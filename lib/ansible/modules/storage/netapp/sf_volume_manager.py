@@ -36,67 +36,63 @@ description:
 options:
 
     state:
-        required: true
         description:
         - Whether the specified volume should exist or not.
+        required: true
         choices: ['present', 'absent']
 
     name:
-        required: true
         description:
-        - The name of the volume to manage
+        - The name of the volume to manage.
+        required: true
 
     account_id:
-        required: true
-        type: int
         description:
-        - account_id for the owner of this volume
+        - Account ID for the owner of this volume.
+        required: true
 
     512emulation:
-        required: false
-        type: bool
         description:
         - Should the volume provide 512-byte sector emulation?
-        - required when C(state=present)
+        - Required when C(state=present)
+        required: false
 
     qos:
-        required: false
-        type: QoS object
         description: Initial quality of service settings for this volume.
+        required: false
         default: None
 
     attributes:
-        required: false
-        type: dict
         description: List of Name/Value pairs in JSON object format.
+        required: false
         default: None
 
     volume_id:
-        required: false
         description:
         - The ID of the volume to manage or update.
-        - In order to create multiple volumes with the same name, but different volume_ids, please declare the volume_id
+        - In order to create multiple volumes with the same name, but different volume_ids, please declare the I(volume_id)
           parameter with an arbitary value. However, the specified volume_id will not be assigned to the newly created
           volume (since it's an auto-generated property).
+        required: false
         default: None
 
     size:
-        required: false
         description:
-        - The size of the volume in (size_unit)
-        - required when C(state = present)
+        - The size of the volume in (size_unit).
+        - Required when C(state = present).
+        required: false
 
     size_unit:
-        required: false
         description:
-        - The unit used to interpret the size parameter
+        - The unit used to interpret the size parameter.
+        required: false
         choices: ['bytes', 'b', 'kb', 'mb', 'gb', 'tb', 'pb', 'eb', 'zb', 'yb']
         default: 'gb'
 
     access:
-        required: false
         description:
-        - Access allowed for the volume
+        - Access allowed for the volume.
+        required: false
         choices: ['readOnly', 'readWrite', 'locked', 'replicationTarget']
         access_type_description:
         - readOnly: Only read operations are allowed.
