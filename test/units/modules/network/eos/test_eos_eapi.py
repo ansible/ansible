@@ -21,45 +21,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import json
 
-import ansible.module_utils.basic
-
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
-from ansible.errors import AnsibleModuleExit
+from ansible.compat.tests.mock import patch
 from ansible.modules.network.eos import eos_eapi
-from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
+from .eos_module import TestEosModule, load_fixture, set_module_args
 
 
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
+class TestEosEapiModule(TestEosModule):
 
-fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
-fixture_data = {}
-
-def load_fixture(name):
-    path = os.path.join(fixture_path, name)
-
-    if path in fixture_data:
-        return fixture_data[path]
-
-    with open(path) as f:
-        data = f.read()
-
-    try:
-        data = json.loads(data)
-    except:
-        pass
-
-    fixture_data[path] = data
-    return data
-
-
-class TestEosEapiModule(unittest.TestCase):
+    module = eos_eapi
 
     def setUp(self):
         self.mock_run_commands = patch('ansible.modules.network.eos.eos_eapi.run_commands')
@@ -68,54 +39,34 @@ class TestEosEapiModule(unittest.TestCase):
         self.mock_load_config = patch('ansible.modules.network.eos.eos_eapi.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.command_fixtures = {}
+
     def tearDown(self):
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
 
-    def execute_module(self, failed=False, changed=False, commands=None,
-            sort=True, command_fixtures={}):
-
+    def load_fixtures(self, commands=None):
         def run_commands(module, commands, **kwargs):
             output = list()
             for cmd in commands:
-                output.append(load_fixture(command_fixtures[cmd]))
+                output.append(load_fixture(self.command_fixtures[cmd]))
             return (0, output, '')
 
         self.run_commands.side_effect = run_commands
         self.load_config.return_value = dict(diff=None, session='session')
 
-        with self.assertRaises(AnsibleModuleExit) as exc:
-            eos_eapi.main()
-
-        result = exc.exception.result
-
-        if failed:
-            self.assertTrue(result.get('failed'), result)
-        else:
-            self.assertEqual(result.get('changed'), changed, result)
-
-        if commands:
-            if sort:
-                self.assertEqual(sorted(commands), sorted(result['commands']), result['commands'])
-            else:
-                self.assertEqual(commands, result['commands'])
-
-        return result
-
     def start_configured(self, *args, **kwargs):
-        command_fixtures = {
+        self.command_fixtures = {
             'show vrf': 'eos_eapi_show_vrf.text',
             'show management api http-commands | json': 'eos_eapi_show_mgmt.json'
         }
-        kwargs['command_fixtures'] = command_fixtures
         return self.execute_module(*args, **kwargs)
 
     def start_unconfigured(self, *args, **kwargs):
-        command_fixtures = {
+        self.command_fixtures = {
             'show vrf': 'eos_eapi_show_vrf.text',
             'show management api http-commands | json': 'eos_eapi_show_mgmt_unconfigured.json'
         }
-        kwargs['command_fixtures'] = command_fixtures
         return self.execute_module(*args, **kwargs)
 
     def test_eos_eapi_http_enable(self):

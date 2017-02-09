@@ -16,9 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'community',
+    'version': '1.0'
+}
 
 DOCUMENTATION = """
 ---
@@ -30,8 +32,6 @@ description:
   - This will configure both login and motd banners on remote devices
     running Arista EOS.  It allows playbooks to add or remote
     banner text from the active running configuration.
-notes:
-  - This module requires connection to be network_cli
 options:
   banner:
     description:
@@ -91,23 +91,8 @@ session_name:
   returned: always
   type: str
   sample: ansible_1479315771
-start:
-  description: The time the job started
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:15.126146"
-end:
-  description: The time the job ended
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:25.595612"
-delta:
-  description: The time elapsed to perform all operations
-  returned: always
-  type: str
-  sample: "0:00:10.469466"
 """
-from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.eos import load_config, run_commands
 
 def map_obj_to_commands(updates, module):
@@ -156,9 +141,9 @@ def main():
 
     required_if = [('state', 'present', ('text',))]
 
-    module = LocalAnsibleModule(argument_spec=argument_spec,
-                                required_if=required_if,
-                                supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           required_if=required_if,
+                           supports_check_mode=True)
 
     result = {'changed': False}
 
