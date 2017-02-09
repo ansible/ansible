@@ -238,6 +238,7 @@ Ansible Changes By Release
   * win_find
   * win_path
   * win_psexec
+  * win_reg_stat
   * win_say
   * win_shortcut
 - xbps
