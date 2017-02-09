@@ -861,6 +861,9 @@ def command_sanity_pep8(args, targets):
     if stderr:
         raise SubprocessError(cmd=cmd, status=status, stderr=stderr)
 
+    if args.explain:
+        return
+
     pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<code>[A-Z0-9]{4}) (?P<message>.*)$'
 
     results = [re.search(pattern, line).groupdict() for line in stdout.splitlines()]
