@@ -84,7 +84,7 @@ options:
       - Currently remote_src does not support recursive copying.
     choices: [ "True", "False" ]
     required: false
-    default: "no"
+    default: "False"
     version_added: "2.0"
   follow:
     required: false
