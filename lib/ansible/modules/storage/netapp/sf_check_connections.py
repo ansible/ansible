@@ -37,24 +37,24 @@ description:
 options:
 
   skip:
-    required: false
     description:
     - Skip checking connection to SVIP or MVIP.
+    required: false
     choices: ['svip', 'mvip']
     default: None
 
   mvip:
-    required: false
     description:
     - Optionally, use to test connection of a different MVIP.
     - This is not needed to test the connection to the target cluster.
+    required: false
     default: None
 
   svip:
-    required: false
     description:
     - Optionally, use to test connection of a different SVIP.
     - This is not needed to test the connection to the target cluster.
+    required: false
     default: None
 
 '''
@@ -72,24 +72,16 @@ RETURN = """
 
 """
 
-import logging
-from traceback import format_exc
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 import ansible.module_utils.netapp as netapp_utils
 
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
 
 class SolidFireConnection(object):
 
     def __init__(self):
-        logger.debug('Init %s', self.__class__.__name__)
-
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
         self.argument_spec.update(dict(
             skip=dict(required=False, type='str', default=None, choices=['mvip', 'svip']),
@@ -129,8 +121,7 @@ class SolidFireConnection(object):
 
         except:
             err = get_exception()
-            logger.exception('Error checking connection to MVIP: %s',
-                             str(err))
+            self.module.fail_json(msg='Error checking connection to MVIP', exception=str(err))
             return False
 
     def check_svip_connection(self):
@@ -148,8 +139,7 @@ class SolidFireConnection(object):
 
         except:
             err = get_exception()
-            logger.exception('Error checking connection to SVIP: %s',
-                             str(err))
+            self.module.fail_json(msg='Error checking connection to SVIP', exception=str(err))
             return False
 
     def check(self):
@@ -199,13 +189,7 @@ class SolidFireConnection(object):
 
 def main():
     v = SolidFireConnection()
-
-    try:
-        v.check()
-    except:
-        err = get_exception()
-        logger.debug("Exception in check(): \n%s" % format_exc(err))
-        raise
+    v.check()
 
 if __name__ == '__main__':
     main()
