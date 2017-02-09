@@ -680,6 +680,7 @@ class AnsibleModule(object):
         self.cleanup_files = []
         self._debug = False
         self._diff = False
+        self._socket_path = None
         self._verbosity = 0
         # May be used to set modifications to the environment for any
         # run_command invocation
@@ -689,7 +690,7 @@ class AnsibleModule(object):
         self._passthrough = ['warnings', 'deprecations']
 
         self.aliases = {}
-        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility']
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility', '_ansible_socket']
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -1413,6 +1414,9 @@ class AnsibleModule(object):
 
             elif k == '_ansible_module_name':
                 self._name = v
+
+            elif k == '_ansible_socket':
+                self._socket_path = v
 
             elif check_invalid_arguments and k not in self._legal_inputs:
                 unsupported_parameters.add(k)

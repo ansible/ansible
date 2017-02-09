@@ -29,7 +29,6 @@ except Exception:
     pass
 
 import fcntl
-import hashlib
 import os
 import shlex
 import signal
@@ -118,6 +117,8 @@ class Server():
         self.play_context = play_context
 
         self._start_time = datetime.datetime.now()
+
+        self.log("setup connection %s" % self.play_context.connection)
 
         self.conn = connection_loader.get(play_context.connection, play_context, sys.stdin)
         self.conn._connect()
@@ -259,20 +260,15 @@ def main():
 
     display.verbosity = pc.verbosity
 
-    # here we create a hash to use later when creating the socket file,
-    # so we can hide the info about the target host/user/etc.
-    m = hashlib.sha256()
-    for attr in ('connection', 'remote_addr', 'port', 'remote_user'):
-        val = getattr(pc, attr, None)
-        if val:
-            m.update(to_bytes(val))
+    ssh = connection_loader.get('ssh', class_only=True)
+    m = ssh._create_control_path(pc.remote_addr, pc.port, pc.remote_user)
 
     # create the persistent connection dir if need be and create the paths
     # which we will be using later
     tmp_path = unfrackpath("$HOME/.ansible/pc")
     makedirs_safe(tmp_path)
     lk_path = unfrackpath("%s/.ansible_pc_lock" % tmp_path)
-    sf_path = unfrackpath("%s/conn-%s" % (tmp_path, m.hexdigest()[0:12]))
+    sf_path = unfrackpath(m % dict(directory=tmp_path))
 
     # if the socket file doesn't exist, spin up the daemon process
     lock_fd = os.open(lk_path, os.O_RDWR|os.O_CREAT, 0o600)
