@@ -153,7 +153,8 @@ def update_vpc_tags(vpc, module, vpc_obj, tags, name):
             for tag_key in sorted(tags):
                 if tags[tag_key] != current_tags[tag_key] and not module.check_mode:
                     vpc.create_tags(vpc_obj.id, tags)
-                return True
+                    return True
+            return False
         else:
             if not module.check_mode:
                 vpc.create_tags(vpc_obj.id, tags)
