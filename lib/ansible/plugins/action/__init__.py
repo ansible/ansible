@@ -554,10 +554,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             data = self._low_level_execute_command(cmd, sudoable=False)
             try:
                 initial_fragment = data['stdout'].strip().splitlines()[-1]
-                result = initial_fragment
             except IndexError:
-                if len(split_path) > 1:
-                    result = self._connection._shell.join_path(initial_fragment, *split_path[1:])
+                initial_fragment = None
+
+            if initial_fragment:
+                result = initial_fragment
+            elif len(split_path) > 1:
+                result = self._connection._shell.join_path(initial_fragment, *split_path[1:])
+
         return result
 
     def _strip_success_message(self, data):
