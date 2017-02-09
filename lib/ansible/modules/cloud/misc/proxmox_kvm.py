@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Abdoul Bah (@helldorado) <abdoul.bah at alterway.fr>
+# (c) 2016, Abdoul Bah (@helldorado) <bahabdoul at gmail.com>
 
 """
 Ansible module to manage Qemu(KVM) instance in Proxmox VE cluster.
@@ -19,7 +19,7 @@ along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'version': '1.1'}
 
 DOCUMENTATION = '''
 ---
@@ -28,7 +28,7 @@ short_description: Management of Qemu(KVM) Virtual Machines in Proxmox VE cluste
 description:
   - Allows you to create/delete/stop Qemu(KVM) Virtual Machines in Proxmox VE cluster.
 version_added: "2.3"
-author: "Abdoul Bah (@helldorado) <abdoul.bah at alterway.fr>"
+author: "Abdoul Bah (@helldorado) <bahabdoul at gmail.com>"
 options:
   acpi:
     description:
@@ -99,6 +99,12 @@ options:
     required: false
     default: null
     type: string
+  clone:
+    description:
+      - Name of VM to be cloned. If C(vmid) is setted, C(clone) can take arbitrary value but required for intiating the clone.
+    required: false
+    default: null
+    type: string
   cores:
     description:
       - Specify number of cores per socket.
@@ -153,12 +159,29 @@ options:
     choices: [ "yes", "no" ]
     required: false
     type: boolean
+  format:
+    description:
+      - Target drive’s backing file’s data format.
+      - Used only with clone.
+    default: qcow2
+    choices: [ "cloop", "cow", "qcow", "qcow2", "qed", "raw", "vmdk" ]
+    required: false
+    type: string
   freeze:
     description:
       - Specify if PVE should freeze CPU at startup (use 'c' monitor command to start execution).
     required: false
     default: null
     choices: [ "yes", "no" ]
+    type: boolean
+  full:
+    description:
+      - Create a full copy of all disk. This is always done when you clone a normal VM.
+      - For VM templates, we try to create a linked clone by default.
+      - Used only with clone
+    default: yes
+    choices: [ "yes", "no"]
+    required: false
     type: boolean
   hostpci:
     description:
@@ -272,6 +295,13 @@ options:
     default: null
     required: false
     type: A hash/dictionary defining interfaces
+  newid:
+    description:
+      - VMID for the clone.
+      - If C(newid) is not set, the next available VM ID will be fetched from ProxmoxAPI.
+    default: null
+    required: false
+    type: integer
   node:
     description:
       - Proxmox VE node, where the new VM will be created.
@@ -314,6 +344,12 @@ options:
     default: null
     required: false
     type: A hash/dictionary defining host parallel devices
+  pool:
+    description:
+      - Add the new VM to the specified pool.
+    default: null
+    required: false
+    type: string
   protection:
     description:
       - Enable/disable the protection flag of the VM. This will enable/disable the remove VM and remove disk operations.
@@ -395,6 +431,12 @@ options:
     required: false
     default: null
     type: string
+  snapname:
+    description:
+      - The name of the snapshot. Used only with clone.
+    default: null
+    required: false
+    type: string
   sockets:
     description:
       - Sets the number of CPU sockets. (1 - N).
@@ -423,6 +465,12 @@ options:
     choices: ['present', 'started', 'absent', 'stopped', 'restarted','current']
     required: false
     default: present
+  storage:
+    description:
+      - Target storage for full clone.
+    default: null
+    required: false
+    type: string
   tablet:
     description:
       - Enables/disables the USB tablet device.
@@ -430,6 +478,13 @@ options:
     choices: [ "yes", "no" ]
     default: "no"
     type: boolean
+  target:
+    description:
+      - Target node. Only allowed if the original VM is on shared storage.
+      - Used only with clone.
+    default: null
+    required: false
+    type: string
   tdf:
     description:
       - Enables/disables time drift fix.
@@ -446,10 +501,19 @@ options:
     type: boolean
   timeout:
     description:
-      - Timeout for operations.
+      - Timeout for operations. C(clone) can take a while. Increase the timeout if need.
     default: 30
     required: false
     type: integer
+  update:
+    description:
+      - If C(yes), the VM will be update with new value.
+      - C(net, virtio, ide, sata, scsi) is disabled when update.
+      - Updating C(net) update the MAC address and C(virtio) create always new disk...
+    default: "no"
+    choices: [ "yes", "no" ]
+    required: false
+    type: boolean
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
@@ -486,6 +550,7 @@ options:
       - If vmid is not set, the next available VM ID will be fetched from ProxmoxAPI.
     default: null
     required: false
+    type: integer
   watchdog:
     description:
       - Creates a virtual hardware watchdog device.
@@ -535,6 +600,32 @@ EXAMPLES = '''
     virtio      : '{"virtio0":"VMs_LVM:10", "virtio1":"VMs:2,format=qcow2", "virtio2":"VMs:5,format=raw"}'
     cores       : 4
     vcpus       : 2
+
+# Clone VM with only source VM name
+- proxmox_kvm:
+    api_user    : root@pam
+    api_password: secret
+    api_host    : helldorado
+    clone       : spynal   # The VM source
+    name        : zavala  # The target VM name
+    node        : sabrewulf
+    storage     : VMs
+    format      : qcow2
+    timeout     : 500  # Note: The task can take a while. Adapt
+
+# Clone VM with source vmid and target newid and raw format
+- proxmox_kvm:
+    api_user    : root@pam
+    api_password: secret
+    api_host    : helldorado
+    clone       : arbitrary_name
+    vmid        : 108
+    newid       : 152
+    name        : zavala  # The target VM name
+    node        : sabrewulf
+    storage     : LVM_STO
+    format      : raw
+    timeout     : 300  # Note: The task can take a while. Adapt
 
 # Create new VM and lock it for snapashot.
 - proxmox_kvm:
@@ -608,6 +699,35 @@ EXAMPLES = '''
     name        : spynal
     node        : sabrewulf
     state       : current
+
+# Update VM configuration
+- proxmox_kvm:
+    api_user    : root@pam
+    api_password: secret
+    api_host    : helldorado
+    name        : spynal
+    node        : sabrewulf
+    cpu         : 8
+    memory      : 16384
+    update      : yes
+
+# Delete QEMU parameters
+- proxmox_kvm:
+    api_user    : root@pam
+    api_password: secret
+    api_host    : helldorado
+    name        : spynal
+    node        : sabrewulf
+    delete      : 'args,template,cpulimit'
+
+# Revert a pending change
+- proxmox_kvm:
+    api_user    : root@pam
+    api_password: secret
+    api_host    : helldorado
+    name        : spynal
+    node        : sabrewulf
+    revert      : 'template,cpulimit'
 '''
 
 RETURN = '''
@@ -670,7 +790,7 @@ def get_nextvmid(proxmox):
     module.fail_json(msg="Unable to get next vmid. Failed with exception: %s")
 
 def get_vmid(proxmox, name):
-    return [ vm['vmid'] for vm in proxmox.cluster.resources.get(type='vm') if vm['name'] == name ]
+  return [ vm['vmid'] for vm in proxmox.cluster.resources.get(type='vm') if vm['name'] == name ]
 
 def get_vm(proxmox, vmid):
   return [ vm for vm in proxmox.cluster.resources.get(type='vm') if vm['vmid'] == int(vmid) ]
@@ -714,9 +834,25 @@ def get_vminfo(module, proxmox, node, vmid, **kwargs):
         results['devices'] = devices
         results['vmid'] = int(vmid)
 
-def create_vm(module, proxmox, vmid, node, name, memory, cpu, cores, sockets, timeout, **kwargs):
+def settings(module, proxmox, vmid, node, name, timeout, **kwargs):
+  proxmox_node = proxmox.nodes(node)
+
+  # Sanitize kwargs. Remove not defined args and ensure True and False converted to int.
+  kwargs = dict((k,v) for k, v in kwargs.items() if v is not None)
+
+  #module.fail_json(msg='%s' % kwargs)
+  if getattr(proxmox_node, VZ_TYPE)(vmid).config.set(**kwargs) is None:
+    return True
+  else:
+      return False
+
+def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sockets, timeout, update, **kwargs):
   # Available only in PVE 4
   only_v4 = ['force','protection','skiplock']
+
+  # valide clone parameters
+  valid_clone_params = ['format', 'full', 'pool', 'snapname', 'storage', 'target']
+  clone_params = {}
   # Default args for vm. Note: -args option is for experts only. It allows you to pass arbitrary arguments to kvm.
   vm_args = "-serial unix:/var/run/qemu-server/{}.serial,server,nowait".format(vmid)
 
@@ -732,15 +868,34 @@ def create_vm(module, proxmox, vmid, node, name, memory, cpu, cores, sockets, ti
       if p in kwargs:
          del kwargs[p]
 
+  # If update, don't update disk (virtio, ide, sata, scsi) and network interface
+  if update:
+    if 'virtio' in kwargs:
+      del kwargs['virtio']
+    if 'sata' in kwargs:
+      del kwargs['sata']
+    if 'scsi' in kwargs:
+      del kwargs['scsi']
+    if 'ide' in kwargs:
+      del kwargs['ide']
+    if 'net' in kwargs:
+      del kwargs['net']
+
   # Convert all dict in kwargs to elements. For hostpci[n], ide[n], net[n], numa[n], parallel[n], sata[n], scsi[n], serial[n], virtio[n]
   for k in kwargs.keys():
     if isinstance(kwargs[k], dict):
       kwargs.update(kwargs[k])
       del kwargs[k]
 
+  # Rename numa_enabled  to numa. According the API documentation
+  if 'numa_enabled' in kwargs:
+    kwargs['numa'] = kwargs['numa_enabled']
+    del kwargs['numa_enabled']
+
   # -args and skiplock require root@pam user
   if module.params['api_user'] == "root@pam" and module.params['args'] is None:
-    kwargs['args'] = vm_args
+    if not update:
+      kwargs['args'] = vm_args
   elif module.params['api_user'] == "root@pam" and module.params['args'] is not None:
     kwargs['args'] = module.params['args']
   elif module.params['api_user'] != "root@pam" and module.params['args'] is not None:
@@ -749,7 +904,19 @@ def create_vm(module, proxmox, vmid, node, name, memory, cpu, cores, sockets, ti
   if module.params['api_user'] != "root@pam" and module.params['skiplock'] is not None:
     module.fail_json(msg='skiplock parameter require root@pam user. ')
 
-  taskid = getattr(proxmox_node, VZ_TYPE).create(vmid=vmid, name=name, memory=memory, cpu=cpu, cores=cores, sockets=sockets, **kwargs)
+  if update:
+    if getattr(proxmox_node, VZ_TYPE)(vmid).config.set(name=name, memory=memory, cpu=cpu, cores=cores, sockets=sockets, **kwargs) is None:
+      return True
+    else:
+      return False
+  elif module.params['clone'] is not None:
+    for param in valid_clone_params:
+      if module.params[param] is not None:
+         clone_params[param] = module.params[param]
+    clone_params.update(dict([k, int(v)] for k, v in clone_params.items() if isinstance(v, bool)))
+    taskid = proxmox_node.qemu(vmid).clone.post(newid=newid, name=name, **clone_params)
+  else:
+      taskid = getattr(proxmox_node, VZ_TYPE).create(vmid=vmid, name=name, memory=memory, cpu=cpu, cores=cores, sockets=sockets, **kwargs)
 
   while timeout:
     if ( proxmox_node.tasks(taskid).status.get()['status'] == 'stopped'
@@ -795,71 +962,81 @@ def stop_vm(module, proxmox, vm, vmid, timeout, force):
 
 def main():
   module = AnsibleModule(
-      argument_spec = dict(
-          acpi = dict(type='bool', default='yes'),
-          agent = dict(type='bool'),
-          args = dict(type='str', default=None),
-          api_host = dict(required=True),
-          api_user = dict(required=True),
-          api_password = dict(no_log=True),
-          autostart = dict(type='bool', default='no'),
-          balloon = dict(type='int',default=0),
-          bios = dict(choices=['seabios', 'ovmf']),
-          boot = dict(type='str', default='cnd'),
-          bootdisk = dict(type='str'),
-          cores = dict(type='int', default=1),
-          cpu = dict(type='str', default='kvm64'),
-          cpulimit = dict(type='int'),
-          cpuunits = dict(type='int', default=1000),
-          delete = dict(type='str'),
-          description = dict(type='str'),
-          digest = dict(type='str'),
-          force = dict(type='bool', default=None),
-          freeze = dict(type='bool'),
-          hostpci = dict(type='dict'),
-          hotplug = dict(type='str'),
-          hugepages = dict(choices=['any', '2', '1024']),
-          ide = dict(type='dict', default=None),
-          keyboard = dict(type='str'),
-          kvm = dict(type='bool', default='yes'),
-          localtime = dict(type='bool'),
-          lock = dict(choices=['migrate', 'backup', 'snapshot', 'rollback']),
-          machine = dict(type='str'),
-          memory = dict(type='int', default=512),
-          migrate_downtime = dict(type='int'),
-          migrate_speed = dict(type='int'),
-          name = dict(type='str'),
-          net = dict(type='dict'),
-          node = dict(),
-          numa = dict(type='dict'),
-          onboot = dict(type='bool', default='yes'),
-          ostype = dict(default='l26', choices=['other', 'wxp', 'w2k', 'w2k3', 'w2k8', 'wvista', 'win7', 'win8', 'l24', 'l26', 'solaris']),
-          parallel = dict(type='dict'),
-          protection = dict(type='bool'),
-          reboot = dict(type='bool'),
-          revert = dict(),
-          sata = dict(type='dict'),
-          scsi = dict(type='dict'),
-          scsihw = dict(choices=['lsi', 'lsi53c810', 'virtio-scsi-pci', 'virtio-scsi-single', 'megasas', 'pvscsi']),
-          serial = dict(type='dict'),
-          shares = dict(type='int'),
-          skiplock = dict(type='bool'),
-          smbios = dict(type='str'),
-          sockets = dict(type='int', default=1),
-          startdate = dict(type='str'),
-          startup = dict(),
-          state = dict(default='present', choices=['present', 'absent', 'stopped', 'started', 'restarted', 'current']),
-          tablet = dict(type='bool', default='no'),
-          tdf = dict(type='bool'),
-          template = dict(type='bool', default='no'),
-          timeout = dict(type='int', default=30),
-          validate_certs = dict(type='bool', default='no'),
-          vcpus = dict(type='int', default=None),
-          vga = dict(default='std', choices=['std', 'cirrus', 'vmware', 'qxl', 'serial0', 'serial1', 'serial2', 'serial3', 'qxl2', 'qxl3', 'qxl4']),
-          virtio = dict(type='dict', default=None),
-          vmid = dict(type='int', default=None),
-          watchdog = dict(),
-          )
+    argument_spec = dict(
+      acpi = dict(type='bool', default='yes'),
+      agent = dict(type='bool'),
+      args = dict(type='str', default=None),
+      api_host = dict(required=True),
+      api_user = dict(required=True),
+      api_password = dict(no_log=True),
+      autostart = dict(type='bool', default='no'),
+      balloon = dict(type='int',default=0),
+      bios = dict(choices=['seabios', 'ovmf']),
+      boot = dict(type='str', default='cnd'),
+      bootdisk = dict(type='str'),
+      clone = dict(type='str', default=None),
+      cores = dict(type='int', default=1),
+      cpu = dict(type='str', default='kvm64'),
+      cpulimit = dict(type='int'),
+      cpuunits = dict(type='int', default=1000),
+      delete = dict(type='str', default=None),
+      description = dict(type='str'),
+      digest = dict(type='str'),
+      force = dict(type='bool', default=None),
+      format = dict(type='str', default='qcow2', choices=['cloop', 'cow', 'qcow', 'qcow2', 'qed', 'raw', 'vmdk' ]),
+      freeze = dict(type='bool'),
+      full = dict(type='bool', default='yes'),
+      hostpci = dict(type='dict'),
+      hotplug = dict(type='str'),
+      hugepages = dict(choices=['any', '2', '1024']),
+      ide = dict(type='dict', default=None),
+      keyboard = dict(type='str'),
+      kvm = dict(type='bool', default='yes'),
+      localtime = dict(type='bool'),
+      lock = dict(choices=['migrate', 'backup', 'snapshot', 'rollback']),
+      machine = dict(type='str'),
+      memory = dict(type='int', default=512),
+      migrate_downtime = dict(type='int'),
+      migrate_speed = dict(type='int'),
+      name = dict(type='str'),
+      net = dict(type='dict'),
+      newid = dict(type='int', default=None),
+      node = dict(),
+      numa = dict(type='dict'),
+      numa_enabled = dict(type='bool'),
+      onboot = dict(type='bool', default='yes'),
+      ostype = dict(default='l26', choices=['other', 'wxp', 'w2k', 'w2k3', 'w2k8', 'wvista', 'win7', 'win8', 'l24', 'l26', 'solaris']),
+      parallel = dict(type='dict'),
+      pool = dict(type='str'),
+      protection = dict(type='bool'),
+      reboot = dict(type='bool'),
+      revert = dict(type='str', default=None),
+      sata = dict(type='dict'),
+      scsi = dict(type='dict'),
+      scsihw = dict(choices=['lsi', 'lsi53c810', 'virtio-scsi-pci', 'virtio-scsi-single', 'megasas', 'pvscsi']),
+      serial = dict(type='dict'),
+      shares = dict(type='int'),
+      skiplock = dict(type='bool'),
+      smbios = dict(type='str'),
+      snapname = dict(type='str'),
+      sockets = dict(type='int', default=1),
+      startdate = dict(type='str'),
+      startup = dict(),
+      state = dict(default='present', choices=['present', 'absent', 'stopped', 'started', 'restarted', 'current']),
+      storage = dict(type='str'),
+      tablet = dict(type='bool', default='no'),
+      target = dict(type='str'),
+      tdf = dict(type='bool'),
+      template = dict(type='bool', default='no'),
+      timeout = dict(type='int', default=30),
+      update = dict(type='bool', default='no'),
+      validate_certs = dict(type='bool', default='no'),
+      vcpus = dict(type='int', default=None),
+      vga = dict(default='std', choices=['std', 'cirrus', 'vmware', 'qxl', 'serial0', 'serial1', 'serial2', 'serial3', 'qxl2', 'qxl3', 'qxl4']),
+      virtio = dict(type='dict', default=None),
+      vmid = dict(type='int', default=None),
+      watchdog = dict(),
+    )
   )
 
   if not HAS_PROXMOXER:
@@ -873,9 +1050,10 @@ def main():
   memory = module.params['memory']
   name = module.params['name']
   node = module.params['node']
-  sockets = module.params['sockets'],
+  sockets = module.params['sockets']
   state = module.params['state']
   timeout = module.params['timeout']
+  update = bool(module.params['update'])
   validate_certs = module.params['validate_certs']
 
   # If password not set get it from PROXMOX_PASSWORD env
@@ -893,165 +1071,212 @@ def main():
   except Exception as e:
     module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
 
-
   # If vmid not set get the Next VM id from ProxmoxAPI
   # If vm name is set get the VM id from ProxmoxAPI
-  if module.params['vmid'] is not None:
-    vmid = module.params['vmid']
-  elif state == 'present':
-    vmid = get_nextvmid(proxmox)
-  elif module.params['name'] is not None:
-    vmid = get_vmid(proxmox, name)[0]
+  if not module.params['clone']:
+    if module.params['vmid'] is not None:
+      vmid = module.params['vmid']
+    elif state == 'present' and not update:
+      vmid = get_nextvmid(proxmox)
+    elif module.params['name'] is not None:
+      try:
+        vmid = get_vmid(proxmox, name)[0]
+      except Exception as e:
+        module.fail_json(msg="VM {} is not present on the cluster. Note: <Update: Yes> is mutually exclusive with a vm not created".format(name))
+  elif module.params['clone'] is not None:
+    if module.params['vmid'] is not None:
+      vmid = module.params['vmid']
+    else:
+      try:
+        vmid = get_vmid(proxmox, module.params['clone'])[0]
+      except Exception as e:
+        module.fail_json(msg="VM {} is not present on the cluster.".format(name))
+    if module.params['newid'] is not None:
+      newid = module.params['newid']
+    else:
+      newid = get_nextvmid(proxmox)
 
-  if state == 'present':
-    try:
-      if get_vm(proxmox, vmid) and not module.params['force']:
-        module.exit_json(changed=False, msg="VM with vmid <%s> already exists" % vmid)
-      elif get_vmid(proxmox, name) and not module.params['force']:
-        module.exit_json(changed=False, msg="VM with name <%s> already exists" % name)
-      elif not (node, module.params['name']):
-        module.fail_json(msg='node, name is mandatory for creating vm')
-      elif not node_check(proxmox, node):
-        module.fail_json(msg="node '%s' does not exist in cluster" % node)
+  if module.params['delete'] is not None and module.params['revert'] is not None:
+     module.fail_json(msg='delete and revert parameters is mutually exclusive')
 
-      create_vm(module, proxmox, vmid, node, name, memory, cpu, cores, sockets, timeout,
-                      acpi = module.params['acpi'],
-                      agent = module.params['agent'],
-                      autostart = module.params['autostart'],
-                      balloon = module.params['balloon'],
-                      bios = module.params['bios'],
-                      boot = module.params['boot'],
-                      bootdisk = module.params['bootdisk'],
-                      cpulimit = module.params['cpulimit'],
-                      cpuunits = module.params['cpuunits'],
-                      delete = module.params['delete'],
-                      description = module.params['description'],
-                      digest = module.params['digest'],
-                      force = module.params['force'],
-                      freeze = module.params['freeze'],
-                      hostpci = module.params['hostpci'],
-                      hotplug = module.params['hotplug'],
-                      hugepages = module.params['hugepages'],
-                      ide = module.params['ide'],
-                      keyboard = module.params['keyboard'],
-                      kvm = module.params['kvm'],
-                      localtime = module.params['localtime'],
-                      lock = module.params['lock'],
-                      machine = module.params['machine'],
-                      migrate_downtime = module.params['migrate_downtime'],
-                      migrate_speed = module.params['migrate_speed'],
-                      net = module.params['net'],
-                      numa = module.params['numa'],
-                      onboot = module.params['onboot'],
-                      ostype = module.params['ostype'],
-                      parallel = module.params['parallel'],
-                      protection = module.params['protection'],
-                      reboot = module.params['reboot'],
-                      revert = module.params['revert'],
-                      sata = module.params['sata'],
-                      scsi = module.params['scsi'],
-                      scsihw = module.params['scsihw'],
-                      serial = module.params['serial'],
-                      shares = module.params['shares'],
-                      skiplock = module.params['skiplock'],
-                      smbios1 = module.params['smbios'],
-                      startdate = module.params['startdate'],
-                      startup = module.params['startup'],
-                      tablet = module.params['tablet'],
-                      tdf = module.params['tdf'],
-                      template = module.params['template'],
-                      vcpus = module.params['vcpus'],
-                      vga = module.params['vga'],
-                      virtio = module.params['virtio'],
-                      watchdog = module.params['watchdog'])
+  if module.params['delete'] is not None or module.params['revert'] is not None:
+     if module.params['delete'] is not None:
+       try:
+         settings(module, proxmox, vmid, node, name, timeout,
+                              delete = module.params['delete'],)
+         module.exit_json(changed=True, msg="Settings has deleted on VM {} with vmid {}".format(name, vmid))
+       except Exception as e:
+         module.fail_json(msg='Unable to delete settings on vm {} with vimd {}: '.format(name, vmid) + str(e))
+     elif module.params['revert'] is not None:
+       try:
+         settings(module, proxmox, vmid, node, name, timeout,
+                              revert = module.params['delete'],)
+         module.exit_json(changed=True, msg="Settings has reverted on VM {} with vmid {}".format(name, vmid))
+       except Exception as e:
+         module.fail_json(msg='Unable to revert settings on vm {} with vimd {}: Maybe is not a pending task...   '.format(name, vmid) + str(e))
+  else:
+    if state == 'present':
+      try:
+        if get_vm(proxmox, vmid) and not (update or module.params['clone']):
+          module.exit_json(changed=False, msg="VM with vmid <%s> already exists" % vmid)
+        elif get_vmid(proxmox, name) and not (update or module.params['clone']):
+          module.exit_json(changed=False, msg="VM with name <%s> already exists" % name)
+        elif not (node, module.params['name']):
+          module.fail_json(msg='node, name is mandatory for creating/updating vm')
+        elif not node_check(proxmox, node):
+          module.fail_json(msg="node '%s' does not exist in cluster" % node)
 
-      get_vminfo(module, proxmox, node, vmid,
-              ide = module.params['ide'],
-              net = module.params['net'],
-              sata = module.params['sata'],
-              scsi = module.params['scsi'],
-              virtio = module.params['virtio'])
-      module.exit_json(changed=True, msg="VM %s with vmid %s deployed" % (name, vmid), **results)
-    except Exception as e:
-          module.fail_json(msg="creation of %s VM %s with vmid %s failed with exception: %s" % ( VZ_TYPE, name, vmid, e ))
+        create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sockets, timeout, update,
+                        acpi = module.params['acpi'],
+                        agent = module.params['agent'],
+                        autostart = module.params['autostart'],
+                        balloon = module.params['balloon'],
+                        bios = module.params['bios'],
+                        boot = module.params['boot'],
+                        bootdisk = module.params['bootdisk'],
+                        cpulimit = module.params['cpulimit'],
+                        cpuunits = module.params['cpuunits'],
+                        description = module.params['description'],
+                        digest = module.params['digest'],
+                        force = module.params['force'],
+                        format = module.params['format'],
+                        freeze = module.params['freeze'],
+                        hostpci = module.params['hostpci'],
+                        hotplug = module.params['hotplug'],
+                        hugepages = module.params['hugepages'],
+                        ide = module.params['ide'],
+                        keyboard = module.params['keyboard'],
+                        kvm = module.params['kvm'],
+                        localtime = module.params['localtime'],
+                        lock = module.params['lock'],
+                        machine = module.params['machine'],
+                        migrate_downtime = module.params['migrate_downtime'],
+                        migrate_speed = module.params['migrate_speed'],
+                        net = module.params['net'],
+                        numa = module.params['numa'],
+                        numa_enabled = module.params['numa_enabled'],
+                        onboot = module.params['onboot'],
+                        ostype = module.params['ostype'],
+                        parallel = module.params['parallel'],
+                        pool = module.params['pool'],
+                        protection = module.params['protection'],
+                        reboot = module.params['reboot'],
+                        sata = module.params['sata'],
+                        scsi = module.params['scsi'],
+                        scsihw = module.params['scsihw'],
+                        serial = module.params['serial'],
+                        shares = module.params['shares'],
+                        skiplock = module.params['skiplock'],
+                        smbios1 = module.params['smbios'],
+                        snapname = module.params['snapname'],
+                        startdate = module.params['startdate'],
+                        startup = module.params['startup'],
+                        tablet = module.params['tablet'],
+                        target = module.params['target'],
+                        tdf = module.params['tdf'],
+                        template = module.params['template'],
+                        vcpus = module.params['vcpus'],
+                        vga = module.params['vga'],
+                        virtio = module.params['virtio'],
+                        watchdog = module.params['watchdog'])
 
-  elif state == 'started':
-    try:
-      vm = get_vm(proxmox, vmid)
-      if not vm:
-        module.fail_json(msg='VM with vmid <%s> does not exist in cluster' % vmid)
-      if getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.current.get()['status'] == 'running':
-        module.exit_json(changed=False, msg="VM %s is already running" % vmid)
+        if not module.params['clone']:
+            get_vminfo(module, proxmox, node, vmid,
+                ide = module.params['ide'],
+                net = module.params['net'],
+                sata = module.params['sata'],
+                scsi = module.params['scsi'],
+                virtio = module.params['virtio'])
+        if update:
+          module.exit_json(changed=True, msg="VM %s with vmid %s updated" % (name, vmid))
+        elif module.params['clone'] is not None:
+          module.exit_json(changed=True, msg="VM %s with newid %s cloned from vm with vmid %s" % (name, newid, vmid))
+        else:
+          module.exit_json(changed=True, msg="VM %s with vmid %s deployed" % (name, vmid), **results)
+      except Exception as e:
+        if update:
+          module.fail_json(msg="Unable to update vm {} with vimd {}=".format(name, vmid) + str(e))
+        elif module.params['clone'] is not None:
+          module.fail_json(msg="Unable to clone vm {} from vimd {}=".format(name, vmid) + str(e))
+        else:
+          module.fail_json(msg="creation of %s VM %s with vmid %s failed with exception=%s" % ( VZ_TYPE, name, vmid, e ))
 
-      if start_vm(module, proxmox, vm, vmid, timeout):
-        module.exit_json(changed=True, msg="VM %s started" % vmid)
-    except Exception as e:
-      module.fail_json(msg="starting of VM %s failed with exception: %s" % ( vmid, e ))
+    elif state == 'started':
+      try:
+        vm = get_vm(proxmox, vmid)
+        if not vm:
+          module.fail_json(msg='VM with vmid <%s> does not exist in cluster' % vmid)
+        if getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.current.get()['status'] == 'running':
+          module.exit_json(changed=False, msg="VM %s is already running" % vmid)
 
-  elif state == 'stopped':
-    try:
-      vm = get_vm(proxmox, vmid)
-      if not vm:
-        module.fail_json(msg='VM with vmid = %s does not exist in cluster' % vmid)
+        if start_vm(module, proxmox, vm, vmid, timeout):
+          module.exit_json(changed=True, msg="VM %s started" % vmid)
+      except Exception as e:
+        module.fail_json(msg="starting of VM %s failed with exception: %s" % ( vmid, e ))
 
-      if getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.current.get()['status'] == 'stopped':
-        module.exit_json(changed=False, msg="VM %s is already stopped" % vmid)
+    elif state == 'stopped':
+      try:
+        vm = get_vm(proxmox, vmid)
+        if not vm:
+          module.fail_json(msg='VM with vmid = %s does not exist in cluster' % vmid)
 
-      if stop_vm(module, proxmox, vm, vmid, timeout, force = module.params['force']):
-        module.exit_json(changed=True, msg="VM %s is shutting down" % vmid)
-    except Exception as e:
-      module.fail_json(msg="stopping of VM %s failed with exception: %s" % ( vmid, e ))
+        if getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.current.get()['status'] == 'stopped':
+          module.exit_json(changed=False, msg="VM %s is already stopped" % vmid)
 
-  elif state == 'restarted':
-    try:
-      vm = get_vm(proxmox, vmid)
-      if not vm:
-        module.fail_json(msg='VM with vmid = %s does not exist in cluster' % vmid)
-      if getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.current.get()['status'] == 'stopped':
-        module.exit_json(changed=False, msg="VM %s is not running" % vmid)
+        if stop_vm(module, proxmox, vm, vmid, timeout, force = module.params['force']):
+          module.exit_json(changed=True, msg="VM %s is shutting down" % vmid)
+      except Exception as e:
+        module.fail_json(msg="stopping of VM %s failed with exception: %s" % ( vmid, e ))
 
-      if ( stop_vm(module, proxmox, vm, vmid, timeout, force = module.params['force']) and
-          start_vm(module, proxmox, vm, vmid, timeout) ):
-        module.exit_json(changed=True, msg="VM %s is restarted" % vmid)
-    except Exception as e:
-      module.fail_json(msg="restarting of VM %s failed with exception: %s" % ( vmid, e ))
+    elif state == 'restarted':
+      try:
+        vm = get_vm(proxmox, vmid)
+        if not vm:
+          module.fail_json(msg='VM with vmid = %s does not exist in cluster' % vmid)
+        if getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.current.get()['status'] == 'stopped':
+          module.exit_json(changed=False, msg="VM %s is not running" % vmid)
 
-  elif state == 'absent':
-    try:
-      vm = get_vm(proxmox, vmid)
-      if not vm:
-        module.exit_json(changed=False, msg="VM %s does not exist" % vmid)
+        if ( stop_vm(module, proxmox, vm, vmid, timeout, force = module.params['force']) and
+            start_vm(module, proxmox, vm, vmid, timeout) ):
+          module.exit_json(changed=True, msg="VM %s is restarted" % vmid)
+      except Exception as e:
+        module.fail_json(msg="restarting of VM %s failed with exception: %s" % ( vmid, e ))
 
-      if getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.current.get()['status'] == 'running':
-        module.exit_json(changed=False, msg="VM %s is running. Stop it before deletion." % vmid)
+    elif state == 'absent':
+      try:
+        vm = get_vm(proxmox, vmid)
+        if not vm:
+          module.exit_json(changed=False, msg="VM %s does not exist" % vmid)
 
-      taskid = getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE).delete(vmid)
-      while timeout:
-        if ( proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['status'] == 'stopped'
-            and proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['exitstatus'] == 'OK' ):
-          module.exit_json(changed=True, msg="VM %s removed" % vmid)
-        timeout = timeout - 1
-        if timeout == 0:
-          module.fail_json(msg='Reached timeout while waiting for removing VM. Last line in task before timeout: %s'
-                           % proxmox_node.tasks(taskid).log.get()[:1])
+        if getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.current.get()['status'] == 'running':
+          module.exit_json(changed=False, msg="VM %s is running. Stop it before deletion." % vmid)
 
-        time.sleep(1)
-    except Exception as e:
-      module.fail_json(msg="deletion of VM %s failed with exception: %s" % ( vmid, e ))
+        taskid = getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE).delete(vmid)
+        while timeout:
+          if ( proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['status'] == 'stopped'
+              and proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['exitstatus'] == 'OK' ):
+            module.exit_json(changed=True, msg="VM %s removed" % vmid)
+          timeout = timeout - 1
+          if timeout == 0:
+            module.fail_json(msg='Reached timeout while waiting for removing VM. Last line in task before timeout: %s'
+                             % proxmox_node.tasks(taskid).log.get()[:1])
 
-  elif state == 'current':
-    status = {}
-    try:
-      vm = get_vm(proxmox, vmid)
-      if not vm:
-        module.fail_json(msg='VM with vmid = %s does not exist in cluster' % vmid)
-      current = getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.current.get()['status']
-      status['status'] = current
-      if status:
-         module.exit_json(changed=False, msg="VM %s with vmid = %s is %s" % (name, vmid, current), **status)
-    except Exception as e:
-      module.fail_json(msg="Unable to get vm {} with vmid = {} status: ".format(name, vmid) + str(e))
+          time.sleep(1)
+      except Exception as e:
+        module.fail_json(msg="deletion of VM %s failed with exception: %s" % ( vmid, e ))
 
+    elif state == 'current':
+      status = {}
+      try:
+        vm = get_vm(proxmox, vmid)
+        if not vm:
+          module.fail_json(msg='VM with vmid = %s does not exist in cluster' % vmid)
+        current = getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.current.get()['status']
+        status['status'] = current
+        if status:
+           module.exit_json(changed=False, msg="VM %s with vmid = %s is %s" % (name, vmid, current), **status)
+      except Exception as e:
+        module.fail_json(msg="Unable to get vm {} with vmid = {} status: ".format(name, vmid) + str(e))
 # import module snippets
 from ansible.module_utils.basic import *
 if __name__ == '__main__':
