@@ -143,6 +143,8 @@ Ansible Changes By Release
   * ldap_entry
 - logstash_plugin
 - net_command
+- netapp
+  * sf_snapshot_schedule_manager
 - nginx_status_facts
 - omapi_host
 - openssl:
