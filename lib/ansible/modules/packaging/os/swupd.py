@@ -107,6 +107,17 @@ EXAMPLES = '''
     manifest: 12920
 '''
 
+RETURN = '''
+stdout:
+  description: stdout of swupd
+  returned: always
+  type: string
+stderr:
+  description: stderr of swupd
+  returned: always
+  type: string
+'''
+
 import os
 from ansible.module_utils.basic import AnsibleModule
 
