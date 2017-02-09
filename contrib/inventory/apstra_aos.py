@@ -38,7 +38,7 @@ This script has been inspired by the cobbler.py inventory. thanks
 """
 
 import argparse
-import ConfigParser
+from ansible.compat.six.moves import configparser
 import os
 
 try:
@@ -350,7 +350,7 @@ class AosInventory(object):
     def read_settings(self):
         """ Reads the settings from the apstra_aos.ini file """
 
-        config = ConfigParser.SafeConfigParser()
+        config = configparser.ConfigParser()
         config.read(os.path.dirname(os.path.realpath(__file__)) + '/apstra_aos.ini')
 
         self.aos_server = config.get('aos', 'aos_server')
