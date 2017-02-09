@@ -149,16 +149,11 @@ def update_vpc_tags(vpc, module, vpc_obj, tags, name):
     tags.update({'Name': name})
     try:
         current_tags = dict((t.name, t.value) for t in vpc.get_all_tags(filters={'resource-id': vpc_obj.id}))
-        if sorted(tags) == sorted(current_tags):
-            for tag_key in sorted(tags):
-                if tags[tag_key] != current_tags[tag_key] and not module.check_mode:
-                    vpc.create_tags(vpc_obj.id, tags)
-                    return True
-            return False
-        else:
+        if lambda tags, current_tags: (tags > current_tags) - (tags < current_tags):
             if not module.check_mode:
                 vpc.create_tags(vpc_obj.id, tags)
-                return True
+            return True
+        else:
             return False
     except Exception as e:
         e_msg=boto_exception(e)
