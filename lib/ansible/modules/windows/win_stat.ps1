@@ -94,7 +94,7 @@ $result = @{
 
 # Backward compatibility
 if ($get_md5 -eq $true -and (Get-Member -inputobject $params -name "get_md5") ) {
-    Deprecate $result "The parameter 'get_md5' is being replaced with 'checksum_algorithm: md5'"
+    Add-DeprecationWarning $result "The parameter 'get_md5' is being replaced with 'checksum_algorithm: md5'"
 }
 
 If (Test-Path -Path $path) {
