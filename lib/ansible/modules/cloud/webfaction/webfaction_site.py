@@ -122,7 +122,7 @@ def main():
             subdomains = dict(required=False, type='list', default=[]),
             site_apps = dict(required=False, type='list', default=[]),
             login_name = dict(required=True),
-            login_password = dict(required=True),
+            login_password = dict(required=True, no_log=True),
         ),
         supports_check_mode=True
     )

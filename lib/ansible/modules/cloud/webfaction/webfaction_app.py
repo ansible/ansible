@@ -122,7 +122,7 @@ def main():
             extra_info = dict(required=False, default=""),
             port_open = dict(required=False, type='bool', default=False),
             login_name = dict(required=True),
-            login_password = dict(required=True),
+            login_password = dict(required=True, no_log=True),
             machine = dict(required=False, default=False),
         ),
         supports_check_mode=True

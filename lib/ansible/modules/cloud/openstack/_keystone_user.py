@@ -343,7 +343,7 @@ def main():
                           default="http://127.0.0.1:35357/v2.0"),
         token=dict(required=False),
         login_user=dict(required=False),
-        login_password=dict(required=False),
+        login_password=dict(required=False, no_log=True),
         login_tenant_name=dict(required=False)
     ))
     # keystone operations themselves take an endpoint, not a keystone auth_url
