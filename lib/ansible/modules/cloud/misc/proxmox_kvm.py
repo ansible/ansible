@@ -434,7 +434,7 @@ options:
     choices: [ "yes", "no" ]
   timeout:
     description:
-      - Timeout for operations.
+      - Timeout for operations. C(clone) can take a while. Increase the timeout if need.
     default: 30
     required: false
   update:
@@ -478,6 +478,7 @@ options:
       - If vmid is not set, the next available VM ID will be fetched from ProxmoxAPI.
     default: null
     required: false
+    type: integer
   watchdog:
     description:
       - Creates a virtual hardware watchdog device.
