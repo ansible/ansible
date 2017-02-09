@@ -267,7 +267,8 @@ class Ec2Inventory(object):
 
         # Route53
         self.route53_enabled = config.getboolean('ec2', 'route53')
-        self.route53_hostnames = config.get('ec2', 'route53_hostnames')
+        if config.has_option('ec2', 'route53_hostnames'):
+            self.route53_hostnames = config.get('ec2', 'route53_hostnames')
         self.route53_excluded_zones = []
         if config.has_option('ec2', 'route53_excluded_zones'):
             self.route53_excluded_zones.extend(
