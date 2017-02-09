@@ -1804,7 +1804,7 @@ class AnsibleModule(object):
         # TODO: generalize a separate log function and make log_invocation use it
         # Sanitize possible password argument when logging.
         log_args = dict()
-        passwd_keys = ['password', 'login_password']
+        passwd_keys = ['password', 'login_password', 'url_password']
 
         for param in self.params:
             canon  = self.aliases.get(param, param)
