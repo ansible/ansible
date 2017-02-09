@@ -2710,7 +2710,7 @@ def checkServerForImage(protocol, ipaddress, folder, username, password):
     try:
         ftp = ftplib.FTP(server)
         ftp.login(username, password)
-    except Exception,e:
+    except Exception:
         ##debugOutput e
         return 1
     else:
@@ -2723,7 +2723,7 @@ def checkServerForImage(protocol, ipaddress, folder, username, password):
                 num = 1
         if(num ==0):
             resp = ftp.mkd(imageDir)
-	    if(resp != imageDir):
+        if(resp != imageDir):
                 return 1 
     return output
 #EOM
