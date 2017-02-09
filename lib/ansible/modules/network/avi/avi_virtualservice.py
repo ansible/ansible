@@ -129,7 +129,7 @@ options:
     dns_info:
         description:
             - Service discovery specific data including fully qualified domain name, type and time-to-live of the dns record.
-            - [note] only one of 'fqdn' and 'dns_info' configuration is allowed.
+            - Note that only one of fqdn and dns_info setting is allowed.
     east_west_placement:
         description:
             - Force placement on all se's in service group (mesos mode only).
@@ -167,7 +167,7 @@ options:
     fqdn:
         description:
             - Dns resolvable, fully qualified domain name of the virtualservice.
-            - [note] only one of 'fqdn' and 'dns_info' configuration is allowed.
+            - Only one of 'fqdn' and 'dns_info' configuration is allowed.
     host_name_xlate:
         description:
             - Translate the host name sent to the servers to this value.
