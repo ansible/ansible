@@ -434,7 +434,7 @@ options:
     choices: [ "yes", "no" ]
   timeout:
     description:
-      - Timeout for operations. C(clone) can take a while. Increase the timeout if need.
+      - Timeout for operations.
     default: 30
     required: false
   update:
