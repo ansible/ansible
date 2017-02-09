@@ -186,6 +186,7 @@ class Swupd(object):
             return False
 
         self.failed = True
+        self.msg = "Failed to check for updates"
 
     def _needs_verify(self):
         cmd = self._get_cmd("verify")
@@ -193,6 +194,7 @@ class Swupd(object):
 
         if self.rc != 0:
             self.failed = True
+            self.msg = "Failed to check for filesystem inconsistencies."
 
         if self.FILES_NOT_MATCH in self.stdout:
             return True
@@ -221,6 +223,7 @@ class Swupd(object):
             return
 
         self.failed = True
+        self.msg = "Failed to install bundle %s" % bundle
 
     def remove_bundle(self, bundle):
         """Removes a bundle with `swupd bundle-remove bundle`"""
@@ -240,6 +243,7 @@ class Swupd(object):
             return
 
         self.failed = True
+        self.msg = "Failed to remove bundle %s" % bundle
 
     def update_os(self):
         """Updates the os with `swupd update`"""
@@ -259,6 +263,7 @@ class Swupd(object):
             return
 
         self.failed = True
+        self.msg = "Failed to check for updates"
 
     def verify_os(self):
         """Verifies filesystem agains specified or current version"""
@@ -278,6 +283,7 @@ class Swupd(object):
             return
 
         self.failed = True
+        self.msg = "Failed to verify the OS"
 
 
 def main():
@@ -318,7 +324,7 @@ def main():
         swupd.failed = True
 
     if swupd.failed:
-        module.fail_json(msg="Unkown Error")
+        module.fail_json(msg=swupd.msg, stdout=swupd.stdout, stderr=swupd.stderr)
     else:
         module.exit_json(changed=swupd.changed, msg=swupd.msg, stdout=swupd.stdout, stderr=swupd.stderr)
 
