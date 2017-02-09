@@ -114,7 +114,7 @@ def main():
             type = dict(required=True),
             password = dict(required=False, default=None),
             login_name = dict(required=True),
-            login_password = dict(required=True),
+            login_password = dict(required=True, no_log=True),
             machine = dict(required=False, default=False),
         ),
         supports_check_mode=True
