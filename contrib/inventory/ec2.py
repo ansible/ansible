@@ -204,7 +204,6 @@ class Ec2Inventory(object):
 
         print(data_to_print)
 
-
     def is_cache_valid(self):
         ''' Determines if the cache files have expired, or if it is still valid '''
 
@@ -216,7 +215,6 @@ class Ec2Inventory(object):
                     return True
 
         return False
-
 
     def read_settings(self):
         ''' Reads the settings from the ec2.ini file '''
@@ -469,6 +467,16 @@ class Ec2Inventory(object):
                     continue
                 self.ec2_instance_filters[filter_key].append(filter_value)
 
+        # Instance Filters can be AND'd or OR'd based on the filters_operator
+        # parameter, default behavior is OR'd
+        self.ec2_filter_operator = 'or'
+        if config.has_option('ec2', 'filters_operator'):
+            self.ec2_filter_operator = config.get('ec2', 'filters_operator')
+            if self.ec2_filter_operator not in ('or', 'and'):
+                sys.stderr.write(
+                    "WARN: Invalid ec2 filters_operator, valid values 'and' and 'or'\n")
+                self.ec2_filter_operator = 'or'
+
     def parse_cli_args(self):
         ''' Command line argument processing '''
 
@@ -482,7 +490,6 @@ class Ec2Inventory(object):
         parser.add_argument('--profile', '--boto-profile', action='store', dest='boto_profile',
                            help='Use boto profile for connections to EC2')
         self.args = parser.parse_args()
-
 
     def do_api_calls_update_cache(self):
         ''' Do API calls to each region, and save data in cache files '''
@@ -541,8 +548,13 @@ class Ec2Inventory(object):
             conn = self.connect(region)
             reservations = []
             if self.ec2_instance_filters:
-                for filter_key, filter_values in self.ec2_instance_filters.items():
-                    reservations.extend(conn.get_all_instances(filters = { filter_key : filter_values }))
+                if self.ec2_filter_operator == 'and':
+                    reservations.extend(conn.get_all_instances(
+                        filters=dict(self.ec2_instance_filters)))
+                else:
+                    for filter_key, filter_values in self.ec2_instance_filters.items():
+                        reservations.extend(conn.get_all_instances(
+                            filters={filter_key: filter_values}))
             else:
                 reservations = conn.get_all_instances()
 
@@ -1280,7 +1292,6 @@ class Ec2Inventory(object):
                     self.route53_records.setdefault(resource, set())
                     self.route53_records[resource].add(record_name)
 
-
     def get_instance_route53_names(self, instance):
         ''' Check if an instance is referenced in the records we have from
         Route53. If it is, return the list of domain names pointing to said
@@ -1486,14 +1497,12 @@ class Ec2Inventory(object):
         json_inventory = cache.read()
         return json_inventory
 
-
     def load_index_from_cache(self):
         ''' Reads the index from the cache file sets self.index '''
 
         cache = open(self.cache_path_index, 'r')
         json_index = cache.read()
         self.index = json.loads(json_index)
-
 
     def write_to_cache(self, data, filename):
         ''' Writes data in JSON format to a file '''
