@@ -180,6 +180,11 @@ options:
       - Public key to add to /root/.ssh/authorized_keys. This was added on Proxmox 4.2, it is ignored for earlier versions
     version_added: "2.3"
     default: null
+  unprivileged:
+    version_added: "2.3"
+    description:
+      - Indicate if the container should be unprivileged
+    default: false
     required: false
 
 notes:
@@ -441,7 +446,8 @@ def main():
           timeout = dict(type='int', default=30),
           force = dict(type='bool', default='no'),
           state = dict(default='present', choices=['present', 'absent', 'stopped', 'started', 'restarted']),
-          pubkey = dict(type='str', default=None)
+          pubkey = dict(type='str', default=None),
+          unprivileged = dict(type='bool', default='no')
           )
   )
 
@@ -517,8 +523,8 @@ def main():
                       nameserver = module.params['nameserver'],
                       searchdomain = module.params['searchdomain'],
                       force = int(module.params['force']),
-                      pubkey = module.params['pubkey']
-                 )
+                      pubkey = module.params['pubkey'],
+                      unprivileged = int(module.params['unprivileged']))
 
       module.exit_json(changed=True, msg="deployed VM %s from template %s"  % (vmid, module.params['ostemplate']))
     except Exception as e:
