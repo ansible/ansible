@@ -30,6 +30,52 @@ $result = @{
     changed = $false
 }
 
+# Used to delete symlinks as powershell cannot delete broken symlinks
+$symlink_util = @"
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+
+namespace Ansible.Command {
+    public class SymLinkHelper {
+        [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)]
+        public static extern bool RemoveDirectory(string lpPathName);
+
+        public static void DeleteSymLink(string linkPathName) {
+            bool result = RemoveDirectory(linkPathName);
+            if (result == false)
+                throw new Exception(String.Format("Error deleting symlink: {0}", new Win32Exception(Marshal.GetLastWin32Error()).Message));
+        }
+    }
+}
+"@
+Add-Type -TypeDefinition $symlink_util
+
+# Used to delete directories and files with logic on handling symbolic links
+function Remove-File($file) {
+    try {
+        if ($file.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+            # Bug with powershell, if you try and delete a symbolic link that is pointing
+            # to an invalid path it will fail, using Win32 API to do this instead
+            [Ansible.Command.SymLinkHelper]::DeleteSymLink($file.FullName)
+        } elseif ($file.PSIsContainer) {
+            Remove-Directory -directory $file
+        } else {
+            Remove-Item -Path $file.FullName -Force
+        }
+    } catch [Exception] {
+        Fail-Json (New-Object psobject) "Failed to delete $($file.FullName): $($_.Exception.Message)"
+    }
+}
+
+function Remove-Directory($directory) {
+    foreach ($file in Get-ChildItem $directory.FullName) {
+        Remove-File -file $file
+    }
+    Remove-Item -Path $directory.FullName -Force -Recurse
+}
+
+
 if ($state -eq "touch") {
     if (-not $check_mode) {
         if (Test-Path $path) {
@@ -45,7 +91,7 @@ if (Test-Path $path) {
     $fileinfo = Get-Item $path
     if ($state -eq "absent") {
         if (-not $check_mode) {
-            Remove-Item -Recurse -Force $fileinfo
+            Remove-File -file $fileinfo
         }
         $result.changed = $true
     } else {
