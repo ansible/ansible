@@ -162,19 +162,12 @@ from ansible.module_utils.dimensiondata import DimensionDataModule, DimensionDat
 from ansible.module_utils.pycompat24 import get_exception
 
 try:
-    from libcloud.common.dimensiondata import DimensionDataStatus, DimensionDataVlan
-    from libcloud.compute.base import Node, NodeLocation
-    from libcloud.compute.providers import get_driver
-    from libcloud.compute.types import Provider
-
-    import libcloud.security
+    from libcloud.common.dimensiondata import DimensionDataVlan
 
     HAS_LIBCLOUD = True
 
 except ImportError:
-    DimensionDataStatus, DimensionDataVlan = None
-    Node, NodeLocation = None
-    libcloud, Provider, get_driver = None
+    DimensionDataVlan = None
 
     HAS_LIBCLOUD = False
 
