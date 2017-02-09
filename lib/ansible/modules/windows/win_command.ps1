@@ -29,6 +29,8 @@ $chdir = Get-AnsibleParam $parsed_args "chdir" -type "path"
 $creates = Get-AnsibleParam $parsed_args "creates" -type "path"
 $removes = Get-AnsibleParam $parsed_args "removes" -type "path"
 
+$result = @{changed=$true; warnings=@(); cmd=$raw_command_line}
+
 If($creates -and $(Test-Path $creates)) {
     Exit-Json @{cmd=$raw_command_line; msg="skipped, since $creates exists"; changed=$false; skipped=$true; rc=0}
 }
@@ -102,11 +104,6 @@ namespace Ansible.Command
 $util_type = Add-Type -TypeDefinition $util_def
 
 # FUTURE: extract this code to separate module_utils as Windows module API version of run_command
-
-$result = @{
-    changed = $true
-    cmd = $raw_command_line
-}
 
 $exec_args = $null
 

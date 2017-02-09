@@ -68,6 +68,8 @@ $executable = Get-AnsibleParam $parsed_args "executable" -type "path"
 $creates = Get-AnsibleParam $parsed_args "creates" -type "path"
 $removes = Get-AnsibleParam $parsed_args "removes" -type "path"
 
+$result = @{changed=$true; warnings=@(); cmd=$raw_command_line}
+
 If($creates -and $(Test-Path $creates)) {
     Exit-Json @{cmd=$raw_command_line; msg="skipped, since $creates exists"; changed=$false; skipped=$true; rc=0}
 }
@@ -77,11 +79,6 @@ If($removes -and -not $(Test-Path $removes)) {
 }
 
 Add-Type -TypeDefinition $helper_def
-
-$result = @{
-    changed = $true
-    cmd = $raw_command_line
-}
 
 $exec_args = $null
 

@@ -101,7 +101,7 @@ Function Fail-Json($obj, $message = $null)
 # Helper function to add warnings, even if the warnings attribute was
 # not already set up. This is a convenience for the module developer
 # so he does not have to check for the attribute prior to adding.
-Function Warn($obj, $message)
+Function Add-Warning($obj, $message)
 {
     if (Get-Member -InputObject $obj -Name "warnings") {
         if ($obj.warnings -is [System.Array]) {
@@ -117,7 +117,7 @@ Function Warn($obj, $message)
 # Helper function to add deprecations, even if the deprecations attribute was
 # not already set up. This is a convenience for the module developer
 # so he does not have to check for the attribute prior to adding.
-Function Deprecate($obj, $message, $version = $null)
+Function Add-DeprecationWarning($obj, $message, $version = $null)
 {
     if (Get-Member -InputObject $obj -Name "deprecations") {
         if ($obj.deprecations -is [System.Array]) {
