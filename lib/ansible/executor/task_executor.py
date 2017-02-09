@@ -762,8 +762,7 @@ class TaskExecutor:
         if self._task.action in self._shared_loader_obj.action_loader:
             handler_name = self._task.action
         else:
-            pc_conn = self._shared_loader_obj.connection_loader.get(self._play_context.connection, class_only=True)
-            handler_name = getattr(pc_conn, 'action_handler', 'normal')
+            handler_name = 'normal'
 
         handler = self._shared_loader_obj.action_loader.get(
             handler_name,

@@ -32,10 +32,11 @@ from abc import ABCMeta, abstractmethod
 from ansible import constants as C
 from ansible.compat.six import binary_type, string_types, text_type, iteritems, with_metaclass
 from ansible.compat.six.moves import shlex_quote
-from ansible.errors import AnsibleError, AnsibleConnectionFailure
+from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleModuleExit
 from ansible.executor.module_common import modify_module
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.json_utils import _filter_non_json_lines
+from ansible.module_utils.local import _modify_module
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
 from ansible.release import __version__
@@ -586,18 +587,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # let module know about filesystems that selinux treats specially
         module_args['_ansible_selinux_special_fs'] = C.DEFAULT_SELINUX_SPECIAL_FS
 
-
-
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=True, wrap_async=False):
         '''
         Transfer and run a module along with its arguments.
         '''
         if task_vars is None:
             task_vars = dict()
-
-        remote_module_path = None
-        args_file_path = None
-        remote_files = []
 
         # if a module name was not specified for this execution, use the action from the task
         if module_name is None:
@@ -606,6 +601,47 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             module_args = self._task.args
 
         self._update_module_args(module_name, module_args, task_vars)
+
+        if getattr(self._connection, 'is_local', False) is True:
+            display.debug("is_local is True, running _execute_local()")
+            res = self._execute_local()
+
+        else:
+            res = self._execute_remote(module_name, module_args, tmp, task_vars, persist_files, delete_remote_tmp, wrap_async)
+
+        # parse the main result, also cleans up internal keys
+        data = self._parse_returned_data(res)
+
+        #NOTE: INTERNAL KEYS ONLY ACCESSIBLE HERE
+        # get internal info before cleaning
+        tmpdir_delete = (not data.pop("_ansible_suppress_tmpdir_delete", False) and wrap_async)
+
+        # remove internal keys
+        self._remove_internal_keys(data)
+        data['_ansible_parsed'] = True
+
+        # cleanup tmp?
+        if (self._play_context.become and self._play_context.become_user != 'root') and not persist_files and delete_remote_tmp or tmpdir_delete:
+            self._remove_tmp_path(tmp)
+
+        #FIXME: for backwards compat, figure out if still makes sense
+        if wrap_async:
+            data['changed'] = True
+
+        # pre-split stdout/stderr into lines if needed
+        if 'stdout' in data and 'stdout_lines' not in data:
+            data['stdout_lines'] = data.get('stdout', u'').splitlines()
+        if 'stderr' in data and 'stderr_lines' not in data:
+            data['stderr_lines'] = data.get('stderr', u'').splitlines()
+
+        display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
+        return data
+
+    def _execute_remote(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=True, wrap_async=False):
+
+        remote_module_path = None
+        args_file_path = None
+        remote_files = []
 
         (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         display.vvv("Using module file %s" % module_path)
@@ -715,33 +751,37 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # actually execute
         res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data)
 
-        # parse the main result, also cleans up internal keys
-        data = self._parse_returned_data(res)
+        display.debug("done with _execute_remote (%s, %s)" % (module_name, module_args))
+        return res
 
-        #NOTE: INTERNAL KEYS ONLY ACCESSIBLE HERE
-        # get internal info before cleaning
-        tmpdir_delete = (not data.pop("_ansible_suppress_tmpdir_delete", False) and wrap_async)
 
-        # remove internal keys
-        self._remove_internal_keys(data)
-        data['_ansible_parsed'] = True
+    def _execute_local(self, module_name=None, module_args=None, tmp=None, task_vars=None):
 
-        # cleanup tmp?
-        if (self._play_context.become and self._play_context.become_user != 'root') and not persist_files and delete_remote_tmp or tmpdir_delete:
-            self._remove_tmp_path(tmp)
+        rc = 256
+        stdout = stderr = ''
 
-        #FIXME: for backwards compat, figure out if still makes sense
-        if wrap_async:
-            data['changed'] = True
+        try:
+            _modify_module(self._task.args, self._connection)
+            path = self._shared_loader_obj.module_loader.find_plugin(self._task.action)
+            pkg = '.'.join(['ansible', 'modules', self._task.action])
+            module = self._shared_loader_obj.module_loader._load_module_source(pkg, path)
+            module.main()
 
-        # pre-split stdout/stderr into lines if needed
-        if 'stdout' in data and 'stdout_lines' not in data:
-            data['stdout_lines'] = data.get('stdout', u'').splitlines()
-        if 'stderr' in data and 'stderr_lines' not in data:
-            data['stderr_lines'] = data.get('stderr', u'').splitlines()
+        except AnsibleModuleExit as exc:
+            if not exc.result.get('failed'):
+                rc = 0
+            stdout = json.dumps(exc.result)
 
-        display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
-        return data
+        except Exception as exc:
+            if display.verbosity > 2:
+                raise
+            rc = 1
+            stderr = str(exc)
+
+        res = dict(rc=rc, stdout=stdout, stderr=stderr, stdout_lines=[])
+
+        display.debug("done with _execute_remote (%s, %s)" % (module_name, module_args))
+        return res
 
     def _remove_internal_keys(self, data):
         for key in list(data.keys()):
