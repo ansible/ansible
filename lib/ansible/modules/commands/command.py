@@ -95,7 +95,7 @@ EXAMPLES = '''
     chdir: somedir/
     creates: /path/to/database
 
-- name: safely use tempalated variable to run command. Always use the quote filter to avoid injection issues.
+- name: safely use templated variable to run command. Always use the quote filter to avoid injection issues.
   command: cat {{ myfile|quote }}
   register: myoutput
 '''
