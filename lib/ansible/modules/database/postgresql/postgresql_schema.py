@@ -38,47 +38,21 @@ options:
       - Name of the database to connect to.
     required: false
     default: postgres
-  login_user:
-    description:
-      - The username used to authenticate with.
-    required: false
-    default: null
-  login_password:
-    description:
-      - The password used to authenticate with.
-    required: false
-    default: null
-  login_host:
-    description:
-      - Host running the database.
-    required: false
-    default: localhost
-  login_unix_socket:
-    description:
-      - Path to a Unix domain socket for local connections.
-    required: false
-    default: null
   owner:
     description:
       - Name of the role to set as owner of the schema.
     required: false
     default: null
-  port:
-    description:
-      - Database port to connect to.
-    required: false
-    default: 5432
   state:
     description:
       - The schema state.
     required: false
     default: present
     choices: [ "present", "absent" ]
-notes:
-   - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
-     the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and C(python-psycopg2) packages on the remote host before using this module.
 requirements: [ psycopg2 ]
 author: "Flavien Chantelot <contact@flavien.io>"
+extends_documentation_fragment:
+- postgres
 '''
 
 EXAMPLES = '''
@@ -109,10 +83,6 @@ except ImportError:
     postgresqldb_found = False
 else:
     postgresqldb_found = True
-
-class NotSupportedError(Exception):
-    pass
-
 
 # ===========================================
 # PostgreSQL module specific support methods.
@@ -177,18 +147,16 @@ def schema_matches(cursor, schema, owner):
 #
 
 def main():
+    argument_spec = pgutils.postgres_common_argument_spec()
+    argument_spec.update(dict(
+        schema=dict(required=True, aliases=['name']),
+        owner=dict(default=""),
+        database=dict(default="postgres"),
+        state=dict(default="present", choices=["absent", "present"]),
+    ))
+
     module = AnsibleModule(
-        argument_spec=dict(
-            login_user=dict(default="postgres"),
-            login_password=dict(default=""),
-            login_host=dict(default=""),
-            login_unix_socket=dict(default=""),
-            port=dict(default="5432"),
-            schema=dict(required=True, aliases=['name']),
-            owner=dict(default=""),
-            database=dict(default="postgres"),
-            state=dict(default="present", choices=["absent", "present"]),
-        ),
+        argument_spec=argument_spec,
         supports_check_mode = True
     )
 
@@ -201,37 +169,10 @@ def main():
     database = module.params["database"]
     changed = False
 
-    # To use defaults values, keyword arguments must be absent, so
-    # check which values are empty and don't include in the **kw
-    # dictionary
-    params_map = {
-        "login_host":"host",
-        "login_user":"user",
-        "login_password":"password",
-        "port":"port"
-    }
-    kw = dict( (params_map[k], v) for (k, v) in module.params.items()
-              if k in params_map and v != '' )
+    kw = pgutils.params_to_kwmap(module)
 
-    # If a login_unix_socket is specified, incorporate it here.
-    is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
-    if is_localhost and module.params["login_unix_socket"] != "":
-        kw["host"] = module.params["login_unix_socket"]
-
-    try:
-        db_connection = psycopg2.connect(database=database, **kw)
-        # Enable autocommit so we can create databases
-        if psycopg2.__version__ >= '2.4.2':
-            db_connection.autocommit = True
-        else:
-            db_connection.set_isolation_level(psycopg2
-                                              .extensions
-                                              .ISOLATION_LEVEL_AUTOCOMMIT)
-        cursor = db_connection.cursor(
-            cursor_factory=psycopg2.extras.DictCursor)
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg="unable to connect to database: %s" %(text, str(e)))
+    db_connection = pgutils.postgres_conn(module, database=database, kw=kw, enable_autocommit=True)
+    cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     try:
         if module.check_mode:
@@ -254,7 +195,7 @@ def main():
             except SQLParseError:
                 e = get_exception()
                 module.fail_json(msg=str(e))
-    except NotSupportedError:
+    except pgutils.NotSupportedError:
         e = get_exception()
         module.fail_json(msg=str(e))
     except SystemExit:
@@ -267,8 +208,9 @@ def main():
     module.exit_json(changed=changed, schema=schema)
 
 # import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.database import *
+from ansible.module_utils.basic import AnsibleModule,get_exception
+import ansible.module_utils.postgres as pgutils
+from ansible.module_utils.database import pg_quote_identifier
 
 if __name__ == '__main__':
     main()
