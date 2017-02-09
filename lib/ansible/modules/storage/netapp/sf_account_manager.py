@@ -32,60 +32,55 @@ version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 description:
 - Create, destroy, or update accounts on SolidFire
-    - auth_basic
 
 options:
 
     state:
-        required: true
         description:
         - Whether the specified account should exist or not.
+        required: true
         choices: ['present', 'absent']
 
     name:
-        required: true
         description:
         - Unique username for this account. (May be 1 to 64 characters in length).
+        required: true
 
     new_name:
-        required: false
         description:
         - New name for the user account.
+        required: false
         default: None
 
     initiator_secret:
-        required: false
-        type: CHAPSecret
         description:
         - CHAP secret to use for the initiator. Should be 12-16 characters long and impenetrable.
         - The CHAP initiator secrets must be unique and cannot be the same as the target CHAP secret.
         - If not specified, a random secret is created.
+        required: false
 
     target_secret:
-        required: false
-        type: CHAPSecret
         description:
         - CHAP secret to use for the target (mutual CHAP authentication).
         - Should be 12-16 characters long and impenetrable.
         - The CHAP target secrets must be unique and cannot be the same as the initiator CHAP secret.
         - If not specified, a random secret is created.
+        required: false
 
     attributes:
-        required: false
-        type: dict
         description: List of Name/Value pairs in JSON object format.
+        required: false
 
     account_id:
-        required: false
         description:
-        - The ID of the account to manage or update
+        - The ID of the account to manage or update.
+        required: false
         default: None
 
     status:
-        required: false
-        type: str
         description:
-        - Status of the account
+        - Status of the account.
+        required: false
 
 '''
 
@@ -117,37 +112,14 @@ EXAMPLES = """
 """
 
 RETURN = """
-msg:
-    description: Successful creation
-    returned: success
-    type: string
-    sample: '{"changed": true}'
-
-msg:
-    description: Successful update
-    returned: success
-    type: string
-    sample: '{"changed": true}'
-
-msg:
-    description: Successful deletion
-    returned: success
-    type: string
-    sample: '{"changed": true}'
 
 """
-
-import logging
-from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 import ansible.module_utils.netapp as netapp_utils
 
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 class SolidFireAccount(object):
@@ -210,8 +182,6 @@ class SolidFireAccount(object):
         return None
 
     def create_account(self):
-        logger.debug('Creating account %s', self.name)
-
         try:
             self.sfe.add_account(username=self.name,
                                  initiator_secret=self.initiator_secret,
@@ -219,24 +189,17 @@ class SolidFireAccount(object):
                                  attributes=self.attributes)
         except:
             err = get_exception()
-            logger.exception('Error creating account %s : %s',
-                             self.name, str(err))
-            raise
+            self.module.fail_json(msg='Error creating account %s' % self.name, exception=str(err))
 
     def delete_account(self):
-        logger.debug('Deleting account %s', self.account_id)
-
         try:
             self.sfe.remove_account(account_id=self.account_id)
 
         except:
             err = get_exception()
-            logger.exception('Error deleting account %s : %s', self.account_id, str(err))
-            raise
+            self.module.fail_json(msg='Error deleting account %s' % self.account_id, exception=str(err))
 
     def update_account(self):
-        logger.debug('Updating account %s', self.account_id)
-
         try:
             self.sfe.modify_account(account_id=self.account_id,
                                     username=self.new_name,
@@ -247,8 +210,7 @@ class SolidFireAccount(object):
 
         except:
             err = get_exception()
-            logger.exception('Error updating account %s : %s', self.account_id, str(err))
-            raise
+            self.module.fail_json(msg='Error updating account %s' % self.account_id, exception=str(err))
 
     def apply(self):
         changed = False
@@ -260,8 +222,6 @@ class SolidFireAccount(object):
             account_exists = True
 
             if self.state == 'absent':
-                logger.debug(
-                    "CHANGED: account exists, but requested state is 'absent'")
                 changed = True
 
             elif self.state == 'present':
@@ -269,43 +229,35 @@ class SolidFireAccount(object):
 
                 if account_detail.username is not None and self.new_name is not None and \
                         account_detail.username != self.new_name:
-                    logger.debug("CHANGED: account username needs to be updated")
                     update_account = True
                     changed = True
 
                 elif account_detail.status is not None and self.status is not None \
                         and account_detail.status != self.status:
-                    logger.debug("CHANGED: Account status needs to be updated")
                     update_account = True
                     changed = True
 
                 elif account_detail.initiator_secret is not None and self.initiator_secret is not None \
                         and account_detail.initiator_secret != self.initiator_secret:
-                    logger.debug("CHANGED: Initiator secret needs to be updated")
                     update_account = True
                     changed = True
 
                 elif account_detail.target_secret is not None and self.target_secret is not None \
                         and account_detail.target_secret != self.target_secret:
-                    logger.debug("CHANGED: Target secret needs to be updated")
                     update_account = True
                     changed = True
 
                 elif account_detail.attributes is not None and self.attributes is not None \
                         and account_detail.attributes != self.attributes:
-                    logger.debug("CHANGED: Attributes needs to be updated")
                     update_account = True
                     changed = True
         else:
             if self.state == 'present':
-                logger.debug(
-                    "CHANGED: account does not exist, but requested state is "
-                    "'present'")
                 changed = True
 
         if changed:
             if self.module.check_mode:
-                logger.debug('skipping changes due to check mode')
+                pass
             else:
                 if self.state == 'present':
                     if not account_exists:
@@ -315,21 +267,13 @@ class SolidFireAccount(object):
 
                 elif self.state == 'absent':
                     self.delete_account()
-        else:
-            logger.debug("exiting with no changes")
 
         self.module.exit_json(changed=changed)
 
 
 def main():
     v = SolidFireAccount()
-
-    try:
-        v.apply()
-    except:
-        err = get_exception()
-        logger.debug("Exception in apply(): \n%s" % format_exc(err))
-        raise
+    v.apply()
 
 if __name__ == '__main__':
     main()
