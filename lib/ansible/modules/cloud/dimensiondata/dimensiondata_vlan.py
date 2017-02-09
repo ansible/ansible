@@ -71,6 +71,7 @@ options:
     description:
       - Permit expansion of the target VLAN's network if the module parameters specify a larger network than the VLAN currently posesses?
       - If C(False), the module will fail under these conditions.
+      - This is intended to prevent accidental expansion of a VLAN's network (since this operation is not reversible).
     required: false
     default: False
 '''
@@ -253,7 +254,7 @@ class DimensionDataVlanModule(DimensionDataModule):
 
             if diff.needs_expand() and not self.allow_expand:
                 self.module.fail_json(
-                    msg='The configured private IPv4 prefix size ({}) for the VLAN differs from its current prefix size ({}) and needs to be expanded. Use allow_expand=true if this is what you want.'.format(
+                    msg='The configured private IPv4 network size ({}-bit prefix) for the VLAN differs from its current network size ({}-bit prefix) and needs to be expanded. Use allow_expand=true if this is what you want.'.format(
                         self.private_ipv4_prefix_size, vlan.private_ipv4_range_size
                     )
                 )
