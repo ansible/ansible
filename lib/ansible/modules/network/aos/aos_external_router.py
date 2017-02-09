@@ -55,13 +55,6 @@ options:
         I(content_format) parameter. It's the same datastructure that is returned
         on success in I(value)
     required: false
-  content_format:
-    description:
-      - Indicate in which format is the content provided. It can be either provided
-        directly as a variable, as a JSON string or as a Yaml String
-    default: json
-    choices: ['var', 'json', 'yaml']
-    required: false
   state:
     description:
       - Indicate what is the expected state of the External Router (present or not)
@@ -76,12 +69,8 @@ EXAMPLES = '''
   aos_external_router:
     session: "{{ session_ok }}"
     name: "my-external-router"
-    state: present
-
-- name: "Create an External Router with multiple subnets"
-  aos_external_router:
-    session: "{{ session_ok }}"
-    name: "my-other-external-router"
+    loopback: 10.0.0.1
+    asn: 65000
     state: present
 
 - name: "Check if an External Router exist by ID"
@@ -103,7 +92,6 @@ EXAMPLES = '''
     state: absent
 
 # Save an External Router to a file
-
 - name: "Access External Router 1/3"
   aos_external_router:
     session: "{{ session_ok }}"
@@ -131,18 +119,6 @@ EXAMPLES = '''
   aos_external_router:
     session: "{{ session_ok }}"
     content: "{{ lookup('file', 'resources/external_router_saved.yaml') }}"
-    content_format: yaml
-    state: present
-
-- name: "Load External Router from Variable"
-  aos_external_router:
-    session: "{{ session_ok }}"
-    content:
-      display_name: my-external-router
-      id: 4276738d-6f86-4034-9656-4bff94a34ea7
-      address: 10.0.0.1
-      asn: 6666
-    content_format: var
     state: present
 '''
 
@@ -199,9 +175,12 @@ def ext_router_absent(module, aos, my_ext_router):
 
     # If not in check mode, delete External Router
     if not module.check_mode:
-        # Add Sleep before delete to workaround a bug in AOS
-        time.sleep(2)
-        my_ext_router.delete()
+        try:
+            # Add Sleep before delete to workaround a bug in AOS
+            time.sleep(2)
+            my_ext_router.delete()
+        except:
+            module.fail_json(msg="An error occured, while trying to delete the External Router")
 
     module.exit_json( changed=True,
                       name=my_ext_router.name,
@@ -223,12 +202,16 @@ def ext_router_present(module, aos, my_ext_router):
     elif my_ext_router.exists is False:
 
         if not module.check_mode:
-            my_new_ext_router = create_new_ext_router(module,
-                                                      my_ext_router,
-                                                      margs['name'],
-                                                      margs['loopback'],
-                                                      margs['asn'] )
-            my_ext_router = my_new_ext_router
+            try:
+                my_new_ext_router = create_new_ext_router(module,
+                                                          my_ext_router,
+                                                          margs['name'],
+                                                          margs['loopback'],
+                                                          margs['asn'] )
+                my_ext_router = my_new_ext_router
+            except:
+                module.fail_json(msg="An error occured while trying to create a new External Router")
+
 
         module.exit_json( changed=True,
                           name=my_ext_router.name,
@@ -263,7 +246,6 @@ def ext_router_present(module, aos, my_ext_router):
         if int(asn) != int(my_ext_router.value['asn']):
             module.fail_json(msg="my_ext_router already exist but ASN is different, currently not supported to update a module")
 
-
     module.exit_json( changed=False,
                       name=my_ext_router.name,
                       id=my_ext_router.id,
@@ -286,7 +268,7 @@ def ext_router(module):
 
     if margs['content'] is not None:
 
-        content = content_to_dict(module, margs['content'], margs['content_format'] )
+        content = content_to_dict(module, margs['content'] )
 
         if 'display_name' in content.keys():
             item_name = content['display_name']
@@ -302,9 +284,12 @@ def ext_router(module):
     #----------------------------------------------------
     # Find Object if available based on ID or Name
     #----------------------------------------------------
-    my_ext_router = find_collection_item(aos.ExternalRouters,
-                        item_name=item_name,
-                        item_id=item_id)
+    try:
+        my_ext_router = find_collection_item(aos.ExternalRouters,
+                            item_name=item_name,
+                            item_id=item_id)
+    except:
+        module.fail_json(msg="Unable to find the IP Pool based on name or ID, something went wrong")
 
     #----------------------------------------------------
     # Proceed based on State value
@@ -323,10 +308,7 @@ def main():
             session=dict(required=True, type="dict"),
             name=dict(required=False ),
             id=dict(required=False ),
-            content=dict(required=False),
-            content_format=dict(required=False,
-                                choices=['json', 'yaml', 'var'],
-                                default="json"),
+            content=dict(required=False, type="json"),
             state=dict( required=False,
                         choices=['present', 'absent'],
                         default="present"),
