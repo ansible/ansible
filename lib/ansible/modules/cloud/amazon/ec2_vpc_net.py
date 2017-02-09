@@ -157,8 +157,7 @@ def update_vpc_tags(vpc, module, vpc_obj, tags, name):
         else:
             if not module.check_mode:
                 vpc.create_tags(vpc_obj.id, tags)
-            return True
-        else:
+                return True
             return False
     except Exception as e:
         e_msg=boto_exception(e)
