@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import collections
 
 from ansible import constants as C
 from ansible.executor.task_queue_manager import TaskQueueManager
@@ -232,7 +233,6 @@ class PlaybookExecutor:
 
         # make sure we have a unique list of hosts
         all_hosts = self._inventory.get_hosts(play.hosts)
-        all_hosts_len = len(all_hosts)
 
         # the serial value can be listed as a scalar or a list of
         # scalars, so we make sure it's a list here
@@ -240,24 +240,57 @@ class PlaybookExecutor:
         if len(serial_batch_list) == 0:
             serial_batch_list = [-1]
 
+        # grouping support?
+        serial_group_by = play.serial_group_by
+        if serial_group_by:
+            group_by_vars = self._variable_manager.get_vars(loader=self._loader, play=play)
+            group_by_templar = Templar(loader=self._loader, variables=group_by_vars)
+
+            def group_by(host):
+                group_by_vars['host'] = host
+                group_by_templar.set_available_variables(group_by_vars)
+                value = group_by_templar.template(serial_group_by)
+                return value
+
+            grouped_dict = collections.defaultdict(list)
+            for host in all_hosts:
+                grouped_dict[group_by(host)].append(host)
+
+            # sort the groups to ensure consistent and predictable ordering
+            grouped_keys = list(grouped_dict.keys())
+            grouped_keys.sort()
+            grouped_hosts = [(len(lst), lst) for lst in (grouped_dict[gr] for gr in grouped_keys)]
+        else:
+            grouped_hosts = [(len(all_hosts), all_hosts)]
+
+        if len(grouped_hosts) == 0:
+            # shortcut: no hosts at all, no reason to continue
+            return []
+
+        min_group_len = min(len(g) for _, g in grouped_hosts)
+
         cur_item = 0
         serialized_batches = []
 
-        while len(all_hosts) > 0:
-            # get the serial value from current item in the list
-            serial = pct_to_int(serial_batch_list[cur_item], all_hosts_len)
+        while max(len(g) for _, g in grouped_hosts) > 0:
+            # try to get the serial value from current item in the list
+            #  this value is not really used; this call just checks the value is actually valid
+            serial = pct_to_int(serial_batch_list[cur_item], min_group_len)
 
             # if the serial count was not specified or is invalid, default to
             # a list of all hosts, otherwise grab a chunk of the hosts equal
             # to the current serial item size
             if serial <= 0:
-                serialized_batches.append(all_hosts)
+                serialized_batches.append([host for _, group in grouped_hosts for host in group])
                 break
             else:
                 play_hosts = []
-                for x in range(serial):
-                    if len(all_hosts) > 0:
-                        play_hosts.append(all_hosts.pop(0))
+                for group_size, group in grouped_hosts:
+                    # get the serial value from current item in the list, for real!
+                    serial = pct_to_int(serial_batch_list[cur_item], group_size)
+                    for x in range(serial):
+                        if len(group) > 0:
+                            play_hosts.append(group.pop(0))
 
                 serialized_batches.append(play_hosts)
 
