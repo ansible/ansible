@@ -35,77 +35,71 @@ description:
 options:
 
     state:
-        required: true
         description:
         - Whether the specified schedule should exist or not.
+        required: true
         choices: ['present', 'absent']
 
     paused:
-        required: false
-        type: bool
         description:
-        - Pause / Resume a schedule
+        - Pause / Resume a schedule.
+        required: false
 
     recurring:
-        required: false
-        type: bool
         description:
-        - Define if the schedule should recur
+        - Should the schedule recur?
+        required: false
 
     time_interval_days:
-        description: time interval in days
+        description: Time interval in days.
         required: false
-        type: int
         default: 1
 
     time_interval_hours:
-        description: time interval in hours
+        description: Time interval in hours.
         required: false
-        type: int
         default: 0
 
     time_interval_minutes:
-        description: time interval in minutes
+        description: Time interval in minutes.
         required: false
-        type: int
         default: 0
 
     name:
-        required: true
         description:
-        - Name for the snapshot schedule
+        - Name for the snapshot schedule.
+        required: true
 
     snapshot_name:
-        required: false
         description:
-        - Name for the created snapshots
+        - Name for the created snapshots.
+        required: false
 
     volumes:
-        required: false
-        type: list
         description:
         - Volume IDs that you want to set the snapshot schedule for.
         - At least 1 volume ID is required for creating a new schedule.
         - required when C(state=present)
+        required: false
 
     retention:
-        required: false
         description:
         - Retention period for the snapshot.
-        - Format is HH:mm:ss
+        - Format is 'HH:mm:ss'.
+        required: false
 
     schedule_id:
-        required: false
         description:
         - The schedule ID for the schedule that you want to update or delete.
+        required: false
 
     starting_date:
+        description:
+        - Starting date for the schedule.
+        - Required when C(state=present).
+        - Please use two '-' in the above format, or you may see an error- TypeError, is not JSON serializable description.
         required: false
         format: 2016--12--01T00:00:00Z
-        description:
-        - starting date for the schedule
-        - required when C(state=present)
-        - Please use two '-' in the above format, or you may see an error- TypeError, is not JSON serializable description
 '''
 
 EXAMPLES = """
@@ -144,7 +138,6 @@ RETURN = """
 schedule_id:
     description: Schedule ID of the newly created schedule
     returned: success
-    type: string
 
 """
 
