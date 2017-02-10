@@ -1,4 +1,4 @@
-# (c) 2014, Brian Coca, Josh Drake, et al
+# (c) 2017, Brian Coca
 #
 # This file is part of Ansible
 #
@@ -20,21 +20,23 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 try:
-    import simplejson as json
+    import cPickle as pickle
 except ImportError:
-    import json
+    import pickle
 
-from ansible.parsing.utils.jsonify import jsonify
 from ansible.plugins.cache.base import BaseFileCacheModule
 
 class CacheModule(BaseFileCacheModule):
     """
-    A caching module backed by json files.
+    A caching module backed by pickle files.
     """
-    plugin_name = 'jsonfile'
+    plugin_name = 'pickle'
+    read_mode = 'rb'
+    write_mode = 'wb'
+    encoding = None
 
     def _load(self, f):
-        return json.load(f)
+        return pickle.load(f)
 
     def _dump(self, value, f):
-        f.write(jsonify(value, format=True))
+        pickle.dump(value, f)
