@@ -45,29 +45,24 @@ options:
     description:
       - The device serial-number; i.e. uniquely identifies the device in the
         AOS system. Only one of I(name) or I(id) can be set.
-    required: false
   id:
     description:
       - The AOS internal id for a device; i.e. uniquely identifies the device in the
         AOS system. Only one of I(name) or I(id) can be set.
-    required: false
   state:
     description:
       - Define in which state the device should be. Currently only I(normal)
-        is supported but the goal is to add I(maint) and I(decomm)
+        is supported but the goal is to add I(maint) and I(decomm).ß
     default: normal
     choices: ['normal']
-    required: false
   approve:
     description:
       - The approve argument instruct the module to convert a device in quarantine
-      mode into approved mode.
-    required: false
+        mode into approved mode.
   location:
     description:
       - When approving a device using the I(approve) argument, it's possible
-       define the location of the device.
-    required: false
+        define the location of the device.ß
 '''
 
 EXAMPLES = '''
@@ -84,13 +79,13 @@ EXAMPLES = '''
 
 RETURNS = '''
 name:
-  description: Name of the IP Pool
+  description: Name of the Device, usually the serial-number.
   returned: always
   type: str
   sample: Server-IpAddrs
 
 id:
-  description: AOS unique ID assigned to the IP Pool
+  description: AOS unique ID assigned to the Device
   returned: always
   type: str
   sample: fcc4ac1c-e249-4fe7-b458-2138bfb44c06
@@ -103,12 +98,14 @@ value:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.aos import get_aos_session, find_collection_item
+from ansible.module_utils.aos import get_aos_session, check_aos_version, find_collection_item
 
-def aos_device_normal(module):
+def aos_device_normal(module, aos, dev):
+
+    margs = module.params
 
     # If approve is define, check if the device needs to be approved or not
-    if margs['approve'} is not None:
+    if margs['approve'] is not None:
 
         if dev.is_approved:
             module.exit_json(changed=False,
@@ -126,15 +123,17 @@ def aos_device_normal(module):
                              value=dev.value)
 
         except (SessionError, SessionRqstError):
-            module.fail_json(msg="unable to approve device")
+            module.fail_json(msg="Unable to approve device")
 
     else:
         # Check if the device is online
-        if dev.state in ('OOS-READY','IS-READY')  :
+        if dev.state in ('OOS-READY','IS-READY'):
             module.exit_json(changed=False,
                              name=dev.name,
                              id=dev.id,
                              value=dev.value)
+        else:
+            module.fail_json(msg="Device is not in 'normal' state")
 
 def aos_device(module):
     margs = module.params
@@ -147,8 +146,8 @@ def aos_device(module):
     item_name = False
     item_id = False
 
-    if margs['src'] is not None:
-        item_name = get_display_name_from_file(module, margs['src'])
+    if margs['id'] is not None:
+        item_id = margs['id']
 
     elif margs['name'] is not None:
         item_name = margs['name']
@@ -166,24 +165,24 @@ def aos_device(module):
     #----------------------------------------------------
     # Valid device state for reference
     #----------------------------------------------------
-      # DEVICE_STATE_IS_ACTIVE = 1;
-      # DEVICE_STATE_IS_READY = 2;
-      # DEVICE_STATE_IS_NOCOMMS = 3;
-      # DEVICE_STATE_IS_MAINT = 4;
-      # DEVICE_STATE_IS_REBOOTING = 5;
-      # DEVICE_STATE_OOS_STOCKED = 6;
-      # DEVICE_STATE_OOS_QUARANTINED = 7;
-      # DEVICE_STATE_OOS_READY = 8;
-      # DEVICE_STATE_OOS_NOCOMMS = 9;
-      # DEVICE_STATE_OOS_DECOMM = 10;
-      # DEVICE_STATE_OOS_MAINT = 11;
-      # DEVICE_STATE_OOS_REBOOTING = 12;
-      # DEVICE_STATE_ERROR = 13;
+        # DEVICE_STATE_IS_ACTIVE = 1;
+        # DEVICE_STATE_IS_READY = 2;
+        # DEVICE_STATE_IS_NOCOMMS = 3;
+        # DEVICE_STATE_IS_MAINT = 4;
+        # DEVICE_STATE_IS_REBOOTING = 5;
+        # DEVICE_STATE_OOS_STOCKED = 6;
+        # DEVICE_STATE_OOS_QUARANTINED = 7;
+        # DEVICE_STATE_OOS_READY = 8;
+        # DEVICE_STATE_OOS_NOCOMMS = 9;
+        # DEVICE_STATE_OOS_DECOMM = 10;
+        # DEVICE_STATE_OOS_MAINT = 11;
+        # DEVICE_STATE_OOS_REBOOTING = 12;
+        # DEVICE_STATE_ERROR = 13;
     #----------------------------------------------------
     # State == Normal
     #----------------------------------------------------
     if margs['state'] == 'normal':
-        aos_device_normal(module)
+        aos_device_normal(module, aos, dev)
 
 def main():
 
@@ -195,12 +194,15 @@ def main():
             state=dict( choices=['normal'],
                         default='normal'),
             approve=dict( required=False ),
-            location=dict(default='')
+            location=dict( required=False, default='')
         ),
         mutually_exclusive = [('name', 'id')],
         required_one_of=[('name', 'id')],
         supports_check_mode=True
     )
+
+    # Check if aos-pyez is present and match the minimum version
+    check_aos_version(module, '0.6.0')
 
     aos_device(module)
 
