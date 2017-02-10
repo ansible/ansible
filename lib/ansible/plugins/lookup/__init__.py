@@ -70,6 +70,7 @@ class LookupBase(with_metaclass(ABCMeta, object)):
             ret.append({'key': key, 'value': terms[key]})
         return ret
 
+    @staticmethod
     def _update_options(options, item):
         """
         examines item and determines if it is an option
