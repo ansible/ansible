@@ -22,7 +22,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: gce_intance_template
+module: gce_instance_template
 version_added: "2.3"
 short_description: create or destroy intance templates of Compute Engine of GCP.
 description:
@@ -205,7 +205,7 @@ EXAMPLES = '''
     project_id: "your-project-name"
   tasks:
     - name: create instance template
-      gce_intance_template:
+      gce_instance_template:
         name: my-test-instance-template
         size: n1-standard-1
         image_family: ubuntu-1604-lts
@@ -214,7 +214,7 @@ EXAMPLES = '''
         credentials_file: "{{ credentials_file }}"
         service_account_email: "{{ service_account_email }}"
     - name: delete instance template
-      gce_intance_template:
+      gce_instance_template:
         name: my-test-instance-template
         size: n1-standard-1
         image_family: ubuntu-1604-lts
