@@ -43,24 +43,20 @@ options:
     description:
       - Name of the External Router to manage.
         Only one of I(name), I(id) or I(content) can be set.
-    required: false
   id:
     description:
       - AOS Id of the External Router to manage (can't be used to create a new External Router),
         Only one of I(name), I(id) or I(content) can be set.
-    required: false
   content:
     description:
       - Datastructure of the External Router to create. The format is defined by the
         I(content_format) parameter. It's the same datastructure that is returned
         on success in I(value).
-    required: false
   state:
     description:
       - Indicate what is the expected state of the External Router (present or not).
     default: present
     choices: ['present', 'absent']
-    required: false
 '''
 
 EXAMPLES = '''
