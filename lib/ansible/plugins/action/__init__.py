@@ -818,7 +818,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 data['rc'] = res['rc']
         return data
 
-    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_or_replace'):
+    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace'):
         '''
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to

@@ -403,9 +403,9 @@ def remove_values(value, no_log_strings):
             native_str_value = native_str_value.replace(omit_me, '*' * 8)
 
         if value_is_text and isinstance(native_str_value, binary_type):
-            value = to_text(native_str_value, encoding='utf-8', errors='surrogate_or_replace')
+            value = to_text(native_str_value, encoding='utf-8', errors='surrogate_then_replace')
         elif not value_is_text and isinstance(native_str_value, text_type):
-            value = to_bytes(native_str_value, encoding='utf-8', errors='surrogate_or_replace')
+            value = to_bytes(native_str_value, encoding='utf-8', errors='surrogate_then_replace')
         else:
             value = native_str_value
     elif isinstance(value, SEQUENCETYPE):
