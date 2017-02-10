@@ -34,7 +34,7 @@ description:
     this module will return the session-token that is required by all
     subsequent AOS module usage. On success the module will automatically populate
     ansible facts with the variable I(aos_session)
-    This module is not idempotent and do not support chech mode.
+    This module is not idempotent and do not support check mode.
 requirements:
   - "aos-pyez >= 0.6.0"
 options:
