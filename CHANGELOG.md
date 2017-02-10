@@ -267,6 +267,11 @@ Ansible Changes By Release
 
 * keyring: allows getting password from system keyrings
 
+####New: cache
+
+* pickle (uses python's own serializer)
+* yaml
+
 
 ## 2.2.1 "The Battle of Evermore" - 2017-01-16
 

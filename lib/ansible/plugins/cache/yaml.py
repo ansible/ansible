@@ -1,4 +1,4 @@
-# (c) 2014, Brian Coca, Josh Drake, et al
+# (c) 2017, Brian Coca
 #
 # This file is part of Ansible
 #
@@ -19,22 +19,20 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-try:
-    import simplejson as json
-except ImportError:
-    import json
+import yaml
 
-from ansible.parsing.utils.jsonify import jsonify
+from ansible.parsing.yaml.loader import AnsibleLoader
+from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.cache.base import BaseFileCacheModule
 
 class CacheModule(BaseFileCacheModule):
     """
-    A caching module backed by json files.
+    A caching module backed by yaml files.
     """
-    plugin_name = 'jsonfile'
+    plugin_name = 'yaml'
 
     def _load(self, f):
-        return json.load(f)
+        return AnsibleLoader(f).get_single_data()
 
     def _dump(self, value, f):
-        f.write(jsonify(value, format=True))
+        yaml.dump(value, f, Dumper=AnsibleDumper, default_flow_style=False)
