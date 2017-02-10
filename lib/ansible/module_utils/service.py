@@ -201,4 +201,4 @@ def daemonize(module, cmd):
                     break
                 return_data += b(data)
 
-        return pickle.loads(to_text(return-data, errors=errors))
+        return pickle.loads(to_text(return_data, errors=errors))
