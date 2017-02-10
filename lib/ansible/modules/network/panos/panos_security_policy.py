@@ -35,32 +35,32 @@ requirements:
 options:
     ip_address:
         description:
-            - IP address (or hostname) of PAN-OS device
+            - IP address (or hostname) of PAN-OS device being configured.
         required: true
     username:
         description:
-            - username for authentication
+            - Username credentials to use for auth.
         required: false
         default: "admin"
     password:
         description:
-            - password for authentication
+            - Password credentials to use for auth.
         required: true
     api_key:
         description:
             - API key that can be used instead of username/password credentials.
     rule_name:
         description:
-            - description of the security rule
+            - Name of the security rule.
         required: true
     rule_type:
         description:
-            - type of security rule (6.1+)
+            - Type of security rule (6.1+).
         required: false
         default: "universal"
     description:
         description:
-            - Description of this rule
+            - Description for the security rule.
         required: false
         default: "None"
     tag:
@@ -70,22 +70,22 @@ options:
         default: "None"
     from_zone:
         description:
-            - list of source zones
+            - List of source zones.
         required: false
         default: "any"
     to_zone:
         description:
-            - list of destination zones
+            - List of destination zones.
         required: false
         default: "any"
     source:
         description:
-            - list of source addresses
+            - List of source addresses.
         required: false
         default: "any"
     source_user:
         description:
-            - use users to enforce policy for individual users or a group of users
+            - Use users to enforce policy for individual users or a group of users.
         required: false
         default: "any"
     hip_profiles:
@@ -97,32 +97,32 @@ options:
         default: "any"
     destination:
         description:
-            - list of destination addresses
+            - List of destination addresses.
         required: false
         default: "any"
     application:
         description:
-            - list of applications
+            - List of applications.
         required: false
         default: "any"
     service:
         description:
-            - list of services
+            - List of services.
         required: false
         default: "application-default"
     log_start:
         description:
-            - whether to log at session start
+            - Whether to log at session start.
         required: false
         default: false
     log_end:
         description:
-            - whether to log at session end
+            - Whether to log at session end.
         required: false
         default: true
     action:
         description:
-            - action
+            - Action to apply once rules maches.
         required: false
         default: "allow"
     group_profile:
@@ -133,39 +133,43 @@ options:
         default: None
     antivirus:
         description:
-            - name of the already defined profile
+            - Name of the already defined antivirus profile.
         required: false
         default: None
     vulnerability:
         description:
-            - name of the already defined profile
+            - Name of the already defined vulnerability profile.
         required: false
         default: None
     spyware:
         description:
-            - name of the already defined profile
+            - Name of the already defined spyware profile.
         required: false
         default: None
     url_filtering:
         description:
-            - name of the already defined profile
+            - Name of the already defined url_filtering profile.
         required: false
         default: None
     file_blocking:
         description:
-            - name of the already defined profile
+            - Name of the already defined file_blocking profile.
         required: false
         default: None
     data_filtering:
         description:
-            - name of the already defined profile
+            - Name of the already defined data_filtering profile.
         required: false
         default: None
     wildfire_analysis:
         description:
-            - name of the already defined profile
+            - Name of the already defined wildfire_analysis profile.
         required: false
         default: None
+    devicegroup:
+        description: >
+            Device groups are used for the Panorama interaction with Firewall(s). The group must exists on Panorama.
+            If device group is not define we assume that we are contacting Firewall.
     commit:
         description:
             - commit if changed
