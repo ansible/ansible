@@ -1485,7 +1485,7 @@ def main():
         argument_spec = dict(
             state      = dict(default='present', choices=['ping', 'present', 'absent', 'up', 'down', 'restarted', 'cd', 'info']),
             user       = dict(default="admin@internal"),
-            password   = dict(required=True),
+            password   = dict(required=True, no_log=True),
             server     = dict(default="127.0.0.1"),
             port       = dict(default="443"),
             insecure_api = dict(default=False, type='bool'),

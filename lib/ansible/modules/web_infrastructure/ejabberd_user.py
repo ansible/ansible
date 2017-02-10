@@ -185,7 +185,7 @@ def main():
         argument_spec = dict(
             host=dict(default=None, type='str'),
             username=dict(default=None, type='str'),
-            password=dict(default=None, type='str'),
+            password=dict(default=None, type='str', no_log=True),
             state=dict(default='present', choices=['present', 'absent']),
             logging=dict(default=False, type='bool')
         ),

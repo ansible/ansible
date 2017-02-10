@@ -377,7 +377,7 @@ def main():
             operation=dict(choices=['create', 'comment', 'edit', 'fetch', 'transition', 'link'],
                            aliases=['command'], required=True),
             username=dict(required=True),
-            password=dict(required=True),
+            password=dict(required=True, no_log=True),
             project=dict(),
             summary=dict(),
             description=dict(),

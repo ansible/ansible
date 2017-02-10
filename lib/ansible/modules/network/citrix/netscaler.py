@@ -179,7 +179,7 @@ def main():
             nsc_host = dict(required=True),
             nsc_protocol = dict(default='https'),
             user = dict(required=True),
-            password = dict(required=True),
+            password = dict(required=True, no_log=True),
             action = dict(default='enable', choices=['enable','disable']),
             name = dict(default=socket.gethostname()),
             type = dict(default='server', choices=['service', 'server']),
