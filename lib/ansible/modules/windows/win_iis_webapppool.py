@@ -53,7 +53,7 @@ options:
       - The following attributes may only have the following names.
       - managedPipelineMode may be either "Integrated" or  "Classic".
       - startMode may be either "OnDemand" or  "AlwaysRunning".
-      - state may be one of "Starting", "Started", "Stopping", "Stopped", "Unknown". 
+      - state may be one of "Starting", "Started", "Stopping", "Stopped", "Unknown".
         Use the C(state) module parameter to modify, states shown are reflect the possible runtime values.
     required: false
     default: null
