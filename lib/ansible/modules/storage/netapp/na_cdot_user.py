@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2016, NetApp, Inc
+# (c) 2017, NetApp, Inc
 #
 # This file is part of Ansible
 #
@@ -17,6 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 
@@ -29,32 +32,32 @@ version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 
 description:
-- Create or destroy users
+- Create or destroy users.
 
 options:
 
   state:
-    required: true
     description:
     - Whether the specified user should exist or not.
+    required: true
     choices: ['present', 'absent']
 
   name:
-    required: true
     description:
-    - The name of the user to manage
+    - The name of the user to manage.
+    required: true
 
   application:
-    required: true
     description:
-    - application
+    - Applications to grant access to.
+    required: true
     choices: ['console', 'http','ontapi','rsh','snmp','sp','ssh','telnet']
 
   authentication_method:
-    required: true
     description:
     - Authentication method for the application.
-    - Not all authentication methods are valid for an application. Valid authentication methods for each application are
+    - Not all authentication methods are valid for an application. Valid authentication methods for each application are as denoted in I(authentication_choices_description).
+    authentication_choices_description:
     - password for console application
     - password, domain, nsswitch, cert for http application.
     - password, domain, nsswitch, cert for ontapi application.
@@ -64,26 +67,26 @@ options:
     - password for rsh application.
     - password for telnet application.
     - password, publickey, domain, nsswitch for ssh application.
+    required: true
     choices: ['community', 'password', 'publickey', 'domain', 'nsswitch', 'usm']
 
   set_password:
-    required: false
     description:
     - Password for the user account.
-    -   This is ignored for creating snmp users.
-    -   This is required for creating non-snmp users.
-    -   For an existing user, this value will be used as the new password.
+    - It is ignored for creating snmp users, but is required for creating non-snmp users.
+    - For an existing user, this value will be used as the new password.
+    default: None
 
   role_name:
-    required: false
-    note: required when state == 'present'
     description:
-    - role name
+    - The name of the role.
+    note: required when C(state=present)
+
 
   vserver:
-    required: true
     description:
-    - vserver
+    - The name of the vserver to use.
+    required: true
 
 '''
 
@@ -105,44 +108,14 @@ EXAMPLES = """
 """
 
 RETURN = """
-msg:
-    description: Successfully created User
-    returned: success
-    type: string
-    sample: '{"changed": true}'
 
 """
-
-"""
-TODO:
-    Go through the role list to ensure role exists before applying, and then
-    log the appropriate error. Presently, a generic 'entry doesn't exist'
-    error is logged.
-
-    Add 'comment' and 'snmpv3-login-info' as configurable parameters.
-
-    Add ability to update properties. Use a flag to ensure that it's the
-    user's desired behavior.
-
-    Add lock/unlock capability.
-
-"""
-
-import logging
-from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 import ansible.module_utils.netapp as netapp_utils
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
-
-logging.basicConfig(level=logging.ERROR)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 class NetAppCDOTUser(object):
@@ -151,25 +124,23 @@ class NetAppCDOTUser(object):
     """
 
     def __init__(self):
-        logger.debug('Init %s', self.__class__.__name__)
-
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
         self.argument_spec.update(dict(
-                state=dict(required=True, choices=['present', 'absent']),
-                name=dict(required=True, type='str'),
+            state=dict(required=True, choices=['present', 'absent']),
+            name=dict(required=True, type='str'),
 
-                application=dict(required=True, type='str', choices=[
-                    'console', 'http', 'ontapi', 'rsh',
-                    'snmp', 'sp', 'ssh', 'telnet']),
-                authentication_method=dict(required=True, type='str',
-                                           choices=['community', 'password',
-                                                    'publickey', 'domain',
-                                                    'nsswitch', 'usm']),
-                set_password=dict(required=False, type='str', default=None),
-                role_name=dict(required=False, type='str'),
+            application=dict(required=True, type='str', choices=[
+                'console', 'http', 'ontapi', 'rsh',
+                'snmp', 'sp', 'ssh', 'telnet']),
+            authentication_method=dict(required=True, type='str',
+                                       choices=['community', 'password',
+                                                'publickey', 'domain',
+                                                'nsswitch', 'usm']),
+            set_password=dict(required=False, type='str', default=None),
+            role_name=dict(required=False, type='str'),
 
-                vserver=dict(required=True, type='str'),
-            ))
+            vserver=dict(required=True, type='str'),
+        ))
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
@@ -210,7 +181,7 @@ class NetAppCDOTUser(object):
         security_login_get_iter = netapp_utils.zapi.NaElement('security-login-get-iter')
         query_details = netapp_utils.zapi.NaElement.create_node_with_children(
             'security-login-account-info', **{'vserver': self.vserver,
-                                              'user-name':self.name,
+                                              'user-name': self.name,
                                               'application': self.application,
                                               'authentication-method':
                                                   self.authentication_method})
@@ -222,23 +193,21 @@ class NetAppCDOTUser(object):
         try:
             result = self.server.invoke_successfully(security_login_get_iter,
                                                      enable_tunneling=False)
+
+            if result.get_child_by_name('num-records') and int(result.get_child_content('num-records')) >= 1:
+                return True
+            else:
+                return False
+
         except netapp_utils.zapi.NaApiError:
             e = get_exception()
             # Error 16034 denotes a user not being found.
             if str(e.code) == "16034":
                 return False
             else:
-                raise
-
-        if (result.get_child_by_name('num-records') and
-                int(result.get_child_content('num-records')) >= 1):
-            return True
-        else:
-            return False
+                self.module.fail_json(msg='Error getting user %s' % self.name, exception=str(e))
 
     def create_user(self):
-        logger.debug('Creating user %s', self.name)
-
         user_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'security-login-create', **{'vserver': self.vserver,
                                         'user-name': self.name,
@@ -253,14 +222,10 @@ class NetAppCDOTUser(object):
             self.server.invoke_successfully(user_create,
                                             enable_tunneling=False)
         except netapp_utils.zapi.NaApiError:
-            e = get_exception()
-            logger.exception('Error creating user %s. Error code: '
-                             '%s', self.name, str(e))
-            raise
+            err = get_exception()
+            self.module.fail_json(msg='Error creating user %s' % self.name, exception=str(err))
 
     def delete_user(self):
-        logger.debug('Removing user %s', self.name)
-
         user_delete = netapp_utils.zapi.NaElement.create_node_with_children(
             'security-login-delete', **{'vserver': self.vserver,
                                         'user-name': self.name,
@@ -272,10 +237,8 @@ class NetAppCDOTUser(object):
             self.server.invoke_successfully(user_delete,
                                             enable_tunneling=False)
         except netapp_utils.zapi.NaApiError:
-            e = get_exception()
-            logger.exception('Error removing user %s. Error code: %s ',
-                             self.name, str(e))
-            raise
+            err = get_exception()
+            self.module.fail_json(msg='Error removing user %s' % self.name, exception=str(err))
 
     def change_password(self):
         """
@@ -299,9 +262,9 @@ class NetAppCDOTUser(object):
             if str(e.code) == '13114':
                 return False
             else:
-                logger.exception('Error setting password %s. Error code: %s ',
-                                 self.name, str(e))
-                raise
+                err = get_exception()
+                self.module.fail_json(msg='Error setting password for user %s' % self.name, exception=str(err))
+
         self.server.set_vserver(None)
         return True
 
@@ -312,50 +275,36 @@ class NetAppCDOTUser(object):
 
         if user_exists:
             if self.state == 'absent':
-                logger.debug(
-                    "CHANGED: user exists, but requested state is "
-                    "'absent'")
                 property_changed = True
 
             elif self.state == 'present':
-                if not self.set_password is None:
+                if self.set_password is not None:
                     password_changed = self.change_password()
         else:
             if self.state == 'present':
-                logger.debug(
-                    "CHANGED: user does not exist, but requested state is"
-                    "'present'")
-
+                # Check if anything needs to be updated
                 property_changed = True
 
         if property_changed:
             if self.module.check_mode:
-                logger.debug('skipping changes due to check mode')
+                pass
             else:
                 if self.state == 'present':
                     if not user_exists:
                         self.create_user()
 
-                    """ TODO: Add ability to update parameters.
-                    else:
-                    """
+                    # Add ability to update parameters.
+
                 elif self.state == 'absent':
                     self.delete_user()
-        else:
-            logger.debug("exiting with no changes")
+
         changed = property_changed or password_changed
         self.module.exit_json(changed=changed)
 
 
 def main():
     v = NetAppCDOTUser()
-
-    try:
-        v.apply()
-    except Exception:
-        e = get_exception()
-        logger.debug("Exception in apply(): \n%s" % format_exc(e))
-        raise
+    v.apply()
 
 if __name__ == '__main__':
     main()
