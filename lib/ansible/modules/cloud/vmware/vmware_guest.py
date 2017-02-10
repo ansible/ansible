@@ -100,6 +100,7 @@ options:
         description:
             - Wait until vCenter detects an IP address for the VM
             - This requires vmware-tools (vmtoolsd) to properly work after creation
+        default: False
    force:
         description:
             - Ignore warnings and complete the actions
@@ -107,6 +108,7 @@ options:
         description:
             - Destination datacenter for the deploy operation
         required: True
+        default: ha-datacenter
    cluster:
         description:
             - The cluster name where the VM will run.
@@ -1261,10 +1263,10 @@ def main():
             disk=dict(required=False, type='list', default=[]),
             hardware=dict(required=False, type='dict', default={}),
             force=dict(required=False, type='bool', default=False),
-            datacenter=dict(required=True, type='str'),
+            datacenter=dict(required=True, type='str', default='ha-datacenter'),
             esxi_hostname=dict(required=False, type='str', default=None),
             cluster=dict(required=False, type='str', default=None),
-            wait_for_ip_address=dict(required=False, type='bool', default=True),
+            wait_for_ip_address=dict(required=False, type='bool', default=False),
             networks=dict(required=False, type='list', default=[]),
             resource_pool=dict(required=False, type='str', default=None),
             customization=dict(required=False, type='dict', no_log=True, default={}),
