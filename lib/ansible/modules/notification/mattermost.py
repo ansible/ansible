@@ -118,7 +118,7 @@ def main():
             validate_certs = dict(default='yes', type='bool'),
         )
     )
-    #init return dict    
+    #init return dict
     retkwargs = dict(changed=False, msg="OK")
 
     #define webhook
@@ -148,7 +148,7 @@ def main():
         #some problem
         retkwargs['msg'] = "Failed to send mattermost message, the error was: {0}".format(info['msg'])
         module.fail_json(**retkwargs)
-    
+
     #Looks good
     module.exit_json(**retkwargs)
 
