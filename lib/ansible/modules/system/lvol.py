@@ -230,6 +230,7 @@ def parse_lvs(data):
             'size': int(decimal_point.match(parts[1]).group(1)),
             'active': (parts[2][4] == 'a'),
             'thinpool': (parts[2][0] == 't'),
+            'thinvol': (parts[2][0] == 'V'),
         })
     return lvs
 
@@ -415,17 +416,24 @@ def main():
     else:
         this_lv = None
 
-    if state == 'present' and not size:
-        if this_lv is None:
-            module.fail_json(msg="No size given.")
-
     msg = ''
     if this_lv is None:
         if state == 'present':
-            # create LV
+            ### require size argument except for snapshot of thin volumes
+            if (lv or thinpool) and not size:
+                for test_lv in lvs:
+                    if test_lv['name'] == lv and test_lv['thinvol'] and snapshot:
+                        break
+                else:
+                    module.fail_json(msg="No size given.")
+
+            ### create LV
             lvcreate_cmd = module.get_bin_path("lvcreate", required=True)
             if snapshot is not None:
-                cmd = "%s %s %s -%s %s%s -s -n %s %s %s/%s" % (lvcreate_cmd, test_opt, yesopt, size_opt, size, size_unit, snapshot, opts, vg, lv)
+                if size:
+                    cmd = "%s %s %s -%s %s%s -s -n %s %s %s/%s" % (lvcreate_cmd, test_opt, yesopt, size_opt, size, size_unit, snapshot, opts, vg, lv)
+                else:
+                    cmd = "%s %s %s -s -n %s %s %s/%s" % (lvcreate_cmd, test_opt, yesopt, snapshot, opts, vg, lv)
             elif thinpool and lv:
                 if size_opt == 'l':
                     module.fail_json(changed=False, msg="Thin volume sizing with percentage not supported.")
