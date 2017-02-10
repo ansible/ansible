@@ -47,36 +47,31 @@ options:
     - The name of the lun to manage.
     required: true
 
-  is_infinite:
+  infinite:
     description:
     - Set True if the volume is an Infinite Volume.
-    required: false
     choices: ['True', 'False']
     default: 'False'
 
-  is_online:
+  online:
     description:
     - Whether the specified volume is online, or not.
-    required: false
     choices: ['True', 'False']
     default: 'True'
 
   aggregate_name:
     description:
     - The name of the aggregate the flexvol should exist on.
-    required: false
     note: required when C(state=present)
 
   size:
     description:
     - The size of the volume in (size_unit).
-    required: false
     note: required when C(state=present)
 
   size_unit:
     description:
     - The unit used to interpret the size parameter.
-    required: false
     choices: ['bytes', 'b', 'kb', 'mb', 'gb', 'tb', 'pb', 'eb', 'zb', 'yb']
     default: 'gb'
 
@@ -94,7 +89,7 @@ EXAMPLES = """
       na_cdot_volume:
         state: present
         name: ansibleVolume
-        is_infinite: False
+        infinite: False
         aggregate_name: aggr1
         size: 20
         size_unit: mb
@@ -107,8 +102,8 @@ EXAMPLES = """
       na_cdot_volume:
         state: present
         name: ansibleVolume
-        is_infinite: False
-        is_online: False
+        infinite: False
+        online: False
         vserver: ansibleVServer
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
@@ -119,11 +114,6 @@ EXAMPLES = """
 RETURN = """
 
 
-"""
-
-"""
-    TODO:
-        Add more configurable parameters
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -154,8 +144,8 @@ class NetAppCDOTVolume(object):
         self.argument_spec.update(dict(
             state=dict(required=True, choices=['present', 'absent']),
             name=dict(required=True, type='str'),
-            is_infinite=dict(required=False, type='bool', default=False),
-            is_online=dict(required=False, type='bool', default=True),
+            is_infinite=dict(required=False, type='bool', default=False, aliases=['infinite']),
+            is_online=dict(required=False, type='bool', default=True, aliases=['online']),
             size=dict(type='int'),
             size_unit=dict(default='gb',
                            choices=['bytes', 'b', 'kb', 'mb', 'gb', 'tb',
@@ -376,10 +366,6 @@ class NetAppCDOTVolume(object):
                 changed = True
 
             elif self.state == 'present':
-                # if self.new_name is not None and not self.name == \
-                #         self.name:
-                #     rename_volume = True
-                #     changed = True
                 if str(volume_detail['size']) != str(self.size):
                     resize_volume = True
                     changed = True
@@ -391,7 +377,6 @@ class NetAppCDOTVolume(object):
                     else:
                         # Volume is offline but requested state is online
                         pass
-
 
         else:
             if self.state == 'present':
@@ -419,8 +404,6 @@ class NetAppCDOTVolume(object):
                 elif self.state == 'absent':
                     self.delete_volume()
 
-        # TODO: include other details about the volume (size, cache config,
-        # etc)
         self.module.exit_json(changed=changed)
 
 
