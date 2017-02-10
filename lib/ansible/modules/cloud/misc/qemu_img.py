@@ -41,9 +41,6 @@ options:
     description:
     - The image format - default qcow2
     default: qcow2
-  size:
-    description:
-    - The size of the image in megabytes.
   options:
     description:
     - Comma separated list of format specific options in a name=value format.
