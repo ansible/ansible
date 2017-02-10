@@ -30,21 +30,54 @@
 
 try:
     import bigsuds
+    bigsuds_found = True
 except ImportError:
     bigsuds_found = False
-else:
-    bigsuds_found = True
+
+
+from ansible.module_utils.basic import env_fallback
 
 
 def f5_argument_spec():
     return dict(
-        server=dict(type='str', required=True),
-        user=dict(type='str', required=True),
-        password=dict(type='str', aliases=['pass', 'pwd'], required=True, no_log=True),
-        validate_certs = dict(default='yes', type='bool'),
-        server_port = dict(type='int', default=443, required=False),
-        state = dict(type='str', default='present', choices=['present', 'absent']),
-        partition = dict(type='str', default='Common')
+        server=dict(
+            type='str',
+            required=True,
+            fallback=(env_fallback, ['F5_SERVER'])
+        ),
+        user=dict(
+            type='str',
+            required=True,
+            fallback=(env_fallback, ['F5_USER'])
+        ),
+        password=dict(
+            type='str',
+            aliases=['pass', 'pwd'],
+            required=True,
+            no_log=True,
+            fallback=(env_fallback, ['F5_PASSWORD'])
+        ),
+        validate_certs=dict(
+            default='yes',
+            type='bool',
+            fallback=(env_fallback, ['F5_VALIDATE_CERTS'])
+        ),
+        server_port=dict(
+            type='int',
+            default=443,
+            required=False,
+            fallback=(env_fallback, ['F5_SERVER_PORT'])
+        ),
+        state=dict(
+            type='str',
+            default='present',
+            choices=['present', 'absent']
+        ),
+        partition=dict(
+            type='str',
+            default='Common',
+            fallback=(env_fallback, ['F5_PARTITION'])
+        )
     )
 
 
