@@ -53,12 +53,12 @@ options:
         - The type of failure to emulated.
     required: False
     version_added: "2.3"
-  output_data_updates:
+  return_data_updates:
     description:
         - A dict of info to add to that passed to fail_json.
     required: False
     version_added: "2.3"
-  output_data_replacement:
+  return_data:
     description:
         - A dict of info to pass to fail_json, completely replacing any existing args.
     required: False
@@ -94,7 +94,8 @@ def main():
             stdout_text=dict(required=False, type='str'),
             stderr_text=dict(required=False, type='str'),
             return_code=dict(required=False, type='int'),
-            output_data=dict(required=False, type='dict'),
+            return_data=dict(required=False, type='dict'),
+            return_data_updates=dict(required=False, type='dict'),
             failure_mode=dict(required=False, type='str',
                               choices=['sys_exit', 'no_output', 'hang', 'python_traceback', 'incomplete_json'])
         ),
@@ -105,8 +106,8 @@ def main():
     stderr_text = module.params.get('stderr_text')
     return_code = module.params.get('return_code')
     failure_mode = module.params.get('failure_mode')
-    output_data_updates = module.params.get('output_data_updates', {})
-    output_data_replacement = module.params.get('output_data_replacement', None)
+    return_data_updates = module.params.get('return_data_updates', {})
+    return_data = module.params.get('return_data', None)
 
     sys_exit = None
 
@@ -137,23 +138,23 @@ def main():
         fail_data = dict(msg='epic_fail failed with a return code of %s just as its parents predicted.' % return_code,
                          blip=return_code,
                          rc=return_code)
-        fail_data.update(output_data_updates)
-        if output_data_replacement:
-            fail_data = output_data_replacement
+        fail_data.update(return_data_updates)
+        if return_data:
+            fail_data = return_data
         module.fail_json(**fail_data)
 
     # fail in a boring fashion
     fail_data = dict(msg="epic_fail failed in a non epic fashion. How typical.")
-    fail_data.update(output_data_updates)
-    if output_data_replacement:
-        fail_data = output_data_replacement
+    fail_data.update(return_data_updates)
+    if return_data:
+        fail_data = return_data
     module.fail_json(**fail_data)
 
     exit_data = dict(changed=False,
                      msg="epic_fail did not live up to its name.")
-    exit_data.update(output_data_updates)
-    if output_data_replacement:
-        exit_data = output_data_replacement
+    exit_data.update(return_data_updates)
+    if return_data:
+        exit_data = return_data
     module.exit_json(**exit_data)
 
 
