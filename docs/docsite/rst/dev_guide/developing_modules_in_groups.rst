@@ -9,7 +9,7 @@ Welcome
 ```````
 This section discusses how to get multiple related modules into Ansible.
 
-This document is intended for both companies wishing to add modules for their own products as well as users of 3rd party products wishing to add Ansible support.
+This document is intended for both companies wishing to add modules for their own products as well as users of 3rd party products wishing to add Ansible functionality.
 
 It's based on module development best practices that the Ansible core team and community have accumulated.
 
@@ -25,7 +25,8 @@ Although it's tempting to get straight into coding, there are a few things to be
 * All modules shipped with Ansible must be done so under the GPLv3 license. Files under the ``lib/ansible/module_utils/`` directory should be done so under the BSD license.
 * Have a look at the existing modules and how they've been named in the :doc:`../list_of_all_modules`, especially in the same functional area (such as cloud, networking, databases).
 * Shared code can be placed into ``lib/ansible/module_utils/``
-* Shared documentation (for example describing common arguments) can be placed in ``lib/ansible/utils/module_docs_fragments/``
+* Shared documentation (for example describing common arguments) can be placed in ``lib/ansible/utils/module_docs_fragments/``.
+* As with all module authors, you are expected to promptly respond to issues and Pull Requests raised via GitHub.
 * Although not required, unit and/or integration tests are strongly recomended. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see ``test/`` and the `Testing Working Group <https://github.com/ansible/community/blob/master/MEETINGS.md>`_.
 
 Naming Convention
