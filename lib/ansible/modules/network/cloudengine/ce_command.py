@@ -37,7 +37,7 @@ extends_documentation_fragment: cloudengine
 options:
   commands:
     description:
-      - The commands to send to the remote HUAWEI CloudEngine device
+      - The commands to send to the remote HUAWEI CloudEngine device 
         over the configured provider.  The resulting output from the
         command is returned. If the I(wait_for) argument is provided,
         the module is not returned until the condition is satisfied
@@ -123,7 +123,7 @@ vars:
   ce_command:
     commands:
       - command: display version
-        output: json
+        output: version info
     provider: "{{ cli }}"
 """
 
@@ -154,7 +154,7 @@ from ansible.module_utils.netcli import CommandRunner
 from ansible.module_utils.netcli import FailedConditionsError
 from ansible.module_utils.netcli import FailedConditionalError
 from ansible.module_utils.netcli import AddCommandError, AddConditionError
-import ansible.module_utils.cloudengine
+from ansible.module_utils.cloudengine import get_cli_exception
 
 
 VALID_KEYS = ['command', 'output', 'prompt', 'response']
@@ -176,11 +176,9 @@ def parse_commands(module):
         if isinstance(cmd, basestring):
             cmd = dict(command=cmd, output=None)
         elif 'command' not in cmd:
-            module.fail_json(msg='command keyword argument is required')
-        elif cmd.get('output') not in [None, 'text', 'json']:
-            module.fail_json(msg='invalid output specified for command')
+            module.fail_json(msg='Error: Command keyword argument is required')
         elif not set(cmd.keys()).issubset(VALID_KEYS):
-            module.fail_json(msg='unknown keyword specified')
+            module.fail_json(msg='Error: Unknown keyword specified')
         yield cmd
 
 
@@ -213,7 +211,7 @@ def main():
                             'check mode, not executing `%s`' % cmd['command'])
         else:
             if cmd['command'].startswith('sys'):
-                module.fail_json(msg='ce_command does not support running '
+                module.fail_json(msg='Error: ce_command does not support running '
                                      'config mode commands.  Please use '
                                      'ce_config instead')
             try:
@@ -227,7 +225,7 @@ def main():
             runner.add_conditional(item)
     except AddConditionError:
         exc = get_exception()
-        module.fail_json(msg=str(exc), condition=exc.condition)
+        module.fail_json(msg=get_cli_exception(exc), condition=exc.condition)
 
     runner.retries = module.params['retries']
     runner.interval = module.params['interval']
@@ -237,14 +235,13 @@ def main():
         runner.run()
     except FailedConditionsError:
         exc = get_exception()
-        module.fail_json(msg=str(exc), failed_conditions=exc.failed_conditions)
+        module.fail_json(msg=get_cli_exception(exc), failed_conditions=exc.failed_conditions)
     except FailedConditionalError:
         exc = get_exception()
-        module.fail_json(
-            msg=str(exc), failed_conditional=exc.failed_conditional)
+        module.fail_json(msg=get_cli_exception(exc), failed_conditional=exc.failed_conditional)
     except NetworkError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), **exc.kwargs)
+        err = get_cli_exception()
+        module.fail_json(msg=err)
 
     result = dict(changed=False)
 
