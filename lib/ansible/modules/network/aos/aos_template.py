@@ -43,24 +43,20 @@ options:
     description:
       - Name of the Template to manage.
         Only one of I(name), I(id) or I(src) can be set.
-    required: false
   id:
     description:
       - AOS Id of the Template to manage (can't be used to create a new Template),
         Only one of I(name), I(id) or I(src) can be set.
-    required: false
   content:
     description:
       - Datastructure of the Template to create. The data can be in YAML / JSON or
         directly a variable. It's the same datastructure that is returned
         on success in I(value).
-    required: false
   state:
     description:
       - Indicate what is the expected state of the Template (present or not).
     default: present
     choices: ['present', 'absent']
-    required: false
 '''
 
 EXAMPLES = '''
