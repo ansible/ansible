@@ -620,6 +620,7 @@ class TaskExecutor:
 
         async_task = Task().load(dict(action='async_status jid=%s' % async_jid))
 
+        #FIXME: this is no longer the case, normal takes care of all, see if this can just be generalized
         # Because this is an async task, the action handler is async. However,
         # we need the 'normal' action handler for the status check, so get it
         # now via the action_loader
