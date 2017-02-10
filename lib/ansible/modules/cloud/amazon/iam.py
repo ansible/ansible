@@ -346,7 +346,7 @@ def update_user(module, iam, name, new_name, new_path, key_state, key_count, key
         status = [ck['status'] for ck in
                   iam.get_all_access_keys(name).list_access_keys_result.access_key_metadata]
         key_qty = len(current_keys)
-    except boto.exception.BotoServerError, err:
+    except boto.exception.BotoServerError as err:
         error_msg = boto_exception(err)
         if 'cannot be found' in error_msg and updated:
             current_keys = [ck['access_key_id'] for ck in
