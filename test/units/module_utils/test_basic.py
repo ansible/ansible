@@ -801,23 +801,22 @@ class TestModuleUtilsBasic(ModuleTestCase):
     @patch('os.path.exists')
     @patch('os.close')
     def test_module_utils_basic_ansible_module_atomic_move(
-        self,
-        _os_close,
-        _os_path_exists,
-        _os_stat,
-        _os_chmod,
-        _os_chown,
-        _os_getlogin,
-        _os_environ,
-        _os_getuid,
-        _pwd_getpwuid,
-        _os_rename,
-        _shutil_copy2,
-        _shutil_move,
-        _shutil_copyfileobj,
-        _os_umask,
-        _tempfile_mkstemp,
-        ):
+            self,
+            _os_close,
+            _os_path_exists,
+            _os_stat,
+            _os_chmod,
+            _os_chown,
+            _os_getlogin,
+            _os_environ,
+            _os_getuid,
+            _pwd_getpwuid,
+            _os_rename,
+            _shutil_copy2,
+            _shutil_move,
+            _shutil_copyfileobj,
+            _os_umask,
+            _tempfile_mkstemp):
 
         from ansible.module_utils import basic
         basic._ANSIBLE_ARGS = None

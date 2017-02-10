@@ -44,7 +44,10 @@ TESTSETS = [
             ],
         "input": {
             "/etc/redhat-release": "CentOS Linux release 7.2.1511 (Core) \n",
-            "/etc/os-release": "NAME=\"CentOS Linux\"\nVERSION=\"7 (Core)\"\nID=\"centos\"\nID_LIKE=\"rhel fedora\"\nVERSION_ID=\"7\"\nPRETTY_NAME=\"CentOS Linux 7 (Core)\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:centos:centos:7\"\nHOME_URL=\"https://www.centos.org/\"\nBUG_REPORT_URL=\"https://bugs.centos.org/\"\n\nCENTOS_MANTISBT_PROJECT=\"CentOS-7\"\nCENTOS_MANTISBT_PROJECT_VERSION=\"7\"\nREDHAT_SUPPORT_PRODUCT=\"centos\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"7\"\n\n",
+            "/etc/os-release": ("NAME=\"CentOS Linux\"\nVERSION=\"7 (Core)\"\nID=\"centos\"\nID_LIKE=\"rhel fedora\"\nVERSION_ID=\"7\"\n"
+                                "PRETTY_NAME=\"CentOS Linux 7 (Core)\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:centos:centos:7\"\n"
+                                "HOME_URL=\"https://www.centos.org/\"\nBUG_REPORT_URL=\"https://bugs.centos.org/\"\n\nCENTOS_MANTISBT_PROJECT=\"CentOS-7\"\n"
+                                "CENTOS_MANTISBT_PROJECT_VERSION=\"7\"\nREDHAT_SUPPORT_PRODUCT=\"centos\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"7\"\n\n"),
             "/etc/system-release": "CentOS Linux release 7.2.1511 (Core) \n"
             },
         "name": "CentOS 7.2.1511",
@@ -65,7 +68,8 @@ TESTSETS = [
             ],
         "input": {
             "/etc/redhat-release": "CentOS release 6.7 (Final)\n",
-            "/etc/lsb-release": "LSB_VERSION=base-4.0-amd64:base-4.0-noarch:core-4.0-amd64:core-4.0-noarch:graphics-4.0-amd64:graphics-4.0-noarch:printing-4.0-amd64:printing-4.0-noarch\n",
+            "/etc/lsb-release": ("LSB_VERSION=base-4.0-amd64:base-4.0-noarch:core-4.0-amd64:core-4.0-noarch:graphics-4.0-amd64:graphics-4.0-noarch:"
+                                 "printing-4.0-amd64:printing-4.0-noarch\n"),
             "/etc/system-release": "CentOS release 6.7 (Final)\n"
             },
         "result": {
@@ -85,7 +89,12 @@ TESTSETS = [
             ],
         "input": {
             "/etc/redhat-release": "Red Hat Enterprise Linux Server release 7.2 (Maipo)\n",
-            "/etc/os-release": "NAME=\"Red Hat Enterprise Linux Server\"\nVERSION=\"7.2 (Maipo)\"\nID=\"rhel\"\nID_LIKE=\"fedora\"\nVERSION_ID=\"7.2\"\nPRETTY_NAME=\"Red Hat Enterprise Linux Server 7.2 (Maipo)\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:redhat:enterprise_linux:7.2:GA:server\"\nHOME_URL=\"https://www.redhat.com/\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\n\nREDHAT_BUGZILLA_PRODUCT=\"Red Hat Enterprise Linux 7\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=7.2\nREDHAT_SUPPORT_PRODUCT=\"Red Hat Enterprise Linux\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"7.2\"\n",
+            "/etc/os-release": ("NAME=\"Red Hat Enterprise Linux Server\"\nVERSION=\"7.2 (Maipo)\"\nID=\"rhel\"\nID_LIKE=\"fedora\"\nVERSION_ID=\"7.2\"\n"
+                                "PRETTY_NAME=\"Red Hat Enterprise Linux Server 7.2 (Maipo)\"\nANSI_COLOR=\"0;31\"\n"
+                                "CPE_NAME=\"cpe:/o:redhat:enterprise_linux:7.2:GA:server\"\nHOME_URL=\"https://www.redhat.com/\"\n"
+                                "BUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\n\nREDHAT_BUGZILLA_PRODUCT=\"Red Hat Enterprise Linux 7\"\n"
+                                "REDHAT_BUGZILLA_PRODUCT_VERSION=7.2\nREDHAT_SUPPORT_PRODUCT=\"Red Hat Enterprise Linux\"\n"
+                                "REDHAT_SUPPORT_PRODUCT_VERSION=\"7.2\"\n"),
             "/etc/system-release": "Red Hat Enterprise Linux Server release 7.2 (Maipo)\n"
             },
         "result": {
@@ -105,7 +114,8 @@ TESTSETS = [
             ],
         "input": {
             "/etc/redhat-release": "Red Hat Enterprise Linux Server release 6.7 (Santiago)\n",
-            "/etc/lsb-release": "LSB_VERSION=base-4.0-amd64:base-4.0-noarch:core-4.0-amd64:core-4.0-noarch:graphics-4.0-amd64:graphics-4.0-noarch:printing-4.0-amd64:printing-4.0-noarch\n",
+            "/etc/lsb-release": ("LSB_VERSION=base-4.0-amd64:base-4.0-noarch:core-4.0-amd64:core-4.0-noarch:graphics-4.0-amd64:graphics-4.0-noarch:"
+                                 "printing-4.0-amd64:printing-4.0-noarch\n"),
             "/etc/system-release": "Red Hat Enterprise Linux Server release 6.7 (Santiago)\n"
             },
         "result": {
@@ -180,7 +190,9 @@ ID_LIKE="suse"
             ""
         ],
         "input": {
-            "/etc/os-release": "NAME=\"openSUSE Tumbleweed\"\n# VERSION=\"20160917\"\nID=opensuse\nID_LIKE=\"suse\"\nVERSION_ID=\"20160917\"\nPRETTY_NAME=\"openSUSE Tumbleweed\"\nANSI_COLOR=\"0;32\"\nCPE_NAME=\"cpe:/o:opensuse:tumbleweed:20160917\"\nBUG_REPORT_URL=\"https://bugs.opensuse.org\"\nHOME_URL=\"https://www.opensuse.org/\"\n"
+            "/etc/os-release": ("NAME=\"openSUSE Tumbleweed\"\n# VERSION=\"20160917\"\nID=opensuse\nID_LIKE=\"suse\"\nVERSION_ID=\"20160917\"\n"
+                                "PRETTY_NAME=\"openSUSE Tumbleweed\"\nANSI_COLOR=\"0;32\"\nCPE_NAME=\"cpe:/o:opensuse:tumbleweed:20160917\"\n"
+                                "BUG_REPORT_URL=\"https://bugs.opensuse.org\"\nHOME_URL=\"https://www.opensuse.org/\"\n")
         },
         "name": "openSUSE Tumbleweed 20160917",
         "result": {
@@ -191,7 +203,7 @@ ID_LIKE="suse"
             "distribution_version": "20160917"
         }
     },
-    { # see https://github.com/ansible/ansible/issues/14837
+    {  # see https://github.com/ansible/ansible/issues/14837
         "name": "SLES 11.3",
         "input": {
             "/etc/SuSE-release":"""
@@ -209,7 +221,7 @@ PATCHLEVEL = 3
             "distribution_version": "11.3",
         }
     },
-    { # see https://github.com/ansible/ansible/issues/14837
+    {  # see https://github.com/ansible/ansible/issues/14837
         "name": "SLES 11.4",
         "input": {
             "/etc/SuSE-release":"""
@@ -236,7 +248,7 @@ CPE_NAME="cpe:/o:suse:sles:11:4"
             "distribution_version": "11.4",
         }
     },
-    { # see https://github.com/ansible/ansible/issues/14837
+    {  # see https://github.com/ansible/ansible/issues/14837
         "name": "SLES 12 SP0",
         "input": {
             "/etc/SuSE-release":"""
@@ -266,7 +278,7 @@ CPE_NAME="cpe:/o:suse:sles:12"
         }
     },
 
-    { # see https://github.com/ansible/ansible/issues/14837
+    {  # see https://github.com/ansible/ansible/issues/14837
         "name": "SLES 12 SP1",
         "input": {
             "/etc/SuSE-release":"""
@@ -346,7 +358,9 @@ BUG_REPORT_URL="http://bugs.debian.org/"
             "xenial"
         ],
         "input": {
-            "/etc/os-release": "NAME=\"Ubuntu\"\nVERSION=\"16.04 LTS (Xenial Xerus)\"\nID=ubuntu\nID_LIKE=debian\nPRETTY_NAME=\"Ubuntu 16.04 LTS\"\nVERSION_ID=\"16.04\"\nHOME_URL=\"http://www.ubuntu.com/\"\nSUPPORT_URL=\"http://help.ubuntu.com/\"\nBUG_REPORT_URL=\"http://bugs.launchpad.net/ubuntu/\"\nUBUNTU_CODENAME=xenial\n",
+            "/etc/os-release": ("NAME=\"Ubuntu\"\nVERSION=\"16.04 LTS (Xenial Xerus)\"\nID=ubuntu\nID_LIKE=debian\nPRETTY_NAME=\"Ubuntu 16.04 LTS\"\n"
+                                "VERSION_ID=\"16.04\"\nHOME_URL=\"http://www.ubuntu.com/\"\nSUPPORT_URL=\"http://help.ubuntu.com/\"\n"
+                                "BUG_REPORT_URL=\"http://bugs.launchpad.net/ubuntu/\"\nUBUNTU_CODENAME=xenial\n"),
             "/etc/lsb-release": "DISTRIB_ID=Ubuntu\nDISTRIB_RELEASE=16.04\nDISTRIB_CODENAME=xenial\nDISTRIB_DESCRIPTION=\"Ubuntu 16.04 LTS\"\n"
         },
         "name": "Ubuntu 16.04",
@@ -410,7 +424,9 @@ VERSION_ID="12.04"
             "xenial"
         ],
         "input": {
-            "/etc/os-release": "NAME=\"KDE neon\"\nVERSION=\"5.8\"\nID=neon\nID_LIKE=\"ubuntu debian\"\nPRETTY_NAME=\"KDE neon User Edition 5.8\"\nVERSION_ID=\"16.04\"\nHOME_URL=\"http://neon.kde.org/\"\nSUPPORT_URL=\"http://neon.kde.org/\"\nBUG_REPORT_URL=\"http://bugs.kde.org/\"\nVERSION_CODENAME=xenial\nUBUNTU_CODENAME=xenial\n",
+            "/etc/os-release": ("NAME=\"KDE neon\"\nVERSION=\"5.8\"\nID=neon\nID_LIKE=\"ubuntu debian\"\nPRETTY_NAME=\"KDE neon User Edition 5.8\"\n"
+                                "VERSION_ID=\"16.04\"\nHOME_URL=\"http://neon.kde.org/\"\nSUPPORT_URL=\"http://neon.kde.org/\"\n"
+                                "BUG_REPORT_URL=\"http://bugs.kde.org/\"\nVERSION_CODENAME=xenial\nUBUNTU_CODENAME=xenial\n"),
             "/etc/lsb-release": "DISTRIB_ID=neon\nDISTRIB_RELEASE=16.04\nDISTRIB_CODENAME=xenial\nDISTRIB_DESCRIPTION=\"KDE neon User Edition 5.8\"\n"
         },
         "name": "KDE neon 16.04",
@@ -466,7 +482,24 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             ""
         ],
         "input": {
-            "/etc/release": "                       SmartOS 20160330T234717Z x86_64\n              Copyright 2010 Sun Microsystems, Inc.  All Rights Reserved.\n              Copyright 2010-2012 Joyent, Inc.  All Rights Reserved.\n                        Use is subject to license terms.\n\n   Built with the following components:\n\n[\n        { \"repo\": \"smartos-live\", \"branch\": \"release-20160331\", \"rev\": \"a77c410f2afe6dc9853a915733caec3609cc50f1\", \"commit_date\": \"1459340323\", \"url\": \"git@github.com:joyent/smartos-live.git\" }\n        , { \"repo\": \"illumos-joyent\", \"branch\": \"release-20160331\", \"rev\": \"ab664c06caf06e9ce7586bff956e7709df1e702e\", \"commit_date\": \"1459362533\", \"url\": \"/root/data/jenkins/workspace/smartos/MG/build/illumos-joyent\" }\n        , { \"repo\": \"illumos-extra\", \"branch\": \"release-20160331\", \"rev\": \"cc723855bceace3df7860b607c9e3827d47e0ff4\", \"commit_date\": \"1458153188\", \"url\": \"/root/data/jenkins/workspace/smartos/MG/build/illumos-extra\" }\n        , { \"repo\": \"kvm\", \"branch\": \"release-20160331\", \"rev\": \"a8befd521c7e673749c64f118585814009fe4b73\", \"commit_date\": \"1450081968\", \"url\": \"/root/data/jenkins/workspace/smartos/MG/build/illumos-kvm\" }\n        , { \"repo\": \"kvm-cmd\", \"branch\": \"release-20160331\", \"rev\": \"c1a197c8e4582c68739ab08f7e3198b2392c9820\", \"commit_date\": \"1454723558\", \"url\": \"/root/data/jenkins/workspace/smartos/MG/build/illumos-kvm-cmd\" }\n        , { \"repo\": \"mdata-client\", \"branch\": \"release-20160331\", \"rev\": \"58158c44603a3316928975deccc5d10864832770\", \"commit_date\": \"1429917227\", \"url\": \"/root/data/jenkins/workspace/smartos/MG/build/mdata-client\" }\n]\n"
+            "/etc/release": ("                       SmartOS 20160330T234717Z x86_64\n"
+                             "              Copyright 2010 Sun Microsystems, Inc.  All Rights Reserved.\n"
+                             "              Copyright 2010-2012 Joyent, Inc.  All Rights Reserved.\n"
+                             "                        Use is subject to license terms.\n\n"
+                             "   Built with the following components:\n\n[\n"
+                             "        { \"repo\": \"smartos-live\", \"branch\": \"release-20160331\", \"rev\": \"a77c410f2afe6dc9853a915733caec3609cc50f1\", "
+                             "\"commit_date\": \"1459340323\", \"url\": \"git@github.com:joyent/smartos-live.git\" }\n        , "
+                             "{ \"repo\": \"illumos-joyent\", \"branch\": \"release-20160331\", \"rev\": \"ab664c06caf06e9ce7586bff956e7709df1e702e\", "
+                             "\"commit_date\": \"1459362533\", \"url\": \"/root/data/jenkins/workspace/smartos/MG/build/illumos-joyent\" }\n"
+                             "        , { \"repo\": \"illumos-extra\", \"branch\": \"release-20160331\", "
+                             "\"rev\": \"cc723855bceace3df7860b607c9e3827d47e0ff4\", \"commit_date\": \"1458153188\", "
+                             "\"url\": \"/root/data/jenkins/workspace/smartos/MG/build/illumos-extra\" }\n        , "
+                             "{ \"repo\": \"kvm\", \"branch\": \"release-20160331\", \"rev\": \"a8befd521c7e673749c64f118585814009fe4b73\", "
+                             "\"commit_date\": \"1450081968\", \"url\": \"/root/data/jenkins/workspace/smartos/MG/build/illumos-kvm\" }\n        , "
+                             "{ \"repo\": \"kvm-cmd\", \"branch\": \"release-20160331\", \"rev\": \"c1a197c8e4582c68739ab08f7e3198b2392c9820\", "
+                             "\"commit_date\": \"1454723558\", \"url\": \"/root/data/jenkins/workspace/smartos/MG/build/illumos-kvm-cmd\" }\n        , "
+                             "{ \"repo\": \"mdata-client\", \"branch\": \"release-20160331\", \"rev\": \"58158c44603a3316928975deccc5d10864832770\", "
+                             "\"commit_date\": \"1429917227\", \"url\": \"/root/data/jenkins/workspace/smartos/MG/build/mdata-client\" }\n]\n")
         },
         "platform.system": "SunOS"
     },
@@ -485,7 +518,9 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             ""
         ],
         "input": {
-            "/etc/release": "                                SmartOS x86_64\n              Copyright 2010 Sun Microsystems, Inc.  All Rights Reserved.\n              Copyright 2010-2013 Joyent, Inc.  All Rights Reserved.\n                        Use is subject to license terms.\n                   See joyent_20141002T182809Z for assembly date and time.\n",
+            "/etc/release": ("                                SmartOS x86_64\n              Copyright 2010 Sun Microsystems, Inc.  All Rights Reserved.\n"
+                             "              Copyright 2010-2013 Joyent, Inc.  All Rights Reserved.\n                        Use is subject to license terms.\n"
+                             "                   See joyent_20141002T182809Z for assembly date and time.\n"),
             "/etc/product": "Name: Joyent Instance\nImage: base64 14.3.0\nDocumentation: http://wiki.joyent.com/jpc2/Base+Instance\n"
         },
         "platform.system": "SunOS"
@@ -505,7 +540,9 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             ""
         ],
         "input": {
-            "/etc/release": "             OpenIndiana Development oi_151.1.9 X86 (powered by illumos)\n        Copyright 2011 Oracle and/or its affiliates. All rights reserved.\n                        Use is subject to license terms.\n                           Assembled 17 January 2014\n"
+            "/etc/release": ("             OpenIndiana Development oi_151.1.9 X86 (powered by illumos)\n        Copyright 2011 Oracle and/or its affiliates. "
+                             "All rights reserved.\n                        Use is subject to license terms.\n                           "
+                             "Assembled 17 January 2014\n")
         },
         "platform.system": "SunOS"
     },
@@ -524,7 +561,9 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             ""
         ],
         "input": {
-            "/etc/release": "  OmniOS v11 r151012\n  Copyright 2014 OmniTI Computer Consulting, Inc. All rights reserved.\n  Use is subject to license terms.\n\n"
+            "/etc/release": (
+                "  OmniOS v11 r151012\n  Copyright 2014 OmniTI Computer Consulting, Inc. All rights reserved.\n  Use is subject to license terms.\n\n"
+            )
         },
         "platform.system": "SunOS"
     },
@@ -543,7 +582,9 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             ""
         ],
         "input": {
-            "/etc/release": "                         Open Storage Appliance v3.1.6\n           Copyright (c) 2014 Nexenta Systems, Inc.  All Rights Reserved.\n           Copyright (c) 2011 Oracle.  All Rights Reserved.\n                         Use is subject to license terms.\n"
+            "/etc/release": ("                         Open Storage Appliance v3.1.6\n           Copyright (c) 2014 Nexenta Systems, Inc.  "
+                             "All Rights Reserved.\n           Copyright (c) 2011 Oracle.  All Rights Reserved.\n                         "
+                             "Use is subject to license terms.\n")
         },
         "platform.system": "SunOS"
     },
@@ -562,7 +603,9 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             ""
         ],
         "input": {
-            "/etc/release": "                        Open Storage Appliance 4.0.3-FP2\n           Copyright (c) 2014 Nexenta Systems, Inc.  All Rights Reserved.\n           Copyright (c) 2010 Oracle.  All Rights Reserved.\n                        Use is subject to license terms.\n"
+            "/etc/release": ("                        Open Storage Appliance 4.0.3-FP2\n           Copyright (c) 2014 Nexenta Systems, Inc.  "
+                             "All Rights Reserved.\n           Copyright (c) 2010 Oracle.  All Rights Reserved.\n                        "
+                             "Use is subject to license terms.\n")
         },
         "platform.system": "SunOS"
     },
@@ -581,7 +624,9 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             ""
         ],
         "input": {
-            "/etc/release": "                       Solaris 10 10/09 s10x_u8wos_08a X86\n           Copyright 2009 Sun Microsystems, Inc.  All Rights Reserved.\n                        Use is subject to license terms.\n                           Assembled 16 September 2009\n"
+            "/etc/release": ("                       Solaris 10 10/09 s10x_u8wos_08a X86\n           Copyright 2009 Sun Microsystems, Inc.  "
+                             "All Rights Reserved.\n                        Use is subject to license terms.\n                           "
+                             "Assembled 16 September 2009\n")
         },
         "platform.system": "SunOS"
     },
@@ -600,7 +645,8 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             ""
         ],
         "input": {
-            "/etc/release": "                           Oracle Solaris 11 11/11 X86\n  Copyright (c) 1983, 2011, Oracle and/or its affiliates.  All rights reserved.\n                            Assembled 18 October 2011\n"
+            "/etc/release": ("                           Oracle Solaris 11 11/11 X86\n  Copyright (c) 1983, 2011, Oracle and/or its affiliates.  "
+                             "All rights reserved.\n                            Assembled 18 October 2011\n")
         },
         "platform.system": "SunOS"
     },
@@ -613,7 +659,8 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             ""
             ],
         "input": {
-            "/etc/release": "                             Oracle Solaris 11.3 X86\n  Copyright (c) 1983, 2015, Oracle and/or its affiliates.  All rights reserved.\n                            Assembled 06 October 2015\n"
+            "/etc/release": ("                             Oracle Solaris 11.3 X86\n  Copyright (c) 1983, 2015, Oracle and/or its affiliates.  "
+            "All rights reserved.\n                            Assembled 06 October 2015\n")
             },
         "platform.system": "SunOS",
         "result": {
@@ -632,7 +679,8 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             ""
             ],
         "input": {
-            "/etc/release": "                    Oracle Solaris 10 1/13 s10x_u11wos_24a X86\n  Copyright (c) 1983, 2013, Oracle and/or its affiliates. All rights reserved.\n                            Assembled 17 January 2013\n"
+            "/etc/release": ("                    Oracle Solaris 10 1/13 s10x_u11wos_24a X86\n  Copyright (c) 1983, 2013, Oracle and/or its affiliates. "
+                             "All rights reserved.\n                            Assembled 17 January 2013\n")
             },
         "platform.system": "SunOS",
         "result": {
@@ -652,7 +700,11 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             ],
         "input": {
             "/etc/redhat-release": "Fedora release 22 (Twenty Two)\n",
-            "/etc/os-release": "NAME=Fedora\nVERSION=\"22 (Twenty Two)\"\nID=fedora\nVERSION_ID=22\nPRETTY_NAME=\"Fedora 22 (Twenty Two)\"\nANSI_COLOR=\"0;34\"\nCPE_NAME=\"cpe:/o:fedoraproject:fedora:22\"\nHOME_URL=\"https://fedoraproject.org/\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\nREDHAT_BUGZILLA_PRODUCT=\"Fedora\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=22\nREDHAT_SUPPORT_PRODUCT=\"Fedora\"\nREDHAT_SUPPORT_PRODUCT_VERSION=22\nPRIVACY_POLICY_URL=https://fedoraproject.org/wiki/Legal:PrivacyPolicy\n",
+            "/etc/os-release": ("NAME=Fedora\nVERSION=\"22 (Twenty Two)\"\nID=fedora\nVERSION_ID=22\nPRETTY_NAME=\"Fedora 22 (Twenty Two)\"\n"
+                                "ANSI_COLOR=\"0;34\"\nCPE_NAME=\"cpe:/o:fedoraproject:fedora:22\"\nHOME_URL=\"https://fedoraproject.org/\"\n"
+                                "BUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\nREDHAT_BUGZILLA_PRODUCT=\"Fedora\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=22\n"
+                                "REDHAT_SUPPORT_PRODUCT=\"Fedora\"\nREDHAT_SUPPORT_PRODUCT_VERSION=22\n"
+                                "PRIVACY_POLICY_URL=https://fedoraproject.org/wiki/Legal:PrivacyPolicy\n"),
             "/etc/system-release": "Fedora release 22 (Twenty Two)\n"
             },
         "result": {
@@ -671,7 +723,12 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             ],
         "input": {
             "/etc/redhat-release": "Fedora release 25 (Rawhide)\n",
-            "/etc/os-release": "NAME=Fedora\nVERSION=\"25 (Workstation Edition)\"\nID=fedora\nVERSION_ID=25\nPRETTY_NAME=\"Fedora 25 (Workstation Edition)\"\nANSI_COLOR=\"0;34\"\nCPE_NAME=\"cpe:/o:fedoraproject:fedora:25\"\nHOME_URL=\"https://fedoraproject.org/\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\nREDHAT_BUGZILLA_PRODUCT=\"Fedora\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=rawhide\nREDHAT_SUPPORT_PRODUCT=\"Fedora\"\nREDHAT_SUPPORT_PRODUCT_VERSION=rawhide\nPRIVACY_POLICY_URL=https://fedoraproject.org/wiki/Legal:PrivacyPolicy\nVARIANT=\"Workstation Edition\"\nVARIANT_ID=workstation\n",
+            "/etc/os-release": ("NAME=Fedora\nVERSION=\"25 (Workstation Edition)\"\nID=fedora\nVERSION_ID=25\n"
+                                "PRETTY_NAME=\"Fedora 25 (Workstation Edition)\"\nANSI_COLOR=\"0;34\"\nCPE_NAME=\"cpe:/o:fedoraproject:fedora:25\"\n"
+                                "HOME_URL=\"https://fedoraproject.org/\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\n"
+                                "REDHAT_BUGZILLA_PRODUCT=\"Fedora\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=rawhide\nREDHAT_SUPPORT_PRODUCT=\"Fedora\"\n"
+                                "REDHAT_SUPPORT_PRODUCT_VERSION=rawhide\nPRIVACY_POLICY_URL=https://fedoraproject.org/wiki/Legal:PrivacyPolicy\n"
+                                "VARIANT=\"Workstation Edition\"\nVARIANT_ID=workstation\n"),
             "/etc/system-release": "Fedora release 25 (Rawhide)\n"
             },
         "name": "Fedora 25",
@@ -691,7 +748,8 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             ""
         ],
         "input": {
-            "/etc/sourcemage-release": "Source Mage GNU/Linux x86_64-pc-linux-gnu\nInstalled from tarball using chroot image (Grimoire 0.61-rc) on Thu May 17 17:31:37 UTC 2012\n"
+            "/etc/sourcemage-release": ("Source Mage GNU/Linux x86_64-pc-linux-gnu\nInstalled from tarball using chroot image (Grimoire 0.61-rc) "
+                                        "on Thu May 17 17:31:37 UTC 2012\n")
         },
         "name": "SMGL NA",
         "result": {
