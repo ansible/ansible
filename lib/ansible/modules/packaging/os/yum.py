@@ -96,8 +96,8 @@ options:
 
   update_cache:
     description:
-      - Force updating (expiring) the cache. Has an effect only if state is I(present)
-        or I(latest).
+      - Force yum to check if cache is out of date and redownload if needed.
+        Has an effect only if state is I(present) or I(latest).
     required: false
     version_added: "1.9"
     default: "no"
@@ -1046,7 +1046,7 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
     if state in ['installed', 'present', 'latest']:
 
         if module.params.get('update_cache'):
-            module.run_command(yum_basecmd + ['clean expire-cache'])
+            module.run_command(yum_basecmd + ['clean', 'expire-cache'])
 
         my = yum_base(conf_file, installroot)
         try:
