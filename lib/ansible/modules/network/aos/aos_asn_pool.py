@@ -30,14 +30,14 @@ version_added: "2.3"
 short_description: Manage AOS ASN Pool
 description:
   - Apstra AOS ASN Pool module let you manage your ASN Pool easily. You can create
-    create and delete ASN Pool by Name, ID or by using a JSON File. This module
-    is idempotent and support the I(check) mode. It's using the AOS REST API
+    and delete ASN Pool by Name, ID or by using a JSON File. This module
+    is idempotent and support the I(check) mode. It's using the AOS REST API.
 requirements:
   - "aos-pyez >= 0.6.0"
 options:
   session:
     description:
-      - An existing AOS session as obtained by aos_login module
+      - An existing AOS session as obtained by aos_login module.
     required: true
   name:
     description:
@@ -57,13 +57,13 @@ options:
     required: false
   state:
     description:
-      - Indicate what is the expected state of the ASN Pool (present or not)
+      - Indicate what is the expected state of the ASN Pool (present or not).
     default: present
     choices: ['present', 'absent']
     required: false
   ranges:
     description:
-      - List of ASNs ranges to add to the ASN Pool
+      - List of ASNs ranges to add to the ASN Pool. Each range must have 2 values.
     required: false
 '''
 
