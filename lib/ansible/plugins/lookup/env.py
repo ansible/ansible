@@ -25,9 +25,22 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
 
+        options = {'allow_undefined': True, 'default': ''}
         ret = []
         for term in terms:
+
+            if self.update_options(options, term):
+                continue
+
             var = term.split()[0]
-            ret.append(os.getenv(var, ''))
+            envvar = os.getenv(var)
+
+            if envvar is None:
+                if options['allow_undefined']:
+                    ret.append(options['default'])
+                else:
+                    raise AnsibleError('Undefined environment variable: %s' % var)
+            else:
+                ret.append(envvar)
 
         return ret
