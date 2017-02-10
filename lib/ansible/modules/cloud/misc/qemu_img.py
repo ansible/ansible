@@ -70,18 +70,29 @@ notes:
 '''
 
 EXAMPLES = '''
-examples:
-  - description: Create a raw image of 5M.
-    code: qemu_img dest=/tmp/testimg size=5M format=raw
+# Create a raw image of 5M.
+- qemu_img:
+    dest: /tmp/testimg
+    size: 5M
+    format: raw
 
-  - description: Enlarge the image to 6G.
-    code: qemu_img dest=/tmp/testimg size=6G format=qcow2
+# Enlarge the image to 6G.
+- qemu_img:
+    dest: /tmp/testimg
+    size: 6G
+    format: qcow2
 
-  - description: Shrink the image by 3G
-    code: qemu_img dest=/tmp/testing size=-3G format=qcow2
+# Shrink the image by 3G
+    code: qemu_img
+    dest: /tmp/testing
+    size: -3G
+    shrink: yes
+    format: qcow2
 
-  - description: Remove the image
-    code: qemu_img dest=/tmp/testimg state=absent
+# Remove the image
+- qemu_img:
+    dest: /tmp/testimg
+    state: absent
 '''
 
 RETURN = '''
