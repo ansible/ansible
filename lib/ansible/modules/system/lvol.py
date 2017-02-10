@@ -228,7 +228,8 @@ def parse_lvs(data):
         lvs.append({
             'name': parts[0].replace('[', '').replace(']', ''),
             'size': int(decimal_point.match(parts[1]).group(1)),
-            'active': (parts[2][4] == 'a')
+            'active': (parts[2][4] == 'a'),
+            'thinpool': (parts[2][0] == 't'),
         })
     return lvs
 
@@ -381,28 +382,31 @@ def main():
 
     lvs = parse_lvs(current_lvs)
 
-    if lv:
-        if snapshot:
-            for test_lv in lvs:
-                if test_lv['name'] == lv:
+    if snapshot:
+        ### check snapshot pre-conditions
+        for test_lv in lvs:
+            if test_lv['name'] == lv or test_lv['name'] == thinpool:
+                if not test_lv['thinpool'] and not thinpool:
                     break
-            else:
-                module.fail_json(msg="Snapshot origin LV %s does not exist in volume group %s." % (lv, vg))
-            check_lv = snapshot
+                else:
+                    module.fail_json(msg="Snapshots of thin pool LVs are not supported.")
+        else:
+            module.fail_json(msg="Snapshot origin LV %s does not exist in volume group %s." % (lv, vg))
+        check_lv = snapshot
 
-        elif thinpool:
+    elif thinpool:
+        if lv:
+            ### check thin volume pre-conditions
             for test_lv in lvs:
                 if test_lv['name'] == thinpool:
                     break
             else:
                 module.fail_json(msg="Thin pool LV %s does not exist in volume group %s." % (thinpool, vg))
             check_lv = lv
-
         else:
-            check_lv = lv
-
-    elif thinpool:
-        check_lv = thinpool
+            check_lv = thinpool
+    else:
+        check_lv = lv
 
     for test_lv in lvs:
         if test_lv['name'] in (check_lv, check_lv.rsplit('/', 1)[-1]):
