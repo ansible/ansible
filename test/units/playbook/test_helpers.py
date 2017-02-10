@@ -389,7 +389,8 @@ class TestLoadListOfBlocks(unittest.TestCase, MixinForMocks):
     def test_block_unknown_action(self):
         ds = [{'action': 'foo'}]
         mock_play = MagicMock(name='MockPlay')
-        res = helpers.load_list_of_blocks(ds, mock_play, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None)
+        res = helpers.load_list_of_blocks(ds, mock_play, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None,
+                                          loader=None)
 
         self.assertIsInstance(res, list)
         for block in res:
