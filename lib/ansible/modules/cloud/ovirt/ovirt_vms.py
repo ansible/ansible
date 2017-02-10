@@ -769,7 +769,6 @@ class VmsModule(BaseModule):
 
     def __attach_nics(self, entity):
         # Attach NICs to VM, if specified:
-        vnic_profiles_service = self._connection.system_service().vnic_profiles_service()
         nics_service = self._service.service(entity.id).nics_service()
         for nic in self.param('nics'):
             if search_by_name(nics_service, nic.get('name')) is None:
