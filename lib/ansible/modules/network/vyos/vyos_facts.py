@@ -96,9 +96,10 @@ ansible_net_gather_subset:
 """
 import re
 
-from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.vyos import run_commands
+from ansible.module_utils.vyos import vyos_argument_spec, check_args
 
 
 class FactsBase(object):
@@ -251,7 +252,13 @@ def main():
         gather_subset=dict(default=['!config'], type='list')
     )
 
-    module = LocalAnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    argument_spec.update(vyos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
 
     gather_subset = module.params['gather_subset']
 
@@ -303,7 +310,7 @@ def main():
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 
-    module.exit_json(ansible_facts=ansible_facts)
+    module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
 
 if __name__ == '__main__':
