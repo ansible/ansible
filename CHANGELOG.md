@@ -145,6 +145,7 @@ Ansible Changes By Release
 - net_command
 - netapp
   * sf_snapshot_schedule_manager
+  * sf_volume_access_group_manager
 - nginx_status_facts
 - omapi_host
 - openssl:
@@ -227,6 +228,7 @@ Ansible Changes By Release
   * vmadm
 - sorcery
 - stacki_host
+- swupd
 - tempfile
 - tower:
   * tower_organization
