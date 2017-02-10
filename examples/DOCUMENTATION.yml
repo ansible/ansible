@@ -2,29 +2,33 @@
 # If a key doesn't apply to your module (ex: choices, default, or
 # aliases) you can use the word 'null', or an empty list, [], where
 # appropriate.
+#
+# See docs.ansible.com/ansible/dev_guide/developing_modules.html for more information
+#
 module: modulename
 short_description: This is a sentence describing the module
 description:
-    - Longer description of the module
-    - You might include instructions
+    - Longer description of the module.
+    - You might include instructions.
 version_added: "X.Y"
-author: "Your AWESOME name, @awesome-github-id"
-notes:
-    - Other things consumers of your module should know 
-    - Additional setting requirements
-requirements:
-    - list of required things
-    - like the factor package
-    - or a specific platform
+author: "Your AWESOME name (@awesome-github-id)"
 options:
 # One or more of the following
     option_name:
         description:
-            - Words go here
-            - that describe
-            - this option
+            - Description of the options goes here.
+            - Must be written in sentences.
         required: true or false
         default: a string or the word null
-        choices: [list, of, choices]
-        aliases: [list, of, aliases]
-        version_added: 1.X
+        choices:
+          - enable
+          - disable
+        aliases:
+          - repo_name
+        version_added: "1.X"
+notes:
+    - Other things consumers of your module should know.
+requirements:
+    - list of required things.
+    - like the factor package
+    - zypper >= 1.0
