@@ -58,7 +58,7 @@ options:
   shrink:
     choices: [ "yes", "no" ]
     defaults: "no"
-    description
+    description:
     - Whether the image should shrink
   state:
     choices: [ "absent", "present"]
