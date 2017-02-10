@@ -43,28 +43,23 @@ options:
     description:
       - Name of the ASN Pool to manage.
         Only one of I(name), I(id) or I(content) can be set.
-    required: false
   id:
     description:
       - AOS Id of the ASN Pool to manage.
         Only one of I(name), I(id) or I(content) can be set.
-    required: false
   content:
     description:
       - Datastructure of the ASN Pool to create. The data can be in YAML / JSON or
         directly a variable. It's the same datastructure that is returned
         on success in I(value).
-    required: false
   state:
     description:
       - Indicate what is the expected state of the ASN Pool (present or not).
     default: present
     choices: ['present', 'absent']
-    required: false
   ranges:
     description:
       - List of ASNs ranges to add to the ASN Pool. Each range must have 2 values.
-    required: false
 '''
 
 EXAMPLES = '''
