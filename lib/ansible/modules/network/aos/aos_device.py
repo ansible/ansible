@@ -52,7 +52,7 @@ options:
   state:
     description:
       - Define in which state the device should be. Currently only I(normal)
-        is supported but the goal is to add I(maint) and I(decomm).ß
+        is supported but the goal is to add I(maint) and I(decomm).
     default: normal
     choices: ['normal']
   approve:
@@ -62,7 +62,7 @@ options:
   location:
     description:
       - When approving a device using the I(approve) argument, it's possible
-        define the location of the device.ß
+        define the location of the device.
 '''
 
 EXAMPLES = '''
