@@ -26,11 +26,12 @@ class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
 
         options = {'allow_undefined': True, 'default': ''}
+
+        # override options passed in
+        options.update(kwargs)
+
         ret = []
         for term in terms:
-
-            if self.update_options(options, term):
-                continue
 
             var = term.split()[0]
             envvar = os.getenv(var)
