@@ -156,7 +156,8 @@ def template_absent(module, aos, my_template):
     # If not in check mode, delete Template
     if not module.check_mode:
         try:
-            time.sleep(2)
+            # need to way 1sec before delete to workaround a current limitation in AOS
+            time.sleep(1)
             my_template.delete()
         except:
             module.fail_json(msg="An error occured, while trying to delete the Template")
