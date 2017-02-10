@@ -49,7 +49,7 @@ options:
         Only one of I(name), I(id) or I(content) can be set.
   content:
     description:
-      - Datastructure of the ASN Pool to create. The data can be in YAML / JSON or
+      - Datastructure of the ASN Pool to manage. The data can be in YAML / JSON or
         directly a variable. It's the same datastructure that is returned
         on success in I(value).
   state:
