@@ -31,40 +31,35 @@ short_description: Manage AOS IP Pool
 description:
   - Apstra AOS Ip Pool module let you manage your IP Pool easily. You can create
     create and delete IP Pool by Name, ID or by using a JSON File. This module
-    is idempotent and support the I(check) mode. It's using the AOS REST API
+    is idempotent and support the I(check) mode. It's using the AOS REST API.
 requirements:
   - "aos-pyez >= 0.6.0"
 options:
   session:
     description:
-      - An existing AOS session as obtained by aos_login module
+      - An existing AOS session as obtained by aos_login module.
     required: true
   name:
     description:
       - Name of the IP Pool to manage.
         Only one of I(name), I(id) or I(content) can be set.
-    required: false
   id:
     description:
       - AOS Id of the IP Pool to manage (can't be used to create a new IP Pool),
         Only one of I(name), I(id) or I(content) can be set.
-    required: false
   content:
     description:
-      - Datastructure of the IP Pool to create. The data can be in YAML / JSON or
+      - Datastructure of the IP Pool to manage. The data can be in YAML / JSON or
         directly a variable. It's the same datastructure that is returned
         on success in I(value).
-    required: false
   state:
     description:
-      - Indicate what is the expected state of the IP Pool (present or not)
+      - Indicate what is the expected state of the IP Pool (present or not).
     default: present
     choices: ['present', 'absent']
-    required: false
   subnets:
     description:
-      - List of subnet that needs to be part of the IP Pool
-    required: false
+      - List of subnet that needs to be part of the IP Pool.
 '''
 
 EXAMPLES = '''
