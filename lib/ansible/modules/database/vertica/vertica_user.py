@@ -306,7 +306,7 @@ def main():
             user=dict(required=True, aliases=['name']),
             profile=dict(default=None),
             resource_pool=dict(default=None),
-            password=dict(default=None),
+            password=dict(default=None, no_log=True),
             expired=dict(type='bool', default=None),
             ldap=dict(type='bool', default=None),
             roles=dict(default=None, aliases=['role']),
