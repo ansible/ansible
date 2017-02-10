@@ -193,14 +193,18 @@ def main():
 
     if state == 'present' and zone_in in zones:
         if private_zone:
-            details = conn.get_hosted_zone(zones[zone_in])
+            details = conn.get_hosted_zone(zones[zone_in])['GetHostedZoneResponse']
 
-            if 'VPCs' not in details['GetHostedZoneResponse']:
+            if 'VPCs' not in details:
                 module.fail_json(
                     msg="Can't change VPC from public to private"
                 )
 
-            vpc_details = details['GetHostedZoneResponse']['VPCs']['VPC']
+            # this is to deal with this boto bug: https://github.com/boto/boto/pull/2882
+            if isinstance(details['VPCs'], dict):
+                vpc_details = details['VPCs']['VPC']
+            else:  # Forward compatibility for when boto fixes that bug
+                vpc_details = [v for v in details['VPCs'] if v['VPCId']== vpc_id][0]
             current_vpc_id = vpc_details['VPCId']
             current_vpc_region = vpc_details['VPCRegion']
 
