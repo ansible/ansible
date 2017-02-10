@@ -98,7 +98,7 @@ try {
       Stop-WebAppPool -Name $name -ErrorAction Stop
       $result.changed = $TRUE
     }
-    if ((($state -eq 'started') -and ($pool.State -eq 'Stopped')) {
+    if (($state -eq 'started') -and ($pool.State -eq 'Stopped')) {
       Start-WebAppPool -Name $name -ErrorAction Stop
       $result.changed = $TRUE
     }
