@@ -31,7 +31,7 @@ Although it's tempting to get straight into coding, there are a few things to be
 Naming Convention
 `````````````````
 
-As you may have noticed when looking under ``lib/ansible/modules/`` we support up to two directories deep (but no deeper), e.g. `databases/mysql`. This is used to group files on disk as well as group related modules in the Module Index, for example: :doc:`../list_of_database_modules`.
+As you may have noticed when looking under ``lib/ansible/modules/`` we support up to two directories deep (but no deeper), e.g. `databases/mysql`. This is used to group files on disk as well as group related modules into categories and topics the Module Index, for example: :doc:`../list_of_database_modules`.
 
 The directory name should represent the *product* or *OS* name, not the company name.
 
@@ -81,10 +81,10 @@ The first PR is slightly different to the rest because it:
 
 The first PR should include the following files:
 
-* ``lib/ansible/modules/$area/$prefix/__init__.py`` - An empty file to initialize namespace and allow Python to import the files. *Required new file*
-* ``lib/ansible/modules/$area/$prefix/$yourfirstmodule.py`` - A single module. *Required new file*
-* ``lib/ansible/utils/module_docs_fragments/$prefix.py`` - Code documentation, such as details regarding common arguments. *Optional new file*
-* ``lib/ansible/module_utils/$prefix.py`` - Code shared between more than one module, such as common arguments. *Optional new file*
+* ``lib/ansible/modules/$category/$topic/__init__.py`` - An empty file to initialize namespace and allow Python to import the files. *Required new file*
+* ``lib/ansible/modules/$category/$topic/$yourfirstmodule.py`` - A single module. *Required new file*
+* ``lib/ansible/utils/module_docs_fragments/$topic.py`` - Code documentation, such as details regarding common arguments. *Optional new file*
+* ``lib/ansible/module_utils/$topic.py`` - Code shared between more than one module, such as common arguments. *Optional new file*
 *  ``docs/docsite/rst/dev_guide/developing_module_utilities.rst`` - Document your new `module_utils` file. *Optional update to existing file*
 
 And that's it.
