@@ -44,24 +44,20 @@ options:
     description:
       - Name of the Logical Device to manage.
         Only one of I(name), I(id) or I(content) can be set.
-    required: false
   id:
     description:
       - AOS Id of the Logical Device to manage (can't be used to create a new Logical Device),
         Only one of I(name), I(id) or I(content) can be set.
-    required: false
   content:
     description:
       - Datastructure of the IP Pool to create. The data can be in YAML / JSON or
         directly a variable. It's the same datastructure that is returned
         on success in I(value).
-    required: false
   state:
     description:
       - Indicate what is the expected state of the Logical Device (present or not).
     default: present
     choices: ['present', 'absent']
-    required: false
 '''
 
 EXAMPLES = '''
