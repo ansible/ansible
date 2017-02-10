@@ -1,1 +1,3 @@
 lib/ansible/plugins/action/__init__.py
+lib/ansible/plugins/cache/pickle.py
+lib/ansible/plugins/cache/yaml.py
