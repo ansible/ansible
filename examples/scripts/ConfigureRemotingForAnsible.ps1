@@ -112,10 +112,11 @@ Function New-LegacySelfSignedCert
     $certdata = $enrollment.CreateRequest(0)
     $enrollment.InstallResponse(2, $certdata, 0, "")
 
-    # Return the thumbprint of the last installed certificate;
-    # This is needed for the new HTTPS WinRM listerner we're
-    # going to create further down.
-    Get-ChildItem "Cert:\LocalMachine\my"| Sort-Object NotBefore -Descending | Select -First 1 | Select -Expand Thumbprint
+    # extract/return the thumbprint from the generated cert
+    $parsed_cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
+    $parsed_cert.Import([System.Text.Encoding]::UTF8.GetBytes($certdata))
+
+    return $parsed_cert.Thumbprint
 }
 
 # Setup error handling.
