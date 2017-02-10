@@ -127,10 +127,6 @@ changed:
     changed: true
 """
 
-
-from ansible.module_utils.ec2 import boto3_conn
-import traceback
-
 try:
     import boto3
     import botocore
@@ -183,14 +179,15 @@ def delete(module, connection, name):
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        name            = dict(required=True, type='str'),
-        state           = dict(required=True, type='str', choices=['present', 'absent', 'copy']),
-        replication_id  = dict(required=False, type='str'),
-        cluster_id      = dict(required=False, type='str'),
-        target          = dict(required=False, type='str'),
-        bucket          = dict(required=False, type='str'),
-    )
+    argument_spec.update(
+        dict(
+            name=dict(required=True, type='str'),
+            state=dict(required=True, type='str', choices=['present', 'absent', 'copy']),
+            replication_id=dict(type='str'),
+            cluster_id=dict(type='str'),
+            target=dict(type='str'),
+            bucket=dict(type='str'),
+        )
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
@@ -198,12 +195,12 @@ def main():
     if not HAS_BOTO3:
         module.fail_json(msg='boto required for this module')
 
-    name                    = module.params.get('name')
-    state                   = module.params.get('state')
-    replication_id          = module.params.get('replication_id')
-    cluster_id              = module.params.get('cluster_id')
-    target                  = module.params.get('target')
-    bucket                  = module.params.get('bucket')
+    name = module.params.get('name')
+    state = module.params.get('state')
+    replication_id  = module.params.get('replication_id')
+    cluster_id = module.params.get('cluster_id')
+    target = module.params.get('target')
+    bucket = module.params.get('bucket')
 
     # Retrieve any AWS settings from the environment.
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
@@ -214,8 +211,8 @@ def main():
                             resource='elasticache', region=region,
                             endpoint=ec2_url, **aws_connect_kwargs)
 
-    changed     = False
-    response    = {}
+    changed = False
+    response = {}
 
     if state == 'present':
         if not all((replication_id, cluster_id)):
@@ -234,7 +231,8 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict
+import traceback
 
 if __name__ == '__main__':
     main()
