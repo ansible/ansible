@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2016, NetApp, Inc
+# (c) 2017, NetApp, Inc
 #
 # This file is part of Ansible
 #
@@ -17,6 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 
@@ -34,32 +37,31 @@ description:
 options:
 
   state:
-    required: true
     description:
     - Whether the specified user should exist or not.
+    required: true
     choices: ['present', 'absent']
 
   name:
-    required: true
     description:
-    - The name of the role to manage
+    - The name of the role to manage.
+    required: true
 
   command_directory_name:
-    required: true
     description:
     - The command or command directory to which the role has an access.
+    required: true
 
   access_level:
-    required: false
     description:
-    - The name of the role to manage
+    - The name of the role to manage.
     choices: ['none', 'readonly', 'all']
     default: 'all'
 
   vserver:
-    required: true
     description:
-    - vserver
+    - The name of the vserver to use.
+    required: true
 
 '''
 
@@ -79,53 +81,30 @@ EXAMPLES = """
 """
 
 RETURN = """
-msg:
-    description: Successfully created User Role
-    returned: success
-    type: string
-    sample: '{"changed": true}'
 
 """
-
-
-"""
-TODO:
-    Add ability to update properties.
-"""
-
-import logging
-from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 import ansible.module_utils.netapp as netapp_utils
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
-
-logging.basicConfig(level=logging.ERROR)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 class NetAppCDOTUserRole(object):
 
     def __init__(self):
-        logger.debug('Init %s', self.__class__.__name__)
-
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
         self.argument_spec.update(dict(
-                state=dict(required=True, choices=['present', 'absent']),
-                name=dict(required=True, type='str'),
+            state=dict(required=True, choices=['present', 'absent']),
+            name=dict(required=True, type='str'),
 
-                command_directory_name=dict(required=True, type='str'),
-                access_level=dict(required=False, type='str', default='all',
-                                  choices=['none', 'readonly', 'all']),
+            command_directory_name=dict(required=True, type='str'),
+            access_level=dict(required=False, type='str', default='all',
+                              choices=['none', 'readonly', 'all']),
 
-                vserver=dict(required=True, type='str'),
-            ))
+            vserver=dict(required=True, type='str'),
+        ))
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
@@ -179,7 +158,7 @@ class NetAppCDOTUserRole(object):
             if str(e.code) == "16031":
                 return False
             else:
-                raise
+                self.module.fail_json(msg='Error getting role %s' % self.name, exception=str(e))
 
         if (result.get_child_by_name('num-records') and
                 int(result.get_child_content('num-records')) >= 1):
@@ -188,8 +167,6 @@ class NetAppCDOTUserRole(object):
             return False
 
     def create_role(self):
-        logger.debug('Creating role %s', self.name)
-
         role_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'security-login-role-create', **{'vserver': self.vserver,
                                              'role-name': self.name,
@@ -202,14 +179,10 @@ class NetAppCDOTUserRole(object):
             self.server.invoke_successfully(role_create,
                                             enable_tunneling=False)
         except netapp_utils.zapi.NaApiError:
-            e = get_exception()
-            logger.exception('Error creating role %s. Error: '
-                             '%s', self.name, str(e))
-            raise
+            err = get_exception()
+            self.module.fail_json(msg='Error creating role %s' % self.name, exception=str(err))
 
     def delete_role(self):
-        logger.debug('Removing role %s', self.name)
-
         role_delete = netapp_utils.zapi.NaElement.create_node_with_children(
             'security-login-role-delete', **{'vserver': self.vserver,
                                              'role-name': self.name,
@@ -220,10 +193,8 @@ class NetAppCDOTUserRole(object):
             self.server.invoke_successfully(role_delete,
                                             enable_tunneling=False)
         except netapp_utils.zapi.NaApiError:
-            e = get_exception()
-            logger.exception('Error removing role %s. Error: %s ',
-                             self.name, str(e))
-            raise
+            err = get_exception()
+            self.module.fail_json(msg='Error removing role %s' % self.name, exception=str(err))
 
     def apply(self):
         changed = False
@@ -231,49 +202,32 @@ class NetAppCDOTUserRole(object):
 
         if role_exists:
             if self.state == 'absent':
-                logger.debug(
-                    "CHANGED: role exists, but requested state is "
-                    "'absent'")
                 changed = True
 
-            """ TODO: Add ability to update parameters
-            elif self.state == 'present':
-            """
+            # Check if properties need to be updated
         else:
             if self.state == 'present':
-                logger.debug(
-                    "CHANGED: role does not exist, but requested state is"
-                    "'present'")
                 changed = True
 
         if changed:
             if self.module.check_mode:
-                logger.debug('skipping changes due to check mode')
+                pass
             else:
                 if self.state == 'present':
                     if not role_exists:
                         self.create_role()
 
-                    """ TODO: Add ability to update parameters
-                    else:
-                    """
+                    # Update properties
+
                 elif self.state == 'absent':
                     self.delete_role()
-        else:
-            logger.debug("exiting with no changes")
 
         self.module.exit_json(changed=changed)
 
 
 def main():
     v = NetAppCDOTUserRole()
-
-    try:
-        v.apply()
-    except Exception:
-        e = get_exception()
-        logger.debug("Exception in apply(): \n%s" % format_exc(e))
-        raise
+    v.apply()
 
 if __name__ == '__main__':
     main()
