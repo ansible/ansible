@@ -20,14 +20,18 @@ All modules must have the following sections defined in this order:
 
 .. note:: Why don't the imports go first?
 
-  Keen Python programmers may notice that contary to PEP8's advice we don't put ``imports`` at the top of the file. This is due to how modules used to be combined with libraries. For more information see :doc:`developing_program_flow_modules`.
+  Keen Python programmers may notice that contary to PEP8's advice we don't put ``imports`` at the top of the file. This is because the ``ANSIBLE_METADATA`` through ``RETURNS`` sections are not used by the module code itself. They are essentially extra docstrings for the file. The imports are placed after these special variables for the same reason as PEP8 puts the imports after the introductory comments and docstrings. This keeps the active parts of the code together and the pieces which are purely informational apart. The decision to exclude E402 is based on readability (which is what PEP8 is about). Documentation strings in a module are much more similar to module level docstrings, than code, and are never utilized by the module itself. Placing the imports below this documentation and closer to the code, consolidates and groups all related code in a congruent manner to improve readability, debugging and understanding.
+
+.. warning:: Why do some modules have imports at the bottom of the file
+
+  If you look at some existing older modules, you may find imports at the bottom of the file. Do not copy that idiom into new modules as it is a historical oddity due to how modules used to be combined with libraries. Over time we're moving the imports to be in their proper place.
 
 
 
 ANSIBLE_METADATA Block
 ''''''''''''''''''''''
 
-Some into line needed
+ANSIBLE_METADATA contains information about the module for use by other tools. At the moment, it informs other tools about what class of people maintains the module and to what degree users can rely on a module's behaviour remaining the same over time.
 
 For new modules the following block can be simply added into your module::
 
@@ -35,13 +39,13 @@ For new modules the following block can be simply added into your module::
                        'supported_by': 'community',
                        'version': '1.0'}
 
-.. note:: version field
+.. warning:: version field
 
    This is the version of the ``ANSIBLE_METADATA`` schema, *not* the version of the module.
 
-.. note::
+.. warning::
 
-   Promoting a modules ``status`` or ``supported_by`` status should only be done by members of the Ansible Core Team.
+   Promoting a module's ``status`` or ``supported_by`` status should only be done by members of the Ansible Core Team.
 
 Version 1.0 of the metadata
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
