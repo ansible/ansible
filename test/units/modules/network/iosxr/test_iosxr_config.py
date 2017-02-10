@@ -20,78 +20,30 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import json
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
-from ansible.errors import AnsibleModuleExit
+from ansible.compat.tests.mock import patch
 from ansible.modules.network.iosxr import iosxr_config
-from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
+from .iosxr_module import TestIosxrModule, load_fixture, set_module_args
 
+class TestIosxrConfigModule(TestIosxrModule):
 
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
-
-fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
-fixture_data = {}
-
-def load_fixture(name):
-    path = os.path.join(fixture_path, name)
-
-    if path in fixture_data:
-        return fixture_data[path]
-
-    with open(path) as f:
-        data = f.read()
-
-    try:
-        data = json.loads(data)
-    except:
-        pass
-
-    fixture_data[path] = data
-    return data
-
-
-class TestIosxrConfigModule(unittest.TestCase):
+    module = iosxr_config
 
     def setUp(self):
         self.patcher_get_config = patch('ansible.modules.network.iosxr.iosxr_config.get_config')
         self.mock_get_config = self.patcher_get_config.start()
-        self.patcher_exec_command = patch('ansible.modules.network.iosxr.iosxr_config.LocalAnsibleModule.exec_command')
+        self.patcher_exec_command = patch('ansible.modules.network.iosxr.iosxr_config.load_config')
         self.mock_exec_command = self.patcher_exec_command.start()
 
     def tearDown(self):
         self.patcher_get_config.stop()
         self.patcher_exec_command.stop()
 
-    def execute_module(self, failed=False, changed=False, commands=None,
-            sort=True):
-
+    def load_fixtures(self, commands=None):
         config_file = 'iosxr_config_config.cfg'
         self.mock_get_config.return_value = load_fixture(config_file)
-        self.mock_exec_command.return_value = (0, 'dummy diff', None)
-
-        with self.assertRaises(AnsibleModuleExit) as exc:
-            iosxr_config.main()
-
-        result = exc.exception.result
-
-        if failed:
-            self.assertTrue(result['failed'], result)
-        else:
-            self.assertEqual(result.get('changed'), changed, result)
-
-        if commands:
-            if sort:
-                self.assertEqual(sorted(commands), sorted(result['updates']), result['updates'])
-            else:
-                self.assertEqual(commands, result['updates'], result['updates'])
-
-        return result
+        self.mock_exec_command.return_value = 'dummy diff'
 
     def test_iosxr_config_unchanged(self):
         src = load_fixture('iosxr_config_config.cfg')
