@@ -135,4 +135,7 @@ class TestPlaybookExecutor(unittest.TestCase):
         play = playbook.get_plays()[0]
         play.post_validate(templar)
         mock_inventory.get_hosts.return_value = ['host0','host1','host2','host3','host4','host5','host6','host7','host8','host9','host10']
-        self.assertEqual(pbe._get_serialized_batches(play), [['host0','host1'],['host2','host3'],['host4','host5'],['host6','host7'],['host8','host9'],['host10']])
+        self.assertEqual(
+            pbe._get_serialized_batches(play),
+            [['host0','host1'],['host2','host3'],['host4','host5'],['host6','host7'],['host8','host9'],['host10']]
+        )

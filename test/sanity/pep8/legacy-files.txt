@@ -276,15 +276,3 @@ lib/ansible/utils/module_docs_fragments/netapp.py
 lib/ansible/utils/module_docs_fragments/ovirt.py
 lib/ansible/utils/module_docs_fragments/ovirt_facts.py
 lib/ansible/vars/__init__.py
-setup.py
-test/units/cli/test_galaxy.py
-test/units/errors/test_errors.py
-test/units/executor/test_playbook_executor.py
-test/units/mock/yaml_helper.py
-test/units/module_utils/basic/test__log_invocation.py
-test/units/module_utils/test_basic.py
-test/units/module_utils/test_distribution_version.py
-test/units/module_utils/test_facts.py
-test/units/parsing/yaml/test_loader.py
-test/units/playbook/test_helpers.py
-test/units/playbook/test_play_context.py

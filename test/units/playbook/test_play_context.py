@@ -144,16 +144,26 @@ class TestPlayContext(unittest.TestCase):
 
         play_context.become_method = 'sudo'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-        self.assertEqual(cmd, """%s %s -u %s %s -c 'echo %s; %s'""" % (sudo_exe, sudo_flags, play_context.become_user, default_exe, play_context.success_key, default_cmd))
+        self.assertEqual(
+            cmd,
+            """%s %s -u %s %s -c 'echo %s; %s'""" % (sudo_exe, sudo_flags, play_context.become_user, default_exe, play_context.success_key, default_cmd)
+        )
         play_context.become_pass = 'testpass'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable=default_exe)
-        self.assertEqual(cmd, """%s %s -p "%s" -u %s %s -c 'echo %s; %s'""" % (sudo_exe, sudo_flags.replace('-n',''), play_context.prompt, play_context.become_user, default_exe, play_context.success_key, default_cmd))
+        self.assertEqual(
+            cmd,
+            """%s %s -p "%s" -u %s %s -c 'echo %s; %s'""" % (sudo_exe, sudo_flags.replace('-n',''), play_context.prompt, play_context.become_user, default_exe,
+                                                             play_context.success_key, default_cmd)
+        )
 
         play_context.become_pass = None
 
         play_context.become_method = 'su'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-        self.assertEqual(cmd, """%s  %s -c '%s -c '"'"'echo %s; %s'"'"''""" % (su_exe, play_context.become_user, default_exe, play_context.success_key, default_cmd))
+        self.assertEqual(
+            cmd,
+            """%s  %s -c '%s -c '"'"'echo %s; %s'"'"''""" % (su_exe, play_context.become_user, default_exe, play_context.success_key, default_cmd)
+        )
 
         play_context.become_method = 'pbrun'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
@@ -165,11 +175,17 @@ class TestPlayContext(unittest.TestCase):
 
         play_context.become_method = 'doas'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-        self.assertEqual(cmd, """%s %s echo %s && %s %s env ANSIBLE=true %s""" % (doas_exe, doas_flags, play_context.success_key, doas_exe, doas_flags, default_cmd))
+        self.assertEqual(
+            cmd,
+            """%s %s echo %s && %s %s env ANSIBLE=true %s""" % (doas_exe, doas_flags, play_context.success_key, doas_exe, doas_flags, default_cmd)
+        )
 
         play_context.become_method = 'ksu'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-        self.assertEqual(cmd, """%s %s %s -e %s -c 'echo %s; %s'""" % (ksu_exe, play_context.become_user, ksu_flags, default_exe, play_context.success_key, default_cmd))
+        self.assertEqual(
+            cmd,
+            """%s %s %s -e %s -c 'echo %s; %s'""" % (ksu_exe, play_context.become_user, ksu_flags, default_exe, play_context.success_key, default_cmd)
+        )
 
         play_context.become_method = 'bad'
         self.assertRaises(AnsibleError, play_context.make_become_cmd, cmd=default_cmd, executable="/bin/bash")
@@ -181,7 +197,12 @@ class TestPlayContext(unittest.TestCase):
         play_context.become_pass = 'testpass'
         play_context.become_method = 'dzdo'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-        self.assertEqual(cmd, """%s -p %s -u %s %s -c 'echo %s; %s'""" % (dzdo_exe, shlex_quote(play_context.prompt), play_context.become_user, default_exe, play_context.success_key, default_cmd))
+        self.assertEqual(
+            cmd,
+            """%s -p %s -u %s %s -c 'echo %s; %s'""" % (dzdo_exe, shlex_quote(play_context.prompt), play_context.become_user, default_exe,
+                                                        play_context.success_key, default_cmd)
+        )
+
 
 class TestTaskAndVariableOverrride(unittest.TestCase):
 
