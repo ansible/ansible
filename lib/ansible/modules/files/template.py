@@ -102,10 +102,10 @@ EXAMPLES = '''
     dest: /etc/sudoers
     validate: 'visudo -cf %s'
 
-# Update SSH configuration safely (avoid shutting yourself out)
+# Update sshd configuration safely, avoid locking yourself out
 - template:
     src: etc/ssh/sshd_config.j2
-    dest: /etc/ssh/sshd_config.j2
+    dest: /etc/ssh/sshd_config
     owner: root
     group: root
     mode: '0600'
