@@ -31,14 +31,14 @@ Include it in your module file like this:
     '''
 
 
-The following fields can be used and are all required unless specified otherwise
+The following fields can be used and are all required unless specified otherwise:
 
 * ``module:``
   The name of the module. This must be the same as the filename, without the ``.py`` extension.
 * ``short_description:``
 
   * A short description which is displayed on the :doc:`../list_of_all_modules` page and ``ansible-doc -l``.
-  * As the short description is displayed by ``ansible-doc -l`` without the category grouping it needs enough detail to explain it's purpose without the context of the directory structure in which it lives.i
+  * As the short description is displayed by ``ansible-doc -l`` without the category grouping it needs enough detail to explain its purpose without the context of the directory structure in which it lives.
   * Unlike ``description:`` this field should not have a trailing full stop.
 * ``description:``
   * A detailed description (generally two or more sentences).
@@ -62,12 +62,14 @@ The following fields can be used and are all required unless specified otherwise
   * ``required:``
     Only needed if true, otherwise it is assumed to be false.
   * ``default:``
+  
     * If `required` is false/missing, `default` may be specified (assumed 'null' if missing).
-    * Ensure that the default parameter in the docs matches default parameter in the code. The default option must not be listed as part of the description.
+    * Ensure that the default parameter in the docs matches the default parameter in the code. 
+    * The default option must not be listed as part of the description. 
   * ``choices:``
     List of option values. Should be absent if empty.
   * ``aliases:``
-    List of option name aliases; generally not needed..
+    List of option name aliases; generally not needed.
   * ``version_added:``
     Only needed if this option was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
     This is a string, and not a float, i.e. ``version_added: "2.3"``.
