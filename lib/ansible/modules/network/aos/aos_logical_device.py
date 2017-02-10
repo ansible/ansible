@@ -32,13 +32,13 @@ description:
   - Apstra AOS Logical Device module let you manage your Logical Devices easily.
     You can create create and delete IP Pool by Name, ID or by using a JSON File.
     This module is idempotent and support the I(check) mode.
-    It's using the AOS REST API
+    It's using the AOS REST API.
 requirements:
   - "aos-pyez >= 0.6.0"
 options:
   session:
     description:
-      - An existing AOS session as obtained by aos_login module
+      - An existing AOS session as obtained by aos_login module.
     required: true
   name:
     description:
@@ -58,7 +58,7 @@ options:
     required: false
   state:
     description:
-      - Indicate what is the expected state of the Logical Device (present or not)
+      - Indicate what is the expected state of the Logical Device (present or not).
     default: present
     choices: ['present', 'absent']
     required: false
