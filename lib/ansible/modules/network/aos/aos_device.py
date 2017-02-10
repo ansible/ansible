@@ -113,18 +113,16 @@ def aos_device_normal(module, aos, dev):
                              id=dev.id,
                              value=dev.value)
 
-        try:
-            if not module.check_mode:
+        if not module.check_mode:
+            try:
                 dev.approve(location=margs['location'])
+            except (SessionError, SessionRqstError):
+                module.fail_json(msg="Unable to approve device")\
 
-            module.exit_json(changed=True,
-                             name=dev.name,
-                             id=dev.id,
-                             value=dev.value)
-
-        except (SessionError, SessionRqstError):
-            module.fail_json(msg="Unable to approve device")
-
+        module.exit_json(changed=True,
+                         name=dev.name,
+                         id=dev.id,
+                         value=dev.value)
     else:
         # Check if the device is online
         if dev.state in ('OOS-READY','IS-READY'):
