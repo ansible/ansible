@@ -94,8 +94,9 @@ def main():
             stdout_text=dict(required=False, type='str'),
             stderr_text=dict(required=False, type='str'),
             return_code=dict(required=False, type='int'),
-            return_data=dict(required=False, type='dict'),
-            return_data_updates=dict(required=False, type='dict'),
+            return_data=dict(required=False, type='dict', default=None),
+            return_data_updates=dict(required=False, type='dict', default={}),
+            output_list=dict(required=False, type='list', default=[]),
             failure_mode=dict(required=False, type='str',
                               choices=['sys_exit', 'no_output', 'hang', 'python_traceback', 'incomplete_json'])
         ),
@@ -108,14 +109,47 @@ def main():
     failure_mode = module.params.get('failure_mode')
     return_data_updates = module.params.get('return_data_updates', {})
     return_data = module.params.get('return_data', None)
+    output_list = module.params.get('output_list', [])
 
     sys_exit = None
 
     nobuf_stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
     nobuf_stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
 
+    def nobuf_stdout_write(what):
+        nobuf_stdout.write(what)
+        nobuf_stdout.flush()
+
+    def nobuf_stderr_write(what):
+        nobuf_stderr.write(what)
+        nobuf_stderr.flush()
+
+    def stdout_write(what):
+        sys.stdout.write(what)
+        sys.stdout.flush()
+
+    def stderr_write(what):
+        sys.stderr.write(what)
+        sys.stderr.flush()
+
     if failure_mode == SYS_EXIT:
         sys_exit = True
+
+    where_map = {'stdout': stdout_write,
+                 'stderr': stderr_write,
+                 'nobuf_stdout': nobuf_stdout_write,
+                 'nobug_stderr': nobuf_stderr_write}
+
+    # A list of data indicating what to output to where and in what order. Useful for
+    # interleaving stdout/stderr
+    for output_info in output_list:
+        where = output_info.get('where', 'stdout')
+        what = output_info.get('what', None)
+        # TODO: when?
+
+        # call the writer method
+        where_map[where](what)
+
 
     if stdout_text:
         nobuf_stdout.write(stdout_text)
@@ -148,14 +182,16 @@ def main():
     fail_data.update(return_data_updates)
     if return_data:
         fail_data = return_data
-    module.fail_json(**fail_data)
+        module.fail_json(**fail_data)
 
     exit_data = dict(changed=False,
                      msg="epic_fail did not live up to its name.")
     exit_data.update(return_data_updates)
     if return_data:
         exit_data = return_data
-    module.exit_json(**exit_data)
+        module.exit_json(**exit_data)
+
+    module.fail_json(msg='You haved failed at failing. End of epic_fail reached.')
 
 
 if __name__ == '__main__':
