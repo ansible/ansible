@@ -46,6 +46,9 @@ options:
         description:
             - password for authentication
         required: true
+    api_key:
+        description:
+            - API key that can be used instead of username/password credentials.
     rule_name:
         description:
             - description of the security rule
@@ -172,7 +175,7 @@ options:
 
 EXAMPLES = '''
 # permit ssh to 1.1.1.1
-- panos_security_policy1:
+- panos_security_policy:
     ip_address: '10.5.172.91'
     username: 'admin'
     password: 'paloalto'
@@ -191,7 +194,7 @@ EXAMPLES = '''
     commit: false
 
 # Allow HTTP multimedia only from CDNs
-- panos_security_policy1:
+- panos_security_policy:
     ip_address: '10.5.172.91'
     username: 'admin'
     password: 'paloalto'
@@ -210,7 +213,7 @@ EXAMPLES = '''
     commit: false
 
 # more complex fictitious rule that uses profiles
-- panos_security_policy1:
+- panos_security_policy:
     ip_address: '10.5.172.91'
     username: 'admin'
     password: 'paloalto'
@@ -226,7 +229,7 @@ EXAMPLES = '''
     commit: false
 
 # deny all
-- panos_security_policy1:
+- panos_security_policy:
     ip_address: '10.5.172.91'
     username: 'admin'
     password: 'paloalto'
@@ -236,6 +239,26 @@ EXAMPLES = '''
     action: 'deny'
     rule_type: 'interzone'
     commit: false
+
+# permit ssh to 1.1.1.1 using panorama and pushing the configuration to firewalls
+# that are defined in 'DeviceGroupA' device group
+- name: permit ssh to 1.1.1.1 through Panorama
+  panos_security_policy:
+    ip_address: '10.5.172.92'
+    password: 'paloalto'
+    rule_name: 'SSH permit'
+    description: 'SSH rule test'
+    from_zone: ['public']
+    to_zone: ['private']
+    source: ['any']
+    source_user: ['any']
+    destination: ['1.1.1.1']
+    category: ['any']
+    application: ['ssh']
+    service: ['application-default']
+    hip_profiles: ['any']
+    action: 'allow'
+    devicegroup: 'DeviceGroupA'
 '''
 
 RETURN = '''
@@ -254,6 +277,7 @@ try:
     from pan.xapi import PanXapiError
     import pandevice
     import pandevice.firewall
+    import pandevice.panorama
     import pandevice.objects
     import pandevice.policies
 
@@ -262,15 +286,21 @@ except ImportError:
     HAS_LIB = False
 
 
-def security_rule_exists(fw, rule_name):
-    rule_base = pandevice.policies.Rulebase.refreshall(fw)
+def security_rule_exists(device, rule_name):
+    if isinstance(device, pandevice.firewall.Firewall):
+        rule_base = pandevice.policies.Rulebase.refreshall(device)
+    elif isinstance(device, pandevice.panorama.Panorama):
+        # look for only pre-rulebase ATM
+        rule_base = pandevice.policies.PreRulebase.refreshall(device)
+
     if rule_base:
         rule_base = rule_base[0]
         security_rules = rule_base.findall(pandevice.policies.SecurityRule)
 
-        for r in security_rules:
-            if r.name == rule_name:
-                return True
+        if security_rules:
+            for r in security_rules:
+                if r.name == rule_name:
+                    return True
 
     return False
 
@@ -318,8 +348,12 @@ def create_security_rule(**kwargs):
     return security_rule
 
 
-def add_security_rule(fw, sec_rule):
-    rule_base = pandevice.policies.Rulebase.refreshall(fw)
+def add_security_rule(device, sec_rule):
+    if isinstance(device, pandevice.firewall.Firewall):
+        rule_base = pandevice.policies.Rulebase.refreshall(device)
+    elif isinstance(device, pandevice.panorama.Panorama):
+        # look for only pre-rulebase ATM
+        rule_base = pandevice.policies.PreRulebase.refreshall(device)
 
     if rule_base:
         rule_base = rule_base[0]
@@ -332,11 +366,26 @@ def add_security_rule(fw, sec_rule):
         return False
 
 
+def _commit(device, device_group=None):
+    """
+    :param device: either firewall or panorama
+    :param device_group: panorama device group or if none then 'all'
+    :return: True if successful
+    """
+    result = device.commit(sync=True)
+
+    if isinstance(device, pandevice.panorama.Panorama):
+        result = device.commit_all(sync=True, sync_all=True, devicegroup=device_group)
+
+    return result
+
+
 def main():
     argument_spec = dict(
         ip_address=dict(required=True),
-        password=dict(required=True, no_log=True),
+        password=dict(no_log=True),
         username=dict(default='admin'),
+        api_key=dict(no_log=True),
         rule_name=dict(required=True),
         description=dict(default=''),
         tag=dict(),
@@ -361,13 +410,16 @@ def main():
         log_end=dict(type='bool', default=True),
         rule_type=dict(default='universal'),
         action=dict(default='allow'),
+        devicegroup=dict(),
         commit=dict(type='bool', default=True)
     )
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,
+                           required_one_of=[['api_key', 'password']])
 
     ip_address = module.params["ip_address"]
     password = module.params["password"]
     username = module.params['username']
+    api_key = module.params['api_key']
     rule_name = module.params['rule_name']
     description = module.params['description']
     tag = module.params['tag']
@@ -394,11 +446,22 @@ def main():
     data_filtering = module.params['data_filtering']
     wildfire_analysis = module.params['wildfire_analysis']
 
+    devicegroup = module.params['devicegroup']
+
     commit = module.params['commit']
 
-    fw = pandevice.firewall.Firewall(ip_address, username, password)
+    if devicegroup:
+        device = pandevice.panorama.Panorama(ip_address, username, password, api_key=api_key)
+        dev_grps = device.refresh_devices()
 
-    if security_rule_exists(fw, rule_name):
+        for grp in dev_grps:
+            if grp.name == devicegroup:
+                break
+            module.fail_json(msg=' \'%s\' device group not found in Panorama. Is the name correct?' % devicegroup)
+    else:
+        device = pandevice.firewall.Firewall(ip_address, username, password, api_key=api_key)
+
+    if security_rule_exists(device, rule_name):
         module.fail_json(msg='Rule with the same name already exists.')
 
     try:
@@ -429,13 +492,13 @@ def main():
             action=action
         )
 
-        changed = add_security_rule(fw, sec_rule)
+        changed = add_security_rule(device, sec_rule)
     except PanXapiError:
         exc = get_exception()
         module.fail_json(msg=exc.message)
 
     if changed and commit:
-        fw.commit(sync=True)
+        result = _commit(device, devicegroup)
 
     module.exit_json(changed=changed, msg="okey dokey")
 
