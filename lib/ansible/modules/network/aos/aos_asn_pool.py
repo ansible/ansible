@@ -193,9 +193,9 @@ def asn_pool_absent(module, aos, my_pool):
     # If in Use, return an error
     if my_pool.value:
         if my_pool.value['status'] != 'not_in_use':
-            module.fail_json(msg="Unable to delete this Asn Pool is currently in use")
+            module.fail_json(msg="Unable to delete ASN Pool '%s' is currently in use" % my_pool.name)
     else:
-        module.fail_json(msg="Asn Pool object has an invalid format, value['status'] must be defined")
+        module.fail_json(msg="ASN Pool object has an invalid format, value['status'] must be defined")
 
     # If not in check mode, delete Ip Pool
     if not module.check_mode:
