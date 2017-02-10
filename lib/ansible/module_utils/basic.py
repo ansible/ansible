@@ -1680,7 +1680,6 @@ class AnsibleModule(object):
             # try to capture all passwords/passphrase named fields
             elif arg_type != 'bool' and PASSWORD_MATCH.search(param):
                 log_args[param] = 'NOT_LOGGING_PASSWORD'
-                self.warn('Module did not set no_log for %s' % param)
             else:
                 param_val = self.params[param]
                 if not isinstance(param_val, (text_type, binary_type)):
