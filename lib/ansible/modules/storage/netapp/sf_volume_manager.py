@@ -174,7 +174,7 @@ class SolidFireVolume(object):
             name=dict(required=True, type='str'),
             account_id=dict(required=True, type='int'),
 
-            enable512e=dict(type='bool'),
+            enable512e=dict(type='bool', aliases=['512emulation']),
             qos=dict(required=False, type='str', default=None),
             attributes=dict(required=False, type='dict', default=None),
 
