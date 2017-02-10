@@ -20,6 +20,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
+import os
+
 from json import dumps
 from collections import MutableMapping
 
@@ -30,6 +32,11 @@ from ansible.errors import AnsibleError
 from ansible.parsing.splitter import parse_kv
 from ansible.module_utils._text import to_native, to_text
 
+cur_id = 0
+def get_unique_id():
+    global cur_id
+    cur_id += 1
+    return "%s-%s" % (os.getpid(), cur_id)
 
 def _validate_mutable_mappings(a, b):
     """
