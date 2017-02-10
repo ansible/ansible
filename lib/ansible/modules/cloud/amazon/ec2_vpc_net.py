@@ -150,7 +150,7 @@ def update_vpc_tags(vpc, module, vpc_obj, tags, name):
     tags.update({'Name': name})
     try:
         current_tags = dict((t.name, t.value) for t in vpc.get_all_tags(filters={'resource-id': vpc_obj.id}))
-        if cmp(tags, current_tags):
+        if tags != current_tags:
             if not module.check_mode:
                 vpc.create_tags(vpc_obj.id, tags)
             return True
