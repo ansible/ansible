@@ -10,6 +10,90 @@ which conforms to the schema defined below. You may find it easier to
 start writing your ``DOCUMENTATION`` string in an editor with YAML
 syntax highlighting before you include it in your Python file.
 
+All modules must have the following sections defined in this order:
+
+ 1. ANSIBLE_METADATA
+ 2. DOCUMENTATION
+ 3. EXAMPLES
+ 4. RETURNS
+ 5. Python imports
+
+
+
+.. note:: Why don't the imports go first?
+
+  Keen Python programmers may notice that contary to PEP8's advice we don't put ``imports`` at the top of the file. This is due to how modules used to be combined with libraries. For more information see :doc:`developing_program_flow_modules`.
+
+
+
+ANSIBLE_METADATA Block
+''''''''''''''''''''''
+
+Some into line needed
+
+For new modules the following block can be simply added into your module::
+
+   ANSIBLE_METADATA = {'status': ['preview'],
+                       'supported_by': 'community',
+                       'version': '1.0'}
+
+.. note:: version field
+
+   This is the version of the ``ANSIBLE_METADATA`` schema, *not* the version of the module.
+
+.. note::
+
+   Promoting a modules ``status`` or ``supported_by`` status should only be done by members of the Ansible Core Team.
+
+Version 1.0 of the metadata
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Structure**::
+
+  ANSIBLE_METADATA = {
+      'version': '1.0',
+      'supported_by': 'core|community|core_curated',
+      'status': ['stableinterface|preview|deprecated|removed']
+  }
+
+**Fields**
+
+-  **version**: An “X.Y” formatted string. X and Y are integers which
+   define the metadata format version. Modules shipped with Ansible are
+   tied to an Ansible release so we will only ship with a single version
+   of the metadata. We’ll increment Y if we add fields or legal values
+   to an existing field. We’ll increment X if we remove fields or values
+   or change the type or meaning of a field.
+-  **supported_by**: This field records who supports the module.
+   Default value is community. Values are:
+
+  -  **core**: maintained by the ansible core team. Core team will fix
+     bugs, add new features, and review PRs.
+  -  **community**: This module is maintained by the community at large.
+     Community is responsible for fixing bugs, adding new features, and
+     reviewing changes.
+  -  **unmaintained**: This module currently needs a new community
+     contributor to help maintain it.
+  -  **committer**: Committers to the ansible repository are the
+     gatekeepers for this module. They will review PRs from the community
+     before merging but might not generate fixes and code for new features
+     on their own.
+-  **status**: This field records information about the module that is
+   important to the end user. It’s a list of strings. The default value
+   is a single element list [“preview”]. The following strings are valid
+   statuses and have the following meanings:
+
+  -  **stableinterface**: This means that the module’s parameters are
+     stable. Every effort will be made not to remove parameters or change
+     their meaning. It is not a rating of the module’s code quality.
+  -  **preview**: This module is a tech preview. This means it may be
+     unstable, the parameters may change, or it may require libraries or
+     web services that are themselves subject to incompatible changes.
+  -  **deprecated**: This module is deprecated and will no longer be
+     available in a future release.
+  -  **removed**: This module is not present in the release. A stub is
+     kept so that documentation can be built. The documentation helps
+     users port from the removed module to new modules.
 
 DOCUMENTATION Block
 '''''''''''''''''''
@@ -62,10 +146,10 @@ The following fields can be used and are all required unless specified otherwise
   * ``required:``
     Only needed if true, otherwise it is assumed to be false.
   * ``default:``
-  
+
     * If `required` is false/missing, `default` may be specified (assumed 'null' if missing).
-    * Ensure that the default parameter in the docs matches the default parameter in the code. 
-    * The default option must not be listed as part of the description. 
+    * Ensure that the default parameter in the docs matches the default parameter in the code.
+    * The default option must not be listed as part of the description.
   * ``choices:``
     List of option values. Should be absent if empty.
   * ``aliases:``
