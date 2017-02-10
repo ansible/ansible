@@ -58,7 +58,7 @@ options:
         required: true
         aliases: [ "name", "path" ]
         description:
-            - List of paths to the file or directory to search. All paths must be fully qualified.
+            - List of paths of directories to search. All paths must be fully qualified.
     file_type:
         required: false
         description:
