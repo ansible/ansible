@@ -104,50 +104,50 @@ group:
     type: dictionary
     contains:
         arn:
-    		description: the Amazon Resource Name (ARN) specifying the group
-    		type: string
-    		sample: "arn:aws:iam::1234567890:group/testgroup1"
-		create_date:
-		    description: the date and time, in ISO 8601 date-time format, when the group was created
-		    type: string
-		    sample: "2017-02-08T04:36:28+00:00"
-	    group_id:
-		    description: the stable and unique string identifying the group
-		    type: string
-		    sample: AGPAIDBWE12NSFINE55TM
-		group_name:
-		    description: the friendly name that identifies the group
-		    type: string
-		    sample: testgroup1
-		path:
-		    description: the path to the group
-		    type: string
-		    sample: /
+            description: the Amazon Resource Name (ARN) specifying the group
+            type: string
+            sample: "arn:aws:iam::1234567890:group/testgroup1"
+        create_date:
+            description: the date and time, in ISO 8601 date-time format, when the group was created
+            type: string
+            sample: "2017-02-08T04:36:28+00:00"
+        group_id:
+            description: the stable and unique string identifying the group
+            type: string
+            sample: AGPAIDBWE12NSFINE55TM
+        group_name:
+            description: the friendly name that identifies the group
+            type: string
+            sample: testgroup1
+        path:
+            description: the path to the group
+            type: string
+            sample: /
 users:
     description: list containing all the group members
     returned: success
     type: list
     contains:
         arn:
-    		description: the Amazon Resource Name (ARN) specifying the user
-    		type: string
-    		sample: "arn:aws:iam::1234567890:user/test_user1"
-		create_date:
-		    description: the date and time, in ISO 8601 date-time format, when the user was created
-		    type: string
-		    sample: "2017-02-08T04:36:28+00:00"
-	    user_id:
-		    description: the stable and unique string identifying the user
-		    type: string
-		    sample: AIDAIZTPY123YQRS22YU2
-		user_name:
-		    description: the friendly name that identifies the user
-		    type: string
-		    sample: testgroup1
-		path:
-		    description: the path to the user
-		    type: string
-		    sample: /		    
+            description: the Amazon Resource Name (ARN) specifying the user
+            type: string
+            sample: "arn:aws:iam::1234567890:user/test_user1"
+        create_date:
+            description: the date and time, in ISO 8601 date-time format, when the user was created
+            type: string
+            sample: "2017-02-08T04:36:28+00:00"
+        user_id:
+            description: the stable and unique string identifying the user
+            type: string
+            sample: AIDAIZTPY123YQRS22YU2
+        user_name:
+            description: the friendly name that identifies the user
+            type: string
+            sample: testgroup1
+        path:
+            description: the path to the user
+            type: string
+            sample: /
 '''
 
 
@@ -233,11 +233,11 @@ def create_or_update_group(connection, module):
 
         # If there are policies in managed_policies attach each policy
         if managed_policies != [None]:
-	        for policy_arn in managed_policies:
-	            try:
-	                connection.attach_group_policy(GroupName=params['GroupName'], PolicyArn=policy_arn)
-	            except (ClientError, ParamValidationError) as e:
-	                module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+            for policy_arn in managed_policies:
+                try:
+                    connection.attach_group_policy(GroupName=params['GroupName'], PolicyArn=policy_arn)
+                except (ClientError, ParamValidationError) as e:
+                    module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
         changed = True
     
@@ -245,7 +245,7 @@ def create_or_update_group(connection, module):
     current_group_members = get_group(connection, params['GroupName'])['Users']
     current_group_members_list = []
     for member in current_group_members:
-    	current_group_members_list.append(member['UserName'])
+        current_group_members_list.append(member['UserName'])
 
     if not compare_group_members(current_group_members_list, users):
 
@@ -264,11 +264,11 @@ def create_or_update_group(connection, module):
                 module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))                    
 
         if users != [None]:
-	        for user in users:
-	            try:
-	                connection.add_user_to_group(GroupName=params['GroupName'], UserName=user)
-	            except (ClientError, ParamValidationError) as e:
-	                module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+            for user in users:
+                try:
+                    connection.add_user_to_group(GroupName=params['GroupName'], UserName=user)
+                except (ClientError, ParamValidationError) as e:
+                    module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
         changed = True
 
@@ -293,10 +293,9 @@ def destroy_group(connection, module):
             module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
         # Remove any users in the group otherwise deletion fails
-    	current_group_members = get_group(connection, params['GroupName'])['Users']
-    	current_group_members_list = []
-    	for member in current_group_members:
-    		current_group_members_list.append(member['UserName'])
+        current_group_members = get_group(connection, params['GroupName'])['Users'    current_group_members_list = []
+        for member in current_group_members:
+            current_group_members_list.append(member['UserName'])
         for user in current_group_members_list:
             try:
                 connection.remove_user_from_group(GroupName=params['GroupName'], UserName=user)
