@@ -13,7 +13,7 @@ Should you have a question rather than a bug report, inquiries are welcome on th
 
 For development-oriented topics, use the `ansible-devel google group <https://groups.google.com/forum/#!forum/ansible-devel>`_  or Ansible's "#ansible" and "#ansible-devel" channels, located on irc.freenode.net.  You should also read :doc:`community`, :doc:`dev_guide/developing_test_pr` and :doc:`dev_guide/developing_modules`.
 
-The modules are hosted on GitHub in the in a subdirectory of the `ansible <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_ repo.
+The modules are hosted on GitHub in a subdirectory of the `ansible <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_ repo.
 
 Core
 ````
@@ -24,13 +24,21 @@ They will also receive slightly higher priority for all requests. Non-core modul
 Curated
 ```````
 
-These modules are currently shipped with Ansible, but might be shipped separately in the future. They are mostly maintained by the community but core committers will oversee any changes or even take care of any issues that arise.
+Some examples of Curated modules are submitted by other companies or maintained by the community. Maintainers of these types of modules must watch for any issues reported or pull requests raised against the module.
+
+Core Committers will review all modules becoming Curated or updates to existing Curated modules. Core committers will also ensure that any issues that arise due to Ansible engine changes will be remediated.
+
+Also, it is strongly recommended (but not presently required) for these types of modules to have unit tests.
+
+These modules are currently shipped with Ansible, but might be shipped separately in the future.
 
 Community
 `````````
+These modules **are not** supported by Core Committers or by companies/partners associated to the module. They are maintained by the community.
 
-These modules are currently shipped with Ansible, but might be shipped separately in the future. They are maintained by the community.
-They are still fully usable, but the response rate to issues is purely up to the community.
+They are still fully usable, but the response rate to issues is purely up to the community.  Best effort support will be provided but is not covered under any support contracts.
+
+These modules are currently shipped with Ansible, but will most likely be shipped separately in the future.
 
 
 .. seealso::
@@ -47,4 +55,3 @@ They are still fully usable, but the response rate to issues is purely up to the
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
