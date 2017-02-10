@@ -33,12 +33,12 @@ options:
     required: true
   managed_policy:
     description:
-      - A list of managed policy ARNs (can't use friendly names due to AWS API limitation) to attach to the group. To embed an inline policy, use M(iam_policy). To remove existing policies, use an empty list item.
+      - A list of managed policy ARNs (can't use friendly names due to AWS API limitation) to attach to the group.
     required: false
   users:
     description:
       - A list of existing users to add as members of the group.
-    required: false    
+    required: false
   state:
     description:
       - Create or remove the IAM group
@@ -208,7 +208,7 @@ def create_or_update_group(connection, module):
         except (ClientError, ParamValidationError) as e:
             module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
-    # Manage managed policies      
+    # Manage managed policies
     current_attached_policies = get_attached_policy_list(connection, params['GroupName'])
     if not compare_attached_group_policies(current_attached_policies, managed_policies):
         # If managed_policies has a single empty element we want to remove all attached policies
@@ -240,7 +240,7 @@ def create_or_update_group(connection, module):
                     module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
         changed = True
-    
+
     # Manage group memberships
     current_group_members = get_group(connection, params['GroupName'])['Users']
     current_group_members_list = []
@@ -250,7 +250,7 @@ def create_or_update_group(connection, module):
     if not compare_group_members(current_group_members_list, users):
 
         # If users has a single empty element we want to remove all users that are members of the group
-        if len(users) == 1 and users[0] == None:
+        if len(users) == 1 and users[0] is None:
             for user in current_group_members_list:
                 try:
                     connection.remove_user_from_group(GroupName=params['GroupName'], UserName=user)
@@ -261,7 +261,7 @@ def create_or_update_group(connection, module):
             try:
                 connection.remove_user_from_group(GroupName=params['GroupName'], UserName=user)
             except (ClientError, ParamValidationError) as e:
-                module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))                    
+                module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))         
 
         if users != [None]:
             for user in users:
@@ -307,7 +307,7 @@ def destroy_group(connection, module):
             connection.delete_group(**params)
         except ClientError as e:
             module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
-    
+
     else:
         module.exit_json(changed=False)
 
