@@ -261,7 +261,7 @@ def create_or_update_group(connection, module):
             try:
                 connection.remove_user_from_group(GroupName=params['GroupName'], UserName=user)
             except (ClientError, ParamValidationError) as e:
-                module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))         
+                module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
         if users != [None]:
             for user in users:
