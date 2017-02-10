@@ -12,13 +12,11 @@ syntax highlighting before you include it in your Python file.
 
 All modules must have the following sections defined in this order:
 
- 1. ANSIBLE_METADATA
- 2. DOCUMENTATION
- 3. EXAMPLES
- 4. RETURNS
- 5. Python imports
-
-
+1. ANSIBLE_METADATA
+2. DOCUMENTATION
+3. EXAMPLES
+4. RETURNS
+5. Python imports
 
 .. note:: Why don't the imports go first?
 
@@ -67,33 +65,33 @@ Version 1.0 of the metadata
 -  **supported_by**: This field records who supports the module.
    Default value is community. Values are:
 
-  -  **core**: maintained by the ansible core team. Core team will fix
-     bugs, add new features, and review PRs.
-  -  **community**: This module is maintained by the community at large.
-     Community is responsible for fixing bugs, adding new features, and
-     reviewing changes.
-  -  **unmaintained**: This module currently needs a new community
-     contributor to help maintain it.
-  -  **committer**: Committers to the ansible repository are the
-     gatekeepers for this module. They will review PRs from the community
-     before merging but might not generate fixes and code for new features
-     on their own.
+   -  **core**: maintained by the ansible core team. Core team will fix
+      bugs, add new features, and review PRs.
+   -  **community**: This module is maintained by the community at large.
+      Community is responsible for fixing bugs, adding new features, and
+      reviewing changes.
+   -  **unmaintained**: This module currently needs a new community
+      contributor to help maintain it.
+   -  **committer**: Committers to the ansible repository are the
+      gatekeepers for this module. They will review PRs from the community
+      before merging but might not generate fixes and code for new features
+      on their own.
 -  **status**: This field records information about the module that is
    important to the end user. It’s a list of strings. The default value
    is a single element list [“preview”]. The following strings are valid
    statuses and have the following meanings:
 
-  -  **stableinterface**: This means that the module’s parameters are
-     stable. Every effort will be made not to remove parameters or change
-     their meaning. It is not a rating of the module’s code quality.
-  -  **preview**: This module is a tech preview. This means it may be
-     unstable, the parameters may change, or it may require libraries or
-     web services that are themselves subject to incompatible changes.
-  -  **deprecated**: This module is deprecated and will no longer be
-     available in a future release.
-  -  **removed**: This module is not present in the release. A stub is
-     kept so that documentation can be built. The documentation helps
-     users port from the removed module to new modules.
+   -  **stableinterface**: This means that the module’s parameters are
+      stable. Every effort will be made not to remove parameters or change
+      their meaning. It is not a rating of the module’s code quality.
+   -  **preview**: This module is a tech preview. This means it may be
+      unstable, the parameters may change, or it may require libraries or
+      web services that are themselves subject to incompatible changes.
+   -  **deprecated**: This module is deprecated and will no longer be
+      available in a future release.
+   -  **removed**: This module is not present in the release. A stub is
+      kept so that documentation can be built. The documentation helps
+      users port from the removed module to new modules.
 
 DOCUMENTATION Block
 '''''''''''''''''''
