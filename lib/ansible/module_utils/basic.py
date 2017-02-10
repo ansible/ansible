@@ -1819,7 +1819,7 @@ class AnsibleModule(object):
             if self.boolean(no_log):
                 log_args[param] = 'NOT_LOGGING_PARAMETER'
             # try to capture all passwords/passphrase named fields missed by no_log
-            elif arg_type != 'bool' and PASSWORD_MATCH.search(param) and \
+            elif PASSWORD_MATCH.search(param) and \
               arg_opts.get('type', 'str') != 'bool' and \
               not arg_opts.get('choices', False):
                 # skip boolean and enums as they are about 'password' state
