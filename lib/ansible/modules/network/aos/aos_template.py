@@ -31,13 +31,13 @@ short_description: Manage AOS Template
 description:
   - Apstra AOS Template module let you manage your Template easily. You can create
     create and delete Template by Name, ID or by using a JSON File. This module
-    is idempotent and support the I(check) mode. It's using the AOS REST API
+    is idempotent and support the I(check) mode. It's using the AOS REST API.
 requirements:
   - "aos-pyez >= 0.6.0"
 options:
   session:
     description:
-      - An existing AOS session as obtained by aos_login module
+      - An existing AOS session as obtained by aos_login module.
     required: true
   name:
     description:
@@ -57,7 +57,7 @@ options:
     required: false
   state:
     description:
-      - Indicate what is the expected state of the Template (present or not)
+      - Indicate what is the expected state of the Template (present or not).
     default: present
     choices: ['present', 'absent']
     required: false
