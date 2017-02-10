@@ -663,7 +663,7 @@ def main():
             ipv6=dict(required=False, default=False, type='bool'),
             multi_key=dict(required=False, default=False, type='bool'),
             timeout=dict(required=False, default=300),
-            password=dict(required=True),
+            password=dict(required=True, no_log=True),
             minutes=dict(required=False, default=30),
             debug=dict(required=False, default=0, type='int')
         ),

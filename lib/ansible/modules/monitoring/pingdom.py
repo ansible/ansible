@@ -128,7 +128,7 @@ def main():
             state=dict(required=True, choices=['running', 'paused', 'started', 'stopped']),
             checkid=dict(required=True),
             uid=dict(required=True),
-            passwd=dict(required=True),
+            passwd=dict(required=True, no_log=True),
             key=dict(required=True)
         )
     )

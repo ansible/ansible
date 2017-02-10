@@ -613,7 +613,7 @@ class ClcServer:
             ttl=dict(default=None),
             managed_os=dict(type='bool', default=False),
             description=dict(default=None),
-            source_server_password=dict(default=None),
+            source_server_password=dict(default=None, no_log=True),
             cpu_autoscale_policy_id=dict(default=None),
             anti_affinity_policy_id=dict(default=None),
             anti_affinity_policy_name=dict(default=None),

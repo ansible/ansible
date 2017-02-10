@@ -119,7 +119,7 @@ def add_dag(xapi, dag_name, dag_filter):
 def main():
     argument_spec = dict(
         ip_address=dict(required=True),
-        password=dict(required=True),
+        password=dict(required=True, no_log=True),
         username=dict(default='admin'),
         dag_name=dict(required=True),
         dag_filter=dict(required=True),
