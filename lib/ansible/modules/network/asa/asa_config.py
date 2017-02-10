@@ -311,7 +311,7 @@ def main():
 
         config=dict(),
         defaults=dict(type='bool', default=False),
-        passwords=dict(type='bool', default=False, no_log=True),
+        passwords=dict(type='bool', default=False),
 
         backup=dict(type='bool', default=False),
         save=dict(type='bool', default=False),
