@@ -19,10 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import uuid
-
 from ansible.inventory.group import Group
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import combine_vars, get_unique_id
 
 __all__ = ['Host']
 
@@ -92,7 +90,7 @@ class Host:
         self._gathered_facts = False
         self._uuid = None
         if gen_uuid:
-            self._uuid = uuid.uuid4()
+            self._uuid = get_unique_id()
         self.implicit = False
 
     def __repr__(self):
