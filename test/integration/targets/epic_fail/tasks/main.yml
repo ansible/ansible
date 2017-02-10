@@ -1,0 +1,94 @@
+---
+- name: The first Play
+  #hosts: newhost
+  #  strategy: free
+  hosts: local_ssh
+  gather_facts: False
+  vars:
+     var_1: type(type)
+     var_2: type(type)()
+     var_3: "type(type)"
+     var_4: "type(type)()"
+     var_5_2: "'{{ var_2 }}'"
+  tasks:
+    - name: epic_fail test 1
+      epic_fail:
+          stderr_text: "Failed to live up to its potential\n"
+      ignore_errors: True
+
+    - name: epic_fail test 2
+      epic_fail:
+          stderr_text: "should exit with a return code of 11\n"
+          return_code: 11
+          # failure_mode: sys_exit
+      register: epic_fail_test_2
+      ignore_errors: True
+
+    - name: epic_fail sys_exit
+      epic_fail:
+          stderr_text: "should exit with a return code of 12 without using fail_json\n\n"
+          stdout_text: "blip bloop\n bsdfadf \n dfsdf"
+          return_code: 12
+          failure_mode: sys_exit
+      register: epic_fail_test_3
+      ignore_errors: True
+
+    - name: epic_fail not-quite-valid-json
+      epic_fail:
+          stdout_text: '{"blip": [true, 37, 1.112, "some_string", ["tuple_a", "tuple_b"], ["list_a", "list_b"], {"dict_a": "dict_a_value"}], "foo": "bar"'
+          failure_mode: sys_exit
+      register: epic_fail_not_quite_valid_json
+      ignore_errors: True
+
+
+    - name: debug epic_fail_test_2
+      debug: var=epic_fail_test_2
+
+    - name: debug epic_fail_test_3
+      debug: var=epic_fail_test_3
+
+    - name: debug epic_fail_not_quite_valid_json
+      debug: var=epic_fail_not_quite_valid_json
+
+    - name: conditional on epic_fail_test_3
+      debug: msg="testing cond on epic_fail_test_3"
+      when: epic_fail_test_3.rc == 0
+
+    - name: conditional on epic_fail_test_3 false
+      debug: msg="conditional on epic_fail_test_3 false"
+      when: epic_fail_test_3.rc == 1
+
+    - name: epic_fail random
+      epic_fail:
+          stdout_text: "I'm not angry, I'm just disappointed.\n"
+          stderr_text: "The standard error is deep with in each and everyone of us.\n"
+          #          failure_mode: sys_exit
+          return_code: 1
+          return_data:
+              gluub: 'glubby fooby'
+              bad_poetry: "Whatever dude."
+              msg: "Is on medium. Its kind of mediocre, if you understand what I am saying."
+              stuff: "do you even json?"
+      register: epic_fail_random_out
+      ignore_errors: true
+
+    - name: debug random_out
+      debug:
+        var: epic_fail_random_out
+
+    - name: epic_fail output_list test
+      epic_fail:
+          output_list:
+              - where: "stderr"
+                what: "STD ERR:Warning, this is a useless message. Do not read it.\n"
+              - where: "stdout"
+                what: "STD OUT: Some notes I wrote to stdout.\n"
+              - where: "nobuf_stdout"
+                what: "STD OUT: I dont mean to interrupt, but your care is on fire.\n"
+          return_code: 37
+      register: epic_fail_output_list_test
+      ignore_errors: true
+
+    - name: debug epic_fail output_list test
+      debug:
+        var: epic_fail_output_list_list
