@@ -127,7 +127,7 @@ def main():
     argument_spec = openstack_full_argument_spec(
         name              = dict(required=True),
         disk_format       = dict(default='qcow2', choices=['ami', 'ari', 'aki', 'vhd', 'vmdk', 'raw', 'qcow2', 'vdi', 'iso']),
-        container_format  = dict(default='bare', choices=['ami', 'aki', 'ari', 'bare', 'ovf', 'ova']),
+        container_format  = dict(default='bare', choices=['ami', 'aki', 'ari', 'bare', 'ovf', 'ova', 'docker']),
         owner             = dict(default=None),
         min_disk          = dict(type='int', default=0),
         min_ram           = dict(type='int', default=0),
