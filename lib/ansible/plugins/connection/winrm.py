@@ -426,7 +426,7 @@ class Connection(ConnectionBase):
                     script = '''
                         If (Test-Path -PathType Leaf "%(path)s")
                         {
-                            $stream = [System.IO.File]::OpenRead("%(path)s");
+                            $stream = New-Object IO.FileStream("%(path)s", [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [IO.FileShare]::ReadWrite);
                             $stream.Seek(%(offset)d, [System.IO.SeekOrigin]::Begin) | Out-Null;
                             $buffer = New-Object Byte[] %(buffer_size)d;
                             $bytesRead = $stream.Read($buffer, 0, %(buffer_size)d);
