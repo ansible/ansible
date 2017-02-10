@@ -216,7 +216,7 @@ class NSoTInventory(object):
         Depending on number of devices in NSoT, could be rather slow since this
         has to request every device resource to filter through
         '''
-        device = [i for i in self.client.devices.get()['data']['devices']
+        device = [i for i in self.client.devices.get()
                   if host in i['hostname']][0]
         attributes = device['attributes']
         attributes.update({'site_id': device['site_id'], 'id': device['id']})
@@ -277,7 +277,7 @@ class NSoTInventory(object):
 
         # Would do a list comprehension here, but would like to save code/time
         # and also acquire attributes in this step
-        for host in devices['data']['devices']:
+        for host in devices:
             # Iterate through each device that matches query, assign hostname
             # to the group's hosts array and then use this single iteration as
             # a chance to update self._meta which will be used in the final
