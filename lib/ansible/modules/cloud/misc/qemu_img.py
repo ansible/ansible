@@ -64,9 +64,9 @@ options:
     choices: [ "absent", "present"]
     description:
     - If the image should be present or absent - default present
-  notes:
-    - This module does not change the type/format of the image
-    - This module does not take snapshots, and should be implemented seperate
+notes:
+  - This module does not change the type/format of the image
+  - This module does not take snapshots, and should be implemented seperate
 '''
 
 EXAMPLES = '''
