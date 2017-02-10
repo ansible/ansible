@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2016, NetApp, Inc
+# (c) 2017, NetApp, Inc
 #
 # This file is part of Ansible
 #
@@ -17,6 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 
@@ -34,63 +37,54 @@ description:
 options:
 
   state:
-    required: true
     description:
     - Whether the specified volume should exist or not.
+    required: true
     choices: ['present', 'absent']
 
   name:
+    description:
+    - The name of the lun to manage.
     required: true
-    description:
-    - The name of the lun to manage
-
-  new_name:
-    required: false
-    description:
-    - Rename the specified volume to the new name.
-    - If the volume is referenced in the /etc/exports file, remember to make
-    - the name change in /etc/exports also so that the affected file system can
-    - be exported by the filer after the filer reboots.
-
-    Note: Set "is-infinite" to True to rename and re-size Infinite Volumes.
 
   is_infinite:
-    required: false
     description:
-    - Set True if the volume is an Infinite Volume
+    - Set True if the volume is an Infinite Volume.
+    required: false
     choices: ['True', 'False']
     default: 'False'
 
   is_online:
-    required: false
     description:
     - Whether the specified volume is online, or not.
+    required: false
     choices: ['True', 'False']
     default: 'True'
 
   aggregate_name:
-    required: false
-    note: required when state == 'present'
     description:
-    - The name of the aggregate the flexvol should exist on
+    - The name of the aggregate the flexvol should exist on.
+    required: false
+    note: required when C(state=present)
 
   size:
-    required: false
-    note: required when state == 'present'
     description:
-    - The size of the volume in (size_unit)
+    - The size of the volume in (size_unit).
+    required: false
+    note: required when C(state=present)
 
   size_unit:
-    required: false
     description:
-    - The unit used to interpret the size parameter
+    - The unit used to interpret the size parameter.
+    required: false
     choices: ['bytes', 'b', 'kb', 'mb', 'gb', 'tb', 'pb', 'eb', 'zb', 'yb']
     default: 'gb'
 
   vserver:
-    required: true
     description:
-    - vserver
+    - Name of the vserver to use.
+    required: true
+    default: None
 
 '''
 
@@ -123,40 +117,20 @@ EXAMPLES = """
 """
 
 RETURN = """
-msg:
-    description: Successfully created FlexVol
-    returned: success
-    type: string
-    sample: '{"changed": true}'
 
-msg:
-    description: Successfully changed FlexVol status to offline
-    returned: success
-    type: string
-    sample: '{"changed": true}'
 
 """
 
 """
-TODO:
-    Add more configurable parameters
+    TODO:
+        Add more configurable parameters
 """
-
-import logging
-from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 import ansible.module_utils.netapp as netapp_utils
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
-
-logging.basicConfig(level=logging.ERROR)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 class NetAppCDOTVolume(object):
@@ -178,18 +152,17 @@ class NetAppCDOTVolume(object):
 
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
         self.argument_spec.update(dict(
-                state=dict(required=True, choices=['present', 'absent']),
-                name=dict(required=True, type='str'),
-                new_name=dict(required=False, type='str', default=None),
-                is_infinite=dict(required=False, type='bool', default=False),
-                is_online=dict(required=False, type='bool', default=True),
-                size=dict(type='int'),
-                size_unit=dict(default='gb',
-                               choices=['bytes', 'b', 'kb', 'mb', 'gb', 'tb',
-                                        'pb', 'eb', 'zb', 'yb'], type='str'),
-                aggregate_name=dict(type='str'),
-                vserver=dict(required=True, type='str', default=None),
-            ))
+            state=dict(required=True, choices=['present', 'absent']),
+            name=dict(required=True, type='str'),
+            is_infinite=dict(required=False, type='bool', default=False),
+            is_online=dict(required=False, type='bool', default=True),
+            size=dict(type='int'),
+            size_unit=dict(default='gb',
+                           choices=['bytes', 'b', 'kb', 'mb', 'gb', 'tb',
+                                    'pb', 'eb', 'zb', 'yb'], type='str'),
+            aggregate_name=dict(type='str'),
+            vserver=dict(required=True, type='str', default=None),
+        ))
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
@@ -204,7 +177,6 @@ class NetAppCDOTVolume(object):
         # set up state variables
         self.state = p['state']
         self.name = p['name']
-        self.new_name = p['new_name']
         self.is_infinite = p['is_infinite']
         self.is_online = p['is_online']
         self.size_unit = p['size_unit']
@@ -265,9 +237,6 @@ class NetAppCDOTVolume(object):
                 is_online = True
             elif current_state == "offline":
                 is_online = False
-            else:
-                logger.debug('Unable to determine whether volume is '
-                             'online/offline')
             return_value = {
                 'name': self.name,
                 'size': current_size,
@@ -277,8 +246,6 @@ class NetAppCDOTVolume(object):
         return return_value
 
     def create_volume(self):
-        logger.debug('Creating volume %s of size %s', self.name, self.size)
-
         volume_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'volume-create', **{'volume': self.name,
                                 'containing-aggr-name': self.aggregate_name,
@@ -288,13 +255,11 @@ class NetAppCDOTVolume(object):
             self.server.invoke_successfully(volume_create,
                                             enable_tunneling=True)
         except netapp_utils.zapi.NaApiError:
-            logger.exception('Error provisioning volume %s of size %s',
-                             self.name, self.size)
-            raise
+            err = get_exception()
+            self.module.fail_json(msg='Error provisioning volume %s of size %s' % (self.name, self.size),
+                                  exception=str(err))
 
     def delete_volume(self):
-        logger.debug('Deleting volume %s', self.name)
-
         if self.is_infinite:
             volume_delete = netapp_utils.zapi.NaElement.create_node_with_children(
                 'volume-destroy-async', **{'volume-name': self.name})
@@ -307,8 +272,9 @@ class NetAppCDOTVolume(object):
             self.server.invoke_successfully(volume_delete,
                                             enable_tunneling=True)
         except netapp_utils.zapi.NaApiError:
-            logger.exception('Error deleting volume %s', self.name)
-            raise
+            err = get_exception()
+            self.module.fail_json(msg='Error deleting volume %s' % self.name,
+                                  exception=str(err))
 
     def rename_volume(self):
         """
@@ -317,23 +283,22 @@ class NetAppCDOTVolume(object):
         Note: 'is_infinite' needs to be set to True in order to rename an
         Infinite Volume.
         """
-        logger.debug('Renaming volume %s', self.name)
-
         if self.is_infinite:
             volume_rename = netapp_utils.zapi.NaElement.create_node_with_children(
                 'volume-rename-async',
                 **{'volume-name': self.name, 'new-volume-name': str(
-                    self.new_name)})
+                    self.name)})
         else:
             volume_rename = netapp_utils.zapi.NaElement.create_node_with_children(
                 'volume-rename', **{'volume': self.name, 'new-volume-name': str(
-                    self.new_name)})
+                    self.name)})
         try:
             self.server.invoke_successfully(volume_rename,
                                             enable_tunneling=True)
         except netapp_utils.zapi.NaApiError:
-            logger.exception('Error renaming volume %s', self.name)
-            raise
+            err = get_exception()
+            self.module.fail_json(msg='Error renaming volume %s' % self.name,
+                                  exception=str(err))
 
     def resize_volume(self):
         """
@@ -342,8 +307,6 @@ class NetAppCDOTVolume(object):
         Note: 'is_infinite' needs to be set to True in order to rename an
         Infinite Volume.
         """
-        logger.debug('Re-sizing volume %s', self.name)
-
         if self.is_infinite:
             volume_resize = netapp_utils.zapi.NaElement.create_node_with_children(
                 'volume-size-async',
@@ -357,8 +320,9 @@ class NetAppCDOTVolume(object):
             self.server.invoke_successfully(volume_resize,
                                             enable_tunneling=True)
         except netapp_utils.zapi.NaApiError:
-            logger.exception('Error re-sizing volume %s', self.name)
-            raise
+            err = get_exception()
+            self.module.fail_json(msg='Error re-sizing volume %s' % self.name,
+                                  exception=str(err))
 
     def change_volume_state(self):
         """
@@ -367,7 +331,6 @@ class NetAppCDOTVolume(object):
         Note: 'is_infinite' needs to be set to True in order to change the
         state of an Infinite Volume.
         """
-        logger.debug('Changing state of volume %s', self.name)
         state_requested = None
         if self.is_online:
             # Requested state is 'online'.
@@ -395,9 +358,9 @@ class NetAppCDOTVolume(object):
             self.server.invoke_successfully(volume_change_state,
                                             enable_tunneling=True)
         except netapp_utils.zapi.NaApiError:
-            logger.exception('Error changing the state of volume %s to %s',
-                             self.name, state_requested)
-            raise
+            err = get_exception()
+            self.module.fail_json(msg='Error changing the state of volume %s to %s' % (self.name, state_requested),
+                                  exception=str(err))
 
     def apply(self):
         changed = False
@@ -410,46 +373,33 @@ class NetAppCDOTVolume(object):
             volume_exists = True
 
             if self.state == 'absent':
-                logger.debug(
-                    "CHANGED: volume exists, but requested state is 'absent'")
                 changed = True
 
             elif self.state == 'present':
-                if self.new_name is not None and not self.new_name == \
-                        self.name:
-                    logger.debug(
-                        "CHANGED: volume needs to be renamed")
-                    rename_volume = True
-                    changed = True
+                # if self.new_name is not None and not self.name == \
+                #         self.name:
+                #     rename_volume = True
+                #     changed = True
                 if str(volume_detail['size']) != str(self.size):
-                    logger.debug(
-                        "CHANGED: volume needs to be re-sized")
                     resize_volume = True
                     changed = True
-                if volume_detail['is_online'] is not \
-                        None and volume_detail['is_online'] != \
-                        self.is_online:
-                    if self.is_online is False:
-                        logger.debug(
-                            "CHANGED: volume is online but requested state "
-                            "is offline")
-                    else:
-                        logger.debug(
-                            "CHANGED: volume is offline but requested state "
-                            "is online")
+                if (volume_detail['is_online'] is not None) and (volume_detail['is_online'] != self.is_online):
                     changed = True
+                    if self.is_online is False:
+                        # Volume is online, but requested state is offline
+                        pass
+                    else:
+                        # Volume is offline but requested state is online
+                        pass
+
 
         else:
             if self.state == 'present':
-                logger.debug(
-                    "CHANGED: volume does not exist, but requested state is "
-                    "'present'")
-
                 changed = True
 
         if changed:
             if self.module.check_mode:
-                logger.debug('skipping changes due to check mode')
+                pass
             else:
                 if self.state == 'present':
                     if not volume_exists:
@@ -468,8 +418,6 @@ class NetAppCDOTVolume(object):
 
                 elif self.state == 'absent':
                     self.delete_volume()
-        else:
-            logger.debug("exiting with no changes")
 
         # TODO: include other details about the volume (size, cache config,
         # etc)
@@ -478,13 +426,7 @@ class NetAppCDOTVolume(object):
 
 def main():
     v = NetAppCDOTVolume()
-
-    try:
-        v.apply()
-    except Exception:
-        e = get_exception()
-        logger.debug("Exception in apply(): \n%s" % format_exc(e))
-        raise
+    v.apply()
 
 if __name__ == '__main__':
     main()
