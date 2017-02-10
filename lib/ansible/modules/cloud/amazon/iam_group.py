@@ -293,7 +293,8 @@ def destroy_group(connection, module):
             module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
         # Remove any users in the group otherwise deletion fails
-        current_group_members = get_group(connection, params['GroupName'])['Users'    current_group_members_list = []
+        current_group_members_list = []
+        current_group_members = get_group(connection, params['GroupName'])['Users']
         for member in current_group_members:
             current_group_members_list.append(member['UserName'])
         for user in current_group_members_list:
