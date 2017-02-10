@@ -147,6 +147,7 @@ def logical_device_absent(module, aos, my_logical_dev):
     # If not in check mode, delete Logical Device
     if not module.check_mode:
         try:
+            # Need to way 1sec before a delete to workaround a current limitation in AOS
             time.sleep(1)
             my_logical_dev.delete()
         except:
