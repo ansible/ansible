@@ -233,7 +233,7 @@ class NetAppESeriesVolume(object):
             log_path=dict(type='str'),
             api_url=dict(type='str'),
             api_username=dict(type='str'),
-            api_password=dict(type='str'),
+            api_password=dict(type='str', no_log=True),
             validate_certs=dict(type='bool'),
         ))
 

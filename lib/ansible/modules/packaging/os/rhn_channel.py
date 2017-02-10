@@ -133,7 +133,7 @@ def main():
             sysname = dict(required=True),
             url = dict(required=True),
             user = dict(required=True),
-            password = dict(required=True, aliases=['pwd']),
+            password = dict(required=True, aliases=['pwd'], no_log=True),
         )
         #        supports_check_mode=True
     )

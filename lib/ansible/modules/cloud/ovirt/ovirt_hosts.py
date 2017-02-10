@@ -316,7 +316,7 @@ def main():
         comment=dict(default=None),
         cluster=dict(default=None),
         address=dict(default=None),
-        password=dict(default=None),
+        password=dict(default=None, no_log=True),
         public_key=dict(default=False, type='bool', aliases=['ssh_public_key']),
         kdump_integration=dict(default=None, choices=['enabled', 'disabled']),
         spm_priority=dict(default=None, type='int'),

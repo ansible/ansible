@@ -87,7 +87,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             mailbox_name=dict(required=True),
-            mailbox_password=dict(required=True),
+            mailbox_password=dict(required=True, no_log=True),
             state=dict(required=False, choices=['present', 'absent'], default='present'),
             login_name=dict(required=True),
             login_password=dict(required=True, no_log=True),

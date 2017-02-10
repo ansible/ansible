@@ -505,7 +505,7 @@ def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True, aliases=['url']),
-        password=dict(default=None, not_log=True),
+        password=dict(default=None, no_log=True),
         username=dict(default=None),
         hypervisor=dict(choices=CS_HYPERVISORS, default=None),
         allocation_state=dict(default=None),

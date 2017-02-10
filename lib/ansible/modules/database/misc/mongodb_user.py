@@ -352,7 +352,7 @@ def main():
             replica_set=dict(default=None),
             database=dict(required=True, aliases=['db']),
             name=dict(required=True, aliases=['user']),
-            password=dict(aliases=['pass']),
+            password=dict(aliases=['pass'], no_log=True),
             ssl=dict(default=False, type='bool'),
             roles=dict(default=None, type='list'),
             state=dict(default='present', choices=['absent', 'present']),

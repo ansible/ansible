@@ -238,7 +238,7 @@ class RabbitMqUser(object):
 def main():
     arg_spec = dict(
         user=dict(required=True, aliases=['username', 'name']),
-        password=dict(default=None),
+        password=dict(default=None, no_log=True),
         tags=dict(default=None),
         permissions=dict(default=list(), type='list'),
         vhost=dict(default='/'),
