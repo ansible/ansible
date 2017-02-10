@@ -45,16 +45,14 @@ options:
   port:
     description:
       - Port number to use when connecting to the AOS server.
-    required: false
+    default: 8888
   user:
     description:
       - Login username to use when connecting to the AOS server.
-    required: false
     default: admin
   passwd:
     description:
       - Password to use when connecting to the AOS server.
-    required: false
     default: admin
 '''
 
