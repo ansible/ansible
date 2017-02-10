@@ -112,10 +112,6 @@ changed:
     changed: true
 """
 
-from ansible.module_utils.ec2 import boto3_conn
-from ansible.module_utils.six import text_type
-import traceback
-
 try:
     import boto3
     import botocore
@@ -255,24 +251,25 @@ def get_info(conn, name):
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        group_family    = dict(required=False, type='str', choices=['memcached1.4', 'redis2.6', 'redis2.8', 'redis3.2']),
-        name            = dict(required=True, type='str'),
-        description     = dict(required=False),
-        state           = dict(required=True),
-        values          = dict(required=False, type='dict'),
-    )
+    argument_spec.update(
+        dict(
+            group_family=dict(type='str', choices=['memcached1.4', 'redis2.6', 'redis2.8', 'redis3.2']),
+            name=dict(required=True, type='str'),
+            description=dict(type='str'),
+            state=dict(required=True),
+            values=dict(type='dict'),
+        )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto required for this module')
 
-    parameter_group_family  = module.params.get('group_family')
-    parameter_group_name    = module.params.get('name')
-    group_description       = module.params.get('description')
-    state                   = module.params.get('state')
-    values                  = module.params.get('values')
+    parameter_group_family = module.params.get('group_family')
+    parameter_group_name = module.params.get('name')
+    group_description = module.params.get('description')
+    state = module.params.get('state')
+    values = module.params.get('values')
 
     # Retrieve any AWS settings from the environment.
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
@@ -327,7 +324,9 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict
+from ansible.module_utils.six import text_type
+import traceback
 
 if __name__ == '__main__':
     main()
