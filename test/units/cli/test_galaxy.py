@@ -168,16 +168,17 @@ class TestGalaxy(unittest.TestCase):
             self.assertIsInstance(galaxycli_obj.parser, ansible.cli.SortedOptParser)
             self.assertIsInstance(galaxycli_obj.galaxy, ansible.galaxy.Galaxy)
             formatted_call = {
-                'import'    : 'usage: %prog import [options] github_user github_repo',
-                'delete'    : 'usage: %prog delete [options] github_user github_repo',
-                'info'      : 'usage: %prog info [options] role_name[,version]',
-                'init'      : 'usage: %prog init [options] role_name',
-                'install'   : 'usage: %prog install [options] [-r FILE | role_name(s)[,version] | scm+role_repo_url[,version] | tar_file(s)]',
-                'list'      : 'usage: %prog list [role_name]',
-                'login'     : 'usage: %prog login [options]',
-                'remove'    : 'usage: %prog remove role1 role2 ...',
-                'search'    : 'usage: %prog search [searchterm1 searchterm2] [--galaxy-tags galaxy_tag1,galaxy_tag2] [--platforms platform1,platform2] [--author username]',
-                'setup'     : 'usage: %prog setup [options] source github_user github_repo secret',
+                'import': 'usage: %prog import [options] github_user github_repo',
+                'delete': 'usage: %prog delete [options] github_user github_repo',
+                'info': 'usage: %prog info [options] role_name[,version]',
+                'init': 'usage: %prog init [options] role_name',
+                'install': 'usage: %prog install [options] [-r FILE | role_name(s)[,version] | scm+role_repo_url[,version] | tar_file(s)]',
+                'list': 'usage: %prog list [role_name]',
+                'login': 'usage: %prog login [options]',
+                'remove': 'usage: %prog remove role1 role2 ...',
+                'search': ('usage: %prog search [searchterm1 searchterm2] [--galaxy-tags galaxy_tag1,galaxy_tag2] [--platforms platform1,platform2] '
+                           '[--author username]'),
+                'setup': 'usage: %prog setup [options] source github_user github_repo secret',
             }
 
             first_call = 'usage: %prog [delete|import|info|init|install|list|login|remove|search|setup] [--help] [options] ...'
