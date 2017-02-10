@@ -41,7 +41,6 @@ lib/ansible/modules/cloud/amazon/ec2_remote_facts.py
 lib/ansible/modules/cloud/amazon/ec2_scaling_policy.py
 lib/ansible/modules/cloud/amazon/ec2_snapshot_facts.py
 lib/ansible/modules/cloud/amazon/ec2_tag.py
-lib/ansible/modules/cloud/amazon/ec2_vol.py
 lib/ansible/modules/cloud/amazon/ec2_vol_facts.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_dhcp_options_facts.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_nacl.py
