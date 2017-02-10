@@ -40,20 +40,20 @@ requirements:
 options:
   server:
     description:
-      - Set to {{ inventory_hostname }}
+      - Address of the AOS Server on which you want to open a connection.
     required: true
   port:
     description:
-      - Port number to use when connecting to the AOS server
+      - Port number to use when connecting to the AOS server.
     required: false
   user:
     description:
-      - Login username to use when connection to the AOS server
+      - Login username to use when connecting to the AOS server.
     required: false
     default: admin
   passwd:
     description:
-      - Login to use when connection to the AOS server
+      - Password to use when connecting to the AOS server.
     required: false
     default: admin
 '''
