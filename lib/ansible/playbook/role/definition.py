@@ -49,6 +49,9 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
     _role = FieldAttribute(isa='string')
 
     def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None):
+
+        super(RoleDefinition, self).__init__()
+
         self._play             = play
         self._variable_manager = variable_manager
         self._loader           = loader
@@ -56,7 +59,6 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         self._role_path    = None
         self._role_basedir = role_basedir
         self._role_params  = dict()
-        super(RoleDefinition, self).__init__()
 
     #def __repr__(self):
     #    return 'ROLEDEF: ' + self._attributes.get('role', '<no name set>')
