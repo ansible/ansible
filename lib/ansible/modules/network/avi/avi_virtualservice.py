@@ -51,7 +51,7 @@ options:
             - If one of the serviceengine's in the serviceenginegroup fails, all virtualservices will end up using the same active serviceengine.
             - Redistribution of the virtualservices can be either manual or automated when the failed serviceengine recovers.
             - Redistribution is based on the auto redistribute property of the serviceenginegroup.
-        default: 1
+            - Default value when not specified in API or module is interpreted by Avi Controller as ACTIVE_STANDBY_SE_1.
     analytics_policy:
         description:
             - Determines analytics settings for the application.
@@ -59,31 +59,29 @@ options:
         description:
             - Specifies settings related to analytics.
             - It is a reference to an object of type analyticsprofile.
-        default: System-Analytics-Profile
     application_profile_ref:
         description:
             - Enable application layer specific features for the virtual service.
             - It is a reference to an object of type applicationprofile.
-        default: System-HTTP
     auto_allocate_floating_ip:
         description:
             - Auto-allocate floating/elastic ip from the cloud infrastructure.
-        default: False
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
     auto_allocate_ip:
         description:
             - Auto-allocate vip from the provided subnet.
-        default: False
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
     availability_zone:
         description:
             - Availability-zone to place the virtual service.
     avi_allocated_fip:
         description:
             - (internal-use) fip allocated by avi in the cloud infrastructure.
-        default: False
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
     avi_allocated_vip:
         description:
             - (internal-use) vip allocated by avi in the cloud infrastructure.
-        default: False
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
     client_auth:
         description:
             - Http authentication configuration for protected resources.
@@ -94,11 +92,10 @@ options:
     cloud_ref:
         description:
             - It is a reference to an object of type cloud.
-        default: Default-Cloud
     cloud_type:
         description:
             - Cloud_type of virtualservice.
-        default: 0
+            - Default value when not specified in API or module is interpreted by Avi Controller as CLOUD_NONE.
     connections_rate_limit:
         description:
             - Rate limit the incoming connections to this virtual service.
@@ -109,7 +106,7 @@ options:
         description:
             - Select the algorithm for qos fairness.
             - This determines how multiple virtual services sharing the same service engines will prioritize traffic over a congested network.
-        default: False
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
     description:
         description:
             - User defined description for the object.
@@ -133,11 +130,11 @@ options:
     east_west_placement:
         description:
             - Force placement on all se's in service group (mesos mode only).
-        default: False
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
     enable_autogw:
         description:
             - Response traffic to clients will be sent back to the source mac address of the connection, rather than statically sent to a default gateway.
-        default: True
+            - Default value when not specified in API or module is interpreted by Avi Controller as True.
     enable_rhi:
         description:
             - Enable route health injection using the bgp config in the vrf context.
@@ -147,7 +144,7 @@ options:
     enabled:
         description:
             - Enable or disable the virtual service.
-        default: True
+            - Default value when not specified in API or module is interpreted by Avi Controller as True.
     floating_ip:
         description:
             - Floating ip to associate with this virtual service.
@@ -159,11 +156,11 @@ options:
     flow_dist:
         description:
             - Criteria for flow distribution among ses.
-        default: 1
+            - Default value when not specified in API or module is interpreted by Avi Controller as LOAD_AWARE.
     flow_label_type:
         description:
             - Criteria for flow labelling.
-        default: 1
+            - Default value when not specified in API or module is interpreted by Avi Controller as NO_LABEL.
     fqdn:
         description:
             - Dns resolvable, fully qualified domain name of the virtualservice.
@@ -178,7 +175,7 @@ options:
     ign_pool_net_reach:
         description:
             - Ignore pool servers network reachability constraints for virtual service placement.
-        default: False
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
     ip_address:
         description:
             - Ip address of the virtual service.
@@ -188,11 +185,11 @@ options:
     limit_doser:
         description:
             - Limit potential dos attackers who exceed max_cps_per_client significantly to a fraction of max_cps_per_client for a while.
-        default: False
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
     max_cps_per_client:
         description:
             - Maximum connections per second per client ip.
-        default: 0
+            - Default value when not specified in API or module is interpreted by Avi Controller as 0.
     microservice_ref:
         description:
             - Microservice representing the virtual service.
@@ -205,7 +202,6 @@ options:
         description:
             - Determines network settings such as protocol, tcp or udp, and related options for the protocol.
             - It is a reference to an object of type networkprofile.
-        default: System-TCP-Proxy
     network_ref:
         description:
             - Manually override the network on which the virtual service is placed.
@@ -231,7 +227,7 @@ options:
     remove_listening_port_on_vs_down:
         description:
             - Remove listening port if virtualservice is down.
-        default: False
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
     requests_rate_limit:
         description:
             - Rate limit the incoming requests to this virtual service.
@@ -239,7 +235,7 @@ options:
         description:
             - Disable re-distribution of flows across service engines for a virtual service.
             - Enable if the network itself performs flow hashing with ecmp in environments such as gcp.
-        default: False
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
     se_group_ref:
         description:
             - The service engine group to use for this virtual service.
@@ -270,7 +266,7 @@ options:
     ssl_sess_cache_avg_size:
         description:
             - Expected number of ssl session cache entries (may be exceeded).
-        default: 1024
+            - Default value when not specified in API or module is interpreted by Avi Controller as 1024.
     static_dns_records:
         description:
             - List of static dns records applied to this virtual service.
@@ -280,8 +276,7 @@ options:
             - Subnet providing reachability for client facing virtual service ip.
     subnet_uuid:
         description:
-            - It represents subnet for the virtual service ip address allocation when auto_allocate_ip is true.
-            - It is only applicable in openstack or aws cloud.
+            - It represents subnet for the virtual service ip address allocation when auto_allocate_ip is true.it is only applicable in openstack or aws cloud.
             - This field is required if auto_allocate_ip is true.
     tenant_ref:
         description:
@@ -289,15 +284,14 @@ options:
     type:
         description:
             - Specify if this is a normal virtual service, or if it is the parent or child of an sni-enabled virtual hosted virtual service.
-        default: 1
+            - Default value when not specified in API or module is interpreted by Avi Controller as VS_TYPE_NORMAL.
     url:
         description:
             - Avi controller URL of the object.
-        required: true
     use_bridge_ip_as_vip:
         description:
             - Use bridge ip as vip on each host in mesos deployments.
-        default: False
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
     uuid:
         description:
             - Uuid of the virtualservice.
@@ -320,7 +314,7 @@ options:
         description:
             - The quality of service weight to assign to traffic transmitted from this virtual service.
             - A higher weight will prioritize traffic versus other virtual services sharing the same service engines.
-        default: 1
+            - Default value when not specified in API or module is interpreted by Avi Controller as 1.
 extends_documentation_fragment:
     - avi
 '''
@@ -409,7 +403,7 @@ def main():
         limit_doser=dict(type='bool',),
         max_cps_per_client=dict(type='int',),
         microservice_ref=dict(type='str',),
-        name=dict(type='str',),
+        name=dict(type='str', required=True),
         network_profile_ref=dict(type='str',),
         network_ref=dict(type='str',),
         network_security_policy_ref=dict(type='str',),
