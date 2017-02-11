@@ -1,0 +1,7 @@
+- hosts:
+    - vyos
+    - junos
+    - ios
+  gather_facts: false
+  roles:
+    - { role: net_command, tags: net_command }
