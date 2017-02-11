@@ -188,9 +188,9 @@ def main():
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec = dict(
-            src = dict(required=True),
+            src = dict(required=True, type='path'),
             delimiter = dict(required=False),
-            dest = dict(required=True),
+            dest = dict(required=True, type='path'),
             backup=dict(default=False, type='bool'),
             remote_src=dict(default=False, type='bool'),
             regexp = dict(required=False),
@@ -203,8 +203,8 @@ def main():
     changed   = False
     path_hash   = None
     dest_hash   = None
-    src       = os.path.expanduser(module.params['src'])
-    dest      = os.path.expanduser(module.params['dest'])
+    src       = module.params['src']
+    dest      = module.params['dest']
     backup    = module.params['backup']
     delimiter = module.params['delimiter']
     regexp    = module.params['regexp']
