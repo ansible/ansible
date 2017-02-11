@@ -56,7 +56,8 @@ options:
   authentication_method:
     description:
     - Authentication method for the application.
-    - Not all authentication methods are valid for an application. Valid authentication methods for each application are as denoted in I(authentication_choices_description).
+    - Not all authentication methods are valid for an application.
+    - Valid authentication methods for each application are as denoted in I(authentication_choices_description).
     authentication_choices_description:
     - password for console application
     - password, domain, nsswitch, cert for http application.
