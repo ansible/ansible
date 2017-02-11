@@ -30,7 +30,7 @@ author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
     - paramiko
-note:
+notes:
     - Checkmode is not supported.
 options:
     ip_address:
