@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2016, NetApp, Inc
+# (c) 2017, NetApp, Inc
 #
 # This file is part of Ansible
 #
@@ -17,6 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 
@@ -34,44 +37,35 @@ description:
 options:
 
   state:
-    required: true
     description:
-    - Whether the specified lun should exist or not.
+    - Whether the specified SVM should exist or not.
+    required: true
     choices: ['present', 'absent']
 
   name:
+    description:
+    - The name of the SVM to manage.
     required: true
-    description:
-    - The name of the svm to manage
-
-  new_name:
-    required: false
-    description:
-    - Rename the SVM
 
   root_volume:
-    required: false
-    note: required when state == 'present'
     description:
-    - Root volume of the svm.
+    - Root volume of the SVM.
+    note: required when C(state=present)
 
   root_volume_aggregate:
-    required: false
-    note: required when state == 'present'
     description:
     - The aggregate on which the root volume will be created.
+    note: required when C(state=present)
 
   root_volume_security_style:
-    required: false
-    note: required when state == 'present'
     description:
-    -   Security Style of the root volume. When specified as part of the
-    -   vserver-create, this field represents the security style for the
-    -   Vserver root volume. When specified as part of vserver-get-iter
-    -   call, this will return the list of matching Vservers. Possible
-    -   values are 'unix', 'ntfs', 'mixed'. The 'unified' security style,
-    -   which applies only to Infinite Volumes, cannot be applied to a Vserver's root volume.
-    -   Valid options are "unix" for NFS, "ntfs" for CIFS, "mixed" for Mixed, "unified" for Unified
+    -   Security Style of the root volume.
+    -   When specified as part of the vserver-create, this field represents the security style for the Vserver root volume.
+    -   When specified as part of vserver-get-iter call, this will return the list of matching Vservers.
+    -   Possible values are 'unix', 'ntfs', 'mixed'.
+    -   The 'unified' security style, which applies only to Infinite Volumes, cannot be applied to a Vserver's root volume.
+    -   Valid options are "unix" for NFS, "ntfs" for CIFS, "mixed" for Mixed, "unified" for Unified.
+    note: required when C(state=present)
     choices: ['unix', 'ntfs', 'mixed', 'unified']
 
 '''
@@ -89,80 +83,34 @@ EXAMPLES = """
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
 
-
-    - name: Rename Manager
-      na_cdot_svm:
-        state: present
-        name: ansibleVServer
-        new_name: ansibleVServerRenamed
-        hostname: "{{ netapp_hostname }}"
-        username: "{{ netapp_username }}"
-        password: "{{ netapp_password }}"
-
 """
 
 RETURN = """
-msg:
-    description: Successfully created SVM
-    returned: success
-    type: string
-    sample: '{"changed": true}'
-
-msg:
-    description: Successfully renamed SVM
-    returned: success
-    type: string
-    sample: '{"changed": true}'
 
 """
-
-"""
-TODO:
-    Add more configurable parameters:
-        force_remove - remove all associated volumes
-        name-server-switch
-        name-mapping-switch
-        language
-        snapshot-policy
-        quota-policy
-        ...
-"""
-
-import logging
-from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 import ansible.module_utils.netapp as netapp_utils
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
-
-logging.basicConfig(level=logging.ERROR)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 class NetAppCDOTSVM(object):
 
     def __init__(self):
-        logger.debug('Init %s', self.__class__.__name__)
-
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
         self.argument_spec.update(dict(
-                state=dict(required=True, choices=['present', 'absent']),
-                name=dict(required=True, type='str'),
-                new_name=dict(required=False, type='str', default=None),
-                root_volume=dict(type='str'),
-                root_volume_aggregate=dict(type='str'),
-                root_volume_security_style=dict(type='str', choices=['nfs',
-                                                                     'cifs',
-                                                                     'mixed',
-                                                                     'unified'
-                                                                     ]),
-            ))
+            state=dict(required=True, choices=['present', 'absent']),
+            name=dict(required=True, type='str'),
+            root_volume=dict(type='str'),
+            root_volume_aggregate=dict(type='str'),
+            root_volume_security_style=dict(type='str', choices=['nfs',
+                                                                 'cifs',
+                                                                 'mixed',
+                                                                 'unified'
+                                                                 ]),
+        ))
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
@@ -179,7 +127,6 @@ class NetAppCDOTSVM(object):
         # set up state variables
         self.state = p['state']
         self.name = p['name']
-        self.new_name = p['new_name']
         self.root_volume = p['root_volume']
         self.root_volume_aggregate = p['root_volume_aggregate']
         self.root_volume_security_style = p['root_volume_security_style']
@@ -223,10 +170,6 @@ class NetAppCDOTSVM(object):
             return False
 
     def create_vserver(self):
-        logger.debug('Creating vserver %s with root volume %s on root '
-                     'aggregate %s', self.name, self.root_volume,
-                     self.root_volume_aggregate)
-
         vserver_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'vserver-create', **{'vserver-name': self.name,
                                  'root-volume': self.root_volume,
@@ -240,16 +183,12 @@ class NetAppCDOTSVM(object):
             self.server.invoke_successfully(vserver_create,
                                             enable_tunneling=False)
         except netapp_utils.zapi.NaApiError:
-            logger.exception('Error provisioning vserver %s with root volume '
-                             '%s on root aggregate %s', self.name,
-                             self.root_volume, self.root_volume_aggregate)
-            raise
+            err = get_exception()
+            self.module.fail_json(msg='Error provisioning SVM %s with root volume %s on aggregate %s'
+                                      % (self.name, self.root_volume, self.root_volume_aggregate),
+                                  exception=str(err))
 
     def delete_vserver(self):
-        logger.debug('Deleting vserver %s with root volume %s on root '
-                     'aggregate %s', self.name, self.root_volume,
-                     self.root_volume_aggregate)
-
         vserver_delete = netapp_utils.zapi.NaElement.create_node_with_children(
             'vserver-destroy', **{'vserver-name': self.name})
 
@@ -257,26 +196,22 @@ class NetAppCDOTSVM(object):
             self.server.invoke_successfully(vserver_delete,
                                             enable_tunneling=False)
         except netapp_utils.zapi.NaApiError:
-            logger.exception('Error deleting vserver %s with root volume %s '
-                             'on root aggregate %s', self.name,
-                             self.root_volume, self.root_volume_aggregate)
-            raise
+            err = get_exception()
+            self.module.fail_json(msg='Error deleting SVM %s with root volume %s on aggregate %s'
+                                      % (self.name, self.root_volume, self.root_volume_aggregate),
+                                  exception=str(err))
 
     def rename_vserver(self):
-        logger.debug('Renaming svm %s', self.name)
-
         vserver_rename = netapp_utils.zapi.NaElement.create_node_with_children(
             'vserver-rename', **{'vserver-name': self.name,
-                                 'new-name': self.new_name})
+                                 'new-name': self.name})
 
         try:
             self.server.invoke_successfully(vserver_rename,
                                             enable_tunneling=False)
         except netapp_utils.zapi.NaApiError:
-            e = get_exception()
-            logger.exception('Error renaming SVM %s. Error : %s',
-                             self.name, str(e))
-            raise
+            err = get_exception()
+            self.module.fail_json(msg='Error renaming SVM %s' % self.name, exception=str(err))
 
     def apply(self):
         changed = False
@@ -284,27 +219,19 @@ class NetAppCDOTSVM(object):
         rename_vserver = False
         if vserver_exists:
             if self.state == 'absent':
-                logger.debug(
-                    "CHANGED: vserver exists, but requested state is 'absent'")
                 changed = True
 
             elif self.state == 'present':
-                if self.new_name is not None and not self.new_name == \
-                        self.name:
-                    changed = True
-                    rename_vserver = True
+                # Update properties
+                pass
 
         else:
             if self.state == 'present':
-                logger.debug(
-                    "CHANGED: vserver does not exist, but requested state is "
-                    "'present'")
-
                 changed = True
 
         if changed:
             if self.module.check_mode:
-                logger.debug('skipping changes due to check mode')
+                pass
             else:
                 if self.state == 'present':
                     if not vserver_exists:
@@ -316,21 +243,13 @@ class NetAppCDOTSVM(object):
 
                 elif self.state == 'absent':
                     self.delete_vserver()
-        else:
-            logger.debug("exiting with no changes")
 
         self.module.exit_json(changed=changed)
 
 
 def main():
     v = NetAppCDOTSVM()
-
-    try:
-        v.apply()
-    except Exception:
-        e = get_exception()
-        logger.debug("Exception in apply(): \n%s" % format_exc(e))
-        raise
+    v.apply()
 
 if __name__ == '__main__':
     main()
