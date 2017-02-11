@@ -76,6 +76,7 @@ options:
     required: false
     default: null
   app_parameters_free_form:
+    version_added: "2.3.0"
     description:
       - Single string of parameters to be passed to the service. Use either this or 'app_parameters', not both
   dependencies:
