@@ -32,6 +32,9 @@ version_added: "2.3"
 requirements:
     - pan-python
     - pandevice
+note:
+    - Checkmode is not supported.
+    - Panorama is supported
 options:
     ip_address:
         description:
@@ -170,6 +173,8 @@ options:
         description: >
             Device groups are used for the Panorama interaction with Firewall(s). The group must exists on Panorama.
             If device group is not define we assume that we are contacting Firewall.
+        required: false
+        default: None
     commit:
         description:
             - commit if changed
