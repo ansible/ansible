@@ -175,6 +175,8 @@ EXAMPLES = '''
     ZYPP_LOCK_TIMEOUT: 20
 '''
 
+import xml
+from ansible.module_utils.pycompat24 import get_exception
 from xml.dom.minidom import parseString as parseXML
 import re
 
@@ -239,7 +241,13 @@ def get_installed_state(m, packages):
 def parse_zypper_xml(m, cmd, fail_not_found=True, packages=None):
     rc, stdout, stderr = m.run_command(cmd, check_rc=False)
 
-    dom = parseXML(stdout)
+    try:
+        dom = parseXML(stdout)
+    except xml.parsers.expat.ExpatError:
+        e = get_exception()
+        m.fail_json(msg="Failed to parse zypper xml output: %s" % e,
+                    rc=rc, stdout=stdout, stderr=stderr, cmd=cmd)
+
     if rc == 104:
         # exit code 104 is ZYPPER_EXIT_INF_CAP_NOT_FOUND (no packages found)
         if fail_not_found:
