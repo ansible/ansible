@@ -202,6 +202,7 @@ Ansible Changes By Release
 - panos:
   * panos_admin
   * panos_admpwd
+  * panos_cert_gen_ssh
   * panos_check
   * panos_commit
   * panos_dag
