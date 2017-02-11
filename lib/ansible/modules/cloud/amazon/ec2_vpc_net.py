@@ -98,42 +98,42 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-id:
+vpc.id:
     description: VPC resource id
     returned: success
     type: string
     sample: vpc-b883b2c4
-cidr_block:
+vpc.cidr_block:
     descrption: The CIDR of the VPC
     returned: success
     type: string
     sample: "10.0.0.0/16"
-state:
+vpc.state:
     description: state of the VPC
     returned: success
     type: string
     sample: available
-tags:
+vpc.tags:
     description: tags attached to the VPC, includes name
     returned: success
     type: dict
     sample: {"Name": "My VPC", "env": "staging"}
-classic_link_enabled:
+vpc.classic_link_enabled:
     description: indicates whether ClassicLink is enabled
     returned: success
     type: boolean
     sample: false
-dhcp_options_id:
+vpc.dhcp_options_id:
     description: the id of the DHCP options assocaited with this VPC
     return: success
     type: string
     sample: dopt-67236184
-instance_tenancy:
+vpc.instance_tenancy:
     description: indicates whther VPC uses default or dedicated tenancy
     returned: success
     type: string
     sample: default
-is_default:
+vpc.is_default:
     description: indicates whether this is the default VPC
     returned: success
     type: boolean
