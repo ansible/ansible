@@ -108,18 +108,6 @@ options:
         configuration action
     required: false
     default: "@"
-  force:
-    description:
-      - The force argument instructs the module to not consider the
-        current devices running-config.  When set to true, this will
-        cause the module to push the contents of I(src) into the device
-        without first checking if already configured.
-      - Note this argument should be considered deprecated.  To achieve
-        the equivalent, set the C(match=none) which is idempotent.  This argument
-        will be removed in a future release.
-    required: false
-    default: false
-    choices: ["true", "false"]
   backup:
     description:
       - This argument will cause the module to create a full backup of
@@ -343,10 +331,6 @@ def main():
         match=dict(default='line', choices=['line', 'strict', 'exact', 'none']),
         replace=dict(default='line', choices=['line', 'block']),
         multiline_delimiter=dict(default='@'),
-
-        # this argument is deprecated in favor of setting match: none
-        # it will be removed in a future version
-        force=dict(default=False, type='bool'),
 
         config=dict(),
         defaults=dict(type='bool', default=False),
