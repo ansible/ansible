@@ -598,6 +598,10 @@ class Ec2Inventory(object):
 
             if e.error_code == 'AuthFailure':
                 error = self.get_auth_error_message()
+            if e.error_code == "OptInRequired":
+                error = "RDS hasn't been enabled for this account yet. " \
+                    "You must either log in to the RDS service through the AWS console to enable it, " \
+                    "or set 'rds = False' in ec2.ini"
             if not e.reason == "Forbidden":
                 error = "Looks like AWS RDS is down:\n%s" % e.message
             self.fail_with_error(error, 'getting RDS instances')
@@ -680,6 +684,10 @@ class Ec2Inventory(object):
 
             if e.error_code == 'AuthFailure':
                 error = self.get_auth_error_message()
+            if e.error_code == "OptInRequired":
+                error = "ElastiCache hasn't been enabled for this account yet. " \
+                    "You must either log in to the ElastiCache service through the AWS console to enable it, " \
+                    "or set 'elasticache = False' in ec2.ini"
             if not e.reason == "Forbidden":
                 error = "Looks like AWS ElastiCache is down:\n%s" % e.message
             self.fail_with_error(error, 'getting ElastiCache clusters')
