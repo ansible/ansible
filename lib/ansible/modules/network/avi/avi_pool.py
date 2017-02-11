@@ -74,11 +74,11 @@ options:
     capacity_estimation:
         description:
             - Inline estimation of capacity of servers.
-        default: False
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
     capacity_estimation_ttfb_thresh:
         description:
             - The maximum time-to-first-byte of a server.
-        default: 0
+            - Default value when not specified in API or module is interpreted by Avi Controller as 0.
     cloud_config_cksum:
         description:
             - Checksum of cloud configuration for pool.
@@ -86,12 +86,11 @@ options:
     cloud_ref:
         description:
             - It is a reference to an object of type cloud.
-        default: Default-Cloud
     connection_ramp_duration:
         description:
             - Duration for which new connections will be gradually ramped up to a server recently brought online.
             - Useful for lb algorithms that are least connection based.
-        default: 10
+            - Default value when not specified in API or module is interpreted by Avi Controller as 10.
     created_by:
         description:
             - Creator name.
@@ -99,7 +98,7 @@ options:
         description:
             - Traffic sent to servers will use this destination server port unless overridden by the server's specific port attribute.
             - The ssl checkbox enables avi to server encryption.
-        default: 80
+            - Default value when not specified in API or module is interpreted by Avi Controller as 80.
     description:
         description:
             - A description of the pool.
@@ -114,7 +113,7 @@ options:
         description:
             - Enable or disable the pool.
             - Disabling will terminate all open connections and pause health monitors.
-        default: True
+            - Default value when not specified in API or module is interpreted by Avi Controller as True.
     fail_action:
         description:
             - Enable an action - close connection, http redirect, local http response, or backup pool - when a pool failure happens.
@@ -122,12 +121,12 @@ options:
     fewest_tasks_feedback_delay:
         description:
             - Periodicity of feedback for fewest tasks server selection algorithm.
-        default: 10
+            - Default value when not specified in API or module is interpreted by Avi Controller as 10.
     graceful_disable_timeout:
         description:
             - Used to gracefully disable a server.
             - Virtual service waits for the specified time before terminating the existing connections  to the servers that are disabled.
-        default: 1
+            - Default value when not specified in API or module is interpreted by Avi Controller as 1.
     health_monitor_refs:
         description:
             - Verify server health by applying one or more health monitors.
@@ -139,12 +138,12 @@ options:
         description:
             - Enable common name check for server certificate.
             - If enabled and no explicit domain name is specified, avi will use the incoming host header to do the match.
-        default: False
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
     inline_health_monitor:
         description:
             - The passive monitor will monitor client to server connections and requests and adjust traffic load to servers based on successful responses.
             - This may alter the expected behavior of the lb method, such as round robin.
-        default: True
+            - Default value when not specified in API or module is interpreted by Avi Controller as True.
     ipaddrgroup_ref:
         description:
             - Use list of servers from ip address group.
@@ -152,18 +151,18 @@ options:
     lb_algorithm:
         description:
             - The load balancing algorithm will pick a server within the pool's list of available servers.
-        default: 1
+            - Default value when not specified in API or module is interpreted by Avi Controller as LB_ALGORITHM_LEAST_CONNECTIONS.
     lb_algorithm_consistent_hash_hdr:
         description:
             - Http header name to be used for the hash key.
     lb_algorithm_hash:
         description:
             - Criteria used as a key for determining the hash between the client and  server.
-        default: 1
+            - Default value when not specified in API or module is interpreted by Avi Controller as LB_ALGORITHM_CONSISTENT_HASH_SOURCE_IP_ADDRESS.
     max_concurrent_connections_per_server:
         description:
             - The maximum number of concurrent connections allowed to each server within the pool.
-        default: 0
+            - Default value when not specified in API or module is interpreted by Avi Controller as 0.
     max_conn_rate_per_server:
         description:
             - Rate limit connections to each server.
@@ -191,29 +190,29 @@ options:
     request_queue_depth:
         description:
             - Minimum number of requests to be queued when pool is full.
-        default: 128
+            - Default value when not specified in API or module is interpreted by Avi Controller as 128.
     request_queue_enabled:
         description:
             - Enable request queue when pool is full.
-        default: False
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
     rewrite_host_header_to_server_name:
         description:
             - Rewrite incoming host header to server name of the server to which the request is proxied.
             - Enabling this feature rewrites host header for requests to all servers in the pool.
-        default: False
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
     rewrite_host_header_to_sni:
         description:
             - If sni server name is specified, rewrite incoming host header to the sni server name.
-        default: False
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
     server_auto_scale:
         description:
             - Server autoscale.
             - Not used anymore.
-        default: False
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
     server_count:
         description:
             - Number of server_count.
-        default: 0
+            - Default value when not specified in API or module is interpreted by Avi Controller as 0.
     server_name:
         description:
             - Fully qualified dns hostname which will be used in the tls sni extension in server connections if sni is enabled.
@@ -229,7 +228,7 @@ options:
         description:
             - Enable tls sni for server connections.
             - If disabled, avi will not send the sni extension as part of the handshake.
-        default: True
+            - Default value when not specified in API or module is interpreted by Avi Controller as True.
     ssl_key_and_certificate_ref:
         description:
             - Service engines will present a client ssl certificate to the server.
@@ -245,12 +244,11 @@ options:
     url:
         description:
             - Avi controller URL of the object.
-        required: true
     use_service_port:
         description:
             - Do not translate the client's destination port when sending the connection to the server.
             - The pool or servers specified service port will still be used for health monitoring.
-        default: False
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
     uuid:
         description:
             - Uuid of the pool.
@@ -336,7 +334,7 @@ def main():
         lb_algorithm_hash=dict(type='str',),
         max_concurrent_connections_per_server=dict(type='int',),
         max_conn_rate_per_server=dict(type='dict',),
-        name=dict(type='str',),
+        name=dict(type='str', required=True),
         networks=dict(type='list',),
         pki_profile_ref=dict(type='str',),
         placement_networks=dict(type='list',),
