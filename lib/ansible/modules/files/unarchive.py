@@ -781,8 +781,8 @@ def main():
         supports_check_mode = True,
     )
 
-    src        = os.path.expanduser(module.params['src'])
-    dest       = os.path.expanduser(module.params['dest'])
+    src        = module.params['src']
+    dest       = module.params['dest']
     copy       = module.params['copy']
     remote_src = module.params['remote_src']
     file_args = module.load_file_common_arguments(module.params)
