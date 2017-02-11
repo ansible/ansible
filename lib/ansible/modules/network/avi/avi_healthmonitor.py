@@ -55,7 +55,7 @@ options:
     failed_checks:
         description:
             - Number of continuous failed health checks before the server is marked down.
-        default: 2
+            - Default value when not specified in API or module is interpreted by Avi Controller as 2.
     http_monitor:
         description:
             - Healthmonitorhttp settings for healthmonitor.
@@ -75,15 +75,15 @@ options:
             - A valid response from the server is expected within the receive timeout window.
             - This timeout must be less than the send interval.
             - If server status is regularly flapping up and down, consider increasing this value.
-        default: 4
+            - Default value when not specified in API or module is interpreted by Avi Controller as 4.
     send_interval:
         description:
             - Frequency, in seconds, that monitors are sent to a server.
-        default: 10
+            - Default value when not specified in API or module is interpreted by Avi Controller as 10.
     successful_checks:
         description:
             - Number of continuous successful health checks before server is marked up.
-        default: 2
+            - Default value when not specified in API or module is interpreted by Avi Controller as 2.
     tcp_monitor:
         description:
             - Healthmonitortcp settings for healthmonitor.
@@ -100,7 +100,6 @@ options:
     url:
         description:
             - Avi controller URL of the object.
-        required: true
     uuid:
         description:
             - Uuid of the health monitor.
@@ -155,13 +154,13 @@ def main():
         http_monitor=dict(type='dict',),
         https_monitor=dict(type='dict',),
         monitor_port=dict(type='int',),
-        name=dict(type='str',),
+        name=dict(type='str', required=True),
         receive_timeout=dict(type='int',),
         send_interval=dict(type='int',),
         successful_checks=dict(type='int',),
         tcp_monitor=dict(type='dict',),
         tenant_ref=dict(type='str',),
-        type=dict(type='str',),
+        type=dict(type='str', required=True),
         udp_monitor=dict(type='dict',),
         url=dict(type='str',),
         uuid=dict(type='str',),
