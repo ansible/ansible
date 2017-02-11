@@ -209,7 +209,7 @@ def main():
     name = module.params['name']
     offline = module.params['offline']
     production = module.params['production']
-    path = os.path.expanduser(module.params['path'])
+    path = module.params['path']
     relative_execpath = module.params['relative_execpath']
     state = module.params['state']
     version = module.params['version']
