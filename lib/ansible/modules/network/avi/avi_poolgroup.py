@@ -50,7 +50,6 @@ options:
     cloud_ref:
         description:
             - It is a reference to an object of type cloud.
-        default: Default-Cloud
     created_by:
         description:
             - Name of the user who created the object.
@@ -71,7 +70,7 @@ options:
     min_servers:
         description:
             - The minimum number of servers to distribute traffic to.
-        default: 0
+            - Default value when not specified in API or module is interpreted by Avi Controller as 0.
     name:
         description:
             - The name of the pool group.
@@ -87,7 +86,6 @@ options:
     url:
         description:
             - Avi controller URL of the object.
-        required: true
     uuid:
         description:
             - Uuid of the pool group.
@@ -134,7 +132,7 @@ def main():
         fail_action=dict(type='dict',),
         members=dict(type='list',),
         min_servers=dict(type='int',),
-        name=dict(type='str',),
+        name=dict(type='str', required=True),
         priority_labels_ref=dict(type='str',),
         tenant_ref=dict(type='str',),
         url=dict(type='str',),
