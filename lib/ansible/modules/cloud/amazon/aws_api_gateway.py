@@ -21,7 +21,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: api-gateway
+module: aws_api_gateway
 short_description: Manage AWS API Gateway APIs
 description:
      - Allows for the management of API Gatway APIs
@@ -75,7 +75,7 @@ EXAMPLES = '''
 # Update API resources for development
 tasks:
 - name: update API
-  api_gateway:
+  aws_api_gateway:
     api_id: 'abc123321cba'
     state: present
     swagger_file: my_api.yml
@@ -83,7 +83,7 @@ tasks:
 # update definitions and deploy API to production
 tasks:
 - name: deploy API
-  api_gateway:
+  aws_api_gateway:
     api_id: 'abc123321cba'
     state: present
     swagger_file: my_api.yml
@@ -171,9 +171,8 @@ def main():
         msg="Unexpected exception configuring AWS API connection"
         module.fail_json(msg=msg, exception=traceback.format_exc())
 
-
     if not api_id:
-        desc="Incomplete API creation by ansible api_gateway module"
+        desc="Incomplete API creation by ansible aws_api_gateway module"
         awsret=client.create_rest_api(name="ansible-temp-api", description=desc)
         api_id=awsret["id"]
 
