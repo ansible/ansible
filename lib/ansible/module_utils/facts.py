@@ -385,8 +385,7 @@ class Facts(object):
         elif self.facts['system'] == 'AIX':
             self.facts['service_mgr'] = 'src'
         elif self.facts['system'] == 'SunOS':
-            #FIXME: smf?
-            self.facts['service_mgr'] = 'svcs'
+            self.facts['service_mgr'] = 'smf'
         elif self.facts['distribution'] == 'OpenWrt':
             self.facts['service_mgr'] = 'openwrt_init'
         elif self.facts['system'] == 'Linux':
