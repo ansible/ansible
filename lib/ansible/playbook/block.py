@@ -37,7 +37,7 @@ class Block(Base, Become, Conditional, Taggable):
 
     # other fields
     _any_errors_fatal = FieldAttribute(isa='bool')
-    _delegate_to      = FieldAttribute(isa='list')
+    _delegate_to      = FieldAttribute(isa='string')
     _delegate_facts   = FieldAttribute(isa='bool', default=False)
     _name             = FieldAttribute(isa='string', default='')
 
