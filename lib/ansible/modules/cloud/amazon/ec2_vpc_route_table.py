@@ -129,7 +129,7 @@ subnet.cidr_block:
     description: The CIDR block for the subnet
     returned: success
     type: string
-    sample: "10.0.0.0/24",
+    sample: "10.0.0.0/24"
 subnet.default_for_az:
     description: indicates whether this is the default subnet for this availability zone
     returned: success
