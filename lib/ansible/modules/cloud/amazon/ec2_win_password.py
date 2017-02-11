@@ -92,7 +92,6 @@ tasks:
 '''
 
 from base64 import b64decode
-from os.path import expanduser
 from Crypto.Cipher import PKCS1_v1_5
 from Crypto.PublicKey import RSA
 import datetime
@@ -107,7 +106,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         instance_id = dict(required=True),
-        key_file = dict(required=True),
+        key_file = dict(required=True, type='path'),
         key_passphrase = dict(no_log=True, default=None, required=False),
         wait = dict(type='bool', default=False, required=False),
         wait_timeout = dict(default=120, required=False),
@@ -119,7 +118,7 @@ def main():
         module.fail_json(msg='Boto required for this module.')
 
     instance_id = module.params.get('instance_id')
-    key_file = expanduser(module.params.get('key_file'))
+    key_file = module.params.get('key_file')
     key_passphrase = module.params.get('key_passphrase')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
