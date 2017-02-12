@@ -478,7 +478,6 @@ options:
       - If vmid is not set, the next available VM ID will be fetched from ProxmoxAPI.
     default: null
     required: false
-    type: integer
   watchdog:
     description:
       - Creates a virtual hardware watchdog device.
