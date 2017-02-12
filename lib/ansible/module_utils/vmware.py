@@ -198,6 +198,8 @@ def gather_vm_facts(content, vm):
         'hw_processor_count': vm.config.hardware.numCPU,
         'hw_memtotal_mb': vm.config.hardware.memoryMB,
         'hw_interfaces': [],
+        'guest_tools_status': vm.guest.toolsRunningStatus,
+        'guest_tools_version': vm.guest.toolsVersion,
         'ipv4': None,
         'ipv6': None,
         'annotation': vm.config.annotation,
