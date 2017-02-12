@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2016, NetApp, Inc
+# (c) 2017, NetApp, Inc
 #
 # This file is part of Ansible
 #
@@ -17,6 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 
@@ -29,64 +32,59 @@ version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 
 description:
-- Create, destroy, resize luns on NetApp cDOT
+- Create, destroy, resize luns on NetApp cDOT.
 
 options:
 
   state:
-    required: true
     description:
     - Whether the specified lun should exist or not.
+    required: true
     choices: ['present', 'absent']
 
   name:
-    required: true
     description:
-    - The name of the lun to manage
+    - The name of the lun to manage.
+    required: true
 
   flexvol_name:
-    required: false
-    notes: required when state == 'present'
     description:
-    - The name of the flexvol the lun should exist on
+    - The name of the FlexVol the lun should exist on.
+    - Required when C(state=present).
 
   size:
-    required: false
-    notes: required when state == 'present'
     description:
-    - The size of the lun in (size_unit)
+    - The size of the lun in C(size_unit).
+    - Required when C(state=present).
 
   size_unit:
-    required: false
     description:
-    - The unit used to interpret the size parameter
+    - The unit used to interpret the size parameter.
     choices: ['bytes', 'b', 'kb', 'mb', 'gb', 'tb', 'pb', 'eb', 'zb', 'yb']
     default: 'gb'
 
   force_resize:
-    required: false
     description:
     - Forcibly reduce the size. This is required for reducing the size of the LUN to avoid accidentally reducing the LUN size.
+    default: false
 
   force_remove:
-    required: false
     description:
-    - If "true", override checks that prevent a LUN from being destroyed if
-    - it is online and mapped. If "false", destroying an online and mapped LUN
-    - will fail. The default if not specified is "false".
+    - If "true", override checks that prevent a LUN from being destroyed if it is online and mapped.
+    - If "false", destroying an online and mapped LUN will fail.
+    default: false
 
   force_remove_fenced:
-    required: false
     description:
-    - If "true", override checks that prevent a LUN from being destroyed
-    - while it is fenced. If "false", attempting to destroy a fenced LUN will
-    - fail. The default if not specified is "false". This field is available
-    - in Data ONTAP 8.2 and later.
+    - If "true", override checks that prevent a LUN from being destroyed while it is fenced.
+    - If "false", attempting to destroy a fenced LUN will fail.
+    - The default if not specified is "false". This field is available in Data ONTAP 8.2 and later.
+    default: false
 
   vserver:
     required: true
     description:
-    - vserver
+    - The name of the vserver to use.
 
 '''
 
@@ -120,42 +118,14 @@ EXAMPLES = """
 """
 
 RETURN = """
-msg:
-    description: Successfully created lun
-    returned: success
-    type: string
-    sample: '{"changed": true}'
-
-msg:
-    description: Successfully resized licenses
-    returned: success
-    type: string
-    sample: '{"changed": true}'
 
 """
-
-"""
-TODO:
-
-    Add the following parameters:
-        mapped_to :
-"""
-
-import logging
-from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 import ansible.module_utils.netapp as netapp_utils
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
-
-logging.basicConfig(level=logging.ERROR)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 class NetAppCDOTLUN(object):
@@ -177,18 +147,18 @@ class NetAppCDOTLUN(object):
 
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
         self.argument_spec.update(dict(
-                state=dict(required=True, choices=['present', 'absent']),
-                name=dict(required=True, type='str'),
-                size=dict(type='int'),
-                size_unit=dict(default='gb',
-                               choices=['bytes', 'b', 'kb', 'mb', 'gb', 'tb',
-                                        'pb', 'eb', 'zb', 'yb'], type='str'),
-                force_resize=dict(default=False, type='bool'),
-                force_remove=dict(default=False, type='bool'),
-                force_remove_fenced=dict(default=False, type='bool'),
-                flexvol_name=dict(type='str'),
-                vserver=dict(required=True, type='str'),
-            ))
+            state=dict(required=True, choices=['present', 'absent']),
+            name=dict(required=True, type='str'),
+            size=dict(type='int'),
+            size_unit=dict(default='gb',
+                           choices=['bytes', 'b', 'kb', 'mb', 'gb', 'tb',
+                                    'pb', 'eb', 'zb', 'yb'], type='str'),
+            force_resize=dict(default=False, type='bool'),
+            force_remove=dict(default=False, type='bool'),
+            force_remove_fenced=dict(default=False, type='bool'),
+            flexvol_name=dict(type='str'),
+            vserver=dict(required=True, type='str'),
+        ))
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
@@ -244,8 +214,7 @@ class NetAppCDOTLUN(object):
             lun_info.add_child_elem(query)
 
             result = self.server.invoke_successfully(lun_info, True)
-            if (result.get_child_by_name('num-records')
-                and int(result.get_child_content('num-records')) >= 1):
+            if result.get_child_by_name('num-records') and int(result.get_child_content('num-records')) >= 1:
                 attr_list = result.get_child_by_name('attributes-list')
                 luns.extend(attr_list.get_children())
 
@@ -298,8 +267,6 @@ class NetAppCDOTLUN(object):
         Create LUN with requested name and size
         """
         path = '/vol/%s/%s' % (self.flexvol_name, self.name)
-        logger.debug('Creating lun %s of size %s', path, self.size)
-
         lun_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'lun-create-by-size', **{'path': path,
                                      'size': str(self.size),
@@ -308,17 +275,15 @@ class NetAppCDOTLUN(object):
         try:
             self.server.invoke_successfully(lun_create, enable_tunneling=True)
         except netapp_utils.zapi.NaApiError:
-            e = get_exception()
-            logger.exception('Error provisioning lun %s of size %s. Error '
-                             'code: %s', self.name, self.size, str(e))
-            raise
+            err = get_exception()
+            self.module.fail_json(msg="Error provisioning lun %s of size %s" % (self.name, self.size),
+                                  exception=str(err))
 
     def delete_lun(self):
         """
         Delete requested LUN
         """
         path = '/vol/%s/%s' % (self.flexvol_name, self.name)
-        logger.debug('Deleting lun %s', path)
 
         lun_delete = netapp_utils.zapi.NaElement.create_node_with_children(
             'lun-destroy', **{'path': path,
@@ -329,8 +294,9 @@ class NetAppCDOTLUN(object):
         try:
             self.server.invoke_successfully(lun_delete, enable_tunneling=True)
         except netapp_utils.zapi.NaApiError:
-            logger.exception('Error deleting lun %s', path)
-            raise
+            err = get_exception()
+            self.module.fail_json(msg="Error deleting lun %s" % path,
+                                  exception=str(err))
 
     def resize_lun(self):
         """
@@ -358,9 +324,10 @@ class NetAppCDOTLUN(object):
                 # larger unit (MB/GB/TB).
                 return False
             else:
-                logger.exception('Error resizing lun %s', path)
-                raise
-        logger.debug('lun %s has been re-sized.', path)
+                err = get_exception()
+                self.module.fail_json(msg="Error resizing lun %s" % path,
+                                      exception=str(err))
+
         return True
 
     def apply(self):
@@ -375,8 +342,6 @@ class NetAppCDOTLUN(object):
             current_size = lun_detail['size']
 
             if self.state == 'absent':
-                logger.debug(
-                    "CHANGED: lun exists, but requested state is 'absent'")
                 property_changed = True
 
             elif self.state == 'present':
@@ -386,15 +351,11 @@ class NetAppCDOTLUN(object):
 
         else:
             if self.state == 'present':
-                logger.debug(
-                    "CHANGED: lun does not exist, but requested state is "
-                    "'present'")
-
                 property_changed = True
 
         if property_changed:
             if self.module.check_mode:
-                logger.debug('skipping changes due to check mode')
+                pass
             else:
                 if self.state == 'present':
                     if not lun_exists:
@@ -411,8 +372,7 @@ class NetAppCDOTLUN(object):
 
                 elif self.state == 'absent':
                     self.delete_lun()
-        else:
-            logger.debug("exiting with no changes")
+
         changed = property_changed or size_changed
         # TODO: include other details about the lun (size, etc.)
         self.module.exit_json(changed=changed)
@@ -420,13 +380,7 @@ class NetAppCDOTLUN(object):
 
 def main():
     v = NetAppCDOTLUN()
-
-    try:
-        v.apply()
-    except Exception:
-        e = get_exception()
-        logger.debug("Exception in apply(): \n%s" % format_exc(e))
-        raise
+    v.apply()
 
 if __name__ == '__main__':
     main()
