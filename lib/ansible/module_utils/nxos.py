@@ -263,9 +263,13 @@ class Cli(NxapiConfigMixin, CliBase):
 
     NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
+    def __init__(self):
+        self.default_output = "text"
+        super(Cli, self).__init__()
+
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=False, **kwargs)
-        self.shell.send('terminal length 0')
+        self.shell.send({'command': 'terminal length 0'})
 
     ### Command methods ###
 
