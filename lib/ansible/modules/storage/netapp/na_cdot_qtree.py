@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2016, NetApp, Inc
+# (c) 2017, NetApp, Inc
 #
 # This file is part of Ansible
 #
@@ -17,6 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 
@@ -29,36 +32,30 @@ version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 
 description:
-- Create or destroy qtrees
+- Create or destroy Qtrees.
 
 options:
 
   state:
-    required: true
     description:
-    - Whether the specified qtree should exist or not.
+    - Whether the specified Qtree should exist or not.
+    required: true
     choices: ['present', 'absent']
 
   name:
+    description:
+    - The name of the Qtree to manage.
     required: true
-    description:
-    - The name of the qtree to manage
-
-  new_name:
-    required: false
-    description:
-    - Rename the qtree
 
   flexvol_name:
-    required: false
-    note: required when state == 'present'
     description:
-    - The name of the flexvol the qtree should exist on
+    - The name of the FlexVol the Qtree should exist on.
+    note: required when C(state=present)
 
   vserver:
-    required: true
     description:
-    - vserver
+    - The name of the vserver to use.
+    required: true
 
 '''
 
@@ -78,7 +75,6 @@ EXAMPLES = """
           na_cdot_qtree:
             state: present
             name: ansibleQTree
-            new_name: ansibleQTreeRenamed
             flexvol_name: ansibleVolume
             vserver: ansibleVServer
             hostname: "{{ netapp_hostname }}"
@@ -88,58 +84,26 @@ EXAMPLES = """
 """
 
 RETURN = """
-msg:
-    description: Successfully created QTree
-    returned: success
-    type: string
-    sample: '{"changed": true}'
-
-msg:
-    description: Successfully renamed QTree
-    returned: success
-    type: string
-    sample: '{"changed": true}'
 
 """
-
-"""
-TODO:
-    Add more configurable parameters:
-        mode, security-style, oplocks, export-policy
-
-    Add async delete
-"""
-
-import logging
-from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 import ansible.module_utils.netapp as netapp_utils
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
-
-logging.basicConfig(level=logging.ERROR)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 class NetAppCDOTQTree(object):
 
     def __init__(self):
-        logger.debug('Init %s', self.__class__.__name__)
-
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
         self.argument_spec.update(dict(
-                state=dict(required=True, choices=['present', 'absent']),
-                name=dict(required=True, type='str'),
-                new_name=dict(required=False, type='str', default=None),
-                flexvol_name=dict(type='str'),
-                vserver=dict(required=True, type='str'),
-            ))
+            state=dict(required=True, choices=['present', 'absent']),
+            name=dict(required=True, type='str'),
+            flexvol_name=dict(type='str'),
+            vserver=dict(required=True, type='str'),
+        ))
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
@@ -154,7 +118,6 @@ class NetAppCDOTQTree(object):
         # set up state variables
         self.state = p['state']
         self.name = p['name']
-        self.new_name = p['new_name']
         self.flexvol_name = p['flexvol_name']
         self.vserver = p['vserver']
 
@@ -193,8 +156,6 @@ class NetAppCDOTQTree(object):
             return False
 
     def create_qtree(self):
-        logger.debug('Creating qtree %s', self.name)
-
         qtree_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'qtree-create', **{'volume': self.flexvol_name,
                                'qtree': self.name})
@@ -203,13 +164,11 @@ class NetAppCDOTQTree(object):
             self.server.invoke_successfully(qtree_create,
                                             enable_tunneling=True)
         except netapp_utils.zapi.NaApiError:
-            e = get_exception()
-            logger.exception('Error provisioning qtree %s. Error code: %s',
-                             self.name, str(e))
-            raise
+            err = get_exception()
+            self.module.fail_json(msg="Error provisioning qtree %s." % self.name,
+                                  exception=str(err))
 
     def delete_qtree(self):
-        logger.debug('Deleting qtree %s', self.name)
         path = '/vol/%s/%s' % (self.flexvol_name, self.name)
         qtree_delete = netapp_utils.zapi.NaElement.create_node_with_children(
             'qtree-delete', **{'qtree': path})
@@ -218,13 +177,13 @@ class NetAppCDOTQTree(object):
             self.server.invoke_successfully(qtree_delete,
                                             enable_tunneling=True)
         except netapp_utils.zapi.NaApiError:
-            logger.exception('Error deleting qtree %s', path)
-            raise
+            err = get_exception()
+            self.module.fail_json(msg="Error deleting qtree %s." % path,
+                                  exception=str(err))
 
     def rename_qtree(self):
-        logger.debug('Renaming qtree %s', self.name)
         path = '/vol/%s/%s' % (self.flexvol_name, self.name)
-        new_path = '/vol/%s/%s' % (self.flexvol_name, self.new_name)
+        new_path = '/vol/%s/%s' % (self.flexvol_name, self.name)
         qtree_rename = netapp_utils.zapi.NaElement.create_node_with_children(
             'qtree-rename', **{'qtree': path,
                                'new-qtree-name': new_path})
@@ -233,10 +192,9 @@ class NetAppCDOTQTree(object):
             self.server.invoke_successfully(qtree_rename,
                                             enable_tunneling=True)
         except netapp_utils.zapi.NaApiError:
-            e = get_exception()
-            logger.exception('Error renaming qtree %s. Error code: %s',
-                             self.name, str(e))
-            raise
+            err = get_exception()
+            self.module.fail_json(msg="Error renaming qtree %s." % self.name,
+                                  exception=str(err))
 
     def apply(self):
         changed = False
@@ -248,27 +206,23 @@ class NetAppCDOTQTree(object):
             qtree_exists = True
 
             if self.state == 'absent':
-                logger.debug(
-                    "CHANGED: qtree exists, but requested state is 'absent'")
+                # Qtree exists, but requested state is 'absent'.
                 changed = True
 
             elif self.state == 'present':
-                if self.new_name is not None and not self.new_name == \
+                if self.name is not None and not self.name == \
                         self.name:
                     changed = True
                     rename_qtree = True
 
         else:
             if self.state == 'present':
-                logger.debug(
-                    "CHANGED: qtree does not exist, but requested state is "
-                    "'present'")
-
+                # Qtree does not exist, but requested state is 'present'.
                 changed = True
 
         if changed:
             if self.module.check_mode:
-                logger.debug('skipping changes due to check mode')
+                pass
             else:
                 if self.state == 'present':
                     if not qtree_exists:
@@ -280,21 +234,13 @@ class NetAppCDOTQTree(object):
 
                 elif self.state == 'absent':
                     self.delete_qtree()
-        else:
-            logger.debug("exiting with no changes")
 
         self.module.exit_json(changed=changed)
 
 
 def main():
     v = NetAppCDOTQTree()
-
-    try:
-        v.apply()
-    except Exception:
-        e = get_exception()
-        logger.debug("Exception in apply(): \n%s" % format_exc(e))
-        raise
+    v.apply()
 
 if __name__ == '__main__':
     main()
