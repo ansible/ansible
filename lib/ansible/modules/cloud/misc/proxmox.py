@@ -504,7 +504,10 @@ def main():
     if not vmid and state == 'present':
         vmid = get_nextvmid(module, proxmox)
     elif not vmid and hostname:
-        vmid = get_vmid(proxmox, hostname)[0]
+        hosts = get_vmid(proxmox, hostname)
+        if len(hosts) == 0:
+            module.fail_json(msg="Vmid could not be fetched => Hostname doesn't exist (action: %s)" % state)
+        vmid = hosts[0]
     elif not vmid:
         module.exit_json(changed=False, msg="Vmid could not be fetched for the following action: %s" % state)
 
