@@ -44,11 +44,10 @@ except ImportError:
     display = Display()
 
 class Connection(ConnectionBase):
-    ''' NetConf base connections '''
+    ''' NetConf connections '''
 
     transport = 'netconf'
     has_pipelining = False
-    action_handler = 'network'
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -113,9 +112,11 @@ class Connection(ConnectionBase):
 
         return (0, reply.data_xml, '')
 
-    def fetch_file(self):
+    def put_file(self, in_path, out_path):
+        """Transfer a file from local to remote"""
         pass
 
-    def put_file(self):
+    def fetch_file(self, in_path, out_path):
+        """Fetch a file from remote to local"""
         pass
 
