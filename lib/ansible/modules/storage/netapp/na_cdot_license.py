@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2016, NetApp, Inc
+# (c) 2017, NetApp, Inc
 #
 # This file is part of Ansible
 #
@@ -17,6 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 
@@ -29,34 +32,30 @@ version_added: '2.3'
 author: Sumit Kumar (sumit4@netapp.com)
 
 description:
-- Add or remove licenses on NetApp cDOT
+- Add or remove licenses on NetApp ONTAP.
 
 options:
 
   remove_unused:
-    required: false
     description:
     - Remove licenses that have no controller affiliation in the cluster.
     choices: ['true', 'false']
 
   remove_expired:
-    required: false
     description:
     - Remove licenses that have expired in the cluster.
     choices: ['true', 'false']
 
   serial_number:
-    required: false
     description:
-    - Serial number of the node associated with the license. This parameter
-    - is used primarily when removing license for a specific service. If this
-    - parameter is not provided, the cluster serial number is used by default.
+    - Serial number of the node associated with the license.
+    - This parameter is used primarily when removing license for a specific service.
+    - If this parameter is not provided, the cluster serial number is used by default.
+    default: None
 
   licenses:
-    required: false
     description:
     - List of licenses to add or remove.
-
     - Please note that trying to remove a non-existent license will throw an error.
     valid_options:
         - base                : Cluster Base License,
@@ -106,53 +105,30 @@ EXAMPLES = """
 """
 
 RETURN = """
-msg:
-    description: Successfully added licenses
-    returned: success
-    type: string
-    sample: '{"changed": true}'
-
-msg:
-    description: Successfully removed licenses
-    returned: success
-    type: string
-    sample: '{"changed": true}'
 
 """
-
-import logging
-from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 import ansible.module_utils.netapp as netapp_utils
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
-
-logging.basicConfig(level=logging.ERROR)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 class NetAppCDOTLicense(object):
 
     def __init__(self):
-        logger.debug('Init %s', self.__class__.__name__)
-
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
         self.argument_spec.update(dict(
-                serial_number=dict(required=False, type='str', default=None),
-                remove_unused=dict(default=False, type='bool'),
-                remove_expired=dict(default=False, type='bool'),
-                licenses=dict(default=False, type='dict'),
-            ))
+            serial_number=dict(required=False, type='str', default=None),
+            remove_unused=dict(default=False, type='bool'),
+            remove_expired=dict(default=False, type='bool'),
+            licenses=dict(default=False, type='dict'),
+        ))
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
-            supports_check_mode=True
+            supports_check_mode=False
         )
 
         p = self.module.params
@@ -181,10 +157,9 @@ class NetAppCDOTLicense(object):
             result = self.server.invoke_successfully(license_status,
                                                      enable_tunneling=False)
         except netapp_utils.zapi.NaApiError:
-            e = get_exception()
-            logger.exception('Error checking license status: %s',
-                             str(e))
-            raise
+            err = get_exception()
+            self.module.fail_json(msg="Error checking license status",
+                                  exception=str(err))
 
         return_dictionary = {}
         license_v2_status = result.get_child_by_name('license-v2-status')
@@ -214,10 +189,9 @@ class NetAppCDOTLicense(object):
             self.server.invoke_successfully(license_delete,
                                             enable_tunneling=False)
         except netapp_utils.zapi.NaApiError:
-            e = get_exception()
-            logger.exception('Error removing license : %s',
-                             str(e))
-            raise
+            err = get_exception()
+            self.module.fail_json(msg="Error removing license",
+                                  exception=str(err))
 
     def remove_unused_licenses(self):
         """
@@ -228,10 +202,9 @@ class NetAppCDOTLicense(object):
             self.server.invoke_successfully(remove_unused,
                                             enable_tunneling=False)
         except netapp_utils.zapi.NaApiError:
-            e = get_exception()
-            logger.exception('Error removing unused licenses : %s',
-                             str(e))
-            raise
+            err = get_exception()
+            self.module.fail_json(msg="Error removing unused licenses",
+                                  exception=str(err))
 
     def remove_expired_licenses(self):
         """
@@ -242,17 +215,14 @@ class NetAppCDOTLicense(object):
             self.server.invoke_successfully(remove_expired,
                                             enable_tunneling=False)
         except netapp_utils.zapi.NaApiError:
-            e = get_exception()
-            logger.exception('Error removing expired licenses : %s',
-                             str(e))
-            raise
+            err = get_exception()
+            self.module.fail_json(msg="Error removing expired licenses",
+                                  exception=str(err))
 
     def update_licenses(self):
         """
         Update licenses
         """
-        logger.debug('Updating licenses')
-
         # Remove unused and expired licenses, if requested.
         if self.remove_unused:
             self.remove_unused_licenses()
@@ -284,10 +254,9 @@ class NetAppCDOTLicense(object):
                 self.server.invoke_successfully(license_add,
                                                 enable_tunneling=False)
             except netapp_utils.zapi.NaApiError:
-                e = get_exception()
-                logger.exception('Error adding licenses : %s',
-                                 str(e))
-                raise
+                err = get_exception()
+                self.module.fail_json(msg="Error adding licenses",
+                                      exception=str(err))
 
     def apply(self):
         changed = False
@@ -304,13 +273,7 @@ class NetAppCDOTLicense(object):
 
 def main():
     v = NetAppCDOTLicense()
-
-    try:
-        v.apply()
-    except Exception:
-        e = get_exception()
-        logger.debug("Exception in apply(): \n%s" % format_exc(e))
-        raise
+    v.apply()
 
 if __name__ == '__main__':
     main()
