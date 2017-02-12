@@ -118,16 +118,4 @@ class TestNetconfConnectionClass(unittest.TestCase):
         self.assertEqual('', out)
         self.assertEqual('unable to parse request', err)
 
-    def test_fetch_file(self):
-        pc = PlayContext()
-        new_stdin = StringIO()
-        conn = netconf.Connection(pc, new_stdin)
-        self.assertIsNone(conn.fetch_file())
-
-    def test_put_file(self):
-        pc = PlayContext()
-        new_stdin = StringIO()
-        conn = netconf.Connection(pc, new_stdin)
-        self.assertIsNone(conn.put_file())
-
 
