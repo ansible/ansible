@@ -932,7 +932,7 @@ def url_argument_spec():
         use_proxy=dict(default='yes', type='bool'),
         validate_certs=dict(default='yes', type='bool'),
         url_username=dict(required=False),
-        url_password=dict(required=False),
+        url_password=dict(required=False, no_log=True),
         force_basic_auth=dict(required=False, type='bool', default='no'),
 
     )
