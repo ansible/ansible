@@ -2149,7 +2149,7 @@ def main():
             ssh_key_file=dict(default=None, type='path'),
             ssh_key_comment=dict(default=ssh_defaults['comment'], type='str'),
             ssh_key_passphrase=dict(default=None, type='str', no_log=True),
-            update_password=dict(default='always',choices=['always','on_create'],type='str'),
+            update_password=dict(default='always',choices=['always','on_create'],type='str', no_log=True),
             expires=dict(default=None, type='float'),
         ),
         supports_check_mode=True
