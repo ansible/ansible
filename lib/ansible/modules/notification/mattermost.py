@@ -72,6 +72,7 @@ options:
     choices:
       - 'yes'
       - 'no'
+notes: Nothing is done in check mode, it'll pass even if your server is down or/and if your token is invalid. If someone found good way to check...
 """
 
 EXAMPLES = """
