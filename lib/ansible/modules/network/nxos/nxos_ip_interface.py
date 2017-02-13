@@ -120,7 +120,7 @@ proposed:
 existing:
     description: k/v pairs of existing IP attributes on the interface
     type: dict
-    sample: {"addresses": [{"addr": "11.11.11.11", "mask": 17, "tag": 101},
+    sample: {"addresses": [{"addr": "11.11.11.11", "mask": 17, "tag": 101}],
             "interface": "ethernet1/32", "prefixes": ["11.11.0.0/17"],
             "type": "ethernet", "vrf": "default"}
 end_state:
