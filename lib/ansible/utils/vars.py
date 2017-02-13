@@ -43,10 +43,10 @@ def get_unique_id():
     global cur_id
     cur_id += 1
     return "-".join([
-        node_mac[0:8], 
-        node_mac[8:12], 
-        random_int[0:4], 
-        random_int[4:8], 
+        node_mac[0:8],
+        node_mac[8:12],
+        random_int[0:4],
+        random_int[4:8],
         ("%012x" % cur_id)[:12],
     ])
 
