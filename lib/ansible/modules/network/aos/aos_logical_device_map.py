@@ -51,10 +51,10 @@ options:
     description:
       - Datastructure of the Logical Device Map to manage. The data can be in YAML / JSON or
         directly a variable. It's the same datastructure that is returned
-        on success in I(value).
+        on success in I(value). Only one of I(name), I(id) or I(content) can be set.
   state:
     description:
-      - Indicate what is the expected state of the Logical Device Map (present or not)
+      - Indicate what is the expected state of the Logical Device Map (present or not).
     default: present
     choices: ['present', 'absent']
 '''
@@ -169,7 +169,7 @@ def logical_device_map_absent(module, aos, my_log_dev_map):
             time.sleep(1)
             my_log_dev_map.delete()
         except:
-            module.fail_json(msg="An error occured, while trying to delete the Logical Device Map")
+            module.fail_json(msg="An error occurred, while trying to delete the Logical Device Map")
 
     module.exit_json( changed=True,
                       name=my_log_dev_map.name,
