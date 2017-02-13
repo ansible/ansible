@@ -24,11 +24,12 @@ import re
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.action import ActionBase
-
+from ansible.compat.six import string_types
 
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
+    VALID_FILE_EXTENSIONS = ['yaml', 'yml', 'json']
 
     def _mutually_exclusive(self):
         dir_arguments = [
@@ -73,7 +74,7 @@ class ActionModule(ActionBase):
         """ Set instance variables based on the arguments that were passed
         """
         self.VALID_DIR_ARGUMENTS = [
-            'dir', 'depth', 'files_matching', 'ignore_files'
+            'dir', 'depth', 'files_matching', 'ignore_files', 'extensions',
         ]
         self.VALID_FILE_ARGUMENTS = ['file', '_raw_params']
         self.GLOBAL_FILE_ARGUMENTS = ['name']
@@ -96,13 +97,19 @@ class ActionModule(ActionBase):
         self.depth = self._task.args.get('depth', None)
         self.files_matching = self._task.args.get('files_matching', None)
         self.ignore_files = self._task.args.get('ignore_files', None)
+        self.valid_extensions = self._task.args.get('extensions', self.VALID_FILE_EXTENSIONS)
+        if isinstance(self.valid_extensions, string_types):
+            self.valid_extensions = list(self.valid_extensions)
+
+        # validate
+        if not isinstance(self.valid_extensions, list):
+            raise AnsibleError('Invalid type for "extensions" option, it must be a list')
 
         self._mutually_exclusive()
 
     def run(self, tmp=None, task_vars=None):
         """ Load yml files recursively from a directory.
         """
-        self.VALID_FILE_EXTENSIONS = ['yaml', 'yml', 'json']
         if not task_vars:
             task_vars = dict()
 
@@ -221,7 +228,7 @@ class ActionModule(ActionBase):
         success = False
         file_ext = source_file.split('.')
         if len(file_ext) >= 1:
-            if file_ext[-1] in self.VALID_FILE_EXTENSIONS:
+            if file_ext[-1] in self.valid_extensions:
                 success = True
                 return success
         return success
@@ -241,7 +248,7 @@ class ActionModule(ActionBase):
             failed = True
             err_msg = (
                 '{0} does not have a valid extension: {1}'
-                .format(filename, ', '.join(self.VALID_FILE_EXTENSIONS))
+                .format(filename, ', '.join(self.valid_extensions))
             )
             return failed, err_msg, results
 
