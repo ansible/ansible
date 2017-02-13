@@ -31,18 +31,18 @@ DOCUMENTATION = """
 module: mattermost
 short_description: Send Mattermost notifications
 description:
-    - The C(mattermost) module sends notifications to U(http://your.mattermost.url) via the Incoming WebHook integration
+    - The C(mattermost) module send notifications to U(http://your.mattermost.url) via the Incoming WebHook integration.
 version_added: "2.3"
 author: "Benjamin Jolivot (@bjolivot)"
 options:
   url:
     description:
-      - Mattermost url (i.e. http://mattermost.yourcompany.com)
+      - Mattermost url (i.e. http://mattermost.yourcompany.com).
     required: true
   api_key:
     description:
       - Mattermost webhook api key. Log into your mattermost site, go to
-        Menu -> Integration -> Incomming Webhook -> Add Incomming Webhook
+        Menu -> Integration -> Incomming Webhook -> Add Incomming Webhook.
         This will give you full URL. api_key is the last part.
         http://mattermost.example.com/hooks/C(API_KEY)
     required: true
@@ -53,26 +53,19 @@ options:
   channel:
     description:
       - Channel to send the message to. If absent, the message goes to the channel selected for the I(api_key).
-    default: None
   username:
     description:
-      - This is the sender of the message (Username Override need to be enabled by mattermost admin, see mattermost doc, default C(Ansible)).
-    required: false
-    default: "Ansible"
+      - This is the sender of the message (Username Override need to be enabled by mattermost admin, see mattermost doc.
   icon_url:
     description:
-      - Url for the message sender's icon (default C(https://www.ansible.com/favicon.ico))
-    required: false
+      - Url for the message sender's icon.
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled sites using self-signed certificates.
-    required: false
-    default: 'yes'
     choices:
       - 'yes'
       - 'no'
-notes: Nothing is done in check mode, it'll pass even if your server is down or/and if your token is invalid. If someone found good way to check...
 """
 
 EXAMPLES = """
@@ -140,6 +133,11 @@ def main():
         'Content-Type': 'application/json',
         'Accept': 'application/json',
     }
+
+    #notes: 
+    #Nothing is done in check mode
+    #it'll pass even if your server is down or/and if your token is invalid. 
+    #If someone find good way to check...
 
     #send request if not in test mode
     if module.check_mode is False:
