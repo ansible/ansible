@@ -23,7 +23,11 @@ import os
 import time
 import errno
 import codecs
-import pickle
+
+try:
+    import cPickle as pickle
+except ImportError
+    import pickle
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
