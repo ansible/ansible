@@ -288,7 +288,7 @@ def main():
         supports_check_mode = True
     )
 
-    path = os.path.expanduser(module.params['path'])
+    path = module.params['path']
     section = module.params['section']
     option = module.params['option']
     value = module.params['value']
