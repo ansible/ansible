@@ -28,7 +28,7 @@ DOCUMENTATION = """
 module: rocketchat
 short_description: Send notifications to Rocket Chat
 description:
-    - The M(rocketchat) module sends notifications to Rocket Chat via the Incoming WebHook integration
+    - The C(rocketchat) module sends notifications to Rocket Chat via the Incoming WebHook integration
 version_added: "2.2"
 author: "Ramon de la Fuente (@ramondelafuente)"
 options:

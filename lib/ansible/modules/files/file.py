@@ -31,7 +31,7 @@ extends_documentation_fragment: files
 description:
      - Sets attributes of files, symlinks, and directories, or removes
        files/symlinks/directories. Many other modules support the same options as
-       the M(file) module - including M(copy), M(template), and M(assemble).
+       the C(file) module - including M(copy), M(template), and M(assemble).
 notes:
     - See also M(copy), M(template), M(assemble)
 requirements: [ ]
@@ -53,7 +53,7 @@ options:
         or M(template) module if you want that behavior.  If C(link), the symbolic
         link will be created or changed. Use C(hard) for hardlinks. If C(absent),
         directories will be recursively deleted, and files or symlinks will be unlinked.
-        Note that M(file) will not fail if the C(path) does not exist as the state did not change.
+        Note that C(file) will not fail if the C(path) does not exist as the state did not change.
         If C(touch) (new in 1.4), an empty file will be created if the C(path) does not
         exist, while an existing file or directory will receive updated file access and
         modification times (similar to the way `touch` works from the command line).

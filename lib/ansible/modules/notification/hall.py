@@ -27,7 +27,7 @@ DOCUMENTATION = """
 module: hall
 short_description: Send notification to Hall
 description:
-    - "The M(hall) module connects to the U(https://hall.com) messaging API and allows you to deliver notication messages to rooms."
+    - "The C(hall) module connects to the U(https://hall.com) messaging API and allows you to deliver notication messages to rooms."
 version_added: "2.0"
 author: Billy Kimble (@bkimble) <basslines@gmail.com>
 options:

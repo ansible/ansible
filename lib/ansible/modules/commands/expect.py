@@ -28,7 +28,7 @@ module: expect
 version_added: 2.0
 short_description: Executes a command and responds to prompts
 description:
-     - The M(expect) module executes a command and responds to prompts
+     - The C(expect) module executes a command and responds to prompts
      - The given command will be executed on all selected nodes. It will not be
        processed through the shell, so variables like C($HOME) and operations
        like C("<"), C(">"), C("|"), and C("&") will not work

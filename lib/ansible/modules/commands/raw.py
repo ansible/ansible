@@ -44,7 +44,7 @@ description:
        all core modules require it. Another is speaking to any devices such as
        routers that do not have any Python installed. In any other case, using
        the M(shell) or M(command) module is much more appropriate. Arguments
-       given to M(raw) are run directly through the configured remote shell.
+       given to C(raw) are run directly through the configured remote shell.
        Standard output, error output and return code are returned when
        available. There is no change handler support for this module.
      - This module does not require python on the remote system, much like
