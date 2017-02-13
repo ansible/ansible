@@ -21,51 +21,57 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nclu
-version_added: "2.2.3"
+version_added: "2.3"
 author: "Cumulus Networks"
 short_description: Configure network interfaces using NCLU
 description:
     - Interface to the Network Command Line Utility, developed to make it easier
       to configure operating systems running ifupdown2 and Quagga, such as
       Cumulus Linux. Command documentation is available at
-      https://docs.cumulusnetworks.com/display/DOCS/Network+Command+Line+Utility
+      U(https://docs.cumulusnetworks.com/display/DOCS/Network+Command+Line+Utility)
 options:
     commands:
         description:
-            - A list of strings containing the net commands to run.
+            - A list of strings containing the net commands to run. Mutually
+              exclusive with I(template).
     template:
         description:
             - A single, multi-line string with jinja2 formatting. This string
               will be broken by lines, and each line will be run through net.
-              Mutually exclusive with 'commands'.
+              Mutually exclusive with I(commands).
     commit:
         description:
             - When true, performs a 'net commit' at the end of the block.
+              Mutually exclusive with I(atomic).
+        default: false
     abort:
         description:
             - Boolean. When true, perform a 'net abort' before the block.
               This cleans out any uncommitted changes in the buffer.
+              Mutually exclusive with I(atomic).
+        default: false
     atomic:
         description:
-            - When true, equivalent to both commit and abort being true.
+            - When true, equivalent to both I(commit) and I(abort) being true.
+              Mutually exclusive with I(commit) and I(atomic).
+        default: false
     description:
         description:
             - Commit description that will be recorded to the commit log if
-              commit or atomic are true.
+              I(commit) or I(atomic) are true.
+        default: "Ansible-originated commit"
 '''
 
 EXAMPLES = '''
 
-## Add two interfaces without committing any changes
-
-nclu:
+- name: Add two interfaces without committing any changes
+  nclu:
     commands:
         - add int swp1
         - add int swp2
 
-## Add 48 interfaces and commit the change.
-
-nclu:
+- name: Add 48 interfaces and commit the change.
+  nclu:
     template: |
         {% for iface in range(1,49) %}
         add int swp{{i}}
@@ -73,9 +79,8 @@ nclu:
     commit: true
     description: "Ansible - add swps1-48"
 
-## Atomically add an interface
-
-nclu:
+- name: Atomically add an interface
+  nclu:
     commands:
         - add int swp1
     atomic: true
@@ -188,6 +193,6 @@ def main(testing=False):
         return {"changed": _changed, "msg": output}
 
 # import module snippets
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()
