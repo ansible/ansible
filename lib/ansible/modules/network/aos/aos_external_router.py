@@ -57,6 +57,12 @@ options:
       - Indicate what is the expected state of the External Router (present or not).
     default: present
     choices: ['present', 'absent']
+  loopback:
+    description:
+      - IP address of the Loopback interface of the external_router.
+  asn:
+    description:
+      - ASN id of the external_router.
 '''
 
 EXAMPLES = '''
