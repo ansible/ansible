@@ -1955,7 +1955,7 @@ class AnsibleModule(object):
         if 'deprecations' in kwargs:
             if isinstance(kwargs['deprecations'], list):
                 for d in kwargs['deprecations']:
-                    self.warn(d)
+                    self.deprecate(d)
             else:
                 self.warn(kwargs['deprecations'])
 
