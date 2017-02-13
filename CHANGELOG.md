@@ -148,6 +148,7 @@ Ansible Changes By Release
   * sf_snapshot_schedule_manager
   * sf_volume_access_group_manager
 - nginx_status_facts
+- nsupdate
 - omapi_host
 - openssl:
   * openssl_privatekey
