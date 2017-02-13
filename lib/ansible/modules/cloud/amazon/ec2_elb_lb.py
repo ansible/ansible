@@ -607,7 +607,7 @@ class ElbManager(object):
                 info['listeners'] = []
 
             if self._check_attribute_support('connection_draining'):
-                info['connection_draining_timeout'] = self.elb_conn.get_lb_attribute(self.name, 'ConnectionDraining').timeout
+                info['connection_draining_timeout'] = int(self.elb_conn.get_lb_attribute(self.name, 'ConnectionDraining').timeout)
 
             if self._check_attribute_support('connecting_settings'):
                 info['idle_timeout'] = self.elb_conn.get_lb_attribute(self.name, 'ConnectingSettings').idle_timeout
@@ -1241,7 +1241,7 @@ def main():
         subnets={'default': None, 'required': False, 'type': 'list'},
         purge_subnets={'default': False, 'required': False, 'type': 'bool'},
         scheme={'default': 'internet-facing', 'required': False},
-        connection_draining_timeout={'default': None, 'required': False},
+        connection_draining_timeout={'default': None, 'required': False, 'type': 'int'},
         idle_timeout={'default': None, 'type': 'int', 'required': False},
         cross_az_load_balancing={'default': None, 'type': 'bool', 'required': False},
         stickiness={'default': None, 'required': False, 'type': 'dict'},
