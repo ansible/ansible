@@ -110,6 +110,15 @@ def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=N
     return res
 
 
+def engine_version(connection):
+    """
+    Return string representation of oVirt engine version.
+    """
+    engine_api = connection.system_service().get()
+    engine_version = engine_api.product_info.version
+    return '%s.%s' % (engine_version.major, engine_version.minor)
+
+
 def create_connection(auth):
     """
     Create a connection to Python SDK, from task `auth` parameter.
@@ -126,7 +135,7 @@ def create_connection(auth):
     :return: Python SDK connection
     """
 
-    return sdk.Connection(
+    connection = sdk.Connection(
         url=auth.get('url'),
         username=auth.get('username'),
         password=auth.get('password'),
@@ -135,6 +144,15 @@ def create_connection(auth):
         token=auth.get('token', None),
         kerberos=auth.get('kerberos', None),
     )
+    api_version = LooseVersion(engine_version(connection))
+    python_sdk_version = LooseVersion(sdk_version.VERSION)
+    if python_sdk_version < api_version:
+        raise Exception(
+            "Your SDK version is lower than engine version, please use same "
+            "version of the SDK as engine, or unexpected errors may appear."
+        )
+
+    return connection
 
 
 def convert_to_bytes(param):
@@ -391,13 +409,8 @@ def check_params(module):
         module.fail_json(msg='"name" or "id" is required')
 
 
-def engine_version(connection):
-    """
-    Return string representation of oVirt engine version.
-    """
-    engine_api = connection.system_service().get()
-    engine_version = engine_api.product_info.version
-    return '%s.%s' % (engine_version.major, engine_version.minor)
+def engine_supported(connection, version):
+    return LooseVersion(engine_version(connection)) >= LooseVersion(version)
 
 
 def check_support(version, connection, module, params):
