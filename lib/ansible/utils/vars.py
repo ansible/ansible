@@ -21,6 +21,9 @@ __metaclass__ = type
 
 import ast
 import os
+import random
+import sys
+import uuid
 
 from json import dumps
 from collections import MutableMapping
@@ -32,11 +35,20 @@ from ansible.errors import AnsibleError
 from ansible.parsing.splitter import parse_kv
 from ansible.module_utils._text import to_native, to_text
 
-cur_id = 0
+cur_id     = 0
+node_mac   = ("%012x" % uuid.getnode())[:12]
+random_int = ("%08x" % random.randint(0, sys.maxint))[:8]
+
 def get_unique_id():
     global cur_id
     cur_id += 1
-    return "%s-%s" % (os.getpid(), cur_id)
+    return "-".join([
+        node_mac[0:8], 
+        node_mac[8:12], 
+        random_int[0:4], 
+        random_int[4:8], 
+        ("%012x" % cur_id)[:12],
+    ])
 
 def _validate_mutable_mappings(a, b):
     """
