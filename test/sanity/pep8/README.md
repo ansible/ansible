@@ -29,5 +29,5 @@ Files which have been removed from the repository must be removed from the legac
 
 The pep8 check can be run locally with:
 
-    ./test/runner/ansible-test sanity --test pep8 [file-or-directory-path-to-check]
+    ./test/runner/ansible-test sanity --test pep8 [file-or-directory-path-to-check] ...
 
