@@ -69,14 +69,14 @@ Version 1.0 of the metadata
 -  **supported_by**: This field records who supports the module.
    Default value is community. Values are:
 
-   -  **core**: maintained by the ansible core team. Core team will fix
+   -  **core**: maintained by the Ansible core team. Core team will fix
       bugs, add new features, and review PRs.
    -  **community**: This module is maintained by the community at large.
       Community is responsible for fixing bugs, adding new features, and
       reviewing changes.
    -  **unmaintained**: This module currently needs a new community
       contributor to help maintain it.
-   -  **committer**: Committers to the ansible repository are the
+   -  **committer**: Committers to the Ansible repository are the
       gatekeepers for this module. They will review PRs from the community
       before merging but might not generate fixes and code for new features
       on their own.
@@ -138,6 +138,10 @@ The following fields can be used and are all required unless specified otherwise
   Name of the module author in the form ``First Last (@GitHubID)``. Use a multi-line list if there is more than one author.
 * ``options:``
   One per module argument
+  * option
+
+    * Declarative operation (not CRUD)–this makes it easy for a user not to care what the existing state is, just about the final state, for example `online:`, rather than `is_online:`.
+    * The name of the option should be consistent with the rest of the module, as well as other modules in the same category.
 
   * ``description:``
 
