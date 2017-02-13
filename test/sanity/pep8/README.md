@@ -25,9 +25,9 @@ Files listed in the [skip list](skip.txt) are not tested by `pep8`.
 
 Files which have been removed from the repository must be removed from the legacy file list and the skip list.
 
-## Running locally
+## Running Locally
 
-You can do a quick pep8 spotcheck by approximating `command_sanity_pep8` in `test/runner/lib/executor.py` like this:
+The pep8 check can be run locally with:
 
-    ./test/runner/ansible-test sanity -v --test pep8 <files to sanity-check>
+    ./test/runner/ansible-test sanity --test pep8 <files to sanity-check>
 
