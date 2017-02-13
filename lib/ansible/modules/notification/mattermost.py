@@ -31,7 +31,7 @@ DOCUMENTATION = """
 module: mattermost
 short_description: Send Mattermost notifications
 description:
-    - The C(mattermost) module send notifications to U(http://your.mattermost.url) via the Incoming WebHook integration.
+    - Sends notifications to U(http://your.mattermost.url) via the Incoming WebHook integration.
 version_added: "2.3"
 author: "Benjamin Jolivot (@bjolivot)"
 options:
