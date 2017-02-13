@@ -434,7 +434,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         bucket         = dict(required=True),
-        dest           = dict(default=None),
+        dest           = dict(default=None, type='path'),
         encrypt        = dict(default=True, type='bool'),
         expiry         = dict(default=600, aliases=['expiration']),
         headers        = dict(type='dict'),
@@ -442,7 +442,7 @@ def main():
         max_keys       = dict(default=1000),
         metadata       = dict(type='dict'),
         mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list'], required=True),
-        object         = dict(),
+        object         = dict(type='path'),
         permission     = dict(type='list', default=['private']),
         version        = dict(default=None),
         overwrite      = dict(aliases=['force'], default='always'),
@@ -462,7 +462,7 @@ def main():
     encrypt = module.params.get('encrypt')
     expiry = int(module.params['expiry'])
     if module.params.get('dest'):
-        dest = os.path.expanduser(module.params.get('dest'))
+        dest = module.params.get('dest')
     headers = module.params.get('headers')
     marker = module.params.get('marker')
     max_keys = module.params.get('max_keys')
@@ -498,7 +498,7 @@ def main():
         location = region
 
     if module.params.get('object'):
-        obj = os.path.expanduser(module.params['object'])
+        obj = module.params['object']
 
     # allow eucarc environment variables to be used if ansible vars aren't set
     if not s3_url and 'S3_URL' in os.environ:
