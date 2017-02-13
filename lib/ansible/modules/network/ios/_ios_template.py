@@ -35,7 +35,6 @@ description:
     commands that are not already configured.  The config source can
     be a set of commands or a template.
 deprecated: Deprecated in 2.2. Use M(ios_config) instead.
-extends_documentation_fragment: ios
 options:
   src:
     description:
@@ -108,51 +107,14 @@ updates:
   returned: always
   type: list
   sample: ['...', '...']
-start:
-  description: The time the job started
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:15.126146"
-end:
-  description: The time the job ended
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:25.595612"
-delta:
-  description: The time elapsed to perform all operations
-  returned: always
-  type: str
-  sample: "0:00:10.469466"
 """
-from functools import partial
-
-from ansible.module_utils import ios
-from ansible.module_utils import ios_cli
+from ansible.module_utils.ios import load_config, get_config
+from ansible.module_utils.ios import ios_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.local import LocalAnsibleModule
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.six import string_types
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-
-SHARED_LIB = 'ios'
-
-def get_ansible_module():
-    if SHARED_LIB == 'ios':
-        return LocalAnsibleModule
-    return AnsibleModule
-
-def invoke(name, *args, **kwargs):
-    obj = globals().get(SHARED_LIB)
-    func = getattr(obj, name)
-    return func(*args, **kwargs)
-
-load_config = partial(invoke, 'load_config')
-get_config = partial(invoke, 'get_config')
-
-def check_args(module, warnings):
-    if SHARED_LIB == 'ios_cli':
-        ios_cli.check_args(module)
 
 def get_current_config(module):
     if module.params['config']:
@@ -174,23 +136,20 @@ def main():
         config=dict(),
     )
 
-    argument_spec.update(ios_cli.ios_cli_argument_spec)
+    argument_spec.update(ios_argument_spec)
 
     mutually_exclusive = [('config', 'backup'), ('config', 'force')]
 
-    cls = get_ansible_module()
-    module = cls(argument_spec=argument_spec,
-                 mutually_exclusive=mutually_exclusive,
-                 supports_check_mode=True)
-
-    warnings = list()
-    check_args(module, warnings)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           mutually_exclusive=mutually_exclusive,
+                           supports_check_mode=True)
 
     candidate = NetworkConfig(contents=module.params['src'], indent=1)
 
     result = {'changed': False}
-    if warnings:
-        result['warnings'] = warnings
+    warnings = list()
+    check_args(module, warnings)
+    result['warnings'] = warnings
 
     if module.params['backup']:
         result['__backup__'] = get_config(module=module)
@@ -210,9 +169,9 @@ def main():
         result['changed'] = True
 
     result['updates'] = commands
+    result['commands'] = commands
 
     module.exit_json(**result)
 
 if __name__ == '__main__':
-    SHARED_LIB = 'ios_cli'
     main()

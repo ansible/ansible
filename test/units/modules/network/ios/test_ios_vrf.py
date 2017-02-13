@@ -20,43 +20,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import json
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
-from ansible.errors import AnsibleModuleExit
+from ansible.compat.tests.mock import patch
 from ansible.modules.network.ios import ios_vrf
-from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
+from .ios_module import TestIosModule, load_fixture, set_module_args
 
 
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
+class TestIosVrfModule(TestIosModule):
 
-fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
-fixture_data = {}
-
-def load_fixture(name):
-    path = os.path.join(fixture_path, name)
-
-    if path in fixture_data:
-        return fixture_data[path]
-
-    with open(path) as f:
-        data = f.read()
-
-    try:
-        data = json.loads(data)
-    except:
-        pass
-
-    fixture_data[path] = data
-    return data
-
-
-class TestIosVrfModule(unittest.TestCase):
+    module = ios_vrf
 
     def setUp(self):
         self.mock_get_config = patch('ansible.modules.network.ios.ios_vrf.get_config')
@@ -69,28 +42,9 @@ class TestIosVrfModule(unittest.TestCase):
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 
-    def execute_module(self, failed=False, changed=False, commands=None, sort=True):
-
+    def load_fixtures(self, commands=None):
         self.get_config.return_value = load_fixture('ios_vrf_config.cfg')
         self.load_config.return_value = None
-
-        with self.assertRaises(AnsibleModuleExit) as exc:
-            ios_vrf.main()
-
-        result = exc.exception.result
-
-        if failed:
-            self.assertTrue(result['failed'], result)
-        else:
-            self.assertEqual(result.get('changed'), changed, result)
-
-        if commands:
-            if sort:
-                self.assertEqual(sorted(commands), sorted(result['commands']))
-            else:
-                self.assertEqual(commands, result['commands'], result['commands'])
-
-        return result
 
     def test_ios_vrf_name(self):
         set_module_args(dict(name='test_4'))
