@@ -49,27 +49,29 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: admin
-    password: admin
-    transport: cli
+# Collect all facts
+  - name: "Collect all facts"
+    ce_facts:
+        gather_subset:  all
+        host:  {{inventory_hostname}}
+        username:  {{username}}
+        password:  {{password}}
 
-- ce_facts:
-    gather_subset: all
-
-# Collect only the config facts
-- ce_facts:
-    gather_subset:
-      - config
+# Collect config facts
+  - name: "Collect config facts"
+    ce_facts:
+        gather_subset:  config
+        host:  {{inventory_hostname}}
+        username:  {{username}}
+        password:  {{password}}
 
 # Do not collect hardware facts
-- ce_facts:
-    gather_subset:
-      - "!hardware"
+  - name: "Do not collect hardware facts"
+    ce_facts:
+        gather_subset:  !hardware
+        host:  {{inventory_hostname}}
+        username:  {{username}}
+        password:  {{password}}
 """
 
 RETURN = """
