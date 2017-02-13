@@ -19,6 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: panos_interface
@@ -28,46 +32,43 @@ description:
 author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
-    - pan-python
+    - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
+note:
+    - Checkmode is not supported.
 options:
     ip_address:
         description:
-            - IP address (or hostname) of PAN-OS device
-        required: true
-    password:
-        description:
-            - password for authentication
+            - IP address (or hostname) of PAN-OS device being configured.
         required: true
     username:
         description:
-            - username for authentication
-        required: false
+            - Username credentials to use for auth.
         default: "admin"
+    password:
+        description:
+            - Password credentials to use for auth.
+        required: true
     if_name:
         description:
-            - name of the interface to configure
+            - Name of the interface to configure.
         required: true
     zone_name:
-        description:
-            - name of the zone for the interface
-            - if the zone does not exist it is created
-            - if the zone exists and is not of the layer3 type the operation will fail
+        description: >
+            Name of the zone for the interface. If the zone does not exist it is created but if the zone exists and
+            it is not of the layer3 type the operation will fail.
         required: true
     create_default_route:
         description:
-            - whether add default route with router learned via DHCP
-        required: false
+            - Whether or not to add default route with router learned via DHCP.
         default: "false"
     commit:
         description:
-            - commit if changed
-        required: false
+            - Commit if changed
         default: true
 '''
 
 EXAMPLES = '''
-# enable DHCP client on ethernet1/1 in zone public
-- name: configure ethernet1/1
+- name: enable DHCP client on ethernet1/1 in zone public
   interface:
     password: "admin"
     ip_address: "192.168.1.1"
@@ -79,10 +80,6 @@ EXAMPLES = '''
 RETURN='''
 # Default return values
 '''
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import get_exception
