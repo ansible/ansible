@@ -208,8 +208,8 @@ class Default(FactsBase):
 class Hardware(FactsBase):
 
     COMMANDS = [
-        'dir | include Directory',
-        'show memory statistics | include Processor'
+        'dir',
+        'show memory statistics'
     ]
 
     def populate(self):
