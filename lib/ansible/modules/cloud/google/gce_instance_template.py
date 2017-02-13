@@ -27,7 +27,7 @@ version_added: "2.3"
 short_description: create or destroy intance templates of Compute Engine of GCP.
 description:
      - Creates or destroy Google instance templates
-       of Compte Engine of Google Cloud Plateform.
+       of Compute Engine of Google Cloud Platform.
 options:
   state:
     description:
@@ -83,10 +83,10 @@ options:
     default: "default"
   subnetwork:
     description:
-      - The Subnetwork resource for this instance.
+      - The Subnetwork resource name for this instance.
     required: false
     default: null
-  can_ip_forword:
+  can_ip_forward:
     description:
       - Set to True to allow instance to
         send/receive non-matching src/dst packets.
@@ -533,7 +533,7 @@ def main():
             source=dict(),
             image=dict(),
             image_family=dict(default='debian-8'),
-            disk_type=dict(default='pd-standard'),
+            disk_type=dict(choices=['pd-standard', 'pd-ssd'], default='pd-standard', type='str'),
             disk_auto_delete=dict(type='bool', default=True),
             network=dict(default='default'),
             subnetwork=dict(),
@@ -552,6 +552,7 @@ def main():
             pem_file=dict(type='path'),
             credentials_file=dict(type='path'),
         ),
+        mutually_exclusive=[['source', 'image']],
         required_one_of=[['image', 'image_family']],
         supports_check_mode=True
     )
