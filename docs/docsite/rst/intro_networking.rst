@@ -15,9 +15,7 @@ Starting with Ansible version 2.1, you can now use the familiar Ansible models o
 Network Automation Installation
 ```````````````````````````````
 
-* Install the `latest Ansible network release <http://docs.ansible.com/ansible/intro_installation.html>`_.
-* Get the `playbooks for testing <https://github.com/ansible/test-network-modules>`_ Ansible core network modules.
-
+* Install the `latest Ansible release <http://docs.ansible.com/ansible/intro_installation.html>`_.
 
 .. _networking_module_index:
 
@@ -26,7 +24,7 @@ Available Networking Modules
 
 Most standard Ansible modules are designed to work with Linux/Unix or Windows machines and will not work with networking devices. Some modules (including "slurp", "raw", and "setup") are platform-agnostic and will work with networking devices.
 
-To see what modules are available for networking devices, please browse the `"networking" section of the Ansible module index <http://docs.ansible.com/ansible/list_of_network_modules.html#>`_.
+To see what modules are available for networking devices, please browse the `"networking" section of the Ansible module index <https://docs.ansible.com/ansible/list_of_network_modules.html#>`_.
 
 .. _understanding_provider_arguments:
 
