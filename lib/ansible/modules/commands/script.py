@@ -23,7 +23,7 @@ module: script
 version_added: "0.9"
 short_description: Runs a local script on a remote node after transferring it
 description:
-     - "The M(script) module takes the script name followed by a list of
+     - "The C(script) module takes the script name followed by a list of
        space-delimited arguments. "
      - "The local script at path will be transferred to the remote node and then executed. "
      - "The given script will be processed through the shell environment on the remote node. "

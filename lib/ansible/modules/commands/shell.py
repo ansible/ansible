@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 module: shell
 short_description: Execute commands in nodes.
 description:
-     - The M(shell) module takes the command name followed by a list of space-delimited arguments.
+     - The C(shell) module takes the command name followed by a list of space-delimited arguments.
        It is almost exactly like the M(command) module but runs
        the command through a shell (C(/bin/sh)) on the remote node.
 version_added: "0.2"
@@ -69,8 +69,8 @@ options:
 notes:
    -  If you want to execute a command securely and predictably, it may be
       better to use the M(command) module instead. Best practices when writing
-      playbooks will follow the trend of using M(command) unless M(shell) is
-      explicitly required. When running ad-hoc commands, use your best
+      playbooks will follow the trend of using M(command) unless the C(shell)
+      module is explicitly required. When running ad-hoc commands, use your best
       judgement.
    -  To sanitize any variables passed to the shell module, you should use
       "{{ var | quote }}" instead of just "{{ var }}" to make sure they don't include evil things like semicolons.
