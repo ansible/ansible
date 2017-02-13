@@ -142,7 +142,7 @@ def main():
     }
 
     #send request if not in test mode
-    if module.check_mode == False:
+    if module.check_mode is False:
         response, info = fetch_url(module=module, url=webhook_url, headers=headers, method='POST', data=payload)
 
         #somthing's wrong
