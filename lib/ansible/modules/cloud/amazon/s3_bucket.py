@@ -168,22 +168,21 @@ def _create_or_update_bucket(connection, module, location):
 
     # Versioning
     versioning_status = bucket.get_versioning_status()
-    if versioning_status:
-        if versioning is not None:
-            if versioning and versioning_status['Versioning'] != "Enabled":
-                try:
-                    bucket.configure_versioning(versioning)
-                    changed = True
-                    versioning_status = bucket.get_versioning_status()
-                except S3ResponseError as e:
-                    module.fail_json(msg=e.message)
-            elif not versioning and versioning_status['Versioning'] != "Enabled":
-                try:
-                    bucket.configure_versioning(versioning)
-                    changed = True
-                    versioning_status = bucket.get_versioning_status()
-                except S3ResponseError as e:
-                    module.fail_json(msg=e.message)
+    if versioning is not None:
+        if versioning and versioning_status.get('Versioning') != "Enabled":
+            try:
+                bucket.configure_versioning(versioning)
+                changed = True
+                versioning_status = bucket.get_versioning_status()
+            except S3ResponseError as e:
+                module.fail_json(msg=e.message)
+        elif not versioning and versioning_status.get('Versioning') == "Enabled":
+            try:
+                bucket.configure_versioning(versioning)
+                changed = True
+                versioning_status = bucket.get_versioning_status()
+            except S3ResponseError as e:
+                module.fail_json(msg=e.message)
 
     # Requester pays
     requester_pays_status = get_request_payment_status(bucket)
