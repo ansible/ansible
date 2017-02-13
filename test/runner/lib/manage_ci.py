@@ -73,7 +73,7 @@ class ManageNetworkCI(object):
             'ansible_host=%s' % self.core_ci.connection.hostname,
             'ansible_user=%s' % self.core_ci.connection.username,
             'ansible_port=%s' % self.core_ci.connection.port,
-            'ansible_connection=network_cli',
+            'ansible_connection=local',
             'ansible_ssh_private_key_file=%s' % self.core_ci.ssh_key.key,
             'ansible_network_os=%s' % self.core_ci.platform,
         ]

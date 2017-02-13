@@ -142,8 +142,9 @@ import re
 
 from functools import partial
 
-from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ios import load_config, get_config
+from ansible.module_utils.ios import ios_argument_spec, check_args
 from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.six import iteritems
 
@@ -327,13 +328,19 @@ def main():
         state=dict(default='present', choices=['present', 'absent'])
     )
 
+    argument_spec.update(ios_argument_spec)
+
     mutually_exclusive = [('name', 'vrfs')]
 
-    module = LocalAnsibleModule(argument_spec=argument_spec,
-                                mutually_exclusive=mutually_exclusive,
-                                supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           mutually_exclusive=mutually_exclusive,
+                           supports_check_mode=True)
 
     result = {'changed': False}
+
+    warnings = list()
+    check_args(module, warnings)
+    result['warnings'] = warnings
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
