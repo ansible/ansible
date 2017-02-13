@@ -28,7 +28,7 @@ module: wakeonlan
 version_added: 2.2
 short_description: Send a magic Wake-on-LAN (WoL) broadcast packet
 description:
-   - The M(wakeonlan) module sends magic Wake-on-LAN (WoL) broadcast packets.
+   - The C(wakeonlan) module sends magic Wake-on-LAN (WoL) broadcast packets.
 options:
   mac:
     description:

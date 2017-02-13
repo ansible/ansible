@@ -79,7 +79,7 @@ options:
     choices: [present, latest]
     default: present
 notes:
-    - Please note that the M(easy_install) module can only install Python
+    - Please note that the C(easy_install) module can only install Python
       libraries. Thus this module is not able to remove libraries. It is
       generally recommended to use the M(pip) module which you can first install
       using M(easy_install).

@@ -29,7 +29,7 @@ author: "Peter Sprygada (@privateip), Patrick Ogenstad (@ogenstad)"
 short_description: Run arbitrary commands on Cisco ASA devices.
 description:
   - Sends arbitrary commands to an ASA node and returns the results
-    read from the device. The M(asa_command) module includes an
+    read from the device. The C(asa_command) module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
 extends_documentation_fragment: asa

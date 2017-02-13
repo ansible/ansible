@@ -29,7 +29,7 @@ module: win_copy
 version_added: "1.9.2"
 short_description: Copies files to remote locations on windows hosts.
 description:
-     - The M(win_copy) module copies a file on the local box to remote windows locations.
+     - The C(win_copy) module copies a file on the local box to remote windows locations.
 options:
   src:
     description:
