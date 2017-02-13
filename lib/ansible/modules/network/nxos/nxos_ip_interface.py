@@ -120,15 +120,15 @@ proposed:
 existing:
     description: k/v pairs of existing IP attributes on the interface
     type: dict
-    sample: {"addresses": [{"addr": "11.11.11.11", "mask": 17, "tag": 101}],
+    sample: {"addresses": [{"addr": "11.11.11.11", "mask": 17, "tag": 101, "secondary": false}],
             "interface": "ethernet1/32", "prefixes": ["11.11.0.0/17"],
             "type": "ethernet", "vrf": "default"}
 end_state:
     description: k/v pairs of IP attributes after module execution
     returned: always
     type: dict
-    sample: {"addresses": [{"addr": "11.11.11.11", "mask": 17, "tag": 101},
-                           {"addr": "20.20.20.20", "mask": 24, "tag": 100}],
+    sample: {"addresses": [{"addr": "11.11.11.11", "mask": 17, "tag": 101, "secondary": false},
+                           {"addr": "20.20.20.20", "mask": 24, "tag": 100, "secondary": true}],
             "interface": "ethernet1/32", "prefixes": ["11.11.0.0/17", "20.20.20.0/24"],
             "type": "ethernet", "vrf": "default"}
 updates:
