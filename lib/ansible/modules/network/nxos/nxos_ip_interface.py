@@ -645,8 +645,6 @@ def main():
     changed = False
     end_state = existing
 
-    prefix = str(ipaddress.ip_interface('{}/{}'.format(addr, mask).decode('utf-8')).network)
-
     if state == 'absent' and existing['addresses']:
         if find_same_addr(existing, addr, mask):
             command = get_remove_ip_config_commands(interface, addr,
