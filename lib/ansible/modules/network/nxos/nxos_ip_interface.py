@@ -143,10 +143,6 @@ changed:
     sample: true
 '''
 
-import json
-import collections
-import ipaddress
-
 # COMMON CODE FOR MIGRATION
 import re
 
@@ -215,7 +211,7 @@ class CustomNetworkConfig(NetworkConfig):
         offset = 0
         obj = None
 
-        ## global config command
+        # global config command
         if not parents:
             for line in to_list(lines):
                 item = ConfigLine(line)
@@ -337,30 +333,6 @@ def find_same_addr(existing, addr, mask, full=False, **kwargs):
     return False
 
 
-# TODO: remove
-# This method doesn't used any more, because we don't use JSON output.
-#
-# def get_cli_body_ssh(command, response, module):
-#     """Get response for when transport=cli.  This is kind of a hack and mainly
-#     needed because these modules were originally written for NX-API.  And
-#     not every command supports "| json" when using cli/ssh.  As such, we assume
-#     if | json returns an XML string, it is a valid command, but that the
-#     resource doesn't exist yet. Instead, we assume if '^' is found in response,
-#     it is an invalid command.
-#     """
-#     if 'xml' in response[0]:
-#         body = []
-#     elif '^' in response[0] or 'show run' in response[0] or response[0] == '\n':
-#         body = response
-#     else:
-#         try:
-#             body = [json.loads(response[0])]
-#         except ValueError:
-#             module.fail_json(msg='Command does not support JSON output',
-#                              command=command)
-#     return body
-
-
 def execute_show(cmds, module, command_type='cli_show'):
     command_type_map = {
         'cli_show': 'json',
@@ -381,22 +353,6 @@ def execute_show(cmds, module, command_type='cli_show'):
 def execute_show_command(command, module, command_type='cli_show'):
     body = execute_show([command], module, command_type=command_type)
     return body
-
-
-# TODO: remove
-# This method isn't used
-#
-# def apply_key_map(key_map, table):
-#     new_dict = {}
-#     for key, value in table.items():
-#         new_key = key_map.get(key)
-#         if new_key:
-#             value = table.get(key)
-#             if value:
-#                 new_dict[new_key] = str(value)
-#             else:
-#                 new_dict[new_key] = value
-#     return new_dict
 
 
 def get_interface_type(interface):
@@ -458,64 +414,6 @@ def send_show_command(interface_name, version, module):
     return body
 
 
-# TODO: remove
-# This method doesn't used any more, because there aren't
-# information about tags from JSON output for IPv4 secondary addresses and IPv6 addresses
-#
-# def parse_structured_data(body, interface_name, version, module):
-#     address_list = []
-#
-#     interface_key = {
-#         'subnet': 'prefix',
-#         'prefix': 'prefix'
-#     }
-#
-#     try:
-#         interface_table = body[0]['TABLE_intf']['ROW_intf']
-#         try:
-#             vrf_table = body[0]['TABLE_vrf']['ROW_vrf']
-#             vrf = vrf_table['vrf-name-out']
-#         except KeyError:
-#             vrf = None
-#     except (KeyError, AttributeError):
-#         return {}
-#
-#     interface = apply_key_map(interface_key, interface_table)
-#     interface['interface'] = interface_name
-#     interface['type'] = get_interface_type(interface_name)
-#     interface['vrf'] = vrf
-#
-#     if version == 'v4':
-#         address = {}
-#         address['addr'] = interface_table.get('prefix', None)
-#         if address['addr'] is not None:
-#             address['mask'] = str(interface_table.get('masklen', None))
-#             interface['addresses'] = [address]
-#             prefix = "{0}/{1}".format(address['addr'], address['mask'])
-#             address_list.append(prefix)
-#         else:
-#             interface['addresses'] = []
-#
-#     elif version == 'v6':
-#         address_list = interface_table.get('addr', [])
-#         interface['addresses'] = []
-#
-#         if address_list:
-#             if not isinstance(address_list, list):
-#                 address_list = [address_list]
-#
-#             for ipv6 in address_list:
-#                 address = {}
-#                 splitted_address = ipv6.split('/')
-#                 address['addr'] = splitted_address[0]
-#                 address['mask'] = splitted_address[1]
-#                 interface['addresses'].append(address)
-#         else:
-#             interface['addresses'] = []
-#
-#     return interface, address_list
-
-
 def parse_unstructured_data(body, interface_name, version, module):
     interface = {}
     interface['addresses'] = []
@@ -536,15 +434,8 @@ def parse_unstructured_data(body, interface_name, version, module):
                 elif "IPv6 subnet:" in splitted_body[index]:
                     last_reference_point = index
                     break
-                    # TODO: remove
-                    # 'prefix' appends when addresses adding to 'address_list'
-                    #
-                    # prefix_line = splitted_body[last_reference_point]
-                    # prefix = prefix_line.split('IPv6 subnet:')[1].strip()
-                    # interface['prefix'] = prefix
 
-            interface_list_table = splitted_body[
-                                   first_reference_point:last_reference_point]
+            interface_list_table = splitted_body[first_reference_point:last_reference_point]
 
             for each_line in interface_list_table:
                 address = each_line.strip().split(' ')[0]
@@ -563,7 +454,9 @@ def parse_unstructured_data(body, interface_name, version, module):
     else:
         for index in range(0, len(splitted_body) - 1):
             if "IP address" in splitted_body[index]:
-                regex = '.*IP\saddress:\s(?P<addr>\d{1,3}(?:\.\d{1,3}){3}),\sIP\ssubnet:\s\d{1,3}(?:\.\d{1,3}){3}\/(?P<mask>\d+)(?:\s(?P<secondary>secondary)\s)?.+?tag:\s(?P<tag>\d+).*'
+                regex = '.*IP\saddress:\s(?P<addr>\d{1,3}(?:\.\d{1,3}){3}),\sIP\ssubnet:' + \
+                        '\s\d{1,3}(?:\.\d{1,3}){3}\/(?P<mask>\d+)(?:\s(?P<secondary>secondary)\s)?' + \
+                        '.+?tag:\s(?P<tag>\d+).*'
                 match = re.match(regex, splitted_body[index])
                 if match:
                     match_dict = match.groupdict()
@@ -627,15 +520,6 @@ def get_remove_ip_config_commands(interface, addr, mask, existing, version):
 def get_config_ip_commands(delta, interface, existing, version):
     commands = []
     delta = dict(delta)
-
-    # TODO: remove
-    # ['addr', 'mask'] aren't correct keys for existing variable
-    # 
-    # loop used in the situation that just an IP address or just a
-    # mask is changing, not both.
-    # for each in ['addr', 'mask']:
-    #     if each not in delta:
-    #         delta[each] = existing[each]
 
     if version == 'v4':
         command = 'ip address {addr}/{mask}'.format(**delta)
