@@ -26,7 +26,7 @@ import codecs
 
 try:
     import cPickle as pickle
-except ImportError
+except ImportError:
     import pickle
 
 from ansible import constants as C
