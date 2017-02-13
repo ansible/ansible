@@ -30,7 +30,7 @@ authors:
     - "Sebastien Rohaut (@usawa)"
 short_description: Modify Linux PAM limits
 description:
-     - The M(pam_limits) module modify PAM limits, default in /etc/security/limits.conf.
+     - The C(pam_limits) module modify PAM limits, default in /etc/security/limits.conf.
        For the full documentation, see man limits.conf(5).
 options:
   domain:

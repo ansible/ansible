@@ -33,7 +33,7 @@ version_added: 2.1
 requirements: ['git']
 short_description: Read and write git configuration
 description:
-  - The M(git_config) module changes git configuration by invoking 'git config'.
+  - The C(git_config) module changes git configuration by invoking 'git config'.
     This is needed if you don't want to use M(template) for the entire git
     config file (e.g. because you need to change just C(user.email) in
     /etc/.git/config).  Solutions involving M(command) are cumbersone or

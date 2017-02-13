@@ -32,7 +32,7 @@ version_added: 1.4
 short_description: Unpacks an archive after (optionally) copying it from the local machine.
 extends_documentation_fragment: files
 description:
-     - The M(unarchive) module unpacks an archive. By default, it will copy the source file from the local system to the target before unpacking - set remote_src=yes to unpack an archive which already exists on the target..
+     - The C(unarchive) module unpacks an archive. By default, it will copy the source file from the local system to the target before unpacking - set remote_src=yes to unpack an archive which already exists on the target..
 options:
   src:
     description:
