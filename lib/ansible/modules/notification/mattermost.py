@@ -23,9 +23,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -105,6 +102,8 @@ webhook_url:
     type: string
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
 
 def main():
     module = AnsibleModule(
