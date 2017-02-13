@@ -39,7 +39,7 @@ requirements:
 options:
   session:
     description:
-      - An existing AOS session as obtained by aos_login module
+      - An existing AOS session as obtained by aos_login module.
     required: true
   name:
     description:
@@ -59,6 +59,8 @@ options:
     description:
       - The approve argument instruct the module to convert a device in quarantine
         mode into approved mode.
+    default: "no"
+    choices: [ "yes", "no" ]
   location:
     description:
       - When approving a device using the I(approve) argument, it's possible
@@ -131,7 +133,7 @@ def aos_device_normal(module, aos, dev):
                              id=dev.id,
                              value=dev.value)
         else:
-            module.fail_json(msg="Device is not in 'normal' state")
+            module.fail_json(msg="Device is in '%s' state" % dev.state)
 
 def aos_device(module):
     margs = module.params
@@ -191,7 +193,7 @@ def main():
             id=dict(required=False),
             state=dict( choices=['normal'],
                         default='normal'),
-            approve=dict( required=False ),
+            approve=dict( required=False, type='bool' ),
             location=dict( required=False, default='')
         ),
         mutually_exclusive = [('name', 'id')],
