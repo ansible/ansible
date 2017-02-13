@@ -33,6 +33,9 @@ description:
        you can call API Gateway's REST API.  You may need to patch
        your boto.  See https://github.com/boto/boto3/issues/876
        and discuss with your AWS rep.
+     - swagger_file and swagger_text are passed directly on to AWS
+       transparently whilst swagger_dict is an ansible dict which is
+       converted to JSON before the API definitions are uploaded.
 version_added: '2.3'
 requirements: [ boto3 ]
 options:
@@ -50,9 +53,13 @@ options:
     description:
       - JSON or YAML file containing swagger definitions for API
     required: false
-  swagger:
+  swagger_text:
     description:
       - Swagger definitions for API in JSON or YAML as a string direct from playbook
+    required: false
+  swagger_dict:
+    description:
+      - Swagger definitions API ansible dictionary which will be converted to JSON and uploaded
     required: false
   stage:
     description:
@@ -127,13 +134,14 @@ def main():
             api_id=dict(type='str', required=False),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             swagger_file=dict(type='str', default=None, aliases=['src', 'api_file']),
-            swagger=dict(type='str', default=None),
+            swagger_dict=dict(type='json', default=None),
+            swagger_text=dict(type='str', default=None),
             stage=dict(type='str', default=None),
             deploy_desc=dict(type='str', default=None),
         )
     )
 
-    mutually_exclusive = [['swagger_file', 'swagger']]
+    mutually_exclusive = [['swagger_file', 'swagger_dict', 'swagger_text' ]]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False,  )   # TODO !!!`
@@ -141,7 +149,8 @@ def main():
     api_id = module.params.get('api_id')
     state = module.params.get('state')
     swagger_file = os.path.expanduser(module.params.get('swagger_file'))
-    swagger = module.params.get('swagger')
+    swagger_dict = module.params.get('swagger_dict')
+    swagger_text = module.params.get('swagger_text')
     stage= module.params.get('stage')
     deploy_desc= module.params.get('deploy_desc')
 
@@ -183,8 +192,10 @@ def main():
                 apidata=f.read()
         except Exception as e:
             module.fail_json(msg=str(e), exception=traceback.format_exc())
-    if swagger:
-        apidata=swagger
+    if swagger_dict:
+        apidata = json.dumps(swagger_dict)
+    if swagger_text:
+        apidata = swagger_text
 
     if apidata is None:
         module.fail_json(msg='module error - failed to get API data')
