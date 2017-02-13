@@ -127,6 +127,11 @@ changed:
     changed: true
 """
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict
+import traceback
+
 try:
     import boto3
     import botocore
@@ -228,11 +233,6 @@ def main():
     facts_result = dict(changed=changed, **camel_dict_to_snake_dict(response))
 
     module.exit_json(**facts_result)
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict
-import traceback
 
 if __name__ == '__main__':
     main()
