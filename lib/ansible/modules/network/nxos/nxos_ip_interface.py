@@ -115,8 +115,8 @@ proposed:
     description: k/v pairs of parameters passed into module
     returned: always
     type: dict
-    sample: "proposed": {"addr": "20.20.20.20", "allow_secondary": true,
-                        "interface": "Ethernet1/32", "mask": "24", "tag": "100"}
+    sample: {"addr": "20.20.20.20", "allow_secondary": true,
+            "interface": "Ethernet1/32", "mask": "24", "tag": 100}
 existing:
     description: k/v pairs of existing IP attributes on the interface
     type: dict
