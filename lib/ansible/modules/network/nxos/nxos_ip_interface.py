@@ -150,6 +150,8 @@ import ipaddress
 # COMMON CODE FOR MIGRATION
 import re
 
+import ipaddress
+
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
 from ansible.module_utils.shell import ShellError
@@ -161,16 +163,15 @@ except ImportError:
 
 
 def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
+    if isinstance(val, (list, tuple)):
+        return list(val)
+    elif val is not None:
+        return [val]
+    else:
+        return list()
 
 
 class CustomNetworkConfig(NetworkConfig):
-
     def expand_section(self, configobj, S=None):
         if S is None:
             S = list()
@@ -205,7 +206,6 @@ class CustomNetworkConfig(NetworkConfig):
         if not obj:
             raise ValueError('path does not exist in config')
         return self.expand_section(obj)
-
 
     def add(self, lines, parents=None):
         """Adds one or lines of configuration
@@ -262,6 +262,7 @@ def get_network_module(**kwargs):
     except NameError:
         return NetworkModule(**kwargs)
 
+
 def get_config(module, include_defaults=False):
     config = module.params['config']
     if not config:
@@ -271,6 +272,7 @@ def get_config(module, include_defaults=False):
             defaults = module.params['include_defaults']
             config = module.config.get_config(include_defaults=defaults)
     return CustomNetworkConfig(indent=2, contents=config)
+
 
 def load_config(module, candidate):
     config = get_config(module)
@@ -299,6 +301,8 @@ def load_config(module, candidate):
         result['updates'] = commands
 
     return result
+
+
 # END OF COMMON CODE
 
 def execute_config_command(commands, module):
@@ -331,6 +335,7 @@ def find_same_addr(existing, addr, mask, full=False, **kwargs):
             else:
                 return address
     return False
+
 
 # TODO: remove
 # This method doesn't used any more, because we don't use JSON output.
@@ -376,6 +381,7 @@ def execute_show(cmds, module, command_type='cli_show'):
 def execute_show_command(command, module, command_type='cli_show'):
     body = execute_show([command], module, command_type=command_type)
     return body
+
 
 # TODO: remove
 # This method isn't used
@@ -538,7 +544,7 @@ def parse_unstructured_data(body, interface_name, version, module):
                     # interface['prefix'] = prefix
 
             interface_list_table = splitted_body[
-                                first_reference_point:last_reference_point]
+                                   first_reference_point:last_reference_point]
 
             for each_line in interface_list_table:
                 address = each_line.strip().split(' ')[0]
@@ -688,7 +694,7 @@ def validate_params(addr, interface, mask, tag, allow_secondary, version, state,
             module.fail_json(msg="Warning! 'mask' must be an integer between"
                                  " 1 and 32 when version v4 and up to 128 "
                                  "when version v6.", version=version,
-                                 mask=mask)
+                             mask=mask)
     if addr is not None and mask is not None:
         try:
             ipaddress.ip_interface('{}/{}'.format(addr, mask).decode('utf-8'))
@@ -700,9 +706,9 @@ def validate_params(addr, interface, mask, tag, allow_secondary, version, state,
             if tag < 0 and tag > 4294967295:
                 raise ValueError
         except ValueError:
-                module.fail_json(msg="Warning! 'tag' must be an integer between"
-                                     " 0 (default) and 4294967295."
-                                     "To use tag you must set 'addr' and 'mask' params.", tag=tag)
+            module.fail_json(msg="Warning! 'tag' must be an integer between"
+                                 " 0 (default) and 4294967295."
+                                 "To use tag you must set 'addr' and 'mask' params.", tag=tag)
     if allow_secondary is not None:
         try:
             if addr is None or mask is None:
@@ -714,19 +720,19 @@ def validate_params(addr, interface, mask, tag, allow_secondary, version, state,
 
 def main():
     argument_spec = dict(
-            interface=dict(required=True),
-            addr=dict(required=False),
-            version=dict(required=False, choices=['v4', 'v6'],
-                         default='v4'),
-            mask=dict(type='str', required=False),
-            tag=dict(required=False, default=0, type='int'),
-            state=dict(required=False, default='present',
-                       choices=['present', 'absent']),
-            allow_secondary=dict(required=False, default=False,
-                                 choices=[True, False], type='bool'),
-            include_defaults=dict(default=True),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        interface=dict(required=True),
+        addr=dict(required=False),
+        version=dict(required=False, choices=['v4', 'v6'],
+                     default='v4'),
+        mask=dict(type='str', required=False),
+        tag=dict(required=False, default=0, type='int'),
+        state=dict(required=False, default='present',
+                   choices=['present', 'absent']),
+        allow_secondary=dict(required=False, default=False,
+                             choices=[True, False], type='bool'),
+        include_defaults=dict(default=True),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)
