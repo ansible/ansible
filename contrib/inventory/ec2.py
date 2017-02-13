@@ -803,8 +803,11 @@ class Ec2Inventory(object):
         # If we can't get a nice hostname, use the destination address
         if not hostname:
             hostname = dest
-        else:
+        # to_safe strips hostname characters like dots, so don't strip if using route53 hostnames
+        elif self.route53_enabled and self.route53_hostnames:
             hostname = hostname.lower()
+        else:
+            hostname = self.to_safe(hostname).lower()
 
         # if we only want to include hosts that match a pattern, skip those that don't
         if self.pattern_include and not self.pattern_include.match(hostname):
