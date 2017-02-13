@@ -130,32 +130,15 @@ warnings:
   returned: always
   type: list
   sample: ['...', '...']
-start:
-  description: The time the job started
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:15.126146"
-end:
-  description: The time the job ended
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:25.595612"
-delta:
-  description: The time elapsed to perform all operations
-  returned: always
-  type: str
-  sample: "0:00:10.469466"
 """
 import time
 
-from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.six import string_types
 from ansible.module_utils.vyos import run_commands
-
-VALID_KEYS = ['command', 'output', 'prompt', 'response']
-
+from ansible.module_utils.vyos import vyos_argument_spec, check_args
 
 def to_lines(stdout):
     for item in stdout:
@@ -170,17 +153,13 @@ def parse_commands(module, warnings):
         prompt=dict(),
         response=dict(),
     ))
+
     commands = command(module.params['commands'])
 
     for index, cmd in enumerate(commands):
         if module.check_mode and not cmd['command'].startswith('show'):
             warnings.append('only show commands are supported when using '
                             'check mode, not executing `%s`' % cmd['command'])
-        else:
-            if cmd['command'].startswith('conf'):
-                module.fail_json(msg='vyos_command does not support running '
-                                     'config mode commands.  Please use '
-                                     'vyos_config instead')
         commands[index] = module.jsonify(cmd)
 
     return commands
@@ -188,7 +167,6 @@ def parse_commands(module, warnings):
 
 def main():
     spec = dict(
-        # { command: <str>, output: <str>, prompt: <str>, response: <str> }
         commands=dict(type='list', required=True),
 
         wait_for=dict(type='list', aliases=['waitfor']),
@@ -198,10 +176,13 @@ def main():
         interval=dict(default=1, type='int')
     )
 
-    module = LocalAnsibleModule(argument_spec=spec, supports_check_mode=True)
+    spec.update(vyos_argument_spec)
 
+    module = AnsibleModule(argument_spec=spec, supports_check_mode=True)
 
     warnings = list()
+    check_args(module, warnings)
+
     commands = parse_commands(module, warnings)
 
     wait_for = module.params['wait_for'] or list()

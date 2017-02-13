@@ -72,21 +72,6 @@ commands:
   sample:
     - set system hostname vyos01
     - set system domain-name foo.example.com
-start:
-  description: The time the job started
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:15.126146"
-end:
-  description: The time the job ended
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:25.595612"
-delta:
-  description: The time elapsed to perform all operations
-  returned: always
-  type: str
-  sample: "0:00:10.469466"
 """
 
 EXAMPLES = """
@@ -112,8 +97,9 @@ EXAMPLES = """
       - sub2.example.com
 """
 
-from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vyos import get_config, load_config
+from ansible.module_utils.vyos import vyos_argument_spec, check_args
 
 
 def spec_key_to_device_key(key):
@@ -181,6 +167,15 @@ def spec_to_commands(want, have):
 
     return commands
 
+def map_param_to_obj(module):
+    return {
+        'host_name': module.params['host_name'],
+        'domain_name': module.params['domain_name'],
+        'domain_search': module.params['domain_search'],
+        'name_server': module.params['name_server'],
+        'state': module.params['state']
+    }
+
 
 def main():
     argument_spec = dict(
@@ -191,14 +186,20 @@ def main():
         state=dict(type='str', default='present', choices=['present', 'absent']),
     )
 
-    module = LocalAnsibleModule(
+    argument_spec.update(vyos_argument_spec)
+
+    module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
         mutually_exclusive=[('domain_name', 'domain_search')],
     )
 
-    result = {'changed': False}
-    want = dict(module.params)
+    warnings = list()
+    check_args(module, warnings)
+
+    result = {'changed': False, 'warnings': warnings}
+
+    want = map_param_to_obj(module)
     have = config_to_dict(module)
 
     commands = spec_to_commands(want, have)
