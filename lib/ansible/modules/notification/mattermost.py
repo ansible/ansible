@@ -23,6 +23,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -32,7 +34,7 @@ DOCUMENTATION = """
 module: mattermost
 short_description: Send Mattermost notifications
 description:
-    - The M(mattermost) module sends notifications to U(http://your.mattermost.url) via the Incoming WebHook integration
+    - The C(mattermost) module sends notifications to U(http://your.mattermost.url) via the Incoming WebHook integration
 version_added: "2.3"
 author: "Benjamin Jolivot (@bjolivot)"
 options:
@@ -54,7 +56,6 @@ options:
   channel:
     description:
       - Channel to send the message to. If absent, the message goes to the channel selected for the I(api_key).
-    required: false
     default: None
   username:
     description:
@@ -112,18 +113,18 @@ def main():
             url         = dict(type='str', required=True),
             api_key     = dict(type='str', required=True,  no_log=True),
             text        = dict(type='str', required=True),
-            channel     = dict(type='str', required=False,  default=None),
+            channel     = dict(type='str', default=None),
             username    = dict(type='str', default='Ansible'),
             icon_url    = dict(type='str', default='https://www.ansible.com/favicon.ico'),
             validate_certs = dict(default='yes', type='bool'),
         )
     )
     #init return dict
-    retkwargs = dict(changed=False, msg="OK")
+    result = dict(changed=False, msg="OK")
 
     #define webhook
     webhook_url = "{0}/hooks/{1}".format(module.params['url'],module.params['api_key'])
-    retkwargs['webhook_url'] = webhook_url
+    result['webhook_url'] = webhook_url
 
     #define payload
     payload = { }
@@ -132,7 +133,7 @@ def main():
             payload[param] = module.params[param]
 
     payload=module.jsonify(payload)
-    retkwargs['payload'] = payload
+    result['payload'] = payload
 
     #http headers
     headers = {
@@ -140,21 +141,19 @@ def main():
         'Accept': 'application/json',
     }
 
-    #send request
-    response, info = fetch_url(module=module, url=webhook_url, headers=headers, method='POST', data=payload)
+    #send request if not in test mode
+    if module.check_mode == False:
+        response, info = fetch_url(module=module, url=webhook_url, headers=headers, method='POST', data=payload)
 
-
-    if info['status'] != 200:
-        #some problem
-        retkwargs['msg'] = "Failed to send mattermost message, the error was: {0}".format(info['msg'])
-        module.fail_json(**retkwargs)
+        #somthing's wrong
+        if info['status'] != 200:
+            #some problem
+            result['msg'] = "Failed to send mattermost message, the error was: {0}".format(info['msg'])
+            module.fail_json(**result)
 
     #Looks good
-    module.exit_json(**retkwargs)
+    module.exit_json(**result)
 
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()
