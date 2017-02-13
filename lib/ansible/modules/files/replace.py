@@ -155,7 +155,7 @@ def main():
     )
 
     params = module.params
-    path = os.path.expanduser(params['path'])
+    path = params['path']
     res_args = dict()
 
     if os.path.isdir(path):
