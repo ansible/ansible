@@ -217,6 +217,14 @@ options:
         this, the source address is never altered."
     required: false
     default: null
+  syn:
+    version_added: "2.3"
+    description:
+      - "This allows matching packets that have the SYN bit set and the ACK
+        and RST bits unset. When negated, this matches all packets with
+        the RST or the ACK bits set."
+    required: false
+    default: ignore
   set_dscp_mark:
     version_added: "2.1"
     description:
@@ -321,6 +329,16 @@ EXAMPLES = '''
     jump: ACCEPT
   become: yes
 
+# Allow new incoming SYN packets on TCP port 22 (SSH).
+- iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 22
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+    comment: Accept new SSH connections.
+
 # Tag all outbound tcp packets with DSCP mark 8
 - iptables:
     chain: OUTPUT
@@ -375,6 +393,13 @@ def append_tcp_flags(rule, param, flag):
         if 'flags' in param and 'flags_set' in param:
             rule.extend([flag, ','.join(param['flags']), ','.join(param['flags_set'])])
 
+def append_match_flag(rule, param, flag, negatable):
+    if param == 'match':
+        rule.extend([flag])
+    elif negatable and param == 'negate':
+        rule.extend(['!', flag])
+
+
 def append_csv(rule, param, flag):
     if param:
         rule.extend([flag, ','.join(param)])
@@ -414,6 +439,7 @@ def construct_rule(params):
         params['set_dscp_mark_class'],
         '--set-dscp-class',
         False)
+    append_match_flag(rule, params['syn'], '--syn', True)
     append_match(rule, params['comment'], 'comment')
     append_param(rule, params['comment'], '--comment', False)
     if 'conntrack' in params['match']:
@@ -536,6 +562,10 @@ def main():
             uid_owner=dict(required=False, default=None, type='str'),
             reject_with=dict(required=False, default=None, type='str'),
             icmp_type=dict(required=False, default=None, type='str'),
+            syn=dict(
+                required=False,
+                default='ignore',
+                choices=['ignore', 'match', 'negate']),
             flush=dict(required=False, default=False, type='bool'),
             policy=dict(
                 required=False,
