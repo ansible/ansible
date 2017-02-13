@@ -1948,15 +1948,19 @@ class AnsibleModule(object):
                     self.warn(w)
             else:
                 self.warn(kwargs['warnings'])
+
         if self._warnings:
             kwargs['warnings'] = self._warnings
 
         if 'deprecations' in kwargs:
             if isinstance(kwargs['deprecations'], list):
                 for d in kwargs['deprecations']:
-                    self.deprecate(d)
+                    if isinstance(d, SEQUENCETYPE) and len(d) == 2:
+                       self.deprecate(d[0], version=d[1])
+                    else:
+                       self.deprecate(d)
             else:
-                self.warn(kwargs['deprecations'])
+                self.deprecate(d)
 
         if self._deprecations:
             kwargs['deprecations'] = self._deprecations
