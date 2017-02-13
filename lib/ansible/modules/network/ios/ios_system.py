@@ -126,26 +126,12 @@ commands:
   sample:
     - hostname ios01
     - ip domain name eng.ansible.com
-start:
-  description: The time the job started
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:15.126146"
-end:
-  description: The time the job ended
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:25.595612"
-delta:
-  description: The time elapsed to perform all operations
-  returned: always
-  type: str
-  sample: "0:00:10.469466"
 """
 import re
 
-from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ios import get_config, load_config
+from ansible.module_utils.ios import ios_argument_spec, check_args
 from ansible.module_utils.network_common import ComplexList
 
 _CONFIGURED_VRFS = None
@@ -364,10 +350,16 @@ def main():
         state=dict(choices=['present', 'absent'], default='present')
     )
 
-    module = LocalAnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+    argument_spec.update(ios_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     result = {'changed': False}
+
+    warnings = list()
+    check_args(module, warnings)
+    result['warnings'] = warnings
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
