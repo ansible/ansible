@@ -689,7 +689,6 @@ class AnsibleModule(object):
         self.run_command_environ_update = {}
         self._warnings = []
         self._deprecations = []
-        self._passthrough = ['warnings', 'deprecations']
 
         self.aliases = {}
         self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility', '_ansible_socket']
