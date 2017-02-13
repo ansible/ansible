@@ -56,13 +56,16 @@ options:
   username:
     description:
       - This is the sender of the message (Username Override need to be enabled by mattermost admin, see mattermost doc.
+    default: Ansible
   icon_url:
     description:
       - Url for the message sender's icon.
+    default: https://www.ansible.com/favicon.ico
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled sites using self-signed certificates.
+    default: yes
     choices:
       - 'yes'
       - 'no'
