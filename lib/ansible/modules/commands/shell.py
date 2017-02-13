@@ -69,8 +69,8 @@ options:
 notes:
    -  If you want to execute a command securely and predictably, it may be
       better to use the M(command) module instead. Best practices when writing
-      playbooks will follow the trend of using M(command) unless C(shell) is
-      explicitly required. When running ad-hoc commands, use your best
+      playbooks will follow the trend of using M(command) unless the C(shell)
+      module is explicitly required. When running ad-hoc commands, use your best
       judgement.
    -  To sanitize any variables passed to the shell module, you should use
       "{{ var | quote }}" instead of just "{{ var }}" to make sure they don't include evil things like semicolons.
