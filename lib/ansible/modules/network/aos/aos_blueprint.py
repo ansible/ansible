@@ -38,7 +38,7 @@ requirements:
 options:
   session:
     description:
-      - An existing AOS session as obtained by aos_login module
+      - An existing AOS session as obtained by aos_login module.
     required: true
   name:
     description:
@@ -46,8 +46,8 @@ options:
         Only one of I(name) or I(id) can be set.
   id:
     description:
-      - AOS Id of the IP Pool to manage (can't be used to create a new IP Pool),
-        Only one of I(name) or I(id)  can be set.
+      - AOS Id of the IP Pool to manage (can't be used to create a new IP Pool).
+        Only one of I(name) or I(id) can be set.
   state:
     description:
       - Indicate what is the expected state of the Blueprint.
@@ -55,16 +55,17 @@ options:
     default: present
   timeout:
     description:
-      - When state='build-ready', this timeout identifies timeout in seconds to wait before
-        declaring a failure
+      - When I(state=build-ready), this timeout identifies timeout in seconds to wait before
+        declaring a failure.
+    default: 5
   template:
     description:
-      - When creating a blueprint, this value identifies, by user-name, an existing engineering
+      - When creating a blueprint, this value identifies, by name, an existing engineering
         design template within the AOS-server.
   reference_arch:
      description:
         - When creating a blueprint, this value identifies a known AOS reference
-          architecture value. I(Refer to AOS-server documentation for available values)
+          architecture value. I(Refer to AOS-server documentation for available values).
 '''
 
 EXAMPLES = '''
@@ -83,7 +84,7 @@ EXAMPLES = '''
     design_template: "{{ blueprint_template }}"
     state: present
   register: bp
-  
+
 - name: Delete a blueprint
   aos_blueprint:
     session: "{{aos_session}}"
