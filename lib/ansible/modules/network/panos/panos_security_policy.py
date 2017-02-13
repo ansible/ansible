@@ -30,9 +30,9 @@ description: >
 author: "Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
-    - pan-python
-    - pandevice
-note:
+    - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
+    - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
+notes:
     - Checkmode is not supported.
     - Panorama is supported
 options:
@@ -51,7 +51,7 @@ options:
         required: true
     api_key:
         description:
-            - API key that can be used instead of username/password credentials.
+            - API key that can be used instead of I(username)/I(password) credentials.
     rule_name:
         description:
             - Name of the security rule.
@@ -130,7 +130,7 @@ options:
         default: "allow"
     group_profile:
         description: >
-            security profile group that is already defined in the system. This property supersedes antivirus,
+            Security profile group that is already defined in the system. This property supersedes antivirus,
             vulnerability, spyware, url_filtering, file_blocking, data_filtering, and wildfire_analysis properties.
         required: false
         default: None
@@ -177,14 +177,14 @@ options:
         default: None
     commit:
         description:
-            - commit if changed
+            - Commit if changed
         required: false
         default: true
 '''
 
 EXAMPLES = '''
-# permit ssh to 1.1.1.1
-- panos_security_policy:
+- name: permit ssh to 1.1.1.1
+  panos_security_policy:
     ip_address: '10.5.172.91'
     username: 'admin'
     password: 'paloalto'
@@ -202,8 +202,8 @@ EXAMPLES = '''
     action: 'allow'
     commit: false
 
-# Allow HTTP multimedia only from CDNs
-- panos_security_policy:
+- name: Allow HTTP multimedia only from CDNs
+  panos_security_policy:
     ip_address: '10.5.172.91'
     username: 'admin'
     password: 'paloalto'
@@ -221,8 +221,8 @@ EXAMPLES = '''
     action: 'allow'
     commit: false
 
-# more complex fictitious rule that uses profiles
-- panos_security_policy:
+- name: more complex fictitious rule that uses profiles
+  panos_security_policy:
     ip_address: '10.5.172.91'
     username: 'admin'
     password: 'paloalto'
@@ -237,8 +237,8 @@ EXAMPLES = '''
     wildfire_analysis: 'default'
     commit: false
 
-# deny all
-- panos_security_policy:
+- name: deny all
+  panos_security_policy:
     ip_address: '10.5.172.91'
     username: 'admin'
     password: 'paloalto'
@@ -273,10 +273,6 @@ EXAMPLES = '''
 RETURN = '''
 # Default return values
 '''
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import get_exception
@@ -424,6 +420,8 @@ def main():
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,
                            required_one_of=[['api_key', 'password']])
+    if not HAS_LIB:
+        module.fail_json(msg='Missing required pan-python and pandevice modules.')
 
     ip_address = module.params["ip_address"]
     password = module.params["password"]
