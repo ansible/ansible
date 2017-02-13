@@ -62,7 +62,7 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(*args, **kwargs)
 
         self.host = self._play_context.remote_addr
-        self.port = self._play_context.port or 22
+        self.port = int(self._play_context.port or 22)
         self.user = self._play_context.remote_user
         self.control_path = C.ANSIBLE_SSH_CONTROL_PATH
         self.control_path_dir = C.ANSIBLE_SSH_CONTROL_PATH_DIR

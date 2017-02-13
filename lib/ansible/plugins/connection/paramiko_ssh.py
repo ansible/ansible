@@ -137,7 +137,7 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(*args, **kwargs)
 
         self.host = self._play_context.remote_addr
-        self.port = self._play_context.port or 22
+        self.port = int(self._play_context.port or 22)
 
     def transport_test(self, connect_timeout):
         ''' Test the transport mechanism, if available '''

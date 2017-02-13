@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
 DOCUMENTATION = '''
 ---
 module: wait_for_connection
-short_description: Waitis until remote system is reachable/usable
+short_description: Waits until remote system is reachable/usable
 description:
 - Waits for a total of C(timeout) seconds.
 - Retries the transport connection after a timeout of C(connect_timeout).
@@ -53,7 +53,6 @@ author: "Dag Wieers (@dagwieers)"
 '''
 
 EXAMPLES = '''
-
 # Wait 300 seconds for system's connection to become reachable/usable by Ansible
 - wait_for_connection:
 
