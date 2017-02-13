@@ -60,7 +60,7 @@ options:
         description:
             - This is the type of the object created.
         default: ip-nemask
-        choices: ip-netmask, fqdn, ip-range
+        choices: [ 'ip-netmask', 'fqdn', 'ip-range' ]
     description:
         description:
             - Description of the address object.
