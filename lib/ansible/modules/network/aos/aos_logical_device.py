@@ -30,7 +30,7 @@ version_added: "2.3"
 short_description: Manage AOS Logical Device
 description:
   - Apstra AOS Logical Device module let you manage your Logical Devices easily.
-    You can create create and delete IP Pool by Name, ID or by using a JSON File.
+    You can create create and delete Logical Device by Name, ID or by using a JSON File.
     This module is idempotent and support the I(check) mode.
     It's using the AOS REST API.
 requirements:
@@ -50,7 +50,7 @@ options:
         Only one of I(name), I(id) or I(content) can be set.
   content:
     description:
-      - Datastructure of the IP Pool to create. The data can be in YAML / JSON or
+      - Datastructure of the Logical Device to create. The data can be in YAML / JSON or
         directly a variable. It's the same datastructure that is returned
         on success in I(value).
   state:
