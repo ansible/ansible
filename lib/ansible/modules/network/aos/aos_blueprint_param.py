@@ -59,7 +59,6 @@ options:
     description:
       - Get the complete list of supported parameters for this blueprint and the
         description of those parameters.
-    type: bool
   state:
     description:
       - Indicate what is the expected state of the Blueprint Parameter (present or not).
