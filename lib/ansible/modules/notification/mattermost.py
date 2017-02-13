@@ -137,9 +137,9 @@ def main():
         'Accept': 'application/json',
     }
 
-    #notes: 
+    #notes:
     #Nothing is done in check mode
-    #it'll pass even if your server is down or/and if your token is invalid. 
+    #it'll pass even if your server is down or/and if your token is invalid.
     #If someone find good way to check...
 
     #send request if not in test mode
