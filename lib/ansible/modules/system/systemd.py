@@ -298,7 +298,14 @@ def main():
     # check service data, cannot error out on rc as it changes across versions, assume not found
     (rc, out, err) = module.run_command("%s show '%s'" % (systemctl, unit))
 
-    if rc == 0:
+    if out.find('ignoring request') != -1:
+        # fallback list-unit-files as show does not work on some systems (chroot)
+        # not used as primary as it skips some services (like those using init.d) and requires .service/etc notation
+        (rc, out, err) = module.run_command("%s list-unit-files '%s'" % (systemctl, unit))
+        if rc == 0:
+            is_systemd = True
+
+    elif rc == 0:
         # load return of systemctl show into dictionary for easy access and return
         multival = []
         if out:
@@ -327,14 +334,6 @@ def main():
             # Check for loading error
             if is_systemd and 'LoadError' in result['status']:
                 module.fail_json(msg="Error loading unit file '%s': %s" % (unit, result['status']['LoadError']))
-
-    elif out.find('ignoring request') != -1:
-        # fallback list-unit-files as show does not work on some systems (chroot)
-        # not used as primary as it skips some services (like those using init.d) and requires .service/etc notation
-        (rc, out, err) = module.run_command("%s list-unit-files '%s'" % (systemctl, unit))
-        if rc == 0:
-            is_systemd = True
-
 
     # Does service exist?
     found = is_systemd or is_initd
