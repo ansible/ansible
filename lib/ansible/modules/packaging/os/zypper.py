@@ -236,10 +236,30 @@ def get_installed_state(m, packages):
     return parse_zypper_xml(m, cmd, fail_not_found=False)[0]
 
 
+def strip_gpg_garbage(stdout):
+    new = []
+    in_garbage=False
+    for line in stdout.split('\n'):
+        if line == '<stream>':
+            in_garbage = True
+        elif in_garbage == True:
+            if line.startswith('  '):
+                continue
+            else:
+                in_garbage = False
+        new.append(line)
+    return '\n'.join(new)
+
+
 def parse_zypper_xml(m, cmd, fail_not_found=True, packages=None):
     rc, stdout, stderr = m.run_command(cmd, check_rc=False)
 
-    dom = parseXML(stdout)
+    try:
+      dom = parseXML(stdout)
+    except Exception:
+        stdout = strip_gpg_garbage(stdout)
+        dom = parseXML(stdout)
+
     if rc == 104:
         # exit code 104 is ZYPPER_EXIT_INF_CAP_NOT_FOUND (no packages found)
         if fail_not_found:
