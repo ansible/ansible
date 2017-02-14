@@ -85,14 +85,13 @@ class ActionModule(_ActionModule):
     def load_provider(self):
         provider = self._task.args.get('provider', {})
         for key, value in iteritems(eos_argument_spec):
-            if key == 'provider':
-                continue
-            elif key in self._task.args:
-                provider[key] = self._task.args[key]
-            elif 'fallback' in value:
-                provider[key] = self._fallback(value['fallback'])
-            elif key not in provider:
-                provider[key] = None
+            if key != 'provider' and key not in provider:
+                if key in self._task.args:
+                    provider[key] = self._task.args[key]
+                elif 'fallback' in value:
+                    provider[key] = self._fallback(value['fallback'])
+                elif key not in provider:
+                    provider[key] = None
         return provider
 
     def _fallback(self, fallback):
