@@ -57,17 +57,21 @@ options:
             - Route tag for IPv4 ot IPv6 Address in integer format.
         required: false
         default: 0
+        version_added: "2.3"
     allow_secondary:
         description:
             - Allow to configure IPv4 secondary addresses on interface.
         required: false
         default: false
+        version_added: "2.3"
     state:
         description:
             - Specify desired state of the resource.
         required: false
         default: present
         choices: ['present','absent']
+requirements:
+    - "ipaddress"
 '''
 
 EXAMPLES = '''
