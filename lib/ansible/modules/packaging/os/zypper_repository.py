@@ -28,8 +28,8 @@ DOCUMENTATION = '''
 ---
 module: zypper_repository
 author: "Matthias Vogelgesang (@matze)"
-version_added: "1.4"
-short_description: Add and remove Zypper repositories
+version_added: "1.5"
+short_description: Add, modify and remove zypper repositories
 description:
     - Add or remove Zypper repositories on SUSE and openSUSE
 options:
@@ -42,7 +42,18 @@ options:
         required: false
         default: none
         description:
-            - URI of the repository or .repo file. Required when state=present.
+            - URI of the repository or .repo file. Required when I(state=present) and I(action=add).
+    action:
+        required: false
+        choices: [ "add", "remove", "modify" ]
+        default: "add"
+        description:
+            - The action you want to perform. C(add, modify or remove)
+            - When wanting to C(add) a repo you can omit either I(action=add) or I(state=present) cause of their defaults.
+            - When wanting to C(modify) a repo then just use I(action=modify)
+            - When wanting to C(remove) a repo then just use one of I(state=absent) or I(action=remove)
+            - When using with C(modify) you should not run another task with C(add) before or afterwards cause of idempotency.
+        version_added: "2.2"
     state:
         required: false
         choices: [ "absent", "present" ]
@@ -283,6 +294,36 @@ def addmodify_repo(module, repodata, old_repos, zypper_version, warnings):
     return rc, stdout, stderr
 
 
+def modify_repo(module, repodata, zypper_version, warnings):
+    "Modifys the repo like name, enable/disable, refresh/no-refresh, priority"
+    cmd = _get_cmd('modifyrepo')
+    if repodata['name']:
+        cmd.extend(['--name', repodata['name']])
+
+    # priority on addrepo available since 1.12.25
+    # https://github.com/openSUSE/zypper/blob/b9b3cb6db76c47dc4c47e26f6a4d2d4a0d12b06d/package/zypper.changes#L327-L336
+    if repodata['priority']:
+        if zypper_version >= LooseVersion('1.12.25'):
+            cmd.extend(['--priority', str(repodata['priority'])])
+        else:
+            warnings.append("Setting priority only available for zypper >= 1.12.25. Ignoring priority argument.")
+
+    if repodata['enabled'] == '1':
+        cmd.append('--enable')
+    else:
+        cmd.append('--disable')
+
+    if repodata['autorefresh'] == '1':
+        cmd.append('--refresh')
+    else:
+        cmd.append('--no-refresh')
+
+    cmd.append(repodata['alias'])
+
+    rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+    return rc, stdout, stderr
+
+
 def remove_repo(module, repo):
     "Removes the repo."
     cmd = _get_cmd('removerepo', repo)
@@ -314,6 +355,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(required=False),
+            action=dict(choices=['add', 'remove', 'modify'], default='add'),
             repo=dict(required=False),
             state=dict(choices=['present', 'absent'], default='present'),
             runrefresh=dict(required=False, default='no', type='bool'),
@@ -326,11 +368,12 @@ def main():
             auto_import_keys = dict(required=False, default=False, type='bool'),
         ),
         supports_check_mode=False,
-        required_one_of = [['state','runrefresh']],
+        required_one_of = [['action', 'state','runrefresh']],
     )
 
     repo = module.params['repo']
     alias = module.params['name']
+    action = module.params['action']
     state = module.params['state']
     overwrite_multiple = module.params['overwrite_multiple']
     auto_import_keys = module.params['auto_import_keys']
@@ -370,17 +413,19 @@ def main():
         else:
             module.fail_json(msg='repo=* can only be used with the runrefresh option.')
 
-    if state == 'present' and not repo:
-        module.fail_json(msg='Module option state=present requires repo')
-    if state == 'absent' and not repo and not alias:
-        module.fail_json(msg='Alias or repo parameter required when state=absent')
+    if state == 'present' and action == 'add' and not repo:
+        module.fail_json(msg='Missing option: \'repo\' (URI). Required when state=present and action=add')
+    if action == 'modify' and not alias:
+        module.fail_json(msg='Missing option: \'name\' (Alias). Required when action=modify')
+    if (state == 'absent' or action == 'remove') and not alias:
+        module.fail_json(msg='Missing option: \'name\' (Alias). Required when state=absent or action=remove')
 
     if repo and repo.endswith('.repo'):
         if alias:
             module.fail_json(msg='Incompatible option: \'name\'. Do not use name when adding .repo files')
     else:
-        if not alias and state == "present":
-            module.fail_json(msg='Name required when adding non-repo files.')
+        if not alias and state == "present" and action == 'add':
+            module.fail_json(msg='Missing option: \'name\' (Alias). Required when adding non-repo files.')
 
     exists, mod, old_repos = repo_exists(module, repodata, overwrite_multiple)
 
@@ -389,7 +434,7 @@ def main():
     else:
         shortname = alias
 
-    if state == 'present':
+    if action == 'add' and state == 'present':
         if exists and not mod:
             if runrefresh:
                 runrefreshrepo(module, auto_import_keys, shortname)
@@ -397,15 +442,21 @@ def main():
         rc, stdout, stderr = addmodify_repo(module, repodata, old_repos, zypper_version, warnings)
         if rc == 0 and (runrefresh or auto_import_keys):
             runrefreshrepo(module, auto_import_keys, shortname)
-    elif state == 'absent':
+    elif action == 'modify' and state == 'present':
+        if exists and not mod:
+            exit_unchanged()
+        if not exists:
+            exit_unchanged()
+        rc, stdout, stderr = modify_repo(module, repodata, zypper_version, warnings)
+    elif action == 'remove' or state == 'absent':
         if not exists:
             exit_unchanged()
         rc, stdout, stderr = remove_repo(module, shortname)
 
     if rc == 0:
-        module.exit_json(changed=True, repodata=repodata, state=state, warnings=warnings)
+        module.exit_json(changed=True, repodata=repodata, action=action, state=state, warnings=warnings)
     else:
-        module.fail_json(msg="Zypper failed with rc %s" % rc, rc=rc, stdout=stdout, stderr=stderr, repodata=repodata, state=state, warnings=warnings)
+        module.fail_json(msg="zypper failed with rc %s" % rc, rc=rc, stdout=stdout, stderr=stderr, repodata=repodata, action=action, state=state, warnings=warnings)
 
 # import module snippets
 from ansible.module_utils.basic import *
