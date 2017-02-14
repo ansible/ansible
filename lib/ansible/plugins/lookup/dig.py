@@ -161,7 +161,7 @@ class LookupModule(LookupBase):
                 elif opt == 'class':
                     try:
                         rdclass = dns.rdataclass.from_text(arg)
-                    except Exception, e:
+                    except Exception as e:
                         raise errors.AnsibleError("dns lookup illegal CLASS: ", str(e))
 
                 continue
