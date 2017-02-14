@@ -29,7 +29,7 @@ module: cisco_spark
 short_description: Send a message to a Cisco Spark Room or Individual.
 description:
     - Send a message to a Cisco Spark Room or Individual with options to control the formatting.
-version_added: "1.0"
+version_added: "2.3"
 author: Drew Rusell (@drusse11)
 notes:
   - The C(recipient_id) type must be valid for the supplied C(recipient_id).
