@@ -184,6 +184,7 @@ import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.eos import run_commands, load_config
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.eos import eos_argument_spec, check_args
 
 def validate_http_port(value, module):
     if not 1 <= value <= 65535:
@@ -198,8 +199,8 @@ def validate_local_http_port(value, module):
         module.fail_json(msg='http_port must be between 1 and 65535')
 
 def validate_vrf(value, module):
-    rc, out, err = run_commands(module, ['show vrf'])
-    configured_vrfs = re.findall('^\s+(\w+)(?=\s)', out[0],re.M)
+    out = run_commands(module, ['show vrf'])
+    configured_vrfs = re.findall('^\s+(\w+)(?=\s)', out[0], re.M)
     configured_vrfs.append('default')
     if value not in configured_vrfs:
         module.fail_json(msg='vrf `%s` is not configured on the system' % value)
@@ -255,7 +256,7 @@ def parse_state(data):
 
 
 def map_config_to_obj(module):
-    rc, out, err = run_commands(module, ['show management api http-commands | json'])
+    out = run_commands(module, ['show management api http-commands | json'])
     return {
         'http': out[0]['httpServer']['configured'],
         'http_port': out[0]['httpServer']['port'],
@@ -290,7 +291,7 @@ def map_params_to_obj(module):
     return obj
 
 def collect_facts(module, result):
-    rc, out, err = run_commands(module, ['show management api http-commands | json'])
+    out = run_commands(module, ['show management api http-commands | json'])
     facts = dict(eos_eapi_urls=dict())
     for each in out[0]['urls']:
         intf, url = each.split(' : ')
@@ -319,6 +320,8 @@ def main():
 
         state=dict(default='started', choices=['stopped', 'started']),
     )
+
+    argument_spec.update(eos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)

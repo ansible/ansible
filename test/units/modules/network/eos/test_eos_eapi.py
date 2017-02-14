@@ -50,7 +50,7 @@ class TestEosEapiModule(TestEosModule):
             output = list()
             for cmd in commands:
                 output.append(load_fixture(self.command_fixtures[cmd]))
-            return (0, output, '')
+            return output
 
         self.run_commands.side_effect = run_commands
         self.load_config.return_value = dict(diff=None, session='session')
@@ -86,9 +86,9 @@ class TestEosEapiModule(TestEosModule):
         self.start_configured(changed=True, commands=commands)
 
     def test_eos_eapi_http_invalid(self):
-        set_module_args(dict(port=80000))
+        set_module_args(dict(http_port=80000))
         commands = []
-        self.start_unconfigured(failed=True)
+        self.start_unconfigured(failed=True, commands=commands)
 
     def test_eos_eapi_https_enable(self):
         set_module_args(dict(https=True))

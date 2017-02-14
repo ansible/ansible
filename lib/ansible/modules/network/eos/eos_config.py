@@ -250,6 +250,7 @@ def run(module, result):
                 commands.extend(module.params['after'])
 
         result['commands'] = commands
+        result['updates'] = commands
 
         replace = module.params['replace'] == 'config'
         commit = not module.check_mode
