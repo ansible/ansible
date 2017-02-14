@@ -37,7 +37,7 @@ options:
         required: false
         default: none
         description:
-            - A name for the repository. Not required when adding repofiles.
+            - A name (Alias) for the repository. Not required when adding repofiles.
     repo:
         required: false
         default: none
@@ -53,12 +53,11 @@ options:
         required: false
         default: none
         description:
-            - A description of the repository
+            - A description (Name) of the repository
     disable_gpg_check:
         description:
             - Whether to disable GPG signature checking of
-              all packages. Has an effect only if state is
-              I(present).
+              all packages. Has an effect only if I(state=present).
             - Needs zypper version >= 1.6.2.
         required: false
         default: "no"
@@ -73,7 +72,7 @@ options:
     priority:
         description:
             - Set priority of repository. Packages will always be installed
-              from the repository with the smallest priority number.
+              from the repository with the lowest priority number.
             - Needs zypper version >= 1.12.25.
         required: false
         version_added: "2.1"
@@ -88,7 +87,7 @@ options:
     auto_import_keys:
         description:
             - Automatically import the gpg signing key of the new or changed repository.
-            - Has an effect only if state is I(present). Has no effect on existing (unchanged) repositories or in combination with I(absent).
+            - Has an effect only if I(state=present). Has no effect on existing (unchanged) repositories or in combination with I(state=absent).
             - Implies runrefresh.
         required: false
         default: "no"
@@ -97,7 +96,7 @@ options:
     runrefresh:
         description:
             - Refresh the package list of the given repository.
-            - Can be used with repo=* to refresh all repositories.
+            - Can be used with I(repo=*) to refresh all repositories.
         required: false
         default: "no"
         choices: ["yes", "no"]
