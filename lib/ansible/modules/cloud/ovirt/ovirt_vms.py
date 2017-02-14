@@ -665,6 +665,46 @@ class VmsModule(BaseModule):
             timeout=self.param('timeout'),
         )
 
+    def wait_for_down(self, vm):
+        """
+        This function will first wait for the status DOWN of the VM.
+        Then it will find the active snapshot and wait until it's state is OK for
+        stateless VMs and statless snaphot is removed.
+        """
+        vm_service = self._service.vm_service(vm.id)
+        wait(
+            service=vm_service,
+            condition=lambda vm: vm.status == otypes.VmStatus.DOWN,
+            wait=self.param('wait'),
+            timeout=self.param('timeout'),
+        )
+        if vm.stateless:
+            snapshots_service = vm_service.snapshots_service()
+            snapshots = snapshots_service.list()
+            snap_active = [
+                snap for snap in snapshots
+                if snap.snapshot_type == otypes.SnapshotType.ACTIVE
+            ][0]
+            snap_stateless = [
+                snap for snap in snapshots
+                if snap.snapshot_type == otypes.SnapshotType.STATELESS
+            ]
+            # Stateless snapshot may be already removed:
+            if snap_stateless:
+                wait(
+                    service=snapshots_service.snapshot_service(snap_stateless[0].id),
+                    condition=lambda snap: snap is None,
+                    wait=self.param('wait'),
+                    timeout=self.param('timeout'),
+                )
+            wait(
+                service=snapshots_service.snapshot_service(snap_active.id),
+                condition=lambda snap: snap.snapshot_status == otypes.SnapshotStatus.OK,
+                wait=self.param('wait'),
+                timeout=self.param('timeout'),
+            )
+        return True
+
     def __attach_disks(self, entity):
         disks_service = self._connection.system_service().disks_service()
 
@@ -729,7 +769,6 @@ class VmsModule(BaseModule):
 
     def __attach_nics(self, entity):
         # Attach NICs to VM, if specified:
-        vnic_profiles_service = self._connection.system_service().vnic_profiles_service()
         nics_service = self._service.service(entity.id).nics_service()
         for nic in self.param('nics'):
             if search_by_name(nics_service, nic.get('name')) is None:
@@ -923,6 +962,7 @@ def main():
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
             )
+            initialization = _get_initialization(sysprep, cloud_init, cloud_init_nics)
             ret = vms_module.action(
                 action='start',
                 post_action=vms_module._post_start_action,
@@ -944,13 +984,23 @@ def main():
                     placement_policy=otypes.VmPlacementPolicy(
                         hosts=[otypes.Host(name=module.params['host'])]
                     ) if module.params['host'] else None,
-                    initialization=_get_initialization(sysprep, cloud_init, cloud_init_nics),
+                    initialization=initialization,
                     os=otypes.OperatingSystem(
                         cmdline=module.params.get('kernel_params'),
                         initrd=module.params.get('initrd_path'),
                         kernel=module.params.get('kernel_path'),
-                    ),
-                ),
+                    ) if (
+                        module.params.get('kernel_params')
+                        or module.params.get('initrd_path')
+                        or module.params.get('kernel_path')
+                    ) else None,
+                ) if (
+                    module.params.get('kernel_params')
+                    or module.params.get('initrd_path')
+                    or module.params.get('kernel_path')
+                    or module.params.get('host')
+                    or initialization
+                ) else None,
             )
 
             if state == 'next_run':
@@ -974,7 +1024,7 @@ def main():
                     action='stop',
                     post_action=vms_module._attach_cd,
                     action_condition=lambda vm: vm.status != otypes.VmStatus.DOWN,
-                    wait_condition=lambda vm: vm.status == otypes.VmStatus.DOWN,
+                    wait_condition=vms_module.wait_for_down,
                 )
             else:
                 ret = vms_module.action(
@@ -982,7 +1032,7 @@ def main():
                     pre_action=vms_module._pre_shutdown_action,
                     post_action=vms_module._attach_cd,
                     action_condition=lambda vm: vm.status != otypes.VmStatus.DOWN,
-                    wait_condition=lambda vm: vm.status == otypes.VmStatus.DOWN,
+                    wait_condition=vms_module.wait_for_down,
                 )
         elif state == 'suspended':
             vms_module.create(
