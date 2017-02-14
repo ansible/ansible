@@ -376,9 +376,9 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             bucket         = dict(required=True),
-            object         = dict(default=None),
+            object         = dict(default=None, type='path'),
             src            = dict(default=None),
-            dest           = dict(default=None),
+            dest           = dict(default=None, type='path'),
             expiration     = dict(type='int', default=600, aliases=['expiry']),
             mode           = dict(choices=['get', 'put', 'delete', 'create', 'get_url', 'get_str'], required=True),
             permission     = dict(choices=['private', 'public-read', 'authenticated-read'], default='private'),
@@ -396,8 +396,6 @@ def main():
     obj           = module.params.get('object')
     src           = module.params.get('src')
     dest          = module.params.get('dest')
-    if dest:
-        dest      = os.path.expanduser(dest)
     mode          = module.params.get('mode')
     expiry        = module.params.get('expiration')
     gs_secret_key = module.params.get('gs_secret_key')
@@ -410,8 +408,6 @@ def main():
     if mode == 'get':
         if not dest or not object:
             module.fail_json(msg="When using GET, dest, bucket, object are mandatory parameters")
-    if obj:
-        obj = os.path.expanduser(module.params['object'])
 
     try:
         gs = boto.connect_gs(gs_access_key, gs_secret_key)
