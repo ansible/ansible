@@ -565,7 +565,9 @@ def ensure_route_table_present(connection, module):
 
     if routes is not None:
         try:
-            result = ensure_routes(connection, route_table, routes, propagating_vgw_ids, module.check_mode, purge_routes)
+            result = ensure_routes(connection, route_table, routes,
+                                   propagating_vgw_ids, module.check_mode,
+                                   purge_routes)
             changed = changed or result['changed']
         except EC2ResponseError as e:
             module.fail_json(msg=e.message)
@@ -592,7 +594,10 @@ def ensure_route_table_present(connection, module):
             )
 
         try:
-            result = ensure_subnet_associations(connection, vpc_id, route_table, associated_subnets, module.check_mode, purge_subnets)
+            result = ensure_subnet_associations(connection, vpc_id, route_table,
+                                                associated_subnets,
+                                                module.check_mode,
+                                                purge_subnets)
             changed = changed or result['changed']
         except EC2ResponseError as e:
             raise AnsibleRouteTableException(
@@ -609,8 +614,8 @@ def main():
         dict(
             lookup = dict(default='tag', required=False, choices=['tag', 'id']),
             propagating_vgw_ids = dict(default=None, required=False, type='list'),
-            purge_routes=dict(default=True, required=False, type='bool'),
-            purge_subnets=dict(default=True, required=False, type='bool'),
+            purge_routes=dict(default=True, type='bool'),
+            purge_subnets=dict(default=True, type='bool'),
             route_table_id = dict(default=None, required=False),
             routes = dict(default=[], required=False, type='list'),
             state = dict(default='present', choices=['present', 'absent']),
