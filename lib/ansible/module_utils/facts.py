@@ -553,6 +553,8 @@ class Facts(object):
         self.facts['user_gecos'] = pwent.pw_gecos
         self.facts['user_dir'] = pwent.pw_dir
         self.facts['user_shell'] = pwent.pw_shell
+        (self.facts['real_user_id'], self.facts['effective_user_id'],  self.facts['saved_user_id']) = os.getresuid()
+        (self.facts['real_group_id'], self.facts['effective_group_id'],  self.facts['saved_group_id']) = os.getresgid()
 
     def get_env_facts(self):
         self.facts['env'] = {}
