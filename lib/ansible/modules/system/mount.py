@@ -138,12 +138,13 @@ EXAMPLES = '''
 '''
 
 
+import os
+
 from ansible.module_utils.basic import AnsibleModule, get_platform
 from ansible.module_utils.ismount import ismount
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
-import os
 
 
 def write_fstab(lines, path):
