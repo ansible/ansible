@@ -36,14 +36,14 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
-    def get_checksum(self, dest, all_vars, try_directory=False, source=None, tmp=None):
+    def get_checksum(self, dest, all_vars, try_directory=False, source=None, tmp=None, follow=False):
         try:
             dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False, tmp=tmp)
 
             if dest_stat['exists'] and dest_stat['isdir'] and try_directory and source:
                 base = os.path.basename(source)
                 dest = os.path.join(dest, base)
-                dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False, tmp=tmp)
+                dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=follow, tmp=tmp)
 
         except AnsibleError:
             return dict(failed=True, msg=to_native(get_exception()))
@@ -62,6 +62,7 @@ class ActionModule(ActionBase):
         dest   = self._task.args.get('dest', None)
         force  = boolean(self._task.args.get('force', True))
         state  = self._task.args.get('state', None)
+        follow = self._task.args.get('follow', True)
 
         if state is not None:
             result['failed'] = True
@@ -178,7 +179,7 @@ class ActionModule(ActionBase):
                         src=xfered,
                         dest=dest,
                         original_basename=os.path.basename(source),
-                        follow=True,
+                        follow=follow,
                         ),
                 )
                 result.update(self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
@@ -197,7 +198,7 @@ class ActionModule(ActionBase):
                 dict(
                     src=None,
                     original_basename=os.path.basename(source),
-                    follow=True,
+                    follow=follow,
                 ),
             )
             result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
