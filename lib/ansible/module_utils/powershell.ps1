@@ -206,6 +206,7 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
 
     }
 
+    # If $value -eq $null, the parameter was unspecified
     if ($value -ne $null -and $type -eq "path") {
         # Expand environment variables on path-type
         $value = Expand-Environment($value)
@@ -215,6 +216,12 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
     } elseif ($value -ne $null -and $type -eq "bool") {
         # Convert boolean types to real Powershell booleans
         $value = $value | ConvertTo-Bool
+    } elseif ($value -ne $null -and $type -eq "int") {
+        # Convert int types to real Powershell integers
+        $value = $value -as [int]
+    } elseif ($value -ne $null -and $type -eq "float") {
+        # Convert float types to real Powershell floats
+        $value = $value -as [float]
     }
 
     return $value
