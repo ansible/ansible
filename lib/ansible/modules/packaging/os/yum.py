@@ -96,13 +96,13 @@ options:
 
   update_cache:
     description:
-      - Force updating the cache. Has an effect only if state is I(present)
-        or I(latest).
+      - Force yum to check if cache is out of date and redownload if needed.
+        Has an effect only if state is I(present) or I(latest).
     required: false
     version_added: "1.9"
     default: "no"
     choices: ["yes", "no"]
-    aliases: []
+    aliases: [ "expire-cache" ]
 
   validate_certs:
     description:
@@ -1081,7 +1081,7 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
     if state in ['installed', 'present', 'latest']:
 
         if module.params.get('update_cache'):
-            module.run_command(yum_basecmd + ['makecache'])
+            module.run_command(yum_basecmd + ['clean', 'expire-cache'])
 
         my = yum_base(conf_file, installroot)
         try:
@@ -1145,7 +1145,7 @@ def main():
             list=dict(),
             conf_file=dict(default=None),
             disable_gpg_check=dict(required=False, default="no", type='bool'),
-            update_cache=dict(required=False, default="no", type='bool'),
+            update_cache=dict(required=False, default="no", aliases=['expire-cache'], type='bool'),
             validate_certs=dict(required=False, default="yes", type='bool'),
             installroot=dict(required=False, default="/", type='str'),
             # this should not be needed, but exists as a failsafe
