@@ -457,7 +457,8 @@ def main():
     if rc == 0:
         module.exit_json(changed=True, repodata=repodata, action=action, state=state, warnings=warnings)
     else:
-        module.fail_json(msg="zypper failed with rc %s" % rc, rc=rc, stdout=stdout, stderr=stderr, repodata=repodata, action=action, state=state, warnings=warnings)
+        module.fail_json(msg="zypper failed with rc %s" % rc, rc=rc, stdout=stdout, stderr=stderr, repodata=repodata, action=action, state=state,
+                         warnings=warnings)
 
 # import module snippets
 from ansible.module_utils.basic import *
