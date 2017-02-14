@@ -693,8 +693,7 @@ def main():
         if (
                 ismount(name) or
                 is_bind_mounted(
-                        module, linux_mounts, name,
-                        args['src'], args['fstype'])):
+                    module, linux_mounts, name, args['src'], args['fstype'])):
             if changed and not module.check_mode:
                 res, msg = remount(module, args)
                 changed = True
