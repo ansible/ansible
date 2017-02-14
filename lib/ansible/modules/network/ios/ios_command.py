@@ -149,7 +149,7 @@ def parse_commands(module, warnings):
         command=dict(key=True),
         prompt=dict(),
         response=dict()
-    ))
+    ), module)
     commands = command(module.params['commands'])
     for index, item in enumerate(commands):
         if module.check_mode and not item['command'].startswith('show'):

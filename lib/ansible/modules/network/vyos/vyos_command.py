@@ -152,8 +152,7 @@ def parse_commands(module, warnings):
         command=dict(key=True),
         prompt=dict(),
         response=dict(),
-    ))
-
+    ), module)
     commands = command(module.params['commands'])
 
     for index, cmd in enumerate(commands):
