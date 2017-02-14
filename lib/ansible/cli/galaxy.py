@@ -365,6 +365,11 @@ class GalaxyCLI(CLI):
                 roles_left.append(GalaxyRole(self.galaxy, **role))
 
         for role in roles_left:
+            # only process roles in roles files when names matches if given
+            if role_file and self.args and role.name not in self.args:
+                display.vvv('Skipping role %s' % role.name)
+                continue
+
             display.vvv('Processing role %s ' % role.name)
 
             # query the galaxy API for the role data
@@ -372,10 +377,6 @@ class GalaxyCLI(CLI):
             if role.install_info is not None:
                 if role.install_info['version'] != role.version or force:
                     if force:
-                        if self.args and role.name not in self.args:
-                            display.vvv('Skipping role %s ' % role.name)
-                            continue
-
                         display.display('- changing role %s from %s to %s' %
                                         (role.name, role.install_info['version'], role.version or "unspecified"))
                         role.remove()
