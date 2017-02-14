@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -27,30 +28,9 @@ version_added: "2.2"
 short_description: Add/remove arrays from the Web Services Proxy
 description:
 - Manage the arrays accessible via a NetApp Web Services Proxy for NetApp E-series storage arrays.
+extends_documentation_fragment:
+    - netapp.eseries
 options:
-  api_username:
-    required: true
-    description:
-    - The username to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-  api_password:
-    required: true
-    description:
-    - The password to authenticate with the SANtricity WebServices Proxy or embedded REST API.
-  api_url:
-    required: true
-    description:
-    - The url to the SANtricity WebServices Proxy or embedded REST API.
-    example:
-    - https://prod-1.wahoo.acme.com/devmgr/v2
-  validate_certs:
-    required: false
-    default: true
-    description:
-    - Should https certificates be validated?
-  ssid:
-    required: true
-    description:
-    - The ID of the array to manage. This value must be unique for each array.
   state:
     required: true
     description:
@@ -108,41 +88,8 @@ from time import sleep
 
 from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.urls import open_url
-from ansible.module_utils.six.moves.urllib.error import HTTPError
-
-
-def request(url, data=None, headers=None, method='GET', use_proxy=True,
-            force=False, last_mod_time=None, timeout=10, validate_certs=True,
-            url_username=None, url_password=None, http_agent=None, force_basic_auth=True, ignore_errors=False):
-    try:
-        r = open_url(url=url, data=data, headers=headers, method=method, use_proxy=use_proxy,
-                     force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
-                     url_username=url_username, url_password=url_password, http_agent=http_agent,
-                     force_basic_auth=force_basic_auth)
-    except HTTPError:
-        err = get_exception()
-        r = err.fp
-
-    try:
-        raw_data = r.read()
-        if raw_data:
-            data = json.loads(raw_data)
-        else:
-            raw_data = None
-    except:
-        if ignore_errors:
-            pass
-        else:
-            raise Exception(raw_data)
-
-    resp_code = r.getcode()
-
-    if resp_code >= 400 and not ignore_errors:
-        raise Exception(resp_code, data)
-    else:
-        return resp_code, data
 
 
 def do_post(ssid, api_url, post_headers, api_usr, api_pwd, validate_certs, request_body, timeout):
@@ -174,10 +121,9 @@ def do_post(ssid, api_url, post_headers, api_usr, api_pwd, validate_certs, reque
 
 
 def main():
-    argument_spec = basic_auth_argument_spec()
+    argument_spec = eseries_host_argument_spec()
     argument_spec.update(dict(
         state=dict(required=True, choices=['present', 'absent']),
-        ssid=dict(required=True, type='str'),
         controller_addresses=dict(type='list'),
         array_wwn=dict(required=False, type='str'),
         array_password=dict(required=False, type='str', no_log=True),
@@ -195,6 +141,7 @@ def main():
     p = module.params
 
     state = p['state']
+    # TODO: allow SSID to be optional
     ssid = p['ssid']
     controller_addresses = p['controller_addresses']
     array_wwn = p['array_wwn']
