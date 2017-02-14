@@ -345,9 +345,6 @@ def mount(module, args):
     name = args['name']
     cmd = [mount_bin]
 
-    if ismount(name):
-        return remount(module, mount_bin, args)
-
     if get_platform().lower() == 'openbsd':
         # Use module.params['fstab'] here as args['fstab'] has been set to the
         # default value.
@@ -383,9 +380,9 @@ def umount(module, path):
         return rc, out+err
 
 
-def remount(module, mount_bin, args):
+def remount(module, args):
     """Try to use 'remount' first and fallback to (u)mount if unsupported."""
-    msg = ''
+    mount_bin = module.get_bin_path('mount', required=True)
     cmd = [mount_bin]
 
     # Multiplatform remount opts
@@ -404,8 +401,10 @@ def remount(module, mount_bin, args):
                     'specify the fstab parameter for OpenBSD hosts'))
     else:
         cmd += _set_fstab_args(args['fstab'])
+
     cmd += [args['name']]
     out = err = ''
+
     try:
         if get_platform().lower().endswith('bsd'):
             # Note: Forcing BSDs to do umount/mount due to BSD remount not
@@ -419,12 +418,15 @@ def remount(module, mount_bin, args):
     except:
         rc = 1
 
+    msg = ''
+
     if rc != 0:
         msg = out + err
-        if ismount(args['name']):
-            rc, msg = umount(module, args['name'])
+        rc, msg = umount(module, args['name'])
+
         if rc == 0:
             rc, msg = mount(module, args)
+
     return rc, msg
 
 
@@ -579,7 +581,6 @@ def main():
         )
     )
 
-    changed = False
     # solaris args:
     #   name, src, fstype, opts, boot, passno, state, fstab=/etc/vfstab
     # linux args:
@@ -648,6 +649,7 @@ def main():
 
     state = module.params['state']
     name = module.params['path']
+    changed = False
 
     if state == 'absent':
         name, changed = unset_mount(module, args)
@@ -688,21 +690,14 @@ def main():
         name, changed = set_mount(module, args)
         res = 0
 
-        if ismount(name):
-            if changed and not module.check_mode:
-                res, msg = mount(module, args)
-                changed = True
-        elif 'bind' in args.get('opts', []):
-            changed = True
-
-            if (
-                    is_bind_mounted(
+        if (
+                ismount(name) or
+                is_bind_mounted(
                         module, linux_mounts, name,
                         args['src'], args['fstype'])):
-                changed = False
-
             if changed and not module.check_mode:
-                res, msg = mount(module, args)
+                res, msg = remount(module, args)
+                changed = True
         else:
             changed = True
 
