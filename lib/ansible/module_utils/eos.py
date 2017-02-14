@@ -27,6 +27,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+import os
 import re
 import time
 
@@ -166,7 +167,7 @@ class Cli:
     def configure(self, commands):
         """Sends configuration commands to the remote device
         """
-        if not check_authorization(self):
+        if not self.check_authorization():
             self._module.fail_json(msg='configuration operations require privilege escalation')
 
         conn = get_connection(self)
@@ -175,7 +176,7 @@ class Cli:
         if rc != 0:
             self._module.fail_json(msg='unable to enter configuration mode', output=err)
 
-        rc, out, err = send_config(self, commands)
+        rc, out, err = self.send_config(commands)
         if rc != 0:
             self._module.fail_json(msg=err)
 
@@ -185,7 +186,7 @@ class Cli:
     def load_config(self, commands, commit=False, replace=False):
         """Loads the config commands onto the remote device
         """
-        if not check_authorization(self):
+        if not self.check_authorization():
             self._module.fail_json(msg='configuration operations require privilege escalation')
 
         use_session = os.getenv('ANSIBLE_EOS_USE_SESSIONS', True)
@@ -194,7 +195,7 @@ class Cli:
         except ValueError:
             pass
 
-        if not all((bool(use_session), supports_sessions(self))):
+        if not all((bool(use_session), self.supports_sessions())):
             return configure(self, commands)
 
         conn = get_connection(self)
@@ -208,10 +209,10 @@ class Cli:
         if replace:
             self.exec_command('rollback clean-config', check_rc=True)
 
-        rc, out, err = send_config(self, commands)
+        rc, out, err = self.send_config(commands)
         if rc != 0:
             self.exec_command('abort')
-            conn.fail_json(msg=err, commands=commands)
+            self._module.fail_json(msg=err, commands=commands)
 
         rc, out, err = self.exec_command('show session-config diffs')
         if rc == 0:
@@ -230,7 +231,7 @@ class Eapi:
         self._module = module
         self._enable = None
         self._session_support = None
-        self._device_config =  {}
+        self._device_configs =  {}
 
         host = module.params['host']
         port = module.params['port']

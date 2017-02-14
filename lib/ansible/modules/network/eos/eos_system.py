@@ -143,6 +143,7 @@ import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.eos import load_config, get_config
+from ansible.module_utils.eos import eos_argument_spec
 
 _CONFIGURED_VRFS = None
 
@@ -303,6 +304,8 @@ def main():
 
         state=dict(default='present', choices=['present', 'absent'])
     )
+
+    argument_spec.update(eos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)

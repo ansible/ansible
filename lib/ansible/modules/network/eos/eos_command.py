@@ -125,6 +125,7 @@ failed_conditions:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import string_types
 from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.network_common import ComplexList
@@ -193,7 +194,12 @@ def main():
         result['warnings'] = warnings
 
     wait_for = module.params['wait_for'] or list()
-    conditionals = [Conditional(c) for c in wait_for]
+
+    try:
+        conditionals = [Conditional(c) for c in wait_for]
+    except AttributeError:
+        exc = get_exception()
+        module.fail_json(msg=str(exc))
 
     retries = module.params['retries']
     interval = module.params['interval']
