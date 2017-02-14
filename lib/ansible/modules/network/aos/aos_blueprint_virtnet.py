@@ -60,11 +60,11 @@ options:
 EXAMPLES = '''
 
 - name: "Access Existing Virtual Network"
-    aos_blueprint_virtnet:
-      session: "{{ session_ok }}"
-      blueprint: "my-blueprint-l2"
-      name: "my-virtual-network"
-      state: present
+  aos_blueprint_virtnet:
+    session: "{{ session_ok }}"
+    blueprint: "my-blueprint-l2"
+    name: "my-virtual-network"
+    state: present
 
 - name: "Delete Virtual Network with JSON File"
   aos_blueprint_virtnet:
