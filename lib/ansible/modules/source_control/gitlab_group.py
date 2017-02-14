@@ -191,7 +191,7 @@ def main():
     # or with login_token
     try:
         if use_credentials:
-            git = gitlab.Gitlab(host=server_url)
+            git = gitlab.Gitlab(host=server_url, verify_ssl=verify_ssl)
             git.login(user=login_user, password=login_password)
         else:
             git = gitlab.Gitlab(server_url, token=login_token, verify_ssl=verify_ssl)
