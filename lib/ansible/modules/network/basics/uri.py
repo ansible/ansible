@@ -196,14 +196,16 @@ EXAMPLES = '''
     method: POST
     body: "name=your_username&password=your_password&enter=Sign%20in"
     status_code: 302
-    HEADER_Content-Type: "application/x-www-form-urlencoded"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
   register: login
 
 - uri:
     url: https://your.form.based.auth.example.com/dashboard.php
     method: GET
     return_content: yes
-    HEADER_Cookie: "{{login.set_cookie}}"
+    headers:
+      Cookie: "{{login.set_cookie}}"
 
 - name: Queue build of a project in Jenkins
   uri:
