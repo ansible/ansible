@@ -382,7 +382,7 @@ def main():
 
     if module.params['save']:
         if not module.check_mode:
-            run_commands(module, ['copy running-config startup-config'])
+            run_commands(module, ['copy running-config startup-config\r'])
         result['changed'] = True
 
     module.exit_json(**result)

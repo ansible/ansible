@@ -75,7 +75,7 @@ class TestIosConfigModule(TestIosModule):
         self.assertEqual(self.get_config.call_count, 0)
         self.assertEqual(self.load_config.call_count, 0)
         args = self.run_commands.call_args[0][1]
-        self.assertIn('copy running-config startup-config', args)
+        self.assertIn('copy running-config startup-config\r', args)
 
     def test_ios_config_lines_wo_parents(self):
         set_module_args(dict(lines=['hostname foo']))
