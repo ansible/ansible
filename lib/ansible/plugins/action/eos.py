@@ -34,6 +34,12 @@ from ansible.module_utils._text import to_bytes
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
+        if self._play_context.connection != 'local':
+            return dict(
+                fail=True,
+                msg='invalid connection specified, expected connection=local, '
+                    'got %s' % self._play_context.connection
+            )
 
         provider = self.load_provider()
         transport = provider['transport']
