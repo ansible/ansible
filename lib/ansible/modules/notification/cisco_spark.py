@@ -28,11 +28,11 @@ DOCUMENTATION = '''
 module: cisco_spark
 short_description: Send a message to a Cisco Spark Room or Individual.
 description:
-    - Send a message to a Cisco Spark Room or Individual, with options to control the formatting.
+    - Send a message to a Cisco Spark Room or Individual with options to control the formatting.
 version_added: "1.0"
 author: Drew Rusell (@drusse11)
 notes:
-  - The receipient_id type must be valid for the supplied recipient_type.
+  - The C(recipient_id) type must be valid for the supplied C(recipient_id).
   - Full API documentation can be found at U(https://developer.ciscospark.com/endpoint-messages-post.html).
 
 options:
@@ -46,7 +46,7 @@ options:
 
   recipient_id:
     description:
-      - The unique identifier associated with the supplied recipient_type.
+      - The unique identifier associated with the supplied C(recipient_type).
     required: true
 
   message_type:
