@@ -200,7 +200,7 @@ def main():
     required_if = [('state', 'saved', ['dest']),
                    ('state', 'loaded', ['src'])]
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
+    module = AnsibleModule(argument_spec=argument_spec, required_if=required_if, supports_check_mode=False)
 
     if not HAS_PYVMOMI:
         module.fail_json(msg='pyvmomi is required for this module')
