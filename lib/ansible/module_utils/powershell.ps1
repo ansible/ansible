@@ -138,9 +138,15 @@ Function Add-DeprecationWarning($obj, $message, $version = $null)
     }
 }
 
+# Helper function to expand environment variables in values. By default
+# it turns any type to a string, but we ensure $null remains $null.
 Function Expand-Environment($value)
 {
-    [System.Environment]::ExpandEnvironmentVariables($value)
+    if ($value -ne $null) {
+        [System.Environment]::ExpandEnvironmentVariables($value)
+    } else {
+        $value
+    }
 }
 
 # Helper function to get an "attribute" from a psobject instance in powershell.
@@ -201,9 +207,12 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
     }
 
     if ($value -ne $null -and $type -eq "path") {
-        # Expand environment variables on path-type (Beware: turns $null into "")
+        # Expand environment variables on path-type
         $value = Expand-Environment($value)
-    } elseif ($type -eq "bool") {
+    } elseif ($value -ne $null -and $type -eq "str") {
+        # Convert str types to real Powershell strings
+        $value = $value.ToString()
+    } elseif ($value -ne $null -and $type -eq "bool") {
         # Convert boolean types to real Powershell booleans
         $value = $value | ConvertTo-Bool
     }
@@ -267,7 +276,7 @@ Function Parse-Args($arguments, $supports_check_mode = $false)
 # and above can handle:
 Function Get-FileChecksum($path, $algorithm = 'sha1')
 {
-    If (Test-Path -PathType Leaf $path)
+    If (Test-Path -Path $path -PathType Leaf)
     {
         switch ($algorithm)
         {
@@ -276,7 +285,7 @@ Function Get-FileChecksum($path, $algorithm = 'sha1')
             'sha256' { $sp = New-Object -TypeName System.Security.Cryptography.SHA256CryptoServiceProvider }
             'sha384' { $sp = New-Object -TypeName System.Security.Cryptography.SHA384CryptoServiceProvider }
             'sha512' { $sp = New-Object -TypeName System.Security.Cryptography.SHA512CryptoServiceProvider }
-            default { Fail-Json (New-Object PSObject) "Unsupported hash algorithm supplied '$algorithm'" }
+            default { Fail-Json @{} "Unsupported hash algorithm supplied '$algorithm'" }
         }
 
         If ($PSVersionTable.PSVersion.Major -ge 4) {
@@ -288,7 +297,7 @@ Function Get-FileChecksum($path, $algorithm = 'sha1')
             $fp.Dispose();
         }
     }
-    ElseIf (Test-Path -PathType Container $path)
+    ElseIf (Test-Path -Path $path -PathType Container)
     {
         $hash = "3";
     }
