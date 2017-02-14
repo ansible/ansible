@@ -45,6 +45,13 @@ options:
       - Name of the HAProxy backend pool.
     required: false
     default: auto-detected
+  drain:
+    description:
+      - Wait until the server has no active connections or until the timeout
+        determined by wait_interval and wait_retries is reached.  Continue only
+        after the status changes to 'MAINT'."
+    default: false
+    version_added: "2.4"
   host:
     description:
       - Name of the backend host to change.
@@ -131,6 +138,19 @@ EXAMPLES = '''
     socket: /var/run/haproxy.sock
     backend: www
     wait: yes
+
+# Place server in drain mode, providing a socket file.  Then check the server's
+# status every minute to see if it changes to maintenance mode, continuing if it
+# does in an hour and failing otherwise.
+- haproxy:
+    state: disabled
+    host: '{{ inventory_hostname }}'
+    socket: /var/run/haproxy.sock
+    backend: www
+    wait: yes
+    drain: yes
+    wait_interval: 1
+    wait_retries: 60
 
 # disable backend server in 'www' backend pool and drop open sessions to it
 - haproxy:
@@ -227,6 +247,7 @@ class HAProxy(object):
         self.wait = self.module.params['wait']
         self.wait_retries = self.module.params['wait_retries']
         self.wait_interval = self.module.params['wait_interval']
+        self.drain = self.module.params['drain']
         self.command_results = {}
 
     def execute(self, cmd, timeout=200, capture_output=True):
@@ -315,7 +336,7 @@ class HAProxy(object):
         r = csv.DictReader(data.splitlines())
         state = tuple(
             map(
-                lambda d: {'status': d['status'], 'weight': d['weight']},
+                lambda d: {'status': d['status'], 'weight': d['weight'], 'scur': d['scur']},
                 filter(lambda d: (pxname is None or d['pxname'] == pxname) and d['svname'] == svname, r)
             )
         )
@@ -333,7 +354,8 @@ class HAProxy(object):
 
             # We can assume there will only be 1 element in state because both svname and pxname are always set when we get here
             if state[0]['status'] == status:
-                return True
+                if not self.drain or (state[0]['scur'] == '0' and status == 'MAINT'):
+                    return True
             else:
                 time.sleep(self.wait_interval)
 
@@ -420,6 +442,7 @@ def main():
             wait=dict(required=False, default=False, type='bool'),
             wait_retries=dict(required=False, default=WAIT_RETRIES, type='int'),
             wait_interval=dict(required=False, default=WAIT_INTERVAL, type='int'),
+            drain=dict(default=False, type='bool'),
         ),
     )
 
