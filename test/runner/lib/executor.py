@@ -165,7 +165,7 @@ def generate_egg_info(args):
 def generate_pip_install(command):
     """
     :type command: str
-    :return: list[str] | None
+    :rtype: list[str] | None
     """
     constraints = 'test/runner/requirements/constraints.txt'
     requirements = 'test/runner/requirements/%s.txt' % command
@@ -860,6 +860,9 @@ def command_sanity_pep8(args, targets):
 
     if stderr:
         raise SubprocessError(cmd=cmd, status=status, stderr=stderr)
+
+    if args.explain:
+        return
 
     pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<code>[A-Z0-9]{4}) (?P<message>.*)$'
 
