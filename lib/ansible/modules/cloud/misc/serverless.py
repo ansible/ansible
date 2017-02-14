@@ -114,7 +114,7 @@ import yaml
 
 
 def read_serverless_config(module):
-    path = os.path.expanduser(module.params.get('service_path'))
+    path = module.params.get('service_path')
 
     try:
         with open(os.path.join(path, 'serverless.yml')) as sls_config:
@@ -141,7 +141,7 @@ def get_service_name(module, stage):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            service_path = dict(required=True),
+            service_path = dict(required=True, type='path'),
             state        = dict(default='present', choices=['present', 'absent'], required=False),
             functions    = dict(type='list', required=False),
             region       = dict(default='', required=False),
@@ -150,7 +150,7 @@ def main():
         ),
     )
 
-    service_path = os.path.expanduser(module.params.get('service_path'))
+    service_path = module.params.get('service_path')
     state = module.params.get('state')
     functions = module.params.get('functions')
     region = module.params.get('region')
