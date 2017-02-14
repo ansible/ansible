@@ -29,19 +29,12 @@ description:
      - Sets or updates the password for a storage array.  When the password is updated on the storage array, it must be updated on the SANtricity Web Services proxy. Note, all storage arrays do not have a Monitor or RO role.
 version_added: "2.2"
 author: Kevin Hulquest (@hulquest)
+extends_documentation_fragment:
+    - netapp.eseries
 options:
-    validate_certs:
-        required: false
-        default: true
-        description:
-        - Should https certificates be validated?
     name:
       description:
         - The name of the storage array. Note that if more than one storage array with this name is detected, the task will fail and you'll have to use the ID instead.
-      required: False
-    ssid:
-      description:
-        - the identifier of the storage array in the Web Services Proxy.
       required: False
     set_admin:
       description:
@@ -55,22 +48,6 @@ options:
       description:
         - The password you would like to set. Cannot be more than 30 characters.
       required: True
-    api_url:
-      description:
-        - The full API url.
-        - "Example: http://ENDPOINT:8080/devmgr/v2"
-        - This can optionally be set via an environment variable, API_URL
-      required: False
-    api_username:
-      description:
-        - The username used to authenticate against the API
-        - This can optionally be set via an environment variable, API_USERNAME
-      required: False
-    api_password:
-      description:
-        - The password used to authenticate against the API
-        - This can optionally be set via an environment variable, API_PASSWORD
-      required: False
 '''
 
 EXAMPLES = '''
@@ -94,51 +71,16 @@ msg:
 '''
 import json
 
+from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-
+from ansible.module_utils.netapp import request, eseries_host_argument_spec
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.urls import open_url
-from ansible.module_utils.six.moves.urllib.error import HTTPError
-
 
 HEADERS = {
     "Content-Type": "application/json",
     "Accept": "application/json"
 }
-
-
-def request(url, data=None, headers=None, method='GET', use_proxy=True,
-            force=False, last_mod_time=None, timeout=10, validate_certs=True,
-            url_username=None, url_password=None, http_agent=None, force_basic_auth=True, ignore_errors=False):
-    try:
-        r = open_url(url=url, data=data, headers=headers, method=method, use_proxy=use_proxy,
-                     force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
-                     url_username=url_username, url_password=url_password, http_agent=http_agent,
-                     force_basic_auth=force_basic_auth)
-    except HTTPError:
-        err = get_exception()
-        r = err.fp
-
-    try:
-        raw_data = r.read()
-        if raw_data:
-            data = json.loads(raw_data)
-        else:
-            raw_data = None
-    except:
-        if ignore_errors:
-            pass
-        else:
-            raise Exception(raw_data)
-
-    resp_code = r.getcode()
-
-    if resp_code >= 400 and not ignore_errors:
-        raise Exception(resp_code, data)
-    else:
-        return resp_code, data
-
 
 def get_ssid(module, name, api_url, user, pwd):
     count = 0
@@ -222,16 +164,13 @@ def set_password(module, ssid, api_url, user, pwd, current_password=None, new_pa
 
 
 def main():
-    argument_spec = basic_auth_argument_spec()
+    argument_spec = eseries_host_argument_spec()
     argument_spec.update(dict(
         name=dict(required=False, type='str'),
         ssid=dict(required=False, type='str'),
         current_password=dict(required=False, no_log=True),
         new_password=dict(required=True, no_log=True),
         set_admin=dict(required=True, type='bool'),
-        api_url=dict(required=True),
-        api_username=dict(required=False),
-        api_password=dict(required=False, no_log=True)
     )
     )
     module = AnsibleModule(argument_spec=argument_spec, mutually_exclusive=[['name', 'ssid']],
