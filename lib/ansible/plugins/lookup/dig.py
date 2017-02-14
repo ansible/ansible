@@ -178,7 +178,7 @@ class LookupModule(LookupBase):
             except dns.exception.SyntaxError:
                 pass
             except Exception as e:
-                raise AnsibleError("dns.reversename unhandled exception", str(e))
+                raise AnsibleError("dns.reversename unhandled exception. Error was: {0}".format(e))
 
         try:
             answers = myres.query(domain, qtype)
@@ -207,6 +207,6 @@ class LookupModule(LookupBase):
         except dns.resolver.Timeout:
             ret.append('')
         except dns.exception.DNSException as e:
-            raise AnsibleError("dns.resolver unhandled exception", e)
+            raise AnsibleError("dns.resolver unhandled exception. Error was: {0}".format(e))
 
         return ret
