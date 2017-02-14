@@ -178,25 +178,10 @@ session_name:
   returned: when changed is True
   type: str
   sample: ansible_1479315771
-start:
-  description: The time the job started
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:15.126146"
-end:
-  description: The time the job ended
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:25.595612"
-delta:
-  description: The time elapsed to perform all operations
-  returned: always
-  type: str
-  sample: "0:00:10.469466"
 """
 import re
 
-from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.eos import run_commands, load_config
 from ansible.module_utils.six import iteritems
 
@@ -335,8 +320,8 @@ def main():
         state=dict(default='started', choices=['stopped', 'started']),
     )
 
-    module = LocalAnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     result = {'changed': False}
 
