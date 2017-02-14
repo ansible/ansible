@@ -46,6 +46,7 @@
 /lib/ansible/module_utils/vmware.py
 /lib/ansible/module_utils/netconf.py
 /lib/ansible/module_utils/junos.py
+/lib/ansible/module_utils/f5.py
 /lib/ansible/parsing/
 /lib/ansible/playbook/
 /lib/ansible/plugins/
