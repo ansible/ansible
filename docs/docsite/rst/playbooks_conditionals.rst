@@ -194,8 +194,8 @@ but it is easily handled with a minimum of syntax in an Ansible Playbook::
         - "vars/common.yml"
         - [ "vars/{{ ansible_os_family }}.yml", "vars/os_defaults.yml" ]
       tasks:
-      - name: make sure apache is running
-        service: name={{ apache }} state=running
+      - name: make sure apache is started
+        service: name={{ apache }} state=started
 
 .. note::
    The variable 'ansible_os_family' is being interpolated into
@@ -242,7 +242,7 @@ The following example shows how to template out a configuration file that was ve
     - name: template a file
       template: src={{ item }} dest=/etc/myapp/foo.conf
       with_first_found:
-        - files: 
+        - files:
            - {{ ansible_distribution }}.conf
            - default.conf
           paths:
@@ -320,4 +320,3 @@ You may check the registered variable's string contents for emptiness::
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
