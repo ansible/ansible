@@ -365,6 +365,7 @@ def main():
                     commands.extend(module.params['after'])
 
             result['commands'] = commands
+            result['updates'] = commands
             result['banners'] = banners
 
             # send the configuration commands to the device and merge
