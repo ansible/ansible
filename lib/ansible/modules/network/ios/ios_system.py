@@ -311,17 +311,17 @@ def map_params_to_obj(module):
     domain_name = ComplexList(dict(
         name=dict(key=True),
         vrf=dict()
-    ))
+    ), module)
 
     domain_search = ComplexList(dict(
         name=dict(key=True),
         vrf=dict()
-    ))
+    ), module)
 
     name_servers = ComplexList(dict(
         server=dict(key=True),
         vrf=dict()
-    ))
+    ), module)
 
     for arg, cast in [('domain_name', domain_name),
                       ('domain_search', domain_search),
