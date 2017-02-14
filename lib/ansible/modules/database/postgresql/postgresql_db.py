@@ -59,14 +59,7 @@ options:
     required: false
     default: null
   state:
-    description:
-      - The database state.
-      - "present" implies that the database should be created if necessary.
-      - "absent" implies that the database should be removed if present.
-      - "dump" requires a target definition to which the database will be backed up. (Added in 2.3)
-      - "restore" also requires a target definition from which the database will be restored. (Added in 2.3)
-      - The format of the backup will be detected based on the target name.
-      - Supported formats for "dump" and "restore" are: .gz, .tar, .bz, .xz, and .sql
+    description: "The database state. present implies that the database should be created if necessary. absent implies that the database should be removed if present. dump requires a target definition to which the database will be backed up. (Added in 2.3) restore also requires a target definition from which the database will be restored. (Added in 2.3) The format of the backup will be detected based on the target name. Supported formats for dump and restore are: .gz, .tar, .bz, .xz, and .sql"
     required: false
     default: present
     choices: [ "present", "absent", "dump", "restore" ]
