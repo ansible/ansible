@@ -144,5 +144,83 @@ def fq_list_names(partition,list_names):
     return map(lambda x: fq_name(partition,x),list_names)
 
 
+class AnsibleF5Client(object):
+    def __init__(self, argument_spec=None, supports_check_mode=False,
+                 mutually_exclusive=None, required_together=None,
+                 required_if=None, f5_product_name='bigip'):
+
+        merged_arg_spec = dict()
+        common_args = f5_argument_spec()
+        merged_arg_spec.update(common_args)
+        if argument_spec:
+            merged_arg_spec.update(argument_spec)
+            self.arg_spec = merged_arg_spec
+
+        mutually_exclusive_params = []
+        if mutually_exclusive:
+            mutually_exclusive_params += mutually_exclusive
+
+        required_together_params = []
+        if required_together:
+            required_together_params += required_together
+
+        self.module = AnsibleModule(
+            argument_spec=merged_arg_spec,
+            supports_check_mode=supports_check_mode,
+            mutually_exclusive=mutually_exclusive_params,
+            required_together=required_together_params,
+            required_if=required_if
+        )
+
+        self.check_mode = self.module.check_mode
+        self._connect_params = self._get_connect_params()
+
+        try:
+            self.api = self._get_mgmt_root(
+                f5_product_name, **self._connect_params
+            )
+        except iControlUnexpectedHTTPError as exc:
+            self.fail(str(exc))
+
+    def fail(self, msg):
+        self.module.fail_json(msg=msg)
+
+    def _get_connect_params(self):
+        params = dict(
+            user=self.module.params['user'],
+            password=self.module.params['password'],
+            server=self.module.params['server'],
+            server_port=self.module.params['server_port'],
+            validate_certs=self.module.params['validate_certs']
+        )
+        return params
+
+    def _get_mgmt_root(self, type, **kwargs):
+        if type == 'bigip':
+            return BigIpMgmt(
+                kwargs['server'],
+                kwargs['user'],
+                kwargs['password'],
+                port=kwargs['server_port'],
+                token='tmos'
+            )
+        elif type == 'iworkflow':
+            return iWorkflowMgmt(
+                kwargs['server'],
+                kwargs['user'],
+                kwargs['password'],
+                port=kwargs['server_port'],
+                token='local'
+            )
+        elif type == 'bigiq':
+            return BigIqMgmt(
+                kwargs['server'],
+                kwargs['user'],
+                kwargs['password'],
+                port=kwargs['server_port'],
+                token='local'
+            )
+
+
 class F5ModuleError(Exception):
     pass
