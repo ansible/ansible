@@ -15,55 +15,69 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+
 class ModuleDocFragment(object):
     # Standard CNOS documentation fragment
     DOCUMENTATION = '''
 options:
     outputfile:
         description:
-            - This specifies the file path to which the output of each command execution is persisted. 
-             Response from the device saved here. Usually the location is the results folder. 
-             But your user can choose which ever path he has write permission. 
+            - This specifies the file path where the output of each command
+             execution is saved. Each command that is specified in the merged
+             template file and each response from the device are saved here.
+             Usually the location is the results folder, but you can
+             choose another location based on your write permission.
         required: true
-        default: null
+        default: Null
         version_added: 2.3
     host:
         description:
-            - This is the variable which used to look into /etc/ansible/hosts file so that device IP addresses 
-             on which this template has to be applied is identified. Usually we specify the ansible keyword {{ inventory_hostname }} 
-             which we specify in the playbook which is an abstraction to the group of 
-             network elements that need to be configured.
+            - This is the variable used to search the hosts file at
+             /etc/ansible/hosts and identify the IP address of the device on
+             which the template is going to be applied. Usually the Ansible
+             keyword {{ inventory_hostname }} is specified in the playbook as
+             an abstraction of the group of network elements that need to be
+             configured.
         required: true
-        default: null
+        default: Null
         version_added: 2.3
     username:
         description:
-            - Configures the username to use to authenticate the connection to the remote device. The value of 
-             username is used to authenticate the SSH session. The value has to come from inventory file ideally,
-             you can even enter it as variable.
+            - Configures the username used to authenticate the connection to
+             the remote device. The value of the username parameter is used to
+             authenticate the SSH session. While generally the value should
+             come from the inventory file, you can also specify it as a
+             variable. This parameter is optional. If it is not specified, no
+             default value will be used.
         required: true
-        default: null
+        default: Null
         version_added: 2.3
     password:
         description:
-            - Configures the password to use to authenticate the connection to the remote device. 
-             The value of password is used to authenticate the SSH session.The value has to come from inventory file ideally,
-             you can even enter it as variable.
+            - Configures the password used to authenticate the connection to
+             the remote device. The value of the password parameter is used to
+             authenticate the SSH session. While generally the value should
+             come from the inventory file, you can also specify it as a
+             variable. This parameter is optional. If it is not specified, no
+             default value will be used.
         required: true
-        default: null
+        default: Null
         version_added: 2.3
     enablePassword:
         description:
-            - Inputs the enable password, in case its enables in the device. This get ignored if the device is not demanding an enable password. 
-             The value of password is used to enter the congig mode.The default value is empty string. The value has to come from inventory file ideally,
-             you can even enter it as variable.
+            - Configures the password used to enter Global Configuration
+             command mode on the switch. If the switch does not request this
+             password, the parameter is ignored.While generally the value
+             should come from the inventory file, you can also specify it as a
+             variable. This parameter is optional. If it is not specified,
+             no default value will be used.
         required: false
-        default: null
+        default: Null
         version_added: 2.3
     deviceType:
         description:
-            - This specifies the type of device against which the image is downloaded. The value has to come from inventory file ideally,
-             you can even enter it as variable.
+            - This specifies the type of device where the method is executed.
         required: Yes
         default: null
         choices: [g8272_cnos,g8296_cnos,g8332_cnos]
