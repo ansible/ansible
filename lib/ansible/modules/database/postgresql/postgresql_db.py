@@ -223,9 +223,9 @@ def db_dump(module, target,
             password=None):
 
     if password:
-          raise NotSupportedError(
+        raise NotSupportedError(
             'password not supported for pg_dump'
-          )
+        )
 
     if db:
       flags = ' --dbname={0}'.format(pipes.quote(db))
@@ -269,9 +269,9 @@ def db_restore(module, target,
     # set initial flags. These are the same in pg_restore as psql
 
     if password:
-          raise NotSupportedError(
+        raise NotSupportedError(
             'password not supported for pg_restore'
-          )
+        )
 
     flags = []
     if db:
