@@ -604,6 +604,9 @@ def main():
                                                     'message_digest_password']],
                                 supports_check_mode=True)
 
+    if not module.params['interface'].startswith('loopback'):
+        module.params['interface'] = module.params['interface'].capitalize()
+
     for param in ['message_digest_encryption_type',
                   'message_digest_algorithm_type',
                   'message_digest_password']:
