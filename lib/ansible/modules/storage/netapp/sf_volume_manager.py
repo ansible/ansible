@@ -139,6 +139,10 @@ EXAMPLES = """
 
 RETURN = """
 
+msg:
+    description: Success message
+    returned: success
+    type: string
 
 """
 
@@ -153,20 +157,7 @@ class SolidFireVolume(object):
 
     def __init__(self):
 
-        self._size_unit_map = dict(
-
-            # Management GUI displays 1024 ** 3 as 1.1 GB, thus use 1000.
-            bytes=1,
-            b=1,
-            kb=1000,
-            mb=1000 ** 2,
-            gb=1000 ** 3,
-            tb=1000 ** 4,
-            pb=1000 ** 5,
-            eb=1000 ** 6,
-            zb=1000 ** 7,
-            yb=1000 ** 8
-        )
+        self._size_unit_map = netapp_utils.SF_BYTE_MAP
 
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
         self.argument_spec.update(dict(
@@ -319,20 +310,26 @@ class SolidFireVolume(object):
             if self.state == 'present':
                 changed = True
 
+        result_message = ""
+
         if changed:
             if self.module.check_mode:
+                result_message = "Check mode, skipping changes"
                 pass
             else:
                 if self.state == 'present':
                     if not volume_exists:
                         self.create_volume()
+                        result_message = "Volume created"
                     elif update_volume:
                             self.update_volume()
+                            result_message = "Volume updated"
 
                 elif self.state == 'absent':
                     self.delete_volume()
+                    result_message = "Volume deleted"
 
-        self.module.exit_json(changed=changed)
+        self.module.exit_json(changed=changed, msg=result_message)
 
 
 def main():
