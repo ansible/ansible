@@ -3,6 +3,7 @@
 
 # (c) 2013, Matthias Vogelgesang <matthias.vogelgesang@gmail.com>
 # (c) 2014, Justin Lecher <jlec@gentoo.org>
+# (c) 2017, Christian Wittmer <chris@computersalat.de>
 #
 # This file is part of Ansible
 #
@@ -31,7 +32,7 @@ author: "Matthias Vogelgesang (@matze)"
 version_added: "1.5"
 short_description: Add, modify and remove zypper repositories
 description:
-    - Add or remove Zypper repositories on SUSE and openSUSE
+    - Add, modify or remove zypper repositories on SLE and openSUSE
 options:
     name:
         required: false
