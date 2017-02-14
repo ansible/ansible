@@ -303,7 +303,7 @@ def get_value(arg, config, module):
 
 def check_interface(module, netcfg):
     config = str(netcfg)
-    REGEX = re.compile(r'\s+interface port-channel{0}*$'.format(module.params['group']), re.M)
+    REGEX = re.compile(r'\s+interface port-channel{0}$'.format(module.params['group']), re.M)
     value = False
     try:
         if REGEX.search(config):
