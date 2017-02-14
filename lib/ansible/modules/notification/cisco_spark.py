@@ -26,14 +26,14 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: cisco_spark
-short_description: Send a message to a Cisco Spark Room or Individual
+short_description: Send a message to a Cisco Spark Room or Individual.
 description:
     - Send a message to a Cisco Spark Room or Individual, with options to control the formatting.
 version_added: "1.0"
 author: Drew Rusell (@drusse11)
 notes:
   - The receipient_id type must be valid for the supplied recipient_type.
-  - Full API documentation can be found at https://developer.ciscospark.com/endpoint-messages-post.html
+  - Full API documentation can be found at U(https://developer.ciscospark.com/endpoint-messages-post.html).
 
 options:
 
@@ -46,7 +46,7 @@ options:
 
   recipient_id:
     description:
-      - The unique identifier associated with the supplied recipient_type
+      - The unique identifier associated with the supplied recipient_type.
     required: true
 
   message_type:
@@ -58,7 +58,7 @@ options:
 
   personal_token:
     description:
-      - Your personal access token required to validate the Spark API
+      - Your personal access token required to validate the Spark API.
     require: true
     aliases: ['token']
 
@@ -109,16 +109,16 @@ EXAMPLES = """
 RETURN = """
 status_code:
   description:
-    - The Response Code returned by the Spark API
-    - Full Responsde Code explanations can be found at https://developer.ciscospark.com/endpoint-messages-post.html
+    - The Response Code returned by the Spark API.
+    - Full Responsde Code explanations can be found at U(https://developer.ciscospark.com/endpoint-messages-post.html).
   returned: always
   type: int
   sample: 200
 
 message:
     description:
-      - The Response Message returned by the Spark API
-      - Full Responsde Code explanations can be found at https://developer.ciscospark.com/endpoint-messages-post.html
+      - The Response Message returned by the Spark API.
+      - Full Responsde Code explanations can be found at U(https://developer.ciscospark.com/endpoint-messages-post.html.
     returned: always
     type: string
     sample: OK (585 bytes)
@@ -198,4 +198,5 @@ def main():
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
-main()
+if __name__ == "__main__":
+    main()
