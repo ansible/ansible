@@ -341,7 +341,7 @@ def generate_command(args, path, options, exclude, require):
     :type options: dict[str, int]
     :type exclude: list[str]
     :type require: list[str]
-    :return: list[str]
+    :rtype: list[str]
     """
     options['--color'] = 1
 

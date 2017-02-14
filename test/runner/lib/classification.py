@@ -3,6 +3,7 @@
 from __future__ import absolute_import, print_function
 
 import os
+import time
 
 from lib.target import (
     walk_module_targets,
@@ -15,6 +16,10 @@ from lib.target import (
 
 from lib.util import (
     display,
+)
+
+from lib.import_analysis import (
+    get_python_module_utils_imports,
 )
 
 
@@ -34,6 +39,26 @@ def categorize_changes(paths, verbose_command=None):
         'windows-integration': set(),
         'network-integration': set(),
     }
+
+    additional_paths = set()
+
+    for path in paths:
+        dependent_paths = mapper.get_dependent_paths(path)
+
+        if not dependent_paths:
+            continue
+
+        display.info('Expanded "%s" to %d dependent file(s):' % (path, len(dependent_paths)), verbosity=1)
+
+        for dependent_path in dependent_paths:
+            display.info(dependent_path, verbosity=1)
+            additional_paths.add(dependent_path)
+
+    additional_paths -= set(paths)  # don't count changed paths as additional paths
+
+    if additional_paths:
+        display.info('Expanded %d changed file(s) into %d additional dependent file(s).' % (len(paths), len(additional_paths)))
+        paths = sorted(set(paths) | additional_paths)
 
     display.info('Mapping %d changed file(s) to tests.' % len(paths))
 
@@ -97,6 +122,35 @@ class PathMapper(object):
                                                   if 'network/' in t.aliases for m in t.modules)
 
         self.prefixes = load_integration_prefixes()
+
+        self.python_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
+
+    def get_dependent_paths(self, path):
+        """
+        :type path: str
+        :rtype: list[str]
+        """
+        name, ext = os.path.splitext(os.path.split(path)[1])
+
+        if path.startswith('lib/ansible/module_utils/'):
+            if ext == '.py':
+                return self.get_python_module_utils_usage(name)
+
+        return []
+
+    def get_python_module_utils_usage(self, name):
+        """
+        :type name: str
+        :rtype: list[str]
+        """
+        if not self.python_module_utils_imports:
+            display.info('Analyzing python module_utils imports...')
+            before = time.time()
+            self.python_module_utils_imports = get_python_module_utils_imports(self.compile_targets)
+            after = time.time()
+            display.info('Processed %d python module_utils in %d second(s).' % (len(self.python_module_utils_imports), after - before))
+
+        return sorted(self.python_module_utils_imports.get(name, set()))
 
     def classify(self, path):
         """
@@ -174,39 +228,7 @@ class PathMapper(object):
                 }
 
             if ext == '.py':
-                network_utils = (
-                    'netcfg',
-                    'netcli',
-                    'network_common',
-                    'network',
-                )
-
-                if name in network_utils:
-                    return {
-                        'network-integration': 'network/',  # target all network platforms
-                        'units': 'all',
-                    }
-
-                if name in self.prefixes and self.prefixes[name] == 'network':
-                    network_target = 'network/%s/' % name
-
-                    if network_target in self.integration_targets_by_alias:
-                        return {
-                            'network-integration': network_target,
-                            'units': 'all',
-                        }
-
-                    display.warning('Integration tests for "%s" not found.' % network_target)
-
-                    return {
-                        'units': 'all',
-                    }
-
-                return {
-                    'integration': 'all',
-                    'network-integration': 'all',
-                    'units': 'all',
-                }
+                return minimal  # already expanded using get_dependent_paths
 
         if path.startswith('lib/ansible/plugins/connection/'):
             if name == '__init__':

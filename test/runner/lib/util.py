@@ -227,7 +227,7 @@ def deepest_path(path_a, path_b):
     """Return the deepest of two paths, or None if the paths are unrelated.
     :type path_a: str
     :type path_b: str
-    :return: str | None
+    :rtype: str | None
     """
     if path_a == '.':
         path_a = ''
