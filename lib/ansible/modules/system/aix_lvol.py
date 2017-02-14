@@ -259,8 +259,11 @@ def main():
     else:
         test_opt = ''
 
-    # Get information on volume group requested
+    # check if system commands are available
     lsvg_cmd = module.get_bin_path("lsvg", required=True)
+    lslv_cmd = module.get_bin_path("lslv", required=True)
+
+    # Get information on volume group requested
     rc, vg_info, err = module.run_command("%s %s" % (lsvg_cmd, vg))
 
     if rc != 0:
@@ -277,7 +280,6 @@ def main():
         lv_size = round_ppsize(convert_size(size), base=this_vg['pp_size'])
 
     # Get information on logical volume requested
-    lslv_cmd = module.get_bin_path("lslv", required=True)
     rc, lv_info, err = module.run_command(
         "%s %s" % (lslv_cmd, lv))
 
