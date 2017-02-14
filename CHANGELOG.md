@@ -142,6 +142,7 @@ Ansible Changes By Release
   * ldap_attr
   * ldap_entry
 - logstash_plugin
+- mattermost
 - net_command
 - netapp
   * sf_account_manager
