@@ -174,7 +174,7 @@ Put your completed module file into the ``lib/ansible/modules/$CATEGORY/`` direc
 run the command: ``make webdocs``. The new 'modules.html' file will be
 built in the ``docs/docsite/_build/html/$MODULENAME_module.html`` directory.
 
-To test your documentation against your ``argument_spec`` you can use ``validate-modules``. Note that this option isn't currently enabled in Shippable as it occasionally returns false positive results.
+To test your documentation against your ``argument_spec`` you can use ``validate-modules``. Note that this option isn't currently enabled in Shippable due to the time it takes to run.
 
 .. code-block:: shell-session
 
