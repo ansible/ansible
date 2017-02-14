@@ -223,6 +223,8 @@ Ansible Changes By Release
   * panos_service
 - postgresql_schema
 - proxmox_kvm
+- pubnub
+  * pubnub_blocks
 - pulp_repo
 - runit
 - serverless
