@@ -146,7 +146,11 @@ changed:
 # COMMON CODE FOR MIGRATION
 import re
 
-import ipaddress
+try:
+    import ipaddress
+    HAS_IPADDRESS = True
+except ImportError:
+    HAS_IPADDRESS = False
 
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
@@ -620,6 +624,9 @@ def main():
     )
     module = get_network_module(argument_spec=argument_spec,
                                 supports_check_mode=True)
+
+    if not HAS_IPADDRESS:
+        module.fail_json(msg="ipaddress is required for this module. Run 'pip install ipaddress' for install.")
 
     addr = module.params['addr']
     version = module.params['version']
