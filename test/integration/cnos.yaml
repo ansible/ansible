@@ -8,5 +8,3 @@
 
   roles:
         - { role: cnos_vlan, when: "limit_to in ['*', 'cnos_vlan']" }
-
-

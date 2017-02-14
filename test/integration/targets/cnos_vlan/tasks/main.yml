@@ -38,4 +38,3 @@
   with_items: "{{cnos_vlan_data9}}"
 
 # Completed file
-
