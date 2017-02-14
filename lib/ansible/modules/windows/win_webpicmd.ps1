@@ -21,12 +21,6 @@ $ErrorActionPreference = "Stop"
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args;
-$result = New-Object PSObject;
-Set-Attr $result "changed" $false;
-
-$package = Get-AnsibleParam $params -name "name" -failifempty $true
-
 Function Find-Command
 {
     [CmdletBinding()]
@@ -103,8 +97,8 @@ Function Install-WithWebPICmd
 
     if ($LastExitCode -ne 0)
     {
-        Set-Attr $result "webpicmd_error_cmd" $cmd
-        Set-Attr $result "webpicmd_error_log" "$results"
+        $result.webpicmd_error_cmd = $cmd
+        $result.webpicmd_error_log = "$results"
         Throw "Error installing $package"
     }
 
@@ -116,17 +110,21 @@ Function Install-WithWebPICmd
     }
 }
 
-Try
-{
+$result = @{
+    changed = $false
+}
+
+$params = Parse-Args $args
+
+$package = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
+
+Try {
     $script:executable = Find-WebPiCmd
-    if ((Test-IsInstalledFromWebPI -package $package) -eq $false)
-    {
+    if ((Test-IsInstalledFromWebPI -package $package) -eq $false) {
         Install-WithWebPICmd -package $package
     }
 
-    Exit-Json $result;
-}
-Catch
-{
+    Exit-Json $result
+} Catch {
      Fail-Json $result $_.Exception.Message
 }
