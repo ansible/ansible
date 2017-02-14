@@ -414,6 +414,7 @@ class Ec2Inventory(object):
             'group_by_availability_zone',
             'group_by_ami_id',
             'group_by_instance_type',
+            'group_by_instance_state',
             'group_by_key_pair',
             'group_by_vpc_id',
             'group_by_security_group',
@@ -858,6 +859,13 @@ class Ec2Inventory(object):
             self.push(self.inventory, type_name, hostname)
             if self.nested_groups:
                 self.push_group(self.inventory, 'types', type_name)
+
+        # Inventory: Group by instance state
+        if self.group_by_instance_state:
+            state_name = self.to_safe('instance_state_' + instance.state)
+            self.push(self.inventory, state_name, hostname)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'instance_states', state_name)
 
         # Inventory: Group by key pair
         if self.group_by_key_pair and instance.key_name:
