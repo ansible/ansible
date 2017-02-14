@@ -48,6 +48,7 @@ Ansible Changes By Release
   * Add support for hosts and virtual machines affinity groups and labels.
   * Add support for users, groups and permissions management.
   * Improved virtual machines and disks management.
+- Mount: Some fixes so bind mounts are not mounted each time the playbook runs.
 
 ###New Modules:
 - a10_server_axapi3
