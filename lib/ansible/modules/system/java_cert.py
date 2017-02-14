@@ -24,7 +24,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: java_cert
-version_added: 2.3
+version_added: '2.3'
 short_description: Uses keytool to import/remove key from java keystore(cacerts)
 description:
   - This is a wrapper module around keytool. Which can be used to import/remove
@@ -32,41 +32,32 @@ description:
 options:
   cert_url:
     description:
-      - Basic URL to fetch SSL certificate from
-    required: true
+      - Basic URL to fetch SSL certificate from. One of cert_url or cert_path is required to load certificate.
   cert_port:
     description:
       - Port to connect to URL. This will be used to create server URL:PORT
     default: 443
   cert_path:
     description:
-      - Local path to load certificate from
+      - Local path to load certificate from. One of cert_url or cert_path is required to load certificate.
   cert_alias:
     description:
-      - Imported certificate alias
-    required: false
-    default: null
+      - Imported certificate alias.
   keystore_path:
     description:
       - Path to keystore.
-    required: false
-    default: null
   keystore_pass:
     description:
-      - Keystore password
-    required: false
-    default: null
+      - Keystore password.
+    required: true
   keystore_create:
     description:
       - Create keystore if it doesn't exist
-    required: false
-    default: null
   state:
     description:
       - Defines action which can be either certificate import or removal.
     choices: [ 'present', 'absent' ]
     default: present
-    required: false
 
 author: Adam Hamsik @haad
 '''
@@ -215,14 +206,14 @@ def test_keystore(module, keystore_path):
 
 def main():
     argument_spec = dict(
-        cert_url=dict(required=False, type='str'),
-        cert_path=dict(required=False, type='str'),
-        cert_alias=dict(required=False, type='str'),
-        cert_port=dict(required=False, default='443', type='int'),
-        keystore_path=dict(required=False, type='str'),
-        keystore_pass=dict(required=False, default='changeit', type='str'),
-        keystore_create=dict(required=False, default=False, type='bool'),
-        state=dict(required=False, default='present',
+        cert_url=dict(type='str'),
+        cert_path=dict(type='str'),
+        cert_alias=dict(type='str'),
+        cert_port=dict(default='443', type='int'),
+        keystore_path=dict(type='str'),
+        keystore_pass=dict(required=True, type='str'),
+        keystore_create=dict(default=False, type='bool'),
+        state=dict(default='present',
                    choices=['present', 'absent'])
     )
 
