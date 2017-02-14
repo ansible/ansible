@@ -26,7 +26,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 from ansible.module_utils.basic import env_fallback
-from ansible.module_utils.network_common import to_list
+from ansible.module_utils.network_common import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
 
 _DEVICE_CONFIGS = {}
@@ -65,9 +65,19 @@ def get_config(module, flags=[]):
         _DEVICE_CONFIGS[cmd] = cfg
         return cfg
 
+def to_commands(commands):
+    transform = ComplexList(dict(
+        command=dict(key=True),
+        prompt=dict(),
+        response=dict()
+    ))
+    return transform(commands)
+
+
 def run_commands(module, commands, check_rc=True):
     responses = list()
-    for cmd in to_list(commands):
+    commands = to_commands(to_list(commands))
+    for cmd in commands:
         cmd = module.jsonify(cmd)
         rc, out, err = exec_command(module, cmd)
         if check_rc and rc != 0:
