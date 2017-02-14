@@ -72,12 +72,12 @@ Target: February/March 2017
   
 - **Networking**
 
-  - Code stability and tidy up
-  - Extend testing
+  - Code stability and tidy up **(done)**
+  - Extend testing **(done)**
   - User facing documentation
-  - Persistent connection manager
-  - Netconf/YANG implementation (only feature)
-  - Deferred from 2.2: Network facts modules (sros)
+  - Persistent connection manager **(done)**
+  - Netconf/YANG implementation (only feature) **(done)**
+  - Deferred from 2.2: Network facts modules (sros) 
 
 - **Python3**
 
