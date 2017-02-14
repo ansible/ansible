@@ -144,5 +144,31 @@ def fq_list_names(partition,list_names):
     return map(lambda x: fq_name(partition,x),list_names)
 
 
+def get_mgmt_root(type, **kwargs):
+    if type == 'bigip':
+        return BigIpMgmt(
+            kwargs['server'],
+            kwargs['user'],
+            kwargs['password'],
+            port=kwargs['server_port'],
+            token='tmos'
+        )
+    elif type == 'iworkflow':
+        return iWorkflowMgmt(
+            kwargs['server'],
+            kwargs['user'],
+            kwargs['password'],
+            port=kwargs['server_port'],
+            token='local'
+        )
+    elif type == 'bigiq':
+        return BigIqMgmt(
+            kwargs['server'],
+            kwargs['user'],
+            kwargs['password'],
+            port=kwargs['server_port'],
+            token='local'
+        )
+
 class F5ModuleError(Exception):
     pass
