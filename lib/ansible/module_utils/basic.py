@@ -689,7 +689,6 @@ class AnsibleModule(object):
         self.run_command_environ_update = {}
         self._warnings = []
         self._deprecations = []
-        self._passthrough = ['warnings', 'deprecations']
 
         self.aliases = {}
         self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility', '_ansible_socket']
@@ -1949,15 +1948,19 @@ class AnsibleModule(object):
                     self.warn(w)
             else:
                 self.warn(kwargs['warnings'])
+
         if self._warnings:
             kwargs['warnings'] = self._warnings
 
         if 'deprecations' in kwargs:
             if isinstance(kwargs['deprecations'], list):
                 for d in kwargs['deprecations']:
-                    self.deprecate(d)
+                    if isinstance(d, SEQUENCETYPE) and len(d) == 2:
+                       self.deprecate(d[0], version=d[1])
+                    else:
+                       self.deprecate(d)
             else:
-                self.warn(kwargs['deprecations'])
+                self.deprecate(d)
 
         if self._deprecations:
             kwargs['deprecations'] = self._deprecations
