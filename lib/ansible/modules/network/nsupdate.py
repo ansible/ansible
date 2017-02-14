@@ -101,6 +101,7 @@ EXAMPLES = '''
     zone: "example.org"
     record: "puppet"
     type: "CNAME"
+    state: absent
 '''
 
 RETURN = '''
@@ -133,12 +134,12 @@ zone:
     returned: success
     type: string
     sample: 'example.org.'
-rc:
+dns_rc:
     description: dnspython return code
     returned: always
     type: int
     sample: 4
-rc_str:
+dns_rc_str:
     description: dnspython return code (string representation)
     returned: always
     type: string
@@ -342,13 +343,16 @@ def main():
     elif module.params["state"] == 'present':
         result = record.create_or_update_record()
 
-    result['rc'] = record.dns_rc
-    result['rc_str'] = dns.rcode.to_text(record.dns_rc)
+    result['dns_rc'] = record.dns_rc
+    result['dns_rc_str'] = dns.rcode.to_text(record.dns_rc)
     if result['failed']:
         module.fail_json(**result)
     else:
-        result['record'] = {'zone': record.zone, 'record': module.params['record'], 'type': module.params['type'],
-                            'ttl': module.params['ttl'], 'value': module.params['value']}
+        result['record'] = dict(zone=record.zone,
+                                record=module.params['record'],
+                                type=module.params['type'],
+                                ttl=module.params['ttl'],
+                                value=module.params['value'])
 
         module.exit_json(**result)
 
