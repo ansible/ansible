@@ -79,9 +79,4 @@ class TerminalModule(TerminalBase):
         elif prompt.endswith('#'):
             self._exec_cli_command('disable')
 
-    @staticmethod
-    def guess_network_os(conn):
-        stdin, stdout, stderr = conn.exec_command('show version')
-        if 'Arista' in stdout.read():
-            return 'eos'
 

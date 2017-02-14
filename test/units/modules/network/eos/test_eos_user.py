@@ -17,43 +17,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import json
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
-from ansible.errors import AnsibleModuleExit
+from ansible.compat.tests.mock import patch
 from ansible.modules.network.eos import eos_user
-from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
+from .eos_module import TestEosModule, load_fixture, set_module_args
 
 
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
+class TestEosUserModule(TestEosModule):
 
-fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
-fixture_data = {}
-
-def load_fixture(name):
-    path = os.path.join(fixture_path, name)
-
-    if path in fixture_data:
-        return fixture_data[path]
-
-    with open(path) as f:
-        data = f.read()
-
-    try:
-        data = json.loads(data)
-    except:
-        pass
-
-    fixture_data[path] = data
-    return data
-
-
-class TestEosUserModule(unittest.TestCase):
+    module = eos_user
 
     def setUp(self):
         self.mock_get_config = patch('ansible.modules.network.eos.eos_user.get_config')
@@ -66,28 +39,9 @@ class TestEosUserModule(unittest.TestCase):
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 
-    def execute_module(self, failed=False, changed=False, commands=None, sort=True):
-
+    def load_fixtures(self, commands=None):
         self.get_config.return_value = load_fixture('eos_user_config.cfg')
         self.load_config.return_value = dict(diff=None, session='session')
-
-        with self.assertRaises(AnsibleModuleExit) as exc:
-            eos_user.main()
-
-        result = exc.exception.result
-
-        if failed:
-            self.assertTrue(result['failed'], result)
-        else:
-            self.assertEqual(result['changed'], changed, result)
-
-        if commands:
-            if sort:
-                self.assertEqual(sorted(commands), sorted(result['commands']), result['commands'])
-            else:
-                self.assertEqual(commands, result['commands'])
-
-        return result
 
     def test_eos_user_create(self):
         set_module_args(dict(username='test', nopassword=True))
@@ -101,7 +55,7 @@ class TestEosUserModule(unittest.TestCase):
 
     def test_eos_user_password(self):
         set_module_args(dict(username='ansible', password='test'))
-        commands = ['username ansible secret ********']
+        commands = ['username ansible secret test']
         self.execute_module(changed=True, commands=commands)
 
     def test_eos_user_privilege(self):
@@ -130,17 +84,16 @@ class TestEosUserModule(unittest.TestCase):
 
     def test_eos_user_update_password_changed(self):
         set_module_args(dict(username='test', password='test', update_password='on_create'))
-        commands = ['username ******** secret ********']
+        commands = ['username test secret test']
         self.execute_module(changed=True, commands=commands)
 
     def test_eos_user_update_password_on_create_ok(self):
         set_module_args(dict(username='ansible', password='test', update_password='on_create'))
-        commands = []
-        self.execute_module(commands=commands)
+        self.execute_module()
 
     def test_eos_user_update_password_always(self):
         set_module_args(dict(username='ansible', password='test', update_password='always'))
-        commands = ['username ansible secret ********']
+        commands = ['username ansible secret test']
         self.execute_module(changed=True, commands=commands)
 
 

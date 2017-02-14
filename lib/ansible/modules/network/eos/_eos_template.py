@@ -35,7 +35,6 @@ description:
     commands that are not already configured.  The config source can
     be a set of commands or a template.
 deprecated: Deprecated in 2.2. Use M(eos_config) instead
-extends_documentation_fragment: eos_local
 options:
   src:
     description:
@@ -124,32 +123,9 @@ responses:
 """
 import re
 
-from ansible.module_utils import eos
-from ansible.module_utils import eos_local
-from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.eos import load_config, get_config
 from ansible.module_utils.basic import AnsibleModle
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-
-SHARED_LIB = 'eos'
-
-def get_ansible_module():
-    if SHARED_LIB == 'eos':
-        return LocalAnsibleModule
-    return AnsibleModule
-
-def invoke(name, *args, **kwargs):
-    obj = globals().get(SHARED_LIB)
-    func = getattr(obj, name)
-    return func(*args, **kwargs)
-
-load_config = partial(invoke, 'load_config')
-get_config = partial(invoke, 'get_config')
-
-def check_args(module):
-    warnings = list()
-    if SHARED_LIB == 'eos_local':
-        eos_local.check_args(module)
-    return warnings
 
 def get_current_config(module):
     config = module.params.get('config')
@@ -201,11 +177,9 @@ def main():
 
     mutually_exclusive = [('config', 'backup'), ('config', 'force')]
 
-    cls = get_ansible_module()
-
-    module = cls(argument_spec=argument_spec,
-                 mutually_exclusive=mutually_exclusive,
-                 supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           mutually_exclusive=mutually_exclusive,
+                           supports_check_mode=True)
 
     warnings = check_args(module)
 
@@ -245,5 +219,4 @@ def main():
     module.exit_json(**result)
 
 if __name__ == '__main__':
-    SHARED_LIB = 'eos_local'
     main()
