@@ -20,56 +20,44 @@
 # POWERSHELL_COMMON
 
 #Functions
-Function UserSearch
-{
+Function UserSearch {
     Param ([string]$accountName)
     #Check if there's a realm specified
 
     $searchDomain = $false
     $searchDomainUPN = $false
-    if ($accountName.Split("\").count -gt 1)
-    {
-        if ($accountName.Split("\")[0] -ne $env:COMPUTERNAME)
-        {
+    if ($accountName.Split("\").count -gt 1) {
+        if ($accountName.Split("\")[0] -ne $env:COMPUTERNAME) {
             $searchDomain = $true
             $accountName = $accountName.split("\")[1]
         }
-    }
-    Elseif ($accountName.contains("@"))
-    {
+    } elseif ($accountName.contains("@")) {
         $searchDomain = $true
         $searchDomainUPN = $true
-    }
-    Else
-    {
+    } else {
         #Default to local user account
         $accountName = $env:COMPUTERNAME + "\" + $accountName
     }
 
-    if ($searchDomain -eq $false)
-    {
+    if ($searchDomain -eq $false) {
         # do not use Win32_UserAccount, because e.g. SYSTEM (BUILTIN\SYSTEM or COMPUUTERNAME\SYSTEM) will not be listed. on Win32_Account groups will be listed too
         $localaccount = get-wmiobject -class "Win32_Account" -namespace "root\CIMV2" -filter "(LocalAccount = True)" | where {$_.Caption -eq $accountName}
         if ($localaccount)
         {
             return $localaccount.SID
         }
-    }
-    Else
-    {
+    } else {
         #Search by samaccountname
         $Searcher = [adsisearcher]""
 
-        If ($searchDomainUPN -eq $false) {
+        if ($searchDomainUPN -eq $false) {
             $Searcher.Filter = "sAMAccountName=$($accountName)"
-        }
-        Else {
+        } else {
             $Searcher.Filter = "userPrincipalName=$($accountName)"
         }
 
-        $result = $Searcher.FindOne() 
-        if ($result)
-        {
+        $result = $Searcher.FindOne()
+        if ($result) {
             $user = $result.GetDirectoryEntry()
 
             # get binary SID from AD account
@@ -80,16 +68,17 @@ Function UserSearch
         }
     }
 }
- 
-$params = Parse-Args $args;
 
-$result = New-Object PSObject;
-Set-Attr $result "changed" $false;
+$result = @{
+    changed = $false
+}
 
-$path = Get-Attr $params "path" -failifempty $true
-$user = Get-Attr $params "user" -failifempty $true
-$recurse = Get-Attr $params "recurse" "no" -validateSet "no","yes" -resultobj $result
-$recurse = $recurse | ConvertTo-Bool
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+
+$path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true
+$user = Get-AnsibleParam -obj $params -name "user" -type "str" -failifempty $true
+$recurse = Get-AnsibleParam -obj $params -name "recurse" -type "bool" -default "no" -validateset "no","yes" -resultobj $result
 
 If (-Not (Test-Path -Path $path)) {
     Fail-Json $result "$path file or directory does not exist on the host"
@@ -97,39 +86,41 @@ If (-Not (Test-Path -Path $path)) {
 
 # Test that the user/group is resolvable on the local machine
 $sid = UserSearch -AccountName ($user)
-if (!$sid)
-{
+if (-not $sid) {
     Fail-Json $result "$user is not a valid user or group on the host machine or domain"
 }
 
-Try {
+try {
     $objUser = New-Object System.Security.Principal.SecurityIdentifier($sid)
 
     $file = Get-Item -Path $path
     $acl = Get-Acl $file.FullName
 
-    If ($acl.getOwner([System.Security.Principal.SecurityIdentifier]) -ne $objUser) {
+    if ($acl.getOwner([System.Security.Principal.SecurityIdentifier]) -ne $objUser) {
         $acl.setOwner($objUser)
-        Set-Acl $file.FullName $acl
+        if (-not $check_mode) {
+            Set-Acl $file.FullName $acl
+        }
 
-        Set-Attr $result "changed" $true;
+        $result.changed = $true
     }
 
-    If ($recurse) {
+    if ($recurse) {
         $files = Get-ChildItem -Path $path -Force -Recurse
         ForEach($file in $files){
             $acl = Get-Acl $file.FullName
 
-            If ($acl.getOwner([System.Security.Principal.SecurityIdentifier]) -ne $objUser) {
+            if ($acl.getOwner([System.Security.Principal.SecurityIdentifier]) -ne $objUser) {
                 $acl.setOwner($objUser)
-                Set-Acl $file.FullName $acl
+                if (-not $check_mode) {
+                    Set-Acl $file.FullName $acl
+                }
 
-                Set-Attr $result "changed" $true;
+                $result.changed = $true
             }
         }
     }
-}
-Catch {
+} catch {
     Fail-Json $result "an error occurred when attempting to change owner on $path for $user"
 }
 
