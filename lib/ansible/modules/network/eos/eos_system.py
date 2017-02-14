@@ -272,12 +272,12 @@ def map_params_to_obj(module):
     lookup_source = ComplexList(dict(
         interface=dict(key=True),
         vrf=dict()
-    ))
+    ), module)
 
     name_servers = ComplexList(dict(
         server=dict(key=True),
         vrf=dict(default='default')
-    ))
+    ), module)
 
     for arg, cast in [('lookup_source', lookup_source), ('name_servers', name_servers)]:
         if module.params[arg] is not None:

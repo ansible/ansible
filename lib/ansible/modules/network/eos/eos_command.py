@@ -143,13 +143,14 @@ def to_lines(stdout):
     return lines
 
 def parse_commands(module, warnings):
-    transform = ComplexList(dict(
+    spec = dict(
         command=dict(key=True),
         output=dict(),
         prompt=dict(),
         response=dict()
-    ))
+    )
 
+    transform = ComplexList(spec, module)
     commands = transform(module.params['commands'])
 
     for index, item in enumerate(commands):
