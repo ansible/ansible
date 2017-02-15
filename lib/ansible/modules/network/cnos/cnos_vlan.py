@@ -21,25 +21,12 @@
 # Module to send VLAN commands to Lenovo Switches
 # Overloading aspect of vlan creation in a range is pending
 # Lenovo Networking
-import sys
-import paramiko
-import time
-import argparse
-import socket
-import array
-import json
-import time
-import re
-try:
-    import cnos
-    HAS_LIB = True
-except:
-    HAS_LIB = False
-from ansible.module_utils.basic import AnsibleModule
-from collections import defaultdict
+#
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
-# ---- Documentation Start -------------------------------------------------- #
 DOCUMENTATION = '''
 ---
 module: cnos_vlan
@@ -217,12 +204,26 @@ return value: |
     [VLAN configurations are successful]
     Upon any failure, the method returns an error display string.
 '''
-# ---- Documentation Ends -------------------------------------------------- #
-# ---- Logic Start ---------------------------------------------------------#
-#
 
+import sys
+import paramiko
+import time
+import argparse
+import socket
+import array
+import json
+import time
+import re
 
-#
+try:
+    import cnos
+    HAS_LIB = True
+except:
+    HAS_LIB = False
+	
+from ansible.module_utils.basic import AnsibleModule
+from collections import defaultdict
+
 def main():
     #
     # Define parameters for vlan creation entry
