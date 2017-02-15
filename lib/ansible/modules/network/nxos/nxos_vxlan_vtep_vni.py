@@ -172,17 +172,23 @@ class CustomNetworkConfig(NetworkConfig):
             S = list()
         S.append(configobj)
         for child in configobj.children:
-            if child in S:
+            child_obj = self.get_object([child])
+            if not child_obj:
                 continue
-            self.expand_section(child, S)
+            if child_obj in S:
+                continue
+            self.expand_section(child_obj, S)
         return S
 
     def get_object(self, path):
         for item in self.items:
             if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
+                if item.parents:
+                    parents = [p for p in item.parents]
+                    if parents == path[:-1]:
+                        return item
+                return item
+        raise ValueError('object does not exist in config')
 
     def to_block(self, section):
         return '\n'.join([item.raw for item in section])
@@ -201,7 +207,6 @@ class CustomNetworkConfig(NetworkConfig):
         if not obj:
             raise ValueError('path does not exist in config')
         return self.expand_section(obj)
-
 
     def add(self, lines, parents=None):
         """Adds one or lines of configuration
