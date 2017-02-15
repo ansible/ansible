@@ -58,23 +58,22 @@ options:
 '''
 
 EXAMPLES = """
-    - name: Manage Aggregates
-          na_cdot_aggregate:
-            state: present
-            name: ansibleAggr
-            disk_count: 1
-            hostname: "{{ netapp_hostname }}"
-            username: "{{ netapp_username }}"
-            password: "{{ netapp_password }}"
+- name: Manage Aggregates
+  na_cdot_aggregate:
+    state: present
+    name: ansibleAggr
+    disk_count: 1
+    hostname: "{{ netapp_hostname }}"
+    username: "{{ netapp_username }}"
+    password: "{{ netapp_password }}"
 
-    - name: Manage Aggregates
-          na_cdot_aggregate:
-            state: present
-            name: ansibleAggr
-            hostname: "{{ netapp_hostname }}"
-            username: "{{ netapp_username }}"
-            password: "{{ netapp_password }}"
-
+- name: Manage Aggregates
+  na_cdot_aggregate:
+    state: present
+    name: ansibleAggr
+    hostname: "{{ netapp_hostname }}"
+    username: "{{ netapp_username }}"
+    password: "{{ netapp_password }}"
 """
 
 RETURN = """

@@ -89,32 +89,30 @@ options:
 '''
 
 EXAMPLES = """
+- name: Create LUN
+  na_cdot_lun:
+    state: present
+    name: ansibleLUN
+    flexvol_name: ansibleVolume
+    vserver: ansibleVServer
+    size: 5
+    size_unit: mb
+    hostname: "{{ netapp_hostname }}"
+    username: "{{ netapp_username }}"
+    password: "{{ netapp_password }}"
 
-    - name: Create LUN
-          na_cdot_lun:
-            state: present
-            name: ansibleLUN
-            flexvol_name: ansibleVolume
-            vserver: ansibleVServer
-            size: 5
-            size_unit: mb
-            hostname: "{{ netapp_hostname }}"
-            username: "{{ netapp_username }}"
-            password: "{{ netapp_password }}"
-
-    - name: Resize Lun
-          na_cdot_lun:
-            state: present
-            name: ansibleLUN
-            force_resize: True
-            flexvol_name: ansibleVolume
-            vserver: ansibleVServer
-            size: 5
-            size_unit: gb
-            hostname: "{{ netapp_hostname }}"
-            username: "{{ netapp_username }}"
-            password: "{{ netapp_password }}"
-
+- name: Resize Lun
+  na_cdot_lun:
+    state: present
+    name: ansibleLUN
+    force_resize: True
+    flexvol_name: ansibleVolume
+    vserver: ansibleVServer
+    size: 5
+    size_unit: gb
+    hostname: "{{ netapp_hostname }}"
+    username: "{{ netapp_username }}"
+    password: "{{ netapp_password }}"
 """
 
 RETURN = """
