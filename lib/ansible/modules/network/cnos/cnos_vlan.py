@@ -48,6 +48,8 @@ description:
      cnos.html)
 version_added: "2.3"
 Options:
+    {}
+
     - The following is a table depicting how the overloaded variables are used
      in the context of VLAN.
     - vlanArg1 is required
@@ -76,17 +78,6 @@ vlagArg4: [~,access-list name,~,~,~,~,~,~,~,~,Slot/chassis number,Port
 Aggregation Number,~,~,~,~,~,~,~,~,~]
 Remarks: [~,~,~,vlanArg2 is optional,~,~,vlanArg3 is optional,~,~,~,~,~,~,~,~,
 ~,~,~,~,~,This feature is not supported. Please use runcommand option]
-
-Notes:
-    - For help in developing on modules, should you be so inclined, please read
-     [Community Information & Contributing](http://docs.ansible.com/ansible/
-     community.html) , [Helping Testing PRs](http://docs.ansible.com/ansible/
-     dev_guide/developing_test_pr.html),[and Developing Modules]
-     (http://docs.ansible.com/ansible/dev_guide/developing_modules.html).
-
-Module Dependency :
-    - cnos_vlan.py
-    - cnos.py
 
 '''
 EXAMPLES = '''
