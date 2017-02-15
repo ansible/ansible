@@ -338,14 +338,15 @@ def to_command(module, commands):
         elif is_text(item['command']):
             item['output'] = 'text'
 
+    return commands
+
 def get_config(module, flags=[]):
     conn = get_connection(module)
     return conn.get_config(flags)
 
 def run_commands(module, commands, check_rc=True):
     conn = get_connection(module)
-    to_command(module, commands)
-    return conn.run_commands(commands)
+    return conn.run_commands(to_command(module, commands))
 
 def load_config(module, config):
     conn = get_connection(module)
