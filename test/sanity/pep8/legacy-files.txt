@@ -13,7 +13,6 @@ lib/ansible/inventory/script.py
 lib/ansible/module_utils/basic.py
 lib/ansible/module_utils/ec2.py
 lib/ansible/module_utils/facts.py
-lib/ansible/module_utils/known_hosts.py
 lib/ansible/module_utils/mysql.py
 lib/ansible/modules/cloud/amazon/_ec2_vpc.py
 lib/ansible/modules/cloud/amazon/aws_kms.py
