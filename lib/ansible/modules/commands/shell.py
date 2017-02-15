@@ -104,6 +104,26 @@ EXAMPLES = '''
 
 - name: Run a command using a templated variable (always use quote filter to avoid injection)
   shell: cat {{ myfile|quote }}
+
+# You can use shell to run other executables to perform actions inline
+- name: Run expect to wait for a successful PXE boot via out-of-band CIMC
+  shell: |
+    set timeout 300
+    spawn ssh admin@{{ cimc_host }}
+
+    expect "password:"
+    send "{{ cimc_password }}\n"
+
+    expect "\n{{ cimc_name }}"
+    send "connect host\n"
+
+    expect "pxeboot.n12"
+    send "\n"
+
+    exit 0
+  args:
+    executable: /usr/bin/expect
+  delegate_to: localhost
 '''
 
 RETURN = '''
