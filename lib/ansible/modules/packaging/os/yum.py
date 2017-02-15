@@ -96,6 +96,16 @@ options:
     choices: ["yes", "no"]
     aliases: []
 
+  skip_broken:
+    description:
+      - Resolve depsolve problems by removing packages that are causing problems from the trans‐
+        action.
+    required: false
+    version_added: "2.3"
+    default: "no"
+    choices: ["yes, "no"]
+    aliases: []
+
   update_cache:
     description:
       - Force yum to check if cache is out of date and redownload if needed.
@@ -1053,7 +1063,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
     return res
 
 def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
-           disable_gpg_check, exclude, repoq, installroot='/'):
+           disable_gpg_check, exclude, repoq, skip_broken, installroot='/'):
 
     # fedora will redirect yum to dnf, which has incompatibilities
     # with how this module expects yum to operate. If yum-deprecated
@@ -1073,6 +1083,10 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
 
     dis_repos =[]
     en_repos = []
+
+    if skip_broken:
+        yum_basecmd.extend('--skip-broken')
+
     if disablerepo:
         dis_repos = disablerepo.split(',')
         r_cmd = ['--disablerepo=%s' % disablerepo]
@@ -1149,6 +1163,7 @@ def main():
             list=dict(),
             conf_file=dict(default=None),
             disable_gpg_check=dict(required=False, default="no", type='bool'),
+            skip_broken=dict(required=False, default="no", aliases=[], type='bool'),
             update_cache=dict(required=False, default="no", aliases=['expire-cache'], type='bool'),
             validate_certs=dict(required=False, default="yes", type='bool'),
             installroot=dict(required=False, default="/", type='str'),
@@ -1205,8 +1220,9 @@ def main():
         enablerepo = params.get('enablerepo', '')
         disablerepo = params.get('disablerepo', '')
         disable_gpg_check = params['disable_gpg_check']
+        skip_broken = params['skip_broken']
         results = ensure(module, state, pkg, params['conf_file'], enablerepo,
-                     disablerepo, disable_gpg_check, exclude, repoquery,
+                     disablerepo, disable_gpg_check, exclude, repoquery, skip_broken,
                      params['installroot'])
         if repoquery:
             results['msg'] = '%s %s' % (results.get('msg',''),
