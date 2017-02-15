@@ -64,20 +64,6 @@ options:
     required: false
     default: present
     choices: [ "present", "absent" ]
-  ssl_mode:
-    description:
-      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
-      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
-    required: false
-    default: disable
-    choices: [disable, allow, prefer, require, verify-ca, verify-full]
-    version_added: '2.3'
-  ssl_rootcert:
-    description:
-      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be verified to be signed by one of these authorities.
-    required: false
-    default: null
-    version_added: '2.3'
 author: "Ansible Core Team"
 extends_documentation_fragment:
 - postgres
