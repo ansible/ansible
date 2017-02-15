@@ -247,9 +247,9 @@ class NetworkConfig(object):
         updates = list()
         for index, line in enumerate(self.items):
             try:
-                if line != other[index]:
+                if str(line).strip() != str(other[index]).strip():
                     updates.append(line)
-            except IndexError:
+            except (AttributeError, IndexError):
                 updates.append(line)
         return updates
 
