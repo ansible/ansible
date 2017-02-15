@@ -187,12 +187,13 @@ notes:
 
 
 EXAMPLES = '''
-    tower_credential:
-        name: Team Name
-        description: Team Description
-        organization: test-org
-        state: present
-        config_file: "~/tower_cli.cfg"
+- name: Add tower credential
+  tower_credential:
+    name: Team Name
+    description: Team Description
+    organization: test-org
+    state: present
+    tower_config_file: "~/tower_cli.cfg"
 '''
 
 try:
@@ -239,7 +240,7 @@ def main():
             tower_host = dict(),
             tower_username = dict(),
             tower_password = dict(no_log=True),
-            tower_verify_ssl = dict(type='bool', default='yes'),
+            tower_verify_ssl = dict(type='bool', default=True),
             tower_config_file = dict(type='path'),
             state = dict(choices=['present', 'absent'], default='present'),
         ),

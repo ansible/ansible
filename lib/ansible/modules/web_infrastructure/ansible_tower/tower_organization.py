@@ -87,13 +87,12 @@ notes:
 
 
 EXAMPLES = '''
-  - tasks
-    - name: Create organization
-      tower_organization:
-          name: "Foo"
-          description: "Foo bar organization"
-          state: present
-          tower_config_file: "~/tower_cli.cfg"
+- name: Create tower organization
+  tower_organization:
+    name: "Foo"
+    description: "Foo bar organization"
+    state: present
+    tower_config_file: "~/tower_cli.cfg"
 '''
 
 try:
@@ -116,7 +115,7 @@ def main():
             tower_host = dict(),
             tower_username = dict(),
             tower_password = dict(no_log=True),
-            tower_verify_ssl = dict(type='bool', default='yes'),
+            tower_verify_ssl = dict(type='bool', default=True),
             tower_config_file = dict(type='path'),
             state = dict(choices=['present', 'absent'], default='present'),
         ),
