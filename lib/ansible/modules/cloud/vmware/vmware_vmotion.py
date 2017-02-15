@@ -136,11 +136,11 @@ def main():
     content = connect_to_api(module=module)
 
     vm_object = find_vm_by_name(content=content, vm_name=module.params['vm_name'])
-    if module.params['destination_host'] != None:
+    if module.params['destination_host'] is not None:
         host_object = find_hostsystem_by_name(content=content, hostname=module.params['destination_host'])
     else:
         host_object = None
-    if module.params['destination_datastore'] != None:
+    if module.params['destination_datastore'] is not None:
         datastore_object = find_datastore_by_name(content=content, datastore_name=module.params['destination_datastore'])
     else:
         datastore_object = None
@@ -153,26 +153,26 @@ def main():
     # Check if we could find the VM or Host
     if not vm_object:
         module.fail_json(msg='Cannot find virtual machine')
-    if not host_object and module.params['destination_host'] != None:
+    if not host_object and module.params['destination_host'] is not None:
         module.fail_json(msg='Cannot find host')
-    if not datastore_object and module.params['destination_datastore'] != None:
+    if not datastore_object and module.params['destination_datastore'] is not None:
         module.fail_json(msg='Cannot find datastore')
     elif not datastore_object.summary.accessible:
         module.fail_json(msg='Datastore is not accessible')
 
     # Make sure VM isn't already at the destination host
-    if module.params['destination_host'] == None:
+    if module.params['destination_host'] is None:
         hostVMotionNeeded = False
-    elif module.params['destination_host'] != None and vm_object.runtime.host.name == module.params['destination_host']:
+    elif module.params['destination_host'] is not None and vm_object.runtime.host.name == module.params['destination_host']:
         hostVMotionNeeded = False
     else:
         hostVMotionNeeded = True
 
     # Make sure VMDKs destination datastore is available on destination esx host (or on the current esx host if not specified)
-    if module.params['destination_datastore'] == None:
+    if module.params['destination_datastore'] is None:
         storageVMotionNeeded = False
     else:
-        if module.params['destination_host'] != None:
+        if module.params['destination_host'] is not None:
             if not datastore_object in host_object.datastore:
                 module.fail_json(msg="Datastore is not accessible on host")
         # Check whether VMDKs are already on the destination datastore
