@@ -53,11 +53,41 @@ author: "Dag Wieers (@dagwieers)"
 '''
 
 EXAMPLES = '''
-# Wait 300 seconds for system's connection to become reachable/usable by Ansible
-- wait_for_connection:
+- name: Wait 300 seconds for target connection to become reachable/usable
+  wait_for_connection:
 
-# Wait 600 seconds for system's connection, but only start checking after 60 seconds
-- wait_for_connection:
+- name: Wait 600 seconds, but only start checking after 60 seconds
+  wait_for_connection:
     delay: 60
     timeout: 600
+
+# Build a new VM, wait for it to become ready and continue playbook
+- hosts: all
+  gather_facts: no
+  tasks:
+  - name: Clone new VM, if missing
+    vmware_guest:
+      hostname: '{{ vcenter_ipaddress }}'
+      ...
+      name: '{{ inventory_hostname_short }}'
+      template: Windows 2012R2
+      state: present
+      networks:
+      - name: VLAN 123
+        ip: '{{ ansible_host }}'
+        netmask: '{{ vm_netmask }}'
+        gateway: '{{ gw_ip }}'
+        domain: '{{ domain }}'
+        dns_servers: [ '{{ dns_ip }}' ]
+      customization:
+        hostname: '{{ vm_shortname }}'
+        runonce:
+        - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\Enable-WinRM.ps1 -CertValidityDays 3650 -ForceNewSSLCert
+    delegate_to: localhost
+
+  - name: Wait for system to become reachable over WinRM
+    wait_for_connection:
+
+  - name: Gather facts for first time
+    setup
 '''
