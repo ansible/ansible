@@ -51,16 +51,12 @@ def ensure_libs(sslrootcert=None):
     # no problems
     return None
 
-def postgres_common_argument_spec(password_alias=True):
-    password_aliases = []
-    if password_alias: # sometimes 'password' means something totally different.
-        password_aliases = ['password']
-
+def postgres_common_argument_spec():
     return dict(
-        login_user        = dict(default='postgres', aliases=['login']),
-        login_password    = dict(default='', no_log=True, aliases=password_aliases),
-        login_host        = dict(default='', aliases=['host']),
-        login_unix_socket = dict(default='', aliases=['unix_socket']),
+        login_user        = dict(default='postgres'),
+        login_password    = dict(default='', no_log=True),
+        login_host        = dict(default=''),
+        login_unix_socket = dict(default=''),
         port              = dict(type='int', default=5432),
         ssl_mode          = dict(default='disable', choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
         ssl_rootcert      = dict(default=None),

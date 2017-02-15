@@ -33,36 +33,11 @@ options:
       - name of the database to add or remove
     required: true
     default: null
-  login_user:
-    description:
-      - The username used to authenticate with
-    required: false
-    default: postgres
-  login_password:
-    description:
-      - The password used to authenticate with
-    required: false
-    default: null
-  login_host:
-    description:
-      - Host running the database
-    required: false
-    default: null
-  login_unix_socket:
-    description:
-      - Path to a Unix domain socket for local connections
-    required: false
-    default: null
   owner:
     description:
       - Name of the role to set as owner of the database
     required: false
     default: null
-  port:
-    description:
-      - Database port to connect to.
-    required: false
-    default: 5432
   template:
     description:
       - Template used to create the database
@@ -103,13 +78,9 @@ options:
     required: false
     default: null
     version_added: '2.3'
-notes:
-   - The default authentication assumes that you are either logging in as or sudo'ing to the C(postgres) account on the host.
-   - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
-     the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and C(python-psycopg2) packages on the remote host before using this module.
-   - The ssl_rootcert parameter requires at least Postgres version 8.4 and I(psycopg2) version 2.4.3.
-requirements: [ psycopg2 ]
 author: "Ansible Core Team"
+extends_documentation_fragment:
+- postgres
 '''
 
 EXAMPLES = '''
@@ -136,6 +107,10 @@ except ImportError:
 else:
     postgresqldb_found = True
 from ansible.module_utils.six import iteritems
+
+import ansible.module_utils.postgres as pgutils
+from ansible.module_utils.basic import get_exception
+
 
 class NotSupportedError(Exception):
     pass
@@ -243,23 +218,20 @@ def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
 #
 
 def main():
+    argument_spec = pgutils.postgres_common_argument_spec()
+    argument_spec.append(dict(
+        db=dict(required=True, aliases=['name']),
+        owner=dict(default=""),
+        template=dict(default=""),
+        encoding=dict(default=""),
+        lc_collate=dict(default=""),
+        lc_ctype=dict(default=""),
+        state=dict(default="present", choices=["absent", "present"]),
+    ))
+
+
     module = AnsibleModule(
-        argument_spec=dict(
-            login_user=dict(default="postgres"),
-            login_password=dict(default="", no_log=True),
-            login_host=dict(default=""),
-            login_unix_socket=dict(default=""),
-            port=dict(default="5432"),
-            db=dict(required=True, aliases=['name']),
-            owner=dict(default=""),
-            template=dict(default=""),
-            encoding=dict(default=""),
-            lc_collate=dict(default=""),
-            lc_ctype=dict(default=""),
-            state=dict(default="present", choices=["absent", "present"]),
-            ssl_mode=dict(default="prefer", choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-            ssl_rootcert=dict(default=None),
-        ),
+        argument_spec=argument_spec,
         supports_check_mode = True
     )
 
@@ -352,8 +324,5 @@ def main():
 
     module.exit_json(changed=changed, db=db)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.database import *
 if __name__ == '__main__':
     main()
