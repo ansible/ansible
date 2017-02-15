@@ -37,7 +37,7 @@ options:
     description:
       - The username used to authenticate with
     required: false
-    default: null
+    default: postgres
   login_password:
     description:
       - The password used to authenticate with
@@ -47,7 +47,7 @@ options:
     description:
       - Host running the database
     required: false
-    default: localhost
+    default: null
   login_unix_socket:
     description:
       - Path to a Unix domain socket for local connections
@@ -257,7 +257,7 @@ def main():
             lc_collate=dict(default=""),
             lc_ctype=dict(default=""),
             state=dict(default="present", choices=["absent", "present"]),
-            ssl_mode=dict(default="disable", choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+            ssl_mode=dict(default="prefer", choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
             ssl_rootcert=dict(default=None),
         ),
         supports_check_mode = True
@@ -296,8 +296,9 @@ def main():
     if is_localhost and module.params["login_unix_socket"] != "":
         kw["host"] = module.params["login_unix_socket"]
 
-    if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
-        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
+    liberr = pgutils.ensure_libs(sslrootcert=module.params.get('ssl_rootcert'))
+    if liberr:
+        module.fail_json(msg=liberr)
 
     try:
         db_connection = psycopg2.connect(database="postgres", **kw)
@@ -305,16 +306,13 @@ def main():
         if psycopg2.__version__ >= '2.4.2':
             db_connection.autocommit = True
         else:
-            db_connection.set_isolation_level(psycopg2
-                                              .extensions
-                                              .ISOLATION_LEVEL_AUTOCOMMIT)
-        cursor = db_connection.cursor(
-            cursor_factory=psycopg2.extras.DictCursor)
+            db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     except TypeError:
         e = get_exception()
         if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
+            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert. Exception: {0}'.format(e))
         module.fail_json(msg="unable to connect to database: %s" % e)
 
     except Exception:
@@ -326,8 +324,7 @@ def main():
             if state == "absent":
                 changed = db_exists(cursor, db)
             elif state == "present":
-                changed = not db_matches(cursor, db, owner, template, encoding,
-                                         lc_collate, lc_ctype)
+                changed = not db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype)
             module.exit_json(changed=changed, db=db)
 
         if state == "absent":
@@ -339,8 +336,7 @@ def main():
 
         elif state == "present":
             try:
-                changed = db_create(cursor, db, owner, template, encoding,
-                                lc_collate, lc_ctype)
+                changed = db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype)
             except SQLParseError:
                 e = get_exception()
                 module.fail_json(msg=str(e))
