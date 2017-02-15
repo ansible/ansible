@@ -11,6 +11,13 @@ except ImportError:
             " install setuptools).")
     sys.exit(1)
 
+with open('requirements.txt') as requirements_file:
+    install_requirements = requirements_file.read().splitlines()
+    if not install_requirements:
+        print("Unable to read requirements from the requirements.txt file"
+                "That indicates this copy of the source code is incomplete.")
+        sys.exit(2)
+
 setup(
     name='ansible',
     version=__version__,
@@ -21,7 +28,7 @@ setup(
     license='GPLv3',
     # Ansible will also make use of a system copy of python-six and
     # python-selectors2 if installed but use a Bundled copy if it's not.
-    install_requires=['paramiko', 'jinja2', "PyYAML", 'setuptools', 'pycrypto >= 2.6'],
+    install_requires=install_requirements,
     package_dir={ '': 'lib' },
     packages=find_packages('lib'),
     package_data={
