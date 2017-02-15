@@ -176,31 +176,24 @@ vlan_list:
 """
 import re
 
-import ansible.module_utils.nxos
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcli import CommandRunner, AddCommandError
-from ansible.module_utils.network import NetworkModule, NetworkError
+from ansible.module_utils.nxos import run_commands
+from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_common import exec_command
 from ansible.module_utils.six import iteritems
 
 
-def add_command(runner, command, output=None):
-    try:
-        runner.add_command(command, output)
-    except AddCommandError:
-        # AddCommandError is raised for any issue adding a command to
-        # the runner.  Silently ignore the exception in this case
-        pass
-
 class FactsBase(object):
 
-    def __init__(self, module, runner):
-        self.module = module
-        self.runner = runner
-        self.facts = dict()
-        self.commands()
+    COMMANDS = frozenset()
 
-    def commands(self):
-        raise NotImplementedError
+    def __init__(self, module):
+        self.module = module
+        self.facts = dict()
+        self.responses = None
+
+    def populate(self):
+        self.responses = run_commands(self.module, list(self.COMMANDS))
 
     def transform_dict(self, data, keymap):
         transform = dict()
@@ -224,33 +217,36 @@ class Default(FactsBase):
         ('host_name', 'hostname')
     ])
 
-    def commands(self):
-        add_command(self.runner, 'show version', output='json')
+    COMMANDS = ['show version | json']
 
     def populate(self):
-        data = self.runner.get_command('show version', output='json')
+        super(Default, self).populate()
+        data = self.responses[0]
         self.facts.update(self.transform_dict(data, self.VERSION_MAP))
 
 class Config(FactsBase):
 
-    def commands(self):
-        add_command(self.runner, 'show running-config')
+    COMMANDS = ['show running-config']
 
     def populate(self):
-        self.facts['config'] = self.runner.get_command('show running-config')
+        super(Config, self).populate()
+        data = self.responses[0]
+        self.facts['config'] = data
 
 
 class Hardware(FactsBase):
 
-    def commands(self):
-        add_command(self.runner, 'dir', output='text')
-        add_command(self.runner, 'show system resources', output='json')
+    COMMANDS = [
+        'dir',
+        'show system resources | json'
+    ]
 
     def populate(self):
-        data = self.runner.get_command('dir', 'text')
+        super(Hardware, self).populate()
+        data = self.responses[0]
         self.facts['filesystems'] = self.parse_filesystems(data)
 
-        data = self.runner.get_command('show system resources', output='json')
+        data = self.responses[1]
         self.facts['memtotal_mb'] = int(data['memory_usage_total']) / 1024
         self.facts['memfree_mb'] = int(data['memory_usage_free']) / 1024
 
@@ -282,38 +278,21 @@ class Interfaces(FactsBase):
         ('prefix', 'subnet')
     ])
 
-    def commands(self):
-        add_command(self.runner, 'show interface', output='json')
-
-        try:
-            self.module.cli('show ipv6 interface', 'json')
-            add_command(self.runner, 'show ipv6 interface', output='json')
-            self.ipv6 = True
-        except NetworkError:
-            self.ipv6 = False
-
-        try:
-            self.module.cli(['show lldp neighbors'])
-            add_command(self.runner, 'show lldp neighbors', output='json')
-            self.lldp_enabled = True
-        except NetworkError:
-            self.lldp_enabled = False
-
     def populate(self):
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        data = self.runner.get_command('show interface', 'json')
+        data = run_commands(self.module, ['show interface | json'])[0]
         self.facts['interfaces'] = self.populate_interfaces(data)
 
-        if self.ipv6:
-            data = self.runner.get_command('show ipv6 interface', 'json')
-            if data:
-                self.parse_ipv6_interfaces(data)
+        rc, out, err = exec_command(self.module, 'show ipv6 interface | json')
+        if rc == 0:
+            if out:
+                self.parse_ipv6_interfaces(out)
 
-        if self.lldp_enabled:
-            data = self.runner.get_command('show lldp neighbors', 'json')
-            self.facts['neighbors'] = self.populate_neighbors(data)
+        rc, out, err = exec_command(self.module, 'show lldp neighbors')
+        if rc == 0:
+            self.facts['neighbors'] = self.populate_neighbors(out)
 
     def populate_interfaces(self, data):
         interfaces = dict()
@@ -390,27 +369,30 @@ class Legacy(FactsBase):
         ('total_capa', 'total_capacity')
     ])
 
-    def commands(self):
-        add_command(self.runner, 'show version', output='json')
-        add_command(self.runner, 'show module', output='json')
-        add_command(self.runner, 'show environment', output='json')
-        add_command(self.runner, 'show interface', output='json')
-        add_command(self.runner, 'show vlan brief', output='json')
+    COMMANDS = [
+        'show version | json',
+        'show module | json',
+        'show environment | json',
+        'show interface | json',
+        'show vlan brief | json'
+    ]
+
 
     def populate(self):
-        data = self.runner.get_command('show version', 'json')
+        super(Legacy, self).populate()
+        data = self.responses[0]
         self.facts.update(self.transform_dict(data, self.VERSION_MAP))
 
-        data = self.runner.get_command('show interface', 'json')
+        data = self.responses[3]
         self.facts['_interfaces_list'] = self.parse_interfaces(data)
 
-        data = self.runner.get_command('show vlan brief', 'json')
+        data = self.responses[4]
         self.facts['_vlan_list'] = self.parse_vlans(data)
 
-        data = self.runner.get_command('show module', 'json')
+        data = self.responses[1]
         self.facts['_module'] = self.parse_module(data)
 
-        data = self.runner.get_command('show environment', 'json')
+        data = self.responses[2]
         self.facts['_fan_info'] = self.parse_fan_info(data)
         self.facts['_power_supply_info'] = self.parse_power_supply_info(data)
 
@@ -463,7 +445,12 @@ def main():
         gather_subset=dict(default=['!config'], type='list')
     )
 
-    module = NetworkModule(argument_spec=spec, supports_check_mode=True)
+    spec.update(nxos_argument_spec)
+
+    module = AnsibleModule(argument_spec=spec, supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
 
     gather_subset = module.params['gather_subset']
 
@@ -501,25 +488,13 @@ def main():
     facts = dict()
     facts['gather_subset'] = list(runable_subsets)
 
-    runner = CommandRunner(module)
-
     instances = list()
     for key in runable_subsets:
-        instances.append(FACT_SUBSETS[key](module, runner))
+        instances.append(FACT_SUBSETS[key](module))
 
-    try:
-        runner.run()
-    except NetworkError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), **exc.kwargs)
-
-    try:
-        for inst in instances:
-            inst.populate()
-            facts.update(inst.facts)
-    except Exception:
-        raise
-        module.exit_json(out=module.from_json(runner.items))
+    for inst in instances:
+        inst.populate()
+        facts.update(inst.facts)
 
     ansible_facts = dict()
     for key, value in iteritems(facts):
@@ -530,7 +505,7 @@ def main():
             key = 'ansible_net_%s' % key
             ansible_facts[key] = value
 
-    module.exit_json(ansible_facts=ansible_facts)
+    module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
 
 if __name__ == '__main__':
