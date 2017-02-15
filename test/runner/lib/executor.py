@@ -274,7 +274,6 @@ def network_inventory(remotes):
         options = dict(
             ansible_host=remote.connection.hostname,
             ansible_user=remote.connection.username,
-            ansible_connection='network_cli',
             ansible_ssh_private_key_file=remote.ssh_key.key,
             ansible_network_os=remote.platform,
         )
