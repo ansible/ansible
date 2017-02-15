@@ -902,8 +902,10 @@ class StrategyBase:
                     if not host.name in self._tqm._unreachable_hosts:
                         iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
                 msg="ending play"
-        #elif meta_action == 'reset_connection':
-        #    connection_info.connection.close()
+        elif meta_action == 'reset_connection':
+            connection = connection_loader.get(play_context.connection, play_context, '/dev/null')
+            connection.reset()
+            msg= 'reset connection'
         else:
             raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
 
