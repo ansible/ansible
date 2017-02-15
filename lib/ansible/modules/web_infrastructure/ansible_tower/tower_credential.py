@@ -60,7 +60,7 @@ options:
       description:
         - Type of credential being added.
       required: True
-      choices: ["ssh", "net", "scm", "aws", "rax", "vmware", "foreman", "cloudforms", "gce", "azure", "azure_rm", "openstack"]
+      choices: ["ssh", "net", "scm", "aws", "rax", "vmware", "satellite6", "cloudforms", "gce", "azure", "azure_rm", "openstack"]
     host:
       description:
         - Host for this credential.
@@ -216,7 +216,7 @@ def main():
             user = dict(),
             team = dict(),
             kind = dict(required=True,
-                        choices=["ssh", "net", "scm", "aws", "rax", "vmware", "foreman",
+                        choices=["ssh", "net", "scm", "aws", "rax", "vmware", "satellite6",
                                  "cloudforms", "gce", "azure", "azure_rm", "openstack"]),
             host = dict(),
             username = dict(),
