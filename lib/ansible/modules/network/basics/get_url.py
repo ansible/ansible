@@ -457,7 +457,7 @@ def main():
 
     res_args = dict(
         url = url, dest = dest, src = tmpsrc, md5sum = md5sum, checksum_src = checksum_src,
-        checksum_dest = checksum_dest, changed = changed, msg = info.get('msg', '')
+        checksum_dest = checksum_dest, changed = changed, msg = info.get('msg', ''), status_code=info.get('status','')
     )
     if backup_file:
         res_args['backup_file'] = backup_file
