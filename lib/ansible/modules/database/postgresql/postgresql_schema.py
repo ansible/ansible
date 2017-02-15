@@ -101,6 +101,7 @@ schema:
     sample: "acme"
 '''
 
+import traceback
 
 try:
     import psycopg2
@@ -231,7 +232,7 @@ def main():
             cursor_factory=psycopg2.extras.DictCursor)
     except Exception:
         e = get_exception()
-        module.fail_json(msg="unable to connect to database: %s" %(text, str(e)))
+        module.fail_json(msg="unable to connect to database: {0}".format(str(e)), exception=traceback.format_exc())
 
     try:
         if module.check_mode:
@@ -262,7 +263,7 @@ def main():
         raise
     except Exception:
         e = get_exception()
-        module.fail_json(msg="Database query failed: %s" %(text, str(e)))
+        module.fail_json(msg="Database query failed: {0}".format(str(e)), exception=traceback.format_exc())
 
     module.exit_json(changed=changed, schema=schema)
 
