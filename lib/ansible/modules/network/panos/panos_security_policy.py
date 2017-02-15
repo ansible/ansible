@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: panos_security_policy
-short_description: create security rule policy
+short_description: Create security rule policy on PanOS devices.
 description: >
     Security policies allow you to enforce rules and take action, and can be as general or specific as needed.
     The policy rules are compared against the incoming traffic in sequence, and because the first rule that matches
@@ -46,12 +46,11 @@ options:
         required: true
     username:
         description:
-            - Username credentials to use for auth.
-        required: false
+            - Username credentials to use for auth unless I(api_key) is set.
         default: "admin"
     password:
         description:
-            - Password credentials to use for auth.
+            - Password credentials to use for auth unless I(api_key) is set.
         required: true
     api_key:
         description:
@@ -62,127 +61,103 @@ options:
         required: true
     rule_type:
         description:
-            - Type of security rule (6.1+).
-        required: false
+            - Type of security rule (version 6.1 of PanOS and above).
         default: "universal"
     description:
         description:
             - Description for the security rule.
-        required: false
         default: "None"
     tag:
         description:
             - Administrative tags that can be added to the rule. Note, tags must be already defined.
-        required: false
         default: "None"
     from_zone:
         description:
             - List of source zones.
-        required: false
         default: "any"
     to_zone:
         description:
             - List of destination zones.
-        required: false
         default: "any"
     source:
         description:
             - List of source addresses.
-        required: false
         default: "any"
     source_user:
         description:
             - Use users to enforce policy for individual users or a group of users.
-        required: false
         default: "any"
     hip_profiles:
         description: >
             If you are using GlobalProtect with host information profile (HIP) enabled, you can also base the policy
             on information collected by GlobalProtect. For example, the user access level can be determined HIP that
             notifies the firewall about the user's local configuration.
-        required: false
         default: "any"
     destination:
         description:
             - List of destination addresses.
-        required: false
         default: "any"
     application:
         description:
             - List of applications.
-        required: false
         default: "any"
     service:
         description:
             - List of services.
-        required: false
         default: "application-default"
     log_start:
         description:
             - Whether to log at session start.
-        required: false
         default: false
     log_end:
         description:
             - Whether to log at session end.
-        required: false
         default: true
     action:
         description:
             - Action to apply once rules maches.
-        required: false
         default: "allow"
     group_profile:
         description: >
             Security profile group that is already defined in the system. This property supersedes antivirus,
             vulnerability, spyware, url_filtering, file_blocking, data_filtering, and wildfire_analysis properties.
-        required: false
         default: None
     antivirus:
         description:
             - Name of the already defined antivirus profile.
-        required: false
         default: None
     vulnerability:
         description:
             - Name of the already defined vulnerability profile.
-        required: false
         default: None
     spyware:
         description:
             - Name of the already defined spyware profile.
-        required: false
         default: None
     url_filtering:
         description:
             - Name of the already defined url_filtering profile.
-        required: false
         default: None
     file_blocking:
         description:
             - Name of the already defined file_blocking profile.
-        required: false
         default: None
     data_filtering:
         description:
             - Name of the already defined data_filtering profile.
-        required: false
         default: None
     wildfire_analysis:
         description:
             - Name of the already defined wildfire_analysis profile.
-        required: false
         default: None
     devicegroup:
         description: >
             Device groups are used for the Panorama interaction with Firewall(s). The group must exists on Panorama.
             If device group is not define we assume that we are contacting Firewall.
-        required: false
         default: None
     commit:
         description:
-            - Commit if changed
-        required: false
+            - Commit configuration if changed.
         default: true
 '''
 
