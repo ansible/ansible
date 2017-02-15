@@ -106,7 +106,7 @@ The Passwordstore Lookup
 .. versionadded:: 2.3
 
 The ``passwordstore`` lookup enables ansible to retrieve, create or update passwords from
-his passwordstore.org ``pass``  store. It also retrieves YAML style keys stored as multilines
+the passwordstore.org ``pass`` utility. It also retrieves YAML style keys stored as multilines
 in the passwordfile
 
 Examples
