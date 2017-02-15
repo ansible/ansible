@@ -21,7 +21,7 @@ __metaclass__ = type
 import os
 import time
 
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
 
 try:
@@ -142,6 +142,7 @@ class CallbackModule(CallbackBase):
         res = host_data.result._result
         rc = res.get('rc', 0)
         dump = self._dump_results(res, indent=0)
+        dump = self._cleanse_string(dump)
 
         if host_data.status == 'ok':
             return TestCase(name, task_data.path, duration, dump)
@@ -166,6 +167,10 @@ class CallbackModule(CallbackBase):
             test_case.add_skipped_info(message)
 
         return test_case
+
+    def _cleanse_string(self, value):
+        """ convert surrogate escapes to the unicode replacement character to avoid XML encoding errors """
+        return to_text(to_bytes(value, errors='surrogateescape'), errors='replace')
 
     def _generate_report(self):
         """ generate a TestSuite report from the collected TaskData and HostData """
