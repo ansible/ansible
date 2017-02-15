@@ -6,8 +6,6 @@ DOCUMENTATION = '''
 ---
 module: reset_ssh_session
 short_description: Remove the CP handle file forcing Ansible to reconnect on next task
-description: Should be used when you make a change that requires relogin to apply and you want to utilize that change
-during the exeuction. The module (action) will make ansible reconnect to the host thus relogin.
 author: Dan Hirsch (@hackndoes)
 options:
   control_persist_path:
