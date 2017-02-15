@@ -164,8 +164,8 @@ def is_encrypted_file(file_obj, start_pos=0, count=-1):
 
 class VaultLib:
 
-    def __init__(self, password):
-        self.b_password = to_bytes(password, errors='strict', encoding='utf-8')
+    def __init__(self, b_password):
+        self.b_password = to_bytes(b_password, errors='strict', encoding='utf-8')
         self.cipher_name = None
         self.b_version = b'1.1'
 
@@ -311,8 +311,8 @@ class VaultLib:
 
 class VaultEditor:
 
-    def __init__(self, password):
-        self.vault = VaultLib(password)
+    def __init__(self, b_password):
+        self.vault = VaultLib(b_password)
 
     # TODO: mv shred file stuff to it's own class
     def _shred_file_custom(self, tmp_path):
@@ -494,7 +494,7 @@ class VaultEditor:
 
         return plaintext
 
-    def rekey_file(self, filename, new_password):
+    def rekey_file(self, filename, b_new_password):
 
         check_prereqs()
 
@@ -510,10 +510,10 @@ class VaultEditor:
             raise AnsibleError("%s for %s" % (to_bytes(e),to_bytes(filename)))
 
         # This is more or less an assert, see #18247
-        if new_password is None:
+        if b_new_password is None:
             raise AnsibleError('The value for the new_password to rekey %s with is not valid' % filename)
 
-        new_vault = VaultLib(new_password)
+        new_vault = VaultLib(b_new_password)
         new_ciphertext = new_vault.encrypt(plaintext)
 
         self.write_data(new_ciphertext, filename)
