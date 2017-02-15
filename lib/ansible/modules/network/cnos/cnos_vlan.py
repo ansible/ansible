@@ -47,7 +47,42 @@ description:
      For more information about this module from Lenovo and customizing it usage for your
      use cases, please visit our [User Guide](http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_vlan.html)
 version_added: "2.3"
-options: {}
+extends_documentation_fragment: cnos
+options:
+  vlanArg1:
+    description:
+      - This is an overloaded vlan first argument. Usage of this argument can be found is the User Guide referenced above.
+    required: true
+    default: null
+    choices: [access-map, dot1q, filter, <1-3999> VLAN ID 1-3999 or range]
+  vlanArg2:
+    description:
+      - This is an overloaded vlan second argument. Usage of this argument can be found is the User Guide referenced above.
+    required: false
+    default: null
+    choices: [VLAN Access Map name,egress-only,name, flood,state, ip]
+  vlanArg3:
+    description:
+      - This is an overloaded vlan third argument. Usage of this argument can be found is the User Guide referenced above.
+    required: false
+    default: null
+    choices: [action, match, statistics, enter VLAN id or range of vlan, ascii name for the VLAN, ipv4 or ipv6, active or suspend, fast-leave,
+    last-member-query-interval, mrouter, querier, querier-timeout, query-interval, query-max-response-time, report-suppression,
+    robustness-variable, startup-query-count, startup-query-interval, static-group]
+  vlanArg4:
+    description:
+      - This is an overloaded vlan fourth argument. Usage of this argument can be found is the User Guide referenced above.
+    required: false
+    default: null
+    choices: [drop or forward or redirect, ip or mac,Interval in seconds,ethernet, port-aggregation, Querier IP address,
+    Querier Timeout in seconds, Query Interval in seconds, Query Max Response Time in seconds,  Robustness Variable value,
+    Number of queries sent at startup, Query Interval at startup]
+  vlanArg5:
+    description:
+      - This is an overloaded vlan fifth argument. Usage of this argument can be found is the User Guide referenced above.
+    required: false
+    default: null
+    choices: [access-list name, Slot/chassis number, Port Aggregation Number]
 
 '''
 EXAMPLES = '''
@@ -55,79 +90,52 @@ EXAMPLES = '''
 Tasks: The following are examples of using the module cnos_vlan. These are written in the main.yml file of the tasks directory.
 ---
 - name: Test Vlan - Create a vlan, name it
-  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars
-  [inventory_hostname]['username']}}  password={{ hostvars[inventory_hostname]
-  ['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}}
-  enablePassword={{ hostvars[inventory_hostname]['enablePassword']}}
-  outputfile=./results/test_vlan_{{ inventory_hostname }}_output.txt
-  vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}'
-  vlanArg3='{{item.vlanArg3}}'
+  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['username'] }}  password={{ hostvars[inventory_hostname]['password'] }}
+  deviceType={{ hostvars[inventory_hostname]['deviceType'] }} enablePassword={{ hostvars[inventory_hostname]['enablePassword'] }}
+  outputfile=./results/test_vlan_{{ inventory_hostname }}_output.txt vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}' vlanArg3='{{item.vlanArg3}}'
   with_items: "{{test_vlan_data1}}"
 
 - name: Test Vlan - Create a vlan, Flood configuration
-  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars
-  [inventory_hostname]['username']}}  password={{ hostvars[inventory_hostname]
-  ['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}}
-  enablePassword={{ hostvars[inventory_hostname]['enablePassword']}}
-  outputfile=./results/test_vlan_{{ inventory_hostname }}_output.txt
-  vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}'
-  vlanArg3='{{item.vlanArg3}}'
+  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['username'] }}  password={{ hostvars[inventory_hostname]['password'] }}
+  deviceType={{ hostvars[inventory_hostname]['deviceType'] }} enablePassword={{ hostvars[inventory_hostname]['enablePassword'] }}
+  outputfile=./results/test_vlan_{{ inventory_hostname }}_output.txt vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}' vlanArg3='{{item.vlanArg3}}'
   with_items: "{{test_vlan_data2}}"
 
 - name: Test Vlan - Create a vlan, State configuration
-  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars
-  [inventory_hostname]['username']}} password={{ hostvars[inventory_hostname]
-  ['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}}
-  enablePassword={{ hostvars[inventory_hostname]['enablePassword']}}
-  outputfile=./results/test_vlan_{{ inventory_hostname }}_output.txt
-  vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}'
-  vlanArg3='{{item.vlanArg3}}'
+  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['username'] }} password={{ hostvars[inventory_hostname]['password'] }}
+  deviceType={{ hostvars[inventory_hostname]['deviceType'] }} enablePassword={{ hostvars[inventory_hostname]['enablePassword'] }}
+  outputfile=./results/test_vlan_{{ inventory_hostname }}_output.txt vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}' vlanArg3='{{item.vlanArg3}}'
   with_items: "{{test_vlan_data3}}"
 
 - name: Test Vlan - VLAN Access map1
-  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars
-  [inventory_hostname]['username']}} password={{ hostvars[inventory_hostname]
-  ['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}}
-  enablePassword={{ hostvars[inventory_hostname]['enablePassword']}}
-  outputfile=./results/test_vlan_{{ inventory_hostname }}_output.txt
-  vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}'
-  vlanArg3='{{item.vlanArg3}}'
+  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['username'] }} password={{ hostvars[inventory_hostname]['password'] }}
+  deviceType={{ hostvars[inventory_hostname]['deviceType'] }} enablePassword={{ hostvars[inventory_hostname]['enablePassword'] }}
+  outputfile=./results/test_vlan_{{ inventory_hostname }}_output.txt vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}' vlanArg3='{{item.vlanArg3}}'
   with_items: "{{test_vlan_data4}}"
 
 - name: Test Vlan - VLAN Accep Map2
-  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars
-  [inventory_hostname]['username']}} password={{ hostvars[inventory_hostname]
-  ['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}}
-  enablePassword={{ hostvars[inventory_hostname]['enablePassword']}}
-  outputfile=./results/test_vlan_{{ inventory_hostname }}_output.txt
-  vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}'
-  vlanArg3='{{item.vlanArg3}}' vlanArg4='{{item.vlanArg4}}'
+  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['username'] }} password={{ hostvars[inventory_hostname]['password'] }}
+  deviceType={{ hostvars[inventory_hostname]['deviceType'] }} enablePassword={{ hostvars[inventory_hostname]['enablePassword'] }}
+  outputfile=./results/test_vlan_{{ inventory_hostname }}_output.txt vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}' vlanArg3='{{item.vlanArg3}}'
+  vlanArg4='{{item.vlanArg4}}'
   with_items: "{{test_vlan_data5}}"
 
 - name: Test Vlan - ip igmp snooping query interval
-  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars
-  [inventory_hostname]['username']}} password={{ hostvars[inventory_hostname]
-  ['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}}
-  enablePassword={{ hostvars[inventory_hostname]['enablePassword']}}
-  outputfile=./results/test_vlan_{{ inventory_hostname }}_output.txt
-  vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}'
-  vlanArg3='{{item.vlanArg3}}' vlanArg4='{{item.vlanArg4}}'
+  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['username'] }} password={{ hostvars[inventory_hostname]['password'] }}
+  deviceType={{ hostvars[inventory_hostname]['deviceType'] }} enablePassword={{ hostvars[inventory_hostname]['enablePassword'] }}
+  outputfile=./results/test_vlan_{{ inventory_hostname }}_output.txt vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}' vlanArg3='{{item.vlanArg3}}'
+  vlanArg4='{{item.vlanArg4}}'
   with_items: "{{test_vlan_data6}}"
 
 - name: Test Vlan - ip igmp snooping mrouter interface port-aggregation23
-  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars
-  [inventory_hostname]['username']}} password={{ hostvars[inventory_hostname]
-  ['password']}} deviceType={{ hostvars[inventory_hostname]['deviceType']}}
-  enablePassword={{ hostvars[inventory_hostname]['enablePassword']}}
-  outputfile=./results/test_vlan_{{ inventory_hostname }}_output.txt
-  vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}'
-  vlanArg3='{{item.vlanArg3}}' vlanArg4='{{item.vlanArg4}}'
-  vlanArg5='{{item.vlanArg5}}'
+  cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars[inventory_hostname]['username'] }} password={{ hostvars[inventory_hostname]['password'] }}
+  deviceType={{ hostvars[inventory_hostname]['deviceType'] }} enablePassword={{ hostvars[inventory_hostname]['enablePassword'] }}
+  outputfile=./results/test_vlan_{{ inventory_hostname }}_output.txt vlanArg1='{{item.vlanArg1}}' vlanArg2='{{item.vlanArg2}}' vlanArg3='{{item.vlanArg3}}'
+  vlanArg4='{{item.vlanArg4}}'  vlanArg5='{{item.vlanArg5}}'
   with_items: "{{test_vlan_data7}}"
 
 ---
-Variables: The following are the variables that need to be defined in the
-main.yml file of the vars directory.
+Variables: The following are the variables that need to be defined in the main.yml file of the vars directory.
 ---
 demo_template_data:
   - {vlanid1: 13, slot_chassis_number1: "1/1-2", portchannel_interface_number1:
