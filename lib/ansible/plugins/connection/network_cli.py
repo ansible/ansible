@@ -42,7 +42,6 @@ class Connection(_Connection):
 
     transport = 'network_cli'
     has_pipelining = False
-    action_handler = 'network'
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)

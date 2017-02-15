@@ -768,8 +768,7 @@ class TaskExecutor:
         elif all((module_prefix in network_group_modules, module_prefix in self._shared_loader_obj.action_loader)):
             handler_name = module_prefix
         else:
-            pc_conn = self._shared_loader_obj.connection_loader.get(self._play_context.connection, class_only=True)
-            handler_name = getattr(pc_conn, 'action_handler', 'normal')
+            handler_name = 'normal'
 
         handler = self._shared_loader_obj.action_loader.get(
             handler_name,
