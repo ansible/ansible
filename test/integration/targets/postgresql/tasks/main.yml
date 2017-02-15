@@ -374,6 +374,112 @@
     that:
       - "result.stdout_lines[-1] == '(0 rows)'"
 
+# Test cases to replicate issue 19835
+- name: Create a user "{{ db_user3 }}"  to test issue 19835
+  become_user: "{{ pg_user }}"
+  become: True
+  postgresql_user:
+    name: "{{ db_user3 }}"
+    encrypted: 'yes'
+    password: "md55c8ccfd9d6711fc69a7eae647fc54f51"
+    login_user: "{{ pg_user }}"
+    #role_attr_flags: "NOSUPERUSER,NOCREATEROLE,NOCREATEDB,noinherit,NOLOGIN"
+    db: postgres
+  register: result
+
+- name: Check that ansible reports that "{{ db_user3 }}" was created for testing issue 19835
+  assert:
+    that:
+      - "result.changed == True"
+
+- name: debug result
+  debug:
+    var: result
+
+- name: Check that "{{ db_user3 }}" was created for testing issue 19835
+  become_user: "{{ pg_user }}"
+  become: True
+  shell: echo "select * from pg_user where usename='{{ db_user3 }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(1 row)'"
+
+- name: Modify user "{{ db_user3 }}" to have only login role attributes for testing issue 19835
+  become_user: "{{ pg_user }}"
+  become: True
+  postgresql_user:
+    name: "{{ db_user3 }}"
+    state: "present"
+    role_attr_flags: "NOSUPERUSER,NOCREATEROLE,NOCREATEDB,noinherit"
+    login_user: "{{ pg_user }}"
+    db: postgres
+  register: result
+
+- name: Check that ansible reports it modified the roles for testing issue 19835
+  assert:
+    that:
+      - "result.changed == True"
+
+- name: Check that the user "{{ db_user3 }}" has the requested role attributes for testing issue 19835
+  become_user: "{{ pg_user }}"
+  become: True
+  shell: echo "select 'super:'||rolsuper, 'createrole:'||rolcreaterole, 'create:'||rolcreatedb, 'inherit:'||rolinherit, 'login:'||rolcanlogin from pg_roles where rolname='{{ db_user3 }}';" | psql -d postgres
+  register: result
+
+- name: Modify a single role attribute on the user "{{ db_user3 }}"  with no_password_changes set to yes. issue 19835
+  become_user: "{{ pg_user }}"
+  become: True
+  postgresql_user:
+    name: "{{ db_user3 }}"
+    state: "present"
+    role_attr_flags: "CREATEDB"
+    no_password_changes: yes
+    login_user: "{{ pg_user }}"
+    db: postgres
+  register: result
+
+- name: Check that ansible reports it modified the role with no_password_changes set to yes. issue 19835
+  assert:
+    that:
+      - "result.changed == True"
+
+- name: Check that the user "{{ db_user3 }}" has the requested role attributes with no_password_changes set to yes. issue 19835
+  become_user: "{{ pg_user }}"
+  become: True
+  shell: echo "select 'super:'||rolsuper, 'createrole:'||rolcreaterole, 'create:'||rolcreatedb, 'inherit:'||rolinherit, 'login:'||rolcanlogin  from pg_roles where rolname='{{ db_user3 }}';" | psql -d postgres
+  register: result
+
+- name: Assert that the request role attributes check for user "{{ db_user3 }}" was correct with no_password_changes set to yes. issue 19835
+  assert:
+    that:
+      - "result.stdout_lines[-1] == '(1 row)'"
+      - "'super:f' in result.stdout_lines[-2]"
+      - "'createrole:f' in result.stdout_lines[-2]"
+      - "'create:t' in result.stdout_lines[-2]"
+      - "'inherit:f' in result.stdout_lines[-2]"
+      - "'login:t' in result.stdout_lines[-2]"
+
+- name: Cleanup the "{{ db_user3 }}" user
+  become_user: "{{ pg_user }}"
+  become: True
+  postgresql_user:
+    name: "{{ db_user3 }}"
+    state: 'absent'
+    login_user: "{{ pg_user }}"
+    db: postgres
+
+- name: Check that "{{ db_user3 }}"  was removed
+  become_user: "{{ pg_user }}"
+  become: True
+  shell: echo "select * from pg_user where usename='{{ db_user3 }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(0 rows)'"
+
 ### TODO: test expires, fail_on_user
 
 #
