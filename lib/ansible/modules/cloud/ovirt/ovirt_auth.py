@@ -83,10 +83,16 @@ options:
         description:
             - "A boolean flag indicating if Kerberos authentication
                should be used instead of the default basic authentication."
+requirements:
+  - python >= 2.7
+  - ovirt-engine-sdk-python >= 4.0.0
 notes:
   - "Everytime you use ovirt_auth module to obtain ticket, you need to also revoke the ticket,
      when you no longer need it, otherwise the ticket would be revoked by engine when it expires.
      For an example of how to achieve that, please take a look at I(examples) section."
+  - "In order to use this module you have to install oVirt Python SDK.
+     To ensure it's installed with correct version you can create the following task:
+     I(pip: name=ovirt-engine-sdk-python version=4.0.0)"
 '''
 
 EXAMPLES = '''
