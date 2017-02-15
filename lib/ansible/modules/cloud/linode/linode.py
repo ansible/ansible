@@ -46,7 +46,7 @@ options:
      - Add the instance to a Display Group in Linode Manager
     default: null
     type: string
-    version_added: "2.2"
+    version_added: "2.3"
   linode_id:
     description:
      - Unique ID of a linode server
@@ -58,73 +58,73 @@ options:
       List of dictionaries for creating additional disks that are added to the Linode configuration settings.
       Dictionary takes Size, Label, Type. Size is in MB.
     default: null
-    version_added: "2.2"
+    version_added: "2.3"
   alert_bwin_enabled:
     description:
     - Set status of bandwidth in alerts.
     default: "True"
     choices: [ "True", "False" ]
-    version_added: "2.2"
+    version_added: "2.3"
   alert_bwin_threshold:
     description:
     - Set threshold in MB of bandwidth in alerts.
     default: null
     type: integer
-    version_added: "2.2"
+    version_added: "2.3"
   alert_bwout_enabled:
     description:
     - Set status of bandwidth out alerts.
     default: "True"
     choices: [ "True", "False" ]
-    version_added: "2.2"
+    version_added: "2.3"
   alert_bwout_threshold:
     description:
     - Set threshold in MB of bandwidth out alerts.
     default: null
     type: integer
-    version_added: "2.2"
+    version_added: "2.3"
   alert_bwquota_enabled:
     description:
     - Set status of bandwidth quota alerts as percentage of network tranfer quota.
     default: "True"
     choices: [ "True", "False" ]
-    version_added: "2.2"
+    version_added: "2.3"
   alert_bwquota_threshold:
     description:
     - Set threshold in MB of bandwidth quota alerts.
     default: null
     type: integer
-    version_added: "2.2"
+    version_added: "2.3"
   alert_cpu_enabled:
     description:
     - Set status of receiving CPU usage alerts.
     default: "True"
     choices: [ "True", "False" ]
-    version_added: "2.2"
+    version_added: "2.3"
   alert_cpu_threshold:
     description:
     - Set percentage threshold for receiving CPU usage alerts. Each CPU core adds 100% to total.
     default: null
     type: integer
-    version_added: "2.2"
+    version_added: "2.3"
   alert_diskio_enabled:
     description:
     - Set status of receiving disk IO alerts.
     default: "True"
     choices: [ "True", "False" ]
-    version_added: "2.2"
+    version_added: "2.3"
   alert_diskio_threshold:
     description:
     - Set threshold for average IO ops/sec over 2 hour period.
     default: null
     type: integer
-    version_added: "2.2"
+    version_added: "2.3"
   backupweeklyday:
     description:
     - Integer value for what day of the week to store weekly backups.
     default: null
     type: integer
-    version_added: "2.2"
+    version_added: "2.3"
   plan:
     description:
      - plan to use for the instance (Linode plan)
@@ -146,7 +146,7 @@ options:
     - Add private IPv4 address when Linode is created.
     default: "no"
     choices: [ "yes", "no" ]
-    version_added: "2.2"
+    version_added: "2.3"
   ssh_pub_key:
     description:
      - SSH public key applied to root user
@@ -344,7 +344,9 @@ def getInstanceDetails(api, server):
     return instance
 
 def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_threshold, alert_bwout_enabled, alert_bwout_threshold,
-alert_bwquota_enabled, alert_bwquota_threshold, alert_cpu_enabled, alert_cpu_threshold, alert_diskio_enabled, alert_diskio_threshold,backupweeklyday, backupwindow, displaygroup, plan, additional_disks, distribution, datacenter, linode_id, payment_term, password, private_ip, ssh_pub_key, swap, wait, wait_timeout, watchdog):
+                  alert_bwquota_enabled, alert_bwquota_threshold, alert_cpu_enabled, alert_cpu_threshold, alert_diskio_enabled, 
+                  alert_diskio_threshold,backupweeklyday, backupwindow, displaygroup, plan, additional_disks, distribution, 
+                  datacenter, linode_id, payment_term, password, private_ip, ssh_pub_key, swap, wait, wait_timeout, watchdog):
     instances = []
     changed = False
     new_server = False
