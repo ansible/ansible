@@ -44,39 +44,10 @@ description:
      This module uses SSH to manage network device configuration.
      The results of the operation will be placed in a directory named 'results'
      that must be created by the user in their local directory to where the playbook is run.
-     To know more about this module from Lenovo and customizing them for your
+     For more information about this module from Lenovo and customizing it usage for your
      use cases, please visit our [User Guide](http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_vlan.html)
-    - The following is a table depicting how the overloaded variables are used
-     in the context of VLAN.
-    - vlanArg1 is required
-    - Other variables are specific to the CLI command defined in vlanArg1
-    - The words in bold are CLI command parameters. When confronted with a
-     list of bulleted options (•), you must choose only one to use.
-    - Please refer to the CNOS Command Reference specific to the switch you
-     are configuring for details of the CLI commands and parameters.
-vlanArg1: [access-map,access-map,access-map,dot1q,filter,<1-3999> VLAN ID
-1-3999 or range,<1-3999> VLAN ID 1-3999 or range,<1-3999> VLAN ID 1-3999 or
-range,<1-3999> VLAN ID 1-3999 or range,<1-3999> VLAN ID 1-3999 or range,
-<1-3999> VLAN ID 1-3999 or range,<1-3999> VLAN ID 1-3999 or range,<1-3999>
-VLAN ID 1-3999 or range,<1-3999> VLAN ID 1-3999 or range,<1-3999> VLAN ID
-1-3999 or range,<1-3999> VLAN ID 1-3999 or range,<1-3999> VLAN ID 1-3999 or
-range,<1-3999> VLAN ID 1-3999 or range,<1-3999> VLAN ID 1-3999 or range,
-<1-3999> VLAN ID 1-3999 or range,<1-3999> VLAN ID 1-3999 or range]
-vlanArg2: [VLAN Access Map name,VLAN Access Map name,VLAN Access Map name,
-egress-only,VLAN Access Map Name,name,flood,state,ip,ip,ip,ip,ip,ip,ip,ip,ip,
-ip,ip,ip,ip]
-vlagArg3: [drop or forward or redirect,ip or mac,~,~,~,~,~,~,~, Interval in
-seconds,ethernet,port-aggregation,Querier IP address,Querier Timeout in
-seconds,Query Interval in seconds, Query Max Response Time in seconds,~,
-Robustness Variable value, Number of queries sent at startup,Query Interval
-at startup,~]
-vlagArg4: [~,access-list name,~,~,~,~,~,~,~,~,Slot/chassis number,Port
-Aggregation Number,~,~,~,~,~,~,~,~,~]
-Remarks: [~,~,~,vlanArg2 is optional,~,~,vlanArg3 is optional,~,~,~,~,~,~,~,~,
-~,~,~,~,~,This feature is not supported. Please use runcommand option]
 version_added: "2.3"
-Options:
-    {}
+options: {}
 
 '''
 EXAMPLES = '''
