@@ -41,6 +41,7 @@ The following fields can be used and are all required unless specified otherwise
   * As the short description is displayed by ``ansible-doc -l`` without the category grouping it needs enough detail to explain its purpose without the context of the directory structure in which it lives.
   * Unlike ``description:`` this field should not have a trailing full stop.
 * ``description:``
+
   * A detailed description (generally two or more sentences).
   * Must be written in full sentences, i.e. with capital letters and fullstops.
   * Shouldn't mention the name module.
@@ -62,10 +63,10 @@ The following fields can be used and are all required unless specified otherwise
   * ``required:``
     Only needed if true, otherwise it is assumed to be false.
   * ``default:``
-  
+
     * If `required` is false/missing, `default` may be specified (assumed 'null' if missing).
-    * Ensure that the default parameter in the docs matches the default parameter in the code. 
-    * The default option must not be listed as part of the description. 
+    * Ensure that the default parameter in the docs matches the default parameter in the code.
+    * The default option must not be listed as part of the description.
   * ``choices:``
     List of option values. Should be absent if empty.
   * ``aliases:``
@@ -172,6 +173,14 @@ Testing documentation
 Put your completed module file into the ``lib/ansible/modules/$CATEGORY/`` directory and then
 run the command: ``make webdocs``. The new 'modules.html' file will be
 built in the ``docs/docsite/_build/html/$MODULENAME_module.html`` directory.
+
+To test your documentation against your ``argument_spec`` you can use ``validate-modules``. Note that this option isn't currently enabled in Shippable due to the time it takes to run.
+
+.. code-block:: shell-session
+
+   # If you don't already, ensure you are using your local checkout
+   $ source hacking/env-setup
+   $ ./test/sanity/validate-modules/validate-modules --arg-spec --warnings  lib/ansible/modules/your/modules/
 
 .. tip::
 
