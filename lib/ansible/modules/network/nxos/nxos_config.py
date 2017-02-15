@@ -16,9 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'core',
+    'version': '1.0'
+}
 
 DOCUMENTATION = """
 ---
@@ -32,7 +34,6 @@ description:
     an implementation for working with NXOS configuration sections in
     a deterministic way.  This module works with either CLI or NXAPI
     transports.
-extends_documentation_fragment: nxos
 options:
   lines:
     description:
@@ -212,17 +213,27 @@ backup_path:
   type: path
   sample: /playbooks/ansible/backup/nxos_config.2016-07-16@22:28:34
 """
-
-import ansible.module_utils.nxos
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.network import NetworkModule, NetworkError
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import NetworkConfig, dumps
+from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import nxos_argument_spec
+from ansible.module_utils.nxos import check_args as nxos_check_args
 
 def check_args(module, warnings):
+    nxos_check_args(module, warnings)
     if module.params['force']:
         warnings.append('The force argument is deprecated, please use '
                         'match=none instead.  This argument will be '
                         'removed in the future')
+
+def get_running_config(module):
+    contents = module.params['config']
+    if not contents:
+        flags = []
+        if module.params['defaults']:
+            flags.append('all')
+        contents = get_config(module, flags=flags)
+    return NetworkConfig(indent=1, contents=contents)
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=2)
@@ -233,13 +244,6 @@ def get_candidate(module):
         candidate.add(module.params['lines'], parents=parents)
     return candidate
 
-def get_config(module):
-    contents = module.params['config']
-    if not contents:
-        defaults = module.params['defaults']
-        contents = module.config.get_config(include_defaults=defaults)
-    return NetworkConfig(indent=2, contents=contents)
-
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
@@ -247,10 +251,9 @@ def run(module, result):
     candidate = get_candidate(module)
 
     if match != 'none':
-        config = get_config(module)
+        config = get_running_config(module)
         path = module.params['parents']
-        configobjs = candidate.difference(config, path=path, match=match,
-                                          replace=replace)
+        configobjs = candidate.difference(config, match=match, replace=replace, path=path)
     else:
         configobjs = candidate.items
 
@@ -264,22 +267,17 @@ def run(module, result):
             if module.params['after']:
                 commands.extend(module.params['after'])
 
-            result['updates'] = commands
+        result['commands'] = commands
+        result['updates'] = commands
 
         if not module.check_mode:
-            module.config.load_config(commands)
+            load_config(module, commands)
 
-        result['changed'] = True
-
-    if module.params['save']:
-        if not module.check_mode:
-            module.config.save_config()
         result['changed'] = True
 
 def main():
     """ main entry point for module execution
     """
-
     argument_spec = dict(
         src=dict(type='path'),
 
@@ -303,14 +301,15 @@ def main():
         save=dict(type='bool', default=False),
     )
 
+    argument_spec.update(nxos_argument_spec)
+
     mutually_exclusive = [('lines', 'src')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),
                    ('replace', 'block', ['lines'])]
 
-    module = NetworkModule(argument_spec=argument_spec,
-                           connect_on_load=False,
+    module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            required_if=required_if,
                            supports_check_mode=True)
@@ -326,11 +325,13 @@ def main():
     if module.params['backup']:
         result['__backup__'] = module.config.get_config()
 
-    try:
+    if any((module.params['src'], module.params['lines'])):
         run(module, result)
-    except NetworkError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), **exc.kwargs)
+
+    if module.params['save']:
+        if not module.check_mode:
+            run_commands(module, ['copy running-config startup-config'])
+        result['changed'] = True
 
     module.exit_json(**result)
 
