@@ -46,14 +46,14 @@ module: cnos_vlan
 short_description: Performs VLAN switch configuration and state management.
 description:
     - This module allows you to work with VLAN related configurations. The
-    operators used are overloaded to ensure control over switch VLAN
-    configurations. The first level of VLAN configuration allows to set up the
-    VLAN range, the VLAN tag persistence, a VLAN access map and access map
-    filter. After passing this level, there are five VLAN arguments that will
-    perform further configurations. They are vlanArg1, vlanArg2, vlanArg3,
-    vlanArg4, and vlanArg5. The value of vlanArg1 will determine the way
-    following arguments will be evaluated. For more details on how to use these
-    arguments, see [Overloaded Variables].
+     operators used are overloaded to ensure control over switch VLAN
+     configurations. The first level of VLAN configuration allows to set up the
+     VLAN range, the VLAN tag persistence, a VLAN access map and access map
+     filter. After passing this level, there are five VLAN arguments that will
+     perform further configurations. They are vlanArg1, vlanArg2, vlanArg3,
+     vlanArg4, and vlanArg5. The value of vlanArg1 will determine the way
+     following arguments will be evaluated. For more details on how to use these
+     arguments, see [Overloaded Variables].
      This module uses SSH to manage network device configuration.
      The results of the operation can be viewed in results directory.
      To know more about this module from Lenovo and customizing them for your
@@ -65,13 +65,13 @@ Options:
 
 Overloaded Options:
     - The following is a table depicting how the overloaded variables are used
-    in the context of VLAN.
-    - • vlanArg1 is required
-    - • Other variables are specific to the CLI command defined in vlanArg1
-    - • The words in bold are CLI command parameters. When confronted with a
-    list of bulleted options (•), you must choose only one to use.
-    - • Please refer to the CNOS Command Reference specific to the switch you
-    are configuring for details of the CLI commands and parameters.
+     in the context of VLAN.
+    - vlanArg1 is required
+    - Other variables are specific to the CLI command defined in vlanArg1
+    - The words in bold are CLI command parameters. When confronted with a
+     list of bulleted options (•), you must choose only one to use.
+    - Please refer to the CNOS Command Reference specific to the switch you
+     are configuring for details of the CLI commands and parameters.
 vlanArg1: [access-map,access-map,access-map,dot1q,filter,<1-3999> VLAN ID
 1-3999 or range,<1-3999> VLAN ID 1-3999 or range,<1-3999> VLAN ID 1-3999 or
 range,<1-3999> VLAN ID 1-3999 or range,<1-3999> VLAN ID 1-3999 or range,
@@ -101,14 +101,13 @@ Notes:
      (http://docs.ansible.com/ansible/dev_guide/developing_modules.html).
 
 Module Dependency :
-    1. cnos_vlan.py
-    2. cnos.py
+    - cnos_vlan.py
+    - cnos.py
 
 '''
 EXAMPLES = '''
 
-Tasks : The following are examples of using the module cnos_vlan. These are
-written in the main.yml file of the tasks directory.
+Tasks: The following are examples of using the module cnos_vlan. These are written in the main.yml file of the tasks directory.
 ---
 - name: Test Vlan - Create a vlan, name it
   cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars
