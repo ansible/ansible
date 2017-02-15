@@ -38,6 +38,12 @@ options:
     uid:
         description:
             - Optionally sets the I(UID) of the user.
+    hidden:
+        required: false
+        type: boolean
+        description:
+            - Darwin/OS X only, optionally hide the user from the login window and system preferences.
+            - The default will be 'True' if the I(system) option is used.
     non_unique:
         description:
             - Optionally when used with the -u option, this option allows to
@@ -265,6 +271,7 @@ class User(object):
         self.state = module.params['state']
         self.name = module.params['name']
         self.uid = module.params['uid']
+        self.hidden     = module.params['hidden']
         self.non_unique = module.params['non_unique']
         self.seuser = module.params['seuser']
         self.group = module.params['group']
@@ -1511,6 +1518,7 @@ class DarwinUser(User):
         ('shell', 'UserShell'),
         ('uid', 'UniqueID'),
         ('group', 'PrimaryGroupID'),
+        ('hidden', 'IsHidden'),
     ]
 
     def _get_dscl(self):
@@ -2134,6 +2142,8 @@ def main():
             shell=dict(type='str'),
             password=dict(type='str', no_log=True),
             login_class=dict(type='str'),
+            # following options are specific to macOS
+            hidden=dict(type='bool'),
             # following options are specific to selinux
             seuser=dict(type='str'),
             # following options are specific to userdel
