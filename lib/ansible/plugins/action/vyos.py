@@ -35,9 +35,18 @@ class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
 
+        if self._play_context.connection != 'local':
+            return dict(
+                fail=True,
+                msg='invalid connection specified, expected connection=local, '
+                    'got %s' % self._play_context.connection
+            )
+
+        provider = self.load_provider()
+
         pc = copy.deepcopy(self._play_context)
         pc.connection = 'network_cli'
-        pc.port = provider['port'] or self._play_context.port
+        pc.port = provider['port'] or self._play_context.port or 22
         pc.remote_user = provider['username'] or self._play_context.connection_user
         pc.password = provider['password'] or self._play_context.password
 
@@ -59,14 +68,15 @@ class ActionModule(_ActionModule):
 
     def load_provider(self):
         provider = self._task.args.get('provider', {})
-        for key, value in iteritems(eos_argument_spec):
-            if key in self._task.args:
-                provider[key] = self._task.args[key]
-            elif 'fallback' in value:
-                provider[key] = self._fallback(value['fallback'])
-            elif key not in provider:
-                provider[key] = None
-        self._task.args['provider'] = provider
+        for key, value in iteritems(ios_argument_spec):
+            if key != 'provider' and key not in provider:
+                if key in self._task.args:
+                    provider[key] = self._task.args[key]
+                elif 'fallback' in value:
+                    provider[key] = self._fallback(value['fallback'])
+                elif key not in provider:
+                    provider[key] = None
+        return provider
 
     def _fallback(self, fallback):
         strategy = fallback[0]
