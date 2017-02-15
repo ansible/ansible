@@ -110,8 +110,8 @@ modifiers = [(no_mod, 'original'),
 #             (under_pre, '_ prepended'),
 #             (new_line_pre, 'new line prepended'),
              (new_line_post, 'new line postpended'),
-             (covert_to_text, 'to_text'),
-             (covert_to_bytes, 'to_bytes')]
+#             (covert_to_bytes, 'to_bytes'),
+             (covert_to_text, 'to_text')]
 
 
 regexes = [PASSWORD_MATCH]
