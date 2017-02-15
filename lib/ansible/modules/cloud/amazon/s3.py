@@ -678,7 +678,7 @@ def main():
                     module.exit_json(msg="Bucket %s and key %s already exists."% (bucket, obj), changed=False)
                 else:
                     create_dirkey(module, s3, bucket, dirobj)
-            if bucketrtn:
+            else:
                 created = create_bucket(module, s3, bucket, location)
                 create_dirkey(module, s3, bucket, dirobj)
 
