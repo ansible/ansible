@@ -102,7 +102,7 @@ options:
     required: false
     default: None
     aliases: [ 'environment' ]
-    version_added: 2.3
+    version_added: "2.3"
 author:
     - 'Steyn Huizinga (@steynovich)'
 extends_documentation_fragment:
