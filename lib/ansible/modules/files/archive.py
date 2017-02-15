@@ -30,7 +30,7 @@ version_added: 2.3
 short_description: Creates a compressed archive of one or more files or trees.
 extends_documentation_fragment: files
 description:
-     - The C(archive) module packs an archive. It is the opposite of the unarchive module. By default, it assumes the compression source exists on the target. It will not copy the source file from the local system to the target before archiving. Source files can be deleted after archival by specifying C(remove)=I(True).
+     - Packs an archive. It is the opposite of M(unarchive). By default, it assumes the compression source exists on the target. It will not copy the source file from the local system to the target before archiving. Source files can be deleted after archival by specifying I(remove=True).
 options:
   path:
     description:
@@ -38,7 +38,7 @@ options:
     required: true
   format:
     description:
-      - The type of compression to use. Can be 'gz', 'bz2', or 'zip'.
+      - The type of compression to use.
     choices: [ 'gz', 'bz2', 'zip' ]
     default: 'gz'
   dest:
@@ -49,7 +49,6 @@ options:
   remove:
     description:
       - Remove any added source files and trees after adding to archive.
-    type: bool
     required: false
     default: false
 
