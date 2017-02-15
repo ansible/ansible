@@ -59,7 +59,11 @@ options:
     floating_ips:
         required: False
         default: None
-        description: Number of floating IP's to allow.
+        description: Number of floating IP's to allow in Compute.
+    floatingip:
+        required: False
+        default: None
+        description: Number of floating IP's to allow in Network.
     gigabytes:
         required: False
         default: None
@@ -198,6 +202,7 @@ EXAMPLES = '''
     cores: "{{ item.cores }}"
     fixed_ips: "{{ item.fixed_ips }}"
     floating_ips: "{{ item.floating_ips }}"
+    floatingip: "{{ item.floatingip }}"
     gigabytes: "{{ item.gigabytes }}"
     injected_file_size: "{{ item.injected_file_size }}"
     injected_files: "{{ item.injected_files }}"
@@ -369,6 +374,7 @@ def main():
         cores=dict(required=False, type='int', default=None),
         fixed_ips=dict(required=False, type='int', default=None),
         floating_ips=dict(required=False, type='int', default=None),
+        floatingip=dict(required=False, type='int', default=None),
         gigabytes=dict(required=False, type='int', default=None),
         gigabytes_types=dict(required=False, type='dict', default={}),
         injected_file_size=dict(required=False, type='int', default=None),
