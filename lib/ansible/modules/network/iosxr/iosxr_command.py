@@ -126,31 +126,15 @@ failed_conditions:
   returned: failed
   type: list
   sample: ['...', '...']
-start:
-  description: The time the job started
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:15.126146"
-end:
-  description: The time the job ended
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:25.595612"
-delta:
-  description: The time elapsed to perform all operations
-  returned: always
-  type: str
-  sample: "0:00:10.469466"
 """
 import time
 
-from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.iosxr import run_commands
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.six import string_types
-
-VALID_KEYS = ['command', 'output', 'prompt', 'response']
+from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
 
 def to_lines(stdout):
     for item in stdout:
@@ -182,7 +166,6 @@ def parse_commands(module, warnings):
 
 def main():
     spec = dict(
-        # { command: <str>, output: <str>, prompt: <str>, response: <str> }
         commands=dict(type='list', required=True),
 
         wait_for=dict(type='list', aliases=['waitfor']),
@@ -192,10 +175,14 @@ def main():
         interval=dict(default=1, type='int')
     )
 
-    module = LocalAnsibleModule(argument_spec=spec,
+    spec.update(iosxr_argument_spec)
+
+    module = AnsibleModule(argument_spec=spec,
                            supports_check_mode=True)
 
     warnings = list()
+    check_args(module, warnings)
+
     commands = parse_commands(module, warnings)
 
     wait_for = module.params['wait_for'] or list()
