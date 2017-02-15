@@ -274,7 +274,6 @@ def install_monitor(module):
         "no_data_timeframe": module.params['no_data_timeframe'],
         "timeout_h": module.params['timeout_h'],
         "renotify_interval": module.params['renotify_interval'],
-        #"escalation_message": module.params['escalation_message'],
         "escalation_message": _fix_template_vars(module.params['message']),
         "notify_audit": module.boolean(module.params['notify_audit']),
         "locked": module.boolean(module.params['locked']),
@@ -287,7 +286,6 @@ def install_monitor(module):
         options["thresholds"] = module.params['thresholds']
 
     monitor = _get_monitor(module)
-    #print monitor
     if not monitor:
         _post_monitor(module, options)
     else:
