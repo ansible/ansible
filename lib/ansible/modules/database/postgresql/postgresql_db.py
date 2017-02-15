@@ -109,6 +109,7 @@ else:
 from ansible.module_utils.six import iteritems
 
 import ansible.module_utils.postgres as pgutils
+from ansible.module_utils.database import SQLParseError, pg_quote_identifier
 from ansible.module_utils.basic import get_exception, AnsibleModule
 
 
