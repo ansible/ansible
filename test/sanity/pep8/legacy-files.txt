@@ -12,7 +12,6 @@ lib/ansible/inventory/dir.py
 lib/ansible/inventory/script.py
 lib/ansible/module_utils/basic.py
 lib/ansible/module_utils/ec2.py
-lib/ansible/module_utils/f5.py
 lib/ansible/module_utils/facts.py
 lib/ansible/module_utils/known_hosts.py
 lib/ansible/module_utils/mysql.py

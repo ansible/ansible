@@ -1,48 +1,29 @@
-# -*- coding: utf-8 -*-
+#
+# Copyright 2016 F5 Networks Inc.
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# This code is part of Ansible, but is an independent component.
-# This particular file snippet, and this file snippet only, is BSD licensed.
-# Modules you write using this snippet, which is embedded dynamically by Ansible
-# still belong to the author of the module, and may assign their own license
-# to the complete work.
-#
-# Copyright (c), Etienne Carrière <etienne.carriere@gmail.com>,2015
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without modification,
-# are permitted provided that the following conditions are met:
-#
-#    * Redistributions of source code must retain the above copyright
-#      notice, this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above copyright notice,
-#      this list of conditions and the following disclaimer in the documentation
-#      and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# Legacy
 
 try:
     import bigsuds
     bigsuds_found = True
 except ImportError:
     bigsuds_found = False
-
-
-try:
-    from f5.bigip import ManagementRoot as BigIpMgmt
-    from f5.bigiq import ManagementRoot as BigIqMgmt
-    from f5.iworkflow import ManagementRoot as iWorkflowMgmt
-    from icontrol.session import iControlUnexpectedHTTPError
-    HAS_F5SDK = True
-except ImportError:
-    HAS_F5SDK = False
 
 
 from ansible.module_utils.basic import env_fallback
@@ -98,9 +79,19 @@ def f5_parse_arguments(module):
     if module.params['validate_certs']:
         import ssl
         if not hasattr(ssl, 'SSLContext'):
-            module.fail_json(msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task')
+            module.fail_json(
+                msg="bigsuds does not support verifying certificates with python < 2.7.9." \
+                    "Either update python or set validate_certs=False on the task'")
 
-    return (module.params['server'],module.params['user'],module.params['password'],module.params['state'],module.params['partition'],module.params['validate_certs'],module.params['server_port'])
+    return (
+        module.params['server'],
+        module.params['user'],
+        module.params['password'],
+        module.params['state'],
+        module.params['partition'],
+        module.params['validate_certs'],
+        module.params['server_port']
+    )
 
 
 def bigip_api(bigip, user, password, validate_certs, port=443):
@@ -144,14 +135,74 @@ def fq_list_names(partition,list_names):
     return map(lambda x: fq_name(partition,x),list_names)
 
 
+
+
+
+# New style
+
+try:
+    from f5.bigip import ManagementRoot as BigIpMgmt
+    from f5.bigiq import ManagementRoot as BigIqMgmt
+    from f5.iworkflow import ManagementRoot as iWorkflowMgmt
+    from icontrol.session import iControlUnexpectedHTTPError
+    HAS_F5SDK = True
+except ImportError:
+    HAS_F5SDK = False
+
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.six import iteritems
+
+
+F5_COMMON_ARGS = dict(
+    server=dict(
+        type='str',
+        required=True,
+        fallback=(env_fallback, ['F5_SERVER'])
+    ),
+    user=dict(
+        type='str',
+        required=True,
+        fallback=(env_fallback, ['F5_USER'])
+    ),
+    password=dict(
+        type='str',
+        aliases=['pass', 'pwd'],
+        required=True,
+        no_log=True,
+        fallback=(env_fallback, ['F5_PASSWORD'])
+    ),
+    validate_certs=dict(
+        default='yes',
+        type='bool',
+        fallback=(env_fallback, ['F5_VALIDATE_CERTS'])
+    ),
+    server_port=dict(
+        type='int',
+        default=443,
+        required=False,
+        fallback=(env_fallback, ['F5_SERVER_PORT'])
+    ),
+    state=dict(
+        type='str',
+        default='present',
+        choices=['present', 'absent']
+    ),
+    partition=dict(
+        type='str',
+        default='Common',
+        fallback=(env_fallback, ['F5_PARTITION'])
+    )
+)
+
+
 class AnsibleF5Client(object):
     def __init__(self, argument_spec=None, supports_check_mode=False,
                  mutually_exclusive=None, required_together=None,
                  required_if=None, f5_product_name='bigip'):
 
         merged_arg_spec = dict()
-        common_args = f5_argument_spec()
-        merged_arg_spec.update(common_args)
+        merged_arg_spec.update(F5_COMMON_ARGS)
         if argument_spec:
             merged_arg_spec.update(argument_spec)
             self.arg_spec = merged_arg_spec
@@ -220,6 +271,55 @@ class AnsibleF5Client(object):
                 port=kwargs['server_port'],
                 token='local'
             )
+
+
+class AnsibleF5Parameters(object):
+    def __init__(self, params=None):
+        self._partition = None
+        if params is None:
+            return
+        for key, value in iteritems(params):
+            setattr(self, key, value)
+
+    @property
+    def partition(self):
+        if self._partition is None:
+            return 'Common'
+        return self._partition.strip('/')
+
+    @partition.setter
+    def partition(self, value):
+        self._partition = value
+
+    @classmethod
+    def from_api(cls, params):
+        for key,value in iteritems(cls._api_param_map):
+            params[key] = params.pop(value, None)
+        p = cls(params)
+        return p
+
+    def __getattr__(self, item):
+        return None
+
+    def api_params(self):
+        result = self._api_params_from_map()
+        return self._filter_none(result)
+
+    def _filter_none(self, params):
+        result = dict()
+        for k, v in iteritems(params):
+            if v is None:
+                continue
+            result[k] = v
+        return result
+
+    def _api_params_from_map(self):
+        result = dict()
+        pmap = self.__class__._api_param_map
+        for k,v in iteritems(pmap):
+            value = getattr(self, k)
+            result[v] = value
+        return result
 
 
 class F5ModuleError(Exception):
