@@ -46,6 +46,7 @@ Tested with Apstra AOS 1.1
 
 This script has been inspired by the cobbler.py inventory. thanks
 
+Author: Damien Garros (@dgarros)
 Version: 0.2.0
 """
 import os
