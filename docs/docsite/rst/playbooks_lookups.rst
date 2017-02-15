@@ -135,7 +135,7 @@ Return the entire pass file content::
 
     password="{{ lookup('pass', 'example/test returnall=true')}}`
 
-The location of the password-store directory can be specified in the following ways::
+The location of the password-store directory can be specified in the following ways:
   - Default is ~/.password-store
   - Can be overruled by PASSWORD_STORE_DIR environment variable
   - Can be overruled by 'passwordstore: path/to/.password-store' ansible setting
