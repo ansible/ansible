@@ -193,8 +193,10 @@ backup_path:
 import re
 import time
 
+
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.ordnance import get_config
 from ansible.module_utils.network import NetworkModule, NetworkError
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.netcli import Command
