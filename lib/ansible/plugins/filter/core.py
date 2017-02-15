@@ -48,7 +48,7 @@ from ansible import errors
 from ansible.compat.six import iteritems, string_types, integer_types
 from ansible.compat.six.moves import reduce
 from ansible.compat.six.moves import shlex_quote
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
@@ -236,7 +236,7 @@ def get_hash(data, hashtype='sha1'):
     except:
         return None
 
-    h.update(data)
+    h.update(to_bytes(data, errors='surrogate_then_strict'))
     return h.hexdigest()
 
 def get_encrypted_password(password, hashtype='sha512', salt=None):
