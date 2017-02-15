@@ -58,7 +58,7 @@ def postgres_common_argument_spec():
         login_host        = dict(default=''),
         login_unix_socket = dict(default=''),
         port              = dict(type='int', default=5432),
-        ssl_mode          = dict(default='disable', choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+        ssl_mode          = dict(default='prefer', choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
         ssl_rootcert      = dict(default=None),
     )
 
