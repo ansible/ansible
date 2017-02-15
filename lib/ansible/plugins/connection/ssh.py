@@ -776,18 +776,16 @@ class Connection(ConnectionBase):
         display.vvv(u"FETCH {0} TO {1}".format(in_path, out_path), host=self.host)
         self._file_transport_command(in_path, out_path, 'get')
 
+    def reset(self):
+        # If we have a persistent ssh connection (ControlPersist), we can ask it to stop listening.
+        cmd = map(to_bytes, self._build_command(self._play_context.ssh_executable, '-O', 'stop', self.host))
+        controlpersist, controlpath = self._persistence_controls(cmd)
+        if controlpersist:
+            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = p.communicate()
+            display.vvv(u'sending stop: %s' % cmd)
+
+        self.close()
+
     def close(self):
-        # If we have a persistent ssh connection (ControlPersist), we can ask it
-        # to stop listening. Otherwise, there's nothing to do here.
-
-        # TODO: reenable once winrm issues are fixed
-        # temporarily disabled as we are forced to currently close connections after every task because of winrm
-        # if self._connected and self._persistent:
-        #     ssh_executable = self._play_context.ssh_executable
-        #     cmd = self._build_command('ssh', '-O', 'stop', self.host)
-        #
-        #     cmd = map(to_bytes, cmd)
-        #     p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        #     stdout, stderr = p.communicate()
-
         self._connected = False

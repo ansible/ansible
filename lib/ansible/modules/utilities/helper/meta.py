@@ -40,6 +40,7 @@ options:
         - "C(clear_facts) (added in 2.1) causes the gathered facts for the hosts specified in the play's list of hosts to be cleared, including the fact cache."
         - "C(clear_host_errors) (added in 2.1) clears the failed state (if any) from hosts specified in the play's list of hosts."
         - "C(end_play) (added in 2.2) causes the play to end without failing the host."
+        - "C(reset_connection) (added in 2.3) interrupts a persistent connection (i.e. ssh + control persist)"
     choices: ['noop', 'flush_handlers', 'refresh_inventory', 'clear_facts', 'clear_host_errors', 'end_play']
     required: true
     default: null
@@ -50,29 +51,32 @@ author:
 '''
 
 EXAMPLES = '''
-# force all notified handlers to run at this point, not waiting for normal sync points
 - template:
     src: new.j2
     dest: /etc/config.txt
   notify: myhandler
-- meta: flush_handlers
+- name: force all notified handlers to run at this point, not waiting for normal sync points
+  meta: flush_handlers
 
-# reload inventory, useful with dynamic inventories when play makes changes to the existing hosts
-- cloud_guest:            # this is fake module
+- name: reload inventory, useful with dynamic inventories when play makes changes to the existing hosts
+  cloud_guest:            # this is fake module
     name: newhost
     state: present
-
 - name: Refresh inventory to ensure new instaces exist in inventory
   meta: refresh_inventory
 
 - name: Clear gathered facts from all currently targeted hosts
   meta: clear_facts
 
-# bring host back to play after failure
-- copy:
+- name: bring host back to play after failure
+  copy:
     src: file
     dest: /etc/file
   remote_user: imightnothavepermission
 
 - meta: clear_host_errors
+
+- user: name={{ansible_user}} groups=input
+- name: reset ssh connection to allow user changes to affect 'current login user'
+  meta: reset_connection
 '''
