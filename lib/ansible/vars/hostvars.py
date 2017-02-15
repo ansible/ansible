@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import collections
 
-from jinja2.exceptions import UndefinedError
+from jinja2.runtime import Undefined
 
 from ansible import constants as C
 from ansible.template import Templar
@@ -73,7 +73,7 @@ class HostVars(collections.Mapping):
         '''
         host = self._find_host(host_name)
         if host is None:
-            raise UndefinedError("'hostvars[\"%s\"]' is undefined" % host_name)
+            raise Undefined(name="hostvars['%s']" % host_name)
 
         return self._variable_manager.get_vars(loader=self._loader, host=host, include_hostvars=False)
 
