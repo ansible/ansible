@@ -68,7 +68,7 @@ class ActionModule(ActionBase):
 
             # for backwards compatibility
             if 'state' in new_module_args and new_module_args['state'] == 'running':
-                self._display.deprecated(msg="state=running is deprecated. Please use state=started", version="2.4")
+                self._display.deprecated(msg="state=running is deprecated. Please use state=started", version="2.7")
                 new_module_args['state'] = 'started'
 
             if module in self.UNUSED_PARAMS:
