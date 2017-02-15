@@ -59,8 +59,10 @@ options:
           - C(present) will make sure the package is installed.
             C(latest)  will make sure the latest version of the package is installed.
             C(absent)  will make sure the specified package is not installed.
+            C(dist-upgrade) will make sure the latest version of all installed packages from all enabled repositories is installed.
+          - When using C(dist-upgrade), I(name) should be C('*').
         required: false
-        choices: [ present, latest, absent ]
+        choices: [ present, latest, absent, dist-upgrade ]
         default: "present"
     type:
         description:
@@ -159,6 +161,12 @@ EXAMPLES = '''
     name: '*'
     state: latest
     type: patch
+
+# Perform a dist-upgrade with additional arguments
+- zypper:
+    name: '*'
+    state: dist-upgrade
+    extra_args: '--no-allow-vendor-change --allow-arch-change'
 
 # Refresh repositories and update package "openssl"
 - zypper:
@@ -287,7 +295,7 @@ def parse_zypper_xml(m, cmd, fail_not_found=True, packages=None):
 
 def get_cmd(m, subcommand):
     "puts together the basic zypper command arguments with those passed to the module"
-    is_install = subcommand in ['install', 'update', 'patch']
+    is_install = subcommand in ['install', 'update', 'patch', 'dist-upgrade']
     is_refresh = subcommand == 'refresh'
     cmd = ['/usr/bin/zypper', '--quiet', '--non-interactive', '--xmlout']
 
@@ -296,7 +304,7 @@ def get_cmd(m, subcommand):
         cmd.append('--no-gpg-checks')
 
     cmd.append(subcommand)
-    if subcommand != 'patch' and not is_refresh:
+    if subcommand not in ['patch', 'dist-upgrade'] and not is_refresh:
         cmd.extend(['--type', m.params['type']])
     if m.check_mode and subcommand != 'search':
         cmd.append('--dry-run')
@@ -389,6 +397,8 @@ def package_update_all(m):
     retvals = {'rc': 0, 'stdout': '', 'stderr': ''}
     if m.params['type'] == 'patch':
         cmdname = 'patch'
+    elif m.params['state'] == 'dist-upgrade':
+        cmdname = 'dist-upgrade'
     else:
         cmdname = 'update'
 
@@ -442,7 +452,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(required=True, aliases=['pkg'], type='list'),
-            state = dict(required=False, default='present', choices=['absent', 'installed', 'latest', 'present', 'removed']),
+            state = dict(required=False, default='present', choices=['absent', 'installed', 'latest', 'present', 'removed', 'dist-upgrade']),
             type = dict(required=False, default='package', choices=['package', 'patch', 'pattern', 'product', 'srcpackage', 'application']),
             disable_gpg_check = dict(required=False, default='no', type='bool'),
             disable_recommends = dict(required=False, default='yes', type='bool'),
@@ -468,8 +478,10 @@ def main():
             module.fail_json(msg="Zypper refresh run failed.", **retvals)
 
     # Perform requested action
-    if name == ['*'] and state == 'latest':
+    if name == ['*'] and state in ['latest', 'dist-upgrade']:
         packages_changed, retvals = package_update_all(module)
+    elif name != ['*'] and state == 'dist-upgrade':
+        module.fail_json(msg="Can not dist-upgrade specific packages.")
     else:
         if state in ['absent', 'removed']:
             packages_changed, retvals = package_absent(module, name)
