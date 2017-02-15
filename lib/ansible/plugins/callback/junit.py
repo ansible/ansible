@@ -20,6 +20,7 @@ __metaclass__ = type
 
 import os
 import time
+import re
 
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
@@ -55,6 +56,8 @@ class CallbackModule(CallbackBase):
     This plugin makes use of the following environment variables:
         JUNIT_OUTPUT_DIR (optional): Directory to write XML files to.
                                      Default: ~/.ansible.log
+        JUNIT_TASK_CLASS (optional): Configure the output to be one class per yaml file
+                                     Default: False
 
     Requires:
         junit_xml
@@ -70,6 +73,7 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).__init__()
 
         self._output_dir = os.getenv('JUNIT_OUTPUT_DIR', os.path.expanduser('~/.ansible.log'))
+        self._task_class = os.getenv('JUNIT_TASK_CLASS', 'False').lower()
         self._playbook_path = None
         self._playbook_name = None
         self._play_name = None
@@ -136,8 +140,13 @@ class CallbackModule(CallbackBase):
         name = '[%s] %s: %s' % (host_data.name, task_data.play, task_data.name)
         duration = host_data.finish - task_data.start
 
+        if self._task_class == 'true':
+            junit_classname = re.sub('\.yml:[0-9]+$', '', task_data.path)
+        else:
+            junit_classname = task_data.path
+
         if host_data.status == 'included':
-            return TestCase(name, task_data.path, duration, host_data.result)
+            return TestCase(name, junit_classname, duration, host_data.result)
 
         res = host_data.result._result
         rc = res.get('rc', 0)
@@ -145,9 +154,9 @@ class CallbackModule(CallbackBase):
         dump = self._cleanse_string(dump)
 
         if host_data.status == 'ok':
-            return TestCase(name, task_data.path, duration, dump)
+            return TestCase(name, junit_classname, duration, dump)
 
-        test_case = TestCase(name, task_data.path, duration)
+        test_case = TestCase(name, junit_classname, duration)
 
         if host_data.status == 'failed':
             if 'exception' in res:
