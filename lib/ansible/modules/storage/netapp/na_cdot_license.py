@@ -77,31 +77,30 @@ options:
 
 
 EXAMPLES = """
+- name: Add licenses
+  na_cdot_license:
+    hostname: "{{ netapp_hostname }}"
+    username: "{{ netapp_username }}"
+    password: "{{ netapp_password }}"
+    serial_number: #################
+    licenses:
+      nfs: #################
+      cifs: #################
+      iscsi: #################
+      fcp: #################
+      snaprestore: #################
+      flexclone: #################
 
-    - name: Add licenses
-          na_cdot_license:
-            hostname: "{{ netapp_hostname }}"
-            username: "{{ netapp_username }}"
-            password: "{{ netapp_password }}"
-            serial_number: #################
-            licenses:
-              nfs: #################
-              cifs: #################
-              iscsi: #################
-              fcp: #################
-              snaprestore: #################
-              flexclone: #################
-
-    - name: Remove licenses
-          na_cdot_license:
-            hostname: "{{ netapp_hostname }}"
-            username: "{{ netapp_username }}"
-            password: "{{ netapp_password }}"
-            remove_unused: false
-            remove_expired: true
-            serial_number: #################
-            licenses:
-              nfs: remove
+- name: Remove licenses
+  na_cdot_license:
+    hostname: "{{ netapp_hostname }}"
+    username: "{{ netapp_username }}"
+    password: "{{ netapp_password }}"
+    remove_unused: false
+    remove_expired: true
+    serial_number: #################
+    licenses:
+      nfs: remove
 """
 
 RETURN = """
