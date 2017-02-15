@@ -648,12 +648,13 @@ def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/'):
                                                              stuff,
                                                              conf_file,
                                                              qf=is_installed_qf,
-                                                             installroot=installroot) + is_available(module,
-                                                                                                     repoq,
-                                                                                                     stuff,
-                                                                                                     conf_file,
-                                                                                                     qf=qf,
-                                                                                                     installroot=installroot)) if p.strip() ]
+                                                             installroot=installroot) +
+                                                is_available(module,
+                                                             repoq,
+                                                             stuff,
+                                                             conf_file,
+                                                             qf=qf,
+                                                             installroot=installroot)) if p.strip() ]
 
 def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot='/'):
 
