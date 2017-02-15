@@ -31,7 +31,6 @@ description:
     base network fact keys with C(ansible_net_<fact>).  The facts
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
-extends_documentation_fragment: iosxr
 options:
   gather_subset:
     description:
@@ -122,9 +121,10 @@ ansible_net_neighbors:
 import re
 
 from ansible.module_utils.iosxr import run_commands
-from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import zip
+from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
 
 
 class FactsBase(object):
@@ -359,7 +359,13 @@ def main():
         gather_subset=dict(default=['!config'], type='list')
     )
 
-    module = LocalAnsibleModule(argument_spec=spec, supports_check_mode=True)
+    spec.update(iosxr_argument_spec)
+
+    module = AnsibleModule(argument_spec=spec,
+                           supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
 
     gather_subset = module.params['gather_subset']
 
@@ -416,7 +422,7 @@ def main():
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 
-    module.exit_json(ansible_facts=ansible_facts)
+    module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
 
 if __name__ == '__main__':

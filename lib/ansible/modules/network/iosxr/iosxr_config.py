@@ -31,7 +31,6 @@ description:
     for segmenting configuration into sections.  This module provides
     an implementation for working with IOS XR configuration sections in
     a deterministic way.
-extends_documentation_fragment: iosxr
 options:
   lines:
     description:
@@ -177,26 +176,11 @@ backup_path:
   returned: when backup is yes
   type: path
   sample: /playbooks/ansible/backup/iosxr01.2016-07-16@22:28:34
-start:
-  description: The time the job started
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:15.126146"
-end:
-  description: The time the job ended
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:25.595612"
-delta:
-  description: The time elapsed to perform all operations
-  returned: always
-  type: str
-  sample: "0:00:10.469466"
 """
-from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.iosxr import load_config,get_config
-from ansible.module_utils.network import NET_TRANSPORT_ARGS, _transitional_argument_spec
+from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
 
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
 
@@ -209,14 +193,6 @@ def check_args(module, warnings):
         warnings.append('The force argument is deprecated, please use '
                         'match=none instead.  This argument will be '
                         'removed in the future')
-
-    for key in NET_TRANSPORT_ARGS:
-        if module.params[key]:
-            warnings.append(
-                'network provider arguments are no longer supported.  Please '
-                'use connection: network_cli for the task'
-            )
-            break
 
 def get_running_config(module):
     contents = module.params['config']
@@ -261,7 +237,7 @@ def run(module, result):
             if module.params['after']:
                 commands.extend(module.params['after'])
 
-            result['updates'] = commands
+            result['commands'] = commands
 
         diff = load_config(module, commands, not check_mode,
                            replace_config, comment)
@@ -293,7 +269,7 @@ def main():
         comment=dict(default=DEFAULT_COMMIT_COMMENT),
     )
 
-    argument_spec.update(_transitional_argument_spec())
+    argument_spec.update(iosxr_argument_spec)
 
     mutually_exclusive = [('lines', 'src')]
 
@@ -302,10 +278,10 @@ def main():
                    ('replace', 'block', ['lines']),
                    ('replace', 'config', ['src'])]
 
-    module = LocalAnsibleModule(argument_spec=argument_spec,
-                                mutually_exclusive=mutually_exclusive,
-                                required_if=required_if,
-                                supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           mutually_exclusive=mutually_exclusive,
+                           required_if=required_if,
+                           supports_check_mode=True)
 
     if module.params['force'] is True:
         module.params['match'] = 'none'
