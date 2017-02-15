@@ -40,6 +40,7 @@ except ImportError:
     import sha as sha1
 
 HASHED_KEY_MAGIC = "|1|"
+SSH_KEYSCAN_DEFAULT_PORT = "22"
 
 def add_git_host_key(module, url, accept_hostkey=True, create_dir=True):
 
@@ -71,10 +72,15 @@ def is_ssh_url(url):
     return False
 
 def get_fqdn(repo_url):
+    return get_fqdn_and_port(repo_url)[0]
+
+def get_fqdn_and_port(repo_url):
 
     """ chop the hostname out of a url """
 
     result = None
+    port = SSH_KEYSCAN_DEFAULT_PORT
+
     if "@" in repo_url and "://" not in repo_url:
         # most likely an user@host:path or user@host/path type URL
         repo_url = repo_url.split("@", 1)[1]
@@ -90,15 +96,15 @@ def get_fqdn(repo_url):
         # parts[1] will be empty on python2.4 on ssh:// or git:// urls, so
         # ensure we actually have a parts[1] before continuing.
         if parts[1] != '':
-            result = parts[1]
+            result = parts[1] # netloc
             if "@" in result:
                 result = result.split("@", 1)[1]
 
             if result[0].startswith('['):
                 result = result.split(']', 1)[0] + ']'
             elif ":" in result:
-                result = result.split(":")[0]
-    return result
+                (result, port) = result.split(":", 2)
+    return (result, port)
 
 def check_hostkey(module, fqdn):
     return not not_in_host_file(module, fqdn)
@@ -159,7 +165,7 @@ def not_in_host_file(self, host):
     return True
 
 
-def add_host_key(module, fqdn, key_type="rsa", create_dir=False):
+def add_host_key(module, fqdn, key_type="rsa", create_dir=False, port=SSH_KEYSCAN_DEFAULT_PORT):
 
     """ use ssh-keyscan to add the hostkey """
 
@@ -184,7 +190,10 @@ def add_host_key(module, fqdn, key_type="rsa", create_dir=False):
     elif not os.path.isdir(user_ssh_dir):
         module.fail_json(msg="%s is not a directory" % user_ssh_dir)
 
-    this_cmd = "%s -t %s %s" % (keyscan_cmd, key_type, fqdn)
+    if port == SSH_KEYSCAN_DEFAULT_PORT:
+        this_cmd = "%s -t %s %s" % (keyscan_cmd, key_type, fqdn)
+    else:
+        this_cmd = "%s -t %s %s -p %s" % (keyscan_cmd, key_type, fqdn, port)
 
     rc, out, err = module.run_command(this_cmd)
     # ssh-keyscan gives a 0 exit code and prints nothins on timeout
