@@ -3127,7 +3127,8 @@ def enterEnableModeForDevice(enablePassword, timeout, obj):
         # A delay of one second
         time.sleep(1)
         try:
-            buff = obj.recv(9999)
+            buffByte = obj.recv(9999)
+            buff = buffByte.decode()
             retVal = retVal + buff
             # debugOutput(buff)
             gotit = buff.find(pwdPrompt)
@@ -3139,7 +3140,8 @@ def enterEnableModeForDevice(enablePassword, timeout, obj):
                 obj.send("\r")
                 obj.send("\n")
                 time.sleep(1)
-                innerBuff = obj.recv(9999)
+                innerBuffByte = obj.recv(9999)
+                innerBuff = innerBuffByte.decode()
                 retVal = retVal + innerBuff
                 # debugOutput(innerBuff)
                 innerGotit = innerBuff.find("#")
@@ -3169,7 +3171,8 @@ def waitForDeviceResponse(command, prompt, timeout, obj):
     while (flag is False):
         time.sleep(1)
         try:
-            buff = obj.recv(9999)
+            buffByte = obj.recv(9999)
+            buff = buffByte.decode()
             retVal = retVal + buff
             # debugOutput(retVal)
             gotit = buff.find(prompt)
@@ -3485,7 +3488,8 @@ def disablePaging(remote_conn):
     remote_conn.send("terminal length 0\n")
     time.sleep(1)
     # Clear the buffer on the screen
-    output = remote_conn.recv(1000)
+    outputByte = remote_conn.recv(1000)
+    output = outputByte.decode()
     return output
 # EOM
 

@@ -14,10 +14,11 @@
         - { role: cnos_portchannel, when: "limit_to in ['*', 'cnos_portchannel']" }
         - { role: cnos_rollback, when: "limit_to in ['*', 'cnos_rollback']" }
         - { role: cnos_save, when: "limit_to in ['*', 'cnos_save']" }
-        - { role: cnos_template, when: "limit_to in ['*', 'cnos_template']" }        
+        - { role: cnos_template, when: "limit_to in ['*', 'cnos_template']" }
         - { role: cnos_conditional_template, when: "limit_to in ['*', 'cnos_conditional_template']" }
         - { role: cnos_conditional_command, when: "limit_to in ['*', 'cnos_conditional_command']" }
         - { role: cnos_vlag, when: "limit_to in ['*', 'cnos_vlag']" }
-        - { role: cnos_command, when: "limit_to in ['*', 'cnos_command']" }         
+        - { role: cnos_command, when: "limit_to in ['*', 'cnos_command']" }
         - { role: cnos_bgp, when: "limit_to in ['*', 'cnos_bgp']" }
-        - { role: cnos_backup, when: "limit_to in ['*', 'cnos_backup']" }  
+        - { role: cnos_backup, when: "limit_to in ['*', 'cnos_backup']" }
+        - { role: cnos_showrun, when: "limit_to in ['*', 'cnos_showrun']" }

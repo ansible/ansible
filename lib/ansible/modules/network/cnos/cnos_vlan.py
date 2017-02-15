@@ -21,12 +21,11 @@
 # Module to send VLAN commands to Lenovo Switches
 # Overloading aspect of vlan creation in a range is pending
 # Lenovo Networking
-#
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
-
+# ---- Documentation Start -------------------------------------------------- #
 DOCUMENTATION = '''
 ---
 module: cnos_vlan
@@ -39,8 +38,8 @@ description:
      filter. After passing this level, there are five VLAN arguments that will
      perform further configurations. They are vlanArg1, vlanArg2, vlanArg3,
      vlanArg4, and vlanArg5. The value of vlanArg1 will determine the way
-     following arguments will be evaluated. For more details on how to use these
-     arguments, see [Overloaded Variables].
+     following arguments will be evaluated. For more details on how to use
+     these arguments, see [Overloaded Variables].
      This module uses SSH to manage network device configuration.
      The results of the operation can be viewed in results directory.
      To know more about this module from Lenovo and customizing them for your
@@ -49,8 +48,6 @@ description:
      cnos.html)
 version_added: "2.3"
 Options:
-
-Overloaded Options:
     - The following is a table depicting how the overloaded variables are used
      in the context of VLAN.
     - vlanArg1 is required
@@ -94,7 +91,8 @@ Module Dependency :
 '''
 EXAMPLES = '''
 
-Tasks: The following are examples of using the module cnos_vlan. These are written in the main.yml file of the tasks directory.
+Tasks: The following are examples of using the module cnos_vlan.
+    These are written in the main.yml file of the tasks directory.
 ---
 - name: Test Vlan - Create a vlan, name it
   cnos_vlan:  host={{ inventory_hostname }} username={{ hostvars
@@ -204,7 +202,8 @@ return value: |
     [VLAN configurations are successful]
     Upon any failure, the method returns an error display string.
 '''
-
+# ---- Documentation Ends -------------------------------------------------- #
+# ---- Logic Start ---------------------------------------------------------#
 import sys
 import paramiko
 import time
@@ -214,13 +213,11 @@ import array
 import json
 import time
 import re
-
 try:
     import cnos
     HAS_LIB = True
 except:
     HAS_LIB = False
-
 from ansible.module_utils.basic import AnsibleModule
 from collections import defaultdict
 
