@@ -54,4 +54,5 @@
 /lib/ansible/template/
 /lib/ansible/utils/
 /lib/ansible/vars/
+/setup.py
 /test/
