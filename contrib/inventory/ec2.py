@@ -1502,8 +1502,7 @@ class Ec2Inventory(object):
         ''' Reads the index from the cache file sets self.index '''
 
         with open(self.cache_path_index, 'r') as f:
-            json_index = f.read()
-            self.index = json.loads(json_index)
+            self.index = json.load(f)
 
     def write_to_cache(self, data, filename):
         ''' Writes data in JSON format to a file '''
