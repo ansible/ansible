@@ -26,13 +26,13 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: panos_address
-short_description: create address service object
+short_description: Create address service object on PanOS devices
 description:
     - Create address service object of different types [IP Range, FQDN, or IP Netmask].
 author: "Luigi Mori (@jtschichold), Ken Celenza (@itdependsnetworks), Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
-    - pan-python
+    - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
 options:
     ip_address:
         description:
@@ -71,7 +71,7 @@ options:
         default: None
     commit:
         description:
-            - Commit if changed
+            - Commit configuration if changed.
         default: true
 '''
 
