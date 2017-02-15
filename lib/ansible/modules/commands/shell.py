@@ -112,13 +112,13 @@ EXAMPLES = '''
     spawn ssh admin@{{ cimc_host }}
 
     expect "password:"
-    send "{{ cimc_password }}\n"
+    send "{{ cimc_password }}\\n"
 
-    expect "\n{{ cimc_name }}"
-    send "connect host\n"
+    expect "\\n{{ cimc_name }}"
+    send "connect host\\n"
 
     expect "pxeboot.n12"
-    send "\n"
+    send "\\n"
 
     exit 0
   args:

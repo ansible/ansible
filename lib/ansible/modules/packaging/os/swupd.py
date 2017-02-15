@@ -87,7 +87,7 @@ options:
 '''
 
 EXAMPLES = '''
-- name Update the OS to the latest version
+- name: Update the OS to the latest version
   swupd:
     update: yes
 

@@ -60,27 +60,25 @@ options:
 '''
 
 EXAMPLES = """
+- name: Create QTree
+  na_cdot_qtree:
+    state: present
+    name: ansibleQTree
+    flexvol_name: ansibleVolume
+    vserver: ansibleVServer
+    hostname: "{{ netapp_hostname }}"
+    username: "{{ netapp_username }}"
+    password: "{{ netapp_password }}"
 
-    - name: Create QTree
-          na_cdot_qtree:
-            state: present
-            name: ansibleQTree
-            flexvol_name: ansibleVolume
-            vserver: ansibleVServer
-            hostname: "{{ netapp_hostname }}"
-            username: "{{ netapp_username }}"
-            password: "{{ netapp_password }}"
-
-    - name: Rename QTree
-          na_cdot_qtree:
-            state: present
-            name: ansibleQTree
-            flexvol_name: ansibleVolume
-            vserver: ansibleVServer
-            hostname: "{{ netapp_hostname }}"
-            username: "{{ netapp_username }}"
-            password: "{{ netapp_password }}"
-
+- name: Rename QTree
+  na_cdot_qtree:
+    state: present
+    name: ansibleQTree
+    flexvol_name: ansibleVolume
+    vserver: ansibleVServer
+    hostname: "{{ netapp_hostname }}"
+    username: "{{ netapp_username }}"
+    password: "{{ netapp_password }}"
 """
 
 RETURN = """

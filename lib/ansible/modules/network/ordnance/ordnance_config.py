@@ -146,6 +146,7 @@ options:
 """
 
 EXAMPLES = """
+---
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
 vars:
@@ -155,6 +156,7 @@ vars:
     password: password
     transport: cli
 
+---
 - name: configure top level configuration
   ordnance_config:
     lines: hostname {{ inventory_hostname }}
