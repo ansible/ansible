@@ -110,6 +110,12 @@ options:
         required: false
         default: "no"
         choices: [ "yes", "no" ]
+    extra_args:
+        version_added: "2.4"
+        required: false
+        description:
+          - Add additional options to C(zypper) command.
+          - Options should be supplied in a single line as if given in the command line.
 
 # informational: requirements for nodes
 requirements:
@@ -316,6 +322,10 @@ def get_cmd(m, subcommand):
             cmd.append('--force')
         if m.params['oldpackage']:
             cmd.append('--oldpackage')
+    if m.params['extra_args']:
+        args_list = m.params['extra_args'].split(' ')
+        cmd.extend(args_list)
+
     return cmd
 
 
@@ -459,6 +469,7 @@ def main():
             force = dict(required=False, default='no', type='bool'),
             update_cache = dict(required=False, aliases=['refresh'], default='no', type='bool'),
             oldpackage = dict(required=False, default='no', type='bool'),
+            extra_args = dict(required=False, default=None),
         ),
         supports_check_mode = True
     )
