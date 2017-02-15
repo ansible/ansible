@@ -164,7 +164,7 @@ options:
           - Dis/allow insecure connections to Tower. If C(no), SSL certificates will not be validated.
             This should only be used on personally controlled sites using self-signed certificates.
         required: False
-        default: 'yes'
+        default: True
     tower_config_file:
       description:
         - Path to the Tower config file. See notes.
