@@ -28,7 +28,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # standard ansible imports
-from ansible.module_utils.basic import get_exception, AnsibleModule
+from ansible.module_utils.basic import get_exception
 
 # standard PG imports
 HAS_PSYCOPG2 = False

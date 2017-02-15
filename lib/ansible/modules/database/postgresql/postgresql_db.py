@@ -109,7 +109,7 @@ else:
 from ansible.module_utils.six import iteritems
 
 import ansible.module_utils.postgres as pgutils
-from ansible.module_utils.basic import get_exception
+from ansible.module_utils.basic import get_exception, AnsibleModule
 
 
 class NotSupportedError(Exception):
