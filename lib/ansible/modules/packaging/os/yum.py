@@ -35,7 +35,9 @@ description:
 options:
   name:
     description:
-      - "Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: yum -y update. You can also pass a url or a local path to a rpm file (using state=present).  To operate on several packages this can accept a comma separated list of packages or (as of 2.0) a list of packages."
+      - "Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: yum -y update.
+         You can also pass a url or a local path to a rpm file (using state=present).  To operate on several packages this can accept a comma separated list
+         of packages or (as of 2.0) a list of packages."
     required: true
     default: null
     aliases: [ 'pkg' ]
@@ -631,7 +633,17 @@ def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/'):
     elif stuff == 'repos':
         return [ dict(repoid=name, state='enabled') for name in sorted(repolist(module, repoq)) if name.strip() ]
     else:
-        return [ pkg_to_dict(p) for p in sorted(is_installed(module, repoq, stuff, conf_file, qf=is_installed_qf, installroot=installroot) + is_available(module, repoq, stuff, conf_file, qf=qf, installroot=installroot)) if p.strip() ]
+        return [ pkg_to_dict(p) for p in sorted(is_installed(module,
+                                                             repoq,
+                                                             stuff,
+                                                             conf_file,
+                                                             qf=is_installed_qf,
+                                                             installroot=installroot) + is_available(module,
+                                                                                                     repoq,
+                                                                                                     stuff,
+                                                                                                     conf_file,
+                                                                                                     qf=qf,
+                                                                                                     installroot=installroot)) if p.strip() ]
 
 def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot='/'):
 
@@ -991,7 +1003,10 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
                 msg = '%s will be updated' % w
             elif w not in updates:
                 other_pkg = will_update_from_other_package[w]
-                to_update.append((w, 'because of (at least) %s-%s.%s from %s' % (other_pkg, updates[other_pkg]['version'], updates[other_pkg]['dist'], updates[other_pkg]['repo'])))
+                to_update.append((w, 'because of (at least) %s-%s.%s from %s' % (other_pkg,
+                                                                                 updates[other_pkg]['version'],
+                                                                                 updates[other_pkg]['dist'],
+                                                                                 updates[other_pkg]['repo'])))
             else:
                 to_update.append((w, '%s.%s from %s' % (updates[w]['version'], updates[w]['dist'], updates[w]['repo'])))
 
@@ -1122,17 +1137,6 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
 
 
 def main():
-
-    # state=installed name=pkgspec
-    # state=removed name=pkgspec
-    # state=latest name=pkgspec
-    #
-    # informational commands:
-    #   list=installed
-    #   list=updates
-    #   list=available
-    #   list=repos
-    #   list=pkgspec
 
     module = AnsibleModule(
         argument_spec = dict(
