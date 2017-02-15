@@ -159,6 +159,9 @@ Ansible Changes By Release
   * os_nova_host_aggregate
   * os_quota
 - openwrt_init
+- ordnance
+  * ordnance_config
+  * ordnance_facts
 - ovirt:
   * ovirt_affinity_groups
   * ovirt_affinity_labels
