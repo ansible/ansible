@@ -219,7 +219,7 @@ def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
 
 def main():
     argument_spec = pgutils.postgres_common_argument_spec()
-    argument_spec.append(dict(
+    argument_spec.update(dict(
         db=dict(required=True, aliases=['name']),
         owner=dict(default=""),
         template=dict(default=""),
