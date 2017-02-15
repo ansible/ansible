@@ -22,22 +22,51 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-module: tower_organization
+module: tower_user
 version_added: "2.3"
-short_description: create, update, or destroy Ansible Tower organizations
+short_description: create, update, or destroy Ansible Tower user.
 description:
-    - Create, update, or destroy Ansible Tower organizations. See
+    - Create, update, or destroy Ansible Tower users. See
       U(https://www.ansible.com/tower) for an overview.
 options:
-    name:
+    username:
       description:
-        - Name to use for the organization.
+        - The username of the user.
       required: True
-    description:
+    first_name:
       description:
-        - The description to use for the organization.
+        - First name of the user.
       required: False
       default: null
+    last_name:
+      description:
+        - Last name of the user.
+      required: False
+      default: null
+    email:
+      description:
+        - Email address of the user.
+      required: True
+    password:
+      description:
+        - Password of the user.
+      required: False
+      default: null
+    organization:
+      description:
+        - Organization the user should be made a member of.
+      required: False
+      default: null
+    superuser:
+      description:
+        - User is a system wide administator.
+      required: False
+      default: False
+    auditor:
+      description:
+        - User is a system wide auditor.
+      required: False
+      default: False
     state:
       description:
         - Desired state of the resource.
@@ -77,9 +106,9 @@ requirements:
   - "ansible-tower-cli >= 3.0.3"
 
 notes:
-  - If no I(tower_config_file) is provided we will attempt to use the tower-cli library
+  - If no I(config_file) is provided we will attempt to use the tower-cli library
     defaults to find your Tower host information.
-  - I(tower_config_file) should contain Tower configuration in the following format
+  - I(config_file) should contain Tower configuration in the following format
       host=hostname
       username=username
       password=password
@@ -87,10 +116,13 @@ notes:
 
 
 EXAMPLES = '''
-- name: Create tower organization
-  tower_organization:
-    name: "Foo"
-    description: "Foo bar organization"
+- name: Add tower user
+  tower_user:
+    username: jdoe
+    password: foobarbaz
+    email: jdoe@example.org
+    first_name: John
+    last_name: Doe
     state: present
     tower_config_file: "~/tower_cli.cfg"
 '''
@@ -110,8 +142,14 @@ except ImportError:
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            name = dict(required=True),
-            description = dict(),
+            username = dict(required=True),
+            first_name = dict(),
+            last_name = dict(),
+            password = dict(no_log=True),
+            email = dict(required=True),
+            organization = dict(),
+            superuser = dict(type='bool', default=False),
+            auditor = dict(type='bool', default=False),
             tower_host = dict(),
             tower_username = dict(),
             tower_password = dict(no_log=True),
@@ -125,24 +163,32 @@ def main():
     if not HAS_TOWER_CLI:
         module.fail_json(msg='ansible-tower-cli required for this module')
 
-    name = module.params.get('name')
-    description = module.params.get('description')
+    username = module.params.get('username')
+    first_name = module.params.get('first_name')
+    last_name = module.params.get('last_name')
+    password = module.params.get('password')
+    email = module.params.get('email')
+    organization = module.params.get('organization')
+    superuser = module.params.get('superuser')
+    auditor = module.params.get('auditor')
     state = module.params.get('state')
 
-    json_output = {'organization': name, 'state': state}
+    json_output = {'username': username, 'state': state}
 
     tower_auth = tower_auth_config(module)
     with settings.runtime_values(**tower_auth):
         tower_check_mode(module)
-        organization = tower_cli.get_resource('organization')
+        user = tower_cli.get_resource('user')
         try:
             if state == 'present':
-                result = organization.modify(name=name, description=description, create_on_missing=True)
+                result = user.modify(username=username, first_name=first_name, last_name=last_name,
+                                    email=email, password=password, organization=organization,
+                                    is_superuser=superuser, is_auditor=auditor, create_on_missing=True)
                 json_output['id'] = result['id']
             elif state == 'absent':
-                result = organization.delete(name=name)
+                result = user.delete(username=username)
         except (exc.ConnectionError, exc.BadRequest) as excinfo:
-            module.fail_json(msg='Failed to update the organization: {0}'.format(excinfo), changed=False)
+            module.fail_json(msg='Failed to update the user: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']
     module.exit_json(**json_output)
