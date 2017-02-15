@@ -47,7 +47,7 @@ options:
       - in addition to state management, various non-idempotent commands are available. See examples
     required: false
     choices: ["create","status", "start", "stop", "pause", "unpause",
-              "shutdown", "undefine", "destroy", "get_xml", "autostart",
+              "shutdown", "undefine", "destroy", "get_xml", "autostart", "get_ifaces",
               "freemem", "list_vms", "info", "nodeinfo", "virttype", "define"]
   uri:
     description:
@@ -125,8 +125,8 @@ else:
     HAS_VIRT = True
 
 ALL_COMMANDS = []
-VM_COMMANDS = ['create','status', 'start', 'stop', 'pause', 'unpause',
-                'shutdown', 'undefine', 'destroy', 'get_xml', 'autostart', 'define']
+VM_COMMANDS = ['create', 'status', 'start', 'stop', 'pause', 'unpause', 'shutdown',
+               'undefine', 'destroy', 'get_xml', 'autostart', 'get_ifaces', 'define']
 HOST_COMMANDS = ['freemem', 'list_vms', 'info', 'nodeinfo', 'virttype']
 ALL_COMMANDS.extend(VM_COMMANDS)
 ALL_COMMANDS.extend(HOST_COMMANDS)
@@ -259,6 +259,9 @@ class LibvirtConnection(object):
     def define_from_xml(self, xml):
         return self.conn.defineXML(xml)
 
+    def get_ifaces(self, vmid):
+        vm = self.conn.lookupByName(vmid)
+        return vm.interfaceAddresses(libvirt.VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE)
 
 class Virt(object):
 
@@ -426,6 +429,14 @@ class Virt(object):
         """
         self.__get_conn()
         return self.conn.define_from_xml(xml)
+
+    def get_ifaces(self, vmid):
+        """
+        Gets the interfaces on a guest
+        """
+
+        self.__get_conn()
+        return self.conn.get_ifaces(vmid)
 
 def core(module):
 
