@@ -280,7 +280,7 @@ This should give you a good idea of how to structure a multi-tier application wi
        An introduction to playbook roles
    :doc:`playbooks_variables`
        An introduction to Ansible variables
-   `Ansible.com: Continuous Delivery <http://www.ansible.com/ansible-continuous-delivery>`_
+   `Ansible.com: Continuous Delivery <https://www.ansible.com/ansible-continuous-delivery>`_
        An introduction to Continuous Delivery with Ansible
 
 

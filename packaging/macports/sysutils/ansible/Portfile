@@ -11,7 +11,7 @@ supported_archs noarch
 
 maintainers     nomaintainer
 
-homepage        http://ansible.com/
+homepage        https://ansible.com/
 description     Radically simple IT automation
 long_description \
     Ansible is a radically simple model-driven configuration \
