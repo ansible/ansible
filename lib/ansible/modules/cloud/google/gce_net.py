@@ -27,7 +27,7 @@ version_added: "1.5"
 short_description: create/destroy GCE networks and firewall rules
 description:
     - This module can create and destroy Google Compute Engine networks and
-      firewall rules U(https://developers.google.com/compute/docs/networking).
+      firewall rules U(https://cloud.google.com/compute/docs/networking).
       The I(name) parameter is reserved for referencing a network while the
       I(fwname) parameter is used to reference firewall rules.
       IPv4 Address ranges must be specified using the CIDR
@@ -152,41 +152,124 @@ options:
 requirements:
     - "python >= 2.6"
     - "apache-libcloud >= 0.13.3, >= 0.17.0 if using JSON credentials"
-author: "Eric Johnson (@erjohnso) <erjohnso@google.com>"
+author: "Eric Johnson (@erjohnso) <erjohnso@google.com>, Tom Melendez (@supertom) <supertom@google.com>"
 '''
 
 EXAMPLES = '''
-# Simple example of creating a new network
-- local_action:
-    module: gce_net
-    name: privatenet
-    ipv4_range: '10.240.16.0/24'
+# Create a 'legacy' Network
+- name: Create Legacy Network
+  gce_net:
+    name: legacynet
+    ipv4_range: '10.24.17.0/24'
+    mode: legacy
+    state: present
 
-# Simple example of creating a new firewall rule
-- local_action:
-    module: gce_net
-    name: privatenet
-    fwname: all-web-webproxy
-    allowed: tcp:80,8080
-    src_tags: ["web", "proxy"]
-
-# Simple example of creating a new auto network
-- local_action:
-    module: gce_net
-    name: privatenet
+# Create an 'auto' Network
+- name: Create Auto Network
+  gce_net:
+    name: autonet
     mode: auto
+    state: present
 
-# Simple example of creating a new custom subnet
-- local_action:
-    module: gce_net
+# Create a 'custom' Network
+- name: Create Custom Network
+  gce_net:
+    name: customnet
+    mode: custom
+    subnet_name: "customsubnet"
+    subnet_region: us-east1
+    ipv4_range: '10.240.16.0/24'
+    state: "present"
+
+# Create Firewall Rule with Source Tags
+- name: Create Firewall Rule w/Source Tags
+  gce_net:
+    name: default
+    fwname: "my-firewall-rule"
+    allowed: tcp:80
+    state: "present"
+    src_tags: "foo,bar"
+
+# Create Firewall Rule with Source Range
+- name: Create Firewall Rule w/Source Range
+  gce_net:
+    name: default
+    fwname: "my-firewall-rule"
+    allowed: tcp:80
+    state: "present"
+    src_range: ['10.1.1.1/32']
+
+# Create Custom Subnetwork
+- name: Create Custom Subnetwork
+  gce_net:
     name: privatenet
     mode: custom
     subnet_name: subnet_example
     subnet_region: us-central1
-    ipv4_range: 10.0.0.0/16
-
+    ipv4_range: '10.0.0.0/16'
 '''
 
+RETURN = '''
+allowed:
+    description: Rules (ports and protocols) specified by this firewall rule.
+    returned: When specified
+    type: string
+    sample: "tcp:80;icmp"
+
+fwname:
+    description: Name of the firewall rule.
+    returned: When specified
+    type: string
+    sample: "my-fwname"
+
+ipv4_range:
+    description: IPv4 range of the specified network or subnetwork.
+    returned: when specified or when a subnetwork is created
+    type: string
+    sample: "10.0.0.0/16"
+
+name:
+    description: Name of the network.
+    returned: always
+    type: string
+    sample: "my-network"
+
+src_range:
+    description: IP address blocks a firewall rule applies to.
+    returned: when specified
+    type: list
+    sample: [ '10.1.1.12/8' ]
+
+src_tags:
+    description: Instance Tags firewall rule applies to.
+    returned: when specified while creating a firewall rule
+    type: list
+    sample: [ 'foo', 'bar' ]
+
+state:
+    description: State of the item operated on.
+    returned: always
+    type: string
+    sample: "present"
+
+subnet_name:
+    description: Name of the subnetwork.
+    returned: when specified or when a subnetwork is created
+    type: string
+    sample: "my-subnetwork"
+
+subnet_region:
+    description: Region of the specified subnet.
+    returned: when specified or when a subnetwork is created
+    type: string
+    sample: "us-east1"
+
+target_tags:
+    description: Instance Tags with these tags receive traffic allowed by firewall rule.
+    returned: when specified while creating a firewall rule
+    type: list
+    sample: [ 'foo', 'bar' ]
+'''
 try:
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
@@ -351,7 +434,7 @@ def main():
                 fw = gce.ex_get_firewall(fwname)
 
                 # If old and new attributes are different, we update the firewall rule.
-                # This implicitly let's us clear out attributes as well.
+                # This implicitly lets us clear out attributes as well.
                 # allowed_list is required and must not be None for firewall rules.
                 if allowed_list and (sorted_allowed_list(allowed_list) != sorted_allowed_list(fw.allowed)):
                     fw.allowed = allowed_list
@@ -459,12 +542,10 @@ def main():
             except Exception as e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             if network:
-                # json_output['d4'] = 'deleting %s' % name
                 try:
                     gce.ex_destroy_network(network)
                 except Exception as e:
                     module.fail_json(msg=unexpected_error_msg(e), changed=False)
-                # json_output['d5'] = 'deleted %s' % name
                 changed = True
 
     json_output['changed'] = changed
