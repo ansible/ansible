@@ -1,0 +1,14 @@
+- name: verify that play can include handler
+  hosts: testhost
+  tasks:
+    - debug: msg="main task"
+      changed_when: True
+      notify: test handler
+      tags: ['playbook_include_handlers']
+  handlers:
+    - include: handlers.yml
+
+- name: verify that role can include handler
+  hosts: testhost
+  roles:
+    - { role: test_handlers_include, tags: ['role_include_handlers'] }

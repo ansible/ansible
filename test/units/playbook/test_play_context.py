@@ -25,6 +25,7 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible import constants as C
+from ansible.compat.six.moves import shlex_quote
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.play_context import PlayContext
@@ -52,7 +53,7 @@ class TestPlayContext(unittest.TestCase):
     def test_play_context(self):
         (options, args) = self._parser.parse_args(['-vv', '--check'])
         play_context = PlayContext(options=options)
-        self.assertEqual(play_context.connection, 'smart')
+        self.assertEqual(play_context.connection, C.DEFAULT_TRANSPORT)
         self.assertEqual(play_context.remote_addr, None)
         self.assertEqual(play_context.remote_user, None)
         self.assertEqual(play_context.password, '')
@@ -131,6 +132,8 @@ class TestPlayContext(unittest.TestCase):
         pfexec_flags = ''
         doas_exe    = 'doas'
         doas_flags  = ' -n  -u foo '
+        ksu_exe = 'ksu'
+        ksu_flags = ''
         dzdo_exe   = 'dzdo'
 
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable=default_exe)
@@ -141,20 +144,30 @@ class TestPlayContext(unittest.TestCase):
 
         play_context.become_method = 'sudo'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-        self.assertEqual(cmd, """%s %s -u %s %s -c 'echo %s; %s'""" % (sudo_exe, sudo_flags, play_context.become_user, default_exe, play_context.success_key, default_cmd))
+        self.assertEqual(
+            cmd,
+            """%s %s -u %s %s -c 'echo %s; %s'""" % (sudo_exe, sudo_flags, play_context.become_user, default_exe, play_context.success_key, default_cmd)
+        )
         play_context.become_pass = 'testpass'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable=default_exe)
-        self.assertEqual(cmd, """%s %s -p "%s" -u %s %s -c 'echo %s; %s'""" % (sudo_exe, sudo_flags.replace('-n',''), play_context.prompt, play_context.become_user, default_exe, play_context.success_key, default_cmd))
+        self.assertEqual(
+            cmd,
+            """%s %s -p "%s" -u %s %s -c 'echo %s; %s'""" % (sudo_exe, sudo_flags.replace('-n',''), play_context.prompt, play_context.become_user, default_exe,
+                                                             play_context.success_key, default_cmd)
+        )
 
         play_context.become_pass = None
 
         play_context.become_method = 'su'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-        self.assertEqual(cmd, """%s  %s -c '%s -c '"'"'echo %s; %s'"'"''""" % (su_exe, play_context.become_user, default_exe, play_context.success_key, default_cmd))
+        self.assertEqual(
+            cmd,
+            """%s  %s -c '%s -c '"'"'echo %s; %s'"'"''""" % (su_exe, play_context.become_user, default_exe, play_context.success_key, default_cmd)
+        )
 
         play_context.become_method = 'pbrun'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-        self.assertEqual(cmd, """%s -b %s -u %s 'echo %s; %s'""" % (pbrun_exe, pbrun_flags, play_context.become_user, play_context.success_key, default_cmd))
+        self.assertEqual(cmd, """%s %s -u %s 'echo %s; %s'""" % (pbrun_exe, pbrun_flags, play_context.become_user, play_context.success_key, default_cmd))
 
         play_context.become_method = 'pfexec'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
@@ -162,7 +175,17 @@ class TestPlayContext(unittest.TestCase):
 
         play_context.become_method = 'doas'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-        self.assertEqual(cmd, """%s %s echo %s && %s %s env ANSIBLE=true %s""" % (doas_exe, doas_flags, play_context.success_key, doas_exe, doas_flags, default_cmd))
+        self.assertEqual(
+            cmd,
+            """%s %s echo %s && %s %s env ANSIBLE=true %s""" % (doas_exe, doas_flags, play_context.success_key, doas_exe, doas_flags, default_cmd)
+        )
+
+        play_context.become_method = 'ksu'
+        cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
+        self.assertEqual(
+            cmd,
+            """%s %s %s -e %s -c 'echo %s; %s'""" % (ksu_exe, play_context.become_user, ksu_flags, default_exe, play_context.success_key, default_cmd)
+        )
 
         play_context.become_method = 'bad'
         self.assertRaises(AnsibleError, play_context.make_become_cmd, cmd=default_cmd, executable="/bin/bash")
@@ -171,10 +194,20 @@ class TestPlayContext(unittest.TestCase):
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
         self.assertEqual(cmd, """%s -u %s %s -c 'echo %s; %s'""" % (dzdo_exe, play_context.become_user, default_exe, play_context.success_key, default_cmd))
 
+        play_context.become_pass = 'testpass'
+        play_context.become_method = 'dzdo'
+        cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
+        self.assertEqual(
+            cmd,
+            """%s -p %s -u %s %s -c 'echo %s; %s'""" % (dzdo_exe, shlex_quote(play_context.prompt), play_context.become_user, default_exe,
+                                                        play_context.success_key, default_cmd)
+        )
+
+
 class TestTaskAndVariableOverrride(unittest.TestCase):
 
     inventory_vars = (
-            ('preferred_names',
+        ('preferred_names',
                 dict(ansible_connection='local',
                     ansible_user='ansibull',
                     ansible_become_user='ansibull',
@@ -186,11 +219,11 @@ class TestTaskAndVariableOverrride(unittest.TestCase):
                     become_method='su',
                     become_pass='ansibullwuzhere',)
             ),
-            ('alternate_names',
+        ('alternate_names',
                 dict(ansible_become_password='ansibullwuzhere',),
                 dict(become_pass='ansibullwuzhere',)
             ),
-            ('deprecated_names',
+        ('deprecated_names',
                 dict(ansible_ssh_user='ansibull',
                     ansible_sudo_user='ansibull',
                     ansible_sudo_pass='ansibullwuzhere',),
@@ -199,7 +232,7 @@ class TestTaskAndVariableOverrride(unittest.TestCase):
                     become_user='ansibull',
                     become_pass='ansibullwuzhere',)
             ),
-            ('deprecated_names2',
+        ('deprecated_names2',
                 dict(ansible_ssh_user='ansibull',
                     ansible_su_user='ansibull',
                     ansible_su_pass='ansibullwuzhere',),
@@ -208,17 +241,17 @@ class TestTaskAndVariableOverrride(unittest.TestCase):
                     become_user='ansibull',
                     become_pass='ansibullwuzhere',)
             ),
-            ('deprecated_alt_names',
+        ('deprecated_alt_names',
                 dict(ansible_sudo_password='ansibullwuzhere',),
                 dict(become_method='sudo',
                     become_pass='ansibullwuzhere',)
             ),
-            ('deprecated_alt_names2',
+        ('deprecated_alt_names2',
                 dict(ansible_su_password='ansibullwuzhere',),
                 dict(become_method='su',
                     become_pass='ansibullwuzhere',)
             ),
-            ('deprecated_and_preferred_names',
+        ('deprecated_and_preferred_names',
                 dict(ansible_user='ansibull',
                     ansible_ssh_user='badbull',
                     ansible_become_user='ansibull',
@@ -233,7 +266,7 @@ class TestTaskAndVariableOverrride(unittest.TestCase):
                     become_method='su',
                     become_pass='ansibullwuzhere',)
             ),
-        )
+    )
 
     def setUp(self):
         parser = CLI.base_parser(

@@ -30,7 +30,7 @@
 ##      192.168.1.110:
 
 # Ex 3: You can create hosts using ranges and add children groups and vars to a group
-# The child group can define anything you would normall add to a group
+# The child group can define anything you would normally add to a group
 
 ##testing:
 ##  hosts:

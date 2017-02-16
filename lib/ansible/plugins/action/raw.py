@@ -40,4 +40,6 @@ class ActionModule(ActionBase):
         executable = self._task.args.get('executable', False)
         result.update(self._low_level_execute_command(self._task.args.get('_raw_params'), executable=executable))
 
+        result['changed'] = True
+
         return result

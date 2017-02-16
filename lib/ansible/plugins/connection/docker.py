@@ -27,16 +27,17 @@ __metaclass__ = type
 import distutils.spawn
 import os
 import os.path
-import pipes
 import subprocess
 import re
 
 from distutils.version import LooseVersion
 
 import ansible.constants as C
+from ansible.compat.six.moves import shlex_quote
 from ansible.errors import AnsibleError, AnsibleFileNotFound
+from ansible.module_utils._text import to_bytes
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
-from ansible.utils.unicode import to_bytes
+
 
 try:
     from __main__ import display
@@ -104,28 +105,43 @@ class Connection(ConnectionBase):
     def _sanitize_version(version):
         return re.sub('[^0-9a-zA-Z\.]', '', version)
 
+    def _old_docker_version(self):
+        cmd_args = []
+        if self._play_context.docker_extra_args:
+            cmd_args += self._play_context.docker_extra_args.split(' ')
+
+        old_version_subcommand = ['version']
+
+        old_docker_cmd = [self.docker_cmd] + cmd_args + old_version_subcommand
+        p = subprocess.Popen(old_docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd_output, err = p.communicate()
+
+        return old_docker_cmd, cmd_output, err, p.returncode
+
+    def _new_docker_version(self):
+        # no result yet, must be newer Docker version
+        cmd_args = []
+        if self._play_context.docker_extra_args:
+            cmd_args += self._play_context.docker_extra_args.split(' ')
+
+        new_version_subcommand = ['version', '--format', "'{{.Server.Version}}'"]
+
+        new_docker_cmd = [self.docker_cmd] + cmd_args + new_version_subcommand
+        p = subprocess.Popen(new_docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cmd_output, err = p.communicate()
+        return new_docker_cmd, cmd_output, err, p.returncode
+
     def _get_docker_version(self):
 
-        cmd = [self.docker_cmd]
+        cmd, cmd_output, err, returncode = self._old_docker_version()
+        if returncode == 0:
+            for line in cmd_output.split('\n'):
+                if line.startswith('Server version:'):  # old docker versions
+                    return self._sanitize_version(line.split()[2])
 
-        if self._play_context.docker_extra_args:
-            cmd += self._play_context.docker_extra_args.split(' ')
-
-        cmd += ['version']
-
-        cmd_output = subprocess.check_output(cmd)
-
-        for line in cmd_output.split('\n'):
-            if line.startswith('Server version:'):  # old docker versions
-                return self._sanitize_version(line.split()[2])
-
-        # no result yet, must be newer Docker version
-        new_docker_cmd = [
-            self.docker_cmd,
-            'version', '--format', "'{{.Server.Version}}'"
-        ]
-
-        cmd_output = subprocess.check_output(new_docker_cmd)
+        cmd, cmd_output, err, returncode = self._new_docker_version()
+        if returncode:
+            raise AnsibleError('Docker version check (%s) failed: %s' % (cmd, err))
 
         return self._sanitize_version(cmd_output)
 
@@ -181,7 +197,7 @@ class Connection(ConnectionBase):
         local_cmd = self._build_exec_cmd([self._play_context.executable, '-c', cmd])
 
         display.vvv("EXEC %s" % (local_cmd,), host=self._play_context.remote_addr)
-        local_cmd = [to_bytes(i, errors='strict') for i in local_cmd]
+        local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
         p = subprocess.Popen(local_cmd, shell=False, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -208,18 +224,18 @@ class Connection(ConnectionBase):
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
 
         out_path = self._prefix_login_path(out_path)
-        if not os.path.exists(to_bytes(in_path, errors='strict')):
+        if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
             raise AnsibleFileNotFound(
                 "file or module does not exist: %s" % in_path)
 
-        out_path = pipes.quote(out_path)
+        out_path = shlex_quote(out_path)
         # Older docker doesn't have native support for copying files into
         # running containers, so we use docker exec to implement this
         # Although docker version 1.8 and later provide support, the
         # owner and group of the files are always set to root
         args = self._build_exec_cmd([self._play_context.executable, "-c", "dd of=%s bs=%s" % (out_path, BUFSIZE)])
-        args = [to_bytes(i, errors='strict') for i in args]
-        with open(to_bytes(in_path, errors='strict'), 'rb') as in_file:
+        args = [to_bytes(i, errors='surrogate_or_strict') for i in args]
+        with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
             try:
                 p = subprocess.Popen(args, stdin=in_file,
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -241,7 +257,7 @@ class Connection(ConnectionBase):
         out_dir = os.path.dirname(out_path)
 
         args = [self.docker_cmd, "cp", "%s:%s" % (self._play_context.remote_addr, in_path), out_dir]
-        args = [to_bytes(i, errors='strict') for i in args]
+        args = [to_bytes(i, errors='surrogate_or_strict') for i in args]
 
         p = subprocess.Popen(args, stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)

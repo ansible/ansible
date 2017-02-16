@@ -31,6 +31,7 @@ RUN apt-get update -y && \
     python-mysqldb \
     python-nose \
     python-paramiko \
+    python-passlib \
     python-pip \
     python-setuptools \
     python-virtualenv \

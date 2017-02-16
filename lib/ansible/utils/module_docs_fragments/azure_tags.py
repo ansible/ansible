@@ -1,5 +1,3 @@
-#!/usr/bin/python
-#
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>
 #
@@ -32,7 +30,7 @@ options:
         default: null
     append_tags:
         description:
-            - Use to control if tags field is cannonical or just appends to existing tags. When cannonical, any tags not found in the tags parameter will be removed from the object's metadata.
+            - Use to control if tags field is canonical or just appends to existing tags. When canonical, any tags not found in the tags parameter will be removed from the object's metadata.
         default: True
         required: false
     '''

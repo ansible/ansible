@@ -32,7 +32,8 @@ Tested with Zabbix Server 2.0.6.
 
 from __future__ import print_function
 
-import os, sys
+import os
+import sys
 import argparse
 import ConfigParser
 
@@ -54,9 +55,9 @@ class ZabbixInventory(object):
         config = ConfigParser.SafeConfigParser()
         conf_path = './zabbix.ini'
         if not os.path.exists(conf_path):
-	        conf_path = os.path.dirname(os.path.realpath(__file__)) + '/zabbix.ini'
+            conf_path = os.path.dirname(os.path.realpath(__file__)) + '/zabbix.ini'
         if os.path.exists(conf_path):
-	        config.read(conf_path)
+            config.read(conf_path)
         # server
         if config.has_option('zabbix', 'server'):
             self.zabbix_server = config.get('zabbix', 'server')

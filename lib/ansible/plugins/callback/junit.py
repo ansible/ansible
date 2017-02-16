@@ -20,16 +20,26 @@ __metaclass__ = type
 
 import os
 import time
+import re
 
-from collections import OrderedDict
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
-from ansible.utils.unicode import to_bytes
 
 try:
     from junit_xml import TestSuite, TestCase
     HAS_JUNIT_XML = True
 except ImportError:
     HAS_JUNIT_XML = False
+
+try:
+    from collections import OrderedDict
+    HAS_ORDERED_DICT = True
+except ImportError:
+    try:
+        from ordereddict import OrderedDict
+        HAS_ORDERED_DICT = True
+    except ImportError:
+        HAS_ORDERED_DICT = False
 
 
 class CallbackModule(CallbackBase):
@@ -46,6 +56,8 @@ class CallbackModule(CallbackBase):
     This plugin makes use of the following environment variables:
         JUNIT_OUTPUT_DIR (optional): Directory to write XML files to.
                                      Default: ~/.ansible.log
+        JUNIT_TASK_CLASS (optional): Configure the output to be one class per yaml file
+                                     Default: False
 
     Requires:
         junit_xml
@@ -61,16 +73,24 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).__init__()
 
         self._output_dir = os.getenv('JUNIT_OUTPUT_DIR', os.path.expanduser('~/.ansible.log'))
+        self._task_class = os.getenv('JUNIT_TASK_CLASS', 'False').lower()
         self._playbook_path = None
         self._playbook_name = None
         self._play_name = None
-        self._task_data = OrderedDict()
+        self._task_data = None
 
         self.disabled = False
 
         if not HAS_JUNIT_XML:
             self.disabled = True
             self._display.warning('The `junit_xml` python module is not installed. '
+                                  'Disabling the `junit` callback plugin.')
+
+        if HAS_ORDERED_DICT:
+            self._task_data = OrderedDict()
+        else:
+            self.disabled = True
+            self._display.warning('The `ordereddict` python module is not installed. '
                                   'Disabling the `junit` callback plugin.')
 
         if not os.path.exists(self._output_dir):
@@ -120,17 +140,23 @@ class CallbackModule(CallbackBase):
         name = '[%s] %s: %s' % (host_data.name, task_data.play, task_data.name)
         duration = host_data.finish - task_data.start
 
+        if self._task_class == 'true':
+            junit_classname = re.sub('\.yml:[0-9]+$', '', task_data.path)
+        else:
+            junit_classname = task_data.path
+
         if host_data.status == 'included':
-            return TestCase(name, task_data.path, duration, host_data.result)
+            return TestCase(name, junit_classname, duration, host_data.result)
 
         res = host_data.result._result
         rc = res.get('rc', 0)
         dump = self._dump_results(res, indent=0)
+        dump = self._cleanse_string(dump)
 
         if host_data.status == 'ok':
-            return TestCase(name, task_data.path, duration, dump)
+            return TestCase(name, junit_classname, duration, dump)
 
-        test_case = TestCase(name, task_data.path, duration)
+        test_case = TestCase(name, junit_classname, duration)
 
         if host_data.status == 'failed':
             if 'exception' in res:
@@ -151,6 +177,10 @@ class CallbackModule(CallbackBase):
 
         return test_case
 
+    def _cleanse_string(self, value):
+        """ convert surrogate escapes to the unicode replacement character to avoid XML encoding errors """
+        return to_text(to_bytes(value, errors='surrogateescape'), errors='replace')
+
     def _generate_report(self):
         """ generate a TestSuite report from the collected TaskData and HostData """
 
@@ -166,7 +196,7 @@ class CallbackModule(CallbackBase):
         output_file = os.path.join(self._output_dir, '%s-%s.xml' % (self._playbook_name, time.time()))
 
         with open(output_file, 'wb') as xml:
-            xml.write(to_bytes(report, errors='strict'))
+            xml.write(to_bytes(report, errors='surrogate_or_strict'))
 
     def v2_playbook_on_start(self, playbook):
         self._playbook_path = playbook._file_name
@@ -222,7 +252,11 @@ class TaskData:
 
     def add_host(self, host):
         if host.uuid in self.host_data:
-            raise Exception('%s: %s: %s: duplicate host callback: %s' % (self.path, self.play, self.name, host.name))
+            if host.status == 'included':
+                # concatenate task include output from multiple items
+                host.result = '%s\n%s' % (self.host_data[host.uuid].result, host.result)
+            else:
+                raise Exception('%s: %s: %s: duplicate host callback: %s' % (self.path, self.play, self.name, host.name))
 
         self.host_data[host.uuid] = host
 

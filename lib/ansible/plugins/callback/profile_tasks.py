@@ -1,4 +1,4 @@
-# (C) 2016, Joel, http://github.com/jjshoe 
+# (C) 2016, Joel, http://github.com/jjshoe
 # (C) 2015, Tom Paine, <github@aioue.net>
 # (C) 2014, Jharrod LaFon, @JharrodLaFon
 # (C) 2012-2013, Michael DeHaan, <michael.dehaan@gmail.com>
@@ -28,6 +28,7 @@ import os
 import time
 
 from ansible.plugins.callback import CallbackBase
+from ansible.compat.six.moves import reduce
 
 # define start time
 t0 = tn = time.time()
@@ -81,12 +82,12 @@ class CallbackModule(CallbackBase):
         self.task_output_limit = os.getenv('PROFILE_TASKS_TASK_OUTPUT_LIMIT', 20)
 
         if self.sort_order == 'ascending':
-            self.sort_order = False;
+            self.sort_order = False
 
         if self.task_output_limit == 'all':
             self.task_output_limit = None
         else:
-            self.task_output_limit = int(self.task_output_limit) 
+            self.task_output_limit = int(self.task_output_limit)
 
         super(CallbackModule, self).__init__()
 
@@ -118,23 +119,22 @@ class CallbackModule(CallbackBase):
 
         timestamp(self)
 
-        results = self.stats.items() 
+        results = self.stats.items()
 
         # Sort the tasks by the specified sort
         if self.sort_order != 'none':
             results = sorted(
-                self.stats.iteritems(),
+                self.stats.items(),
                 key=lambda x:x[1]['time'],
                 reverse=self.sort_order,
             )
 
-        # Display the number of tasks specified or the default of 20 
+        # Display the number of tasks specified or the default of 20
         results = results[:self.task_output_limit]
 
         # Print the timings
         for uuid, result in results:
-            msg = ''
-            msg="{0:-<70}{1:->9}".format('{0} '.format(result['name']),' {0:.02f}s'.format(result['time']))
+            msg=u"{0:-<70}{1:->9}".format(result['name'] + u' ',u' {0:.02f}s'.format(result['time']))
             if 'path' in result:
-                msg += "\n{0:-<79}".format( '{0} '.format(result['path']))
+                msg += u"\n{0:-<79}".format(result['path'] + u' ')
             self._display.display(msg)

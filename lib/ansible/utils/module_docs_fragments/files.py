@@ -25,39 +25,56 @@ options:
     required: false
     default: null
     description:
-      - mode the file or directory should be. For those used to I(/usr/bin/chmod) remember that modes are actually octal numbers (like 0644). Leaving off the leading zero will likely have unexpected results. As of version 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
+      - Mode the file or directory should be. For those used to I(/usr/bin/chmod) remember that modes are actually octal numbers (like 0644). Leaving off the leading zero will likely have unexpected results. As of version 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
   owner:
     required: false
     default: null
     description:
-      - name of the user that should own the file/directory, as would be fed to I(chown)
+      - Name of the user that should own the file/directory, as would be fed to I(chown).
   group:
     required: false
     default: null
     description:
-      - name of the group that should own the file/directory, as would be fed to I(chown)
+      - Name of the group that should own the file/directory, as would be fed to I(chown).
   seuser:
     required: false
     default: null
     description:
-      - user part of SELinux file context. Will default to system policy, if
+      - User part of SELinux file context. Will default to system policy, if
         applicable. If set to C(_default), it will use the C(user) portion of the
-        policy if available
+        policy if available.
   serole:
     required: false
     default: null
     description:
-      - role part of SELinux file context, C(_default) feature works as for I(seuser).
+      - Role part of SELinux file context, C(_default) feature works as for I(seuser).
   setype:
     required: false
     default: null
     description:
-      - type part of SELinux file context, C(_default) feature works as for I(seuser).
+      - Type part of SELinux file context, C(_default) feature works as for I(seuser).
   selevel:
     required: false
     default: "s0"
     description:
-      - level part of the SELinux file context. This is the MLS/MCS attribute,
+      - Level part of the SELinux file context. This is the MLS/MCS attribute,
         sometimes known as the C(range). C(_default) feature works as for
         I(seuser).
+  unsafe_writes:
+    description:
+      -  Normally this module uses atomic operations to prevent data corruption or inconsistent reads from the target files,
+         sometimes systems are configured or just broken in ways that prevent this. One example are docker mounted files,
+         they cannot be updated atomically and can only be done in an unsafe manner.
+      -  This boolean option allows ansible to fall back to unsafe methods of updating files for those cases in which you do
+         not have any other choice. Be aware that this is subject to race conditions and can lead to data corruption.
+    required: false
+    default: false
+    version_added: "2.2"
+  attributes:
+    description:
+      - Attributes of the file or directory should be. To get supported flags look at the man page for I(chattr) on the taget system.
+    required: false
+    default: None
+    aliases: ['attr']
+    version_added: "2.3"
 """

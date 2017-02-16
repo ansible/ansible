@@ -34,7 +34,7 @@ if os.getenv('ANSIBLE_ETCD_URL') is not None:
 
 ANSIBLE_ETCD_VERSION = 'v1'
 if os.getenv('ANSIBLE_ETCD_VERSION') is not None:
-    ANSIBLE_ETCD_URL = os.environ['ANSIBLE_ETCD_VERSION']
+    ANSIBLE_ETCD_VERSION = os.environ['ANSIBLE_ETCD_VERSION']
 
 class Etcd:
     def __init__(self, url=ANSIBLE_ETCD_URL, version=ANSIBLE_ETCD_VERSION,

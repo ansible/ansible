@@ -29,7 +29,7 @@ options:
     aliases: []
   aws_secret_key:
     description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used. 
+      - AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
     required: false
     default: null
     aliases: [ 'ec2_secret_key', 'secret_key' ]
@@ -56,7 +56,7 @@ options:
     version_added: "1.5"
   profile:
     description:
-      - uses a boto profile. Only works with boto >= 2.24.0
+      - Uses a boto profile. Only works with boto >= 2.24.0.
     required: false
     default: null
     aliases: []
@@ -73,7 +73,7 @@ notes:
     C(AWS_SECURITY_TOKEN) or C(EC2_SECURITY_TOKEN),
     C(AWS_REGION) or C(EC2_REGION)
   - Ansible uses the boto configuration file (typically ~/.boto) if no
-    credentials are provided. See http://boto.readthedocs.org/en/latest/boto_config_tut.html 
-  - C(AWS_REGION) or C(EC2_REGION) can be typically be used to specify the 
+    credentials are provided. See http://boto.readthedocs.org/en/latest/boto_config_tut.html
+  - C(AWS_REGION) or C(EC2_REGION) can be typically be used to specify the
     AWS region, when required, but this can also be configured in the boto config file
 """

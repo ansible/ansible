@@ -1,0 +1,253 @@
+# test code for the template module
+# (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: show python interpreter
+  debug:
+     msg: "{{ ansible_python['executable'] }}"
+
+- name: show jinja2 version
+  debug:
+     msg: "{{ lookup('pipe', '{{ ansible_python[\"executable\"] }} -c \"import jinja2; print(jinja2.__version__)\"') }}"
+
+- name: get default group
+  shell: id -gn
+  register: group
+
+- name: fill in a basic template
+  template: src=foo.j2 dest={{output_dir}}/foo.templated mode=0644
+  register: template_result
+
+- assert: 
+    that: 
+        - "'changed' in template_result" 
+        - "'dest' in template_result" 
+        - "'group' in template_result" 
+        - "'gid' in template_result" 
+        - "'md5sum' in template_result" 
+        - "'checksum' in template_result"
+        - "'owner' in template_result" 
+        - "'size' in template_result" 
+        - "'src' in template_result" 
+        - "'state' in template_result" 
+        - "'uid' in template_result" 
+
+- name: verify that the file was marked as changed
+  assert: 
+    that: 
+      - "template_result.changed == true"
+
+# VERIFY CONTENTS
+
+- name: check what python version ansible is running on
+  command: "{{ ansible_python.executable }} -c 'import distutils.sysconfig ; print(distutils.sysconfig.get_python_version())'"
+  register: pyver
+  delegate_to: localhost
+
+- name: copy known good into place
+  copy: src=foo.txt dest={{output_dir}}/foo.txt
+
+- name: compare templated file to known good
+  shell: diff -w {{output_dir}}/foo.templated {{output_dir}}/foo.txt
+  register: diff_result
+
+- name: verify templated file matches known good
+  assert:  
+    that: 
+        - 'diff_result.stdout == ""' 
+        - "diff_result.rc == 0" 
+
+# VERIFY MODE
+
+- name: set file mode
+  file: path={{output_dir}}/foo.templated mode=0644
+  register: file_result
+
+- name: ensure file mode did not change
+  assert:
+    that:
+      - "file_result.changed != True"
+
+# VERIFY dest as a directory does not break file attributes
+# Note: expanduser is needed to go down the particular codepath that was broken before
+- name: setup directory for test
+  file: state=directory dest={{output_dir | expanduser}}/template-dir mode=0755 owner=nobody group={{ group.stdout }}
+
+- name: set file mode when the destination is a directory
+  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir/ mode=0600 owner=root group={{ group.stdout }}
+
+- name: set file mode when the destination is a directory
+  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir/ mode=0600 owner=root group={{ group.stdout }}
+  register: file_result
+
+- name: check that the file has the correct attributes
+  stat: path={{output_dir | expanduser}}/template-dir/foo.j2
+  register: file_attrs
+
+- assert:
+    that:
+      - "file_attrs.stat.uid == 0"
+      - "file_attrs.stat.pw_name == 'root'"
+      - "file_attrs.stat.mode == '0600'"
+
+- name: check that the containing directory did not change attributes
+  stat: path={{output_dir | expanduser}}/template-dir/
+  register: dir_attrs
+
+- assert:
+    that:
+      - "dir_attrs.stat.uid != 0"
+      - "dir_attrs.stat.pw_name == 'nobody'"
+      - "dir_attrs.stat.mode == '0755'"
+
+- name: Check that template to a directory where the directory does not end with a / is allowed
+  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir mode=0600 owner=root group={{ group.stdout }}
+
+- name: make a symlink to the templated file
+  file:
+    path: '{{ output_dir }}/foo.symlink'
+    src: '{{ output_dir }}/foo.templated'
+    state: link
+
+- name: check that templating the symlink results in the file being templated
+  template:
+    src: foo.j2
+    dest: '{{output_dir}}/foo.symlink'
+    mode: 0600
+    follow: True
+  register: template_result
+
+- assert:
+    that:
+      - "template_result.changed == True"
+
+- name: check that the file has the correct attributes
+  stat: path={{output_dir | expanduser}}/template-dir/foo.j2
+  register: file_attrs
+
+- assert:
+    that:
+      - "file_attrs.stat.mode == '0600'"
+
+- name: check that templating the symlink again makes no changes
+  template:
+    src: foo.j2
+    dest: '{{output_dir}}/foo.symlink'
+    mode: 0600
+    follow: True
+  register: template_result
+
+- assert:
+    that:
+      - "template_result.changed == False"
+
+# Test strange filenames
+
+- name: Create a temp dir for filename tests
+  file:
+    state: directory
+    dest: '{{ output_dir }}/filename-tests'
+
+- name: create a file with an unusual filename
+  template:
+    src: foo.j2
+    dest: "{{ output_dir }}/filename-tests/foo t'e~m\\plated"
+  register: template_result
+
+- assert:
+    that:
+      - "template_result.changed == True"
+
+- name: check that the unusual filename was created
+  command: "ls {{ output_dir }}/filename-tests/"
+  register: unusual_results
+
+- assert:
+    that:
+      - "\"foo t'e~m\\plated\" in unusual_results.stdout_lines"
+      - "{{unusual_results.stdout_lines| length}} == 1"
+
+- name: check that the unusual filename can be checked for changes
+  template:
+    src: foo.j2
+    dest: "{{ output_dir }}/filename-tests/foo t'e~m\\plated"
+  register: template_result
+
+- assert:
+    that:
+      - "template_result.changed == False"
+
+
+# check_mode
+
+- name: fill in a basic template in check mode
+  template: src=short.j2 dest={{output_dir}}/short.templated
+  register: template_result
+  check_mode: True
+
+- name: check file exists
+  stat: path={{output_dir}}/short.templated
+  register: templated
+
+- name: verify that the file was marked as changed in check mode but was not created
+  assert: 
+    that: 
+      - "not templated.stat.exists"
+      - "template_result|changed"
+
+- name: fill in a basic template
+  template: src=short.j2 dest={{output_dir}}/short.templated
+
+- name: fill in a basic template in check mode
+  template: src=short.j2 dest={{output_dir}}/short.templated
+  register: template_result
+  check_mode: True
+
+- name: verify that the file was marked as not changes in check mode
+  assert: 
+    that: 
+      - "not template_result|changed"
+      - "'templated_var_loaded' in lookup('file', '{{output_dir | expanduser}}/short.templated')"
+
+- name: change var for the template
+  set_fact: 
+    templated_var: "changed"
+
+- name: fill in a basic template with changed var in check mode
+  template: src=short.j2 dest={{output_dir}}/short.templated
+  register: template_result
+  check_mode: True
+
+- name: verify that the file was marked as changed in check mode but the content was not changed
+  assert: 
+    that: 
+      - "'templated_var_loaded' in lookup('file', '{{output_dir | expanduser }}/short.templated')"
+      - "template_result|changed"
+
+# Create a template using a child template, to ensure that variables
+# are passed properly from the parent to subtemplate context (issue #20063)
+
+- name: test parent and subtemplate creation of context
+  template: src=parent.j2 dest={{output_dir}}/parent_and_subtemplate.templated
+  register: template_result
+
+- stat: path={{output_dir}}/parent_and_subtemplate.templated
+
+- name: verify that the parent and subtemplate creation worked
+  assert:
+    that:
+    - "template_result|changed"

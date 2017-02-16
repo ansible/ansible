@@ -19,10 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import uuid
-
 from ansible.inventory.group import Group
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import combine_vars, get_unique_id
 
 __all__ = ['Host']
 
@@ -64,12 +62,12 @@ class Host:
         )
 
     def deserialize(self, data):
-        self.__init__()
+        self.__init__(gen_uuid=False)
 
         self.name    = data.get('name')
         self.vars    = data.get('vars', dict())
         self.address = data.get('address', '')
-        self._uuid   = data.get('uuid', uuid.uuid4())
+        self._uuid   = data.get('uuid', None)
         self.implicit= data.get('implicit', False)
 
         groups = data.get('groups', [])
@@ -78,7 +76,7 @@ class Host:
             g.deserialize(group_data)
             self.groups.append(g)
 
-    def __init__(self, name=None, port=None):
+    def __init__(self, name=None, port=None, gen_uuid=True):
 
         self.name = name
         self.vars = {}
@@ -90,7 +88,9 @@ class Host:
             self.set_variable('ansible_port', int(port))
 
         self._gathered_facts = False
-        self._uuid = uuid.uuid4()
+        self._uuid = None
+        if gen_uuid:
+            self._uuid = get_unique_id()
         self.implicit = False
 
     def __repr__(self):
@@ -136,6 +136,6 @@ class Host:
     def get_group_vars(self):
         results = {}
         groups = self.get_groups()
-        for group in sorted(groups, key=lambda g: g.depth):
+        for group in sorted(groups, key=lambda g: (g.depth, g.name)):
             results = combine_vars(results, group.get_vars())
         return results

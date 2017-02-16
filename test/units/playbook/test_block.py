@@ -39,10 +39,10 @@ class TestBlock(unittest.TestCase):
 
     def test_load_block_simple(self):
         ds = dict(
-           block = [],
-           rescue = [],
-           always = [],
-           #otherwise = [],
+            block = [],
+            rescue = [],
+            always = [],
+            #otherwise = [],
         )
         b = Block.load(ds)
         self.assertEqual(b.block, [])
@@ -53,10 +53,10 @@ class TestBlock(unittest.TestCase):
 
     def test_load_block_with_tasks(self):
         ds = dict(
-           block = [dict(action='block')],
-           rescue = [dict(action='rescue')],
-           always = [dict(action='always')],
-           #otherwise = [dict(action='otherwise')],
+            block = [dict(action='block')],
+            rescue = [dict(action='rescue')],
+            always = [dict(action='always')],
+            #otherwise = [dict(action='otherwise')],
         )
         b = Block.load(ds)
         self.assertEqual(len(b.block), 1)
@@ -74,4 +74,15 @@ class TestBlock(unittest.TestCase):
         b = Block.load(ds)
         self.assertEqual(len(b.block), 1)
         self.assertIsInstance(b.block[0], Task)
+
+    def test_deserialize(self):
+        ds = dict(
+            block = [dict(action='block')],
+            rescue = [dict(action='rescue')],
+            always = [dict(action='always')],
+        )
+        b = Block.load(ds)
+        data = dict(parent = ds, parent_type = 'Block')
+        b.deserialize(data)
+        self.assertIsInstance(b._parent, Block)
 

@@ -80,7 +80,8 @@ def _ip_query(v):
     if v.size == 1:
         return str(v.ip)
     if v.size > 1:
-        if v.ip != v.network:
+        # /31 networks in netaddr have no broadcast address
+        if v.ip != v.network or not v.broadcast:
             return str(v.ip)
 
 def _gateway_query(v):
@@ -162,8 +163,7 @@ def _net_query(v):
             return str(v.network) + '/' + str(v.prefixlen)
 
 def _netmask_query(v):
-    if v.size > 1:
-        return str(v.netmask)
+    return str(v.netmask)
 
 def _network_query(v):
     if v.size > 1:
@@ -228,6 +228,9 @@ def _bool_hwaddr_query(v):
     if v:
         return True
 
+def _int_hwaddr_query(v):
+    return int(v)
+
 def _cisco_query(v):
     v.dialect = netaddr.mac_cisco
     return str(v)
@@ -259,61 +262,61 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
     ''' Check if string is an IP address or network and filter it '''
 
     query_func_extra_args = {
-            '': ('vtype',),
-            '6to4': ('vtype', 'value'),
-            'cidr_lookup': ('iplist', 'value'),
-            'int': ('vtype',),
-            'ipv4': ('value',),
-            'ipv6': ('value',),
-            'link-local': ('value',),
-            'loopback': ('value',),
-            'lo': ('value',),
-            'multicast': ('value',),
-            'private': ('value',),
-            'public': ('value',),
-            'unicast': ('value',),
-            'wrap': ('vtype', 'value'),
-            }
+        '': ('vtype',),
+        '6to4': ('vtype', 'value'),
+        'cidr_lookup': ('iplist', 'value'),
+        'int': ('vtype',),
+        'ipv4': ('value',),
+        'ipv6': ('value',),
+        'link-local': ('value',),
+        'loopback': ('value',),
+        'lo': ('value',),
+        'multicast': ('value',),
+        'private': ('value',),
+        'public': ('value',),
+        'unicast': ('value',),
+        'wrap': ('vtype', 'value'),
+        }
     query_func_map = {
-            '': _empty_ipaddr_query,
-            '6to4': _6to4_query,
-            'address': _ip_query,
-            'address/prefix': _gateway_query,
-            'bool': _bool_ipaddr_query,
-            'broadcast': _broadcast_query,
-            'cidr': _cidr_query,
-            'cidr_lookup': _cidr_lookup_query,
-            'gateway': _gateway_query,
-            'gw': _gateway_query,
-            'host': _host_query,
-            'host/prefix': _gateway_query,
-            'hostmask': _hostmask_query,
-            'hostnet': _gateway_query,
-            'int': _int_query,
-            'ip': _ip_query,
-            'ipv4': _ipv4_query,
-            'ipv6': _ipv6_query,
-            'link-local': _link_local_query,
-            'lo': _loopback_query,
-            'loopback': _loopback_query,
-            'multicast': _multicast_query,
-            'net': _net_query,
-            'netmask': _netmask_query,
-            'network': _network_query,
-            'prefix': _prefix_query,
-            'private': _private_query,
-            'public': _public_query,
-            'revdns': _revdns_query,
-            'router': _gateway_query,
-            'size': _size_query,
-            'subnet': _subnet_query,
-            'type': _type_query,
-            'unicast': _unicast_query,
-            'v4': _ipv4_query,
-            'v6': _ipv6_query,
-            'version': _version_query,
-            'wrap': _wrap_query,
-            }
+        '': _empty_ipaddr_query,
+        '6to4': _6to4_query,
+        'address': _ip_query,
+        'address/prefix': _gateway_query,
+        'bool': _bool_ipaddr_query,
+        'broadcast': _broadcast_query,
+        'cidr': _cidr_query,
+        'cidr_lookup': _cidr_lookup_query,
+        'gateway': _gateway_query,
+        'gw': _gateway_query,
+        'host': _host_query,
+        'host/prefix': _gateway_query,
+        'hostmask': _hostmask_query,
+        'hostnet': _gateway_query,
+        'int': _int_query,
+        'ip': _ip_query,
+        'ipv4': _ipv4_query,
+        'ipv6': _ipv6_query,
+        'link-local': _link_local_query,
+        'lo': _loopback_query,
+        'loopback': _loopback_query,
+        'multicast': _multicast_query,
+        'net': _net_query,
+        'netmask': _netmask_query,
+        'network': _network_query,
+        'prefix': _prefix_query,
+        'private': _private_query,
+        'public': _public_query,
+        'revdns': _revdns_query,
+        'router': _gateway_query,
+        'size': _size_query,
+        'subnet': _subnet_query,
+        'type': _type_query,
+        'unicast': _unicast_query,
+        'v4': _ipv4_query,
+        'v6': _ipv6_query,
+        'version': _version_query,
+        'wrap': _wrap_query,
+        }
 
     vtype = None
 
@@ -329,7 +332,7 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
         _ret = []
         for element in value:
             if ipaddr(element, str(query), version):
-                    _ret.append(ipaddr(element, str(query), version))
+                _ret.append(ipaddr(element, str(query), version))
 
         if _ret:
             return _ret
@@ -582,10 +585,9 @@ def nthhost(value, query=''):
         return False
 
     try:
-        vsize = ipaddr(v, 'size')
         nth = int(query)
         if value.size > nth:
-          return value[nth]
+            return value[nth]
 
     except ValueError:
         return False
@@ -605,7 +607,7 @@ def slaac(value, query = ''):
         elif vtype == 'network':
             v = ipaddr(value, 'subnet')
 
-        if v.version != 6:
+        if ipaddr(value, 'version') != 6:
             return False
 
         value = netaddr.IPNetwork(v)
@@ -631,21 +633,22 @@ def hwaddr(value, query = '', alias = 'hwaddr'):
     ''' Check if string is a HW/MAC address and filter it '''
 
     query_func_extra_args = {
-            '': ('value',),
-            }
+        '': ('value',),
+        }
     query_func_map = {
-            '': _empty_hwaddr_query,
-            'bare': _bare_query,
-            'bool': _bool_hwaddr_query,
-            'cisco': _cisco_query,
-            'eui48': _win_query,
-            'linux': _linux_query,
-            'pgsql': _postgresql_query,
-            'postgresql': _postgresql_query,
-            'psql': _postgresql_query,
-            'unix': _unix_query,
-            'win': _win_query,
-            }
+        '': _empty_hwaddr_query,
+        'bare': _bare_query,
+        'bool': _bool_hwaddr_query,
+        'int': _int_hwaddr_query,
+        'cisco': _cisco_query,
+        'eui48': _win_query,
+        'linux': _linux_query,
+        'pgsql': _postgresql_query,
+        'postgresql': _postgresql_query,
+        'psql': _postgresql_query,
+        'unix': _unix_query,
+        'win': _win_query,
+        }
 
     try:
         v = netaddr.EUI(value)

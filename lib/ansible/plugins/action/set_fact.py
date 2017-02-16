@@ -18,12 +18,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import iteritems
+from ansible.compat.six import iteritems, string_types
 
+from ansible.constants import mk_boolean as boolean
 from ansible.plugins.action import ActionBase
-from ansible.utils.boolean import boolean
 from ansible.utils.vars import isidentifier
-
 
 class ActionModule(ActionBase):
 
@@ -45,7 +44,7 @@ class ActionModule(ActionBase):
                     result['msg'] = "The variable name '%s' is not valid. Variables must start with a letter or underscore character, and contain only letters, numbers and underscores." % k
                     return result
 
-                if isinstance(v, basestring) and v.lower() in ('true', 'false', 'yes', 'no'):
+                if isinstance(v, string_types) and v.lower() in ('true', 'false', 'yes', 'no'):
                     v = boolean(v)
                 facts[k] = v
 

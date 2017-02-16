@@ -19,25 +19,20 @@
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-#!/usr/bin/env python
 
 import sys
-import getpass
 import os
-import shutil
-import time
 import tempfile
-from binascii import unhexlify
-from binascii import hexlify
 from nose.plugins.skip import SkipTest
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
-from ansible.utils.unicode import to_bytes, to_unicode
 
 from ansible import errors
 from ansible.parsing.vault import VaultLib
 from ansible.parsing.vault import VaultEditor
+from ansible.module_utils._text import to_bytes, to_text
+
 
 # Counter import fails for 2.0.1, requires >= 2.6.1 from pip
 try:
@@ -71,6 +66,7 @@ v11_data = """$ANSIBLE_VAULT;1.1;AES256
 64336561613965383835646464623865663966323464653236343638373165343863623638316664
 3631633031323837340a396530313963373030343933616133393566366137363761373930663833
 3739"""
+
 
 class TestVaultEditor(unittest.TestCase):
 
@@ -109,11 +105,8 @@ class TestVaultEditor(unittest.TestCase):
         self.assertTrue(os.path.exists(tmp_file.name))
 
     def test_decrypt_1_0(self):
-        """
-        Skip testing decrypting 1.0 files if we don't have access to AES, KDF or
-        Counter, or we are running on python3 since VaultAES hasn't been backported.
-        """
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or sys.version > '3':
+        # Skip testing decrypting 1.0 files if we don't have access to AES, KDF or Counter.
+        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
 
         v10_file = tempfile.NamedTemporaryFile(delete=False)
@@ -126,19 +119,18 @@ class TestVaultEditor(unittest.TestCase):
         error_hit = False
         try:
             ve.decrypt_file(v10_file.name)
-        except errors.AnsibleError as e:
+        except errors.AnsibleError:
             error_hit = True
 
         # verify decrypted content
         f = open(v10_file.name, "rb")
-        fdata = to_unicode(f.read())
+        fdata = to_text(f.read())
         f.close()
 
         os.unlink(v10_file.name)
 
-        assert error_hit == False, "error decrypting 1.0 file"
+        assert error_hit is False, "error decrypting 1.0 file"
         assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip()
-
 
     def test_decrypt_1_1(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
@@ -154,26 +146,22 @@ class TestVaultEditor(unittest.TestCase):
         error_hit = False
         try:
             ve.decrypt_file(v11_file.name)
-        except errors.AnsibleError as e:
+        except errors.AnsibleError:
             error_hit = True
 
         # verify decrypted content
         f = open(v11_file.name, "rb")
-        fdata = to_unicode(f.read())
+        fdata = to_text(f.read())
         f.close()
 
         os.unlink(v11_file.name)
 
-        assert error_hit == False, "error decrypting 1.0 file"
+        assert error_hit is False, "error decrypting 1.0 file"
         assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip()
 
-
     def test_rekey_migration(self):
-        """
-        Skip testing rekeying files if we don't have access to AES, KDF or
-        Counter, or we are running on python3 since VaultAES hasn't been backported.
-        """
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or sys.version > '3':
+        # Skip testing rekeying files if we don't have access to AES, KDF or Counter.
+        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
 
         v10_file = tempfile.NamedTemporaryFile(delete=False)
@@ -186,7 +174,7 @@ class TestVaultEditor(unittest.TestCase):
         error_hit = False
         try:
             ve.rekey_file(v10_file.name, 'ansible2')
-        except errors.AnsibleError as e:
+        except errors.AnsibleError:
             error_hit = True
 
         # verify decrypted content
@@ -194,7 +182,7 @@ class TestVaultEditor(unittest.TestCase):
         fdata = f.read()
         f.close()
 
-        assert error_hit == False, "error rekeying 1.0 file to 1.1"
+        assert error_hit is False, "error rekeying 1.0 file to 1.1"
 
         # ensure filedata can be decrypted, is 1.1 and is AES256
         vl = VaultLib("ansible2")
@@ -202,13 +190,11 @@ class TestVaultEditor(unittest.TestCase):
         error_hit = False
         try:
             dec_data = vl.decrypt(fdata)
-        except errors.AnsibleError as e:
+        except errors.AnsibleError:
             error_hit = True
 
         os.unlink(v10_file.name)
 
         assert vl.cipher_name == "AES256", "wrong cipher name set after rekey: %s" % vl.cipher_name
-        assert error_hit == False, "error decrypting migrated 1.0 file"
-        assert dec_data.strip() == "foo", "incorrect decryption of rekeyed/migrated file: %s" % dec_data
-
-
+        assert error_hit is False, "error decrypting migrated 1.0 file"
+        assert dec_data.strip() == b"foo", "incorrect decryption of rekeyed/migrated file: %s" % dec_data

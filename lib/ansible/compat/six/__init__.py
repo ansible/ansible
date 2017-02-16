@@ -36,13 +36,13 @@ if _system_six:
     # If we need some things from even newer versions of six, then we need to
     # use our bundled copy instead
 
-       if ( # Added in six-1.8.0
-            not hasattr(_system_six.moves, 'shlex_quote') or
-            # Added in six-1.4.0
-            not hasattr(_system_six, 'byte2int') or
-            not hasattr(_system_six, 'add_metaclass') or
-            not hasattr(_system_six.moves, 'urllib')
-            ):
+    if ( # Added in six-1.8.0
+         not hasattr(_system_six.moves, 'shlex_quote') or
+         # Added in six-1.4.0
+         not hasattr(_system_six, 'byte2int') or
+         not hasattr(_system_six, 'add_metaclass') or
+         not hasattr(_system_six.moves, 'urllib')
+        ):
 
         _system_six = False
 

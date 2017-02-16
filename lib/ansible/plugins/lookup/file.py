@@ -19,6 +19,7 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils._text import to_text
 
 try:
     from __main__ import display
@@ -33,22 +34,16 @@ class LookupModule(LookupBase):
 
         ret = []
 
-        basedir = self.get_basedir(variables)
-
         for term in terms:
             display.debug("File lookup term: %s" % term)
 
-            # Special handling of the file lookup, used primarily when the
-            # lookup is done from a role. If the file isn't found in the
-            # basedir of the current file, use dwim_relative to look in the
-            # role/files/ directory, and finally the playbook directory
-            # itself (which will be relative to the current working dir)
-
-            lookupfile = self._loader.path_dwim_relative(basedir, 'files', term)
-            display.vvvv("File lookup using %s as file" % lookupfile)
+            # Find the file in the expected search path
+            lookupfile = self.find_file_in_search_path(variables, 'files', term)
+            display.vvvv(u"File lookup using %s as file" % lookupfile)
             try:
                 if lookupfile:
-                    contents, show_data = self._loader._get_file_contents(lookupfile)
+                    b_contents, show_data = self._loader._get_file_contents(lookupfile)
+                    contents = to_text(b_contents, errors='surrogate_or_strict')
                     ret.append(contents.rstrip())
                 else:
                     raise AnsibleParserError()

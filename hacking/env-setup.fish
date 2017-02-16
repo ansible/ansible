@@ -4,16 +4,16 @@
 set HACKING_DIR (dirname (status -f))
 set FULL_PATH (python -c "import os; print(os.path.realpath('$HACKING_DIR'))")
 set ANSIBLE_HOME (dirname $FULL_PATH)
-set PREFIX_PYTHONPATH $ANSIBLE_HOME/lib 
-set PREFIX_PATH $ANSIBLE_HOME/bin 
+set PREFIX_PYTHONPATH $ANSIBLE_HOME/lib
+set PREFIX_PATH $ANSIBLE_HOME/bin
 set PREFIX_MANPATH $ANSIBLE_HOME/docs/man
 
 # set quiet flag
-if set -q argv
+if test (count $argv) -ge 1
     switch $argv
-    case '-q' '--quiet'
-        set QUIET "true"
-    case '*'
+        case '-q' '--quiet'
+            set QUIET "true"
+        case '*'
     end
 end
 
@@ -39,7 +39,7 @@ end
 # Set MANPATH
 if not contains $PREFIX_MANPATH $MANPATH
     if not set -q MANPATH
-        set -gx MANPATH $PREFIX_MANPATH
+        set -gx MANPATH $PREFIX_MANPATH:
     else
         set -gx MANPATH $PREFIX_MANPATH $MANPATH
     end
@@ -49,15 +49,14 @@ set -gx ANSIBLE_LIBRARY $ANSIBLE_HOME/library
 
 # Generate egg_info so that pkg_resources works
 pushd $ANSIBLE_HOME
+if test -e $PREFIX_PYTHONPATH/ansible*.egg-info
+    rm -r $PREFIX_PYTHONPATH/ansible*.egg-info
+end
 if [ $QUIET ]
     python setup.py -q egg_info
 else
     python setup.py egg_info
 end
-if test -e $PREFIX_PYTHONPATH/ansible*.egg-info
-    rm -r $PREFIX_PYTHONPATH/ansible*.egg-info
-end
-mv ansible*egg-info $PREFIX_PYTHONPATH
 find . -type f -name "*.pyc" -delete
 popd
 
