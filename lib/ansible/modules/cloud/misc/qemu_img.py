@@ -51,12 +51,12 @@ options:
     choices: [ "yes", "no" ]
     defaults: "yes"
     description:
-    - Whether the image should grow
+    - Whether the image is allowed grow
   shrink:
     choices: [ "yes", "no" ]
     defaults: "no"
     description:
-    - Whether the image should shrink
+    - Whether the image is allowed shrink
   state:
     choices: [ "absent", "present"]
     description:
