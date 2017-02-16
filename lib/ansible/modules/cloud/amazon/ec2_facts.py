@@ -57,7 +57,10 @@ EXAMPLES = '''
 
 import socket
 import re
+import json
+
 from ansible.module_utils._text import to_text
+
 socket.setdefaulttimeout(5)
 
 
@@ -65,29 +68,14 @@ class Ec2Metadata(object):
     ec2_metadata_uri = 'http://169.254.169.254/latest/meta-data/'
     ec2_sshdata_uri = 'http://169.254.169.254/latest/meta-data/public-keys/0/openssh-key'
     ec2_userdata_uri = 'http://169.254.169.254/latest/user-data/'
+    ec2_dynamicdata_uri = 'http://169.254.169.254/latest/dynamic/'
 
-    AWS_REGIONS = ('ap-northeast-1',
-                   'ap-northeast-2',
-                   'ap-south-1',
-                   'ap-southeast-1',
-                   'ap-southeast-2',
-                   'ca-central-1',
-                   'eu-central-1',
-                   'eu-west-1',
-                   'eu-west-2',
-                   'sa-east-1',
-                   'us-east-1',
-                   'us-east-2',
-                   'us-west-1',
-                   'us-west-2',
-                   'us-gov-west-1',
-                   )
-
-    def __init__(self, module, ec2_metadata_uri=None, ec2_sshdata_uri=None, ec2_userdata_uri=None):
+    def __init__(self, module, ec2_metadata_uri=None, ec2_sshdata_uri=None, ec2_userdata_uri=None, ec2_dynamicdata_uri=None):
         self.module = module
         self.uri_meta = ec2_metadata_uri or self.ec2_metadata_uri
         self.uri_user = ec2_userdata_uri or self.ec2_userdata_uri
         self.uri_ssh = ec2_sshdata_uri or self.ec2_sshdata_uri
+        self.uri_dynamic = ec2_dynamicdata_uri or self.ec2_dynamicdata_uri
         self._data = {}
         self._prefix = 'ansible_ec2_%s'
 
@@ -143,32 +131,29 @@ class Ec2Metadata(object):
                 newkey = key.replace(':', '_').replace('-', '_')
                 data[newkey] = data.pop(key)
 
-    def add_ec2_region(self, data):
-        """Use the 'ansible_ec2_placement_availability_zone' key/value
-        pair to add 'ansible_ec2_placement_region' key/value pair with
-        the EC2 region name.
-        """
-
-        # Only add a 'ansible_ec2_placement_region' key if the
-        # 'ansible_ec2_placement_availability_zone' exists.
-        zone = data.get('ansible_ec2_placement_availability_zone')
-        if zone is not None:
-            # Use the zone name as the region name unless the zone
-            # name starts with a known AWS region name.
-            region = zone
-            for r in self.AWS_REGIONS:
-                if zone.startswith(r):
-                    region = r
-                    break
-            data['ansible_ec2_placement_region'] = region
+    def convert_json_to_fields(self, data):
+        """Flattens stringified JSON values and inserts them into the dictionary"""
+        for (key, value) in data.items():
+            try:
+                dict = json.loads(value)
+                del data[key]  # Remove extraneous key
+                for (subkey, subvalue) in dict.items():
+                    newkey = key + '_' + subkey
+                    data[newkey.lower()] = subvalue
+            except:
+                pass  # not a stringifed JSON string
 
     def run(self):
-        self.fetch(self.uri_meta)  # populate _data
+        self.fetch(self.uri_meta)  # populate metadata
         data = self._mangle_fields(self._data, self.uri_meta)
         data[self._prefix % 'user-data'] = self._fetch(self.uri_user)
         data[self._prefix % 'public-key'] = self._fetch(self.uri_ssh)
+        self._data = {}
+        self.fetch(self.uri_dynamic)  # populate dynamic data
+        dyndata = self._mangle_fields(self._data, self.uri_dynamic)
+        data = dict(dyndata.items() + data.items())
+        self.convert_json_to_fields(data)
         self.fix_invalid_varnames(data)
-        self.add_ec2_region(data)
         return data
 
 
