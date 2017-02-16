@@ -16,9 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'core',
+    'version': '1.0'
+}
 
 DOCUMENTATION = """
 ---
@@ -56,27 +58,14 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
----
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: ansible
-    password: Ansible
-    transport: cli
-
----
 - name: enable netconf service on port 830
   junos_netconf:
     listens_on: 830
     state: present
-    provider: "{{ cli }}"
 
 - name: disable netconf service
   junos_netconf:
     state: absent
-    provider: "{{ cli }}"
 """
 
 RETURN = """
@@ -88,64 +77,94 @@ commands:
 """
 import re
 
-import ansible.module_utils.junos
+from ansible.module_utils.junos import load_config, get_config
+from ansible.module_utils.junos import junos_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
 
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.network import NetworkModule, NetworkError
+
+def map_obj_to_commands(updates, module):
+    want, have = updates
+    commands = list()
+
+    if want['state'] == 'present' and have['state'] == 'absent':
+        commands.append(
+            'set system services netconf ssh port %s' % want['netconf_port']
+        )
+
+    elif want['state'] == 'absent' and have['state'] == 'present':
+        commands.append('delete system services netconf')
+
+    elif want['netconf_port'] != have.get('netconf_port'):
+        commands.append(
+            'set system services netconf ssh port %s' % want['netconf_port']
+        )
+
+    return commands
 
 def parse_port(config):
     match = re.search(r'port (\d+)', config)
     if match:
         return int(match.group(1))
 
-def get_instance(module):
-    cmd = 'show configuration system services netconf'
-    cfg = module.cli(cmd)[0]
-    result = dict(state='absent')
-    if cfg:
-        result = dict(state='present')
-        result['port'] = parse_port(cfg)
-    return result
+def map_config_to_obj(module):
+    config = get_config(module, ['system services netconf'])
+    obj = {'state': 'absent'}
+    if config:
+        obj.update({
+            'state': 'present',
+            'netconf_port': parse_port(config)
+        })
+    return obj
+
+
+def validate_netconf_port(value, module):
+    if not 1 <= value <= 65535:
+        module.fail_json(msg='netconf_port must be between 1 and 65535')
+
+def map_params_to_obj(module):
+    obj = {
+        'netconf_port': module.params['netconf_port'],
+        'state': module.params['state']
+    }
+
+    for key, value in iteritems(obj):
+        # validate the param value (if validator func exists)
+        validator = globals().get('validate_%s' % key)
+        if all((value, validator)):
+            validator(value, module)
+
+    return obj
 
 def main():
     """main entry point for module execution
     """
-
     argument_spec = dict(
         netconf_port=dict(type='int', default=830, aliases=['listens_on']),
         state=dict(default='present', choices=['present', 'absent']),
-        transport=dict(default='cli', choices=['cli'])
     )
 
-    module = NetworkModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    state = module.params['state']
-    port = module.params['netconf_port']
+    warnings = list()
+    check_args(module, warnings)
 
-    result = dict(changed=False)
+    result = {'changed': False, 'warnings': warnings}
 
-    instance = get_instance(module)
+    want = map_params_to_obj(module)
+    have = map_config_to_obj(module)
 
-    if state == 'present' and instance.get('state') == 'absent':
-        commands = 'set system services netconf ssh port %s' % port
-    elif state == 'present' and port != instance.get('port'):
-        commands = 'set system services netconf ssh port %s' % port
-    elif state == 'absent' and instance.get('state') == 'present':
-        commands = 'delete system services netconf'
-    else:
-        commands = None
+    commands = map_obj_to_commands((want, have), module)
+    result['commands'] = commands
 
     if commands:
-        if not module.check_mode:
-            try:
-                comment = 'configuration updated by junos_netconf'
-                module.config(commands, comment=comment)
-            except NetworkError:
-                exc = get_exception()
-                module.fail_json(msg=str(exc), **exc.kwargs)
-        result['changed'] = True
-        result['commands'] = commands
+        commit = not module.check_mode
+        diff = load_config(module, commands, commit=commit)
+        if diff and module._diff:
+            if module._diff:
+                result['diff'] = {'prepared': diff}
+            result['changed'] = True
 
     module.exit_json(**result)
 

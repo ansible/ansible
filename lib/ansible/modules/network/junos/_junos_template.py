@@ -127,22 +127,13 @@ def main():
         transport=dict(default='netconf', choices=['netconf'])
     )
 
-    module = NetworkModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
     comment = module.params['comment']
     confirm = module.params['confirm']
     commit = not module.check_mode
-
-    replace = False
-    overwrite = False
-
     action = module.params['action']
-    if action == 'overwrite':
-        overwrite = True
-    elif action == 'replace':
-        replace = True
-
     src = module.params['src']
     fmt = module.params['config_format']
 
@@ -150,19 +141,16 @@ def main():
         module.fail_json(msg="overwrite cannot be used when format is "
             "set per junos-pyez documentation")
 
-    results = dict(changed=False)
-    results['_backup'] = unicode(module.config.get_config()).strip()
+    results = {'changed': False}
 
-    try:
-        diff = module.config.load_config(src, commit=commit, replace=replace,
-                confirm=confirm, comment=comment, config_format=fmt)
+    if module.praams['backup']:
+        results['__backup__'] = unicode(get_configuration(module))
 
-        if diff:
-            results['changed'] = True
-            results['diff'] = dict(prepared=diff)
-    except NetworkError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), **exc.kwargs)
+    diff = load(module, src, **kwargs)
+    if diff:
+        results['changed'] = True
+        if module._diff:
+            results['diff'] = {'prepared': diff}
 
     module.exit_json(**results)
 
