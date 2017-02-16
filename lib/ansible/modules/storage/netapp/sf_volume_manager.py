@@ -63,7 +63,7 @@ options:
         default: None
 
     attributes:
-        description: List of Name/Value pairs in JSON object format.
+        description: A YAML dictionary of attributes that you would like to apply on this volume.
         required: false
         default: None
 
