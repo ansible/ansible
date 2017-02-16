@@ -1293,7 +1293,10 @@ class Ec2Inventory(object):
         ''' Get and store the map of resource records to domain names that
         point to them. '''
 
-        r53_conn = route53.Route53Connection()
+        if self.boto_profile:
+            r53_conn = route53.Route53Connection(profile_name=self.boto_profile)
+        else:
+            r53_conn = route53.Route53Connection()
         all_zones = r53_conn.get_zones()
 
         route53_zones = [ zone for zone in all_zones if zone.name[:-1]
