@@ -147,4 +147,11 @@ EXAMPLES = r'''
     path: C:\temp\testfile.txt
     line: Line added to file
     newline: unix
+
+# Update a line using backrefs
+- win_lineinfile:
+    path: C:\temp\example.conf
+    backrefs: yes
+    regexp: '(^name=)'
+    line: '$1JohnDoe'
 '''
