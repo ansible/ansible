@@ -22,15 +22,9 @@ __metaclass__ = type
 
 import os
 
-try:
-    import builtins
-except ImportError:
-    import __builtin__ as builtins
-
-
 from ansible import constants as C
 from ansible.compat.six import text_type
-from ansible.compat.six.moves import shlex_quote
+from ansible.compat.six.moves import shlex_quote, builtins
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, mock_open
 
