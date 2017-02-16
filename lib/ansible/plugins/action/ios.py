@@ -53,10 +53,11 @@ class ActionModule(_ActionModule):
         pc.become = provider['authorize'] or False
         pc.become_pass = provider['auth_pass']
 
+        connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+
         socket_path = self._get_socket_path(pc)
         if not os.path.exists(socket_path):
             # start the connection if it isn't started
-            connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
             connection.exec_command('EXEC: show version')
 
         task_vars['ansible_socket'] = socket_path
@@ -66,7 +67,14 @@ class ActionModule(_ActionModule):
             self._play_context.become_method = None
 
 
-        return super(ActionModule, self).run(tmp, task_vars)
+        results = super(ActionModule, self).run(tmp, task_vars)
+
+        # need to make sure to leave config mode if the module didn't clean up
+        rc, out, err = connection.exec_command('EXEC: prompt()')
+        if str(out).strip().endswith(')#'):
+            connection.exec_command('EXEC: exit')
+
+        return results
 
     def _get_socket_path(self, play_context):
         ssh = connection_loader.get('ssh', class_only=True)
