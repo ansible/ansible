@@ -41,7 +41,7 @@ options:
     required: true
   member:
     description:
-      - Member address name to add/delete.
+      - Member address name to add or delete.
     required: true
   state:
     description:

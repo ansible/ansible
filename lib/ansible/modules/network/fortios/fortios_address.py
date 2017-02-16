@@ -42,7 +42,7 @@ options:
     choices: ['present', 'absent']
   name:
     description:
-      - Name of the address to add/delete
+      - Name of the address to add or delete
     required: true
   type:
     description:
