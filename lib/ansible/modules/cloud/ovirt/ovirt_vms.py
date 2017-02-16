@@ -937,7 +937,8 @@ def main():
 
     try:
         state = module.params['state']
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         vms_service = connection.system_service().vms_service()
         vms_module = VmsModule(
             connection=connection,
@@ -1053,7 +1054,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout='token' not in module.params['auth'])
 
 
 if __name__ == "__main__":
