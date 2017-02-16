@@ -1519,26 +1519,22 @@ class Ec2Inventory(object):
         ''' Reads the inventory from the cache file and returns it as a JSON
         object '''
 
-        cache = open(self.cache_path_cache, 'r')
-        json_inventory = cache.read()
-        return json_inventory
-
+        with open(self.cache_path_cache, 'r') as f:
+            json_inventory = f.read()
+            return json_inventory
 
     def load_index_from_cache(self):
         ''' Reads the index from the cache file sets self.index '''
 
-        cache = open(self.cache_path_index, 'r')
-        json_index = cache.read()
-        self.index = json.loads(json_index)
-
+        with open(self.cache_path_index, 'r') as f:
+            self.index = json.load(f)
 
     def write_to_cache(self, data, filename):
         ''' Writes data in JSON format to a file '''
 
         json_data = self.json_format_dict(data, True)
-        cache = open(filename, 'w')
-        cache.write(json_data)
-        cache.close()
+        with open(filename, 'w') as f:
+            f.write(json_data)
 
     def uncammelize(self, key):
         temp = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', key)
