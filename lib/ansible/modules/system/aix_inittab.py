@@ -92,7 +92,8 @@ requirements: [ 'itertools']
 
 EXAMPLES = '''
 # Add service startmyservice to the inittab, directly after service existingservice.
-- aix_inittab
+- name: Add startmyservice to inittab
+  aix_inittab
     name: startmyservice
     runlevel: 4
     processaction: once
@@ -102,7 +103,8 @@ EXAMPLES = '''
   become: yes
 
 # Change inittab enrty startmyservice to runlevel "2" and processactio "wait".
-- aix_inittab
+- name: Change startmyservice to inittab
+  aix_inittab
     name: startmyservice
     runlevel: 2
     processaction: wait
@@ -111,7 +113,8 @@ EXAMPLES = '''
   become: yes
 
 # Remove inittab entry startmyservice.
-- aix_inittab
+- name: remove startmyservice from inittab
+  aix_inittab
     name: startmyservice
     runlevel: 2
     processaction: wait
