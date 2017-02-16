@@ -71,9 +71,16 @@ def do_fork():
             if pid > 0:
                 sys.exit(0)
 
+            if C.DEFAULT_LOG_PATH != '':
+                out_file = file(C.DEFAULT_LOG_PATH, 'a+')
+                err_file = file(C.DEFAULT_LOG_PATH, 'a+', 0)
+            else:
+                out_file = file('/dev/null', 'a+')
+                err_file = file('/dev/null', 'a+', 0)
+
+            os.dup2(out_file.fileno(), sys.stdout.fileno())
+            os.dup2(err_file.fileno(), sys.stderr.fileno())
             os.close(sys.stdin.fileno())
-            os.close(sys.stdout.fileno())
-            os.close(sys.stderr.fileno())
 
             return pid
         except OSError as e:
@@ -102,14 +109,6 @@ def recv_data(s):
         data += d
     return data
 
-def log(msg, host=None, **kwargs):
-    if host:
-        msg = '<%s> %s' % (host, msg)
-    facility = getattr(syslog, C.DEFAULT_SYSLOG_FACILITY, syslog.LOG_USER)
-    syslog.openlog('ansible-connection', 0, facility)
-    syslog.syslog(syslog.LOG_INFO, str(msg))
-
-
 class Server():
 
     def __init__(self, path, play_context):
@@ -118,7 +117,7 @@ class Server():
 
         self._start_time = datetime.datetime.now()
 
-        self.log("setup connection %s" % self.play_context.connection)
+        display.vvv("setup connection %s" % self.play_context.connection, play_context.remote_addr)
 
         self.conn = connection_loader.get(play_context.connection, play_context, sys.stdin)
         self.conn._connect()
@@ -135,9 +134,6 @@ class Server():
         meth = getattr(obj, name, None)
         if meth:
             return meth(*args, **kwargs)
-
-    def log(self, msg):
-        log(msg, host=self.play_context.remote_addr)
 
     def alarm_handler(self, signum, frame):
         '''
@@ -220,13 +216,13 @@ class Server():
                     send_data(s, to_bytes(stderr))
                 s.close()
         except Exception as e:
-            log(traceback.format_exc())
+            display.debug(traceback.format_exc())
         finally:
             # when done, close the connection properly and cleanup
             # the socket file so it can be recreated
             end_time = datetime.datetime.now()
             delta = end_time - self._start_time
-            log('shutting down connection, connection was active for %s secs' % delta, self.play_context.remote_addr)
+            dsplay.v('shutting down connection, connection was active for %s secs' % delta, self.play_context.remote_addr)
             try:
                 self.conn.close()
                 self.socket.close()
@@ -258,8 +254,6 @@ def main():
         sys.stderr.write(traceback.format_exc())
         sys.exit("FAIL: %s" % e)
 
-    display.verbosity = pc.verbosity
-
     ssh = connection_loader.get('ssh', class_only=True)
     m = ssh._create_control_path(pc.remote_addr, pc.port, pc.remote_user)
 
@@ -279,7 +273,7 @@ def main():
             try:
                 server = Server(sf_path, pc)
             except Exception as exc:
-                log(traceback.format_exc(), pc.remote_addr)
+                display.debug(traceback.format_exec(), pc.remote_addr)
             fcntl.lockf(lock_fd, fcntl.LOCK_UN)
             os.close(lock_fd)
             server.run()
@@ -308,8 +302,7 @@ def main():
                 time.sleep(C.PERSISTENT_CONNECT_INTERVAL)
                 attempts += 1
                 if attempts > C.PERSISTENT_CONNECT_RETRIES:
-                    sys.stderr.write('failed to connect to the listener socket, '
-                    'connection timeout.  See syslog for more details')
+                    sys.stderr.write('failed to connect to the listener socket, connection timeout.')
                     sys.exit(255)
 
         # send the play_context back into the connection so the connection
@@ -334,5 +327,4 @@ def main():
 
 if __name__ == '__main__':
     display = Display()
-    display.display = log
     main()
