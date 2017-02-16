@@ -1011,7 +1011,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
         for w in will_update:
             if w.startswith('@'):
                 to_update.append((w, None))
-                msg = '%s will be updated' % w
+                res['msg'] += '%s will be updated' % w
             elif w not in updates:
                 other_pkg = will_update_from_other_package[w]
                 to_update.append((w, 'because of (at least) %s-%s.%s from %s' % (other_pkg,
@@ -1086,7 +1086,7 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
     en_repos = []
 
     if skip_broken:
-        yum_basecmd.extend('--skip-broken')
+        yum_basecmd.extend(['--skip-broken'])
 
     if disablerepo:
         dis_repos = disablerepo.split(',')
@@ -1125,7 +1125,7 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
                     for i in new_repos:
                         if not i in current_repos:
                             rid = my.repos.getRepo(i)
-                            a = rid.repoXML.repoid
+                            a = rid.repoXML.repoid  ##  if no one complains remove this on next MR 
                     current_repos = new_repos
                 except yum.Errors.YumBaseError:
                     e = get_exception()
@@ -1147,7 +1147,6 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
         # should be caught by AnsibleModule argument_spec
         module.fail_json(msg="we should never get here unless this all"
                 " failed", changed=False, results='', errors='unexpected state')
-
     return res
 
 
