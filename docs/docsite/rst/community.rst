@@ -246,7 +246,7 @@ Releases are also given code names based on Van Halen songs, that no one really 
 Tower Support Questions
 -----------------------
 
-Ansible `Tower <http://ansible.com/tower>`_ is a UI, Server, and REST endpoint for Ansible, produced by Ansible, Inc.
+Ansible `Tower <https://ansible.com/tower>`_ is a UI, Server, and REST endpoint for Ansible, produced by Ansible, Inc.
 
 If you have a question about Tower, visit `support.ansible.com <https://support.ansible.com/>`_ rather than using the IRC
 channel or the general project mailing list.

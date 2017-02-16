@@ -24,7 +24,7 @@ setup(
     description='Radically simple IT automation',
     author=__author__,
     author_email='info@ansible.com',
-    url='http://ansible.com/',
+    url='https://ansible.com/',
     license='GPLv3',
     # Ansible will also make use of a system copy of python-six and
     # python-selectors2 if installed but use a Bundled copy if it's not.

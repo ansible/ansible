@@ -484,7 +484,7 @@ They can then be used in a template or a jinja template in any role called after
 Ansible Galaxy
 ``````````````
 
-`Ansible Galaxy <http://galaxy.ansible.com>`_ is a free site for finding, downloading, rating, and reviewing all kinds of community developed Ansible roles and can be a great way to get a jumpstart on your automation projects.
+`Ansible Galaxy <https://galaxy.ansible.com>`_ is a free site for finding, downloading, rating, and reviewing all kinds of community developed Ansible roles and can be a great way to get a jumpstart on your automation projects.
 
 You can sign up with social auth, and the download client 'ansible-galaxy' is included in Ansible 1.4.2 and later.
 
