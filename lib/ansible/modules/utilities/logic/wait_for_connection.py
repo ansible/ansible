@@ -22,7 +22,7 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
                     'supported_by': 'core',
                     'version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: wait_for_connection
 short_description: Waits until remote system is reachable/usable
@@ -52,7 +52,7 @@ options:
 author: "Dag Wieers (@dagwieers)"
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Wait 300 seconds for target connection to become reachable/usable
   wait_for_connection:
 
@@ -61,6 +61,22 @@ EXAMPLES = '''
     delay: 60
     timeout: 600
 
+# Wake desktops, wait for them to become ready and continue playbook
+- hosts: all
+  gather_facts: no
+  tasks:
+  - name: Send magic Wake-On-Lan packet to turn on individual systems
+    wakeonlan:
+      mac: '{{ mac }}'
+      broadcast: 192.168.0.255
+    delegate_to: localhost
+
+  - name: Wait for system to become reachable
+    wait_for_connection:
+
+  - name: Gather facts for first time
+    setup:
+
 # Build a new VM, wait for it to become ready and continue playbook
 - hosts: all
   gather_facts: no
@@ -68,26 +84,25 @@ EXAMPLES = '''
   - name: Clone new VM, if missing
     vmware_guest:
       hostname: '{{ vcenter_ipaddress }}'
-      ...
       name: '{{ inventory_hostname_short }}'
       template: Windows 2012R2
-      state: present
-      networks:
-      - name: VLAN 123
-        ip: '{{ ansible_host }}'
-        netmask: '{{ vm_netmask }}'
-        gateway: '{{ gw_ip }}'
-        domain: '{{ domain }}'
-        dns_servers: [ '{{ dns_ip }}' ]
       customization:
         hostname: '{{ vm_shortname }}'
         runonce:
-        - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\Enable-WinRM.ps1 -CertValidityDays 3650 -ForceNewSSLCert
+        - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\ConfigureRemotingForAnsible.ps1 -CertValidityDays 3650 -ForceNewSSLCert
     delegate_to: localhost
 
   - name: Wait for system to become reachable over WinRM
     wait_for_connection:
 
   - name: Gather facts for first time
-    setup
+    setup:
+'''
+
+RETURN = r'''
+elapsed:
+  description: The number of seconds that elapsed waiting for the connection to appear.
+  returned: always
+  type: integer
+  sample: 23
 '''

@@ -90,13 +90,12 @@ class Connection(ConnectionBase):
 
         super(Connection, self).__init__(*args, **kwargs)
 
-        self.host = self._play_context.remote_addr
-        self.port = int(self._play_context.port or 5986)
-
     def transport_test(self, connect_timeout):
         ''' Test the transport mechanism, if available '''
-        display.vvv("attempting transport test to %s:%s" % (self.host, self.port))
-        sock = socket.create_connection((self.host, self.port), connect_timeout)
+        host = self._play_context.remote_addr
+        port = int(self._play_context.port or 5986)
+        display.vvv("attempting transport test to %s:%s" % (host, port))
+        sock = socket.create_connection((host, port), connect_timeout)
         sock.close()
 
     def set_host_overrides(self, host, hostvars=None):

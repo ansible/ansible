@@ -19,11 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import socket
 import time
-
 from datetime import datetime, timedelta
 
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.plugins.action import ActionBase
 
 try:
@@ -54,7 +53,8 @@ class ActionModule(ActionBase):
                 if what_desc:
                     display.debug("wait_for_connection: %s success" % what_desc)
                 return
-            except Exception as e:
+            except Exception:
+                e = get_exception()
                 if what_desc:
                     display.debug("wait_for_connection: %s fail (expected), retrying in %d seconds..." % (what_desc, sleep))
                 time.sleep(sleep)
@@ -78,7 +78,7 @@ class ActionModule(ActionBase):
 
         def ping_module_test(connect_timeout):
             ''' Test ping module, if available '''
-            display.vvv("attempting ping module test")
+            display.vvv("wait_for_connection: attempting ping module test")
             # call connection reset between runs if it's there
             try:
                 self._connection._reset()
@@ -86,13 +86,13 @@ class ActionModule(ActionBase):
                 pass
 
             # Use win_ping on winrm/powershell, else use ping
-            if self._connection.transport == 'winrm' and self._connection._shell_type == 'powershell':
-                result = self._execute_module(module_name='win_ping', module_args={})
+            if hasattr(self._connection, '_shell_type') and self._connection._shell_type == 'powershell':
+                ping_result = self._execute_module(module_name='win_ping', module_args=dict(), tmp=tmp, task_vars=task_vars)
             else:
-                result = self._execute_module(module_name='ping', module_args={})
+                ping_result = self._execute_module(module_name='ping', module_args=dict(), tmp=tmp, task_vars=task_vars)
 
             # Test module output
-            if result['ping'] != 'pong':
+            if ping_result['ping'] != 'pong':
                 raise Exception('ping test failed')
 
         start = datetime.now()
@@ -108,7 +108,8 @@ class ActionModule(ActionBase):
             # Use the ping module test to determine end-to-end connectivity
             self.do_until_success_or_timeout(ping_module_test, timeout, connect_timeout, what_desc="ping module test success", sleep=sleep)
 
-        except TimedOutException as e:
+        except TimedOutException:
+            e = get_exception()
             result['failed'] = True
             result['msg'] = str(e)
 
