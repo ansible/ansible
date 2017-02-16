@@ -357,6 +357,9 @@ def main():
                     fw.allowed = allowed_list
                     fw_changed = True
 
+                # source_ranges might not be set in the project; cast it to an empty list
+                fw.source_ranges = fw.source_ranges or []
+
                 # If these attributes are lists, we sort them first, then compare.
                 # Otherwise, we update if they differ.
                 if fw.source_ranges != src_range:
@@ -368,14 +371,20 @@ def main():
                         fw.source_ranges = src_range
                         fw_changed = True
 
+                # source_tags might not be set in the project; cast it to an empty list
+                fw.source_tags = fw.source_tags or []
+
                 if fw.source_tags != src_tags:
-                    if isinstance(src_range, list):
+                    if isinstance(src_tags, list):
                         if sorted(fw.source_tags) != sorted(src_tags):
                             fw.source_tags = src_tags
                             fw_changed = True
                     else:
                         fw.source_tags = src_tags
                         fw_changed = True
+
+                # target_tags might not be set in the project; cast it to an empty list
+                fw.target_tags = fw.target_tags or []
 
                 if fw.target_tags != target_tags:
                     if isinstance(target_tags, list):

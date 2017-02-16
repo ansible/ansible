@@ -496,6 +496,24 @@
        - file_result.changed
        - "stat_result.stat.exists == False"
 
+- name: create folder to point set symbolic link for
+  win_file:
+    path: "{{win_output_dir}}/link-test/link-target"
+    state: directory
+
+- name: create symbolic link
+  win_command: cmd.exe /c mklink /d "{{win_output_dir}}\link-test\link" "{{win_output_dir}}\link-test\link-target"
+
+- name: remove symbolic link target
+  win_file:
+    path: "{{win_output_dir}}/link-test/link-target"
+    state: absent
+
+- name: remove parent folder with broken link
+  win_file:
+    path: "{{win_output_dir}}/link-test"
+    state: absent
+
 - name: clean up sub1
   win_file: path={{win_output_dir}}/sub1 state=absent
 

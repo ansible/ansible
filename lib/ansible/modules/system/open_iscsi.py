@@ -276,7 +276,7 @@ def main():
             target = dict(required=False, aliases=['name', 'targetname']),
             node_auth = dict(required=False, default='CHAP'),
             node_user = dict(required=False),
-            node_pass = dict(required=False),
+            node_pass = dict(required=False, no_log=True),
 
             # actions
             login = dict(type='bool', aliases=['state']),

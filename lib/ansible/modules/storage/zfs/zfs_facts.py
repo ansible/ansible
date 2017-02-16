@@ -78,13 +78,19 @@ options:
 '''
 
 EXAMPLES = '''
-name: Gather facts about ZFS dataset rpool/export/home
-zfs_facts: dataset=rpool/export/home
+- name: Gather facts about ZFS dataset rpool/export/home
+  zfs_facts:
+    dataset: rpool/export/home
 
-name: Report space usage on ZFS filesystems under data/home
-zfs_facts: name=data/home recurse=yes type=filesystem
-debug: msg='ZFS dataset {{ item.name }} consumes {{ item.used }} of disk space.'
-with_items: '{{ ansible_zfs_datasets }}
+- name: Report space usage on ZFS filesystems under data/home
+  zfs_facts:
+    name: data/home
+    recurse: yes
+    type: filesystem
+
+- debug:
+    msg: 'ZFS dataset {{ item.name }} consumes {{ item.used }} of disk space.'
+  with_items: '{{ ansible_zfs_datasets }}'
 '''
 
 RETURN = '''

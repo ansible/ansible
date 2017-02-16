@@ -26,21 +26,21 @@ Target: February/March 2017
 - **Metadata**
 
   - Add metadata to the modules we ship **(done)**
-  - Write code to use metadata in docs
-  - If needed for python2/3 write code to use metadata in module_common or pluginloader
+  - Write code to use metadata in docs **(done)**
+  - If needed for python2/3 write code to use metadata in module_common or pluginloader **(not needed)**
   
 - **Documentation**
   
-  - Update developing_modules (in progress, will continue in 2.4)
+  - Update developing_modules **(in progress, will continue in 2.4)**
   - Set up rst skeleton for module_utils docs.
   - Plugin development docs
-  - Speed up `make webdocs` https://github.com/ansible/ansible/issues/17406   (done)
+  - Speed up `make webdocs` https://github.com/ansible/ansible/issues/17406   **(done)**
   
 - **Windows platform** (nitzmahone)
   
   - Pipelining support
   - Become support
-  - Integrated kerberos ticket management (via ansible_user/ansible_password) (done)
+  - Integrated kerberos ticket management (via ansible_user/ansible_password) **(done)**
   - Switch PS input encoding to BOM-less UTF8
   - Server 2016 support/testing (now RTM’d)
   - Modularize Windows module_utils (allow N files)
@@ -63,27 +63,30 @@ Target: February/March 2017
   
 - **Azure modules** (nitzmahone/mattclay)
 
-  - Ensure Azure SDK rc6/RTM work
-  - Move tests from ansible/azure_rm repo to ansible/ansible
-  - Update/enhance tests
-  - Expose endpoint overrides (support AzureChinaCloud, Azure Stack)
-  - Get Azure tests running in CI (stretch, depends on availability of sponsored account)
-  - azure_rm_loadbalancer module (stretch)
+  - Ensure Azure SDK rc6/RTM work **(done)**
+  - Move tests from ansible/azure_rm repo to ansible/ansible **(bump to 2.4, no CI resources)**
+  - Update/enhance tests **(bump to 2.4, no CI resources)**
+  - Expose endpoint overrides (support AzureChinaCloud, Azure Stack) **(bump to 2.4)**
+  - Get Azure tests running in CI (stretch, depends on availability of sponsored account) **(bump to 2.4, no CI resources)**
+  - azure_rm_loadbalancer module (stretch) **(bump to 2.4)**
   
 - **Networking**
 
-  - Code stability and tidy up
-  - Extend testing
+  - Code stability and tidy up **(done)**
+  - Extend testing **(done)**
   - User facing documentation
-  - Persistent connection manager
-  - Netconf/YANG implementation (only feature)
-  - Deferred from 2.2: Network facts modules (sros)
+  - Persistent connection manager **(done)**
+  - Netconf/YANG implementation (only feature) **(done)**
+  - Deferred from 2.2: Network facts modules (sros) 
 
 - **Python3**
 
   - For 2.3:
   
-    - We want all tests to pass (majority do but there’s 10-20 that still need fixes)
+    - We want all tests to pass
+      - Just the mercurial tests left because we haven't created an image with
+        both python2 and python3 to test it on yet.
+      - Check by doing ``grep skip/python3 test/integration/targets/\*/aliases``
     - If users report bugs on python3, these should be fixed and will prioritize our work on porting other modules.
   - Still have to solve the python3-only and python2-only modules.  Thinking of doing this via metadata.  Will mean we have to use metadata at the module_common level.  Will also mean we don’t support py2-only or py3-only old style python modules. 
   - Note: Most of the currently tested ansible features now run.  But there’s still a lot of code that’s untested.
@@ -135,8 +138,8 @@ Target: February/March 2017
 
 - **Plugin Loader**
 
-  - Add module_utils to the plugin loader (feature)
-  - Split plugin loader: Plugin_search, plugin_loader (modules only use first) (Stretch goal) (slip to 2.4)
+  - Add module_utils to the plugin loader (feature) [done]
+  - Split plugin loader: Plugin_search, plugin_loader (modules only use first) [pushed to 2.4]
   
 - **ansible-ssh**
 

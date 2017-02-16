@@ -104,7 +104,7 @@ EXAMPLES = """
     lookup_source: Management1
 
 - name: configure DNS lookup sources with VRF support
-    eos_system:
+  eos_system:
       lookup_source:
         - interface: Management1
           vrf: mgmt
@@ -137,27 +137,13 @@ session_name:
   returned: when changed is True
   type: str
   sample: ansible_1479315771
-start:
-  description: The time the job started
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:15.126146"
-end:
-  description: The time the job ended
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:25.595612"
-delta:
-  description: The time elapsed to perform all operations
-  returned: always
-  type: str
-  sample: "0:00:10.469466"
 """
 import re
 
-from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.eos import load_config, get_config
+from ansible.module_utils.eos import eos_argument_spec
 
 _CONFIGURED_VRFS = None
 
@@ -286,12 +272,12 @@ def map_params_to_obj(module):
     lookup_source = ComplexList(dict(
         interface=dict(key=True),
         vrf=dict()
-    ))
+    ), module)
 
     name_servers = ComplexList(dict(
         server=dict(key=True),
         vrf=dict(default='default')
-    ))
+    ), module)
 
     for arg, cast in [('lookup_source', lookup_source), ('name_servers', name_servers)]:
         if module.params[arg] is not None:
@@ -319,8 +305,10 @@ def main():
         state=dict(default='present', choices=['present', 'absent'])
     )
 
-    module = LocalAnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+    argument_spec.update(eos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     result = {'changed': False}
 

@@ -28,7 +28,7 @@ module: copy
 version_added: "historical"
 short_description: Copies files to remote locations.
 description:
-     - The M(copy) module copies a file on the local box to remote locations. Use the M(fetch) module to copy files from remote locations to the local box. If you need variable interpolation in copied files, use the M(template) module.
+     - The C(copy) module copies a file on the local box to remote locations. Use the M(fetch) module to copy files from remote locations to the local box. If you need variable interpolation in copied files, use the M(template) module.
 options:
   src:
     description:
@@ -84,7 +84,7 @@ options:
       - Currently remote_src does not support recursive copying.
     choices: [ "True", "False" ]
     required: false
-    default: "no"
+    default: "False"
     version_added: "2.0"
   follow:
     required: false

@@ -289,13 +289,13 @@ def main():
     argument_spec = url_argument_spec()
     argument_spec.update(
         url = dict(required=True),
-        dest = dict(required=True),
+        dest = dict(required=True, type='path'),
         backup = dict(default=False, type='bool'),
         sha256sum = dict(default=''),
         checksum = dict(default=''),
         timeout = dict(required=False, type='int', default=10),
         headers = dict(required=False, default=None),
-        tmp_dest = dict(required=False, default=''),
+        tmp_dest = dict(required=False, default='', type='path'),
     )
 
     module = AnsibleModule(
@@ -305,14 +305,14 @@ def main():
     )
 
     url  = module.params['url']
-    dest = os.path.expanduser(module.params['dest'])
+    dest = module.params['dest']
     backup = module.params['backup']
     force = module.params['force']
     sha256sum = module.params['sha256sum']
     checksum = module.params['checksum']
     use_proxy = module.params['use_proxy']
     timeout = module.params['timeout']
-    tmp_dest = os.path.expanduser(module.params['tmp_dest'])
+    tmp_dest = module.params['tmp_dest']
 
     # Parse headers to dict
     if module.params['headers']:
@@ -457,7 +457,7 @@ def main():
 
     res_args = dict(
         url = url, dest = dest, src = tmpsrc, md5sum = md5sum, checksum_src = checksum_src,
-        checksum_dest = checksum_dest, changed = changed, msg = info.get('msg', '')
+        checksum_dest = checksum_dest, changed = changed, msg = info.get('msg', ''), status_code=info.get('status','')
     )
     if backup_file:
         res_args['backup_file'] = backup_file

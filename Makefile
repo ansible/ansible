@@ -140,11 +140,7 @@ loc:
 	sloccount lib library bin
 
 pep8:
-	@echo "#############################################"
-	@echo "# Running PEP8 Compliance Tests"
-	@echo "#############################################"
-	-pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225,E261,E241 lib/ bin/
-	# -pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225,E261,E241 --filename "*" library/
+	$(ANSIBLE_TEST) sanity --test pep8 --python $(PYTHON_VERSION) $(TEST_FLAGS)
 
 pyflakes:
 	pyflakes lib/ansible/*.py lib/ansible/*/*.py bin/*

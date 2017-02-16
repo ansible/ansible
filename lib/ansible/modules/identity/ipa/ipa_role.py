@@ -147,10 +147,12 @@ role:
   type: dict
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.ipa import IPAClient
 
-class RoleIPAClient(IPAClient):
 
+class RoleIPAClient(IPAClient):
     def __init__(self, module, host, port, protocol):
         super(RoleIPAClient, self).__init__(module, host, port, protocol)
 
@@ -210,35 +212,8 @@ def get_role_dict(description=None):
     return data
 
 
-def get_role_diff(ipa_role, module_role):
-    data = []
-    for key in module_role.keys():
-        module_value = module_role.get(key, None)
-        ipa_value = ipa_role.get(key, None)
-        if isinstance(ipa_value, list) and not isinstance(module_value, list):
-            module_value = [module_value]
-        if isinstance(ipa_value, list) and isinstance(module_value, list):
-            ipa_value = sorted(ipa_value)
-            module_value = sorted(module_value)
-        if ipa_value != module_value:
-            data.append(key)
-    return data
-
-
-def modify_if_diff(module, name, ipa_list, module_list, add_method, remove_method):
-    changed = False
-    diff = list(set(ipa_list) - set(module_list))
-    if len(diff) > 0:
-        changed = True
-        if not module.check_mode:
-            remove_method(name=name, item=diff)
-
-    diff = list(set(module_list) - set(ipa_list))
-    if len(diff) > 0:
-        changed = True
-        if not module.check_mode:
-            add_method(name=name, item=diff)
-    return changed
+def get_role_diff(client, ipa_role, module_role):
+    return client.get_diff(ipa_data=ipa_role, module_data=module_role)
 
 
 def ensure(module, client):
@@ -260,7 +235,7 @@ def ensure(module, client):
             if not module.check_mode:
                 ipa_role = client.role_add(name=name, item=module_role)
         else:
-            diff = get_role_diff(ipa_role=ipa_role, module_role=module_role)
+            diff = get_role_diff(client, ipa_role, module_role)
             if len(diff) > 0:
                 changed = True
                 if not module.check_mode:
@@ -270,28 +245,28 @@ def ensure(module, client):
                     client.role_mod(name=name, item=data)
 
         if group is not None:
-            changed = modify_if_diff(module, name, ipa_role.get('member_group', []), group,
-                                     client.role_add_group,
-                                     client.role_remove_group) or changed
+            changed = client.modify_if_diff(name, ipa_role.get('member_group', []), group,
+                                            client.role_add_group,
+                                            client.role_remove_group) or changed
 
         if host is not None:
-            changed = modify_if_diff(module, name, ipa_role.get('member_host', []), host,
-                                     client.role_add_host,
-                                     client.role_remove_host) or changed
+            changed = client.modify_if_diff(name, ipa_role.get('member_host', []), host,
+                                            client.role_add_host,
+                                            client.role_remove_host) or changed
 
         if hostgroup is not None:
-            changed = modify_if_diff(module, name, ipa_role.get('member_hostgroup', []), hostgroup,
-                                     client.role_add_hostgroup,
-                                     client.role_remove_hostgroup) or changed
+            changed = client.modify_if_diff(name, ipa_role.get('member_hostgroup', []), hostgroup,
+                                            client.role_add_hostgroup,
+                                            client.role_remove_hostgroup) or changed
 
         if service is not None:
-            changed = modify_if_diff(module, name, ipa_role.get('member_service', []), service,
-                                     client.role_add_service,
-                                     client.role_remove_service) or changed
+            changed = client.modify_if_diff(name, ipa_role.get('member_service', []), service,
+                                            client.role_add_service,
+                                            client.role_remove_service) or changed
         if user is not None:
-            changed = modify_if_diff(module, name, ipa_role.get('member_user', []), user,
-                                     client.role_add_user,
-                                     client.role_remove_user) or changed
+            changed = client.modify_if_diff(name, ipa_role.get('member_user', []), user,
+                                            client.role_add_user,
+                                            client.role_remove_user) or changed
     else:
         if ipa_role:
             changed = True
@@ -336,9 +311,6 @@ def main():
         e = get_exception()
         module.fail_json(msg=str(e))
 
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()

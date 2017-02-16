@@ -54,10 +54,3 @@ class TerminalModule(TerminalBase):
                 self._exec_cli_command(c)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
-
-    @staticmethod
-    def guess_network_os(conn):
-        stdin, stdout, stderr = conn.exec_command('show version')
-        if 'Junos' in stdout.read():
-            return 'junos'
-

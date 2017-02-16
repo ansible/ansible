@@ -25,8 +25,28 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.network_common import to_list
+from ansible.module_utils.connection import exec_command
 
 _DEVICE_CONFIGS = {}
+
+vyos_argument_spec = {
+    'host': dict(),
+    'port': dict(type='int'),
+    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
+    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
+    'timeout': dict(type='int', default=10),
+    'provider': dict(type='dict'),
+}
+
+def check_args(module, warnings):
+    provider = module.params['provider'] or {}
+    for key in vyos_argument_spec:
+        if key != 'provider' and module.params[key]:
+            warnings.append('argument %s has been deprecated and will be '
+                    'removed in a future version' % key)
 
 def get_config(module, target='commands'):
     cmd = ' '.join(['show configuration', target])
@@ -34,7 +54,7 @@ def get_config(module, target='commands'):
     try:
         return _DEVICE_CONFIGS[cmd]
     except KeyError:
-        rc, out, err = module.exec_command(cmd)
+        rc, out, err = exec_command(module, cmd)
         if rc != 0:
             module.fail_json(msg='unable to retrieve current config', stderr=err)
         cfg = str(out).strip()
@@ -43,46 +63,42 @@ def get_config(module, target='commands'):
 
 def run_commands(module, commands, check_rc=True):
     responses = list()
-
     for cmd in to_list(commands):
-        rc, out, err = module.exec_command(cmd)
+        rc, out, err = exec_command(module, cmd)
         if check_rc and rc != 0:
             module.fail_json(msg=err, rc=rc)
         responses.append(out)
     return responses
 
-def load_config(module, commands, commit=False, comment=None, save=False):
-    rc, out, err = module.exec_command('configure')
+def load_config(module, commands, commit=False, comment=None):
+    rc, out, err = exec_command(module, 'configure')
     if rc != 0:
         module.fail_json(msg='unable to enter configuration mode', output=err)
 
     for cmd in to_list(commands):
-        rc, out, err = module.exec_command(cmd, check_rc=False)
+        rc, out, err = exec_command(module, cmd, check_rc=False)
         if rc != 0:
             # discard any changes in case of failure
-            module.exec_command('exit discard')
+            exec_command(module, 'exit discard')
             module.fail_json(msg='configuration failed')
 
     diff = None
     if module._diff:
-        rc, out, err = module.exec_command('compare')
+        rc, out, err = exec_command(module, 'compare')
         if not out.startswith('No changes'):
-            rc, out, err = module.exec_command('show')
+            rc, out, err = exec_command(module, 'show')
             diff = str(out).strip()
 
     if commit:
         cmd = 'commit'
         if comment:
             cmd += ' comment "%s"' % comment
-        module.exec_command(cmd)
-
-    if save:
-        module.exec_command(cmd)
+        exec_command(module, cmd)
 
     if not commit:
-        module.exec_command('exit discard')
+        exec_command(module, 'exit discard')
     else:
-        module.exec_command('exit')
+        exec_command(module, 'exit')
 
     if diff:
         return diff

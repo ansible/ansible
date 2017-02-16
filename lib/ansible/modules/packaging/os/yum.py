@@ -96,13 +96,13 @@ options:
 
   update_cache:
     description:
-      - Force updating the cache. Has an effect only if state is I(present)
-        or I(latest).
+      - Force yum to check if cache is out of date and redownload if needed.
+        Has an effect only if state is I(present) or I(latest).
     required: false
     version_added: "1.9"
     default: "no"
     choices: ["yes", "no"]
-    aliases: []
+    aliases: [ "expire-cache" ]
 
   validate_certs:
     description:
@@ -844,6 +844,53 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
 
     return res
 
+
+def run_check_update(module, yum_basecmd):
+    # run check-update to see if we have packages pending
+    rc, out, err = module.run_command(yum_basecmd + ['check-update'])
+    return rc, out, err
+
+
+def parse_check_update(check_update_output):
+    updates = {}
+
+    # remove incorrect new lines in longer columns in output from yum check-update
+    # yum line wrapping can move the repo to the next line
+    #
+    # Meant to filter out sets of lines like:
+    #  some_looooooooooooooooooooooooooooooooooooong_package_name   1:1.2.3-1.el7
+    #                                                                    some-repo-label
+    #
+    # But it also needs to avoid catching lines like:
+    # Loading mirror speeds from cached hostfile
+    #
+    # ceph.x86_64                               1:11.2.0-0.el7                    ceph
+
+    # preprocess string and filter out empty lines so the regex below works
+    out = re.sub('\n[^\w]\W+(.*)', ' \1',
+                 check_update_output)
+
+    available_updates = out.split('\n')
+
+    # build update dictionary
+    for line in available_updates:
+        line = line.split()
+        # ignore irrelevant lines
+        # '*' in line matches lines like mirror lists:
+        #      * base: mirror.corbina.net
+        # len(line) != 3 could be junk or a continuation
+        #
+        # FIXME: what is  the '.' not in line  conditional for?
+
+        if '*' in line or len(line) != 3 or '.' not in line[0]:
+            continue
+        else:
+            pkg, version, repo = line
+            name, dist = pkg.rsplit('.', 1)
+            updates.update({name: {'version': version, 'dist': dist, 'repo': repo}})
+    return updates
+
+
 def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot='/'):
 
     res = {}
@@ -862,26 +909,13 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
     if '*' in items:
         update_all = True
 
-    # run check-update to see if we have packages pending
-    rc, out, err = module.run_command(yum_basecmd + ['check-update'])
+    rc, out, err = run_check_update(module, yum_basecmd)
+
     if rc == 0 and update_all:
         res['results'].append('Nothing to do here, all packages are up to date')
         return res
     elif rc == 100:
-        # remove incorrect new lines in longer columns in output from yum check-update
-        out=re.sub('\n\W+', ' ', out)
-        available_updates = out.split('\n')
-        # build update dictionary
-        for line in available_updates:
-            line = line.split()
-            # ignore irrelevant lines
-            # FIXME... revisit for something less kludgy
-            if '*' in line or len(line) != 3 or '.' not in line[0]:
-                continue
-            else:
-                pkg, version, repo = line
-                name, dist = pkg.rsplit('.', 1)
-                updates.update({name: {'version': version, 'dist': dist, 'repo': repo}})
+        updates = parse_check_update(out)
     elif rc == 1:
         res['msg'] = err
         res['rc'] = rc
@@ -919,6 +953,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
                 if spec in pkgs['install'] and is_available(module, repoq, this, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
                     nothing_to_do = False
                     break
+
 
                 # this contains the full NVR and spec could contain wildcards
                 # or virtual provides (like "python-*" or "smtp-daemon") while
@@ -1046,7 +1081,7 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
     if state in ['installed', 'present', 'latest']:
 
         if module.params.get('update_cache'):
-            module.run_command(yum_basecmd + ['makecache'])
+            module.run_command(yum_basecmd + ['clean', 'expire-cache'])
 
         my = yum_base(conf_file, installroot)
         try:
@@ -1110,7 +1145,7 @@ def main():
             list=dict(),
             conf_file=dict(default=None),
             disable_gpg_check=dict(required=False, default="no", type='bool'),
-            update_cache=dict(required=False, default="no", type='bool'),
+            update_cache=dict(required=False, default="no", aliases=['expire-cache'], type='bool'),
             validate_certs=dict(required=False, default="yes", type='bool'),
             installroot=dict(required=False, default="/", type='str'),
             # this should not be needed, but exists as a failsafe

@@ -91,10 +91,10 @@ gcpubsub:
         mykey2: myvalu2
         mykey3: myvalue3
     - message: "this is message 2"
-        attributes:
-          server: prod
-          sla: "99.9999"
-          owner: fred
+      attributes:
+        server: prod
+        sla: "99.9999"
+        owner: fred
 
 # Subscriptions
 ## Create Subscription (pull)

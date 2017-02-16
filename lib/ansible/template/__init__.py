@@ -144,7 +144,7 @@ class AnsibleContext(Context):
         '''
         if isinstance(val, dict):
             for key in val.keys():
-                if self._is_unsafe(key) or self._is_unsafe(val[key]):
+                if self._is_unsafe(val[key]):
                     return True
         elif isinstance(val, list):
             for item in val:
@@ -281,7 +281,7 @@ class Templar:
     def _clean_data(self, orig_data):
         ''' remove jinja2 template tags from a string '''
 
-        if not isinstance(orig_data, string_types) or hasattr(orig_data, '__ENCRYPTED__') or hasattr(orig_data, '__UNSAFE__'):
+        if not isinstance(orig_data, string_types) or hasattr(orig_data, '__ENCRYPTED__'):
             return orig_data
 
         with contextlib.closing(StringIO(orig_data)) as data:
@@ -345,11 +345,7 @@ class Templar:
         if hasattr(variable, '__UNSAFE__'):
             if isinstance(variable, text_type):
                 rval = self._clean_data(variable)
-            else:
-                # Do we need to convert these into text_type as well?
-                # return self._clean_data(to_text(variable._obj, nonstring='passthru'))
-                rval = self._clean_data(variable._obj)
-            return rval
+                return rval
 
         try:
             if convert_bare:
@@ -389,6 +385,7 @@ class Templar:
                             overrides=overrides,
                             disable_lookups=disable_lookups,
                         )
+
                         unsafe = hasattr(result, '__UNSAFE__')
                         if convert_data and not self._no_type_regex.match(variable):
                             # if this looks like a dictionary or list, convert it to such using the safe_eval method

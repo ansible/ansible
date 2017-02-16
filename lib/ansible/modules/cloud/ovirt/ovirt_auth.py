@@ -83,10 +83,16 @@ options:
         description:
             - "A boolean flag indicating if Kerberos authentication
                should be used instead of the default basic authentication."
+requirements:
+  - python >= 2.7
+  - ovirt-engine-sdk-python >= 4.0.0
 notes:
   - "Everytime you use ovirt_auth module to obtain ticket, you need to also revoke the ticket,
      when you no longer need it, otherwise the ticket would be revoked by engine when it expires.
      For an example of how to achieve that, please take a look at I(examples) section."
+  - "In order to use this module you have to install oVirt Python SDK.
+     To ensure it's installed with correct version you can create the following task:
+     I(pip: name=ovirt-engine-sdk-python version=4.0.0)"
 '''
 
 EXAMPLES = '''
@@ -96,7 +102,7 @@ tasks:
        # oVirt user's password, and include that yaml file with variable:
        - include_vars: ovirt_password.yml
 
-       - name: Obtain SSO token with using username/password credentials:
+       - name: Obtain SSO token with using username/password credentials
          ovirt_auth:
            url: https://ovirt.example.com/ovirt-engine/api
            username: admin@internal
@@ -110,11 +116,11 @@ tasks:
            state: absent
            name: myvm
 
-      always:
-        - name: Always revoke the SSO token
-          ovirt_auth:
-            state: absent
-            ovirt_auth: "{{ ovirt_auth }}"
+    always:
+      - name: Always revoke the SSO token
+        ovirt_auth:
+          state: absent
+          ovirt_auth: "{{ ovirt_auth }}"
 '''
 
 RETURN = '''

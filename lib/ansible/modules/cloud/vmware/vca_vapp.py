@@ -137,12 +137,12 @@ EXAMPLES = '''
 - name: Creates a new vApp in a VCA instance
   vca_vapp:
     vapp_name: tower
-    state=present
-    template_name='Ubuntu Server 12.04 LTS (amd64 20150127)'
-    vdc_name=VDC1
-    instance_id=<your instance id here>
-    username=<your username here>
-    password=<your password here>
+    state: present
+    template_name: 'Ubuntu Server 12.04 LTS (amd64 20150127)'
+    vdc_name: VDC1
+    instance_id: '<your instance id here>'
+    username: '<your username here>'
+    password: '<your password here>'
 
 '''
 

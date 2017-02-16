@@ -73,14 +73,14 @@ EXAMPLES = '''
 - ovirt_snapshots:
     vm_name: rhel7
     description: MySnapshot
-register: snapshot
+  register: snapshot
 
 # Create snapshot and save memory:
 - ovirt_snapshots:
     vm_name: rhel7
     description: SnapWithMem
     use_memory: true
-register: snapshot
+  register: snapshot
 
 # Restore snapshot:
 - ovirt_snapshots:

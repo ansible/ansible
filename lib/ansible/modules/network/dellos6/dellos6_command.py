@@ -31,7 +31,7 @@ version_added: "2.2"
 short_description: Run commands on remote devices running Dell OS6
 description:
   - Sends arbitrary commands to a Dell OS6 node and returns the results
-    read from the device. The M(dellos6_command) module includes an
+    read from the device. The C(dellos6_command) module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
@@ -87,20 +87,20 @@ tasks:
  - name: run show version on remote devices
    dellos6_command:
      commands: show version
-     provider "{{ cli }}"
+     provider: "{{ cli }}"
 
  - name: run show version and check to see if output contains Dell
    dellos6_command:
      commands: show version
      wait_for: result[0] contains Dell
-     provider "{{ cli }}"
+     provider: "{{ cli }}"
 
  - name: run multiple commands on remote nodes
    dellos6_command:
      commands:
       - show version
       - show interfaces
-     provider "{{ cli }}"
+     provider: "{{ cli }}"
 
  - name: run multiple commands and evaluate the output
    dellos6_command:
@@ -110,7 +110,7 @@ tasks:
      wait_for:
       - result[0] contains Dell
       - result[1] contains Access
-     provider "{{ cli }}"
+     provider: "{{ cli }}"
 """
 
 RETURN = """

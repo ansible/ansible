@@ -199,7 +199,7 @@ EXAMPLES = '''
       state: "present"
       name: "my-pool"
       partition: "Common"
-      host: "{{ ansible_default_ipv4["address"] }}"
+      host: "{{ ansible_default_ipv4['address'] }}"
       port: 80
 
 - name: Remove pool member from pool
@@ -210,7 +210,7 @@ EXAMPLES = '''
       state: "absent"
       name: "my-pool"
       partition: "Common"
-      host: "{{ ansible_default_ipv4["address"] }}"
+      host: "{{ ansible_default_ipv4['address'] }}"
       port: 80
 
 - name: Delete pool
@@ -582,7 +582,7 @@ def main():
     module.exit_json(**result)
 
 from ansible.module_utils.basic import *
-from ansible.module_utils.f5 import *
+from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()

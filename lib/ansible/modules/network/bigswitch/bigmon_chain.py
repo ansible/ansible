@@ -53,20 +53,17 @@ options:
     choices: [true, false]
   access_token:
     description:
-     - Bigmon access token.
-    required: false
-
-notes:
-  - An environment variable can be used, BIGSWITCH_ACCESS_TOKEN.
+     - Bigmon access token. If this isn't set the the environment variable C(BIGSWITCH_ACCESS_TOKEN) is used.
 '''
 
 
 EXAMPLES = '''
 - name: bigmon inline service chain
-      bigmon_chain:
-        name: MyChain
-        controller: '{{ inventory_hostname }}'
-        state: present
+  bigmon_chain:
+    name: MyChain
+    controller: '{{ inventory_hostname }}'
+    state: present
+    validate_certs: false
 '''
 
 
@@ -144,8 +141,8 @@ def main():
             name=dict(type='str', required=True),
             controller=dict(type='str', required=True),
             state=dict(choices=['present', 'absent'], default='present'),
-            validate_certs=dict(type='bool', default='False'),
-            access_token=dict(aliases=['BIGSWITCH_ACCESS_TOKEN'], no_log=True)
+            validate_certs=dict(type='bool', default='True'),
+            access_token=dict(type='str', no_log=True)
         )
     )
 

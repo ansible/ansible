@@ -34,7 +34,6 @@ description:
     base network fact keys with C(ansible_net_<fact>).  The facts
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
-extends_documentation_fragment: eos_local
 options:
   gather_subset:
     description:
@@ -135,32 +134,10 @@ ansible_net_neighbors:
 """
 import re
 
-from functools import partial
-
-from ansible.module_utils import eos
-from ansible.module_utils import eos_local
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.local import LocalAnsibleModule
 from ansible.module_utils.six import iteritems
-
-SHARED_LIB = 'eos'
-
-
-def get_ansible_module():
-    if SHARED_LIB == 'eos':
-        return LocalAnsibleModule
-    return AnsibleModule
-
-def invoke(name, *args, **kwargs):
-    obj = globals().get(SHARED_LIB)
-    func = getattr(obj, name)
-    return func(*args, **kwargs)
-
-run_commands = partial(invoke, 'run_commands')
-
-def check_args(module, warnings):
-    if SHARED_LIB == 'eos_local':
-        eos_local.check_args(module, warnings)
+from ansible.module_utils.eos import run_commands
+from ansible.module_utils.eos import eos_argument_spec, check_args
 
 class FactsBase(object):
 
@@ -335,10 +312,10 @@ def main():
         gather_subset=dict(default=['!config'], type='list')
     )
 
-    argument_spec.update(eos_local.eos_local_argument_spec)
+    argument_spec.update(eos_argument_spec)
 
-    cls = get_ansible_module()
-    module = cls(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
@@ -397,5 +374,4 @@ def main():
 
 
 if __name__ == '__main__':
-    SHARED_LIB = 'eos_local'
     main()

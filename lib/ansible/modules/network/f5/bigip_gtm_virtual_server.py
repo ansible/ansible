@@ -92,7 +92,7 @@ else:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.f5 import bigip_api, f5_argument_spec
+from ansible.module_utils.f5_utils import bigip_api, f5_argument_spec
 
 
 def server_exists(api, server):

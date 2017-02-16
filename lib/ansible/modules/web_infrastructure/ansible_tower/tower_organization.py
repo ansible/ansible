@@ -44,27 +44,27 @@ options:
       required: False
       default: "present"
       choices: ["present", "absent"]
-    host:
+    tower_host:
       description:
         - URL to your Tower instance.
       required: False
       default: null
-    username:
+    tower_username:
         description:
           - Username for your Tower instance.
         required: False
         default: null
-    password:
+    tower_password:
         description:
           - Password for your Tower instance.
         required: False
         default: null
-    verify_ssl:
+    tower_verify_ssl:
         description:
           - Dis/allow insecure connections to Tower. If C(no), SSL certificates will not be validated.
             This should only be used on personally controlled sites using self-signed certificates.
         required: False
-        default: 'yes'
+        default: True
     tower_config_file:
       description:
         - Path to the Tower config file. See notes.
@@ -87,16 +87,13 @@ notes:
 
 
 EXAMPLES = '''
-  - tasks
-    - name: Create organization
-      tower_organization:
-          name: "Foo"
-          description: "Foo bar organization"
-          state: present
-          tower_config_file: "~/tower_cli.cfg"
+- name: Create tower organization
+  tower_organization:
+    name: "Foo"
+    description: "Foo bar organization"
+    state: present
+    tower_config_file: "~/tower_cli.cfg"
 '''
-
-import os
 
 try:
     import tower_cli
@@ -115,10 +112,10 @@ def main():
         argument_spec = dict(
             name = dict(required=True),
             description = dict(),
-            host = dict(),
-            username = dict(),
-            password = dict(no_log=True),
-            verify_ssl = dict(type='bool', default='yes'),
+            tower_host = dict(),
+            tower_username = dict(),
+            tower_password = dict(no_log=True),
+            tower_verify_ssl = dict(type='bool', default=True),
             tower_config_file = dict(type='path'),
             state = dict(choices=['present', 'absent'], default='present'),
         ),

@@ -5,21 +5,29 @@ Ansible Changes By Release
 
 ###Major Changes:
 * Documented and renamed the previously released 'single var vaulting' feature, allowing user to use vault encryption for single variables in a normal YAML vars file.
+* Allow module_utils for custom modules to be placed in site-specific
+  directories and shipped in roles
+* On platforms that support it, use more modern system polling API instead of
+  select in the ssh connection plugin.  This removes one limitation on how many
+  parallel forks are feasible on these systems.
+* Refactored/standardized most Windows modules, adding check-mode and
+  diff support where possible.
+* Extended Windows module API with parameter-type support, helper functions.
+  (i.e. Expand-Environment, Add-Warning, Add-DeprecatationWarning)
 
 ###Minor Changes:
 * The version and release facts for OpenBSD hosts were reversed.  This has been
   changed so that version has the numeric portion and release has the name of
   the release.
 * removed 'package' from default squash actions as not all package managers support it and it creates errors when using loops,
-  any user can add back via config options if they don't use those package managers or othewise avoid the errors.
+  any user can add back via config options if they don't use those package managers or otherwise avoid the errors.
 * Blocks can now have a `name` field, to aid in playbook readability.
 * default strategy is now configurable via ansible.cfg or environment variable.
 * Added 'ansible_playbook_python' which contains 'current python executable', it can be blank in some cases in which Ansible is not invoked via the standard CLI (sys.executable limitation).
 * ansible-doc now displays path to module
 * added optional 'piped' transfer method to ssh plugin for when scp and sftp are missing
 * default controlpersist path is now a custom hash of host-port-user to avoid the socket path length errors for long hostnames
-* Refactored/standardized Windows modules, adding check-mode and diff support where possible
-* Extended Windows module API with parameter-type support, helper functions (i.e. Expand-Environment, Warn, Deprecate)
+* Various fixes for Python3 compatibility
 
 ###Deprecations:
 * Specifying --tags (or --skip-tags) multiple times on the command line
@@ -42,6 +50,7 @@ Ansible Changes By Release
   * Add support for hosts and virtual machines affinity groups and labels.
   * Add support for users, groups and permissions management.
   * Improved virtual machines and disks management.
+- Mount: Some fixes so bind mounts are not mounted each time the playbook runs.
 
 ###New Modules:
 - a10_server_axapi3
@@ -54,6 +63,8 @@ Ansible Changes By Release
   * ec2_vpc_nat_gateway_facts
   * ec2_vpc_vgw_facts
   * ecs_ecr
+  * elasticache_parameter_group
+  * elasticache_snapshot
   * iam_role
   * s3_sync
 - archive
@@ -83,16 +94,6 @@ Ansible Changes By Release
 - foreman:
   * foreman
   * katello
-- free_ipa:
-  * ipa_group
-  * ipa_hbacrule
-  * ipa_host
-  * ipa_hostgroup
-  * ipa_role
-  * ipa_sudocmd
-  * ipa_sudocmdgroup
-  * ipa_sudorule
-  * ipa_user
 - gconftool2
 - google
   * gce_eip
@@ -134,8 +135,14 @@ Ansible Changes By Release
   * ldap_attr
   * ldap_entry
 - logstash_plugin
+- mattermost
 - net_command
+- netapp
+  * sf_account_manager
+  * sf_snapshot_schedule_manager
+  * sf_volume_access_group_manager
 - nginx_status_facts
+- nsupdate
 - omapi_host
 - openssl:
   * openssl_privatekey
@@ -144,6 +151,9 @@ Ansible Changes By Release
   * os_nova_host_aggregate
   * os_quota
 - openwrt_init
+- ordnance
+  * ordnance_config
+  * ordnance_facts
 - ovirt:
   * ovirt_affinity_groups
   * ovirt_affinity_labels
@@ -190,6 +200,7 @@ Ansible Changes By Release
 - panos:
   * panos_admin
   * panos_admpwd
+  * panos_cert_gen_ssh
   * panos_check
   * panos_commit
   * panos_dag
@@ -200,14 +211,9 @@ Ansible Changes By Release
   * panos_pg
   * panos_restart
   * panos_service
-  * panos_loadcfg
-  * panos_mgtconfig
-  * panos_nat_policy
-  * panos_pg
-  * panos_restart
-  * panos_service
 - postgresql_schema
 - proxmox_kvm
+- pubnub_blocks
 - pulp_repo
 - runit
 - serverless
@@ -217,16 +223,19 @@ Ansible Changes By Release
   * vmadm
 - sorcery
 - stacki_host
+- swupd
 - tempfile
-- tower:
-  * tower_organization
-- vmware_guest_facts
-- vmware_guest_snapshot
+- tower_organization
+- vmware:
+  * vmware_guest_facts
+  * vmware_guest_snapshot
 - web_infrastructure
   * jenkins_script
 - windows:
+  * win_find
   * win_path
   * win_psexec
+  * win_reg_stat
   * win_say
   * win_shortcut
 - xbps

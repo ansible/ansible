@@ -16,10 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'core',
+    'version': '1.0'
+}
 
 DOCUMENTATION = """
 ---
@@ -32,7 +33,6 @@ description:
     NXAPI feature is absent from the configuration by default.  Since
     this module manages the NXAPI feature it only supports the use
     of the C(Cli) transport.
-extends_documentation_fragment: nxos
 options:
   http_port:
     description:
@@ -84,15 +84,6 @@ options:
     default: no
     choices: ['yes', 'no']
     aliases: ['enable_sandbox']
-  config:
-    description:
-      - The C(config) argument provides an optional argument to
-        specify the device running-config to used as the basis for
-        configuring the remote system.  The C(config) argument accepts
-        a string value that represents the device configuration.
-    required: false
-    default: null
-    version_added: "2.2"
   state:
     description:
       - The C(state) argument controls whether or not the NXAPI
@@ -106,17 +97,9 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: admin
-    password: admin
-
 - name: Enable NXAPI access with default configuration
   nxos_nxapi:
-    provider: "{{ cli }}"
+    state: present
 
 - name: Enable NXAPI with no HTTP, HTTPS at port 9443 and sandbox disabled
   nxos_nxapi:
@@ -124,12 +107,10 @@ vars:
     https_port: 9443
     https: yes
     enable_sandbox: no
-    provider: "{{ cli }}"
 
 - name: remove NXAPI configuration
   nxos_nxapi:
     state: absent
-    provider: "{{ cli }}"
 """
 
 RETURN = """
@@ -142,189 +123,172 @@ updates:
   sample: ['no feature nxapi']
 """
 import re
-import time
 
-from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.nxos import NetworkModule, NetworkError
-from ansible.module_utils.basic import get_exception
+from functools import partial
 
-PRIVATE_KEYS_RE = re.compile('__.+__')
+from ansible.module_utils.nxos import run_commands, load_config
+from ansible.module_utils.nxos import nxos_argument_spec
+from ansible.module_utils.nxos import check_args as nxos_check_args
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netcfg import NetworkConfig
+from ansible.module_utils.six import iteritems
 
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
+def check_args(module, warnings):
+    nxos_check_args(module, warnings)
 
-def get_instance(module):
-    instance = dict(state='absent')
-    try:
-        resp = module.cli('show nxapi', 'json')
-    except NetworkError:
-        return instance
+    state = module.params['state']
 
-    instance['state'] = 'present'
+    if state == 'started':
+        module.params['state'] = 'present'
+        warnings.append('state=started is deprecated and will be removed in a '
+                        'a future release.  Please use state=present instead')
+    elif state == 'stopped':
+        module.params['state'] = 'absent'
+        warnings.append('state=stopped is deprecated and will be removed in a '
+                        'a future release.  Please use state=absent instead')
 
-    instance['http'] = 'http_port' in resp[0]
-    instance['http_port'] = resp[0].get('http_port') or 80
+    if module.params['transport'] == 'nxapi':
+        module.fail_json(msg='module not supported over nxapi transport')
 
-    instance['https'] = 'https_port' in resp[0]
-    instance['https_port'] = resp[0].get('https_port') or 443
+    for key in ['config']:
+        if module.params[key]:
+            warnings.append('argument %s is deprecated and will be ignored' % key)
 
-    instance['sandbox'] = resp[0]['sandbox_status']
+    return warnings
 
-    return instance
+def map_obj_to_commands(updates, module):
+    commands = list()
+    want, have = updates
 
-def present(module, instance, commands):
-    commands.append('feature nxapi')
-    setters = set()
-    for key, value in module.argument_spec.items():
-        setter = value.get('setter') or 'set_%s' % key
-        if setter not in setters:
-            setters.add(setter)
-            if module.params[key] is not None:
-                invoke(setter, module, instance, commands)
+    needs_update = lambda x: want.get(x) is not None and (want.get(x) != have.get(x))
 
-def absent(module, instance, commands):
-    if instance['state'] != 'absent':
-        commands.append('no feature nxapi')
+    if needs_update('state'):
+        if want['state'] == 'absent':
+            return ['no feature nxapi']
+        commands.append('feature nxapi')
 
-def set_http(module, instance, commands):
-    port = module.params['http_port']
-    if not 0 <= port <= 65535:
+    if any((needs_update('http'), needs_update('http_port'))):
+        if want['http'] is True or (want['http'] is None and have['http'] is True):
+            port = want['http_port'] or 80
+            commands.append('nxapi http port %s' % port)
+        elif want['http'] is False:
+            commands.append('no nxapi http')
+
+    if any((needs_update('https'), needs_update('https_port'))):
+        if want['https'] is True or (want['https'] is None and have['https'] is True):
+            port = want['https_port'] or 443
+            commands.append('nxapi https port %s' % port)
+        elif want['https'] is False:
+            commands.append('no nxapi https')
+
+    if needs_update('sandbox'):
+        cmd = 'nxapi sandbox'
+        if not want['sandbox']:
+            cmd = 'no %s' % cmd
+        commands.append(cmd)
+
+    return commands
+
+def parse_http(data):
+    match = re.search('HTTP Port:\s+(\d+)', data, re.M)
+    if match:
+        return {'http': True, 'http_port': match.group(1)}
+    else:
+        return {'http': False, 'http_port': None}
+
+def parse_https(data):
+    match = re.search('HTTPS Port:\s+(\d+)', data, re.M)
+    if match:
+        return {'https': True, 'https_port': match.group(1)}
+    else:
+        return {'https': False, 'https_port': None}
+
+def parse_sandbox(data):
+    match = re.search('Sandbox:\s+(.+)$', data, re.M)
+    return {'sandbox': match.group(1) == 'Enabled'}
+
+def map_config_to_obj(module):
+    out = run_commands(module, ['show nxapi'], check_rc=False)
+    if not out[0]:
+        return {'state': 'absent'}
+
+    out = str(out[0]).strip()
+
+    obj = {'state': 'present'}
+    obj.update(parse_http(out))
+    obj.update(parse_https(out))
+    obj.update(parse_sandbox(out))
+
+    return obj
+
+def validate_http_port(value, module):
+    if not 1 <= module.params['http_port'] <= 65535:
         module.fail_json(msg='http_port must be between 1 and 65535')
-    elif module.params['http'] is True:
-        commands.append('nxapi http port %s' % port)
-    elif module.params['http'] is False:
-        commands.append('no nxapi http')
 
-def set_https(module, instance, commands):
-    port = module.params['https_port']
-    if not 0 <= port <= 65535:
+def validate_https_port(value, module):
+    if not 1 <= module.params['https_port'] <= 65535:
         module.fail_json(msg='https_port must be between 1 and 65535')
-    elif module.params['https'] is True:
-        commands.append('nxapi https port %s' % port)
-    elif module.params['https'] is False:
-        commands.append('no nxapi https')
 
-def set_sandbox(module, instance, commands):
-    if module.params['sandbox'] is True:
-        commands.append('nxapi sandbox')
-    elif module.params['sandbox'] is False:
-        commands.append('no nxapi sandbox')
+def map_params_to_obj(module):
+    obj = {
+        'http': module.params['http'],
+        'http_port': module.params['http_port'],
+        'https': module.params['https'],
+        'https_port': module.params['https_port'],
+        'sandbox': module.params['sandbox'],
+        'state': module.params['state']
+    }
 
-def get_config(module):
-    contents = module.params['config']
-    if not contents:
-        try:
-            contents = module.cli(['show running-config nxapi all'])[0]
-        except NetworkError:
-            contents = None
-    config = NetworkConfig(indent=2)
-    if contents:
-        config.load(contents)
-    return config
+    for key, value in iteritems(obj):
+        if value:
+            validator = globals().get('validate_%s' % key)
+            if validator:
+                validator(value, module)
 
-def load_checkpoint(module, result):
-    try:
-        checkpoint = result['__checkpoint__']
-        module.cli(['rollback running-config checkpoint %s' % checkpoint,
-                    'no checkpoint %s' % checkpoint], output='text')
-    except KeyError:
-        module.fail_json(msg='unable to rollback, checkpoint not found')
-    except NetworkError:
-        exc = get_exception()
-        msg = 'unable to rollback configuration'
-        module.fail_json(msg=msg, checkpoint=checkpoint, **exc.kwargs)
-
-def load_config(module, commands, result):
-    # create a config checkpoint
-    checkpoint = 'ansible_%s' % int(time.time())
-    module.cli(['checkpoint %s' % checkpoint], output='text')
-    result['__checkpoint__'] = checkpoint
-
-    # load the config into the device
-    module.config.load_config(commands)
-
-    # load was successfully, remove the config checkpoint
-    module.cli(['no checkpoint %s' % checkpoint])
-
-def load(module, commands, result):
-    candidate = NetworkConfig(indent=2, contents='\n'.join(commands))
-    config = get_config(module)
-    configobjs = candidate.difference(config)
-
-    if configobjs:
-        commands = dumps(configobjs, 'commands').split('\n')
-        result['updates'] = commands
-        if not module.check_mode:
-            load_config(module, commands, result)
-        result['changed'] = True
-
-def clean_result(result):
-    # strip out any keys that have two leading and two trailing
-    # underscore characters
-    for key in result.keys():
-        if PRIVATE_KEYS_RE.match(key):
-            del result[key]
-
+    return obj
 
 def main():
     """ main entry point for module execution
     """
-
     argument_spec = dict(
-        http=dict(aliases=['enable_http'], default=True, type='bool', setter='set_http'),
-        http_port=dict(default=80, type='int', setter='set_http'),
+        http=dict(aliases=['enable_http'], type='bool'),
+        http_port=dict(type='int'),
 
-        https=dict(aliases=['enable_https'], default=False, type='bool', setter='set_https'),
-        https_port=dict(default=443, type='int', setter='set_https'),
+        https=dict(aliases=['enable_https'], type='bool'),
+        https_port=dict(type='int'),
 
-        sandbox=dict(aliases=['enable_sandbox'], default=False, type='bool'),
+        sandbox=dict(aliases=['enable_sandbox'], type='bool'),
 
-        # Only allow configuration of NXAPI using cli transport
-        transport=dict(required=True, choices=['cli']),
-
+        # deprecated (Ansible 2.3) arguments
         config=dict(),
 
-        # Support for started and stopped is for backwards capability only and
-        # will be removed in a future version
         state=dict(default='present', choices=['started', 'stopped', 'present', 'absent'])
     )
 
-    module = NetworkModule(argument_spec=argument_spec,
-                           connect_on_load=False,
+    argument_spec.update(nxos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    state = module.params['state']
+
+    result = {'changed': False}
 
     warnings = list()
+    check_args(module, warnings)
+    result['warnings'] = warnings
 
-    result = dict(changed=False, warnings=warnings)
+    want = map_params_to_obj(module)
+    have = map_config_to_obj(module)
 
-    if state == 'started':
-        state = 'present'
-        warnings.append('state=started is deprecated and will be removed in a '
-                        'a future release.  Please use state=present instead')
-    elif state == 'stopped':
-        state = 'absent'
-        warnings.append('state=stopped is deprecated and will be removed in a '
-                        'a future release.  Please use state=absent instead')
+    commands = map_obj_to_commands((want, have), module)
+    result['commands'] = commands
 
-    commands = list()
-    instance = get_instance(module)
+    if commands:
+        if not module.check_mode:
+            load_config(module, commands)
+        result['changed'] = True
 
-    invoke(state, module, instance, commands)
-
-    try:
-        load(module, commands, result)
-    except (ValueError, NetworkError):
-        load_checkpoint(module, result)
-        exc = get_exception()
-        module.fail_json(msg=str(exc), **exc.kwargs)
-
-    clean_result(result)
     module.exit_json(**result)
-
 
 if __name__ == '__main__':
     main()

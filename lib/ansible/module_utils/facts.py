@@ -153,7 +153,7 @@ class Facts(object):
                  { 'path' : '/usr/sbin/swlist',     'name' : 'SD-UX' },
                  { 'path' : '/usr/bin/emerge',      'name' : 'portage' },
                  { 'path' : '/usr/sbin/pkgadd',     'name' : 'svr4pkg' },
-                 { 'path' : '/usr/bin/pkg',         'name' : 'pkg' },
+                 { 'path' : '/usr/bin/pkg',         'name' : 'pkg5' },
                  { 'path' : '/usr/bin/xbps-install','name' : 'xbps' },
                  { 'path' : '/usr/local/sbin/pkg',  'name' : 'pkgng' },
                  { 'path' : '/usr/bin/swupd',       'name' : 'swupd' },
@@ -385,8 +385,7 @@ class Facts(object):
         elif self.facts['system'] == 'AIX':
             self.facts['service_mgr'] = 'src'
         elif self.facts['system'] == 'SunOS':
-            #FIXME: smf?
-            self.facts['service_mgr'] = 'svcs'
+            self.facts['service_mgr'] = 'smf'
         elif self.facts['distribution'] == 'OpenWrt':
             self.facts['service_mgr'] = 'openwrt_init'
         elif self.facts['system'] == 'Linux':
@@ -406,7 +405,7 @@ class Facts(object):
     def get_lsb_facts(self):
         lsb_path = self.module.get_bin_path('lsb_release')
         if lsb_path:
-            rc, out, err = self.module.run_command([lsb_path, "-a"], errors='surrogate_or_replace')
+            rc, out, err = self.module.run_command([lsb_path, "-a"], errors='surrogate_then_replace')
             if rc == 0:
                 self.facts['lsb'] = {}
                 for line in out.splitlines():
@@ -484,7 +483,7 @@ class Facts(object):
     def get_caps_facts(self):
         capsh_path = self.module.get_bin_path('capsh')
         if capsh_path:
-            rc, out, err = self.module.run_command([capsh_path, "--print"], errors='surrogate_or_replace')
+            rc, out, err = self.module.run_command([capsh_path, "--print"], errors='surrogate_then_replace')
             enforced_caps = []
             enforced = 'NA'
             for line in out.splitlines():
@@ -553,6 +552,10 @@ class Facts(object):
         self.facts['user_gecos'] = pwent.pw_gecos
         self.facts['user_dir'] = pwent.pw_dir
         self.facts['user_shell'] = pwent.pw_shell
+        self.facts['real_user_id'] = os.getuid()
+        self.facts['effective_user_id'] = os.geteuid()
+        self.facts['real_group_id'] = os.getgid()
+        self.facts['effective_group_id'] = os.getgid()
 
     def get_env_facts(self):
         self.facts['env'] = {}
@@ -1329,7 +1332,7 @@ class LinuxHardware(Hardware):
     def _run_findmnt(self, findmnt_path):
         args = ['--list', '--noheadings', '--notruncate']
         cmd = [findmnt_path] + args
-        rc, out, err = self.module.run_command(cmd, errors='surrogate_or_replace')
+        rc, out, err = self.module.run_command(cmd, errors='surrogate_then_replace')
         return rc, out, err
 
     def _find_bind_mounts(self):
@@ -1423,7 +1426,7 @@ class LinuxHardware(Hardware):
         self.facts['devices'] = {}
         lspci = self.module.get_bin_path('lspci')
         if lspci:
-            rc, pcidata, err = self.module.run_command([lspci, '-D'], errors='surrogate_or_replace')
+            rc, pcidata, err = self.module.run_command([lspci, '-D'], errors='surrogate_then_replace')
         else:
             pcidata = None
 
@@ -2482,7 +2485,7 @@ class LinuxNetwork(Network):
                 continue
             if v == 'v6' and not socket.has_ipv6:
                 continue
-            rc, out, err = self.module.run_command(command[v], errors='surrogate_or_replace')
+            rc, out, err = self.module.run_command(command[v], errors='surrogate_then_replace')
             if not out:
                 # v6 routing may result in
                 #   RTNETLINK answers: Invalid argument
@@ -2647,10 +2650,10 @@ class LinuxNetwork(Network):
             ip_path = self.module.get_bin_path("ip")
 
             args = [ip_path, 'addr', 'show', 'primary', device]
-            rc, primary_data, stderr = self.module.run_command(args, errors='surrogate_or_replace')
+            rc, primary_data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
 
             args = [ip_path, 'addr', 'show', 'secondary', device]
-            rc, secondary_data, stderr = self.module.run_command(args, errors='surrogate_or_replace')
+            rc, secondary_data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
 
             parse_ip_output(primary_data)
             parse_ip_output(secondary_data, secondary=True)
@@ -2672,7 +2675,7 @@ class LinuxNetwork(Network):
         ethtool_path = self.module.get_bin_path("ethtool")
         if ethtool_path:
             args = [ethtool_path, '-k', device]
-            rc, stdout, stderr = self.module.run_command(args, errors='surrogate_or_replace')
+            rc, stdout, stderr = self.module.run_command(args, errors='surrogate_then_replace')
             if rc == 0:
                 for line in stdout.strip().splitlines():
                     if not line or line.endswith(":"):

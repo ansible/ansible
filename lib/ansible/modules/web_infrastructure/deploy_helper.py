@@ -130,42 +130,42 @@ EXAMPLES = '''
 
 # General explanation, starting with an example folder structure for a project:
 
-root:
-    releases:
-        - 20140415234508
-        - 20140415235146
-        - 20140416082818
-
-    shared:
-        - sessions
-        - uploads
-
-    current: -> releases/20140416082818
-
-
-The 'releases' folder holds all the available releases. A release is a complete build of the application being
-deployed. This can be a clone of a repository for example, or a sync of a local folder on your filesystem.
-Having timestamped folders is one way of having distinct releases, but you could choose your own strategy like
-git tags or commit hashes.
-
-During a deploy, a new folder should be created in the releases folder and any build steps required should be
-performed. Once the new build is ready, the deploy procedure is 'finalized' by replacing the 'current' symlink
-with a link to this build.
-
-The 'shared' folder holds any resource that is shared between releases. Examples of this are web-server
-session files, or files uploaded by users of your application. It's quite common to have symlinks from a release
-folder pointing to a shared/subfolder, and creating these links would be automated as part of the build steps.
-
-The 'current' symlink points to one of the releases. Probably the latest one, unless a deploy is in progress.
-The web-server's root for the project will go through this symlink, so the 'downtime' when switching to a new
-release is reduced to the time it takes to switch the link.
-
-To distinguish between successful builds and unfinished ones, a file can be placed in the folder of the release
-that is currently in progress. The existence of this file will mark it as unfinished, and allow an automated
-procedure to remove it during cleanup.
+# root:
+#     releases:
+#         - 20140415234508
+#         - 20140415235146
+#         - 20140416082818
+#
+#     shared:
+#         - sessions
+#         - uploads
+#
+#     current: releases/20140416082818
 
 
-# Typical usage:
+# The 'releases' folder holds all the available releases. A release is a complete build of the application being
+# deployed. This can be a clone of a repository for example, or a sync of a local folder on your filesystem.
+# Having timestamped folders is one way of having distinct releases, but you could choose your own strategy like
+# git tags or commit hashes.
+#
+# During a deploy, a new folder should be created in the releases folder and any build steps required should be
+# performed. Once the new build is ready, the deploy procedure is 'finalized' by replacing the 'current' symlink
+# with a link to this build.
+#
+# The 'shared' folder holds any resource that is shared between releases. Examples of this are web-server
+# session files, or files uploaded by users of your application. It's quite common to have symlinks from a release
+# folder pointing to a shared/subfolder, and creating these links would be automated as part of the build steps.
+#
+# The 'current' symlink points to one of the releases. Probably the latest one, unless a deploy is in progress.
+# The web-server's root for the project will go through this symlink, so the 'downtime' when switching to a new
+# release is reduced to the time it takes to switch the link.
+#
+# To distinguish between successful builds and unfinished ones, a file can be placed in the folder of the release
+# that is currently in progress. The existence of this file will mark it as unfinished, and allow an automated
+# procedure to remove it during cleanup.
+
+
+# Typical usage
 - name: Initialize the deploy root and gather facts
   deploy_helper:
     path: /path/to/root
