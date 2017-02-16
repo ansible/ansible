@@ -10,21 +10,23 @@ Ansible Changes By Release
 * On platforms that support it, use more modern system polling API instead of
   select in the ssh connection plugin.  This removes one limitation on how many
   parallel forks are feasible on these systems.
+* Refactored/standardized most Windows modules, adding check-mode and
+  diff support where possible.
+* Extended Windows module API with parameter-type support, helper functions.
+  (i.e. Expand-Environment, Add-Warning, Add-DeprecatationWarning)
 
 ###Minor Changes:
 * The version and release facts for OpenBSD hosts were reversed.  This has been
   changed so that version has the numeric portion and release has the name of
   the release.
 * removed 'package' from default squash actions as not all package managers support it and it creates errors when using loops,
-  any user can add back via config options if they don't use those package managers or othewise avoid the errors.
+  any user can add back via config options if they don't use those package managers or otherwise avoid the errors.
 * Blocks can now have a `name` field, to aid in playbook readability.
 * default strategy is now configurable via ansible.cfg or environment variable.
 * Added 'ansible_playbook_python' which contains 'current python executable', it can be blank in some cases in which Ansible is not invoked via the standard CLI (sys.executable limitation).
 * ansible-doc now displays path to module
 * added optional 'piped' transfer method to ssh plugin for when scp and sftp are missing
 * default controlpersist path is now a custom hash of host-port-user to avoid the socket path length errors for long hostnames
-* Refactored/standardized Windows modules, adding check-mode and diff support where possible
-* Extended Windows module API with parameter-type support, helper functions (i.e. Expand-Environment, Warn, Deprecate)
 * Various fixes for Python3 compatibility
 
 ###Deprecations:
@@ -92,16 +94,6 @@ Ansible Changes By Release
 - foreman:
   * foreman
   * katello
-- free_ipa:
-  * ipa_group
-  * ipa_hbacrule
-  * ipa_host
-  * ipa_hostgroup
-  * ipa_role
-  * ipa_sudocmd
-  * ipa_sudocmdgroup
-  * ipa_sudorule
-  * ipa_user
 - gconftool2
 - google
   * gce_eip
@@ -219,16 +211,9 @@ Ansible Changes By Release
   * panos_pg
   * panos_restart
   * panos_service
-  * panos_loadcfg
-  * panos_mgtconfig
-  * panos_nat_policy
-  * panos_pg
-  * panos_restart
-  * panos_service
 - postgresql_schema
 - proxmox_kvm
-- pubnub
-  * pubnub_blocks
+- pubnub_blocks
 - pulp_repo
 - runit
 - serverless
@@ -240,10 +225,10 @@ Ansible Changes By Release
 - stacki_host
 - swupd
 - tempfile
-- tower:
-  * tower_organization
-- vmware_guest_facts
-- vmware_guest_snapshot
+- tower_organization
+- vmware:
+  * vmware_guest_facts
+  * vmware_guest_snapshot
 - web_infrastructure
   * jenkins_script
 - windows:
