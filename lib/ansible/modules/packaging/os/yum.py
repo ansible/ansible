@@ -22,13 +22,18 @@ module: yum
 version_added: historical
 short_description: Manages packages with the I(yum) package manager
 description:
-     - Installs, upgrade, removes, and lists packages and groups with the I(yum) package manager.
+     - Installs, upgrade, downgrades, removes, and lists packages and groups with the I(yum) package manager.
 options:
   name:
     description:
-      - "Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: yum -y update.
-         You can also pass a url or a local path to a rpm file (using state=present).  To operate on several packages this can accept a comma separated list
-         of packages or (as of 2.0) a list of packages."
+      - Package name, or package specifier with version, like C(name-1.0).
+        If a previous version is specified, the task also needs to turn
+        C(allow_downgrade) on. See the C(allow_downgrade) documentation for
+        caveats with downgrading packages. When using state=latest, this can
+        be '*' which means run C(yum -y update).  You can also pass a url
+        or a local path to a rpm file (using state=present). To operate on
+        several packages this can accept a comma separated list of packages
+        or (as of 2.0) a list of packages.
     required: true
     default: null
     aliases: [ 'pkg' ]
@@ -133,6 +138,21 @@ options:
     choices: ["yes", "no"]
     version_added: "2.4"
 
+  allow_downgrade:
+    description:
+      - Specify if the named package and version is allowed to downgrade
+        a maybe already installed higher version of that package.
+        Note that setting allow_downgrade=True can make this module
+        behave in a non-idempotent way. The task could end up with a set
+        of packages that does not match the complete list of specified
+        packages to install (because dependencies between the downgraded
+        package and others can cause changes to the packages which were
+        in the earlier transaction).
+    required: false
+    default: "no"
+    choices: ["yes", "no"]
+    version_added: "2.4"
+
 notes:
   - When used with a loop of package names in a playbook, ansible optimizes
     the call to the yum module.  Instead of calling the module with a single
@@ -226,7 +246,6 @@ EXAMPLES = '''
 
 import os
 import re
-import shutil
 import tempfile
 
 try:
@@ -243,7 +262,7 @@ except ImportError:
 
 try:
     from yum.misc import find_unfinished_transactions, find_ts_remaining
-    from rpmUtils.miscutils import splitFilename
+    from rpmUtils.miscutils import splitFilename, compareEVR
     transaction_helpers = True
 except:
     transaction_helpers = False
@@ -647,9 +666,49 @@ def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/', disabler
         return [pkg_to_dict(p) for p in sorted(is_installed(module, repoq, stuff, conf_file, qf=is_installed_qf, installroot=installroot)+
                                                 is_available(module, repoq, stuff, conf_file, qf=qf, installroot=installroot)) if p.strip()]
 
-def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot='/'):
+
+def exec_install(module, items, action, pkgs, res, yum_basecmd):
+    cmd = yum_basecmd + [action] + pkgs
+
+    if module.check_mode:
+        module.exit_json(changed=True, results=res['results'], changes=dict(installed=pkgs))
+
+    lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+    rc, out, err = module.run_command(cmd, environ_update=lang_env)
+
+    if (rc == 1):
+        for spec in items:
+            # Fail on invalid urls:
+            if ('://' in spec and ('No package %s available.' % spec in out or 'Cannot open: %s. Skipping.' % spec in err)):
+                err = 'Package at %s could not be installed' % spec
+                module.fail_json(changed=False,msg=err,rc=1)
+
+    res['rc'] = rc
+    res['results'].append(out)
+    res['msg'] += err
+    res['changed'] = True
+
+    # special case for groups
+    for spec in items:
+        if spec.startswith('@'):
+            if ('Nothing to do' in out and rc == 0) or ('does not have any packages to install' in err):
+                res['changed'] = False
+
+    if rc != 0:
+        res['changed'] = False
+        module.fail_json(**res)
+
+    # FIXME - if we did an install - go and check the rpmdb to see if it actually installed
+    # look for each pkg in rpmdb
+    # look for each pkg via obsoletes
+
+    return res
+
+
+def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot='/', allow_downgrade=False):
 
     pkgs = []
+    downgrade_pkgs = []
     res = {}
     res['results'] = []
     res['msg'] = ''
@@ -658,6 +717,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
 
     for spec in items:
         pkg = None
+        downgrade_candidate = False
 
         # check if pkgspec is installed (if possible for idempotence)
         # localpkg
@@ -742,46 +802,42 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, i
             if found:
                 continue
 
-            # if not - then pass in the spec as what to install
+            # Downgrade - The yum install command will only install or upgrade to a spec version, it will
+            # not install an older version of an RPM even if specified by the install spec. So we need to
+            # determine if this is a downgrade, and then use the yum downgrade command to install the RPM.
+            if allow_downgrade:
+                for package in pkglist:
+                    # Get the NEVRA of the requested package using pkglist instead of spec because pkglist
+                    #  contains consistently-formatted package names returned by yum, rather than user input
+                    #  that is often not parsed correctly by splitFilename().
+                    (name, ver, rel, epoch, arch) = splitFilename(package)
+
+                    # Check if any version of the requested package is installed
+                    inst_pkgs = is_installed(module, repoq, name, conf_file, en_repos=en_repos, dis_repos=dis_repos, is_pkg=True)
+                    if inst_pkgs:
+                        (cur_name, cur_ver, cur_rel, cur_epoch, cur_arch) = splitFilename(inst_pkgs[0])
+                        compare = compareEVR((cur_epoch, cur_ver, cur_rel), (epoch, ver, rel))
+                        if compare > 0:
+                            downgrade_candidate = True
+                        else:
+                            downgrade_candidate = False
+                            break
+
+            # If package needs to be installed/upgraded/downgraded, then pass in the spec
             # we could get here if nothing provides it but that's not
             # the error we're catching here
             pkg = spec
 
-        pkgs.append(pkg)
+        if downgrade_candidate and allow_downgrade:
+            downgrade_pkgs.append(pkg)
+        else:
+            pkgs.append(pkg)
+
+    if downgrade_pkgs:
+        res = exec_install(module, items, 'downgrade', downgrade_pkgs, res, yum_basecmd)
 
     if pkgs:
-        cmd = yum_basecmd + ['install'] + pkgs
-
-        if module.check_mode:
-            module.exit_json(changed=True, results=res['results'], changes=dict(installed=pkgs))
-
-
-        lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
-        rc, out, err = module.run_command(cmd, environ_update=lang_env)
-
-        if rc == 1:
-            for spec in items:
-                # Fail on invalid urls:
-                if '://' in spec and ('No package %s available.' % spec in out or 'Cannot open: %s. Skipping.' % spec in err):
-                    module.fail_json(msg='Package at %s could not be installed' % spec, rc=1, changed=False)
-
-        res['rc'] = rc
-        res['results'].append(out)
-        res['msg'] += err
-        res['changed'] = True
-
-        # special case for groups
-        if spec.startswith('@'):
-            if ('Nothing to do' in out and rc == 0) or ('does not have any packages to install' in err):
-                res['changed'] = False
-
-        if rc != 0:
-            res['changed'] = False
-            module.fail_json(**res)
-
-        # FIXME - if we did an install - go and check the rpmdb to see if it actually installed
-        # look for each pkg in rpmdb
-        # look for each pkg via obsoletes
+        res = exec_install(module, items, 'install', pkgs, res, yum_basecmd)
 
     return res
 
@@ -1065,7 +1121,8 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
     return res
 
 def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
-           disable_gpg_check, exclude, repoq, skip_broken, security, installroot='/'):
+           disable_gpg_check, exclude, repoq, skip_broken, security,
+           installroot='/', allow_downgrade=False):
 
     # fedora will redirect yum to dnf, which has incompatibilities
     # with how this module expects yum to operate. If yum-deprecated
@@ -1161,7 +1218,7 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
     if state in ['installed', 'present']:
         if disable_gpg_check:
             yum_basecmd.append('--nogpgcheck')
-        res = install(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot=installroot)
+        res = install(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot=installroot, allow_downgrade=allow_downgrade)
     elif state in ['removed', 'absent']:
         res = remove(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot=installroot)
     elif state == 'latest':
@@ -1209,6 +1266,7 @@ def main():
             installroot=dict(required=False, default="/", type='str'),
             # this should not be needed, but exists as a failsafe
             install_repoquery=dict(required=False, default="yes", type='bool'),
+            allow_downgrade=dict(required=False, default="no", type='bool'),
             security=dict(default="no", type='bool'),
         ),
         required_one_of=[['name', 'list']],
@@ -1265,9 +1323,10 @@ def main():
         disable_gpg_check = params['disable_gpg_check']
         skip_broken = params['skip_broken']
         security = params['security']
+        allow_downgrade = params['allow_downgrade']
         results = ensure(module, state, pkg, params['conf_file'], enablerepo,
                          disablerepo, disable_gpg_check, exclude, repoquery,
-                         skip_broken, security, params['installroot'])
+                         skip_broken, security, params['installroot'], allow_downgrade)
         if repoquery:
             results['msg'] = '%s %s' % (results.get('msg', ''),
                     'Warning: Due to potential bad behaviour with rhnplugin and certificates, used slower repoquery calls instead of Yum API.')
