@@ -550,11 +550,11 @@ def command_integration_role(args, target, start_at_task):
 
     vars_file = 'integration_config.yml'
 
-    if 'windows/' in target.aliases:
+    if isinstance(args, WindowsIntegrationConfig):
         inventory = 'inventory.winrm'
         hosts = 'windows'
         gather_facts = False
-    elif 'network/' in target.aliases:
+    elif isinstance(args, NetworkIntegrationConfig):
         inventory = 'inventory.networking'
         hosts = target.name[:target.name.find('_')]
         gather_facts = False
