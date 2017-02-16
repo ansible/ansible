@@ -64,7 +64,6 @@ lib/ansible/modules/cloud/amazon/redshift.py
 lib/ansible/modules/cloud/amazon/route53.py
 lib/ansible/modules/cloud/amazon/route53_health_check.py
 lib/ansible/modules/cloud/amazon/s3.py
-lib/ansible/modules/cloud/amazon/s3_bucket.py
 lib/ansible/modules/cloud/amazon/s3_lifecycle.py
 lib/ansible/modules/cloud/amazon/s3_sync.py
 lib/ansible/modules/cloud/amazon/s3_website.py
