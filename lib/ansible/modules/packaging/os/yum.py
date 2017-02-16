@@ -1103,25 +1103,18 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
             module.run_command(yum_basecmd + ['clean', 'expire-cache'])
 
         my = yum_base(conf_file, installroot)
-        try:
-            if disablerepo:
+        if disablerepo:
+            try:
                 my.repos.disableRepo(disablerepo)
-            current_repos = my.repos.repos.keys()
-            if enablerepo:
-                try:
-                    my.repos.enableRepo(enablerepo)
-                    new_repos = my.repos.repos.keys()
-                    for i in new_repos:
-                        if not i in current_repos:
-                            rid = my.repos.getRepo(i)
-                            a = rid.repoXML.repoid  ##  if no one complains remove this on next MR
-                    current_repos = new_repos
-                except yum.Errors.YumBaseError:
-                    e = get_exception()
-                    module.fail_json(msg="Error setting/accessing repos: %s" % (e))
-        except yum.Errors.YumBaseError:
-            e = get_exception()
-            module.fail_json(msg="Error accessing repos: %s" % e)
+            except yum.Errors.YumBaseError:
+                yum_error = get_exception()
+                module.fail_json(msg="Error setting/accessing repos: %s" % (yum_error))
+        if enablerepo:
+            try:
+                my.repos.enableRepo(enablerepo)
+            except yum.Errors.YumBaseError:
+                yum_error = get_exception()
+                module.fail_json(msg="Error setting/accessing repos: %s" % (yum_error))
     if state in ['installed', 'present']:
         if disable_gpg_check:
             yum_basecmd.append('--nogpgcheck')
