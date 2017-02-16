@@ -21,6 +21,7 @@
 
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+$diff_support = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
@@ -37,10 +38,13 @@ if ($state -eq "absent" -and $value) {
 $result = @{
     before_value = $before_value
     changed = $false
-    diff = @{ }
     level = $level
     name = $name
     value = $value
+}
+
+if ($diff_support) {
+    $result.diff = @{}
 }
 
 if ($state -eq "present" -and $before_value -ne $value) {
@@ -48,38 +52,35 @@ if ($state -eq "present" -and $before_value -ne $value) {
         [Environment]::SetEnvironmentVariable($name, $value, $level)
     }
     $result.changed = $true
-    if ($before_value -eq $null) {
-        $result.diff.prepared = @"
+
+    if ($diff_support) {
+        if ($before_value -eq $null) {
+            $result.diff.prepared = @"
 [$level]
 +$NAME = $value
 "@
-    } else {
-        $result.diff.prepared = @"
+        } else {
+            $result.diff.prepared = @"
 [$level]
 -$NAME = $before_value
 +$NAME = $value
 "@
+        }
     }
+
 } elseif ($state -eq "absent" -and $before_value -ne $null) {
     if (-not $check_mode) {
         [Environment]::SetEnvironmentVariable($name, $null, $level)
     }
     $result.changed = $true
-    $result.diff.prepared = @"
+
+    if ($diff_support) {
+        $result.diff.prepared = @"
 [$level]
 -$NAME = $before_value
 "@
-}
-
-# Verify if the change actually worked
-if (-not $check_mode) {
-    $after_value = [Environment]::GetEnvironmentVariable($name, $level)
-
-    # TODO: Find out when this is expected to happen ?
-    if ($after_value -ne $value) {
-        Add-Warning $result "Uh-oh, expected value $value, but got value $after_value instead."
-        $result.value = $after_value
     }
+
 }
 
 Exit-Json $result
