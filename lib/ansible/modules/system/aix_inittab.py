@@ -152,7 +152,7 @@ def check_current_entry(module):
     if rc == 0:
         keys = ('name', 'runlevel', 'processaction', 'command')
         values = out.split(":")
-	values = map(lambda s: s.strip(), values) # strip non readable characters as \n 
+        values = map(lambda s: s.strip(), values) # strip non readable characters as \n 
         existsdict =  dict(itertools.izip(keys,values))
         existsdict.update({ 'exist' : True })
     return existsdict
@@ -223,13 +223,11 @@ def main():
                 result['changed'] = True
             
 	    # If the entry does not exist create the entry
-	    elif current_entry['exist'] != True:
-
+            elif current_entry['exist'] != True:
                 if module.params['follow']:
                     (rc, out, err) = module.run_command(['mkitab', '-i',  module.params['follow'], new_entry ])
-		else:
-		    (rc, out, err) = module.run_command(['mkitab', new_entry ])
-		
+                else:
+                    (rc, out, err) = module.run_command(['mkitab', new_entry ])
                 if rc != 0:
                     result['warnings']= "could not add"+" "+module.params['name']
                     module.fail_json(rc=rc, err=err, msg=result['warnings'])
