@@ -5,7 +5,6 @@ lib/ansible/compat/six/__init__.py
 lib/ansible/constants.py
 lib/ansible/errors/__init__.py
 lib/ansible/executor/play_iterator.py
-lib/ansible/executor/stats.py
 lib/ansible/executor/task_executor.py
 lib/ansible/galaxy/role.py
 lib/ansible/inventory/dir.py
@@ -260,7 +259,6 @@ lib/ansible/plugins/lookup/first_found.py
 lib/ansible/plugins/shell/fish.py
 lib/ansible/plugins/shell/sh.py
 lib/ansible/plugins/strategy/__init__.py
-lib/ansible/plugins/strategy/debug.py
 lib/ansible/plugins/strategy/linear.py
 lib/ansible/template/__init__.py
 lib/ansible/utils/encrypt.py
