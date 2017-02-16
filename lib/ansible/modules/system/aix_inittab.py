@@ -227,8 +227,8 @@ def main():
 
                 if module.params['follow']:
                     (rc, out, err) = module.run_command(['mkitab', '-i',  module.params['follow'], new_entry ])
-		else:
-		    (rc, out, err) = module.run_command(['mkitab', new_entry ])
+                else:
+                    (rc, out, err) = module.run_command(['mkitab', new_entry ])
 		
                 if rc != 0:
                     result['warnings']= "could not add"+" "+module.params['name']
