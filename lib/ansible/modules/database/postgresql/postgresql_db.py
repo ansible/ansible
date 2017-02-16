@@ -85,14 +85,17 @@ EXAMPLES = '''
     template: template0
 '''
 
+HAS_PSYCOPG2 = False
 try:
     import psycopg2
     import psycopg2.extras
 except ImportError:
-    postgresqldb_found = False
+    pass
 else:
-    postgresqldb_found = True
+    HAS_PSYCOPG2 = True
 from ansible.module_utils.six import iteritems
+
+import traceback
 
 import ansible.module_utils.postgres as pgutils
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
@@ -222,7 +225,7 @@ def main():
         supports_check_mode = True
     )
 
-    if not postgresqldb_found:
+    if not HAS_PSYCOPG2:
         module.fail_json(msg="the python psycopg2 module is required")
 
     db = module.params["db"]
@@ -255,11 +258,8 @@ def main():
     if is_localhost and module.params["login_unix_socket"] != "":
         kw["host"] = module.params["login_unix_socket"]
 
-    liberr = pgutils.ensure_libs(sslrootcert=module.params.get('ssl_rootcert'))
-    if liberr:
-        module.fail_json(msg=liberr)
-
     try:
+        pgutils.ensure_libs(sslrootcert=module.params.get('ssl_rootcert'))
         db_connection = psycopg2.connect(database="postgres", **kw)
         # Enable autocommit so we can create databases
         if psycopg2.__version__ >= '2.4.2':
@@ -268,15 +268,19 @@ def main():
             db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
+    except pgutils.LibraryError:
+        e = get_exception()
+        module.fail_json(msg="unable to connect to database: {0}".format(str(e)), exception=traceback.format_exc())
+
     except TypeError:
         e = get_exception()
         if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert. Exception: {0}'.format(e))
-        module.fail_json(msg="unable to connect to database: %s" % e)
+            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert. Exception: {0}'.format(e), exception=traceback.format_exc())
+        module.fail_json(msg="unable to connect to database: %s" % e, exception=traceback.format_exc())
 
     except Exception:
         e = get_exception()
-        module.fail_json(msg="unable to connect to database: %s" % e)
+        module.fail_json(msg="unable to connect to database: %s" % e, exception=traceback.format_exc())
 
     try:
         if module.check_mode:

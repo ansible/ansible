@@ -5,7 +5,7 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 from ansible.compat.six.moves import builtins
 
-from ansible.module_utils import postgres, basic
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from units.mock.procenv import swap_stdin_and_argv
 
@@ -33,9 +33,9 @@ class TestPostgres(unittest.TestCase):
 
         self.assertFalse(mod.module_utils.postgres.HAS_PSYCOPG2)
 
-        ensure_ret = mod.module_utils.postgres.ensure_libs(sslrootcert=None)
-        self.assertIn('psycopg2 is not installed', ensure_ret)
-        pprint.pprint(ensure_ret)
+        with self.assertRaises(mod.module_utils.postgres.LibraryError) as context:
+            mod.module_utils.postgres.ensure_libs(sslrootcert=None)
+        self.assertIn('psycopg2 is not installed', to_native(context.exception))
 
     @patch.object(builtins, '__import__')
     def test_postgres_pg2_found_ensure_libs(self, mock_import):
@@ -69,7 +69,7 @@ class TestPostgres(unittest.TestCase):
 
         self.assertTrue(mod.module_utils.postgres.HAS_PSYCOPG2)
 
-        ensure_ret = mod.module_utils.postgres.ensure_libs(sslrootcert="yes")
-        self.assertTrue(ensure_ret)
-        self.assertIn('psycopg2 must be at least 2.4.3 in order to use', ensure_ret)
-        pprint.pprint(ensure_ret)
+        with self.assertRaises(mod.module_utils.postgres.LibraryError) as context:
+            mod.module_utils.postgres.ensure_libs(sslrootcert='yes')
+        self.assertIn('psycopg2 must be at least 2.4.3 in order to use', to_native(context.exception))
+

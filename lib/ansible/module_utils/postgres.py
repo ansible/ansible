@@ -42,11 +42,14 @@ else:
 
 from ansible.module_utils.six import iteritems
 
+class LibraryError(Exception):
+    pass
+
 def ensure_libs(sslrootcert=None):
     if not HAS_PSYCOPG2:
-        return 'psycopg2 is not installed. we need psycopg2.'
+        raise LibraryError('psycopg2 is not installed. we need psycopg2.')
     if sslrootcert and psycopg2.__version__ < '2.4.3':
-        return 'psycopg2 must be at least 2.4.3 in order to use the ssl_rootcert parameter'
+        raise LibraryError('psycopg2 must be at least 2.4.3 in order to use the ssl_rootcert parameter')
 
     # no problems
     return None
