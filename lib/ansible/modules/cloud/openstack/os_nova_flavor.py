@@ -91,6 +91,7 @@ options:
         - Metadata dictionary
      required: false
      default: None
+     version_added: "2.3"
 requirements: ["shade"]
 '''
 
@@ -111,8 +112,8 @@ EXAMPLES = '''
     state: absent
     name: tiny
 
-# Create flavor with metadata
-- os_nova_flavor:
+- name: Create flavor with metadata
+  os_nova_flavor:
     cloud: mycloud
     state: present
     name: tiny
