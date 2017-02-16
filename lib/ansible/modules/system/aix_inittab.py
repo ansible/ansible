@@ -144,6 +144,7 @@ from ansible.module_utils.basic import AnsibleModule
 # end import modules
 # start defining the functions
 
+
 def check_current_entry(module):
     # Check if entry exists, if not return False in exists in return dict,
     # if true return True and the entry in return dict
@@ -152,10 +153,11 @@ def check_current_entry(module):
     if rc == 0:
         keys = ('name', 'runlevel', 'processaction', 'command')
         values = out.split(":")
-        values = map(lambda s: s.strip(), values) # strip non readable characters as \n
-        existsdict =  dict(itertools.izip(keys,values))
+        values = map(lambda s: s.strip(), values)  # strip non readable characters as \n
+        existsdict = dict(itertools.izip(keys,values))
         existsdict.update({ 'exist' : True })
     return existsdict
+
 
 def main():
     # initialize
@@ -163,27 +165,27 @@ def main():
         argument_spec = dict(
             name = dict( required=True, type='str', aliases=['service']),
             runlevel = dict( required=True, type='str'),
-            processaction = dict( choices=[ 
-                                           'respawn',
-                                           'wait',
-                                           'once',
-                                           'boot',
-                                           'bootwait',
-                                           'powerfail',
-                                           'powerwait',
-                                           'off',
-                                           'hold',
-                                           'ondemand',
-                                           'initdefault',
-                                           'sysinit'
-					   ], type='str'),
+            processaction = dict( choices=[
+                                  'respawn',
+                                  'wait',
+                                  'once',
+                                  'boot',
+                                  'bootwait',
+                                  'powerfail',
+                                  'powerwait',
+                                  'off',
+                                  'hold',
+                                  'ondemand',
+                                  'initdefault',
+                                  'sysinit'
+                                  ], type='str'),
             command = dict( required=True, type='str' ),
             follow = dict( type='str' ),
             action = dict( choices=[
-                                    'install',
-                                    'change',
-                                    'remove'
-                                    ], required=True, type='str'),
+                           'install',
+                           'change',
+                           'remove'
+                           ], required=True, type='str'),
         )
         )
 
@@ -211,7 +213,10 @@ def main():
         new_entry = module.params['name']+":"+module.params['runlevel']+":"+module.params['processaction']+":"+module.params['command']
 
         # If current entry exists or fields are different(if the entry does not exists, then the entry wil be created
-        if ( not current_entry['exist'] ) or (module.params['runlevel'] != current_entry['runlevel'] or module.params['processaction'] != current_entry['processaction'] or module.params['command'] != current_entry['command']):
+        if ( not current_entry['exist'] ) or (
+                module.params['runlevel'] != current_entry['runlevel'] or
+                module.params['processaction'] != current_entry['processaction'] or
+                module.params['command'] != current_entry['command'] ):
 
             # If the entry does exist then change the entry
             if current_entry['exist']:
@@ -229,7 +234,7 @@ def main():
                     (rc, out, err) = module.run_command(['mkitab', '-i',  module.params['follow'], new_entry ])
                 else:
                     (rc, out, err) = module.run_command(['mkitab', new_entry ])
-		
+
                 if rc != 0:
                     result['warnings']= "could not add"+" "+module.params['name']
                     module.fail_json(rc=rc, err=err, msg=result['warnings'])
