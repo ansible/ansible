@@ -386,8 +386,8 @@ DIFF_CONTEXT = get_config(p, 'diff', 'context', 'ANSIBLE_DIFF_CONTEXT', 3, value
 DIFF_ALWAYS = get_config(p, 'diff', 'always', 'ANSIBLE_DIFF_ALWAYS', False, value_type='bool')
 
 # non-configurable things
-MODULE_REQUIRE_ARGS       = ['command', 'win_command', 'net_command', 'shell', 'win_shell', 'raw', 'script']
-MODULE_NO_JSON            = ['command', 'win_command', 'net_command', 'shell', 'win_shell', 'raw']
+MODULE_REQUIRE_ARGS       = ['command', 'win_command', 'shell', 'win_shell', 'raw', 'script']
+MODULE_NO_JSON            = ['command', 'win_command', 'shell', 'win_shell', 'raw']
 DEFAULT_BECOME_PASS       = None
 DEFAULT_PASSWORD_CHARS = to_text(ascii_letters + digits + ".,:-_", errors='strict')  # characters included in auto-generated passwords
 DEFAULT_SUDO_PASS         = None

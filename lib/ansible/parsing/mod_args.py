@@ -31,7 +31,6 @@ from ansible.template import Templar
 RAW_PARAM_MODULES = ([
     'command',
     'win_command',
-    'net_command',
     'shell',
     'win_shell',
     'script',
@@ -165,7 +164,7 @@ class ModuleArgsParser:
 
         # only internal variables can start with an underscore, so
         # we don't allow users to set them directy in arguments
-        if args and action not in ('command', 'net_command', 'win_command', 'shell', 'win_shell', 'script', 'raw'):
+        if args and action not in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw'):
             for arg in args:
                 arg = to_text(arg)
                 if arg.startswith('_ansible_'):
@@ -196,7 +195,7 @@ class ModuleArgsParser:
             args = thing
         elif isinstance(thing, string_types):
             # form is like: copy: src=a dest=b
-            check_raw = action in ('command', 'net_command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
+            check_raw = action in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
             args = parse_kv(thing, check_raw=check_raw)
         elif thing is None:
             # this can happen with modules which take no params, like ping:
