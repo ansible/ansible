@@ -154,6 +154,9 @@ class Ec2Metadata(object):
         data = dict(dyndata.items() + data.items())
         self.convert_json_to_fields(data)
         self.fix_invalid_varnames(data)
+
+        # Maintain old key for backwards compatibility
+        data['ansible_ec2_placement_region'] = data['ansible_ec2_instance_identity_document_region']
         return data
 
 
