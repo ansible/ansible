@@ -103,7 +103,7 @@ options:
     required: false
     version_added: "2.3"
     default: "no"
-    choices: ["yes, "no"]
+    choices: ["yes", "no"]
     aliases: []
 
   update_cache:
