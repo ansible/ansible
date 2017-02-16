@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import codecs
+
 try:
     import simplejson as json
 except ImportError:
@@ -31,10 +33,12 @@ class CacheModule(BaseFileCacheModule):
     """
     A caching module backed by json files.
     """
-    plugin_name = 'jsonfile'
 
-    def _load(self, f):
-        return json.load(f)
+    def _load(self, filepath):
+        # Valid JSON is always UTF-8 encoded.
+        with codecs.open(filepath, 'r', encoding='utf-8') as f:
+            return json.load(f)
 
-    def _dump(self, value, f):
-        f.write(jsonify(value, format=True))
+    def _dump(self, value, filepath):
+        with codecs.open(filepath, 'w', encoding='utf-8') as f:
+            f.write(jsonify(value, format=True))

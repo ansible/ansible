@@ -21,8 +21,6 @@ __metaclass__ = type
 import os
 import time
 import errno
-import codecs
-
 from abc import ABCMeta, abstractmethod
 
 from ansible import constants as C
@@ -74,12 +72,9 @@ class BaseFileCacheModule(BaseCacheModule):
     """
     A caching module backed by file based storage.
     """
-    plugin_name = None
-    read_mode = 'r'
-    write_mode = 'w'
-    encoding = 'utf-8'
     def __init__(self, *args, **kwargs):
 
+        self.plugin_name = self.__module__.split('.')[-1]
         self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
         self._cache = {}
         self._cache_dir = None
@@ -89,7 +84,8 @@ class BaseFileCacheModule(BaseCacheModule):
             self._cache_dir = os.path.expanduser(os.path.expandvars(C.CACHE_PLUGIN_CONNECTION))
 
         if not self._cache_dir:
-            raise AnsibleError("error, '%s' cache plugin requires the 'fact_caching_connection' config option to be set (to a writeable directory path)" % self.plugin_name)
+            raise AnsibleError("error, '%s' cache plugin requires the 'fact_caching_connection' config option"
+                    " to be set (to a writeable directory path)" % self.plugin_name)
 
         if not os.path.exists(self._cache_dir):
             try:
@@ -111,15 +107,16 @@ class BaseFileCacheModule(BaseCacheModule):
 
         cachefile = "%s/%s" % (self._cache_dir, key)
         try:
-            with codecs.open(cachefile, self.read_mode, encoding=self.encoding) as f:
-                try:
-                    value = self._load(f)
-                    self._cache[key] = value
-                    return value
-                except ValueError as e:
-                    display.warning("error in '%s' cache plugin while trying to read %s : %s. Most likely a corrupt file, so erasing and failing." % (self.plugin_name, cachefile, to_bytes(e)))
-                    self.delete(key)
-                    raise AnsibleError("The cache file %s was corrupt, or did not otherwise contain valid data. It has been removed, so you can re-run your command now." % cachefile)
+            try:
+                value = self._load(cachefile)
+                self._cache[key] = value
+                return value
+            except ValueError as e:
+                display.warning("error in '%s' cache plugin while trying to read %s : %s."
+                        " Most likely a corrupt file, so erasing and failing." % (self.plugin_name, cachefile, to_bytes(e)))
+                self.delete(key)
+                raise AnsibleError("The cache file %s was corrupt, or did not otherwise contain valid data."
+                        " It has been removed, so you can re-run your command now." % cachefile)
         except (OSError,IOError) as e:
             display.warning("error in '%s' cache plugin while trying to read %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
             raise KeyError
@@ -132,17 +129,9 @@ class BaseFileCacheModule(BaseCacheModule):
 
         cachefile = "%s/%s" % (self._cache_dir, key)
         try:
-            f = codecs.open(cachefile, self.write_mode, encoding=self.encoding)
+            self._dump(value, cachefile)
         except (OSError,IOError) as e:
             display.warning("error in '%s' cache plugin while trying to write to %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
-            pass
-        else:
-            self._dump(value, f)
-        finally:
-            try:
-                f.close()
-            except UnboundLocalError:
-                pass
 
     def has_expired(self, key):
 
@@ -212,9 +201,31 @@ class BaseFileCacheModule(BaseCacheModule):
             ret[key] = self.get(key)
         return ret
 
-    def _load(self, f):
-        raise AnsibleError("Plugin '%s' must implement _load method" % self.plugin_name)
+    @abstractmethod
+    def _load(self, filepath):
+        """
+        Read data from a filepath and return it as a value
 
-    def _dump(self, value, f):
-        raise AnsibleError("Plugin '%s' must implement _dump method" % self.plugin_name)
+        :arg filepath: The filepath to read from.
+        :returns: The value stored in the filepath
 
+        This method reads from the file on disk and takes care of any parsing
+        and transformation of the data before returning it.  The value
+        returned should be what Ansible would expect if it were uncached data.
+
+        .. note:: Filehandles have advantages but calling code doesn't know
+            whether this file is text or binary, should be decoded, or accessed via
+            a library function.  Therefore the API uses a filepath and opens
+            the file inside of the method.
+        """
+        pass
+
+    @abstractmethod
+    def _dump(self, value, filepath):
+        """
+        Write data to a filepath
+
+        :arg value: The value to store
+        :arg filepath: The filepath to store it at
+        """
+        pass
