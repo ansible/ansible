@@ -114,6 +114,10 @@ options:
      required: false
      default: None
      version_added: "2.1"
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatability
+     required: false
 requirements:
     - "python >= 2.6"
     - "shade"
