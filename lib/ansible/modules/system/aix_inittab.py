@@ -124,12 +124,12 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-description: The result is deliverd in an dictionary.
+# description: The result is deliverd in an dictionary.
 - return:
-  changed: true,
-  msg: [],
+  changed: true
+  msg: []
   name: "startmyservice"
-  status: "changed inittab entry startmyservice",
+  status: "changed inittab entry startmyservice"
   warnings: []
 '''
 
