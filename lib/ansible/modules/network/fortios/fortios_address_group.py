@@ -91,6 +91,7 @@ import logging
 import re
 import shlex
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 
 
 #check for pyFG lib
@@ -208,8 +209,9 @@ def main():
     if module.check_mode is False and change_string != "":
         try:
             f.commit()
-        except FailedCommit as e:
+        except FailedCommit:
             #rollback
+            e = get_exception()
             module.fail_json(msg="Unable to commit change, check your args, the error was {0}".format(e.message))
 
     module.exit_json(**result)
