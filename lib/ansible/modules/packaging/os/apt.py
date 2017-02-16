@@ -120,6 +120,51 @@ options:
     type: bool
     default: 'no'
     version_added: "2.4"
+  allow_install:
+    description:
+      - 'List of packages allowed to be installed as dependencies. If anything not listed here is going to be installed additionally, the module fails.'
+      - 'Name wildcards (fnmatch) like C(lib*) are supported, specifying version is not supported.'
+      - 'Pass C([]) (empty list) to prohibit the installation of any dependencies.'
+    required: false
+    version_added: "2.6"
+  prohibit_install:
+    description:
+      - 'List of packages prohibited to be installed as dependencies. If anything listed here is going to be installed additionally, the module fails.'
+      - 'Name wildcards (fnmatch) like C(lib*) are supported, specifying version is not supported.'
+      - 'To prohibit the installation of any dependencies, use C(allow_install=[]).'
+    required: false
+    version_added: "2.6"
+  allow_upgrade:
+    description:
+      - 'Similar to C(allow_install), but refers to package upgrading.'
+    required: false
+    version_added: "2.6"
+  prohibit_upgrade:
+    description:
+      - 'Similar to C(prohibit_install), but refers to package upgrading.'
+    required: false
+    version_added: "2.6"
+  allow_remove:
+    description:
+      - 'Similar to C(allow_install), but refers to package removing.'
+    required: false
+    version_added: "2.6"
+  prohibit_remove:
+    description:
+      - 'Similar to C(prohibit_install), but refers to package removing.'
+    required: false
+    version_added: "2.6"
+  allow_downgrade:
+    description:
+      - 'Similar to C(allow_install), but refers to package downgrading.'
+      - 'Note: to be able to downgrade anything, you have to pass C(force=yes).'
+    required: false
+    version_added: "2.6"
+  prohibit_downgrade:
+    description:
+      - 'Similar to C(prohibit_install), but refers to package downgrading.'
+    required: false
+    version_added: "2.6"
 requirements:
    - python-apt (python 2)
    - python3-apt (python 3)
@@ -169,7 +214,7 @@ EXAMPLES = '''
   apt:
     name: foo=1.00
 
-- name: Update the repository cache and update package "nginx" to latest version using default release squeeze-backport
+- name: Update the repository cache and update package "nginx" to latest version using default release squeeze-backports
   apt:
     name: nginx
     state: latest
@@ -226,6 +271,36 @@ EXAMPLES = '''
 - name: Remove dependencies that are no longer required
   apt:
     autoremove: yes
+
+- name: Install the package "foo", but only if that does not install the package "bar" (it may be either not a dependency or already installed)
+  apt:
+    name: foo
+    state: present
+    prohibit_install: bar
+
+- name: Install the package "foo" and packages whose names start with "bar", but only if that does not install the package "baz" and packages
+    whose names start with "qux"
+  apt:
+    name:
+    - foo
+    - bar*
+    state: present
+    prohibit_install: [baz, qux*]
+
+- name: Install a .deb package, but only if that does not remove anything, installs the package "bar" or upgrades packages other than "baz" and "qux"
+  apt:
+    deb: foo.deb
+    state: present
+    allow_remove: []
+    prohibit_install: bar
+    allow_upgrade:
+    - baz
+    - qux
+
+- name: Perform an aptitude full-upgrade, but only if that does not remove the package "foo"
+  apt:
+    upgrade: full
+    prohibit_remove: foo
 
 '''
 
@@ -421,7 +496,7 @@ def expand_dpkg_options(dpkg_options_compressed):
     return dpkg_options.strip()
 
 
-def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
+def expand_pkgspec_from_fnmatches(m, pkgspec, cache, must_exist=True):
     # Note: apt-get does implicit regex matching when an exact package name
     # match is not found.  Something like this:
     # matches = [pkg.name for pkg in cache if re.match(pkgspec, pkg.name)]
@@ -455,7 +530,9 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
                 matches = fnmatch.filter(pkg_name_cache, pkgname_pattern)
 
                 if not matches:
-                    m.fail_json(msg="No package(s) matching '%s' available" % str(pkgname_pattern))
+                    # do not fail if packages from allow_*/prohibit_* parameters are not available
+                    if must_exist:
+                        m.fail_json(msg="No package(s) matching '%s' available" % str(pkgname_pattern))
                 else:
                     new_pkgspec.extend(matches)
             else:
@@ -500,6 +577,94 @@ def mark_installed_manually(m, packages):
 
     if rc != 0:
         m.fail_json(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc)
+
+
+def parse_simulation_diff(output):
+    diff = [s.rstrip() for s in to_native(output).splitlines()]
+    l = len(diff)
+    packages = {}
+    for (action, marker) in [['install', 'The following NEW packages will be installed:'],
+                             ['upgrade', 'The following packages will be upgraded:'],
+                             ['remove', 'The following packages will be REMOVED:'],
+                             ['downgrade', 'The following packages will be DOWNGRADED:']]:
+        pkgs = set()
+        try:
+            line = diff.index(marker)
+            line += 1
+            while line < l and diff[line].startswith(' '):
+                pkgs |= set(diff[line].lstrip().split(' '))
+                line += 1
+        except ValueError:
+            pass
+        packages[action] = set(re.sub('{.}$|\\*$', '', s) for s in pkgs)
+    return packages
+
+
+def can_perform_action(m, cmd, cache, prompt_regex=None):
+    p = m.params.copy()
+    given = False
+    for param in ['allow_install', 'prohibit_install', 'allow_upgrade', 'prohibit_upgrade',
+                  'allow_remove', 'prohibit_remove', 'allow_downgrade', 'prohibit_downgrade']:
+        if p[param] is not None:
+            given = True
+            # expand name wildcards (fnmatch)
+            pkgspec = expand_pkgspec_from_fnmatches(m, p[param], cache, must_exist=False)
+            packages = set()
+            for package in pkgspec:
+                name, version = package_split(package)
+                packages.add(name)
+            p[param] = packages
+    if not given:
+        # there was no restriction, no need to simulate
+        return None
+
+    # deal with the packages specified in package/pkg/name parameter
+    if p['package']:
+        pkgspec = expand_pkgspec_from_fnmatches(m, p['package'], cache)
+        packages = set()
+        for package in pkgspec:
+            name, version = package_split(package)
+            packages.add(name)
+        if p['state'] == 'present':
+            if p['allow_install'] is not None:
+                p['allow_install'] = set(p['allow_install']) | packages
+            # if version is specified, the package may also be upgraded or downgraded
+            if p['allow_upgrade'] is not None:
+                p['allow_upgrade'] = set(p['allow_upgrade']) | packages
+            if p['allow_downgrade'] is not None:
+                p['allow_downgrade'] = set(p['allow_downgrade']) | packages
+        elif p['state'] == 'absent':
+            if p['allow_remove'] is not None:
+                p['allow_remove'] = set(p['allow_remove']) | packages
+        elif p['state'] == 'latest':
+            if p['allow_install'] is not None:
+                p['allow_install'] = set(p['allow_install']) | packages
+            if p['allow_upgrade'] is not None:
+                p['allow_upgrade'] = set(p['allow_upgrade']) | packages
+
+    rc, stdout, stderr = m.run_command(cmd, prompt_regex=prompt_regex)
+    cmd_result = dict(rc=rc, stdout=stdout, stderr=stderr)
+    if rc:
+        return cmd_result
+    diff = parse_simulation_diff(stdout)
+
+    msg = ''
+    for (action, what) in [['install', 'installed'], ['upgrade', 'upgraded'], ['remove', 'removed'], ['downgrade', 'downgraded']]:
+        prohibited = set()
+        if 'allow_%s' % action in p and p['allow_%s' % action] is not None:
+            prohibited = diff[action].difference(set(p['allow_%s' % action]))
+        elif 'prohibit_%s' % action in p and p['prohibit_%s' % action] is not None:
+            prohibited = diff[action].intersection(set(p['prohibit_%s' % action]))
+        if len(prohibited):
+            if msg:
+                msg += '\n'
+            msg += 'The following packages were prohibited to be %s: ' % what + ', '.join(sorted(prohibited)) + '.'
+
+    if msg:
+        msg += "\nThe action was not allowed by module's parameters."
+        m.fail_json(msg=msg)
+
+    return cmd_result
 
 
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
@@ -570,7 +735,24 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         if allow_unauthenticated:
             cmd += " --allow-unauthenticated"
 
-        rc, out, err = m.run_command(cmd)
+        if m.check_mode:
+            simulate_cmd = cmd
+        else:
+            simulate_cmd = cmd + ' --simulate'
+
+        simulate_cmd_result = can_perform_action(m, simulate_cmd, cache)
+        if simulate_cmd_result is not None and simulate_cmd_result['rc']:
+            # simulate_cmd failed
+            return (False, dict(msg="'%s' failed: %s" % (simulate_cmd, simulate_cmd_result['stderr']), stdout=simulate_cmd_result['stdout'],
+                    stderr=simulate_cmd_result['stderr']))
+
+        if m.check_mode and simulate_cmd_result is not None:
+            # there's no need to run the same command again
+            rc = simulate_cmd_result['rc']
+            out = simulate_cmd_result['stdout']
+            err = simulate_cmd_result['stderr']
+        else:
+            rc, out, err = m.run_command(cmd)
         if m._diff:
             diff = parse_diff(out)
         else:
@@ -714,7 +896,24 @@ def remove(m, pkgspec, cache, purge=False, force=False,
 
         cmd = "%s -q -y %s %s %s %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, force_yes, autoremove, check_arg, packages)
 
-        rc, out, err = m.run_command(cmd)
+        if m.check_mode:
+            simulate_cmd = cmd
+        else:
+            simulate_cmd = cmd + ' --simulate'
+
+        simulate_cmd_result = can_perform_action(m, simulate_cmd, cache)
+        if simulate_cmd_result is not None and simulate_cmd_result['rc']:
+            # simulate_cmd failed
+            return (False, dict(msg="'%s' failed: %s" % (simulate_cmd, simulate_cmd_result['stderr']), stdout=simulate_cmd_result['stdout'],
+                                stderr=simulate_cmd_result['stderr']))
+
+        if m.check_mode and simulate_cmd_result is not None:
+            # there's no need to run the same command again
+            rc = simulate_cmd_result['rc']
+            out = simulate_cmd_result['stdout']
+            err = simulate_cmd_result['stderr']
+        else:
+            rc, out, err = m.run_command(cmd)
         if m._diff:
             diff = parse_diff(out)
         else:
@@ -760,7 +959,7 @@ def cleanup(m, purge=False, force=False, operation=None,
     m.exit_json(changed=changed, stdout=out, stderr=err, diff=diff)
 
 
-def upgrade(m, mode="yes", force=False, default_release=None,
+def upgrade(m, cache, mode="yes", force=False, default_release=None,
             use_apt_get=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False):
 
@@ -816,7 +1015,24 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     if default_release:
         cmd += " -t '%s'" % (default_release,)
 
-    rc, out, err = m.run_command(cmd, prompt_regex=prompt_regex)
+    if m.check_mode:
+        simulate_cmd = cmd
+    else:
+        simulate_cmd = cmd + ' --simulate'
+
+    simulate_cmd_result = can_perform_action(m, simulate_cmd, cache, prompt_regex=prompt_regex)
+    if simulate_cmd_result is not None and simulate_cmd_result['rc']:
+        # simulate_cmd failed
+        return (False, dict(msg="'%s' failed: %s" % (simulate_cmd, simulate_cmd_result['stderr']), stdout=simulate_cmd_result['stdout'],
+                            stderr=simulate_cmd_result['stderr']))
+
+    if m.check_mode and simulate_cmd_result is not None:
+        # there's no need to run the same command again
+        rc = simulate_cmd_result['rc']
+        out = simulate_cmd_result['stdout']
+        err = simulate_cmd_result['stderr']
+    else:
+        rc, out, err = m.run_command(cmd, prompt_regex=prompt_regex)
     if m._diff:
         diff = parse_diff(out)
     else:
@@ -927,8 +1143,17 @@ def main():
             only_upgrade=dict(type='bool', default=False),
             force_apt_get=dict(type='bool', default=False),
             allow_unauthenticated=dict(type='bool', default=False, aliases=['allow-unauthenticated']),
+            allow_install=dict(type='list', aliases=['allow-install']),
+            prohibit_install=dict(type='list', aliases=['prohibit-install']),
+            allow_upgrade=dict(type='list', aliases=['allow-upgrade']),
+            prohibit_upgrade=dict(type='list', aliases=['prohibit-upgrade']),
+            allow_remove=dict(type='list', aliases=['allow-remove']),
+            prohibit_remove=dict(type='list', aliases=['prohibit-remove']),
+            allow_downgrade=dict(type='list', aliases=['allow-downgrade']),
+            prohibit_downgrade=dict(type='list', aliases=['prohibit-downgrade']),
         ),
-        mutually_exclusive=[['deb', 'package', 'upgrade']],
+        mutually_exclusive=[['deb', 'package', 'upgrade'], ['allow_install', 'prohibit_install'], ['allow_upgrade', 'prohibit_upgrade'],
+                            ['allow_remove', 'prohibit_remove'], ['allow_downgrade', 'prohibit_downgrade']],
         required_one_of=[['autoremove', 'deb', 'package', 'update_cache', 'upgrade']],
         supports_check_mode=True,
     )
@@ -1028,7 +1253,7 @@ def main():
         force_yes = p['force']
 
         if p['upgrade']:
-            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove)
+            upgrade(module, cache, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove)
 
         if p['deb']:
             if p['state'] != 'present':
