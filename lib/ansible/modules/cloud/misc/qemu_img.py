@@ -139,8 +139,8 @@ def main():
     img_format = module.params['format']
     img_options = module.params['options']
     size = module.params['size']
-    grow = module.boolean(module.params['grow'])
-    shrink = module.boolean(module.params['shrink'])
+    grow = module.params['grow']
+    shrink = module.params['shrink']
 
     qemu_img = module.get_bin_path('qemu-img', True)
 
