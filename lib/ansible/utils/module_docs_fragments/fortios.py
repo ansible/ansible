@@ -34,11 +34,11 @@ options:
     description:
       - Specifies the password used to authenticate to the remote device.
     required: true
-  timeout
+  timeout:
     description:
       - Timeout in seconds for connecting to the remote device.
     default: 60
-  vdom
+  vdom:
     description:
       - Specifies on which vdom to apply configuration
 """
