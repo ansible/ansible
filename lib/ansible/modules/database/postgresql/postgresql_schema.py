@@ -101,7 +101,6 @@ schema:
     sample: "acme"
 '''
 
-
 try:
     import psycopg2
     import psycopg2.extras
@@ -109,6 +108,10 @@ except ImportError:
     postgresqldb_found = False
 else:
     postgresqldb_found = True
+
+import traceback
+
+from ansible.module_utils._text import to_native
 
 class NotSupportedError(Exception):
     pass
@@ -231,7 +234,7 @@ def main():
             cursor_factory=psycopg2.extras.DictCursor)
     except Exception:
         e = get_exception()
-        module.fail_json(msg="unable to connect to database: %s" %(text, str(e)))
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
 
     try:
         if module.check_mode:
@@ -262,7 +265,7 @@ def main():
         raise
     except Exception:
         e = get_exception()
-        module.fail_json(msg="Database query failed: %s" %(text, str(e)))
+        module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
     module.exit_json(changed=changed, schema=schema)
 
