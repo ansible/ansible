@@ -37,6 +37,20 @@ except:
 
 
 HAS_SF_SDK = False
+SF_BYTE_MAP = dict(
+    # Management GUI displays 1024 ** 3 as 1.1 GB, thus use 1000.
+    bytes=1,
+    b=1,
+    kb=1000,
+    mb=1000 ** 2,
+    gb=1000 ** 3,
+    tb=1000 ** 4,
+    pb=1000 ** 5,
+    eb=1000 ** 6,
+    zb=1000 ** 7,
+    yb=1000 ** 8
+)
+
 try:
     from solidfire.factory import ElementFactory
     from solidfire.custom.models import TimeIntervalFrequency
@@ -112,6 +126,7 @@ def eseries_host_argument_spec():
         validate_certs=dict(required=False, default=True),
     ))
     return argument_spec
+
 
 def request(url, data=None, headers=None, method='GET', use_proxy=True,
             force=False, last_mod_time=None, timeout=10, validate_certs=True,
