@@ -16,9 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'core',
+    'version': '1.0'
+}
 
 DOCUMENTATION = """
 ---
@@ -31,7 +33,6 @@ description:
     configuration running on Juniper JUNOS devices.  It provides a set
     of arguments for loading configuration, performing rollback operations
     and zeroing the active configuration on the device.
-extends_documentation_fragment: junos
 options:
   lines:
     description:
@@ -144,16 +145,6 @@ notes:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
----
-vars:
-  netconf:
-    host: "{{ inventory_hostname }}"
-    username: ansible
-    password: Ansible
-
----
 - name: load configure file into device
   junos_config:
     src: srx.cfg
@@ -182,19 +173,27 @@ backup_path:
   type: path
   sample: /playbooks/ansible/backup/config.2016-07-16@22:28:34
 """
+import re
 import json
 
 from xml.etree import ElementTree
+from ncclient.xml_ import to_xml
 
-import ansible.module_utils.junos
-
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.network import NetworkModule, NetworkError
+from ansible.module_utils.junos import get_diff, load
+from ansible.module_utils.junos import locked_config, load_configuration
+from ansible.module_utils.junos import get_configuration
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import NetworkConfig
-
 
 DEFAULT_COMMENT = 'configured by junos_config'
 
+def check_args(module, warnings):
+    if module.params['zeroize']:
+        module.fail_json(msg='argument zeroize is deprecated and no longer '
+                'supported, use junos_command instead')
+
+    if module.params['replace'] is not None:
+        module.fail_json(msg='argument replace is deprecated, use update')
 
 def guess_format(config):
     try:
@@ -233,91 +232,63 @@ def config_to_commands(config):
 
     return commands
 
-def diff_commands(commands, config):
-    config = [unicode(c).replace("'", '') for c in config]
+def filter_delete_statements(module, candidate):
+    reply = get_configuration(module, format='set')
+    config = reply.xpath('//configuration-set')[0].text.strip()
+    for index, line in enumerate(candidate):
+        if line.startswith('delete'):
+            newline = re.sub('^delete', 'set', line)
+            if newline not in config:
+                del candidate[index]
+    return candidate
 
-    updates = list()
-    visited = set()
-
-    for index, item in enumerate(commands):
-        if len(item) > 0:
-            if not item.startswith('set') and not item.startswith('delete'):
-                raise ValueError('line must start with either `set` or `delete`')
-
-            elif item.startswith('set') and item[4:] not in config:
-                updates.append(item)
-
-            elif item.startswith('delete'):
-                for entry in config + commands[0:index]:
-                    if entry.startswith('set'):
-                        entry = entry[4:]
-                    if entry.startswith(item[7:]) and item not in visited:
-                        updates.append(item)
-                        visited.add(item)
-
-    return updates
-
-def load_config(module, result):
+def load_config(module):
     candidate =  module.params['lines'] or module.params['src']
     if isinstance(candidate, basestring):
         candidate = candidate.split('\n')
 
-    kwargs = dict()
-    kwargs['comment'] = module.params['comment']
-    kwargs['confirm'] = module.params['confirm']
-    kwargs[module.params['update']] = True
-    kwargs['commit'] = not module.check_mode
-    kwargs['replace'] = module.params['replace']
+    confirm = module.params['confirm'] > 0
+    confirm_timeout = module.params['confirm']
+
+    kwargs = {
+        'confirm': module.params['confirm'] is not None,
+        'confirm_timeout': module.params['confirm_timeout'],
+        'comment': module.params['comment'],
+        'commit': not module.check_mode,
+    }
 
     if module.params['src']:
         config_format = module.params['src_format'] or guess_format(str(candidate))
-    elif module.params['lines']:
-        config_format = 'set'
-    kwargs['config_format'] = config_format
+        kwargs.update({'format': config_format, 'action': module.params['update']})
 
     # this is done to filter out `delete ...` statements which map to
     # nothing in the config as that will cause an exception to be raised
-    if config_format == 'set':
-        config = module.config.get_config()
-        config = config_to_commands(config)
-        candidate = diff_commands(candidate, config)
+    if module.params['lines']:
+        candidate = filter_delete_statements(module, candidate)
+        kwargs.update({'action': 'set', 'format': 'text'})
 
-    diff = module.config.load_config(candidate, **kwargs)
-
-    if diff:
-        result['changed'] = True
-        result['diff'] = dict(prepared=diff)
+    return load(module, candidate, **kwargs)
 
 def rollback_config(module, result):
     rollback = module.params['rollback']
+    diff = None
 
-    kwargs = dict(comment=module.params['comment'],
-                  commit=not module.check_mode)
+    with locked_config:
+        load_configuration(module, rollback=rollback)
+        diff = get_diff(module)
 
-    diff = module.connection.rollback_config(rollback, **kwargs)
+    return diff
 
-    if diff:
-        result['changed'] = True
-        result['diff'] = dict(prepared=diff)
+def confirm_config(module):
+    with locked_config:
+        commit_configuration(confirm=True)
 
-def zeroize_config(module, result):
-    if not module.check_mode:
-        module.connection.cli('request system zeroize')
-    result['changed'] = True
-
-def confirm_config(module, result):
-    checkonly = module.check_mode
-    result['changed'] = module.connection.confirm_commit(checkonly)
-
-def run(module, result):
-    if module.params['rollback']:
-        return rollback_config(module, result)
-    elif module.params['zeroize']:
-        return zeroize_config(module, result)
-    elif not any((module.params['src'], module.params['lines'])):
-        return confirm_config(module, result)
-    else:
-        return load_config(module, result)
+def update_result(module, result, diff=None):
+    if diff == '':
+        diff = None
+    result['changed'] = diff is not None
+    if module._diff:
+        result['diff'] =  {'prepared': diff}
 
 
 def main():
@@ -330,8 +301,10 @@ def main():
         src_format=dict(choices=['xml', 'text', 'set', 'json']),
 
         # update operations
-        update=dict(default='merge', choices=['merge', 'overwrite', 'replace']),
-        replace=dict(default=False, type='bool'),
+        update=dict(default='merge', choices=['merge', 'overwrite', 'replace', 'update']),
+
+        # deprecated replace in Ansible 2.3
+        replace=dict(type='bool'),
 
         confirm=dict(default=0, type='int'),
         comment=dict(default=DEFAULT_COMMENT),
@@ -339,36 +312,35 @@ def main():
         # config operations
         backup=dict(type='bool', default=False),
         rollback=dict(type='int'),
-        zeroize=dict(default=False, type='bool'),
 
-        transport=dict(default='netconf', choices=['netconf'])
+        # deprecated zeroize in Ansible 2.3
+        zeroize=dict(default=False, type='bool'),
     )
 
-    mutually_exclusive = [('lines', 'rollback'), ('lines', 'zeroize'),
-                          ('rollback', 'zeroize'), ('lines', 'src'),
-                          ('src', 'zeroize'), ('src', 'rollback'),
-                          ('update', 'replace')]
+    mutually_exclusive = [('lines', 'src', 'rollback')]
 
-    required_if = [('replace', True, ['src']),
-                   ('update', 'merge', ['src', 'lines'], True),
-                   ('update', 'overwrite', ['src', 'lines'], True),
-                   ('update', 'replace', ['src', 'lines'], True)]
-
-    module = NetworkModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
-                           required_if=required_if,
                            supports_check_mode=True)
 
-    result = dict(changed=False)
+    warnings = list()
+    check_args(module, warnings)
+
+    result = {'changed': False, 'warnings': warnings}
 
     if module.params['backup']:
-        result['__backup__'] = module.config.get_config()
+        result['__backup__'] = get_configuration()
 
-    try:
-        run(module, result)
-    except NetworkError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), **exc.kwargs)
+    if module.params['rollback']:
+        diff = get_diff(module)
+        update_result(module, result, diff)
+
+    elif not any((module.params['src'], module.params['lines'])):
+        confirm_config(module)
+
+    else:
+        diff = load_config(module)
+        update_result(module, result, diff)
 
     module.exit_json(**result)
 
