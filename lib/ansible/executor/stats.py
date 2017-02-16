@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from collections import MutableMapping
+
 from ansible.utils.vars import merge_hash
 
 class AggregateStats:
@@ -73,10 +75,10 @@ class AggregateStats:
             return self.set_custom_stats(which, what, host)
 
         # mismatching types
-        if type(what) != type(self.custom[host][which]):
+        if not isinstance(what, type(self.custom[host][which])):
             return None
 
-        if isinstance(what, dict):
+        if isinstance(what, MutableMapping):
             self.custom[host][which] =  merge_hash(self.custom[host][which], what)
         else:
             # let overloaded + take care of other types
