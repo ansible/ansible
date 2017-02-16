@@ -128,8 +128,9 @@ options:
     description:
       - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
       - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+      - Default of C(prefer) matches libpq default.
     required: false
-    default: disable
+    default: prefer
     choices: [disable, allow, prefer, require, verify-ca, verify-full]
     version_added: '2.3'
   ssl_rootcert:
@@ -646,7 +647,7 @@ def main():
             encrypted=dict(type='bool', default='no'),
             no_password_changes=dict(type='bool', default='no'),
             expires=dict(default=None),
-            ssl_mode=dict(default='disable', choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+            ssl_mode=dict(default='prefer', choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
             ssl_rootcert=dict(default=None)
         ),
         supports_check_mode = True

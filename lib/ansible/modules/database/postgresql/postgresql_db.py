@@ -33,36 +33,11 @@ options:
       - name of the database to add or remove
     required: true
     default: null
-  login_user:
-    description:
-      - The username used to authenticate with
-    required: false
-    default: null
-  login_password:
-    description:
-      - The password used to authenticate with
-    required: false
-    default: null
-  login_host:
-    description:
-      - Host running the database
-    required: false
-    default: localhost
-  login_unix_socket:
-    description:
-      - Path to a Unix domain socket for local connections
-    required: false
-    default: null
   owner:
     description:
       - Name of the role to set as owner of the database
     required: false
     default: null
-  port:
-    description:
-      - Database port to connect to.
-    required: false
-    default: 5432
   template:
     description:
       - Template used to create the database
@@ -89,27 +64,9 @@ options:
     required: false
     default: present
     choices: [ "present", "absent" ]
-  ssl_mode:
-    description:
-      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
-      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
-    required: false
-    default: disable
-    choices: [disable, allow, prefer, require, verify-ca, verify-full]
-    version_added: '2.3'
-  ssl_rootcert:
-    description:
-      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be verified to be signed by one of these authorities.
-    required: false
-    default: null
-    version_added: '2.3'
-notes:
-   - The default authentication assumes that you are either logging in as or sudo'ing to the C(postgres) account on the host.
-   - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
-     the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and C(python-psycopg2) packages on the remote host before using this module.
-   - The ssl_rootcert parameter requires at least Postgres version 8.4 and I(psycopg2) version 2.4.3.
-requirements: [ psycopg2 ]
 author: "Ansible Core Team"
+extends_documentation_fragment:
+- postgres
 '''
 
 EXAMPLES = '''
@@ -128,14 +85,22 @@ EXAMPLES = '''
     template: template0
 '''
 
+HAS_PSYCOPG2 = False
 try:
     import psycopg2
     import psycopg2.extras
 except ImportError:
-    postgresqldb_found = False
+    pass
 else:
-    postgresqldb_found = True
+    HAS_PSYCOPG2 = True
 from ansible.module_utils.six import iteritems
+
+import traceback
+
+import ansible.module_utils.postgres as pgutils
+from ansible.module_utils.database import SQLParseError, pg_quote_identifier
+from ansible.module_utils.basic import get_exception, AnsibleModule
+
 
 class NotSupportedError(Exception):
     pass
@@ -243,27 +208,24 @@ def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
 #
 
 def main():
+    argument_spec = pgutils.postgres_common_argument_spec()
+    argument_spec.update(dict(
+        db=dict(required=True, aliases=['name']),
+        owner=dict(default=""),
+        template=dict(default=""),
+        encoding=dict(default=""),
+        lc_collate=dict(default=""),
+        lc_ctype=dict(default=""),
+        state=dict(default="present", choices=["absent", "present"]),
+    ))
+
+
     module = AnsibleModule(
-        argument_spec=dict(
-            login_user=dict(default="postgres"),
-            login_password=dict(default="", no_log=True),
-            login_host=dict(default=""),
-            login_unix_socket=dict(default=""),
-            port=dict(default="5432"),
-            db=dict(required=True, aliases=['name']),
-            owner=dict(default=""),
-            template=dict(default=""),
-            encoding=dict(default=""),
-            lc_collate=dict(default=""),
-            lc_ctype=dict(default=""),
-            state=dict(default="present", choices=["absent", "present"]),
-            ssl_mode=dict(default="disable", choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-            ssl_rootcert=dict(default=None),
-        ),
+        argument_spec=argument_spec,
         supports_check_mode = True
     )
 
-    if not postgresqldb_found:
+    if not HAS_PSYCOPG2:
         module.fail_json(msg="the python psycopg2 module is required")
 
     db = module.params["db"]
@@ -296,38 +258,36 @@ def main():
     if is_localhost and module.params["login_unix_socket"] != "":
         kw["host"] = module.params["login_unix_socket"]
 
-    if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
-        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
-
     try:
+        pgutils.ensure_libs(sslrootcert=module.params.get('ssl_rootcert'))
         db_connection = psycopg2.connect(database="postgres", **kw)
         # Enable autocommit so we can create databases
         if psycopg2.__version__ >= '2.4.2':
             db_connection.autocommit = True
         else:
-            db_connection.set_isolation_level(psycopg2
-                                              .extensions
-                                              .ISOLATION_LEVEL_AUTOCOMMIT)
-        cursor = db_connection.cursor(
-            cursor_factory=psycopg2.extras.DictCursor)
+            db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    except pgutils.LibraryError:
+        e = get_exception()
+        module.fail_json(msg="unable to connect to database: {0}".format(str(e)), exception=traceback.format_exc())
 
     except TypeError:
         e = get_exception()
         if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
-        module.fail_json(msg="unable to connect to database: %s" % e)
+            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert. Exception: {0}'.format(e), exception=traceback.format_exc())
+        module.fail_json(msg="unable to connect to database: %s" % e, exception=traceback.format_exc())
 
     except Exception:
         e = get_exception()
-        module.fail_json(msg="unable to connect to database: %s" % e)
+        module.fail_json(msg="unable to connect to database: %s" % e, exception=traceback.format_exc())
 
     try:
         if module.check_mode:
             if state == "absent":
                 changed = db_exists(cursor, db)
             elif state == "present":
-                changed = not db_matches(cursor, db, owner, template, encoding,
-                                         lc_collate, lc_ctype)
+                changed = not db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype)
             module.exit_json(changed=changed, db=db)
 
         if state == "absent":
@@ -339,8 +299,7 @@ def main():
 
         elif state == "present":
             try:
-                changed = db_create(cursor, db, owner, template, encoding,
-                                lc_collate, lc_ctype)
+                changed = db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype)
             except SQLParseError:
                 e = get_exception()
                 module.fail_json(msg=str(e))
@@ -356,8 +315,5 @@ def main():
 
     module.exit_json(changed=changed, db=db)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.database import *
 if __name__ == '__main__':
     main()
