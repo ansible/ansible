@@ -243,7 +243,6 @@ lib/ansible/playbook/role/metadata.py
 lib/ansible/plugins/action/set_fact.py
 lib/ansible/plugins/action/set_stats.py
 lib/ansible/plugins/action/synchronize.py
-lib/ansible/plugins/cache/base.py
 lib/ansible/plugins/callback/default.py
 lib/ansible/plugins/callback/logentries.py
 lib/ansible/plugins/callback/oneline.py

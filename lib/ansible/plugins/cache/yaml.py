@@ -19,6 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+
+import codecs
+
 import yaml
 
 from ansible.parsing.yaml.loader import AnsibleLoader
@@ -29,10 +32,11 @@ class CacheModule(BaseFileCacheModule):
     """
     A caching module backed by yaml files.
     """
-    plugin_name = 'yaml'
 
-    def _load(self, f):
-        return AnsibleLoader(f).get_single_data()
+    def _load(self, filepath):
+        with codecs.open(filepath, 'r', encoding='utf-8') as f:
+            return AnsibleLoader(f).get_single_data()
 
-    def _dump(self, value, f):
-        yaml.dump(value, f, Dumper=AnsibleDumper, default_flow_style=False)
+    def _dump(self, value, filepath):
+        with codecs.open(filepath, 'w', encoding='utf-8') as f:
+            yaml.dump(value, f, Dumper=AnsibleDumper, default_flow_style=False)
