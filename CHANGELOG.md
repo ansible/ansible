@@ -140,6 +140,7 @@ Ansible Changes By Release
 - netapp
   * sf_account_manager
   * sf_snapshot_schedule_manager
+  * sf_volume_manager
   * sf_volume_access_group_manager
 - nginx_status_facts
 - nsupdate
