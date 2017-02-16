@@ -23,15 +23,15 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'version': '1.0'}
 
 
-DOCUMENTATION = ''' 
---- 
+DOCUMENTATION = '''
+---
 author: "Joris Weijters (@molekuul)"
-module: aix_inittab 
+module: aix_inittab
 short_description: Manages the inittab at AIX.
-description: 
+description:
     - Manages the inittab at AIX.
 version_added: "2.3"
-options: 
+options:
   name:
     description: Name of the inittab entry.
     required: True
@@ -46,20 +46,20 @@ options:
   processaction:
     description: Action what the init has to do with this entry.
     required: True
-    choices: [ 
-               'respawn', 
-               'wait', 
-	       'once', 
-	       'boot', 
-	       'bootwait', 
-	       'powerfail', 
-	       'powerwait', 
-	       'off', 
-	       'hold', 
-	       'ondemand', 
-	       'initdefault', 
-	       'sysinit' 
-	       ]
+    choices: [
+               'respawn',
+               'wait',
+               'once',
+               'boot',
+               'bootwait',
+               'powerfail',
+               'powerwait',
+               'off',
+               'hold',
+               'ondemand',
+               'initdefault',
+               'sysinit'
+              ]
     type: string
     default: null
   command:
@@ -76,15 +76,15 @@ options:
     description: What action has to be done.
     required: True
     type: string
-    choices: [ 
-               'install', 
-	       'change', 
-	       'remove'
-	       ]
+    choices: [
+               'install',
+               'change',
+               'remove'
+              ]
     default: null
 notes:
   - The changes are persisten across reboot.
-  - You need root rights to read or adjust the inittab with the lsitab, chitab, 
+  - You need root rights to read or adjust the inittab with the lsitab, chitab,
     mkitab or rmitab commands.
   - tested at AIX 7.1.
 requirements: [ 'itertools']
@@ -122,7 +122,7 @@ EXAMPLES = '''
 
 RETURN = '''
 description: The result is deliverd in an dictionary.
-{ 
+{
   changed: true,
   msg: [],
   name: "startmyservice"
@@ -145,14 +145,14 @@ from ansible.module_utils.basic import AnsibleModule
 # start defining the functions
 
 def check_current_entry(module):
-    # Check if entry exists, if not return False in exists in return dict, 
+    # Check if entry exists, if not return False in exists in return dict,
     # if true return True and the entry in return dict
     existsdict = { 'exist' : False }
     (rc, out, err) = module.run_command(['lsitab', module.params['name']])
     if rc == 0:
         keys = ('name', 'runlevel', 'processaction', 'command')
         values = out.split(":")
-        values = map(lambda s: s.strip(), values) # strip non readable characters as \n 
+        values = map(lambda s: s.strip(), values) # strip non readable characters as \n
         existsdict =  dict(itertools.izip(keys,values))
         existsdict.update({ 'exist' : True })
     return existsdict
@@ -162,56 +162,56 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict( required=True, type='str', aliases=['service']),
-	    runlevel = dict( required=True, type='str'),
-	    processaction = dict( choices=[ 
-	                                   'respawn', 
-					   'wait', 
-					   'once', 
-					   'boot', 
-					   'bootwait', 
-					   'powerfail', 
-					   'powerwait', 
-					   'off', 
-					   'hold', 
-					   'ondemand', 
-					   'initdefault', 
-					   'sysinit' 
+            runlevel = dict( required=True, type='str'),
+            processaction = dict( choices=[ 
+                                           'respawn',
+                                           'wait',
+                                           'once',
+                                           'boot',
+                                           'bootwait',
+                                           'powerfail',
+                                           'powerwait',
+                                           'off',
+                                           'hold',
+                                           'ondemand',
+                                           'initdefault',
+                                           'sysinit'
 					   ], type='str'),
-	    command = dict( required=True, type='str' ),
-	    follow = dict( type='str' ),
-	    action = dict( choices=[ 
-	                            'install', 
-				    'change', 
-				    'remove'
-				    ], required=True, type='str'),
-	)
-	)
+            command = dict( required=True, type='str' ),
+            follow = dict( type='str' ),
+            action = dict( choices=[
+                                    'install',
+                                    'change',
+                                    'remove'
+                                    ], required=True, type='str'),
+        )
+        )
 
-    result = { 
+    result = {
         'name':  module.params['name'],
-        'changed': False, 
-        'status': {}, 
-        'warnings': [], 
-	'msg': [],
-    } 
+        'changed': False,
+        'status': {},
+        'warnings': [],
+        'msg': [],
+    }
 
     # Find commandline strings
     lsitab = module.get_bin_path('lsitab')
-    mkitab = module.get_bin_path('mkitab') 
+    mkitab = module.get_bin_path('mkitab')
     rmitab = module.get_bin_path('rmitab')
-    
+
     # check if the new entry exists
     current_entry = check_current_entry(module)
-    
 
-    # if action is install or change,    
+
+    # if action is install or change,
     if module.params['action'] == 'install' or module.params['action'] == 'change':
 
         # create new entry string
         new_entry = module.params['name']+":"+module.params['runlevel']+":"+module.params['processaction']+":"+module.params['command']
 
         # If current entry exists or fields are different(if the entry does not exists, then the entry wil be created
-        if (current_entry['exist'] != True) or (module.params['runlevel'] != current_entry['runlevel'] or  module.params['processaction'] != current_entry['processaction'] or  module.params['command'] != current_entry['command']):
+        if ( not current_entry['exist'] ) or (module.params['runlevel'] != current_entry['runlevel'] or module.params['processaction'] != current_entry['processaction'] or module.params['command'] != current_entry['command']):
 
             # If the entry does exist then change the entry
             if current_entry['exist']:
@@ -221,13 +221,15 @@ def main():
                     module.fail_json(rc=rc, err=err, msg=result['warnings'] )
                 result['status'] = "changed inittab entry"+" "+current_entry['name']
                 result['changed'] = True
-            
-	    # If the entry does not exist create the entry
-            elif current_entry['exist'] != True:
+
+            # If the entry does not exist create the entry
+            elif not current_entry['exist']:
+
                 if module.params['follow']:
                     (rc, out, err) = module.run_command(['mkitab', '-i',  module.params['follow'], new_entry ])
-                else:
-                    (rc, out, err) = module.run_command(['mkitab', new_entry ])
+		else:
+		    (rc, out, err) = module.run_command(['mkitab', new_entry ])
+		
                 if rc != 0:
                     result['warnings']= "could not add"+" "+module.params['name']
                     module.fail_json(rc=rc, err=err, msg=result['warnings'])
