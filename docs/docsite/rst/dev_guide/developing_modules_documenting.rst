@@ -66,40 +66,41 @@ Format::
 Fields
 ``````
 
--  **version**: An “X.Y” formatted string. X and Y are integers which
+:version: An “X.Y” formatted string. X and Y are integers which
    define the metadata format version. Modules shipped with Ansible are
    tied to an Ansible release so we will only ship with a single version
    of the metadata. We’ll increment Y if we add fields or legal values
    to an existing field. We’ll increment X if we remove fields or values
    or change the type or meaning of a field.
--  **supported_by**: This field records who supports the module.
+:supported_by: This field records who supports the module.
    Default value is community. Values are:
 
-   -  **core**: maintained by the Ansible core team. Core team will fix
+   :core: maintained by the Ansible core team. Core team will fix
       bugs, add new features, and review PRs.
-   -  **community**: This module is maintained by the community at large.
+   :community: This module is maintained by the community at large.
       Community is responsible for fixing bugs, adding new features, and
       reviewing changes.
-   -  **unmaintained**: This module currently needs a new community
+   :unmaintained: This module currently needs a new community
       contributor to help maintain it.
-   -  **committer**: Committers to the Ansible repository are the
+   :committer: Committers to the Ansible repository are the
       gatekeepers for this module. They will review PRs from the community
       before merging but might not generate fixes and code for new features
       on their own.
--  **status**: This field records information about the module that is
+
+:status: This field records information about the module that is
    important to the end user. It’s a list of strings. The default value
    is a single element list [“preview”]. The following strings are valid
    statuses and have the following meanings:
 
-   -  **stableinterface**: This means that the module’s parameters are
+   :stableinterface: This means that the module’s parameters are
       stable. Every effort will be made not to remove parameters or change
       their meaning. It is not a rating of the module’s code quality.
-   -  **preview**: This module is a tech preview. This means it may be
+   :preview: This module is a tech preview. This means it may be
       unstable, the parameters may change, or it may require libraries or
       web services that are themselves subject to incompatible changes.
-   -  **deprecated**: This module is deprecated and will no longer be
+   :deprecated: This module is deprecated and will no longer be
       available in a future release.
-   -  **removed**: This module is not present in the release. A stub is
+   :removed: This module is not present in the release. A stub is
       kept so that documentation can be built. The documentation helps
       users port from the removed module to new modules.
 
@@ -125,54 +126,53 @@ Include it in your module file like this:
 
 The following fields can be used and are all required unless specified otherwise:
 
-* ``module:``
+:module:
   The name of the module. This must be the same as the filename, without the ``.py`` extension.
-* ``short_description:``
-
+:short_description:
   * A short description which is displayed on the :doc:`../list_of_all_modules` page and ``ansible-doc -l``.
   * As the short description is displayed by ``ansible-doc -l`` without the category grouping it needs enough detail to explain its purpose without the context of the directory structure in which it lives.
   * Unlike ``description:`` this field should not have a trailing full stop.
-* ``description:``
-
+:description:
   * A detailed description (generally two or more sentences).
   * Must be written in full sentences, i.e. with capital letters and fullstops.
   * Shouldn't mention the name module.
-* ``version_added:``
+:version_added:
   The version of Ansible when the module was added.
   This is a `string`, and not a float, i.e. ``version_added: "2.1"``
-* ``author:``
+:author:
   Name of the module author in the form ``First Last (@GitHubID)``. Use a multi-line list if there is more than one author.
-* ``options:``
-  One per module argument
-  * option
+:options:
+  One per module argument:
+  
+  :option-name:
 
     * Declarative operation (not CRUD)–this makes it easy for a user not to care what the existing state is, just about the final state, for example `online:`, rather than `is_online:`.
     * The name of the option should be consistent with the rest of the module, as well as other modules in the same category.
 
-  * ``description:``
+  :description:
 
     * Detailed explanation of what this option does. It should be written in full sentences.
     * Should not list the options values (that's what ``choices:`` is for, though it should explain `what` the values do if they aren't obvious.
     * If an argument takes both True)/False and Yes)/No, the documentation should use True and False.
     * If an optional parameter is sometimes required this need to be reflected in the documentation, e.g. "Required when I(state=present)."
     * Mutually exclusive options must be documented as the final sentence on each of the options.
-  * ``required:``
+  :required:
     Only needed if true, otherwise it is assumed to be false.
-  * ``default:``
+  :default:
 
     * If `required` is false/missing, `default` may be specified (assumed 'null' if missing).
     * Ensure that the default parameter in the docs matches the default parameter in the code.
     * The default option must not be listed as part of the description.
-  * ``choices:``
+  :choices:
     List of option values. Should be absent if empty.
-  * ``aliases:``
+  :aliases:
     List of option name aliases; generally not needed.
-  * ``version_added:``
+  :version_added:
     Only needed if this option was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
     This is a string, and not a float, i.e. ``version_added: "2.3"``.
-* ``requirements:``
+  :requirements:
     List of requirements, and minimum versions (if applicable)
-* ``notes:``
+  :notes:
     Details of any important information that doesn't fit in one of the above sections; for example if ``check_mode`` isn't supported, or a link to external documentation.
 
 
