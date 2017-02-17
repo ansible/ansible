@@ -71,9 +71,9 @@ options:
     default: None
   validate_certs:
     description:
-      - Whether or not SSL API requests should be verified.
+      - Whether or not SSL API requests should be verified. Before 2.3 this defaulted to True.
     required: false
-    default: True
+    default: null
     aliases: ['verify']
   cacert:
     description:
