@@ -287,7 +287,7 @@ class Ec2Inventory(object):
             self.elasticache_enabled = config.getboolean('ec2', 'elasticache')
 
         # Combine with Autoscaling groups tags?
-        self.autoscaling_enabled = True
+        self.autoscaling_enabled = False
         if config.has_option('ec2', 'autoscaling'):
             self.autoscaling_enabled = config.getboolean('ec2', 'autoscaling')
 
