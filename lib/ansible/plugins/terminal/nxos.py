@@ -27,12 +27,12 @@ from ansible.errors import AnsibleConnectionFailure
 
 class TerminalModule(TerminalBase):
 
-    terminal_prompts_re = [
+    terminal_stdout_re = [
         re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*[>|#|%](?:\s*)$'),
         re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*\(.+\)#(?:\s*)$')
     ]
 
-    terminal_errors_re = [
+    terminal_stderr_re = [
         re.compile(r"% ?Error"),
         re.compile(r"^% \w+", re.M),
         re.compile(r"% ?Bad secret"),
