@@ -73,6 +73,7 @@ options:
     override_iptables:
         description:
             - "If True host iptables will be overridden by host deploy script."
+            - "Note that C(override_iptables) is I(false) by default in oVirt."
     force:
         description:
             - "If True host will be forcibly moved to desired state."
@@ -108,12 +109,14 @@ EXAMPLES = '''
 # Examples don't contain auth parameter for simplicity,
 # look at ovirt_auth module to see how to reuse authentication:
 
-# Add host with username/password supporting SR-IOV:
+# Add host with username/password supporting SR-IOV.
+# Note that override_iptables is false by default in oVirt:
 - ovirt_hosts:
     cluster: Default
     name: myhost
     address: 10.34.61.145
     password: secret
+    override_iptables: true
     kernel_params:
       - intel_iommu=on
 
@@ -123,6 +126,7 @@ EXAMPLES = '''
     cluster: Default
     name: myhost2
     address: 10.34.61.145
+    override_iptables: true
 
 # Deploy hosted engine host
 - ovirt_hosts:
@@ -130,6 +134,7 @@ EXAMPLES = '''
     name: myhost2
     password: secret
     address: 10.34.61.145
+    override_iptables: true
     hosted_engine: deploy
 
 # Maintenance
