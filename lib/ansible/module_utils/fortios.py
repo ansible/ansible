@@ -22,18 +22,18 @@ import time
 
 
 fortios_argument_spec = dict(
-        host            = dict(required=True ),
-        username        = dict(required=True ),
-        password        = dict(required=True, type='str', no_log=True ),
-        timeout         = dict(type='int', default=60),
-        vdom            = dict(type='str', default=None ),
-        backup          = dict(type='bool', default=False),
-        backup_path     = dict(type='str'),
-        backup_filename = dict(type='str'),
+    host            = dict(required=True ),
+    username        = dict(required=True ),
+    password        = dict(required=True, type='str', no_log=True ),
+    timeout         = dict(type='int', default=60),
+    vdom            = dict(type='str', default=None ),
+    backup          = dict(type='bool', default=False),
+    backup_path     = dict(type='str'),
+    backup_filename = dict(type='str'),
 )
 
 fortios_required_if = [
-        ['backup',   True   , ['backup_path']   ],
+    ['backup',   True   , ['backup_path']   ],
 ]
 
 def backup(module,running_config):
@@ -49,4 +49,3 @@ def backup(module,running_config):
         open(filename, 'w').write(running_config)
     except:
         module.fail_json(msg="Can't create backup file {0} Permission denied ?".format(filename))
-
