@@ -57,7 +57,6 @@ class ShippableChanges(object):
 
         try:
             self.branch = os.environ['BRANCH']
-            self.fork_branch = os.environ['BASE_BRANCH']
             self.is_pr = os.environ['IS_PULL_REQUEST'] == 'true'
             self.is_tag = os.environ['IS_GIT_TAG'] == 'true'
             self.commit = os.environ['COMMIT']

@@ -796,18 +796,12 @@ def command_sanity_validate_modules(args, targets):
     if skip_paths:
         cmd += ['--exclude', '^(%s)' % '|'.join(skip_paths)]
 
-    # Find fork_branch
-    git = Git(args)
-    try:
-        changes = ShippableChanges(args, git) if is_shippable() else LocalChanges(args, git)
-    except ApplicationError:
-        fork_branch = 'devel'
+    if is_shippable():
+        cmd.extend([
+            '--base-branch', os.environ['BASE_BRANCH']
+        ])
     else:
-        fork_branch = changes.fork_branch
-
-    cmd.extend([
-        '--base-branch', fork_branch
-    ])
+        display.warning("Cannot perform module comparison against the base branch when running locally")
 
     run_command(args, cmd, env=env)
 

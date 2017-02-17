@@ -136,7 +136,7 @@ class ModuleValidator(Validator):
         'setup.ps1'
     ))
 
-    def __init__(self, path, analyze_arg_spec=False, base_branch='devel'):
+    def __init__(self, path, analyze_arg_spec=False, base_branch=None):
         super(ModuleValidator, self).__init__()
 
         self.path = path
@@ -157,7 +157,10 @@ class ModuleValidator(Validator):
         except:
             self.ast = None
 
-        self.base_module = self._get_base_file()
+        if base_branch:
+            self.base_module = self._get_base_file()
+        else:
+            self.base_module = None
 
     def __enter__(self):
         return self
@@ -213,7 +216,7 @@ class ModuleValidator(Validator):
         return t.name
 
     def _is_new_module(self):
-        return not bool(self.base_module)
+        return self.base_branch and not bool(self.base_module)
 
     def _check_interpreter(self, powershell=False):
         if powershell:
@@ -739,9 +742,8 @@ def main():
                         type=re_compile)
     parser.add_argument('--arg-spec', help='Analyze module argument spec',
                         action='store_true', default=False)
-    parser.add_argument('--base-branch', default='devel',
-                        help='Used in determining if new options were added. '
-                             'Default: "%(default)s"')
+    parser.add_argument('--base-branch', default=None,
+                        help='Used in determining if new options were added')
 
     args = parser.parse_args()
 
