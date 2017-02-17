@@ -56,6 +56,7 @@ class ActionModule(_ActionModule):
         pc.port = provider['port'] or self._play_context.port or 22
         pc.remote_user = provider['username'] or self._play_context.connection_user
         pc.password = provider['password'] or self._play_context.password
+        pc.timeout = provider['timeout'] or self._play_context.timeout
         pc.become = provider['authorize'] or False
         pc.become_pass = provider['auth_pass']
 
@@ -64,7 +65,9 @@ class ActionModule(_ActionModule):
         socket_path = self._get_socket_path(pc)
         if not os.path.exists(socket_path):
             # start the connection if it isn't started
-            connection.exec_command('EXEC: show version')
+            rc, out, err = connection.exec_command('open_shell()')
+            if not rc == 0:
+                return {'failed': True, 'msg': 'unable to open shell', 'rc': rc}
 
         task_vars['ansible_socket'] = socket_path
 
