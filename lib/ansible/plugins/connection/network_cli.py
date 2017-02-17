@@ -193,16 +193,22 @@ class Connection(_Connection):
 
     def _find_prompt(self, response):
         """Searches the buffered response for a matching command prompt"""
+        errored_response = None
         for regex in self._terminal.terminal_errors_re:
             if regex.search(response):
-                raise AnsibleConnectionFailure(response)
+                errored_response = response
+                break
 
         for regex in self._terminal.terminal_prompts_re:
             match = regex.search(response)
             if match:
                 self._matched_pattern = regex.pattern
                 self._matched_prompt = match.group()
-                return True
+                if not errored_response:
+                    return True
+
+        if errored_response:
+            raise AnsibleConnectionFailure(errored_response)
 
     def alarm_handler(self, signum, frame):
         """Alarm handler raised in case of command timeout """
