@@ -47,7 +47,13 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(play_context, new_stdin,
                                          *args, **kwargs)
 
-        display.vvv("NSPAWN ARGS %s" % self._play_context.nspawn_args)
+        self.nspawn_args = getattr(self._play_context, 'nspawn_args', C.ANSIBLE_NSPAWN_ARGS)
+        display.vvv("NSPAWN ARGS %s" % self.nspawn_args)
+
+        if six.PY2:
+            self.nspawn_args = shlex.split( to_bytes(self.nspawn_args, errors='surrogate_or_strict'))
+        else:
+            self.nspawn_args = shlex.split( to_text(self.nspawn_args, errors='surrogate_or_strict'))
 
         self.ostree = os.path.normpath(self._play_context.remote_addr)
 
@@ -93,17 +99,7 @@ class Connection(ConnectionBase):
             if C.DEFAULT_EXECUTABLE
             else '/bin/sh')
 
-        nspawn_args = self._play_context.nspawn_args
-        if six.PY2:
-            nspawn_args = shlex.split(
-                to_bytes(nspawn_args, errors='surrogate_or_strict')
-            )
-        else:
-            nspawn_args = shlex.split(
-                to_text(nspawn_args, errors='surrogate_or_strict')
-            )
-
-        local_cmd = [self.nspawn_cmd, '-D', self.ostree] + nspawn_args + [
+        local_cmd = [self.nspawn_cmd, '-D', self.ostree] + self.nspawn_args + [
             '--', executable, '-c', cmd]
 
         display.vvv("EXEC %s" % (local_cmd), host=self.ostree)

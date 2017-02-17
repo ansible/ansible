@@ -70,6 +70,7 @@ MAGIC_VARIABLE_MAPPING = dict(
     become_flags     = ('ansible_become_flags',),
     ssh_common_args  = ('ansible_ssh_common_args',),
     docker_extra_args= ('ansible_docker_extra_args',),
+    nspawn_args      = ('ansible_nspawn_args',),
     sftp_extra_args  = ('ansible_sftp_extra_args',),
     scp_extra_args   = ('ansible_scp_extra_args',),
     ssh_extra_args   = ('ansible_ssh_extra_args',),
@@ -130,7 +131,6 @@ TASK_ATTRIBUTE_OVERRIDES = (
     'become_method',
     'become_flags',
     'connection',
-    'docker_extra_args',
     'delegate_to',
     'no_log',
     'remote_user',
@@ -284,8 +284,8 @@ class PlayContext(Base):
 
         self.check_mode = boolean(options.check)
 
-        # get ssh options FIXME: make these common to all connections
-        for flag in ['ssh_common_args', 'docker_extra_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args']:
+        # get special options FIXME: make these common to all connections
+        for flag in ['ssh_common_args', 'docker_extra_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args', 'nspawn_args']:
             setattr(self, flag, getattr(options,flag, ''))
 
         # general flags (should we move out?)
