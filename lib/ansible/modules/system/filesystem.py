@@ -38,7 +38,7 @@ options:
     required: true
   dev:
     description:
-    - Target block device. Starting in 2.3 it can also take a list of devices for file systems that allow this.
+    - Target block device.
     required: true
   force:
     choices: [ "yes", "no" ]
@@ -72,9 +72,6 @@ EXAMPLES = '''
     dev: /dev/sdb1
     opts: -cc
 '''
-
-import os
-from ansible.module_utils.basic import AnsibleModule
 
 def _get_dev_size(dev, module):
     """ Return size in bytes of device. Returns int """
@@ -124,7 +121,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             fstype=dict(required=True, aliases=['type']),
-            dev=dict(required=True, aliases=['device'], type='list'),
+            dev=dict(required=True, aliases=['device']),
             opts=dict(),
             force=dict(type='bool', default='no'),
             resizefs=dict(type='bool', default='no'),
@@ -203,13 +200,12 @@ def main():
     growcmd = fs_cmd_map[fstype]['grow']
     fssize_cmd = fs_cmd_map[fstype]['fsinfo']
 
-    for device in dev:
-        if not os.path.exists(device):
-            module.fail_json(msg="Device %s not found." % device)
+    if not os.path.exists(dev):
+        module.fail_json(msg="Device %s not found."%dev)
 
     cmd = module.get_bin_path('blkid', required=True)
 
-    rc,raw_fs,err = module.run_command("%s -c /dev/null -o value -s TYPE %s" % (cmd, ' '.join(dev)))
+    rc,raw_fs,err = module.run_command("%s -c /dev/null -o value -s TYPE %s" % (cmd, dev))
     fs = raw_fs.strip()
 
     if fs == fstype and resizefs == False and not force:
@@ -263,5 +259,7 @@ def main():
 
     module.exit_json(changed=changed)
 
+# import module snippets
+from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()
