@@ -183,3 +183,14 @@
   assert:
     that:
       - "pip_install_venv.changed"
+
+# Download case
+- name: check for download isort package
+  pip: name=isort state=downloaded
+  register: download_package
+
+# fishy way to verify the package presence
+- name: ensure the download package is present
+  assert:
+    that:
+      - "'Successfully downloaded isort' in download_package.stdout"
