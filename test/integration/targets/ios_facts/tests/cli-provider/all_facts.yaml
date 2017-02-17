@@ -6,7 +6,9 @@
   ios_facts:
     gather_subset:
       - all
+    provider: "{{ cli }}"
   register: result
+
 
 
 - assert:
