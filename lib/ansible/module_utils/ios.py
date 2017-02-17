@@ -39,7 +39,7 @@ ios_argument_spec = {
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
-    'timeout': dict(type='int', default=10),
+    'timeout': dict(type='int'),
     'provider': dict(type='dict'),
 }
 
