@@ -30,6 +30,11 @@ description:
 requirements:
     - "python >= 2.6"
     - "shade"
+options:
+  availability_zone:
+    description:
+      - Ignored. Present for backwards compatability
+    required: false
 extends_documentation_fragment: openstack
 '''
 
