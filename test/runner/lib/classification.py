@@ -322,6 +322,9 @@ class PathMapper(object):
             return minimal
 
         if path.startswith('test/integration/targets/'):
+            if not os.path.exists(path):
+                return minimal
+
             target = self.integration_targets_by_name[path.split('/')[3]]
 
             if 'hidden/' in target.aliases:
