@@ -578,6 +578,19 @@ class PlayContext(Base):
                 else:
                     becomecmd = '%s -u %s %s' % (exe, self.become_user, command)
 
+            elif self.become_method == 'pmrun':
+
+                # http://documents.software.dell.com/privilege-manager-for-unix/6.0/administrators-guide/privilege-manager-programs/pmrun
+                exe = self.become_exe or 'pmrun'
+                flags = ''
+                if self.become_user and self.become_user != 'root':
+                    flags += '-u %s' % self.become_user
+                prompt = 'Enter UPM user password:'
+                if flags:
+                    becomecmd = '%s %s %s' % (exe, flags, command)
+                else:
+                    becomecmd = '%s %s' % (exe, command)
+
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
 
