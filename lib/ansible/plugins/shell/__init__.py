@@ -172,3 +172,7 @@ class ShellBase(object):
             cmd += ' %s %s' % (self._SHELL_AND, cmd_to_append)
 
         return cmd
+
+    def wrap_for_exec(self, cmd):
+        """wrap script execution with any necessary decoration (eg '&' for quoted powershell script paths)"""
+        return cmd

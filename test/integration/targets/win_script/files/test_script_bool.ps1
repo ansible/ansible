@@ -2,5 +2,5 @@ Param(
 [bool]$boolvariable
 )
 
-Write-Host $boolvariable.GetType()
-Write-Host $boolvariable
+Write-Output $boolvariable.GetType().FullName
+Write-Output $boolvariable
