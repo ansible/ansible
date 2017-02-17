@@ -24,7 +24,9 @@ import argparse
 import ast
 import os
 import re
+import subprocess
 import sys
+import tempfile
 
 from distutils.version import StrictVersion
 from fnmatch import fnmatch
@@ -134,7 +136,7 @@ class ModuleValidator(Validator):
         'setup.ps1'
     ))
 
-    def __init__(self, path, analyze_arg_spec=False):
+    def __init__(self, path, analyze_arg_spec=False, base_branch=None):
         super(ModuleValidator, self).__init__()
 
         self.path = path
@@ -142,6 +144,8 @@ class ModuleValidator(Validator):
         self.name, _ = os.path.splitext(self.basename)
 
         self.analyze_arg_spec = analyze_arg_spec
+
+        self.base_branch = base_branch
 
         self._python_module_override = False
 
@@ -152,6 +156,23 @@ class ModuleValidator(Validator):
             self.ast = ast.parse(self.text)
         except:
             self.ast = None
+
+        if base_branch:
+            self.base_module = self._get_base_file()
+        else:
+            self.base_module = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if not self.base_module:
+            return
+
+        try:
+            os.remove(self.base_module)
+        except:
+            pass
 
     @property
     def object_name(self):
@@ -180,12 +201,22 @@ class ModuleValidator(Validator):
         except AttributeError:
             return False
 
+    def _get_base_file(self):
+        command = ['git', 'show', '%s:%s' % (self.base_branch, self.path)]
+        p = subprocess.Popen(command, stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
+        if int(p.returncode) != 0:
+            return None
+
+        t = tempfile.NamedTemporaryFile(delete=False)
+        t.write(stdout)
+        t.close()
+
+        return t.name
+
     def _is_new_module(self):
-        if self.name.startswith("_") and not os.path.islink(self.name):
-            # This is a deprecated module, so look up the *old* name
-            return not module_loader.has_plugin(self.name[1:])
-        else:
-            return not module_loader.has_plugin(self.name)
+        return self.base_branch and not bool(self.base_module)
 
     def _check_interpreter(self, powershell=False):
         if powershell:
@@ -549,8 +580,7 @@ class ModuleValidator(Validator):
 
         with CaptureStd():
             try:
-                existing = module_loader.find_plugin(self.name, mod_type='.py')
-                existing_doc, _, _, _ = get_docstring(existing, verbose=True)
+                existing_doc, _, _, _ = get_docstring(self.base_module, verbose=True)
                 existing_options = existing_doc.get('options', {})
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']
@@ -712,6 +742,9 @@ def main():
                         type=re_compile)
     parser.add_argument('--arg-spec', help='Analyze module argument spec',
                         action='store_true', default=False)
+    parser.add_argument('--base-branch', default=None,
+                        help='Used in determining if new options were added')
+
     args = parser.parse_args()
 
     args.modules[:] = [m.rstrip('/') for m in args.modules]
@@ -723,9 +756,10 @@ def main():
             path = module
             if args.exclude and args.exclude.search(path):
                 sys.exit(0)
-            mv = ModuleValidator(path, analyze_arg_spec=args.arg_spec)
-            mv.validate()
-            exit.append(mv.report(args.warnings))
+            with ModuleValidator(path, analyze_arg_spec=args.arg_spec,
+                                 base_branch=args.base_branch) as mv:
+                mv.validate()
+                exit.append(mv.report(args.warnings))
 
         for root, dirs, files in os.walk(module):
             basedir = root[len(module)+1:].split('/', 1)[0]
@@ -745,9 +779,10 @@ def main():
                 path = os.path.join(root, filename)
                 if args.exclude and args.exclude.search(path):
                     continue
-                mv = ModuleValidator(path, analyze_arg_spec=args.arg_spec)
-                mv.validate()
-                exit.append(mv.report(args.warnings))
+                with ModuleValidator(path, analyze_arg_spec=args.arg_spec,
+                                     base_branch=args.base_branch) as mv:
+                    mv.validate()
+                    exit.append(mv.report(args.warnings))
 
     sys.exit(sum(exit))
 
