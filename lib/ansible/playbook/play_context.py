@@ -550,10 +550,8 @@ class PlayContext(Base):
                 becomecmd = '%s %s "%s"' % (exe, flags, success_cmd)
 
             elif self.become_method == 'runas':
-                raise AnsibleError("'runas' is not yet implemented")
-                #FIXME: figure out prompt
-                # this is not for use with winrm plugin but if they ever get ssh native on windoez
-                becomecmd = '%s %s /user:%s "%s"' % (exe, flags, self.become_user, success_cmd)
+                # become is handled inside the WinRM connection plugin
+                becomecmd = cmd
 
             elif self.become_method == 'doas':
 

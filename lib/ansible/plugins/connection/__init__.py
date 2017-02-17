@@ -61,6 +61,8 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
     '''
 
     has_pipelining = False
+    has_native_async = False # eg, winrm
+    always_pipeline_modules = False # eg, winrm
     become_methods = C.BECOME_METHODS
     # When running over this connection type, prefer modules written in a certain language
     # as discovered by the specified file extension.  An empty string as the
