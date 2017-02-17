@@ -99,7 +99,6 @@ class Connection(_Connection):
 
     @ensure_connect
     def open_shell(self):
-        """Opens the vty shell on the connection"""
         self._shell = self.ssh.invoke_shell()
         self._shell.settimeout(self._play_context.timeout)
 
@@ -111,6 +110,8 @@ class Connection(_Connection):
         if getattr(self._play_context, 'become', None):
             auth_pass = self._play_context.become_pass
             self._terminal.on_authorize(passwd=auth_pass)
+
+        return (0, 'ok', '')
 
     def close(self):
         display.vvv('closing connection', host=self._play_context.remote_addr)
@@ -127,7 +128,7 @@ class Connection(_Connection):
             self._shell.close()
             self._shell = None
 
-        return (0, 'shell closed', '')
+        return (0, 'ok', '')
 
     def receive(self, obj=None):
         """Handles receiving of output from command"""
@@ -233,6 +234,8 @@ class Connection(_Connection):
 
         if obj['command'] == 'close_shell()':
             return self.close_shell()
+        elif obj['command'] == 'open_shell()':
+            return self.open_shell()
         elif obj['command'] == 'prompt()':
             return (0, self._matched_prompt, '')
         elif obj['command'] == 'history()':
