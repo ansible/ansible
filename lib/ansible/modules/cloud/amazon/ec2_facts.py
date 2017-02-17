@@ -118,11 +118,17 @@ class Ec2Metadata(object):
                 new_uri = uri + '/' + field
             if new_uri not in self._data and not new_uri.endswith('/'):
                 content = self._fetch(new_uri)
-                if field == 'security-groups':
+                if field == 'security-groups' or field == 'security-group-ids':
                     sg_fields = ",".join(content.split('\n'))
                     self._data['%s' % (new_uri)] = sg_fields
                 else:
-                    self._data['%s' % (new_uri)] = content
+                    try:
+                        dict = json.loads(content)
+                        for (key, value) in dict.items():
+                            self._data['%s_%s' % (new_uri, key.lower())] = value
+                    except:
+                        self._data['%s' % (new_uri)] = content  # not a stringifed JSON string
+
 
     def fix_invalid_varnames(self, data):
         """Change ':'' and '-' to '_' to ensure valid template variable names"""
@@ -131,28 +137,16 @@ class Ec2Metadata(object):
                 newkey = key.replace(':', '_').replace('-', '_')
                 data[newkey] = data.pop(key)
 
-    def convert_json_to_fields(self, data):
-        """Flattens stringified JSON values and inserts them into the dictionary"""
-        for (key, value) in data.items():
-            try:
-                dict = json.loads(value)
-                del data[key]  # Remove extraneous key
-                for (subkey, subvalue) in dict.items():
-                    newkey = key + '_' + subkey
-                    data[newkey.lower()] = subvalue
-            except:
-                pass  # not a stringifed JSON string
-
     def run(self):
-        self.fetch(self.uri_meta)  # populate metadata
+        self.fetch(self.uri_meta)  # populate _data with metadata
         data = self._mangle_fields(self._data, self.uri_meta)
         data[self._prefix % 'user-data'] = self._fetch(self.uri_user)
         data[self._prefix % 'public-key'] = self._fetch(self.uri_ssh)
-        self._data = {}
-        self.fetch(self.uri_dynamic)  # populate dynamic data
+
+        self._data = {}  # clear out metadata in _data
+        self.fetch(self.uri_dynamic)  # populate _data with dynamic data
         dyndata = self._mangle_fields(self._data, self.uri_dynamic)
-        data = dict(dyndata.items() + data.items())
-        self.convert_json_to_fields(data)
+        data.update(dyndata)
         self.fix_invalid_varnames(data)
 
         # Maintain old key for backwards compatibility
