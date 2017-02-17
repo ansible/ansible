@@ -47,7 +47,7 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(play_context, new_stdin,
                                          *args, **kwargs)
 
-        self.nspawn_args = self._play_context.get('nspawn_args', C.ANSIBLE_NSPAWN_ARGS)
+        self.nspawn_args = getattr(self._play_context, 'nspawn_args', C.ANSIBLE_NSPAWN_ARGS)
         display.vvv("NSPAWN ARGS %s" % self.nspawn_args)
 
         if six.PY2:
