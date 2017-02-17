@@ -130,7 +130,6 @@ TASK_ATTRIBUTE_OVERRIDES = (
     'become_method',
     'become_flags',
     'connection',
-    'docker_extra_args',
     'delegate_to',
     'no_log',
     'remote_user',
