@@ -41,6 +41,10 @@ options:
           this dictionary may be additional dictionaries.
      required: false
      default: None
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatability
+     required: false
 '''
 
 EXAMPLES = '''

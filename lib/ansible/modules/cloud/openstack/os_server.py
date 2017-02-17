@@ -192,6 +192,10 @@ options:
      required: false
      default: true
      version_added: "2.2"
+   availability_zone:
+     description:
+       - Availability zone in which to create the server.
+     required: false
 requirements:
     - "python >= 2.6"
     - "shade"

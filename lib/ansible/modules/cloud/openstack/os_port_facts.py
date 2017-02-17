@@ -45,6 +45,10 @@ options:
               the port dictionary, or strings within nested dictionaries.
         required: false
         default: null
+    availability_zone:
+      description:
+        - Ignored. Present for backwards compatability
+      required: false
 extends_documentation_fragment: openstack
 '''
 

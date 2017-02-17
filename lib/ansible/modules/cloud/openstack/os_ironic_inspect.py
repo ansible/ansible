@@ -58,6 +58,10 @@ options:
         - A timeout in seconds to tell the role to wait for the node to complete introspection if wait is set to True.
       required: false
       default: 1200
+    availability_zone:
+      description:
+        - Ignored. Present for backwards compatability
+      required: false
 
 requirements: ["shade"]
 '''

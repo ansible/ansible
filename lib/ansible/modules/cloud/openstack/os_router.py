@@ -75,6 +75,10 @@ options:
         - List of subnets to attach to the router internal interface.
      required: false
      default: None
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatability
+     required: false
 requirements: ["shade"]
 '''
 

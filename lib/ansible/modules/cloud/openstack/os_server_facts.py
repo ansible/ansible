@@ -45,6 +45,10 @@ options:
           of additional API calls.
      required: false
      default: false
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatability
+     required: false
 extends_documentation_fragment: openstack
 '''
 
