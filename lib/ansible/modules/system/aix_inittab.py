@@ -68,7 +68,6 @@ options:
     type: string
   state:
     description: Whether the entry should be present or absent in the inittab file
-    required: True
     type: string
     choices: [ "present", "absent" ]
     default: present
@@ -76,7 +75,7 @@ notes:
   - The changes are persistent across reboots.
   - You need root rights to read or adjust the inittab with the lsitab, chitab,
     mkitab or rmitab commands.
-  - tested at AIX 7.1.
+  - tested on AIX 7.1.
 requirements: [ 'itertools']
 '''
 
