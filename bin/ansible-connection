@@ -222,7 +222,7 @@ class Server():
             # the socket file so it can be recreated
             end_time = datetime.datetime.now()
             delta = end_time - self._start_time
-            dsplay.v('shutting down connection, connection was active for %s secs' % delta, self.play_context.remote_addr)
+            display.v('shutting down connection, connection was active for %s secs' % delta, self.play_context.remote_addr)
             try:
                 self.conn.close()
                 self.socket.close()
