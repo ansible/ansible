@@ -796,6 +796,13 @@ def command_sanity_validate_modules(args, targets):
     if skip_paths:
         cmd += ['--exclude', '^(%s)' % '|'.join(skip_paths)]
 
+    if is_shippable():
+        cmd.extend([
+            '--base-branch', os.environ['BASE_BRANCH']
+        ])
+    else:
+        display.warning("Cannot perform module comparison against the base branch when running locally")
+
     run_command(args, cmd, env=env)
 
 
