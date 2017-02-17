@@ -66,6 +66,10 @@ options:
         - Maximum number of seconds to wait for the stack creation
       required: false
       default: 3600
+    availability_zone:
+      description:
+        - Ignored. Present for backwards compatability
+      required: false
 requirements:
     - "python >= 2.6"
     - "shade"

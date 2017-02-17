@@ -37,6 +37,10 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatability
+     required: false
 requirements:
     - "python >= 2.6"
     - "shade"

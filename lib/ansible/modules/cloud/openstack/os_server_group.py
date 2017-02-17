@@ -47,6 +47,10 @@ options:
           valid policy names are anti-affinity, affinity, soft-anti-affinity
           and soft-affinity.
      required: false
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatability
+     required: false
 requirements:
     - "python >= 2.6"
     - "shade"

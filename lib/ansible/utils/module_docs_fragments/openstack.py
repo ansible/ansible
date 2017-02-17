@@ -48,10 +48,6 @@ options:
     description:
       - Name of the region.
     required: false
-  availability_zone:
-    description:
-      - Name of the availability zone.
-    required: false
   wait:
     description:
       - Should ansible wait until the requested resource is complete.

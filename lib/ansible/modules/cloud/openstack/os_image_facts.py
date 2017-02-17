@@ -36,6 +36,10 @@ options:
      description:
         - Name or ID of the image
      required: true
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatability
+     required: false
 extends_documentation_fragment: openstack
 '''
 
