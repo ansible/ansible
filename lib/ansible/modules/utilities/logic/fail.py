@@ -37,6 +37,9 @@ options:
         fail will simple bail out with a generic message.
     required: false
     default: "'Failed as requested from task'"
+  what:
+    description:
+      - this is a test
 
 author: "Dag Wieers (@dagwieers)"
 '''
