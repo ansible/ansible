@@ -17,18 +17,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
-
 DOCUMENTATION = '''
 ---
-module: foreman
-short_description: Manage Foreman Resources
+module: katello_upload
+short_description: Upload content to Katello
 description:
-    - Allows the management of Foreman resources inside your Foreman server
-version_added: "2.3"
+    - Allows the upload of content to a Katello repository
 author: "Eric D Helms (@ehelms)"
 requirements:
     - "nailgun >= 0.28.0"
@@ -47,26 +41,39 @@ options:
         description:
             - Password for user accessing Foreman server
         required: true
-    entity:
+    verify_ssl:
         description:
-            - The Foreman resource that the action will be performed on (e.g. organization, host)
+            - Verify SSL of the Foreman server
+        required: false
+    file:
+        description:
+            - File to upload
         required: true
-    params:
+    repository:
         description:
-            - Parameters associated to the entity resource to set or edit in dictionary format (e.g. name, description)
+            - Repository to upload file in to
+        required: true
+    product:
+        description:
+            - Product to which the repository lives in
+        required: true
+    organization:
+        description:
+            - Organization that the Product is in
         required: true
 '''
 
 EXAMPLES = '''
-- name: "Create CI Organization"
+- name: "Upload my.rpm"
   local_action:
-      module: foreman
+      module: katello
       username: "admin"
       password: "admin"
       server_url: "https://fakeserver.com"
-      entity: "organization"
-      params:
-        name: "My Cool New Organization"
+      file: "my.rpm"
+      repository: "Build RPMs"
+      product: "My Product"
+      organization: "Default Organization"
 '''
 
 RETURN = '''# '''
@@ -74,17 +81,24 @@ RETURN = '''# '''
 import datetime
 
 try:
-    from nailgun import entities, entity_fields
+    from nailgun import entities, entity_fields, entity_mixins
     from nailgun.config import ServerConfig
     HAS_NAILGUN_PACKAGE = True
 except:
     HAS_NAILGUN_PACKAGE = False
+
 
 class NailGun(object):
     def __init__(self, server, entities, module):
         self._server = server
         self._entities = entities
         self._module = module
+        entity_mixins.TASK_TIMEOUT = 1000
+
+    def upload(self, file, repository, product, organization):
+        repo = self.find_repository(repository, product, organization)
+        with open(file) as content:
+            repo.upload_content(files={'content': content})
 
     def find_organization(self, name, **params):
         org = self._entities.Organization(self._server, name=name, **params)
@@ -93,21 +107,31 @@ class NailGun(object):
         if len(response) == 1:
             return response[0]
         else:
-            self._module.fail_json(msg="No Content View found for %s" % name)
+            self._module.fail_json(msg="No organization found for %s" % name)
 
-    def organization(self, params):
-        name = params['name']
-        del params['name']
-        org = self.find_organization(name, **params)
+    def find_product(self, name, organization):
+        org = self.find_organization(organization)
 
-        if org:
-            org = self._entities.Organization(self._server, name=name, id=org.id, **params)
-            org.update()
+        product = self._entities.Product(self._server, name=name, organization=org)
+        response = product.search()
+
+        if len(response) == 1:
+            return response[0]
         else:
-            org = self._entities.Organization(self._server, name=name, **params)
-            org.create()
+            self._module.fail_json(msg="No Product found for %s" % name)
 
-        return True
+    def find_repository(self, name, product, organization):
+        product = self.find_product(product, organization)
+
+        repository = self._entities.Repository(self._server, name=name, product=product)
+        repository._fields['organization'] = entity_fields.OneToOneField(entities.Organization)
+        repository.organization = product.organization
+        response = repository.search()
+
+        if len(response) == 1:
+            return response[0]
+        else:
+            self._module.fail_json(msg="No Repository found for %s" % name)
 
 def main():
     module = AnsibleModule(
@@ -115,9 +139,11 @@ def main():
             server_url=dict(required=True),
             username=dict(required=True, no_log=True),
             password=dict(required=True, no_log=True),
-            entity=dict(required=True, no_log=False),
             verify_ssl=dict(required=False, type='bool', default=False),
-            params=dict(required=True, no_log=True, type='dict'),
+            file=dict(required=True, no_log=True),
+            repository=dict(required=True, no_log=False),
+            product=dict(required=True, no_log=False),
+            organization=dict(required=True, no_log=False),
         ),
         supports_check_mode=True
     )
@@ -128,8 +154,10 @@ def main():
     server_url = module.params['server_url']
     username = module.params['username']
     password = module.params['password']
-    entity = module.params['entity']
-    params = module.params['params']
+    file = module.params['file']
+    repository = module.params['repository']
+    product = module.params['product']
+    organization = module.params['organization']
     verify_ssl = module.params['verify_ssl']
 
     server = ServerConfig(
@@ -146,11 +174,12 @@ def main():
     except Exception as e:
         module.fail_json(msg="Failed to connect to Foreman server: %s " % e)
 
-    if entity == 'organization':
-        ng.organization(params)
-        module.exit_json(changed=True, result="%s updated" % entity)
-    else:
-        module.fail_json(changed=False, result="Unsupported entity supplied")
+    try:
+        ng.upload(file, repository, product, organization)
+    except Exception as e:
+        module.fail_json(msg=e)
+
+    module.exit_json(changed=True, result="File successfully uploaded to %s" % repository)
 
 # import module snippets
 from ansible.module_utils.basic import *
