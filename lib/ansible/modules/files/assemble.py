@@ -171,7 +171,7 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, igno
     return temp_path
 
 
-def cleanup(path, result=None):
+def cleanup(module, path):
     # cleanup just in case
     if os.path.exists(path):
         try:
@@ -179,8 +179,7 @@ def cleanup(path, result=None):
         except (IOError, OSError):
             e = get_exception()
             # don't error on possible race conditions, but keep warning
-            if result is not None:
-                result['warnings'] = ['Unable to remove temp file (%s): %s' % (path, str(e))]
+            module.warn('Unable to remove temp file (%s): %s' % (path, e))
 
 
 def main():
@@ -248,7 +247,7 @@ def main():
             (rc, out, err) = module.run_command(validate % path)
             result['validation'] = dict(rc=rc, stdout=out, stderr=err)
             if rc != 0:
-                cleanup(path)
+                cleanup(module, path)
                 module.fail_json(msg="failed to validate: rc:%s error:%s" % (rc, err))
         if backup and dest_hash is not None:
             result['backup_file'] = module.backup_local(dest)
@@ -256,7 +255,7 @@ def main():
         module.atomic_move(path, dest, unsafe_writes=module.params['unsafe_writes'])
         changed = True
 
-    cleanup(path, result)
+    cleanup(module, path)
 
     # handle file permissions
     file_args = module.load_file_common_arguments(module.params)

@@ -147,9 +147,7 @@ def main():
     candidate = NetworkConfig(contents=module.params['src'], indent=1)
 
     result = {'changed': False}
-    warnings = list()
-    check_args(module, warnings)
-    result['warnings'] = warnings
+    check_args(module)
 
     if module.params['backup']:
         result['__backup__'] = get_config(module=module)

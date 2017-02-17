@@ -43,12 +43,13 @@ ios_argument_spec = {
     'provider': dict(type='dict'),
 }
 
-def check_args(module, warnings):
+# NOTE: Below warnings parameter is a leftover for compatibility
+def check_args(module, warnings=None):
     provider = module.params['provider'] or {}
     for key in ios_argument_spec:
         if key != 'provider' and module.params[key]:
-            warnings.append('argument %s has been deprecated and will be '
-                    'removed in a future version' % key)
+            module.warn('argument %s has been deprecated and will be '
+                        'removed in a future version' % key)
 
 def get_config(module, flags=[]):
     cmd = 'show running-config '

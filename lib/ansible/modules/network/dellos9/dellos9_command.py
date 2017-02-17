@@ -177,14 +177,12 @@ def main():
     commands = module.params['commands']
     conditionals = module.params['wait_for'] or list()
 
-    warnings = list()
-
     runner = CommandRunner(module)
 
     for cmd in commands:
         if module.check_mode and not cmd.startswith('show'):
-            warnings.append('only show commands are supported when using '
-                            'check mode, not executing `%s`' % cmd)
+            module.warn('only show commands are supported when using '
+                        'check mode, not executing `%s`' % cmd)
         else:
             if cmd.startswith('conf'):
                 module.fail_json(msg='dellos9_command does not support running '
@@ -217,7 +215,6 @@ def main():
             output = 'command not executed due to check_mode, see warnings'
         result['stdout'].append(output)
 
-    result['warnings'] = warnings
     result['stdout_lines'] = list(to_lines(result['stdout']))
 
     module.exit_json(**result)

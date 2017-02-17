@@ -137,8 +137,8 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.network_common import ComplexList
 
-def check_args(module, warnings):
-    junos_check_args(module, warnings)
+def check_args(module):
+    junos_check_args(module)
 
     if module.params['rpcs']:
         module.fail_json(msg='argument rpcs has been deprecated, please use '
@@ -152,7 +152,7 @@ def to_lines(stdout):
         lines.append(item)
     return lines
 
-def parse_commands(module, warnings):
+def parse_commands(module):
     spec = dict(
         command=dict(key=True),
         output=dict(default=module.params['display'], choices=['text', 'json']),
@@ -165,7 +165,7 @@ def parse_commands(module, warnings):
 
     for index, item in enumerate(commands):
         if module.check_mode and not item['command'].startswith('show'):
-            warnings.append(
+            module.warn(
                 'Only show commands are supported when using check_mode, not '
                 'executing %s' % item['command']
             )
@@ -202,10 +202,9 @@ def main():
                            supports_check_mode=True)
 
 
-    warnings = list()
-    check_args(module, warnings)
+    check_args(module)
 
-    commands = parse_commands(module, warnings)
+    commands = parse_commands(module)
 
     wait_for = module.params['wait_for'] or list()
     conditionals = [Conditional(c) for c in wait_for]
@@ -237,7 +236,6 @@ def main():
 
     result = {
         'changed': False,
-        'warnings': warnings,
         'stdout': responses,
         'stdout_lines': to_lines(responses)
     }

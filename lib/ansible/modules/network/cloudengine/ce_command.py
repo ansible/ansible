@@ -205,14 +205,12 @@ def main():
     commands = list(parse_commands(module))
     conditionals = module.params['wait_for'] or list()
 
-    warnings = list()
-
     runner = CommandRunner(module)
 
     for cmd in commands:
         if module.check_mode and not cmd['command'].startswith('dis'):
-            warnings.append('only display commands are supported when using '
-                            'check mode, not executing `%s`' % cmd['command'])
+            module.warn('only display commands are supported when using '
+                        'check mode, not executing `%s`' % cmd['command'])
         else:
             if cmd['command'].startswith('sys'):
                 module.fail_json(msg='ce_command does not support running '
@@ -222,7 +220,7 @@ def main():
                 runner.add_command(**cmd)
             except AddCommandError:
                 exc = get_exception()
-                warnings.append('duplicate command detected: %s' % cmd)
+                module.warn('duplicate command detected: %s' % cmd)
 
     try:
         for item in conditionals:
@@ -258,7 +256,6 @@ def main():
             output = 'command not executed due to check_mode, see warnings'
         result['stdout'].append(output)
 
-    result['warnings'] = warnings
     result['stdout_lines'] = list(to_lines(result['stdout']))
 
     module.exit_json(**result)

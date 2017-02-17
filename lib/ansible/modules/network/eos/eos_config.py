@@ -210,12 +210,12 @@ from ansible.module_utils.eos import run_commands
 from ansible.module_utils.eos import eos_argument_spec
 from ansible.module_utils.eos import check_args as eos_check_args
 
-def check_args(module, warnings):
-    eos_check_args(module, warnings)
+def check_args(module):
+    eos_check_args(module)
     if module.params['force']:
-        warnings.append('The force argument is deprecated, please use '
-                        'match=none instead.  This argument will be '
-                        'removed in the future')
+        module.warn('The force argument is deprecated, please use '
+                    'match=none instead.  This argument will be '
+                    'removed in the future')
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=3)
@@ -307,12 +307,9 @@ def main():
     if module.params['force'] is True:
         module.params['match'] = 'none'
 
-    warnings = list()
-    check_args(module, warnings)
+    check_args(module)
 
     result = {'changed': False}
-    if warnings:
-        result['warnings'] = warnings
 
     if module.params['backup']:
         result['__backup__'] = get_config(module)

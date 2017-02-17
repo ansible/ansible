@@ -174,14 +174,12 @@ def main():
     commands = list(parse_commands(module))
     conditionals = module.params['wait_for'] or list()
 
-    warnings = list()
-
     runner = CommandRunner(module)
 
     for cmd in commands:
         if module.check_mode and not cmd['command'].startswith('show'):
-            warnings.append('only show commands are supported when using '
-                            'check mode, not executing `%s`' % cmd['command'])
+            module.warn('only show commands are supported when using '
+                        'check mode, not executing `%s`' % cmd['command'])
         else:
             if cmd['command'].startswith('conf'):
                 module.fail_json(msg='asa_command does not support running '
@@ -191,7 +189,7 @@ def main():
                 runner.add_command(**cmd)
             except AddCommandError:
                 exc = get_exception()
-                warnings.append('duplicate command detected: %s' % cmd)
+                module.warn('duplicate command detected: %s' % cmd)
 
     for item in conditionals:
         runner.add_conditional(item)
@@ -218,7 +216,6 @@ def main():
             output = 'command not executed due to check_mode, see warnings'
         result['stdout'].append(output)
 
-    result['warnings'] = warnings
     result['stdout_lines'] = list(to_lines(result['stdout']))
 
     module.exit_json(**result)

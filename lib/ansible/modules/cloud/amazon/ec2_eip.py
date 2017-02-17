@@ -388,7 +388,7 @@ def main():
         module.fail_json(msg="parameters are required together: ('device_id', 'private_ip_address')")
 
     if instance_id:
-        warnings = ["instance_id is no longer used, please use device_id going forward"]
+        module.warn("instance_id is no longer used, please use device_id going forward")
         is_instance = True
         device_id = instance_id
     else:
@@ -429,8 +429,6 @@ def main():
     except (boto.exception.EC2ResponseError, EIPException) as e:
         module.fail_json(msg=str(e))
 
-    if instance_id:
-        result['warnings'] = warnings
     module.exit_json(**result)
 
 # import module snippets

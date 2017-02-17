@@ -181,11 +181,9 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
-    warnings = check_args(module)
+    check_args(module)
 
     result = {'changed': False}
-    if warnings:
-        result['warnings'] = warnings
 
     src = module.params['src']
     candidate = NetworkConfig(contents=src, indent=3)

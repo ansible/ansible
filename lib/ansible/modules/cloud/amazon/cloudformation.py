@@ -493,9 +493,9 @@ def main():
             module.fail_json(msg=boto_exception(err), exception=traceback.format_exc())
 
     if module.params['template_format'] is not None:
-        result['warnings'] = [('Argument `template_format` is deprecated '
-            'since Ansible 2.3, JSON and YAML templates are now passed '
-            'directly to the CloudFormation API.')]
+        module.warn('Argument `template_format` is deprecated '
+                    'since Ansible 2.3, JSON and YAML templates are now passed '
+                    'directly to the CloudFormation API.')
     module.exit_json(**result)
 
 # import module snippets

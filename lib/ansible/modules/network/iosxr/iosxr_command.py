@@ -142,7 +142,7 @@ def to_lines(stdout):
             item = str(item).split('\n')
         yield item
 
-def parse_commands(module, warnings):
+def parse_commands(module):
     command = ComplexList(dict(
         command=dict(key=True),
         prompt=dict(),
@@ -152,7 +152,7 @@ def parse_commands(module, warnings):
 
     for index, item in enumerate(commands):
         if module.check_mode and not item['command'].startswith('show'):
-            warnings.append(
+            module.warn(
                 'only show commands are supported when using check mode, not '
                 'executing `%s`' % item['command']
             )
@@ -180,10 +180,9 @@ def main():
     module = AnsibleModule(argument_spec=spec,
                            supports_check_mode=True)
 
-    warnings = list()
-    check_args(module, warnings)
+    check_args(module)
 
-    commands = parse_commands(module, warnings)
+    commands = parse_commands(module)
 
     wait_for = module.params['wait_for'] or list()
     conditionals = [Conditional(c) for c in wait_for]
@@ -217,7 +216,6 @@ def main():
     result = {
         'changed': False,
         'stdout': responses,
-        'warnings': warnings,
         'stdout_lines': list(to_lines(responses))
     }
 

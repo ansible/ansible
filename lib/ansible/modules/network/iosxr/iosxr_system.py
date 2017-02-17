@@ -245,10 +245,9 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    warnings = list()
-    check_args(module, warnings)
+    check_args(module)
 
-    result = {'changed': False, 'warnings': warnings}
+    result = {'changed': False}
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
