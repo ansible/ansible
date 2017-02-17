@@ -29,8 +29,9 @@ asserts:
     - "self.final_module_args['rsync_path'] == '\"sudo -u ansibletest1 rsync\"'"
     - "self.final_module_args['src'] == '/tmp/deleteme'"
     - "self.final_module_args['dest'] == 'root@el6host:/tmp/deleteme'"
+    # and this ...
     - "self.task.become == True"
-    - "self.task.become_user == None"
+    - "self.task.become_user == 'ansibletest1'"
     - "self._play_context.shell == 'sh'"
     - "self._play_context.remote_addr == 'el6host'"
     - "self._play_context.remote_user == 'root'"
