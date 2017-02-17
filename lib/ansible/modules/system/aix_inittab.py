@@ -37,13 +37,11 @@ options:
     required: True
     alias: service
     type: string
-    default: null
   runlevel:
     description: Runlevel of the entry.
     required: True
     type: string
-    default: null
-  processaction:
+  action:
     description: Action what the init has to do with this entry.
     required: True
     choices: [
@@ -61,29 +59,21 @@ options:
                'sysinit'
               ]
     type: string
-    default: null
   command:
     description: What command has to run.
     requred: True
     type: string
-    default: null
-  follow:
-    description: After which inittabline shoud the new entry follow.
-    required: False
+  insertafter:
+    description: After which inittabline should the new entry inserted.
     type: string
-    default: null
-  action:
-    description: What action has to be done.
+  state:
+    description: Whether the entry should be present or absent in the inittab file
     required: True
     type: string
-    choices: [
-               'install',
-               'change',
-               'remove'
-              ]
-    default: null
+    choices: [ "present", "absent" ]
+    default: present
 notes:
-  - The changes are persisten across reboot.
+  - The changes are persistent across reboots.
   - You need root rights to read or adjust the inittab with the lsitab, chitab,
     mkitab or rmitab commands.
   - tested at AIX 7.1.
@@ -96,20 +86,20 @@ EXAMPLES = '''
   aix_inittab:
     name: startmyservice
     runlevel: 4
-    processaction: once
+    action: once
     command: "echo hello"
-    follow: existingservice
-    action: install
+    insertafter: existingservice
+    state: present
   become: yes
 
-# Change inittab enrty startmyservice to runlevel "2" and processactio "wait".
+# Change inittab enrty startmyservice to runlevel "2" and processaction "wait".
 - name: Change startmyservice to inittab
   aix_inittab:
     name: startmyservice
     runlevel: 2
-    processaction: wait
+    action: wait
     command: "echo hello"
-    action: change
+    state: present
   become: yes
 
 # Remove inittab entry startmyservice.
@@ -117,9 +107,9 @@ EXAMPLES = '''
   aix_inittab:
     name: startmyservice
     runlevel: 2
-    processaction: wait
+    action: wait
     command: "echo hello"
-    action: remove
+    state: absent
   become: yes
 '''
 
@@ -135,12 +125,6 @@ RETURN = '''
 
 # Import necessary libraries
 import itertools
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
 from ansible.module_utils.basic import AnsibleModule
 
 # end import modules
@@ -153,7 +137,7 @@ def check_current_entry(module):
     existsdict = { 'exist' : False }
     (rc, out, err) = module.run_command(['lsitab', module.params['name']])
     if rc == 0:
-        keys = ('name', 'runlevel', 'processaction', 'command')
+        keys = ('name', 'runlevel', 'action', 'command')
         values = out.split(":")
         values = map(lambda s: s.strip(), values)  # strip non readable characters as \n
         existsdict = dict(itertools.izip(keys,values))
@@ -167,27 +151,26 @@ def main():
         argument_spec = dict(
             name = dict( required=True, type='str', aliases=['service']),
             runlevel = dict( required=True, type='str'),
-            processaction = dict( choices=[
-                                  'respawn',
-                                  'wait',
-                                  'once',
-                                  'boot',
-                                  'bootwait',
-                                  'powerfail',
-                                  'powerwait',
-                                  'off',
-                                  'hold',
-                                  'ondemand',
-                                  'initdefault',
-                                  'sysinit'
-                                  ], type='str'),
-            command = dict( required=True, type='str' ),
-            follow = dict( type='str' ),
             action = dict( choices=[
-                           'install',
-                           'change',
-                           'remove'
-                           ], required=True, type='str'),
+                           'respawn',
+                           'wait',
+                           'once',
+                           'boot',
+                           'bootwait',
+                           'powerfail',
+                           'powerwait',
+                           'off',
+                           'hold',
+                           'ondemand',
+                           'initdefault',
+                           'sysinit'
+                           ], type='str'),
+            command = dict( required=True, type='str' ),
+            insertafter = dict( type='str' ),
+            state = dict( choices=[
+                          'present',
+                          'absent',
+                          ], required=True, type='str'),
         )
         )
 
@@ -209,15 +192,15 @@ def main():
 
 
     # if action is install or change,
-    if module.params['action'] == 'install' or module.params['action'] == 'change':
+    if module.params['state'] == 'present':
 
         # create new entry string
-        new_entry = module.params['name']+":"+module.params['runlevel']+":"+module.params['processaction']+":"+module.params['command']
+        new_entry = module.params['name']+":"+module.params['runlevel']+":"+module.params['action']+":"+module.params['command']
 
         # If current entry exists or fields are different(if the entry does not exists, then the entry wil be created
         if ( not current_entry['exist'] ) or (
                 module.params['runlevel'] != current_entry['runlevel'] or
-                module.params['processaction'] != current_entry['processaction'] or
+                module.params['action'] != current_entry['action'] or
                 module.params['command'] != current_entry['command'] ):
 
             # If the entry does exist then change the entry
@@ -232,8 +215,8 @@ def main():
             # If the entry does not exist create the entry
             elif not current_entry['exist']:
 
-                if module.params['follow']:
-                    (rc, out, err) = module.run_command(['mkitab', '-i',  module.params['follow'], new_entry ])
+                if module.params['insertafter']:
+                    (rc, out, err) = module.run_command(['mkitab', '-i',  module.params['insertafter'], new_entry ])
                 else:
                     (rc, out, err) = module.run_command(['mkitab', new_entry ])
 
@@ -244,7 +227,7 @@ def main():
                 result['changed'] = True
 
 
-    elif module.params['action'] == 'remove':
+    elif module.params['state'] == 'absent':
         # If the action is remove and the entry exists then remove the entry
         if current_entry['exist']:
             (rc, out, err) = module.run_command(['rmitab',  module.params['name']])
