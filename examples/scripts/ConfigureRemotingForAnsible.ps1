@@ -4,7 +4,7 @@
 # -----------------------------------------------------------
 #
 # This script checks the current WinRM (PS Remoting) configuration and makes
-# the # necessary changes to allow Ansible to connect, authenticate and
+# the necessary changes to allow Ansible to connect, authenticate and
 # execute PowerShell commands.
 #
 # All events are logged to the Windows EventLog, useful for unattended runs.
