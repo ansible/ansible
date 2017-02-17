@@ -28,16 +28,14 @@ from ansible.errors import AnsibleConnectionFailure
 
 class TerminalModule(TerminalBase):
 
-    terminal_prompts_re = [
+    terminal_stdout_re = [
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
         re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
     ]
 
-    terminal_errors_re = [
+    terminal_stderr_re = [
         re.compile(r"^\r\nError:"),
     ]
-
-    supports_multiplexing = False
 
     def on_open_shell(self):
         try:

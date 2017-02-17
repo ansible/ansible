@@ -25,16 +25,15 @@ import json
 from ansible.plugins.terminal import TerminalBase
 from ansible.errors import AnsibleConnectionFailure
 
-
 class TerminalModule(TerminalBase):
 
-    terminal_prompts_re = [
+    terminal_stdout_re = [
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
         re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$"),
         re.compile(r']]>]]>[\r\n]?')
     ]
 
-    terminal_errors_re = [
+    terminal_stderr_re = [
         re.compile(r"% ?Error"),
         re.compile(r"% ?Bad secret"),
         re.compile(r"invalid input", re.I),
@@ -44,11 +43,9 @@ class TerminalModule(TerminalBase):
         re.compile(r"'[^']' +returned error code: ?\d+"),
     ]
 
-    supports_multiplexing = False
-
     def on_open_shell(self):
         try:
             for cmd in ['terminal length 0', 'terminal exec prompt no-timestamp']:
-                self._connection.exec_command(cmd)
+                self._exec_cli_command(cmd)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')

@@ -32,16 +32,14 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
     A base class for implementing cli connections
     '''
 
-    terminalprompts_re = []
+    terminal_stdout_re = []
 
-    terminalerrors_re = []
+    terminal_stderr_re = []
 
     ansi_re = [
         re.compile(r'(\x1b\[\?1h\x1b=)'),
         re.compile(r'\x08.')
     ]
-
-    supports_multiplexing = True
 
     def __init__(self, connection):
         self._connection = connection
@@ -67,8 +65,4 @@ class TerminalBase(with_metaclass(ABCMeta, object)):
         pass
 
     def on_deauthorize(self):
-        pass
-
-    @staticmethod
-    def guess_network_os(conn):
         pass

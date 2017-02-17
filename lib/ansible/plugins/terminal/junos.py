@@ -34,12 +34,12 @@ except ImportError:
 
 class TerminalModule(TerminalBase):
 
-    terminal_prompts_re = [
+    terminal_stdout_re = [
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|%) ?$"),
     ]
 
-    terminal_errors_re = [
+    terminal_stderr_re = [
         re.compile(r"unknown command"),
         re.compile(r"syntax error,")
     ]
