@@ -31,13 +31,19 @@ from ansible.module_utils.ios import ios_argument_spec
 from ansible.module_utils.basic import AnsibleFallbackNotFound
 from ansible.module_utils._text import to_bytes
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
 
         if self._play_context.connection != 'local':
             return dict(
-                fail=True,
+                failed=True,
                 msg='invalid connection specified, expected connection=local, '
                     'got %s' % self._play_context.connection
             )
@@ -70,9 +76,9 @@ class ActionModule(_ActionModule):
         results = super(ActionModule, self).run(tmp, task_vars)
 
         # need to make sure to leave config mode if the module didn't clean up
-        rc, out, err = connection.exec_command('EXEC: prompt()')
+        rc, out, err = connection.exec_command('prompt()')
         if str(out).strip().endswith(')#'):
-            connection.exec_command('EXEC: exit')
+            connection.exec_command('exit')
 
         return results
 
