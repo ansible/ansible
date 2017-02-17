@@ -94,6 +94,15 @@ class Cli:
     def __init__(self, module):
         self._module = module
         self._device_configs = {}
+        self._session_support = None
+
+    @property
+    def supports_sessions(self):
+        if self._session_support is not None:
+            return self._session_support
+        rc, out, err = self.exec_command('show configuration sessions')
+        self._session_support = rc == 0
+        return self._session_support
 
     def exec_command(self, command):
         if isinstance(command, dict):
@@ -195,7 +204,7 @@ class Cli:
         except ValueError:
             pass
 
-        if not all((bool(use_session), self.supports_sessions())):
+        if not all((bool(use_session), self.supports_sessions)):
             return configure(self, commands)
 
         conn = get_connection(self)
@@ -254,6 +263,14 @@ class Eapi:
             self._enable = {'cmd': 'enable', 'input': module.params['auth_pass']}
         else:
             self._enable = 'enable'
+
+    @property
+    def supports_sessions(self):
+        if self._session_support:
+            return self._session_support
+        response = self.send_request(['show configuration sessions'])
+        self._session_support = 'error' not in response
+        return self._session_support
 
     def _request_builder(self, commands, output, reqid=None):
         params = dict(version=1, cmds=commands, format=output)
@@ -344,13 +361,6 @@ class Eapi:
             self._device_configs[cmd] = cfg
             return cfg
 
-    def supports_sessions(self):
-        if self._session_support:
-            return self._session_support
-        response = self.send_request(['show configuration sessions'])
-        self._session_support = 'error' not in response
-        return self._session_support
-
     def configure(self, commands):
         """Sends the ordered set of commands to the device
         """
@@ -371,7 +381,7 @@ class Eapi:
         fallback to using configure() to load the commands.  If that happens,
         there will be no returned diff or session values
         """
-        if not supports_sessions():
+        if not self.supports_sessions:
             return configure(self, commands)
 
         session = 'ansible_%s' % int(time.time())
@@ -405,6 +415,8 @@ class Eapi:
 
 is_json = lambda x: str(x).endswith('| json')
 is_text = lambda x: not str(x).endswith('| json')
+
+supports_sessions = lambda x: get_connection(module).supports_sessions
 
 def get_config(module, flags=[]):
     conn = get_connection(module)
