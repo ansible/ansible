@@ -123,9 +123,17 @@ While YAML is generally friendly, the following is going to result in a YAML syn
 
     foo: somebody said I should put a colon here: so I did
 
-You will want to quote any hash values using colons, like so::
+    windows_drive: c:
+
+But this will work::
+
+    windows_path: c:\windows
+
+You will want to quote hash values using colons followed by a space or the end of the line::
 
     foo: "somebody said I should put a colon here: so I did"
+    
+    windows_drive: "c:"
 
 And then the colon will be preserved.
 
