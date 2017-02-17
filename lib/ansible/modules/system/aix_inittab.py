@@ -178,7 +178,6 @@ def main():
         'name':  module.params['name'],
         'changed': False,
         'status': {},
-        'warnings': [],
         'msg': [],
     }
 
@@ -207,8 +206,7 @@ def main():
             if current_entry['exist']:
                 (rc, out, err) = module.run_command(['chitab', new_entry])
                 if rc != 0:
-                    result['warnings']= "could not change"+" "+current_entry['name']
-                    module.fail_json(rc=rc, err=err, msg=result['warnings'] )
+                    module.warn('could not change (%s)' % current_entry['name'])
                 result['status'] = "changed inittab entry"+" "+current_entry['name']
                 result['changed'] = True
 
@@ -221,8 +219,7 @@ def main():
                     (rc, out, err) = module.run_command(['mkitab', new_entry ])
 
                 if rc != 0:
-                    result['warnings']= "could not add"+" "+module.params['name']
-                    module.fail_json(rc=rc, err=err, msg=result['warnings'])
+                    module.warn('could not add (%s)' % current_entry['name'])
                 result['status'] = "add inittab entry"+" "+module.params['name']
                 result['changed'] = True
 
@@ -232,8 +229,7 @@ def main():
         if current_entry['exist']:
             (rc, out, err) = module.run_command(['rmitab',  module.params['name']])
             if rc != 0:
-                result['warnings']= "could not remove"+" "+current_entry['name']
-                module.fail_json(rc=rc, err=err, msg=result['warnings'] )
+                module.warn('could not remove (%s)' % current_entry['name'])
             result['status'] = "removed inittab entry"+" "+current_entry['name']
             result['changed'] = True
 
