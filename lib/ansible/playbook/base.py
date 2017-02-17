@@ -500,6 +500,15 @@ class Base(with_metaclass(BaseMeta, object)):
 
         return [i for i,_ in itertools.groupby(combined) if i is not None]
 
+    def dump_attrs(self):
+        '''
+        Dumps all attributes to a dictionary
+        '''
+        attrs = dict()
+        for name in self._valid_attrs.keys():
+            attrs[name] = getattr(self, name)
+        return attrs
+
     def serialize(self):
         '''
         Serializes the object derived from the base object into
@@ -509,10 +518,7 @@ class Base(with_metaclass(BaseMeta, object)):
         as field attributes.
         '''
 
-        repr = dict()
-
-        for name in self._valid_attrs.keys():
-            repr[name] = getattr(self, name)
+        repr = self.dump_attrs()
 
         # serialize the uuid field
         repr['uuid'] = self._uuid
