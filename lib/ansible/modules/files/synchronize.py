@@ -438,7 +438,7 @@ def main():
     if private_key is None:
         private_key = ''
     else:
-        private_key = '-i '+ private_key
+        private_key = '-i "%s"' % private_key
 
     ssh_opts = '-S none'
 
