@@ -365,7 +365,6 @@
     that:
       - "check56_result.changed == true"
 
-<<<<<<< HEAD:test/integration/targets/win_regedit/tasks/main.yml
 # test empty data value (some things depend on this, having no data is not equivalent)
 
 - name: set an empty data value
