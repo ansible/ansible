@@ -112,6 +112,9 @@ output:
       }
 '''
 
+from ansible.module_utils.basic import AnsibleModule, traceback
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict
+
 import os
 
 try:
@@ -121,7 +124,7 @@ except ImportError:
     HAS_BOTOCORE = False
 
 try:
-    import boto3
+    import boto3 # noqua: F401
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -148,7 +151,10 @@ def main():
 
     api_id = module.params.get('api_id')
     state = module.params.get('state')
-    swagger_file = os.path.expanduser(module.params.get('swagger_file'))
+    try:
+        swagger_file = os.path.expanduser(module.params.get('swagger_file'))
+    except AttributeError:
+        swagger_file=None
     swagger_dict = module.params.get('swagger_dict')
     swagger_text = module.params.get('swagger_text')
     stage= module.params.get('stage')
@@ -215,9 +221,11 @@ def main():
         msg="Unexpected exception configuring api {}".format(api_id)
         module.fail_json(msg=msg, exception=traceback.format_exc())
 
-    if deploy_desc is None:
-        deploy_desc = "Automatic deployment by Ansible."
+    changed=True
+
     if stage:
+        if deploy_desc is None:
+            deploy_desc = "Automatic deployment by Ansible."
         try:
             deploy_response=client.create_deployment(restApiId=api_id, stageName=stage,
                                                      description=deploy_desc)
@@ -230,13 +238,12 @@ def main():
         except Exception as e:
             msg="Unexpected exception deploying api {} to stage {}".format(api_id, stage)
             module.fail_json(msg=msg, exception=traceback.format_exc())
-    changed=True
-    module.exit_json(changed=changed, api_id=api_id,
+        module.exit_json(changed=changed, api_id=api_id,
                      create_response=camel_dict_to_snake_dict(create_response),
                      deploy_response=camel_dict_to_snake_dict(deploy_response))
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+    else:
+            module.exit_json(changed=changed, api_id=api_id,
+                     create_response=camel_dict_to_snake_dict(create_response))
 
 if __name__ == '__main__':
     main()
