@@ -777,6 +777,9 @@ def command_sanity_validate_modules(args, targets):
     :type args: SanityConfig
     :type targets: SanityTargets
     """
+    is_shippable = is_shippable()
+    display.warning('EARLY Environment Vars: %r' % os.environ)
+
     env = ansible_environment(args)
 
     paths = [deepest_path(i.path, 'lib/ansible/modules/') for i in targets.include_external]
@@ -796,12 +799,12 @@ def command_sanity_validate_modules(args, targets):
     if skip_paths:
         cmd += ['--exclude', '^(%s)' % '|'.join(skip_paths)]
 
-    if is_shippable():
+    if is_shippable:
         cmd.extend([
             '--base-branch', os.environ['BASE_BRANCH']
         ])
     else:
-        display.warning("Environment variables: %r" % repr(os.environ))
+        display.warning("Environment variables: %r" % os.environ)
         display.warning("Cannot perform module comparison against the base branch when running locally")
 
     run_command(args, cmd, env=env)
