@@ -68,6 +68,13 @@ class ActionModule(_ActionModule):
             rc, out, err = connection.exec_command('open_shell()')
             if not rc == 0:
                 return {'failed': True, 'msg': 'unable to open shell', 'rc': rc}
+        else:
+            # make sure we are in the right cli context which should be
+            # enable mode and not config module
+            rc, out, err = connection.exec_command('prompt()')
+            if str(out).strip().endswith(')#'):
+                display.vvv('wrong context, sending exit to device', self._play_context.remote_addr)
+                connection.exec_command('exit')
 
         task_vars['ansible_socket'] = socket_path
 
@@ -75,15 +82,7 @@ class ActionModule(_ActionModule):
             self._play_context.become = False
             self._play_context.become_method = None
 
-
-        results = super(ActionModule, self).run(tmp, task_vars)
-
-        # need to make sure to leave config mode if the module didn't clean up
-        rc, out, err = connection.exec_command('prompt()')
-        if str(out).strip().endswith(')#'):
-            connection.exec_command('exit')
-
-        return results
+        return super(ActionModule, self).run(tmp, task_vars)
 
     def _get_socket_path(self, play_context):
         ssh = connection_loader.get('ssh', class_only=True)
@@ -117,5 +116,3 @@ class ActionModule(_ActionModule):
             return strategy(*args, **kwargs)
         except AnsibleFallbackNotFound:
             pass
-
-
