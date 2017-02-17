@@ -31,9 +31,23 @@ from ansible.compat.six import iteritems
 from ansible.module_utils.iosxr import iosxr_argument_spec
 from ansible.module_utils.basic import AnsibleFallbackNotFound
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
+
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
+
+        if self._play_context.connection != 'local':
+            return dict(
+                failed=True,
+                msg='invalid connection specified, expected connection=local, '
+                    'got %s' % self._play_context.connection
+            )
 
         provider = self.load_provider()
 
@@ -44,15 +58,25 @@ class ActionModule(_ActionModule):
         pc.remote_user = provider['username'] or self._play_context.connection_user
         pc.password = provider['password'] or self._play_context.password
 
+        connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+
         socket_path = self._get_socket_path(pc)
         if not os.path.exists(socket_path):
             # start the connection if it isn't started
-            connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
-            version = connection.exec_command('EXEC: show version')
+            rc, out, err = connection.exec_command('open_shell()')
+            if rc != 0:
+                return {'failed': True, 'msg': 'unable to open shell', 'rc': rc}
 
         task_vars['ansible_socket'] = socket_path
 
-        return super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(tmp, task_vars)
+
+        # need to make sure to leave config mode if the module didn't clean up
+        rc, out, err = connection.exec_command('prompt()')
+        if str(out).strip().endswith(')#'):
+            connection.exec_command('exit')
+
+        return result
 
     def _get_socket_path(self, play_context):
         ssh = connection_loader.get('ssh', class_only=True)
