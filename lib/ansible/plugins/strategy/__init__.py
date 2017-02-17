@@ -332,11 +332,6 @@ class StrategyBase:
             else:
                 loop_var = 'item'
 
-            # get the vars for this task/host pair, make them the active set of vars for our templar above
-            task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=original_host, task=original_task)
-            self.add_tqm_variables(task_vars, play=iterator._play)
-            templar.set_available_variables(task_vars)
-
             # send callbacks for 'non final' results
             if '_ansible_retry' in task_result._result:
                 self._tqm.send_callback('v2_runner_retry', task_result)
@@ -352,6 +347,11 @@ class StrategyBase:
                             self._tqm.send_callback('v2_on_file_diff', task_result)
                     self._tqm.send_callback('v2_runner_item_on_ok', task_result)
                 continue
+
+            # get the vars for this task/host pair, make them the active set of vars for our templar above
+            task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=original_host, task=original_task)
+            self.add_tqm_variables(task_vars, play=iterator._play)
+            templar.set_available_variables(task_vars)
 
             run_once = templar.template(original_task.run_once)
             if original_task.register:
