@@ -273,7 +273,7 @@ def main():
             try:
                 server = Server(sf_path, pc)
             except Exception as exc:
-                display.debug(traceback.format_exec(), pc.remote_addr)
+                display.vvv(traceback.format_exc(), pc.remote_addr)
             fcntl.lockf(lock_fd, fcntl.LOCK_UN)
             os.close(lock_fd)
             server.run()
