@@ -126,6 +126,10 @@ options:
       - Apply the rule to routed/forwarded packets.
     required: false
     choices: ['yes', 'no']
+  comment:
+    description:
+      - Add a comment to the rule. Requires UFW version >=0.35.
+    required: false
 '''
 
 EXAMPLES = '''
@@ -200,6 +204,7 @@ EXAMPLES = '''
     proto: udp
     src: 1.2.3.4
     port: 514
+    comment: "Block syslog"
 
 # Allow incoming access to eth0 from 1.2.3.5 port 5469 to 1.2.3.4 port 5469
 - ufw:
@@ -250,7 +255,8 @@ def main():
             to_ip     = dict(default='any', aliases=['dest', 'to']),
             to_port   = dict(default=None,  aliases=['port']),
             proto     = dict(default=None,  aliases=['protocol'], choices=['any', 'tcp', 'udp', 'ipv6', 'esp', 'ah']),
-            app       = dict(default=None,  aliases=['name'])
+            app       = dict(default=None,  aliases=['name']),
+            comment   = dict(default=None)
         ),
         supports_check_mode = True,
         mutually_exclusive = [['app', 'proto', 'logging']]
@@ -306,7 +312,7 @@ def main():
             #
             # ufw [--dry-run] [delete] [insert NUM] [route] allow|deny|reject|limit [in|out on INTERFACE] [log|log-all] \
             #     [from ADDRESS [port PORT]] [to ADDRESS [port PORT]] \
-            #     [proto protocol] [app application]
+            #     [proto protocol] [app application] [comment COMMENT]
             cmd.append([module.boolean(params['delete']), 'delete'])
             cmd.append([module.boolean(params['route']), 'route'])
             cmd.append([params['insert'], "insert %s" % params['insert']])
@@ -321,6 +327,7 @@ def main():
 
                 value = params[key]
                 cmd.append([value, template % (value)])
+            cmd.append([params['comment'], "comment '%s'" % params['comment']])
 
             execute(cmd)
 
