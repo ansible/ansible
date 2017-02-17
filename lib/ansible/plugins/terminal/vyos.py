@@ -28,12 +28,12 @@ from ansible.errors import AnsibleConnectionFailure
 
 class TerminalModule(TerminalBase):
 
-    terminal_prompts_re = [
+    terminal_stdout_re = [
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
         re.compile(r"\@[\w\-\.]+:\S+?[>#\$] ?$")
     ]
 
-    terminal_errors_re = [
+    terminal_stderr_re = [
         re.compile(r"\n\s*Invalid command:"),
         re.compile(r"\nCommit failed"),
         re.compile(r"\n\s+Set failed"),
@@ -47,10 +47,4 @@ class TerminalModule(TerminalBase):
             self._exec_cli_command('set terminal length %s' % self.terminal_length)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
-
-    @staticmethod
-    def guess_network_os(conn):
-        stdin, stdout, stderr = conn.exec_command('cat /etc/issue')
-        if 'VyOS' in stdout.read():
-            return 'vyos'
 
