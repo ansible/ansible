@@ -43,15 +43,6 @@ options:
     description:
       - Only for partial backup, you can restrict by giving expected configuration path (ex. firewall address).
     default: ""
-  backup:
-    description:
-      - This argument will cause the module to create a full backup of
-        the current C(running-config) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
-    default: no
-    choices: ['yes', 'no']
 notes:
   - This module requires pyFG python library
 """
@@ -92,8 +83,11 @@ change_string:
   type: string
 """
 
-import os
-import time
+
+
+from ansible.module_utils.fortios import fortios_argument_spec, fortios_required_if
+from ansible.module_utils.fortios import backup
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 
@@ -114,19 +108,19 @@ NOT_UPDATABLE_CONFIG_OBJECTS=[
 
 def main():
     argument_spec = dict(
-        host      = dict(required=True ),
-        username  = dict(required=True ),
-        password  = dict(required=True, type='str', no_log=True ),
-        timeout   = dict(type='int', default=60),
-        vdom      = dict(type='str', default=None ),
         src       = dict(type='str', default=None),
         filter    = dict(type='str', default=""),
         backup    =dict(type='bool', default=False),
     )
 
+    argument_spec.update(fortios_argument_spec)
+
+    required_if = fortios_required_if
+
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=required_if,
     )
 
     result = dict(changed=False)
@@ -158,12 +152,8 @@ def main():
 
     #backup config
     if module.params['backup']:
-        backup_path = 'backup'
-        if not os.path.exists(backup_path):
-            os.mkdir(backup_path)
-        tstamp = time.strftime("%Y-%m-%d@%H:%M:%S", time.localtime(time.time()))
-        filename = '%s/%s_config.%s' % (backup_path, module.params['host'], tstamp)
-        open(filename, 'w').write(f.running_config.to_text())
+        backup(module, f.running_config.to_text())
+
 
     #update config
     if module.params['src'] is not None:
