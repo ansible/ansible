@@ -34,6 +34,7 @@ class Connection(ConnectionBase):
                 *args, **kwargs)
 
         display.vvv("NSPAWN ARGS %s" % self._play_context.nspawn_args)
+        display.vvv("NSPAWN EXTRA ARGS %s" % self._play_context.nspawn_extra_args)
 
         self.chroot = self._play_context.remote_addr
 
@@ -68,7 +69,8 @@ class Connection(ConnectionBase):
                 else '/bin/sh')
 
         nspawn_args = shlex.split(self._play_context.nspawn_args)
-        local_cmd = [self.nspawn_cmd, '-D', self.chroot ] + nspawn_args + [
+        nspawn_extra_args = shlex.split(self._play_context.nspawn_extra_args)
+        local_cmd = [self.nspawn_cmd, '-D', self.chroot ] + nspawn_args + nspawn_extra_args + [
                 '--', executable, '-c', cmd]
 
         display.vvv("EXEC %s" % (local_cmd), host=self.chroot)
