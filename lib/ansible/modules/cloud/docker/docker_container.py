@@ -766,7 +766,7 @@ class TaskParameters(DockerBaseClass):
 
         self.publish_all_ports = False
         self.published_ports = self._parse_publish_ports()
-        if self.published_ports == 'all':
+        if self.published_ports in ('all', 'ALL'):
             self.publish_all_ports = True
             self.published_ports = None
 
