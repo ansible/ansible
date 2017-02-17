@@ -796,6 +796,22 @@ def command_sanity_validate_modules(args, targets):
     if skip_paths:
         cmd += ['--exclude', '^(%s)' % '|'.join(skip_paths)]
 
+    # Find fork_branch
+    git = Git(args)
+    try:
+        if is_shippable():
+            changes = ShippableChanges(args, git)
+        else:
+            changes = LocalChanges(args, git)
+    except:
+        fork_branch = 'devel'
+    else:
+        fork_branch = changes.fork_branch
+
+    cmd.extend([
+        '--base-branch', fork_branch
+    ])
+
     run_command(args, cmd, env=env)
 
 
