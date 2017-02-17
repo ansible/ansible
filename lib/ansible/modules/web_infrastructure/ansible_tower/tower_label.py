@@ -89,7 +89,7 @@ notes:
 
 EXAMPLES = '''
 - name: Add label to tower organization
-  tower_label
+  tower_label:
     name: Custom Label
     organization: My Organization
     state: present
