@@ -23,7 +23,6 @@ __metaclass__ = type
 
 import glob
 import imp
-import inspect
 import os
 import os.path
 import sys
@@ -49,7 +48,7 @@ PLUGIN_PATH_CACHE = {}
 
 
 def get_all_plugin_loaders():
-    return [(name, obj) for (name, obj) in inspect.getmembers(sys.modules[__name__]) if isinstance(obj, PluginLoader)]
+    return [(name, obj) for (name, obj) in globals().items() if isinstance(obj, PluginLoader)]
 
 
 class PluginLoader:
