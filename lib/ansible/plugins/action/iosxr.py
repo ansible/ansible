@@ -57,6 +57,7 @@ class ActionModule(_ActionModule):
         pc.port = provider['port'] or self._play_context.port or 22
         pc.remote_user = provider['username'] or self._play_context.connection_user
         pc.password = provider['password'] or self._play_context.password
+        pc.timeout = provider['timeout'] or self._play_context.timeout
 
         connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
