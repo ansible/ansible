@@ -10,6 +10,8 @@ Ansible Changes By Release
 * On platforms that support it, use more modern system polling API instead of
   select in the ssh connection plugin.  This removes one limitation on how many
   parallel forks are feasible on these systems.
+* Windows supports become method "runas" to run modules as a different user, and to transparently access network resources.
+* Windows now uses pipelining when executing modules, resulting in significantly faster execution for small tasks.
 * Refactored/standardized most Windows modules, adding check-mode and
   diff support where possible.
 * Extended Windows module API with parameter-type support, helper functions.
