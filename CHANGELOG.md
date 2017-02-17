@@ -228,7 +228,15 @@ Ansible Changes By Release
 - stacki_host
 - swupd
 - tempfile
-- tower_organization
+- tower
+  * tower_credential
+  * tower_group
+  * tower_host
+  * tower_inventory
+  * tower_label.py
+  * tower_organization
+  * tower_project
+  * tower_user
 - vmware:
   * vmware_guest_facts
   * vmware_guest_snapshot
