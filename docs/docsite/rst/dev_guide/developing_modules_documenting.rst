@@ -1,7 +1,9 @@
 .. _module_documenting:
 
 Documenting Your Module
-```````````````````````
+=======================
+
+.. contents:: Topics
 
 The online module documentation is generated from the modules themselves.
 As the module documentation is generated from documentation strings contained in the modules, all modules included with Ansible must have a ``DOCUMENTATION`` string.
@@ -29,7 +31,7 @@ All modules must have the following sections defined in this order:
 
 
 ANSIBLE_METADATA Block
-''''''''''''''''''''''
+----------------------
 
 ANSIBLE_METADATA contains information about the module for use by other tools. At the moment, it informs other tools about what class of people maintains the module and to what degree users can rely on a module's behaviour remaining the same over time.
 
@@ -48,9 +50,12 @@ For new modules the following block can be simply added into your module::
    Promoting a module's ``status`` or ``supported_by`` status should only be done by members of the Ansible Core Team.
 
 Version 1.0 of the metadata
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
++++++++++++++++++++++++++++
 
-**Structure**::
+Structure
+`````````
+
+Format::
 
   ANSIBLE_METADATA = {
       'version': '1.0',
@@ -58,7 +63,8 @@ Version 1.0 of the metadata
       'status': ['stableinterface|preview|deprecated|removed']
   }
 
-**Fields**
+Fields
+``````
 
 -  **version**: An “X.Y” formatted string. X and Y are integers which
    define the metadata format version. Modules shipped with Ansible are
@@ -98,7 +104,7 @@ Version 1.0 of the metadata
       users port from the removed module to new modules.
 
 DOCUMENTATION Block
-'''''''''''''''''''
+-------------------
 
 See an example documentation string in the checkout under `examples/DOCUMENTATION.yml <https://github.com/ansible/ansible/blob/devel/examples/DOCUMENTATION.yml>`_.
 
@@ -170,10 +176,20 @@ The following fields can be used and are all required unless specified otherwise
     Details of any important information that doesn't fit in one of the above sections; for example if ``check_mode`` isn't supported, or a link to external documentation.
 
 
+.. note::
 
+   The above fields are are all in lowercase.
+
+.. note::
+
+   Their is no need to document the ``type:`` of an option.
+
+.. note::
+
+   If you module doesn't doesn't have any options (perhaps it's a ``_facts`` module)  you can use ``options: {}``.
 
 EXAMPLES block
-''''''''''''''
+--------------
 
 The EXAMPLES section is required for all new modules.
 
@@ -195,7 +211,7 @@ As per playbook best practice, a `name:` should be specified.
 If the module returns facts that are often needed, an example of how to use them can be helpful.
 
 RETURN Block
-''''''''''''
+------------
 
 The RETURN section documents what the module returns, and is required for all new modules.
 
@@ -221,8 +237,14 @@ the ``type`` of the value and a ``sample``.  For example, from the ``copy`` modu
     ...
     '''
 
+.. note::
+
+   If you module doesn't return anything (apart from the standard returns) you can use ``RETURN = ''' # '''``.
+
+
 Formatting options
-''''''''''''''''''
+------------------
+
 These formatting functions are ``U()`` for URLs, ``I()`` for option names, ``C()`` for files and option values and ``M()`` for module names.
 Module names should be specified as ``M(module)`` to create a link to the online documentation for that module.
 
@@ -245,7 +267,7 @@ Example usage::
   If you wish to refer a collection of modules, use ``C(..)``, e.g. ``Refer to the C(win_*) modules.``
 
 Documentation fragments
-```````````````````````
+-----------------------
 
 Some categories of modules share common documentation, such as details on how to authenticate options, or file mode settings. Rather than duplicate that information it can be shared using ``docs_fragments``.
 
@@ -258,7 +280,7 @@ To include, simply add in ``extends_documentation_fragment: FRAGMENT_NAME`` into
 Examples can be found by searching for ``extends_documentation_fragment`` under the Ansible source tree.
 
 Testing documentation
-'''''''''''''''''''''
+---------------------
 
 Put your completed module file into the ``lib/ansible/modules/$CATEGORY/`` directory and then
 run the command: ``make webdocs``. The new 'modules.html' file will be
