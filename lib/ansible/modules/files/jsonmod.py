@@ -155,10 +155,14 @@ EXAMPLES = '''
 
 from collections import OrderedDict
 import copy
-import json
+try:
+    import json
+except:
+    import simplejson as json
 import os
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types, text_type
+from ansible.module_utils.pycompat24 import get_exception
 
 class JSONPathUpdater(object):
     def __init__(self, json_path):
@@ -243,7 +247,7 @@ class JSONPathUpdater(object):
         if key_missing:
             if remove:
                 return
-            
+
             while True:
                 prevtoken = curtoken
                 curtoken = self._get_next_token()
@@ -301,8 +305,11 @@ def main():
 
     filename = p.get("path")
     if os.path.exists(filename):
-        with open(filename, "r") as json_file:
+        try:
+            json_file = open(filename, mode="r")
             data = json.load(json_file, object_pairs_hook=OrderedDict)
+        finally:
+            json_file.close()
         origdata = copy.deepcopy(data)
     else:
         if not p.get("create_file", False):
@@ -325,7 +332,8 @@ def main():
             update_data_jsonstr = p.get("data_json")
             try:
                 update_data = json.loads(update_data_jsonstr)
-            except Exception, e:
+            except Exception:
+                e = get_exception()
                 module.fail_json(msg="Error while decoding JSON for updating: %s" % text_type(e))
         elif p.get("data_str") is not None:
             update_data = p.get("data_str")
@@ -337,7 +345,8 @@ def main():
             updater.update_json(data, remove=True)
         else:
             updater.update_json(data, update_data=update_data)
-    except Exception, e:
+    except Exception:
+        e = get_exception()
         module.fail_json(msg="Error while updating JSON: %s" % text_type(e))
 
     before = json.dumps(origdata, indent=4)
@@ -354,8 +363,11 @@ def main():
         else:
             if p.get("backup", False):
                 backup_file = module.backup_local(filename)
-            with open(filename, mode="w", encoding="utf-8") as json_file:
-                json.dump(json_file, data)
+            try:
+                json_file = open(filename, mode="w")
+                json.dump(data, json_file)
+            finally:
+                json_file.close()
             msg = "Updated the file"
     else:
         msg = "File already up to date"
