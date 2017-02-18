@@ -57,6 +57,8 @@ class ActionModule(_ActionModule):
             pc.port = provider['port'] or self._play_context.port or 22
             pc.remote_user = provider['username'] or self._play_context.connection_user
             pc.password = provider['password'] or self._play_context.password
+            pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
+            pc.timeout = provider['timeout'] or self._play_context.timeout
 
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
@@ -71,18 +73,16 @@ class ActionModule(_ActionModule):
             task_vars['ansible_socket'] = socket_path
 
         else:
-            if provider['host'] is None:
-                self._task.args['host'] = self._play_context.remote_addr
-            if provider['username'] is None:
-                self._task.args['username'] = self._play_context.connection_user
-            if provider['password'] is None:
-                self._task.args['password'] = self._play_context.password
-            if provider['timeout'] is None:
-                self._task.args['timeout'] = self._play_context.timeout
-            if task_vars.get('nxapi_use_ssl'):
-                self._task.args['use_ssl'] = task_vars['nxapi_use_ssl']
-            if task_vars.get('nxapi_validate_certs'):
-                self._task.args['validate_certs'] = task_vars['nxapi_validate_certs']
+            provider_arg = {
+                'host': self._play_context.remote_addr,
+                'port': provider.get('port'),
+                'username': provider.get('username') or self._play_context.connection_user,
+                'password': provider.get('password') or self._play_context.password,
+                'timeout': provider.get('timeout') or self._play_context.timeout,
+                'use_ssl': task_vars.get('nxapi_use_ssl') or False,
+                'validate_certs': task_vars.get('nxapi_validate_certs') or True
+            }
+            self._task.args['provider'] = provider_arg
 
 
         result = super(ActionModule, self).run(tmp, task_vars)
