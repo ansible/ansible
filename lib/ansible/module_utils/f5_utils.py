@@ -293,7 +293,7 @@ class AnsibleF5Parameters(object):
 
     @classmethod
     def from_api(cls, params):
-        for key,value in iteritems(cls.api_param_map):
+        for key,value in iteritems(cls.param_api_map):
             params[key] = params.pop(value, None)
         p = cls(params)
         return p
@@ -315,7 +315,7 @@ class AnsibleF5Parameters(object):
 
     def _api_params_from_map(self):
         result = dict()
-        pmap = self.__class__.api_param_map
+        pmap = self.__class__.param_api_map
         for k,v in iteritems(pmap):
             value = getattr(self, k)
             result[v] = value
