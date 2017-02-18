@@ -39,7 +39,7 @@ iosxr_argument_spec = {
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict')
+    'provider': dict(type='dict', no_log=True)
 }
 
 def check_args(module, warnings):
