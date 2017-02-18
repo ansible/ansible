@@ -209,7 +209,7 @@ def parse_sandbox(data):
 
 def map_config_to_obj(module):
     out = run_commands(module, ['show nxapi'], check_rc=False)
-    if not out[0]:
+    if out[0] == '':
         return {'state': 'absent'}
 
     out = str(out[0]).strip()

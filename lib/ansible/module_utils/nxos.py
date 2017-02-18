@@ -41,12 +41,16 @@ _DEVICE_CONNECTION = None
 nxos_argument_spec = {
     'host': dict(),
     'port': dict(type='int'),
+
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
+    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE'])),
+
     'use_ssl': dict(type='bool'),
     'validate_certs': dict(type='bool'),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict'),
+
+    'provider': dict(type='dict', no_log=True),
     'transport': dict(choices=['cli', 'nxapi'])
 }
 
@@ -347,7 +351,7 @@ def get_config(module, flags=[]):
 
 def run_commands(module, commands, check_rc=True):
     conn = get_connection(module)
-    return conn.run_commands(to_command(module, commands))
+    return conn.run_commands(to_command(module, commands), check_rc)
 
 def load_config(module, config):
     conn = get_connection(module)
