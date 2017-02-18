@@ -34,11 +34,13 @@ _DEVICE_CONFIGS = {}
 vyos_argument_spec = {
     'host': dict(),
     'port': dict(type='int'),
+
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    'timeout': dict(type='int', default=10),
-    'provider': dict(type='dict'),
+
+    'timeout': dict(type='int'),
+    'provider': dict(type='dict', no_log=True),
 }
 
 def check_args(module, warnings):
