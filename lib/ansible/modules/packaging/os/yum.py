@@ -816,7 +816,7 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
         is_group = False
         # group remove - this is doom on a stick
         if pkg.startswith('@'):
-            is_group = True
+            is_group = True # nopep8 this will be fixed in next MR this module needs major rewrite anyway.
         else:
             if not is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
                 res['results'].append('%s is not installed' % pkg)
@@ -1098,23 +1098,54 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
         yum_basecmd.extend(e_cmd)
 
     if state in ['installed', 'present', 'latest']:
+        """ The need of this entire if conditional has to be chalanged
+            this function is the ensure function that is called
+            in the main section.
+
+            This conditional tends to disable/enable repo for
+            install present latest action, same actually
+            can be done for remove and absent action
+
+            As solution I would advice to cal
+            try: my.repos.disableRepo(disablerepo)
+            and
+            try: my.repos.enableRepo(enablerepo)
+            right before any yum_cmd is actually called regardless
+            of yum action.
+
+            Please note that enable/disablerepo options are general
+            options, this means that we can call those with any action
+            option.  https://linux.die.net/man/8/yum
+
+            This docstring will be removed together when issue: #21619
+            will be solved.
+
+            This has been triggered by: #19587 and #195870
+        """
 
         if module.params.get('update_cache'):
             module.run_command(yum_basecmd + ['clean', 'expire-cache'])
 
         my = yum_base(conf_file, installroot)
-        if disablerepo:
-            try:
+        try:
+            if disablerepo:
                 my.repos.disableRepo(disablerepo)
-            except yum.Errors.YumBaseError:
-                yum_error = get_exception()
-                module.fail_json(msg="Error setting/accessing repos: %s" % (yum_error))
-        if enablerepo:
-            try:
-                my.repos.enableRepo(enablerepo)
-            except yum.Errors.YumBaseError:
-                yum_error = get_exception()
-                module.fail_json(msg="Error setting/accessing repos: %s" % (yum_error))
+            current_repos = my.repos.repos.keys()
+            if enablerepo:
+                try:
+                    my.repos.enableRepo(enablerepo)
+                    new_repos = my.repos.repos.keys()
+                    for i in new_repos:
+                        if not i in current_repos:
+                            rid = my.repos.getRepo(i)
+                            a = rid.repoXML.repoid # nopep8 - https://github.com/ansible/ansible/pull/21475#pullrequestreview-22404868
+                    current_repos = new_repos
+                except yum.Errors.YumBaseError:
+                    e = get_exception()
+                    module.fail_json(msg="Error setting/accessing repos: %s" % (e))
+        except yum.Errors.YumBaseError:
+            e = get_exception()
+            module.fail_json(msg="Error accessing repos: %s" % e)
     if state in ['installed', 'present']:
         if disable_gpg_check:
             yum_basecmd.append('--nogpgcheck')
