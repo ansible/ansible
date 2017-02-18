@@ -33,6 +33,7 @@ $state = Get-Attr $params "state" -default "present" -validateSet "present", "ab
 
 $application = Get-Attr $params "application" -default $null
 $appParameters = Get-Attr $params "app_parameters" -default $null
+$appParametersFree  = Get-Attr $params "app_parameters_free_form" -default $null 
 $startMode = Get-Attr $params "start_mode" -default "auto" -validateSet "auto", "manual", "disabled" -resultobj $result
 
 $stdoutFile = Get-Attr $params "stdout_file" -default $null
@@ -42,6 +43,10 @@ $dependencies = Get-Attr $params "dependencies" -default $null
 $user = Get-Attr $params "user" -default $null
 $password = Get-Attr $params "password" -default $null
 
+if (($appParameters -ne $null) -and ($appParametersFree -ne $null))
+{
+    Fail-Json $result "Use either app_parameters or app_parameteres_free_form, but not both"
+}
 
 #abstract the calling of nssm because some PowerShell environments
 #mishandle its stdout(which is Unicode) as UTF8
@@ -209,7 +214,8 @@ Function Nssm-Update-AppParameters
         [string]$name,
         [Parameter(Mandatory=$true)]
         [AllowEmptyString()]
-        [string]$appParameters
+        [string]$appParameters,
+        [string]$appParametersFree
     )
 
     $cmd = "get ""$name"" AppParameters"
@@ -248,13 +254,17 @@ Function Nssm-Update-AppParameters
         Set-Attr $result "nssm_app_parameters_keys" $appParamKeys
         Set-Attr $result "nssm_app_parameters_vals" $appParamVals
     }
+    elseif ($appParametersFree) {
+        Set-Attr $result "nssm_app_parameters_free_form" $appParametersFree
+        $singleLineParams = $appParametersFree
+    }
 
     Set-Attr $result "nssm_app_parameters" $appParameters
     Set-Attr $result "nssm_single_line_app_parameters" $singleLineParams
 
     if ($results -ne $singleLineParams)
     {
-        if ($appParameters)
+        if ($appParameters -or $appParametersFree)
         {
             $cmd = "set ""$name"" AppParameters $singleLineParams"
         } else {
@@ -648,7 +658,7 @@ Function Nssm-Restart
 Function NssmProcedure
 {
     Nssm-Install -name $name -application $application
-    Nssm-Update-AppParameters -name $name -appParameters $appParameters
+    Nssm-Update-AppParameters -name $name -appParameters $appParameters -appParametersFree $appParametersFree
     Nssm-Set-Output-Files -name $name -stdout $stdoutFile -stderr $stderrFile
     Nssm-Update-Dependencies -name $name -dependencies $dependencies
     Nssm-Update-Credentials -name $name -user $user -password $password

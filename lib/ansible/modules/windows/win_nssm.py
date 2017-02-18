@@ -75,6 +75,10 @@ options:
       - Parameters to be passed to the application when it starts
     required: false
     default: null
+  app_parameters_free_form:
+    version_added: "2.3.0"
+    description:
+      - Single string of parameters to be passed to the service. Use either this or 'app_parameters', not both
   dependencies:
     description:
       - Service dependencies that has to be started to trigger startup, separated by comma.
@@ -143,6 +147,16 @@ EXAMPLES = r'''
     app_parameters:
         _: bar
         "-file": "output.bat"
+
+# Use the single line parameters option to specify an arbitrary string of parameters
+# for the service executable
+- name: Make sure the Consul service runs
+  win_nssm:
+      name: consul
+      application: "C:\\consul\\consul.exe"
+      app_parameters_free_form: "agent -config-dir=C:\\consul\\config"
+      stdout_file: "C:\\consul\\log.txt"
+      stderr_file: "C:\\consul\\error.txt"
 
 # Install and start the foo service, redirecting stdout and stderr to the same file
 - win_nssm:
