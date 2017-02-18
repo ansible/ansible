@@ -151,10 +151,7 @@ def main():
 
     api_id = module.params.get('api_id')
     state = module.params.get('state')
-    try:
-        swagger_file = os.path.expanduser(module.params.get('swagger_file'))
-    except AttributeError:
-        swagger_file=None
+    swagger_file = module.params.get('swagger_file')
     swagger_dict = module.params.get('swagger_dict')
     swagger_text = module.params.get('swagger_text')
     stage= module.params.get('stage')
@@ -192,15 +189,15 @@ def main():
         api_id=awsret["id"]
 
     apidata=None
-    if swagger_file:
+    if swagger_file is not None:
         try:
-            with open(swagger_file) as f:
+            with open(os.path.expanduser(swagger_file)) as f:
                 apidata=f.read()
         except Exception as e:
             module.fail_json(msg=str(e), exception=traceback.format_exc())
-    if swagger_dict:
+    if swagger_dict is not None:
         apidata = json.dumps(swagger_dict)
-    if swagger_text:
+    if swagger_text is not None:
         apidata = swagger_text
 
     if apidata is None:
