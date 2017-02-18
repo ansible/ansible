@@ -65,25 +65,31 @@ class ActionModule(_ActionModule):
         pc.remote_user = provider['username'] or self._play_context.connection_user
         pc.password = provider['password'] or self._play_context.password
         pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
+        pc.timeout = provider['timeout'] or self._play_context.timeout
+
+        display.vvv('using connection plugin %s' % pc.connection)
+        connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
         socket_path = self._get_socket_path(pc)
-
         if not os.path.exists(socket_path):
             # start the connection if it isn't started
-            connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
-
-            if pc.connection == 'network_cli':
-                rc, out, err = connection.exec_command('show version')
-                display.vvv('%s %s %s' % (rc, out, err))
-
             if pc.connection == 'netconf':
-                # <get-software-information />
-                req = new_ele('get-software-information')
-                connection.exec_command(to_xml(req))
+                rc, out, err = connection.exec_command('open_session()')
+            else:
+                rc, out, err = connection.exec_command('open_shell()')
+
+            if rc != 0:
+                return {'failed': True, 'msg': 'unable to connect to control socket'}
 
         task_vars['ansible_socket'] = socket_path
 
-        return super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(tmp, task_vars)
+
+        if pc.connection == 'network_cli':
+            display.vvv('closing cli shell connection', self._play_context.remote_addr)
+            rc, out, err = connection.exec_command('close_shell()')
+
+        return result
 
     def _get_socket_path(self, play_context):
         ssh = connection_loader.get('ssh', class_only=True)
