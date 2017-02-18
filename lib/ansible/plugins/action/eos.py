@@ -58,6 +58,8 @@ class ActionModule(_ActionModule):
             pc.network_os = 'eos'
             pc.remote_user = provider['username'] or self._play_context.connection_user
             pc.password = provider['password'] or self._play_context.password or 22
+            pc.privateip_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
+            pc.timeout = provider['timeout'] or self._play_context.timeout
             pc.become = provider['authorize'] or False
             pc.become_pass = provider['auth_pass']
 
@@ -73,18 +75,18 @@ class ActionModule(_ActionModule):
             task_vars['ansible_socket'] = socket_path
 
         else:
-            if provider['host'] is None:
-                self._task.args['host'] = self._play_context.remote_addr
-            if provider['username'] is None:
-                self._task.args['username'] = self._play_context.connection_user
-            if provider['password'] is None:
-                self._task.args['password'] = self._play_context.password
-            if provider['timeout'] is None:
-                self._task.args['timeout'] = self._play_context.timeout
-            if task_vars.get('eapi_use_ssl'):
-                self._task.args['use_ssl'] = task_vars['eapi_use_ssl']
-            if task_vars.get('eapi_validate_certs'):
-                self._task.args['validate_certs'] = task_vars['eapi_validate_certs']
+            provider_arg = {
+                'host': provider.get('host') or self._play_context.remote_addr,
+                'port': provider.get('port'),
+                'username': provider.get('username') or self._play_context.connection_user,
+                'password': provider.get('password') or self._play_context.password,
+                'authorize': provider.get('authorize') or False,
+                'auth_pass': provider.get('auth_pass'),
+                'timeout': provider.get('timeout') or self._play_context.timeout,
+                'use_ssl': task_vars.get('eapi_use_ssl') or False,
+                'validate_certs': task_vars.get('eapi_validate_certs') or True
+            }
+            self._task.args['provider'] = provider_arg
 
         if self._play_context.become_method == 'enable':
             self._play_context.become = False
