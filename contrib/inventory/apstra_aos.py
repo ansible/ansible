@@ -19,7 +19,7 @@
 #
 """
 Apstra AOS external inventory script
-=================================
+====================================
 
 Ansible has a feature where instead of reading from /etc/ansible/hosts
 as a text file, it can query external programs to obtain the list
@@ -32,12 +32,26 @@ To use this:
 More information about Ansible Dynamic Inventory here
 http://unix.stackexchange.com/questions/205479/in-ansible-dynamic-inventory-json-can-i-render-hostvars-based-on-the-hostname
 
+2 modes are currently, supported: **device based** or **blueprint based**:
+  - For **Device based**, the list of device is taken from the global device list
+    the serial ID will be used as the inventory_hostname
+  - For **Blueprint based**, the list of device is taken from the given blueprint
+    the Node name will be used as the inventory_hostname
+
+Input parameters parameter can be provided using either with the ini file or by using Environment Variables:
+The following list of Environment Variables are supported: AOS_SERVER, AOS_PORT, AOS_USERNAME, AOS_PASSWORD, AOS_BLUEPRINT
+The config file takes precedence over the Environment Variables
+
 Tested with Apstra AOS 1.1
 
 This script has been inspired by the cobbler.py inventory. thanks
-"""
 
+Author: Damien Garros (@dgarros)
+Version: 0.2.0
+"""
+import os
 import argparse
+
 from ansible.compat.six.moves import configparser
 import os
 
@@ -55,7 +69,7 @@ except ImportError:
 
 """
 ##
-Expected output format
+Expected output format in Device mode
 {
   "Cumulus": {
     "hosts": [
@@ -264,6 +278,9 @@ Expected output format
 }
 """
 
+def fail(msg):
+    sys.stderr.write("%s\n" % msg)
+    sys.exit(1)
 
 class AosInventory(object):
 
@@ -286,7 +303,6 @@ class AosInventory(object):
         # ----------------------------------------------------
         # Open session to AOS
         # ----------------------------------------------------
-
         aos = Session(  server=self.aos_server,
                         port=self.aos_server_port,
                         user=self.aos_username,
@@ -296,48 +312,112 @@ class AosInventory(object):
 
         # ----------------------------------------------------
         # Build the inventory
+        #  2 modes are supported: device based or blueprint based
+        #  - For device based, the list of device is taken from the global device list
+        #    the serial ID will be used as the inventory_hostname
+        #  - For Blueprint based, the list of device is taken from the given blueprint
+        #    the Node name will be used as the inventory_hostname
         # ----------------------------------------------------
-        for device in aos.Devices:
-            # If not reacheable, create by key and
-            # If reacheable, create by hostname
+        if self.aos_blueprint:
 
-            self.add_host_to_group('all', device.name)
+            bp = aos.Blueprints[self.aos_blueprint]
+            if bp.exists is False:
+                fail("Unable to find the Blueprint: %s" % self.aos_blueprint)
 
-            # populate information for this host
-            if 'status' in device.value.keys():
-                for key, value in device.value['status'].items():
-                    self.add_var_to_host(device.name, key, value)
+            for dev_name, dev_id in bp.params['devices'].value.items():
 
-            if 'user_config' in device.value.keys():
-                for key, value in device.value['user_config'].items():
-                    self.add_var_to_host(device.name, key, value)
-
-            # Based on device status online|offline, collect facts as well
-            if device.value['status']['comm_state'] == 'on':
+                self.add_host_to_group('all', dev_name)
+                device = aos.Devices.find( uid=dev_id)
 
                 if 'facts' in device.value.keys():
-                    # Populate variables for this host
-                    self.add_var_to_host(device.name,
-                                         'ansible_ssh_host',
-                                         device.value['facts']['mgmt_ipaddr'])
+                    self.add_device_facts_to_var(dev_name, device)
 
-                    # self.add_host_to_group('all', device.name)
-                    for key, value in device.value['facts'].items():
+                # Go over the contents data structure
+                for node in bp.contents['system']['nodes']:
+                    if node['display_name'] == dev_name:
+                        self.add_host_to_group(node['role'], dev_name)
+
+                        # Check for additional attribute to import
+                        attributes_to_import = [
+                            'loopback_ip',
+                            'asn',
+                            'role',
+                            'position',
+                        ]
+                        for attr in attributes_to_import:
+                            if attr in node.keys():
+                                self.add_var_to_host(dev_name, attr, node[attr])
+
+                # if blueprint_interface is enabled in the configuration
+                #   Collect links information
+                if self.aos_blueprint_int:
+                    interfaces = dict()
+
+                    for link in bp.contents['system']['links']:
+                        # each link has 2 sides [0,1], and it's unknown which one match this device
+                        #  at first we assume, first side match(0) and peer is (1)
+                        peer_id = 1
+
+                        for side in link['endpoints']:
+                            if side['display_name'] == dev_name:
+
+                                # import local information first
+                                int_name = side['interface']
+
+                                # init dict
+                                interfaces[int_name] = dict()
+                                if 'ip' in side.keys():
+                                    interfaces[int_name]['ip'] = side['ip']
+
+                                if 'interface' in side.keys():
+                                    interfaces[int_name]['name'] = side['interface']
+
+                                if 'display_name' in link['endpoints'][peer_id].keys():
+                                    interfaces[int_name]['peer'] = link['endpoints'][peer_id]['display_name']
+
+                                if 'ip' in link['endpoints'][peer_id].keys():
+                                    interfaces[int_name]['peer_ip'] = link['endpoints'][peer_id]['ip']
+
+                                if 'type' in link['endpoints'][peer_id].keys():
+                                    interfaces[int_name]['peer_type'] = link['endpoints'][peer_id]['type']
+
+                            else:
+                                # if we haven't match the first time, prepare the peer_id
+                                # for the second loop iteration
+                                peer_id = 0
+
+                    self.add_var_to_host(dev_name, 'interfaces', interfaces)
+
+        else:
+            for device in aos.Devices:
+                # If not reacheable, create by key and
+                # If reacheable, create by hostname
+
+                self.add_host_to_group('all', device.name)
+
+                # populate information for this host
+                if 'status' in device.value.keys():
+                    for key, value in device.value['status'].items():
                         self.add_var_to_host(device.name, key, value)
 
-                        if key == 'os_family':
-                            self.add_host_to_group(value, device.name)
-                        elif key == 'hw_model':
-                            self.add_host_to_group(value, device.name)
+                if 'user_config' in device.value.keys():
+                    for key, value in device.value['user_config'].items():
+                        self.add_var_to_host(device.name, key, value)
 
-            # Check if device is associated with a blueprint
-            #  if it's create a new group
-            if 'blueprint_active' in device.value['status'].keys():
-                if 'blueprint_id' in device.value['status'].keys():
-                    bp = aos.Blueprints.find(method='id', key=device.value['status']['blueprint_id'])
+                # Based on device status online|offline, collect facts as well
+                if device.value['status']['comm_state'] == 'on':
 
-                    if bp:
-                        self.add_host_to_group(bp['display_name'], device.name)
+                    if 'facts' in device.value.keys():
+                        self.add_device_facts_to_var(device.name, device)
+
+                # Check if device is associated with a blueprint
+                #  if it's create a new group
+                if 'blueprint_active' in device.value['status'].keys():
+                    if 'blueprint_id' in device.value['status'].keys():
+                        bp = aos.Blueprints.find(uid=device.value['status']['blueprint_id'])
+
+                        if bp:
+                            self.add_host_to_group(bp.name, device.name)
 
         # ----------------------------------------------------
         # Convert the inventory and return a JSON String
@@ -353,10 +433,55 @@ class AosInventory(object):
         config = configparser.ConfigParser()
         config.read(os.path.dirname(os.path.realpath(__file__)) + '/apstra_aos.ini')
 
-        self.aos_server = config.get('aos', 'aos_server')
-        self.aos_server_port = config.get('aos', 'port')
-        self.aos_username = config.get('aos', 'username')
-        self.aos_password = config.get('aos', 'password')
+        # Default Values
+        self.aos_blueprint = False
+        self.aos_blueprint_int = True
+        self.aos_username = 'admin'
+        self.aos_password = 'admin'
+        self.aos_server_port = 8888
+
+        # Try to reach all parameters from File, if not available try from ENV
+        try:
+            self.aos_server = config.get('aos', 'aos_server')
+        except:
+            if 'AOS_SERVER' in os.environ.keys():
+                self.aos_server = os.environ['AOS_SERVER']
+            pass
+
+        try:
+            self.aos_server_port = config.get('aos', 'port')
+        except:
+            if 'AOS_PORT' in os.environ.keys():
+                self.aos_server_port = os.environ['AOS_PORT']
+            pass
+
+        try:
+            self.aos_username = config.get('aos', 'username')
+        except:
+            if 'AOS_USERNAME' in os.environ.keys():
+                self.aos_username = os.environ['AOS_USERNAME']
+            pass
+
+        try:
+            self.aos_password = config.get('aos', 'password')
+        except:
+            if 'AOS_PASSWORD' in os.environ.keys():
+                self.aos_password = os.environ['AOS_PASSWORD']
+            pass
+
+        try:
+            self.aos_blueprint = config.get('aos', 'blueprint')
+        except:
+            if 'AOS_BLUEPRINT' in os.environ.keys():
+                self.aos_blueprint = os.environ['AOS_BLUEPRINT']
+            pass
+
+        try:
+            if config.get('aos', 'blueprint_interface') in ['false', 'no']:
+                self.aos_blueprint_int = False
+        except:
+            pass
+
 
     def parse_cli_args(self):
         """ Command line argument processing """
@@ -391,6 +516,22 @@ class AosInventory(object):
             self.inventory['_meta']['hostvars'][host] = {}
 
         self.inventory['_meta']['hostvars'][host][var] = value
+
+    def add_device_facts_to_var(self, device_name, device):
+
+        # Populate variables for this host
+        self.add_var_to_host(device_name,
+                             'ansible_ssh_host',
+                             device.value['facts']['mgmt_ipaddr'])
+
+        # self.add_host_to_group('all', device.name)
+        for key, value in device.value['facts'].items():
+            self.add_var_to_host(device_name, key, value)
+
+            if key == 'os_family':
+                self.add_host_to_group(value, device_name)
+            elif key == 'hw_model':
+                self.add_host_to_group(value, device_name)
 
 
 # Run the script
