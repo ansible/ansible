@@ -36,7 +36,6 @@ from fnmatch import fnmatch
 
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
-from ansible.plugins import module_loader
 from ansible.utils.module_docs import BLACKLIST_MODULES, get_docstring
 
 from module_args import get_argument_spec
@@ -587,7 +586,7 @@ class ModuleValidator(Validator):
             _, errors, traces = parse_yaml(doc_info['EXAMPLES']['value'],
                                            doc_info['EXAMPLES']['lineno'],
                                            self.name, 'EXAMPLES', load_all=True)
-            self.errors.extend([(311, e) for e in errors])
+            self.errors.extend([(311, error) for error in errors])
             self.traces.extend(traces)
 
         if not bool(doc_info['RETURN']['value']):
@@ -599,7 +598,7 @@ class ModuleValidator(Validator):
             _, errors, traces = parse_yaml(doc_info['RETURN']['value'],
                                            doc_info['RETURN']['lineno'],
                                            self.name, 'RETURN')
-            self.errors.extend([(313, e) for e in errors])
+            self.errors.extend([(313, error) for error in errors])
             self.traces.extend(traces)
 
         if not bool(doc_info['ANSIBLE_METADATA']['value']):
@@ -616,7 +615,7 @@ class ModuleValidator(Validator):
                     doc_info['ANSIBLE_METADATA']['lineno'],
                     self.name, 'ANSIBLE_METADATA'
                 )
-                self.errors.extend([(315, e) for e in errors])
+                self.errors.extend([(315, error) for error in errors])
                 self.traces.extend(traces)
 
             if metadata:
