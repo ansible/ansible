@@ -46,4 +46,4 @@ test_ethernet_data22:
 test_ethernet_data23:
   - {interfaceOption: 'ethernet', interfaceRange: 33, interfaceArg1: "bfd", interfaceArg2: "ipv4", interfaceArg3: "authentication", interfaceArg4: "meticulous-keyed-md5", interfaceArg5: "key-chain", interfaceArg6: "mychain"}
 test_ethernet_data24:
-  - {interfaceOption: 'ethernet',interfaceRange: "1/1-2", interfaceArg1: "aggregation-group", interfaceArg2: 33, interfaceArg3: "on"}
+  - {interfaceOption: 'ethernet', interfaceRange: "1/1-2", interfaceArg1: "aggregation-group", interfaceArg2: 33, interfaceArg3: "on"}
