@@ -142,6 +142,13 @@ class LinuxVirtual(Virtual):
             virtual_facts['virtualization_role'] = 'guest'
             return virtual_facts
 
+        chassis_vendor = get_file_content('/sys/devices/virtual/dmi/id/chassis_vendor')
+
+        if chassis_vendor == 'Bochs':
+            self.facts['virtualization_type'] = 'kvm'
+            self.facts['virtualization_role'] = 'guest'
+            return
+
         if os.path.exists('/proc/self/status'):
             for line in get_file_lines('/proc/self/status'):
                 if re.match('^VxID: \d+', line):
