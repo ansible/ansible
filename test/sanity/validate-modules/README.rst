@@ -38,15 +38,14 @@ Help
                             Output format. Default: "plain"
       --output OUTPUT       Output location, use "-" for stdout. Default "-"
 
-Current Validations
-===================
-
 Codes
 ~~~~~~~
 
 Errors
 ^^^^^^
 
+Locations
+---------
 101. Interpreter line is not ``#!/usr/bin/python``
 102. Interpreter line is not ``#!powershell``
 103. Did not find a call to ``main()``
@@ -54,6 +53,8 @@ Errors
 105. GPLv3 license header not found
 106. Import found before documentation variables. All imports must appear below ``DOCUMENTATION``/``EXAMPLES``/``RETURN``/``ANSIBLE_METADATA``
 
+Imports
+-------
 201. Did not find a ``module_utils`` import
 203. ``requests`` import found, should use ``ansible.module_utils.urls`` instead
 204. ``boto`` import found, new modules should use ``boto3``
@@ -61,6 +62,8 @@ Errors
 206. ``WANT_JSON`` not found in module
 207. ``REPLACER_WINDOWS`` not found in module
 
+Documentation
+-------------
 301. No ``DOCUMENTATION`` provided
 302. ``DOCUMENTATION`` is not valid YAML
 303. ``DOCUMENTATION`` fragment missing
@@ -79,10 +82,14 @@ Errors
 316. Invalid ``ANSIBLE_METADATA`` schema
 317. option is marked as required but specifies a default. Arguments with a default should not be marked as required
 
+Syntax
+------
 401. Python ``SyntaxError`` while parsing module
 402. Indentation contains tabs
 403. Type comparison using ``type()`` found. Use ``isinstance()`` instead
 
+Naming
+------
 501. Official Ansible modules must have a ``.py`` extension for python modules or a ``.ps1`` for powershell modules
 502. Ansible module subdirectories must contain an ``__init__.py``
 503. Missing python documentation file
@@ -90,9 +97,13 @@ Errors
 Warnings
 ^^^^^^^^
 
+Imports
+-------
 201. Try/Except ``HAS_`` expression missing
 202. Did not find ``ansible.module_utils.basic`` import
 
+Documentation
+-------------
 301. Unknown pre-existing ``DOCUMENTATION`` error
 302. Pre-existing ``DOCUMENTATION`` fragment missing
 303. No ``RETURN`` documentation provided for legacy module
