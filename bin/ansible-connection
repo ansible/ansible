@@ -117,7 +117,7 @@ class Server():
 
         self._start_time = datetime.datetime.now()
 
-        display.vvv("setup connection %s" % self.play_context.connection, play_context.remote_addr)
+        display.vvv("using connection %s" % self.play_context.connection, play_context.remote_addr)
 
         self.conn = connection_loader.get(play_context.connection, play_context, sys.stdin)
         self.conn._connect()
@@ -222,7 +222,7 @@ class Server():
             # the socket file so it can be recreated
             end_time = datetime.datetime.now()
             delta = end_time - self._start_time
-            display.v('shutting down connection, connection was active for %s secs' % delta, self.play_context.remote_addr)
+            display.v('shutting down control socket, connection was active for %s secs' % delta, self.play_context.remote_addr)
             try:
                 self.conn.close()
                 self.socket.close()
@@ -254,6 +254,8 @@ def main():
         sys.stderr.write(traceback.format_exc())
         sys.exit("FAIL: %s" % e)
 
+    display.verbosity = pc.verbosity
+
     ssh = connection_loader.get('ssh', class_only=True)
     m = ssh._create_control_path(pc.remote_addr, pc.port, pc.remote_user)
 
@@ -270,14 +272,20 @@ def main():
     if not os.path.exists(sf_path):
         pid = do_fork()
         if pid == 0:
+            rc = 0
             try:
                 server = Server(sf_path, pc)
+            except AnsibleConnectionFailure as exc:
+                display.vvv(str(exc), pc.remote_addr)
+                rc = 1
             except Exception as exc:
                 display.vvv(traceback.format_exc(), pc.remote_addr)
+                rc = 1
             fcntl.lockf(lock_fd, fcntl.LOCK_UN)
             os.close(lock_fd)
-            server.run()
-            sys.exit(0)
+            if rc == 0:
+                server.run()
+            sys.exit(rc)
     fcntl.lockf(lock_fd, fcntl.LOCK_UN)
     os.close(lock_fd)
 
@@ -302,7 +310,7 @@ def main():
                 time.sleep(C.PERSISTENT_CONNECT_INTERVAL)
                 attempts += 1
                 if attempts > C.PERSISTENT_CONNECT_RETRIES:
-                    sys.stderr.write('failed to connect to the listener socket, connection timeout.')
+                    sys.stderr.write('failed to connect to control socket')
                     sys.exit(255)
 
         # send the play_context back into the connection so the connection
