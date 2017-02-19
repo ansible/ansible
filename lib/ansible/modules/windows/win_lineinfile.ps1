@@ -57,17 +57,13 @@ function WriteLines($outlines, $path, $linesep, $encodingobj, $validate, $check_
 	# Commit changes to the path
 	$cleanpath = $path.Replace("/", "\")
 	Try {
-		If ($check_mode) {
-			Copy-Item $temppath $cleanpath -force -ErrorAction Stop -WhatIf
-		} Else {
-			Copy-Item $temppath $cleanpath -force -ErrorAction Stop
-		}
+		Copy-Item $temppath $cleanpath -force -ErrorAction Stop -WhatIf:$check_mode
 	} Catch {
 		Fail-Json @{} "Cannot write to: $cleanpath ($($_.Exception.Message))"
 	}
 
 	Try {
-		Remove-Item $temppath -force -ErrorAction Stop
+		Remove-Item $temppath -force -ErrorAction Stop -WhatIf:$check_mode
 	} Catch {
 		Fail-Json @{} "Cannot remove temporary file: $temppath ($($_.Exception.Message))"
 	}
@@ -81,11 +77,7 @@ function WriteLines($outlines, $path, $linesep, $encodingobj, $validate, $check_
 function BackupFile($path, $check_mode) {
 	$backuppath = $path + "." + [DateTime]::Now.ToString("yyyyMMdd-HHmmss")
 	Try {
-		If ($check_mode) {
-			Copy-Item $path $backuppath -WhatIf
-		} Else {
-			Copy-Item $path $backuppath
-		}
+		Copy-Item $path $backuppath -WhatIf:$check_mode
 	} Catch {
 		Fail-Json @{} "Cannot copy backup file! ($($_.Exception.Message))"
 	}
