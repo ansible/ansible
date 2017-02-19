@@ -289,8 +289,8 @@
     that:
       - "file20_result.changed == true"
 
-# previous version has 'src=sub1', sub1 did not exist
-# test was incorrectly linking non-existent file, updated to correctly link dir
+# previous version had 'src=sub1', sub1 did not exist
+# test was incorrectly linking non-existent file without force=yes, updated to correctly link dir
 - name: create soft link to relative directory
   file: src=../sub1 dest={{output_dir}}/sub1-link state=link
   register: file21_result
