@@ -235,7 +235,7 @@
   copy: dest={{output_dir}}/follow_test content="this is the follow test file\n"
 
 - name: create a symlink to the test file
-  file: path={{output_dir}}/follow_link src='./follow_test' state=link
+  file: path={{output_dir}}/follow_link src='{{output_dir}}/follow_test' state=link
 
 - name: update the test file using follow=True to preserve the link
   copy: dest={{output_dir}}/follow_link content="this is the new content\n" follow=yes
