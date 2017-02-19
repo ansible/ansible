@@ -68,6 +68,7 @@ If ($state -eq "present") {
         Restart = $restart
         IncludeAllSubFeature = $includesubfeatures
         ErrorAction = "SilentlyContinue"
+        WhatIf = $check_mode
     }
 
     # IncludeManagementTools and source are options only for Install-WindowsFeature
@@ -84,14 +85,11 @@ If ($state -eq "present") {
         if ($IncludeManagementTools) {
             $InstallParams.add("IncludeManagementTools", $includemanagementtools)
         }
+
     }
 
     try {
-        if ($check_mode) {
-            $featureresult = Invoke-Expression "$addCmdlet @InstallParams -WhatIf"
-        } else {
-            $featureresult = Invoke-Expression "$addCmdlet @InstallParams"
-        }
+        $featureresult = Invoke-Expression "$addCmdlet @InstallParams"
     } catch {
         Fail-Json $result $_.Exception.Message
     }
@@ -102,14 +100,11 @@ If ($state -eq "present") {
         Name = $name
         Restart = $restart
         ErrorAction = "SilentlyContinue"
+        WhatIf = $check_mode
     }
 
     try {
-        if ($check_mode) {
-            $featureresult = Invoke-Expression "$removeCmdlet @UninstallParams -WhatIf"
-        } else {
-            $featureresult = Invoke-Expression "$removeCmdlet @UninstallParams"
-        }
+        $featureresult = Invoke-Expression "$removeCmdlet @UninstallParams"
     } catch {
         Fail-Json $result $_.Exception.Message
     }
