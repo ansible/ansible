@@ -71,6 +71,8 @@ class ActionModule(_ActionModule):
         connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
         socket_path = self._get_socket_path(pc)
+        display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
+
         if not os.path.exists(socket_path):
             # start the connection if it isn't started
             if pc.connection == 'netconf':
@@ -80,16 +82,19 @@ class ActionModule(_ActionModule):
 
             if rc != 0:
                 return {'failed': True, 'msg': 'unable to connect to control socket'}
+        elif pc.connection == 'network_cli':
+            # make sure we are in the right cli context which should be
+            # enable mode and not config module
+            rc, out, err = connection.exec_command('prompt()')
+            while str(out).strip().endswith(')#'):
+                display.debug('wrong context, sending exit to device', self._play_context.remote_addr)
+                connection.exec_command('exit')
+                rc, out, err = connection.exec_command('prompt()')
+
 
         task_vars['ansible_socket'] = socket_path
 
-        result = super(ActionModule, self).run(tmp, task_vars)
-
-        if pc.connection == 'network_cli':
-            display.vvv('closing cli shell connection', self._play_context.remote_addr)
-            rc, out, err = connection.exec_command('close_shell()')
-
-        return result
+        return super(ActionModule, self).run(tmp, task_vars)
 
     def _get_socket_path(self, play_context):
         ssh = connection_loader.get('ssh', class_only=True)
