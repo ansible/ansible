@@ -26,13 +26,13 @@ DOCUMENTATION = r'''
 ---
 module: win_iis_webapplication
 version_added: "2.0"
-short_description: Configures a IIS Web application.
+short_description: Configures IIS web applications.
 description:
-     - Creates, Removes and configures a IIS Web applications
+     - Creates, removes, and configures IIS web applications.
 options:
   name:
     description:
-      - Name of the Web applicatio
+      - Name of the web application.
     required: true
     default: null
     aliases: []
@@ -44,7 +44,7 @@ options:
     aliases: []
   state:
     description:
-      - State of the web application
+      - State of the web application.
     choices:
       - present
       - absent
@@ -53,7 +53,7 @@ options:
     aliases: []
   physical_path:
     description:
-      - The physical path on the remote host to use for the new applicatiojn. The specified folder must already exist.
+      - The physical path on the remote host to use for the new application. The specified folder must already exist.
     required: false
     default: null
     aliases: []
@@ -67,7 +67,7 @@ author: Henrik Wallström
 '''
 
 EXAMPLES = r'''
-- name: Add ACME webapplication on IIS
+- name: Add ACME webapplication on IIS.
   win_iis_webapplication:
     name: api
     site: acme
