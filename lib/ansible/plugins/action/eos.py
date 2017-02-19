@@ -50,7 +50,7 @@ class ActionModule(_ActionModule):
         provider = self.load_provider()
         transport = provider['transport'] or 'cli'
 
-        display.vvv('transport is %s' % transport, self._play_context.remote_addr)
+        display.vvvv('connection transport is %s' % transport, self._play_context.remote_addr)
 
         if transport == 'cli':
             pc = copy.deepcopy(self._play_context)
@@ -66,11 +66,22 @@ class ActionModule(_ActionModule):
             connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
             socket_path = self._get_socket_path(pc)
+            display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
+
             if not os.path.exists(socket_path):
                 # start the connection if it isn't started
+                display.vvvv('calling open_shell()', pc.remote_addr)
                 rc, out, err = connection.exec_command('open_shell()')
                 if not rc == 0:
-                    return {'failed': True, 'msg': 'unable to open shell', 'rc': rc}
+                    return {'failed': True, 'msg': 'unable to open shell'}
+            else:
+                # make sure we are in the right cli context which should be
+                # enable mode and not config module
+                rc, out, err = connection.exec_command('prompt()')
+                while str(out).strip().endswith(')#'):
+                    display.debug('wrong context, sending exit to device', self._play_context.remote_addr)
+                    connection.exec_command('exit')
+                    rc, out, err = connection.exec_command('prompt()')
 
             task_vars['ansible_socket'] = socket_path
 
@@ -92,13 +103,7 @@ class ActionModule(_ActionModule):
             self._play_context.become = False
             self._play_context.become_method = None
 
-        result = super(ActionModule, self).run(tmp, task_vars)
-
-        if transport == 'cli':
-            display.vvv('closing cli shell connection', self._play_context.remote_addr)
-            rc, out, err = connection.exec_command('close_shell()')
-
-        return result
+        return super(ActionModule, self).run(tmp, task_vars)
 
     def _get_socket_path(self, play_context):
         ssh = connection_loader.get('ssh', class_only=True)
