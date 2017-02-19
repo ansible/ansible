@@ -205,6 +205,7 @@ class JenkinsJob:
             'name': self.name,
             'user': self.user,
             'state': self.state,
+            'validate_certs': self.validate_certs,
             'diff': {
                 'before': "",
                 'after': ""
@@ -380,7 +381,7 @@ def main():
             password        = dict(required=False, no_log=True),
             state           = dict(required=False, choices=['present', 'absent'], default="present"),
             enabled         = dict(required=False, type='bool'),
-            validate_certs  = dict(required=False, type='bool'),
+            validate_certs  = dict(required=False, type='bool', default=True),
             token           = dict(required=False, no_log=True),
             url             = dict(required=False, default="http://localhost:8080"),
             user            = dict(required=False)
