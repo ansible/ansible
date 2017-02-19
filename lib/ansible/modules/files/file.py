@@ -370,7 +370,7 @@ def main():
             b_relpath = os.path.dirname(b_path)
             relpath = to_native(b_relpath, errors='strict')
 
-        absrc = os.path.join(relpath, src)
+        absrc = os.path.abspath(src)
         b_absrc = to_bytes(absrc, errors='surrogate_or_strict')
         if not force and not os.path.exists(b_absrc):
             module.fail_json(path=path, src=src, msg='src file does not exist, use "force=yes" if you really want to create the link: %s' % absrc)
