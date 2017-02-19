@@ -281,7 +281,7 @@
       - 'file19_result.state == "directory"'
 
 - name: create soft link to relative file
-  file: src=../sub1/file1 dest={{output_dir}}/sub2/link1 state=link
+  file: src={{output_dir}}/sub1/file1 dest={{output_dir}}/sub2/link1 state=link
   register: file20_result
 
 - name: verify that the result was marked as changed
@@ -292,7 +292,7 @@
 # previous version had 'src=sub1', sub1 did not exist
 # test was incorrectly linking non-existent file without force=yes, updated to correctly link dir
 - name: create soft link to relative directory
-  file: src=../sub1 dest={{output_dir}}/sub1-link state=link
+  file: src={{output_dir}}/sub1 dest={{output_dir}}/sub1-link state=link
   register: file21_result
 
 - name: verify that the result was marked as changed
