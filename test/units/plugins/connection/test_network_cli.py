@@ -45,7 +45,6 @@ class TestConnectionClass(unittest.TestCase):
         conn.ssh = None
 
         self.assertRaises(AnsibleConnectionFailure, conn._connect)
-        #mocked_terminal_loader.all.assert_called_with(class_only=True)
 
         mocked_terminal_loader.reset_mock()
         mocked_terminal_loader.get.return_value = None
@@ -139,6 +138,7 @@ class TestConnectionClass(unittest.TestCase):
         conn._shell = MagicMock()
 
         # test _shell already open
+        conn._connected = MagicMock(return_value=True)
         rc, out, err = conn.exec_command('command')
         self.assertEqual(out, 'command response')
         self.assertFalse(mock_open_shell.called)
