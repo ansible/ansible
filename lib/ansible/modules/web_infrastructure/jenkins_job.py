@@ -224,15 +224,7 @@ class JenkinsJob:
 
     def get_jenkins_connection(self):
 
-        if self.validate_certs == False:
-            try:
-                _create_unverified_https_context = ssl._create_unverified_context
-            except AttributeError:
-                # Legacy Python that doesn't verify HTTPS certificates by default
-                pass
-            else:
-                # Handle target environment that doesn't support HTTPS verification
-                ssl._create_default_https_context = _create_unverified_https_context
+        self.set_ssl_context()
         try:
             if (self.user and self.password):
                 return jenkins.Jenkins(self.jenkins_url, self.user, self.password)
@@ -245,6 +237,18 @@ class JenkinsJob:
         except Exception:
             e = get_exception()
             self.module.fail_json(msg='Unable to connect to Jenkins server, %s' % str(e))
+
+    def set_ssl_context(self):
+        if self.validate_certs == False:
+            try:
+                _create_unverified_https_context = ssl._create_unverified_context
+            except AttributeError:
+                # Legacy Python that doesn't verify HTTPS certificates by default
+                pass
+            else:
+                # Handle target environment that doesn't support HTTPS verification
+                ssl._create_default_https_context = _create_unverified_https_context
+
 
     def job_class_excluded(self, response):
         return response['_class'] in self.job_classes_exceptions
