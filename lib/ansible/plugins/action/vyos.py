@@ -62,18 +62,23 @@ class ActionModule(_ActionModule):
         connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
         socket_path = self._get_socket_path(pc)
+        display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
+
         if not os.path.exists(socket_path):
             # start the connection if it isn't started
             rc, out, err = connection.exec_command('open_shell()')
             if rc != 0:
                 return {'failed': True, 'msg': 'unable to connect to control socket'}
+        else:
+            # make sure we are in the right cli context which should be
+            # enable mode and not config module
+            rc, out, err = connection.exec_command('prompt()')
+            while str(out).strip().endswith('#'):
+                display.debug('wrong context, sending exit to device', self._play_context.remote_addr)
+                connection.exec_command('exit')
+                rc, out, err = connection.exec_command('prompt()')
 
         task_vars['ansible_socket'] = socket_path
-
-        result = super(ActionModule, self).run(tmp, task_vars)
-
-        display.vvv('closing cli shell', self._play_context.remote_addr)
-        connection.exec_command('close_shell()')
 
         return super(ActionModule, self).run(tmp, task_vars)
 
