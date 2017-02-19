@@ -443,7 +443,7 @@ class PlayContext(Base):
         # additionally, we need to do this check after final connection has been
         # correctly set above ...
         if new_info.connection == 'local':
-            new_info.connection_user = new_info.remote_user
+            new_info.connection_user = self.remote_user
             new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
 
         # set no_log to default if it was not previouslly set
