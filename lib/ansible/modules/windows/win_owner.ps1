@@ -98,10 +98,7 @@ try {
 
     if ($acl.getOwner([System.Security.Principal.SecurityIdentifier]) -ne $objUser) {
         $acl.setOwner($objUser)
-        if (-not $check_mode) {
-            Set-Acl $file.FullName $acl
-        }
-
+        Set-Acl -Path $file.FullName -AclObject $acl -WhatIf:$check_mode
         $result.changed = $true
     }
 
@@ -112,10 +109,7 @@ try {
 
             if ($acl.getOwner([System.Security.Principal.SecurityIdentifier]) -ne $objUser) {
                 $acl.setOwner($objUser)
-                if (-not $check_mode) {
-                    Set-Acl $file.FullName $acl
-                }
-
+                Set-Acl -Path $file.FullName -AclObject $acl -WhatIf:$check_mode
                 $result.changed = $true
             }
         }
