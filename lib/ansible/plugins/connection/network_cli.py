@@ -234,7 +234,7 @@ class Connection(_Connection):
             return (0, self._history, '')
 
         try:
-            if self._shell is None:
+            if not self._connected:
                 self.open_shell()
         except AnsibleConnectionFailure as exc:
             return (1, '', str(exc))
