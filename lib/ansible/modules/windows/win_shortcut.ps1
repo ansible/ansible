@@ -58,14 +58,12 @@ $windowstyleids = @( "", "normal", "", "maximized", "", "", "", "minimized" )
 
 If ($state -eq "absent") {
     If (Test-Path -Path $dest) {
-        If ($check_mode -ne $true) {
-            # If the shortcut exists, try to remove it
-            Try {
-                Remove-Item -Path $dest
-            } Catch {
-                # Report removal failure
-                Fail-Json $result "Failed to remove shortcut $dest. (" + $_.Exception.Message + ")"
-            }
+        # If the shortcut exists, try to remove it
+        Try {
+            Remove-Item -Path $dest -WhatIf:$check_mode
+        } Catch {
+            # Report removal failure
+            Fail-Json $result "Failed to remove shortcut $dest. (" + $_.Exception.Message + ")"
         }
         # Report removal success
         $result.changed = $true
