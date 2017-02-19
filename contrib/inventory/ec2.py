@@ -1557,5 +1557,6 @@ class Ec2Inventory(object):
             return json.dumps(data)
 
 
-# Run the script
-Ec2Inventory()
+if __name__ == '__main__':
+    # Run the script
+    Ec2Inventory()
