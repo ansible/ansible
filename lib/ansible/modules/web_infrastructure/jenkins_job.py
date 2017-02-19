@@ -182,7 +182,12 @@ try:
     python_lxml_installed = True
 except ImportError:
     python_lxml_installed = False
-import ssl
+
+try:
+    import ssl
+    python_ssl_installed = True
+except ImportError:
+    python_ssl_installed = False
 
 class JenkinsJob:
     def __init__(self, module):
@@ -369,6 +374,10 @@ def test_dependencies(module):
     if not python_lxml_installed:
         module.fail_json(msg="lxml required for this module. "\
               "see http://lxml.de/installation.html")
+
+    if not python_ssl_installed:
+        module.fail_json(msg="ssl required for this module. "\
+              "see https://pypi.python.org/pypi/ssl")
 
 def job_config_to_string(xml_str):
     return ET.tostring(ET.fromstring(xml_str))
