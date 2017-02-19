@@ -762,8 +762,8 @@ class Ec2Inventory(object):
 
                             for reservation in reservations:
                                 for reservation_instance in reservation.instances:
-                                  reservation_instance.tags = tags
-                                  self.add_instance(reservation_instance, region)
+                                    reservation_instance.tags = tags
+                                    self.add_instance(reservation_instance, region)
 
         except boto.exception.BotoServerError as e:
             if e.error_code == 'AuthFailure':
