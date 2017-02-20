@@ -63,7 +63,7 @@ options:
     cpu_expandable_reservations:
         description:
             - In a resource pool with an expandable reservation, the reservation on a 
-              resource pool can grow beyond the specified value, if the parent resource pool has unreserved resources.
+            - resource pool can grow beyond the specified value, if the parent resource pool has unreserved resources.
         default: True
     cpu_reservation:
         description:
@@ -85,7 +85,7 @@ options:
     mem_expandable_reservations:
         description:
             - In a resource pool with an expandable reservation, the reservation on a resource pool 
-            can grow beyond the specified value, if the parent resource pool has unreserved resources.
+            - can grow beyond the specified value, if the parent resource pool has unreserved resources.
         default: True
     mem_reservation:
         description:
