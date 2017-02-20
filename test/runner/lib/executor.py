@@ -550,11 +550,11 @@ def command_integration_role(args, target, start_at_task):
 
     vars_file = 'integration_config.yml'
 
-    if 'windows/' in target.aliases:
+    if isinstance(args, WindowsIntegrationConfig):
         inventory = 'inventory.winrm'
         hosts = 'windows'
         gather_facts = False
-    elif 'network/' in target.aliases:
+    elif isinstance(args, NetworkIntegrationConfig):
         inventory = 'inventory.networking'
         hosts = target.name[:target.name.find('_')]
         gather_facts = False
@@ -795,6 +795,13 @@ def command_sanity_validate_modules(args, targets):
 
     if skip_paths:
         cmd += ['--exclude', '^(%s)' % '|'.join(skip_paths)]
+
+    if is_shippable():
+        cmd.extend([
+            '--base-branch', os.environ['BASE_BRANCH']
+        ])
+    else:
+        display.warning("Cannot perform module comparison against the base branch when running locally")
 
     run_command(args, cmd, env=env)
 

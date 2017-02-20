@@ -45,7 +45,6 @@ class TestConnectionClass(unittest.TestCase):
         conn.ssh = None
 
         self.assertRaises(AnsibleConnectionFailure, conn._connect)
-        mocked_terminal_loader.all.assert_called_with(class_only=True)
 
         mocked_terminal_loader.reset_mock()
         mocked_terminal_loader.get.return_value = None
@@ -139,6 +138,7 @@ class TestConnectionClass(unittest.TestCase):
         conn._shell = MagicMock()
 
         # test _shell already open
+        conn._connected = MagicMock(return_value=True)
         rc, out, err = conn.exec_command('command')
         self.assertEqual(out, 'command response')
         self.assertFalse(mock_open_shell.called)
@@ -151,8 +151,8 @@ class TestConnectionClass(unittest.TestCase):
         conn = network_cli.Connection(pc, new_stdin)
 
         mock__terminal = MagicMock()
-        mock__terminal.terminal_prompts_re = [re.compile('device#')]
-        mock__terminal.terminal_errors_re = [re.compile('^ERROR')]
+        mock__terminal.terminal_stdout_re = [re.compile('device#')]
+        mock__terminal.terminal_stderr_re = [re.compile('^ERROR')]
         conn._terminal = mock__terminal
 
         mock__shell = MagicMock()

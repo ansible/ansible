@@ -49,6 +49,10 @@ options:
       - Device you want to attach. Defaults to auto finding a device name.
      required: false
      default: None
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatability
+     required: false
 requirements:
     - "python >= 2.6"
     - "shade"

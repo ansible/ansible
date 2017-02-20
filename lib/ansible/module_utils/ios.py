@@ -39,7 +39,7 @@ ios_argument_spec = {
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
-    'timeout': dict(type='int', default=10),
+    'timeout': dict(type='int'),
     'provider': dict(type='dict'),
 }
 
@@ -65,18 +65,19 @@ def get_config(module, flags=[]):
         _DEVICE_CONFIGS[cmd] = cfg
         return cfg
 
-def to_commands(commands):
-    transform = ComplexList(dict(
-        command=dict(key=True),
-        prompt=dict(),
-        response=dict()
-    ))
+def to_commands(module, commands):
+    spec = {
+        'command': dict(key=True),
+        'prompt': dict(),
+        'response': dict()
+    }
+    transform = ComplexList(spec, module)
     return transform(commands)
 
 
 def run_commands(module, commands, check_rc=True):
     responses = list()
-    commands = to_commands(to_list(commands))
+    commands = to_commands(module, to_list(commands))
     for cmd in commands:
         cmd = module.jsonify(cmd)
         rc, out, err = exec_command(module, cmd)

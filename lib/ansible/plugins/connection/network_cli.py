@@ -41,7 +41,7 @@ class Connection(_Connection):
     ''' CLI (shell) SSH connections on Paramiko '''
 
     transport = 'network_cli'
-    has_pipelining = False
+    has_pipelining = True
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -72,24 +72,10 @@ class Connection(_Connection):
 
         network_os = self._play_context.network_os
         if not network_os:
-            for cls in terminal_loader.all(class_only=True):
-                try:
-                    network_os = cls.guess_network_os(self.ssh)
-                    if network_os:
-                        break
-                except:
-                    raise AnsibleConnectionFailure(
-                        'Unable to automatically determine host network os. '
-                        'Please manually configure ansible_network_os value '
-                        'for this host'
-                    )
-
-        if not network_os:
             raise AnsibleConnectionFailure(
                 'Unable to automatically determine host network os. Please '
                 'manually configure ansible_network_os value for this host'
             )
-
 
         self._terminal = terminal_loader.get(network_os, self)
         if not self._terminal:
@@ -99,7 +85,6 @@ class Connection(_Connection):
 
     @ensure_connect
     def open_shell(self):
-        """Opens the vty shell on the connection"""
         self._shell = self.ssh.invoke_shell()
         self._shell.settimeout(self._play_context.timeout)
 
@@ -112,6 +97,8 @@ class Connection(_Connection):
             auth_pass = self._play_context.become_pass
             self._terminal.on_authorize(passwd=auth_pass)
 
+        return (0, 'ok', '')
+
     def close(self):
         display.vvv('closing connection', host=self._play_context.remote_addr)
         self.close_shell()
@@ -123,11 +110,11 @@ class Connection(_Connection):
         if self._shell:
             self._terminal.on_close_shell()
 
-        if self._terminal.supports_multiplexing and self._shell:
+        if self._shell:
             self._shell.close()
             self._shell = None
 
-        return (0, 'shell closed', '')
+        return (0, 'ok', '')
 
     def receive(self, obj=None):
         """Handles receiving of output from command"""
@@ -192,16 +179,22 @@ class Connection(_Connection):
 
     def _find_prompt(self, response):
         """Searches the buffered response for a matching command prompt"""
-        for regex in self._terminal.terminal_errors_re:
+        errored_response = None
+        for regex in self._terminal.terminal_stderr_re:
             if regex.search(response):
-                raise AnsibleConnectionFailure(response)
+                errored_response = response
+                break
 
-        for regex in self._terminal.terminal_prompts_re:
+        for regex in self._terminal.terminal_stdout_re:
             match = regex.search(response)
             if match:
                 self._matched_pattern = regex.pattern
                 self._matched_prompt = match.group()
-                return True
+                if not errored_response:
+                    return True
+
+        if errored_response:
+            raise AnsibleConnectionFailure(errored_response)
 
     def alarm_handler(self, signum, frame):
         """Alarm handler raised in case of command timeout """
@@ -233,13 +226,15 @@ class Connection(_Connection):
 
         if obj['command'] == 'close_shell()':
             return self.close_shell()
+        elif obj['command'] == 'open_shell()':
+            return self.open_shell()
         elif obj['command'] == 'prompt()':
             return (0, self._matched_prompt, '')
         elif obj['command'] == 'history()':
             return (0, self._history, '')
 
         try:
-            if self._shell is None:
+            if not self._connected:
                 self.open_shell()
         except AnsibleConnectionFailure as exc:
             return (1, '', str(exc))

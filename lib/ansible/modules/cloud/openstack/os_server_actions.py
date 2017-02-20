@@ -59,6 +59,10 @@ options:
        - Image the server should be rebuilt with
      default: null
      version_added: "2.3"
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatability
+     required: false
 requirements:
     - "python >= 2.6"
     - "shade"

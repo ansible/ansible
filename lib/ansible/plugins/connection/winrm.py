@@ -27,6 +27,7 @@ import traceback
 import json
 import tempfile
 import subprocess
+import itertools
 
 HAVE_KERBEROS = False
 try:
@@ -41,6 +42,7 @@ from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
+from ansible.plugins.shell.powershell import exec_wrapper, become_wrapper, leaf_exec
 from ansible.utils.hashing import secure_hash
 from ansible.utils.path import makedirs_safe
 
@@ -68,12 +70,14 @@ class Connection(ConnectionBase):
 
     transport = 'winrm'
     module_implementation_preferences = ('.ps1', '.exe', '')
-    become_methods = []
+    become_methods = ['runas']
     allow_executable = False
 
     def __init__(self,  *args, **kwargs):
 
-        self.has_pipelining   = False
+        self.has_pipelining   = True
+        self.always_pipeline_modules = True
+        self.has_native_async = True
         self.protocol         = None
         self.shell_id         = None
         self.delegate         = None
@@ -92,6 +96,9 @@ class Connection(ConnectionBase):
         self._winrm_path = hostvars.get('ansible_winrm_path', '/wsman')
         self._winrm_user = self._play_context.remote_user
         self._winrm_pass = self._play_context.password
+        self._become_method = self._play_context.become_method
+        self._become_user = self._play_context.become_user
+        self._become_pass = self._play_context.become_pass
 
         self._kinit_cmd  = hostvars.get('ansible_winrm_kinit_cmd', 'kinit')
 
@@ -288,7 +295,51 @@ class Connection(ConnectionBase):
         self.shell_id = None
         self._connect()
 
+    def _create_raw_wrapper_payload(self, cmd):
+        payload = {
+            'module_entry': base64.b64encode(to_bytes(cmd)),
+            'powershell_modules': {},
+            'actions': ['exec'],
+            'exec': base64.b64encode(to_bytes(leaf_exec))
+        }
+
+        return json.dumps(payload)
+
+    def _wrapper_payload_stream(self, payload, buffer_size=200000):
+        payload_bytes = to_bytes(payload)
+        byte_count = len(payload_bytes)
+        for i in range(0, byte_count, buffer_size):
+            yield payload_bytes[i:i+buffer_size], i+buffer_size >= byte_count
+
     def exec_command(self, cmd, in_data=None, sudoable=True):
+        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
+        cmd_parts = self._shell._encode_script(exec_wrapper, as_list=True, strict_mode=False, preserve_rc=False)
+
+        # TODO: display something meaningful here
+        display.vvv("EXEC (via pipeline wrapper)")
+
+        if not in_data:
+            payload = self._create_raw_wrapper_payload(cmd)
+        else:
+            payload = in_data
+
+        result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True, stdin_iterator=self._wrapper_payload_stream(payload))
+
+        result.std_out = to_bytes(result.std_out)
+        result.std_err = to_bytes(result.std_err)
+
+        # parse just stderr from CLIXML output
+        if self.is_clixml(result.std_err):
+            try:
+                result.std_err = self.parse_clixml_stream(result.std_err)
+            except:
+                # unsure if we're guaranteed a valid xml doc- use raw output in case of error
+                pass
+
+        return (result.status_code, result.std_out, result.std_err)
+
+
+    def exec_command_old(self, cmd, in_data=None, sudoable=True):
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
         cmd_parts = shlex.split(to_bytes(cmd), posix=False)
         cmd_parts = map(to_text, cmd_parts)

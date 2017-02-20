@@ -68,7 +68,7 @@ class Task(Base, Conditional, Taggable, Become):
     _args                 = FieldAttribute(isa='dict', default=dict())
     _action               = FieldAttribute(isa='string')
 
-    _any_errors_fatal     = FieldAttribute(isa='bool')
+    _any_errors_fatal     = FieldAttribute(isa='bool', default=False, always_post_validate=True)
     _async                = FieldAttribute(isa='int', default=0)
     _changed_when         = FieldAttribute(isa='list', default=[])
     _delay                = FieldAttribute(isa='int', default=5)

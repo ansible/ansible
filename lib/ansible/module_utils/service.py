@@ -202,3 +202,22 @@ def daemonize(module, cmd):
                 return_data += b(data)
 
         return pickle.loads(to_text(return_data, errors=errors))
+
+def check_ps(module, pattern):
+
+    # Set ps flags
+    if platform.system() == 'SunOS':
+        psflags = '-ef'
+    else:
+        psflags = 'auxww'
+
+    # Find ps binary
+    psbin = module.get_bin_path('ps', True)
+
+    (rc, out, err) = module.run_command('%s %s' % (psbin, psflags))
+    # If rc is 0, set running as appropriate
+    if rc == 0:
+        for line in out.split('\n'):
+            if pattern in line:
+                return True
+    return False

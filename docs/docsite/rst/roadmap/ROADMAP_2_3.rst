@@ -38,15 +38,15 @@ Target: February/March 2017
   
 - **Windows platform** (nitzmahone)
   
-  - Pipelining support
-  - Become support
+  - Pipelining support **(done)**
+  - Become support **(done)**
   - Integrated kerberos ticket management (via ansible_user/ansible_password) **(done)**
-  - Switch PS input encoding to BOM-less UTF8
-  - Server 2016 support/testing (now RTM’d)
-  - Modularize Windows module_utils (allow N files)
-  - Declarative argspec for PS / .NET
-  - Kerberos encryption (via notting, pywinrm/requests_kerberos/pykerberos)
-  - Fix plugin-specific connection var lookup/delegation (either registered explicitly by plugins or ansible_(plugin)_*)
+  - Switch PS input encoding to BOM-less UTF8 **(done)**
+  - Server 2016 support/testing (now RTM’d) **(in progress)**
+  - Modularize Windows module_utils (allow N files) **(in progress)**
+  - Declarative argspec for PS / .NET **(bumped to 2.4)**
+  - Kerberos encryption (via notting, pywinrm/requests_kerberos/pykerberos) **(in progress, available in pywinrm post 2.3 release)**
+  - Fix plugin-specific connection var lookup/delegation (either registered explicitly by plugins or ansible_(plugin)_*) **(bumped to 2.4)**
 
 - **Windows modules** (nitzmahone)
 

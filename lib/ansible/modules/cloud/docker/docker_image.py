@@ -508,6 +508,7 @@ class ImageManager(DockerBaseClass):
             dockerfile=self.dockerfile,
             decode=True
         )
+        build_output = []
         if self.tag:
             params['tag'] = "%s:%s" % (self.name, self.tag)
         if self.container_limits:
@@ -521,14 +522,20 @@ class ImageManager(DockerBaseClass):
         for line in self.client.build(**params):
             # line = json.loads(line)
             self.log(line, pretty_print=True)
+            if "stream" in line:
+                build_output.append(line["stream"])
             if line.get('error'):
                 if line.get('errorDetail'):
                     errorDetail = line.get('errorDetail')
-                    self.fail("Error building %s - code: %s message: %s" % (self.name,
-                                                                            errorDetail.get('code'),
-                                                                            errorDetail.get('message')))
+                    self.fail(
+                        "Error building %s - code: %s, message: %s, logs: %s" % (
+                            self.name,
+                            errorDetail.get('code'),
+                            errorDetail.get('message'),
+                            build_output))
                 else:
-                    self.fail("Error building %s - %s" % (self.name, line.get('error')))
+                    self.fail("Error building %s - message: %s, logs: %s" % (
+                        self.name, line.get('error'), build_output))
         return self.client.find_image(name=self.name, tag=self.tag)
 
     def load_image(self):
