@@ -160,7 +160,7 @@ EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
 
-- name: CloudEngine config test 
+- name: CloudEngine config test
   vars:
     cli:
       host: "{{ inventory_hostname }}"
@@ -216,9 +216,9 @@ backup_path:
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.ce import get_config, load_config, run_commands
-from ansible.module_utils.ce import ce_argument_spec
-from ansible.module_utils.ce import check_args as ce_check_args
+from ansible.module_utils.cloudengine import get_config, load_config, run_commands
+from ansible.module_utils.cloudengine import ce_argument_spec
+from ansible.module_utils.cloudengine import check_args as ce_check_args
 
 def check_args(module, warnings):
     ce_check_args(module, warnings)
