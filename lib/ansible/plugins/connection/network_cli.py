@@ -23,6 +23,7 @@ import socket
 import json
 import signal
 import datetime
+import traceback
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.six.moves import StringIO
@@ -69,6 +70,7 @@ class Connection(_Connection):
         super(Connection, self)._connect()
 
         display.debug('starting network_cli._connect()')
+        display.vvvv('starting network_cli._connect()')
 
         network_os = self._play_context.network_os
         if not network_os:
@@ -149,7 +151,9 @@ class Connection(_Connection):
             if obj.get('sendonly'):
                 return
             return self.receive(obj)
-        except (socket.timeout, AttributeError):
+        except (socket.timeout, AttributeError) as exc:
+            #display.debug(traceback.format_exc())
+            display.vvv(traceback.format_exc())
             raise AnsibleConnectionFailure("timeout trying to send command: %s" % command.strip())
 
     def _strip(self, data):
@@ -219,6 +223,7 @@ class Connection(_Connection):
         :returns: a tuple of (return code, stdout, stderr).  The return
             code is an integer and stdout and stderr are strings
         """
+        display.vvv('cmd: %s' % cmd)
         try:
             obj = json.loads(cmd)
         except (ValueError, TypeError):
@@ -234,7 +239,7 @@ class Connection(_Connection):
             return (0, self._history, '')
 
         try:
-            if not self._connected:
+            if self._shell is None:
                 self.open_shell()
         except AnsibleConnectionFailure as exc:
             return (1, '', str(exc))
