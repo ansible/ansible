@@ -1120,7 +1120,7 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
             This docstring will be removed together when issue: #21619
             will be solved.
 
-            This has been triggered by: #19587 and #195870
+            This has been triggered by: #19587
         """
 
         if module.params.get('update_cache'):
