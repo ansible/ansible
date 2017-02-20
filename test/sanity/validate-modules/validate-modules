@@ -123,7 +123,7 @@ class Reporter(object):
             if report['errors'] or (warnings and report['warnings']):
                 print()
 
-        return 2 if ret else 0
+        return 3 if ret else 0
 
     @staticmethod
     def json(reports, warnings=False, output='-'):
@@ -136,7 +136,7 @@ class Reporter(object):
         with Reporter._output_handle(output) as handle:
             print(json.dumps(Reporter._filter_out_ok(reports), indent=4), file=handle)
 
-        return 2 if sum(ret) else 0
+        return 3 if sum(ret) else 0
 
 
 class Validator(object):
