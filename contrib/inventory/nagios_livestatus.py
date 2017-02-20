@@ -53,7 +53,8 @@ class NagiosLivestatusInventory(object):
         config = configparser.SafeConfigParser()
         config.read(os.path.dirname(os.path.realpath(__file__)) + '/nagios_livestatus.ini')
         for section in config.sections():
-            if not config.has_option(section, 'livestatus_uri'): continue
+            if not config.has_option(section, 'livestatus_uri'):
+                continue
 
             # If fields_to_retrieve is not set, using default fields
             fields_to_retrieve = self.default_fields_to_retrieve
@@ -63,12 +64,12 @@ class NagiosLivestatusInventory(object):
 
             # default section values
             section_values = {
-              'var_prefix' : 'livestatus_',
-              'host_filter': None,
-              'host_field' : 'name',
-              'group_field': 'groups'
+                'var_prefix': 'livestatus_',
+                'host_filter': None,
+                'host_field': 'name',
+                'group_field': 'groups'
             }
-            for key,value in section_values.iteritems():
+            for key, value in section_values.items():
                 if config.has_option(section, key):
                     section_values[key] = config.get(section, key).strip()
 
@@ -93,7 +94,7 @@ class NagiosLivestatusInventory(object):
             # Updating backend_definition with current value
             backend_definition['name']   = section
             backend_definition['fields'] = fields_to_retrieve
-            for key, value in section_values.iteritems():
+            for key, value in section_values.items():
                 backend_definition[key] = value
 
             self.backends.append(backend_definition)
