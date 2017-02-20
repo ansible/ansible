@@ -114,10 +114,11 @@ extends_documentation_fragment: vmware.documentation
 
 EXAMPLES = '''
 Example from Ansible playbook
-
+#
+# Create a resource pool
+#
     - name: Add resource pool to vCenter
-      local_action:
-        module: vmware_resource_pool
+      vmware_resource_pool:
         hostname: vcsa_host
         username: vcsa_user
         password: vcsa_pass
