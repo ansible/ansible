@@ -80,7 +80,7 @@ class ZabbixInventory(object):
         }
 
     def get_host(self, api, name):
-        data = {}
+        data = {'ansible_ssh_host': name}
         return data
 
     def get_list(self, api):
