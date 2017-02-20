@@ -233,9 +233,12 @@ Ansible Changes By Release
   * tower_group
   * tower_host
   * tower_inventory
-  * tower_label.py
+  * tower_job_template
+  * tower_label
   * tower_organization
   * tower_project
+  * tower_role
+  * tower_team
   * tower_user
 - vmware:
   * vmware_guest_facts
