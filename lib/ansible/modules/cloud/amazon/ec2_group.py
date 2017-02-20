@@ -315,6 +315,7 @@ def main():
                 changed = True
         else:
             # no match found, no changes required
+            pass
 
     # Ensure requested group is present
     elif state == 'present':
