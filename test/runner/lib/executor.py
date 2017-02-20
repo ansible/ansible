@@ -35,6 +35,7 @@ from lib.util import (
     ApplicationWarning,
     ApplicationError,
     SubprocessError,
+    MissingEnvironmentVariable,
     display,
     run_command,
     deepest_path,
@@ -796,12 +797,12 @@ def command_sanity_validate_modules(args, targets):
     if skip_paths:
         cmd += ['--exclude', '^(%s)' % '|'.join(skip_paths)]
 
-    if is_shippable():
+    if args.base_branch:
         cmd.extend([
-            '--base-branch', os.environ['BASE_BRANCH']
+            '--base-branch', args.base_branch,
         ])
     else:
-        display.warning("Cannot perform module comparison against the base branch when running locally")
+        display.warning('Cannot perform module comparison against the base branch. Base branch not detected when running locally.')
 
     run_command(args, cmd, env=env)
 
@@ -1377,6 +1378,16 @@ class SanityConfig(TestConfig):
         self.test = args.test  # type: list [str]
         self.skip_test = args.skip_test  # type: list [str]
         self.list_tests = args.list_tests  # type: bool
+
+        if args.base_branch:
+            self.base_branch = args.base_branch  # str
+        elif is_shippable():
+            try:
+                self.base_branch = os.environ['BASE_BRANCH']  # str
+            except KeyError as ex:
+                raise MissingEnvironmentVariable(name=ex.args[0])
+        else:
+            self.base_branch = ''
 
 
 class IntegrationConfig(TestConfig):

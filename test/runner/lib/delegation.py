@@ -15,6 +15,7 @@ from lib.executor import (
     SubprocessError,
     ShellConfig,
     TestConfig,
+    SanityConfig,
     create_shell_command,
 )
 
@@ -354,6 +355,9 @@ def generate_command(args, path, options, exclude, require):
 
     if isinstance(args, ShellConfig):
         cmd = create_shell_command(cmd)
+    elif isinstance(args, SanityConfig):
+        if args.base_branch:
+            cmd += ['--base-branch', args.base_branch]
 
     return cmd
 
@@ -381,6 +385,10 @@ def filter_options(args, argv, options, exclude, require):
             '--ignore-unstaged': 0,
             '--changed-from': 1,
             '--changed-path': 1,
+        })
+    elif isinstance(args, SanityConfig):
+        options.update({
+            '--base-branch': 1,
         })
 
     remaining = 0
