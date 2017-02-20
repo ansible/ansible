@@ -28,7 +28,7 @@ fortios_argument_spec = dict(
     timeout         = dict(type='int', default=60),
     vdom            = dict(type='str', default=None ),
     backup          = dict(type='bool', default=False),
-    backup_path     = dict(type='str'),
+    backup_path     = dict(type='path'),
     backup_filename = dict(type='str'),
 )
 
