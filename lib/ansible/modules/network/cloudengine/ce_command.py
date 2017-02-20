@@ -144,13 +144,13 @@ failed_conditions:
 
 import time
 
-from ansible.module_utils.ce import run_commands
+from ansible.module_utils.cloudengine import run_commands
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
 from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.network_common import ComplexList
-from ansible.module_utils.ce import ce_argument_spec, check_args
+from ansible.module_utils.cloudengine import ce_argument_spec, check_args
 
 
 def to_lines(stdout):
