@@ -131,7 +131,7 @@ def create(module, conn, name, group_family, description):
         response = conn.create_cache_parameter_group(CacheParameterGroupName=name, CacheParameterGroupFamily=group_family, Description=description)
         changed = True
     except boto.exception.BotoServerError as e:
-        module.fail_json(msg="Unable to create cache parameter group.", exception=traceback.format_exc(e))
+        module.fail_json(msg="Unable to create cache parameter group.", exception=traceback.format_exc())
     return response, changed
 
 def delete(module, conn, name):
@@ -141,7 +141,7 @@ def delete(module, conn, name):
         response = {}
         changed = True
     except boto.exception.BotoServerError as e:
-        module.fail_json(msg="Unable to delete cache parameter group.", exception=traceback.format_exc(e))
+        module.fail_json(msg="Unable to delete cache parameter group.", exception=traceback.format_exc())
     return response, changed
 
 def make_current_modifiable_param_dict(module, conn, name):
@@ -215,7 +215,7 @@ def modify(module, conn, name, values):
     try:
         response = conn.modify_cache_parameter_group(CacheParameterGroupName=name, ParameterNameValues=format_parameters)
     except boto.exception.BotoServerError as e:
-        module.fail_json(msg="Unable to modify cache parameter group.", exception=traceback.format_exc(e))
+        module.fail_json(msg="Unable to modify cache parameter group.", exception=traceback.format_exc())
     return response
 
 def reset(module, conn, name, values):
@@ -238,7 +238,7 @@ def reset(module, conn, name, values):
     try:
         response = conn.reset_cache_parameter_group(CacheParameterGroupName=name, ParameterNameValues=format_parameters, ResetAllParameters=all_parameters)
     except boto.exception.BotoServerError as e:
-        module.fail_json(msg="Unable to reset cache parameter group.", exception=traceback.format_exc(e))
+        module.fail_json(msg="Unable to reset cache parameter group.", exception=traceback.format_exc())
 
     # determine changed
     new_parameters_dict = make_current_modifiable_param_dict(module, conn, name)
