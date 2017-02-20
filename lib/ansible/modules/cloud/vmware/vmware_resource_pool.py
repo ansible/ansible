@@ -62,7 +62,8 @@ options:
         required: True
     cpu_expandable_reservations:
         description:
-            - In a resource pool with an expandable reservation, the reservation on a resource pool can grow beyond the specified value, if the parent resource pool has unreserved resources.
+            - In a resource pool with an expandable reservation, the reservation on a 
+              resource pool can grow beyond the specified value, if the parent resource pool has unreserved resources.
         default: True
     cpu_reservation:
         description:
@@ -83,7 +84,8 @@ options:
         default: Normal
     mem_expandable_reservations:
         description:
-            - In a resource pool with an expandable reservation, the reservation on a resource pool can grow beyond the specified value, if the parent resource pool has unreserved resources.
+            - In a resource pool with an expandable reservation, the reservation on a resource pool 
+            can grow beyond the specified value, if the parent resource pool has unreserved resources.
         default: True
     mem_reservation:
         description:
@@ -244,11 +246,11 @@ class VMwareResourcePool(object):
         result = None
         resource_pool = self.select_resource_pool(self.host_obj)
         try:
-          task = self.resource_pool_obj.Destroy()
-          success, result = wait_for_task(task)
+            task = self.resource_pool_obj.Destroy()
+            success, result = wait_for_task(task)
 
         except:
-          self.module.fail_json(msg="Failed to remove resource pool '%s' '%s'" % (self.resource_pool,resource_pool))
+            self.module.fail_json(msg="Failed to remove resource pool '%s' '%s'" % (self.resource_pool,resource_pool))
         self.module.exit_json(changed=changed, result=str(result))
 
     def state_add_rp(self):
