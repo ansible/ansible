@@ -109,13 +109,14 @@ class VaultCLI(CLI):
             if self.options.output_file and len(self.args) > 1:
                 raise AnsibleOptionsError("At most one input file may be used with the --output option")
 
-        if '-' in self.args or len(self.args) == 0 or self.options.encrypt_string_stdin_name:
-            self.encrypt_string_read_stdin = True
+        if self.action == 'encrypt_string':
+            if '-' in self.args or len(self.args) == 0 or self.options.encrypt_string_stdin_name:
+                self.encrypt_string_read_stdin = True
 
-        # TODO: prompting from stdin and reading from stdin seem
-        #       mutually exclusive, but verify that.
-        if self.options.encrypt_string_prompt and self.encrypt_string_read_stdin:
-            raise AnsibleOptionsError('The --prompt option is not supported if also reading input from stdin')
+            # TODO: prompting from stdin and reading from stdin seem
+            #       mutually exclusive, but verify that.
+            if self.options.encrypt_string_prompt and self.encrypt_string_read_stdin:
+                raise AnsibleOptionsError('The --prompt option is not supported if also reading input from stdin')
 
     def run(self):
 
