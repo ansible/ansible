@@ -139,7 +139,7 @@ If ($featureresult.FeatureResult) {
 
 $result.feature_result = $installed_features
 $result.success = ($featureresult.Success.ToString() | ConvertTo-Bool)
-$result.exitcode = ($featureresult.ExitCode.ToString())
+$result.exitcode = $featureresult.ExitCode.ToString()
 $result.restart_needed = ($featureresult.RestartNeeded.ToString() | ConvertTo-Bool)
 
 If ($result.success) {
