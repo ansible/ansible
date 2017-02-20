@@ -304,7 +304,7 @@ def main():
     # Ensure requested group is absent
     if state == 'absent':
         if group:
-            '''found a match, delete it'''
+            # found a match, delete it
             try:
                 if not module.check_mode:
                     group.delete()
@@ -314,18 +314,18 @@ def main():
                 group = None
                 changed = True
         else:
-            '''no match found, no changes required'''
+            # no match found, no changes required
 
     # Ensure requested group is present
     elif state == 'present':
         if group:
-            '''existing group'''
+            # existing group
             if group.description != description:
                 module.fail_json(msg="Group description does not match existing group. ec2_group does not support this case.")
 
         # if the group doesn't exist, create it now
         else:
-            '''no match found, create it'''
+            # no match found, create it
             if not module.check_mode:
                 group = ec2.create_security_group(name, description, vpc_id=vpc_id)
 
