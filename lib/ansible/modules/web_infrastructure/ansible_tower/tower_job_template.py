@@ -33,7 +33,6 @@ options:
       description:
         - Name to use for the job_template.
       required: True
-      default: null
     description:
       description:
         - Description to use for the job_template.
@@ -44,7 +43,6 @@ options:
         - The job_type to use for the job_template.
       required: True
       choices: ["run", "check", "scan"]
-      default: null
     inventory:
       description:
         - Inventory to use for the job_template.
@@ -54,12 +52,10 @@ options:
       description:
         - Project to use for the job_template.
       required: True
-      default: null
     playbook:
       description:
         - Playbook to use for the job_template.
       required: True
-      default: null
     machine_credential:
       description:
         - Machine_credential to use for the job_template.
@@ -99,6 +95,11 @@ options:
     skip_tags:
       description:
         - The skip_tags to use for the job_template.
+      required: False
+      default: null
+    host_config_key:
+      description:
+        - Allow provisioning callbacks using this host config key.
       required: False
       default: null
     extra_vars_path:
@@ -273,6 +274,7 @@ def main():
             verbosity = dict(choices=['verbose', 'debug']),
             job_tags = dict(),
             skip_tags = dict(),
+            host_config_key = dict(),
             extra_vars_path = dict(type='path', required=False),
             ask_extra_vars = dict(type='bool', default=False),
             ask_limit = dict(type='bool', default=False),
