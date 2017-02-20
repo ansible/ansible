@@ -116,7 +116,7 @@
     that:
     - asyncresult.ansible_job_id is match('\d+\.\d+')
     - asyncresult.finished == 1
-    - asyncresult.changed == false
+    - asyncresult.changed == true
     - asyncresult | failed == true
     - asyncresult.msg == 'failed gracefully'
 
