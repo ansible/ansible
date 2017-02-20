@@ -249,6 +249,7 @@ Ansible Changes By Release
   * win_reg_stat
   * win_say
   * win_shortcut
+  * win_tempfile
 - xbps
 - zfs:
   * zfs_facts
