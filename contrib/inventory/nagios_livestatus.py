@@ -68,7 +68,7 @@ class NagiosLivestatusInventory(object):
               'host_field' : 'name',
               'group_field': 'groups'
             }
-            for key,value in section_values.iteritems():
+            for key, value in section_values.items():
                 if config.has_option(section, key):
                     section_values[key] = config.get(section, key).strip()
 
@@ -93,7 +93,7 @@ class NagiosLivestatusInventory(object):
             # Updating backend_definition with current value
             backend_definition['name']   = section
             backend_definition['fields'] = fields_to_retrieve
-            for key, value in section_values.iteritems():
+            for key, value in section_values.items():
                 backend_definition[key] = value
 
             self.backends.append(backend_definition)
