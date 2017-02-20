@@ -8,3 +8,4 @@
     - { role: win_shell, tags: test_win_shell }
     - { role: win_command, tags: test_win_command }
     - { role: win_reg_stat, tags: test_win_reg_stat }
+    - { role: win_region, tags: test_win-region }
