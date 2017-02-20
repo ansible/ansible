@@ -466,7 +466,7 @@ def new_vm(module, uuid, vm_state):
         # if we cannot remove the file so the operator knows about it.
         module.fail_json(
             msg='Could not remove temporary JSON payload file {0}'.format(payload_file),
-            exception=traceback.format_exc(e))
+            exception=traceback.format_exc())
 
     return changed, vm_uuid
 
@@ -530,7 +530,7 @@ def create_payload(module, uuid):
         vmdef_json = json.dumps(vmdef)
     except Exception as e:
         module.fail_json(
-            msg='Could not create valid JSON payload', exception=traceback.format_exc(e))
+            msg='Could not create valid JSON payload', exception=traceback.format_exc())
 
     # Create the temporary file that contains our payload, and set tight
     # permissions for it may container sensitive information.
@@ -545,7 +545,7 @@ def create_payload(module, uuid):
         fh.close()
     except Exception as e:
         module.fail_json(
-            msg='Could not save JSON payload', exception=traceback.format_exc(e))
+            msg='Could not save JSON payload', exception=traceback.format_exc())
 
     return fname
 

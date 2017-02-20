@@ -167,7 +167,7 @@ class CloudFormationServiceManager:
         except botocore.exceptions.NoRegionError:
             self.module.fail_json(msg="Region must be specified as a parameter, in AWS_DEFAULT_REGION environment variable or in boto configuration file")
         except Exception as e:
-            self.module.fail_json(msg="Can't establish connection - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Can't establish connection - " + str(e), exception=traceback.format_exc())
 
     def describe_stack(self, stack_name):
         try:
@@ -177,21 +177,21 @@ class CloudFormationServiceManager:
                 return response[0]
             self.module.fail_json(msg="Error describing stack - an empty response was returned")
         except Exception as e:
-            self.module.fail_json(msg="Error describing stack - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error describing stack - " + str(e), exception=traceback.format_exc())
 
     def list_stack_resources(self, stack_name):
         try:
             func = partial(self.client.list_stack_resources,StackName=stack_name)
             return self.paginated_response(func, 'StackResourceSummaries')
         except Exception as e:
-            self.module.fail_json(msg="Error listing stack resources - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error listing stack resources - " + str(e), exception=traceback.format_exc())
 
     def describe_stack_events(self, stack_name):
         try:
             func = partial(self.client.describe_stack_events,StackName=stack_name)
             return self.paginated_response(func, 'StackEvents')
         except Exception as e:
-            self.module.fail_json(msg="Error describing stack events - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error describing stack events - " + str(e), exception=traceback.format_exc())
 
     def get_stack_policy(self, stack_name):
         try:
@@ -201,14 +201,14 @@ class CloudFormationServiceManager:
                 return json.loads(stack_policy)
             return dict()
         except Exception as e:
-            self.module.fail_json(msg="Error getting stack policy - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error getting stack policy - " + str(e), exception=traceback.format_exc())
 
     def get_template(self, stack_name):
         try:
             response = self.client.get_template(StackName=stack_name)
             return response.get('TemplateBody')
         except Exception as e:
-            self.module.fail_json(msg="Error getting stack template - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error getting stack template - " + str(e), exception=traceback.format_exc())
 
     def paginated_response(self, func, result_key, next_token=None):
         '''

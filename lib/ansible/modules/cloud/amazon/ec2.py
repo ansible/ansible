@@ -1407,7 +1407,7 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
                             changed = True
                 else:
                     module.fail_json(msg='Failed to handle source_dest_check state for instance {0}, error: {1}'.format(inst.id, exc),
-                                     exception=traceback.format_exc(exc))
+                                     exception=traceback.format_exc())
 
             # Check "termination_protection" attribute
             if (inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection
@@ -1514,7 +1514,7 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
                             changed = True
                 else:
                     module.fail_json(msg='Failed to handle source_dest_check state for instance {0}, error: {1}'.format(inst.id, exc),
-                                     exception=traceback.format_exc(exc))
+                                     exception=traceback.format_exc())
 
             # Check "termination_protection" attribute
             if (inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection
