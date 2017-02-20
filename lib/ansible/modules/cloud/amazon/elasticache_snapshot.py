@@ -151,7 +151,7 @@ def create(module, connection, replication_id, cluster_id, name):
             response = {}
             changed = False
         else:
-            module.fail_json(msg="Unable to create the snapshot.", exception=traceback.format_exc(e))
+            module.fail_json(msg="Unable to create the snapshot.", exception=traceback.format_exc())
     return response, changed
 
 def copy(module, connection, name, target, bucket):
@@ -162,7 +162,7 @@ def copy(module, connection, name, target, bucket):
                                             TargetBucket=bucket)
         changed = True
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Unable to copy the snapshot.", exception=traceback.format_exc(e))
+        module.fail_json(msg="Unable to copy the snapshot.", exception=traceback.format_exc())
     return response, changed
 
 def delete(module, connection, name):
@@ -178,7 +178,7 @@ def delete(module, connection, name):
             module.fail_json(msg="Error: InvalidSnapshotState. The snapshot is not in an available state or failed state to allow deletion."
                              "You may need to wait a few minutes.")
         else:
-            module.fail_json(msg="Unable to delete the snapshot.", exception=traceback.format_exc(e))
+            module.fail_json(msg="Unable to delete the snapshot.", exception=traceback.format_exc())
     return response, changed
 
 

@@ -506,7 +506,7 @@ def create_autoscaling_group(connection, module):
             changed = True
             return(changed, asg_properties)
         except BotoServerError as e:
-            module.fail_json(msg="Failed to create Autoscaling Group: %s" % str(e), exception=traceback.format_exc(e))
+            module.fail_json(msg="Failed to create Autoscaling Group: %s" % str(e), exception=traceback.format_exc())
     else:
         as_group = as_groups[0]
         changed = False
@@ -566,13 +566,13 @@ def create_autoscaling_group(connection, module):
             try:
                 as_group.update()
             except BotoServerError as e:
-                module.fail_json(msg="Failed to update Autoscaling Group: %s" % str(e), exception=traceback.format_exc(e))
+                module.fail_json(msg="Failed to update Autoscaling Group: %s" % str(e), exception=traceback.format_exc())
 
         if notification_topic:
             try:
                 as_group.put_notification_configuration(notification_topic, notification_types)
             except BotoServerError as e:
-                module.fail_json(msg="Failed to update Autoscaling Group notifications: %s" % str(e), exception=traceback.format_exc(e))
+                module.fail_json(msg="Failed to update Autoscaling Group notifications: %s" % str(e), exception=traceback.format_exc())
 
         if wait_for_instances:
             wait_for_new_inst(module, connection, group_name, wait_timeout, desired_capacity, 'viable_instances')
@@ -581,7 +581,7 @@ def create_autoscaling_group(connection, module):
             as_group = connection.get_all_groups(names=[group_name])[0]
             asg_properties = get_properties(as_group)
         except BotoServerError as e:
-            module.fail_json(msg="Failed to read existing Autoscaling Groups: %s" % str(e), exception=traceback.format_exc(e))
+            module.fail_json(msg="Failed to read existing Autoscaling Groups: %s" % str(e), exception=traceback.format_exc())
         return(changed, asg_properties)
 
 

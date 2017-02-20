@@ -236,7 +236,7 @@ class CloudFrontServiceManager:
             self.module.fail_json(msg="Region must be specified as a parameter, in AWS_DEFAULT_REGION environment variable or in boto configuration file")
         except Exception as e:
             self.module.fail_json(msg="Can't establish connection - " + str(e),
-                                  exception=traceback.format_exc(e))
+                                  exception=traceback.format_exc())
 
     def get_distribution(self, distribution_id):
         try:
@@ -244,7 +244,7 @@ class CloudFrontServiceManager:
             return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error describing distribution - " + str(e),
-                                  exception=traceback.format_exc(e))
+                                  exception=traceback.format_exc())
 
     def get_distribution_config(self, distribution_id):
         try:
@@ -252,7 +252,7 @@ class CloudFrontServiceManager:
             return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error describing distribution configuration - " + str(e),
-                                  exception=traceback.format_exec(e))
+                                  exception=traceback.format_exec())
 
     def get_origin_access_identity(self, origin_access_identity_id):
         try:
@@ -260,7 +260,7 @@ class CloudFrontServiceManager:
             return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error describing origin access identity - " + str(e),
-                                  exception=traceback.format_exc(e))
+                                  exception=traceback.format_exc())
 
     def get_origin_access_identity_config(self, origin_access_identity_id):
         try:
@@ -268,7 +268,7 @@ class CloudFrontServiceManager:
             return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error describing origin access identity configuration - " + str(e),
-                                  exception=traceback.format_exc(e))
+                                  exception=traceback.format_exc())
 
     def get_invalidation(self, distribution_id, invalidation_id):
         try:
@@ -276,7 +276,7 @@ class CloudFrontServiceManager:
             return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error describing invalidation - " + str(e),
-                                  exception=traceback.format_exc(e))
+                                  exception=traceback.format_exc())
 
     def get_streaming_distribution(self, distribution_id):
         try:
@@ -284,7 +284,7 @@ class CloudFrontServiceManager:
             return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error describing streaming distribution - " + str(e),
-                                  exception=traceback.format_exc(e))
+                                  exception=traceback.format_exc())
 
     def get_streaming_distribution_config(self, distribution_id):
         try:
@@ -292,7 +292,7 @@ class CloudFrontServiceManager:
             return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error describing streaming distribution - " + str(e),
-                                  exception=traceback.format_exc(e))
+                                  exception=traceback.format_exc())
 
     def list_origin_access_identities(self):
         try:
@@ -303,7 +303,7 @@ class CloudFrontServiceManager:
             return {}
         except Exception as e:
             self.module.fail_json(msg="Error listing cloud front origin access identities - " + str(e),
-                                  exception=traceback.format_exc(e))
+                                  exception=traceback.format_exc())
 
     def list_distributions(self, keyed=True):
         try:
@@ -318,7 +318,7 @@ class CloudFrontServiceManager:
             return self.keyed_list_helper(distribution_list)
         except Exception as e:
             self.module.fail_json(msg="Error listing distributions - " + str(e),
-                                  exception=traceback.format_exc(e))
+                                  exception=traceback.format_exc())
 
     def list_distributions_by_web_acl_id(self, web_acl_id):
         try:
@@ -331,7 +331,7 @@ class CloudFrontServiceManager:
             return self.keyed_list_helper(distribution_list)
         except Exception as e:
             self.module.fail_json(msg="Error listing distributions by web acl id - " + str(e),
-                                  exception=traceback.format_exc(e))
+                                  exception=traceback.format_exc())
 
     def list_invalidations(self, distribution_id):
         try:
@@ -342,7 +342,7 @@ class CloudFrontServiceManager:
             return {}
         except Exception as e:
             self.module.fail_json(msg="Error listing invalidations - " + str(e),
-                                  exception=traceback.format_exc(e))
+                                  exception=traceback.format_exc())
 
     def list_streaming_distributions(self, keyed=True):
         try:
@@ -357,7 +357,7 @@ class CloudFrontServiceManager:
             return self.keyed_list_helper(streaming_distribution_list)
         except Exception as e:
             self.module.fail_json(msg="Error listing streaming distributions - " + str(e),
-                                  exception=traceback.format_exc(e))
+                                  exception=traceback.format_exc())
 
     def summary(self):
         summary_dict = {}
@@ -378,7 +378,7 @@ class CloudFrontServiceManager:
             return origin_access_identity_list
         except Exception as e:
             self.module.fail_json(msg="Error generating summary of origin access identities - " + str(e),
-                                  exception=traceback.format_exc(e))
+                                  exception=traceback.format_exc())
 
     def summary_get_distribution_list(self, streaming=False):
         try:
@@ -404,7 +404,7 @@ class CloudFrontServiceManager:
             return distribution_list
         except Exception as e:
             self.module.fail_json(msg="Error generating summary of distributions - " + str(e),
-                                  exception=traceback.format_exc(e))
+                                  exception=traceback.format_exc())
 
     def get_etag_from_distribution_id(self, distribution_id, streaming):
         distribution = {}
@@ -423,7 +423,7 @@ class CloudFrontServiceManager:
             return invalidation_ids
         except Exception as e:
             self.module.fail_json(msg="Error getting list of invalidation ids - " + str(e),
-                                  exception=traceback.format_exc(e))
+                                  exception=traceback.format_exc())
 
     def get_distribution_id_from_domain_name(self, domain_name):
         try:
@@ -439,7 +439,7 @@ class CloudFrontServiceManager:
             return distribution_id
         except Exception as e:
             self.module.fail_json(msg="Error getting distribution id from domain name - " + str(e),
-                                  exception=traceback.format_exc(e))
+                                  exception=traceback.format_exc())
 
     def get_aliases_from_distribution_id(self, distribution_id):
         aliases = []
@@ -453,7 +453,7 @@ class CloudFrontServiceManager:
             return aliases
         except Exception as e:
             self.module.fail_json(msg="Error getting list of aliases from distribution_id - " + str(e),
-                                  exception=traceback.format_exc(e))
+                                  exception=traceback.format_exc())
 
     def paginated_response(self, func, result_key=""):
         '''

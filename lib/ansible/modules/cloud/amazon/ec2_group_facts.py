@@ -145,7 +145,7 @@ def main():
             Filters=ansible_dict_to_boto3_filter_list(sanitized_filters)
         )
     except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(e))
+        module.fail_json(msg=e.message, exception=traceback.format_exc())
 
     # Turn the boto3 result in to ansible_friendly_snaked_names
     snaked_security_groups = []
