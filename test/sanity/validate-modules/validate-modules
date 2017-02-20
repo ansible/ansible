@@ -372,7 +372,7 @@ class ModuleValidator(Validator):
         elif not found_basic:
             self.warnings.append(
                 (
-                    202,
+                    292,
                     'Did not find "ansible.module_utils.basic" import'
                 )
             )
@@ -427,7 +427,7 @@ class ModuleValidator(Validator):
                                 found_has = True
             if found_try_except_import and not found_has:
                 self.warnings.append((
-                    201,
+                    291,
                     'Found Try/Except block without HAS_ assginment'
                 ))
 
@@ -672,14 +672,14 @@ class ModuleValidator(Validator):
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']
                 self.warnings.append((
-                    302,
+                    392,
                     'Pre-existing DOCUMENTATION fragment missing: %s' % fragment
                 ))
                 return
             except Exception as e:
                 self.warning_traces.append(e)
                 self.warnings.append((
-                    301,
+                    391,
                     ('Unknown pre-existing DOCUMENTATION '
                      'error, see TRACE. Submodule refs may '
                      'need updated')
