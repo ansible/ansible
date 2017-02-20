@@ -106,8 +106,8 @@ def aos_login(module):
         module.fail_json(msg="AOS-server login credentials failed")
 
     module.exit_json(changed=False,
-                     ansible_facts=dict( aos_session=dict(url=aos.api.url, headers=aos.api.headers)),
-                     aos_session=dict(url=aos.api.url, headers=aos.api.headers))
+                     ansible_facts=dict(aos_session=aos.session),
+                     aos_session=dict(aos_session=aos.session))
 
 def main():
     module = AnsibleModule(
