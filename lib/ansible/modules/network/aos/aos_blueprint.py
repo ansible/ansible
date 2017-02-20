@@ -73,7 +73,7 @@ EXAMPLES = '''
   aos_blueprint:
     session: "{{ aos_session }}"
     name: "my-blueprint"
-    design_template: "my-template"
+    template: "my-template"
     reference_arch: two_stage_l3clos
     state: present
 
@@ -81,7 +81,7 @@ EXAMPLES = '''
   aos_blueprint:
     session: "{{ aos_session }}"
     name: "{{ blueprint_name }}"
-    design_template: "{{ blueprint_template }}"
+    template: "{{ blueprint_template }}"
     state: present
   register: bp
 
