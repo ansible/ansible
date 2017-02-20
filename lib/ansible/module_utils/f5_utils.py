@@ -199,7 +199,8 @@ F5_COMMON_ARGS = dict(
 class AnsibleF5Client(object):
     def __init__(self, argument_spec=None, supports_check_mode=False,
                  mutually_exclusive=None, required_together=None,
-                 required_if=None, f5_product_name='bigip'):
+                 required_if=None, required_one_of=None,
+                 f5_product_name='bigip'):
 
         merged_arg_spec = dict()
         merged_arg_spec.update(F5_COMMON_ARGS)
@@ -220,7 +221,8 @@ class AnsibleF5Client(object):
             supports_check_mode=supports_check_mode,
             mutually_exclusive=mutually_exclusive_params,
             required_together=required_together_params,
-            required_if=required_if
+            required_if=required_if,
+            required_one_of=required_one_of
         )
 
         self.check_mode = self.module.check_mode
