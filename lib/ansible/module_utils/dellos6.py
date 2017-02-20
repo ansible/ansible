@@ -104,48 +104,47 @@ def os6_parse(lines, indent=None, comment_tokens=None):
             continue
 
         else:
-          parent_match=False
-          # handle sublevel parent
-          for pr in sublevel_cmds:
-              if pr.match(line):
-                 if len(parent) != 0:
-                     cfg.parents.extend(parent)
-                 parent.append(cfg)
-                 config.append(cfg)
-                 if children:
-                   children.insert(len(parent)-1,[])
-                   children[len(parent)-2].append(cfg)
-                 parent_match=True
-                 continue
-          # handle exit
-          if childline.match(line):
-            if children:
-              parent[len(children)-1].children.extend(children[len(children)-1])
-              if len(children)>1:
-                parent[len(children)-2].children.extend(parent[len(children)-1].children)
-              cfg.parents.extend(parent)
-              children.pop()
-              parent.pop()
-
-            if not children:
-              children = list()
-              if parent:
-                  cfg.parents.extend(parent)
-              parent = list()
-            config.append(cfg)
-          # handle sublevel children
-          elif parent_match is False and len(parent)>0 :
-            if not children:
-              cfglist=[cfg]
-              children.append(cfglist)
-            else:
-              children[len(parent)-1].append(cfg)
-            cfg.parents.extend(parent)
-            config.append(cfg)
-          # handle global commands
-          elif not parent:
-            config.append(cfg)
-    return config             
+            parent_match=False
+            # handle sublevel parent
+            for pr in sublevel_cmds:
+                if pr.match(line):
+                    if len(parent) != 0:
+                        cfg.parents.extend(parent)
+                    parent.append(cfg)
+                    config.append(cfg)
+                    if children:
+                        children.insert(len(parent) - 1,[])
+                        children[len(parent) - 2].append(cfg)
+                    parent_match=True
+                    continue
+            # handle exit
+            if childline.match(line):
+                if children:
+                    parent[len(children) - 1].children.extend(children[len(children) - 1])
+                    if len(children)>1:
+                        parent[len(children) - 2].children.extend(parent[len(children) - 1].children)
+                    cfg.parents.extend(parent)
+                    children.pop()
+                    parent.pop()
+                if not children:
+                    children = list()
+                    if parent:
+                        cfg.parents.extend(parent)
+                    parent = list()
+                    config.append(cfg)
+            # handle sublevel children
+            elif parent_match is False and len(parent)>0 :
+                if not children:
+                    cfglist=[cfg]
+                    children.append(cfglist)
+                else:
+                    children[len(parent) - 1].append(cfg)
+                cfg.parents.extend(parent)
+                config.append(cfg)
+            # handle global commands
+            elif not parent:
+                config.append(cfg)
+    return config
 
 
 class Dellos6NetworkConfig(NetworkConfig):
