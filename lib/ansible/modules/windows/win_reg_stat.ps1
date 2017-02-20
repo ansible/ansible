@@ -20,13 +20,13 @@
 $ErrorActionPreference = "Stop"
 
 $params = Parse-Args $args -supports_check_mode $true
-$key = Get-AnsibleParam $params "key" -FailIfEmpty $true
-$property = Get-AnsibleParam $params "property" -FailIfEmpty $false -default $null
+
+$key = Get-AnsibleParam -obj $params -name "key" -type "str" -failifempty $true
+$property = Get-AnsibleParam -obj $params -name "property" -type "str"
 
 $result = @{
-    win_reg_stat = @{}
     changed = $false
-    warnings = @()
+    win_reg_stat = @{}
 }
 
 Function Get-NetHiveName($hive) {
@@ -36,7 +36,7 @@ Function Get-NetHiveName($hive) {
         "HKCC" {"CurrentConfig"}
         "HKCU" {"CurrentUser"}
         "HKLM" {"LocalMachine"}
-        "HKU" {"Users"}        
+        "HKU" {"Users"}
         default {"unsupported"}
     }
 }
@@ -118,7 +118,7 @@ if (Test-Path REGISTRY::$hive\$path) {
             if ($real_property -eq $true) {
                 $property_object = Get-PropertyObject -hive $hive -net_hive $net_hive -path $path -property $property.Name 
                 $property_info.Add($property.Name, $property_object)
-            }            
+            }
         }
 
         $sub_keys = @()
