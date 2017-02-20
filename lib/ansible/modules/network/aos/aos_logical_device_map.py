@@ -37,7 +37,7 @@ requirements:
 options:
   session:
     description:
-      - An existing AOS session as obtained by aos_login module.
+      - An existing AOS session as obtained by M(aos_login) module.
     required: true
   name:
     description:
