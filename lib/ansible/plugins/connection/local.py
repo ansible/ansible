@@ -28,7 +28,7 @@ import ansible.constants as C
 from ansible.compat import selectors
 from ansible.compat.six import text_type, binary_type
 from ansible.errors import AnsibleError, AnsibleFileNotFound
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
 
 
@@ -67,7 +67,7 @@ class Connection(ConnectionBase):
 
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else None
 
-        display.vvv(u"EXEC {0}".format(cmd), host=self._play_context.remote_addr)
+        display.vvv(u"EXEC {0}".format(to_text(cmd)), host=self._play_context.remote_addr)
         display.debug("opening command with Popen()")
 
         if isinstance(cmd, (text_type, binary_type)):
