@@ -20,28 +20,22 @@
 
 # WANT_JSON
 # POWERSHELL_COMMON
-$params = Parse-Args $args;
+$params = Parse-Args $args
 
 # Name parameter
-$name = Get-Attr $params "name" $FALSE;
-If ($name -eq $FALSE) {
-    Fail-Json (New-Object psobject) "missing required argument: name";
-}
+$name = Get-AnsibleParam -obj $params -name "name" -type "string" -failifempty $true
+
 
 # State parameter
-$state = Get-Attr $params "state" $FALSE;
-$valid_states = ('started', 'restarted', 'stopped', 'absent');
-If (($state -Ne $FALSE) -And ($state -NotIn $valid_states)) {
-  Fail-Json $result "state is '$state'; must be $($valid_states)"
-}
+$state = Get-AnsibleParam -obj $params -name "state" -default "present" -validateSet "started","restarted","stopped","absent"
 
 # Attributes parameter - Pipe separated list of attributes where
 # keys and values are separated by comma (paramA:valyeA|paramB:valueB)
 $attributes = @{};
 If (Get-Member -InputObject $params -Name attributes) {
   $params.attributes -split '\|' | foreach {
-    $key, $value = $_ -split "\:";
-    $attributes.Add($key, $value);
+    $key, $value = $_ -split "\:"
+    $attributes.Add($key, $value)
   }
 }
 
@@ -54,10 +48,12 @@ if ((Get-Module "WebAdministration" -ErrorAction SilentlyContinue) -eq $NULL){
 }
 
 # Result
-$result = New-Object psobject @{
+$result = @{
   changed = $FALSE
-  attributes = $attributes
-};
+#  attributes = $attributes
+}
+
+$result.attributes = $attributes
 
 # Get pool
 $pool = Get-Item IIS:\AppPools\$name
@@ -79,7 +75,7 @@ try {
   if($pool) {
     # Set properties
     $attributes.GetEnumerator() | foreach {
-      $newParameter = $_;
+      $newParameter = $_
       $currentParameter = Get-ItemProperty ("IIS:\AppPools\" + $name) $newParameter.Key
       $currentParamVal = ""
       try {
@@ -122,7 +118,7 @@ if ($pool)
   $result.info = @{
     name = $pool.Name
     state = $pool.State
-    attributes =  New-Object psobject @{}
+    attributes =  @{}
   };
 
   $pool.Attributes | ForEach {
