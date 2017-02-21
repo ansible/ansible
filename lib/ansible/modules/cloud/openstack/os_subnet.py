@@ -50,7 +50,8 @@ options:
    cidr:
      description:
         - The CIDR representation of the subnet that should be assigned to
-          the subnet. Required when I(state) is 'present'
+          the subnet. Required when I(state) is 'present' and a subnetpool
+          is not specified.
      required: false
      default: None
    ip_version:
@@ -108,6 +109,11 @@ options:
      choices: ['dhcpv6-stateful', 'dhcpv6-stateless', 'slaac']
      required: false
      default: None
+   use_default_subnetpool:
+     description:
+        - Use the default subnetpool for I(ip_version) to obtain a CIDR.
+     required: false
+     default: false
    project:
      description:
         - Project name or ID containing the subnet (name admin-only)
@@ -163,6 +169,9 @@ try:
     HAS_SHADE = True
 except ImportError:
     HAS_SHADE = False
+
+
+from distutils.version import StrictVersion
 
 
 def _can_update(subnet, module, cloud):
@@ -256,6 +265,7 @@ def main():
         host_routes=dict(default=None, type='list'),
         ipv6_ra_mode=dict(default=None, choice=ipv6_mode_choices),
         ipv6_address_mode=dict(default=None, choice=ipv6_mode_choices),
+        use_default_subnetpool=dict(default=False, type='bool'),
         state=dict(default='present', choices=['absent', 'present']),
         project=dict(default=None)
     )
@@ -282,13 +292,21 @@ def main():
     host_routes = module.params['host_routes']
     ipv6_ra_mode = module.params['ipv6_ra_mode']
     ipv6_a_mode = module.params['ipv6_address_mode']
+    use_default_subnetpool = module.params['use_default_subnetpool']
     project = module.params.pop('project')
+
+    if (use_default_subnetpool and
+            StrictVersion(shade.__version__) < StrictVersion('1.16.0')):
+        module.fail_json(msg="To utilize use_default_subnetpool, the installed"
+                             " version of the shade library MUST be >=1.16.0")
 
     # Check for required parameters when state == 'present'
     if state == 'present':
-        for p in ['network_name', 'cidr']:
-            if not module.params[p]:
-                module.fail_json(msg='%s required with present state' % p)
+        if not module.params['network_name']:
+            module.fail_json(msg='network_name required with present state')
+        if not module.params['cidr'] and not use_default_subnetpool:
+            module.fail_json(msg='cidr or use_default_subnetpool required '
+                                 'with present state')
 
     if pool_start and pool_end:
         pool = [dict(start=pool_start, end=pool_end)]
@@ -320,18 +338,20 @@ def main():
 
         if state == 'present':
             if not subnet:
-                subnet = cloud.create_subnet(network_name, cidr,
-                                             ip_version=ip_version,
-                                             enable_dhcp=enable_dhcp,
-                                             subnet_name=subnet_name,
-                                             gateway_ip=gateway_ip,
-                                             disable_gateway_ip=no_gateway_ip,
-                                             dns_nameservers=dns,
-                                             allocation_pools=pool,
-                                             host_routes=host_routes,
-                                             ipv6_ra_mode=ipv6_ra_mode,
-                                             ipv6_address_mode=ipv6_a_mode,
-                                             tenant_id=project_id)
+                subnet = cloud.create_subnet(
+                    network_name, cidr,
+                    ip_version=ip_version,
+                    enable_dhcp=enable_dhcp,
+                    subnet_name=subnet_name,
+                    gateway_ip=gateway_ip,
+                    disable_gateway_ip=no_gateway_ip,
+                    dns_nameservers=dns,
+                    allocation_pools=pool,
+                    host_routes=host_routes,
+                    ipv6_ra_mode=ipv6_ra_mode,
+                    ipv6_address_mode=ipv6_a_mode,
+                    use_default_subnetpool=use_default_subnetpool,
+                    tenant_id=project_id)
                 changed = True
             else:
                 if _needs_update(subnet, module, cloud):
