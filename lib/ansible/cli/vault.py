@@ -234,7 +234,7 @@ class VaultCLI(CLI):
         # use any leftover args as strings to encrypt
         # Try to match args up to --name options
         if hasattr(self.options, 'encrypt_string_names') and self.options.encrypt_string_names:
-            name_and_text_list = zip(self.options.encrypt_string_names, args)
+            name_and_text_list = list(zip(self.options.encrypt_string_names, args))
 
             # Some but not enough --name's to name each var
             if len(args) > len(name_and_text_list):
