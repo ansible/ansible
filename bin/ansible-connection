@@ -112,12 +112,14 @@ def recv_data(s):
 class Server():
 
     def __init__(self, path, play_context):
+        display.vvvv("starting new persistent socket with path %s" % path, play_context.remote_addr)
+
         self.path = path
         self.play_context = play_context
 
         self._start_time = datetime.datetime.now()
 
-        display.vvv("using connection %s" % self.play_context.connection, play_context.remote_addr)
+        display.vvv("using connection plugin %s" % self.play_context.connection, play_context.remote_addr)
 
         self.conn = connection_loader.get(play_context.connection, play_context, sys.stdin)
         self.conn._connect()
@@ -160,6 +162,7 @@ class Server():
                 signal.alarm(C.PERSISTENT_CONNECT_TIMEOUT)
                 try:
                     (s, addr) = self.socket.accept()
+                    display.vvvv('incoming request accepted on persistent socket', self.play_context.remote_addr)
                     # clear the alarm
                     # FIXME: potential race condition here between the accept and
                     #        time to this call.
@@ -171,12 +174,14 @@ class Server():
                     data = recv_data(s)
                     if not data:
                         break
+                    display.vvvv("received data on socket with len %s" % len(data), self.play_context.remote_addr)
 
                     signal.alarm(C.DEFAULT_TIMEOUT)
 
                     rc = 255
                     try:
                         if data.startswith(b'EXEC: '):
+                            display.vvvv("socket operation is EXEC", self.play_context.remote_addr)
                             cmd = data.split(b'EXEC: ')[1]
                             (rc, stdout, stderr) = self.conn.exec_command(cmd)
                         elif data.startswith(b'PUT: ') or data.startswith(b'FETCH: '):
@@ -184,13 +189,16 @@ class Server():
                             stdout = stderr = ''
                             try:
                                 if op == 'FETCH:':
+                                    display.vvvv("socket operation is FETCH", self.play_context.remote_addr)
                                     self.conn.fetch_file(src, dst)
                                 elif op == 'PUT:':
+                                    display.vvvv("socket operation is PUT", self.play_context.remote_addr)
                                     self.conn.put_file(src, dst)
                                 rc = 0
                             except:
                                 pass
                         elif data.startswith(b'CONTEXT: '):
+                            display.vvvv("socket operation is CONTEXT", self.play_context.remote_addr)
                             pc_data = data.split(b'CONTEXT: ')[1]
 
                             src = StringIO(pc_data)
@@ -203,6 +211,7 @@ class Server():
                             self.dispatch(self.conn, 'update_play_context', pc)
                             continue
                         else:
+                            display.vvvv("socket operation is UNKNOWN", self.play_context.remote_addr)
                             stdout = ''
                             stderr = 'Invalid action specified'
                     except:
@@ -211,12 +220,14 @@ class Server():
 
                     signal.alarm(0)
 
+                    display.vvvv("socket operation completed with rc %s" % rc, self.play_context.remote_addr)
+
                     send_data(s, to_bytes(str(rc)))
                     send_data(s, to_bytes(stdout))
                     send_data(s, to_bytes(stderr))
                 s.close()
         except Exception as e:
-            display.debug(traceback.format_exc())
+            display.vvvv(traceback.format_exc())
         finally:
             # when done, close the connection properly and cleanup
             # the socket file so it can be recreated
