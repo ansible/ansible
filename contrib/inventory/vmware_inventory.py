@@ -685,12 +685,15 @@ class VMWareInventory(object):
                 if self.lowerkeys:
                     method = method.lower()
                 if level + 1 <= self.maxlevel:
-                    rdata[method] = self._process_object_types(
-                        methodToCall,
-                        thisvm=thisvm,
-                        inkey=inkey + '.' + method,
-                        level=(level + 1)
-                    )
+                    try:
+                        rdata[method] = self._process_object_types(
+                            methodToCall,
+                            thisvm=thisvm,
+                            inkey=inkey + '.' + method,
+                            level=(level + 1)
+                        )
+                    except vim.fault.NoPermission:
+                        self.debugl("Skipping method %s (NoPermission)" % method)
         else:
             pass
 
