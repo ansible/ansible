@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
+ANSIBLE_METADATA = {'status': ['deprecated'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
@@ -26,6 +26,7 @@ version_added: "2.1"
 author: "Cumulus Networks (@CumulusNetworks)"
 short_description: Configures a front panel port, loopback or
                   management port on Cumulus Linux.
+deprecated: Deprecated in 2.3. Use M(nclu) instead.
 description:
     - Configures a front panel, sub-interface, SVI, management or loopback port
       on a Cumulus Linux switch. For bridge ports use the cl_bridge module. For

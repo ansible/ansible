@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
+ANSIBLE_METADATA = {'status': ['deprecated'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
@@ -25,6 +25,7 @@ module: cl_ports
 version_added: "2.1"
 author: "Cumulus Networks (@CumulusNetworks)"
 short_description: Configure Cumulus Switch port attributes (ports.conf)
+deprecated: Deprecated in 2.3. Use M(nclu) instead.
 description:
     - Set the initial port attribute defined in the Cumulus Linux ports.conf,
       file. This module does not do any error checking at the moment. Be careful
