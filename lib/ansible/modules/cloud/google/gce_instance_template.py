@@ -203,6 +203,9 @@ EXAMPLES = '''
         service_account_email: "{{ service_account_email }}"
 '''
 
+RETURN = '''
+'''
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.gce import gce_connect
 
