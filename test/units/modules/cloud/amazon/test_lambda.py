@@ -100,8 +100,8 @@ def test_update_lambda_if_config_changed(monkeypatch):
     call_module()
 
     #guard against calling other than for a lambda connection (e.g. IAM)
-    fake_boto3_conn.assert_called_once()
-    fake_lambda_connection.update_function_configuration.assert_called_once()
+    assert(len(fake_boto3_conn.mock_calls) == 1)
+    assert(len(fake_lambda_connection.update_function_configuration.mock_calls) == 1)
 
 def test_update_lambda_if_only_one_config_item_changed(monkeypatch):
 
@@ -126,8 +126,8 @@ def test_update_lambda_if_only_one_config_item_changed(monkeypatch):
     call_module()
 
     #guard against calling other than for a lambda connection (e.g. IAM)
-    fake_boto3_conn.assert_called_once()
-    fake_lambda_connection.update_function_configuration.assert_called_once()
+    assert(len(fake_boto3_conn.mock_calls) == 1)
+    assert(len(fake_lambda_connection.update_function_configuration.mock_calls) == 1)
 
 def test_dont_update_lambda_if_nothing_changed(monkeypatch):
 
@@ -152,8 +152,8 @@ def test_dont_update_lambda_if_nothing_changed(monkeypatch):
     call_module()
 
     #guard against calling other than for a lambda connection (e.g. IAM)
-    fake_boto3_conn.assert_called_once()
-    fake_lambda_connection.update_function_configuration.assert_not_called()
+    assert(len(fake_boto3_conn.mock_calls) == 1)
+    assert(len(fake_lambda_connection.update_function_configuration.mock_calls) == 0)
 
 def test_warn_region_not_specified():
 
@@ -186,5 +186,5 @@ def test_warn_region_not_specified():
 
     call_module()
 
-    fake_fail_json.assert_called_once()
+    assert(len(fake_fail_json.mock_calls) == 1)
 
