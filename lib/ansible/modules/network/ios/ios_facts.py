@@ -222,10 +222,12 @@ class Hardware(FactsBase):
 
         data = self.responses[1]
         if data:
-            match = re.findall(r'\s(\d+)\s', data)
+            processor_line = [l for l in data.splitlines()
+                              if 'Processor' in l].pop()
+            match = re.findall(r'\s(\d+)\s', processor_line)
             if match:
                 self.facts['memtotal_mb'] = int(match[0]) / 1024
-                self.facts['memfree_mb'] = int(match[1]) / 1024
+                self.facts['memfree_mb'] = int(match[3]) / 1024
 
     def parse_filesystems(self, data):
         return re.findall(r'^Directory of (\S+)/', data, re.M)
