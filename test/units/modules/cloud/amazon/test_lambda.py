@@ -23,22 +23,14 @@ from __future__ import (absolute_import, division, print_function)
 from nose.plugins.skip import SkipTest
 import unittest
 import pytest
-import os
 import json
 import copy
-#from ansible.errors import AnsibleModuleExit
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils import basic
-
 from ansible.compat.tests.mock import Mock, patch
-
-
-try:
-    import boto3
-    import botocore
-    from moto import mock_lambda
-except ImportError:
-    raise SkipTest("test_ec2_asg.py requires the `boto3`, `botocore`, and `moto` modules")
+from ansible.module_utils.ec2 import HAS_BOTO3
+if not HAS_BOTO3:
+    raise SkipTest("test_ec2_asg.py requires the `boto3`, and `botocore` modules")
 
 #lambda is a keyword so we have to hack this.
 _temp = __import__("ansible.modules.cloud.amazon.lambda")
@@ -47,12 +39,6 @@ lda=getattr(_temp.modules.cloud.amazon,"lambda")
 
 
 exit_return_dict={}
-
-def fake_exit_json(self,**kwargs):
-    """ store the kwargs given to exit_json rather than putting them out to stdout"""
-    global exit_return_dict
-    exit_return_dict=kwargs
-    sys.exit(0)
 
 def set_module_args(args):
     args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
@@ -75,15 +61,15 @@ two_change_function_config=copy.copy(one_change_function_config)
 two_change_function_config['Role']='arn:aws:iam::987654321012:role/lambda_advanced_execution'
 
 base_module_args={
-        "region": "us-west-1",
-        "name": "lambda_name",
-        "state": "present",
-        "zip_file": "test/units/modules/cloud/amazon/fixtures/thezip.zip",
-        "runtime": 'python2.7',
-        "role": 'arn:aws:iam::987654321012:role/lambda_basic_execution',
-        "memory_size": 128,
-        "timeout" : 3,
-        "handler": 'lambda_python.my_handler'
+    "region": "us-west-1",
+    "name": "lambda_name",
+    "state": "present",
+    "zip_file": "test/units/modules/cloud/amazon/fixtures/thezip.zip",
+    "runtime": 'python2.7',
+    "role": 'arn:aws:iam::987654321012:role/lambda_basic_execution',
+    "memory_size": 128,
+    "timeout" : 3,
+    "handler": 'lambda_python.my_handler'
 }
 
 fake_lambda_connection = Mock()
@@ -108,7 +94,7 @@ def test_update_lambda_if_config_changed(monkeypatch):
     set_module_args(base_module_args)
     @patch("ansible.modules.cloud.amazon.lambda.boto3_conn", fake_boto3_conn)
     def call_module():
-        with pytest.raises(SystemExit) as exc:
+        with pytest.raises(SystemExit):
             lda.main()
 
     call_module()
@@ -134,7 +120,7 @@ def test_update_lambda_if_only_one_config_item_changed(monkeypatch):
 
     @patch("ansible.modules.cloud.amazon.lambda.boto3_conn", fake_boto3_conn)
     def call_module():
-        with pytest.raises(SystemExit) as exc:
+        with pytest.raises(SystemExit):
             lda.main()
 
     call_module()
@@ -160,7 +146,7 @@ def test_dont_update_lambda_if_nothing_changed(monkeypatch):
 
     @patch("ansible.modules.cloud.amazon.lambda.boto3_conn", fake_boto3_conn)
     def call_module():
-        with pytest.raises(SystemExit) as exc:
+        with pytest.raises(SystemExit):
             lda.main()
 
     call_module()
@@ -169,15 +155,13 @@ def test_dont_update_lambda_if_nothing_changed(monkeypatch):
     fake_boto3_conn.assert_called_once()
     fake_lambda_connection.update_function_configuration.assert_not_called()
 
-
-@mock_lambda
 def test_warn_region_not_specified():
 
     set_module_args({
         "name": "lambda_name",
         "state": "present",
-# Module is called without a region causing error 
-#        "region": "us-east-1",
+        # Module is called without a region causing error
+        # "region": "us-east-1",
         "zip_file": "test/units/modules/cloud/amazon/fixtures/thezip.zip",
         "runtime": 'python2.7',
         "role": 'arn:aws:iam::987654321012:role/lambda_basic_execution',
@@ -193,6 +177,7 @@ def test_warn_region_not_specified():
                 raise(SystemExit("Module failed without message"))
 
     fake_fail_json=Mock(side_effect=side_effect)
+
     @patch("ansible.module_utils.basic.AnsibleModule.fail_json", fake_fail_json)
     def call_module():
         with pytest.raises(SystemExit) as e:
