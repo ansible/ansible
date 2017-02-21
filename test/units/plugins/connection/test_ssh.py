@@ -25,8 +25,6 @@ from io import StringIO
 
 import pytest
 
-from contextlib import contextmanager
-
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, PropertyMock
 
@@ -37,58 +35,6 @@ from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNo
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ssh
 from ansible.module_utils._text import to_bytes
-
-
-@contextmanager
-def mock_run():
-    """Callers will likely need to still set the following lines themselves:
-
-            mock_popen_res.stdout.read.side_effect = [b'stdout', b'']
-            mock_popen_res.stderr.read.side_effect = [b'']
-            type(mock_popen_res).returncode = PropertyMock(side_effect=[0] * 4)
-            mock_Popen.return_value = mock_popen_res
-            res = conn.exec_command('ssh', 'some data')
-    """
-
-    mock_select = patch('select.select').start()
-    mock_fcntl = patch('fcntl.fcntl').start()
-    mock_oswrite = patch('os.write').start()
-    mock_osclose = patch('os.close').start()
-    mock_openpty = patch('pty.openpty').start()
-    mock_Popen = patch('subprocess.Popen').start()
-
-    pc = PlayContext()
-    new_stdin = StringIO()
-
-    conn = ssh.Connection(pc, new_stdin)
-    conn._send_initial_data = MagicMock()
-    conn._terminate_process = MagicMock()
-    conn.sshpass_pipe = [MagicMock(), MagicMock()]
-
-    mock_popen_res = MagicMock()
-    mock_popen_res.poll = MagicMock()
-    mock_popen_res.wait = MagicMock()
-    mock_popen_res.stdin = MagicMock()
-    mock_popen_res.stdin.fileno.return_value = 1000
-    mock_popen_res.stdout = MagicMock()
-    mock_popen_res.stdout.fileno.return_value = 1001
-    mock_popen_res.stderr = MagicMock()
-    mock_popen_res.stderr.fileno.return_value = 1002
-    mock_Popen.return_value = mock_popen_res
-
-    def _mock_select(rlist, wlist, elist, timeout=None):
-        rvals = []
-        if mock_popen_res.stdout in rlist:
-            rvals.append(mock_popen_res.stdout)
-        if mock_popen_res.stderr in rlist:
-            rvals.append(mock_popen_res.stderr)
-        return (rvals, [], [])
-
-    mock_select.side_effect = _mock_select
-
-    yield (conn, pc, mock_Popen, mock_popen_res, mock_openpty)
-
-    patch.stopall()
 
 
 class TestConnectionBaseClass(unittest.TestCase):
@@ -139,54 +85,6 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         res, stdout, stderr = conn.exec_command('ssh')
         res, stdout, stderr = conn.exec_command('ssh', 'this is some data')
-
-    def test_plugins_connection_ssh__run(self):
-        with mock_run() as (conn, pc, mock_Popen, mock_popen_res, mock_openpty):
-
-            mock_popen_res.stdout.read.side_effect = [b"some data", b""]
-            mock_popen_res.stderr.read.side_effect = [b""]
-            type(mock_popen_res).returncode = PropertyMock(side_effect=[0] * 4)
-            conn._run("ssh", "this is input data")
-
-            # test with a password set to trigger the sshpass write
-            pc.password = '12345'
-            mock_popen_res.stdout.read.side_effect = [b"some data", b"", b""]
-            mock_popen_res.stderr.read.side_effect = [b""]
-            type(mock_popen_res).returncode = PropertyMock(side_effect=[0] * 4)
-            conn._run(["ssh", "is", "a", "cmd"], "this is more data")
-
-            # test with password prompting enabled
-            pc.password = ''
-            pc.prompt = 'prompt'
-            mock_popen_res.stdout.read.side_effect = [b"prompt", b"", b""]
-            mock_popen_res.stderr.read.side_effect = [b""]
-            type(mock_popen_res).returncode = PropertyMock(side_effect=[0] * 4)
-            conn._run("ssh", "this is input data")
-
-            # test with some become settings
-            pc.prompt = ''
-            pc.become = True
-            pc.success_key = 'BECOME-SUCCESS-abcdefg'
-            pc.become_method = 'sudo'
-            mock_popen_res.stdout.read.side_effect = [b"some data", b"", b""]
-            mock_popen_res.stderr.read.side_effect = [b""]
-            type(mock_popen_res).returncode = PropertyMock(side_effect=[0] * 4)
-            conn._run("ssh", "this is input data")
-
-            # simulate no data input
-            mock_openpty.return_value = (98, 99)
-            mock_popen_res.stdout.read.side_effect = [b"some data", b"", b""]
-            mock_popen_res.stderr.read.side_effect = [b""]
-            type(mock_popen_res).returncode = PropertyMock(side_effect=[0] * 4)
-            conn._run("ssh", "")
-
-            # simulate no data input but Popen using new pty's fails
-            mock_Popen.return_value = None
-            mock_Popen.side_effect = [OSError(), mock_popen_res]
-            mock_popen_res.stdout.read.side_effect = [b"some data", b"", b""]
-            mock_popen_res.stderr.read.side_effect = [b""]
-            type(mock_popen_res).returncode = PropertyMock(side_effect=[0] * 4)
-            conn._run("ssh", "")
 
     def test_plugins_connection_ssh__examine_output(self):
         pc = PlayContext()
@@ -296,54 +194,6 @@ class TestConnectionBaseClass(unittest.TestCase):
         self.assertTrue(conn._flags['become_nopasswd_error'])
 
     @patch('time.sleep')
-    def test_plugins_connection_ssh_exec_command_retries(self, mock_sleep):
-        C.ANSIBLE_SSH_RETRIES = 9
-
-        # test a regular, successful execution
-        with mock_run() as (conn, pc, mock_Popen, mock_popen_res, mock_openpty):
-            conn._build_command = MagicMock()
-            conn._build_command.return_value = 'ssh'
-
-            mock_popen_res.stdout.read.side_effect = [b'stdout', b'']
-            mock_popen_res.stderr.read.side_effect = [b'']
-            type(mock_popen_res).returncode = PropertyMock(side_effect=[0] * 4)
-            mock_Popen.return_value = mock_popen_res
-            res = conn.exec_command('ssh', 'some data')
-            self.assertEquals(res, (0, b'stdout', b''))
-            self.assertEquals(res, (0, b'stdout', b''), msg='exec_command did not return the expected data')
-
-        # test a retry, followed by success
-        with mock_run() as (conn, pc, mock_Popen, mock_popen_res, mock_openpty):
-            conn._build_command = MagicMock()
-            conn._build_command.return_value = 'ssh'
-
-            mock_popen_res.stdout.read.side_effect = [b"", b"stdout", b""]
-            mock_popen_res.stderr.read.side_effect = [b"", b'']
-            type(mock_popen_res).returncode = PropertyMock(side_effect=[255] * 3 + [0] * 4)
-            mock_Popen.return_value = mock_popen_res
-            res = conn.exec_command('ssh', 'some data')
-            self.assertEquals(res, (0, b'stdout', b''), msg='exec_command did not return the expected data')
-
-        # test multiple failures
-        with mock_run() as (conn, pc, mock_Popen, mock_popen_res, mock_openpty):
-            conn._build_command = MagicMock()
-            conn._build_command.return_value = 'ssh'
-
-            mock_popen_res.stdout.read.side_effect = [b""] * 10
-            mock_popen_res.stderr.read.side_effect = [b""] * 10
-            type(mock_popen_res).returncode = PropertyMock(side_effect=[255] * 30)
-            mock_Popen.return_value = mock_popen_res
-            self.assertRaises(AnsibleConnectionFailure, conn.exec_command, 'ssh', 'some data')
-
-        # test other failure from exec_command
-        with mock_run() as (conn, pc, mock_Popen, mock_popen_res, mock_openpty):
-            conn._build_command = MagicMock()
-            conn._build_command.return_value = 'ssh'
-
-            mock_Popen.side_effect = [Exception('bad')] * 10
-            self.assertRaises(Exception, conn.exec_command, 'ssh', 'some data')
-
-    @patch('time.sleep')
     @patch('os.path.exists')
     def test_plugins_connection_ssh_put_file(self, mock_ospe, mock_sleep):
         pc = PlayContext()
@@ -401,20 +251,6 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._run.return_value = (0, 'stdout', '')
         self.assertRaises(AnsibleFileNotFound, conn.put_file, '/path/to/bad/file', '/remote/path/to/file')
 
-        # test a retry, followed by success
-        with mock_run() as (conn, pc, mock_Popen, mock_popen_res, mock_openpty):
-            with patch('ansible.plugins.connection.ssh.os') as os_mock:
-                os_mock.path.exists.return_value = True
-                conn._build_command = MagicMock()
-                conn._build_command.return_value = 'ssh'
-
-                mock_popen_res.stdout.read.side_effect = [b"", b"stdout", b""]
-                mock_popen_res.stderr.read.side_effect = [b"", b'']
-                type(mock_popen_res).returncode = PropertyMock(side_effect=[255] * 3 + [0] * 4)
-                mock_Popen.return_value = mock_popen_res
-                res = conn.put_file('/path/to/in/file', '/path/to/dest/file')
-                self.assertEquals(res, (0, b'stdout', b''), msg='put_file did not return the expected response')
-
     @patch('time.sleep')
     def test_plugins_connection_ssh_fetch_file(self, mock_sleep):
         pc = PlayContext()
@@ -465,19 +301,6 @@ class TestConnectionBaseClass(unittest.TestCase):
         # test that a non-zero rc raises an error
         conn._run.return_value = (1, 'stdout', 'some errors')
         self.assertRaises(AnsibleError, conn.fetch_file, '/path/to/bad/file', '/remote/path/to/file')
-
-        # test a retry, followed by success
-        with mock_run() as (conn, pc, mock_Popen, mock_popen_res, mock_openpty):
-            conn._build_command = MagicMock()
-            conn._build_command.return_value = 'ssh'
-
-            mock_popen_res.stdout.read.side_effect = [b"", b"stdout", b""]
-            mock_popen_res.stderr.read.side_effect = [b"", b'']
-            type(mock_popen_res).returncode = PropertyMock(side_effect=[255] * 3 + [0] * 4)
-            mock_Popen.return_value = mock_popen_res
-
-            res = conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
-            self.assertEquals(res, (0, b'stdout', b''), msg='fetch_file did not return the expected response')
 
 
 class MockSelector(object):
@@ -690,3 +513,120 @@ class TestSSHConnectionRun(object):
         assert self.mock_selector.register.called is True
         assert self.mock_selector.register.call_count == 2
         assert self.conn._send_initial_data.called is False
+
+
+@pytest.mark.usefixtures('mock_run_env')
+class TestSSHConnectionRetries(object):
+    def test_retry_then_success(self):
+        self.mock_popen_res.stdout.read.side_effect = [b"", b"my_stdout\n", b"second_line"]
+        self.mock_popen_res.stderr.read.side_effect = [b"", b"my_stderr"]
+        type(self.mock_popen_res).returncode = PropertyMock(side_effect=[255] * 3 + [0] * 4)
+
+        self.mock_selector.select.side_effect = [
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
+            [],
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
+            []
+        ]
+        self.mock_selector.get_map.side_effect = lambda: True
+
+        self.conn._build_command = MagicMock()
+        self.conn._build_command.return_value = 'ssh'
+
+        return_code, b_stdout, b_stderr = self.conn.exec_command('ssh', 'some data')
+        assert return_code == 0
+        assert b_stdout == b'my_stdout\nsecond_line'
+        assert b_stderr == b'my_stderr'
+
+    @patch('time.sleep')
+    def test_multiple_failures(self, mock_sleep):
+        C.ANSIBLE_SSH_RETRIES = 9
+
+        self.mock_popen_res.stdout.read.side_effect = [b""] * 11
+        self.mock_popen_res.stderr.read.side_effect = [b""] * 11
+        type(self.mock_popen_res).returncode = PropertyMock(side_effect=[255] * 30)
+
+        self.mock_selector.select.side_effect = [
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
+            [],
+        ] * 10
+        self.mock_selector.get_map.side_effect = lambda: True
+
+        self.conn._build_command = MagicMock()
+        self.conn._build_command.return_value = 'ssh'
+
+        pytest.raises(AnsibleConnectionFailure, self.conn.exec_command, 'ssh', 'some data')
+        assert self.mock_popen.call_count == 10
+
+    @patch('time.sleep')
+    def test_abitrary_exceptions(self, mock_sleep):
+        C.ANSIBLE_SSH_RETRIES = 9
+
+        self.conn._build_command = MagicMock()
+        self.conn._build_command.return_value = 'ssh'
+
+        self.mock_popen.side_effect = [Exception('bad')] * 10
+        pytest.raises(Exception, self.conn.exec_command, 'ssh', 'some data')
+        assert self.mock_popen.call_count == 10
+
+    @patch('time.sleep')
+    @patch('ansible.plugins.connection.ssh.os')
+    def test_put_file_retries(self, os_mock, time_mock):
+        os_mock.path.exists.return_value = True
+
+        self.mock_popen_res.stdout.read.side_effect = [b"", b"my_stdout\n", b"second_line"]
+        self.mock_popen_res.stderr.read.side_effect = [b"", b"my_stderr"]
+        type(self.mock_popen_res).returncode = PropertyMock(side_effect=[255] * 3 + [0] * 4)
+
+        self.mock_selector.select.side_effect = [
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
+            [],
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
+            []
+        ]
+        self.mock_selector.get_map.side_effect = lambda: True
+
+        self.conn._build_command = MagicMock()
+        self.conn._build_command.return_value = 'ssh'
+
+        return_code, b_stdout, b_stderr = self.conn.put_file('/path/to/in/file', '/path/to/dest/file')
+        assert return_code == 0
+        assert b_stdout == b"my_stdout\nsecond_line"
+        assert b_stderr == b"my_stderr"
+        assert self.mock_popen.call_count == 2
+
+    @patch('time.sleep')
+    @patch('ansible.plugins.connection.ssh.os')
+    def test_fetch_file_retries(self, os_mock, time_mock):
+        os_mock.path.exists.return_value = True
+
+        self.mock_popen_res.stdout.read.side_effect = [b"", b"my_stdout\n", b"second_line"]
+        self.mock_popen_res.stderr.read.side_effect = [b"", b"my_stderr"]
+        type(self.mock_popen_res).returncode = PropertyMock(side_effect=[255] * 3 + [0] * 4)
+
+        self.mock_selector.select.side_effect = [
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
+            [],
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
+            [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
+            []
+        ]
+        self.mock_selector.get_map.side_effect = lambda: True
+
+        self.conn._build_command = MagicMock()
+        self.conn._build_command.return_value = 'ssh'
+
+        return_code, b_stdout, b_stderr = self.conn.fetch_file('/path/to/in/file', '/path/to/dest/file')
+        assert return_code == 0
+        assert b_stdout == b"my_stdout\nsecond_line"
+        assert b_stderr == b"my_stderr"
+        assert self.mock_popen.call_count == 2
