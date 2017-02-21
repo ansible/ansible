@@ -179,6 +179,9 @@ class PlayIterator:
         if gather_timeout:
             setup_task.args['gather_timeout'] = gather_timeout
         setup_task.set_loader(self._play._loader)
+        # short circuit fact gathering if the entire playbook is conditional
+        if self._play._included_conditional is not None:
+            setup_task.when = self._play._included_conditional[:]
         setup_block.block = [setup_task]
 
         setup_block = setup_block.filter_tagged_tasks(play_context, all_vars)
