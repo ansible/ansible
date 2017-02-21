@@ -87,7 +87,8 @@ options:
         default: Null
         choices: [key-chain, key-id, keyed-md5 or keyed-sha1 or meticulous-keyed-md5 or meticulous-keyed-sha1 or simple, Interval value in milliseconds,
          Destination IP (Both IPV4 and IPV6),in or out, MAC address, Time-out value in seconds, class-id, request, Specify the IPv4 address,
-         OSPF area ID as a decimal value, OSPF area ID in IP address format, anycast or secondary, ethernet, vlan, MAC (hardware) address in HHHH.HHHH.HHHH format,
+         OSPF area ID as a decimal value, OSPF area ID in IP address format, anycast or secondary, ethernet, vlan, 
+         MAC (hardware) address in HHHH.HHHH.HHHH format,
          Load interval delay in seconds, Specify policy input name, input or output, cost, port-priority, BFD minimum receive interval,source-interface]
     interfaceArg5:
         description:
