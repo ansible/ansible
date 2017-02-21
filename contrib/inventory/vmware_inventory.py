@@ -628,7 +628,10 @@ class VMWareInventory(object):
         elif type(vobj) in self.vimTable:
             rdata = {}
             for key in self.vimTable[type(vobj)]:
-                rdata[key] = getattr(vobj, key)
+                try:
+                    rdata[key] = getattr(vobj, key)
+                except Exception as e:
+                    self.debugl(e)
 
         elif issubclass(type(vobj), str) or isinstance(vobj, str):
             if vobj.isalnum():
