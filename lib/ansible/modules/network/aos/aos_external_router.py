@@ -69,7 +69,7 @@ EXAMPLES = '''
 
 - name: "Create an External Router"
   aos_external_router:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     name: "my-external-router"
     loopback: 10.0.0.1
     asn: 65000
@@ -77,26 +77,26 @@ EXAMPLES = '''
 
 - name: "Check if an External Router exist by ID"
   aos_external_router:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     name: "45ab26fc-c2ed-4307-b330-0870488fa13e"
     state: present
 
 - name: "Delete an External Router by name"
   aos_external_router:
-    session: "{{ session }}"
+    session: "{{ aos_session }}"
     name: "my-external-router"
     state: absent
 
 - name: "Delete an External Router by id"
   aos_external_router:
-    session: "{{ session }}"
+    session: "{{ aos_session }}"
     id: "45ab26fc-c2ed-4307-b330-0870488fa13e"
     state: absent
 
 # Save an External Router to a file
 - name: "Access External Router 1/3"
   aos_external_router:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     name: "my-external-router"
     state: present
   register: external_router
@@ -113,13 +113,13 @@ EXAMPLES = '''
 
 - name: "Load External Router from a JSON file"
   aos_external_router:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     content: "{{ lookup('file', 'resources/external_router_saved.json') }}"
     state: present
 
 - name: "Load External Router from a YAML file"
   aos_external_router:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     content: "{{ lookup('file', 'resources/external_router_saved.yaml') }}"
     state: present
 '''

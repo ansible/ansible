@@ -61,21 +61,21 @@ EXAMPLES = '''
 
 - name: "Access Existing Virtual Network"
   aos_blueprint_virtnet:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     blueprint: "my-blueprint-l2"
     name: "my-virtual-network"
     state: present
 
 - name: "Delete Virtual Network with JSON File"
   aos_blueprint_virtnet:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     blueprint: "my-blueprint-l2"
     content: "{{ lookup('file', 'resources/virtual-network-02.json') }}"
     state: absent
 
 - name: "Create Virtual Network"
   aos_blueprint_virtnet:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     blueprint: "my-blueprint-l2"
     content: "{{ lookup('file', 'resources/virtual-network-02.json') }}"
     state: present

@@ -64,13 +64,13 @@ EXAMPLES = '''
 
 - name: "Delete a Rack Type by name"
   aos_rack_type:
-    session: "{{ session }}"
+    session: "{{ aos_session }}"
     name: "my-rack-type"
     state: absent
 
 - name: "Delete a Rack Type by id"
   aos_rack_type:
-    session: "{{ session }}"
+    session: "{{ aos_session }}"
     id: "45ab26fc-c2ed-4307-b330-0870488fa13e"
     state: absent
 
@@ -78,7 +78,7 @@ EXAMPLES = '''
 
 - name: "Access Rack Type 1/3"
   aos_rack_type:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     name: "my-rack-type"
     state: present
   register: rack_type
@@ -93,13 +93,13 @@ EXAMPLES = '''
 
 - name: "Load Rack Type from a JSON file"
   aos_rack_type:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     content: "{{ lookup('file', 'resources/rack_type_saved.json') }}"
     state: present
 
 - name: "Load Rack Type from a YAML file"
   aos_rack_type:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     content: "{{ lookup('file', 'resources/rack_type_saved.yaml') }}"
     state: present
 '''

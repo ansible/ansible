@@ -77,7 +77,7 @@ EXAMPLES = '''
 
 - name: Add Logical Device Maps information in a Blueprint
   aos_blueprint_param:
-    session: "{{session_ok}}"
+    session: "{{ aos_session }}"
     blueprint: "my-blueprint-l2"
     name: "logical_device_maps"
     value:
@@ -90,21 +90,21 @@ EXAMPLES = '''
 
 - name: Access Logical Device Maps information from a Blueprint
   aos_blueprint_param:
-    session: "{{session_ok}}"
+    session: "{{ aos_session }}"
     blueprint: "my-blueprint-l2"
     name: "logical_device_maps"
     state: present
 
 - name: Reset Logical Device Maps information in a Blueprint
   aos_blueprint_param:
-    session: "{{session_ok}}"
+    session: "{{ aos_session }}"
     blueprint: "my-blueprint-l2"
     name: "logical_device_maps"
     state: absent
 
 - name: Get list of all supported Params for a blueprint
   aos_blueprint_param:
-    session: "{{session_ok}}"
+    session: "{{ aos_session }}"
     blueprint: "my-blueprint-l2"
     get_param_list: yes
   register: params_list
@@ -112,7 +112,7 @@ EXAMPLES = '''
 
 - name: Add Resource Pools information in a Blueprint, by providing a param_map
   aos_blueprint_param:
-    session: "{{session_ok}}"
+    session: "{{ aos_session }}"
     blueprint: "my-blueprint-l2"
     name: "resource_pools"
     value:

@@ -63,31 +63,31 @@ EXAMPLES = '''
 
 - name: "Check if an Template exist by name"
   aos_template:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     name: "my-template"
     state: present
 
 - name: "Check if an Template exist by ID"
   aos_template:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     id: "45ab26fc-c2ed-4307-b330-0870488fa13e"
     state: present
 
 - name: "Delete an Template by name"
   aos_template:
-    session: "{{ session }}"
+    session: "{{ aos_session }}"
     name: "my-template"
     state: absent
 
 - name: "Delete an Template by id"
   aos_template:
-    session: "{{ session }}"
+    session: "{{ aos_session }}"
     id: "45ab26fc-c2ed-4307-b330-0870488fa13e"
     state: absent
 
 - name: "Access Template 1/3"
   aos_template:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     name: "my-template"
     state: present
   register: template
@@ -102,13 +102,13 @@ EXAMPLES = '''
 
 - name: "Load Template from File (Json)"
   aos_template:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     content: "{{ lookup('file', 'resources/template_saved.json') }}"
     state: present
 
 - name: "Load Template from File (yaml)"
   aos_template:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     content: "{{ lookup('file', 'resources/template_saved.yaml') }}"
     state: present
 '''
