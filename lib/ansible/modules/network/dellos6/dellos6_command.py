@@ -176,7 +176,6 @@ def main():
     module = NetworkModule(argument_spec=spec,
                            connect_on_load=False,
                            supports_check_mode=True)
-  
     commands = list(parse_commands(module))
     conditionals = module.params['wait_for'] or list()
 
