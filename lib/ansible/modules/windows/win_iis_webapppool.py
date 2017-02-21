@@ -65,30 +65,6 @@ EXAMPLES = r'''
   win_iis_webapppool:
     name: DefaultAppPool
 
-host | success >> {
-    "attributes": {},
-    "changed": false,
-    "info": {
-        "attributes": {
-            "CLRConfigFile": "",
-            "applicationPoolSid": "S-1-5-82-3006700770-424185619-1745488364-794895919-4004696415",
-            "autoStart": true,
-            "enable32BitAppOnWin64": false,
-            "enableConfigurationOverride": true,
-            "managedPipelineMode": "Classic",
-            "managedRuntimeLoader": "webengine4.dll",
-            "managedRuntimeVersion": "v4.0",
-            "name": "DefaultAppPool",
-            "passAnonymousToken": true,
-            "queueLength": 1000,
-            "startMode": "OnDemand",
-            "state": "Started"
-        },
-        "name": "DefaultAppPool",
-        "state": "Started"
-    }
-}
-
 - name: Create a new application pool in 'Started' state
   win_iis_webapppool:
     name: AppPool
