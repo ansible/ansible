@@ -152,7 +152,6 @@ class Connection(_Connection):
                 return
             return self.receive(obj)
         except (socket.timeout, AttributeError) as exc:
-            #display.debug(traceback.format_exc())
             display.vvv(traceback.format_exc())
             raise AnsibleConnectionFailure("timeout trying to send command: %s" % command.strip())
 
@@ -164,12 +163,15 @@ class Connection(_Connection):
 
     def _handle_prompt(self, resp, obj):
         """Matches the command prompt and responds"""
-        prompt = re.compile(obj['prompt'], re.I)
+        if not isinstance(obj['prompt'], list):
+            obj['prompt'] = [obj['prompt']]
+        prompts = [re.compile(r, re.I) for r in obj['prompt']]
         answer = obj['answer']
-        match = prompt.search(resp)
-        if match:
-            self._shell.sendall('%s\r' % answer)
-            return True
+        for regex in prompts:
+            match = regex.search(resp)
+            if match:
+                self._shell.sendall('%s\r' % answer)
+                return True
 
     def _sanitize(self, resp, obj=None):
         """Removes elements from the response before returning to the caller"""
