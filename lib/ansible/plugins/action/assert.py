@@ -50,7 +50,7 @@ class ActionModule(ActionBase):
         # the built in evaluate function. The when has already been evaluated
         # by this point, and is not used again, so we don't care about mangling
         # that value now
-        cond = Conditional(loader=self._loader)
+        cond = Conditional.from_loader(loader=self._loader)
         result['_ansible_verbose_always'] = True
         for that in thats:
             cond.when = [that]
