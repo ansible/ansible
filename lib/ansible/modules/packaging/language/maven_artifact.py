@@ -375,4 +375,4 @@ def main():
                      url_repository=repo, ignore_checksum=ignore_checksum, changed=True)
 
 if __name__ == '__main__':
-	main()
+    main()
