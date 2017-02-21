@@ -48,19 +48,27 @@ options:
     description:
        - Name of database contained on the instance.
     required: False
+<<<<<<< HEAD
   force_instance_delete:
     description:
        - To delete an instance, this argument must exist and be true (along with state being equal to absent).
     required: False
     default: False
   instance_display_name:
+=======
+  display_name:
+>>>>>>> 8ce1527... [GCE] Google Cloud Spanner module
     description:
        - Name of Instance to display.  If not specified, instance_id will be used instead.
     required: False
   node_count:
     description:
+<<<<<<< HEAD
        - Number of nodes in the instance.  If not specified while creating an instance,
          node_count will be set to 1.
+=======
+       - Number of nodes in the instance.  Default is 1.
+>>>>>>> 8ce1527... [GCE] Google Cloud Spanner module
     required: False
   state:
     description: State of the instance or database (absent, present). Applies to the most granular
@@ -129,9 +137,6 @@ try:
 except ImportError:
     HAS_PYTHON26 = False
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.gcp import check_min_pkg_version, get_google_cloud_credentials
-
 try:
     from google.cloud import spanner
     from google.gax.errors import GaxError
@@ -139,10 +144,12 @@ try:
 except ImportError as e:
     HAS_GOOGLE_CLOUD_SPANNER = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.gcp import check_min_pkg_version, get_google_cloud_credentials
+
 CLOUD_CLIENT = 'google-cloud-spanner'
 CLOUD_CLIENT_MINIMUM_VERSION = '0.23.0'
 CLOUD_CLIENT_USER_AGENT = 'ansible-spanner-0.1'
-
 
 def get_spanner_configuration_name(config_name, project_name):
     config_name = 'projects/%s/instanceConfigs/regional-%s' % (project_name,
@@ -155,7 +162,11 @@ def instance_update(instance):
     Call update method on spanner client.
 
     Note: A ValueError exception is thrown despite the client succeeding.
+<<<<<<< HEAD
     So, we validate the node_count and instance_display_name parameters and then
+=======
+    So, we validate the node_count and display_name parameters and then
+>>>>>>> 8ce1527... [GCE] Google Cloud Spanner module
     ignore the ValueError exception.
 
     :param instance: a Spanner instance object
