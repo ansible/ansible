@@ -182,7 +182,6 @@ lib/ansible/modules/packaging/os/opkg.py
 lib/ansible/modules/packaging/os/pacman.py
 lib/ansible/modules/packaging/os/rhn_register.py
 lib/ansible/modules/packaging/os/swdepot.py
-lib/ansible/modules/packaging/os/yum.py
 lib/ansible/modules/packaging/os/zypper.py
 lib/ansible/modules/source_control/github_hooks.py
 lib/ansible/modules/storage/netapp/netapp_e_amg.py
