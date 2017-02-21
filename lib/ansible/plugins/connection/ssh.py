@@ -712,14 +712,14 @@ class Connection(ConnectionBase):
                 if sftp_action == 'get':
                     # we pass sudoable=False to disable pty allocation, which
                     # would end up mixing stdout/stderr and screwing with newlines
-                    (returncode, stdout, stderr) = self._exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE), sudoable=False)
+                    (returncode, stdout, stderr) = self.exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE), sudoable=False)
                     out_file = open(to_bytes(out_path, errors='surrogate_or_strict'), 'wb+')
                     out_file.write(stdout)
                     out_file.close()
                 else:
                     in_data = open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb').read()
                     in_data = to_bytes(in_data, nonstring='passthru')
-                    (returncode, stdout, stderr) = self._exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), in_data=in_data)
+                    (returncode, stdout, stderr) = self.exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), in_data=in_data)
 
             # Check the return code and rollover to next method if failed
             if returncode == 0:
