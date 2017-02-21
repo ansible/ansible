@@ -37,7 +37,7 @@ This script can be run with the switches
 --datacenter, to restrict the nodes to a single datacenter
 --host to restrict the inventory to a single named node. (requires datacenter config)
 
-The configuration for this plugin is read from a consul.ini file located in the
+The configuration for this plugin is read from a consul_io.ini file located in the
 same directory as this inventory script. All config options in the config file
 are optional except the host and port, which must point to a valid agent or
 server running the http api. For more information on enabling the endpoint see.
@@ -420,9 +420,12 @@ class ConsulConfig(dict):
             return False
 
     def read_settings(self):
-        ''' Reads the settings from the consul.ini file '''
+        ''' Reads the settings from the consul_io.ini file (or consul.ini for backwards compatibility)'''
         config = ConfigParser.SafeConfigParser()
-        config.read(os.path.dirname(os.path.realpath(__file__)) + '/consul.ini')
+        if os.path.isfile(os.path.dirname(os.path.realpath(__file__)) + '/consul_io.ini'):
+            config.read(os.path.dirname(os.path.realpath(__file__)) + '/consul_io.ini')
+        else:
+            config.read(os.path.dirname(os.path.realpath(__file__)) + '/consul.ini')
 
         config_options = ['host', 'token', 'datacenter', 'servers_suffix',
                           'tags', 'kv_metadata', 'kv_groups', 'availability',
