@@ -142,7 +142,10 @@ def fq_list_names(partition,list_names):
 
 try:
     from f5.bigip import ManagementRoot as BigIpMgmt
+    from f5.bigip.contexts import BigIpTxContext
+
     from f5.bigiq import ManagementRoot as BigIqMgmt
+
     from f5.iworkflow import ManagementRoot as iWorkflowMgmt
     from icontrol.session import iControlUnexpectedHTTPError
     HAS_F5SDK = True
