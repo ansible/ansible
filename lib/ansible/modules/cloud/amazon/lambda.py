@@ -332,12 +332,13 @@ def main():
             func_kwargs.update({'MemorySize': memory_size})
         if (environment_variables is not None) and (current_config['Environment']['Variables'] != environment_variables):
             func_kwargs.update({'Environment':{'Variables': environment_variables}})
-        if dead_letter_arn:
+        if dead_letter_arn is not None:
             if current_config.get('DeadLetterConfig'):
                 if current_config['DeadLetterConfig']['TargetArn'] != dead_letter_arn:
                     func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
             else:
-                func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
+                if dead_letter_arn != "":
+                    func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
 
         # Check for unsupported mutation
         if current_config['Runtime'] != runtime:
