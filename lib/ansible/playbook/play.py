@@ -97,6 +97,7 @@ class Play(Base, Taggable, Become):
     def __init__(self):
         super(Play, self).__init__()
 
+        self._included_conditional = None
         self._included_path = None
         self._removed_hosts = []
         self.ROLE_CACHE = {}
@@ -330,5 +331,6 @@ class Play(Base, Taggable, Become):
     def copy(self):
         new_me = super(Play, self).copy()
         new_me.ROLE_CACHE = self.ROLE_CACHE.copy()
+        new_me._included_conditional = self._included_conditional
         new_me._included_path = self._included_path
         return new_me

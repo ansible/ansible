@@ -184,6 +184,9 @@ class PlayIterator:
         if fact_path:
             setup_task.args['fact_path'] = fact_path
         setup_task.set_loader(self._play._loader)
+        # short circuit fact gathering if the entire playbook is conditional
+        if self._play._included_conditional is not None:
+            setup_task.when = self._play._included_conditional[:]
         setup_block.block = [setup_task]
 
         setup_block = setup_block.filter_tagged_tasks(play_context, all_vars)

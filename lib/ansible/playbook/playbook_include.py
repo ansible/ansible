@@ -49,6 +49,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
 
         # import here to avoid a dependency loop
         from ansible.playbook import Playbook
+        from ansible.playbook.play import Play
 
         # first, we use the original parent method to correctly load the object
         # via the load_data/preprocess_data system we normally use for other
@@ -73,6 +74,11 @@ class PlaybookInclude(Base, Conditional, Taggable):
         # finally, update each loaded playbook entry with any variables specified
         # on the included playbook and/or any tags which may have been set
         for entry in pb._entries:
+
+            # conditional includes on a playbook need a marker to skip gathering
+            if new_obj.when and isinstance(entry, Play):
+                entry._included_conditional = new_obj.when[:]
+
             temp_vars = entry.vars.copy()
             temp_vars.update(new_obj.vars)
             param_tags = temp_vars.pop('tags', None)
