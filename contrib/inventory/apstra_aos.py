@@ -312,7 +312,7 @@ class AosInventory(object):
 
         # Save session information in variables of group all
         self.add_var_to_group('all', 'aos_session', aos.session)
-        
+
         # ----------------------------------------------------
         # Build the inventory
         #  2 modes are supported: device based or blueprint based
