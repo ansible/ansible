@@ -153,7 +153,7 @@ CODENAME = Malachite
         "result":{
             "distribution": "openSUSE Leap",
             "distribution_major_version": "42",
-            "distribution_release": "x86_64",
+            "distribution_release": "1",
             "os_family": "Suse",
             "distribution_version": "42.1",
         }
