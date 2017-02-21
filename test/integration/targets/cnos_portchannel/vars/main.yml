@@ -16,7 +16,7 @@ test_portchannel_data7:
 test_portchannel_data8:
   - {interfaceRange: 33, interfaceArg1: "lldp", interfaceArg2: "tlv-select", interfaceArg3: "max-frame-size"}
 test_portchannel_data9:
-  - {interfaceRange: 33, interfaceArg1: "load-interval", interfaceArg2: "counter", interfaceArg3: 2,interfaceArg4: 33 }
+  - {interfaceRange: 33, interfaceArg1: "load-interval", interfaceArg2: "counter", interfaceArg3: 2, interfaceArg4: 33 }
 test_portchannel_data10:
   - {interfaceRange: 33, interfaceArg1: "mac", interfaceArg2: "copp-system-acl-vlag-hc"}
 test_portchannel_data11:
