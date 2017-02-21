@@ -31,8 +31,7 @@ description:
 options:
   state:
     description:
-      - desired state of instance template
-    required: false
+      - The desired state for the instance template.
     default: "present"
     choices: ["present", "absent"]
   name:
@@ -42,76 +41,64 @@ options:
     default: null
   size:
     description:
-      - instance template size to use, use 'f1-micro' by default
-    required: false
+      - The desired machine type for the instance template.
     default: "f1-micro"
   source:
     description:
       - A source disk to attach to the instance.
-        Cannot specify both 'image' and 'source'.
-    required: false
+        Cannot specify both I(image) and I(source).
     default: null
   image:
     description:
       - The image to use to create the instance.
-        Cannot specify both 'image' and 'source'.
-    required: false
+        Cannot specify both both I(image) and I(source).
     default: null
   image_family:
     description:
       - The image family to use to create the instance.
-        Cannot specify both 'image' and 'source'.
-    required: false
+        If I(image) has been used I(image_family) is ignored.
+        Cannot specify both I(image) and I(source).
     default: null
   disk_type:
     description:
-      - Specify a pd-standard (default) disk or pd-ssd
+      - Specify a C(pd-standard) disk or C(pd-ssd)
         for an SSD disk.
-    required: false
     default: pd-standard
   disk_auto_delete:
     description:
       - Indicate that the boot disk should be
-        deleted when the Node is deleted. Set to
-        True by default.
-    required: false
+        deleted when the Node is deleted.
     default: true
   network:
     description:
       - The network to associate with the instance.
-    required: false
     default: "default"
   subnetwork:
     description:
       - The Subnetwork resource name for this instance.
-    required: false
     default: null
   can_ip_forward:
     description:
       - Set to True to allow instance to
         send/receive non-matching src/dst packets.
-    required: false
     default: false
   external_ip:
     description:
       - The external IP address to use.
-        If 'ephemeral' (default), a new non-static address will be
-        used.  If 'None', then no external address will
+        If C(ephemeral), a new non-static address will be
+        used.  If C(None), then no external address will
         be used.  To use an existing static IP address
         specify adress name.
-    required: false
     default: "ephemeral"
   service_account_email:
     description:
       - service account email
-    required: false
     default: null
   service_account_permissions:
     description:
       - service account permissions (see
         U(https://cloud.google.com/sdk/gcloud/reference/compute/instances/create),
         --scopes section for detailed information)
-    required: false
     default: null
     choices: [
       "bigquery", "cloud-platform", "compute-ro", "compute-rw",
@@ -124,28 +111,23 @@ options:
       - Defines whether the instance should be
         automatically restarted when it is
         terminated by Compute Engine.
-    required: false
     default: null
   preemptible:
     description:
       - Defines whether the instance is preemptible.
-    required: false
     default: null
   tags:
     description:
       - a comma-separated list of tags to associate with the instance
-    required: false
     default: null
   metadata:
     description:
       - a hash/dictionary of custom data for the instance;
         '{"key":"value", ...}'
-    required: false
     default: null
   description:
     description:
       - description of instance template
-    required: false
     default: null
   disks:
     description:
@@ -153,30 +135,25 @@ options:
         gives the name of the disk; alternatively, a dictionary value can
         define 'name' and 'mode' ('READ_ONLY' or 'READ_WRITE'). The first entry
         will be the boot disk (which must be READ_WRITE).
-    required: false
     default: null
   nic_gce_struct:
     description:
       - Support passing in the GCE-specific
         formatted networkInterfaces[] structure.
-    required: false
     default: null
   project_id:
     description:
       - your GCE project ID
-    required: false
     default: null
   pem_file:
     description:
       - path to the pem file associated with the service account email
         This option is deprecated. Use 'credentials_file'.
-    required: false
     default: null
   credentials_file:
     description:
       - path to the JSON file associated with the service account email
     default: null
-    required: false
 requirements:
     - "python >= 2.6"
     - "apache-libcloud >= 0.13.3, >= 0.17.0 if using JSON credentials,
@@ -188,13 +165,15 @@ author: "Gwenael Pellen (@GwenaelPellenArkeup) <gwenael.pellen@arkeup.com>"
 
 EXAMPLES = '''
 # Usage
-  name: my-test-instance-template
-  size: n1-standard-1
-  image_family: ubuntu-1604-lts
-  state: present
-  project_id: "your-project-name"
-  credentials_file: "/path/to/your-key.json"
-  service_account_email: "your-sa@your-project-name.iam.gserviceaccount.com"
+- name: create instance template named foo
+  gce_instance_template:
+    name: foo
+    size: n1-standard-1
+    image_family: ubuntu-1604-lts
+    state: present
+    project_id: "your-project-name"
+    credentials_file: "/path/to/your-key.json"
+    service_account_email: "your-sa@your-project-name.iam.gserviceaccount.com"
 
 # Example Playbook
 - name: Compute Engine Instance Template Examples
