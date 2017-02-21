@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from yaml.constructor import Constructor, ConstructorError
+from yaml.constructor import SafeConstructor, ConstructorError
 from yaml.nodes import MappingNode
 
 from ansible.module_utils._text import to_bytes
@@ -35,7 +35,7 @@ except ImportError:
     display = Display()
 
 
-class AnsibleConstructor(Constructor):
+class AnsibleConstructor(SafeConstructor):
     def __init__(self, file_name=None, vault_password=None):
         self._vault_password = vault_password
         self._ansible_file_name = file_name
