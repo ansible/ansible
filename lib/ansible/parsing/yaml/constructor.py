@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from yaml.constructor import Constructor, ConstructorError
+from yaml.constructor import SafeConstructor, ConstructorError
 from yaml.nodes import MappingNode
 from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode
 from ansible.vars.unsafe_proxy import wrap_var
@@ -31,7 +31,7 @@ except ImportError:
     display = Display()
 
 
-class AnsibleConstructor(Constructor):
+class AnsibleConstructor(SafeConstructor):
     def __init__(self, file_name=None):
         self._ansible_file_name = file_name
         super(AnsibleConstructor, self).__init__()
