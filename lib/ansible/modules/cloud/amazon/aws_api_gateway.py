@@ -69,7 +69,6 @@ author:
     - 'Michael De La Rue (@mikedlr)'
 extends_documentation_fragment:
     - aws
-    - ec2
 notes:
    - a future version of this module will probably use tags or another
      ID so that an API can be create only once.
@@ -112,22 +111,17 @@ output:
       }
 '''
 
+import json
 from ansible.module_utils.basic import AnsibleModule, traceback
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict
 
-import os
+from ansible.module_utils.ec2 import HAS_BOTO3
 
 try:
     import botocore
     HAS_BOTOCORE = True
 except ImportError:
     HAS_BOTOCORE = False
-
-try:
-    import boto3 # noqua: F401
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
 
 
 def main():
@@ -136,7 +130,7 @@ def main():
         dict(
             api_id=dict(type='str', required=False),
             state=dict(type='str', default='present', choices=['present', 'absent']),
-            swagger_file=dict(type='str', default=None, aliases=['src', 'api_file']),
+            swagger_file=dict(type='path', default=None, aliases=['src', 'api_file']),
             swagger_dict=dict(type='json', default=None),
             swagger_text=dict(type='str', default=None),
             stage=dict(type='str', default=None),
@@ -144,13 +138,13 @@ def main():
         )
     )
 
-    mutually_exclusive = [['swagger_file', 'swagger_dict', 'swagger_text' ]]
+    mutually_exclusive = [['swagger_file', 'swagger_dict', 'swagger_text' ]]  # noqa: F841
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=False,  )   # TODO !!!`
 
     api_id = module.params.get('api_id')
-    state = module.params.get('state')
+    state = module.params.get('state')   # noqa: F841
     swagger_file = module.params.get('swagger_file')
     swagger_dict = module.params.get('swagger_dict')
     swagger_text = module.params.get('swagger_text')
@@ -161,7 +155,7 @@ def main():
     changed = False
 
     if not HAS_BOTO3:
-        module.fail_json(msg='Python module "boto3" is missing, please install it')
+        module.fail_json(msg='Python module "boto3" is missing, please install boto3')
 
     if not HAS_BOTOCORE:
         module.fail_json(msg='Python module "botocore" is missing, please install it')
@@ -191,10 +185,11 @@ def main():
     apidata=None
     if swagger_file is not None:
         try:
-            with open(os.path.expanduser(swagger_file)) as f:
+            with open(swagger_file) as f:
                 apidata=f.read()
         except Exception as e:
-            module.fail_json(msg=str(e), exception=traceback.format_exc())
+            module.fail_json(msg="Failed trying to read swagger file" + str(e),
+                             exception=traceback.format_exc())
     if swagger_dict is not None:
         apidata = json.dumps(swagger_dict)
     if swagger_text is not None:

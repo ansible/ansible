@@ -26,12 +26,10 @@ import sys
 import json
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils import basic
+from ansible.module_utils.ec2 import HAS_BOTO3
 
-try:
-    import boto3  # noqa: F401
-    import botocore  # noqa: F401
-except ImportError:
-    raise SkipTest("test_ec2_asg.py requires the `boto3` and `botocore` modules")
+if not HAS_BOTO3:
+    raise SkipTest("test_api_gateway.py requires the `boto3` and `botocore` modules")
 
 import ansible.modules.cloud.amazon.aws_api_gateway as agw
 
