@@ -132,7 +132,7 @@ def content_to_dict(module, content):
     # elif format in ['yaml', 'var']:
 
     try:
-        content_dict = yaml.load(content)
+        content_dict = yaml.safe_load(content)
 
         if not isinstance(content_dict, dict):
             raise

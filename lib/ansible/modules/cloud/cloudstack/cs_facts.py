@@ -146,7 +146,7 @@ class CloudStackFacts(object):
     def _get_user_data_json(self):
         try:
             # this data come form users, we try what we can to parse it...
-            return yaml.load(self._fetch(CS_USERDATA_BASE_URL))
+            return yaml.safe_load(self._fetch(CS_USERDATA_BASE_URL))
         except:
             return None
 
