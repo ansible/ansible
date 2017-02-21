@@ -35,7 +35,9 @@ description:
 options:
   name:
     description:
-      - "Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: yum -y update. You can also pass a url or a local path to a rpm file (using state=present).  To operate on several packages this can accept a comma separated list of packages or (as of 2.0) a list of packages."
+      - "Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: yum -y update.
+         You can also pass a url or a local path to a rpm file (using state=present).  To operate on several packages this can accept a comma separated list
+         of packages or (as of 2.0) a list of packages."
     required: true
     default: null
     aliases: [ 'pkg' ]
@@ -90,6 +92,16 @@ options:
         installed. Has an effect only if state is I(present) or I(latest).
     required: false
     version_added: "1.2"
+    default: "no"
+    choices: ["yes", "no"]
+    aliases: []
+
+  skip_broken:
+    description:
+      - Resolve depsolve problems by removing packages that are causing problems from the trans‐
+        action.
+    required: false
+    version_added: "2.3"
     default: "no"
     choices: ["yes", "no"]
     aliases: []
@@ -631,7 +643,8 @@ def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/'):
     elif stuff == 'repos':
         return [ dict(repoid=name, state='enabled') for name in sorted(repolist(module, repoq)) if name.strip() ]
     else:
-        return [ pkg_to_dict(p) for p in sorted(is_installed(module, repoq, stuff, conf_file, qf=is_installed_qf, installroot=installroot) + is_available(module, repoq, stuff, conf_file, qf=qf, installroot=installroot)) if p.strip() ]
+        return [ pkg_to_dict(p) for p in sorted(is_installed(module,repoq, stuff, conf_file, qf=is_installed_qf, installroot=installroot)+
+                                                is_available(module, repoq, stuff, conf_file, qf=qf, installroot=installroot)) if p.strip()]
 
 def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot='/'):
 
@@ -803,7 +816,7 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
         is_group = False
         # group remove - this is doom on a stick
         if pkg.startswith('@'):
-            is_group = True
+            is_group = True # nopep8 this will be fixed in next MR this module needs major rewrite anyway.
         else:
             if not is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
                 res['results'].append('%s is not installed' % pkg)
@@ -988,10 +1001,12 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
         for w in will_update:
             if w.startswith('@'):
                 to_update.append((w, None))
-                msg = '%s will be updated' % w
             elif w not in updates:
                 other_pkg = will_update_from_other_package[w]
-                to_update.append((w, 'because of (at least) %s-%s.%s from %s' % (other_pkg, updates[other_pkg]['version'], updates[other_pkg]['dist'], updates[other_pkg]['repo'])))
+                to_update.append((w, 'because of (at least) %s-%s.%s from %s' % (other_pkg,
+                                                                                 updates[other_pkg]['version'],
+                                                                                 updates[other_pkg]['dist'],
+                                                                                 updates[other_pkg]['repo'])))
             else:
                 to_update.append((w, '%s.%s from %s' % (updates[w]['version'], updates[w]['dist'], updates[w]['repo'])))
 
@@ -1038,7 +1053,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
     return res
 
 def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
-           disable_gpg_check, exclude, repoq, installroot='/'):
+           disable_gpg_check, exclude, repoq, skip_broken, installroot='/'):
 
     # fedora will redirect yum to dnf, which has incompatibilities
     # with how this module expects yum to operate. If yum-deprecated
@@ -1058,6 +1073,10 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
 
     dis_repos =[]
     en_repos = []
+
+    if skip_broken:
+        yum_basecmd.extend(['--skip-broken'])
+
     if disablerepo:
         dis_repos = disablerepo.split(',')
         r_cmd = ['--disablerepo=%s' % disablerepo]
@@ -1079,6 +1098,30 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
         yum_basecmd.extend(e_cmd)
 
     if state in ['installed', 'present', 'latest']:
+        """ The need of this entire if conditional has to be chalanged
+            this function is the ensure function that is called
+            in the main section.
+
+            This conditional tends to disable/enable repo for
+            install present latest action, same actually
+            can be done for remove and absent action
+
+            As solution I would advice to cal
+            try: my.repos.disableRepo(disablerepo)
+            and
+            try: my.repos.enableRepo(enablerepo)
+            right before any yum_cmd is actually called regardless
+            of yum action.
+
+            Please note that enable/disablerepo options are general
+            options, this means that we can call those with any action
+            option.  https://linux.die.net/man/8/yum
+
+            This docstring will be removed together when issue: #21619
+            will be solved.
+
+            This has been triggered by: #19587
+        """
 
         if module.params.get('update_cache'):
             module.run_command(yum_basecmd + ['clean', 'expire-cache'])
@@ -1095,7 +1138,7 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
                     for i in new_repos:
                         if not i in current_repos:
                             rid = my.repos.getRepo(i)
-                            a = rid.repoXML.repoid
+                            a = rid.repoXML.repoid # nopep8 - https://github.com/ansible/ansible/pull/21475#pullrequestreview-22404868
                     current_repos = new_repos
                 except yum.Errors.YumBaseError:
                     e = get_exception()
@@ -1117,7 +1160,6 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
         # should be caught by AnsibleModule argument_spec
         module.fail_json(msg="we should never get here unless this all"
                 " failed", changed=False, results='', errors='unexpected state')
-
     return res
 
 
@@ -1134,6 +1176,7 @@ def main():
     #   list=repos
     #   list=pkgspec
 
+
     module = AnsibleModule(
         argument_spec = dict(
             name=dict(aliases=['pkg'], type="list"),
@@ -1145,6 +1188,7 @@ def main():
             list=dict(),
             conf_file=dict(default=None),
             disable_gpg_check=dict(required=False, default="no", type='bool'),
+            skip_broken=dict(required=False, default="no", aliases=[], type='bool'),
             update_cache=dict(required=False, default="no", aliases=['expire-cache'], type='bool'),
             validate_certs=dict(required=False, default="yes", type='bool'),
             installroot=dict(required=False, default="/", type='str'),
@@ -1201,8 +1245,9 @@ def main():
         enablerepo = params.get('enablerepo', '')
         disablerepo = params.get('disablerepo', '')
         disable_gpg_check = params['disable_gpg_check']
+        skip_broken = params['skip_broken']
         results = ensure(module, state, pkg, params['conf_file'], enablerepo,
-                     disablerepo, disable_gpg_check, exclude, repoquery,
+                     disablerepo, disable_gpg_check, exclude, repoquery, skip_broken,
                      params['installroot'])
         if repoquery:
             results['msg'] = '%s %s' % (results.get('msg',''),
