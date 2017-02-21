@@ -318,7 +318,8 @@ def main():
     vmware_rp = VMwareResourcePool(module)
     vmware_rp.process_state()
 
-from ansible.module_utils.vmware import get_all_objs, connect_to_api, vmware_argument_spec, find_datacenter_by_name, find_cluster_by_name_datacenter, wait_for_task
+from ansible.module_utils.vmware import get_all_objs, connect_to_api, vmware_argument_spec, find_datacenter_by_name, \
+     find_cluster_by_name_datacenter, wait_for_task
 from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
