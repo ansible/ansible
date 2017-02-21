@@ -167,24 +167,19 @@ def test_warn_region_not_specified():
         "role": 'arn:aws:iam::987654321012:role/lambda_basic_execution',
         "handler": 'lambda_python.my_handler'})
 
-    def side_effect(*args,**kwargs):
-        if "region must be specified" in kwargs['msg']:
-            raise(SystemExit("BOOM NO REGION"))
-        else:
-            try:
-                raise(SystemExit("Module failed with message:" + kwargs['msg']))
-            except KeyError:
-                raise(SystemExit("Module failed without message"))
+    class AnsibleFailJson(Exception):
+        pass
 
-    fake_fail_json=Mock(side_effect=side_effect)
+    def fail_json(*args, **kwargs):
+        kwargs['failed'] = True
+        raise AnsibleFailJson(kwargs)
 
-    @patch("ansible.module_utils.basic.AnsibleModule.fail_json", fake_fail_json)
     def call_module():
-        with pytest.raises(SystemExit) as e:
-            lda.main()
-        assert ("BOOM NO REGION" in str(e))
+        with patch.object(basic.AnsibleModule, 'fail_json', fail_json):
+            with pytest.raises(AnsibleFailJson) as e:
+                lda.main()
+        result=e.value
+        assert("region must be specified" in result[0]['msg'])
 
     call_module()
-
-    assert(len(fake_fail_json.mock_calls) == 1)
 
