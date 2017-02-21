@@ -1,0 +1,12 @@
+boto3
+jinja2
+mock
+nose
+passlib
+pycrypto
+pytest
+pytest-mock
+python-memcached
+pyyaml
+redis
+unittest2 ; python_version < '2.7'

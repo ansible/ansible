@@ -20,6 +20,7 @@ __metaclass__ = type
 from collections import MutableMapping
 
 from ansible import constants as C
+from ansible.errors import AnsibleError
 from ansible.plugins import cache_loader
 
 try:
@@ -32,16 +33,17 @@ except ImportError:
 class FactCache(MutableMapping):
 
     def __init__(self, *args, **kwargs):
+
         self._plugin = cache_loader.get(C.CACHE_PLUGIN)
+        if not self._plugin:
+            raise AnsibleError('Unable to load the facts cache plugin (%s).' % (C.CACHE_PLUGIN))
+
         # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display = display
 
-        if self._plugin is None:
-            display.warning("Failed to load fact cache plugins")
-            return
 
     def __getitem__(self, key):
-        if key not in self:
+        if not self._plugin.contains(key):
             raise KeyError
         return self._plugin.get(key)
 

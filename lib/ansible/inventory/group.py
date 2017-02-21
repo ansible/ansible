@@ -83,7 +83,7 @@ class Group:
             raise Exception("can't add group to itself")
 
         # don't add if it's already there
-        if not group in self.child_groups:
+        if group not in self.child_groups:
             self.child_groups.append(group)
 
             # update the depth of the child
@@ -94,7 +94,7 @@ class Group:
 
             # now add self to child's parent_groups list, but only if there
             # isn't already a group with the same name
-            if not self.name in [g.name for g in group.parent_groups]:
+            if self.name not in [g.name for g in group.parent_groups]:
                 group.parent_groups.append(self)
 
             self.clear_hosts_cache()

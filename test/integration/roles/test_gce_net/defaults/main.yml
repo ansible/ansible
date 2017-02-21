@@ -1,0 +1,11 @@
+---
+# defaults file for test_gce_net
+firewall_name: "{{ resource_prefix|lower }}-fwrule"
+network_name_auto: "{{ resource_prefix|lower }}-auto"
+network_name_custom: "{{ resource_prefix|lower }}-custom"
+network_name_legacy: "{{ resource_prefix|lower }}-legacy"
+subnetwork_name_custom: "{{ resource_prefix|lower }}-subnetwork-custom"
+subnetwork_region: "us-east1"
+service_account_email: "{{ gce_service_account_email }}"
+pem_file: "{{ gce_pem_file }}"
+project_id: "{{ gce_project_id }}"

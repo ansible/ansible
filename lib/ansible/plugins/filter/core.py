@@ -25,19 +25,18 @@ import itertools
 import json
 import os.path
 import ntpath
-import pipes
 import glob
 import re
 import crypt
 import hashlib
 import string
 from functools import partial
-from random import SystemRandom, shuffle
+from random import Random, SystemRandom, shuffle
 from datetime import datetime
 import uuid
 
 import yaml
-from jinja2.filters import environmentfilter
+from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
 try:
     import passlib.hash
@@ -46,9 +45,10 @@ except:
     HAS_PASSLIB = False
 
 from ansible import errors
-from ansible.compat.six import iteritems, string_types
+from ansible.compat.six import iteritems, string_types, integer_types
 from ansible.compat.six.moves import reduce
-from ansible.module_utils._text import to_text
+from ansible.compat.six.moves import shlex_quote
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
@@ -67,7 +67,7 @@ class AnsibleJSONEncoder(json.JSONEncoder):
         if isinstance(o, HostVars):
             return dict(o)
         else:
-            return json.JSONEncoder.default(o)
+            return super(AnsibleJSONEncoder, self).default(o)
 
 def to_yaml(a, *args, **kw):
     '''Make verbose, human readable yaml'''
@@ -123,7 +123,7 @@ def to_datetime(string, format="%Y-%d-%m %H:%M:%S"):
 
 def quote(a):
     ''' return its argument quoted for shell usage '''
-    return pipes.quote(a)
+    return shlex_quote(a)
 
 def fileglob(pathname):
     ''' return list of matched regular files for glob '''
@@ -199,9 +199,12 @@ def from_yaml(data):
     return data
 
 @environmentfilter
-def rand(environment, end, start=None, step=None):
-    r = SystemRandom()
-    if isinstance(end, (int, long)):
+def rand(environment, end, start=None, step=None, seed=None):
+    if seed is None:
+        r = SystemRandom()
+    else:
+        r = Random(seed)
+    if isinstance(end, integer_types):
         if not start:
             start = 0
         if not step:
@@ -214,10 +217,14 @@ def rand(environment, end, start=None, step=None):
     else:
         raise errors.AnsibleFilterError('random can only be used on sequences and integers')
 
-def randomize_list(mylist):
+def randomize_list(mylist, seed=None):
     try:
         mylist = list(mylist)
-        shuffle(mylist)
+        if seed:
+            r = Random(seed)
+            r.shuffle(mylist)
+        else:
+            shuffle(mylist)
     except:
         pass
     return mylist
@@ -229,7 +236,7 @@ def get_hash(data, hashtype='sha1'):
     except:
         return None
 
-    h.update(data)
+    h.update(to_bytes(data, errors='surrogate_then_strict'))
     return h.hexdigest()
 
 def get_encrypted_password(password, hashtype='sha512', salt=None):
@@ -257,7 +264,11 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
             saltstring =  "$%s$%s" % (cryptmethod[hashtype],salt)
             encrypted = crypt.crypt(password, saltstring)
         else:
-            cls = getattr(passlib.hash, '%s_crypt' % hashtype)
+            if hashtype == 'blowfish':
+                cls = passlib.hash.bcrypt
+            else:
+                cls = getattr(passlib.hash, '%s_crypt' % hashtype)
+
             encrypted = cls.encrypt(password, salt=salt)
 
         return encrypted
@@ -387,11 +398,75 @@ def extract(item, container, morekeys=None):
 
     return value
 
+def failed(*a, **kw):
+    ''' Test if task result yields failed '''
+    item = a[0]
+    if type(item) != dict:
+        raise errors.AnsibleFilterError("|failed expects a dictionary")
+    rc = item.get('rc',0)
+    failed = item.get('failed',False)
+    if rc != 0 or failed:
+        return True
+    else:
+        return False
+
+def success(*a, **kw):
+    ''' Test if task result yields success '''
+    return not failed(*a, **kw)
+
+def changed(*a, **kw):
+    ''' Test if task result yields changed '''
+    item = a[0]
+    if type(item) != dict:
+        raise errors.AnsibleFilterError("|changed expects a dictionary")
+    if not 'changed' in item:
+        changed = False
+        if ('results' in item    # some modules return a 'results' key
+                and type(item['results']) == list
+                and type(item['results'][0]) == dict):
+            for result in item['results']:
+                changed = changed or result.get('changed', False)
+    else:
+        changed = item.get('changed', False)
+    return changed
+
+def skipped(*a, **kw):
+    ''' Test if task result yields skipped '''
+    item = a[0]
+    if type(item) != dict:
+        raise errors.AnsibleFilterError("|skipped expects a dictionary")
+    skipped = item.get('skipped', False)
+    return skipped
+
+
+@environmentfilter
+def do_groupby(environment, value, attribute):
+    """Overridden groupby filter for jinja2, to address an issue with
+    jinja2>=2.9.0,<2.9.5 where a namedtuple was returned which
+    has repr that prevents ansible.template.safe_eval.safe_eval from being
+    able to parse and eval the data.
+
+    jinja2<2.9.0,>=2.9.5 is not affected, as <2.9.0 uses a tuple, and
+    >=2.9.5 uses a standard tuple repr on the namedtuple.
+
+    The adaptation here, is to run the jinja2 `do_groupby` function, and
+    cast all of the namedtuples to a regular tuple.
+
+    See https://github.com/ansible/ansible/issues/20098
+
+    We may be able to remove this in the future.
+    """
+    return [tuple(t) for t in _do_groupby(environment, value, attribute)]
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
     def filters(self):
         return {
+            # jinja2 overrides
+            'groupby': do_groupby,
+
             # base 64
             'b64decode': partial(unicode_wrap, base64.b64decode),
             'b64encode': partial(unicode_wrap, base64.b64encode),
@@ -467,4 +542,21 @@ class FilterModule(object):
 
             # array and dict lookups
             'extract': extract,
+
+            # failure testing
+            'failed'    : failed,
+            'failure'   : failed,
+            'success'   : success,
+            'succeeded' : success,
+
+            # changed testing
+            'changed' : changed,
+            'change'  : changed,
+
+            # skip testing
+            'skipped' : skipped,
+            'skip'    : skipped,
+
+            # debug
+            'type_debug': lambda o: o.__class__.__name__,
         }

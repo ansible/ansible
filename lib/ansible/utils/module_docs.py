@@ -40,9 +40,7 @@ except ImportError:
 
 # modules that are ok that they do not have documentation strings
 BLACKLIST_MODULES = frozenset((
-   'async_wrapper',
-   'accelerate',
-   'fireball',
+    'async_wrapper',
 ))
 
 def get_docstring(filename, verbose=False):
@@ -60,6 +58,7 @@ def get_docstring(filename, verbose=False):
     doc = None
     plainexamples = None
     returndocs = None
+    metadata = None
 
     try:
         # Thank you, Habbie, for this bit of code :-)
@@ -74,7 +73,7 @@ def get_docstring(filename, verbose=False):
                         display.warning("Failed to assign id for %s on %s, skipping" % (t, filename))
                         continue
 
-                    if 'DOCUMENTATION' in theid:
+                    if 'DOCUMENTATION' == theid:
                         doc = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
                         fragments = doc.get('extends_documentation_fragment', [])
 
@@ -97,18 +96,18 @@ def get_docstring(filename, verbose=False):
                             fragment_yaml = getattr(fragment_class, fragment_var, '{}')
                             fragment = AnsibleLoader(fragment_yaml, file_name=filename).get_single_data()
 
-                            if fragment.has_key('notes'):
+                            if 'notes' in fragment:
                                 notes = fragment.pop('notes')
                                 if notes:
-                                    if not doc.has_key('notes'):
+                                    if 'notes' not in doc:
                                         doc['notes'] = []
                                     doc['notes'].extend(notes)
 
-                            if 'options' not in fragment.keys():
-                                raise Exception("missing options in fragment, possibly misformatted?")
+                            if 'options' not in fragment:
+                                raise Exception("missing options in fragment (%s), possibly misformatted?: %s" % (fragment_name, filename))
 
                             for key, value in fragment.items():
-                                if not doc.has_key(key):
+                                if key not in doc:
                                     doc[key] = value
                                 else:
                                     if isinstance(doc[key], MutableMapping):
@@ -118,17 +117,40 @@ def get_docstring(filename, verbose=False):
                                     elif isinstance(doc[key], MutableSequence):
                                         doc[key] = sorted(frozenset(doc[key] + value))
                                     else:
-                                        raise Exception("Attempt to extend a documentation fragement of unknown type")
+                                        raise Exception("Attempt to extend a documentation fragement (%s) of unknown type: %s" (fragment_name, filename))
 
-                    elif 'EXAMPLES' in theid:
+                    elif 'EXAMPLES' == theid:
                         plainexamples = child.value.s[1:]  # Skip first empty line
 
-                    elif 'RETURN' in theid:
+                    elif 'RETURN' == theid:
                         returndocs = child.value.s[1:]
+
+                    elif 'ANSIBLE_METADATA' == theid:
+                        metadata = child.value
+                        if type(metadata).__name__ == 'Dict':
+                            metadata = ast.literal_eval(child.value)
+                        else:
+                            # try yaml loading
+                            metadata = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
+
+                        if not isinstance(metadata, dict):
+                            display.warning("Invalid metadata detected in %s, using defaults" % filename)
+                            metadata = {'status': ['preview'], 'supported_by': 'community', 'version': '1.0'}
+
     except:
         display.error("unable to parse %s" % filename)
         if verbose == True:
             display.display("unable to parse %s" % filename)
             raise
-    return doc, plainexamples, returndocs
+
+    if not metadata:
+        metadata = dict()
+
+    # ensure metadata defaults
+    # FUTURE: extract this into its own class for use by runtime metadata
+    metadata['version'] = metadata.get('version', '1.0')
+    metadata['status'] = metadata.get('status', ['preview'])
+    metadata['supported_by'] = metadata.get('supported_by', 'community')
+
+    return doc, plainexamples, returndocs, metadata
 

@@ -58,9 +58,9 @@ def mail(subject='Ansible error mail', sender=None, to=None, cc=None, bcc=None, 
     b_content += b_body
 
     b_addresses = b_to.split(b',')
-    if b_cc:
+    if cc:
         b_addresses += b_cc.split(b',')
-    if b_bcc:
+    if bcc:
         b_addresses += b_bcc.split(b',')
 
     for b_address in b_addresses:
@@ -92,13 +92,13 @@ class CallbackModule(CallbackBase):
         subject = 'Failed: %s' % attach
         body = 'The following task failed for host ' + host + ':\n\n%s\n\n' % attach
 
-        if 'stdout' in res._result.keys() and res._result['stdout']:
+        if 'stdout' in res._result and res._result['stdout']:
             subject = res._result['stdout'].strip('\r\n').split('\n')[-1]
             body += 'with the following output in standard output:\n\n' + res._result['stdout'] + '\n\n'
-        if 'stderr' in res._result.keys() and res._result['stderr']:
+        if 'stderr' in res._result and res._result['stderr']:
             subject = res._result['stderr'].strip('\r\n').split('\n')[-1]
             body += 'with the following output in standard error:\n\n' + res._result['stderr'] + '\n\n'
-        if 'msg' in res._result.keys() and res._result['msg']:
+        if 'msg' in res._result and res._result['msg']:
             subject = res._result['msg'].strip('\r\n').split('\n')[0]
             body += 'with the following message:\n\n' + res._result['msg'] + '\n\n'
         body += 'A complete dump of the error:\n\n' + self._dump_results(res._result)

@@ -21,13 +21,7 @@ from io import StringIO
 import os
 import re
 
-try:
-    # python2
-    import ConfigParser as configparser
-except ImportError:
-    # python3
-    import configparser
-
+from ansible.compat.six.moves import configparser
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils._text import to_bytes, to_text
@@ -36,7 +30,7 @@ from ansible.module_utils._text import to_bytes, to_text
 def _parse_params(term):
     '''Safely split parameter term to preserve spaces'''
 
-    keys = ['key', 'section', 'file', 're']
+    keys = ['key', 'type', 'section', 'file', 're', 'default']
     params = {}
     for k in keys:
         params[k] = ''

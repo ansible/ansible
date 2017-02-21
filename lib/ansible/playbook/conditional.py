@@ -19,12 +19,21 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ast
+import re
+
+from jinja2.compiler import generate
 from jinja2.exceptions import UndefinedError
 
 from ansible.compat.six import text_type
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
+from ansible.module_utils._text import to_native
+
+DEFINED_REGEX = re.compile(r'(hostvars\[.+\]|[\w_]+)\s+(not\s+is|is|is\s+not)\s+(defined|undefined)')
+LOOKUP_REGEX = re.compile(r'lookup\s*\(')
+VALID_VAR_REGEX = re.compile("^[_A-Za-z][_a-zA-Z0-9]*$")
 
 class Conditional:
 
@@ -50,6 +59,29 @@ class Conditional:
         if not isinstance(value, list):
             setattr(self, name, [ value ])
 
+    def _get_attr_when(self):
+        '''
+        Override for the 'tags' getattr fetcher, used from Base.
+        '''
+        when = self._attributes['when']
+        if when is None:
+            when = []
+        if hasattr(self, '_get_parent_attribute'):
+            when = self._get_parent_attribute('when', extend=True, prepend=True)
+        return when
+
+    def extract_defined_undefined(self, conditional):
+        results = []
+
+        cond = conditional
+        m = DEFINED_REGEX.search(cond)
+        while m:
+            results.append(m.groups())
+            cond = cond[m.end():]
+            m = DEFINED_REGEX.search(cond)
+
+        return results
+
     def evaluate_conditional(self, templar, all_vars):
         '''
         Loops through the conditionals set on this object, returning
@@ -72,7 +104,7 @@ class Conditional:
                 if not self._check_conditional(conditional, templar, all_vars):
                     return False
         except Exception as e:
-            raise AnsibleError("The conditional check '%s' failed. The error was: %s" % (conditional, e), obj=ds)
+            raise AnsibleError("The conditional check '%s' failed. The error was: %s" % (to_native(conditional), to_native(e)), obj=ds)
 
         return True
 
@@ -87,21 +119,60 @@ class Conditional:
         if conditional is None or conditional == '':
             return True
 
-        if conditional in all_vars and '-' not in text_type(all_vars[conditional]):
+        # pull the "bare" var out, which allows for nested conditionals
+        # and things like:
+        # - assert:
+        #     that:
+        #     - item
+        #   with_items:
+        #   - 1 == 1
+        if conditional in all_vars and VALID_VAR_REGEX.match(conditional):
             conditional = all_vars[conditional]
 
         # make sure the templar is using the variables specified with this method
         templar.set_available_variables(variables=all_vars)
 
         try:
-            conditional = templar.template(conditional)
+            # if the conditional is "unsafe", disable lookups
+            disable_lookups = hasattr(conditional, '__UNSAFE__')
+            conditional = templar.template(conditional, disable_lookups=disable_lookups)
             if not isinstance(conditional, text_type) or conditional == "":
                 return conditional
 
-            # a Jinja2 evaluation that results in something Python can eval!
+            # update the lookups flag, as the string returned above may now be unsafe
+            # and we don't want future templating calls to do unsafe things
+            disable_lookups |= hasattr(conditional, '__UNSAFE__')
+
+            # now we generated the "presented" string, which is a jinja2 if/else block
+            # used to evaluate the conditional. First, we do some low-level jinja2 parsing
+            # involving the AST format of the statement to ensure we don't do anything
+            # unsafe (using the disable_lookup flag above)
+            e = templar.environment.overlay()
+            e.filters.update(templar._get_filters())
+            e.tests.update(templar._get_tests())
+
             presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
-            conditional = templar.template(presented)
-            val = conditional.strip()
+            res = e._parse(presented, None, None)
+            res = generate(res, e, None, None)
+            parsed = ast.parse(res, mode='exec')
+
+            class CleansingNodeVisitor(ast.NodeVisitor):
+                def generic_visit(self, node, inside_call=False):
+                    if isinstance(node, ast.Call):
+                        inside_call = True
+                    elif isinstance(node, ast.Str):
+                        # calling things with a dunder is generally bad at this point...
+                        if inside_call and disable_lookups and node.s.startswith("__"):
+                            raise AnsibleError("Invalid access found in the presented conditional: '%s'" % conditional)
+                    # iterate over all child nodes
+                    for child_node in ast.iter_child_nodes(node):
+                        self.generic_visit(child_node, inside_call=inside_call)
+
+            cnv = CleansingNodeVisitor()
+            cnv.visit(parsed)
+
+            # and finally we templated the presented string and look at the resulting string
+            val = templar.template(presented, disable_lookups=disable_lookups).strip()
             if val == "True":
                 return True
             elif val == "False":
@@ -109,14 +180,31 @@ class Conditional:
             else:
                 raise AnsibleError("unable to evaluate conditional: %s" % original)
         except (AnsibleUndefinedVariable, UndefinedError) as e:
-            # the templating failed, meaning most likely a
-            # variable was undefined. If we happened to be
-            # looking for an undefined variable, return True,
-            # otherwise fail
-            if "is undefined" in original:
-                return True
-            elif "is defined" in original:
-                return False
-            else:
-                raise AnsibleError("error while evaluating conditional (%s): %s" % (original, e))
+            # the templating failed, meaning most likely a variable was undefined. If we happened to be
+            # looking for an undefined variable, return True, otherwise fail
+            try:
+                # first we extract the variable name from the error message
+                var_name = re.compile(r"'(hostvars\[.+\]|[\w_]+)' is undefined").search(str(e)).groups()[0]
+                # next we extract all defined/undefined tests from the conditional string
+                def_undef = self.extract_defined_undefined(conditional)
+                # then we loop through these, comparing the error variable name against
+                # each def/undef test we found above. If there is a match, we determine
+                # whether the logic/state mean the variable should exist or not and return
+                # the corresponding True/False
+                for (du_var, logic, state) in def_undef:
+                    # when we compare the var names, normalize quotes because something
+                    # like hostvars['foo'] may be tested against hostvars["foo"]
+                    if var_name.replace("'", '"') == du_var.replace("'", '"'):
+                        # the should exist is a xor test between a negation in the logic portion
+                        # against the state (defined or undefined)
+                        should_exist = ('not' in logic) != (state == 'defined')
+                        if should_exist:
+                            return False
+                        else:
+                            return True
+                # as nothing above matched the failed var name, re-raise here to
+                # trigger the AnsibleUndefinedVariable exception again below
+                raise
+            except Exception as new_e:
+                raise AnsibleUndefinedVariable("error while evaluating conditional (%s): %s" % (original, e))
 

@@ -72,20 +72,18 @@ class AdHocCLI(CLI):
             help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
             default=C.DEFAULT_MODULE_NAME)
 
-        self.options, self.args = self.parser.parse_args(self.args[1:])
+        super(AdHocCLI, self).parse()
 
         if len(self.args) < 1:
             raise AnsibleOptionsError("Missing target hosts")
         elif len(self.args) > 1:
-            raise AnsibleOptionsError("Extranous options or arguments")
+            raise AnsibleOptionsError("Extraneous options or arguments")
 
         display.verbosity = self.options.verbosity
         self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
 
-        return True
-
     def _play_ds(self, pattern, async, poll):
-        check_raw = self.options.module_name in ('command', 'shell', 'script', 'raw')
+        check_raw = self.options.module_name in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
         return dict(
             name = "Ansible Ad-Hoc",
             hosts = pattern,
@@ -120,7 +118,7 @@ class AdHocCLI(CLI):
             vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
             loader.set_vault_password(vault_pass)
         elif self.options.ask_vault_pass:
-            vault_pass = self.ask_vault_passwords()[0]
+            vault_pass = self.ask_vault_passwords()
             loader.set_vault_password(vault_pass)
 
         variable_manager = VariableManager()
@@ -139,9 +137,12 @@ class AdHocCLI(CLI):
 
         inventory.subset(self.options.subset)
         hosts = inventory.list_hosts(pattern)
-        if len(hosts) == 0 and no_hosts is False:
-            # Invalid limit
-            raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
+        if len(hosts) == 0:
+            if no_hosts is False and self.options.subset:
+                # Invalid limit
+                raise AnsibleError("Specified --limit does not match any hosts")
+            else:
+                display.warning("No hosts matched, nothing to do")
 
         if self.options.listhosts:
             display.display('  hosts (%d):' % len(hosts))
@@ -186,15 +187,15 @@ class AdHocCLI(CLI):
         self._tqm = None
         try:
             self._tqm = TaskQueueManager(
-                    inventory=inventory,
-                    variable_manager=variable_manager,
-                    loader=loader,
-                    options=self.options,
-                    passwords=passwords,
-                    stdout_callback=cb,
-                    run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
-                    run_tree=run_tree,
-                )
+                inventory=inventory,
+                variable_manager=variable_manager,
+                loader=loader,
+                options=self.options,
+                passwords=passwords,
+                stdout_callback=cb,
+                run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
+                run_tree=run_tree,
+            )
 
             result = self._tqm.run(play)
         finally:

@@ -1,7 +1,301 @@
 Ansible Changes By Release
 ==========================
 
-## 2.2 TBD - ACTIVE DEVELOPMENT
+## 2.3 TBD - ACTIVE DEVELOPMENT
+
+###Major Changes:
+* Documented and renamed the previously released 'single var vaulting' feature, allowing user to use vault encryption for single variables in a normal YAML vars file.
+* Allow module_utils for custom modules to be placed in site-specific
+  directories and shipped in roles
+* On platforms that support it, use more modern system polling API instead of
+  select in the ssh connection plugin.  This removes one limitation on how many
+  parallel forks are feasible on these systems.
+* Windows supports become method "runas" to run modules as a different user, and to transparently access network resources.
+* Windows now uses pipelining when executing modules, resulting in significantly faster execution for small tasks.
+* Refactored/standardized most Windows modules, adding check-mode and
+  diff support where possible.
+* Extended Windows module API with parameter-type support, helper functions.
+  (i.e. Expand-Environment, Add-Warning, Add-DeprecatationWarning)
+
+###Minor Changes:
+* The version and release facts for OpenBSD hosts were reversed.  This has been
+  changed so that version has the numeric portion and release has the name of
+  the release.
+* removed 'package' from default squash actions as not all package managers support it and it creates errors when using loops,
+  any user can add back via config options if they don't use those package managers or otherwise avoid the errors.
+* Blocks can now have a `name` field, to aid in playbook readability.
+* default strategy is now configurable via ansible.cfg or environment variable.
+* Added 'ansible_playbook_python' which contains 'current python executable', it can be blank in some cases in which Ansible is not invoked via the standard CLI (sys.executable limitation).
+* ansible-doc now displays path to module
+* added optional 'piped' transfer method to ssh plugin for when scp and sftp are missing
+* default controlpersist path is now a custom hash of host-port-user to avoid the socket path length errors for long hostnames
+* Various fixes for Python3 compatibility
+
+###Deprecations:
+* Specifying --tags (or --skip-tags) multiple times on the command line
+  currently leads to the last one overridding all the previous ones.  This
+  behaviour is deprecated.  In the future, if you specify --tags multiple times
+  the tags will be merged together.  In 2.3, using --tags multiple times on one
+  command line will emit a deprecation warning.  Setting the
+  merge_multiple_cli_tags option to True in the ansible.cfg file will enable
+  the new behaviour.  In 2.4, the default will be to merge and you can enable
+  the old overwriting behaviour via the config option.  In 2.5, multiple --tags
+  options will be merged with no way to go back to the old behaviour.
+* Modules
+  * ec2_vpc will be deprecated in 2.3 and removed in 2.5
+
+###Modules Notes:
+- oVirt/RHV
+  * Add dynamic inventory.
+  * Add support for 4.1 features.
+  * Add support for data centers, clusters, hosts, storage domains and networks management.
+  * Add support for hosts and virtual machines affinity groups and labels.
+  * Add support for users, groups and permissions management.
+  * Improved virtual machines and disks management.
+- Mount: Some fixes so bind mounts are not mounted each time the playbook runs.
+
+###New Modules:
+- a10_server_axapi3
+- amazon
+  * aws_kms
+  * cloudfront_facts
+  * ec2_group_facts
+  * ec2_lc_facts
+  * ec2_vpc_igw_facts
+  * ec2_vpc_nat_gateway_facts
+  * ec2_vpc_vgw_facts
+  * ecs_ecr
+  * elasticache_parameter_group
+  * elasticache_snapshot
+  * iam_role
+  * s3_sync
+- archive
+- beadm
+- bigswitch:
+  * bigmon_chain
+  * bigmon_policy
+- cloudengine
+  * ce_command
+- cloudscale_server
+- cloudstack
+  * cs_host
+  * cs_nic
+  * cs_region
+  * cs_role
+  * cs_vpc
+- dimensiondata_network
+- eos:
+  * eos_banner
+  * eos_system
+  * eos_user
+- f5
+  * bigip_gtm_facts
+  * bigip_hostname
+  * bigip_snat_pool
+  * bigip_sys_global
+- foreman:
+  * foreman
+  * katello
+- gconftool2
+- google
+  * gce_eip
+  * gce_snapshot
+  * gcpubsub
+  * gcpubsub_facts
+- icinga2_feature
+- illumos:
+  * dladm_iptun
+  * dladm_linkprop
+  * dladm_vlan
+  * ipadm_addr
+  * ipadm_addrprop
+  * ipadm_ifprop
+- infinidat:
+  * infini_export
+  * infini_export_client
+  * infini_fs
+  * infini_host
+  * infini_pool
+  * infini_vol
+- ipa
+  * ipa_group
+  * ipa_hbacrule
+  * ipa_host
+  * ipa_hostgroup
+  * ipa_role
+  * ipa_sudocmd
+  * ipa_sudocmdgroup
+  * ipa_sudorule
+  * ipa_user
+- ipinfoio_facts
+- ios:
+  * ios_system
+  * ios_vrf
+- iosxr_system
+- jenkins_script
+- ldap:
+  * ldap_attr
+  * ldap_entry
+- logstash_plugin
+- mattermost
+- net_command
+- netapp
+  * sf_account_manager
+  * sf_snapshot_schedule_manager
+  * sf_volume_manager
+  * sf_volume_access_group_manager
+- nginx_status_facts
+- nsupdate
+- omapi_host
+- openssl:
+  * openssl_privatekey
+  * openssl_publickey
+- openstack
+  * os_nova_host_aggregate
+  * os_quota
+- openwrt_init
+- ordnance
+  * ordnance_config
+  * ordnance_facts
+- ovirt:
+  * ovirt_affinity_groups
+  * ovirt_affinity_labels
+  * ovirt_affinity_labels_facts
+  * ovirt_clusters
+  * ovirt_clusters_facts
+  * ovirt_datacenters
+  * ovirt_datacenters_facts
+  * ovirt_external_providers
+  * ovirt_external_providers_facts
+  * ovirt_groups
+  * ovirt_groups_facts
+  * ovirt_host_networks
+  * ovirt_host_pm
+  * ovirt_hosts
+  * ovirt_hosts_facts
+  * ovirt_mac_pools
+  * ovirt_networks
+  * ovirt_networks_facts
+  * ovirt_nics
+  * ovirt_nics_facts
+  * ovirt_permissions
+  * ovirt_permissions_facts
+  * ovirt_quotas
+  * ovirt_quotas_facts
+  * ovirt_snapshots
+  * ovirt_snapshots_facts
+  * ovirt_storage_domains
+  * ovirt_storage_domains_facts
+  * ovirt_tags
+  * ovirt_tags_facts
+  * ovirt_templates
+  * ovirt_templates_facts
+  * ovirt_users
+  * ovirt_users_facts
+  * ovirt_vmpools
+  * ovirt_vmpools_facts
+  * ovirt_vms_facts
+- pacemaker_cluster
+- packet:
+  * packet_device
+  * packet_sshkey
+- pamd
+- panos:
+  * panos_admin
+  * panos_admpwd
+  * panos_cert_gen_ssh
+  * panos_check
+  * panos_commit
+  * panos_dag
+  * panos_import
+  * panos_loadcfg
+  * panos_mgtconfig
+  * panos_nat_policy
+  * panos_pg
+  * panos_restart
+  * panos_service
+- postgresql_schema
+- proxmox_kvm
+- pubnub_blocks
+- pulp_repo
+- runit
+- serverless
+- set_stats
+- smartos:
+  * imgadm
+  * vmadm
+- sorcery
+- stacki_host
+- swupd
+- tempfile
+- tower
+  * tower_credential
+  * tower_group
+  * tower_host
+  * tower_inventory
+  * tower_label.py
+  * tower_organization
+  * tower_project
+  * tower_user
+- vmware:
+  * vmware_guest_facts
+  * vmware_guest_snapshot
+- web_infrastructure
+  * jenkins_script
+- windows:
+  * win_find
+  * win_path
+  * win_psexec
+  * win_reg_stat
+  * win_region
+  * win_say
+  * win_shortcut
+  * win_tempfile
+- xbps
+- zfs:
+  * zfs_facts
+  * zpool_facts
+
+####New Callbacks:
+
+* dense: minimal stdout output with fallback to default when verbose
+
+####New: lookups
+
+* keyring: allows getting password from system keyrings
+
+
+## 2.2.1 "The Battle of Evermore" - 2017-01-16
+
+### Major Changes:
+
+* Security fix for CVE-2016-9587 - An attacker with control over a client system being managed by Ansible and the ability to send facts back to the Ansible server could use this flaw to execute arbitrary code on the Ansible server as the user and group Ansible is running as.
+
+### Minor Changes:
+
+* Fixes a bug where undefined variables in with_* loops would cause a task failure even if the when condition would cause the task to be skipped.
+* Fixed a bug related to roles where in certain situations a role may be run more than once despite not allowing duplicates.
+* Fixed some additional bugs related to atomic_move for modules.
+* Fixes multiple bugs related to field/attribute inheritance in nested blocks and includes, as well as task iteration logic during failures.
+* Fixed pip installing packages into virtualenvs using the system pip instead of the virtualenv pip.
+* Fixed dnf on systems with dnf-2.0.x (some changes in the API).
+* Fixed traceback with dnf install of groups.
+* Fixes a bug in which include_vars was not working with failed_when.
+* Fix for include_vars only loading files with .yml, .yaml, and .json extensions.  This was only supposed to apply to loading a directory of vars files.
+* Fixes several bugs related to properly incrementing the failed count in the host statistics.
+* Fixes a bug with listening handlers which did not specify a `name` field.
+* Fixes a bug with the `play_hosts` internal variable, so that it properly reflects the current list of hosts.
+* Fixes a bug related to the v2_playbook_on_start callback method and legacy (v1) plugins.
+* Fixes an openssh related process exit race condition, related to the fact that connections using ControlPersist do not close stderr.
+* Improvements and fixes to OpenBSD fact gathering.
+* Updated `make deb` to use pbuilder. Use `make local_deb` for the previous non-pbuilder build.
+* Fixed Windows async to avoid blocking due to handle inheritance.
+* Fixed bugs in the mount module on older Linux kernels and *BSDs
+* Various minor fixes for Python 3
+* Inserted some checks for jinja2-2.9, which can cause some issues with Ansible currently.
+
+
+## 2.2 "The Battle of Evermore" - 2016-11-01
 
 ###Major Changes:
 
@@ -11,10 +305,10 @@ Ansible Changes By Release
 * Added the ability to specify serial batches as a list (`serial: [1, 5, 10]`), which allows for so-called "canary" actions in one play.
 * Fixed 'local type' plugins and actions to have a more predictable relative path. Fixes a regression of 1.9 (PR #16805). Existing users of 2.x will need to adjust related tasks.
 * `meta` tasks can now use conditionals.
-* `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.n
+* `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.
 * New privilege escalation become method `ksu`
-* Windows `async:` support for long-running or backgrodund tasks.
-* Windows `environment:` support for setting module environment vars in play/task. 
+* Windows `async:` support for long-running or background tasks.
+* Windows `environment:` support for setting module environment vars in play/task.
 * Added a new `meta` option: `end_play`, which can be used to skip to the end of a play.
 * roles can now be included in the middle of a task list via the new `include_role` module, this also allows for making the role import 'loopable' and/or conditional.
 * The service module has been changed to use system specific modules if they exist and fall back to the old service module if they cannot be found or detected.
@@ -33,16 +327,19 @@ Ansible Changes By Release
 * Tech Preview: Work has been done to get Ansible running under Python3.  This work is not complete enough to depend upon in production environments but it is enough to begin testing it.
   * Most of the controller side should now work.  Users should be able to run python3 /usr/bin/ansible and python3 /usr/bin/ansible-playbook and have core features of ansible work.
   * A few of the most essential modules have been audited and are known to work.  Others work out of the box.
-  * We are using unit and integration tests to help us port code and not regress later.  Even if you are not famiriar with python you can still help by contributing integration tests (just ansible roles) that exercise more of the code to make sure it continues to run on both Python2 and Python3.
+  * We are using unit and integration tests to help us port code and not regress later.  Even if you are not familiar with python you can still help by contributing integration tests (just ansible roles) that exercise more of the code to make sure it continues to run on both Python2 and Python3.
+  * scp_if_ssh now supports True, False and "smart". "smart" is the default and will retry failed sftp transfers with scp.
+* Network:
+  * Refactored all network modules to remove duplicate code and take advantage of Ansiballz implementation
+  * All functionality from *_template network modules have been combined into *_config module
+  * Network *_command modules not longer allow configuration mode statements
 
 ####New Modules:
 - apache2_mod_proxy
-- archive
 - asa
   * asa_acl
   * asa_command
   * asa_config
-  * asa_template
 - atomic
   * atomic_host
   * atomic_image
@@ -57,26 +354,43 @@ Ansible Changes By Release
   * ec2_vpc_nat_gateway
   * ec2_vpc_peer
   * ec2_vpc_vgw
+  * efs
+  * efs_facts
   * execute_lambda
   * iam_mfa_device_facts
   * iam_server_certificate_facts
   * kinesis_stream
+  * lambda
+  * lambda_alias
+  * lambda_event
+  * lambda_facts
+  * redshift
+  * redshift_subnet_group
   * s3_website
   * sts_session_token
 - cloudstack
   * cs_router
   * cs_snapshot_policy
-- dnos10
-  * dnos10_command
-  * dnos10_config
-  * dnos10_template
+- dellos6
+  * dellos6_command
+  * dellos6_config
+  * dellos6_facts
+- dellos9
+  * dellos9_command
+  * dellos9_config
+  * dellos9_facts
+- dellos10
+  * dellos10_command
+  * dellos10_config
+  * dellos10_facts
+- digital_ocean_block_storage
+- docker
+  * docker_network
+- eos
+  * eos_facts
 - exoscale:
   * exo_dns_domain
   * exo_dns_record
-- dnos6
-  * dnos6_command
-- dnos9
-  * dnos9_command
 - f5:
   * bigip_device_dns
   * bigip_device_ntp
@@ -95,6 +409,7 @@ Ansible Changes By Release
 - google
   * gcdns_record
   * gcdns_zone
+  * gce_mig
 - honeybadger_deployment
 - illumos
   * dladm_etherstub
@@ -105,6 +420,10 @@ Ansible Changes By Release
 - ipmi
   * ipmi_boot
   * ipmi_power
+- ios
+  * ios_facts
+- iosxr
+  * iosxr_facts
 - include_role
 - jenkins
   * jenkins_job
@@ -117,9 +436,86 @@ Ansible Changes By Release
   * lxd_profile
   * lxd_container
 - netapp
+  * netapp_e_amg
+  * netapp_e_amg_role
+  * netapp_e_amg_sync
+  * netapp_e_auth
   * netapp_e_facts
+  * netapp_e_flashcache
+  * netapp_e_hostgroup
+  * netapp_e_host
+  * netapp_e_lun_mapping
+  * netapp_e_snapshot_group
+  * netapp_e_snapshot_images
+  * netapp_e_snapshot_volume
   * netapp_e_storage_system
+  * netapp_e_storagepool
+  * netapp_e_volume
+  * netapp_e_volume_copy
 - netconf_config
+- netvisor
+  * pn_cluster
+  * pn_ospfarea
+  * pn_ospf
+  * pn_show
+  * pn_trunk
+  * pn_vlag
+  * pn_vlan
+  * pn_vrouterbgp
+  * pn_vrouterif
+  * pn_vrouterlbif
+  * pn_vrouter
+- nxos
+  * nxos_aaa_server_host
+  * nxos_aaa_server
+  * nxos_acl_interface
+  * nxos_acl
+  * nxos_bgp_af
+  * nxos_bgp_neighbor_af
+  * nxos_bgp_neighbor
+  * nxos_bgp
+  * nxos_evpn_global
+  * nxos_evpn_vni
+  * nxos_file_copy
+  * nxos_gir_profile_management
+  * nxos_gir
+  * nxos_hsrp
+  * nxos_igmp_interface
+  * nxos_igmp
+  * nxos_igmp_snooping
+  * nxos_install_os
+  * nxos_interface_ospf
+  * nxos_mtu
+  * nxos_ntp_auth
+  * nxos_ntp_options
+  * nxos_ntp
+  * nxos_ospf
+  * nxos_ospf_vrf
+  * nxos_overlay_global
+  * nxos_pim_interface
+  * nxos_pim
+  * nxos_pim_rp_address
+  * nxos_portchannel
+  * nxos_rollback
+  * nxos_smu
+  * nxos_snapshot
+  * nxos_snmp_community
+  * nxos_snmp_contact
+  * nxos_snmp_host
+  * nxos_snmp_location
+  * nxos_snmp_traps
+  * nxos_snmp_user
+  * nxos_static_route
+  * nxos_udld_interface
+  * nxos_udld
+  * nxos_vpc_interface
+  * nxos_vpc
+  * nxos_vrf_af
+  * nxos_vtp_domain
+  * nxos_vtp_password
+  * nxos_vtp_version
+  * nxos_vxlan_vtep
+  * nxos_vxlan_vtep_vni
 - mssql_db
 - ovh_ip_loadbalancing_backend
 - opendj_backendprop
@@ -129,12 +525,20 @@ Ansible Changes By Release
   * os_server_group
   * os_stack
   * os_zone
+- ovirt
+  * ovirt_auth
+  * ovirt_disks
+  * ovirt_vms
 - rhevm
 - rocketchat
 - sefcontext
 - sensu_subscription
 - smartos
   * smartos_image_facts
+- sros
+  * sros_command
+  * sros_config
+  * sros_rollback
 - statusio_maintenance
 - systemd
 - telegram
@@ -148,9 +552,18 @@ Ansible Changes By Release
   * vmware_guest
   * vmware_local_user_manager
   * vmware_vmotion
+- vyos
+  * vyos_command
+  * vyos_config
+  * vyos_facts
 - wakeonlan
-- win_robocopy
+- windows
+  * win_command
+  * win_robocopy
+  * win_shell
 
+####New Callbacks:
+* foreman
 
 ###Minor Changes:
 * now -vvv shows exact path from which 'currently executing module' was picked up from.
@@ -160,8 +573,113 @@ Ansible Changes By Release
 * `raw` now returns `changed: true` to be consistent with shell/command/script modules. Add `changed_when: false` to `raw` tasks to restore the pre-2.2 behavior if necessary.
 * removed previously deprecated ';' as host list separator.
 * Only check if the default ssh client supports ControlPersist once instead of once for each host + task combination.
+* Fix a problem with the pip module updating the python pip package itself.
+* ansible_play_hosts is a new magic variable to provide a list of hosts in scope for the current play. Unlike play_hosts it is not subject to the 'serial' keyword.
+* ansible_play_batch is a new magic variable meant to substitute the current play_hosts.
 
-## 2.1.2 "The Song Remains the Same"
+###For custom front ends using the API:
+* ansible.parsing.vault:
+  * VaultLib.is_encrypted() has been deprecated.  It will be removed in 2.4.
+    Use ansible.parsing.vault.is_encrypted() instead
+  * VaultFile has been removed. This unfinished code was never used inside of
+    Ansible.  The feature it was intended to support has now been implemented
+    without using this.
+  * VaultAES, the older, insecure encrypted format that debuted in Ansible-1.5
+    and was replaced by VaultAES256 less than a week later, now has a deprecation
+    warning.  **It will be removed in 2.3**.  In the unlikely event that you
+    wrote a vault file in that 1 week window and have never modified the file
+    since (ansible-vault automatically re-encrypts the file using VaultAES256
+    whenever it is written to but not read), run ``ansible-vault rekey
+    [filename]`` to move to VaultAES256.
+
+###Removed Deprecated:
+* ';' as host list separator.
+* with\_ 'bare variable' handling, now loop items must always be templated `{{ }}` or they will be considered as plain strings.
+* skipping task on 'missing attribute' in loop variable, now in a loop an undefined attribute will return an error instead of skipping the task.
+* skipping on undefined variables in loop, now loops will have to define a variable or use `|default` to avoid errors.
+
+###Deprecations
+Notice given that the following will be removed in Ansible 2.4:
+* Modules
+  * eos_template
+  * ios_template
+  * iosxr_template
+  * junos_template
+  * nxos_template
+  * ops_template
+
+## 2.1.4 "The Song Remains the Same" - 2017-01-16
+
+* Security fix for CVE-2016-9587 - An attacker with control over a client system being managed by Ansible and the ability to send facts back to the Ansible server could use this flaw to execute arbitrary code on the Ansible server as the user and group Ansible is running as.
+* Fixed a bug with conditionals in loops, where undefined variables and other errors will defer raising the error until the conditional has been evaluated.
+* Added a version check for jinja2-2.9, which does not fully work with Ansible currently.
+
+## 2.1.3 "The Song Remains the Same" - 2016-11-04
+
+* Security fix for CVE-2016-8628 - Command injection by compromised server via fact variables. In some situations, facts returned by modules could overwrite connection-based facts or some other special variables, leading to injected commands running on the Ansible controller as the user running Ansible (or via escalated permissions).
+* Security fix for CVE-2016-8614 - apt_key module not properly validating keys in some situations.
+
+###Minor Changes:
+* The subversion module from core now marks its password parameter as no_log so
+  the password is obscured when logging.
+* The postgresql_lang and postgresql_ext modules from extras now mark
+  login_password as no_log so the password is obscured when logging.
+* Fixed several bugs related to locating files relative to role/playbook directories.
+* Fixed a bug in the way hosts were tested for failed states, resulting in incorrectly skipped block sessions.
+* Fixed a bug in the way our custom JSON encoder is used for the to_json* filters.
+* Fixed some bugs related to the use of non-ascii characters in become passwords.
+* Fixed a bug with Azure modules which may be using the latest rc6 library.
+* Backported some docker_common fixes.
+
+## 2.1.2 "The Song Remains the Same" - 2016-09-29
+
+###Minor Changes:
+* Fixed a bug related to creation of retry files (#17456)
+* Fixed a bug in the way include params are used when an include task is dynamic (#17064)
+* Fixed a bug related to including blocks in an include task (#15963)
+* Fixed a bug related to the use of hostvars internally when creating the connection plugin. This prevents things like variables using lookups from being evaluated unnecessarily (#17024)
+* Fixed a bug where using a variable containing a list for the `hosts` of a play resulted in an list of lists (#16583)
+* Fixed a bug where integer values would cause an error if a module param was of type `float` (no issue)
+* Fixed a bug with net_template failing if src was not specified (#17726)
+* Fixed a bug in "ansible-galaxy import" (#17417)
+* Fixed a bug in which INI files incorrectly treated a hosts range as a section header (#15331)
+* Fixed a bug in which the max_fail_percentage calculation erroneously caused a series of plays to stop executing (#15954)
+* Fixed a bug in which the task names were not properly templated (#16295)
+* Fixed a bug causing "squashed" loops (ie. yum, apt) to incorrectly report results (ansible-modules-core#4214)
+* Fixed several bugs related to includes:
+  - when including statically, make sure that all parents were also included statically (issue #16990)
+  - properly resolve nested static include paths
+  - print a message when a file is statically included
+* Fixed a bug in which module params expected to be float types were not converted from integers (only strings) (#17325)
+* Fixed a bug introduced by static includes in 2.1, which prevented notifications from going to the "top level" handler name.
+* Fixed a bug where a group_vars or host_vars directory in the current working directory would be used (and would take precedence) over those in the inventory and/or playbook directory.
+* Fixed a bug which could occur when the result of an async task did not parse as valid JSON.
+* (re)-allowed the use of ansible_python_interpreter lines with more than one argument.
+* Fixed several bugs related to the creation of the implicit localhost in inventory.
+* Fixed a bug related to an unspecified number of retries when using until.
+* Fixed a race-condition bug when creating temp directories before the worker process is forked.
+* Fix a bug with async's poll keyword not making use of ansible_python_interpreter to run (and thus breaking when /usr/bin/python is not present on the remote machine.)
+* Fix a bug where hosts that started with a range in inventory were being treated as an invalid section header.
+
+Module fixes:
+* Fixed a bug where the temporary CA files created by the module helper code were not being deleted properly in some situations (#17073)
+* Fixed many bugs in the unarchive module
+* Fixes for module ec2:
+  - Fixed a bug related to source_dest_check when used with non-vpc instances (core#3243)
+  - Fixed a bug in ec2 where instances were not powering of when referenced via tags only (core#4765)
+  - Fixed a bug where instances with multiple interfaces were not powering up/down correctly (core#3234)
+* Fixes for module get_url:
+  - Fixed a bug in get_url module to force a download if there is a checksum mismatch regardless of the last modified time (core#4262)
+  - Fixed a bug in get_url module to properly process FTP results (core#3661 and core#4601)
+* Fixed a bug in win_user related to users with disabled accounts/expired passwords (core#4369)
+* ini_file:
+  - Fixed a bug where option lines are now inserted before blank lines.
+  - Fixed a bug where leading whitespace prevented matches on options.
+* Fixed a bug in iam_cert when dup_ok is used as a string.
+* Fixed a bug in postgresql_db related to the changed logic when state=absent.
+* Fixed a bug where single_transaction and quick were not passed into db_dump for the mysql_db module.
+* Fixed a bug where the fetch module was not idempotent when retrieving the target of a symlink.
+* Many minor fixes for bugs in extras modules.
 
 ###Deprecations:
 
@@ -360,6 +878,7 @@ Ansible Changes By Release
 * Deprecated the use of "bare" variables in loops (ie. `with_items: foo`, where `foo` is a variable).
   The full jinja2 variable syntax of `{{foo}}` should always be used instead. This warning will be removed
   completely in 2.3, after which time it will be an error.
+* play_hosts magic variable, use ansible_play_batch or ansible_play_hosts instead.
 
 ## 2.0.2 "Over the Hills and Far Away"
 
@@ -1529,7 +2048,7 @@ New modules and plugins.
   * rax_clb *-- manages Rackspace cloud load balancers*
 - files
   * acl *-- set or get acls on a file*
-  * synchronize *-- a useful wraper around rsyncing trees of files*
+  * synchronize *-- a useful wrapper around rsyncing trees of files*
   * unarchive *-- pushes and extracts tarballs*
 - system
   * blacklist *-- add or remove modules from the kernel blacklist*
@@ -2588,3 +3107,4 @@ in kickstarts
 ## 0.0.2 and 0.0.1
 
 * Initial stages of project
+

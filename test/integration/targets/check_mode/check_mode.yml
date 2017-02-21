@@ -1,0 +1,6 @@
+- hosts: testhost
+  vars:
+  - output_dir: .
+  roles:
+  - { role: test_always_run, tags: test_always_run }
+  - { role: test_check_mode, tags: test_check_mode }

@@ -1,4 +1,3 @@
-#!/usr/bin/make
 # WARN: gmake syntax
 ########################################################
 # Makefile for Ansible
@@ -47,10 +46,12 @@ else
 GITINFO = ""
 endif
 
-ifeq ($(shell echo $(OS) | egrep -c 'Darwin|FreeBSD|OpenBSD'),1)
+ifeq ($(shell echo $(OS) | egrep -c 'Darwin|FreeBSD|OpenBSD|DragonFly'),1)
 DATE := $(shell date -j -r $(shell git log -n 1 --format="%at") +%Y%m%d%H%M)
+CPUS ?= $(shell sysctl hw.ncpu|awk '{print $$2}')
 else
 DATE := $(shell date --utc --date="$(GIT_DATE)" +%Y%m%d%H%M)
+CPUS ?= $(shell nproc)
 endif
 
 # DEB build parameters
@@ -77,6 +78,12 @@ DEB_PPA ?= ppa
 # Choose the desired Ubuntu release: lucid precise saucy trusty
 DEB_DIST ?= unstable
 
+# pbuilder parameters
+PBUILDER_ARCH ?= amd64
+PBUILDER_CACHE_DIR = /var/cache/pbuilder
+PBUILDER_BIN ?= pbuilder
+PBUILDER_OPTS ?= --debootstrapopts --variant=buildd --architecture $(PBUILDER_ARCH) --debbuildopts -b
+
 # RPM build parameters
 RPMSPECDIR= packaging/rpm
 RPMSPEC = $(RPMSPECDIR)/ansible.spec
@@ -91,19 +98,30 @@ RPMNVR = "$(NAME)-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
 MOCK_BIN ?= mock
 MOCK_CFG ?=
 
-NOSETESTS ?= nosetests
+# ansible-test parameters
+ANSIBLE_TEST ?= test/runner/ansible-test
+TEST_FLAGS ?=
 
-NOSETESTS3 ?= nosetests-3.5
+# ansible-test units parameters (make test / make test-py3)
+PYTHON_VERSION ?= $(shell python2 -c 'import sys; print("%s.%s" % sys.version_info[:2])')
+PYTHON3_VERSION ?= $(shell python3 -c 'import sys; print("%s.%s" % sys.version_info[:2])')
+
+# ansible-test integration parameters (make integration)
+IMAGE ?= centos7
+TARGET ?=
 
 ########################################################
 
 all: clean python
 
 tests:
-	PYTHONPATH=./lib $(NOSETESTS) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches
+	$(ANSIBLE_TEST) units -v --python $(PYTHON_VERSION) $(TEST_FLAGS)
 
 tests-py3:
-	PYTHONPATH=./lib $(NOSETESTS3) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches
+	$(ANSIBLE_TEST) units -v --python $(PYTHON3_VERSION) $(TEST_FLAGS)
+
+integration:
+	$(ANSIBLE_TEST) integration -v --docker $(IMAGE) $(TARGET) $(TEST_FLAGS)
 
 authors:
 	sh hacking/authors.sh
@@ -122,11 +140,7 @@ loc:
 	sloccount lib library bin
 
 pep8:
-	@echo "#############################################"
-	@echo "# Running PEP8 Compliance Tests"
-	@echo "#############################################"
-	-pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225,E261,E241 lib/ bin/
-	# -pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225,E261,E241 --filename "*" library/
+	$(ANSIBLE_TEST) sanity --test pep8 --python $(PYTHON_VERSION) $(TEST_FLAGS)
 
 pyflakes:
 	pyflakes lib/ansible/*.py lib/ansible/*/*.py bin/*
@@ -157,6 +171,10 @@ clean:
 	@echo "Cleaning up authors file"
 	rm -f AUTHORS.TXT
 	find . -type f -name '*.pyc' -delete
+	rm -f /test/units/.coverage*
+	@echo "Cleaning up docsite"
+	$(MAKE) -C docs/docsite clean
+	$(MAKE) -C docs/api clean
 
 python:
 	$(PYTHON) setup.py build
@@ -227,7 +245,23 @@ debian: sdist
         sed -ie "s|%VERSION%|$(VERSION)|g;s|%RELEASE%|$(DEB_RELEASE)|;s|%DIST%|$${DIST}|g;s|%DATE%|$(DEB_DATE)|g" deb-build/$${DIST}/$(NAME)-$(VERSION)/debian/changelog ; \
 	done
 
-deb: debian
+deb: deb-src
+	@for DIST in $(DEB_DIST) ; do \
+	    PBUILDER_OPTS="$(PBUILDER_OPTS) --distribution $${DIST} --basetgz $(PBUILDER_CACHE_DIR)/$${DIST}-$(PBUILDER_ARCH)-base.tgz --buildresult $(CURDIR)/deb-build/$${DIST}" ; \
+	    $(PBUILDER_BIN) create $${PBUILDER_OPTS} --othermirror "deb http://archive.ubuntu.com/ubuntu $${DIST} universe" ; \
+	    $(PBUILDER_BIN) update $${PBUILDER_OPTS} ; \
+	    $(PBUILDER_BIN) build $${PBUILDER_OPTS} deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}.dsc ; \
+	done
+	@echo "#############################################"
+	@echo "Ansible DEB artifacts:"
+	@for DIST in $(DEB_DIST) ; do \
+	    echo deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_amd64.changes ; \
+	done
+	@echo "#############################################"
+
+# Build package outside of pbuilder, with locally installed dependencies.
+# Install BuildRequires as noted in packaging/debian/control.
+local_deb: debian
 	@for DIST in $(DEB_DIST) ; do \
 	    (cd deb-build/$${DIST}/$(NAME)-$(VERSION)/ && $(DEBUILD) -b) ; \
 	done
@@ -262,7 +296,7 @@ deb-src-upload: deb-src
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 
 webdocs:
-	(cd docsite/; make docs)
+	(cd docs/docsite/; CPUS=$(CPUS) make docs)
 
 docs: $(MANPAGES)
 

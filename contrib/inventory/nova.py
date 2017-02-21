@@ -26,7 +26,7 @@ import re
 import os
 import ConfigParser
 from novaclient import client as nova_client
-from six import iteritems
+from six import iteritems, itervalues
 
 try:
     import json
@@ -105,7 +105,7 @@ def get_ips(server, access_ip=True):
     # Iterate through each servers network(s), get addresses and get type
     addresses = getattr(server, 'addresses', {})
     if len(addresses) > 0:
-        for network in addresses.itervalues():
+        for network in itervalues(addresses):
             for address in network:
                 if address.get('OS-EXT-IPS:type', False) == 'fixed':
                     private.append(address['addr'])

@@ -25,6 +25,7 @@ from ansible.compat.six import PY3
 from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.vars.hostvars import HostVars
+from ansible.vars.unsafe_proxy import AnsibleUnsafeText
 
 
 class AnsibleDumper(yaml.SafeDumper):
@@ -39,7 +40,7 @@ def represent_hostvars(self, data):
 
 # Note: only want to represent the encrypted data
 def represent_vault_encrypted_unicode(self, data):
-    return self.represent_scalar(u'!vault-encrypted', data._ciphertext.decode(), style='|')
+    return self.represent_scalar(u'!vault', data._ciphertext.decode(), style='|')
 
 if PY3:
     represent_unicode = yaml.representer.SafeRepresenter.represent_str
@@ -48,6 +49,11 @@ else:
 
 AnsibleDumper.add_representer(
     AnsibleUnicode,
+    represent_unicode,
+)
+
+AnsibleDumper.add_representer(
+    AnsibleUnsafeText,
     represent_unicode,
 )
 

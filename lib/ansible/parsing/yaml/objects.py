@@ -73,7 +73,7 @@ class AnsibleSequence(AnsibleBaseYAMLObject, list):
 class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleUnicode):
     __UNSAFE__ = True
     __ENCRYPTED__ = True
-    yaml_tag = u'!vault-encrypted'
+    yaml_tag = u'!vault'
 
     @classmethod
     def from_plaintext(cls, seq, vault):
@@ -132,3 +132,6 @@ class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleUnicode):
 
     def __unicode__(self):
         return unicode(self.data)
+
+    def encode(self, encoding=None, errors=None):
+        return self.data.encode(encoding, errors)

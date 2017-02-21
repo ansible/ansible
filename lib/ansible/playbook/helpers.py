@@ -40,6 +40,8 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
 
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.block import Block
+    from ansible.playbook.task_include import TaskInclude
+    from ansible.playbook.role_include import IncludeRole
 
     assert isinstance(ds, (list, type(None)))
 
@@ -54,14 +56,17 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
                 task_include=task_include,
                 use_handlers=use_handlers,
                 variable_manager=variable_manager,
-                loader=loader
+                loader=loader,
             )
             # Implicit blocks are created by bare tasks listed in a play without
             # an explicit block statement. If we have two implicit blocks in a row,
             # squash them down to a single block to save processing time later.
             if b._implicit and len(block_list) > 0 and block_list[-1]._implicit:
                 for t in b.block:
-                    t._block = block_list[-1]
+                    if isinstance(t._parent, (TaskInclude, IncludeRole)):
+                        t._parent._parent = block_list[-1]
+                    else:
+                        t._parent = block_list[-1]
                 block_list[-1].block.extend(b.block)
             else:
                 block_list.append(b)
@@ -128,8 +133,8 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     is_static = t.static
                 else:
                     is_static = C.DEFAULT_TASK_INCLUDES_STATIC or \
-                                (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC) or \
-                                (not templar._contains_vars(t.args['_raw_params']) and t.all_parents_static() and not t.loop)
+                        (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC) or \
+                        (not templar._contains_vars(t.args['_raw_params']) and t.all_parents_static() and not t.loop)
 
                 if is_static:
                     if t.loop is not None:
@@ -174,13 +179,13 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                             include_target = templar.template(t.args['_raw_params'])
                         except AnsibleUndefinedVariable:
                             raise AnsibleParserError(
-                                      "Error when evaluating variable in include name: %s.\n\n" \
-                                      "When using static includes, ensure that any variables used in their names are defined in vars/vars_files\n" \
-                                      "or extra-vars passed in from the command line. Static includes cannot use variables from inventory\n" \
-                                      "sources like group or host vars." % t.args['_raw_params'],
-                                      obj=task_ds,
-                                      suppress_extended_error=True,
-                                  )
+                                "Error when evaluating variable in include name: %s.\n\n" \
+                                "When using static includes, ensure that any variables used in their names are defined in vars/vars_files\n" \
+                                "or extra-vars passed in from the command line. Static includes cannot use variables from inventory\n" \
+                                "sources like group or host vars." % t.args['_raw_params'],
+                                obj=task_ds,
+                                suppress_extended_error=True,
+                                )
                         if t._role:
                             include_file = loader.path_dwim_relative(t._role._role_path, subdir, include_target)
                         else:
@@ -197,7 +202,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         # the same fashion used by the on_include callback. We also do it here,
                         # because the recursive nature of helper methods means we may be loading
                         # nested includes, and we want the include order printed correctly
-                        display.display("statically included: %s" % include_file, color=C.COLOR_SKIP)
+                        display.vv("statically included: %s" % include_file)
                     except AnsibleFileNotFound:
                         if t.static or \
                            C.DEFAULT_TASK_INCLUDES_STATIC or \
@@ -214,11 +219,13 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         task_list.append(t)
                         continue
 
+                    ti_copy = t.copy(exclude_parent=True)
+                    ti_copy._parent = block
                     included_blocks = load_list_of_blocks(
                         data,
                         play=play,
                         parent_block=None,
-                        task_include=t.copy(),
+                        task_include=ti_copy,
                         role=role,
                         use_handlers=use_handlers,
                         loader=loader,
@@ -228,12 +235,12 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     # pop tags out of the include args, if they were specified there, and assign
                     # them to the include. If the include already had tags specified, we raise an
                     # error so that users know not to specify them both ways
-                    tags = t.vars.pop('tags', [])
+                    tags = ti_copy.vars.pop('tags', [])
                     if isinstance(tags, string_types):
                         tags = tags.split(',')
 
                     if len(tags) > 0:
-                        if len(t.tags) > 0:
+                        if len(ti_copy.tags) > 0:
                             raise AnsibleParserError(
                                 "Include tasks should not specify tags in more than one way (both via args and directly on the task). " \
                                 "Mixing styles in which tags are specified is prohibited for whole import hierarchy, not only for single import statement",
@@ -242,7 +249,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                             )
                         display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option")
                     else:
-                        tags = t.tags[:]
+                        tags = ti_copy.tags[:]
 
                     # now we extend the tags on each of the included blocks
                     for b in included_blocks:
@@ -262,13 +269,13 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
             elif 'include_role' in task_ds:
 
                 ir = IncludeRole.load(
-                            task_ds,
-                            block=block,
-                            role=role,
-                            task_include=None,
-                            variable_manager=variable_manager,
-                            loader=loader
-                     )
+                    task_ds,
+                    block=block,
+                    role=role,
+                    task_include=None,
+                    variable_manager=variable_manager,
+                    loader=loader
+                    )
 
                 #   1. the user has set the 'static' option to false or true
                 #   2. one of the appropriate config options was set
@@ -286,7 +293,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                                 needs_templating = True
                                 break
                     is_static = C.DEFAULT_TASK_INCLUDES_STATIC or \
-                                (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC)  or \
+                                (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC) or \
                                 (not needs_templating and ir.all_parents_static() and not ir.loop)
                     display.debug('Determined that if include_role static is %s' % str(is_static))
                 if is_static:

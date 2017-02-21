@@ -94,12 +94,11 @@ class ConsoleCLI(CLI, cmd.Cmd):
             help="one-step-at-a-time: confirm each task before running")
 
         self.parser.set_defaults(cwd='*')
-        self.options, self.args = self.parser.parse_args(self.args[1:])
+
+        super(ConsoleCLI, self).parse()
 
         display.verbosity = self.options.verbosity
         self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
-
-        return True
 
     def get_names(self):
         return dir(self)
@@ -199,15 +198,15 @@ class ConsoleCLI(CLI, cmd.Cmd):
             self._tqm = None
             try:
                 self._tqm = TaskQueueManager(
-                        inventory=self.inventory,
-                        variable_manager=self.variable_manager,
-                        loader=self.loader,
-                        options=self.options,
-                        passwords=self.passwords,
-                        stdout_callback=cb,
-                        run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
-                        run_tree=False,
-                    )
+                    inventory=self.inventory,
+                    variable_manager=self.variable_manager,
+                    loader=self.loader,
+                    options=self.options,
+                    passwords=self.passwords,
+                    stdout_callback=cb,
+                    run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
+                    run_tree=False,
+                )
 
                 result = self._tqm.run(play)
             finally:
@@ -357,7 +356,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         if module_name in self.modules:
             in_path = module_loader.find_plugin(module_name)
             if in_path:
-                oc, a, _ = module_docs.get_docstring(in_path)
+                oc, a, _, _ = module_docs.get_docstring(in_path)
                 if oc:
                     display.display(oc['short_description'])
                     display.display('Parameters:')
@@ -389,8 +388,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     def module_args(self, module_name):
         in_path = module_loader.find_plugin(module_name)
-        oc, a, _ = module_docs.get_docstring(in_path)
-        return oc['options'].keys()
+        oc, a, _, _ = module_docs.get_docstring(in_path)
+        return list(oc['options'].keys())
 
     def run(self):
 
@@ -424,7 +423,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
             vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=self.loader)
             self.loader.set_vault_password(vault_pass)
         elif self.options.ask_vault_pass:
-            vault_pass = self.ask_vault_passwords()[0]
+            vault_pass = self.ask_vault_passwords()
             self.loader.set_vault_password(vault_pass)
 
         self.variable_manager = VariableManager()

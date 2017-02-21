@@ -41,14 +41,12 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
     def run(self, tmp=None, task_vars=None):
-        if task_vars is None:
-            task_vars = dict()
+
+        self._supports_check_mode = False
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        if self._play_context.check_mode:
-            result['skipped'] = True
-            result['msg'] = 'check mode not supported for this module'
+        if result.get('skipped', False):
             return result
 
         # Parse out any hostname:port patterns
@@ -70,11 +68,11 @@ class ActionModule(ActionBase):
         new_groups = []
         if groups:
             if isinstance(groups, list):
-               group_list = groups
+                group_list = groups
             elif isinstance(groups, string_types):
-               group_list = groups.split(",")
+                group_list = groups.split(",")
             else:
-               raise AnsibleError("Groups must be specfied as a list.", obj=self._task)
+                raise AnsibleError("Groups must be specfied as a list.", obj=self._task)
 
             for group_name in group_list:
                 if group_name not in new_groups:

@@ -1,0 +1,28 @@
+---
+- debug: msg="START eapi/output.yaml"
+
+- name: get output for single command
+  eos_command:
+    commands: ['show version']
+    provider: "{{ eapi }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+
+- name: get output for multiple commands
+  eos_command:
+    commands:
+      - show version
+      - show interfaces
+    provider: "{{ eapi }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+
+- debug: msg="END eapi/output.yaml"

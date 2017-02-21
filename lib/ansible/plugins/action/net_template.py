@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Peter Sprygada <psprygada@ansible.com>
+# (c) 2016 Red Hat Inc.
 #
 # This file is part of Ansible
 #
@@ -25,35 +25,27 @@ import glob
 import urlparse
 
 from ansible.module_utils._text import to_text
-from ansible.plugins.action import ActionBase
+from ansible.plugins.action.normal import ActionModule as _ActionModule
 
 
-BOOLEANS = ('true', 'false', 'yes', 'no')
-
-
-class ActionModule(ActionBase):
-
-    TRANSFERS_FILES = False
+class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
-        result = super(ActionModule, self).run(tmp, task_vars)
-        result['changed'] = False
 
         try:
             self._handle_template()
         except (ValueError, AttributeError) as exc:
             return dict(failed=True, msg=exc.message)
 
-        result.update(self._execute_module(module_name=self._task.action,
-            module_args=self._task.args, task_vars=task_vars))
+        result = super(ActionModule, self).run(tmp, task_vars)
 
-        if self._task.args.get('backup') and result.get('_backup'):
+        if self._task.args.get('backup') and result.get('__backup__'):
             # User requested backup and no error occurred in module.
-            # NOTE: If there is a parameter error, _backup key may not be in results.
-            self._write_backup(task_vars['inventory_hostname'], result['_backup'])
+            # NOTE: If there is a parameter error, __backup__ key may not be in results.
+            self._write_backup(task_vars['inventory_hostname'], result['__backup__'])
 
-        if '_backup' in result:
-            del result['_backup']
+        if '__backup__' in result:
+            del result['__backup__']
 
         return result
 
@@ -101,10 +93,11 @@ class ActionModule(ActionBase):
         searchpath = [working_path]
         if self._task._role is not None:
             searchpath.append(self._task._role._role_path)
-            dep_chain = self._task._block.get_dep_chain()
-            if dep_chain is not None:
-                for role in dep_chain:
-                    searchpath.append(role._role_path)
+            if hasattr(self._task, "_block:"):
+                dep_chain = self._task._block.get_dep_chain()
+                if dep_chain is not None:
+                    for role in dep_chain:
+                        searchpath.append(role._role_path)
         searchpath.append(os.path.dirname(source))
         self._templar.environment.loader.searchpath = searchpath
         self._task.args['src'] = self._templar.template(template_data)

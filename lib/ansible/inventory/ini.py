@@ -38,9 +38,10 @@ class InventoryParser(object):
     Takes an INI-format inventory file and builds a list of groups and subgroups
     with their associated hosts and variable settings.
     """
+    _COMMENT_MARKERS = frozenset((u';', u'#'))
+    b_COMMENT_MARKERS = frozenset((b';', b'#'))
 
     def __init__(self, loader, groups, filename=C.DEFAULT_HOST_LIST):
-        self._loader = loader
         self.filename = filename
 
         # Start with an empty host list and whatever groups we're passed in
@@ -52,13 +53,28 @@ class InventoryParser(object):
 
         # Read in the hosts, groups, and variables defined in the
         # inventory file.
-
         if loader:
-            (data, private) = loader._get_file_contents(filename)
+            (b_data, private) = loader._get_file_contents(filename)
         else:
-            with open(filename) as fh:
-                data = to_text(fh.read())
-        data = data.split('\n')
+            with open(filename, 'rb') as fh:
+                b_data = fh.read()
+
+        try:
+            # Faster to do to_text once on a long string than many
+            # times on smaller strings
+            data = to_text(b_data, errors='surrogate_or_strict').splitlines()
+        except UnicodeError:
+            # Handle non-utf8 in comment lines: https://github.com/ansible/ansible/issues/17593
+            data = []
+            for line in b_data.splitlines():
+                if line and line[0] in self.b_COMMENT_MARKERS:
+                    # Replace is okay for comment lines
+                    #data.append(to_text(line, errors='surrogate_then_replace'))
+                    # Currently we only need these lines for accurate lineno in errors
+                    data.append(u'')
+                else:
+                    # Non-comment lines still have to be valid uf-8
+                    data.append(to_text(line, errors='surrogate_or_strict'))
 
         self._parse(data)
 
@@ -89,7 +105,7 @@ class InventoryParser(object):
             line = line.strip()
 
             # Skip empty lines and comments
-            if line == '' or line.startswith(";") or line.startswith("#"):
+            if not line or line[0] in self._COMMENT_MARKERS:
                 continue
 
             # Is this a [section] header? That tells us what group we're parsing

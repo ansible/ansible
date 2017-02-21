@@ -22,8 +22,9 @@ import os
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.plugins.action import ActionBase
-from ansible.utils.boolean import boolean
+from ansible.constants import mk_boolean as boolean
 
 
 class ActionModule(ActionBase):
@@ -58,10 +59,8 @@ class ActionModule(ActionBase):
             result['msg'] = "src (or content) and dest are required"
             return result
 
-        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
         if not tmp:
-            tmp = self._make_tmp_path(remote_user)
-            self._cleanup_remote_tmp = True
+            tmp = self._make_tmp_path()
 
         if creates:
             # do not run the command if the line contains creates=filename
@@ -79,19 +78,21 @@ class ActionModule(ActionBase):
         if not remote_src:
             try:
                 source = self._loader.get_real_file(self._find_needle('files', source))
-            except AnsibleError as e:
+            except AnsibleError:
                 result['failed'] = True
-                result['msg'] = to_native(e)
+                result['msg'] = to_native(get_exception())
                 self._remove_tmp_path(tmp)
                 return result
 
-        remote_checksum = self._remote_checksum(dest, all_vars=task_vars, follow=True)
-        if remote_checksum == '4':
+        try:
+            remote_stat = self._execute_remote_stat(dest, all_vars=task_vars, follow=True)
+        except AnsibleError:
             result['failed'] = True
-            result['msg'] = "python isn't present on the system.  Unable to compute checksum"
+            result['msg'] = to_native(get_exception())
             self._remove_tmp_path(tmp)
             return result
-        elif remote_checksum != '3':
+
+        if not remote_stat['exists'] or not remote_stat['isdir']:
             result['failed'] = True
             result['msg'] = "dest '%s' must be an existing dir" % dest
             self._remove_tmp_path(tmp)
@@ -107,7 +108,7 @@ class ActionModule(ActionBase):
 
         if not remote_src:
             # fix file permissions when the copy is done as a different user
-            self._fixup_perms2((tmp, tmp_src), remote_user)
+            self._fixup_perms2((tmp, tmp_src))
             # Build temporary module_args.
             new_module_args = self._task.args.copy()
             new_module_args.update(

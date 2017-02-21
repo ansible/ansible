@@ -1,0 +1,6 @@
+---
+cli:
+  host: "{{ inventory_hostname }}"
+  username: "{{ ops_cli_user | default('netop') }}"
+  password: "{{ ops_cli_pass | default('netop') }}"
+  transport: cli

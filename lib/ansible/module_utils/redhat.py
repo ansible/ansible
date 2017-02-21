@@ -29,7 +29,8 @@
 import os
 import re
 import types
-import ConfigParser
+
+from ansible.module_utils.six.moves import configparser
 
 
 class RegistrationBase(object):
@@ -59,7 +60,7 @@ class RegistrationBase(object):
     def update_plugin_conf(self, plugin, enabled=True):
         plugin_conf = '/etc/yum/pluginconf.d/%s.conf' % plugin
         if os.path.isfile(plugin_conf):
-            cfg = ConfigParser.ConfigParser()
+            cfg = configparser.ConfigParser()
             cfg.read([plugin_conf])
             if enabled:
                 cfg.set('main', 'enabled', 1)
@@ -87,7 +88,7 @@ class Rhsm(RegistrationBase):
         '''
 
         # Read RHSM defaults ...
-        cp = ConfigParser.ConfigParser()
+        cp = configparser.ConfigParser()
         cp.read(rhsm_conf)
 
         # Add support for specifying a default value w/o having to standup some configuration
@@ -99,7 +100,7 @@ class Rhsm(RegistrationBase):
             else:
                 return default
 
-        cp.get_option = types.MethodType(get_option_default, cp, ConfigParser.ConfigParser)
+        cp.get_option = types.MethodType(get_option_default, cp, configparser.ConfigParser)
 
         return cp
 
@@ -127,7 +128,7 @@ class Rhsm(RegistrationBase):
         for k,v in kwargs.items():
             if re.search(r'^(system|rhsm)_', k):
                 args.append('--%s=%s' % (k.replace('_','.'), v))
-        
+
         self.module.run_command(args, check_rc=True)
 
     @property
@@ -141,7 +142,7 @@ class Rhsm(RegistrationBase):
         # Quick version...
         if False:
             return os.path.isfile('/etc/pki/consumer/cert.pem') and \
-                   os.path.isfile('/etc/pki/consumer/key.pem')
+                os.path.isfile('/etc/pki/consumer/key.pem')
 
         args = ['subscription-manager', 'identity']
         rc, stdout, stderr = self.module.run_command(args, check_rc=False)

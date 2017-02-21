@@ -1,5 +1,6 @@
 # (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com> and others
+# (c) 2017, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -22,7 +23,6 @@ __metaclass__ = type
 
 import glob
 import imp
-import inspect
 import os
 import os.path
 import sys
@@ -31,6 +31,7 @@ import warnings
 from collections import defaultdict
 
 from ansible import constants as C
+from ansible.compat.six import string_types
 from ansible.module_utils._text import to_text
 
 
@@ -47,7 +48,7 @@ PLUGIN_PATH_CACHE = {}
 
 
 def get_all_plugin_loaders():
-    return [(name, obj) for (name, obj) in inspect.getmembers(sys.modules[__name__]) if isinstance(obj, PluginLoader)]
+    return [(name, obj) for (name, obj) in globals().items() if isinstance(obj, PluginLoader)]
 
 
 class PluginLoader:
@@ -148,7 +149,7 @@ class PluginLoader:
                     results.append(os.path.join(root,x))
         return results
 
-    def _get_package_paths(self):
+    def _get_package_paths(self, subdirs=True):
         ''' Gets the path of a Python package '''
 
         if not self.package:
@@ -159,11 +160,18 @@ class PluginLoader:
             for parent_mod in parts:
                 m = getattr(m, parent_mod)
             self.package_path = os.path.dirname(m.__file__)
-        return self._all_directories(self.package_path)
+        if subdirs:
+            return self._all_directories(self.package_path)
+        return [self.package_path]
 
-    def _get_paths(self):
+    def _get_paths(self, subdirs=True):
         ''' Return a list of paths to search for plugins in '''
 
+        # FIXME: This is potentially buggy if subdirs is sometimes True and
+        # sometimes False.  In current usage, everything calls this with
+        # subdirs=True except for module_utils_loader which always calls it
+        # with subdirs=False.  So there currently isn't a problem with this
+        # caching.
         if self._paths is not None:
             return self._paths
 
@@ -173,15 +181,18 @@ class PluginLoader:
         if self.config is not None:
             for path in self.config:
                 path = os.path.realpath(os.path.expanduser(path))
-                contents = glob.glob("%s/*" % path) + glob.glob("%s/*/*" % path)
-                for c in contents:
-                    if os.path.isdir(c) and c not in ret:
-                        ret.append(c)
+                if subdirs:
+                    contents = glob.glob("%s/*" % path) + glob.glob("%s/*/*" % path)
+                    for c in contents:
+                        if os.path.isdir(c) and c not in ret:
+                            ret.append(c)
                 if path not in ret:
                     ret.append(path)
 
         # look for any plugins installed in the package subtree
-        ret.extend(self._get_package_paths())
+        # Note package path always gets added last so that every other type of
+        # path is searched before it.
+        ret.extend(self._get_package_paths(subdirs=subdirs))
 
         # HACK: because powershell modules are in the same directory
         # hierarchy as other modules we have to process them last.  This is
@@ -197,6 +208,7 @@ class PluginLoader:
         # would have class_names, they would not work as written.
         reordered_paths = []
         win_dirs = []
+
         for path in ret:
             if path.endswith('windows'):
                 win_dirs.append(path)
@@ -221,7 +233,7 @@ class PluginLoader:
                 self._extra_dirs.append(directory)
                 self._paths = None
 
-    def find_plugin(self, name, mod_type=''):
+    def find_plugin(self, name, mod_type='', ignore_deprecated=False):
         ''' Find a plugin named name '''
 
         if mod_type:
@@ -260,6 +272,9 @@ class PluginLoader:
 
                 # HACK: We have no way of executing python byte
                 # compiled files as ansible modules so specifically exclude them
+                ### FIXME: I believe this is only correct for modules and
+                # module_utils.  For all other plugins we want .pyc and .pyo should
+                # bew valid
                 if full_path.endswith(('.pyc', '.pyo')):
                     continue
 
@@ -297,7 +312,7 @@ class PluginLoader:
             alias_name = '_' + name
             # We've already cached all the paths at this point
             if alias_name in pull_cache:
-                if not os.path.islink(pull_cache[alias_name]):
+                if not ignore_deprecated and not os.path.islink(pull_cache[alias_name]):
                     display.deprecated('%s is kept for backwards compatibility '
                               'but usage is discouraged. The module '
                               'documentation details page may explain '
@@ -373,6 +388,7 @@ class PluginLoader:
     def all(self, *args, **kwargs):
         ''' instantiates all plugins with the same arguments '''
 
+        path_only = kwargs.pop('path_only', False)
         class_only = kwargs.pop('class_only', False)
         all_matches = []
         found_in_cache = True
@@ -383,6 +399,10 @@ class PluginLoader:
         for path in sorted(all_matches, key=lambda match: os.path.basename(match)):
             name, _ = os.path.splitext(path)
             if '__init__' in name:
+                continue
+
+            if path_only:
+                yield path
                 continue
 
             if path not in self._module_cache:
@@ -461,6 +481,13 @@ module_loader = PluginLoader(
     'library',
 )
 
+module_utils_loader = PluginLoader(
+    '',
+    'ansible.module_utils',
+    C.DEFAULT_MODULE_UTILS_PATH,
+    'module_utils',
+)
+
 lookup_loader = PluginLoader(
     'LookupModule',
     'ansible.plugins.lookup',
@@ -504,3 +531,11 @@ strategy_loader = PluginLoader(
     'strategy_plugins',
     required_base_class='StrategyBase',
 )
+
+terminal_loader = PluginLoader(
+    'TerminalModule',
+    'ansible.plugins.terminal',
+    'terminal_plugins',
+    'terminal_plugins'
+)
+

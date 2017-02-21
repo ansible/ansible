@@ -142,12 +142,11 @@ class PlaybookExecutor:
 
                         break_play = False
                         # we are actually running plays
-                        for batch in self._get_serialized_batches(new_play):
-                            if len(batch) == 0:
-                                self._tqm.send_callback('v2_playbook_on_play_start', new_play)
-                                self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
-                                break
-
+                        batches = self._get_serialized_batches(new_play)
+                        if len(batches) == 0:
+                            self._tqm.send_callback('v2_playbook_on_play_start', new_play)
+                            self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
+                        for batch in batches:
                             # restrict the inventory to the hosts in the serialized batch
                             self._inventory.restrict_to_hosts(batch)
                             # and run it...
@@ -195,7 +194,7 @@ class PlaybookExecutor:
                             if C.RETRY_FILES_SAVE_PATH:
                                 basedir = C.shell_expand(C.RETRY_FILES_SAVE_PATH)
                             elif playbook_path:
-                                basedir = os.path.dirname(playbook_path)
+                                basedir = os.path.dirname(os.path.abspath(playbook_path))
                             else:
                                 basedir = '~/'
 

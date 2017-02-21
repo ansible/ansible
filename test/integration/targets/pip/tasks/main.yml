@@ -1,0 +1,5 @@
+# Current pip unconditionally uses md5.
+# We can re-enable if pip switches to a different hash or allows us to not check md5.
+
+- include: 'pip.yml'
+  when: ansible_fips|bool != True

@@ -49,7 +49,8 @@ BUFSIZE = 65536
 def ensure_connect(func):
     @wraps(func)
     def wrapped(self, *args, **kwargs):
-        self._connect()
+        if not self._connected:
+            self._connect()
         return func(self, *args, **kwargs)
     return wrapped
 
@@ -60,6 +61,8 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
     '''
 
     has_pipelining = False
+    has_native_async = False # eg, winrm
+    always_pipeline_modules = False # eg, winrm
     become_methods = C.BECOME_METHODS
     # When running over this connection type, prefer modules written in a certain language
     # as discovered by the specified file extension.  An empty string as the
@@ -140,6 +143,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             # ['t\x00\x00\x00', '\x00\x00\x00e\x00\x00\x00']
             return [to_text(x.strip()) for x in shlex.split(to_bytes(argstring)) if x.strip()]
         except AttributeError:
+            # In Python3, shlex.split doesn't work on a byte string.
             return [to_text(x.strip()) for x in shlex.split(argstring) if x.strip()]
 
     @abstractproperty
@@ -252,7 +256,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             return False
         elif isinstance(self._play_context.prompt, string_types):
             b_prompt = to_bytes(self._play_context.prompt)
-            return b_output.startswith(b_prompt)
+            return b_prompt in b_output
         else:
             return self._play_context.prompt(b_output)
 

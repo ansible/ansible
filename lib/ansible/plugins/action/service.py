@@ -26,15 +26,19 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
     UNUSED_PARAMS = {
-        'systemd': ['pattern', 'runlevels', 'sleep', 'arguments'],
+        'systemd': ['pattern', 'runlevel', 'sleep', 'arguments', 'args'],
     }
 
     def run(self, tmp=None, task_vars=None):
         ''' handler for package operations '''
-        if task_vars is None:
-            task_vars = dict()
+
+        self._supports_check_mode = True
+        self._supports_async      = True
 
         result = super(ActionModule, self).run(tmp, task_vars)
+
+        if result.get('skipped', False):
+            return result
 
         module = self._task.args.get('use', 'auto').lower()
 
@@ -50,7 +54,7 @@ class ActionModule(ActionBase):
         if module == 'auto':
             facts = self._execute_module(module_name='setup', module_args=dict(gather_subset='!all', filter='ansible_service_mgr'), task_vars=task_vars)
             self._display.debug("Facts %s" % facts)
-            if 'ansible_facts' in facts and  'ansible_service_mgr' in facts['ansible_facts']:
+            if 'ansible_facts' in facts and 'ansible_service_mgr' in facts['ansible_facts']:
                 module = facts['ansible_facts']['ansible_service_mgr']
 
         if not module or module == 'auto' or module not in self._shared_loader_obj.module_loader:
@@ -64,6 +68,7 @@ class ActionModule(ActionBase):
 
             # for backwards compatibility
             if 'state' in new_module_args and new_module_args['state'] == 'running':
+                self._display.deprecated(msg="state=running is deprecated. Please use state=started", version="2.7")
                 new_module_args['state'] = 'started'
 
             if module in self.UNUSED_PARAMS:
@@ -73,7 +78,7 @@ class ActionModule(ActionBase):
                         self._display.warning('Ignoring "%s" as it is not used in "%s"' % (unused, module))
 
             self._display.vvvv("Running %s" % module)
-            result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars))
+            result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async))
         else:
             result['failed'] = True
             result['msg'] = 'Could not detect which service manager to use. Try gathering facts or setting the "use" option.'

@@ -23,12 +23,14 @@ import pwd
 import time
 
 from ansible import constants as C
+from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
-from ansible.utils.boolean import boolean
 
+boolean = C.mk_boolean
 
 class ActionModule(ActionBase):
 
@@ -43,13 +45,14 @@ class ActionModule(ActionBase):
                 dest = os.path.join(dest, base)
                 dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False, tmp=tmp)
 
-        except Exception as e:
-            return dict(failed=True, msg=to_bytes(e))
+        except AnsibleError:
+            return dict(failed=True, msg=to_native(get_exception()))
 
         return dest_stat['checksum']
 
     def run(self, tmp=None, task_vars=None):
         ''' handler for template operations '''
+
         if task_vars is None:
             task_vars = dict()
 
@@ -57,27 +60,21 @@ class ActionModule(ActionBase):
 
         source = self._task.args.get('src', None)
         dest   = self._task.args.get('dest', None)
-        faf    = self._task.first_available_file
         force  = boolean(self._task.args.get('force', True))
         state  = self._task.args.get('state', None)
 
         if state is not None:
             result['failed'] = True
             result['msg'] = "'state' cannot be specified on a template"
-        elif (source is None and faf is not None) or dest is None:
+        elif source is None or dest is None:
             result['failed'] = True
             result['msg'] = "src and dest are required"
-        elif faf:
-            source = self._get_first_available_file(faf, task_vars.get('_original_file', None, 'templates'))
-            if source is None:
-                result['failed'] = True
-                result['msg'] = "could not find src in first_available_file list"
         else:
             try:
                 source = self._find_needle('templates', source)
-            except AnsibleError as e:
+            except AnsibleError:
                 result['failed'] = True
-                result['msg'] = to_native(e)
+                result['msg'] = to_native(get_exception())
 
         if 'failed' in result:
             return result
@@ -121,29 +118,36 @@ class ActionModule(ActionBase):
                 time.localtime(os.path.getmtime(b_source))
             )
 
-            # Create a new searchpath list to assign to the templar environment's file
-            # loader, so that it knows about the other paths to find template files
-            searchpath = [self._loader._basedir, os.path.dirname(source)]
-            if self._task._role is not None:
-                if C.DEFAULT_ROLES_PATH:
-                    searchpath[:0] = C.DEFAULT_ROLES_PATH
-                searchpath.insert(1, self._task._role._role_path)
+
+            searchpath = []
+            # set jinja2 internal search path for includes
+            if 'ansible_search_path' in task_vars:
+                searchpath = task_vars['ansible_search_path']
+                # our search paths aren't actually the proper ones for jinja includes.
+
+            searchpath.extend([self._loader._basedir, os.path.dirname(source)])
+
+            # We want to search into the 'templates' subdir of each search path in
+            # addition to our original search paths.
+            newsearchpath = []
+            for p in searchpath:
+                newsearchpath.append(os.path.join(p, 'templates'))
+                newsearchpath.append(p)
+            searchpath = newsearchpath
 
             self._templar.environment.loader.searchpath = searchpath
 
             old_vars = self._templar._available_variables
             self._templar.set_available_variables(temp_vars)
-            resultant = self._templar.template(template_data, preserve_trailing_newlines=True, escape_backslashes=False, convert_data=False)
+            resultant = self._templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False)
             self._templar.set_available_variables(old_vars)
         except Exception as e:
             result['failed'] = True
             result['msg'] = type(e).__name__ + ": " + str(e)
             return result
 
-        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
         if not tmp:
-            tmp = self._make_tmp_path(remote_user)
-            self._cleanup_remote_tmp = True
+            tmp = self._make_tmp_path()
 
         local_checksum = checksum_s(resultant)
         remote_checksum = self.get_checksum(dest, task_vars, not directory_prepended, source=source, tmp=tmp)
@@ -166,16 +170,16 @@ class ActionModule(ActionBase):
                 xfered = self._transfer_data(self._connection._shell.join_path(tmp, 'source'), resultant)
 
                 # fix file permissions when the copy is done as a different user
-                self._fixup_perms2((tmp, xfered), remote_user)
+                self._fixup_perms2((tmp, xfered))
 
                 # run the copy module
                 new_module_args.update(
-                   dict(
-                       src=xfered,
-                       dest=dest,
-                       original_basename=os.path.basename(source),
-                       follow=True,
-                   ),
+                    dict(
+                        src=xfered,
+                        dest=dest,
+                        original_basename=os.path.basename(source),
+                        follow=True,
+                        ),
                 )
                 result.update(self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
 

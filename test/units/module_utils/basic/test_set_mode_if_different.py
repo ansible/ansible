@@ -21,6 +21,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import pytest
 
 try:
     import builtins
@@ -79,15 +80,15 @@ def _check_mode_unchanged_when_already_0660(self, mode):
 
 
 SYNONYMS_0660 = (
-        [[0o660]],
-        [['0o660']],
-        [['660']],
-        )
+    [[0o660]],
+    [['0o660']],
+    [['660']],
+    )
 
 @add_method(_check_no_mode_given_returns_previous_changes,
         [dict(previous_changes=True)],
-        [dict(previous_changes=False)],
-        )
+    [dict(previous_changes=False)],
+    )
 @add_method(_check_mode_changed_to_0660,
         *SYNONYMS_0660
         )
@@ -100,7 +101,8 @@ class TestSetModeIfDifferent(TestSetModeIfDifferentBase):
             with patch('os.lchmod', return_value=None, create=True) as m_os:
                 m.side_effect = [self.mock_stat1, self.mock_stat2, self.mock_stat2]
                 self.am._symbolic_mode_to_octal = MagicMock(side_effect=Exception)
-                self.assertRaises(SystemExit, self.am.set_mode_if_different, '/path/to/file', 'o+w,g+w,a-r', False)
+                with pytest.raises(SystemExit):
+                    self.am.set_mode_if_different('/path/to/file', 'o+w,g+w,a-r', False)
 
         original_hasattr = hasattr
         def _hasattr(obj, name):
@@ -131,8 +133,8 @@ def _check_knows_to_change_to_0660_in_check_mode(self, mode):
 
 @add_method(_check_no_mode_given_returns_previous_changes,
         [dict(previous_changes=True)],
-        [dict(previous_changes=False)],
-        )
+    [dict(previous_changes=False)],
+    )
 @add_method(_check_knows_to_change_to_0660_in_check_mode,
         *SYNONYMS_0660
         )

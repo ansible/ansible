@@ -77,7 +77,7 @@ def get_a_ssh_config(box_name):
 if options.list:
     ssh_config = get_ssh_config()
     hosts = { 'coreos': []}
-    
+
     for data in ssh_config:
         hosts['coreos'].append(data['Host'])
 

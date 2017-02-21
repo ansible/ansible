@@ -27,7 +27,10 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import re
 from time import sleep
+
+from ansible.module_utils.cloud import CloudRetry
 
 try:
     import boto
@@ -49,10 +52,43 @@ try:
 except:
     HAS_LOOSE_VERSION = False
 
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import string_types, binary_type, text_type
 
 class AnsibleAWSError(Exception):
     pass
+
+
+def _botocore_exception_maybe():
+    """
+    Allow for boto3 not being installed when using these utils by wrapping
+    botocore.exceptions instead of assigning from it directly.
+    """
+    if HAS_BOTO3:
+        return botocore.exceptions.ClientError
+    return type(None)
+
+
+class AWSRetry(CloudRetry):
+    base_class = _botocore_exception_maybe()
+
+    @staticmethod
+    def status_code_from_exception(error):
+        return error.response['Error']['Code']
+
+    @staticmethod
+    def found(response_code):
+        # This list of failures is based on this API Reference
+        # http://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html
+        retry_on = [
+            'RequestLimitExceeded', 'Unavailable', 'ServiceUnavailable',
+            'InternalFailure', 'InternalError'
+        ]
+
+        not_found = re.compile(r'^\w+.NotFound')
+        if response_code in retry_on or not_found.search(response_code):
+            return True
+        else:
+            return False
 
 
 def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
@@ -77,8 +113,8 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
         client = boto3.session.Session(profile_name=profile).client(resource, region_name=region, endpoint_url=endpoint, **params)
         return client
     else:
-        resource = boto3.session.Session(profile_name=profile).resource(resource, region_name=region, endpoint_url=endpoint, **params)
         client = boto3.session.Session(profile_name=profile).client(resource, region_name=region, endpoint_url=endpoint, **params)
+        resource = boto3.session.Session(profile_name=profile).resource(resource, region_name=region, endpoint_url=endpoint, **params)
         return client, resource
 
 boto3_inventory_conn = _boto3_conn
@@ -196,8 +232,8 @@ def get_aws_connection_info(module, boto3=False):
         boto_params['validate_certs'] = validate_certs
 
     for param, value in boto_params.items():
-        if isinstance(value, str):
-            boto_params[param] = unicode(value, 'utf-8', 'strict')
+        if isinstance(value, binary_type):
+            boto_params[param] = text_type(value, 'utf-8', 'strict')
 
     return region, ec2_url, boto_params
 
@@ -307,7 +343,7 @@ def camel_dict_to_snake_dict(camel_dict):
 
 
     snake_dict = {}
-    for k, v in camel_dict.iteritems():
+    for k, v in camel_dict.items():
         if isinstance(v, dict):
             snake_dict[camel_to_snake(k)] = camel_dict_to_snake_dict(v)
         elif isinstance(v, list):
@@ -316,6 +352,28 @@ def camel_dict_to_snake_dict(camel_dict):
             snake_dict[camel_to_snake(k)] = v
 
     return snake_dict
+
+
+def snake_dict_to_camel_dict(snake_dict):
+
+    def camelize(complex_type):
+        if complex_type is None:
+            return
+        new_type = type(complex_type)()
+        if isinstance(complex_type, dict):
+            for key in complex_type:
+                new_type[camel(key)] = camelize(complex_type[key])
+        elif isinstance(complex_type, list):
+            for i in range(len(complex_type)):
+                new_type.append(camelize(complex_type[i]))
+        else:
+            return complex_type
+        return new_type
+
+    def camel(words):
+        return words.split('_')[0] + ''.join(x.capitalize() or '_' for x in words.split('_')[1:])
+
+    return camelize(snake_dict)
 
 
 def ansible_dict_to_boto3_filter_list(filters_dict):
@@ -342,7 +400,7 @@ def ansible_dict_to_boto3_filter_list(filters_dict):
     """
 
     filters_list = []
-    for k,v in filters_dict.iteritems():
+    for k,v in filters_dict.items():
         filter_dict = {'Name': k}
         if isinstance(v, string_types):
             filter_dict['Values'] = [v]
@@ -407,7 +465,7 @@ def ansible_dict_to_boto3_tag_list(tags_dict):
     """
 
     tags_list = []
-    for k,v in tags_dict.iteritems():
+    for k,v in tags_dict.items():
         tags_list.append({'Key': k, 'Value': v})
 
     return tags_list
@@ -435,7 +493,6 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
             return sg['GroupId']
         else:
             return sg.id
-
 
     sec_group_id_list = []
 
@@ -478,3 +535,88 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
 
     return sec_group_id_list
 
+
+def sort_json_policy_dict(policy_dict):
+
+    """ Sort any lists in an IAM JSON policy so that comparison of two policies with identical values but
+    different orders will return true
+    Args:
+        policy_dict (dict): Dict representing IAM JSON policy.
+    Basic Usage:
+        >>> my_iam_policy = {'Principle': {'AWS':["31","7","14","101"]}
+        >>> sort_json_policy_dict(my_iam_policy)
+    Returns:
+        Dict: Will return a copy of the policy as a Dict but any List will be sorted
+        {
+            'Principle': {
+                'AWS': [ '7', '14', '31', '101' ]
+            }
+        }
+    """
+
+    def value_is_list(my_list):
+
+        checked_list = []
+        for item in my_list:
+            if isinstance(item, dict):
+                checked_list.append(sort_json_policy_dict(item))
+            elif isinstance(item, list):
+                checked_list.append(value_is_list(item))
+            else:
+                checked_list.append(item)
+
+        checked_list.sort()
+        return checked_list
+
+    ordered_policy_dict = {}
+    for key, value in policy_dict.items():
+        if isinstance(value, dict):
+            ordered_policy_dict[key] = sort_json_policy_dict(value)
+        elif isinstance(value, list):
+            ordered_policy_dict[key] = value_is_list(value)
+        else:
+            ordered_policy_dict[key] = value
+
+    return ordered_policy_dict
+
+
+def map_complex_type(complex_type, type_map):
+    """
+        Allows to cast elements within a dictionary to a specific type
+        Example of usage:
+
+        DEPLOYMENT_CONFIGURATION_TYPE_MAP = {
+            'maximum_percent': 'int',
+            'minimum_healthy_percent': 'int'
+        }
+
+        deployment_configuration = map_complex_type(module.params['deployment_configuration'],
+                                                    DEPLOYMENT_CONFIGURATION_TYPE_MAP)
+
+        This ensures all keys within the root element are casted and valid integers
+    """
+
+    if complex_type is None:
+        return
+    new_type = type(complex_type)()
+    if isinstance(complex_type, dict):
+        for key in complex_type:
+            if key in type_map:
+                if isinstance(type_map[key], list):
+                    new_type[key] = map_complex_type(
+                        complex_type[key],
+                        type_map[key][0])
+                else:
+                    new_type[key] = map_complex_type(
+                        complex_type[key],
+                        type_map[key])
+            else:
+                return complex_type
+    elif isinstance(complex_type, list):
+        for i in range(len(complex_type)):
+            new_type.append(map_complex_type(
+                complex_type[i],
+                type_map))
+    elif type_map:
+        return globals()['__builtins__'][type_map](complex_type)
+    return new_type

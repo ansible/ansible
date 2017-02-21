@@ -59,8 +59,11 @@ class DocCLI(CLI):
                 help='List available modules')
         self.parser.add_option("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
                 help='Show playbook snippet for specified module(s)')
+        self.parser.add_option("-a", "--all", action="store_true", default=False, dest='all_modules',
+                help='Show documentation for all modules')
 
-        self.options, self.args = self.parser.parse_args(self.args[1:])
+        super(DocCLI, self).parse()
+
         display.verbosity = self.options.verbosity
 
     def run(self):
@@ -80,6 +83,13 @@ class DocCLI(CLI):
             self.pager(self.get_module_list_text())
             return 0
 
+        # process all modules
+        if self.options.all_modules:
+            paths = module_loader._get_paths()
+            for path in paths:
+                self.find_modules(path)
+            self.args = sorted(set(self.module_list) - module_docs.BLACKLIST_MODULES)
+
         if len(self.args) == 0:
             raise AnsibleOptionsError("Incorrect options passed")
 
@@ -89,7 +99,7 @@ class DocCLI(CLI):
 
             try:
                 # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-                filename = module_loader.find_plugin(module, mod_type='.py')
+                filename = module_loader.find_plugin(module, mod_type='.py', ignore_deprecated=True)
                 if filename is None:
                     display.warning("module %s not found in %s\n" % (module, DocCLI.print_paths(module_loader)))
                     continue
@@ -98,9 +108,9 @@ class DocCLI(CLI):
                     continue
 
                 try:
-                    doc, plainexamples, returndocs = module_docs.get_docstring(filename, verbose=(self.options.verbosity > 0))
+                    doc, plainexamples, returndocs, metadata = module_docs.get_docstring(filename, verbose=(self.options.verbosity > 0))
                 except:
-                    display.vvv(traceback.print_exc())
+                    display.vvv(traceback.format_exc())
                     display.error("module %s has a documentation error formatting or is missing documentation\nTo see exact traceback use -vvv" % module)
                     continue
 
@@ -123,6 +133,7 @@ class DocCLI(CLI):
                     doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
                     doc['plainexamples']    = plainexamples
                     doc['returndocs']       = returndocs
+                    doc['metadata']         = metadata
 
                     if self.options.show_snippet:
                         text += self.get_snippet_text(doc)
@@ -133,33 +144,34 @@ class DocCLI(CLI):
                     # probably a quoting issue.
                     raise AnsibleError("Parsing produced an empty object.")
             except Exception as e:
-                display.vvv(traceback.print_exc())
+                display.vvv(traceback.format_exc())
                 raise AnsibleError("module %s missing documentation (or could not parse documentation): %s\n" % (module, str(e)))
 
-        self.pager(text)
+        if text:
+            self.pager(text)
         return 0
 
     def find_modules(self, path):
+        for module in os.listdir(path):
+            full_path = '/'.join([path, module])
 
-        if os.path.isdir(path):
-            for module in os.listdir(path):
-                if module.startswith('.'):
+            if module.startswith('.'):
+                continue
+            elif os.path.isdir(full_path):
+                continue
+            elif any(module.endswith(x) for x in C.BLACKLIST_EXTS):
+                continue
+            elif module.startswith('__'):
+                continue
+            elif module in C.IGNORE_FILES:
+                continue
+            elif module.startswith('_'):
+                if os.path.islink(full_path):  # avoids aliases
                     continue
-                elif os.path.isdir(module):
-                    self.find_modules(module)
-                elif any(module.endswith(x) for x in C.BLACKLIST_EXTS):
-                    continue
-                elif module.startswith('__'):
-                    continue
-                elif module in C.IGNORE_FILES:
-                    continue
-                elif module.startswith('_'):
-                    fullpath = '/'.join([path,module])
-                    if os.path.islink(fullpath): # avoids aliases
-                        continue
 
-                module = os.path.splitext(module)[0] # removes the extension
-                self.module_list.append(module)
+            module = os.path.splitext(module)[0]  # removes the extension
+            module = module.lstrip('_')  # remove underscore from deprecated modules
+            self.module_list.append(module)
 
     def get_module_list_text(self):
         columns = display.columns
@@ -173,7 +185,7 @@ class DocCLI(CLI):
                 continue
 
             # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-            filename = module_loader.find_plugin(module, mod_type='.py')
+            filename = module_loader.find_plugin(module, mod_type='.py', ignore_deprecated=True)
 
             if filename is None:
                 continue
@@ -183,7 +195,7 @@ class DocCLI(CLI):
                 continue
 
             try:
-                doc, plainexamples, returndocs = module_docs.get_docstring(filename)
+                doc, plainexamples, returndocs, metadata = module_docs.get_docstring(filename)
                 desc = self.tty_ify(doc.get('short_description', '?')).strip()
                 if len(desc) > linelimit:
                     desc = desc[:linelimit] + '...'
@@ -241,7 +253,7 @@ class DocCLI(CLI):
 
         opt_indent="        "
         text = []
-        text.append("> %s\n" % doc['module'].upper())
+        text.append("> %s    (%s)\n" % (doc['module'].upper(), doc['filename']))
         pad = display.columns * 0.20
         limit = max(display.columns - int(pad), 70)
 
@@ -252,8 +264,18 @@ class DocCLI(CLI):
 
         text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), limit, initial_indent="  ", subsequent_indent="  "))
 
+        # FUTURE: move deprecation to metadata-only
+
         if 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0:
             text.append("DEPRECATED: \n%s\n" % doc['deprecated'])
+
+        metadata = doc['metadata']
+
+        supported_by = metadata['supported_by']
+        text.append("Supported by: %s\n" % supported_by)
+
+        status = metadata['status']
+        text.append("Status: %s\n" % ", ".join(status))
 
         if 'action' in doc and doc['action']:
             text.append("  * note: %s\n" % "This module has a corresponding action plugin.")

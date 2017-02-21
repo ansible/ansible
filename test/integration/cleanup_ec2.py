@@ -43,7 +43,7 @@ def delete_autoscaling_group(get_func, attr, opts):
                 if tmp_groups:
                     tmp_group = tmp_groups[0]
                     if not tmp_group.instances:
-                       instances = False
+                        instances = False
                 time.sleep(10)
 
             group.delete()
@@ -55,15 +55,15 @@ def delete_aws_eips(get_func, attr, opts):
 
     # the file might not be there if the integration test wasn't run
     try:
-      eip_log = open(opts.eip_log, 'r').read().splitlines()
+        eip_log = open(opts.eip_log, 'r').read().splitlines()
     except IOError:
-      print('%s not found.' % opts.eip_log)
-      return
+        print('%s not found.' % opts.eip_log)
+        return
 
     for item in get_func():
         val = getattr(item, attr)
         if val in eip_log:
-          prompt_and_delete(item, "Delete matching %s? [y/n]: " % (item,), opts.assumeyes)
+            prompt_and_delete(item, "Delete matching %s? [y/n]: " % (item,), opts.assumeyes)
 
 def delete_aws_instances(reservation, opts):
     for list in reservation:
@@ -75,10 +75,10 @@ def prompt_and_delete(item, prompt, assumeyes):
         assumeyes = raw_input(prompt).lower() == 'y'
     assert hasattr(item, 'delete') or hasattr(item, 'terminate') , "Class <%s> has no delete or terminate attribute" % item.__class__
     if assumeyes:
-        if  hasattr(item, 'delete'):
+        if hasattr(item, 'delete'):
             item.delete()
             print ("Deleted %s" % item)
-        if  hasattr(item, 'terminate'):
+        if hasattr(item, 'terminate'):
             item.terminate()
             print ("Terminated %s" % item)
 
