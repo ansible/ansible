@@ -13,6 +13,7 @@
   ios_template:
     src: basic/config.j2
     provider: "{{ cli }}"
+    timeout: 90
   register: result
 
 - assert:
@@ -24,6 +25,7 @@
   ios_template:
     src: basic/config.j2
     provider: "{{ cli }}"
+    timeout: 90
   register: result
 
 - assert:

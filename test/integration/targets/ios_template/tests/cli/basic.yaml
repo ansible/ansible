@@ -6,6 +6,7 @@
     commands:
       - no interface Loopback999
     match: none
+    timeout: 90
   ignore_errors: yes
 
 - name: configure device with config

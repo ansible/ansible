@@ -13,6 +13,7 @@
     src: defaults/config.j2
     include_defaults: yes
     provider: "{{ cli }}"
+    timeout: 90
   register: result
 
 - assert:
@@ -25,6 +26,7 @@
     src: defaults/config.j2
     include_defaults: yes
     provider: "{{ cli }}"
+    timeout: 90
   register: result
 
 - assert:

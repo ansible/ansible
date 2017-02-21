@@ -15,6 +15,7 @@
   ios_config:
     src: basic/config.j2
     provider: "{{ cli }}"
+    timeout: 90
   register: result
 
 - assert:

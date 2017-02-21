@@ -27,6 +27,7 @@
     src: basic/config.j2
     backup: yes
     provider: "{{ cli }}"
+    timeout: 90
   register: result
 
 - assert:
