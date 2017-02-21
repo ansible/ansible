@@ -186,7 +186,7 @@ class VMwareResourcePool(object):
         pool_selections = self.get_obj(
             [vim.ResourcePool],
             self.resource_pool,
-            return_all=True
+            return_all = True
         )
         if pool_selections:
             for p in pool_selections:
@@ -258,27 +258,26 @@ class VMwareResourcePool(object):
 
         rp_spec=vim.ResourceConfigSpec()
         cpu_alloc=vim.ResourceAllocationInfo()
-        cpu_alloc.expandableReservation=self.cpu_expandable_reservations
-        cpu_alloc.limit=int(self.cpu_limit)
-        cpu_alloc.reservation=int(self.cpu_reservation)
+        cpu_alloc.expandableReservation = self.cpu_expandable_reservations
+        cpu_alloc.limit = int(self.cpu_limit)
+        cpu_alloc.reservation = int(self.cpu_reservation)
         cpu_alloc_shares = vim.SharesInfo()
         cpu_alloc_shares.level = self.cpu_shares
         cpu_alloc.shares =  cpu_alloc_shares
-        rp_spec.cpuAllocation=cpu_alloc
-        mem_alloc=vim.ResourceAllocationInfo()
-        mem_alloc.limit=int(self.mem_limit)
-        mem_alloc.expandableReservation=self.mem_expandable_reservations
-        mem_alloc.reservation=int(self.mem_reservation)
+        rp_spec.cpuAllocation = cpu_alloc
+        mem_alloc = vim.ResourceAllocationInfo()
+        mem_alloc.limit = int(self.mem_limit)
+        mem_alloc.expandableReservation = self.mem_expandable_reservations
+        mem_alloc.reservation = int(self.mem_reservation)
         mem_alloc_shares = vim.SharesInfo()
         mem_alloc_shares.level = self.mem_shares
-        mem_alloc.shares =  mem_alloc_shares
-        rp_spec.memoryAllocation=mem_alloc
+        mem_alloc.shares = mem_alloc_shares
+        rp_spec.memoryAllocation = mem_alloc
 
         self.dc_obj = find_datacenter_by_name(self.content, self.datacenter)
         self.cluster_obj = find_cluster_by_name_datacenter(self.dc_obj, self.cluster)
         rootResourcePool = self.cluster_obj.resourcePool
         task = rootResourcePool.CreateResourcePool(self.resource_pool, rp_spec)
-        #wait_for_task(task)
 
         self.module.exit_json(changed=changed)
 
