@@ -98,6 +98,7 @@ EXAMPLES = '''
 import binascii
 
 from ansible.module_utils.basic import *
+from ansible.module_utils._text import to_text
 
 from collections import defaultdict
 
@@ -144,7 +145,7 @@ def decode_hex(hexstring):
     if len(hexstring) < 3:
         return hexstring
     if hexstring[:2] == "0x":
-        return binascii.unhexlify(hexstring[2:])
+        return to_text(binascii.unhexlify(hexstring[2:]))
     else:
         return hexstring
 
