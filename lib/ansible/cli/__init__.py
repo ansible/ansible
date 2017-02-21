@@ -476,6 +476,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         else:
             cpath = C.DEFAULT_MODULE_PATH
         result = result + "\n  configured module search path = %s" % cpath
+        result = result + "\n  python version = %s" % ''.join(sys.version.splitlines())
         return result
 
     @staticmethod
