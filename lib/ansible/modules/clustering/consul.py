@@ -95,9 +95,10 @@ options:
         default: None
     service_port:
         description:
-          - the port on which the service is listening required for
+          - the port on which the service is listening. Can optionally be supplied for
             registration of a service, i.e. if service_name or service_id is set
         required: false
+        default: None
     service_address:
         description:
           - the address to advertise that the service will be listening on.
@@ -210,6 +211,13 @@ EXAMPLES = '''
   consul:
     service_name: nginx
     state: absent
+
+- name: register celery worker service
+  consul:
+    service_name: celery-worker
+    tags:
+      - prod
+      - worker
 
 - name: create a node level check to test disk usage
   consul:
@@ -383,7 +391,7 @@ def parse_check(module):
 
 def parse_service(module):
 
-    if module.params.get('service_name') and module.params.get('service_port'):
+    if module.params.get('service_name'):
         return ConsulService(
             module.params.get('service_id'),
             module.params.get('service_name'),
@@ -391,10 +399,9 @@ def parse_service(module):
             module.params.get('service_port'),
             module.params.get('tags'),
         )
-    elif module.params.get('service_name') and not module.params.get('service_port'):
+    elif module.params.get('service_port') and not module.params.get('service_name'):
 
-        module.fail_json(msg="service_name supplied but no service_port, a port is required to configure a service. Did you configure "
-                             "the 'port' argument meaning 'service_port'?")
+        module.fail_json( msg="service_port supplied but no service_name, a name is required to configure a service." )
 
 
 class ConsulService():
@@ -415,23 +422,20 @@ class ConsulService():
             self.tags = loaded['Tags']
 
     def register(self, consul_api):
-        if len(self.checks) > 0:
-            check = self.checks[0]
+        optional = {}
 
-            consul_api.agent.service.register(
-                self.name,
-                service_id=self.id,
-                address=self.address,
-                port=self.port,
-                tags=self.tags,
-                check=check.check)
-        else:
-            consul_api.agent.service.register(
-                self.name,
-                service_id=self.id,
-                address=self.address,
-                port=self.port,
-                tags=self.tags)
+        if self.port:
+            optional['port'] = self.port
+
+        if len(self.checks) > 0:
+            optional['check'] = checks[0].check
+
+        consul_api.agent.service.register(
+            self.name,
+            service_id=self.id,
+            address=self.address,
+            tags=self.tags,
+            **optional)
 
     def add_check(self, check):
         self.checks.append(check)
@@ -562,7 +566,7 @@ def main():
             service_id=dict(required=False),
             service_name=dict(required=False),
             service_address=dict(required=False, type='str', default=None),
-            service_port=dict(required=False, type='int'),
+            service_port=dict(required=False, type='int', default=None),
             state=dict(default='present', choices=['present', 'absent']),
             interval=dict(required=False, type='str'),
             ttl=dict(required=False, type='str'),
