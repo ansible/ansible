@@ -64,13 +64,13 @@ EXAMPLES = '''
 
 - name: "Delete a Logical Device by name"
   aos_logical_device:
-    session: "{{ session }}"
+    session: "{{ aos_session }}"
     name: "my-logical-device"
     state: absent
 
 - name: "Delete a Logical Device by id"
   aos_logical_device:
-    session: "{{ session }}"
+    session: "{{ aos_session }}"
     id: "45ab26fc-c2ed-4307-b330-0870488fa13e"
     state: absent
 
@@ -78,7 +78,7 @@ EXAMPLES = '''
 
 - name: "Access Logical Device 1/3"
   aos_logical_device:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     name: "my-logical-device"
     state: present
   register: logical_device
@@ -93,13 +93,13 @@ EXAMPLES = '''
 
 - name: "Load Logical Device from a JSON file"
   aos_logical_device:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     content: "{{ lookup('file', 'resources/logical_device_saved.json') }}"
     state: present
 
 - name: "Load Logical Device from a YAML file"
   aos_logical_device:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     content: "{{ lookup('file', 'resources/logical_device_saved.yaml') }}"
     state: present
 '''

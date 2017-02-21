@@ -66,7 +66,7 @@ EXAMPLES = '''
 
 - name: "Create ASN Pool"
   aos_asn_pool:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     name: "my-asn-pool"
     ranges:
       - [ 100, 200 ]
@@ -86,32 +86,32 @@ EXAMPLES = '''
 
 - name: "Delete ASN Pool"
   aos_asn_pool:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     name: "my-asn-pool"
     state: absent
 
 - name: "Load ASN Pool from File(JSON)"
   aos_asn_pool:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     content: "{{ lookup('file', 'resources/asn_pool_saved.json') }}"
     state: present
 
 - name: "Delete ASN Pool from File(JSON)"
   aos_asn_pool:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     content: "{{ lookup('file', 'resources/asn_pool_saved.json') }}"
     state: absent
 
 - name: "Load ASN Pool from File(Yaml)"
   aos_asn_pool:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     content: "{{ lookup('file', 'resources/asn_pool_saved.yaml') }}"
     state: present
   register: test
 
 - name: "Delete ASN Pool from File(Yaml)"
   aos_asn_pool:
-    session: "{{ session_ok }}"
+    session: "{{ aos_session }}"
     content: "{{ lookup('file', 'resources/asn_pool_saved.yaml') }}"
     state: absent
 '''
