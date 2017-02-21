@@ -26,17 +26,17 @@ $ErrorActionPreference = "Stop"
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-$src = Get-AnsibleParam -obj $params -name "src" -type "path" -default $null
+$src = Get-AnsibleParam -obj $params -name "src" -type "path"
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
-$state = Get-AnsibleParam -obj $params -name "state" -type "string" -default "present"
-$orig_args = Get-AnsibleParam -obj $params -name "args" -type "string" -default $null
-$directory = Get-AnsibleParam -obj $params -name "directory" -type "path" -default $null
-$hotkey = Get-AnsibleParam -obj $params -name "hotkey" -type "string" -default $null
-$icon = Get-AnsibleParam -obj $params -name "icon" -type "path" -default $null
-$orig_description = Get-AnsibleParam -obj $params -name "description" -type "string" -default $null
-$windowstyle = Get-AnsibleParam -obj $params -name "windowstyle" -type "string" -validateset "normal","maximized","minimized" -default $null
+$state = Get-AnsibleParam -obj $params -name "state" -type "string" -default "present" -validateset "present","absent"
+$orig_args = Get-AnsibleParam -obj $params -name "args" -type "string"
+$directory = Get-AnsibleParam -obj $params -name "directory" -type "path"
+$hotkey = Get-AnsibleParam -obj $params -name "hotkey" -type "string"
+$icon = Get-AnsibleParam -obj $params -name "icon" -type "path"
+$orig_description = Get-AnsibleParam -obj $params -name "description" -type "string"
+$windowstyle = Get-AnsibleParam -obj $params -name "windowstyle" -type "string" -validateset "normal","maximized","minimized"
 
-# Expand environment variables on non-path types (Beware: turns $null into "")
+# Expand environment variables on non-path types
 $args = Expand-Environment($orig_args)
 $description = Expand-Environment($orig_description)
 
@@ -58,14 +58,12 @@ $windowstyleids = @( "", "normal", "", "maximized", "", "", "", "minimized" )
 
 If ($state -eq "absent") {
     If (Test-Path -Path $dest) {
-        If ($check_mode -ne $true) {
-            # If the shortcut exists, try to remove it
-            Try {
-                Remove-Item -Path $dest
-            } Catch {
-                # Report removal failure
-                Fail-Json $result "Failed to remove shortcut $dest. (" + $_.Exception.Message + ")"
-            }
+        # If the shortcut exists, try to remove it
+        Try {
+            Remove-Item -Path $dest -WhatIf:$check_mode
+        } Catch {
+            # Report removal failure
+            Fail-Json $result "Failed to remove shortcut $dest. (" + $_.Exception.Message + ")"
         }
         # Report removal success
         $result.changed = $true
