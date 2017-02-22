@@ -113,10 +113,7 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-Example from Ansible playbook
-#
 # Create a resource pool
-#
   - name: Add resource pool to vCenter
     vmware_resource_pool:
       hostname: vcsa_host
