@@ -37,13 +37,11 @@ options:
         should operate on. If the kernel is configured with automatic module
         loading, an attempt will be made to load the appropriate module for
         that table if it is not already there.
-    required: false
     default: filter
     choices: [ "filter", "nat", "mangle", "raw", "security" ]
   state:
     description:
       - Whether the rule should be absent or present.
-    required: false
     default: present
     choices: [ "present", "absent" ]
   action:
@@ -51,13 +49,11 @@ options:
     description:
       - Whether the rule should be appended at the bottom or inserted at the
         top. If the rule already exists the chain won't be modified.
-    required: false
     default: append
     choices: [ "append", "insert" ]
   ip_version:
     description:
       - Which version of the IP protocol this rule should apply to.
-    required: false
     default: ipv4
     choices: [ "ipv4", "ipv6" ]
   chain:
@@ -65,7 +61,6 @@ options:
       - "Chain to operate on. This option can either be the name of a user
         defined chain or any of the builtin chains: 'INPUT', 'FORWARD',
         'OUTPUT', 'PREROUTING', 'POSTROUTING', 'SECMARK', 'CONNSECMARK'."
-    required: false
   protocol:
     description:
       - The protocol of the rule or of the packet to check. The specified
@@ -76,8 +71,6 @@ options:
         inverts the test.  The number zero is equivalent to all. "all" will
         match with all protocols and is taken as default when this option is
         omitted.
-    required: false
-    default: null
   source:
     description:
       - Source specification. Address can be either a network name,
@@ -89,8 +82,6 @@ options:
         at the left side of the network mask. Thus, a mask of 24 is equivalent
         to 255.255.255.0. A "!" argument before the address specification
         inverts the sense of the address.
-    required: false
-    default: null
   destination:
     description:
       - Destination specification. Address can be either a network name,
@@ -102,8 +93,6 @@ options:
         at the left side of the network mask. Thus, a mask of 24 is equivalent
         to 255.255.255.0. A "!" argument before the address specification
         inverts the sense of the address.
-    required: false
-    default: null
   tcp_flags:
     version_added: "2.4"
     description:
@@ -112,7 +101,6 @@ options:
         flags you want to examine. The "flags_set" list tells which one(s)
         should be set. If one of the two values is missing, the --tcp-flags option
         will be ignored.
-    required: false
     default: {}
   match:
     description:
@@ -121,7 +109,6 @@ options:
         which a target is invoked. Matches are evaluated first to last if
         specified as an array and work in short-circuit fashion, i.e. if one
         extension yields false, evaluation will stop.
-    required: false
     default: []
   jump:
     description:
@@ -132,15 +119,11 @@ options:
         below).  If this option is omitted in a rule (and the goto parameter
         is not used), then matching the rule will have no effect on the
         packet's fate, but the counters on the rule will be incremented.
-    required: false
-    default: null
   goto:
     description:
       - This specifies that the processing should continue in a user specified
         chain. Unlike the jump argument return will not continue processing in
         this chain but instead in the chain that called us via jump.
-    required: false
-    default: null
   in_interface:
     description:
       - Name of an interface via which a packet was received (only for packets
@@ -149,8 +132,6 @@ options:
         the interface name ends in a "+", then any interface which begins with
         this name will match. If this option is omitted, any interface name
         will match.
-    required: false
-    default: null
   out_interface:
     description:
       - Name of an interface via which a packet is going to be sent (for
@@ -159,8 +140,6 @@ options:
         If the interface name ends in a "+", then any interface which begins
         with this name will match. If this option is omitted, any interface
         name will match.
-    required: false
-    default: null
   fragment:
     description:
       - This means that the rule only refers to second and further fragments
@@ -169,14 +148,10 @@ options:
         not match any rules which specify them. When the "!" argument precedes
         fragment argument, the rule will only match head fragments, or
         unfragmented packets.
-    required: false
-    default: null
   set_counters:
     description:
       - This enables the administrator to initialize the packet and byte
         counters of a rule (during INSERT, APPEND, REPLACE operations).
-    required: false
-    default: null
   source_port:
     description:
       - "Source port or port range specification. This can either be a service
@@ -184,8 +159,6 @@ options:
         the format first:last. If the first port is omitted, '0' is assumed;
         if the last is omitted, '65535' is assumed. If the first port is
         greater than the second one they will be swapped."
-    required: false
-    default: null
   destination_port:
     description:
       - "Destination port or port range specification. This can either be
@@ -193,37 +166,28 @@ options:
         specified, using the format first:last. If the first port is omitted,
         '0' is assumed; if the last is omitted, '65535' is assumed. If the
         first port is greater than the second one they will be swapped."
-    required: false
-    default: null
   to_ports:
     description:
       - "This specifies a destination port or range of ports to use: without
         this, the destination port is never altered. This is only valid if the
         rule also specifies one of the following protocols: tcp, udp, dccp or
         sctp."
-    required: false
-    default: null
   to_destination:
     version_added: "2.1"
     description:
       - "This specifies a destination address to use with DNAT: without
         this, the destination address is never altered."
-    required: false
-    default: null
   to_source:
     version_added: "2.2"
     description:
       - "This specifies a source address to use with SNAT: without
         this, the source address is never altered."
-    required: false
-    default: null
   syn:
-    version_added: "2.3"
+    version_added: "2.4"
     description:
       - "This allows matching packets that have the SYN bit set and the ACK
         and RST bits unset. When negated, this matches all packets with
         the RST or the ACK bits set."
-    required: false
     default: ignore
   set_dscp_mark:
     version_added: "2.1"
@@ -231,28 +195,21 @@ options:
       - "This allows specifying a DSCP mark to be added to packets.
         It takes either an integer or hex value. Mutually exclusive with
         C(set_dscp_mark_class)."
-    required: false
-    default: null
   set_dscp_mark_class:
     version_added: "2.1"
     description:
       - "This allows specifying a predefined DiffServ class which will be
         translated to the corresponding DSCP mark. Mutually exclusive with
         C(set_dscp_mark)."
-    required: false
-    default: null
   comment:
     description:
       - "This specifies a comment that will be added to the rule"
-    required: false
-    default: null
   ctstate:
     description:
       - "ctstate is a list of the connection states to match in the conntrack
         module.
         Possible states are: 'INVALID', 'NEW', 'ESTABLISHED', 'RELATED',
         'UNTRACKED', 'SNAT', 'DNAT'"
-    required: false
     default: []
   limit:
     description:
@@ -260,38 +217,30 @@ options:
         The number can specify units explicitly, using `/second', `/minute',
         `/hour' or `/day', or parts of them (so `5/second' is the same as
         `5/s')."
-    required: false
-    default: null
   limit_burst:
     version_added: "2.1"
     description:
       - "Specifies the maximum burst before the above limit kicks in."
-    required: false
-    default: null
   uid_owner:
     version_added: "2.1"
     description:
       - "Specifies the UID or username to use in match by owner rule."
-    required: false
   reject_with:
     version_added: "2.1"
     description:
       - "Specifies the error packet type to return while rejecting."
-    required: false
   icmp_type:
     version_added: "2.2"
     description:
       - "This allows specification of the ICMP type, which can be a numeric
         ICMP type, type/code pair, or one of the ICMP type names shown by the
         command 'iptables -p icmp -h'"
-    required: false
   flush:
     version_added: "2.2"
     description:
       - "Flushes the specified table and chain of all rules. If no chain is
         specified then the entire table is purged. Ignores all other
         parameters."
-    required: false
   policy:
     version_added: "2.2"
     description:
@@ -520,55 +469,49 @@ def main():
         supports_check_mode=True,
         argument_spec=dict(
             table=dict(
-                required=False,
                 default='filter',
                 choices=['filter', 'nat', 'mangle', 'raw', 'security']),
             state=dict(
-                required=False,
                 default='present',
                 choices=['present', 'absent']),
             action=dict(
-                required=False,
                 default='append',
                 type='str',
                 choices=['append', 'insert']),
             ip_version=dict(
-                required=False,
                 default='ipv4',
                 choices=['ipv4', 'ipv6']),
-            chain=dict(required=False, default=None, type='str'),
-            protocol=dict(required=False, default=None, type='str'),
-            source=dict(required=False, default=None, type='str'),
-            to_source=dict(required=False, default=None, type='str'),
-            destination=dict(required=False, default=None, type='str'),
-            to_destination=dict(required=False, default=None, type='str'),
-            match=dict(required=False, default=[], type='list'),
-            tcp_flags=dict(required=False, default={}, type='dict'),
-            jump=dict(required=False, default=None, type='str'),
-            goto=dict(required=False, default=None, type='str'),
-            in_interface=dict(required=False, default=None, type='str'),
-            out_interface=dict(required=False, default=None, type='str'),
-            fragment=dict(required=False, default=None, type='str'),
-            set_counters=dict(required=False, default=None, type='str'),
-            source_port=dict(required=False, default=None, type='str'),
-            destination_port=dict(required=False, default=None, type='str'),
-            to_ports=dict(required=False, default=None, type='str'),
-            set_dscp_mark=dict(required=False, default=None, type='str'),
-            set_dscp_mark_class=dict(required=False, default=None, type='str'),
-            comment=dict(required=False, default=None, type='str'),
-            ctstate=dict(required=False, default=[], type='list'),
-            limit=dict(required=False, default=None, type='str'),
-            limit_burst=dict(required=False, default=None, type='str'),
-            uid_owner=dict(required=False, default=None, type='str'),
-            reject_with=dict(required=False, default=None, type='str'),
-            icmp_type=dict(required=False, default=None, type='str'),
+            chain=dict(default=None, type='str'),
+            protocol=dict(default=None, type='str'),
+            source=dict(default=None, type='str'),
+            to_source=dict(default=None, type='str'),
+            destination=dict(default=None, type='str'),
+            to_destination=dict(default=None, type='str'),
+            match=dict(default=[], type='list'),
+            tcp_flags=dict(default={}, type='dict'),
+            jump=dict(default=None, type='str'),
+            goto=dict(default=None, type='str'),
+            in_interface=dict(default=None, type='str'),
+            out_interface=dict(default=None, type='str'),
+            fragment=dict(default=None, type='str'),
+            set_counters=dict(default=None, type='str'),
+            source_port=dict(default=None, type='str'),
+            destination_port=dict(default=None, type='str'),
+            to_ports=dict(default=None, type='str'),
+            set_dscp_mark=dict(default=None, type='str'),
+            set_dscp_mark_class=dict(default=None, type='str'),
+            comment=dict(default=None, type='str'),
+            ctstate=dict(default=[], type='list'),
+            limit=dict(default=None, type='str'),
+            limit_burst=dict(default=None, type='str'),
+            uid_owner=dict(default=None, type='str'),
+            reject_with=dict(default=None, type='str'),
+            icmp_type=dict(default=None, type='str'),
             syn=dict(
-                required=False,
                 default='ignore',
                 choices=['ignore', 'match', 'negate']),
-            flush=dict(required=False, default=False, type='bool'),
+            flush=dict(default=False, type='bool'),
             policy=dict(
-                required=False,
                 default=None,
                 type='str',
                 choices=['ACCEPT', 'DROP', 'QUEUE', 'RETURN']),
