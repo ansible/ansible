@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
 ANSIBLE_METADATA = {'status': ['stableinterface'],
                     'supported_by': 'committer',
                     'version': '1.0'}
@@ -35,6 +36,7 @@ options:
       - Network ACL resource identifier. At least one of C(name) or C(nacl_id)
         must be set when updating or removing a Network ACL
     required: false
+    version_added: "2.3"
   vpc_id:
     description:
       - VPC id of the requesting VPC.
@@ -131,15 +133,14 @@ task:
   type: dictionary
 '''
 
-try:
-    import botocore
-    import boto3
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, HAS_BOTO3, update_aws_tags
+
+try:
+    import botocore
+except ImportError:
+    pass  # caught by imported HAS_BOTO3
 
 
 # Common fields for the default rule that is contained within every VPC NACL.
@@ -158,7 +159,7 @@ DEFAULT_EGRESS = dict(DEFAULT_RULE_FIELDS.items() + [('Egress', True)])
 PROTOCOL_NUMBERS = {'all': -1, 'icmp': 1, 'tcp': 6, 'udp': 17, }
 
 
-#Utility methods
+# Utility methods
 def icmp_present(entry):
     if len(entry) == 6 and entry[1] == 'icmp' or entry[1] == 1:
         return True
@@ -351,7 +352,7 @@ def remove_network_acl(client, module):
     return changed, result
 
 
-#Boto3 client methods
+# Boto3 client methods
 def create_network_acl(vpc_id, client, module):
     try:
         nacl = client.create_network_acl(VpcId=vpc_id)
@@ -424,7 +425,7 @@ def find_default_vpc_nacl(vpc_id, client, module):
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=str(e))
     nacls = response['NetworkAcls']
-    return [n['NetworkAclId'] for n in nacls if n['IsDefault'] == True]
+    return [n['NetworkAclId'] for n in nacls if n['IsDefault']]
 
 
 def find_subnet_ids_by_nacl_id(nacl_id, client, module):
@@ -491,22 +492,23 @@ def subnets_to_associate(client, module):
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        vpc_id=dict(required=True),
-        name=dict(required=False),
-        nacl_id=dict(required=False),
-        subnets=dict(required=False, type='list', default=list()),
-        tags=dict(required=False, type='dict'),
-        ingress=dict(required=False, type='list', default=list()),
-        egress=dict(required=False, type='list', default=list(),),
-        state=dict(default='present', choices=['present', 'absent']),
+    argument_spec.update(
+        dict(
+            vpc_id=dict(required=True),
+            name=dict(),
+            nacl_id=dict(),
+            subnets=dict(type='list', default=list()),
+            tags=dict(type='dict'),
+            ingress=dict(type='list', default=list()),
+            egress=dict(type='list', default=list(),),
+            state=dict(default='present', choices=['present', 'absent']),
         ),
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
     if not HAS_BOTO3:
-        module.fail_json(msg='json, botocore and boto3 are required.')
-    state = module.params.get('state').lower()
+        module.fail_json(msg='botocore and boto3 are required.')
+    state = module.params.get('state')
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         client = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)

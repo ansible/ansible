@@ -10,7 +10,6 @@ lib/ansible/galaxy/role.py
 lib/ansible/inventory/dir.py
 lib/ansible/inventory/script.py
 lib/ansible/module_utils/basic.py
-lib/ansible/module_utils/ec2.py
 lib/ansible/module_utils/facts.py
 lib/ansible/module_utils/mysql.py
 lib/ansible/modules/cloud/amazon/_ec2_vpc.py
@@ -40,7 +39,6 @@ lib/ansible/modules/cloud/amazon/ec2_snapshot_facts.py
 lib/ansible/modules/cloud/amazon/ec2_tag.py
 lib/ansible/modules/cloud/amazon/ec2_vol_facts.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_dhcp_options_facts.py
-lib/ansible/modules/cloud/amazon/ec2_vpc_nacl.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_net.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_net_facts.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_route_table_facts.py

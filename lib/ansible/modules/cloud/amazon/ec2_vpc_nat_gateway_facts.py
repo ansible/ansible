@@ -89,6 +89,7 @@ result:
 
 import json
 
+# import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, HAS_BOTO3
