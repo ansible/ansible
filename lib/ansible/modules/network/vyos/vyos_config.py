@@ -227,8 +227,7 @@ def run(module, result):
         load_config(module, commands, commit=commit, comment=comment, save=save)
 
         if result.get('filtered'):
-            result['warnings'].append('Some configuration commands were '
-                                      'removed, please see the filtered key')
+            module.warn('Some configuration commands were removed, please see the filtered key')
 
         result['changed'] = True
 
@@ -258,10 +257,9 @@ def main():
         supports_check_mode=True
     )
 
-    warnings = list()
-    check_args(module, warnings)
+    check_args(module)
 
-    result = dict(changed=False, warnings=warnings)
+    result = dict(changed=False)
 
     if module.params['backup']:
         result['__backup__'] = get_config(module=module)

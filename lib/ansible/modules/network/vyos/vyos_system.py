@@ -194,10 +194,9 @@ def main():
         mutually_exclusive=[('domain_name', 'domain_search')],
     )
 
-    warnings = list()
-    check_args(module, warnings)
+    check_args(module)
 
-    result = {'changed': False, 'warnings': warnings}
+    result = {'changed': False}
 
     want = map_param_to_obj(module)
     have = config_to_dict(module)

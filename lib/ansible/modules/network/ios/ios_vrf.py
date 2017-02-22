@@ -338,9 +338,7 @@ def main():
 
     result = {'changed': False}
 
-    warnings = list()
-    check_args(module, warnings)
-    result['warnings'] = warnings
+    check_args(module)
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)

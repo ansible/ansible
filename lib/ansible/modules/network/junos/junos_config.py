@@ -187,7 +187,7 @@ from ansible.module_utils.netcfg import NetworkConfig
 
 DEFAULT_COMMENT = 'configured by junos_config'
 
-def check_args(module, warnings):
+def check_args(module):
     if module.params['zeroize']:
         module.fail_json(msg='argument zeroize is deprecated and no longer '
                 'supported, use junos_command instead')
@@ -323,10 +323,9 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
-    warnings = list()
-    check_args(module, warnings)
+    check_args(module)
 
-    result = {'changed': False, 'warnings': warnings}
+    result = {'changed': False}
 
     if module.params['backup']:
         result['__backup__'] = get_configuration()

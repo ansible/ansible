@@ -214,16 +214,16 @@ from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.six import iteritems
 
 
-def check_args(module, warnings):
-    ios_check_args(module, warnings)
+def check_args(module):
+    ios_check_args(module)
     if module.params['multiline_delimiter']:
         if len(module.params['multiline_delimiter']) != 1:
             module.fail_json(msg='multiline_delimiter value can only be a '
                                  'single character')
     if module.params['force']:
-        warnings.append('The force argument is deprecated as of Ansible 2.2, '
-                        'please use match=none instead.  This argument will '
-                        'be removed in the future')
+        module.warn('The force argument is deprecated as of Ansible 2.2, '
+                    'please use match=none instead.  This argument will '
+                    'be removed in the future')
 
 def extract_banners(config):
     banners = {}
@@ -330,9 +330,7 @@ def main():
 
     result = {'changed': False}
 
-    warnings = list()
-    check_args(module, warnings)
-    result['warnings'] = warnings
+    check_args(module)
 
     if any((module.params['lines'], module.params['src'])):
         match = module.params['match']

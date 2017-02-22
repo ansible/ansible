@@ -142,7 +142,7 @@ def to_lines(stdout):
         lines.append(item)
     return lines
 
-def parse_commands(module, warnings):
+def parse_commands(module):
     spec = dict(
         command=dict(key=True),
         output=dict(),
@@ -155,7 +155,7 @@ def parse_commands(module, warnings):
 
     for index, item in enumerate(commands):
         if module.check_mode and not item['command'].startswith('show'):
-            warnings.append(
+            module.warn(
                 'Only show commands are supported when using check_mode, not '
                 'executing %s' % item['command']
             )
@@ -188,11 +188,8 @@ def main():
 
     result = {'changed': False}
 
-    warnings = list()
-    check_args(module, warnings)
-    commands = parse_commands(module, warnings)
-    if warnings:
-        result['warnings'] = warnings
+    check_args(module)
+    commands = parse_commands(module)
 
     wait_for = module.params['wait_for'] or list()
 

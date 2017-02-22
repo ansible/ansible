@@ -964,7 +964,7 @@ def main():
     git_version_used = git_version(git_path, module)
 
     if depth is not None and git_version_used < LooseVersion('1.9.1'):
-        result['warnings'].append("Your git version is too old to fully support the depth argument. Falling back to full checkouts.")
+        module.warn("Your git version is too old to fully support the depth argument. Falling back to full checkouts.")
         depth = None
 
     recursive = module.params['recursive']

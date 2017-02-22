@@ -631,9 +631,7 @@ def main():
         linux_mounts = get_linux_mounts(module)
 
         if linux_mounts is None:
-            args['warnings'] = (
-                'Cannot open file /proc/self/mountinfo. '
-                'Bind mounts might be misinterpreted.')
+            module.warn('Cannot open file /proc/self/mountinfo. Bind mounts might be misinterpreted.')
 
     # Override defaults with user specified params
     for key in ('src', 'fstype', 'passno', 'opts', 'dump', 'fstab'):

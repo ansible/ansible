@@ -43,12 +43,13 @@ vyos_argument_spec = {
     'provider': dict(type='dict', no_log=True),
 }
 
-def check_args(module, warnings):
+# NOTE: Below warnings parameter is a leftover for compatibility
+def check_args(module, warnings=None):
     provider = module.params['provider'] or {}
     for key in vyos_argument_spec:
         if key != 'provider' and module.params[key]:
-            warnings.append('argument %s has been deprecated and will be '
-                    'removed in a future version' % key)
+            module.warn('argument %s has been deprecated and will be '
+                        'removed in a future version' % key)
 
 def get_config(module, target='commands'):
     cmd = ' '.join(['show configuration', target])

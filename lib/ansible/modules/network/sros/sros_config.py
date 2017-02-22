@@ -258,10 +258,9 @@ def run(module, result):
 
         # check if creating checkpoints is possible
         if not module.connection.rollback_enabled:
-            warn = 'Cannot create checkpoint.  Please enable this feature ' \
-                   'using the sros_rollback module.  Automatic rollback ' \
-                   'will be disabled'
-            result['warnings'].append(warn)
+            module.warn('Cannot create checkpoint.  Please enable this feature ' \
+                        'using the sros_rollback module.  Automatic rollback ' \
+                        'will be disabled')
 
         # send the configuration commands to the device and merge
         # them with the current running config
@@ -299,7 +298,7 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
-    result = dict(changed=False, warnings=list())
+    result = dict(changed=False)
 
     if module.params['backup']:
         result['__backup__'] = module.config.get_config()

@@ -54,12 +54,13 @@ nxos_argument_spec = {
     'transport': dict(choices=['cli', 'nxapi'])
 }
 
-def check_args(module, warnings):
+# NOTE: Below warnings parameter is a leftover for compatibility
+def check_args(module, warnings=None):
     provider = module.params['provider'] or {}
     for key in nxos_argument_spec:
         if key not in ['provider', 'transport'] and module.params[key]:
-            warnings.append('argument %s has been deprecated and will be '
-                    'removed in a future version' % key)
+            module.warn('argument %s has been deprecated and will be '
+                        'removed in a future version' % key)
 
 def load_params(module):
     provider = module.params.get('provider') or dict()
