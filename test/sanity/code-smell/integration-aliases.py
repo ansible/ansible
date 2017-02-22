@@ -41,7 +41,7 @@ def main():
         missing_aliases.append(target_dir)
 
     if missing_aliases:
-        message = '''
+        message = textwrap.dedent('''
         The following integration target directories are missing `aliases` files:
 
         %s
@@ -66,9 +66,9 @@ def main():
         skip/python3
 
         Take a look at existing `aliases` files to see what aliases are available and how they're used.
-        ''' % '\n'.join(missing_aliases)
+        ''').strip() % '\n'.join(missing_aliases)
 
-        print(textwrap.dedent(message).strip())
+        print(message)
 
         exit(1)
 
