@@ -176,10 +176,11 @@ def test_warn_region_not_specified():
 
     def call_module():
         with patch.object(basic.AnsibleModule, 'fail_json', fail_json):
-            with pytest.raises(AnsibleFailJson) as e:
+            try:
                 lda.main()
-        result=e.value
-        assert("region must be specified" in result[0]['msg'])
+            except AnsibleFailJson as e: 
+                result = e.args[0]
+                assert("region must be specified" in result['msg'])
 
     call_module()
 
