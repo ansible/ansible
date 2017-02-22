@@ -264,8 +264,10 @@ def userAddOrUpdate(userModule, HTTPMethod):
         payload["LastName"] = userModule.params["lastName"]
 
     if "changePasswordOnTheNextLogon" in userModule.params:
-        payload["ChangePasswordOnTheNextLogon"] = "true" if userModule.params[
-            "changePasswordOnTheNextLogon"] else "false"
+        if userModule.params["changePasswordOnTheNextLogon"]:
+            payload["ChangePasswordOnTheNextLogon"] = "true"
+        else:
+            payload["ChangePasswordOnTheNextLogon"] = "false"
 
     if "expiryDate" in userModule.params:
         payload["ExpiryDate"] = userModule.params["expiryDate"]
@@ -274,8 +276,10 @@ def userAddOrUpdate(userModule, HTTPMethod):
         payload["UserTypeName"] = userModule.params["userTypeName"]
 
     if "disabled" in userModule.params:
-        payload["Disabled"] = "true" if userModule.params[
-            "disabled"] else "false"
+        if userModule.params["disabled"]:
+            payload["Disabled"] = "true"
+        else:
+            payload["Disabled"] = "false"
 
     if "location" in userModule.params:
         payload["Location"] = userModule.params["location"]
