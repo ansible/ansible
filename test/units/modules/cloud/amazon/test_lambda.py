@@ -21,22 +21,20 @@
 from __future__ import (absolute_import, division, print_function)
 
 from nose.plugins.skip import SkipTest
-import unittest
 import pytest
 import json
 import copy
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils import basic
-from ansible.compat.tests.mock import Mock, patch
+from ansible.compat.tests.mock import MagicMock, Mock, patch
 from ansible.module_utils.ec2 import HAS_BOTO3
 if not HAS_BOTO3:
     raise SkipTest("test_ec2_asg.py requires the `boto3`, and `botocore` modules")
 
-#lambda is a keyword so we have to hack this.
+# lambda is a keyword so we have to hack this.
 _temp = __import__("ansible.modules.cloud.amazon.lambda")
 
-lda=getattr(_temp.modules.cloud.amazon,"lambda")
-
+lda = getattr(_temp.modules.cloud.amazon,"lambda")
 
 exit_return_dict={}
 
@@ -44,7 +42,7 @@ def set_module_args(args):
     args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
     basic._ANSIBLE_ARGS = to_bytes(args)
 
-base_function_config={
+base_start_function_config_in_aws={
     'FunctionName' : 'lambda_name',
     'Role' : 'arn:aws:iam::987654321012:role/lambda_basic_execution',
     'Handler' : 'lambda_python.my_handler',
@@ -55,10 +53,12 @@ base_function_config={
     'CodeSha256' : 'AqMZ+xptM7aC9VXu+5jyp1sqO+Nj4WFMNzQxtPMP2n8=',
 }
 
-one_change_function_config=copy.copy(base_function_config)
-one_change_function_config['Timeout']=4
-two_change_function_config=copy.copy(one_change_function_config)
-two_change_function_config['Role']='arn:aws:iam::987654321012:role/lambda_advanced_execution'
+one_change_start_function_config_in_aws=copy.copy(base_start_function_config_in_aws)
+one_change_start_function_config_in_aws['Timeout']=4
+two_change_start_function_config_in_aws=copy.copy(one_change_start_function_config_in_aws)
+two_change_start_function_config_in_aws['Role']='arn:aws:iam::987654321012:role/lambda_advanced_execution'
+code_change_start_function_config_in_aws=copy.copy(base_start_function_config_in_aws)
+code_change_start_function_config_in_aws['CodeSha256']='P+Zy8U4T4RiiHWElhL10VBKj9jw4rSJ5bm/TiW+4Rts='
 
 base_module_args={
     "region": "us-west-1",
@@ -72,16 +72,16 @@ base_module_args={
     "handler": 'lambda_python.my_handler'
 }
 
-fake_lambda_connection = Mock()
-
 
 #TODO: def test_handle_different_types_in_config_params(monkeypatch):
 
-def test_update_lambda_if_config_changed(monkeypatch):
 
+def test_update_lambda_if_code_changed(monkeypatch):
+
+    fake_lambda_connection = MagicMock()
     fake_lambda_connection.get_function.configure_mock(
         return_value={
-            'Configuration' : two_change_function_config
+            'Configuration' : code_change_start_function_config_in_aws
         }
     )
     fake_lambda_connection.update_function_configuration.configure_mock(
@@ -99,19 +99,57 @@ def test_update_lambda_if_config_changed(monkeypatch):
 
     call_module()
 
-    #guard against calling other than for a lambda connection (e.g. IAM)
+    # guard against calling other than for a lambda connection (e.g. IAM)
+    assert(len(fake_boto3_conn.mock_calls) == 1), "multiple boto connections used unexpectedly"
+    assert(len(fake_lambda_connection.update_function_configuration.mock_calls) == 0), \
+        "unexpectedly updatede lambda configuration when only code changed"
+    assert(len(fake_lambda_connection.update_function_configuration.mock_calls) < 2), \
+        "lambda function update called multiple times when only one time should be needed"
+    assert(len(fake_lambda_connection.update_function_code.mock_calls) > 1), \
+        "failed to update lambda function when code changed"
+    # 3 because after uploading we call into the return from mock to try to find what function version
+    # was returned so the MagicMock actually sees two calls for one update.
+    assert(len(fake_lambda_connection.update_function_code.mock_calls) < 3), \
+        "lambda function code update called multiple times when only one time should be needed"
+
+def test_update_lambda_if_config_changed(monkeypatch):
+
+    fake_lambda_connection = MagicMock()
+    fake_lambda_connection.get_function.configure_mock(
+        return_value={
+            'Configuration' : two_change_start_function_config_in_aws
+        }
+    )
+    fake_lambda_connection.update_function_configuration.configure_mock(
+        return_value={
+            'Version' : 1
+        }
+    )
+    fake_boto3_conn=Mock(return_value=fake_lambda_connection)
+
+    set_module_args(base_module_args)
+    @patch("ansible.modules.cloud.amazon.lambda.boto3_conn", fake_boto3_conn)
+    def call_module():
+        with pytest.raises(SystemExit):
+            lda.main()
+
+    call_module()
+
+    # guard against calling other than for a lambda connection (e.g. IAM)
     assert(len(fake_boto3_conn.mock_calls) == 1), "multiple boto connections used unexpectedly"
     assert(len(fake_lambda_connection.update_function_configuration.mock_calls) > 0), \
         "failed to update lambda function when configuration changed"
     assert(len(fake_lambda_connection.update_function_configuration.mock_calls) < 2), \
         "lambda function update called multiple times when only one time should be needed"
+    assert(len(fake_lambda_connection.update_function_code.mock_calls) == 0), \
+        "updated lambda code when no change should have happened"
 
 def test_update_lambda_if_only_one_config_item_changed(monkeypatch):
 
-    fake_lambda_connection = Mock()
+    fake_lambda_connection = MagicMock()
     fake_lambda_connection.get_function.configure_mock(
         return_value={
-            'Configuration' : one_change_function_config
+            'Configuration' : one_change_start_function_config_in_aws
         }
     )
     fake_lambda_connection.update_function_configuration.configure_mock(
@@ -128,19 +166,21 @@ def test_update_lambda_if_only_one_config_item_changed(monkeypatch):
 
     call_module()
 
-    #guard against calling other than for a lambda connection (e.g. IAM)
+    # guard against calling other than for a lambda connection (e.g. IAM)
     assert(len(fake_boto3_conn.mock_calls) == 1), "multiple boto connections used unexpectedly"
     assert(len(fake_lambda_connection.update_function_configuration.mock_calls) > 0), \
         "failed to update lambda function when configuration changed"
     assert(len(fake_lambda_connection.update_function_configuration.mock_calls) < 2), \
         "lambda function update called multiple times when only one time should be needed"
+    assert(len(fake_lambda_connection.update_function_code.mock_calls) == 0), \
+        "updated lambda code when no change should have happened"
 
 def test_dont_update_lambda_if_nothing_changed(monkeypatch):
 
-    fake_lambda_connection = Mock()
+    fake_lambda_connection = MagicMock()
     fake_lambda_connection.get_function.configure_mock(
         return_value={
-            'Configuration' : base_function_config
+            'Configuration' : base_start_function_config_in_aws
         }
     )
     fake_lambda_connection.update_function_configuration.configure_mock(
@@ -157,10 +197,12 @@ def test_dont_update_lambda_if_nothing_changed(monkeypatch):
 
     call_module()
 
-    #guard against calling other than for a lambda connection (e.g. IAM)
+    # guard against calling other than for a lambda connection (e.g. IAM)
     assert(len(fake_boto3_conn.mock_calls) == 1), "multiple boto connections used unexpectedly"
     assert(len(fake_lambda_connection.update_function_configuration.mock_calls) == 0), \
         "updated lambda function when no configuration changed"
+    assert(len(fake_lambda_connection.update_function_code.mock_calls) == 0 ), \
+        "updated lambda code when no change should have happened"
 
 def test_warn_region_not_specified():
 
@@ -185,7 +227,7 @@ def test_warn_region_not_specified():
         with patch.object(basic.AnsibleModule, 'fail_json', fail_json):
             try:
                 lda.main()
-            except AnsibleFailJson as e: 
+            except AnsibleFailJson as e:
                 result = e.args[0]
                 assert("region must be specified" in result['msg'])
 
