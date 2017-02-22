@@ -40,40 +40,32 @@ options:
         description:
             - Specifies if an authentication logon/logoff and a cyberarkSession should be added/removed
     userName:
-        required: False
         description:
             - The name of the user who will logon to the Vault
     password:
-        required: False
         description:
             - The password of the user
     newPassword:
-        required: False
         description:
             - The new password of the user. This parameter is optional, and enables you to change a password
     apiBaseUrl:
-        required: False
         description:
             - A string containing the base URL of the server hosting CyberArk's Privileged Account Security Web Services SDK
-    validateCerts:
-        required: False
-        default: false
+    validate_certs:
+        default: true
         description:
             - If C(false), SSL certificates will not be validated.  This should only
               set to C(false) used on personally controlled sites using self-signed
               certificates.
     useSharedLogonAuthentication:
-        required: False
         default: false
         description:
             - Whether or not Shared Logon Authentication will be used.
     useRadiusAuthentication:
-        required: False
         default: false
         description:
             - Whether or not users will be authenticated via a RADIUS server. Valid values are true/false
     cyberarkSession:
-        required: False
         description:
             - Dictionary set by a CyberArk authentication containing the different values to perform actions on a logged-on CyberArk session
 '''
@@ -113,7 +105,7 @@ cyberarkSession:
             returned: success
             type: string
             sample: "https://<IIS_Server_PVWA>"
-        validateCerts:
+        validate_certs:
             description: Whether SSL certificates will be validated.
             returned: success
             type: bool
@@ -125,15 +117,19 @@ cyberarkSession:
             sample: true
 '''
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+from ansible.module_utils.basic import AnsibleModule 
+from ansible.module_utils.urls import open_url
+import urllib
+import httplib
+import traceback
 import sys
+import json
 
 
 def processAuthentication(module):
 
     apiBaseUrl = module.params["apiBaseUrl"]
-    validateCerts = module.params["validateCerts"]
+    validate_certs = module.params["validate_certs"]
     username = module.params["username"]
     password = module.params["password"]
     newPassword = module.params["newPassword"]
@@ -180,7 +176,7 @@ def processAuthentication(module):
 
         if apiBaseUrl is None:
             apiBaseUrl = cyberarkSession["apiBaseUrl"]
-            validateCerts = cyberarkSession["validateCerts"]
+            validate_certs = cyberarkSession["validate_certs"]
             useSharedLogonAuthentication = cyberarkSession[
                 "useSharedLogonAuthentication"]
             headers["Authorization"] = cyberarkSession["token"]
@@ -197,7 +193,7 @@ def processAuthentication(module):
             method="POST",
             headers=headers,
             data=payload,
-            validate_certs=validateCerts)
+            validate_certs=validate_certs)
 
         result = None
         changed = False
@@ -215,10 +211,14 @@ def processAuthentication(module):
                     "cyberarkSession": {
                         "token": token,
                         "apiBaseUrl": apiBaseUrl,
-                        "validateCerts": validateCerts,
+                        "validate_certs": validate_certs,
                         "useSharedLogonAuthentication":
                         useSharedLogonAuthentication},
                 }
+                
+                if newPassword is not None:
+                    changed = True
+                
             else:
                 result = {
                     "cyberarkSession": {}
@@ -231,7 +231,7 @@ def processAuthentication(module):
                 endPoint +
                 json.dumps(headers))
 
-    except Exception:
+    except httplib.HTTPException:
         t, e = sys.exc_info()[:2]
         module.fail_json(
             msg="EndPoint=" +
@@ -243,17 +243,29 @@ def processAuthentication(module):
             str(e),
             exception=traceback.format_exc(),
             status_code=e.code)
+    except Exception:
+        t, e = sys.exc_info()[:2]
+        module.fail_json(
+            msg="EndPoint=" +
+            apiBaseUrl +
+            endPoint +
+            " headers=[" +
+            json.dumps(headers) +
+            "] ===>" +
+            str(e),
+            exception=traceback.format_exc(),
+            status_code=-1)
 
 
 def main():
 
     fields = {
         "apiBaseUrl": {"required": False, "type": "str"},
-        "validateCerts": {"required": False, "type": "bool",
-                          "default": "false"},
+        "validate_certs": {"required": False, "type": "bool",
+                          "default": "true"},
         "username": {"required": False, "type": "str"},
-        "password": {"required": False, "type": "str"},
-        "newPassword": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "no_log": True},
+        "newPassword": {"required": False, "type": "str", "no_log": True},
         "useSharedLogonAuthentication": {"default": False, "type": "bool"},
         "useRadiusAuthentication": {"default": False, "type": "bool"},
         "state": {"required": False, "type": "str",
