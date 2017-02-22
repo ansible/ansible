@@ -83,6 +83,12 @@ options:
       - Platform type to match.
     default: null
     required: false
+  product_code:
+    description:
+      - Marketplace product code to match.
+    default: null
+    required: false
+    version_added: "2.3"
   sort:
     description:
       - Optional attribute which with to sort the results.
@@ -307,6 +313,7 @@ def main():
         is_public = dict(required=False, type='bool'),
         name = dict(required=False),
         platform = dict(required=False),
+        product_code = dict(required=False),
         sort = dict(required=False, default=None,
                 choices=['name', 'description', 'tag', 'architecture', 'block_device_mapping', 'creationDate', 'hypervisor', 'is_public', 'location', 'owner_id', 'platform', 'root_device_name', 'root_device_type', 'state', 'virtualization_type']),
         sort_tag = dict(required=False),
@@ -336,6 +343,7 @@ def main():
     name = module.params.get('name')
     owner = module.params.get('owner')
     platform = module.params.get('platform')
+    product_code = module.params.get('product_code')
     sort = module.params.get('sort')
     sort_tag = module.params.get('sort_tag')
     sort_order = module.params.get('sort_order')
@@ -362,6 +370,8 @@ def main():
         filter['name'] = name
     if platform:
         filter['platform'] = platform
+    if product_code:
+        filter['product-code'] = product_code
     if virtualization_type:
         filter['virtualization_type'] = virtualization_type
 
