@@ -310,6 +310,9 @@ class AosInventory(object):
 
         aos.login()
 
+        # Save session information in variables of group all
+        self.add_var_to_group('all', 'aos_session', aos.session)
+
         # ----------------------------------------------------
         # Build the inventory
         #  2 modes are supported: device based or blueprint based
@@ -482,7 +485,6 @@ class AosInventory(object):
         except:
             pass
 
-
     def parse_cli_args(self):
         """ Command line argument processing """
 
@@ -516,6 +518,16 @@ class AosInventory(object):
             self.inventory['_meta']['hostvars'][host] = {}
 
         self.inventory['_meta']['hostvars'][host][var] = value
+
+    def add_var_to_group(self, group, var, value):
+
+        # Check if the group exist, if not initialize it
+        if group not in self.inventory.keys():
+            self.inventory[group] = {}
+            self.inventory[group]['hosts'] = []
+            self.inventory[group]['vars'] = {}
+
+        self.inventory[group]['vars'][var] = value
 
     def add_device_facts_to_var(self, device_name, device):
 
