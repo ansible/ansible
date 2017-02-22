@@ -159,17 +159,17 @@ cyberarkUser:
             description: properties of the result user (either added/updated).
             type: dictionary
             sample: {
-                        "AgentUser": false, 
-                        "Disabled": false, 
-                        "Email": "", 
-                        "Expired": false, 
-                        "ExpiryDate": null, 
-                        "FirstName": "", 
-                        "LastName": "", 
-                        "Location": "\\Applications", 
-                        "Source": "Internal", 
-                        "Suspended": false, 
-                        "UserName": "Prov_centos01", 
+                        "AgentUser": false,
+                        "Disabled": false,
+                        "Email": "",
+                        "Expired": false,
+                        "ExpiryDate": null,
+                        "FirstName": "",
+                        "LastName": "",
+                        "Location": "\\Applications",
+                        "Source": "Internal",
+                        "Suspended": false,
+                        "UserName": "Prov_centos01",
                         "UserTypeName": "AppProvider"
                     }
 status_code:

@@ -4,7 +4,8 @@
 #
 #
 #
-# USAGE: {{lookup('cyberarkpassword', AppID='Application1', Query='safe=Safe1;Folder=root;Object=User1', Output='Password,PassProps.UserName,PassProps.Address' [, extraParms])}}
+# USAGE: {{lookup('cyberarkpassword', AppID='Application1', Query='safe=Safe1;Folder=root;Object=User1',
+#                 Output='Password,PassProps.UserName,PassProps.Address' [, extraParms])}}
 #
 # It Requires CyberArk AIM Installed, and /opt/CARKaim/sdk/clipasswordsdk
 #
@@ -86,12 +87,12 @@ class CyberarkPassword:
                 '-d',
                 self.delimiter]
             allParms.extend(self.extraParms)
-            
+
             credential = subprocess.check_output(allParms)
-            
+
             if len(credential) > 0 and credential.endswith("\n"):
-            		credential = credential[:-1]
-            
+                credential = credential[:-1]
+
             outputNames = self.output.split(",")
             outputValues = credential.split(self.delimiter)
 
@@ -107,7 +108,7 @@ class CyberarkPassword:
         except subprocess.CalledProcessError as e:
             raise AnsibleError(e.output)
         except OSError as e:
-            raise AnsibleError("ERROR - AIM seems not to be installed or clipasswordsdk not found in the standard location. ERROR=(" + str(e.errno) + ") ==> " + e.strerror)
+            raise AnsibleError("ERROR - AIM not installed or clipasswordsdk not in standard location. ERROR=(" + str(e.errno) + ") => " + e.strerror)
 
         return [resultDict]
 

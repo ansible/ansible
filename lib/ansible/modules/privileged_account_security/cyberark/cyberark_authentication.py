@@ -114,7 +114,7 @@ cyberarkSession:
             description: Session Token returned by the logon operation
             returned: success
             type: string
-            sample: "AAEAAAD/////AQAAAAAAAAAMAgAAAFhDeWJlckFyay5TZXJ2aWNlcy5XZWIsIFZlcnNpb249OC4wLjAuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tlbj00MGJlMWRiYzg3MTg2NzBmBQEAAAAoQ3liZXJBcmsuU2VydmljZXMuV2ViLlNlc3Npb25JZGVudGlmaWVycwQAAAAFVG9rZW4ESW5mbwlTZXNzaW9uSWQEVHlwZQEBAQECAAAABgMAAAAQQUIyQTcxOTRCNkM0NEM4OQYEAAAAUDAwMDAwMDAyQTdEMUI4RjQxQ0Y5QjM2N0Y4RDcxMUFDNTgzNDVBMEEzRENDMjdFMzI5RENEMTU0NkE1NDZCRDQxQjc0QjJBQTAwMDAwMDAwBgUAAAAkOWU0MmNiNWMtNDhhNy00ZDc5LWE2MTQtMmRlMTBjMWI1ZWQ2BgYAAAABNAs="
+            sample: "AAEAAAD/////AQAAAAA......NiNWMtNDhhNy00ZDc5LWE2MTQtMmRlMTBjMWI1ZWQ2BgYAAAABNAs="
         apiBaseUrl:
             description: A string containing the base URL of the server hosting CyberArk's Privileged Account Security Web Services SDK.
             returned: success
