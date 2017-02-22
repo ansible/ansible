@@ -113,20 +113,20 @@ EXAMPLES = '''
 
 - name: Create user
   cyberark_user:
-    userName: "Username"
+    userName: "username"
     initialPassword: "password"
     userTypeName: "EPVUser"
     changePasswordOnTheNextLogon: false
     state: present
     cyberarkSession: "{{ cyberarkSession }}"
 
-  - name: Reset user credential
-    cyberark_user:
-      userName: "Username"
-      newPassword: "password"
-      disabled: false
-      state: update
-      cyberarkSession: "{{ cyberarkSession }}"
+- name: Reset user credential
+  cyberark_user:
+    userName: "Username"
+    newPassword: "password"
+    disabled: false
+    state: update
+    cyberarkSession: "{{ cyberarkSession }}"
 
 - name: Logoff from CyberArk Vault
   cyberark_authentication:
