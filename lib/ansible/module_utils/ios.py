@@ -69,7 +69,7 @@ def to_commands(module, commands):
     spec = {
         'command': dict(key=True),
         'prompt': dict(),
-        'response': dict()
+        'answer': dict()
     }
     transform = ComplexList(spec, module)
     return transform(commands)
