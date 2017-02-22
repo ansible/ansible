@@ -156,6 +156,9 @@ class LookupModule(LookupBase):
                     qtype = arg.upper()
                 elif opt == 'flat':
                     flat = int(arg)
+                elif opt == 'search':
+                    for s in arg.split(','):
+                        myres.search.append(dns.name.from_text(s))
 
                 continue
 
