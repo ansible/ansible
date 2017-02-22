@@ -2,13 +2,13 @@
 
 ## Getting Started
 
-Since Ansible 2.0, it is a requirement that all new AWS modules are written to use boto3.
+Since Ansible 2.0, it is required that all new AWS modules are written to use boto3.
 
 Prior to 2.0, modules may have been written in boto or boto3. The effort to port all modules to boto3 has begun.
 
 ## Bug fixing
 
-When possible the code should be ported to use boto3, bug fixes to code that relies on boto will still be accepted.
+Bug fixes to code that relies on boto will still be accepted. When possible, the code should be ported to use boto3. 
 
 ## Naming your module
 
@@ -23,8 +23,8 @@ AWS, that's fine, but don't create new ones independently
 
 ## Adding new features
 
-Try and keep backward compatibility with relatively recent
-versions of boto3. That means that if want to implement some
+Try to keep backward compatibility with relatively recent
+versions of boto3. That means that if you want to implement some
 functionality that uses a new feature of boto3, it should only
 fail if that feature actually needs to be run, with a message
 saying which version of boto3 is needed.
