@@ -178,7 +178,7 @@ def parse_commands(module, warnings):
         command=dict(key=True),
         output=dict(),
         prompt=dict(),
-        response=dict()
+        answer=dict()
     ), module)
 
     commands = transform(module.params['commands'])
