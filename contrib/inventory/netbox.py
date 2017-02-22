@@ -20,8 +20,12 @@
 import os
 import sys
 import yaml
-import urllib
 import argparse
+from functools import reduce
+try:
+    import urllib2 as urllib
+except ImportError:
+    import urllib.request as urllib
 try:
     import json
 except ImportError:
@@ -44,7 +48,7 @@ def get_value_by_path(source_dict, key_path, ignore_key_error=False):
 
     try:
         key_output = reduce(lambda xdict, key: xdict[key], key_path.split('.'), source_dict)
-    except KeyError, key_name:
+    except KeyError as key_name:
         if ignore_key_error:
             key_output = None
         else:
@@ -128,13 +132,14 @@ class NetboxAsInventory(object):
         self.host = script_args.host
 
         # Script configuration.
-        script_config = script_config_data.get("netbox")
+        main_config_key = "netbox"
+        script_config = script_config_data.get(main_config_key)
         if script_config:
             self.api_url = script_config["main"].get('api_url')
             self.group_by = script_config.setdefault("group_by", {})
             self.hosts_vars = script_config.setdefault("hosts_vars", {})
         else:
-            print("The key 'netbox_inventory' is not found in config file.")
+            print("The key '%s' is not found in config file." % main_config_key)
             sys.exit(1)
 
         # Get value based on key.
@@ -162,7 +167,7 @@ class NetboxAsInventory(object):
         else:
             data_source = self.api_url
 
-        json_data = urllib.urlopen(data_source).read()
+        json_data = urllib.urlopen(data_source).read().decode('utf8')
         hosts_list = json.loads(json_data)
         return hosts_list
 
@@ -261,7 +266,7 @@ class NetboxAsInventory(object):
                 key_name = self.key_map[category]
                 data_dict = categories_source[category]
 
-                for key, value in host_vars[category].iteritems():
+                for key, value in host_vars[category].items():
                     var_name = key
                     var_value = get_value_by_path(data_dict, value + "." + key_name, ignore_key_error=True)
                     if var_value:
