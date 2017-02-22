@@ -364,6 +364,19 @@ class ModuleValidator(Validator):
                     linenos.append(child.lineno)
 
                     for name in child.names:
+                        if ('module_utils' in getattr(child, 'module', '') and
+                                isinstance(name, ast.alias) and
+                                name.name == '*'):
+                            msg = (
+                                208,
+                                ('module_utils imports should import specific '
+                                 'components, not "*". line %d' % child.lineno)
+                            )
+                            if self._is_new_module():
+                                self.errors.append(msg)
+                            else:
+                                self.warnings.append(msg)
+
                         if (isinstance(name, ast.alias) and
                                 name.name == 'basic'):
                             found_basic = True
