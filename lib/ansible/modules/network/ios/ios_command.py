@@ -168,7 +168,6 @@ def main():
     """main entry point for module execution
     """
     argument_spec = dict(
-        # { command: <str>, prompt: <str>, response: <str> }
         commands=dict(type='list', required=True),
 
         wait_for=dict(type='list', aliases=['waitfor']),
