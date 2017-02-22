@@ -27,9 +27,9 @@ DOCUMENTATION = '''
 ---
 author: "Joris Weijters (@molekuul)"
 module: aix_inittab
-short_description: Manages the inittab at AIX.
+short_description: Manages the inittab on AIX.
 description:
-    - Manages the inittab at AIX.
+    - Manages the inittab on AIX.
 version_added: "2.3"
 options:
   name:
