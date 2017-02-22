@@ -46,7 +46,14 @@ def main():
 
         %s
 
-        Unless a test cannot run as part of CI, you'll want to add an appropriate CI alias, such as:
+        If these tests cannot be run as part of CI (requires external services, unsupported dependencies, etc.),
+        then they most likely belong in `test/integration/roles/` instead of `test/integration/targets/`.
+        In that case, do not add an `aliases` file. Instead, just relocate the tests.
+
+        However, if you think that the tests should be able to be supported by CI, please discuss test
+        organization with @mattclay or @gundalow on GitHub or #ansible-devel on IRC.
+
+        If these tests can be run as part of CI, you'll need to add an appropriate CI alias, such as:
 
         posix/ci/group1
         windows/ci/group2
