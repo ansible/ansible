@@ -100,8 +100,11 @@ def test_update_lambda_if_config_changed(monkeypatch):
     call_module()
 
     #guard against calling other than for a lambda connection (e.g. IAM)
-    assert(len(fake_boto3_conn.mock_calls) == 1)
-    assert(len(fake_lambda_connection.update_function_configuration.mock_calls) == 1)
+    assert(len(fake_boto3_conn.mock_calls) == 1), "multiple boto connections used unexpectedly"
+    assert(len(fake_lambda_connection.update_function_configuration.mock_calls) > 0), \
+        "failed to update lambda function when configuration changed"
+    assert(len(fake_lambda_connection.update_function_configuration.mock_calls) < 2), \
+        "lambda function update called multiple times when only one time should be needed"
 
 def test_update_lambda_if_only_one_config_item_changed(monkeypatch):
 
@@ -126,8 +129,11 @@ def test_update_lambda_if_only_one_config_item_changed(monkeypatch):
     call_module()
 
     #guard against calling other than for a lambda connection (e.g. IAM)
-    assert(len(fake_boto3_conn.mock_calls) == 1)
-    assert(len(fake_lambda_connection.update_function_configuration.mock_calls) == 1)
+    assert(len(fake_boto3_conn.mock_calls) == 1), "multiple boto connections used unexpectedly"
+    assert(len(fake_lambda_connection.update_function_configuration.mock_calls) > 0), \
+        "failed to update lambda function when configuration changed"
+    assert(len(fake_lambda_connection.update_function_configuration.mock_calls) < 2), \
+        "lambda function update called multiple times when only one time should be needed"
 
 def test_dont_update_lambda_if_nothing_changed(monkeypatch):
 
@@ -152,8 +158,9 @@ def test_dont_update_lambda_if_nothing_changed(monkeypatch):
     call_module()
 
     #guard against calling other than for a lambda connection (e.g. IAM)
-    assert(len(fake_boto3_conn.mock_calls) == 1)
-    assert(len(fake_lambda_connection.update_function_configuration.mock_calls) == 0)
+    assert(len(fake_boto3_conn.mock_calls) == 1), "multiple boto connections used unexpectedly"
+    assert(len(fake_lambda_connection.update_function_configuration.mock_calls) == 0), \
+        "updated lambda function when no configuration changed"
 
 def test_warn_region_not_specified():
 
