@@ -147,7 +147,7 @@ def parse_commands(module, warnings):
         command=dict(key=True),
         output=dict(),
         prompt=dict(),
-        response=dict()
+        answer=dict()
     )
 
     transform = ComplexList(spec, module)

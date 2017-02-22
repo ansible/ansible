@@ -332,7 +332,7 @@ def to_command(module, commands):
         command=dict(key=True),
         output=dict(default=default_output),
         prompt=dict(),
-        response=dict()
+        answer=dict()
     ), module)
 
     commands = transform(to_list(commands))

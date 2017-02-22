@@ -209,9 +209,7 @@ from ansible.module_utils.ios import run_commands, get_config, load_config
 from ansible.module_utils.ios import ios_argument_spec
 from ansible.module_utils.ios import check_args as ios_check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.netcli import Conditional
-from ansible.module_utils.six import string_types
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.six import iteritems
 
