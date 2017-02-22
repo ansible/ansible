@@ -166,11 +166,11 @@ class Default(FactsBase):
 class Hardware(FactsBase):
 
     def commands(self):
-        return(['dir /all | include Directory', 'show memory summary'])
+        return(['dir /all', 'show memory summary'])
 
     def populate(self, results):
         self.facts['filesystems'] = self.parse_filesystems(
-            results['dir /all | include Directory'])
+            results['dir /all'])
 
         match = re.search(r'Physical Memory (\d+)M total \((\d+)',
             results['show memory summary'])
