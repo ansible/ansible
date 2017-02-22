@@ -38,7 +38,8 @@ options:
         choices: [ "present", "absent" ]
     vpc_id:
         description:
-            - The VPC ID the zone should be a part of (if this is going to be a private zone)
+            - One or more VPC IDs that the zone should be associated with (if this is going to be a private zone)
+              Multiple VPCs are only supported since 2.3.
         required: false
         default: null
     vpc_region:
@@ -74,6 +75,15 @@ EXAMPLES = '''
     zone: devel.example.com
     state: present
     vpc_id: '{{ myvpc_id }}'
+    comment: developer domain private zone for devel
+
+- name: associate a zone with multiple VPCs
+  route53_zone:
+    zone: devel.example.com
+    state: present
+    vpc_id:
+      - vpc-abcd1234
+      - vpc-abbad0d0
     comment: developer domain
 
 # more complex example
@@ -89,7 +99,7 @@ EXAMPLES = '''
     var: zone_out
 '''
 
-RETURN='''
+RETURN = '''
 comment:
     description: optional hosted zone comment
     returned: when hosted zone exists
@@ -122,32 +132,55 @@ zone_id:
     sample: "Z6JQG9820BEFMW"
 '''
 
-try:
-    import boto
-    import boto.ec2
-    from boto import route53
-    from boto.route53 import Route53Connection
-    from boto.route53.zone import Zone
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import boto3_conn, HAS_BOTO3, camel_dict_to_snake_dict
+
+try:
+    import botocore
+except ImportError:
+    pass  # caught by imported HAS_BOTO3
+
+import traceback
+import uuid
+
+
+def update_vpc_associations(module, conn, zone, current_vpcs, desired_vpcs):
+    _, _, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+    vpc_region = module.params.get('vpc_region')
+    for vpc in desired_vpcs - current_vpcs:
+        try:
+            conn.associate_vpc_with_hosted_zone(HostedZoneId=zone['Id'].replace('/hostedzone/', ''),
+                                                VPC=dict(VPCRegion=vpc_region,
+                                                         VPCId=vpc))
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg="Couldn't associate VPC %s with zone %s: %s" % (vpc, zone['Name'], str(e)),
+                             exception=traceback.format_exc(e), **camel_dict_to_snake_dict(e.response))
+    for vpc in current_vpcs - desired_vpcs:
+        try:
+            conn.disassociate_vpc_from_hosted_zone(HostedZoneId=zone['Id'].replace('/hostedzone/', ''),
+                                                   VPC=dict(VPCRegion=vpc_region,
+                                                            VPCId=vpc))
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg="Couldn't disassociate VPC %s from zone %s: %s" % (vpc, zone['Name'], str(e)),
+                             exception=traceback.format_exc(e), **camel_dict_to_snake_dict(e.response))
 
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        zone=dict(required=True),
-        state=dict(default='present', choices=['present', 'absent']),
-        vpc_id=dict(default=None),
-        vpc_region=dict(default=None),
-        comment=dict(default='')))
+    argument_spec.update(
+        dict(
+            zone=dict(required=True),
+            state=dict(default='present', choices=['present', 'absent']),
+            vpc_id=dict(type='list', default=[]),
+            vpc_region=dict(),
+            comment=dict(default='')
+        )
+    )
     module = AnsibleModule(argument_spec=argument_spec)
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
+    if not HAS_BOTO3:
+        module.fail_json("boto3 and botocore are required for route53_zone module")
 
     zone_in = module.params.get('zone').lower()
     state = module.params.get('state').lower()
@@ -160,70 +193,68 @@ def main():
 
     private_zone = vpc_id is not None and vpc_region is not None
 
-    _, _, aws_connect_kwargs = get_aws_connection_info(module)
+    _, _, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+    conn = boto3_conn(module, conn_type='client', resource='route53',
+                      **aws_connect_kwargs)
 
-    # connect to the route53 endpoint
-    try:
-        conn = Route53Connection(**aws_connect_kwargs)
-    except boto.exception.BotoServerError as e:
-        module.fail_json(msg=e.error_message)
-
-    results = conn.get_all_hosted_zones()
+    results = conn.list_hosted_zones()
     zones = {}
 
-    for r53zone in results['ListHostedZonesResponse']['HostedZones']:
+    for r53zone in results['HostedZones']:
         zone_id = r53zone['Id'].replace('/hostedzone/', '')
-        zone_details = conn.get_hosted_zone(zone_id)['GetHostedZoneResponse']
-        if vpc_id and 'VPCs' in zone_details:
-            # this is to deal with this boto bug: https://github.com/boto/boto/pull/2882
-            if isinstance(zone_details['VPCs'], dict):
-                if zone_details['VPCs']['VPC']['VPCId'] == vpc_id:
-                    zones[r53zone['Name']] = zone_id
-            else: # Forward compatibility for when boto fixes that bug
-                if vpc_id in [v['VPCId'] for v in zone_details['VPCs']]:
-                    zones[r53zone['Name']] = zone_id
-        else:
-            zones[r53zone['Name']] = zone_id
+        zones[r53zone['Name']] = zone_id
+
+    if vpc_id:
+        desired_vpcs = set(vpc_id)
 
     record = {
         'private_zone': private_zone,
-        'vpc_id': vpc_id,
+        'vpc_id': vpc_id[0],
         'vpc_region': vpc_region,
         'comment': comment,
     }
 
     if state == 'present' and zone_in in zones:
         if private_zone:
-            details = conn.get_hosted_zone(zones[zone_in])
+            details = conn.get_hosted_zone(Id=zones[zone_in])
+            changed = False
 
-            if 'VPCs' not in details['GetHostedZoneResponse']:
+            if not details['HostedZone']['Config']['PrivateZone']:
                 module.fail_json(
                     msg="Can't change VPC from public to private"
                 )
 
-            vpc_details = details['GetHostedZoneResponse']['VPCs']['VPC']
-            current_vpc_id = vpc_details['VPCId']
-            current_vpc_region = vpc_details['VPCRegion']
+            desired_vpcs = set(vpc_id)
+            current_vpc_region = details['VPCs'][0]['VPCRegion']
+            current_vpcs = set([v['VPCId'] for v in details['VPCs']])
 
-            if current_vpc_id != vpc_id:
-                module.fail_json(
-                    msg="Can't change VPC ID once a zone has been created"
-                )
             if current_vpc_region != vpc_region:
-                module.fail_json(
-                    msg="Can't change VPC Region once a zone has been created"
-                )
+                module.fail_json(msg="Can't change VPC Region once a zone has been created")
+
+            if current_vpcs != desired_vpcs:
+                update_vpc_associations(module, conn, details['HostedZone'], current_vpcs, desired_vpcs)
+                changed = True
 
         record['zone_id'] = zones[zone_in]
         record['name'] = zone_in
-        module.exit_json(changed=False, set=record)
+        record['vpc_id'] = ','.join(desired_vpcs)
+        module.exit_json(changed=changed, set=record)
 
     elif state == 'present':
-        result = conn.create_hosted_zone(zone_in, **record)
-        hosted_zone = result['CreateHostedZoneResponse']['HostedZone']
+        params = dict(Name=zone_in, HostedZoneConfig=dict(Comment=comment, PrivateZone=private_zone),
+                      CallerReference=str(uuid.uuid4()))
+        if private_zone:
+            params['VPC'] = dict(VPCRegion=vpc_region, VPCId=vpc_id[0])
+        result = conn.create_hosted_zone(**params)
+        hosted_zone = result['HostedZone']
         zone_id = hosted_zone['Id'].replace('/hostedzone/', '')
         record['zone_id'] = zone_id
         record['name'] = zone_in
+        if len(desired_vpcs) > 1:
+            current_vpcs = set([vpc_id[0]])
+            update_vpc_associations(module, conn, hosted_zone, current_vpcs, desired_vpcs)
+            record['vpc_id'] = ','.join(desired_vpcs)
+
         module.exit_json(changed=True, set=record)
 
     elif state == 'absent' and zone_in in zones:
