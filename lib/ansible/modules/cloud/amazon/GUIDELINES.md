@@ -4,7 +4,7 @@
 
 Since Ansible 2.0, it is a requirement that all new AWS modules are written to use boto3.
 
-Prior to 2.0, modules may of been written in boto or boto3. The effort to port all modules to boto3 has begun.
+Prior to 2.0, modules may have been written in boto or boto3. The effort to port all modules to boto3 has begun.
 
 ## Bug fixing
 
