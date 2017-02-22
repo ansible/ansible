@@ -133,6 +133,14 @@ EXAMPLES = '''
       state: present
 '''
 
+RETURN = """
+instance:
+    descripton: metadata about the new resource pool
+    returned: always
+    type: dict
+    sample: None
+"""
+
 try:
     from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
