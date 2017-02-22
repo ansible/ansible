@@ -259,7 +259,7 @@ class CliBase(object):
             transform = ComplexDict(dict(
                 command=dict(key=True),
                 prompt=dict(),
-                response=dict(),
+                answer=dict(),
                 sendonly=dict(default=False)
             ))
             return transform(obj)
