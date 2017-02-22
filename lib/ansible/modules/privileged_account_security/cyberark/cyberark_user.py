@@ -16,10 +16,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-import sys
-
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -50,8 +46,8 @@ options:
         choices: ['details', 'present', 'update', 'absent']
         description:
             - Specifies the state (defining the action to follow) needed for the user.
-              'details': query user details, 'present': create user,
-              'update': update user (even the password), 'delete' delete user.
+              'details' for query user details, 'present' for create user,
+              'update' for update user (even the password), 'delete' for delete user.
     cyberarkSession:
         required: True
         description:
@@ -104,50 +100,47 @@ options:
 '''
 
 EXAMPLES = '''
-  tasks:
+- name: Logon to CyberArk Vault using PAS Web Services SDK
+  cyberark_authentication:
+    apiBaseUrl: "https://components.cyberark.local"
+    useSharedLogonAuthentication: true
 
-    - name: Logon to CyberArk Vault using PAS Web Services SDK
-      cyberark_authentication:
-        apiBaseUrl: "https://components.cyberark.local"
-        useSharedLogonAuthentication: true
+- name: Get Users Details
+  cyberark_user:
+    userName: "Username"
+    state: details
+    cyberarkSession: "{{ cyberarkSession }}"
+  register: cyberarkaction
+  ignore_errors: yes
 
-    - name: Get Users Details
-      cyberark_user:
-        userName: "Username"
-        state: details
-        cyberarkSession: "{{ cyberarkSession }}"
-      register: cyberarkaction
-      ignore_errors: yes
+- name: Create user
+  cyberark_user:
+    userName: "Username"
+    initialPassword: "password"
+    userTypeName: "EPVUser"
+    changePasswordOnTheNextLogon: false
+    state: present
+    cyberarkSession: "{{ cyberarkSession }}"
+  register: cyberarkaction
+  ignore_errors: yes
+  when: (cyberarkaction.status_code == 404)
 
-    - name: Create user
-      cyberark_user:
-        userName: "Username"
-        initialPassword: "password"
-        userTypeName: "EPVUser"
-        changePasswordOnTheNextLogon: false
-        state: present
-        cyberarkSession: "{{ cyberarkSession }}"
-      register: cyberarkaction
-      ignore_errors: yes
-      when: (cyberarkaction.status_code == 404)
+  - name: Reset user credential
+    cyberark_user:
+      userName: "Username"
+      newPassword: "password"
+      disabled: false
+      state: update
+      cyberarkSession: "{{ cyberarkSession }}"
+    register: cyberarkaction
+    ignore_errors: yes
+    when: (cyberarkaction.status_code == 200)
 
-      - name: Reset user credential
-        cyberark_user:
-          userName: "Username"
-          newPassword: "password"
-          disabled: false
-          state: update
-          cyberarkSession: "{{ cyberarkSession }}"
-        register: cyberarkaction
-        ignore_errors: yes
-        when: (cyberarkaction.status_code == 200)
-
-    - name: Logoff from CyberArk Vault
-      cyberark_authentication:
-        state: absent
-        cyberarkSession: "{{ cyberarkSession }}"
+- name: Logoff from CyberArk Vault
+  cyberark_authentication:
+    state: absent
+    cyberarkSession: "{{ cyberarkSession }}"
 '''
-
 
 RETURN = '''
 cyberarkUser:
@@ -166,7 +159,7 @@ cyberarkUser:
                         "ExpiryDate": null,
                         "FirstName": "",
                         "LastName": "",
-                        "Location": "\\Applications",
+                        "Location": "Applications",
                         "Source": "Internal",
                         "Suspended": false,
                         "UserName": "Prov_centos01",
@@ -178,6 +171,10 @@ status_code:
     type: int
     sample: 200
 '''
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
+import sys
 
 
 def userDetails(userModule):

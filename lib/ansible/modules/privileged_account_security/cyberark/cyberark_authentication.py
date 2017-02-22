@@ -16,10 +16,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-import sys
-
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -59,7 +55,6 @@ options:
         required: False
         description:
             - A string containing the base URL of the server hosting CyberArk's Privileged Account Security Web Services SDK
-               For example: I(https://<IIS_Server_PVWA>).
     validateCerts:
         required: False
         default: false
@@ -84,24 +79,22 @@ options:
 '''
 
 EXAMPLES = '''
-  tasks:
+- name: Logon to CyberArk Vault using PAS Web Services SDK - UseSharedLogonAuthentication
+  cyberark_authentication:
+    apiBaseUrl: "{{ WebServicesBaseURL }}"
+    useSharedLogonAuthentication: true
 
-    - name: Logon to CyberArk Vault using PAS Web Services SDK - UseSharedLogonAuthentication
-      cyberark_authentication:
-        apiBaseUrl: "{{ WebServicesBaseURL }}"
-        useSharedLogonAuthentication: true
+- name: Logon to CyberArk Vault using PAS Web Services SDK - Not UseSharedLogonAuthentication
+  cyberark_authentication:
+    apiBaseUrl: "{{ WebServicesBaseURL }}"
+    username: "{{ PasswordObject.password }}"
+    password: "{{ PasswordObject.passprops.username }}"
+    useSharedLogonAuthentication: false
 
-    - name: Logon to CyberArk Vault using PAS Web Services SDK - Not UseSharedLogonAuthentication
-      cyberark_authentication:
-        apiBaseUrl: "{{ WebServicesBaseURL }}"
-        username: "{{ PasswordObject.password }}"
-        password: "{{ PasswordObject.passprops.username }}"
-        useSharedLogonAuthentication: false
-
-    - name: Logoff from CyberArk Vault
-      cyberark_authentication:
-        state: absent
-        cyberarkSession: "{{ cyberarkSession }}"
+- name: Logoff from CyberArk Vault
+  cyberark_authentication:
+    state: absent
+    cyberarkSession: "{{ cyberarkSession }}"
 '''
 
 RETURN = '''
@@ -131,6 +124,10 @@ cyberarkSession:
             type: bool
             sample: true
 '''
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
+import sys
 
 
 def processAuthentication(module):
