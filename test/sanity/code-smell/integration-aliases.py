@@ -59,6 +59,7 @@ def main():
         windows/ci/group2
 
         The CI groups are used to balance tests across multiple jobs to minimize test run time.
+        Using the relevant `group1` entry is fine in most cases. Groups can be changed later to redistribute tests.
 
         Aliases can also be used to express test requirements:
 
