@@ -544,7 +544,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         cmd = self._connection._shell.expand_user(expand_path)
         data = self._low_level_execute_command(cmd, sudoable=False)
         try:
-            initial_fragment = data['stdout'].strip().splitlines()
+            initial_fragment = data['stdout'].strip().splitlines()[-1]
         except IndexError:
             initial_fragment = None
 
