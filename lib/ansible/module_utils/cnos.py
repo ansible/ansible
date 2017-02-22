@@ -3168,7 +3168,7 @@ def waitForDeviceResponse(command, prompt, timeout, obj):
     obj.send(command)
     flag = False
     retVal = ""
-    while (flag is False):
+    while (flag == False):
         time.sleep(1)
         try:
             buffByte = obj.recv(9999)
@@ -3179,7 +3179,10 @@ def waitForDeviceResponse(command, prompt, timeout, obj):
             if(gotit != -1):
                 flag = True
         except:
-            retVal = retVal + "\n Error-101"
+            if(prompt != "(yes/no)?" ):
+                retVal = retVal + "\n Error-101"
+            else:
+                retVal = retVal
             flag = True
     return retVal
 # EOM
