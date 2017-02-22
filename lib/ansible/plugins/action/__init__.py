@@ -543,7 +543,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         cmd = self._connection._shell.expand_user(expand_path)
         data = self._low_level_execute_command(cmd, sudoable=False)
-        initial_fragment = data['stdout'].strip().splitlines()[-1]
+        initial_fragment = None
+        initial_fragment_lines = data['stdout'].strip().splitlines()
+        if initial_fragment_lines:
+            initial_fragment = initial_fragment_lines[-1]
 
         if not initial_fragment:
             # Something went wrong trying to expand the path remotely.  Return
