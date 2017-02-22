@@ -134,7 +134,10 @@ class TaskExecutor:
                 if isinstance(res, UnsafeProxy):
                     return res._obj
                 elif isinstance(res, binary_type):
-                    return to_text(res, errors='surrogate_or_strict')
+                    try:
+                        return to_text(res, errors='surrogate_or_strict')
+                    except:
+                        return bytes(res)
                 elif isinstance(res, dict):
                     for k in res:
                         res[k] = _clean_res(res[k])
