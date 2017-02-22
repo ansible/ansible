@@ -321,7 +321,7 @@ PARAMETER_MAP = {
     'iops': 'Iops',
     'license_model': 'LicenseModel',
     'maint_window': 'PreferredMaintenanceWindow',
-    'multi_zone': 'MultiAz',
+    'multi_zone': 'MultiAZ',
     'new_instance_name': 'NewDBInstanceIdentifier',
     'new_instance_name': 'NewInstanceId',
     'option_group': 'OptionGroupName',
