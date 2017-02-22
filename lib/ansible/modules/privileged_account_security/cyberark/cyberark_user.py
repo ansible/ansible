@@ -27,7 +27,7 @@ module: cyberark_user
 short_description: "Module for CyberArk User Management using Privileged Account
                     Security Web Services SDK"
 author: "Edward Nunez (@enunez-cyberark)"
-version_added: "2.2"
+version_added: "2.3"
 description:
     - "CyberArk User Management using PAS Web Services SDK.
        It currently supports the following actions: Get User Details, Add User,
@@ -110,8 +110,6 @@ EXAMPLES = '''
     userName: "Username"
     state: details
     cyberarkSession: "{{ cyberarkSession }}"
-  register: cyberarkaction
-  ignore_errors: yes
 
 - name: Create user
   cyberark_user:
@@ -121,9 +119,6 @@ EXAMPLES = '''
     changePasswordOnTheNextLogon: false
     state: present
     cyberarkSession: "{{ cyberarkSession }}"
-  register: cyberarkaction
-  ignore_errors: yes
-  when: (cyberarkaction.status_code == 404)
 
   - name: Reset user credential
     cyberark_user:
@@ -132,9 +127,6 @@ EXAMPLES = '''
       disabled: false
       state: update
       cyberarkSession: "{{ cyberarkSession }}"
-    register: cyberarkaction
-    ignore_errors: yes
-    when: (cyberarkaction.status_code == 200)
 
 - name: Logoff from CyberArk Vault
   cyberark_authentication:

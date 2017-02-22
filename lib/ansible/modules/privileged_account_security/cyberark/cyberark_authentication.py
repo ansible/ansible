@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 module: cyberark_authentication
 short_description: "Module for CyberArk Vault Authentication using Privileged Account Security Web Services SDK"
 author: "Edward Nunez (@enunez-cyberark)"
-version_added: "2.2"
+version_added: "2.3"
 description:
     - "Authenticates to CyberArk Vault using Privileged Account Security Web Services SDK and
        creates a session fact that can be used by other modules. It returns an Ansible fact
@@ -71,7 +71,7 @@ options:
         required: False
         default: false
         description:
-            - Whether or not users will be authenticated via a RADIUS server. Valid values: true/false
+            - Whether or not users will be authenticated via a RADIUS server. Valid values are true/false
     cyberarkSession:
         required: False
         description:
