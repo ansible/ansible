@@ -274,106 +274,103 @@ rebuilt:
 '''
 
 EXAMPLES = '''
-- name: define myservice
+-   name: define myservice
     docker_swarm_service:
-      name: myservice
-      image: "alpine"
-      args:
-      - "sleep"
-      - "3600"
-      mounts:
-      - source: /tmp/
-        target: /remote_tmp/
-        type: bind
-      env:
-        - "ENVVAR1=envvar1"
-      restart_policy: any
-      restart_policy_attempts: 5
-      restart_policy_window: 30
+        name: myservice
+        image: "alpine"
+        args:
+        - "sleep"
+        - "3600"
+        mounts:
+        -   source: /tmp/
+            target: /remote_tmp/
+            type: bind
+        env:
+        -   "ENVVAR1=envvar1"
+        restart_policy: any
+        restart_policy_attempts: 5
+        restart_policy_window: 30
     register: dss_out1
-  - name: change myservice.env
+-   name: change myservice.env
     docker_swarm_service:
-      name: myservice
-      image: "alpine"
-      args:
-      - "sleep"
-      - "7200"
-      mounts:
-      - source: /tmp/
-        target: /remote_tmp/
-        type: bind
-      env:
-        - "ENVVAR1=envvar1"
-      restart_policy: any
-      restart_policy_attempts: 5
-      restart_policy_window: 30
+        name: myservice
+        image: "alpine"
+        args:
+        -   "sleep"
+        -   "7200"
+        mounts:
+        -   source: /tmp/
+            target: /remote_tmp/
+            type: bind
+        env:
+        -   "ENVVAR1=envvar1"
+        restart_policy: any
+        restart_policy_attempts: 5
+        restart_policy_window: 30
     register: dss_out2
-  - debug:
-      var: dss_out1
-  - fail:
-  - name: test for changed myservice facts
+-   name: test for changed myservice facts
     fail:
-      msg: unchanged service
+        msg: unchanged service
     when: "{{ dss_out1 == dss_out2 }}"
-  - name: change myservice.image
+-   name: change myservice.image
     docker_swarm_service:
-      name: myservice
-      image: "alpine:edge"
-      args:
-      - "sleep"
-      - "7200"
-      mounts:
-      - source: /tmp/
-        target: /remote_tmp/
-        type: bind
-      env:
-        - "ENVVAR1=envvar1"
-      restart_policy: any
-      restart_policy_attempts: 5
-      restart_policy_window: 30
+        name: myservice
+        image: "alpine:edge"
+        args:
+        -   "sleep"
+        -   "7200"
+        mounts:
+        -   source: /tmp/
+            target: /remote_tmp/
+            type: bind
+        env:
+        -   "ENVVAR1=envvar1"
+        restart_policy: any
+        restart_policy_attempts: 5
+        restart_policy_window: 30
     register: dss_out3
-  - name: test for changed myservice facts
+-   name: test for changed myservice facts
     fail:
-      msg: unchanged service
+        msg: unchanged service
     when: "{{ dss_out2 == dss_out3 }}"
-  - name: remove mount
+-   name: remove mount
     docker_swarm_service:
-      name: myservice
-      image: "alpine:edge"
-      args:
-      - "sleep"
-      - "7200"
-      env:
-        - "ENVVAR1=envvar1"
-      restart_policy: any
-      restart_policy_attempts: 5
-      restart_policy_window: 30
+        name: myservice
+        image: "alpine:edge"
+        args:
+        -   "sleep"
+        -   "7200"
+        env:
+        -   "ENVVAR1=envvar1"
+        restart_policy: any
+        restart_policy_attempts: 5
+        restart_policy_window: 30
     register: dss_out4
-  - name: test for changed myservice facts
+-   name: test for changed myservice facts
     fail:
-      msg: unchanged service
+        msg: unchanged service
     when: "{{ dss_out3 == dss_out4 }}"
-  - name: keep service as it is
+-   name: keep service as it is
     docker_swarm_service:
-      name: myservice
-      image: "alpine:edge"
-      args:
-      - "sleep"
-      - "7200"
-      env:
-        - "ENVVAR1=envvar1"
-      restart_policy: any
-      restart_policy_attempts: 5
-      restart_policy_window: 30
+        name: myservice
+        image: "alpine:edge"
+        args:
+        -   "sleep"
+        -   "7200"
+        env:
+        -   "ENVVAR1=envvar1"
+        restart_policy: any
+        restart_policy_attempts: 5
+        restart_policy_window: 30
     register: dss_out5
-  - name: test for changed service facts
+-   name: test for changed service facts
     fail:
-      msg: changed service
+        msg: changed service
     when: "{{ dss_out5 != dss_out5 }}"
-  - name: remove myservice
+-   name: remove myservice
     docker_swarm_service:
-      name: myservice
-      state: absent
+        name: myservice
+        state: absent
 '''
 
 from ansible.module_utils.docker_common import *
