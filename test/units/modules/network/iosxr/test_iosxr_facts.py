@@ -52,7 +52,6 @@ class TestIosxrFacts(TestIosxrModule):
                     command = item
                 filename = str(command).replace(' ', '_')
                 filename = filename.replace('/', '7')
-                filename = filename.replace('|', '1')
                 output.append(load_fixture(filename))
             return output
 
@@ -66,7 +65,7 @@ class TestIosxrFacts(TestIosxrModule):
         self.assertIn('default', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('interfaces', ansible_facts['ansible_net_gather_subset'])
         self.assertEquals('iosxr01', ansible_facts['ansible_net_hostname'])
-        self.assertEquals([], ansible_facts['ansible_net_filesystems'])
+        self.assertEquals(['disk0:', 'flash0:'], ansible_facts['ansible_net_filesystems'])
         self.assertIn('GigabitEthernet0/0/0/0',
             ansible_facts['ansible_net_interfaces'].keys())
 
