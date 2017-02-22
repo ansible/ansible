@@ -22,7 +22,7 @@ def main():
             continue
 
         # don't require aliases for support directories
-        if any(os.path.splitext(f)[0] == 'test' for f in files):
+        if any(os.path.splitext(f)[0] == 'test' and os.access(os.path.join(target_dir, f), os.X_OK) for f in files):
             continue
 
         # don't require aliases for setup_ directories
