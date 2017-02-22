@@ -117,7 +117,7 @@ def get_docstring(filename, verbose=False):
                                     elif isinstance(doc[key], MutableSequence):
                                         doc[key] = sorted(frozenset(doc[key] + value))
                                     else:
-                                        raise Exception("Attempt to extend a documentation fragement (%s) of unknown type: %s" (fragment_name, filename))
+                                        raise Exception("Attempt to extend a documentation fragement (%s) of unknown type: %s" % (fragment_name, filename))
 
                     elif 'EXAMPLES' == theid:
                         plainexamples = child.value.s[1:]  # Skip first empty line
