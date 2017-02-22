@@ -39,6 +39,7 @@ description:
      use cases, please visit our [User Guide](http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_reload.html)
 version_added: "2.3"
 extends_documentation_fragment: cnos
+options: {}
 
 '''
 EXAMPLES = '''
