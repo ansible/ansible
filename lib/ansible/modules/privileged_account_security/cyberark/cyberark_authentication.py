@@ -18,6 +18,7 @@
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
+import sys
 
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -233,7 +234,8 @@ def processAuthentication(module):
                 endPoint +
                 json.dumps(headers))
 
-    except Exception as e:
+    except Exception:
+        t, e = sys.exc_info()[:2]
         module.fail_json(
             msg="EndPoint=" +
             apiBaseUrl +
