@@ -74,7 +74,7 @@ The complete module metadata specification is here: https://github.com/ansible/p
     * Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
 * Module-dependent guidelines: Additional module guidelines may exist for certain families of modules.
     * Be sure to check out the modules themselves for additional information.
-        * Amazon: https://github.com/ansible/ansible-modules-extras/blob/devel/cloud/amazon/GUIDELINES.md
+        * Amazon: https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/amazon/GUIDELINES.md
     * Modules should make use of the "extends_documentation_fragment" to ensure documentation available. For example, the AWS module should include::
 
         extends_documentation_fragment:
