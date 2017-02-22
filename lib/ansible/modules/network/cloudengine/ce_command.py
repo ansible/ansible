@@ -92,25 +92,25 @@ EXAMPLES = """
     transport: cli
 
   tasks:
-  - name: run display version on remote devices
+  - name: "Run display version on remote devices"
     ce_command:
       commands: display version
       provider: "{{ cli }}"
 
-  - name: run display version and check to see if output contains HUAWEI
+  - name: "Run display version and check to see if output contains HUAWEI"
     ce_command:
       commands: display version
       wait_for: result[0] contains HUAWEI
       provider: "{{ cli }}"
 
-  - name: run multiple commands on remote nodes
+  - name: "Run multiple commands on remote nodes"
     ce_command:
       commands:
         - display version
         - display device
       provider: "{{ cli }}"
 
-  - name: run multiple commands and evaluate the output
+  - name: "Run multiple commands and evaluate the output"
     ce_command:
       commands:
         - display version
@@ -147,7 +147,6 @@ import time
 from ansible.module_utils.cloudengine import run_commands
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import string_types
 from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.cloudengine import ce_argument_spec, check_args
@@ -172,7 +171,7 @@ def parse_commands(module, warnings):
 
     commands = transform(module.params['commands'])
 
-    for index, item in enumerate(commands):
+    for _, item in enumerate(commands):
         if module.check_mode and not item['command'].startswith('dis'):
             warnings.append(
                 'Only display commands are supported when using check_mode, not '
