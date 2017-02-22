@@ -23,12 +23,10 @@ if [ -s /tmp/windows.txt ]; then
     target="windows/ci/"
 
     ansible-test windows-integration --color -v --retry-on-error "${target}" --requirements \
+        --windows 2008-SP2 \
+        --windows 2008-R2_SP1 \
         --windows 2012-RTM \
         --windows 2012-R2_RTM \
-
-# removed due to increased memory usage from pipelining triggering memory quota bug in WMF3 (due to AMIs unpatched for KB2842230
-#        --windows 2008-SP2 \
-#        --windows 2008-R2_SP1 \
 
 else
     echo "No changes requiring integration tests specific to Windows were detected."
