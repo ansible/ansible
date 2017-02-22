@@ -97,6 +97,10 @@ class ActionModule(_ActionModule):
             }
             self._task.args['provider'] = provider_arg
 
+        # make sure a transport value is set in args
+        if self._task.args.get('transport') is None and self._task.args.get('provider').get('transport') is None:
+            self._task.args['transport'] = 'cli'
+
         return super(ActionModule, self).run(tmp, task_vars)
 
     def _get_socket_path(self, play_context):
