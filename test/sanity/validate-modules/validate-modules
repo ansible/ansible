@@ -577,7 +577,7 @@ class ModuleValidator(Validator):
                             'Unknown DOCUMENTATION error, see TRACE'
                         ))
 
-                if doc.get('options') is None and doc.get('extends_documentation_fragment'):
+                if 'options' in doc and doc['options'] is None and doc.get('extends_documentation_fragment'):
                     self.errors.append((
                         305,
                         ('DOCUMENTATION.options must be a dictionary/hash when used '
