@@ -169,14 +169,13 @@ EXAMPLES = """
       transport: cli
 
   tasks:
-
-  - name: configure top level configuration and save it
+  - name: "Configure top level configuration and save it"
     ce_config:
       lines: sysname {{ inventory_hostname }}
       save: yes
       provider: "{{ cli }}"
 
-  - name: configure acl configuration and save it
+  - name: "Configure acl configuration and save it"
     ce_config:
       lines:
         - rule 10 permit source 1.1.1.1 32
@@ -189,7 +188,7 @@ EXAMPLES = """
       match: exact
       provider: "{{ cli }}"
 
-  - name: configure acl configuration and save it
+  - name: "Configure acl configuration and save it"
     ce_config:
       lines:
         - rule 10 permit source 1.1.1.1 32
@@ -324,7 +323,7 @@ def main():
     result = dict(changed=False, warnings=warnings)
 
     if module.params['backup']:
-        result['__backup__'] = module.config.get_config()
+        result['__backup__'] = get_config(module)
 
     if any((module.params['src'], module.params['lines'])):
         run(module, result)
