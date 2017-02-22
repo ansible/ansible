@@ -117,23 +117,23 @@ Example from Ansible playbook
 #
 # Create a resource pool
 #
-    - name: Add resource pool to vCenter
-      vmware_resource_pool:
-        hostname: vcsa_host
-        username: vcsa_user
-        password: vcsa_pass
-        datacenter: datacenter
-        cluster: cluster
-        resource_pool: resource_pool
-        mem_shares: normal
-        mem_limit: -1
-        mem_reservation: 0
-        mem_expandable_reservations: True
-        cpu_shares: normal
-        cpu_limit: -1
-        cpu_reservation: 0
-        cpu_expandable_reservations: True
-        state: present
+  - name: Add resource pool to vCenter
+    vmware_resource_pool:
+      hostname: vcsa_host
+      username: vcsa_user
+      password: vcsa_pass
+      datacenter: datacenter
+      cluster: cluster
+      resource_pool: resource_pool
+      mem_shares: normal
+      mem_limit: -1
+      mem_reservation: 0
+      mem_expandable_reservations: True
+      cpu_shares: normal
+      cpu_limit: -1
+      cpu_reservation: 0
+      cpu_expandable_reservations: True
+      state: present
 '''
 
 try:
