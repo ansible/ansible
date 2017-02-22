@@ -364,7 +364,7 @@ class ModuleValidator(Validator):
                     linenos.append(child.lineno)
 
                     for name in child.names:
-                        if ('module_utils' in child.module and
+                        if ('module_utils' in getattr(child, 'module', '') and
                                 isinstance(name, ast.alias) and
                                 name.name == '*'):
                             msg = (
