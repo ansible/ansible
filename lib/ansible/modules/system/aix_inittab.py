@@ -116,10 +116,8 @@ RETURN = '''
 # description: The result is deliverd in an dictionary.
 - return:
   changed: true
-  msg: []
   name: "startmyservice"
-  status: "changed inittab entry startmyservice"
-  warnings: []
+  msg: "changed inittab entry startmyservice"
 '''
 
 # Import necessary libraries
@@ -133,107 +131,118 @@ from ansible.module_utils.basic import AnsibleModule
 def check_current_entry(module):
     # Check if entry exists, if not return False in exists in return dict,
     # if true return True and the entry in return dict
-    existsdict = { 'exist' : False }
-    (rc, out, err) = module.run_command(['lsitab', module.params['name']])
+    existsdict = {'exist': False}
+    lsitab = module.get_bin_path('lsitab')
+    (rc, out, err) = module.run_command([lsitab, module.params['name']])
     if rc == 0:
         keys = ('name', 'runlevel', 'action', 'command')
         values = out.split(":")
-        values = map(lambda s: s.strip(), values)  # strip non readable characters as \n
-        existsdict = dict(itertools.izip(keys,values))
-        existsdict.update({ 'exist' : True })
+        # strip non readable characters as \n
+        values = map(lambda s: s.strip(), values)
+        existsdict = dict(itertools.izip(keys, values))
+        existsdict.update({'exist': True})
     return existsdict
 
 
 def main():
     # initialize
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict( required=True, type='str', aliases=['service']),
-            runlevel = dict( required=True, type='str'),
-            action = dict( choices=[
-                           'respawn',
-                           'wait',
-                           'once',
-                           'boot',
-                           'bootwait',
-                           'powerfail',
-                           'powerwait',
-                           'off',
-                           'hold',
-                           'ondemand',
-                           'initdefault',
-                           'sysinit'
-                           ], type='str'),
-            command = dict( required=True, type='str' ),
-            insertafter = dict( type='str' ),
-            state = dict( choices=[
-                          'present',
-                          'absent',
-                          ], required=True, type='str'),
+        argument_spec=dict(
+            name=dict(required=True, type='str', aliases=['service']),
+            runlevel=dict(required=True, type='str'),
+            action=dict(choices=[
+                'respawn',
+                'wait',
+                'once',
+                'boot',
+                'bootwait',
+                'powerfail',
+                'powerwait',
+                'off',
+                'hold',
+                'ondemand',
+                'initdefault',
+                'sysinit'
+            ], type='str'),
+            command=dict(required=True, type='str'),
+            insertafter=dict(type='str'),
+            state=dict(choices=[
+                'present',
+                'absent',
+            ], required=True, type='str'),
         )
-        )
+    )
 
     result = {
-        'name':  module.params['name'],
+        'name': module.params['name'],
         'changed': False,
-        'status': {},
-        'msg': [],
+        'msg': ""
     }
 
     # Find commandline strings
-    lsitab = module.get_bin_path('lsitab')
     mkitab = module.get_bin_path('mkitab')
     rmitab = module.get_bin_path('rmitab')
+    chitab = module.get_bin_path('chitab')
 
     # check if the new entry exists
     current_entry = check_current_entry(module)
-
 
     # if action is install or change,
     if module.params['state'] == 'present':
 
         # create new entry string
-        new_entry = module.params['name']+":"+module.params['runlevel']+":"+module.params['action']+":"+module.params['command']
+        new_entry = module.params['name'] + ":" + module.params['runlevel'] + \
+            ":" + module.params['action'] + ":" + module.params['command']
 
-        # If current entry exists or fields are different(if the entry does not exists, then the entry wil be created
-        if ( not current_entry['exist'] ) or (
+        # If current entry exists or fields are different(if the entry does not
+        # exists, then the entry wil be created
+        if (not current_entry['exist']) or (
                 module.params['runlevel'] != current_entry['runlevel'] or
                 module.params['action'] != current_entry['action'] or
-                module.params['command'] != current_entry['command'] ):
+                module.params['command'] != current_entry['command']):
 
             # If the entry does exist then change the entry
             if current_entry['exist']:
-                (rc, out, err) = module.run_command(['chitab', new_entry])
+                (rc, out, err) = module.run_command([chitab, new_entry])
                 if rc != 0:
-                    module.warn('could not change (%s)' % current_entry['name'])
-                result['status'] = "changed inittab entry"+" "+current_entry['name']
-                result['changed'] = True
+                    module.fail_json(
+                        msg="could not change inittab", rc=rc, err=err)
+                else:
+                    result['msg'] = "changed inittab entry" + \
+                        " " + current_entry['name']
+                    result['changed'] = True
 
             # If the entry does not exist create the entry
             elif not current_entry['exist']:
 
                 if module.params['insertafter']:
-                    (rc, out, err) = module.run_command(['mkitab', '-i',  module.params['insertafter'], new_entry ])
+                    (rc, out, err) = module.run_command(
+                        [mkitab, '-i', module.params['insertafter'], new_entry])
                 else:
-                    (rc, out, err) = module.run_command(['mkitab', new_entry ])
+                    (rc, out, err) = module.run_command([mkitab, new_entry])
 
                 if rc != 0:
-                    module.warn('could not add (%s)' % current_entry['name'])
-                result['status'] = "add inittab entry"+" "+module.params['name']
-                result['changed'] = True
-
+                    module.fail_json(
+                        "could not adjust inittab", rc=rc, err=err)
+                else:
+                    result['msg'] = "add inittab entry" + \
+                        " " + module.params['name']
+                    result['changed'] = True
 
     elif module.params['state'] == 'absent':
         # If the action is remove and the entry exists then remove the entry
         if current_entry['exist']:
-            (rc, out, err) = module.run_command(['rmitab',  module.params['name']])
+            (rc, out, err) = module.run_command(
+                [rmitab, module.params['name']])
             if rc != 0:
-                module.warn('could not remove (%s)' % current_entry['name'])
-            result['status'] = "removed inittab entry"+" "+current_entry['name']
-            result['changed'] = True
+                module.fail_json(
+                    msg="could not remove entry grom inittab)", rc=rc, err=err)
+            else:
+                result['msg'] = "removed inittab entry" + \
+                    " " + current_entry['name']
+                result['changed'] = True
 
     module.exit_json(**result)
 
 if __name__ == '__main__':
     main()
-
