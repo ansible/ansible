@@ -9,13 +9,12 @@ trap 'rm -rf "${MYTMPDIR}"' EXIT
 TEST_FILE="${MYTMPDIR}/test_file"
 echo "This is a test file" > "${TEST_FILE}"
 
-
 # encrypt it
-ansible-vault encrypt --vault-password-file vault-password "${TEST_FILE}"
+ansible-vault encrypt "$@" --vault-password-file vault-password "${TEST_FILE}"
 
-ansible-vault view --vault-password-file vault-password "${TEST_FILE}"
+ansible-vault view "$@" --vault-password-file vault-password "${TEST_FILE}"
 
-ansible-vault decrypt --vault-password-file vault-password "${TEST_FILE}"
+ansible-vault decrypt "$@" --vault-password-file vault-password "${TEST_FILE}"
 
 # new password file for rekeyed file
 NEW_VAULT_PASSWORD="${MYTMPDIR}/new-vault-password"
