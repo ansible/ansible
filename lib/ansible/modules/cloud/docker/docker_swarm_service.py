@@ -893,6 +893,12 @@ def main():
         supports_check_mode=True
     )
 
+    if not HAS_DOCKER_PY_2:
+        client.module.fail_json(
+            msg=("docker python library version is %s. "
+                 + "this module requires version 2.0.0 or greater")
+            % docker_version)
+
     dsm = DockerServiceManager(client)
     msg, changed, rebuilt, changes, facts = dsm.run()
 
