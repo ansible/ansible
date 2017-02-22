@@ -18,6 +18,7 @@
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
+import sys
 
 
 ANSIBLE_METADATA = {'status': ['preview'],
@@ -211,7 +212,8 @@ def userDetails(userModule):
 
         return (changed, result, response.getcode())
 
-    except Exception as e:
+    except Exception:
+        t, e = sys.exc_info()[:2]
         userModule.fail_json(
             msg=str(e),
             exception=traceback.format_exc(),
@@ -290,7 +292,8 @@ def userAddOrUpdate(userModule, HTTPMethod):
 
         return (changed, result, response.getcode())
 
-    except Exception as e:
+    except Exception:
+        t, e = sys.exc_info()[:2]
         userModule.fail_json(
             msg=str(e),
             exception=traceback.format_exc(),
@@ -329,7 +332,8 @@ def userDelete(userModule):
 
         return (changed, result, response.getcode())
 
-    except Exception as e:
+    except Exception:
+        t, e = sys.exc_info()[:2]
         userModule.fail_json(
             msg=str(e),
             exception=traceback.format_exc(),
