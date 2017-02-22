@@ -170,7 +170,8 @@ def main():
                 'present',
                 'absent',
             ], required=True, type='str'),
-        )
+        ),
+        supports_check_mode=True,
     )
 
     result = {
@@ -183,6 +184,7 @@ def main():
     mkitab = module.get_bin_path('mkitab')
     rmitab = module.get_bin_path('rmitab')
     chitab = module.get_bin_path('chitab')
+    rc = 0
 
     # check if the new entry exists
     current_entry = check_current_entry(module)
@@ -203,44 +205,42 @@ def main():
 
             # If the entry does exist then change the entry
             if current_entry['exist']:
-                (rc, out, err) = module.run_command([chitab, new_entry])
+                if not module.check_mode:
+                    (rc, out, err) = module.run_command([chitab, new_entry])
                 if rc != 0:
                     module.fail_json(
                         msg="could not change inittab", rc=rc, err=err)
-                else:
-                    result['msg'] = "changed inittab entry" + \
-                        " " + current_entry['name']
-                    result['changed'] = True
+                result['msg'] = "changed inittab entry" + " " + current_entry['name']
+                result['changed'] = True
 
             # If the entry does not exist create the entry
             elif not current_entry['exist']:
-
                 if module.params['insertafter']:
-                    (rc, out, err) = module.run_command(
-                        [mkitab, '-i', module.params['insertafter'], new_entry])
+                    if not module.check_mode:
+                        (rc, out, err) = module.run_command(
+                            [mkitab, '-i', module.params['insertafter'], new_entry])
                 else:
-                    (rc, out, err) = module.run_command([mkitab, new_entry])
+                    if not module.check_mode:
+                        (rc, out, err) = module.run_command(
+                            [mkitab, new_entry])
 
                 if rc != 0:
                     module.fail_json(
                         "could not adjust inittab", rc=rc, err=err)
-                else:
-                    result['msg'] = "add inittab entry" + \
-                        " " + module.params['name']
-                    result['changed'] = True
+                result['msg'] = "add inittab entry" + " " + module.params['name']
+                result['changed'] = True
 
     elif module.params['state'] == 'absent':
         # If the action is remove and the entry exists then remove the entry
         if current_entry['exist']:
-            (rc, out, err) = module.run_command(
-                [rmitab, module.params['name']])
-            if rc != 0:
-                module.fail_json(
-                    msg="could not remove entry grom inittab)", rc=rc, err=err)
-            else:
-                result['msg'] = "removed inittab entry" + \
-                    " " + current_entry['name']
-                result['changed'] = True
+            if not module.check_mode:
+                (rc, out, err) = module.run_command(
+                    [rmitab, module.params['name']])
+                if rc != 0:
+                    module.fail_json(
+                        msg="could not remove entry grom inittab)", rc=rc, err=err)
+            result['msg'] = "removed inittab entry" + " " + current_entry['name']
+            result['changed'] = True
 
     module.exit_json(**result)
 
