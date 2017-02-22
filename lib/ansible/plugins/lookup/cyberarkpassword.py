@@ -49,7 +49,7 @@ class CyberarkPassword:
         # Support for Generic parameters to be able to specify
         # FailRequestOnPasswordChange, Queryformat, Reason, etc.
         self.extraParms = []
-        for key, value in kwargs.iteritems():
+        for key, value in kwargs.items():
             self.extraParms.append('-p')
             self.extraParms.append(key + "=" + value)
 
