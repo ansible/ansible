@@ -326,6 +326,18 @@ class AnsibleF5Parameters(object):
             result[v] = value
         return result
 
+    def _params_from_map(self):
+        result = dict()
+        pmap = self.__class__.param_api_map
+        for k,v in iteritems(pmap):
+            value = getattr(self, k)
+            result[k] = value
+        return result
+
+    def to_dict(self):
+        result = self._params_from_map()
+        return self._filter_none(result)
+
 
 class F5ModuleError(Exception):
     pass
