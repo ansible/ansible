@@ -167,6 +167,8 @@ from ansible.module_utils.six import (PY2, PY3, b, binary_type, integer_types,
 from ansible.module_utils.six.moves import map, reduce
 from ansible.module_utils._text import to_native, to_bytes, to_text
 
+PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
+
 _NUMBERTYPES = tuple(list(integer_types) + [float])
 
 # Deprecated compat.  Only kept in case another module used these names  Using
@@ -401,9 +403,9 @@ def remove_values(value, no_log_strings):
             native_str_value = native_str_value.replace(omit_me, '*' * 8)
 
         if value_is_text and isinstance(native_str_value, binary_type):
-            value = to_text(native_str_value, encoding='utf-8', errors='surrogate_or_replace')
+            value = to_text(native_str_value, encoding='utf-8', errors='surrogate_then_replace')
         elif not value_is_text and isinstance(native_str_value, text_type):
-            value = to_bytes(native_str_value, encoding='utf-8', errors='surrogate_or_replace')
+            value = to_bytes(native_str_value, encoding='utf-8', errors='surrogate_then_replace')
         else:
             value = native_str_value
     elif isinstance(value, SEQUENCETYPE):
@@ -680,16 +682,16 @@ class AnsibleModule(object):
         self.cleanup_files = []
         self._debug = False
         self._diff = False
+        self._socket_path = None
         self._verbosity = 0
         # May be used to set modifications to the environment for any
         # run_command invocation
         self.run_command_environ_update = {}
         self._warnings = []
         self._deprecations = []
-        self._passthrough = ['warnings', 'deprecations']
 
         self.aliases = {}
-        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility']
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility', '_ansible_socket']
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -1414,6 +1416,9 @@ class AnsibleModule(object):
             elif k == '_ansible_module_name':
                 self._name = v
 
+            elif k == '_ansible_socket':
+                self._socket_path = v
+
             elif check_invalid_arguments and k not in self._legal_inputs:
                 unsupported_parameters.add(k)
 
@@ -1804,7 +1809,6 @@ class AnsibleModule(object):
         # TODO: generalize a separate log function and make log_invocation use it
         # Sanitize possible password argument when logging.
         log_args = dict()
-        passwd_keys = ['password', 'login_password']
 
         for param in self.params:
             canon  = self.aliases.get(param, param)
@@ -1813,8 +1817,13 @@ class AnsibleModule(object):
 
             if self.boolean(no_log):
                 log_args[param] = 'NOT_LOGGING_PARAMETER'
-            elif param in passwd_keys:
+            # try to capture all passwords/passphrase named fields missed by no_log
+            elif PASSWORD_MATCH.search(param) and \
+              arg_opts.get('type', 'str') != 'bool' and \
+              not arg_opts.get('choices', False):
+                # skip boolean and enums as they are about 'password' state
                 log_args[param] = 'NOT_LOGGING_PASSWORD'
+                self.warn('Module did not set no_log for %s' % param)
             else:
                 param_val = self.params[param]
                 if not isinstance(param_val, (text_type, binary_type)):
@@ -1941,15 +1950,19 @@ class AnsibleModule(object):
                     self.warn(w)
             else:
                 self.warn(kwargs['warnings'])
+
         if self._warnings:
             kwargs['warnings'] = self._warnings
 
         if 'deprecations' in kwargs:
             if isinstance(kwargs['deprecations'], list):
                 for d in kwargs['deprecations']:
-                    self.warn(d)
+                    if isinstance(d, SEQUENCETYPE) and len(d) == 2:
+                       self.deprecate(d[0], version=d[1])
+                    else:
+                       self.deprecate(d)
             else:
-                self.warn(kwargs['deprecations'])
+                self.deprecate(d)
 
         if self._deprecations:
             kwargs['deprecations'] = self._deprecations
@@ -2441,9 +2454,11 @@ class AnsibleModule(object):
             rc = cmd.returncode
         except (OSError, IOError):
             e = get_exception()
+            self.log("Error Executing CMD:%s Exception:%s" % (clean_args, to_native(e)))
             self.fail_json(rc=e.errno, msg=to_native(e), cmd=clean_args)
         except Exception:
             e = get_exception()
+            self.log("Error Executing CMD:%s Exception:%s" % (clean_args,to_native(traceback.format_exc())))
             self.fail_json(rc=257, msg=to_native(e), exception=traceback.format_exc(), cmd=clean_args)
 
         # Restore env settings

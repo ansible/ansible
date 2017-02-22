@@ -19,45 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import json
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
-from ansible.errors import AnsibleModuleExit
+from ansible.compat.tests.mock import patch
 from ansible.modules.network.vyos import vyos_facts
-from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
+from .vyos_module import TestVyosModule, load_fixture, set_module_args
 
 
-fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
-fixture_data = {}
+class TestVyosFactsModule(TestVyosModule):
 
-
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
-
-
-def load_fixture(name):
-    path = os.path.join(fixture_path, name)
-
-    if path in fixture_data:
-        return fixture_data[path]
-
-    with open(path) as f:
-        data = f.read()
-
-    try:
-        data = json.loads(data)
-    except:
-        pass
-
-    fixture_data[path] = data
-    return data
-
-
-class TestVyosFactsModule(unittest.TestCase):
+    module = vyos_facts
 
     def setUp(self):
         self.mock_run_commands = patch('ansible.modules.network.vyos.vyos_facts.run_commands')
@@ -66,8 +37,7 @@ class TestVyosFactsModule(unittest.TestCase):
     def tearDown(self):
         self.mock_run_commands.stop()
 
-    def execute_module(self, failed=False, changed=False):
-
+    def load_fixtures(self, commands=None):
         def load_from_file(*args, **kwargs):
             module, commands = args
             output = list()
@@ -83,18 +53,6 @@ class TestVyosFactsModule(unittest.TestCase):
             return output
 
         self.run_commands.side_effect = load_from_file
-
-        with self.assertRaises(AnsibleModuleExit) as exc:
-            vyos_facts.main()
-
-        result = exc.exception.result
-
-        if failed:
-            self.assertTrue(result.get('failed'))
-        else:
-            self.assertEqual(result.get('changed'), changed, result)
-
-        return result
 
     def test_vyos_facts_default(self):
         set_module_args(dict(gather_subset='default'))

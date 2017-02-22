@@ -78,7 +78,7 @@ EXAMPLES = '''
         dest: /etc/network/interfaces
       notify: restart networking
 
- handlers:
+  handlers:
    - name: restart switchd
      service:
       name: switchd
@@ -89,10 +89,7 @@ EXAMPLES = '''
       state: reloaded
 
 # Force all switches to accept a new license. Typically not needed
-ansible -m cl_license -a "src='http://10.1.1.1/new_lic' force=yes" -u root all
-
-----
-
+# ansible -m cl_license -a "src='http://10.1.1.1/new_lic' force=yes" -u root all
 '''
 
 RETURN = '''

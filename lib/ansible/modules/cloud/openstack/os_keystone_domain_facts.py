@@ -41,6 +41,10 @@ options:
           this dictionary may be additional dictionaries.
      required: false
      default: None
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatability
+     required: false
 '''
 
 EXAMPLES = '''
@@ -58,7 +62,7 @@ EXAMPLES = '''
     var: openstack_domains
 
 # Gather facts about a previously created domain with filter
-- os_keystone_domain_facts
+- os_keystone_domain_facts:
     cloud: awesomecloud
     name: demodomain
     filters:

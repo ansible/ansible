@@ -144,7 +144,7 @@ class Debugger(cmd.Cmd):
             exec(code, globals(), self.scope)
         except:
             t, v = sys.exc_info()[:2]
-            if type(t) == type(''):
+            if isinstance(t, str):
                 exc_type_name = t
             else:
                 exc_type_name = t.__name__

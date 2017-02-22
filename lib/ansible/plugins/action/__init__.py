@@ -33,7 +33,7 @@ from ansible import constants as C
 from ansible.compat.six import binary_type, string_types, text_type, iteritems, with_metaclass
 from ansible.compat.six.moves import shlex_quote
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
-from ansible.executor.module_common import modify_module
+from ansible.executor.module_common import modify_module, build_windows_module_payload
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.parsing.utils.jsonify import jsonify
@@ -159,6 +159,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args,
                 task_vars=task_vars, module_compression=self._play_context.module_compression)
 
+        # FUTURE: we'll have to get fancier about this to support powershell over SSH on Windows...
+        if self._connection.transport == "winrm":
+            # WinRM always pipelines, so we need to build up a fancier module payload...
+            module_data = build_windows_module_payload(module_name=module_name, module_path=module_path,
+                                                   b_module_data=module_data, module_args=module_args,
+                                                   task_vars=task_vars, task=self._task,
+                                                   play_context=self._play_context)
+
         return (module_style, module_shebang, module_data, module_path)
 
     def _compute_environment_string(self):
@@ -200,6 +208,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
         Determines if we are required and can do pipelining
         '''
+        if self._connection.always_pipeline_modules:
+            return True #eg, winrm
+
         # any of these require a true
         for condition in [
               self._connection.has_pipelining,
@@ -586,6 +597,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # let module know about filesystems that selinux treats specially
         module_args['_ansible_selinux_special_fs'] = C.DEFAULT_SELINUX_SPECIAL_FS
 
+        # give the module the socket for persistent connections
+        module_args['_ansible_socket'] = task_vars.get('ansible_socket')
+
 
 
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=True, wrap_async=False):
@@ -607,6 +621,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         self._update_module_args(module_name, module_args, task_vars)
 
+        # FUTURE: refactor this along with module build process to better encapsulate "smart wrapper" functionality
         (module_style, shebang, module_data, module_path) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         display.vvv("Using module file %s" % module_path)
         if not shebang and module_style != 'binary':
@@ -815,7 +830,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 data['rc'] = res['rc']
         return data
 
-    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_or_replace'):
+    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace'):
         '''
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to
@@ -831,10 +846,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
 
         display.debug("_low_level_execute_command(): starting")
-        if not cmd:
-            # this can happen with powershell modules when there is no analog to a Windows command (like chmod)
-            display.debug("_low_level_execute_command(): no command, exiting")
-            return dict(stdout='', stderr='', rc=254)
+#        if not cmd:
+#            # this can happen with powershell modules when there is no analog to a Windows command (like chmod)
+#            display.debug("_low_level_execute_command(): no command, exiting")
+#           return dict(stdout='', stderr='', rc=254)
 
         allow_same_user = C.BECOME_ALLOW_SAME_USER
         same_user = self._play_context.become_user == self._play_context.remote_user

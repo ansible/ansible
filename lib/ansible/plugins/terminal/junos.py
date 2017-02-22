@@ -34,12 +34,12 @@ except ImportError:
 
 class TerminalModule(TerminalBase):
 
-    terminal_prompts_re = [
+    terminal_stdout_re = [
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|%) ?$"),
     ]
 
-    terminal_errors_re = [
+    terminal_stderr_re = [
         re.compile(r"unknown command"),
         re.compile(r"syntax error,")
     ]
@@ -54,10 +54,3 @@ class TerminalModule(TerminalBase):
                 self._exec_cli_command(c)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
-
-    @staticmethod
-    def guess_network_os(conn):
-        stdin, stdout, stderr = conn.exec_command('show version')
-        if 'Junos' in stdout.read():
-            return 'junos'
-

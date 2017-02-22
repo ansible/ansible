@@ -121,27 +121,13 @@ filtered:
   returned: always
   type: list
   sample: ['...', '...']
-start:
-  description: The time the job started
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:15.126146"
-end:
-  description: The time the job ended
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:25.595612"
-delta:
-  description: The time elapsed to perform all operations
-  returned: always
-  type: str
-  sample: "0:00:10.469466"
 """
 import re
 
-from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.vyos import load_config, get_config, run_commands
+from ansible.module_utils.vyos import vyos_argument_spec, check_args
 
 
 DEFAULT_COMMENT = 'configured by vyos_config'
@@ -262,15 +248,20 @@ def main():
         save=dict(type='bool', default=False),
     )
 
+    argument_spec.update(vyos_argument_spec)
+
     mutually_exclusive = [('lines', 'src')]
 
-    module = LocalAnsibleModule(
+    module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive=mutually_exclusive,
         supports_check_mode=True
     )
 
-    result = dict(changed=False, warnings=[])
+    warnings = list()
+    check_args(module, warnings)
+
+    result = dict(changed=False, warnings=warnings)
 
     if module.params['backup']:
         result['__backup__'] = get_config(module=module)

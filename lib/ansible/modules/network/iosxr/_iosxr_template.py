@@ -34,7 +34,6 @@ description:
     commands that are not already configured.  The config source can
     be a set of commands or a template.
 deprecated: Deprecated in 2.2. Use M(iosxr_config) instead.
-extends_documentation_fragment: iosxr
 options:
   src:
     description:
@@ -99,39 +98,11 @@ updates:
   returned: always
   type: list
   sample: ['...', '...']
-
-start:
-  description: The time the job started
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:15.126146"
-end:
-  description: The time the job ended
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:25.595612"
-delta:
-  description: The time elapsed to perform all operations
-  returned: always
-  type: str
-  sample: "0:00:10.469466"
 """
-from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.iosxr import get_config, load_config
-from ansible.module_utils.network import NET_TRANSPORT_ARGS, _transitional_argument_spec
-
-
-def check_args(module):
-    warnings = list()
-    for key in NET_TRANSPORT_ARGS:
-        if module.params[key]:
-            warnings.append(
-                'network provider arguments are no longer supported.  Please '
-                'use connection: network_cli for the task'
-            )
-            break
-    return warnings
+from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
 
 
 def main():
@@ -145,17 +116,16 @@ def main():
         config=dict(),
     )
 
-    # Removed the use of provider arguments in 2.3 due to network_cli
-    # connection plugin.  To be removed in 2.5
-    argument_spec.update(_transitional_argument_spec())
+    argument_spec.update(iosxr_argument_spec)
 
     mutually_exclusive = [('config', 'backup'), ('config', 'force')]
 
-    module = LocalAnsibleModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
-    warnings = check_args(module)
+    warnings = list()
+    check_args(module, warnings)
 
     result = dict(changed=False, warnings=warnings)
 
@@ -178,6 +148,7 @@ def main():
         result['changed'] = not module.check_mode
 
     result['updates'] = commands
+    result['commands'] = commands
     module.exit_json(**result)
 
 

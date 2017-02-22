@@ -26,7 +26,7 @@ module: grove
 version_added: 1.4
 short_description: Sends a notification to a grove.io channel
 description:
-     - The M(grove) module sends a message for a service to a Grove.io
+     - The C(grove) module sends a message for a service to a Grove.io
        channel.
 options:
   channel_token:

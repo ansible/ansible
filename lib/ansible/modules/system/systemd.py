@@ -33,7 +33,7 @@ options:
     name:
         required: true
         description:
-            - Name of the service.
+            - Name of the service. When using in a chroot environment you always need to specify the full name i.e. (crond.service).
         aliases: ['unit', 'service']
     state:
         required: false
@@ -283,7 +283,6 @@ def main():
         'name':  unit,
         'changed': False,
         'status': {},
-        'warnings': [],
     }
 
     # Run daemon-reload first, if requested
@@ -298,7 +297,15 @@ def main():
 
     # check service data, cannot error out on rc as it changes across versions, assume not found
     (rc, out, err) = module.run_command("%s show '%s'" % (systemctl, unit))
-    if rc == 0:
+
+    if out.find('ignoring request') != -1:
+        # fallback list-unit-files as show does not work on some systems (chroot)
+        # not used as primary as it skips some services (like those using init.d) and requires .service/etc notation
+        (rc, out, err) = module.run_command("%s list-unit-files '%s'" % (systemctl, unit))
+        if rc == 0:
+            is_systemd = True
+
+    elif rc == 0:
         # load return of systemctl show into dictionary for easy access and return
         multival = []
         if out:
@@ -331,7 +338,7 @@ def main():
     # Does service exist?
     found = is_systemd or is_initd
     if is_initd and not is_systemd:
-        result['warnings'].append('The service (%s) is actually an init script but the system is managed by systemd' % unit)
+        module.warn('The service (%s) is actually an init script but the system is managed by systemd' % unit)
 
     # mask/unmask the service, if requested, can operate on services before they are installed
     if module.params['masked'] is not None:

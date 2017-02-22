@@ -27,15 +27,7 @@
 #
 
 Set-StrictMode -Version 2.0
-
-# Ansible v2 will insert the module arguments below as a string containing
-# JSON; assign them to an environment variable and redefine $args so existing
-# modules will continue to work.
-$complex_args = @'
-<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>
-'@
-Set-Content env:MODULE_COMPLEX_ARGS -Value $complex_args
-$args = @('env:MODULE_COMPLEX_ARGS')
+$ErrorActionPreference = "Stop"
 
 # Helper function to set an "attribute" on a psobject instance in powershell.
 # This is a convenience to make adding Members to the object easier and
@@ -98,6 +90,46 @@ Function Fail-Json($obj, $message = $null)
     Exit 1
 }
 
+# Helper function to add warnings, even if the warnings attribute was
+# not already set up. This is a convenience for the module developer
+# so he does not have to check for the attribute prior to adding.
+Function Add-Warning($obj, $message)
+{
+    if (Get-Member -InputObject $obj -Name "warnings") {
+        if ($obj.warnings -is [System.Array]) {
+            $obj.warnings += $message
+        } else {
+            throw "warnings attribute is not an array"
+        }
+    } else {
+        $obj.warnings = ,@( $message )
+    }
+}
+
+# Helper function to add deprecations, even if the deprecations attribute was
+# not already set up. This is a convenience for the module developer
+# so he does not have to check for the attribute prior to adding.
+Function Add-DeprecationWarning($obj, $message, $version = $null)
+{
+    if (Get-Member -InputObject $obj -Name "deprecations") {
+        if ($obj.deprecations -is [System.Array]) {
+            $obj.deprecations += @{
+                msg = $message
+                version = $version
+            }
+        } else {
+            throw "deprecations attribute is not a list"
+        }
+    } else {
+        $obj.deprecations = ,@(
+            @{
+                msg = $message
+                version = $version
+            }
+        )
+    }
+}
+
 Function Expand-Environment($value)
 {
     [System.Environment]::ExpandEnvironmentVariables($value)
@@ -121,7 +153,7 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
 
         # Iterate over aliases to find acceptable Member $name
         foreach ($alias in $aliases) {
-            if (Get-Member -InputObject $obj -Name $alias) {
+            if ($obj.ContainsKey($alias)) {
                 $found = $alias
                 break
             }
@@ -177,7 +209,6 @@ If (!(Get-Alias -Name "Get-attr" -ErrorAction SilentlyContinue))
     New-Alias -Name Get-attr -Value Get-AnsibleParam
 }
 
-
 # Helper filter/pipeline function to convert a value to boolean following current
 # Ansible practices
 # Example: $is_true = "true" | ConvertTo-Bool
@@ -210,6 +241,9 @@ Function Parse-Args($arguments, $supports_check_mode = $false)
     If ($arguments.Length -gt 0)
     {
         $params = Get-Content $arguments[0] | ConvertFrom-Json
+    }
+    Else {
+        $params = $complex_args
     }
     $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
     If ($check_mode -and -not $supports_check_mode)
@@ -275,3 +309,6 @@ Function Get-PendingRebootStatus
         return $False
     }
 }
+
+# this line must stay at the bottom to ensure all defined module parts are exported
+Export-ModuleMember -Alias * -Function * -Cmdlet *

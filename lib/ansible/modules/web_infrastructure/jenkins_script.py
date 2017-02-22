@@ -31,7 +31,7 @@ module: jenkins_script
 short_description: Executes a groovy script in the jenkins instance
 version_added: '2.3'
 description:
-    - The M(jenkins_script) module takes a script plus a dict of values
+    - The C(jenkins_script) module takes a script plus a dict of values
       to use within the script and returns the result of the script being run.
 
 options:

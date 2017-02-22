@@ -42,7 +42,7 @@ author: "Chris Church (@cchurch)"
 
 EXAMPLES = r'''
 # Test connectivity to a windows host
-ansible winserver -m win_ping
+# ansible winserver -m win_ping
 
 # Example from an Ansible Playbook
 - win_ping:

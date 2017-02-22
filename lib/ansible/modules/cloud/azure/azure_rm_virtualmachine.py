@@ -487,7 +487,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             short_hostname=dict(type='str'),
             vm_size=dict(type='str', choices=[], default='Standard_D1'),
             admin_username=dict(type='str'),
-            admin_password=dict(type='str', ),
+            admin_password=dict(type='str', no_log=True),
             ssh_password_enabled=dict(type='bool', default=True),
             ssh_public_keys=dict(type='list'),
             image=dict(type='dict'),

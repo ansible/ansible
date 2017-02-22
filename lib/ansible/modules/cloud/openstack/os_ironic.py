@@ -118,6 +118,10 @@ options:
           re-assert the password field.
       required: false
       default: false
+    availability_zone:
+      description:
+        - Ignored. Present for backwards compatability
+      required: false
 
 requirements: ["shade", "jsonpatch"]
 '''

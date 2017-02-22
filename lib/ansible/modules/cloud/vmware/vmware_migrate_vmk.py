@@ -64,7 +64,7 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-Example from Ansible playbook
+# Example from Ansible playbook
 
     - name: Migrate Management vmk
       local_action:

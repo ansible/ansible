@@ -5,16 +5,13 @@ lib/ansible/compat/six/__init__.py
 lib/ansible/constants.py
 lib/ansible/errors/__init__.py
 lib/ansible/executor/play_iterator.py
-lib/ansible/executor/stats.py
 lib/ansible/executor/task_executor.py
 lib/ansible/galaxy/role.py
 lib/ansible/inventory/dir.py
 lib/ansible/inventory/script.py
 lib/ansible/module_utils/basic.py
 lib/ansible/module_utils/ec2.py
-lib/ansible/module_utils/f5.py
 lib/ansible/module_utils/facts.py
-lib/ansible/module_utils/known_hosts.py
 lib/ansible/module_utils/mysql.py
 lib/ansible/modules/cloud/amazon/_ec2_vpc.py
 lib/ansible/modules/cloud/amazon/aws_kms.py
@@ -41,7 +38,6 @@ lib/ansible/modules/cloud/amazon/ec2_remote_facts.py
 lib/ansible/modules/cloud/amazon/ec2_scaling_policy.py
 lib/ansible/modules/cloud/amazon/ec2_snapshot_facts.py
 lib/ansible/modules/cloud/amazon/ec2_tag.py
-lib/ansible/modules/cloud/amazon/ec2_vol.py
 lib/ansible/modules/cloud/amazon/ec2_vol_facts.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_dhcp_options_facts.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_nacl.py
@@ -67,7 +63,6 @@ lib/ansible/modules/cloud/amazon/redshift.py
 lib/ansible/modules/cloud/amazon/route53.py
 lib/ansible/modules/cloud/amazon/route53_health_check.py
 lib/ansible/modules/cloud/amazon/s3.py
-lib/ansible/modules/cloud/amazon/s3_bucket.py
 lib/ansible/modules/cloud/amazon/s3_lifecycle.py
 lib/ansible/modules/cloud/amazon/s3_sync.py
 lib/ansible/modules/cloud/amazon/s3_website.py
@@ -187,7 +182,6 @@ lib/ansible/modules/packaging/os/opkg.py
 lib/ansible/modules/packaging/os/pacman.py
 lib/ansible/modules/packaging/os/rhn_register.py
 lib/ansible/modules/packaging/os/swdepot.py
-lib/ansible/modules/packaging/os/yum.py
 lib/ansible/modules/packaging/os/zypper.py
 lib/ansible/modules/source_control/github_hooks.py
 lib/ansible/modules/storage/netapp/netapp_e_amg.py
@@ -264,7 +258,6 @@ lib/ansible/plugins/lookup/first_found.py
 lib/ansible/plugins/shell/fish.py
 lib/ansible/plugins/shell/sh.py
 lib/ansible/plugins/strategy/__init__.py
-lib/ansible/plugins/strategy/debug.py
 lib/ansible/plugins/strategy/linear.py
 lib/ansible/template/__init__.py
 lib/ansible/utils/encrypt.py
@@ -277,15 +270,3 @@ lib/ansible/utils/module_docs_fragments/netapp.py
 lib/ansible/utils/module_docs_fragments/ovirt.py
 lib/ansible/utils/module_docs_fragments/ovirt_facts.py
 lib/ansible/vars/__init__.py
-setup.py
-test/units/cli/test_galaxy.py
-test/units/errors/test_errors.py
-test/units/executor/test_playbook_executor.py
-test/units/mock/yaml_helper.py
-test/units/module_utils/basic/test__log_invocation.py
-test/units/module_utils/test_basic.py
-test/units/module_utils/test_distribution_version.py
-test/units/module_utils/test_facts.py
-test/units/parsing/yaml/test_loader.py
-test/units/playbook/test_helpers.py
-test/units/playbook/test_play_context.py

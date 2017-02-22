@@ -66,6 +66,10 @@ options:
         - Maximum number of seconds to wait for the stack creation
       required: false
       default: 3600
+    availability_zone:
+      description:
+        - Ignored. Present for backwards compatability
+      required: false
 requirements:
     - "python >= 2.6"
     - "shade"
@@ -86,12 +90,12 @@ EXAMPLES = '''
         bmc_flavor: m1.medium
         bmc_image: CentOS
         key_name: default
-        private_net: {{ private_net_param }}
+        private_net: "{{ private_net_param }}"
         node_count: 2
         name: undercloud
         image: CentOS
         my_flavor: m1.large
-        external_net: {{ external_net_param }}
+        external_net: "{{ external_net_param }}"
 '''
 
 RETURN = '''

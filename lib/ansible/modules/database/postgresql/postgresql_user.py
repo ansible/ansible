@@ -128,8 +128,9 @@ options:
     description:
       - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
       - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+      - Default of C(prefer) matches libpq default.
     required: false
-    default: disable
+    default: prefer
     choices: [disable, allow, prefer, require, verify-ca, verify-full]
     version_added: '2.3'
   ssl_rootcert:
@@ -189,7 +190,7 @@ EXAMPLES = '''
     state: absent
 
 # Example privileges string format
-INSERT,UPDATE/table:SELECT/anothertable:ALL
+# INSERT,UPDATE/table:SELECT/anothertable:ALL
 
 # Remove an existing user's password
 - postgresql_user:
@@ -329,6 +330,56 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
 
         try:
             cursor.execute(' '.join(alter), query_password_data)
+        except psycopg2.InternalError:
+            e = get_exception()
+            if e.pgcode == '25006':
+                # Handle errors due to read-only transactions indicated by pgcode 25006
+                # ERROR:  cannot execute ALTER ROLE in a read-only transaction
+                changed = False
+                module.fail_json(msg=e.pgerror)
+                return changed
+            else:
+                raise psycopg2.InternalError(e)
+
+        # Grab new role attributes.
+        cursor.execute(select, {"user": user})
+        new_role_attrs = cursor.fetchone()
+
+        # Detect any differences between current_ and new_role_attrs.
+        for i in range(len(current_role_attrs)):
+            if current_role_attrs[i] != new_role_attrs[i]:
+                changed = True
+
+    elif no_password_changes and role_attr_flags != '':
+        # Grab role information from pg_roles instead of pg_authid
+        select = "SELECT * FROM pg_roles where rolname=%(user)s"
+        cursor.execute(select, {"user": user})
+        # Grab current role attributes.
+        current_role_attrs = cursor.fetchone()
+
+        role_attr_flags_changing = False
+
+        if role_attr_flags:
+            role_attr_flags_dict = {}
+            for r in role_attr_flags.split(' '):
+                if r.startswith('NO'):
+                    role_attr_flags_dict[r.replace('NO', '', 1)] = False
+                else:
+                    role_attr_flags_dict[r] = True
+
+            for role_attr_name, role_attr_value in role_attr_flags_dict.items():
+                if current_role_attrs[PRIV_TO_AUTHID_COLUMN[role_attr_name]] != role_attr_value:
+                    role_attr_flags_changing = True
+
+        if not role_attr_flags_changing:
+            return False
+
+        alter = ['ALTER USER %(user)s' % {"user": pg_quote_identifier(user, 'role')}]
+        if role_attr_flags:
+            alter.append('WITH %s' % role_attr_flags)
+
+        try:
+            cursor.execute(' '.join(alter))
         except psycopg2.InternalError:
             e = get_exception()
             if e.pgcode == '25006':
@@ -596,7 +647,7 @@ def main():
             encrypted=dict(type='bool', default='no'),
             no_password_changes=dict(type='bool', default='no'),
             expires=dict(default=None),
-            ssl_mode=dict(default='disable', choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+            ssl_mode=dict(default='prefer', choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
             ssl_rootcert=dict(default=None)
         ),
         supports_check_mode = True

@@ -63,6 +63,10 @@ options:
        - Should the roles be present or absent on the user.
      choices: [present, absent]
      default: present
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatability
+     required: false
 requirements:
     - "python >= 2.6"
     - "shade"

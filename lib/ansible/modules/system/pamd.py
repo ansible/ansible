@@ -136,7 +136,7 @@ EXAMPLES = """
     control: required
     module_path: pam_faillock.so
     new_type: auth
-    new_control=sufficient
+    new_control: sufficient
     new_module_path: pam_faillock.so
     state: after
 

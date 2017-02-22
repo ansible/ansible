@@ -70,7 +70,7 @@ options:
     choices: [
       "bigquery", "cloud-platform", "compute-ro", "compute-rw",
       "useraccounts-ro", "useraccounts-rw", "datastore", "logging-write",
-      "monitoring", "sql", "sql-admin", "storage-full", "storage-ro",
+      "monitoring", "sql-admin", "storage-full", "storage-ro",
       "storage-rw", "taskqueue", "userinfo-email"
     ]
   pem_file:
@@ -236,6 +236,7 @@ EXAMPLES = '''
       credentials_file: "/path/to/your-key.json"
       project_id: "your-project-name"
 
+---
 # Example Playbook
 - name: Compute Engine Instance Examples
   hosts: localhost

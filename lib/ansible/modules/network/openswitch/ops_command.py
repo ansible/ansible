@@ -17,7 +17,7 @@
 #
 
 ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
+                    'supported_by': 'community',
                     'version': '1.0'}
 
 DOCUMENTATION = """
@@ -85,6 +85,7 @@ options:
 EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
+---
 vars:
   cli:
     host: "{{ inventory_hostname }}"
@@ -92,6 +93,7 @@ vars:
     password: netop
     transport: cli
 
+---
 - ops_command:
     commands:
       - show version

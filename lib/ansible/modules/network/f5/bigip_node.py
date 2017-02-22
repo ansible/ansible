@@ -461,7 +461,7 @@ def main():
     module.exit_json(**result)
 
 from ansible.module_utils.basic import *
-from ansible.module_utils.f5 import *
+from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()

@@ -244,7 +244,7 @@ EXAMPLES = '''
     links: yes
 
 # Synchronization of two paths both on the control machine
-- synchronize
+- synchronize:
     src: some/relative/path
     dest: /some/absolute/path
   delegate_to: localhost
@@ -282,9 +282,9 @@ EXAMPLES = '''
     rsync_path: "su -c rsync"
 
 # Example .rsync-filter file in the source directory
-- var       # exclude any path whose last part is 'var'
-- /var      # exclude any path starting with 'var' starting at the source directory
-+ /var/conf # include /var/conf even though it was previously excluded
+# - var       # exclude any path whose last part is 'var'
+# - /var      # exclude any path starting with 'var' starting at the source directory
+# + /var/conf # include /var/conf even though it was previously excluded
 
 # Synchronize passing in extra rsync options
 - synchronize:
@@ -438,7 +438,7 @@ def main():
     if private_key is None:
         private_key = ''
     else:
-        private_key = '-i '+ private_key
+        private_key = '-i "%s"' % private_key
 
     ssh_opts = '-S none'
 

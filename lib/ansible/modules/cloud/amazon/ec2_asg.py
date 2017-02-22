@@ -182,15 +182,15 @@ EXAMPLES = '''
 
 # Rolling ASG Updates
 
-Below is an example of how to assign a new launch config to an ASG and terminate old instances.
-
-All instances in "myasg" that do not have the launch configuration named "my_new_lc" will be terminated in
-a rolling fashion with instances using the current launch configuration, "my_new_lc".
-
-This could also be considered a rolling deploy of a pre-baked AMI.
-
-If this is a newly created group, the instances will not be replaced since all instances
-will have the current launch configuration.
+# Below is an example of how to assign a new launch config to an ASG and terminate old instances.
+#
+# All instances in "myasg" that do not have the launch configuration named "my_new_lc" will be terminated in
+# a rolling fashion with instances using the current launch configuration, "my_new_lc".
+#
+# This could also be considered a rolling deploy of a pre-baked AMI.
+#
+# If this is a newly created group, the instances will not be replaced since all instances
+# will have the current launch configuration.
 
 - name: create launch config
   ec2_lc:
@@ -213,8 +213,8 @@ will have the current launch configuration.
     desired_capacity: 5
     region: us-east-1
 
-To only replace a couple of instances instead of all of them, supply a list
-to "replace_instances":
+# To only replace a couple of instances instead of all of them, supply a list
+# to "replace_instances":
 
 - ec2_asg:
     name: myasg
@@ -506,7 +506,7 @@ def create_autoscaling_group(connection, module):
             changed = True
             return(changed, asg_properties)
         except BotoServerError as e:
-            module.fail_json(msg="Failed to create Autoscaling Group: %s" % str(e), exception=traceback.format_exc(e))
+            module.fail_json(msg="Failed to create Autoscaling Group: %s" % str(e), exception=traceback.format_exc())
     else:
         as_group = as_groups[0]
         changed = False
@@ -566,13 +566,13 @@ def create_autoscaling_group(connection, module):
             try:
                 as_group.update()
             except BotoServerError as e:
-                module.fail_json(msg="Failed to update Autoscaling Group: %s" % str(e), exception=traceback.format_exc(e))
+                module.fail_json(msg="Failed to update Autoscaling Group: %s" % str(e), exception=traceback.format_exc())
 
         if notification_topic:
             try:
                 as_group.put_notification_configuration(notification_topic, notification_types)
             except BotoServerError as e:
-                module.fail_json(msg="Failed to update Autoscaling Group notifications: %s" % str(e), exception=traceback.format_exc(e))
+                module.fail_json(msg="Failed to update Autoscaling Group notifications: %s" % str(e), exception=traceback.format_exc())
 
         if wait_for_instances:
             wait_for_new_inst(module, connection, group_name, wait_timeout, desired_capacity, 'viable_instances')
@@ -581,13 +581,14 @@ def create_autoscaling_group(connection, module):
             as_group = connection.get_all_groups(names=[group_name])[0]
             asg_properties = get_properties(as_group)
         except BotoServerError as e:
-            module.fail_json(msg="Failed to read existing Autoscaling Groups: %s" % str(e), exception=traceback.format_exc(e))
+            module.fail_json(msg="Failed to read existing Autoscaling Groups: %s" % str(e), exception=traceback.format_exc())
         return(changed, asg_properties)
 
 
 def delete_autoscaling_group(connection, module):
     group_name = module.params.get('name')
     notification_topic = module.params.get('notification_topic')
+    wait_for_instances = module.params.get('wait_for_instances')
 
     if notification_topic:
         ag.delete_notification_configuration(notification_topic)
@@ -595,6 +596,11 @@ def delete_autoscaling_group(connection, module):
     groups = connection.get_all_groups(names=[group_name])
     if groups:
         group = groups[0]
+
+        if not wait_for_instances:
+            group.delete(True)
+            return True
+
         group.max_size = 0
         group.min_size = 0
         group.desired_capacity = 0
@@ -611,11 +617,9 @@ def delete_autoscaling_group(connection, module):
         group.delete()
         while len(connection.get_all_groups(names=[group_name])):
             time.sleep(5)
-        changed=True
-        return changed
-    else:
-        changed=False
-        return changed
+        return True
+
+    return False
 
 def get_chunks(l, n):
     for i in xrange(0, len(l), n):

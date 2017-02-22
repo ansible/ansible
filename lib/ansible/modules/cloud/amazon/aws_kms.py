@@ -264,7 +264,7 @@ def main():
         kms = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='kms', region=region, endpoint=ec2_url, **aws_connect_kwargs)
         iam = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='iam', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoCredentialsError as e:
-        module.fail_json(msg='cannot connect to AWS', exception=traceback.format_exc(e))
+        module.fail_json(msg='cannot connect to AWS', exception=traceback.format_exc())
 
 
     try:
@@ -289,7 +289,7 @@ def main():
 
     except Exception as err:
         error_msg = boto_exception(err)
-        module.fail_json(msg=error_msg, exception=traceback.format_exc(err))
+        module.fail_json(msg=error_msg, exception=traceback.format_exc())
 
     module.exit_json(**result)
 

@@ -124,7 +124,7 @@ EXAMPLES = '''
   delegate_to: localhost
 
 # send an email to more than one recipient that the build failed
-- sendgrid
+- sendgrid:
       username: "{{ sendgrid_username }}"
       password: "{{ sendgrid_password }}"
       from_address: "build@mycompany.com"

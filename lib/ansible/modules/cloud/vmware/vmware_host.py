@@ -68,7 +68,7 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-Example from Ansible playbook
+# Example from Ansible playbook
 
     - name: Add ESXi Host to VCSA
       local_action:

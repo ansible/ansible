@@ -35,6 +35,7 @@ from lib.util import (
     ApplicationWarning,
     ApplicationError,
     SubprocessError,
+    MissingEnvironmentVariable,
     display,
     run_command,
     deepest_path,
@@ -165,7 +166,7 @@ def generate_egg_info(args):
 def generate_pip_install(command):
     """
     :type command: str
-    :return: list[str] | None
+    :rtype: list[str] | None
     """
     constraints = 'test/runner/requirements/constraints.txt'
     requirements = 'test/runner/requirements/%s.txt' % command
@@ -274,7 +275,6 @@ def network_inventory(remotes):
         options = dict(
             ansible_host=remote.connection.hostname,
             ansible_user=remote.connection.username,
-            ansible_connection='network_cli',
             ansible_ssh_private_key_file=remote.ssh_key.key,
             ansible_network_os=remote.platform,
         )
@@ -551,11 +551,11 @@ def command_integration_role(args, target, start_at_task):
 
     vars_file = 'integration_config.yml'
 
-    if 'windows/' in target.aliases:
+    if isinstance(args, WindowsIntegrationConfig):
         inventory = 'inventory.winrm'
         hosts = 'windows'
         gather_facts = False
-    elif 'network/' in target.aliases:
+    elif isinstance(args, NetworkIntegrationConfig):
         inventory = 'inventory.networking'
         hosts = target.name[:target.name.find('_')]
         gather_facts = False
@@ -797,6 +797,13 @@ def command_sanity_validate_modules(args, targets):
     if skip_paths:
         cmd += ['--exclude', '^(%s)' % '|'.join(skip_paths)]
 
+    if args.base_branch:
+        cmd.extend([
+            '--base-branch', args.base_branch,
+        ])
+    else:
+        display.warning('Cannot perform module comparison against the base branch. Base branch not detected when running locally.')
+
     run_command(args, cmd, env=env)
 
 
@@ -860,6 +867,9 @@ def command_sanity_pep8(args, targets):
 
     if stderr:
         raise SubprocessError(cmd=cmd, status=status, stderr=stderr)
+
+    if args.explain:
+        return
 
     pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<code>[A-Z0-9]{4}) (?P<message>.*)$'
 
@@ -1368,6 +1378,16 @@ class SanityConfig(TestConfig):
         self.test = args.test  # type: list [str]
         self.skip_test = args.skip_test  # type: list [str]
         self.list_tests = args.list_tests  # type: bool
+
+        if args.base_branch:
+            self.base_branch = args.base_branch  # str
+        elif is_shippable():
+            try:
+                self.base_branch = os.environ['BASE_BRANCH']  # str
+            except KeyError as ex:
+                raise MissingEnvironmentVariable(name=ex.args[0])
+        else:
+            self.base_branch = ''
 
 
 class IntegrationConfig(TestConfig):

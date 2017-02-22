@@ -28,6 +28,8 @@ import json
 import os
 import shlex
 import zipfile
+import random
+import re
 from io import BytesIO
 
 from ansible.release import __version__, __author__
@@ -35,6 +37,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins import module_utils_loader
+from ansible.plugins.shell.powershell import async_watchdog, async_wrapper, become_wrapper, leaf_exec
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
 # variable to the object and then it never gets updated.
@@ -603,7 +606,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     elif b'from ansible.module_utils.' in b_module_data:
         module_style = 'new'
         module_substyle = 'python'
-    elif REPLACER_WINDOWS in b_module_data:
+    elif REPLACER_WINDOWS in b_module_data or b'#Requires -Module' in b_module_data:
         module_style = 'new'
         module_substyle = 'powershell'
     elif REPLACER_JSONARGS in b_module_data:
@@ -733,33 +736,14 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         b_module_data = output.getvalue()
 
     elif module_substyle == 'powershell':
-        # Module replacer for jsonargs and windows
-        lines = b_module_data.split(b'\n')
-        for line in lines:
-            if REPLACER_WINDOWS in line:
-                # FIXME: Need to make a module_utils loader for powershell at some point
-                ps_data = _slurp(os.path.join(_MODULE_UTILS_PATH, "powershell.ps1"))
-                output.write(ps_data)
-                py_module_names.add((b'powershell',))
-                continue
-            output.write(line + b'\n')
-        b_module_data = output.getvalue()
-
-        module_args_json = to_bytes(json.dumps(module_args))
-        b_module_data = b_module_data.replace(REPLACER_JSONARGS, module_args_json)
-
         # Powershell/winrm don't actually make use of shebang so we can
         # safely set this here.  If we let the fallback code handle this
         # it can fail in the presence of the UTF8 BOM commonly added by
         # Windows text editors
         shebang = u'#!powershell'
 
-        # Sanity check from 1.x days.  This is currently useless as we only
-        # get here if we are going to substitute powershell.ps1 into the
-        # module anyway.  Leaving it for when/if we add other powershell
-        # module_utils files.
-        if (b'powershell',) not in py_module_names:
-            raise AnsibleError("missing required import in %s: # POWERSHELL_COMMON" % module_path)
+        # powershell wrapper build is currently handled in build_windows_module_payload, called in action
+        # _configure_module after this function returns.
 
     elif module_substyle == 'jsonargs':
         module_args_json = to_bytes(json.dumps(module_args))
@@ -800,11 +784,8 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
        ... will result in the insertion of basic.py into the module
        from the module_utils/ directory in the source tree.
 
-    For powershell, there's equivalent conventions like this:
-
-    # POWERSHELL_COMMON
-
-    which results in the inclusion of the common code from powershell.ps1
+    For powershell, this code effectively no-ops, as the exec wrapper requires access to a number of
+    properties not available here.
 
     """
     with open(module_path, 'rb') as f:
@@ -839,3 +820,47 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
         shebang = to_bytes(shebang, errors='surrogate_or_strict')
 
     return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))
+
+def build_windows_module_payload(module_name, module_path, b_module_data, module_args, task_vars, task, play_context):
+    exec_manifest = dict(
+        module_entry=base64.b64encode(b_module_data),
+        powershell_modules=dict(),
+        module_args=module_args,
+        actions=['exec']
+    )
+
+    exec_manifest['exec'] = base64.b64encode(to_bytes(leaf_exec))
+
+    if task.async > 0:
+        exec_manifest["actions"].insert(0, 'async_watchdog')
+        exec_manifest["async_watchdog"] = base64.b64encode(to_bytes(async_watchdog))
+        exec_manifest["actions"].insert(0, 'async_wrapper')
+        exec_manifest["async_wrapper"] = base64.b64encode(to_bytes(async_wrapper))
+        exec_manifest["async_jid"] = str(random.randint(0, 999999999999))
+        exec_manifest["async_timeout_sec"] = task.async
+
+    if play_context.become and play_context.become_method=='runas':
+        exec_manifest["actions"].insert(0, 'become')
+        exec_manifest["become_user"] = play_context.become_user
+        exec_manifest["become_password"] = play_context.become_pass
+        exec_manifest["become"] = base64.b64encode(to_bytes(become_wrapper))
+
+    lines = b_module_data.split(b'\n')
+    module_names = set()
+
+    requires_module_list = re.compile(r'(?i)^#requires \-module(?:s?) (.+)')
+
+    for line in lines:
+        # legacy, equivalent to #Requires -Modules powershell
+        if REPLACER_WINDOWS in line:
+            module_names.add(b'powershell')
+            # TODO: add #Requires checks for Ansible.ModuleUtils.X
+
+    for m in module_names:
+        exec_manifest["powershell_modules"][m] = base64.b64encode(
+            to_bytes(_slurp(os.path.join(_MODULE_UTILS_PATH, m + ".ps1"))))
+
+    # FUTURE: smuggle this back as a dict instead of serializing here; the connection plugin may need to modify it
+    b_module_data = json.dumps(exec_manifest)
+
+    return b_module_data

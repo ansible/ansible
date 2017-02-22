@@ -106,6 +106,10 @@ options:
         - An integer value representing the number of seconds to
           wait for the node activation or deactivation to complete.
       version_added: "2.1"
+    availability_zone:
+      description:
+        - Ignored. Present for backwards compatability
+      required: false
 '''
 
 EXAMPLES = '''

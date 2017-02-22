@@ -82,6 +82,10 @@ options:
           assigned if a value is not specified.
      required: false
      default: "auto"
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatability
+     required: false
 requirements: ["shade"]
 '''
 

@@ -182,7 +182,7 @@ def main():
         name=dict(default=None, required=True, aliases=['host']),
         address=dict(default=None),
         username=dict(default=None),
-        password=dict(default=None),
+        password=dict(default=None, no_log=True),
         type=dict(default=None),
         port=dict(default=None, type='int'),
         slot=dict(default=None),
