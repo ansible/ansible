@@ -443,7 +443,7 @@ class PlayContext(Base):
         # additionally, we need to do this check after final connection has been
         # correctly set above ...
         if new_info.connection == 'local':
-            new_info.connection_user = self.remote_user
+            new_info.connection_user = new_info.remote_user
             new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
 
         # set no_log to default if it was not previouslly set
@@ -595,6 +595,10 @@ class PlayContext(Base):
         for prop, var_list in MAGIC_VARIABLE_MAPPING.items():
             try:
                 if 'become' in prop:
+                    continue
+
+                # perserves the user var for local connections
+                if self.connection == 'local' and 'remote_user' in prop:
                     continue
 
                 var_val = getattr(self, prop)
