@@ -184,7 +184,7 @@ updates:
 import re
 import sys
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_netconf, ce_argument_spec
+from ansible.module_utils.cloudengine import get_netconf, ce_argument_spec
 
 try:
     from ncclient.operations.rpc import RPCError
