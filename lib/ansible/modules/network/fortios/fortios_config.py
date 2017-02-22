@@ -61,6 +61,7 @@ EXAMPLES = """
     username: admin
     password: password
     backup: yes
+    backup_path: /tmp/forti_backup/
     filter: "firewall address"
 
 - name: Update configuration from file
@@ -110,7 +111,6 @@ def main():
     argument_spec = dict(
         src       = dict(type='str', default=None),
         filter    = dict(type='str', default=""),
-        backup    =dict(type='bool', default=False),
     )
 
     argument_spec.update(fortios_argument_spec)

@@ -49,10 +49,10 @@ options:
         folder.
     default: no
     choices: ['yes', 'no']
-  backup-path:
+  backup_path:
     description:
-      - Specifies where to store backup files. Required if I(backup=yes)
-  backup-filename:
+      - Specifies where to store backup files. Required if I(backup=yes).
+  backup_filename:
     description:
       - Specifies the backup filename. If ommited filename will be
         formated like HOST_config.YYYY-MM-DD@HH:MM:SS
