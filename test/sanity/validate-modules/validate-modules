@@ -28,6 +28,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import traceback
 
 from collections import OrderedDict
 from contextlib import contextmanager
@@ -569,12 +570,19 @@ class ModuleValidator(Validator):
                             303,
                             'DOCUMENTATION fragment missing: %s' % fragment
                         ))
-                    except Exception as e:
-                        self.traces.append(e)
+                    except Exception:
+                        self.traces.append(traceback.format_exc())
                         self.errors.append((
                             304,
                             'Unknown DOCUMENTATION error, see TRACE'
                         ))
+
+                if 'options' in doc and doc['options'] is None and doc.get('extends_documentation_fragment'):
+                    self.errors.append((
+                        305,
+                        ('DOCUMENTATION.options must be a dictionary/hash when used '
+                         'with DOCUMENTATION.extends_documentation_fragment')
+                    ))
 
                 self._validate_docs_schema(doc, doc_schema, 'DOCUMENTATION', 305)
                 self._check_version_added(doc)
@@ -760,8 +768,8 @@ class ModuleValidator(Validator):
             self.errors.append((401, 'Python SyntaxError while parsing module'))
             try:
                 compile(self.text, self.path, 'exec')
-            except Exception as e:
-                self.traces.append(e)
+            except Exception:
+                self.traces.append(traceback.format_exc())
             return
 
         if self._python_module():
