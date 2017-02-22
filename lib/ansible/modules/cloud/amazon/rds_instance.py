@@ -14,10 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-import botocore
-import time
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '0.1'}
@@ -67,24 +63,20 @@ options:
     default: standard unless iops is set
   instance_type:
     description:
-      - The instance type of the database. If source_instance is specified then the replica inherits the same instance type as the source instance.
-    required: false
+      - The instance type of the database. If source_instance is specified then the replica inherits
+        the same instance type as the source instance.
   username:
     description:
       - Master database username.
-    required: false
   password:
     description:
       - Password for the master database username.
-    required: false
   db_name:
     description:
       - Name of a database to create within the instance. If not specified then no database is created.
-    required: false
   engine_version:
     description:
       - Version number of the database engine to use. If not specified then the current Amazon RDS default engine version is used.
-    required: false
   parameter_group:
     description:
       - Name of the DB parameter group to associate with this instance. If omitted then the RDS default DBParameterGroup will be used.
@@ -170,6 +162,13 @@ options:
     description:
       - Used only when state=rebooted. If enabled, the reboot is done using a MultiAZ failover.
     required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+  force_password_update:
+    description:
+      - Whether to try to update the DB password for an existing database. There is no API method to
+        determine whether or not a password will be updated, and it causes problems with later operations
+        if a password is updated unnecessarily.
     default: "no"
     choices: [ "yes", "no" ]
   old_instance_name:
@@ -273,6 +272,17 @@ EXAMPLES = '''
     msg: "The new db endpoint is {{ rds.instance.endpoint }}"
 '''
 
+import time
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict
+from ansible.module_utils.rds import RDSDBInstance, get_db_instance
+
+try:
+    import botocore
+except ImportError:
+    pass # caught by imported HAS_BOTO3
 
 DEFAULT_PORTS= {
     'aurora': 3306,
@@ -479,13 +489,12 @@ def update_rds_tags(conn, resource, current_tags, desired_tags):
 
     for k in desired_keys & current_keys:
         if current_tags[k] != desired_tags[k]:
-            to_delete.append(k)
-            to_add.append(k)
+            to_delete.add(k)
+            to_add.add(k)
 
     if to_delete:
         try:
-            conn.remove_tags_from_resource(ResourceName=resource,
-                                           Tags=[{'Key': k} for k in to_delete])
+            conn.remove_tags_from_resource(ResourceName=resource, TagKeys=list(to_delete))
             changed = True
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=str(e))
@@ -501,16 +510,18 @@ def update_rds_tags(conn, resource, current_tags, desired_tags):
 
 
 def modify_db_instance(module, conn):
+    force_password_update = module.params.pop('force_password_update')
     required_vars = ['instance_name']
     valid_vars = ['apply_immediately', 'backup_retention', 'backup_window',
-                  'db_name', 'engine_version', 'instance_type', 'iops', 'license_model',
+                  'db_name', 'engine_version',
+                  'instance_type', 'iops', 'license_model',
                   'maint_window', 'multi_zone', 'new_instance_name',
                   'option_group', 'parameter_group', 'password', 'port', 'size',
                   'storage_type', 'subnet', 'tags', 'upgrade', 'vpc_security_groups']
 
     existing_instance_name = module.params.get('instance_name')
     existing_instance = get_db_instance(conn, existing_instance_name)
-    for immutable_key in ['username', 'db_engine']:
+    for immutable_key in ['username', 'db_engine', 'db_name']:
         if immutable_key in module.params:
             if module.params[immutable_key] != existing_instance.data[immutable_key]:
                 module.fail_json(msg="Cannot modify parameter %s for instance %s" %
@@ -520,7 +531,7 @@ def modify_db_instance(module, conn):
     params = validate_parameters(required_vars, valid_vars, module)
     new_instance_name = module.params.get('new_instance_name')
 
-    will_change = existing_instance.diff(params)
+    will_change = existing_instance.diff(module.params)
     if not will_change:
         module.exit_json(changed=False, instance=existing_instance.data, operation="modify")
 
@@ -532,6 +543,8 @@ def modify_db_instance(module, conn):
     # modify_db_instance does not cope with DBSubnetGroup not moving VPC!
     if existing_instance.instance['DBSubnetGroup']['DBSubnetGroupName'] == params.get('DBSubnetGroupName'):
         del(params['DBSubnetGroupName'])
+    if not force_password_update:
+        del(params['MasterUserPassword'])
 
     try:
         response = conn.modify_db_instance(**params)
@@ -558,8 +571,9 @@ def modify_db_instance(module, conn):
         instance = get_db_instance(conn, instance_name)
 
     # guess that this changed the DB, need a way to check
-    changed = (instance != existing_instance)
-    # modify_db_instance can't modify tags directly
+    diff = existing_instance.diff(instance.data)
+    changed = not not diff
+    # boto3 modify_db_instance can't modify tags directly
     current_tags = conn.list_tags_for_resource(ResourceName=response['DBInstance']['DBInstanceArn'])['TagList']
     if update_rds_tags(conn, response['DBInstance']['DBInstanceArn'],
                        current_tags, tags):
@@ -721,6 +735,7 @@ def main():
             publicly_accessible = dict(),
             character_set_name = dict(),
             force_failover = dict(type='bool', default=False),
+            force_password_update = dict(type='bool', default=False),
         )
     )
 
@@ -756,10 +771,5 @@ def main():
     if module.params.get('snapshot'):
         restore_db_instance(module, conn)
     ensure_db_state(module, conn)
-
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, ansible_dict_to_boto3_tag_list
-from ansible.module_utils.rds import RDSDBInstance, get_db_instance
 
 main()
