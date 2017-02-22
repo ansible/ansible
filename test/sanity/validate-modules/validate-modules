@@ -28,6 +28,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import traceback
 
 from collections import OrderedDict
 from contextlib import contextmanager
@@ -569,8 +570,8 @@ class ModuleValidator(Validator):
                             303,
                             'DOCUMENTATION fragment missing: %s' % fragment
                         ))
-                    except Exception as e:
-                        self.traces.append(e)
+                    except Exception:
+                        self.traces.append(traceback.format_exc())
                         self.errors.append((
                             304,
                             'Unknown DOCUMENTATION error, see TRACE'
@@ -760,8 +761,8 @@ class ModuleValidator(Validator):
             self.errors.append((401, 'Python SyntaxError while parsing module'))
             try:
                 compile(self.text, self.path, 'exec')
-            except Exception as e:
-                self.traces.append(e)
+            except Exception:
+                self.traces.append(traceback.format_exc())
             return
 
         if self._python_module():
