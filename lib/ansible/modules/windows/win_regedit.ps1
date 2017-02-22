@@ -58,7 +58,7 @@ Function Test-ValueData {
     )
 
     try {
-        Get-ItemProperty -Path $Path -Name $Name
+        Get-ItemProperty -Path $Path -Name $Name | Out-Null
         return $true
     } catch {
         return $false
@@ -188,7 +188,7 @@ if ($state -eq "present") {
                             $null = $(Get-Item -Path $path -ErrorAction 'Stop').OpenSubKey('','ReadWriteSubTree').SetValue($null,$data)
                         } else {
                             Remove-ItemProperty -Path $path -Name $name
-                            New-ItemProperty -Path $path -Name $name -Value $data -PropertyType $type -Force
+                            New-ItemProperty -Path $path -Name $name -Value $data -PropertyType $type -Force | Out-Null
                         }
                     } catch {
                         Fail-Json $result $_.Exception.Message
@@ -209,7 +209,7 @@ if ($state -eq "present") {
                     try {
                         if ($type -eq "none") {
                             Remove-ItemProperty -Path $path -Name $name
-                            New-ItemProperty -Path $path -Name $name -Value $data -PropertyType $type -Force
+                            New-ItemProperty -Path $path -Name $name -Value $data -PropertyType $type -Force | Out-Null
                         } else {
                             Set-ItemProperty -Path $path -Name $name -Value $data
                         }
@@ -233,7 +233,7 @@ if ($state -eq "present") {
             # Add missing entry
             if (-not $check_mode) {
                 try {
-                    New-ItemProperty -Path $path -Name $name -Value $data -PropertyType $type
+                    New-ItemProperty -Path $path -Name $name -Value $data -PropertyType $type | Out-Null
                 } Catch {
                     Fail-Json $result $_.Exception.Message
                 }
@@ -251,7 +251,7 @@ if ($state -eq "present") {
             try {
                 $new_path = New-Item $path -Type directory -Force
                 if ($name -ne $null) {
-                    $new_path | New-ItemProperty -Name $name -Value $data -PropertyType $type -Force
+                    $new_path | New-ItemProperty -Name $name -Value $data -PropertyType $type -Force | Out-Null
                 }
             } catch {
                 Fail-Json $result $_.Exception.Message
