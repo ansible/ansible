@@ -61,7 +61,7 @@ options:
     type: string
   command:
     description: What command has to run.
-    requred: True
+    required: True
     type: string
   insertafter:
     description: After which inittabline should the new entry inserted.
