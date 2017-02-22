@@ -117,7 +117,7 @@ cyberarkSession:
             sample: true
 '''
 
-from ansible.module_utils.basic import AnsibleModule 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import open_url
 import urllib
 import httplib
@@ -215,10 +215,10 @@ def processAuthentication(module):
                         "useSharedLogonAuthentication":
                         useSharedLogonAuthentication},
                 }
-                
+
                 if newPassword is not None:
                     changed = True
-                
+
             else:
                 result = {
                     "cyberarkSession": {}
