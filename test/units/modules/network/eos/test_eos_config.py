@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-#
 # (c) 2016 Red Hat Inc.
 #
 # This file is part of Ansible
@@ -134,6 +132,3 @@ class TestEosConfigModule(TestEosModule):
         set_module_args(args)
         result = self.execute_module()
         self.assertIn('__backup__', result)
-
-
-

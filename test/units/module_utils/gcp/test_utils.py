@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # (c) 2016, Tom Melendez <tom@supertom.com>
 #
@@ -35,7 +34,3 @@ class GCPUtilsTestCase(unittest.TestCase):
         self.assertTrue(check_min_pkg_version('foobar', '0.4.0'))
         self.assertTrue(check_min_pkg_version('foobar', '0.5.0'))
         self.assertFalse(check_min_pkg_version('foobar', '0.6.0'))
-
-
-if __name__ == '__main__':
-    unittest.main()
