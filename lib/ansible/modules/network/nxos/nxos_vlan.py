@@ -107,40 +107,45 @@ RETURN = '''
 
 proposed_vlans_list:
     description: list of VLANs being proposed
-    returned: always
+    returned: when debug enabled
     type: list
     sample: ["100"]
 existing_vlans_list:
     description: list of existing VLANs on the switch prior to making changes
-    returned: always
+    returned: when debug enabled
     type: list
     sample: ["1", "2", "3", "4", "5", "20"]
 end_state_vlans_list:
     description: list of VLANs after the module is executed
-    returned: always
+    returned: when debug enabled
     type: list
     sample:  ["1", "2", "3", "4", "5", "20", "100"]
 proposed:
     description: k/v pairs of parameters passed into module (does not include
                  vlan_id or vlan_range)
-    returned: always
+    returned: when debug enabled
     type: dict or null
     sample: {"admin_state": "down", "name": "app_vlan",
             "vlan_state": "suspend", "mapped_vni": "5000"}
 existing:
     description: k/v pairs of existing vlan or null when using vlan_range
-    returned: always
+    returned: when debug enabled
     type: dict
     sample: {"admin_state": "down", "name": "app_vlan",
              "vlan_id": "20", "vlan_state": "suspend", "mapped_vni": ""}
 end_state:
     description: k/v pairs of the VLAN after executing module or null
                  when using vlan_range
-    returned: always
+    returned: when debug enabled
     type: dict or null
     sample: {"admin_state": "down", "name": "app_vlan", "vlan_id": "20",
              "vlan_state": "suspend", "mapped_vni": "5000"}
 updates:
+    description: command string sent to the device
+    returned: always
+    type: list
+    sample: ["vlan 20", "vlan 55", "vn-segment 5000"]
+commands:
     description: command string sent to the device
     returned: always
     type: list
@@ -150,7 +155,6 @@ changed:
     returned: always
     type: boolean
     sample: true
-
 '''
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
@@ -426,17 +430,22 @@ def main():
             if vlan_id:
                 end_state = get_vlan(vlan_id, module)
 
-    results = {}
-    results['proposed_vlans_list'] = proposed_vlans_list
-    results['existing_vlans_list'] = existing_vlans_list
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['end_state'] = end_state
-    results['end_state_vlans_list'] = end_state_vlans_list
-    results['updates'] = commands
-    results['changed'] = changed
-    results['warnings'] = warnings
-    results['warnings'] = warnings
+    results = {
+        'commands': commands,
+        'updates': commands,
+        'changed': changed,
+        'warnings': warnings
+    }
+
+    if module._debug:
+        results.update({
+            'proposed_vlans_list': proposed_vlans_list,
+            'existing_vlans_list': existing_vlans_list,
+            'proposed': proposed,
+            'existing': existing,
+            'end_state': end_state,
+            'end_state_vlans_list': end_state_vlans_list
+        })
 
     module.exit_json(**results)
 
