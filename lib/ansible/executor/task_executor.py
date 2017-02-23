@@ -20,7 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import base64
-import subprocess
 import sys
 import time
 import traceback
@@ -30,7 +29,7 @@ from ansible.compat.six import iteritems, string_types, binary_type
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure
 from ansible.executor.task_result import TaskResult
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_text
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.template import Templar
@@ -708,18 +707,16 @@ class TaskExecutor:
                 if not check_for_controlpersist(self._play_context.ssh_executable):
                     conn_type = "paramiko"
 
-        # if using persistent connections (or the action has set the FORCE_PERSISTENT_CONNECTION
-        # attribute to True), then we use the persistent connection plugion. Otherwise load the
-        # requested connection plugin
-        if C.USE_PERSISTENT_CONNECTIONS or getattr(self, 'FORCE_PERSISTENT_CONNECTION', False) or conn_type == 'persistent':
-            # if someone did `connection: persistent`, default it to using a
-            # persistent paramiko connection to avoid problems
-            if conn_type == 'persistent':
-                self._play_context.connection = 'paramiko'
+        # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems
+        if conn_type == 'persistent':
+            self._play_context.connection = 'paramiko'
 
-            connection = self._shared_loader_obj.connection_loader.get('persistent', self._play_context, self._new_stdin)
-        else:
-            connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
+        # if using persistent connections (or the action has set the FORCE_PERSISTENT_CONNECTION attribute to True),
+        # then we use the persistent connection plugion. Otherwise load the requested connection plugin
+        elif C.USE_PERSISTENT_CONNECTIONS or getattr(self, 'FORCE_PERSISTENT_CONNECTION', False):
+            conn_type == 'persistent'
+
+        connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
 
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
