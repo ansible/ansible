@@ -80,6 +80,7 @@ class ActionModule(_ActionModule):
             results['_ansible_verbose_override'] = True
 
         return results
+
     def _get_working_path(self):
         cwd = self._loader.get_basedir()
         if self._task._role is not None:
