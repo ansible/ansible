@@ -40,32 +40,32 @@ $result = @{
     }
 }
 
-if ($skip_certificate_validation){
-    [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
+if($skip_certificate_validation){
+    [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
 }
 
 Function Download-File($result, $url, $dest, $username, $password, $proxy_url, $proxy_username, $proxy_password) {
     $webClient = New-Object System.Net.WebClient
-
-    if ($proxy_url) {
+    if($proxy_url) {
         $proxy_server = New-Object System.Net.WebProxy($proxy_url, $true)
-        if ($proxy_username -and $proxy_password){
+        if($proxy_username -and $proxy_password){
             $proxy_credential = New-Object System.Net.NetworkCredential($proxy_username, $proxy_password)
             $proxy_server.Credentials = $proxy_credential
         }
         $webClient.Proxy = $proxy_server
     }
 
-    if ($username -and $password){
+    if($username -and $password){
         $webClient.Credentials = New-Object System.Net.NetworkCredential($username, $password)
     }
 
-    try {
+    Try {
         if (-not $check_mode) {
             $webClient.DownloadFile($url, $dest)
         }
         $result.changed = $true
-    } catch {
+    }
+    Catch {
         Fail-Json $result "Error downloading $url to $dest $($_.Exception.Message)"
     }
 
@@ -74,14 +74,15 @@ Function Download-File($result, $url, $dest, $username, $password, $proxy_url, $
 
 If ($force -or -not (Test-Path -Path $dest)) {
     Download-File -result $result -url $url -dest $dest -username $username -password $password -proxy_url $proxy_url -proxy_username $proxy_username -proxy_password $proxy_password
-} else {
+}
+Else {
     $fileLastMod = ([System.IO.FileInfo]$dest).LastWriteTimeUtc
     $webLastMod = $null
 
-    try {
+    Try {
         $webRequest = [System.Net.HttpWebRequest]::Create($url)
 
-        if ($username -and $password){
+        if($username -and $password){
             $webRequest.Credentials = New-Object System.Net.NetworkCredential($username, $password)
         }
 
@@ -90,15 +91,17 @@ If ($force -or -not (Test-Path -Path $dest)) {
 
         $webLastMod = $webResponse.GetResponseHeader("Last-Modified")
         $webResponse.Close()
-    } catch {
+    }
+    Catch {
         Fail-Json $result "Error when requesting Last-Modified date from $url $($_.Exception.Message)"
     }
 
-    if (($webLastMod) -and ((Get-Date -Date $webLastMod ) -lt $fileLastMod)) {
+    If (($webLastMod) -and ((Get-Date -Date $webLastMod ) -lt $fileLastMod)) {
         $result.changed = $false
-    } else {
+    } Else {
         Download-File -result $result -url $url -dest $dest -username $username -password $password -proxy_url $proxy_url -proxy_username $proxy_username -proxy_password $proxy_password
     }
+
 }
 
-Exit-Json $result
+Exit-Json $result;
