@@ -43,7 +43,8 @@ from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils.urls import fetch_url
 
-EXO_DNS_BASEURL="https://api.exoscale.ch/dns/v1"
+EXO_DNS_BASEURL = "https://api.exoscale.ch/dns/v1"
+
 
 def exo_dns_argument_spec():
     return dict(
@@ -53,6 +54,7 @@ def exo_dns_argument_spec():
         api_region=dict(default='cloudstack'),
         validate_certs=dict(default='yes', type='bool'),
     )
+
 
 def exo_dns_required_together():
     return [['api_key', 'api_secret']]
@@ -125,12 +127,12 @@ class ExoDns(object):
             data = json.dumps(data)
 
         response, info = fetch_url(
-            module = self.module,
-            url = url,
-            data = data,
-            method = method,
-            headers = self.headers,
-            timeout = self.module.params.get('api_timeout'),
+            module=self.module,
+            url=url,
+            data=data,
+            method=method,
+            headers=self.headers,
+            timeout=self.module.params.get('api_timeout'),
         )
 
         if info['status'] not in (200, 201, 204):
@@ -164,4 +166,3 @@ class ExoDns(object):
                 self.result['diff']['after'][key] = value
                 changed = True
         return changed
-
