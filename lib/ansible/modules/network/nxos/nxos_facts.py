@@ -181,7 +181,7 @@ import re
 from ansible.module_utils.nxos import run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_common import exec_command
+from ansible.module_utils.connection import exec_command
 from ansible.module_utils.six import iteritems
 
 
