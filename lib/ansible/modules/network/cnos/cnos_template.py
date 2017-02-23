@@ -29,7 +29,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_template
-short_description: Manages CNOS configurations using templates.
+short_description: Manage switch configuration using templates on devices running Lenovo CNOS
 description:
     - This module allows you to work with the running configuration of a switch. It provides a way
      to execute a set of CNOS commands on a switch by evaluating the current running configuration
@@ -148,19 +148,19 @@ def main():
     output = output + cnos.waitForDeviceResponse("configure d\n", "(config)#", 2, remote_conn)
 
     # Send commands one by one
-    with open(commandfile, "r") as f:
-        for line in f:
-            # Omit the comment lines in template file
-            if not line.startswith("#"):
-                command = line
-                if not line.endswith("\n"):
-                    command = command+"\n"
-                response = cnos.waitForDeviceResponse(command, "#", 2, remote_conn)
-                errorMsg = cnos.checkOutputForError(response)
-                output = output + response
-                if(errorMsg is not None):
-                    break   # To cater to Mufti case
-
+    #with open(commandfile, "r") as f:
+    f = open(commandfile, "r")
+    for line in f:
+        # Omit the comment lines in template file
+        if not line.startswith("#"):
+            command = line
+            if not line.endswith("\n"):
+                command = command+"\n"
+            response = cnos.waitForDeviceResponse(command, "#", 2, remote_conn)
+            errorMsg = cnos.checkOutputForError(response)
+            output = output + response
+            if(errorMsg is not None):
+                break   # To cater to Mufti case
     # Write to memory
     output = output + cnos.waitForDeviceResponse("save\n", "#", 3, remote_conn)
     # Write output to file
