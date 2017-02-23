@@ -31,7 +31,6 @@ $path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $tr
 If (-Not (Test-Path -Path $path -PathType Leaf)){
     Fail-Json $result "Specfied path $path does exist or is not a file."
 }
-
 $ext = [System.IO.Path]::GetExtension($path)
 If ( $ext -notin '.exe', '.dll'){
     Fail-Json $result "Specfied path $path is not a vaild file type; must be DLL or EXE."
@@ -63,7 +62,8 @@ Try {
     If ($file_private_part -eq $null){
         $file_private_part = ''
     }
-} Catch{
+}
+Catch{
     Fail-Json $result "Error: $_.Exception.Message"
 }
 
@@ -74,5 +74,4 @@ $result.win_file_version.file_major_part = $file_major_part.toString()
 $result.win_file_version.file_minor_part = $file_minor_part.toString()
 $result.win_file_version.file_build_part = $file_build_part.toString()
 $result.win_file_version.file_private_part = $file_private_part.toString()
-
-Exit-Json $result
+Exit-Json $result;
