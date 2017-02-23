@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
 #
