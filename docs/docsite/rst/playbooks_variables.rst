@@ -859,15 +859,30 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
 .. note:: the previous describes the default config `hash_behavior=replace`, switch to 'merge' to only partially overwrite.
 
 
-Another important thing to consider (for all versions) is that connection specific variables override config, command line and play specific options and directives.  For example::
+Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and directives.  For example::
 
-    ansible_ssh_user will override `-u <user>` and `remote_user: <user>`
+    ansible -u lola myhost
+
+This will still connect as ``ramon`` as ``ansible_ssh_user`` is set to ``ramon`` in inventory for myhost.
+For plays/tasks this is also true for ``remote_user``::
+
+ - hosts: myhost
+   tasks:
+    - command: i'll connect as ramon still
+      remote_user: lola
 
 This is done so host specific settings can override the general settings. These variables are normally defined per host or group in inventory,
 but they behave like other variables, so if you really want to override the remote user globally even over inventory you can use extra vars::
 
-    ansible... -e "ansible_ssh_user=<user>"
+    ansible... -e "ansible_user=<user>"
 
+You can also override as a normal variable in a play::
+
+    - hosts: all
+      vars:
+        ansible_user: lola
+      tasks:
+        - command: i'll connect as lola!
 
 .. _variable_scopes:
 
