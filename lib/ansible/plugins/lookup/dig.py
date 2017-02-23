@@ -173,7 +173,7 @@ class LookupModule(LookupBase):
         ret = []
 
         if HAVE_DNSRESOLVER == False and domain and qtype.upper() == 'A' and flat:
-            ret.append(socket.gethostbyname(domain))
+            ret.append(socket.gethostbyname(domain.rstrip('.')))
 
         #this is as far as we could go without dns.resolver
         elif HAVE_DNSRESOLVER == False:
