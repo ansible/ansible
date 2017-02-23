@@ -45,7 +45,7 @@ class ActionModule(_ActionModule):
 
         if self._play_context.connection != 'local':
             return dict(
-                fail=True,
+                failed=True,
                 msg='invalid connection specified, expected connection=local, '
                     'got %s' % self._play_context.connection
             )
