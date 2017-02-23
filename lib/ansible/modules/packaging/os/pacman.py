@@ -197,35 +197,41 @@ def update_package_db(module, pacman_path):
 
 def upgrade(module, pacman_path):
     cmdupgrade = "%s -Suq --noconfirm" % (pacman_path)
-    cmdneedrefresh = "%s -Qqu" % (pacman_path)
+    cmdneedrefresh = "%s -Qu" % (pacman_path)
     rc, stdout, stderr = module.run_command(cmdneedrefresh, check_rc=False)
     data = stdout.split('\n')
     data.remove('')
+    packages = []
     diff = {
         'before': '',
         'after': '',
-        'after_header': 'upgraded'
     }
 
     if rc == 0:
-        if module._diff:
-            diff['after'] = '\n'.join(data) + '\n'
+        regex = re.compile('(\w+) ((?:\S+)-(?:\S+)) -> ((?:\S+)-(?:\S+))')
+        b = []
+        a = []
+        for p in data:
+            m = regex.search(p)
+            packages.append(m.group(1))
+            if module._diff:
+                diff['before'] += "%s-%s\n" % (m.group(1), m.group(2))
+                diff['after'] += "%s-%s\n" % (m.group(1), m.group(3))
         if module.check_mode:
-            module.exit_json(changed=True, msg="%s package(s) would be upgraded" % (len(data)), packages=data, diff=diff)
+            module.exit_json(changed=True, msg="%s package(s) would be upgraded" % (len(data)), packages=packages, diff=diff)
         rc, stdout, stderr = module.run_command(cmdupgrade, check_rc=False)
         if rc == 0:
-            module.exit_json(changed=True, msg='System upgraded', packages=data, diff=diff)
+            module.exit_json(changed=True, msg='System upgraded', packages=packages, diff=diff)
         else:
             module.fail_json(msg="Could not upgrade")
     else:
-        module.exit_json(changed=False, msg='Nothing to upgrade', packages=data)
+        module.exit_json(changed=False, msg='Nothing to upgrade', packages=packages)
 
 def remove_packages(module, pacman_path, packages):
     data = []
     diff = {
         'before': '',
         'after': '',
-        'before_header': 'removed'
     }
 
     if module.params["recurse"] or module.params["force"]:
@@ -253,6 +259,7 @@ def remove_packages(module, pacman_path, packages):
             d = stdout.split('\n')[2].split(' ')[2:]
             for i, pkg in enumerate(d):
                 d[i] = re.sub('-[0-9].*$', '', d[i].split('/')[-1])
+                diff['before'] += "%s\n" % pkg
             data.append('\n'.join(d))
 
         if rc != 0:
@@ -261,9 +268,6 @@ def remove_packages(module, pacman_path, packages):
         remove_c += 1
 
     if remove_c > 0:
-        if module._diff:
-            diff['before'] = '\n'.join(data) + '\n'
-
         module.exit_json(changed=True, msg="removed %s package(s)" % remove_c, diff=diff)
 
     module.exit_json(changed=False, msg="package(s) already absent")
@@ -277,7 +281,6 @@ def install_packages(module, pacman_path, state, packages, package_files):
     diff = {
         'before': '',
         'after': '',
-        'after_header': 'installed'
     }
 
     to_install_repos = []
@@ -303,6 +306,8 @@ def install_packages(module, pacman_path, state, packages, package_files):
         data = [ i for i in data if i != '' ]
         for i, pkg in enumerate(data):
             data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
+            if module._diff:
+                diff['after'] += "%s\n" % pkg
 
         if rc != 0:
             module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_repos), stderr))
@@ -316,6 +321,8 @@ def install_packages(module, pacman_path, state, packages, package_files):
         data = [ i for i in data if i != '' ]
         for i, pkg in enumerate(data):
             data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
+            if module._diff:
+                diff['after'] += "%s\n" % pkg
 
         if rc != 0:
             module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_files), stderr))
@@ -325,8 +332,6 @@ def install_packages(module, pacman_path, state, packages, package_files):
     if state == 'latest' and len(package_err) > 0:
         message = "But could not ensure 'latest' state for %s package(s) as remote version could not be fetched." % (package_err)
 
-    if module._diff:
-        diff['after'] = '\n'.join(data) + '\n'
     if install_c > 0:
         module.exit_json(changed=True, msg="installed %s package(s). %s" % (install_c, message), diff=diff)
 
