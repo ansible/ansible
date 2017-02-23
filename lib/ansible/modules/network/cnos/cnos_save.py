@@ -29,7 +29,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_save
-short_description: Saves a switch’s running configuration as its the startup configuration.
+short_description: Save the running configuration as the startup configuration on devices running Lenovo CNOS
 description:
     - This module allows you to copy the running configuration of a switch over its startup configuration.
      It is recommended to use this module shortly after any major configuration changes so they persist after
