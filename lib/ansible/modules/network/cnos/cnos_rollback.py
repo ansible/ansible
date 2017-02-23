@@ -30,7 +30,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_rollback
-short_description: Rolls back the running or startup configuration of a switch from a remote server using FTP, SFTP, TFTP, or SCP.
+short_description: Roll back the running or startup configuration from a remote server on devices running Lenovo CNOS
 description:
     - This module allows you to work with switch configurations. It provides a way to roll back configurations
      of a switch from a remote server. This is achieved by using startup or running configurations of the target
