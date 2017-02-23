@@ -30,7 +30,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_command
-short_description: Executes a single CNOS command on a remote switch.
+short_description: Execute a single command on devices running Lenovo CNOS
 description:
     - This module allows you to modify the switch running configuration. It provides a way to
      execute a single CNOS command on a switch by evaluating the current running configuration
