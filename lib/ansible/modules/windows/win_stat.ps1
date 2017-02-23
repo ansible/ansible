@@ -25,10 +25,10 @@ using Microsoft.Win32.SafeHandles;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 
-namespace Ansible.Command {
-
-    public class SymLinkHelper {
-
+namespace Ansible.Command
+{
+    public class SymLinkHelper
+    {
         private const int FILE_SHARE_WRITE = 2;
         private const int CREATION_DISPOSITION_OPEN_EXISTING = 3;
         private const int FILE_FLAG_BACKUP_SEMANTICS = 0x02000000;
@@ -40,8 +40,8 @@ namespace Ansible.Command {
         public static extern SafeFileHandle CreateFile(string lpFileName, int dwDesiredAccess,
         int dwShareMode, IntPtr SecurityAttributes, int dwCreationDisposition, int dwFlagsAndAttributes, IntPtr hTemplateFile);
 
-        public static string GetSymbolicLinkTarget(System.IO.DirectoryInfo symlink) {
-
+        public static string GetSymbolicLinkTarget(System.IO.DirectoryInfo symlink)
+        {
             SafeFileHandle directoryHandle = CreateFile(symlink.FullName, 0, 2, System.IntPtr.Zero, CREATION_DISPOSITION_OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, System.IntPtr.Zero);
             if(directoryHandle.IsInvalid)
                 throw new Win32Exception(Marshal.GetLastWin32Error());
@@ -61,17 +61,22 @@ namespace Ansible.Command {
 "@
 Add-Type -TypeDefinition $symlink_util
 
-function Date_To_Timestamp($start_date, $end_date) {
-    if ($start_date -and $end_date) {
+function Date_To_Timestamp($start_date, $end_date)
+{
+    If($start_date -and $end_date)
+    {
         return (New-TimeSpan -Start $start_date -End $end_date).TotalSeconds
     }
 }
 
 function Get-Hash($path, $algorithm) {
     # Using PowerShell V4 and above we can use some powershell cmdlets instead of .net
-    if ($PSVersionTable.PSVersion.Major -ge 4) {
+    If ($PSVersionTable.PSVersion.Major -ge 4)
+    {
         $hash = (Get-FileHash -Path $path -Algorithm $algorithm).Hash
-    } else {
+    }
+    Else
+    {
         $net_algorithm = [Security.Cryptography.HashAlgorithm]::Create($algorithm)
         $raw_hash = [System.BitConverter]::ToString($net_algorithm.ComputeHash([System.IO.File]::ReadAllBytes($path)))
         $hash = $raw_hash -replace '-'
@@ -90,14 +95,15 @@ $checksum_algorithm = Get-AnsibleParam -obj $params -name "checksum_algorithm" -
 $result = @{
     changed = $false
     stat = @{}
-}
+};
 
 # Backward compatibility
 if ($get_md5 -eq $true -and (Get-Member -inputobject $params -name "get_md5") ) {
     Add-DeprecationWarning $result "The parameter 'get_md5' is being replaced with 'checksum_algorithm: md5'"
 }
 
-If (Test-Path -Path $path) {
+If (Test-Path -Path $path)
+{
     $result.stat.exists = $true
 
     # Initial values
@@ -117,23 +123,27 @@ If (Test-Path -Path $path) {
     $result.stat.path = $info.FullName
 
     $attributes = @()
-    foreach ($attribute in ($info.Attributes -split ",")) {
-        $attributes += $attribute.Trim()
+    foreach ($attribute in ($info.Attributes -split ',')) {
+        $attributes += $attribute.Trim();
     }
     $result.stat.attributes = $info.Attributes.ToString()
     $result.stat.isarchive = $attributes -contains "Archive"
     $result.stat.ishidden = $attributes -contains "Hidden"
     $result.stat.isreadonly = $attributes -contains "ReadOnly"
 
-    if ($info) {
-        $accesscontrol = $info.GetAccessControl()
-    } else {
-        $accesscontrol = $null
+    If ($info)
+    {
+        $accesscontrol = $info.GetAccessControl();
+    }
+    Else
+    {
+        $accesscontrol = $null;
     }
     $result.stat.owner = $accesscontrol.Owner
 
     $iscontainer = $info.PSIsContainer
-    if ($attributes -contains "ReparsePoint") {
+    If ($attributes -contains 'ReparsePoint')
+    {
         # TODO: Find a way to differenciate between soft and junction links
         $result.stat.islink = $true
         $result.stat.isdir = $true
@@ -143,35 +153,44 @@ If (Test-Path -Path $path) {
         } catch {
             $result.stat.lnk_source = $null
         }
-    } elseif ($iscontainer) {
+    }
+    ElseIf ($iscontainer)
+    {
         $result.stat.isdir = $true
 
         $share_info = Get-WmiObject -Class Win32_Share -Filter "Path='$($info.Fullname -replace '\\', '\\')'"
-        if ($share_info -ne $null) {
+        If ($share_info -ne $null)
+        {
             $result.stat.isshared = $true
             $result.stat.sharename = $share_info.Name
         }
 
-        $dir_files_sum = Get-ChildItem $info.FullName -Recurse | Measure-Object -property length -sum
-        if ($dir_files_sum -eq $null) {
+        $dir_files_sum = Get-ChildItem $info.FullName -Recurse | Measure-Object -property length -sum;
+        If ($dir_files_sum -eq $null)
+        {
             $result.stat.size = 0
-        } else {
+        }
+        Else{
             $result.stat.size = $dir_files_sum.Sum
         }
-    } else {
+    }
+    Else
+    {
         $result.stat.size = $info.Length
         $result.stat.extension = $info.Extension
 
-        if ($get_md5) {
+        If ($get_md5) {
             $result.stat.md5 = Get-Hash -Path $path -Algorithm "md5"
         }
 
-        if ($get_checksum) {
+        If ($get_checksum) {
             $result.stat.checksum = Get-Hash -Path $path -Algorithm $checksum_algorithm
         }
     }
-} else {
+}
+Else
+{
     $result.stat.exists = $false
 }
 
-Exit-Json $result
+Exit-Json $result;
