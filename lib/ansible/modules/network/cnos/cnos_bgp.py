@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_bgp
-short_description: Performs BGP switch configuration and state management.
+short_description: Manage BGP resources and attributes on devices running Lenovo CNOS
 description:
     - This module allows you to work with Border Gateway Protocol (BGP) related configurations.
      The operators used are overloaded to ensure control over switch BGP configurations. This
