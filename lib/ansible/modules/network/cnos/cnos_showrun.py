@@ -29,7 +29,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_showrun
-short_description: Returns the current running configuration of a switch.
+short_description: Collect the current running configuration on devices running Lenovo CNOS
 description:
     - This module allows you to view the switch running configuration. It executes the display running-config CLI
      command on a switch and returns a file containing the current running configuration of the target network
