@@ -146,9 +146,9 @@ separate from the inventory file, see the next section.
 Default groups
 ++++++++++++++
 
-There are two default groups: ``all`` and ``ungrouped``. ``all`` contains every hosts.
-``ungrouped`` contains all hosts declared without an explicit section, even if they belongs to
-an other group.
+There are two default groups: ``all`` and ``ungrouped``. ``all`` contains every host.
+``ungrouped`` contains all hosts declared without an explicit section, even if they belong to
+another group.
 
 .. _splitting_out_vars:
 
