@@ -154,7 +154,7 @@ In order to keep the history clean and better audit incoming code, we will requi
 contain merge commits.  Use ``git pull --rebase`` (rather than ``git pull``) and ``git rebase`` (rather than ``git merge``). Also be sure to use topic
 branches to keep your additions on different branches, such that they won't pick up stray commits later.
 
-If you make a mistake you do not need to close your PR, create a clean branch locally and then push to GitHub
+If you make a mistake you do not need to close your PR. Instead, create a clean branch locally and then push to GitHub
 with ``--force`` to overwrite the existing branch (permissible in this case as no one else should be using that
 branch as reference). Code comments won't be lost, they just won't be attached to the existing branch.
 
