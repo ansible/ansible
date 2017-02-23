@@ -48,14 +48,17 @@ try {
         $addCmdlet = "Install-WindowsFeature"
         $removeCmdlet = "Uninstall-WindowsFeature"
         $installWF = $true
-    } elseif (Get-Command "Add-WindowsFeature" -ErrorAction SilentlyContinue) {
+    }
+    elseif (Get-Command "Add-WindowsFeature" -ErrorAction SilentlyContinue) {
         $addCmdlet = "Add-WindowsFeature"
         $removeCmdlet = "Remove-WindowsFeature"
         $addWF = $true
-    } else {
+    }
+    else {
         throw [System.Exception] "Not supported on this version of Windows"
     }
-} catch {
+}
+catch {
     Fail-Json $result $_.Exception.Message
 }
 
@@ -79,22 +82,22 @@ If ($state -eq "present") {
                 Fail-Json $result "Failed to find source path $source"
             }
 
-            $InstallParams.add("Source", $source)
+            $InstallParams.add("Source",$source)
         }
 
         if ($IncludeManagementTools) {
-            $InstallParams.add("IncludeManagementTools", $includemanagementtools)
+            $InstallParams.add("IncludeManagementTools",$includemanagementtools)
         }
-
     }
 
     try {
         $featureresult = Invoke-Expression "$addCmdlet @InstallParams"
-    } catch {
+    }
+    catch {
         Fail-Json $result $_.Exception.Message
     }
-
-} ElseIf ($state -eq "absent") {
+}
+ElseIf ($state -eq "absent") {
 
     $UninstallParams = @{
         Name = $name
@@ -105,7 +108,8 @@ If ($state -eq "present") {
 
     try {
         $featureresult = Invoke-Expression "$removeCmdlet @UninstallParams"
-    } catch {
+    }
+    catch {
         Fail-Json $result $_.Exception.Message
     }
 }
@@ -114,8 +118,8 @@ If ($state -eq "present") {
 # each role/feature that is installed/removed
 $installed_features = @()
 #$featureresult.featureresult is filled if anything was changed
-If ($featureresult.FeatureResult) {
-
+If ($featureresult.FeatureResult)
+{
     ForEach ($item in $featureresult.FeatureResult) {
         $message = @()
         ForEach ($msg in $item.Message) {
@@ -144,8 +148,10 @@ $result.restart_needed = ($featureresult.RestartNeeded.ToString() | ConvertTo-Bo
 
 If ($result.success) {
     Exit-Json $result
-} ElseIf ($state -eq "present") {
+}
+ElseIf ($state -eq "present") {
     Fail-Json $result "Failed to add feature"
-} Else {
+}
+Else {
     Fail-Json $result "Failed to remove feature"
 }
