@@ -603,7 +603,7 @@ def create_autoscaling_group(connection, module):
             changed = True
             return changed, asg_properties
         except botocore.exceptions.BotoCoreError as e:
-            module.fail_json(msg="Failed to create Autoscaling Group: %s" % str(e), exception=traceback.format_exc(e))
+            module.fail_json(msg="Failed to create Autoscaling Group: %s" % str(e), exception=traceback.format_exc())
     else:
         as_group = as_groups['AutoScalingGroups'][0]
         changed = False
@@ -643,7 +643,7 @@ def create_autoscaling_group(connection, module):
                 )
             except botocore.exceptions.BotoCoreError as e:
                 module.fail_json(msg="Failed to update Autoscaling Group: %s" % str(e),
-                                 exception=traceback.format_exc(e))
+                                 exception=traceback.format_exc())
 
         # Update load balancers if they are specified and one or more already exists
         elif as_group['LoadBalancerNames']:
@@ -684,7 +684,7 @@ def create_autoscaling_group(connection, module):
                 )
             except botocore.exceptions.BotoCoreError as e:
                 module.fail_json(msg="Failed to update Autoscaling Group: %s" % str(e),
-                                 exception=traceback.format_exc(e))
+                                 exception=traceback.format_exc())
         # Update target groups if they are specified and one or more already exists
         elif target_group_arns and as_group['TargetGroupARNs']:
             # Get differences
@@ -737,7 +737,7 @@ def create_autoscaling_group(connection, module):
                 )
             except botocore.exceptions.BotoCoreError as e:
                 module.fail_json(msg="Failed to update Autoscaling Group notifications: %s" % str(e),
-                                 exception=traceback.format_exc(e))
+                                 exception=traceback.format_exc())
         if wait_for_instances:
             wait_for_new_inst(module, connection, group_name, wait_timeout, desired_capacity, 'viable_instances')
             # Wait for ELB health if ELB(s)defined
@@ -756,7 +756,7 @@ def create_autoscaling_group(connection, module):
             asg_properties = get_properties(as_group)
         except botocore.exceptions.BotoCoreError as e:
             module.fail_json(msg="Failed to read existing Autoscaling Groups: %s" % str(e),
-                             exception=traceback.format_exc(e))
+                             exception=traceback.format_exc())
         return changed, asg_properties
 
 
