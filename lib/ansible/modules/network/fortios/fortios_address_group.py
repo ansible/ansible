@@ -119,11 +119,6 @@ def is_invalid_name(input_str):
 def main():
     #define module params
     argument_spec = dict(
-        host        = dict(required=True ),
-        username    = dict(required=True ),
-        password    = dict(required=True, type='str', no_log=True ),
-        timeout     = dict(type='int', default=60),
-        vdom        = dict(type='str' ),
         state       = dict(choices=['present', 'absent'], default='present'),
         name        = dict(aliases=['group_name'], required=True, type='str'),
         member      = dict(aliases=['members'], required=True, type='list'),
