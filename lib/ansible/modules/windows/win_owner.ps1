@@ -20,44 +20,56 @@
 # POWERSHELL_COMMON
 
 #Functions
-Function UserSearch {
+Function UserSearch
+{
     Param ([string]$accountName)
     #Check if there's a realm specified
 
     $searchDomain = $false
     $searchDomainUPN = $false
-    if ($accountName.Split("\").count -gt 1) {
-        if ($accountName.Split("\")[0] -ne $env:COMPUTERNAME) {
+    if ($accountName.Split("\").count -gt 1)
+    {
+        if ($accountName.Split("\")[0] -ne $env:COMPUTERNAME)
+        {
             $searchDomain = $true
             $accountName = $accountName.split("\")[1]
         }
-    } elseif ($accountName.contains("@")) {
+    }
+    Elseif ($accountName.contains("@"))
+    {
         $searchDomain = $true
         $searchDomainUPN = $true
-    } else {
+    }
+    Else
+    {
         #Default to local user account
         $accountName = $env:COMPUTERNAME + "\" + $accountName
     }
 
-    if ($searchDomain -eq $false) {
+    if ($searchDomain -eq $false)
+    {
         # do not use Win32_UserAccount, because e.g. SYSTEM (BUILTIN\SYSTEM or COMPUUTERNAME\SYSTEM) will not be listed. on Win32_Account groups will be listed too
         $localaccount = get-wmiobject -class "Win32_Account" -namespace "root\CIMV2" -filter "(LocalAccount = True)" | where {$_.Caption -eq $accountName}
         if ($localaccount)
         {
             return $localaccount.SID
         }
-    } else {
+    }
+    Else
+    {
         #Search by samaccountname
         $Searcher = [adsisearcher]""
 
-        if ($searchDomainUPN -eq $false) {
+        If ($searchDomainUPN -eq $false) {
             $Searcher.Filter = "sAMAccountName=$($accountName)"
-        } else {
+        }
+        Else {
             $Searcher.Filter = "userPrincipalName=$($accountName)"
         }
 
         $result = $Searcher.FindOne()
-        if ($result) {
+        if ($result)
+        {
             $user = $result.GetDirectoryEntry()
 
             # get binary SID from AD account
@@ -86,35 +98,37 @@ If (-Not (Test-Path -Path $path)) {
 
 # Test that the user/group is resolvable on the local machine
 $sid = UserSearch -AccountName ($user)
-if (-not $sid) {
+if (-not $sid)
+{
     Fail-Json $result "$user is not a valid user or group on the host machine or domain"
 }
 
-try {
+Try {
     $objUser = New-Object System.Security.Principal.SecurityIdentifier($sid)
 
     $file = Get-Item -Path $path
     $acl = Get-Acl $file.FullName
 
-    if ($acl.getOwner([System.Security.Principal.SecurityIdentifier]) -ne $objUser) {
+    If ($acl.getOwner([System.Security.Principal.SecurityIdentifier]) -ne $objUser) {
         $acl.setOwner($objUser)
         Set-Acl -Path $file.FullName -AclObject $acl -WhatIf:$check_mode
         $result.changed = $true
     }
 
-    if ($recurse) {
+    If ($recurse) {
         $files = Get-ChildItem -Path $path -Force -Recurse
         ForEach($file in $files){
             $acl = Get-Acl $file.FullName
 
-            if ($acl.getOwner([System.Security.Principal.SecurityIdentifier]) -ne $objUser) {
+            If ($acl.getOwner([System.Security.Principal.SecurityIdentifier]) -ne $objUser) {
                 $acl.setOwner($objUser)
                 Set-Acl -Path $file.FullName -AclObject $acl -WhatIf:$check_mode
                 $result.changed = $true
             }
         }
     }
-} catch {
+}
+Catch {
     Fail-Json $result "an error occurred when attempting to change owner on $path for $user"
 }
 
