@@ -29,7 +29,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_reload
-short_description: Restarts the switch.
+short_description: Perform switch restart on devices running Lenovo CNOS
 description:
     - This module allows you to restart the switch using the current startup configuration.
      The module is usually invoked after the running configuration has been saved over the startup configuration.
