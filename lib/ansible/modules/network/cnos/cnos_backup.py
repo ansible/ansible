@@ -29,7 +29,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_backup
-short_description: Saves the current running or startup configuration to a remote server using FTP, SFTP, TFTP, or SCP.
+short_description: Backup the current running or startup configuration to a remote server on devices running Lenovo CNOS
 description:
     - This module allows you to work with switch configurations. It provides a
      way to back up the running or startup configurations of a switch to a
