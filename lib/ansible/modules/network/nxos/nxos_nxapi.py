@@ -192,14 +192,14 @@ def map_obj_to_commands(updates, module):
 def parse_http(data):
     match = re.search('HTTP Port:\s+(\d+)', data, re.M)
     if match:
-        return {'http': True, 'http_port': match.group(1)}
+        return {'http': True, 'http_port': int(match.group(1))}
     else:
         return {'http': False, 'http_port': None}
 
 def parse_https(data):
     match = re.search('HTTPS Port:\s+(\d+)', data, re.M)
     if match:
-        return {'https': True, 'https_port': match.group(1)}
+        return {'https': True, 'https_port': int(match.group(1))}
     else:
         return {'https': False, 'https_port': None}
 
