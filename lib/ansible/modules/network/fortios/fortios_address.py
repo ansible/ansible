@@ -215,7 +215,7 @@ def main():
         ['type',   'geography', ['country']           ],
     ]
 
-    #merge global required_if & argument_spec from module_utils/fortios.py 
+    #merge global required_if & argument_spec from module_utils/fortios.py
     argument_spec.update(fortios_argument_spec)
     required_if = fortios_required_if + fortios_address_required_if
 
