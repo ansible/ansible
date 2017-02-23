@@ -16,6 +16,7 @@
     src: basic/config.j2
     provider: "{{ cli }}"
     match: none
+    defaults: yes
   register: result
 
 - assert:
@@ -28,6 +29,7 @@
   nxos_config:
     src: basic/config.j2
     provider: "{{ cli }}"
+    defaults: yes
   register: result
 
 - assert:

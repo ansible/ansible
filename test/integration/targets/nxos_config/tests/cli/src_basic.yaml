@@ -14,6 +14,7 @@
 - name: configure device with config
   nxos_config:
     src: basic/config.j2
+    defaults: yes
     provider: "{{ cli }}"
   register: result
 
@@ -26,6 +27,7 @@
 - name: check device with config
   nxos_config:
     src: basic/config.j2
+    defaults: yes
     provider: "{{ cli }}"
   register: result
 
