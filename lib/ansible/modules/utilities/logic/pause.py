@@ -61,3 +61,31 @@ EXAMPLES = '''
 - pause:
     prompt: "Make sure org.foo.FooOverload exception is not present"
 '''
+
+RETURN = '''
+user_input:
+  description: User input from interactive console
+  returned: if no waiting time set
+  type: string
+  sample: Example user input
+start:
+  description: Time when started pausing
+  returned: always
+  type: string
+  sample: 2017-02-23 14:35:07.298862
+stop:
+  description: Time when ended pausing
+  returned: always
+  type: string
+  sample: 2017-02-23 14:35:09.552594
+delta:
+  description: Time paused in seconds
+  returned: always
+  type: string
+  sample: 2
+stdout:
+  description: Output of pause module
+  returned: always
+  type: string
+  sample: Paused for 0.04 minutes
+'''
