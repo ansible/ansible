@@ -15,10 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['deprecated'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
+ANSIBLE_METADATA = {
+    'status': ['deprecated'],
+    'supported_by': 'community',
+    'version': '1.0'
+}
 
 DOCUMENTATION = """
 ---
@@ -34,7 +36,6 @@ description:
     commands that are not already configured.  The config source can
     be a set of commands or a template.
 deprecated: Deprecated in 2.2. Use M(nxos_config) instead.
-extends_documentation_fragment: nxos
 options:
   src:
     description:
@@ -114,20 +115,23 @@ responses:
   type: list
   sample: ['...', '...']
 """
-import ansible.module_utils.nxos
+from ansible.module_utils.nxos import load_config, get_config
+from ansible.module_utils.nxos import nxos_argument_spec
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.network import NetworkModule
 
-def get_config(module):
-    config = module.params['config'] or dict()
+def get_current_config(module):
+    config = module.params.get('config')
     if not config and not module.params['force']:
-        config = module.config.get_config()
+        flags = []
+        if module.params['include_defaults']:
+            flags.append('all')
+        config = get_config(module, flags)
     return config
 
 def main():
     """ main entry point for module execution
     """
-
     argument_spec = dict(
         src=dict(),
         force=dict(default=False, type='bool'),
@@ -136,9 +140,11 @@ def main():
         config=dict(),
     )
 
+    argument_spec.update(nxos_argument_spec)
+
     mutually_exclusive = [('config', 'backup'), ('config', 'force')]
 
-    module = NetworkModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
@@ -146,10 +152,10 @@ def main():
 
     candidate = NetworkConfig(contents=module.params['src'], indent=2)
 
-    contents = get_config(module)
+    contents = get_current_config(module)
     if contents:
         config = NetworkConfig(contents=contents, indent=2)
-        result['_backup'] = str(contents)
+        result['__backup__'] = str(contents)
 
     if not module.params['force']:
         commands = candidate.difference(config)
@@ -160,11 +166,12 @@ def main():
 
     if commands:
         if not module.check_mode:
-            response = module.config(commands)
-            result['responses'] = response
+            load_config(module, commands)
         result['changed'] = True
 
     result['updates'] = commands
+    result['commands'] = commands
+
     module.exit_json(**result)
 
 
