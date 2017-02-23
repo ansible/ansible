@@ -242,6 +242,18 @@ the ``type`` of the value and a ``sample``.  For example, from the ``copy`` modu
    If your module doesn't return anything (apart from the standard returns), you can use ``RETURN = ''' # '''``.
 
 
+Python Imports
+--------------
+
+Starting with Ansible version 2.2, all new modules are required to use imports in the form:
+
+.. code-block:: python
+
+   from module_utils.basic import AnsibleModule
+
+
+The use of "ildcard" imports such as ``from module_utils.basic import *`` is no longer allowed.
+
 Formatting options
 ------------------
 
