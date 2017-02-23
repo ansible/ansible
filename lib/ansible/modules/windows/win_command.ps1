@@ -98,12 +98,12 @@ $result = @{
     cmd = $raw_command_line
 }
 
-If($creates -and $(Test-Path $creates)) {
-    Exit-Json @{ msg = "skipped, since $creates exists"; cmd = $raw_command_line; changed = $false; skipped = $true; rc = 0 }
+If($creates -and $(Test-Path -Path $creates)) {
+    Exit-Json @{msg="skipped, since $creates exists";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }
 
-If($removes -and -not $(Test-Path $removes)) {
-    Exit-Json @{ msg = "skipped, since $removes does not exist"; cmd = $raw_command_line; changed = $false; skipped = $true; rc = 0 }
+If($removes -and -not $(Test-Path -Path $removes)) {
+    Exit-Json @{msg="skipped, since $removes does not exist";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }
 
 Add-Type -TypeDefinition $helper_def
@@ -143,7 +143,7 @@ Catch [System.ComponentModel.Win32Exception] {
     # fail nicely for "normal" error conditions
     # FUTURE: this probably won't work on Nano Server
     $excep = $_
-    Exit-Json @{ msg = $excep.Exception.Message; cmd = $raw_command_line; changed = $false; rc = $excep.Exception.NativeErrorCode }
+    Exit-Json @{msg = $excep.Exception.Message; cmd = $raw_command_line; changed = $false; rc = $excep.Exception.NativeErrorCode}
 }
 
 $stdout = $stderr = [string] $null
