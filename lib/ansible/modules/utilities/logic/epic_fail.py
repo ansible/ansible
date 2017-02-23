@@ -98,7 +98,7 @@ def main():
             return_data_updates=dict(required=False, type='dict', default={}),
             output_list=dict(required=False, type='list', default=[]),
             failure_mode=dict(required=False, type='str',
-                              choices=['sys_exit', 'no_output', 'hang', 'python_traceback', 'incomplete_json'])
+                              choices=['exit_json', 'fail_json', 'sys_exit', 'no_output', 'hang', 'python_traceback', 'incomplete_json'])
         ),
         supports_check_mode=True
     )
@@ -106,12 +106,10 @@ def main():
     stdout_text = module.params.get('stdout_text')
     stderr_text = module.params.get('stderr_text')
     return_code = module.params.get('return_code')
-    failure_mode = module.params.get('failure_mode')
+    failure_mode = module.params.get('failure_mode', 'fail_json')
     return_data_updates = module.params.get('return_data_updates', {})
     return_data = module.params.get('return_data', None)
     output_list = module.params.get('output_list', [])
-
-    sys_exit = None
 
     nobuf_stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
     nobuf_stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
@@ -132,9 +130,6 @@ def main():
         sys.stderr.write(what)
         sys.stderr.flush()
 
-    if failure_mode == SYS_EXIT:
-        sys_exit = True
-
     where_map = {'stdout': stdout_write,
                  'stderr': stderr_write,
                  'nobuf_stdout': nobuf_stdout_write,
@@ -150,7 +145,6 @@ def main():
         # call the writer method
         where_map[where](what)
 
-
     if stdout_text:
         nobuf_stdout.write(stdout_text)
         nobuf_stdout.flush()
@@ -162,34 +156,31 @@ def main():
     sys.stderr.flush()
     sys.stderr.flush()
 
-    # exit sans fail_json or exit_json
-    if sys_exit:
-        sys.exit(return_code or 14)
+    if failure_mode == 'exit_json':
+        exit_data = {'changed': False,
+                     'failed': False,
+                     'msg': 'epic_fail did not live up to its name.',
+                     'rc': return_code or 0}
+        exit_data.update(return_data_updates)
 
-    # TODO: implement modes
+        if return_data:
+            exit_data = return_data
 
-    if return_code:
-        fail_data = dict(msg='epic_fail failed with a return code of %s just as its parents predicted.' % return_code,
-                         blip=return_code,
-                         rc=return_code)
+        module.exit_json(**exit_data)
+
+    if failure_mode == 'fail_json':
+        fail_data = {'rc': return_code or 1,
+                     'failed': True}
         fail_data.update(return_data_updates)
         if return_data:
             fail_data = return_data
         module.fail_json(**fail_data)
 
-    # fail in a boring fashion
-    fail_data = dict(msg="epic_fail failed in a non epic fashion. How typical.")
-    fail_data.update(return_data_updates)
-    if return_data:
-        fail_data = return_data
-        module.fail_json(**fail_data)
+    # exit sans fail_json or exit_json
+    if failure_mode == 'sys_exit':
+        sys.exit(return_code or 14)
 
-    exit_data = dict(changed=False,
-                     msg="epic_fail did not live up to its name.")
-    exit_data.update(return_data_updates)
-    if return_data:
-        exit_data = return_data
-        module.exit_json(**exit_data)
+    # TODO: implement other failure modes
 
     module.fail_json(msg='You haved failed at failing. End of epic_fail reached.')
 
