@@ -128,7 +128,7 @@ def main():
         comment     = dict(type='str'),
     )
 
-    #merge global argument_spec from module_utils/fortios.py 
+    #merge global argument_spec from module_utils/fortios.py
     argument_spec.update(fortios_argument_spec)
 
     #decalre module
