@@ -39,10 +39,12 @@ options:
     description:
       - Name of the address group.
     required: true
+    aliases: group_name
   member:
     description:
-      - Member address name to add or delete.
+      - Member(s) address name to add or delete.
     required: true
+    aliases: members
   state:
     description:
       - Specifies if address need to be added or deleted in group.
@@ -121,8 +123,8 @@ def main():
         timeout     = dict(type='int', default=60),
         vdom        = dict(type='str' ),
         state       = dict(choices=['present', 'absent'], default='present'),
-        name        = dict(required=True, type='str'),
-        member      = dict(required=True, type='str'),
+        name        = dict(aliases=['group_name'], required=True, type='str'),
+        member      = dict(aliases=['members'], required=True, type='list'),
         comment     = dict(type='str'),
     )
 
@@ -137,10 +139,11 @@ def main():
 
     #check params
     if is_invalid_name(module.params['name']):
-        module.fail_json(msg="Bad name argument value, must contain only letters, digits, -, _, .")
+        module.fail_json(msg="Bad name argument value {0}, must contain only letters, digits, -, _, .".format(module.params['name']))
 
-    if is_invalid_name(module.params['member']):
-        module.fail_json(msg="Bad member argument value, must contain only letters, digits, -, _, .")
+    for member in module.params['member']:
+        if is_invalid_name(member):
+            module.fail_json(msg="Bad member argument value {0}, must contain only letters, digits, -, _, .".format(member))
 
     #prepare return dict
     result = dict(changed=False)
@@ -182,12 +185,14 @@ def main():
 
     #generate target group list
     if module.params['state'] == 'absent':
-        if module.params['member'] in group_members:
-            group_members.remove(module.params['member'])
+        for member in module.params['member']:
+            if member in group_members:
+                group_members.remove(member)
     else:
         #state == present
-        if module.params['member'] not in group_members:
-            group_members.append(module.params['member'])
+        for member in module.params['member']:
+            if member not in group_members:
+                group_members.append(member)
 
     #delete group if empty
     if len(group_members) == 0:
