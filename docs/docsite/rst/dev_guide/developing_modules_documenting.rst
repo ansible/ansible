@@ -22,9 +22,9 @@ All modules must have the following sections defined in this order:
 
 .. note:: Why don't the imports go first?
 
-  Keen Python programmers may notice that contrary to PEP8's advice we don't put ``imports`` at the top of the file. This is because the ``ANSIBLE_METADATA`` through ``RETURNS`` sections are not used by the module code itself. They are essentially extra docstrings for the file. The imports are placed after these special variables for the same reason as PEP8 puts the imports after the introductory comments and docstrings. This keeps the active parts of the code together and the pieces which are purely informational apart. The decision to exclude E402 is based on readability (which is what PEP8 is about). Documentation strings in a module are much more similar to module level docstrings, than code, and are never utilized by the module itself. Placing the imports below this documentation and closer to the code, consolidates and groups all related code in a congruent manner to improve readability, debugging and understanding.
+  Keen Python programmers may notice that contrary to PEP8's advice we don't put ``imports`` at the top of the file. This is because the ``ANSIBLE_METADATA`` through ``RETURNS`` sections are not used by the module code itself; they are essentially extra docstrings for the file. The imports are placed after these special variables for the same reason as PEP8 puts the imports after the introductory comments and docstrings. This keeps the active parts of the code together and the pieces which are purely informational apart. The decision to exclude E402 is based on readability (which is what PEP8 is about). Documentation strings in a module are much more similar to module level docstrings, than code, and are never utilized by the module itself. Placing the imports below this documentation and closer to the code, consolidates and groups all related code in a congruent manner to improve readability, debugging and understanding.
 
-.. warning:: Why do some modules have imports at the bottom of the file
+.. warning:: Why do some modules have imports at the bottom of the file?
 
   If you look at some existing older modules, you may find imports at the bottom of the file. Do not copy that idiom into new modules as it is a historical oddity due to how modules used to be combined with libraries. Over time we're moving the imports to be in their proper place.
 
@@ -33,9 +33,9 @@ All modules must have the following sections defined in this order:
 ANSIBLE_METADATA Block
 ----------------------
 
-ANSIBLE_METADATA contains information about the module for use by other tools. At the moment, it informs other tools about what class of people maintains the module and to what degree users can rely on a module's behaviour remaining the same over time.
+ANSIBLE_METADATA contains information about the module for use by other tools. At the moment, it informs other tools which type of maintainer the module has and to what degree users can rely on a module's behaviour remaining the same over time.
 
-For new modules the following block can be simply added into your module::
+For new modules, the following block can be simply added into your module::
 
    ANSIBLE_METADATA = {'status': ['preview'],
                        'supported_by': 'community',
@@ -68,17 +68,17 @@ Fields
 
 :version: An “X.Y” formatted string. X and Y are integers which
    define the metadata format version. Modules shipped with Ansible are
-   tied to an Ansible release so we will only ship with a single version
+   tied to an Ansible release, so we will only ship with a single version
    of the metadata. We’ll increment Y if we add fields or legal values
    to an existing field. We’ll increment X if we remove fields or values
    or change the type or meaning of a field.
 :supported_by: This field records who supports the module.
    Default value is community. Values are:
 
-   :core: maintained by the Ansible core team. Core team will fix
+   :core: Maintained by the Ansible core team. Core team will fix
       bugs, add new features, and review PRs.
-   :community: This module is maintained by the community at large.
-      Community is responsible for fixing bugs, adding new features, and
+   :community: This module is maintained by the community at large,
+      which is responsible for fixing bugs, adding new features, and
       reviewing changes.
    :unmaintained: This module currently needs a new community
       contributor to help maintain it.
@@ -182,11 +182,11 @@ The following fields can be used and are all required unless specified otherwise
 
 .. note::
 
-   Their is no need to document the ``type:`` of an option.
+   There is no need to document the ``type:`` of an option.
 
 .. note::
 
-   If you module doesn't doesn't have any options (perhaps it's a ``_facts`` module)  you can use ``options: {}``.
+   If you module doesn't doesn't have any options (for example, it's a ``_facts`` module), you can use ``options: {}``.
 
 EXAMPLES block
 --------------
@@ -239,7 +239,7 @@ the ``type`` of the value and a ``sample``.  For example, from the ``copy`` modu
 
 .. note::
 
-   If you module doesn't return anything (apart from the standard returns) you can use ``RETURN = ''' # '''``.
+   If your module doesn't return anything (apart from the standard returns), you can use ``RETURN = ''' # '''``.
 
 
 Formatting options
