@@ -67,11 +67,9 @@ options:
     imgtype:
         description:
             - This specifies the firmware image type to be downloaded:
-            - all   Both Uboot and OS images
-            - boot  Uboot image only
-            - onie  ONIE image
         required: true
         default: null
+        choices: [all, boot, os, onie]
     serverusername:
         description:
             - Specify the username for the server relating to the protocol used.
