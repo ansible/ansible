@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 ########################################################################
 #
 # (C) 2015, Chris Houseknecht <chouse@ansible.com>
