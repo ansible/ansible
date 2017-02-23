@@ -205,7 +205,10 @@ def parse_https(data):
 
 def parse_sandbox(data):
     match = re.search('Sandbox:\s+(.+)$', data, re.M)
-    return {'sandbox': match.group(1) == 'Enabled'}
+    value = None
+    if match:
+        value = match.group(1) == 'Enabled'
+    return {'sandbox': value}
 
 def map_config_to_obj(module):
     out = run_commands(module, ['show nxapi'], check_rc=False)
