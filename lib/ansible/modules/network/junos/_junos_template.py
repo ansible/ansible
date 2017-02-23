@@ -16,9 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['deprecated'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['deprecated'],
+    'supported_by': 'community',
+    'version': '1.0'
+}
 
 
 DOCUMENTATION = """
@@ -108,8 +110,8 @@ EXAMPLES = """
     src: config.j2
     action: overwrite
 """
-import ansible.module_utils.junos
 
+from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import get_exception
 from ansible.module_utils.network import NetworkModule, NetworkError
 
@@ -127,8 +129,12 @@ def main():
         transport=dict(default='netconf', choices=['netconf'])
     )
 
+    argument_spec.update(junos_argument_spec)
+
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
+
+    check_args(module, warnings)
 
     comment = module.params['comment']
     confirm = module.params['confirm']
