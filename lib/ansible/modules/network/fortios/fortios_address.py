@@ -119,6 +119,9 @@ change_string:
   type: string
 """
 
+from ansible.module_utils.fortios import fortios_argument_spec, fortios_required_if
+from ansible.module_utils.fortios import backup
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 
@@ -194,11 +197,6 @@ def get_formated_ipaddr(input_ip):
 
 def main():
     argument_spec = dict(
-        host      = dict(required=True ),
-        username  = dict(required=True ),
-        password  = dict(required=True, type='str', no_log=True ),
-        timeout   = dict(type='int', default=60),
-        vdom      = dict(type='str', default=None ),
         state     = dict(required=True, choices=['present', 'absent']),
         name      = dict(required=True, type='str'),
         type      = dict(choices=['iprange', 'fqdn', 'ipmask', 'geography'], default='ipmask'),
@@ -217,8 +215,10 @@ def main():
         ['type',   'geography', ['country']           ],
     ]
 
-    #merge global required_if from module_utils/fortios.py & fortios_address specific required_if
+    #merge global required_if & argument_spec from module_utils/fortios.py 
+    argument_spec.update(fortios_argument_spec)
     required_if = fortios_required_if + fortios_address_required_if
+
 
     module = AnsibleModule(
         argument_spec=argument_spec,
