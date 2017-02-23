@@ -39,12 +39,14 @@ options:
     description:
       - Name of the address group.
     required: true
-    aliases: group_name
+    aliases: 
+      - group_name
   member:
     description:
       - Member(s) address name to add or delete.
     required: true
-    aliases: members
+    aliases: 
+      - members
   state:
     description:
       - Specifies if address need to be added or deleted in group.
