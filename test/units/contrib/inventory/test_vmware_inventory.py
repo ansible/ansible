@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import json
 import os
 import pickle
@@ -121,9 +119,3 @@ class TestVMWareInventory(unittest.TestCase):
         expected = json.dumps(expected, indent=2)
         #import epdb; epdb.st()
         assert showdata == expected
-
-
-
-
-if __name__ == '__main__':
-    unittest.main()

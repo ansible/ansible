@@ -92,6 +92,3 @@ class RetryTestCase(unittest.TestCase):
             self.assertEqual(e.response['Error']['Code'], 'AuthFailure')
 
         self.assertEqual(self.counter, 1)
-
-if __name__ == '__main__':
-    unittest.main()

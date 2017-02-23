@@ -40,7 +40,3 @@ class TestUrlparse(unittest.TestCase):
         s3_url="http://bla.blubb"
         actual = s3.get_s3_connection(aws_connect_kwargs, location, rgw, s3_url)
         self.assertEqual("bla.blubb", actual.host)
-
-
-if __name__ == '__main__':
-    unittest.main()

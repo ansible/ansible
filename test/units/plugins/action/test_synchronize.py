@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''
 (Epdb) pprint(DeepDiff(self.final_task_vars, out_task_vars), indent=2)
 { 'dic_item_added': set([u"root['ansible_python_interpreter']"]),
@@ -243,7 +241,3 @@ class TestSynchronizeAction(unittest.TestCase):
         # delegate to other remote host with su enabled
         x = SynchronizeTester()
         x.runtest(fixturepath=os.path.join(self.fixturedir,'delegate_remote_su'))
-
-
-if __name__ == "__main__":
-    SynchronizeTester().runtest()

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import unittest
 
 from ansible.modules.cloud.google.gce_tag import _get_changed_items, _intersect_items, _union_items
@@ -60,9 +58,3 @@ class TestGCETag(unittest.TestCase):
         want = ['three']
         got = _get_changed_items(existing_tags, tags_to_remove)
         self.assertEqual(want, got)
-
-if __name__ == '__main__':
-    unittest.main()
-
-
-
