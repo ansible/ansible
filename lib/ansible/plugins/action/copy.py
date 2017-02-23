@@ -179,21 +179,8 @@ class ActionModule(ActionBase):
             else:
                 dest_file = self._connection._shell.join_path(dest)
 
-            if not force:
-                # Avoid possible heavy checksum operation by checking if the dest_file exists
-                dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp, checksum=False)
-
-                if dest_status['exists'] and dest_status['isdir']:
-                    # Append the relative source location to the destination and get remote stats again
-                    dest_file = self._connection._shell.join_path(dest, source_rel)
-                    dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp, checksum=False)
-
-                if dest_status['exists']:
-                    # remote_file exists so continue to next iteration.
-                    continue
-
             # Attempt to get remote file info
-            dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp)
+            dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp, checksum=force)
 
             if dest_status['exists'] and dest_status['isdir']:
                 # The dest is a directory.
@@ -207,7 +194,11 @@ class ActionModule(ActionBase):
                 else:
                     # Append the relative source location to the destination and get remote stats again
                     dest_file = self._connection._shell.join_path(dest, source_rel)
-                    dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp)
+                    dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp, checksum=force)
+
+            if dest_status['exists'] and not force:
+                # remote_file exists so continue to next iteration.
+                continue
 
             # Generate a hash of the local file.
             local_checksum = checksum(source_full)
