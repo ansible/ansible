@@ -19,7 +19,7 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args
+$params = Parse-Args $args;
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
@@ -31,12 +31,12 @@ $result = @{
 }
 
 $adsi = [ADSI]"WinNT://$env:COMPUTERNAME"
-$group = $adsi.Children | Where-Object { $_.SchemaClassName -eq 'group' -and $_.Name -eq $name }
+$group = $adsi.Children | Where-Object {$_.SchemaClassName -eq 'group' -and $_.Name -eq $name }
 
 try {
-    if ($state -eq "present") {
-        if (-not $group) {
-            if (-not $check_mode) {
+    If ($state -eq "present") {
+        If (-not $group) {
+            If (-not $check_mode) {
                 $group = $adsi.Create("Group", $name)
                 $group.SetInfo()
             }
@@ -44,22 +44,24 @@ try {
             $result.changed = $true
         }
 
-        if ($null -ne $description) {
-            if (-not $group.description -or $group.description -ne $description) {
+        If ($null -ne $description) {
+            IF (-not $group.description -or $group.description -ne $description) {
                 $group.description = $description
-                if (-not $check_mode) {
+                If (-not $check_mode) {
                     $group.SetInfo()
                 }
                 $result.changed = $true
             }
         }
-    } elseif ($state -eq "absent" -and $group) {
-        if (-not $check_mode) {
+    }
+    ElseIf ($state -eq "absent" -and $group) {
+        If (-not $check_mode) {
             $adsi.delete("Group", $group.Name.Value)
         }
         $result.changed = $true
     }
-} catch {
+}
+catch {
     Fail-Json $result $_.Exception.Message
 }
 
