@@ -27,9 +27,9 @@ try:
     from dns.rdatatype import (A, AAAA, CNAME, DLV, DNAME, DNSKEY, DS, HINFO, LOC,
             MX, NAPTR, NS, NSEC3PARAM, PTR, RP, SOA, SPF, SRV, SSHFP, TLSA, TXT)
     import dns.exception
-    HAVE_DNS = True
+    HAVE_DNSRESOLVER = True
 except ImportError:
-    HAVE_DNS = False
+    HAVE_DNSRESOLVER = False
 
 def make_rdata_dict(rdata):
     ''' While the 'dig' lookup plugin supports anything which dnspython supports
@@ -115,13 +115,12 @@ class LookupModule(LookupBase):
             ... flat=0                                      # returns a dict; default is 1 == string
         '''
 
-        if HAVE_DNS == False:
-            raise AnsibleError("Can't LOOKUP(dig): module dns.resolver is not installed")
+        if HAVE_DNSRESOLVER:
+            # Create Resolver object so that we can set NS if necessary
+            myres = dns.resolver.Resolver()
+            edns_size = 4096
+            myres.use_edns(0, ednsflags=dns.flags.DO, payload=edns_size)
 
-        # Create Resolver object so that we can set NS if necessary
-        myres = dns.resolver.Resolver()
-        edns_size = 4096
-        myres.use_edns(0, ednsflags=dns.flags.DO, payload=edns_size)
 
         domain = None
         qtype  = 'A'
@@ -129,6 +128,8 @@ class LookupModule(LookupBase):
 
         for t in terms:
             if t.startswith('@'):       # e.g. "@10.0.1.2,192.0.2.1" is ok.
+                if HAVE_DNSRESOLVER == False:
+                    raise AnsibleError("Can't LOOKUP(dig): module dns.resolver is required to specify nameserver")
                 nsset = t[1:].split(',')
                 nameservers = []
                 for ns in nsset:
@@ -171,42 +172,50 @@ class LookupModule(LookupBase):
 
         ret = []
 
-        if qtype.upper() == 'PTR':
+        if HAVE_DNSRESOLVER == False and domain and qtype.upper() == 'A' and flat:
+            ret.append(socket.gethostbyname(domain))
+
+        #this is as far as we could go without dns.resolver
+        elif HAVE_DNSRESOLVER == False:
+            raise AnsibleError("Can't LOOKUP(dig): module dns.resolver is required for this request")
+
+        else:
+            if qtype.upper() == 'PTR':
+                try:
+                    n = dns.reversename.from_address(domain)
+                    domain = n.to_text()
+                except dns.exception.SyntaxError:
+                    pass
+                except Exception as e:
+                    raise AnsibleError("dns.reversename unhandled exception", str(e))
+     
             try:
-                n = dns.reversename.from_address(domain)
-                domain = n.to_text()
-            except dns.exception.SyntaxError:
-                pass
-            except Exception as e:
-                raise AnsibleError("dns.reversename unhandled exception", str(e))
-
-        try:
-            answers = myres.query(domain, qtype)
-            for rdata in answers:
-                s = rdata.to_text()
-                if qtype.upper() == 'TXT':
-                    s = s[1:-1]  # Strip outside quotes on TXT rdata
-
-                if flat:
-                    ret.append(s)
-                else:
-                    try:
-                        rd = make_rdata_dict(rdata)
-                        rd['owner']     = answers.canonical_name.to_text()
-                        rd['type']      = dns.rdatatype.to_text(rdata.rdtype)
-                        rd['ttl']       = answers.rrset.ttl
-
-                        ret.append(rd)
-                    except Exception as e:
-                        ret.append(str(e))
-
-        except dns.resolver.NXDOMAIN:
-            ret.append('NXDOMAIN')
-        except dns.resolver.NoAnswer:
-            ret.append("")
-        except dns.resolver.Timeout:
-            ret.append('')
-        except dns.exception.DNSException as e:
-            raise AnsibleError("dns.resolver unhandled exception", e)
+                answers = myres.query(domain, qtype)
+                for rdata in answers:
+                    s = rdata.to_text()
+                    if qtype.upper() == 'TXT':
+                        s = s[1:-1]  # Strip outside quotes on TXT rdata
+     
+                    if flat:
+                        ret.append(s)
+                    else:
+                        try:
+                            rd = make_rdata_dict(rdata)
+                            rd['owner']     = answers.canonical_name.to_text()
+                            rd['type']      = dns.rdatatype.to_text(rdata.rdtype)
+                            rd['ttl']       = answers.rrset.ttl
+     
+                            ret.append(rd)
+                        except Exception as e:
+                            ret.append(str(e))
+     
+            except dns.resolver.NXDOMAIN:
+                ret.append('NXDOMAIN')
+            except dns.resolver.NoAnswer:
+                ret.append("")
+            except dns.resolver.Timeout:
+                ret.append('')
+            except dns.exception.DNSException as e:
+                raise AnsibleError("dns.resolver unhandled exception", e)
 
         return ret
