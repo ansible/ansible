@@ -35,6 +35,12 @@ options:
     description:
       - Public key material.
     required: false
+  force:
+    description:
+      - Force overwrite of already existing key pair if key has changed.
+    required: false
+    default: true
+    version_added: "2.3"
   state:
     description:
       - create or delete keypair
@@ -80,6 +86,15 @@ EXAMPLES = '''
     key_material: 'ssh-rsa AAAAxyz...== me@example.com'
     state: present
 
+# Given example2 is already existing, the key will not be replaced because the
+# force flag was set to `false`
+- name: example2 ec2 key
+  ec2_key:
+    name: example2
+    key_material: 'ssh-rsa AAAAxyz...== me@example.com'
+    force: false
+    state: present
+
 # Creates a new ec2 key pair named `example` if not present using provided key
 # material
 - name: example3 ec2 key
@@ -110,6 +125,7 @@ def main():
     argument_spec.update(dict(
         name=dict(required=True),
         key_material=dict(required=False),
+        force = dict(required=False, type='bool', default=True),
         state = dict(default='present', choices=['present', 'absent']),
         wait = dict(type='bool', default=False),
         wait_timeout = dict(default=300),
@@ -126,6 +142,7 @@ def main():
     name = module.params['name']
     state = module.params.get('state')
     key_material = module.params.get('key_material')
+    force = module.params.get('force')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
 
@@ -162,7 +179,7 @@ def main():
     elif state == 'present':
         if key:
             # existing key found
-            if key_material:
+            if key_material and force:
                 # EC2's fingerprints are non-trivial to generate, so push this key
                 # to a temporary name and make ec2 calculate the fingerprint for us.
                 #
