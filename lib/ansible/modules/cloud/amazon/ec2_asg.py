@@ -729,7 +729,6 @@ def create_autoscaling_group(connection, module):
 
         if notification_topic:
             try:
-                as_group.put_notification_configuration(notification_topic, notification_types)
                 connection.put_notification_configuration(
                     AutoScalingGroupName=group_name,
                     TopicARN=notification_topic,
@@ -773,9 +772,14 @@ def delete_autoscaling_group(connection, module):
     describe_response = connection.describe_auto_scaling_groups(AutoScalingGroupNames=[group_name])
     groups = describe_response.get('AutoScalingGroups')
     if groups:
-        connection.update_auto_scaling_group(AutoScalingGroupName=group_name, MinSize=0, MaxSize=0, DesiredCapacity=0)
+        if not wait_for_instances:
+            connection.update_auto_scaling_group(
+                AutoScalingGroupName=group_name,
+                MinSize=0, MaxSize=0,
+                DesiredCapacity=0)
+
         instances = True
-        while instances:
+        while instances and wait_for_instances:
             tmp_groups = connection.describe_auto_scaling_groups(AutoScalingGroupNames=[group_name]).get(
                 'AutoScalingGroups')
             if tmp_groups:
@@ -849,11 +853,11 @@ def replace(connection, module):
 
     # check if min_size/max_size/desired capacity have been specified and if not use ASG values
     if min_size is None:
-        min_size = as_group.min_size
+        min_size = as_group['MinSize']
     if max_size is None:
-        max_size = as_group.max_size
+        max_size = as_group['MaxSize']
     if desired_capacity is None:
-        desired_capacity = as_group.desired_capacity
+        desired_capacity = as_group['DesiredCapacity']
     # set temporary settings and wait for them to be reached
     # This should get overwritten if the number of instances left is less than the batch size.
 
