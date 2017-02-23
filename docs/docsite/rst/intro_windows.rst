@@ -331,7 +331,7 @@ In addition, the following core modules work with Windows::
 
 
 Some modules can be utilised in playbooks that target windows by delegating to localhost, depending on what you are
-attempting to achieve.  For example assemble can be used to create a file on your ansible controller that is then 
+attempting to achieve.  For example, assemble can be used to create a file on your ansible controller that is then 
 sent to your windows targets using win_copy.
 
 In many cases, it may not be necessary to even write or use an Ansible module.
