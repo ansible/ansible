@@ -30,7 +30,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_vlan
-short_description: Performs VLAN switch configuration and state management.
+short_description: Manage VLAN resources and attributes on devices running Lenovo CNOS
 description:
     - This module allows you to work with VLAN related configurations. The
      operators used are overloaded to ensure control over switch VLAN
