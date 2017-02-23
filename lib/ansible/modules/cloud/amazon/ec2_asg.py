@@ -45,7 +45,7 @@ options:
   target_group_arns:
     description:
       - List of target group ARNs to use for the group
-    required: false
+    version_added: "2.3"
   availability_zones:
     description:
       - List of availability zone names in which to create the group.  Defaults to all the availability zones in the region if vpc_zone_identifier is not set.
