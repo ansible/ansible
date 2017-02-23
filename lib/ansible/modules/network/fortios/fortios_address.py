@@ -42,7 +42,7 @@ options:
     choices: ['present', 'absent']
   name:
     description:
-      - Name of the address to add or delete
+      - Name of the address to add or delete.
     required: true
   type:
     description:
@@ -192,9 +192,6 @@ def get_formated_ipaddr(input_ip):
     return False
 
 
-
-
-
 def main():
     argument_spec = dict(
         host      = dict(required=True ),
@@ -213,12 +210,15 @@ def main():
         comment   = dict(type='str'),
     )
 
-    required_if = [
+    fortios_address_required_if = [
         ['type',   'ipmask'   , ['value']             ],
         ['type',   'fqdn'     , ['value']             ],
         ['type',   'iprange'  , ['start_ip', 'end_ip']],
         ['type',   'geography', ['country']           ],
     ]
+
+    #merge global required_if from module_utils/fortios.py & fortios_address specific required_if
+    required_if = fortios_required_if + fortios_address_required_if
 
     module = AnsibleModule(
         argument_spec=argument_spec,
