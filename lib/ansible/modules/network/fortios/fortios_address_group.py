@@ -93,6 +93,8 @@ import shlex
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 
+from ansible.module_utils.fortios import fortios_argument_spec, fortios_required_if
+from ansible.module_utils.fortios import backup
 
 #check for pyFG lib
 try:
@@ -123,6 +125,9 @@ def main():
         member      = dict(required=True, type='str'),
         comment     = dict(type='str'),
     )
+
+    #merge global argument_spec from module_utils/fortios.py 
+    argument_spec.update(fortios_argument_spec)
 
     #decalre module
     module = AnsibleModule(
@@ -180,15 +185,19 @@ def main():
         if module.params['member'] in group_members:
             group_members.remove(module.params['member'])
     else:
-        state = present
+        #state == present
         if module.params['member'] not in group_members:
             group_members.append(module.params['member'])
-
 
     #delete group if empty
     if len(group_members) == 0:
         f.candidate_config[path].del_block(module.params['name'])
     else:
+        #create addrgrp if not exist (when there is no address group)
+        if path not in f.candidate_config.to_text():
+            new_conf = FortiConfig(path,'config')
+            f.candidate_config[path] = new_conf
+
         #process changes
         new_grp = FortiConfig(module.params['name'], 'edit')
         new_grp.set_param('member', " ".join(group_members) )
