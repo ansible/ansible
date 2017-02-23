@@ -66,7 +66,7 @@ options:
         default: null
     imgtype:
         description:
-            - This specifies the firmware image type to be downloaded:
+            - This specifies the firmware image type to be downloaded
         required: true
         default: null
         choices: [all, boot, os, onie]
