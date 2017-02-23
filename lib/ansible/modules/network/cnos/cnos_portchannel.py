@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_portchannel
-short_description: Performs switch configuration and state management relating to port aggregation.
+short_description: Manage portchannel (port aggregation) configuration on devices running Lenovo CNOS
 description:
     - This module allows you to work with port aggregation related configurations. The operators
      used are overloaded to ensure control over switch port aggregation configurations. Apart
