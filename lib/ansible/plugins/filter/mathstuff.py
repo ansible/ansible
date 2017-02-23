@@ -22,8 +22,11 @@ __metaclass__ = type
 
 import math
 import collections
+import itertools
+
 from ansible import errors
 from ansible.module_utils import basic
+
 
 def unique(a):
     if isinstance(a,collections.Hashable):
@@ -117,7 +120,7 @@ class FilterModule(object):
     ''' Ansible math jinja2 filters '''
 
     def filters(self):
-        return {
+        filters = {
             # general math
             'min' : min,
             'max' : max,
@@ -134,8 +137,25 @@ class FilterModule(object):
             'symmetric_difference': symmetric_difference,
             'union': union,
 
+            # combinatorial
+            'permutations': itertools.permutations,
+            'combinations': itertools.combinations,
+
             # computer theory
             'human_readable' : human_readable,
             'human_to_bytes' : human_to_bytes,
 
         }
+
+        # py2 vs py3, reverse when py3 is predominant version
+        try:
+            filters['zip'] = itertools.izip
+            filters['zip_longest'] = itertools.izip_longest
+        except AttributeError:
+            try:
+                filters['zip'] = itertools.zip
+                filters['zip_longest'] = itertools.zip_longest
+            except:
+                pass
+
+        return filters

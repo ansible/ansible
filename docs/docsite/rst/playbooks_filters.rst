@@ -609,6 +609,41 @@ To get date object from string use the `to_datetime` filter, (new in version in 
     # get amount of seconds between two dates, default date format is %Y-%d-%m %H:%M:%S but you can pass your own one
     {{ (("2016-08-04 20:00:12"|to_datetime) - ("2015-10-06"|to_datetime('%Y-%d-%m'))).seconds  }}
 
+
+Combination Filters
+````````````````````
+
+.. versionadded:: 2.3
+
+This set of filters returns a list of combined lists.
+To get permutations of a list::
+
+    - name: give me largest permutations (order matters)
+      debug: msg="{{ [1,2,3,4,5]|permutations|list }}"
+
+    - name: give me permutations of sets of 3
+      debug: msg="{{ [1,2,3,4,5]|permutations(3)|list }}"
+
+Combinations always require a set size::
+
+    - name: give me combinations for sets of 2
+      debug: msg="{{ [1,2,3,4,5]|combinations(2)|list }}"
+
+
+To get a list combining the elements of other lists use ``zip``::
+
+    - name: give me list combo of 2 lists 
+      debug: msg="{{ [1,2,3,4,5]|zip(['a','b','c','d','e','f'])|list }}"
+
+    - name: give me shortest combo of 2 lists
+      debug: msg="{{ [1,2,3]|zip(['a','b','c','d','e','f'])|list }}"
+
+To always exhaust all list use ``zip_longest``::
+
+    - name: give me longest combo of 3 lists , fill with X
+      debug: msg="{{ [1,2,3]|zip_longest(['a','b','c','d','e','f'], [21, 22, 23], fillvalue='X')|list }}"
+
+
 Debugging Filters
 `````````````````
 
