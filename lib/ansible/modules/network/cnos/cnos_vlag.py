@@ -29,7 +29,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_vlag
-short_description: Performs vLAG switch configuration and state management.
+short_description: Manage VLAG resources and attributes on devices running Lenovo CNOS
 description:
     - This module allows you to work with virtual Link Aggregation Groups
      (vLAG) related configurations. The operators used are overloaded to ensure
