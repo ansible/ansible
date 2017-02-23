@@ -33,7 +33,8 @@ function Get-User($user) {
 function Get-UserFlag($user, $flag) {
     If ($user.UserFlags[0] -band $flag) {
         $true
-    } Else {
+    }
+    Else {
         $false
     }
 }
@@ -48,11 +49,11 @@ function Clear-UserFlag($user, $flag) {
 
 ########
 
+$params = Parse-Args $args;
+
 $result = @{
     changed = $false
-}
-
-$params = Parse-Args $args
+};
 
 $username = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $fullname = Get-AnsibleParam -obj $params -name "fullname" -type "str"
@@ -75,7 +76,8 @@ If ($account_locked -ne $null -and $account_locked) {
 If ($groups -ne $null) {
     If ($groups -is [System.String]) {
         [string[]]$groups = $groups.Split(",")
-    } ElseIf ($groups -isnot [System.Collections.IList]) {
+    }
+    ElseIf ($groups -isnot [System.Collections.IList]) {
         Fail-Json $result "groups must be a string or array"
     }
     $groups = $groups | ForEach { ([string]$_).Trim() } | Where { $_ }
@@ -96,7 +98,8 @@ If ($state -eq 'present') {
             }
             $user_obj.SetInfo()
             $result.changed = $true
-        } ElseIf (($password -ne $null) -and ($update_password -eq 'always')) {
+        }
+        ElseIf (($password -ne $null) -and ($update_password -eq 'always')) {
             [void][system.reflection.assembly]::LoadWithPartialName('System.DirectoryServices.AccountManagement')
             $host_name = [System.Net.Dns]::GetHostName()
             $pc = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalContext 'Machine', $host_name
@@ -104,7 +107,8 @@ If ($state -eq 'present') {
             # ValidateCredentials will fail if either of these are true- just force update...
             If($user_obj.AccountDisabled -or $user_obj.PasswordExpired) {
                 $password_match = $false
-            } Else {
+            }
+            Else {
                 $password_match = $pc.ValidateCredentials($username, $password)
             }
 
@@ -128,7 +132,8 @@ If ($state -eq 'present') {
         If (($password_never_expires -ne $null) -and ($password_never_expires -ne (Get-UserFlag $user_obj $ADS_UF_DONT_EXPIRE_PASSWD))) {
             If ($password_never_expires) {
                 Set-UserFlag $user_obj $ADS_UF_DONT_EXPIRE_PASSWD
-            } Else {
+            }
+            Else {
                 Clear-UserFlag $user_obj $ADS_UF_DONT_EXPIRE_PASSWD
             }
             $result.changed = $true
@@ -136,7 +141,8 @@ If ($state -eq 'present') {
         If (($user_cannot_change_password -ne $null) -and ($user_cannot_change_password -ne (Get-UserFlag $user_obj $ADS_UF_PASSWD_CANT_CHANGE))) {
             If ($user_cannot_change_password) {
                 Set-UserFlag $user_obj $ADS_UF_PASSWD_CANT_CHANGE
-            } Else {
+            }
+            Else {
                 Clear-UserFlag $user_obj $ADS_UF_PASSWD_CANT_CHANGE
             }
             $result.changed = $true
@@ -161,7 +167,8 @@ If ($state -eq 'present') {
                         If ($group_obj) {
                             $group_obj.Remove($user_obj.Path)
                             $result.changed = $true
-                        } Else {
+                        }
+                        Else {
                             Fail-Json $result "group '$grp' not found"
                         }
                     }
@@ -174,14 +181,16 @@ If ($state -eq 'present') {
                         If ($group_obj) {
                             $group_obj.Add($user_obj.Path)
                             $result.changed = $true
-                        } Else {
+                        }
+                        Else {
                             Fail-Json $result "group '$grp' not found"
                         }
                     }
                 }
             }
         }
-    } catch {
+    }
+    catch {
         Fail-Json $result $_.Exception.Message
     }
 }
@@ -194,7 +203,8 @@ ElseIf ($state -eq 'absent') {
             $result.changed = $true
             $user_obj = $null
         }
-    } catch {
+    }
+    catch {
         Fail-Json $result $_.Exception.Message
     }
 }
@@ -222,12 +232,14 @@ try {
         }
         $result.groups = $user_groups
         $result.state = "present"
-    } Else {
+    }
+    Else {
         $result.name = $username
         $result.msg = "User '$username' was not found"
         $result.state = "absent"
     }
-} catch {
+}
+catch {
     Fail-Json $result $_.Exception.Message
 }
 
