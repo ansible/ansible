@@ -54,6 +54,6 @@ options:
       - Specifies where to store backup files. Required if I(backup=yes).
   backup_filename:
     description:
-      - Specifies the backup filename. If ommited filename will be
+      - Specifies the backup filename. If omitted filename will be
         formated like HOST_config.YYYY-MM-DD@HH:MM:SS
 """

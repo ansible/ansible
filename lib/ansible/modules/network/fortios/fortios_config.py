@@ -32,7 +32,7 @@ version_added: "2.3"
 author: "Benjamin Jolivot (@bjolivot)"
 short_description: Manage fortios firewall config
 description:
-  - This module provide management of FortiOS Devices configuration.
+  - This module provides management of FortiOS Devices configuration.
 extends_documentation_fragment: fortios
 options:
   src:
