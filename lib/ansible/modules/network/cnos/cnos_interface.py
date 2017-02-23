@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_interface
-short_description: Performs switch interface configuration and state management for ethernet ports, loopback interfaces, VLANs, and the management interface.
+short_description: Manage interface configuration on devices running Lenovo CNOS
 description:
     - This module allows you to work with interface related configurations. The operators used are
      overloaded to ensure control over switch interface configurations. Apart from the regular device
