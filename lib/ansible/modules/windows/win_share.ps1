@@ -244,7 +244,8 @@ Try {
             $result.changed = $true
         }
     }
-} Catch {
+}
+Catch {
     Fail-Json $result "an error occurred when attempting to create share $name"
 }
 
