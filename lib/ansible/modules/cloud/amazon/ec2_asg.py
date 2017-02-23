@@ -472,7 +472,6 @@ def wait_for_target_group(asg_connection, module, group_name):
         wait_timeout = time.time() + wait_timeout
         healthy_instances = tg_healthy(asg_connection, elbv2_connection, module, group_name)
 
-        # module.fail_json(msg=healthy_instances)
         while healthy_instances < as_group.get('MinSize') and wait_timeout > time.time():
             healthy_instances = tg_healthy(asg_connection, elbv2_connection, module, group_name)
             log.debug("Target Group thinks {0} instances are healthy.".format(healthy_instances))
@@ -504,6 +503,7 @@ def suspend_processes(ec2_connection, as_group, module):
 
     return True
 
+@AWSRetry.backoff(tries=3, delay=0.1)
 def create_autoscaling_group(connection, module):
     group_name = module.params.get('name')
     load_balancers = module.params['load_balancers']
@@ -554,6 +554,8 @@ def create_autoscaling_group(connection, module):
             availability_zones = module.params['availability_zones'] = [zone.name for zone in ec2_connection.get_all_zones()]
         enforce_required_arguments(module)
         launch_configs = connection.describe_launch_configurations(LaunchConfigurationNames=[launch_config_name])
+        if len(launch_configs) == 0:
+            module.fail_json(msg="No launch config found with name %s" % launch_config_name)
         ag = dict(
             AutoScalingGroupName=group_name,
             AvailabilityZones=availability_zones,
@@ -576,9 +578,12 @@ def create_autoscaling_group(connection, module):
 
         try:
             connection.create_auto_scaling_group(**ag)
-            ag = connection.describe_auto_scaling_groups(
-                AutoScalingGroupNames=[group_name])['AutoScalingGroups'][0]
-            suspend_processes(connection, ag, module)
+
+            all_ag = connection.describe_auto_scaling_groups(AutoScalingGroupNames=[group_name])['AutoScalingGroups']
+            if len(all_ag) == 0:
+                module.fail_json(msg="No auto scaling group found with the name %s" % group_name)
+            as_group = all_ag[0]
+            suspend_processes(connection, as_group, module)
             if wait_for_instances:
                 wait_for_new_inst(module, connection, group_name, wait_timeout, desired_capacity, 'viable_instances')
                 if load_balancers:
@@ -594,8 +599,6 @@ def create_autoscaling_group(connection, module):
                         notification_types,
                     ]
                 )
-            as_group = connection.describe_auto_scaling_groups(
-                AutoScalingGroupNames=[group_name])['AutoScalingGroups'][0]
             asg_properties = get_properties(as_group)
             changed = True
             return changed, asg_properties
@@ -615,12 +618,12 @@ def create_autoscaling_group(connection, module):
             dead_tags = []
             have_tag_keyvals = [x['Key'] for x in have_tags]
             want_tag_keyvals = [x['Key'] for x in want_tags]
-            for have_tag_keyval in have_tag_keyvals:
-                if have_tag_keyval not in want_tag_keyvals:
-                    changed = True
-                    dead_tags.append(dict(ResourceId=as_group['AutoScalingGroupName'],
-                                          ResourceType='auto-scaling-group', Key=have_tag_keyval))
-                    have_tags = [have_tag for have_tag in have_tags if have_tag['Key'] != have_tag_keyval]
+
+            for dead_tag in set(have_tag_keyvals).difference(want_tag_keyvals):
+                changed = True
+                dead_tags.append(dict(ResourceId=as_group['AutoScalingGroupName'],
+                                      ResourceType='auto-scaling-group', Key=dead_tag))
+                have_tags = [have_tag for have_tag in have_tags if have_tag['Key'] != dead_tag]
             if dead_tags:
                 connection.delete_tags(Tags=dead_tags)
 
@@ -648,10 +651,8 @@ def create_autoscaling_group(connection, module):
             if not load_balancers:
                 load_balancers = list()
             wanted_elbs = set(load_balancers)
-            # module.fail_json(msg=list(wanted_elbs))
 
             has_elbs = set(as_group['LoadBalancerNames'])
-            # module.fail_json(msg=wanted_elbs)
             # check if all requested are already existing
             if has_elbs.issuperset(wanted_elbs):
                 # if wanted contains less than existing, then we need to delete some
@@ -791,7 +792,7 @@ def delete_autoscaling_group(connection, module):
     return False
 
 def get_chunks(l, n):
-    for i in xrange(0, len(l), n):
+    for i in range(0, len(l), n):
         yield l[i:i + n]
 
 
