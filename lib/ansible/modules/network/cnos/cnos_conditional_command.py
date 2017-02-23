@@ -29,7 +29,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_conditional_command
-short_description: This module executes a single CNOS command with respect to conditions specified in the inventory.
+short_description: Execute a single command based on condition on devices running Lenovo CNOS
 description:
    - This module allows you to modify the running configuration of a switch. It provides a way to
     execute a single CNOS command on a network device by evaluating the current running configuration
