@@ -113,7 +113,7 @@ options:
       - Specifies IPS Sensor profile name.
   application_list:
     description:
-      - Specifies Application Control name.        
+      - Specifies Application Control name.
   comment:
     description:
       - free text to describe policy.
@@ -198,7 +198,6 @@ def main():
         webfilter_profile         = dict(type='str'),
         ips_sensor                = dict(type='str'),
         application_list          = dict(type='str'),
-        
     )
 
     #merge global required_if & argument_spec from module_utils/fortios.py
