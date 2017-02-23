@@ -148,6 +148,7 @@ from functools import partial
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.eos import get_config, load_config
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.eos import eos_argument_spec, check_args
 
 def validate_privilege(value, module):
     if not 1 <= value <= 15:
@@ -314,13 +315,20 @@ def main():
         state=dict(default='present', choices=['present', 'absent'])
     )
 
+    argument_spec.update(eos_argument_spec)
+
     mutually_exclusive = [('username', 'users')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
+    warnings = list()
+    check_args(module, warnings)
+
     result = {'changed': False}
+    if warnings:
+        result['warnings'] = warnings
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
