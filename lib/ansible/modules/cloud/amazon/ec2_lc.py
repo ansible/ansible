@@ -139,6 +139,7 @@ EXAMPLES = '''
       ephemeral: ephemeral0
 
 '''
+import traceback
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
@@ -196,10 +197,10 @@ def create_launch_config(connection, module):
 
     if user_data_path:
         try:
-            user_data_file = open(user_data_path, 'r')
-            user_data = user_data_file.read()
+            with open(user_data_path, 'r') as user_data_file:
+                user_data = user_data_file.read()
         except IOError as e:
-            module.fail_json(msg=str(e))
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
 
     if volumes:
         for volume in volumes:
