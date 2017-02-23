@@ -255,7 +255,7 @@ def load_config(module):
 
     kwargs = {
         'confirm': module.params['confirm'] is not None,
-        'confirm_timeout': module.params['confirm_timeout'],
+        'confirm_timeout': module.params['confirm'],
         'comment': module.params['comment'],
         'commit': not module.check_mode,
     }
