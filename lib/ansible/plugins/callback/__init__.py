@@ -119,9 +119,9 @@ class CallbackBase:
                 msg += "To see the full traceback, use -vvv. The error was: %s" % error
             else:
                 msg = "The full traceback is:\n" + result['exception']
+                del result['exception']
 
             self._display.display(msg, color=C.COLOR_ERROR)
-            del result['exception']
 
     def _get_diff(self, difflist):
 
