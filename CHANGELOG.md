@@ -96,6 +96,8 @@ Ansible Changes By Release
 - foreman:
   * foreman
   * katello
+- fortios
+  * fortios_config
 - gconftool2
 - google
   * gce_eip
@@ -3115,4 +3117,3 @@ in kickstarts
 ## 0.0.2 and 0.0.1
 
 * Initial stages of project
-
