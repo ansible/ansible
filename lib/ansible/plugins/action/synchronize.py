@@ -296,7 +296,7 @@ class ActionModule(ActionBase):
             self._override_module_replaced_vars(task_vars)
 
         # SWITCH SRC AND DEST HOST PER MODE
-        if _tmp_args.get('mode', 'push') == 'pull':
+        if _tmp_args.get('direction', 'push') == 'pull':
             (dest_host, src_host) = (src_host, dest_host)
 
         # MUNGE SRC AND DEST PER REMOTE_HOST INFO
@@ -327,7 +327,7 @@ class ActionModule(ActionBase):
                     user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
 
             # use the mode to define src and dest's url
-            if _tmp_args.get('mode', 'push') == 'pull':
+            if _tmp_args.get('direction', 'push') == 'pull':
                 # src is a remote path: <user>@<host>, dest is a local path
                 src = self._process_remote(_tmp_args, src_host, src, user, inv_port in localhost_ports)
                 dest = self._process_origin(dest_host, dest, user)
