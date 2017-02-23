@@ -22,10 +22,7 @@ import sys
 import yaml
 import argparse
 from functools import reduce
-try:
-    import urllib2 as urllib
-except ImportError:
-    import urllib.request as urllib
+from ansible.module_utils.urls import open_url
 try:
     import json
 except ImportError:
@@ -167,7 +164,7 @@ class NetboxAsInventory(object):
         else:
             data_source = self.api_url
 
-        json_data = urllib.urlopen(data_source).read().decode('utf8')
+        json_data = open_url(data_source).read()
         hosts_list = json.loads(json_data)
         return hosts_list
 
