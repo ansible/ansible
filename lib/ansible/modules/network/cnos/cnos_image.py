@@ -29,7 +29,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_image
-short_description: Performs switch firmware upgrade or download on a switch from a remote server using FTP, SFTP, TFTP, or SCP.
+short_description: Perform firmware upgrade/download from a remote server on devices running Lenovo CNOS
 description:
     - This module allows you to work with switch firmware images. It provides a way to download a firmware image
      to a network device from a remote server using FTP, SFTP, TFTP, or SCP. The first step is to create a directory
