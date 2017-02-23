@@ -79,7 +79,8 @@ options:
     description:
       - "Specifies policy service(s), could be a list (ex: ['MAIL','DNS'])."
     required: true
-    aliases: services
+    aliases:
+      - services
   service_negate:
     description:
       - Negate policy service(s) defined in service value.
