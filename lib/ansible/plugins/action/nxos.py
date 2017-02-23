@@ -99,7 +99,9 @@ class ActionModule(_ActionModule):
             self._task.args['provider'] = provider_arg
 
         # make sure a transport value is set in args
-        if self._task.args.get('transport') is None and self._task.args.get('provider').get('transport') is None:
+        transport = self._task.args.get('transport')
+        provider_transport = (self._task.args.get('provider') or {}).get('transport')
+        if all((transport is None, provider_transport is None)):
             self._task.args['transport'] = 'cli'
 
         return super(ActionModule, self).run(tmp, task_vars)
