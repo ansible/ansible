@@ -87,6 +87,7 @@ class ActionModule(_ActionModule):
 
         else:
             provider_arg = {
+                'transport': 'nxapi',
                 'host': self._play_context.remote_addr,
                 'port': provider.get('port'),
                 'username': provider.get('username') or self._play_context.connection_user,
