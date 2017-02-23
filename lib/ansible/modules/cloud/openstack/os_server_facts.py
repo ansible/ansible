@@ -44,7 +44,7 @@ requirements:
 options:
    server:
      description:
-       - restrict results to servers with names matching
+       - restrict results to servers with names or UUID matching
          this glob expression (e.g., C<web*>).
      required: false
      default: None
