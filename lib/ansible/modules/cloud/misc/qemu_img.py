@@ -150,9 +150,9 @@ def main():
         if not os.path.exists(dest):
             if not module.check_mode:
                 if not img_options:
-                    module.run_command('%s create -f %s "%s" %s' % (qemu_img, img_format, dest, size), check_rc=True)
+                    rc, stdout, stderr = module.run_command('%s create -f %s "%s" %s' % (qemu_img, img_format, dest, size), check_rc=True)
                 else:
-                    module.run_command('%s create -f %s -o "%s" "%s" %s' % (qemu_img, img_format, img_options, dest, size), check_rc=True)
+                    rc, stdout, stderr = module.run_command('%s create -f %s -o "%s" "%s" %s' % (qemu_img, img_format, img_options, dest, size), check_rc=True)
             result['changed'] = True
         else:
             try:
@@ -182,7 +182,7 @@ def main():
                 newsize = size - current_size
                 if(newsize > 0):
                     if not module.check_mode:
-                        module.run_command('%s resize "%s" %s' % (qemu_img, dest, size), check_rc=True)
+                        rc, stdout, stderr = module.run_command('%s resize "%s" %s' % (qemu_img, dest, size), check_rc=True)
                     result['changed'] = True
             if(shrink):
                 if(img_format == 'qcow2'):
@@ -193,7 +193,7 @@ def main():
                     newsize = current_size - size
                 if(newsize > 0):
                     if not module.check_mode:
-                        module.run_command('%s resize "%s" %s' % (qemu_img, dest, size), check_rc=True)
+                        rc, stdout, stderr = module.run_command('%s resize "%s" %s' % (qemu_img, dest, size), check_rc=True)
                     result['changed'] = True
 
     if state == 'absent':
