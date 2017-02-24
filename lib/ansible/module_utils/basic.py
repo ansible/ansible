@@ -902,10 +902,11 @@ class AnsibleModule(object):
         context = ret[1].split(':', 3)
         return context
 
-    def user_and_group(self, filename):
-        filename = os.path.expanduser(os.path.expandvars(filename))
-        b_filename = to_bytes(filename, errors='surrogate_or_strict')
-        st = os.lstat(b_filename)
+    def user_and_group(self, path, expand=True):
+        b_path = to_bytes(path, errors='surrogate_then_strict')
+        if expand:
+            b_path = os.path.expanduser(os.path.expandvars(b_path))
+        st = os.lstat(b_path)
         uid = st.st_uid
         gid = st.st_gid
         return (uid, gid)
@@ -987,12 +988,14 @@ class AnsibleModule(object):
             changed = True
         return changed
 
-    def set_owner_if_different(self, path, owner, changed, diff=None):
-        path = os.path.expanduser(os.path.expandvars(path))
-        b_path = to_bytes(path, errors='surrogate_or_strict')
+    def set_owner_if_different(self, path, owner, changed, diff=None, expand=True):
+        b_path = to_bytes(path, errors='surrogate_then_strict')
+        if expand:
+            b_path = os.path.expanduser(os.path.expandvars(b_path))
+        path = to_text(b_path, errors='surrogate_then_strict')
         if owner is None:
             return changed
-        orig_uid, orig_gid = self.user_and_group(path)
+        orig_uid, orig_gid = self.user_and_group(path, expand)
         try:
             uid = int(owner)
         except ValueError:
@@ -1019,12 +1022,14 @@ class AnsibleModule(object):
             changed = True
         return changed
 
-    def set_group_if_different(self, path, group, changed, diff=None):
-        path = os.path.expanduser(os.path.expandvars(path))
-        b_path = to_bytes(path, errors='surrogate_or_strict')
+    def set_group_if_different(self, path, group, changed, diff=None, expand=True):
+        b_path = to_bytes(path, errors='surrogate_then_strict')
+        if expand:
+            b_path = os.path.expanduser(os.path.expandvars(b_path))
+        path = to_text(b_path, errors='surrogate_then_strict')
         if group is None:
             return changed
-        orig_uid, orig_gid = self.user_and_group(b_path)
+        orig_uid, orig_gid = self.user_and_group(b_path, expand)
         try:
             gid = int(group)
         except ValueError:
@@ -1051,9 +1056,11 @@ class AnsibleModule(object):
             changed = True
         return changed
 
-    def set_mode_if_different(self, path, mode, changed, diff=None):
-        b_path = to_bytes(path, errors='surrogate_or_strict')
-        b_path = os.path.expanduser(os.path.expandvars(b_path))
+    def set_mode_if_different(self, path, mode, changed, diff=None, expand=True):
+        b_path = to_bytes(path, errors='surrogate_then_strict')
+        if expand:
+            b_path = os.path.expanduser(os.path.expandvars(b_path))
+        path = to_text(b_path, errors='surrogate_then_strict')
         path_stat = os.lstat(b_path)
 
         if mode is None:
@@ -1125,14 +1132,15 @@ class AnsibleModule(object):
                 changed = True
         return changed
 
-    def set_attributes_if_different(self, path, attributes, changed, diff=None):
+    def set_attributes_if_different(self, path, attributes, changed, diff=None, expand=True):
 
         if attributes is None:
             return changed
 
-        b_path = to_bytes(path, errors='surrogate_or_strict')
-        b_path = os.path.expanduser(os.path.expandvars(b_path))
-        existing = self.get_file_attributes(b_path)
+        b_path = to_bytes(path, errors='surrogate_then_strict')
+        if expand:
+            b_path = os.path.expanduser(os.path.expandvars(b_path))
+        path = to_text(b_path, errors='surrogate_then_strict')
 
         if existing.get('attr_flags','') != attributes:
             attrcmd = self.get_bin_path('chattr')
@@ -1273,30 +1281,30 @@ class AnsibleModule(object):
         or_reduce = lambda mode, perm: mode | user_perms_to_modes[user][perm]
         return reduce(or_reduce, perms, 0)
 
-    def set_fs_attributes_if_different(self, file_args, changed, diff=None):
+    def set_fs_attributes_if_different(self, file_args, changed, diff=None, expand=True):
         # set modes owners and context as needed
         changed = self.set_context_if_different(
             file_args['path'], file_args['secontext'], changed, diff
         )
         changed = self.set_owner_if_different(
-            file_args['path'], file_args['owner'], changed, diff
+            file_args['path'], file_args['owner'], changed, diff, expand
         )
         changed = self.set_group_if_different(
-            file_args['path'], file_args['group'], changed, diff
+            file_args['path'], file_args['group'], changed, diff, expand
         )
         changed = self.set_mode_if_different(
-            file_args['path'], file_args['mode'], changed, diff
+            file_args['path'], file_args['mode'], changed, diff, expand
         )
         changed = self.set_attributes_if_different(
-            file_args['path'], file_args['attributes'], changed, diff
+            file_args['path'], file_args['attributes'], changed, diff, expand
         )
         return changed
 
-    def set_directory_attributes_if_different(self, file_args, changed, diff=None):
-        return self.set_fs_attributes_if_different(file_args, changed, diff)
+    def set_directory_attributes_if_different(self, file_args, changed, diff=None, expand=True):
+        return self.set_fs_attributes_if_different(file_args, changed, diff, expand)
 
-    def set_file_attributes_if_different(self, file_args, changed, diff=None):
-        return self.set_fs_attributes_if_different(file_args, changed, diff)
+    def set_file_attributes_if_different(self, file_args, changed, diff=None, expand=True):
+        return self.set_fs_attributes_if_different(file_args, changed, diff, expand)
 
     def add_path_info(self, kwargs):
         '''

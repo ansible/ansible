@@ -865,10 +865,10 @@ def main():
         for filename in handler.files_in_archive:
             file_args['path'] = os.path.join(dest, filename)
             try:
-                res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
+                res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
             except (IOError, OSError):
                 e = get_exception()
-                module.fail_json(msg="Unexpected error when accessing exploded file: %s" % str(e), **res_args)
+                module.fail_json(msg="Unexpected error when accessing exploded file: %s" % e, **res_args)
 
     if module.params['list_files']:
         res_args['files'] = handler.files_in_archive
