@@ -144,7 +144,6 @@ def coverage_command(self_dir, version):
     args = [
         find_executable(executable),
         'run',
-        '--append',
         '--rcfile',
         os.path.join(self_dir, '.coveragerc'),
     ]
