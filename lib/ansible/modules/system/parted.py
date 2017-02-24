@@ -97,7 +97,6 @@ options:
      - Sets the name for the partition number (GPT, Mac, MIPS and PC98 only).
   flags:
     description: A list of the flags that has to be set on the partition.
-    default: null
   state:
     description:
      - If to create or delete a partition. If not present the module will return
@@ -125,20 +124,26 @@ partition_info:
           "logical_block": 512,
           "model": "VMware Virtual disk",
           "physical_block": 512,
-          "size": 5242880,
-          "table": "msdos"
+          "size": 5.0,
+          "table": "msdos",
+          "unit": "gib"
         },
         "partitions": [{
-            "begin": 1024,
-            "end": 1048576,
-            "flags": [
-                "lvm"
-            ],
-            "fstype": null,
-            "num": 1,
-            "size": 1047552
-        }, ...],
-        "script": ""
+          "begin": 0.0,
+          "end": 1.0,
+          "flags": ["boot", "lvm"],
+          "fstype": null,
+          "num": 1,
+          "size": 1.0
+        }, {
+          "begin": 1.0,
+          "end": 5.0,
+          "flags": [],
+          "fstype": null,
+          "num": 2,
+          "size": 4.0
+        }],
+        "script": "unit 'GiB' print"
       }
 '''
 
@@ -232,9 +237,9 @@ def parse_partition_info(output, unit):
 
         parts.append({
             'num':    int(part_params[0]),
-            'begin':  parse_unit(part_params[1], unit),
-            'end':    parse_unit(part_params[2], unit),
-            'size':   parse_unit(part_params[3], unit),
+            'begin':  parse_unit(part_params[1], unit)[0],
+            'end':    parse_unit(part_params[2], unit)[0],
+            'size':   parse_unit(part_params[3], unit)[0],
             'fstype': part_params[4] or None,
             'flags':  flags,
         })
@@ -269,13 +274,11 @@ def format_disk_size(size_bytes, unit, sector_size):
             unit = units_si[index]
 
     # Find the appropriate multiplier
-    multiplier = 1
+    multiplier = 1.0
     if unit in units_si:
         multiplier = 1000.0 ** units_si.index(unit)
     elif unit in units_iec:
         multiplier = 1024.0 ** units_iec.index(unit)
-    else:
-        module.fail_json(msg="No valid size unit specified.")
 
     output = size_bytes / multiplier * (1 + 1E-16)
 
@@ -302,7 +305,7 @@ def read_record(file_path, default=None):
             return f.readline().strip()
         finally:
             f.close()
-    except:
+    except IOError:
         return default
 
 
@@ -320,6 +323,7 @@ def get_unlabeled_device_info(device, unit):
     logic_block = int(read_record(base + "/queue/logical_block_size", 0))
     phys_block  = int(read_record(base + "/queue/physical_block_size", 0))
     size_bytes  = int(read_record(base + "/size", 0)) * logic_block
+
     size, unit  = format_disk_size(size_bytes, unit, logic_block)
 
     return {
@@ -359,8 +363,7 @@ def get_device_info(device, unit):
              rc=rc, out=out, err=err
         )
 
-    out = parse_partition_info(out, unit)
-    return out
+    return parse_partition_info(out, unit)
 
 
 def check_parted_label(device):
@@ -414,7 +417,7 @@ def parted(script, device, align):
     """
     global module
 
-    if script:
+    if script and not module.check_mode:
         command = "parted -s -m -a {0} {1} -- {2}".format(align, device, script)
         rc, out, err = module.run_command(command)
 
@@ -451,7 +454,9 @@ def parse_unit(size_str, unit, ceil=True):
     if len(matches.groups()) == 2:
         unit = matches.group(2).lower()
 
-    size = int(math.ceil(size) if ceil else math.floor(size))
+    size = math.floor(size)
+    if ceil:
+        math.ceil(size)
 
     return size, unit
 
@@ -579,14 +584,16 @@ def main():
 
             current_parts = get_device_info(device, unit)['partitions']
 
-        if part_exists(current_parts, 'num', number):
+        if part_exists(current_parts, 'num', number) or module.check_mode:
             # Assign name to the the partition
             if name and name in ['gpt', 'mac', 'mips', 'pc98']:
                 script += "name {0} {1} ".format(number, name)
 
             # Manage flags
             if flags:
-                partition = [p for p in current_parts if p['num'] == number][0]
+                partition = {'flags': []}
+                if not module.check_mode:
+                    partition = [p for p in current_parts if p['num'] == number][0]
 
                 # Compute only the changes in flags status
                 flags_off = list(set(partition['flags']) - set(flags))
@@ -610,11 +617,14 @@ def main():
 
     elif state and state == 'absent':
         # Remove the partition
-        if part_exists(current_parts, 'num', number):
+        if part_exists(current_parts, 'num', number) or module.check_mode:
             script = "rm {0} ".format(number)
             output_script += script
             changed = True
             parted(script, device, align)
+
+    elif not state:
+        output_script = "unit '{0}' print ".format(unit)
 
     # Final status of the device
     final_device_status = get_device_info(device, unit)
@@ -624,6 +634,7 @@ def main():
         partitions=final_device_status['partitions'],
         script=output_script.strip()
     )
+
 
 module = None
 
