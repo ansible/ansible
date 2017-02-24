@@ -34,7 +34,7 @@ from ansible.module_utils.cloud import CloudRetry
 
 try:
     import boto
-    import boto.ec2 #boto does weird import stuff
+    import boto.ec2  # boto does weird import stuff
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -46,13 +46,8 @@ try:
 except:
     HAS_BOTO3 = False
 
-try:
-    from distutils.version import LooseVersion
-    HAS_LOOSE_VERSION = True
-except:
-    HAS_LOOSE_VERSION = False
-
 from ansible.module_utils.six import string_types, binary_type, text_type
+
 
 class AnsibleAWSError(Exception):
     pass
@@ -95,7 +90,9 @@ def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None
     try:
         return _boto3_conn(conn_type=conn_type, resource=resource, region=region, endpoint=endpoint, **params)
     except ValueError:
-        module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type parameter in the boto3_conn function call')
+        module.fail_json(msg='There is an issue in the code of the module. You must specify either both, '
+                         'resource or client to the conn_type parameter in the boto3_conn function call')
+
 
 def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **params):
     profile = params.pop('profile_name', None)
@@ -118,6 +115,7 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
         return client, resource
 
 boto3_inventory_conn = _boto3_conn
+
 
 def aws_common_argument_spec():
     return dict(
@@ -257,7 +255,9 @@ def connect_to_aws(aws_module, region, **params):
     conn = aws_module.connect_to_region(region, **params)
     if not conn:
         if region not in [aws_module_region.name for aws_module_region in aws_module.regions()]:
-            raise AnsibleAWSError("Region %s does not seem to be available for aws module %s. If the region definitely exists, you may need to upgrade boto or extend with endpoints_path" % (region, aws_module.__name__))
+            raise AnsibleAWSError("Region %s does not seem to be available for aws module %s. "
+                                  "If the region definitely exists, you may need to upgrade boto "
+                                  "or extend with endpoints_path" % (region, aws_module.__name__))
         else:
             raise AnsibleAWSError("Unknown problem connecting to region %s for aws module %s." % (region, aws_module.__name__))
     if params.get('profile_name'):
@@ -287,6 +287,7 @@ def ec2_connect(module):
         module.fail_json(msg="Either region or ec2_url must be specified")
 
     return ec2
+
 
 def paging(pause=0, marker_property='marker'):
     """ Adds paging to boto retrieval functions that support a 'marker'
@@ -327,7 +328,6 @@ def camel_dict_to_snake_dict(camel_dict):
 
         return all_cap_re.sub(r'\1_\2', s1).lower()
 
-
     def value_is_list(camel_list):
 
         checked_list = []
@@ -340,7 +340,6 @@ def camel_dict_to_snake_dict(camel_dict):
                 checked_list.append(item)
 
         return checked_list
-
 
     snake_dict = {}
     for k, v in camel_dict.items():
@@ -486,7 +485,6 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
         else:
             return sg.name
 
-
     def get_sg_id(sg, boto3):
 
         if boto3:
@@ -620,3 +618,39 @@ def map_complex_type(complex_type, type_map):
     elif type_map:
         return globals()['__builtins__'][type_map](complex_type)
     return new_type
+
+
+def update_aws_tags(connection, resource_id, current_tags, desired_tags):
+
+    """ Update the tags associated with resource_id from current_tags
+    to desired_tags
+    Args:
+        connection: boto/boto3 connection
+        resource_id: AWS resource identifier to update
+        current_tags: list of existing tags in ansible dict format
+        desired_tags: list of desired tags in ansible dict format
+    Returns:
+        Bool: whether any changes were made
+    """
+
+    changed = False
+    current_keys = set(current_tags.keys())
+    desired_keys = set(desired_tags.keys())
+    to_add = desired_keys - current_keys
+    to_delete = current_keys - desired_keys
+
+    for k in desired_keys & current_keys:
+        if current_tags[k] != desired_tags[k]:
+            to_delete.append(k)
+            to_add.append(k)
+
+    if to_delete:
+        connection.delete_tags(Resources=[resource_id],
+                               Tags=[{'Key': k} for k in to_delete])
+        changed = True
+    if to_add:
+        connection.create_tags(Resources=[resource_id],
+                               Tags=[{'Key': k, 'Value': desired_tags[k]}
+                                     for k in to_add])
+        changed = True
+    return changed
