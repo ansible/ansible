@@ -393,6 +393,14 @@ class ModuleValidator(Validator):
 
         return linenos
 
+    def _get_first_callable(self):
+        linenos = []
+        for child in self.ast.body:
+            if isinstance(child, (ast.FunctionDef, ast.ClassDef)):
+                linenos.append(child.lineno)
+
+        return min(linenos)
+
     def _find_main_call(self):
         lineno = False
         if_bodies = []
@@ -445,38 +453,58 @@ class ModuleValidator(Validator):
                     'Found Try/Except block without HAS_ assginment'
                 ))
 
-    def _ensure_imports_below_docs(self, doc_info):
-        doc_lines = [doc_info[key]['lineno'] for key in doc_info]
+    def _ensure_imports_below_docs(self, doc_info, first_callable):
+        min_doc_line = min(
+            [doc_info[key]['lineno'] for key in doc_info if doc_info[key]['lineno']]
+        )
+        max_doc_line = max(
+            [doc_info[key]['end_lineno'] for key in doc_info if doc_info[key]['end_lineno']]
+        )
+
+        import_lines = []
 
         for child in self.ast.body:
             if isinstance(child, (ast.Import, ast.ImportFrom)):
-                for lineno in doc_lines:
-                    if child.lineno < lineno:
-                        self.errors.append((
-                            106,
-                            ('Import found before documentation variables. '
-                             'All imports must appear below '
-                             'DOCUMENTATION/EXAMPLES/RETURN/ANSIBLE_METADATA. '
-                             'line %d' % (child.lineno,))
-                        ))
-                        break
+                import_lines.append(child.lineno)
+                if child.lineno < min_doc_line:
+                    self.errors.append((
+                        106,
+                        ('Import found before documentation variables. '
+                         'All imports must appear below '
+                         'DOCUMENTATION/EXAMPLES/RETURN/ANSIBLE_METADATA. '
+                         'line %d' % (child.lineno,))
+                    ))
+                    break
             elif isinstance(child, ast.TryExcept):
                 bodies = child.body
                 for handler in child.handlers:
                     bodies.extend(handler.body)
                 for grandchild in bodies:
                     if isinstance(grandchild, (ast.Import, ast.ImportFrom)):
-                        for lineno in doc_lines:
-                            if child.lineno < lineno:
-                                self.errors.append((
-                                    106,
-                                    ('Import found before documentation '
-                                     'variables. All imports must appear below '
-                                     'DOCUMENTATION/EXAMPLES/RETURN/'
-                                     'ANSIBLE_METADATA. line %d' %
-                                     (child.lineno,))
-                                ))
-                                break
+                        import_lines.append(grandchild.lineno)
+                        if grandchild.lineno < min_doc_line:
+                            self.errors.append((
+                                106,
+                                ('Import found before documentation '
+                                 'variables. All imports must appear below '
+                                 'DOCUMENTATION/EXAMPLES/RETURN/'
+                                 'ANSIBLE_METADATA. line %d' %
+                                 (child.lineno,))
+                            ))
+                            break
+
+        for import_line in import_lines:
+            if not (max_doc_line < import_line < first_callable):
+                msg = (
+                    107,
+                    ('Imports should be directly below DOCUMENTATION/EXAMPLES/'
+                     'RETURN/ANSIBLE_METADATA. line %d' % import_line)
+                )
+                if self._is_new_module():
+                    self.errors.append(msg)
+                else:
+                    self.warnings.append(msg)
+
 
     def _find_ps_replacers(self):
         if 'WANT_JSON' not in self.text:
@@ -496,19 +524,23 @@ class ModuleValidator(Validator):
         docs = {
             'DOCUMENTATION': {
                 'value': None,
-                'lineno': 0
+                'lineno': 0,
+                'end_lineno': 0,
             },
             'EXAMPLES': {
                 'value': None,
-                'lineno': 0
+                'lineno': 0,
+                'end_lineno': 0,
             },
             'RETURN': {
                 'value': None,
-                'lineno': 0
+                'lineno': 0,
+                'end_lineno': 0,
             },
             'ANSIBLE_METADATA': {
                 'value': None,
-                'lineno': 0
+                'lineno': 0,
+                'end_lineno': 0,
             }
         }
         for child in self.ast.body:
@@ -517,15 +549,32 @@ class ModuleValidator(Validator):
                     if grandchild.id == 'DOCUMENTATION':
                         docs['DOCUMENTATION']['value'] = child.value.s
                         docs['DOCUMENTATION']['lineno'] = child.lineno
+                        docs['DOCUMENTATION']['end_lineno'] = (
+                            child.lineno + len(child.value.s.splitlines())
+                        )
                     elif grandchild.id == 'EXAMPLES':
-                        docs['EXAMPLES']['value'] = child.value.s[1:]
+                        docs['EXAMPLES']['value'] = child.value.s
                         docs['EXAMPLES']['lineno'] = child.lineno
+                        docs['EXAMPLES']['end_lineno'] = (
+                            child.lineno + len(child.value.s.splitlines())
+                        )
                     elif grandchild.id == 'RETURN':
                         docs['RETURN']['value'] = child.value.s
                         docs['RETURN']['lineno'] = child.lineno
+                        docs['RETURN']['end_lineno'] = (
+                            child.lineno + len(child.value.s.splitlines())
+                        )
                     elif grandchild.id == 'ANSIBLE_METADATA':
                         docs['ANSIBLE_METADATA']['value'] = child.value
                         docs['ANSIBLE_METADATA']['lineno'] = child.lineno
+                        try:
+                            docs['ANSIBLE_METADATA']['end_lineno'] = (
+                                child.lineno + len(child.value.s.splitlines())
+                            )
+                        except AttributeError:
+                            docs['ANSIBLE_METADATA']['end_lineno'] = (
+                                child.value.values[-1].lineno
+                            )
 
         return docs
 
@@ -796,7 +845,8 @@ class ModuleValidator(Validator):
             self._find_module_utils(main)
             self._find_has_import()
             self._check_for_tabs()
-            self._ensure_imports_below_docs(doc_info)
+            first_callable = self._get_first_callable()
+            self._ensure_imports_below_docs(doc_info, first_callable)
 
         if self._powershell_module():
             self._find_ps_replacers()
