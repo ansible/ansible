@@ -19,31 +19,30 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args;
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-$result = New-Object psobject @{
-    win_get_url = New-Object psobject
+$url = Get-AnsibleParam -obj $params -name "url" -type "str" -failifempty $true
+$dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
+$skip_certificate_validation = Get-AnsibleParam -obj $params -name "skip_certificate_validation" -type "bool" -default $false
+$username = Get-AnsibleParam -obj $params -name "username" -type "str"
+$password = Get-AnsibleParam -obj $params -name "password" -type "str"
+$proxy_url = Get-AnsibleParam -obj $params -name "proxy_url" -type "str"
+$proxy_username = Get-AnsibleParam -obj $params -name "proxy_username" -type "str"
+$proxy_password = Get-AnsibleParam -obj $params -name "proxy_password" -type "str"
+$force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $true
+
+$result = @{
     changed = $false
+    win_get_url = @{
+        dest = $dest
+        url = $url
+    }
 }
-
-$url = Get-AnsibleParam $params -name "url" -failifempty $true
-$dest = Get-AnsibleParam $params -name "dest" -type "path" -failifempty $true
-
-$skip_certificate_validation = Get-AnsibleParam $params -name "skip_certificate_validation" -default $false
-$skip_certificate_validation = $skip_certificate_validation | ConvertTo-Bool
-$username = Get-AnsibleParam $params "username"
-$password = Get-AnsibleParam $params "password"
-
-$proxy_url = Get-AnsibleParam $params "proxy_url"
-$proxy_username = Get-AnsibleParam $params "proxy_username"
-$proxy_password = Get-AnsibleParam $params "proxy_password"
 
 if($skip_certificate_validation){
-  [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
+    [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
 }
-
-$force = Get-AnsibleParam -obj $params -name "force" -default $true
-$force = $force | ConvertTo-Bool
 
 Function Download-File($result, $url, $dest, $username, $password, $proxy_url, $proxy_username, $proxy_password) {
     $webClient = New-Object System.Net.WebClient
@@ -61,7 +60,9 @@ Function Download-File($result, $url, $dest, $username, $password, $proxy_url, $
     }
 
     Try {
-        $webClient.DownloadFile($url, $dest)
+        if (-not $check_mode) {
+            $webClient.DownloadFile($url, $dest)
+        }
         $result.changed = $true
     }
     Catch {
@@ -71,9 +72,8 @@ Function Download-File($result, $url, $dest, $username, $password, $proxy_url, $
 }
 
 
-If ($force -or -not (Test-Path $dest)) {
-   Download-File -result $result -url $url -dest $dest -username $username -password $password -proxy_url $proxy_url -proxy_username $proxy_username -proxy_password $proxy_password
-
+If ($force -or -not (Test-Path -Path $dest)) {
+    Download-File -result $result -url $url -dest $dest -username $username -password $password -proxy_url $proxy_url -proxy_username $proxy_username -proxy_password $proxy_password
 }
 Else {
     $fileLastMod = ([System.IO.FileInfo]$dest).LastWriteTimeUtc
@@ -103,8 +103,5 @@ Else {
     }
 
 }
-
-Set-Attr $result.win_get_url "url" $url
-Set-Attr $result.win_get_url "dest" $dest
 
 Exit-Json $result;
