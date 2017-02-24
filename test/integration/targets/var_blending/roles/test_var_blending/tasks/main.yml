@@ -38,14 +38,18 @@
   debug: var=same_value_as_var_name_var
   register: same_value_as_var_name
 
-- name: check debug variable output when variable is undefined
+- assert:
+    that:
+      - same_value_as_var_name.same_value_as_var_name_var == 'same_value_as_var_name_var'
+
+- name: check task failed when variable is undefined
   debug: var=undefined_variable
   register: var_undefined
+  ignore_errors: true
 
 - assert:
     that:
-      - var_undefined.undefined_variable == 'VARIABLE IS NOT DEFINED!'
-      - same_value_as_var_name.same_value_as_var_name_var == 'same_value_as_var_name_var'
+      - 'var_undefined|failed'
 
 - name: cleanup temporary template output
   file: path={{output_dir}}/foo.templated state=absent
