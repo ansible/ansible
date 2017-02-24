@@ -44,7 +44,6 @@ options:
   recurse:
     description:
       - Indicates if the owner should be changed recursively
-    required: false
     choices:
       - no
       - yes

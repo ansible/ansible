@@ -67,7 +67,7 @@ Function UserSearch
             $Searcher.Filter = "userPrincipalName=$($accountName)"
         }
 
-        $result = $Searcher.FindOne() 
+        $result = $Searcher.FindOne()
         if ($result)
         {
             $user = $result.GetDirectoryEntry()
@@ -80,16 +80,17 @@ Function UserSearch
         }
     }
 }
- 
-$params = Parse-Args $args;
 
-$result = New-Object PSObject;
-Set-Attr $result "changed" $false;
+$result = @{
+    changed = $false
+}
 
-$path = Get-Attr $params "path" -failifempty $true
-$user = Get-Attr $params "user" -failifempty $true
-$recurse = Get-Attr $params "recurse" "no" -validateSet "no","yes" -resultobj $result
-$recurse = $recurse | ConvertTo-Bool
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+
+$path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true
+$user = Get-AnsibleParam -obj $params -name "user" -type "str" -failifempty $true
+$recurse = Get-AnsibleParam -obj $params -name "recurse" -type "bool" -default "no" -validateset "no","yes" -resultobj $result
 
 If (-Not (Test-Path -Path $path)) {
     Fail-Json $result "$path file or directory does not exist on the host"
@@ -97,7 +98,7 @@ If (-Not (Test-Path -Path $path)) {
 
 # Test that the user/group is resolvable on the local machine
 $sid = UserSearch -AccountName ($user)
-if (!$sid)
+if (-not $sid)
 {
     Fail-Json $result "$user is not a valid user or group on the host machine or domain"
 }
@@ -110,9 +111,8 @@ Try {
 
     If ($acl.getOwner([System.Security.Principal.SecurityIdentifier]) -ne $objUser) {
         $acl.setOwner($objUser)
-        Set-Acl $file.FullName $acl
-
-        Set-Attr $result "changed" $true;
+        Set-Acl -Path $file.FullName -AclObject $acl -WhatIf:$check_mode
+        $result.changed = $true
     }
 
     If ($recurse) {
@@ -122,9 +122,8 @@ Try {
 
             If ($acl.getOwner([System.Security.Principal.SecurityIdentifier]) -ne $objUser) {
                 $acl.setOwner($objUser)
-                Set-Acl $file.FullName $acl
-
-                Set-Attr $result "changed" $true;
+                Set-Acl -Path $file.FullName -AclObject $acl -WhatIf:$check_mode
+                $result.changed = $true
             }
         }
     }
