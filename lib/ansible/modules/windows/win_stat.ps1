@@ -17,8 +17,6 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args -arguments $args -supports_check_mode $true;
-
 # C# code to determine link target, copied from http://chrisbensen.blogspot.com.au/2010/06/getfinalpathnamebyhandle.html
 $symlink_util = @"
 using System;
@@ -38,12 +36,12 @@ namespace Ansible.Command
         [DllImport("kernel32.dll", EntryPoint = "GetFinalPathNameByHandleW", CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern int GetFinalPathNameByHandle(IntPtr handle, [In, Out] StringBuilder path, int bufLen, int flags);
 
-        [DllImport("kernel32.dll", EntryPoint = "CreateFileW", CharSet = CharSet.Unicode, SetLastError = true)] 
-        public static extern SafeFileHandle CreateFile(string lpFileName, int dwDesiredAccess, 
+        [DllImport("kernel32.dll", EntryPoint = "CreateFileW", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern SafeFileHandle CreateFile(string lpFileName, int dwDesiredAccess,
         int dwShareMode, IntPtr SecurityAttributes, int dwCreationDisposition, int dwFlagsAndAttributes, IntPtr hTemplateFile);
 
-        public static string GetSymbolicLinkTarget(System.IO.DirectoryInfo symlink) 
-        { 
+        public static string GetSymbolicLinkTarget(System.IO.DirectoryInfo symlink)
+        {
             SafeFileHandle directoryHandle = CreateFile(symlink.FullName, 0, 2, System.IntPtr.Zero, CREATION_DISPOSITION_OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, System.IntPtr.Zero);
             if(directoryHandle.IsInvalid)
                 throw new Win32Exception(Marshal.GetLastWin32Error());
@@ -54,9 +52,9 @@ namespace Ansible.Command
             if (size<0)
                 throw new Win32Exception(Marshal.GetLastWin32Error()); // The remarks section of GetFinalPathNameByHandle mentions the return being prefixed with "\\?\" // More information about "\\?\" here -> http://msdn.microsoft.com/en-us/library/aa365247(v=VS.85).aspx
             if (path[0] == '\\' && path[1] == '\\' && path[2] == '?' && path[3] == '\\')
-                return path.ToString().Substring(4); 
-            else 
-                return path.ToString(); 
+                return path.ToString().Substring(4);
+            else
+                return path.ToString();
         }
     }
 }
@@ -67,7 +65,7 @@ function Date_To_Timestamp($start_date, $end_date)
 {
     If($start_date -and $end_date)
     {
-        Write-Output (New-TimeSpan -Start $start_date -End $end_date).TotalSeconds
+        return (New-TimeSpan -Start $start_date -End $end_date).TotalSeconds
     }
 }
 
@@ -75,7 +73,7 @@ function Get-Hash($path, $algorithm) {
     # Using PowerShell V4 and above we can use some powershell cmdlets instead of .net
     If ($PSVersionTable.PSVersion.Major -ge 4)
     {
-        $hash = (Get-FileHash $path -Algorithm $algorithm).Hash
+        $hash = (Get-FileHash -Path $path -Algorithm $algorithm).Hash
     }
     Else
     {
@@ -87,33 +85,51 @@ function Get-Hash($path, $algorithm) {
     $hash.ToLower()
 }
 
-$path = Get-AnsibleParam -obj $params -name 'path' -failifempty $true;
-$get_md5 = Get-AnsibleParam -obj $params -name 'get_md5' -failifempty $false -default $true | ConvertTo-Bool;
-$get_checksum = Get-AnsibleParam -obj $params -name 'get_checksum' -failifempty $false -default $true | ConvertTo-Bool;
-$checksum_algorithm = Get-AnsibleParam -obj $params -name 'checksum_algorithm' -failifempty $false -default 'sha1' -ValidateSet 'sha1','sha256','sha384','sha512'
+$params = Parse-Args $args -supports_check_mode $true
 
-$result = New-Object psobject @{
-    stat = New-Object psobject
+$path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -aliases "dest","name"
+$get_md5 = Get-AnsibleParam -obj $params -name "get_md5" -type "bool" -default $true
+$get_checksum = Get-AnsibleParam -obj $params -name "get_checksum" -type "bool" -default $true
+$checksum_algorithm = Get-AnsibleParam -obj $params -name "checksum_algorithm" -type "str" -default "sha1" -validateset "md5","sha1","sha256","sha384","sha512"
+
+$result = @{
     changed = $false
+    stat = @{}
 };
 
-If (Test-Path $path)
+# Backward compatibility
+if ($get_md5 -eq $true -and (Get-Member -inputobject $params -name "get_md5") ) {
+    Add-DeprecationWarning $result "The parameter 'get_md5' is being replaced with 'checksum_algorithm: md5'"
+}
+
+If (Test-Path -Path $path)
 {
-    Set-Attr $result.stat "exists" $TRUE;
+    $result.stat.exists = $true
+
+    # Initial values
+    $result.stat.isdir = $false
+    $result.stat.islink = $false
+    $result.stat.isshared = $false
 
     # Need to use -Force so it picks up hidden files
-    $info = Get-Item -Force $path;
-    $iscontainer = $info.PSIsContainer;
-    $filename = $info.Name;
-    $filepath = $info.FullName;
+    $info = Get-Item -Force $path
+
+    $epoch_date = Get-Date -Date "01/01/1970"
+    $result.stat.creationtime = (Date_To_Timestamp $epoch_date $info.CreationTime)
+    $result.stat.lastaccesstime = (Date_To_Timestamp $epoch_date $info.LastAccessTime)
+    $result.stat.lastwritetime = (Date_To_Timestamp $epoch_date $info.LastWriteTime)
+
+    $result.stat.filename = $info.Name
+    $result.stat.path = $info.FullName
+
     $attributes = @()
     foreach ($attribute in ($info.Attributes -split ',')) {
         $attributes += $attribute.Trim();
     }
-    $attributes_string = $info.Attributes.ToString();
-    $isreadonly = $attributes -contains 'ReadOnly';
-    $ishidden = $attributes -contains 'Hidden';
-    $isarchive = $attributes -contains 'Archive';
+    $result.stat.attributes = $info.Attributes.ToString()
+    $result.stat.isarchive = $attributes -contains "Archive"
+    $result.stat.ishidden = $attributes -contains "Hidden"
+    $result.stat.isreadonly = $attributes -contains "ReadOnly"
 
     If ($info)
     {
@@ -123,80 +139,58 @@ If (Test-Path $path)
     {
         $accesscontrol = $null;
     }
-    $owner = $accessControl.Owner;
-    $creationtime = $info.CreationTime;
-    $lastaccesstime = $info.LastAccessTime;
-    $lastwritetime = $info.LastAccessTime;
+    $result.stat.owner = $accesscontrol.Owner
 
-    $epoch_date = Get-Date -Date "01/01/1970"
-    $islink = $false
-    $isdir = $false
-    $isshared = $false
-
+    $iscontainer = $info.PSIsContainer
     If ($attributes -contains 'ReparsePoint')
     {
         # TODO: Find a way to differenciate between soft and junction links
-        $islink = $true
-        $isdir = $true
+        $result.stat.islink = $true
+        $result.stat.isdir = $true
         # Try and get the symlink source, can result in failure if link is broken
         try {
-            $lnk_source = [Ansible.Command.SymLinkHelper]::GetSymbolicLinkTarget($path)
-            Set-Attr $result.stat "lnk_source" $lnk_source
-        } catch {}
-    } 
+            $result.stat.lnk_source = [Ansible.Command.SymLinkHelper]::GetSymbolicLinkTarget($path)
+        } catch {
+            $result.stat.lnk_source = $null
+        }
+    }
     ElseIf ($iscontainer)
     {
-        $isdir = $true
+        $result.stat.isdir = $true
 
-        $share_info = Get-WmiObject -Class Win32_Share -Filter "Path='$($info.Fullname -replace '\\', '\\')'";
-        If ($share_info -ne $null) 
+        $share_info = Get-WmiObject -Class Win32_Share -Filter "Path='$($info.Fullname -replace '\\', '\\')'"
+        If ($share_info -ne $null)
         {
-            $isshared = $true
-            Set-Attr $result.stat "sharename" $share_info.Name;
+            $result.stat.isshared = $true
+            $result.stat.sharename = $share_info.Name
         }
 
         $dir_files_sum = Get-ChildItem $info.FullName -Recurse | Measure-Object -property length -sum;
         If ($dir_files_sum -eq $null)
         {
-            Set-Attr $result.stat "size" 0;
+            $result.stat.size = 0
         }
         Else{
-            Set-Attr $result.stat "size" $dir_files_sum.Sum;
+            $result.stat.size = $dir_files_sum.Sum
         }
     }
     Else
     {
-        Set-Attr $result.stat "size" $info.Length;
-        Set-Attr $result.stat "extension" $info.extension;
+        $result.stat.size = $info.Length
+        $result.stat.extension = $info.Extension
 
         If ($get_md5) {
-            $md5 = Get-Hash -path $path -algorithm 'md5'
-            Set-Attr $result.stat "md5" $md5
+            $result.stat.md5 = Get-Hash -Path $path -Algorithm "md5"
         }
 
         If ($get_checksum) {
-            $checksum = Get-Hash -path $path -algorithm $checksum_algorithm
-            Set-Attr $result.stat "checksum" $checksum
+            $result.stat.checksum = Get-Hash -Path $path -Algorithm $checksum_algorithm
         }
     }
-
-    Set-Attr $result.stat "islink" $islink;
-    Set-Attr $result.stat "isdir" $isdir;
-    Set-Attr $result.stat "isshared" $isshared;
-    Set-Attr $result.stat "isreadonly" $isreadonly;
-    Set-Attr $result.stat "ishidden" $ishidden;
-    Set-Attr $result.stat "isarchive" $isarchive;
-    Set-Attr $result.stat "filename" $filename;
-    Set-Attr $result.stat "path" $filepath;
-    Set-Attr $result.stat "attributes" $attributes_string;
-    Set-Attr $result.stat "owner" $owner;
-    Set-Attr $result.stat "creationtime" (Date_To_Timestamp $epoch_date $creationtime);
-    Set-Attr $result.stat "lastaccesstime" (Date_To_Timestamp $epoch_date $lastaccesstime);
-    Set-Attr $result.stat "lastwritetime" (Date_To_Timestamp $epoch_date $lastwritetime);
 }
 Else
 {
-    Set-Attr $result.stat "exists" $FALSE;
+    $result.stat.exists = $false
 }
 
 Exit-Json $result;
