@@ -162,7 +162,7 @@ def main():
             except:
                 size_unit = 'b'
             try:
-                units = list('b', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+                units = list(['b', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'])
                 unitmultiplier = 1024**units.index(size_unit)
             except:
                 module.fail_json(msg='Unknown size unit : %s' % (size_unit))
