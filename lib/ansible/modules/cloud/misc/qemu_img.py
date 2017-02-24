@@ -158,10 +158,14 @@ def main():
         else:
             try:
                 size_unit = str(size[-1:])
+                size = size[:-1]
+            except:
+                size_unit = 'b'
+            try:
                 units = list('b', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
                 unitmultiplier = 1024**units.index(size_unit)
             except:
-                unitmultiplier = 1
+                module.fail_json(msg='Unknown size unit : %s' % (size_unit))
             size_increase = False
             size_decrease = False
             if(size[:1] == '+'):
