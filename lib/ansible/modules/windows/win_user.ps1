@@ -66,8 +66,8 @@ $password_never_expires = Get-AnsibleParam -obj $params -name "password_never_ex
 $user_cannot_change_password = Get-AnsibleParam -obj $params -name "user_cannot_change_password" -type "bool"
 $account_disabled = Get-AnsibleParam -obj $params -name "account_disabled" -type "bool"
 $account_locked = Get-AnsibleParam -obj $params -name "account_locked" -type "bool"
-$groups = Get-AnsibleParam -obj $params -name "groups" -type "str"
-$groups_action = Get-AnsibleParam -obj $params -name "groups_action" -type "str" -default "replace" -validateset "add","replace","remove"
+$groups = Get-AnsibleParam -obj $params -name "groups"
+$groups_action = Get-AnsibleParam -obj $params -name "groups_action" -type "str" -default "replace" -validateset "add","remove","replace"
 
 If ($account_locked -ne $null -and $account_locked) {
     Fail-Json $result "account_locked must be set to 'no' if provided"
