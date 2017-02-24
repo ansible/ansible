@@ -429,6 +429,18 @@ def _network_args(module, cloud):
     return args
 
 
+def _parse_meta(meta):
+    if isinstance(meta, str):
+        metas = {}
+        for kv_str in meta.split(","):
+            k, v = kv_str.split("=")
+            metas[k] = v
+        return metas
+    if not meta:
+        return {}
+    return meta
+
+
 def _delete_server(module, cloud):
     try:
         cloud.delete_server(
@@ -464,12 +476,7 @@ def _create_server(module, cloud):
 
     nics = _network_args(module, cloud)
 
-    if isinstance(module.params['meta'], str):
-        metas = {}
-        for kv_str in module.params['meta'].split(","):
-            k, v = kv_str.split("=")
-            metas[k] = v
-        module.params['meta'] = metas
+    module.params['meta'] = _parse_meta(module.params['meta'])
 
     bootkwargs = dict(
         name=module.params['name'],
@@ -500,6 +507,27 @@ def _create_server(module, cloud):
     )
 
     _exit_hostvars(module, cloud, server)
+
+
+def _update_server(module, cloud, server):
+    changed = False
+
+    module.params['meta'] = _parse_meta(module.params['meta'])
+
+    # cloud.set_server_metadata only updates the key=value pairs, it doesn't
+    # touch existing ones
+    update_meta = {}
+    for (k, v) in module.params['meta'].items():
+        if k not in server.metadata or server.metadata[k] != v:
+            update_meta[k] = v
+
+    if update_meta:
+        cloud.set_server_metadata(server, update_meta)
+        changed = True
+        # Refresh server vars
+        server = cloud.get_server(module.params['name'])
+
+    return (changed, server)
 
 
 def _delete_floating_ip_list(cloud, server, extra_ips):
@@ -560,7 +588,8 @@ def _get_server_state(module, cloud):
                 msg="The instance is available but not Active state: "
                     + server.status)
         (ip_changed, server) = _check_floating_ips(module, cloud, server)
-        _exit_hostvars(module, cloud, server, ip_changed)
+        (server_changed, server) = _update_server(module, cloud, server)
+        _exit_hostvars(module, cloud, server, ip_changed or server_changed)
     if server and state == 'absent':
         return True
     if state == 'absent':
