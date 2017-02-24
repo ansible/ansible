@@ -133,7 +133,12 @@ class TaskExecutor:
                 if isinstance(res, UnsafeProxy):
                     return res._obj
                 elif isinstance(res, binary_type):
-                    return to_text(res, errors='surrogate_or_strict')
+                    try:
+                        return to_text(res, errors='surrogate_or_strict')
+                    except UnicodeDecodeError:
+                        display.warning("We were unable to decode all characters, skipped some in effort to return as much as possible")
+                        # If text contains non-utf8 characters, we replace them by there hex code if over 128 (Fix #21804)
+                        return to_text(''.join([i if ord(i) < 128 else ("\\x%x" % ord(i)) for i in res]), errors='surrogate_or_strict')
                 elif isinstance(res, dict):
                     for k in res:
                         res[k] = _clean_res(res[k])
