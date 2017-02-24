@@ -23,7 +23,8 @@ class ModuleDocFragment(object):
 options:
     region:
         description:
-          - The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See U(http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region)
+          - The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used.
+            See U(http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region)
         required: false
         aliases: [ 'aws_region', 'ec2_region' ]
 """

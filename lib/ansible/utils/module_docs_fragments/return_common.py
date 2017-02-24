@@ -19,7 +19,7 @@
 class ModuleDocFragment(object):
 
     # Standard documentation fragment
-    RETURN= '''
+    RETURN = '''
 changed:
     description: Whether the module affected changes on the target.
     returned: always
