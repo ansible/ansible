@@ -1718,7 +1718,7 @@ class AnsibleModule(object):
     def _set_defaults(self, pre=True):
         for (k,v) in self.argument_spec.items():
             default = v.get('default', None)
-            if pre == True:
+            if pre is True:
                 # this prevents setting defaults on required items
                 if default is not None and k not in self.params:
                     self.params[k] = default

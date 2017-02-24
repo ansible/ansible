@@ -316,7 +316,7 @@ def create_eni(connection, vpc_id, module):
         eni = find_eni(connection, module)
         if eni is None:
             eni = connection.create_network_interface(subnet_id, private_ip_address, description, security_groups)
-            if attached == True and instance_id is not None:
+            if attached is True and instance_id is not None:
                 try:
                     eni.attach(instance_id, device_index)
                 except BotoServerError:
@@ -399,14 +399,14 @@ def modify_eni(connection, vpc_id, module, eni):
                 secondary_addresses_to_remove_count = current_secondary_address_count - secondary_private_ip_address_count
                 connection.unassign_private_ip_addresses(network_interface_id=eni.id, private_ip_addresses=current_secondary_addresses[:secondary_addresses_to_remove_count], dry_run=False)
 
-        if attached == True:
+        if attached is True:
             if eni.attachment and eni.attachment.instance_id != instance_id:
                 detach_eni(eni, module)
             if eni.attachment is None:
                 eni.attach(instance_id, device_index)
                 wait_for_eni(eni, "attached")
                 changed = True
-        elif attached == False:
+        elif attached is False:
             detach_eni(eni, module)
 
     except BotoServerError as e:

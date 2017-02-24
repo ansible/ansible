@@ -173,7 +173,7 @@ def create_meter(module, name, apiid, apikey):
             except IOError:
                 # Now download the file...
                 rc = download_request(module, name, apiid, apikey, cert_type)
-                if rc == False:
+                if rc is False:
                     module.fail_json("Download request for " + cert_type + ".pem failed")
 
         return 0, "Meter " + name + " created"

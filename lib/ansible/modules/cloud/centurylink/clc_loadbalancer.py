@@ -805,7 +805,7 @@ class ClcLoadBalancer:
             if not node in nodes:
                 changed = True
                 nodes.append(node)
-        if changed == True and not self.module.check_mode:
+        if changed is True and not self.module.check_mode:
             result = self.set_loadbalancernodes(
                 alias,
                 location,
@@ -836,7 +836,7 @@ class ClcLoadBalancer:
             if node in nodes:
                 changed = True
                 nodes.remove(node)
-        if changed == True and not self.module.check_mode:
+        if changed is True and not self.module.check_mode:
             result = self.set_loadbalancernodes(
                 alias,
                 location,

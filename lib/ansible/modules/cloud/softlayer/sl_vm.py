@@ -383,7 +383,7 @@ def main():
 
   elif module.params.get('state') == 'present':
       (changed, instance) = create_virtual_instance(module)
-      if module.params.get('wait') == True and instance:
+      if module.params.get('wait') is True and instance:
         (changed, instance) = wait_for_instance(module, instance['id'])
 
   module.exit_json(changed=changed, instance=json.loads(json.dumps(instance, default=lambda o: o.__dict__)))

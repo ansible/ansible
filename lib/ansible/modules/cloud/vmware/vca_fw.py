@@ -231,7 +231,7 @@ def main():
             gateway.delete_fw_rule(**kwargs)
         result['changed'] = True
 
-    if not module.check_mode and result['changed'] == True:
+    if not module.check_mode and result['changed'] is True:
         task = gateway.save_services_configuration()
         if task:
             vca.block_until_completed(task)

@@ -2207,7 +2207,7 @@ def main():
 
     if user.user_exists():
         info = user.user_info()
-        if info == False:
+        if info is False:
             result['msg'] = "failed to look up user name: %s" % user.name
             result['failed'] = True
         result['uid'] = info[2]

@@ -534,7 +534,7 @@ class Connection(object):
             self.cursor.execute(query % (set_what, for_whom))
 
             # Only revoke GRANT/ADMIN OPTION if grant_option actually is False.
-            if grant_option == False:
+            if grant_option is False:
                 if obj_type == 'group':
                     query = 'REVOKE ADMIN OPTION FOR %s FROM %s'
                 else:

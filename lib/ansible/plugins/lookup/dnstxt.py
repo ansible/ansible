@@ -39,7 +39,7 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
-        if HAVE_DNS == False:
+        if HAVE_DNS is False:
             raise AnsibleError("Can't LOOKUP(dnstxt): module dns.resolver is not installed")
 
         ret = []

@@ -204,7 +204,7 @@ def main():
 
     changed = False
     if operation == 'create':
-        if slb_server_exists == False:
+        if slb_server_exists is False:
             result = axapi_call_v3(module, axapi_base_url+'slb/server/', method='POST', body=json.dumps(json_post), signature=signature)
             if axapi_failure(result):
                 module.fail_json(msg="failed to create the server: %s" % result['response']['err']['msg'])

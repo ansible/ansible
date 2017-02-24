@@ -762,7 +762,7 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
                 vm.set_extra_config(vm_extra_config)
 
             # Power on if asked
-            if power_on_after_clone == True:
+            if power_on_after_clone is True:
                 state = 'powered_on'
                 power_state(vm, state, True)
 
