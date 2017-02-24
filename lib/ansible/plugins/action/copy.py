@@ -158,8 +158,7 @@ class ActionModule(ActionBase):
             # If the local file does not exist, get_real_file() raises AnsibleFileNotFound
             try:
                 source_full = self._loader.get_real_file(source_full)
-            except AnsibleFileNotFound:
-                e = get_exception()
+            except AnsibleFileNotFound as e:
                 result['failed'] = True
                 result['msg'] = "could not find src=%s, %s" % (source_full, e)
                 self._remove_tmp_path(tmp)
