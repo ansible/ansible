@@ -57,7 +57,7 @@ class ActionModule(ActionBase):
                 if results == self._task.args['var']:
                     # If var name is same as result, try to template it
                     if isinstance(results, string_types):
-                        results = self._templar.template(results, convert_bare=True, fail_on_undefined=True)
+                        results = self._templar.template('{{' + results + '}}', convert_bare=True, fail_on_undefined=True)
 
                 if isinstance(self._task.args['var'], (list, dict)):
                     # If var is a list or dict, use the type as key to display
