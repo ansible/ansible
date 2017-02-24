@@ -17,6 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
 class ModuleDocFragment(object):
 
     # Standard files documentation fragment
