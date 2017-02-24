@@ -253,7 +253,7 @@ def main():
     if module.params['state'] == 'absent':
         f.candidate_config[path].del_block(module.params['id'])
         change_string = f.compare_config()
-        if change_string != "":
+        if change_string:
             result['change_string'] = change_string
             result['changed'] = True
 
