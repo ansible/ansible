@@ -462,10 +462,7 @@ def module_controller(module, gce):
         (changed, output, name) = delete_instance_template(module, gce)
         json_output['changed'] = changed
         json_output['msg'] = output
-    else:
-        module.fail_json(
-            msg='bad state !',
-        )
+
     module.exit_json(**json_output)
 
 
