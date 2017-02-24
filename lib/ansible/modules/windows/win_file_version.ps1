@@ -19,14 +19,14 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args;
+$params = Parse-Args $args -supports_check_mode $true
 
-$result = New-Object psobject @{
-    win_file_version = New-Object psobject
+$result = @{
+    win_file_version = @{}
     changed = $false
 }
 
-$path = Get-AnsibleParam $params "path" -type "path" -failifempty $true -resultobj $result
+$path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -resultobj $result
 
 If (-Not (Test-Path -Path $path -PathType Leaf)){
     Fail-Json $result "Specfied path $path does exist or is not a file."
@@ -67,12 +67,11 @@ Catch{
     Fail-Json $result "Error: $_.Exception.Message"
 }
 
-Set-Attr $result.win_file_version "path" $path.toString()
-Set-Attr $result.win_file_version "file_version" $file_version.toString()
-Set-Attr $result.win_file_version "product_version" $product_version.toString()
-Set-Attr $result.win_file_version "file_major_part" $file_major_part.toString()
-Set-Attr $result.win_file_version "file_minor_part" $file_minor_part.toString()
-Set-Attr $result.win_file_version "file_build_part" $file_build_part.toString()
-Set-Attr $result.win_file_version "file_private_part" $file_private_part.toString()
+$result.win_file_version.path = $path.toString()
+$result.win_file_version.file_version = $file_version.toString()
+$result.win_file_version.product_version = $product_version.toString()
+$result.win_file_version.file_major_part = $file_major_part.toString()
+$result.win_file_version.file_minor_part = $file_minor_part.toString()
+$result.win_file_version.file_build_part = $file_build_part.toString()
+$result.win_file_version.file_private_part = $file_private_part.toString()
 Exit-Json $result;
-
