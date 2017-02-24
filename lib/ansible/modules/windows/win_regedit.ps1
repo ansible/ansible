@@ -23,6 +23,7 @@ $ErrorActionPreference = "Stop"
 
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+$diff_support = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
 
 $path = Get-AnsibleParam -obj $params -name "path" -type "string" -failifempty $true -aliases "key"
 $name = Get-AnsibleParam -obj $params -name "name" -type "string" -aliases "entry","value"
@@ -34,15 +35,17 @@ $result = @{
     changed = $false
     data_changed = $false
     data_type_changed = $false
-    diff = @{
+}
+
+if ($diff_support) {
+    $result.diff = @{
         prepared = ""
     }
-    warnings = @()
 }
 
 # Fix HCCC:\ PSDrive for pre-2.3 compatibility
 if ($path -match "^HCCC:\\") {
-    $result.warnings += "Please use path: HKCC:\... instead of path: $path\n"
+    Add-Warning("Please use path: HKCC:\... instead of path: $path")
     $path = $path -replace "HCCC:\\","HKCC:\\"
 }
 
@@ -79,13 +82,13 @@ Function Compare-Data {
         } else {
             return $false
         }
-    } elseif ($ReferenceData -is [String] -or $ReferenceData -is [int]) {
+    } elseif ($ReferenceData -is [string] -or $ReferenceData -is [int]) {
         if ($ReferenceData -eq $DifferenceData) {
             return $true
         } else {
             return $false
         }
-    } elseif ($ReferenceData -is [Object[]]) {
+    } elseif ($ReferenceData -is [object[]]) {
         if (@(Compare-Object $ReferenceData $DifferenceData -SyncWindow 0).Length -eq 0) {
             return $true
         } else {
@@ -142,14 +145,14 @@ if (-not (Test-Path HKCC:\)) {
 
 
 # Convert HEX string to binary if type binary
-if ($type -eq "binary" -and $data -ne $null -and $data -is [String]) {
+if ($type -eq "binary" -and $data -ne $null -and $data -is [string]) {
     $data = Convert-RegExportHexStringToByteArray($data)
 }
 
 # Special case handling for the path's default property.
 if ($name -eq "" -or ($name -ne $null -and $name.ToLower() -eq "(default)")) {
     # Apparently, "(default)" cannot be of type expandstring, do it ourselves
-    if ($type -eq "expandstring" -and $data -ne $null -and $data -is [String]) {
+    if ($type -eq "expandstring" -and $data -ne $null -and $data -is [string]) {
         $data = Expand-Environment($data)
     }
     $name = "(default)"
@@ -197,11 +200,15 @@ if ($state -eq "present") {
                 $result.changed = $true
                 $result.data_changed = $true
                 $result.data_type_changed = $true
-                $result.diff.prepared += @"
+
+                if ($diff_support) {
+                    $result.diff.prepared += @"
  [$path]
 -"$name" = "$old_type`:$data"
 +"$name" = "$type`:$data"
 "@
+                }
+
             # FIXME: Compare-Data fails to work for null-length byte arrays
             } elseif (-not (Compare-Data -ReferenceData $old_data -DifferenceData $data)) {
                 # Changes Only Data
@@ -219,11 +226,14 @@ if ($state -eq "present") {
                 }
                 $result.changed = $true
                 $result.data_changed = $true
-                $result.diff.prepared += @"
+
+                if ($diff_support) {
+                    $result.diff.prepared += @"
  [$path]
 -"$name" = "$type`:$old_data"
 +"$name" = "$type`:$data"
 "@
+                }
 
             } else {
                 # Nothing to do, everything is already as requested
@@ -239,10 +249,14 @@ if ($state -eq "present") {
                 }
             }
             $result.changed = $true
-            $result.diff.prepared += @"
+
+            if ($diff_support) {
+                $result.diff.prepared += @"
  [$path]
 +"$name" = "$type`:$data"
 "@
+            }
+
         }
 
     } elseif (-not (Test-Path $path)) {
@@ -258,15 +272,16 @@ if ($state -eq "present") {
             }
         }
         $result.changed = $true
-        $result.diff.prepared += @"
-+[$path"]
 
-"@
-        if ($name -ne $null) {
+        if ($diff_support) {
             $result.diff.prepared += @"
-+"$name" = "$type`:$data"
-
++[$path"]
 "@
+            if ($name -ne $null) {
+                $result.diff.prepared += @"
++"$name" = "$type`:$data"
+"@
+            }
         }
 
     }
@@ -284,10 +299,13 @@ if ($state -eq "present") {
                 }
             }
             $result.changed = $true
-            $result.diff.prepared += @"
+
+            if ($diff_support) {
+                $result.diff.prepared += @"
 -[$path]
 -"$name" = "$type`:$data"
 "@
+            }
 
         } elseif (Test-ValueData -Path $path -Name $name) {
 
@@ -299,10 +317,14 @@ if ($state -eq "present") {
                 }
             }
             $result.changed = $true
-            $result.diff.prepared += @"
+
+            if ($diff_support) {
+                $result.diff.prepared += @"
  [$path]
 -"$name" = "$type`:$data"
 "@
+            }
+
         }
     } else {
         # Nothing to do, everything is already as requested
