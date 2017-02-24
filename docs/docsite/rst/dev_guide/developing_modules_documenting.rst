@@ -59,7 +59,7 @@ Format::
 
   ANSIBLE_METADATA = {
       'version': '1.0',
-      'supported_by': 'core|community|core_curated',
+      'supported_by': 'core|community|unmaintained|committer',
       'status': ['stableinterface|preview|deprecated|removed']
   }
 
