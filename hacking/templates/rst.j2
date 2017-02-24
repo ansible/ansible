@@ -163,8 +163,9 @@ Common return values are documented here :doc:`common_return_values`, the follow
 Notes
 -----
 
+.. note::
 {% for note in notes %}
-.. note:: @{ note | convert_symbols_to_format }@
+    - @{ note | convert_symbols_to_format }@
 {% endfor %}
 {% endif %}
 
