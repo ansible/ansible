@@ -427,6 +427,10 @@ class VaultEditor:
 
         # A file to be encrypted into a vaultfile could be any encoding
         # so treat the contents as a byte string.
+
+        # follow the symlink
+        filename = os.path.realpath(filename)
+
         b_plaintext = self.read_data(filename)
         b_ciphertext = self.vault.encrypt(b_plaintext)
         self.write_data(b_ciphertext, output_file or filename)
@@ -435,7 +439,11 @@ class VaultEditor:
 
         check_prereqs()
 
+        # follow the symlink
+        filename = os.path.realpath(filename)
+
         ciphertext = self.read_data(filename)
+
         try:
             plaintext = self.vault.decrypt(ciphertext)
         except AnsibleError as e:
@@ -458,7 +466,11 @@ class VaultEditor:
 
         check_prereqs()
 
+        # follow the symlink
+        filename = os.path.realpath(filename)
+
         ciphertext = self.read_data(filename)
+
         try:
             plaintext = self.vault.decrypt(ciphertext)
         except AnsibleError as e:
@@ -486,8 +498,12 @@ class VaultEditor:
 
         check_prereqs()
 
+        # follow the symlink
+        filename = os.path.realpath(filename)
+
         prev = os.stat(filename)
         ciphertext = self.read_data(filename)
+
         try:
             plaintext = self.vault.decrypt(ciphertext)
         except AnsibleError as e:
