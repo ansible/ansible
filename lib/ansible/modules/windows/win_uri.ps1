@@ -31,13 +31,13 @@ Function ConvertTo-SnakeCase($input_string) {
 # Build Arguments
 $params = Parse-Args $args -supports_check_mode $true
 
-$url = Get-AnsibleParam -obj $params -name "url" -type "string" -failifempty $true
-$method = Get-AnsibleParam -obj $params "method" -type "string" -default "GET" -validateset "GET","POST","PUT","HEAD","DELETE","OPTIONS","PATCH","TRACE","CONNECT","REFRESH"
-$content_type = Get-AnsibleParam -obj $params -name "content_type" -type "string"
+$url = Get-AnsibleParam -obj $params -name "url" -type "str" -failifempty $true
+$method = Get-AnsibleParam -obj $params "method" -type "str" -default "GET" -validateset "GET","POST","PUT","HEAD","DELETE","OPTIONS","PATCH","TRACE","CONNECT","REFRESH"
+$content_type = Get-AnsibleParam -obj $params -name "content_type" -type "str"
 # TODO: Why is this not a normal dictionary ?
-$headers = Get-AnsibleParam -obj $params -name "headers" -type "string"
+$headers = Get-AnsibleParam -obj $params -name "headers" -type "str"
 # TODO: Why is this not a normal dictionary ?
-$body = Get-AnsibleParam -obj $params -name "body" -type "string"
+$body = Get-AnsibleParam -obj $params -name "body" -type "str"
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path"
 $use_basic_parsing = Get-AnsibleParam -obj $params -name "use_basic_parsing" -type "bool" -default $true
 
