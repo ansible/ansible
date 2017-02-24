@@ -6,6 +6,7 @@ passlib
 pycrypto
 pytest
 pytest-mock
+pytest-xdist
 python-memcached
 pyyaml
 redis

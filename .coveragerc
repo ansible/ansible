@@ -9,6 +9,7 @@ branch = True
 # results from multiple tests simultaneously, as well as supporting multiple
 # test runs, such as from integration tests.
 concurrency = multiprocessing
+parallel = True
 
 # When running tests through ansible-test, this option is overridden by
 # the COVERAGE_FILE environment variable. This option is present for
