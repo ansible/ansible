@@ -62,6 +62,8 @@ class ActionModule(ActionBase):
         dest   = self._task.args.get('dest', None)
         force  = boolean(self._task.args.get('force', True))
         state  = self._task.args.get('state', None)
+        decode = self._task.args.pop('decode', None)
+        encode = self._task.args.pop('encode', None)
 
         if state is not None:
             result['failed'] = True
@@ -92,7 +94,11 @@ class ActionModule(ActionBase):
         b_source = to_bytes(source)
         try:
             with open(b_source, 'r') as f:
-                template_data = to_text(f.read())
+                template_data = None
+                if decode is not None:
+                    template_data = to_text(f.read(), encoding=decode)
+                else:
+                    template_data = to_text(f.read())
 
             try:
                 template_uid = pwd.getpwuid(os.stat(b_source).st_uid).pw_name
@@ -140,6 +146,9 @@ class ActionModule(ActionBase):
             old_vars = self._templar._available_variables
             self._templar.set_available_variables(temp_vars)
             resultant = self._templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False)
+            # if encode is set, we change template result encoding
+            if encode is not None:
+                resultant = resultant.encode(encode)
             self._templar.set_available_variables(old_vars)
         except Exception as e:
             result['failed'] = True

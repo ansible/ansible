@@ -53,6 +53,18 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "no"
+  decode:
+    description:
+      - read template using a different encoding (iso8859-15, cp1252)
+    required: false
+    default: null
+    version_added: "2.3"
+  encode:
+    description:
+      - write file using a alternative encoding (iso8859-15, cp1252)
+    required: false
+    default: null
+    version_added: "2.3"
   force:
     description:
       - the default is C(yes), which will replace the remote file when contents
