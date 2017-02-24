@@ -234,7 +234,7 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.urls import fetch_url
 
 # APT related constants
@@ -716,12 +716,14 @@ def download(module, deb):
 
     try:
         rsp, info = fetch_url(module, deb)
-        f = open(package, 'w')
+        # Ensure file is open in binary mode for Python 3
+        f = open(package, 'wb')
         # Read 1kb at a time to save on ram
         while True:
             data = rsp.read(BUFSIZE)
+            data = to_bytes(data, errors='surrogate_or_strict')
 
-            if data == "":
+            if len(data) < 1:
                 break # End of file, break while loop
 
             f.write(data)

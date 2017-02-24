@@ -91,7 +91,7 @@ EXAMPLES = '''
 
 # Ensure account configuration
 - local_action:
-    module: cs_configuration:
+    module: cs_configuration
     name: allow.public.user.templates
     value: false
     account: acme inc

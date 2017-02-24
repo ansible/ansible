@@ -309,7 +309,7 @@ options:
       - "Use docker CLI syntax: C(8000), C(9000:8000), or C(0.0.0.0:9000:8000), where 8000 is a
         container port, 9000 is a host port, and 0.0.0.0 is a host interface."
       - Container ports must be exposed either in the Dockerfile or via the C(expose) option.
-      - A value of ALL will publish all exposed container ports to random host ports, ignoring
+      - A value of all will publish all exposed container ports to random host ports, ignoring
         any other mappings.
       - If C(networks) parameter is provided, will inspect each network to see if there exists
         a bridge network with optional parameter com.docker.network.bridge.host_binding_ipv4.
@@ -766,7 +766,7 @@ class TaskParameters(DockerBaseClass):
 
         self.publish_all_ports = False
         self.published_ports = self._parse_publish_ports()
-        if self.published_ports == 'all':
+        if self.published_ports in ('all', 'ALL'):
             self.publish_all_ports = True
             self.published_ports = None
 

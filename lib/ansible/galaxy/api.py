@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 ########################################################################
 #
 # (C) 2013, James Cammarata <jcammarata@ansible.com>

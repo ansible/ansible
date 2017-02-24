@@ -362,9 +362,7 @@ def main():
                 type='str',
                 default='{}/.config/lxc/client.crt'.format(os.environ['HOME'])
             ),
-            trust_password=dict(
-                type='str',
-            )
+            trust_password=dict( type='str', no_log=True)
         ),
         supports_check_mode=False,
     )

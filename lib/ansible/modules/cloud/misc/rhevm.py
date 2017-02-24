@@ -217,8 +217,7 @@ vm:
 
 EXAMPLES = '''
 # basic get info from VM
-  action: rhevm
-  args:
+  - rhevm:
       name: "demo"
       user: "{{ rhev.admin.name }}"
       password: "{{ rhev.admin.pass }}"
@@ -226,8 +225,7 @@ EXAMPLES = '''
       state: "info"
 
 # basic create example from image
-  action: rhevm
-  args:
+  - rhevm:
       name: "demo"
       user: "{{ rhev.admin.name }}"
       password: "{{ rhev.admin.pass }}"
@@ -237,8 +235,7 @@ EXAMPLES = '''
       cluster: "centos"
 
 # power management
-  action: rhevm
-  args:
+  - rhevm:
       name: "uptime_server"
       user: "{{ rhev.admin.name }}"
       password: "{{ rhev.admin.pass }}"
@@ -246,11 +243,10 @@ EXAMPLES = '''
       cluster: "RH"
       state: "down"
       image: "centos7_x64"
-      cluster: "centos
+      cluster: "centos"
 
 # multi disk, multi nic create example
-  action: rhevm
-  args:
+  - rhevm:
       name: "server007"
       user: "{{ rhev.admin.name }}"
       password: "{{ rhev.admin.pass }}"
@@ -290,23 +286,21 @@ EXAMPLES = '''
         - "hd"
 
 # add a CD to the disk cd_drive
-  action: rhevm
-  args:
-    name: 'server007'
-    user: "{{ rhev.admin.name }}"
-    password: "{{ rhev.admin.pass }}"
-    state: 'cd'
-    cd_drive: 'rhev-tools-setup.iso'
+  - rhevm:
+      name: 'server007'
+      user: "{{ rhev.admin.name }}"
+      password: "{{ rhev.admin.pass }}"
+      state: 'cd'
+      cd_drive: 'rhev-tools-setup.iso'
 
 # new host deployment + host network configuration
-  action: rhevm
-  args:
-    name: "ovirt_node007"
-    password: "{{ rhevm.admin.pass }}"
-    type: "host"
-    state: present
-    cluster: "rhevm01"
-    ifaces:
+  - rhevm:
+      name: "ovirt_node007"
+      password: "{{ rhevm.admin.pass }}"
+      type: "host"
+      state: present
+      cluster: "rhevm01"
+      ifaces:
         - name: em1
         - name: em2
         - name: p3p1
@@ -1485,7 +1479,7 @@ def main():
         argument_spec = dict(
             state      = dict(default='present', choices=['ping', 'present', 'absent', 'up', 'down', 'restarted', 'cd', 'info']),
             user       = dict(default="admin@internal"),
-            password   = dict(required=True),
+            password   = dict(required=True, no_log=True),
             server     = dict(default="127.0.0.1"),
             port       = dict(default="443"),
             insecure_api = dict(default=False, type='bool'),

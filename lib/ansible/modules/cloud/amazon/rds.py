@@ -276,7 +276,7 @@ EXAMPLES = '''
     wait: yes
 
 # Reboot an instance and wait for it to become available again
-- rds
+- rds:
     command: reboot
     instance_name: database
     wait: yes

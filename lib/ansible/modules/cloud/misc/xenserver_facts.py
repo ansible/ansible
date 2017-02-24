@@ -34,10 +34,11 @@ options: {}
 
 EXAMPLES = '''
 - name: Gather facts from xenserver
-   xenserver:
+  xenserver:
 
 - name: Print running VMs
-  debug: msg="{{ item }}"
+  debug:
+    msg: "{{ item }}"
   with_items: "{{ xs_vms.keys() }}"
   when: xs_vms[item]['power_state'] == "Running"
 

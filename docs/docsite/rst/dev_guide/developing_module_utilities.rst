@@ -10,6 +10,7 @@ The following is a list of module_utils files and a general description. The mod
 
 - a10.py - Utilities used by the a10_server module to manage A10 Networks devices.
 - api.py - Adds shared support for generic API modules.
+- aos.py - Module support utilities for managing Apstra AOS Server.
 - asa.py - Module support utilities for managing Cisco ASA network devices.
 - azure_rm_common.py - Definitions and utilities for Microsoft Azure Resource Manager template deployments.
 - basic.py - General definitions and helper utilities for Ansible modules.
@@ -17,8 +18,8 @@ The following is a list of module_utils files and a general description. The mod
 - database.py - Miscellaneous helper functions for PostGRES and MySQL
 - docker_common.py - Definitions and helper utilities for modules working with Docker.
 - ec2.py - Definitions and utilities for modules working with Amazon EC2
-- eos.py - Helper functions for modules working with EOS networking devices. 
-- f5.py - Helper functions for modules working with F5 networking devices. 
+- eos.py - Helper functions for modules working with EOS networking devices.
+- f5.py - Helper functions for modules working with F5 networking devices.
 - facts.py - Helper functions for modules that return facts.
 - gce.py - Definitions and helper functions for modules that work with Google Compute Engine resources.
 - ios.py - Definitions and helper functions for modules that manage Cisco IOS networking devices
@@ -43,6 +44,6 @@ The following is a list of module_utils files and a general description. The mod
 - six.py - Module utils for working with the Six python 2 and 3 compatibility library
 - splitter.py - String splitting and manipulation utilities for working with Jinja2 templates
 - urls.py - Utilities for working with http and https requests
-- vca.py - Contains utilities for modules that work with VMware vCloud Air 
+- vca.py - Contains utilities for modules that work with VMware vCloud Air
 - vmware.py - Contains utilities for modules that work with VMware vSphere VMs
 - vyos.py - Definitions and functions for working with VyOS networking

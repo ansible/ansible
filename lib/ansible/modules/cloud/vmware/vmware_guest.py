@@ -45,7 +45,7 @@ options:
             - What state should the virtual machine be in?
             - If C(state) is set to C(present) and VM exists, ensure the VM configuration conforms to task arguments
         required: True
-        choices: ['present', 'absent', 'poweredon', 'poweredoff', 'restarted', 'suspended']
+        choices: ['present', 'absent', 'poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest']
    name:
         description:
             - Name of the VM to work with
@@ -100,6 +100,7 @@ options:
         description:
             - Wait until vCenter detects an IP address for the VM
             - This requires vmware-tools (vmtoolsd) to properly work after creation
+        default: False
    force:
         description:
             - Ignore warnings and complete the actions
@@ -107,6 +108,7 @@ options:
         description:
             - Destination datacenter for the deploy operation
         required: True
+        default: ha-datacenter
    cluster:
         description:
             - The cluster name where the VM will run.
@@ -507,12 +509,23 @@ class PyVmomiHelper(object):
                     else:
                         result = {'changed': False, 'failed': True,
                                   'msg': "Cannot restart VM in the current state %s" % current_state}
+
                 elif expected_state == 'suspended':
                     if current_state in ('poweredon', 'poweringon'):
                         task = vm.Suspend()
                     else:
                         result = {'changed': False, 'failed': True,
                                   'msg': 'Cannot suspend VM in the current state %s' % current_state}
+
+                elif expected_state in ['shutdownguest', 'rebootguest']:
+                    if current_state == 'poweredon' and vm.guest.toolsRunningStatus == 'guestToolsRunning':
+                        if expected_state == 'shutdownguest':
+                            task = vm.ShutdownGuest()
+                        else:
+                            task = vm.RebootGuest()
+                    else:
+                        result = {'changed': False, 'failed': True,
+                                  'msg': "VM %s must be in poweredon state & tools should be installed for guest shutdown/reboot" % vm.name}
 
             except Exception:
                 e = get_exception()
@@ -1157,8 +1170,7 @@ class PyVmomiHelper(object):
 
         # Mark VM as Template
         if self.params['is_template']:
-            task = self.current_vm_obj.MarkAsTemplate()
-            self.wait_for_task(task)
+            self.current_vm_obj.MarkAsTemplate()
             change_applied = True
 
         vm_facts = self.gather_facts(self.current_vm_obj)
@@ -1233,6 +1245,8 @@ def main():
                     'absent',
                     'restarted',
                     'suspended',
+                    'shutdownguest',
+                    'rebootguest'
                 ],
                 default='present'),
             validate_certs=dict(required=False, type='bool', default=True),
@@ -1248,10 +1262,10 @@ def main():
             disk=dict(required=False, type='list', default=[]),
             hardware=dict(required=False, type='dict', default={}),
             force=dict(required=False, type='bool', default=False),
-            datacenter=dict(required=True, type='str'),
+            datacenter=dict(required=True, type='str', default='ha-datacenter'),
             esxi_hostname=dict(required=False, type='str', default=None),
             cluster=dict(required=False, type='str', default=None),
-            wait_for_ip_address=dict(required=False, type='bool', default=True),
+            wait_for_ip_address=dict(required=False, type='bool', default=False),
             networks=dict(required=False, type='list', default=[]),
             resource_pool=dict(required=False, type='str', default=None),
             customization=dict(required=False, type='dict', no_log=True, default={}),
@@ -1289,7 +1303,7 @@ def main():
             result = pyv.remove_vm(vm)
         elif module.params['state'] == 'present':
             result = pyv.reconfigure_vm()
-        elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted', 'suspended']:
+        elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest']:
             # set powerstate
             tmp_result = pyv.set_powerstate(vm, module.params['state'], module.params['force'])
             if tmp_result['changed']:

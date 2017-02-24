@@ -186,6 +186,7 @@ EXAMPLES = '''
 
 # In vars file
 # ============
+---
 cl_bonds:
   bond0:
     alias_name: uplink to isp

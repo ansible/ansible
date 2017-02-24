@@ -28,7 +28,6 @@ short_description: Manages VLAN resources and attributes.
 description:
     - Manages VLAN configurations on NX-OS switches.
 author: Jason Edelman (@jedelman8)
-extends_documentation_fragment: nxos
 options:
     vlan_id:
         description:
@@ -108,40 +107,45 @@ RETURN = '''
 
 proposed_vlans_list:
     description: list of VLANs being proposed
-    returned: always
+    returned: when debug enabled
     type: list
     sample: ["100"]
 existing_vlans_list:
     description: list of existing VLANs on the switch prior to making changes
-    returned: always
+    returned: when debug enabled
     type: list
     sample: ["1", "2", "3", "4", "5", "20"]
 end_state_vlans_list:
     description: list of VLANs after the module is executed
-    returned: always
+    returned: when debug enabled
     type: list
     sample:  ["1", "2", "3", "4", "5", "20", "100"]
 proposed:
     description: k/v pairs of parameters passed into module (does not include
                  vlan_id or vlan_range)
-    returned: always
+    returned: when debug enabled
     type: dict or null
     sample: {"admin_state": "down", "name": "app_vlan",
             "vlan_state": "suspend", "mapped_vni": "5000"}
 existing:
     description: k/v pairs of existing vlan or null when using vlan_range
-    returned: always
+    returned: when debug enabled
     type: dict
     sample: {"admin_state": "down", "name": "app_vlan",
              "vlan_id": "20", "vlan_state": "suspend", "mapped_vni": ""}
 end_state:
     description: k/v pairs of the VLAN after executing module or null
                  when using vlan_range
-    returned: always
+    returned: when debug enabled
     type: dict or null
     sample: {"admin_state": "down", "name": "app_vlan", "vlan_id": "20",
              "vlan_state": "suspend", "mapped_vni": "5000"}
 updates:
+    description: command string sent to the device
+    returned: always
+    type: list
+    sample: ["vlan 20", "vlan 55", "vn-segment 5000"]
+commands:
     description: command string sent to the device
     returned: always
     type: list
@@ -151,165 +155,16 @@ changed:
     returned: always
     type: boolean
     sample: true
-
 '''
+from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
 
-import json
-import collections
-
-# COMMON CODE FOR MIGRATION
 import re
 
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
-from ansible.module_utils.shell import ShellError
-
-try:
-    from ansible.module_utils.nxos import get_module
-except ImportError:
-    from ansible.module_utils.nxos import NetworkModule
-
-
-def to_list(val):
-    if isinstance(val, (list, tuple)):
-        return list(val)
-    elif val is not None:
-        return [val]
-    else:
-        return list()
-
-
-class CustomNetworkConfig(NetworkConfig):
-
-    def expand_section(self, configobj, S=None):
-        if S is None:
-            S = list()
-        S.append(configobj)
-        for child in configobj.children:
-            if child in S:
-                continue
-            self.expand_section(child, S)
-        return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
-
-    def to_block(self, section):
-        return '\n'.join([item.raw for item in section])
-
-    def get_section(self, path):
-        try:
-            section = self.get_section_objects(path)
-            return self.to_block(section)
-        except ValueError:
-            return list()
-
-    def get_section_objects(self, path):
-        if not isinstance(path, list):
-            path = [path]
-        obj = self.get_object(path)
-        if not obj:
-            raise ValueError('path does not exist in config')
-        return self.expand_section(obj)
-
-
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
-
-        ancestors = list()
-        offset = 0
-        obj = None
-
-        ## global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
-
-        else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
-
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
-
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
-
-
-def get_network_module(**kwargs):
-    try:
-        return get_module(**kwargs)
-    except NameError:
-        return NetworkModule(**kwargs)
-
-def get_config(module, include_defaults=False):
-    config = module.params['config']
-    if not config:
-        try:
-            config = module.get_config()
-        except AttributeError:
-            defaults = module.params['include_defaults']
-            config = module.config.get_config(include_defaults=defaults)
-    return CustomNetworkConfig(indent=2, contents=config)
-
-def load_config(module, candidate):
-    config = get_config(module)
-
-    commands = candidate.difference(config)
-    commands = [str(c).strip() for c in commands]
-
-    save_config = module.params['save']
-
-    result = dict(changed=False)
-
-    if commands:
-        if not module.check_mode:
-            try:
-                module.configure(commands)
-            except AttributeError:
-                module.config(commands)
-
-            if save_config:
-                try:
-                    module.config.save_config()
-                except AttributeError:
-                    module.execute(['copy running-config startup-config'])
-
-        result['changed'] = True
-        result['updates'] = commands
-
-    return result
-# END OF COMMON CODE
+from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.nxos import run_commands, load_config, get_config
+from ansible.module_utils.basic import AnsibleModule
 
 def vlan_range_to_list(vlans):
     result = []
@@ -396,8 +251,7 @@ def get_vlan_config_commands(vlan, vid):
 
 
 def get_list_of_vlans(module):
-    command = 'show vlan'
-    body = execute_show_command(command, module)
+    body = run_commands(module, ['show vlan | json'])
     vlan_list = []
     vlan_table = body[0].get('TABLE_vlanbrief')['ROW_vlanbrief']
 
@@ -411,8 +265,10 @@ def get_list_of_vlans(module):
 
 
 def get_vni(vlanid, module):
-    command = 'show run all | section vlan.{0}'.format(vlanid)
-    body = execute_show_command(command, module, command_type='cli_show_ascii')[0]
+    flags = str('all | section vlan.{0}'.format(vlanid)).split(' ')
+    body = get_config(module, flags=flags)
+    #command = 'show run all | section vlan.{0}'.format(vlanid)
+    #body = execute_show_command(command, module, command_type='cli_show_ascii')[0]
     value = ''
     if body:
         REGEX = re.compile(r'(?:vn-segment\s)(?P<value>.*)$', re.M)
@@ -424,10 +280,11 @@ def get_vni(vlanid, module):
 def get_vlan(vlanid, module):
     """Get instance of VLAN as a dictionary
     """
+    command = 'show vlan id %s | json' % vlanid
+    body = run_commands(module, [command])
 
-    command = 'show vlan id ' + vlanid
-
-    body = execute_show_command(command, module)
+    #command = 'show vlan id ' + vlanid
+    #body = execute_show_command(command, module)
 
     try:
         vlan_table = body[0]['TABLE_vlanbriefid']['ROW_vlanbriefid']
@@ -469,90 +326,6 @@ def apply_value_map(value_map, resource):
         resource[key] = value[resource.get(key)]
     return resource
 
-
-def execute_config_command(commands, module):
-    try:
-        module.configure(commands)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending CLI commands',
-                         error=str(clie), commands=commands)
-    except AttributeError:
-        try:
-            commands.insert(0, 'configure')
-            module.cli.add_commands(commands, output='config')
-            module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending CLI commands',
-                             error=str(clie), commands=commands)
-
-
-def get_cli_body_ssh(command, response, module):
-    """Get response for when transport=cli.  This is kind of a hack and mainly
-    needed because these modules were originally written for NX-API.  And
-    not every command supports "| json" when using cli/ssh.  As such, we assume
-    if | json returns an XML string, it is a valid command, but that the
-    resource doesn't exist yet.
-    """
-    if 'show run' in command or response[0] == '\n':
-        body = response
-    elif 'xml' in response[0]:
-        body = []
-    else:
-        try:
-            body = [json.loads(response[0])]
-        except ValueError:
-            module.fail_json(msg='Command does not support JSON output',
-                             command=command)
-    return body
-
-
-def execute_show(cmds, module, command_type=None):
-    command_type_map = {
-        'cli_show': 'json',
-        'cli_show_ascii': 'text'
-    }
-
-    try:
-        if command_type:
-            response = module.execute(cmds, command_type=command_type)
-        else:
-            response = module.execute(cmds)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(cmds),
-                         error=str(clie))
-    except AttributeError:
-        try:
-            if command_type:
-                command_type = command_type_map.get(command_type)
-                module.cli.add_commands(cmds, output=command_type)
-                response = module.cli.run_commands()
-            else:
-                module.cli.add_commands(cmds, raw=True)
-                response = module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending {0}'.format(cmds),
-                             error=str(clie))
-    return response
-
-
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if 'show run' not in command:
-            command += ' | json'
-        cmds = [command]
-        response = execute_show(cmds, module)
-        body = get_cli_body_ssh(command, response, module)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = execute_show(cmds, module, command_type=command_type)
-
-    return body
-
-
 def main():
     argument_spec = dict(
         vlan_id=dict(required=False, type='str'),
@@ -567,10 +340,23 @@ def main():
         config=dict(),
         save=dict(type='bool', default=False)
     )
-    module = get_network_module(argument_spec=argument_spec,
-                                 mutually_exclusive=[['vlan_range', 'name'],
-                                                     ['vlan_id', 'vlan_range']],
-                                 supports_check_mode=True)
+
+    argument_spec.update(nxos_argument_spec)
+
+
+    argument_spec.update(nxos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           mutually_exclusive=[['vlan_range', 'name'],
+                                               ['vlan_id', 'vlan_range']],
+                           supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
+
+
+    warnings = list()
+    check_args(module, warnings)
 
     vlan_range = module.params['vlan_range']
     vlan_id = module.params['vlan_id']
@@ -636,7 +422,7 @@ def main():
             module.exit_json(changed=True,
                              commands=commands)
         else:
-            execute_config_command(commands, module)
+            load_config(module, commands)
             changed = True
             end_state_vlans_list = numerical_sort(get_list_of_vlans(module))
             if 'configure' in commands:
@@ -644,18 +430,26 @@ def main():
             if vlan_id:
                 end_state = get_vlan(vlan_id, module)
 
-    results = {}
-    results['proposed_vlans_list'] = proposed_vlans_list
-    results['existing_vlans_list'] = existing_vlans_list
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['end_state'] = end_state
-    results['end_state_vlans_list'] = end_state_vlans_list
-    results['updates'] = commands
-    results['changed'] = changed
+    results = {
+        'commands': commands,
+        'updates': commands,
+        'changed': changed,
+        'warnings': warnings
+    }
+
+    if module._debug:
+        results.update({
+            'proposed_vlans_list': proposed_vlans_list,
+            'existing_vlans_list': existing_vlans_list,
+            'proposed': proposed,
+            'existing': existing,
+            'end_state': end_state,
+            'end_state_vlans_list': end_state_vlans_list
+        })
 
     module.exit_json(**results)
 
 
 if __name__ == '__main__':
     main()
+

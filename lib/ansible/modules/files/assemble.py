@@ -31,7 +31,7 @@ description:
      - Assembles a configuration file from fragments. Often a particular
        program will take a single configuration file and does not support a
        C(conf.d) style structure where it is easy to build up the configuration
-       from multiple sources. M(assemble) will take a directory of files that can be
+       from multiple sources. C(assemble) will take a directory of files that can be
        local or have already been transferred to the system, and concatenate them
        together to produce a destination file. Files are assembled in string sorting order.
        Puppet calls this idea I(fragments).
@@ -188,9 +188,9 @@ def main():
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec = dict(
-            src = dict(required=True),
+            src = dict(required=True, type='path'),
             delimiter = dict(required=False),
-            dest = dict(required=True),
+            dest = dict(required=True, type='path'),
             backup=dict(default=False, type='bool'),
             remote_src=dict(default=False, type='bool'),
             regexp = dict(required=False),
@@ -203,8 +203,8 @@ def main():
     changed   = False
     path_hash   = None
     dest_hash   = None
-    src       = os.path.expanduser(module.params['src'])
-    dest      = os.path.expanduser(module.params['dest'])
+    src       = module.params['src']
+    dest      = module.params['dest']
     backup    = module.params['backup']
     delimiter = module.params['delimiter']
     regexp    = module.params['regexp']

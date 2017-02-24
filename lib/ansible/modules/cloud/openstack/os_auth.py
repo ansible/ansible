@@ -30,6 +30,11 @@ description:
 requirements:
     - "python >= 2.6"
     - "shade"
+options:
+  availability_zone:
+    description:
+      - Ignored. Present for backwards compatability
+    required: false
 extends_documentation_fragment: openstack
 '''
 
@@ -67,8 +72,8 @@ def main():
             ansible_facts=dict(
                 auth_token=cloud.auth_token,
                 service_catalog=cloud.service_catalog))
-    except shade.OpenStackCloudException as e:
-        module.fail_json(msg=str(e))
+    except Exception as e:
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
 
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *

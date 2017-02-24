@@ -35,7 +35,7 @@ requirements:
 options:
    server:
      description:
-       - restrict results to servers with names matching
+       - restrict results to servers with names or UUID matching
          this glob expression (e.g., C<web*>).
      required: false
      default: None
@@ -45,6 +45,10 @@ options:
           of additional API calls.
      required: false
      default: false
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatability
+     required: false
 extends_documentation_fragment: openstack
 '''
 
@@ -88,7 +92,7 @@ def main():
             # filter servers by name
             pattern = module.params['server']
             openstack_servers = [server for server in openstack_servers
-                                 if fnmatch.fnmatch(server['name'], pattern)]
+                                 if fnmatch.fnmatch(server['name'], pattern) or fnmatch.fnmatch(server['id'], pattern)]
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_servers=openstack_servers))
 

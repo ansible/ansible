@@ -32,8 +32,6 @@ description:
     either individual usernames or the collection of usernames in the
     current running config.  It also supports purging usernames from the
     configuration that are not explicitly defined.
-notes:
-  - This module requires connection to be network_cli
 options:
   users:
     description:
@@ -142,29 +140,15 @@ session_name:
   returned: when changed is True
   type: str
   sample: ansible_1479315771
-start:
-  description: The time the job started
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:15.126146"
-end:
-  description: The time the job ended
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:25.595612"
-delta:
-  description: The time elapsed to perform all operations
-  returned: always
-  type: str
-  sample: "0:00:10.469466"
 """
 import re
 
 from functools import partial
 
-from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.eos import get_config, load_config
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.eos import eos_argument_spec, check_args
 
 def validate_privilege(value, module):
     if not 1 <= value <= 15:
@@ -331,13 +315,20 @@ def main():
         state=dict(default='present', choices=['present', 'absent'])
     )
 
+    argument_spec.update(eos_argument_spec)
+
     mutually_exclusive = [('username', 'users')]
 
-    module = LocalAnsibleModule(argument_spec=argument_spec,
-                                mutually_exclusive=mutually_exclusive,
-                                supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           mutually_exclusive=mutually_exclusive,
+                           supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
 
     result = {'changed': False}
+    if warnings:
+        result['warnings'] = warnings
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)

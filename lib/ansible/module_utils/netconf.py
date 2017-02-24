@@ -4,7 +4,7 @@
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
 #
-# (c) 2016 Red Hat Inc.
+# (c) 2017 Red Hat Inc.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -29,9 +29,11 @@ from contextlib import contextmanager
 
 from ncclient.xml_ import new_ele, sub_ele, to_xml, to_ele
 
+from ansible.module_utils.connection import exec_command
+
 def send_request(module, obj, check_rc=True):
     request = to_xml(obj)
-    rc, out, err = module.exec_command(request)
+    rc, out, err = exec_command(module, request)
     if rc != 0:
         if check_rc:
             module.fail_json(msg=str(err))

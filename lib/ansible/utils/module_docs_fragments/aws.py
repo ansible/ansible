@@ -23,7 +23,9 @@ class ModuleDocFragment(object):
 options:
   ec2_url:
     description:
-      - Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints).  Ignored for modules where region is required.  Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+      - Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints).
+        Ignored for modules where region is required. Must be specified for all other modules if region is not used.
+        If not set then the value of the EC2_URL environment variable, if any, is used.
     required: false
     default: null
     aliases: []

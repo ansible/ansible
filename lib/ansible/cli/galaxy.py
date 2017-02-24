@@ -344,7 +344,7 @@ class GalaxyCLI(CLI):
                         roles_left.append(GalaxyRole(self.galaxy, **role))
                 f.close()
             except (IOError, OSError) as e:
-                display.error('Unable to open %s: %s' % (role_file, str(e)))
+                raise AnsibleError('Unable to open %s: %s' % (role_file, str(e)))
         else:
             # roles were specified directly, so we'll just go out grab them
             # (and their dependencies, unless the user doesn't want us to).

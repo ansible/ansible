@@ -61,7 +61,10 @@ class TestModuleUtilsBasic(unittest.TestCase):
             self.assertEqual(len(args), 1)
             message = args[0]
 
-            self.assertEqual(len(message), len('Invoked with bam=bam bar=[1, 2, 3] foo=False baz=baz no_log=NOT_LOGGING_PARAMETER password=NOT_LOGGING_PASSWORD'))
+            self.assertEqual(
+                len(message),
+                len('Invoked with bam=bam bar=[1, 2, 3] foo=False baz=baz no_log=NOT_LOGGING_PARAMETER password=NOT_LOGGING_PASSWORD')
+            )
             self.assertTrue(message.startswith('Invoked with '))
             self.assertIn(' bam=bam', message)
             self.assertIn(' bar=[1, 2, 3]', message)

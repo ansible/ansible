@@ -384,4 +384,4 @@ def check_min_pkg_version(pkg_name, minimum_version):
 
 def unexpected_error_msg(error):
     """Create an error string based on passed in error."""
-    return 'Unexpected response: (%s). Detail: %s' % (str(error), traceback.format_exc(error))
+    return 'Unexpected response: (%s). Detail: %s' % (str(error), traceback.format_exc())

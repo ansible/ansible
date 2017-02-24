@@ -23,7 +23,6 @@ __metaclass__ = type
 
 import glob
 import imp
-import inspect
 import os
 import os.path
 import sys
@@ -32,7 +31,6 @@ import warnings
 from collections import defaultdict
 
 from ansible import constants as C
-from ansible.compat.six import string_types
 from ansible.module_utils._text import to_text
 
 
@@ -49,7 +47,7 @@ PLUGIN_PATH_CACHE = {}
 
 
 def get_all_plugin_loaders():
-    return [(name, obj) for (name, obj) in inspect.getmembers(sys.modules[__name__]) if isinstance(obj, PluginLoader)]
+    return [(name, obj) for (name, obj) in globals().items() if isinstance(obj, PluginLoader)]
 
 
 class PluginLoader:
@@ -371,7 +369,14 @@ class PluginLoader:
         self._display_plugin_load(self.class_name, name, self._searched_paths, path,
                                   found_in_cache=found_in_cache, class_only=class_only)
         if not class_only:
-            obj = obj(*args, **kwargs)
+            try:
+                obj = obj(*args, **kwargs)
+            except TypeError as e:
+                if "abstract" in e.args[0]:
+                    # Abstract Base Class.  The found plugin file does not
+                    # fully implement the defined interface.
+                    return None
+                raise
 
         return obj
 
@@ -431,7 +436,10 @@ class PluginLoader:
             self._display_plugin_load(self.class_name, name, self._searched_paths, path,
                                       found_in_cache=found_in_cache, class_only=class_only)
             if not class_only:
-                obj = obj(*args, **kwargs)
+                try:
+                    obj = obj(*args, **kwargs)
+                except TypeError as e:
+                    display.warning("Skipping plugin (%s) as it seems to be incomplete: %s" % (path, to_text(e)))
 
             # set extra info on the module, in case we want it later
             setattr(obj, '_original_path', path)

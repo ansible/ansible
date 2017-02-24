@@ -306,7 +306,7 @@ def main():
             user=dict(required=True, aliases=['name']),
             profile=dict(default=None),
             resource_pool=dict(default=None),
-            password=dict(default=None),
+            password=dict(default=None, no_log=True),
             expired=dict(type='bool', default=None),
             ldap=dict(type='bool', default=None),
             roles=dict(default=None, aliases=['role']),
@@ -315,7 +315,7 @@ def main():
             cluster=dict(default='localhost'),
             port=dict(default='5433'),
             login_user=dict(default='dbadmin'),
-            login_password=dict(default=None),
+            login_password=dict(default=None, no_log=True),
         ), supports_check_mode = True)
 
     if not pyodbc_found:

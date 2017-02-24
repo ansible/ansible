@@ -19,45 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import json
 
-from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
-from ansible.errors import AnsibleModuleExit
+from .iosxr_module import TestIosxrModule, load_fixture, set_module_args
 from ansible.modules.network.iosxr import iosxr_facts
-from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
 
 
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
+class TestIosxrFacts(TestIosxrModule):
 
-
-fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
-fixture_data = {}
-
-
-def load_fixture(name):
-    path = os.path.join(fixture_path, name)
-
-    if path in fixture_data:
-        return fixture_data[path]
-
-    with open(path) as f:
-        data = f.read()
-
-    try:
-        data = json.loads(data)
-    except:
-        pass
-
-    fixture_data[path] = data
-    return data
-
-
-class TestIosxrFacts(unittest.TestCase):
+    module = iosxr_facts
 
     def setUp(self):
         self.mock_run_commands = patch(
@@ -67,7 +38,7 @@ class TestIosxrFacts(unittest.TestCase):
     def tearDown(self):
         self.mock_run_commands.stop()
 
-    def execute_module(self, failed=False, changed=False):
+    def load_fixtures(self, commands=None):
 
         def load_from_file(*args, **kwargs):
             module, commands = args
@@ -81,23 +52,10 @@ class TestIosxrFacts(unittest.TestCase):
                     command = item
                 filename = str(command).replace(' ', '_')
                 filename = filename.replace('/', '7')
-                filename = filename.replace('|', '1')
                 output.append(load_fixture(filename))
             return output
 
         self.run_commands.side_effect = load_from_file
-
-        with self.assertRaises(AnsibleModuleExit) as exc:
-            iosxr_facts.main()
-
-        result = exc.exception.result
-
-        if failed:
-            self.assertTrue(result.get('failed'))
-        else:
-            self.assertEqual(result.get('changed'), changed, result)
-
-        return result
 
     def test_iosxr_facts_gather_subset_default(self):
         set_module_args(dict())
@@ -107,7 +65,7 @@ class TestIosxrFacts(unittest.TestCase):
         self.assertIn('default', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('interfaces', ansible_facts['ansible_net_gather_subset'])
         self.assertEquals('iosxr01', ansible_facts['ansible_net_hostname'])
-        self.assertEquals([], ansible_facts['ansible_net_filesystems'])
+        self.assertEquals(['disk0:', 'flash0:'], ansible_facts['ansible_net_filesystems'])
         self.assertIn('GigabitEthernet0/0/0/0',
             ansible_facts['ansible_net_interfaces'].keys())
 

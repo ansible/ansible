@@ -96,6 +96,19 @@ options:
       - List of VPC security group IDs to associate with the Lambda function. Required when vpc_subnet_ids is used.
     required: false
     default: None
+  environment_variables:
+    description:
+      - A dictionary of environment variables the Lambda function is given.
+    required: false
+    default: None
+    aliases: [ 'environment' ]
+    version_added: "2.3"
+  dead_letter_arn:
+    description:
+      - The parent object that contains the target Amazon Resource Name (ARN) of an Amazon SQS queue or Amazon SNS topic.
+    required: false
+    default: None
+    version_added: "2.3"
 author:
     - 'Steyn Huizinga (@steynovich)'
 extends_documentation_fragment:
@@ -120,11 +133,18 @@ tasks:
     vpc_security_group_ids:
     - sg-123abcde
     - sg-edcba321
+    environment_variables: '{{ item.env_vars }}'
   with_items:
     - name: HelloWorld
       zip_file: hello-code.zip
+      env_vars:
+        key1: "first"
+        key2: "second"
     - name: ByeBye
       zip_file: bye-code.zip
+      env_vars:
+        key1: "1"
+        key2: "2"
 
 # Basic Lambda function deletion
 tasks:
@@ -221,6 +241,8 @@ def main():
         memory_size=dict(type='int', default=128),
         vpc_subnet_ids=dict(type='list', default=None),
         vpc_security_group_ids=dict(type='list', default=None),
+        environment_variables=dict(type='dict', default=None),
+        dead_letter_arn=dict(type='str', default=None),
         )
     )
 
@@ -250,6 +272,8 @@ def main():
     memory_size = module.params.get('memory_size')
     vpc_subnet_ids = module.params.get('vpc_subnet_ids')
     vpc_security_group_ids = module.params.get('vpc_security_group_ids')
+    environment_variables = module.params.get('environment_variables')
+    dead_letter_arn = module.params.get('dead_letter_arn')
 
     check_mode = module.check_mode
     changed = False
@@ -306,6 +330,15 @@ def main():
             func_kwargs.update({'Timeout': timeout})
         if memory_size and current_config['MemorySize'] != memory_size:
             func_kwargs.update({'MemorySize': memory_size})
+        if (environment_variables is not None) and (current_config['Environment']['Variables'] != environment_variables):
+            func_kwargs.update({'Environment':{'Variables': environment_variables}})
+        if dead_letter_arn is not None:
+            if current_config.get('DeadLetterConfig'):
+                if current_config['DeadLetterConfig']['TargetArn'] != dead_letter_arn:
+                    func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
+            else:
+                if dead_letter_arn != "":
+                    func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
 
         # Check for unsupported mutation
         if current_config['Runtime'] != runtime:
@@ -338,7 +371,7 @@ def main():
                 func_kwargs.update({'VpcConfig':{'SubnetIds': [], 'SecurityGroupIds': []}})
 
         # Upload new configuration if configuration has changed
-        if len(func_kwargs) > 2:
+        if len(func_kwargs) > 1:
             try:
                 if not check_mode:
                     response = client.update_function_configuration(**func_kwargs)
@@ -421,7 +454,11 @@ def main():
                        'Code': code,
                        'Timeout': timeout,
                        'MemorySize': memory_size,
+                       'Environment':{'Variables': environment_variables}
                        }
+
+        if dead_letter_arn:
+            func_kwargs.update({'DeadLetterConfig': {'TargetARN': dead_letter_arn}})
 
         # If VPC configuration is given
         if vpc_subnet_ids or vpc_security_group_ids:

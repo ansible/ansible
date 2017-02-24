@@ -46,6 +46,10 @@ options:
           this dictionary may be additional dictionaries.
      required: false
      default: None
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatability
+     required: false
 '''
 
 EXAMPLES = '''
@@ -63,16 +67,15 @@ EXAMPLES = '''
     var: openstack_projects
 
 # Gather facts about a previously created project in a specific domain
-- os_project_facts
+- os_project_facts:
     cloud: awesomecloud
     name: demoproject
     domain: admindomain
 - debug:
     var: openstack_projects
 
-# Gather facts about a previously created project in a specific domain
-  with filter
-- os_project_facts
+# Gather facts about a previously created project in a specific domain with filter
+- os_project_facts:
     cloud: awesomecloud
     name: demoproject
     domain: admindomain

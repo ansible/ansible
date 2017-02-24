@@ -4,7 +4,7 @@
 # -----------------------------------------------------------
 #
 # This script checks the current WinRM (PS Remoting) configuration and makes
-# the # necessary changes to allow Ansible to connect, authenticate and
+# the necessary changes to allow Ansible to connect, authenticate and
 # execute PowerShell commands.
 #
 # All events are logged to the Windows EventLog, useful for unattended runs.
@@ -32,12 +32,14 @@
 # Updated by Michael Crilly <mike@autologic.cm>
 # Updated by Anton Ouzounov <Anton.Ouzounov@careerbuilder.com>
 # Updated by Dag Wieërs <dag@wieers.com>
+# Updated by Jordan Borean <jborean93@gmail.com>
 #
 # Version 1.0 - 2014-07-06
 # Version 1.1 - 2014-11-11
 # Version 1.2 - 2015-05-15
 # Version 1.3 - 2016-04-04
 # Version 1.4 - 2017-01-05
+# Version 1.5 - 2017-02-09
 
 # Support -Verbose option
 [CmdletBinding()]
@@ -47,7 +49,8 @@ Param (
     [int]$CertValidityDays = 365,
     [switch]$SkipNetworkProfileCheck,
     $CreateSelfSignedCert = $true,
-    [switch]$ForceNewSSLCert
+    [switch]$ForceNewSSLCert,
+    [switch]$EnableCredSSP
 )
 
 Function Write-Log
@@ -109,10 +112,11 @@ Function New-LegacySelfSignedCert
     $certdata = $enrollment.CreateRequest(0)
     $enrollment.InstallResponse(2, $certdata, 0, "")
 
-    # Return the thumbprint of the last installed certificate;
-    # This is needed for the new HTTPS WinRM listerner we're
-    # going to create further down.
-    Get-ChildItem "Cert:\LocalMachine\my"| Sort-Object NotBefore -Descending | Select -First 1 | Select -Expand Thumbprint
+    # extract/return the thumbprint from the generated cert
+    $parsed_cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
+    $parsed_cert.Import([System.Text.Encoding]::UTF8.GetBytes($certdata))
+
+    return $parsed_cert.Thumbprint
 }
 
 # Setup error handling.
@@ -256,6 +260,19 @@ If (($basicAuthSetting.Value) -eq $false)
 Else
 {
     Write-Verbose "Basic auth is already enabled."
+}
+
+# If EnableCredSSP if set to true
+If ($EnableCredSSP)
+{
+    # Check for CredSSP authentication
+    $credsspAuthSetting = Get-ChildItem WSMan:\localhost\Service\Auth | Where {$_.Name -eq "CredSSP"}
+    If (($credsspAuthSetting.Value) -eq $false)
+    {
+        Write-Verbose "Enabling CredSSP auth support."
+        Enable-WSManCredSSP -role server -Force
+        Write-Log "Enabled CredSSP auth support."
+    }
 }
 
 # Configure firewall to allow WinRM HTTPS connections.

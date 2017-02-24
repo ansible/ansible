@@ -159,7 +159,7 @@ def main():
         argument_spec=dict(
             name=dict(required=True, aliases=['db']),
             login_user=dict(default=''),
-            login_password=dict(default=''),
+            login_password=dict(default='', no_log=True),
             login_host=dict(required=True),
             login_port=dict(default='1433'),
             target=dict(default=None),

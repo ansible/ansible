@@ -87,6 +87,10 @@ options:
      required: false
      default: false
      version_added: "2.1"
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatability
+     required: false
 requirements: ["shade"]
 '''
 

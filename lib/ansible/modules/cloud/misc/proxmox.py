@@ -175,6 +175,18 @@ options:
      - Indicate desired state of the instance
     choices: ['present', 'started', 'absent', 'stopped', 'restarted']
     default: present
+  pubkey:
+    description:
+      - Public key to add to /root/.ssh/authorized_keys. This was added on Proxmox 4.2, it is ignored for earlier versions
+    version_added: "2.3"
+    default: null
+  unprivileged:
+    version_added: "2.3"
+    description:
+      - Indicate if the container should be unprivileged
+    default: false
+    required: false
+
 notes:
   - Requires proxmoxer and requests modules on host. This modules can be installed with pip.
 requirements: [ "proxmoxer", "python >= 2.7", "requests" ]
@@ -274,7 +286,7 @@ EXAMPLES = '''
 - proxmox:
     vmid: 100
     api_user: root@pam
-    api_passwordL 1q2w3e
+    api_password: 1q2w3e
     api_host: node1
     force: yes
     state: stopped
@@ -329,6 +341,7 @@ def node_check(proxmox, node):
 def create_instance(module, proxmox, vmid, node, disk, storage, cpus, memory, swap, timeout, **kwargs):
   proxmox_node = proxmox.nodes(node)
   kwargs = dict((k,v) for k, v in kwargs.items() if v is not None)
+
   if VZ_TYPE =='lxc':
       kwargs['cpulimit']=cpus
       kwargs['rootfs']=disk
@@ -338,9 +351,14 @@ def create_instance(module, proxmox, vmid, node, disk, storage, cpus, memory, sw
       if 'mounts' in kwargs:
         kwargs.update(kwargs['mounts'])
         del kwargs['mounts']
+      if 'pubkey' in kwargs:
+        if float(proxmox.version.get()['version']) >= 4.2:
+          kwargs['ssh-public-keys'] = kwargs['pubkey']
+        del kwargs['pubkey']
   else:
       kwargs['cpus']=cpus
       kwargs['disk']=disk
+
   taskid = getattr(proxmox_node, VZ_TYPE).create(vmid=vmid, storage=storage, memory=memory, swap=swap, **kwargs)
 
   while timeout:
@@ -428,6 +446,8 @@ def main():
           timeout = dict(type='int', default=30),
           force = dict(type='bool', default='no'),
           state = dict(default='present', choices=['present', 'absent', 'stopped', 'started', 'restarted']),
+          pubkey = dict(type='str', default=None),
+          unprivileged = dict(type='bool', default='no')
           )
   )
 
@@ -502,7 +522,9 @@ def main():
                       cpuunits = module.params['cpuunits'],
                       nameserver = module.params['nameserver'],
                       searchdomain = module.params['searchdomain'],
-                      force = int(module.params['force']))
+                      force = int(module.params['force']),
+                      pubkey = module.params['pubkey'],
+                      unprivileged = int(module.params['unprivileged']))
 
       module.exit_json(changed=True, msg="deployed VM %s from template %s"  % (vmid, module.params['ostemplate']))
     except Exception as e:

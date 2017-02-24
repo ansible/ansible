@@ -168,6 +168,7 @@ class PlayContext(Base):
     _timeout          = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
     _shell            = FieldAttribute(isa='string')
     _network_os       = FieldAttribute(isa='string')
+    _connection_user  = FieldAttribute(isa='string')
     _ssh_args         = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_ARGS)
     _ssh_common_args  = FieldAttribute(isa='string')
     _sftp_extra_args  = FieldAttribute(isa='string')
@@ -208,7 +209,7 @@ class PlayContext(Base):
     _force_handlers   = FieldAttribute(isa='bool', default=False)
     _start_at_task    = FieldAttribute(isa='string')
     _step             = FieldAttribute(isa='bool', default=False)
-    _diff             = FieldAttribute(isa='bool', default=False)
+    _diff             = FieldAttribute(isa='bool', default=C.DIFF_ALWAYS)
 
     # Fact gathering settings
     _gather_subset    = FieldAttribute(isa='string', default=C.DEFAULT_GATHER_SUBSET)
@@ -442,6 +443,7 @@ class PlayContext(Base):
         # additionally, we need to do this check after final connection has been
         # correctly set above ...
         if new_info.connection == 'local':
+            new_info.connection_user = new_info.remote_user
             new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
 
         # set no_log to default if it was not previouslly set
@@ -548,10 +550,8 @@ class PlayContext(Base):
                 becomecmd = '%s %s "%s"' % (exe, flags, success_cmd)
 
             elif self.become_method == 'runas':
-                raise AnsibleError("'runas' is not yet implemented")
-                #FIXME: figure out prompt
-                # this is not for use with winrm plugin but if they ever get ssh native on windoez
-                becomecmd = '%s %s /user:%s "%s"' % (exe, flags, self.become_user, success_cmd)
+                # become is handled inside the WinRM connection plugin
+                becomecmd = cmd
 
             elif self.become_method == 'doas':
 
@@ -595,6 +595,10 @@ class PlayContext(Base):
         for prop, var_list in MAGIC_VARIABLE_MAPPING.items():
             try:
                 if 'become' in prop:
+                    continue
+
+                # perserves the user var for local connections
+                if self.connection == 'local' and 'remote_user' in prop:
                     continue
 
                 var_val = getattr(self, prop)

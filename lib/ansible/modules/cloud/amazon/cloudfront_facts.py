@@ -145,10 +145,10 @@ EXAMPLES = '''
 
 # Facts are published in ansible_facts['cloudfront'][<distribution_name>]
 - debug:
-    msg: '{{ ansible_facts['cloudfront']['my-cloudfront-distribution-id'] }}'
+    msg: "{{ ansible_facts['cloudfront']['my-cloudfront-distribution-id'] }}"
 
 - debug:
-    msg: '{{ ansible_facts['cloudfront']['www.my-website.com'] }}'
+    msg: "{{ ansible_facts['cloudfront']['www.my-website.com'] }}"
 
 # Get all information about an invalidation for a distribution.
 - cloudfront_facts:
@@ -233,56 +233,64 @@ class CloudFrontServiceManager:
         except botocore.exceptions.NoRegionError:
             self.module.fail_json(msg="Region must be specified as a parameter, in AWS_DEFAULT_REGION environment variable or in boto configuration file")
         except Exception as e:
-            self.module.fail_json(msg="Can't establish connection - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Can't establish connection - " + str(e),
+                                  exception=traceback.format_exc())
 
     def get_distribution(self, distribution_id):
         try:
             func = partial(self.client.get_distribution,Id=distribution_id)
             return self.paginated_response(func)
         except Exception as e:
-            self.module.fail_json(msg="Error describing distribution - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error describing distribution - " + str(e),
+                                  exception=traceback.format_exc())
 
     def get_distribution_config(self, distribution_id):
         try:
             func = partial(self.client.get_distribution_config,Id=distribution_id)
             return self.paginated_response(func)
         except Exception as e:
-            self.module.fail_json(msg="Error describing distribution configuration - " + str(e), exception=traceback.format_exec(e))
+            self.module.fail_json(msg="Error describing distribution configuration - " + str(e),
+                                  exception=traceback.format_exec())
 
     def get_origin_access_identity(self, origin_access_identity_id):
         try:
             func = partial(self.client.get_cloud_front_origin_access_identity,Id=origin_access_identity_id)
             return self.paginated_response(func)
         except Exception as e:
-            self.module.fail_json(msg="Error describing origin access identity - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error describing origin access identity - " + str(e),
+                                  exception=traceback.format_exc())
 
     def get_origin_access_identity_config(self, origin_access_identity_id):
         try:
             func = partial(self.client.get_cloud_front_origin_access_identity_config,Id=origin_access_identity_id)
             return self.paginated_response(func)
         except Exception as e:
-            self.module.fail_json(msg="Error describing origin access identity configuration - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error describing origin access identity configuration - " + str(e),
+                                  exception=traceback.format_exc())
 
     def get_invalidation(self, distribution_id, invalidation_id):
         try:
             func = partial(self.client.get_invalidation,DistributionId=distribution_id,Id=invalidation_id)
             return self.paginated_response(func)
         except Exception as e:
-            self.module.fail_json(msg="Error describing invalidation - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error describing invalidation - " + str(e),
+                                  exception=traceback.format_exc())
 
     def get_streaming_distribution(self, distribution_id):
         try:
             func = partial(self.client.get_streaming_distribution,Id=distribution_id)
             return self.paginated_response(func)
         except Exception as e:
-            self.module.fail_json(msg="Error describing streaming distribution - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error describing streaming distribution - " + str(e),
+                                  exception=traceback.format_exc())
 
     def get_streaming_distribution_config(self, distribution_id):
         try:
             func = partial(self.client.get_streaming_distribution_config,Id=distribution_id)
             return self.paginated_response(func)
         except Exception as e:
-            self.module.fail_json(msg="Error describing streaming distribution - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error describing streaming distribution - " + str(e),
+                                  exception=traceback.format_exc())
 
     def list_origin_access_identities(self):
         try:
@@ -292,7 +300,8 @@ class CloudFrontServiceManager:
               return origin_access_identity_list['Items']
             return {}
         except Exception as e:
-            self.module.fail_json(msg="Error listing cloud front origin access identities - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error listing cloud front origin access identities - " + str(e),
+                                  exception=traceback.format_exc())
 
     def list_distributions(self, keyed=True):
         try:
@@ -306,7 +315,8 @@ class CloudFrontServiceManager:
                 return distribution_list
             return self.keyed_list_helper(distribution_list)
         except Exception as e:
-            self.module.fail_json(msg="Error listing distributions - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error listing distributions - " + str(e),
+                                  exception=traceback.format_exc())
 
     def list_distributions_by_web_acl_id(self, web_acl_id):
         try:
@@ -318,7 +328,8 @@ class CloudFrontServiceManager:
                 distribution_list = distribution_list['Items']
             return self.keyed_list_helper(distribution_list)
         except Exception as e:
-            self.module.fail_json(msg="Error listing distributions by web acl id - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error listing distributions by web acl id - " + str(e),
+                                  exception=traceback.format_exc())
 
     def list_invalidations(self, distribution_id):
         try:
@@ -328,7 +339,8 @@ class CloudFrontServiceManager:
                 return invalidation_list['Items']
             return {}
         except Exception as e:
-            self.module.fail_json(msg="Error listing invalidations - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error listing invalidations - " + str(e),
+                                  exception=traceback.format_exc())
 
     def list_streaming_distributions(self, keyed=True):
         try:
@@ -342,7 +354,8 @@ class CloudFrontServiceManager:
                 return streaming_distribution_list
             return self.keyed_list_helper(streaming_distribution_list)
         except Exception as e:
-            self.module.fail_json(msg="Error listing streaming distributions - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error listing streaming distributions - " + str(e),
+                                  exception=traceback.format_exc())
 
     def summary(self):
         summary_dict = {}
@@ -362,32 +375,8 @@ class CloudFrontServiceManager:
                 origin_access_identity_list['origin_access_identities'].append( oai_summary )
             return origin_access_identity_list
         except Exception as e:
-            self.module.fail_json(msg="Error generating summary of origin access identities - " + str(e), exception=traceback.format_exc(e))
-
-    def summary_get_distribution_list(self, streaming=False):
-        try:
-            list_name = 'streaming_distributions' if streaming else 'distributions'
-            key_list = ['Id', 'ARN', 'Status', 'LastModifiedTime', 'DomainName', 'Comment', 'PriceClass', 'Enabled' ]
-            distribution_list = { list_name: [] }
-            distributions = self.list_streaming_distributions(False) if streaming else self.list_distributions(False)
-            for dist in distributions:
-                temp_distribution = {}
-                for key_name in key_list:
-                    temp_distribution.update( { key_name: dist[key_name] } )
-                temp_distribution.update( { 'Aliases': [] } )
-                temp_distribution.update( { 'ETag': self.get_etag_from_distribution_id(dist['Id'], streaming) } )
-                if 'Items' in dist['Aliases']:
-                    for alias in dist['Aliases']['Items']:
-                        temp_distribution['Aliases'].append(alias)
-                if not streaming:
-                    temp_distribution.update( { 'WebACLId': dist['WebACLId'] } )
-                    invalidation_ids = self.get_list_of_invalidation_ids_from_distribution_id(dist['Id'])
-                    if invalidation_ids:
-                        temp_distribution.update( { 'Invalidations': invalidation_ids } )
-                distribution_list[list_name].append(temp_distribution)
-            return distribution_list
-        except Exception as e:
-            self.module.fail_json(msg="Error generating summary of distributions - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error generating summary of origin access identities - " + str(e),
+                                  exception=traceback.format_exc())
 
     def get_etag_from_distribution_id(self, distribution_id, streaming):
         distribution = {}
@@ -405,7 +394,8 @@ class CloudFrontServiceManager:
                 invalidation_ids.append(invalidation['Id'])
             return invalidation_ids
         except Exception as e:
-            self.module.fail_json(msg="Error getting list of invalidation ids - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error getting list of invalidation ids - " + str(e),
+                                  exception=traceback.format_exc())
 
     def get_distribution_id_from_domain_name(self, domain_name):
         try:
@@ -420,7 +410,8 @@ class CloudFrontServiceManager:
                             break
             return distribution_id
         except Exception as e:
-            self.module.fail_json(msg="Error getting distribution id from domain name - " + str(e), exception=traceback.format_exc(e))
+            self.module.fail_json(msg="Error getting distribution id from domain name - " + str(e),
+                                  exception=traceback.format_exc())
 
     def get_aliases_from_distribution_id(self, distribution_id):
         aliases = []
@@ -433,8 +424,8 @@ class CloudFrontServiceManager:
                     break
             return aliases
         except Exception as e:
-            self.module.fail_json(msg="Error getting list of aliases from distribution_id - " + str(e), exception=traceback.format_exc(e))
-
+            self.module.fail_json(msg="Error getting list of aliases from distribution_id - " + str(e),
+                                  exception=traceback.format_exc())
     def paginated_response(self, func, result_key=""):
         '''
         Returns expanded response for paginated operations.
@@ -475,24 +466,24 @@ def set_facts_for_distribution_id_and_alias(details, facts, distribution_id, ali
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        distribution_id                   = dict(required=False, type='str'),
-        invalidation_id                   = dict(required=False, type='str'),
-        origin_access_identity_id         = dict(required=False, type='str'),
-        domain_name_alias                 = dict(required=False, type='str'),
-        all_lists                         = dict(required=False, default=False, type='bool'),
-        distribution                      = dict(required=False, default=False, type='bool'),
-        distribution_config               = dict(required=False, default=False, type='bool'),
-        origin_access_identity            = dict(required=False, default=False, type='bool'),
-        origin_access_identity_config     = dict(required=False, default=False, type='bool'),
-        invalidation                      = dict(required=False, default=False, type='bool'),
-        streaming_distribution            = dict(required=False, default=False, type='bool'),
-        streaming_distribution_config     = dict(required=False, default=False, type='bool'),
-        list_origin_access_identities     = dict(required=False, default=False, type='bool'),
-        list_distributions                = dict(required=False, default=False, type='bool'),
-        list_distributions_by_web_acl_id  = dict(required=False, default=False, type='bool'),
-        list_invalidations                = dict(required=False, default=False, type='bool'),
-        list_streaming_distributions      = dict(required=False, default=False, type='bool'),
-        summary                           = dict(required=False, default=False, type='bool')
+        distribution_id=dict(required=False, type='str'),
+        invalidation_id=dict(required=False, type='str'),
+        origin_access_identity_id=dict(required=False, type='str'),
+        domain_name_alias=dict(required=False, type='str'),
+        all_lists=dict(required=False, default=False, type='bool'),
+        distribution=dict(required=False, default=False, type='bool'),
+        distribution_config=dict(required=False, default=False, type='bool'),
+        origin_access_identity=dict(required=False, default=False, type='bool'),
+        origin_access_identity_config=dict(required=False, default=False, type='bool'),
+        invalidation=dict(required=False, default=False, type='bool'),
+        streaming_distribution=dict(required=False, default=False, type='bool'),
+        streaming_distribution_config=dict(required=False, default=False, type='bool'),
+        list_origin_access_identities=dict(required=False, default=False, type='bool'),
+        list_distributions=dict(required=False, default=False, type='bool'),
+        list_distributions_by_web_acl_id=dict(required=False, default=False, type='bool'),
+        list_invalidations=dict(required=False, default=False, type='bool'),
+        list_streaming_distributions=dict(required=False, default=False, type='bool'),
+        summary=dict(required=False, default=False, type='bool')
     ))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
@@ -502,29 +493,29 @@ def main():
 
     service_mgr = CloudFrontServiceManager(module)
 
-    distribution_id                   = module.params.get('distribution_id')
-    invalidation_id                   = module.params.get('invalidation_id')
-    origin_access_identity_id         = module.params.get('origin_access_identity_id')
-    web_acl_id                        = module.params.get('web_acl_id')
-    domain_name_alias                 = module.params.get('domain_name_alias')
-    all_lists                         = module.params.get('all_lists')
-    distribution                      = module.params.get('distribution')
-    distribution_config               = module.params.get('distribution_config')
-    origin_access_identity            = module.params.get('origin_access_identity')
-    origin_access_identity_config     = module.params.get('origin_access_identity_config')
-    invalidation                      = module.params.get('invalidation')
-    streaming_distribution            = module.params.get('streaming_distribution')
-    streaming_distribution_config     = module.params.get('streaming_distribution_config')
-    list_origin_access_identities     = module.params.get('list_origin_access_identities')
-    list_distributions                = module.params.get('list_distributions')
-    list_distributions_by_web_acl_id  = module.params.get('list_distributions_by_web_acl_id')
-    list_invalidations                = module.params.get('list_invalidations')
-    list_streaming_distributions      = module.params.get('list_streaming_distributions')
-    summary                           = module.params.get('summary')
+    distribution_id = module.params.get('distribution_id')
+    invalidation_id = module.params.get('invalidation_id')
+    origin_access_identity_id = module.params.get('origin_access_identity_id')
+    web_acl_id = module.params.get('web_acl_id')
+    domain_name_alias = module.params.get('domain_name_alias')
+    all_lists = module.params.get('all_lists')
+    distribution = module.params.get('distribution')
+    distribution_config = module.params.get('distribution_config')
+    origin_access_identity = module.params.get('origin_access_identity')
+    origin_access_identity_config = module.params.get('origin_access_identity_config')
+    invalidation = module.params.get('invalidation')
+    streaming_distribution = module.params.get('streaming_distribution')
+    streaming_distribution_config = module.params.get('streaming_distribution_config')
+    list_origin_access_identities = module.params.get('list_origin_access_identities')
+    list_distributions = module.params.get('list_distributions')
+    list_distributions_by_web_acl_id = module.params.get('list_distributions_by_web_acl_id')
+    list_invalidations = module.params.get('list_invalidations')
+    list_streaming_distributions = module.params.get('list_streaming_distributions')
+    summary = module.params.get('summary')
 
+    aliases = []
     result = { 'cloudfront': {} }
     facts = {}
-    aliases = []
 
     require_distribution_id = (distribution or distribution_config or invalidation or streaming_distribution or
         streaming_distribution_config or list_invalidations)

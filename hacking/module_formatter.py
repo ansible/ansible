@@ -135,7 +135,12 @@ def list_modules(module_dir, depth=0):
     # * windows powershell modules have documentation stubs in python docstring
     #   format (they are not executed) so skip the ps1 format files
     # * One glob level for every module level that we're going to traverse
-    files = glob.glob("%s/*.py" % module_dir) + glob.glob("%s/*/*.py" % module_dir) + glob.glob("%s/*/*/*.py" % module_dir) + glob.glob("%s/*/*/*/*.py" % module_dir)
+    files = (
+        glob.glob("%s/*.py" % module_dir) +
+        glob.glob("%s/*/*.py" % module_dir) +
+        glob.glob("%s/*/*/*.py" % module_dir) +
+        glob.glob("%s/*/*/*/*.py" % module_dir)
+    )
 
     for module_path in files:
         if module_path.endswith('__init__.py'):
@@ -412,7 +417,8 @@ def process_category(category, categories, options, env, template, outputname):
 
     category_file.write("""\n\n
 .. note::
-    - %s: This marks a module as deprecated, which means a module is kept for backwards compatibility but usage is discouraged.  The module documentation details page may explain more about this rationale.
+    - %s: This marks a module as deprecated, which means a module is kept for backwards compatibility but usage is discouraged.
+       The module documentation details page may explain more about this rationale.
 """ % DEPRECATED)
     category_file.close()
 

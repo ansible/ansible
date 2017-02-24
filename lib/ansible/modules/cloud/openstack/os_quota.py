@@ -156,6 +156,10 @@ options:
         required: False
         default: None
         description: Number of LVM volumes to allow.
+    availability_zone:
+      description:
+        - Ignored. Present for backwards compatability
+      required: false
 
 
 requirements:

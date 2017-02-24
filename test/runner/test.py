@@ -285,6 +285,9 @@ def parse_args():
                         choices=SUPPORTED_PYTHON_VERSIONS,
                         help='python version: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
 
+    sanity.add_argument('--base-branch',
+                        help=argparse.SUPPRESS)
+
     add_extra_docker_options(sanity, integration=False)
 
     shell = subparsers.add_parser('shell',

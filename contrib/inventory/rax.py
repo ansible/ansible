@@ -367,8 +367,8 @@ def _list(regions, refresh_cache=True):
                                    'RAX_CACHE_MAX_AGE', 600))
 
     if (not os.path.exists(get_cache_file_path(regions)) or
-        refresh_cache or
-        (time() - os.stat(get_cache_file_path(regions))[-1]) > cache_max_age):
+            refresh_cache or
+            (time() - os.stat(get_cache_file_path(regions))[-1]) > cache_max_age):
         # Cache file doesn't exist or older than 10m or refresh cache requested
         _list_into_cache(regions)
 

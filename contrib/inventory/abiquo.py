@@ -122,12 +122,16 @@ def generate_inv_from_api(enterprise_entity,config):
         vms_entity = next(link for link in (enterprise['links']) if (link['rel']=='virtualmachines'))
         vms = api_get(vms_entity,config)
         for vmcollection in vms['collection']:
-            vm_vapp = next(link for link in (vmcollection['links']) if (link['rel']=='virtualappliance'))['title'].replace('[','').replace(']','').replace(' ','_')
-            vm_vdc = next(link for link in (vmcollection['links']) if (link['rel']=='virtualdatacenter'))['title'].replace('[','').replace(']','').replace(' ','_')
-            vm_template = next(link for link in (vmcollection['links']) if (link['rel']=='virtualmachinetemplate'))['title'].replace('[','').replace(']','').replace(' ','_')
+            for link in vmcollection['links']:
+                if link['rel'] == 'virtualappliance':
+                    vm_vapp = link['title'].replace('[','').replace(']','').replace(' ','_')
+                elif link['rel'] == 'virtualdatacenter':
+                    vm_vdc = link['title'].replace('[','').replace(']','').replace(' ','_')
+                elif link['rel'] == 'virtualmachinetemplate':
+                    vm_template = link['title'].replace('[','').replace(']','').replace(' ','_')
 
             # From abiquo.ini: Only adding to inventory VMs with public IP
-            if (config.getboolean('defaults', 'public_ip_only')) == True:
+            if config.getboolean('defaults', 'public_ip_only') is True:
                 for link in vmcollection['links']:
                     if (link['type']=='application/vnd.abiquo.publicip+json' and link['rel']=='ip'):
                         vm_nic = link['title']
@@ -137,7 +141,7 @@ def generate_inv_from_api(enterprise_entity,config):
             # Otherwise, assigning defined network interface IP address
             else:
                 for link in vmcollection['links']:
-                    if (link['rel']==config.get('defaults', 'default_net_interface')):
+                    if link['rel'] == config.get('defaults', 'default_net_interface'):
                         vm_nic = link['title']
                         break
                     else:
@@ -145,7 +149,7 @@ def generate_inv_from_api(enterprise_entity,config):
 
             vm_state = True
             # From abiquo.ini: Only adding to inventory VMs deployed
-            if ((config.getboolean('defaults', 'deployed_only') == True) and (vmcollection['state'] == 'NOT_ALLOCATED')):
+            if config.getboolean('defaults', 'deployed_only') is True and vmcollection['state'] == 'NOT_ALLOCATED':
                 vm_state = False
 
             if vm_nic is not None and vm_state:
@@ -161,7 +165,7 @@ def generate_inv_from_api(enterprise_entity,config):
                     inventory[vm_template] = {}
                     inventory[vm_template]['children'] = []
                     inventory[vm_template]['hosts'] = []
-                if config.getboolean('defaults', 'get_metadata') == True:
+                if config.getboolean('defaults', 'get_metadata') is True:
                     meta_entity = next(link for link in (vmcollection['links']) if (link['rel']=='metadata'))
                     try:
                         metadata = api_get(meta_entity,config)

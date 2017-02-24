@@ -52,6 +52,9 @@ a file at a given filepath.
 If the file exists previously, it will retrieve its contents, behaving just like with_file. Usage of variables like "{{ inventory_hostname }}" in the filepath can be used to set
 up random passwords per host (which simplifies password management in 'host_vars' variables).
 
+A special case is using ``/dev/null`` as a path. The password lookup will generate a new random password each time, but will not write it to ``/dev/null``. This can be used when you need a password
+without storing it on the controller.
+
 Generated passwords contain a random mix of upper and lowercase ASCII letters, the
 numbers 0-9 and punctuation (". , : - _"). The default length of a generated password is 20 characters.
 This length can be changed by passing an extra parameter::

@@ -414,6 +414,13 @@ class VaultEditor:
         # shuffle tmp file into place
         self.shuffle_files(tmp_path, filename)
 
+    def encrypt_bytes(self, b_plaintext):
+        check_prereqs()
+
+        b_ciphertext = self.vault.encrypt(b_plaintext)
+
+        return b_ciphertext
+
     def encrypt_file(self, filename, output_file=None):
 
         check_prereqs()

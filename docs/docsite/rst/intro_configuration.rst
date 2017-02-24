@@ -502,6 +502,19 @@ to talk to::
 
 It used to be called hostfile in Ansible before 1.9
 
+.. _inventory_ignore_extensions:
+
+inventory_ignore_extensions
+===========================
+
+Coma-separated list of file extension patterns to ignore when Ansible inventory
+is a directory with multiple sources (static and dynamic)::
+
+    inventory_ignore_extensions = ~, .orig, .bak, .ini, .cfg, .retry, .pyc, .pyo
+
+This option can be overridden by setting ``ANSIBLE_INVENTORY_IGNORE``
+environment variable.
+
 .. _jinja2_extensions:
 
 jinja2_extensions
@@ -1239,7 +1252,5 @@ Override the default Galaxy server value of https://galaxy.ansible.com. Useful i
 ignore_certs
 ============
 
-If set to *yes*, ansible-galaxy will not validate TLS certificates. Handy for testing against a server with a self-signed certificate
-.
-ver with a self-signed certificate
-.
+If set to *yes*, ansible-galaxy will not validate TLS certificates. This can be useful for testing against a server with a self-signed certificate.
+

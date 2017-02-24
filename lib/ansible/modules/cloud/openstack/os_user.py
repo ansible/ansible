@@ -73,6 +73,10 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatability
+     required: false
 requirements:
     - "python >= 2.6"
     - "shade"
@@ -182,7 +186,7 @@ def main():
 
     argument_spec = openstack_full_argument_spec(
         name=dict(required=True),
-        password=dict(required=False, default=None),
+        password=dict(required=False, default=None, no_log=True),
         email=dict(required=False, default=None),
         default_project=dict(required=False, default=None),
         domain=dict(required=False, default=None),
