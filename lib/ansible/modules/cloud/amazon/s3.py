@@ -92,7 +92,7 @@ options:
     description:
       - Switches the module behaviour between put (upload), get (download), geturl (return download url, Ansible 1.3+),
         getstr (download object as string (1.3+)), list (list keys, Ansible 2.0+), create (bucket), delete (bucket), and delobj (delete object, Ansible 2.0+).
-        Warning: delete (bucket) will delete a bucket and any objects it contains unlike the AWS CLI (which requires the --force option if any objects
+        Warning, delete (bucket) will delete a bucket and any objects it contains unlike the AWS CLI (which requires the --force option if any objects
         are in the bucket).
     required: true
     choices: ['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list']
