@@ -18,6 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
 class ModuleDocFragment(object):
 
     # facts standard oVirt documentation fragment
@@ -38,7 +39,8 @@ options:
         required: True
         description:
             - "Dictionary with values needed to create HTTP/HTTPS connection to oVirt:"
-            - "C(username)[I(required)] - The name of the user, something like `I(admin@internal)`. Default value is set by I(OVIRT_USERNAME) environment variable."
+            - C(username)[I(required)] - The name of the user, something like I(admin@internal).
+              Default value is set by I(OVIRT_USERNAME) environment variable.
             - "C(password)[I(required)] - The password of the user. Default value is set by I(OVIRT_PASSWORD) environment variable."
             - "C(url)[I(required)] - A string containing the base URL of the server, usually
             something like `I(https://server.example.com/ovirt-engine/api)`. Default value is set by I(OVIRT_URL) environment variable."

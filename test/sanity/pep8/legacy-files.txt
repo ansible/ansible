@@ -261,11 +261,4 @@ lib/ansible/plugins/strategy/linear.py
 lib/ansible/template/__init__.py
 lib/ansible/utils/encrypt.py
 lib/ansible/utils/module_docs.py
-lib/ansible/utils/module_docs_fragments/aws.py
-lib/ansible/utils/module_docs_fragments/azure_tags.py
-lib/ansible/utils/module_docs_fragments/ec2.py
-lib/ansible/utils/module_docs_fragments/files.py
-lib/ansible/utils/module_docs_fragments/netapp.py
-lib/ansible/utils/module_docs_fragments/ovirt.py
-lib/ansible/utils/module_docs_fragments/ovirt_facts.py
 lib/ansible/vars/__init__.py
