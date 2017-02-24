@@ -306,7 +306,7 @@ class Nxapi:
 
         return responses
 
-    def load_config(self, config):
+    def load_config(self, commands):
         """Sends the ordered set of commands to the device
         """
         cmds = ['configure terminal']
