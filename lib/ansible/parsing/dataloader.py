@@ -247,7 +247,7 @@ class DataLoader():
             basedir = unfrackpath(path)
 
             #FIXME: this role detection will not work with alternate/missing main.yml
-            # is it a role and if so make sure you get correct base path 
+            # is it a role and if so make sure you get correct base path
             if path.endswith('tasks') and os.path.exists(to_bytes(os.path.join(path,'main.yml'), errors='surrogate_or_strict')) \
                     or os.path.exists(to_bytes(os.path.join(path,'tasks/main.yml'), errors='surrogate_or_strict')):
                 is_role = True
