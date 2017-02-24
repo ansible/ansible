@@ -3,8 +3,8 @@
 # Created on Aug 25, 2016
 # @author: Gaurav Rastogi (grastogi@avinetworks.com)
 #          Eric Anderson (eanderson@avinetworks.com)
-# module_check: not supported
-# Avi Version: 16.3.6
+# module_check: supported
+# Avi Version: 16.3.8
 #
 #
 # This file is part of Ansible
@@ -35,12 +35,11 @@ description:
     - This module is used to configure VirtualService object
     - more examples at U(https://github.com/avinetworks/devops)
 requirements: [ avisdk ]
-version_added: 2.3
+version_added: "2.3"
 options:
     state:
         description:
             - The state that should be applied on the entity.
-        required: false
         default: present
         choices: ["absent","present"]
     active_standby_se_tag:
@@ -99,6 +98,9 @@ options:
     connections_rate_limit:
         description:
             - Rate limit the incoming connections to this virtual service.
+    content_rewrite:
+        description:
+            - Profile used to match and rewrite strings in request and/or response body.
     created_by:
         description:
             - Creator name.
@@ -353,6 +355,7 @@ obj:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.avi import avi_common_argument_spec
 
+
 HAS_AVI = True
 try:
     from avi.sdk.utils.ansible_utils import avi_ansible_api
@@ -378,6 +381,7 @@ def main():
         cloud_ref=dict(type='str',),
         cloud_type=dict(type='str',),
         connections_rate_limit=dict(type='dict',),
+        content_rewrite=dict(type='dict',),
         created_by=dict(type='str',),
         delay_fairness=dict(type='bool',),
         description=dict(type='str',),
@@ -438,7 +442,7 @@ def main():
     )
     argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(
-        argument_spec=argument_specs)
+        argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:
         return module.fail_json(msg=(
             'Avi python API SDK (avisdk) is not installed. '
