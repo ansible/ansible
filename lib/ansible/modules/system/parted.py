@@ -18,12 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.module_utils.basic import AnsibleModule
-import locale
-import math
-import re
-import os
-
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'committer',
+    'version': '1.0'
+}
 
 DOCUMENTATION = '''
 ---
@@ -189,6 +188,13 @@ EXAMPLES = """
 """
 
 
+from ansible.module_utils.basic import AnsibleModule
+import locale
+import math
+import re
+import os
+
+
 def parse_partition_info(output, unit):
     """
     Parses the output of parted and transforms the data into
@@ -247,7 +253,7 @@ def parse_partition_info(output, unit):
     return {'generic': generic, 'partitions': parts}
 
 
-def format_disk_size(size_bytes, unit, sector_size):
+def format_disk_size(size_bytes, unit):
     """
     Formats a size in bytes into a different unit, like parted does. It doesn't
     manage CYL and CHS formats, though.
@@ -283,13 +289,19 @@ def format_disk_size(size_bytes, unit, sector_size):
     output = size_bytes / multiplier * (1 + 1E-16)
 
     # Corrections to round up as per IEEE754 standard
-    if output < 10:    w = output + 0.005
-    elif output < 100: w = output + 0.05
-    else:              w = output + 0.5
+    if output < 10:
+        w = output + 0.005
+    elif output < 100:
+        w = output + 0.05
+    else:
+        w = output + 0.5
 
-    if w < 10:    precision = 2
-    elif w < 100: precision = 1
-    else:         precision = 0
+    if w < 10:
+        precision = 2
+    elif w < 100:
+        precision = 1
+    else:
+        precision = 0
 
     # Round and return
     return round(output, precision), unit
@@ -324,7 +336,7 @@ def get_unlabeled_device_info(device, unit):
     phys_block  = int(read_record(base + "/queue/physical_block_size", 0))
     size_bytes  = int(read_record(base + "/size", 0)) * logic_block
 
-    size, unit  = format_disk_size(size_bytes, unit, logic_block)
+    size, unit  = format_disk_size(size_bytes, unit)
 
     return {
         'generic': {
@@ -360,7 +372,7 @@ def get_device_info(device, unit):
         module.fail_json(msg=(
             "Error while getting device information with parted "
             "script: '{0}'".format(command)),
-             rc=rc, out=out, err=err
+            rc=rc, out=out, err=err
         )
 
     return parse_partition_info(out, unit)
