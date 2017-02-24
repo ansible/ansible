@@ -32,7 +32,7 @@ version_added: "2.3"
 author: "Benjamin Jolivot (@bjolivot)"
 short_description: Manage fortios firewall ipv4 policy objects
 description:
-  - This module provide management of firewall ipv4 policies on FortiOS devices.
+  - This module provides management of firewall ipv4 policies on FortiOS devices.
 extends_documentation_fragment: fortios
 options:
   id:
@@ -171,15 +171,14 @@ from ansible.module_utils.pycompat24 import get_exception
 #check for pyFG lib
 try:
     from pyFG import FortiOS, FortiConfig
-    from pyFG.fortios import logger
-    from pyFG.exceptions import CommandExecutionException, FailedCommit, ForcedCommit
+    from pyFG.exceptions import CommandExecutionException, FailedCommit
     HAS_PYFG=True
 except:
     HAS_PYFG=False
 
 def main():
     argument_spec = dict(
-        comment                   = dict(),
+        comment                   = dict(type='str'),
         id                        = dict(type='str', required=True),
         src_intf                  = dict(default='any'),
         dst_intf                  = dict(default='any'),
@@ -203,18 +202,25 @@ def main():
 
     #merge global required_if & argument_spec from module_utils/fortios.py
     argument_spec.update(fortios_argument_spec)
-    required_if = fortios_required_if
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=required_if,
+        required_if=fortios_required_if,
     )
+
+    #test params
+    #Nat related
+    if not module.params['nat']:
+        if module.params['poolname']:
+            module.fail_json(msg='Poolname param require Nat to be true.')
+        if module.params['fixedport']:
+            module.fail_json(msg='Fixedport param require Nat to be true.')
+
 
     result = dict(changed=False)
 
     # fail if libs not present
-    msg = ""
     if not HAS_PYFG:
         module.fail_json(msg='Could not import the python library pyFG required by this module')
 
@@ -230,15 +236,18 @@ def main():
     #connect
     try:
         f.open()
-    except:
-        module.fail_json(msg='Error connecting device')
+    except Exception:
+        e = get_exception()
+        module.fail_json(msg='Error connecting device. %s' % e)
 
     #get  config
     try:
         f.load_config(path=path)
         result['firewall_address_config'] = f.running_config.to_text()
-    except:
-        module.fail_json(msg='Error reading running config')
+    except Exception:
+        f.close()
+        e = get_exception()
+        module.fail_json(msg='Error reading running config. %s' % e)
 
     #Absent State
     if module.params['state'] == 'absent':
@@ -253,8 +262,8 @@ def main():
         new_policy = FortiConfig(module.params['id'], 'edit')
 
         #src / dest / service / interfaces
-        new_policy.set_param('srcintf', '"{0}"'.format(module.params['src_intf']))
-        new_policy.set_param('dstintf', '"{0}"'.format(module.params['dst_intf']))
+        new_policy.set_param('srcintf', '"%s"' % (module.params['src_intf']))
+        new_policy.set_param('dstintf', '"%s"' % (module.params['dst_intf']))
 
 
         new_policy.set_param('srcaddr', " ".join('"' + item + '"' for item in module.params['src_addr']))
@@ -270,10 +279,10 @@ def main():
             new_policy.set_param('service-negate', 'enable')
 
         # action
-        new_policy.set_param('action', '{0}'.format(module.params['action']))
+        new_policy.set_param('action', '%s' % (module.params['action']))
 
         # Schedule
-        new_policy.set_param('schedule', '"{0}"'.format(module.params['schedule']))
+        new_policy.set_param('schedule', '%s' % (module.params['schedule']))
 
         #NAT
         if module.params['nat']:
@@ -282,21 +291,21 @@ def main():
                 new_policy.set_param('fixedport', 'enable')
             if module.params['poolname'] is not None:
                 new_policy.set_param('ippool', 'enable')
-                new_policy.set_param('poolname', '"{0}"'.format(module.params['poolname']))
+                new_policy.set_param('poolname', '"%s"' % (module.params['poolname']))
 
         #security profiles:
         if module.params['av_profile'] is not None:
-            new_policy.set_param('av-profile', '"{0}"'.format(module.params['av_profile']))
+            new_policy.set_param('av-profile', '"%s"' % (module.params['av_profile']))
         if module.params['webfilter_profile'] is not None:
-            new_policy.set_param('webfilter-profile', '"{0}"'.format(module.params['webfilter_profile']))
+            new_policy.set_param('webfilter-profile', '"%s"' % (module.params['webfilter_profile']))
         if module.params['ips_sensor'] is not None:
-            new_policy.set_param('ips-sensor', '"{0}"'.format(module.params['ips_sensor']))
+            new_policy.set_param('ips-sensor', '"%s"' % (module.params['ips_sensor']))
         if module.params['application_list'] is not None:
-            new_policy.set_param('application-list', '"{0}"'.format(module.params['application_list']))
+            new_policy.set_param('application-list', '"%s"' % (module.params['application_list']))
 
         # comment
         if module.params['comment'] is not None:
-            new_policy.set_param('comment', '"{0}"'.format(module.params['comment']))
+            new_policy.set_param('comment', '"%s"' % (module.params['comment']))
 
         #add to candidate config
         f.candidate_config[path][module.params['id']] = new_policy
@@ -304,19 +313,21 @@ def main():
         #check if change needed
         change_string = f.compare_config()
 
-        if change_string != "":
+        if change_string:
             result['change_string'] = change_string
             result['changed'] = True
 
     #Commit if not check mode
-    if module.check_mode is False and change_string != "":
+    if change_string and not module.check_mode:
         try:
             f.commit()
         except FailedCommit:
-            #rollback
+            #Something's wrong (rollback is automatic)
+            f.close()
             e = get_exception()
-            module.fail_json(msg="Unable to commit change, check your args, the error was {0}".format(e.message))
+            module.fail_json(msg="Unable to commit change, check your args, the error was %s" % (e.message))
 
+    f.close()
     module.exit_json(**result)
 
 if __name__ == '__main__':
