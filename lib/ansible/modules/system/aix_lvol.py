@@ -304,9 +304,11 @@ def main():
             if this_lv['policy'] != policy:
                 ### change lv allocation policy
                 chlv_cmd = module.get_bin_path("chlv", required=True)
-                rc, _, err = module.run_command("%s %s -e %s %s" % (test_opt, chlv_cmd, lv_policy, this_lv['name']))
+                rc, out, err = module.run_command("%s %s -e %s %s" % (test_opt, chlv_cmd, lv_policy, this_lv['name']))
                 if rc == 0:
                     module.exit_json(changed=True, msg="Logical volume %s policy changed: %s." % (lv, policy))
+                else:
+                    module.fail_json(msg="Failed to change logical volume %s policy." %lv, rc=rc, out=out, err=err)
 
             if vg != this_lv['vg']:
                 module.fail_json(msg="Logical volume %s already exist in volume group %s" % (lv, this_lv['vg']))
