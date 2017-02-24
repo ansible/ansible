@@ -42,8 +42,8 @@ notes:
     through C(/sys/) to obtain disk information. In this case the units CHS and
     CYL are not supported.
 requirements:
-  - This module requires either parted version >= 3.1. If parted version < 3.1
-    the it is required a Linux version running the sysfs file system C(/sys/).
+  - This module requires parted version >= 3.1 or, if parted version < 3.1,
+    then it requires a Linux version running the sysfs file system C(/sys/).
 options:
   device:
     description: The block device (disk) where to operate.
@@ -209,9 +209,12 @@ def parse_partition_info(output, unit):
     """
     lines = output.split('\n')
     generic_params = lines[1].rstrip(';').split(':')
+    size, unit = parse_unit(generic_params[1], unit)
+
     generic = {
         'dev':   generic_params[0],
-        'size':  parse_unit(generic_params[1], unit),
+        'size':  size,
+        'unit':  unit,
         'table': generic_params[5],
         'model': generic_params[6],
         'logical_block':  int(generic_params[3]),
@@ -256,7 +259,7 @@ def format_disk_size(size_bytes, unit, sector_size):
     units_si  = ['b', 'kb',  'mb',  'gb',  'tb',  'pb',  'eb',  'zb',  'yb']
     units_iec = ['b', 'kib', 'mib', 'gib', 'tib', 'pib', 'eib', 'zib', 'yib']
 
-    # If unit is the empty string, it defaults to 'compact'.
+    # Cases where we default to 'compact'
     if unit in ['', 'compact', 'cyl', 'chs']:
         index = max(0, int(
             (math.log10(size_bytes) - 1.0) / 3.0
@@ -269,11 +272,10 @@ def format_disk_size(size_bytes, unit, sector_size):
     multiplier = 1
     if unit in units_si:
         multiplier = 1000.0 ** units_si.index(unit)
+    elif unit in units_iec:
+        multiplier = 1024.0 ** units_iec.index(unit)
     else:
-        if unit in units_iec:
-            multiplier = 1024.0 ** units_iec.index(unit)
-        else:
-            module.fail_json(msg="No valid size unit specified.")
+        module.fail_json(msg="No valid size unit specified.")
 
     output = size_bytes / multiplier * (1 + 1E-16)
 
@@ -287,7 +289,7 @@ def format_disk_size(size_bytes, unit, sector_size):
     else:         precision = 0
 
     # Round and return
-    return round(output, precision)
+    return round(output, precision), unit
 
 
 def read_record(file_path, default=None):
@@ -318,12 +320,14 @@ def get_unlabeled_device_info(device, unit):
     logic_block = int(read_record(base + "/queue/logical_block_size", 0))
     phys_block  = int(read_record(base + "/queue/physical_block_size", 0))
     size_bytes  = int(read_record(base + "/size", 0)) * logic_block
+    size, unit  = format_disk_size(size_bytes, unit, logic_block)
 
     return {
         'generic': {
             'dev':            device,
             'table':          "unknown",
-            'size':           format_disk_size(size_bytes, unit, logic_block),
+            'size':           size,
+            'unit':           unit,
             'logical_block':  logic_block,
             'physical_block': phys_block,
             'model':          "{0} {1}".format(vendor, model),
@@ -339,12 +343,10 @@ def get_device_info(device, unit):
     """
     global module
 
-    label_needed = check_parted_label(device)
-    label_needed = True
-
-    # If parted complains about missing labels, it means there are no partitions
+    # If parted complains about missing labels, it means there are no partitions.
     # In this case only, use a custom function to fetch information and emulate
     # parted formats for the unit.
+    label_needed = check_parted_label(device)
     if label_needed:
         return get_unlabeled_device_info(device, unit)
 
@@ -436,15 +438,22 @@ def part_exists(partitions, attribute, number):
     )
 
 
-def parse_unit(s, unit, ceil=True):
+def parse_unit(size_str, unit, ceil=True):
     """
     Converts '123.1unit' string into ints. If ceil is True it will be rounded up
-    (124)  and and down (123) if ceil is False.
+    (124) and and down (123) if ceil is False.
     """
-    flt = locale.atof(s.lower().split(unit.lower())[0])
-    if ceil:
-        return int(math.ceil(flt))
-    return int(math.floor(flt))
+    matches = re.search(r'^([\d.]+)(\w+)?$', size_str)
+    if matches is None:
+        module.fail_json(msg="Error interpreting the size of the disk given by parted.")
+
+    size = locale.atof(matches.group(1))
+    if len(matches.groups()) == 2:
+        unit = matches.group(2).lower()
+
+    size = int(math.ceil(size) if ceil else math.floor(size))
+
+    return size, unit
 
 
 def main():
@@ -531,7 +540,7 @@ def main():
     if state:
         state = state.lower()
     if number and number < 0:
-        module.fail_json(msg="The partition number must be non negativ.e")
+        module.fail_json(msg="The partition number must be non negative.")
 
     # Read the current disk information
     current_device = get_device_info(device, unit)
@@ -565,7 +574,8 @@ def main():
         if script:
             output_script += script
             parted(script, device, align)
-            changed = True; script = ""
+            changed = True
+            script = ""
 
             current_parts = get_device_info(device, unit)['partitions']
 
@@ -594,14 +604,16 @@ def main():
 
         # Execute the script
         if script:
-            output_script += script; changed = True
+            output_script += script
+            changed = True
             parted(script, device, align)
 
     elif state and state == 'absent':
         # Remove the partition
         if part_exists(current_parts, 'num', number):
             script = "rm {0} ".format(number)
-            output_script += script; changed = True
+            output_script += script
+            changed = True
             parted(script, device, align)
 
     # Final status of the device
