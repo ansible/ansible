@@ -301,7 +301,8 @@ class CallbackModule(CallbackBase):
                         self._display.vvvv('%s: %s' % (option,val))
 
     def v2_runner_retry(self, result):
-        msg = "FAILED - RETRYING: %s (%d retries left)." % (result._task, result._result['retries'] - result._result['attempts'])
+        task_name = result.task_name or result._task
+        msg = "FAILED - RETRYING: %s (%d retries left)." % (task_name, result._result['retries'] - result._result['attempts'])
         if (self._display.verbosity > 2 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
             msg += "Result was: %s" % self._dump_results(result._result)
         self._display.display(msg, color=C.COLOR_DEBUG)
