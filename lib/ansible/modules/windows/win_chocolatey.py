@@ -31,7 +31,9 @@ module: win_chocolatey
 version_added: "1.9"
 short_description: Installs packages using chocolatey
 description:
-    - Installs packages using Chocolatey (http://chocolatey.org/). If Chocolatey is missing from the system, the module will install it. List of packages can be found at http://chocolatey.org/packages
+    - Installs packages using Chocolatey (U(http://chocolatey.org/)).
+    - If Chocolatey is missing from the system, the module will install it.
+    - List of packages can be found at U(http://chocolatey.org/packages)
 options:
   name:
     description:
@@ -43,25 +45,29 @@ options:
     choices:
       - present
       - absent
+      - latest
     default: present
   force:
     description:
-      - Forces install of the package (even if it already exists). Using Force will cause ansible to always report that a change was made
+      - Forces install of the package (even if it already exists).
+      - Using C(force) will cause ansible to always report that a change was made
     choices:
       - yes
       - no
     default: no
   upgrade:
     description:
-      - If package is already installed it, try to upgrade to the latest version or to the specified version
+      - If package is already installed it, try to upgrade to the latest version or to the specified version.
+      - As of Ansible v2.3 this is deprecated, set parameter C(state) to "latest" for the same result.
+    version_removed: '2.3'
     choices:
       - yes
       - no
     default: no
   version:
     description:
-      - Specific version of the package to be installed
-      - Ignored when state == 'absent'
+      - Specific version of the package to be installed.
+      - Ignored when C(state) is set to "absent".
   source:
     description:
       - Specify source rather than using default chocolatey repository
@@ -76,13 +82,11 @@ options:
   allow_empty_checksums:
     description:
       - Allow empty Checksums to be used
-    require: false
     default: false
     version_added: '2.2'
   ignore_checksums:
     description:
       - Ignore Checksums
-    require: false
     default: false
     version_added: '2.2'
   ignore_dependencies:
