@@ -1,3 +1,4 @@
+
 #
 # (c) 2015 Peter Sprygada, <psprygada@ansible.com>
 #
@@ -38,28 +39,24 @@ from ansible.module_utils.netcfg import NetworkConfig, ConfigLine, ignore_line, 
 
 def get_config(module):
     contents = module.params['config']
-
     if not contents:
         contents = module.config.get_config()
         module.params['config'] = contents
-
-    return Dellos6NetworkConfig(indent=0, contents=contents[0])
-
+        return Dellos6NetworkConfig(indent=0, contents=contents[0])
+    else:
+        return Dellos6NetworkConfig(indent=0, contents=contents)
 
 def get_sublevel_config(running_config, module):
     contents = list()
     current_config_contents = list()
     sublevel_config = Dellos6NetworkConfig(indent=0)
-
     obj = running_config.get_object(module.params['parents'])
     if obj:
         contents = obj.children
-
     for c in contents:
         if isinstance(c, ConfigLine):
             current_config_contents.append(c.raw)
     sublevel_config.add(current_config_contents, module.params['parents'])
-
     return sublevel_config
 
 
@@ -68,6 +65,7 @@ def os6_parse(lines, indent=None, comment_tokens=None):
         re.compile(r'^vlan.*$'),
         re.compile(r'^stack.*$'),
         re.compile(r'^interface.*$'),
+        re.compile(r'datacenter-bridging.*$'),
         re.compile(r'line (console|telnet|ssh).*$'),
         re.compile(r'ip ssh !(server).*$'),
         re.compile(r'ip (dhcp|vrf).*$'),
@@ -85,54 +83,67 @@ def os6_parse(lines, indent=None, comment_tokens=None):
         re.compile(r'banner motd.*$'),
         re.compile(r'openflow.*$'),
         re.compile(r'support-assist.*$'),
+        re.compile(r'template.*$'),
+        re.compile(r'address-family.*$'),
+        re.compile(r'spanning-tree mst.*$'),
+        re.compile(r'logging.*$'),
         re.compile(r'(radius-server|tacacs-server) host.*$')]
 
     childline = re.compile(r'^exit$')
-
     config = list()
-    inSubLevel = False
-    parent = None
-    children = list()
-    subcommandcount = 0
-
+    parent = list()
+    children = []
+    parent_match = False
     for line in str(lines).split('\n'):
         text = str(re.sub(r'([{};])', '', line)).strip()
-
         cfg = ConfigLine(text)
         cfg.raw = line
-
         if not text or ignore_line(text, comment_tokens):
-            parent = None
-            children = list()
-            inSubLevel = False
+            parent = list()
+            children = []
             continue
 
-        if inSubLevel is False:
+        else:
+            parent_match=False
+            # handle sublevel parent
             for pr in sublevel_cmds:
                 if pr.match(line):
-                    parent = cfg
-                    config.append(parent)
-                    inSubLevel = True
+                    if len(parent) != 0:
+                        cfg.parents.extend(parent)
+                    parent.append(cfg)
+                    config.append(cfg)
+                    if children:
+                        children.insert(len(parent) - 1,[])
+                        children[len(parent) - 2].append(cfg)
+                    parent_match=True
                     continue
-            if parent is None:
+            # handle exit
+            if childline.match(line):
+                if children:
+                    parent[len(children) - 1].children.extend(children[len(children) - 1])
+                    if len(children)>1:
+                        parent[len(children) - 2].children.extend(parent[len(children) - 1].children)
+                    cfg.parents.extend(parent)
+                    children.pop()
+                    parent.pop()
+                if not children:
+                    children = list()
+                    if parent:
+                        cfg.parents.extend(parent)
+                    parent = list()
+                    config.append(cfg)
+            # handle sublevel children
+            elif parent_match is False and len(parent)>0 :
+                if not children:
+                    cfglist=[cfg]
+                    children.append(cfglist)
+                else:
+                    children[len(parent) - 1].append(cfg)
+                cfg.parents.extend(parent)
                 config.append(cfg)
-
-        # handle sub level commands
-        elif inSubLevel and childline.match(line):
-            parent.children = children
-            inSubLevel = False
-            children = list()
-            parent = None
-
-        # handle top level commands
-        elif inSubLevel:
-            children.append(cfg)
-            cfg.parents = [parent]
-            config.append(cfg)
-
-        else:  # global level
-            config.append(cfg)
-
+            # handle global commands
+            elif not parent:
+                config.append(cfg)
     return config
 
 
@@ -140,6 +151,18 @@ class Dellos6NetworkConfig(NetworkConfig):
 
     def load(self, contents):
         self._config = os6_parse(contents, self.indent, DEFAULT_COMMENT_TOKENS)
+
+    def diff_line(self, other, path=None):
+        diff = list()
+        for item in self.items:
+            if str(item) == "exit":
+                for diff_item in diff:
+                    if item.parents == diff_item.parents:
+                        diff.append(item)
+                        break
+            elif item not in other:
+                diff.append(item)
+        return diff
 
 
 class Cli(CliBase):
