@@ -294,11 +294,3 @@
     return_content: true
   register: result
   failed_when: result.json.headers['Content-Type'] != 'text/json'
-
-- name: Test using HEADER_ generates a warning
-  uri:
-    url: "https://{{ httpbin_host }}/get"
-    HEADER_Foo: bar
-    return_content: true
-  register: result
-  failed_when: '"HEADER_*" not in result.warnings|default([""])|join("")'
