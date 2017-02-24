@@ -38,7 +38,7 @@ Function Set-Attr($obj, $name, $value)
     # If the provided $obj is undefined, define one to be nice
     If (-not $obj.GetType)
     {
-        $obj = New-Object psobject
+        $obj = @{ }
     }
 
     Try
@@ -59,7 +59,7 @@ Function Exit-Json($obj)
     # If the provided $obj is undefined, define one to be nice
     If (-not $obj.GetType)
     {
-        $obj = New-Object psobject
+        $obj = @{ }
     }
 
     echo $obj | ConvertTo-Json -Compress -Depth 99
@@ -67,25 +67,27 @@ Function Exit-Json($obj)
 }
 
 # Helper function to add the "msg" property and "failed" property, convert the
-# powershell object to JSON and echo it, exiting the script
+# powershell Hashtable to JSON and echo it, exiting the script
 # Example: Fail-Json $result "This is the failure message"
 Function Fail-Json($obj, $message = $null)
 {
-    # If we weren't given 2 args, and the only arg was a string, create a new
-    # psobject and use the arg as the failure message
-    If ($message -eq $null -and $obj.GetType().Name -eq "String")
-    {
+    if ($obj -is [hashtable] -or $obj -is [psobject]) {
+        # Nothing to do
+    } elseif ($obj -is [string] -and $message -eq $null) {
+        # If we weren't given 2 args, and the only arg was a string,
+        # create a new Hashtable and use the arg as the failure message
         $message = $obj
-        $obj = New-Object psobject
-    }
-    # If the first args is undefined or not an object, make it an object
-    ElseIf (-not $obj -or -not $obj.GetType -or $obj.GetType().Name -ne "PSCustomObject")
-    {
-        $obj = New-Object psobject
+        $obj = @{ }
+    } else {
+        # If the first argument is undefined or a different type,
+        # make it a Hashtable
+        $obj = @{ }
     }
 
+    # Still using Set-Attr for PSObject compatibility
     Set-Attr $obj "msg" $message
     Set-Attr $obj "failed" $true
+
     echo $obj | ConvertTo-Json -Compress -Depth 99
     Exit 1
 }
@@ -96,7 +98,7 @@ Function Fail-Json($obj, $message = $null)
 Function Add-Warning($obj, $message)
 {
     if (Get-Member -InputObject $obj -Name "warnings") {
-        if ($obj.warnings -is [System.Array]) {
+        if ($obj.warnings -is [array]) {
             $obj.warnings += $message
         } else {
             throw "warnings attribute is not an array"
@@ -112,7 +114,7 @@ Function Add-Warning($obj, $message)
 Function Add-DeprecationWarning($obj, $message, $version = $null)
 {
     if (Get-Member -InputObject $obj -Name "deprecations") {
-        if ($obj.deprecations -is [System.Array]) {
+        if ($obj.deprecations -is [array]) {
             $obj.deprecations += @{
                 msg = $message
                 version = $version
@@ -238,12 +240,9 @@ Function ConvertTo-Bool
     $boolean_strings = "yes", "on", "1", "true", 1
     $obj_string = [string]$obj
 
-    if (($obj.GetType().Name -eq "Boolean" -and $obj) -or $boolean_strings -contains $obj_string.ToLower())
-    {
+    if (($obj -is [boolean] -and $obj) -or $boolean_strings -contains $obj_string.ToLower()) {
         return $true
-    }
-    Else
-    {
+    } else {
         return $false
     }
 }
@@ -328,3 +327,4 @@ Function Get-PendingRebootStatus
 
 # this line must stay at the bottom to ensure all defined module parts are exported
 Export-ModuleMember -Alias * -Function * -Cmdlet *
+
