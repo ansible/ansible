@@ -211,14 +211,14 @@ def update_fw_settings(fw_zone, fw_settings):
 # masquerade handling
 #
 def get_masquerade_enabled(zone):
-    if fw.queryMasquerade(zone) == True:
+    if fw.queryMasquerade(zone) is True:
         return True
     else:
         return False
 
 def get_masquerade_enabled_permanent(zone):
     fw_zone, fw_settings = get_fw_zone_settings(zone)
-    if fw_settings.getMasquerade() == True:
+    if fw_settings.getMasquerade() is True:
         return True
     else:
         return False
@@ -507,7 +507,7 @@ def main():
 
         ## Check for firewalld running
         try:
-            if fw.connected == False:
+            if fw.connected is False:
                 module.fail_json(msg='firewalld service must be running, or try with offline=true')
         except AttributeError:
             module.fail_json(msg="firewalld connection can't be established,\
@@ -623,7 +623,7 @@ def main():
             msgs.append('Permanent operation')
 
             if desired_state == "enabled":
-                if is_enabled == False:
+                if is_enabled is False:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -633,7 +633,7 @@ def main():
                     )
                     changed=True
             elif desired_state == "disabled":
-                if is_enabled == True:
+                if is_enabled is True:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -651,7 +651,7 @@ def main():
 
 
             if desired_state == "enabled":
-                if is_enabled == False:
+                if is_enabled is False:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -661,7 +661,7 @@ def main():
                     )
                     changed=True
             elif desired_state == "disabled":
-                if is_enabled == True:
+                if is_enabled is True:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -671,7 +671,7 @@ def main():
                     )
                     changed=True
 
-        if changed == True:
+        if changed is True:
             msgs.append("Changed service %s to %s" % (service, desired_state))
 
     # FIXME - source type does not handle non-permanent mode, this was an
@@ -679,7 +679,7 @@ def main():
     if source is not None:
         is_enabled = action_handler(get_source, (zone, source))
         if desired_state == "enabled":
-            if is_enabled == False:
+            if is_enabled is False:
                 if module.check_mode:
                     module.exit_json(changed=True)
 
@@ -687,7 +687,7 @@ def main():
                 changed=True
                 msgs.append("Added %s to zone %s" % (source, zone))
         elif desired_state == "disabled":
-            if is_enabled == True:
+            if is_enabled is True:
                 if module.check_mode:
                     module.exit_json(changed=True)
 
@@ -749,7 +749,7 @@ def main():
             msgs.append('Permanent operation')
 
             if desired_state == "enabled":
-                if is_enabled == False:
+                if is_enabled is False:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -759,7 +759,7 @@ def main():
                     )
                     changed=True
             elif desired_state == "disabled":
-                if is_enabled == True:
+                if is_enabled is True:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -776,7 +776,7 @@ def main():
             msgs.append('Non-permanent operation')
 
             if desired_state == "enabled":
-                if is_enabled == False:
+                if is_enabled is False:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -786,7 +786,7 @@ def main():
                     )
                     changed=True
             elif desired_state == "disabled":
-                if is_enabled == True:
+                if is_enabled is True:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -796,7 +796,7 @@ def main():
                     )
                     changed=True
 
-        if changed == True:
+        if changed is True:
             msgs.append("Changed port %s to %s" % ("%s/%s" % (port, protocol), \
                         desired_state))
 
@@ -853,7 +853,7 @@ def main():
             msgs.append('Permanent operation')
 
             if desired_state == "enabled":
-                if is_enabled == False:
+                if is_enabled is False:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -863,7 +863,7 @@ def main():
                     )
                     changed=True
             elif desired_state == "disabled":
-                if is_enabled == True:
+                if is_enabled is True:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -880,7 +880,7 @@ def main():
             msgs.append('Non-permanent operation')
 
             if desired_state == "enabled":
-                if is_enabled == False:
+                if is_enabled is False:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -890,7 +890,7 @@ def main():
                     )
                     changed=True
             elif desired_state == "disabled":
-                if is_enabled == True:
+                if is_enabled is True:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -900,7 +900,7 @@ def main():
                     )
                     changed=True
 
-        if changed == True:
+        if changed is True:
             msgs.append("Changed rich_rule %s to %s" % (rich_rule, desired_state))
 
     if interface is not None:
@@ -948,7 +948,7 @@ def main():
             )
             msgs.append('Permanent operation')
             if desired_state == "enabled":
-                if is_enabled == False:
+                if is_enabled is False:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -956,7 +956,7 @@ def main():
                     changed=True
                     msgs.append("Changed %s to zone %s" % (interface, zone))
             elif desired_state == "disabled":
-                if is_enabled == True:
+                if is_enabled is True:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -970,7 +970,7 @@ def main():
             )
             msgs.append('Non-permanent operation')
             if desired_state == "enabled":
-                if is_enabled == False:
+                if is_enabled is False:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -978,7 +978,7 @@ def main():
                     changed=True
                     msgs.append("Changed %s to zone %s" % (interface, zone))
             elif desired_state == "disabled":
-                if is_enabled == True:
+                if is_enabled is True:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -1027,7 +1027,7 @@ def main():
             msgs.append('Permanent operation')
 
             if desired_state == "enabled":
-                if is_enabled == False:
+                if is_enabled is False:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -1035,7 +1035,7 @@ def main():
                     changed=True
                     msgs.append("Added masquerade to zone %s" % (zone))
             elif desired_state == "disabled":
-                if is_enabled == True:
+                if is_enabled is True:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -1047,7 +1047,7 @@ def main():
             msgs.append('Non-permanent operation')
 
             if desired_state == "enabled":
-                if is_enabled == False:
+                if is_enabled is False:
                     if module.check_mode:
                         module.exit_json(changed=True)
 
@@ -1055,7 +1055,7 @@ def main():
                     changed=True
                     msgs.append("Added masquerade to zone %s" % (zone))
             elif desired_state == "disabled":
-                if is_enabled == True:
+                if is_enabled is True:
                     if module.check_mode:
                         module.exit_json(changed=True)
 

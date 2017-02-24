@@ -660,7 +660,7 @@ class Connection(ConnectionBase):
                     raise AnsibleOptionsError('scp_if_ssh needs to be one of [smart|True|False]')
             if scp_if_ssh == 'smart':
                 methods = ['sftp', 'scp', 'piped']
-            elif scp_if_ssh == True:
+            elif scp_if_ssh is True:
                 methods = ['scp']
             else:
                 methods = ['sftp']

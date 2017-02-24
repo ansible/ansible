@@ -1005,7 +1005,7 @@ def validate_parameters(required_vars, valid_vars, module):
             if k in valid_vars:
                 params[v] = module.params[k]
             else:
-                if module.params.get(k) == False:
+                if module.params.get(k) is False:
                     pass
                 else:
                     module.fail_json(msg="Parameter %s is not valid for %s command" % (k, command))
