@@ -180,7 +180,7 @@ backup_path:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.iosxr import load_config,get_config
-from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
+from ansible.module_utils.iosxr import iosxr_argument_spec
 
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
 
