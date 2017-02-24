@@ -128,6 +128,9 @@ def main():
             state = dict(type='str', choices=['absent', 'present'], default='present'),
         ),
         supports_check_mode = True,
+        required_if=[
+            ( "state", "present", [ "size" ] ),
+        ],
     )
 
     result = dict(
@@ -145,8 +148,6 @@ def main():
     qemu_img = module.get_bin_path('qemu-img', True)
 
     if state == 'present':
-        if not size:
-            module.fail_json(msg="No size defined, creating a disk image requires a size")
         if not os.path.exists(dest):
             if not module.check_mode:
                 if not img_options:
