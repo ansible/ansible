@@ -155,21 +155,12 @@ def main():
                     module.run_command('%s create -f %s -o "%s" "%s" %s' % (qemu_img, img_format, img_options, dest, size), check_rc=True)
             result['changed'] = True
         else:
-            size_unit = size[-1:]
-            if size_unit not in ['T','G','M','k','b','']:
-                module.fail_json(msg="No valid size unit specified")
-            else:
-                if(size_unit == 'T'):
-                    unitmultiplier = 1024*1024*1024*1024
-                elif(size_unit == 'G'):
-                    unitmultiplier = 1024*1024*1024
-                elif(size_unit == 'M'):
-                    unitmultiplier = 1024*1024
-                elif(size_unit == 'k'):
-                    unitmultiplier = 1024
-                else:
-                    unitmultiplier = 1
-            size = size[:-1]
+            try:
+                size_unit = str(size[-1:])
+                units = list('b', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+                unitmultiplier = 1024**units.index(size_unit)
+            except:
+                unitmultiplier = 1
             size_increase = False
             size_decrease = False
             if(size[:1] == '+'):
