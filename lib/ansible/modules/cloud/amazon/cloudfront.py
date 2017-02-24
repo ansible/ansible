@@ -107,14 +107,34 @@ class CloudFrontServiceManager:
         except Exception as e:
             self.module.fail_json(msg="Error describing distribution - " + str(e), exception=traceback.format_exc(e))
 
-
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        list_streaming_distributions      = dict(required=False, default=False, type='bool'),
-        summary                           = dict(required=False, default=False, type='bool')
+        create_cloud_front_origin_access_identity = dict(required=False, type='bool'),
+        CloudFrontOriginAccessIdentity.Id = dict(required=False, type='string'),
+        CloudFrontOriginAccessIdentity.S3CannonicalUserId = dict(required=False, type='string'),
+        CloudFrontOriginAccessIdentity.CloudFrontOriginAccessIdentityConfig.CallerReference = dict(required=False, type='string'),
+        CloudFrontOriginAccessIdentity.CloudFrontOriginAccessIdentityConfig.Comment = dict(required=False, type='string'),
+        create_distribution = dict(required=False, type='bool'),
+        create_distribution_with_tags = dict(required=False, type='bool'),
+        create_invalidation = dict(required=False, type='bool'),
+        create_streaming_distribution = dict(required=False, type='bool'),
+        create_streaming_distribution_with_tags = dict(required=False, type='bool'),
+        delete_cloud_front_origin_access_identity = dict(required=False, type='bool'),
+        delete_distribution = dict(required=False, type='bool'),
+        delete_streaming_distribution = dict(required=False, type='bool'),
+        generate_presigned_url = dict(required=False, type='bool'),
+        tag_resource =  dict(required=False, type='bool'),
+        untag_resource = dict(required=False, type='bool'),
+        update_cloud_front_origin_access_identity = dict(required=False, type='bool'),
+        update_distribution = dict(required=False, type='bool'),
+        update_streaming_distribution = dict(required=False, type='bool'),
+        content = dict(required=False, type='string'),
+        location = dict(required=False, type='string'),
+        etag = dict(required=False, type='string')
     ))
 
+    result = {}
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
     if not HAS_BOTO3:
@@ -122,11 +142,13 @@ def main():
 
     service_mgr = CloudFrontServiceManager(module)
 
-    list_streaming_distributions      = module.params.get('list_streaming_distributions')
-    summary                           = module.params.get('summary')
+    if(create_cloud_front_origin_access_identity):
+        service_mgr.
 
-    result['cloudfront'].update(facts)
-    module.exit_json(msg="Retrieved cloudfront facts.", ansible_facts=result)
+    list_streaming_distributions = module.params.get('list_streaming_distributions')
+    summary = module.params.get('summary')
+
+    module.exit_json(msg="Did some cloudfront stuff", ansible_facts=result)
 
 if __name__ == '__main__':
     main()
