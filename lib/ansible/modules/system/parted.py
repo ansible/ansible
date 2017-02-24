@@ -51,14 +51,12 @@ options:
   align:
     description: Set alignment for newly created partitions.
     choices: ['none', 'cylinder', 'minimal', 'optimal']
-    required: False
     default: optimal
   number:
     description:
      - The number of the partition to work with or the number of the partition
        that will be created. Required when performing any action on the disk,
        except fetching information.
-    required: False
   unit:
     description:
      - Selects the current default unit that Parted will use to display
@@ -69,7 +67,6 @@ options:
        's', 'B', 'KB', 'KiB', 'MB', 'MiB', 'GB', 'GiB', 'TB', 'TiB', '%', 'cyl',
        'chs', 'compact'
     ]
-    required: False
     default: KiB
   label:
     description: Creates a new disk label.
@@ -77,7 +74,6 @@ options:
        'aix', 'amiga', 'bsd', 'dvh', 'gpt', 'loop', 'mac', 'msdos', 'pc98',
        'sun', ''
     ]
-    required: False
     default: msdos
   part_type:
     description:
@@ -86,33 +82,27 @@ options:
        'gpt' partition table. Neither part-type nor name may be used with a
        'sun' partition table.
     choices: ['primary', 'extended', 'logical']
-    required: False
   part_start:
     description:
      - Where the partition will start as offset from the beginning of the disk,
        that is, the "distance" from the start of the disk.
-    required: False
     default: 0%
   part_end :
     description:
      - Where the partition will end as offset from the beginning of the disk,
        that is, the "distance" from the start of the disk.
-    required: False
     default: 100%
   name:
     description:
      - Sets the name for the partition number (GPT, Mac, MIPS and PC98 only).
-    required: False
   flags:
     description: A list of the flags that has to be set on the partition.
-    required: False
     default: null
   state:
     description:
      - If to create or delete a partition. If not present the module will return
        only the device information.
     choices: ['present', 'absent']
-    required: False
     default: present
 '''
 
@@ -246,7 +236,7 @@ def parse_partition_info(output, unit):
             'flags':  flags,
         })
 
-    return { 'generic': generic, 'partitions': parts }
+    return {'generic': generic, 'partitions': parts}
 
 
 def format_disk_size(size_bytes, unit, sector_size):
@@ -258,43 +248,36 @@ def format_disk_size(size_bytes, unit, sector_size):
     """
     unit = unit.lower()
 
+    # Shortcut
+    if size_bytes == 0:
+        return 0.0
+
+    # Reference prefixes (International System of Units and IEC)
+    units_si  = ['b', 'kb',  'mb',  'gb',  'tb',  'pb',  'eb',  'zb',  'yb']
+    units_iec = ['b', 'kib', 'mib', 'gib', 'tib', 'pib', 'eib', 'zib', 'yib']
+
     # If unit is the empty string, it defaults to 'compact'.
     if unit in ['', 'compact', 'cyl', 'chs']:
-       unit = 'b'
-       if size_bytes >= 10 * math.pow(1000, 4):
-           unit = 'tb'
-       elif size_bytes >= 10 * math.pow(1000, 3):
-           unit = 'gb'
-       elif size_bytes >= 10 * math.pow(1000, 2):
-           unit = 'mb'
-       elif size_bytes >= 10 * math.pow(1000, 1):
-           unit = 'kb'
+        index = max(0, int(
+            (math.log10(size_bytes) - 1.0) / 3.0
+        ))
+        unit = 'b'
+        if index < len(units_si):
+            unit = units_si[index]
 
-    if unit == 's':
-        scale = sector_size
-    elif unit == '%':
-        scale = size_bytes / 100
-    elif unit == 'b':
-        scale = 1
-    elif unit == 'kb':
-        scale = math.pow(1000, 1)
-    elif unit == 'mb':
-        scale = math.pow(1000, 2)
-    elif unit == 'gb':
-        scale = math.pow(1000, 3)
-    elif unit == 'tb':
-        scale = math.pow(1000, 4)
-    elif unit == 'kib':
-        scale = math.pow(1024, 1)
-    elif unit == 'mib':
-        scale = math.pow(1024, 2)
-    elif unit == 'gib':
-        scale = math.pow(1024, 3)
-    elif unit == 'tib':
-        scale = math.pow(1024, 4)
+    # Find the appropriate multiplier
+    multiplier = 1
+    if unit in units_si:
+        multiplier = 1000.0 ** units_si.index(unit)
+    else:
+        if unit in units_iec:
+            multiplier = 1024.0 ** units_iec.index(unit)
+        else:
+            module.fail_json(msg="No valid size unit specified.")
 
-    output = size_bytes / scale * (1 + 1E-16)
+    output = size_bytes / multiplier * (1 + 1E-16)
 
+    # Corrections to round up as per IEEE754 standard
     if output < 10:    w = output + 0.005
     elif output < 100: w = output + 0.05
     else:              w = output + 0.5
@@ -303,6 +286,7 @@ def format_disk_size(size_bytes, unit, sector_size):
     elif w < 100: precision = 1
     else:         precision = 0
 
+    # Round and return
     return round(output, precision)
 
 
@@ -356,6 +340,7 @@ def get_device_info(device, unit):
     global module
 
     label_needed = check_parted_label(device)
+    label_needed = True
 
     # If parted complains about missing labels, it means there are no partitions
     # In this case only, use a custom function to fetch information and emulate
@@ -389,7 +374,7 @@ def check_parted_label(device):
 
     # Older parted versions return a message in the stdout and RC > 0.
     rc, out, err = module.run_command("parted -s -m {0} print".format(device))
-    if rc !=0 and 'unrecognised disk label' in out.lower():
+    if rc != 0 and 'unrecognised disk label' in out.lower():
         return True
 
     return False
@@ -418,7 +403,7 @@ def parted_version():
     major = int(matches.group(1))
     minor = int(matches.group(2))
 
-    return (major, minor)
+    return major, minor
 
 
 def parted(script, device, align):
@@ -464,66 +449,69 @@ def parse_unit(s, unit, ceil=True):
 
 def main():
     global module
-    changed = False; script = ""; output_script = ""
+    changed = False
+    output_script = ""
+    script = ""
 
     module = AnsibleModule(
-        argument_spec = dict(
-            device = dict(required=True),
-            align = dict(
-                default='optimal',
-                choices=['none', 'cylinder', 'minimal', 'optimal'],
-                required=False,
-                type='str'
-            ),
-            number = dict(default=None, type='int', required=False),
+        argument_spec={
+            'device': {'required': True, 'type': 'str'},
+            'align': {
+                'default': 'optimal',
+                'choices': ['none', 'cylinder', 'minimal', 'optimal'],
+                'required': False,
+                'type': 'str'
+            },
+            'number': {'default': None, 'type': 'int', 'required': False},
 
             # unit <unit> command
-            unit = dict(
-                default='KiB',
-                choices=[
+            'unit': {
+                'default': 'KiB',
+                'choices': [
                     's', 'B', 'KB', 'KiB', 'MB', 'MiB', 'GB', 'GiB', 'TB',
                     'TiB', '%', 'cyl', 'chs', 'compact'
                 ],
-                required=False,
-                type='str'
-            ),
+                'required': False,
+                'type': 'str'
+            },
 
             # mklabel <label-type> command
-            label = dict(
-                choices=[
+            'label': {
+                'choices': [
                     'aix', 'amiga', 'bsd', 'dvh', 'gpt', 'loop', 'mac', 'msdos',
-                     'pc98', 'sun', ''
+                    'pc98', 'sun', ''
                 ],
-                required=False,
-                type='str'
-            ),
+                'required': False,
+                'type': 'str'
+            },
 
             # mkpart <part-type> [<fs-type>] <start> <end> command
-            part_type = dict(
-                default='primary',
-                choices=['primary', 'extended', 'logical'],
-                required=False,
-                type='str'
-            ),
-            part_start = dict(default='0%', type='str', required=False),
-            part_end = dict(default='100%', type='str', required=False),
+            'part_type': {
+                'default': 'primary',
+                'choices': ['primary', 'extended', 'logical'],
+                'required': False,
+                'type': 'str'
+            },
+            'part_start': {'default': '0%', 'type': 'str', 'required': False},
+            'part_end': {'default': '100%', 'type': 'str', 'required': False},
 
             # name <partition> <name> command
-            name = dict(type='str', required=False),
+            'name': {'type': 'str', 'required': False},
 
             # set <partition> <flag> <state> command
-            flags = dict(type='list', required=False),
+            'flags': {'type': 'list', 'required': False},
 
             # rm/mkpart command
-            state = dict(
-                choices=['present', 'absent'],
-                required=False,
-                type='str'
-            )
-        ),
-        required_together = [
+            'state': {
+                'choices': ['present', 'absent'],
+                'required': False,
+                'type': 'str'
+            }
+        },
+        required_together=[
             ['number', 'state']
-        ]
+        ],
+        supports_check_mode=True,
     )
 
     # Data extraction
@@ -625,6 +613,7 @@ def main():
         script=output_script.strip()
     )
 
+module = None
 
 if __name__ == '__main__':
     main()
