@@ -113,11 +113,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-# description: The result is deliverd in an dictionary.
-- return:
-  changed: true
-  name: "startmyservice"
-  msg: "changed inittab entry startmyservice"
+
 '''
 
 # Import necessary libraries
