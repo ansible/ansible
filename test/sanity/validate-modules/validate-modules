@@ -277,7 +277,7 @@ class ModuleValidator(Validator):
         return t.name
 
     def _is_new_module(self):
-        return bool(self.base_branch) and not bool(self.base_module)
+        return not self.object_name.startswith('_') and bool(self.base_branch) and not bool(self.base_module)
 
     def _check_interpreter(self, powershell=False):
         if powershell:
