@@ -185,10 +185,10 @@ def get_formated_ipaddr(input_ip):
             str_ip, str_netmask = input_ip.split(" ")
             ip = IPNetwork(str_ip)
             mask = IPNetwork(str_netmask)
-            return "{0} {1}".format(str_ip, str_netmask)
+            return "%s %s" % (str_ip, str_netmask)
         else:
             ip = IPNetwork(input_ip)
-            return "{0} {1}".format(str(ip.ip), str(ip.netmask))
+            return "%s %s" % (str(ip.ip), str(ip.netmask))
     except:
         return False
 
@@ -265,23 +265,25 @@ def main():
     #connect
     try:
         f.open()
-    except:
-        module.fail_json(msg='Error connecting device')
+    except Exception:
+        e = get_exception()
+        module.fail_json(msg='Error connecting device. %s' % e)
+
 
 
     #get  config
     try:
         f.load_config(path=path)
         result['firewall_address_config'] = f.running_config.to_text()
-
-    except:
-        module.fail_json(msg='Error reading running config')
+    except Exception:
+        e = get_exception()
+        module.fail_json(msg='Error reading running config. %s' % e)
 
     #Absent State
     if module.params['state'] == 'absent':
         f.candidate_config[path].del_block(module.params['name'])
         change_string = f.compare_config()
-        if change_string != "":
+        if change_string:
             result['change_string'] = change_string
             result['changed'] = True
 
@@ -292,7 +294,7 @@ def main():
         new_addr = FortiConfig(module.params['name'], 'edit')
 
         if module.params['comment'] is not None:
-            new_addr.set_param('comment', '"{0}"'.format(module.params['comment']))
+            new_addr.set_param('comment', '"%s"' % (module.params['comment']))
 
         if module.params['type'] == 'iprange':
             new_addr.set_param('iprange', module.params['start_ip'])
@@ -301,15 +303,15 @@ def main():
 
         if module.params['type'] == 'geography':
             new_addr.set_param('type', 'geography')
-            new_addr.set_param('country', '"{0}"'.format(module.params['country']))
+            new_addr.set_param('country', '"%s"' % (module.params['country']))
 
         if module.params['interface'] != 'any':
-            new_addr.set_param('associated-interface', '"{0}"'.format(module.params['interface']))
+            new_addr.set_param('associated-interface', '"%s"' % (module.params['interface']))
 
         if module.params['value'] is not None:
             if module.params['type'] == 'fqdn':
                 new_addr.set_param('type', 'fqdn')
-                new_addr.set_param('fqdn', '"{0}"'.format(module.params['value']))
+                new_addr.set_param('fqdn', '"%s"' % (module.params['value']))
             if module.params['type'] == 'ipmask':
                 new_addr.set_param('subnet', module.params['value'])
 
@@ -318,7 +320,7 @@ def main():
 
         #check if change needed
         change_string = f.compare_config()
-        if change_string != "":
+        if change_string:
             result['change_string'] = change_string
             result['changed'] = True
 
@@ -329,7 +331,7 @@ def main():
         except FailedCommit:
             #rollback
             e = get_exception()
-            module.fail_json(msg="Unable to commit change, check your args, the error was {0}".format(e.message))
+            module.fail_json(msg="Unable to commit change, check your args, the error was %s" % (e.message))
 
     module.exit_json(**result)
 
