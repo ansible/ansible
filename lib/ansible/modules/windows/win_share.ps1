@@ -109,33 +109,34 @@ Function NormalizeAccounts
     return ,$normalizedUsers
 }
 
-$params = Parse-Args $args;
+$result = @{
+    changed = $false
+}
 
-$result = New-Object PSObject;
-Set-Attr $result "changed" $false;
+$params = Parse-Args $args
 
-$name = Get-Attr $params "name" -failifempty $true
-$state = Get-Attr $params "state" "present" -validateSet "present","absent" -resultobj $result
+$name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
 
 Try {
     $share = Get-SmbShare $name -ErrorAction SilentlyContinue
     If ($state -eq "absent") {
         If ($share) {
             Remove-SmbShare -Force -Name $name
-            Set-Attr $result "changed" $true;
+            $result.changed = $true
         }
     }
     Else {
-        $path = Get-Attr $params "path" -failifempty $true
-        $description = Get-Attr $params "description" ""
+        $path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true
+        $description = Get-AnsibleParam -obj $params -name "description" -type "str" -default ""
 
-        $permissionList = Get-Attr $params "list" "no" -validateSet "no","yes" -resultobj $result | ConvertTo-Bool
+        $permissionList = Get-AnsibleParam -obj $params -name "list" -type "bool" -default "no" -validateset "no","yes" -resultobj $result
         $folderEnum = if ($permissionList) { "Unrestricted" } else { "AccessBased" }
 
-        $permissionRead = Get-Attr $params "read" "" | NormalizeAccounts
-        $permissionChange = Get-Attr $params "change" "" | NormalizeAccounts
-        $permissionFull = Get-Attr $params "full" "" | NormalizeAccounts
-        $permissionDeny = Get-Attr $params "deny" "" | NormalizeAccounts
+        $permissionRead = Get-AnsibleParam -obj $params -name "read" -type "str" -default "" | NormalizeAccounts
+        $permissionChange = Get-AnsibleParam -obj $params -name "change" -type "str" -default "" | NormalizeAccounts
+        $permissionFull = Get-AnsibleParam -obj $params -name "full" -type "str" -default "" | NormalizeAccounts
+        $permissionDeny = Get-AnsibleParam -obj $params -name "deny" -type "str" -default "" | NormalizeAccounts
 
         If (-Not (Test-Path -Path $path)) {
             Fail-Json $result "$path directory does not exist on the host"
@@ -145,11 +146,11 @@ Try {
         $path = (Get-Item $path).FullName -replace "\\$"
 
         # need to (re-)create share
-        If (!$share) {
+        If (-not $share) {
             New-SmbShare -Name $name -Path $path
             $share = Get-SmbShare $name -ErrorAction SilentlyContinue
 
-            Set-Attr $result "changed" $true;
+            $result.changed = $true
         }
         If ($share.Path -ne $path) {
             Remove-SmbShare -Force -Name $name
@@ -157,17 +158,17 @@ Try {
             New-SmbShare -Name $name -Path $path
             $share = Get-SmbShare $name -ErrorAction SilentlyContinue
 
-            Set-Attr $result "changed" $true;
+            $result.changed = $true
         }
 
         # updates
         If ($share.Description -ne $description) {
             Set-SmbShare -Force -Name $name -Description $description
-            Set-Attr $result "changed" $true;
+            $result.changed = $true
         }
         If ($share.FolderEnumerationMode -ne $folderEnum) {
             Set-SmbShare -Force -Name $name -FolderEnumerationMode $folderEnum
-            Set-Attr $result "changed" $true;
+            $result.changed = $true
         }
 
         # clean permissions that imply others
@@ -185,14 +186,14 @@ Try {
             If ($permission.AccessControlType -eq "Deny") {
                 If (!$permissionDeny.Contains($permission.AccountName)) {
                     Unblock-SmbShareAccess -Force -Name $name -AccountName $permission.AccountName
-                    Set-Attr $result "changed" $true;
+                    $result.changed = $true
                 }
             }
             ElseIf ($permission.AccessControlType -eq "Allow") {
                 If ($permission.AccessRight -eq "Full") {
                     If (!$permissionFull.Contains($permission.AccountName)) {
                         Revoke-SmbShareAccess -Force -Name $name -AccountName $permission.AccountName
-                        Set-Attr $result "changed" $true;
+                        $result.changed = $true
 
                         Continue
                     }
@@ -203,7 +204,7 @@ Try {
                 ElseIf ($permission.AccessRight -eq "Change") {
                     If (!$permissionChange.Contains($permission.AccountName)) {
                         Revoke-SmbShareAccess -Force -Name $name -AccountName $permission.AccountName
-                        Set-Attr $result "changed" $true;
+                        $result.changed = $true
 
                         Continue
                     }
@@ -214,7 +215,7 @@ Try {
                 ElseIf ($permission.AccessRight -eq "Read") {
                     If (!$permissionRead.Contains($permission.AccountName)) {
                         Revoke-SmbShareAccess -Force -Name $name -AccountName $permission.AccountName
-                        Set-Attr $result "changed" $true;
+                        $result.changed = $true
 
                         Continue
                     }
@@ -224,23 +225,23 @@ Try {
                 }
             }
         }
-        
+
         # add missing permissions
         ForEach ($user in $permissionRead) {
             Grant-SmbShareAccess -Force -Name $name -AccountName $user -AccessRight "Read"
-            Set-Attr $result "changed" $true;
+            $result.changed = $true
         }
         ForEach ($user in $permissionChange) {
             Grant-SmbShareAccess -Force -Name $name -AccountName $user -AccessRight "Change"
-            Set-Attr $result "changed" $true;
+            $result.changed = $true
         }
         ForEach ($user in $permissionFull) {
             Grant-SmbShareAccess -Force -Name $name -AccountName $user -AccessRight "Full"
-            Set-Attr $result "changed" $true;
+            $result.changed = $true
         }
         ForEach ($user in $permissionDeny) {
             Block-SmbShareAccess -Force -Name $name -AccountName $user
-            Set-Attr $result "changed" $true;
+            $result.changed = $true
         }
     }
 }
