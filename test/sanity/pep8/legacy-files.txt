@@ -219,7 +219,6 @@ lib/ansible/modules/web_infrastructure/jira.py
 lib/ansible/modules/web_infrastructure/nginx_status_facts.py
 lib/ansible/modules/windows/win_acl.py
 lib/ansible/modules/windows/win_acl_inheritance.py
-lib/ansible/modules/windows/win_chocolatey.py
 lib/ansible/modules/windows/win_command.py
 lib/ansible/modules/windows/win_feature.py
 lib/ansible/modules/windows/win_lineinfile.py
