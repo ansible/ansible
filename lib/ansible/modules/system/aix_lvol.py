@@ -134,8 +134,8 @@ def convert_size(module, size):
     units = ['M', 'G', 'T']
     try:
         multiplier = 1024**units.index(unit)
-    except ValueError as e:
-        module.fail_json(msg="No valid size unit specified. " )
+    except ValueError:
+        module.fail_json(msg="No valid size unit specified." )
 
     return int(size[:-1]) * multiplier
 
