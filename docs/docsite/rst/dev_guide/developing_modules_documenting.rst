@@ -178,15 +178,11 @@ The following fields can be used and are all required unless specified otherwise
 
 .. note::
 
-   The above fields are are all in lowercase.
+   - The above fields are are all in lowercase.
 
-.. note::
+   - There is no need to document the ``type:`` of an option.
 
-   There is no need to document the ``type:`` of an option.
-
-.. note::
-
-   If you module doesn't doesn't have any options (for example, it's a ``_facts`` module), you can use ``options: {}``.
+   - If the module doesn't doesn't have any options (for example, it's a ``_facts`` module), you can use ``options: {}``.
 
 EXAMPLES block
 --------------
@@ -252,7 +248,9 @@ Starting with Ansible version 2.2, all new modules are required to use imports i
    from module_utils.basic import AnsibleModule
 
 
-The use of "wildcard" imports such as ``from module_utils.basic import *`` is no longer allowed.
+.. warning::
+
+   The use of "iwildcard" imports such as ``from module_utils.basic import *`` is no longer allowed.
 
 Formatting options
 ------------------
