@@ -94,10 +94,10 @@ class Reporter(object):
 
     @staticmethod
     def _filter_out_ok(reports):
-        temp_reports = reports.copy()
-        for path, report in temp_reports.items():
-            if not (report['errors'] or report['warnings']):
-                del temp_reports[path]
+        temp_reports = OrderedDict()
+        for path, report in reports.items():
+            if report['errors'] or report['warnings']:
+                temp_reports[path] = report
 
         return temp_reports
 
