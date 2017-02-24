@@ -991,9 +991,9 @@ def main():
         if immediate and permanent:
             is_enabled_permanent = action_handler(
                 get_masquerade_enabled_permanent,
-                (zone)
+                (zone,)
             )
-            is_enabled_immediate = action_handler(get_masquerade_enabled, (zone))
+            is_enabled_immediate = action_handler(get_masquerade_enabled, (zone,))
             msgs.append('Permanent and Non-Permanent(immediate) operation')
 
             if desired_state == "enabled":
@@ -1023,7 +1023,7 @@ def main():
                     msgs.append("Removed masquerade from zone %s" % (zone))
 
         elif permanent and not immediate:
-            is_enabled = action_handler(get_masquerade_enabled_permanent, (zone))
+            is_enabled = action_handler(get_masquerade_enabled_permanent, (zone,))
             msgs.append('Permanent operation')
 
             if desired_state == "enabled":
@@ -1043,7 +1043,7 @@ def main():
                     changed=True
                     msgs.append("Removed masquerade from zone %s" % (zone))
         elif immediate and not permanent:
-            is_enabled = action_handler(get_masquerade_enabled, (zone))
+            is_enabled = action_handler(get_masquerade_enabled, (zone,))
             msgs.append('Non-permanent operation')
 
             if desired_state == "enabled":
