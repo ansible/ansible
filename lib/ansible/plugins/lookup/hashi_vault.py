@@ -94,7 +94,6 @@ class HashiVault:
             except AttributeError:
                 raise AnsibleError("Authentication method '%s' not supported" % self.auth_method)
         else:
-            self.token = kwargs.get('token')
             if self.token is None:
                 raise AnsibleError("No Vault Token specified")
 
