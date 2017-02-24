@@ -31,6 +31,7 @@ from hashlib import sha256
 from binascii import hexlify
 from binascii import unhexlify
 from hashlib import md5
+from functools import wraps
 
 # Note: Only used for loading obsolete VaultAES files.  All files are written
 # using the newer VaultAES256 which does not require md5
@@ -160,6 +161,18 @@ def is_encrypted_file(file_obj, start_pos=0, count=-1):
         file_obj.seek(current_position)
 
     return is_encrypted(b_vaulttext)
+
+
+def ensure_realpath(func):
+    @wraps(func)
+    def inner(self, filename, *args, **kwargs):
+        realpath = os.path.realpath(filename) if filename != '-' else filename
+        try:
+            kwargs['output_file'] = os.path.realpath(kwargs['output_file'])
+        except (KeyError, AttributeError):
+            pass
+        return func(self, realpath, *args, **kwargs)
+    return inner
 
 
 class VaultLib:
@@ -421,6 +434,7 @@ class VaultEditor:
 
         return b_ciphertext
 
+    @ensure_realpath
     def encrypt_file(self, filename, output_file=None):
 
         check_prereqs()
@@ -431,6 +445,7 @@ class VaultEditor:
         b_ciphertext = self.vault.encrypt(b_plaintext)
         self.write_data(b_ciphertext, output_file or filename)
 
+    @ensure_realpath
     def decrypt_file(self, filename, output_file=None):
 
         check_prereqs()
@@ -442,6 +457,7 @@ class VaultEditor:
             raise AnsibleError("%s for %s" % (to_bytes(e),to_bytes(filename)))
         self.write_data(plaintext, output_file or filename, shred=False)
 
+    @ensure_realpath
     def create_file(self, filename):
         """ create a new encrypted file """
 
@@ -454,6 +470,7 @@ class VaultEditor:
 
         self._edit_file_helper(filename)
 
+    @ensure_realpath
     def edit_file(self, filename):
 
         check_prereqs()
@@ -482,6 +499,7 @@ class VaultEditor:
 
         return plaintext
 
+    @ensure_realpath
     def rekey_file(self, filename, new_password):
 
         check_prereqs()
