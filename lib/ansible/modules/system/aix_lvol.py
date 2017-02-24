@@ -43,35 +43,30 @@ options:
   lv_type:
     description:
     - The type of the logical volume. Default to jfs2.
-    required: false
   size:
     description:
-    - The size of the logical volume, size by default in megabytes or optionally with one of the [MGT] units.
+    - The size of the logical volume with one of the [MGT] units.
   copies:
     description:
     - the number of copies of the logical volume. By default, 1 copy. Maximum copies are 3.
-    required: false
   policy:
     choices: [ "maximum", "minimum" ]
     default: maximum
     description:
     - Sets the interphysical volume allocation policy. "maximum" allocates logical partitions across the maximum number of physical volumes.
       "minimum" allocates logical partitions across the minimum number of physical volumes.
-    required: false
   state:
     choices: [ "present", "absent" ]
     default: present
     description:
     - Control if the logical volume exists. If C(present) and the
       volume does not already exist then the C(size) option is required.
-    required: false
   opts:
     description:
     - Free-form options to be passed to the mklv command
   pvs:
     description:
     - Comma separated list of physical volumes e.g. hdisk1,hdisk2
-    required: false
 '''
 
 EXAMPLES = '''
@@ -131,31 +126,18 @@ msg:
   sample: Logical volume testlv created.
 '''
 
+from ansible.module_utils.basic import AnsibleModule
 import re
 
-def convert_size(size):
-    base_size = None
-    size_factor = None
+def convert_size(module, size):
+    unit = size[-1].upper()
+    units = ['M', 'G', 'T']
+    try:
+        multiplier = 1024**units.index(unit)
+    except ValueError as e:
+        module.fail_json(msg="No valid size unit specified. " )
 
-    match = re.search("(\d+)", size)
-    if match is not None:
-        base_size = int(match.group(1))
-
-    match = re.search("(\w)", size)
-    if match is not None:
-
-        if match.group(1).upper() == "G":
-            size_factor=1024
-        if match.group(1).upper() == "T":
-            size_factor=1024*1024
-
-    if base_size is None:
-        return None
-
-    if size_factor is None:
-        return base_size
-
-    return base_size * base_factor
+    return int(size[:-1]) * multiplier
 
 def round_ppsize(x, base=16):
     new_size = int(base * round(float(x)/base))
@@ -223,12 +205,12 @@ def parse_vg(data):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            vg=dict(required=True),
-            lv=dict(required=True),
-            lv_type=dict(default='jfs2'),
+            vg=dict(required=True, type='str'),
+            lv=dict(required=True, type='str'),
+            lv_type=dict(default='jfs2', type='str'),
             size=dict(type='str'),
-            opts=dict(default=''),
-            copies=dict(default='1', type='int'),
+            opts=dict(default='', type='str'),
+            copies=dict(default='1', type='str'),
             state=dict(choices=["absent", "present"], default='present'),
             policy=dict(choices=["maximum", "minimum"], default='maximum'),
             pvs=dict(type='list',default=list())
@@ -270,14 +252,14 @@ def main():
         if state == 'absent':
             module.exit_json(changed=False, msg="Volume group %s does not exist." % vg)
         else:
-            module.fail_json(msg="Volume group %s does not exist." % vg, rc=rc, err=err)
+            module.fail_json(msg="Volume group %s does not exist." % (vg, vg_info), rc=rc, out=vg_info, err=err)
 
     this_vg = parse_vg(vg_info)
 
 
     if size is not None:
         # Calculate pp size and round it up based on pp size.
-        lv_size = round_ppsize(convert_size(size), base=this_vg['pp_size'])
+        lv_size = round_ppsize(convert_size(module, size), base=this_vg['pp_size'])
 
     # Get information on logical volume requested
     rc, lv_info, err = module.run_command(
@@ -304,20 +286,20 @@ def main():
             mklv_cmd = module.get_bin_path("mklv", required=True)
 
             cmd = "%s %s -t %s -y %s -c %s  -e %s %s %s %sM %s" % (test_opt, mklv_cmd, lv_type, lv, copies, lv_policy, opts, vg, lv_size, pv_list)
-            rc, _, err = module.run_command(cmd)
+            rc, out, err = module.run_command(cmd)
             if rc == 0:
                 module.exit_json(changed=True, msg="Logical volume %s created." % lv)
             else:
-                module.fail_json(msg="Creating logical volume '%s' failed" % lv, rc=rc, err=err)
+                module.fail_json(msg="Creating logical volume %s failed." % lv, rc=rc, out=out, err=err)
     else:
         if state == 'absent':
             ### remove LV
             rmlv_cmd = module.get_bin_path("rmlv", required=True)
-            rc, _, err = module.run_command("%s %s -f %s" % (test_opt, rmlv_cmd, this_lv['name']))
+            rc, out, err = module.run_command("%s %s -f %s" % (test_opt, rmlv_cmd, this_lv['name']))
             if rc == 0:
                 module.exit_json(changed=True, msg="Logical volume %s deleted." % lv)
             else:
-                module.fail_json(msg="Failed to remove logical volume %s" % (lv), rc=rc, err=err)
+                module.fail_json(msg="Failed to remove logical volume %s." % lv, rc=rc, out=out, err=err)
         else:
             if this_lv['policy'] != policy:
                 ### change lv allocation policy
@@ -341,14 +323,12 @@ def main():
                 if rc == 0:
                     module.exit_json(changed=True, msg="Logical volume %s size extended to %sMB." % (lv, lv_size))
                 else:
-                    module.fail_json(msg="Unable to resize %s to %sMB" % (lv, lv_size), rc=rc, err=err)
+                    module.fail_json(msg="Unable to resize %s to %sMB." % (lv, lv_size), rc=rc, out=out, err=err)
             elif lv_size < this_lv['size']:
                 module.fail_json(msg="No shrinking of Logical Volume %s permitted. Current size: %s MB" % (lv, this_lv['size']))
             else:
                 module.exit_json(changed=False, msg="Logical volume %s size is already %sMB." % (lv, lv_size))
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
