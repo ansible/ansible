@@ -155,7 +155,7 @@ def main():
     else:
         installed = False
 
-    if ( state == 'present' or state == 'latest' ) and installed == False:
+    if ( state == 'present' or state == 'latest' ) and installed is False:
         if module.check_mode:
             module.exit_json(changed=True)
         rc, output = install_package(module, depot, name)
@@ -167,7 +167,7 @@ def main():
         else:
             module.fail_json(name=name, msg=output, rc=rc)
 
-    elif state == 'latest' and installed == True:
+    elif state == 'latest' and installed is True:
         #Check depot version
         rc, version_depot = query_package(module, name, depot)
 
@@ -189,7 +189,7 @@ def main():
             output = "Software package not in repository " + depot
             module.fail_json(name=name, msg=output, rc=rc)
 
-    elif state == 'absent' and installed == True:
+    elif state == 'absent' and installed is True:
         if module.check_mode:
             module.exit_json(changed=True)
         rc, output = remove_package(module, name)
