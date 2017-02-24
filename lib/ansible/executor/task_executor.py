@@ -129,17 +129,26 @@ class TaskExecutor:
             if 'changed' not in res:
                 res['changed'] = False
 
-            def _clean_res(res):
+            def _clean_res(res, errors='surrogate_or_strict'):
                 if isinstance(res, UnsafeProxy):
                     return res._obj
                 elif isinstance(res, binary_type):
-                    return to_text(res, errors='surrogate_or_strict')
+                    return to_text(res, errors=errors)
                 elif isinstance(res, dict):
                     for k in res:
-                        res[k] = _clean_res(res[k])
+                        try:
+                            res[k] = _clean_res(res[k], errors=errors)
+                        except UnicodeError:
+                            if k == 'diff':
+                                # If this is a diff, substitute a replacement character if the value
+                                # is undecodable as utf8.  (Fix #21804)
+                                display.warning("We were unable to decode all characters, replaced some in an effort to return as much as possible")
+                                res[k] = _clean_res(res[k], errors='surrogate_then_replace')
+                            else:
+                                raise
                 elif isinstance(res, list):
                     for idx,item in enumerate(res):
-                        res[idx] = _clean_res(item)
+                        res[idx] = _clean_res(item, errors=errors)
                 return res
 
             display.debug("dumping result to json")
