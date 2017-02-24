@@ -102,9 +102,8 @@ from ansible.module_utils.fortios import backup
 
 #check for pyFG lib
 try:
-    from pyFG import *
-    from pyFG.fortios import logger
-    from pyFG.exceptions import *
+    from pyFG import FortiOS, FortiConfig
+    from pyFG.exceptions import CommandExecutionException, FailedCommit
     HAS_PYFG=True
 except:
     HAS_PYFG=False
@@ -132,15 +131,16 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=fortios_required_if,
     )
 
     #check params
     if is_invalid_name(module.params['name']):
-        module.fail_json(msg="Bad name argument value {0}, must contain only letters, digits, -, _, .".format(module.params['name']))
+        module.fail_json(msg="Bad name argument value %s, must contain only letters, digits, -, _, ." % (module.params['name']))
 
     for member in module.params['member']:
         if is_invalid_name(member):
-            module.fail_json(msg="Bad member argument value {0}, must contain only letters, digits, -, _, .".format(member))
+            module.fail_json(msg="Bad member argument value %s, must contain only letters, digits, -, _, ." % (member))
 
     #prepare return dict
     result = dict(changed=False)
@@ -161,16 +161,18 @@ def main():
     #connect
     try:
         f.open()
-    except:
-        module.fail_json(msg='Error connecting device')
+    except Exception:
+        e = get_exception()
+        module.fail_json(msg='Error connecting device. %s' % e)
 
     #get  config
     try:
         f.load_config(path=path)
         result['firewall_address_config'] = f.running_config.to_text()
-
-    except:
-        module.fail_json(msg='Error reading running config')
+    except Exception:
+        f.close()
+        e = get_exception()
+        module.fail_json(msg='Error reading running config. %s' % e)
 
 
     #load group member list if group exists
@@ -205,25 +207,26 @@ def main():
         new_grp.set_param('member', " ".join(group_members) )
 
         if module.params['comment'] is not None:
-            new_grp.set_param('comment', '"{0}"'.format(module.params['comment']))
+            new_grp.set_param('comment', '"%s"' % (module.params['comment']))
 
         #add to candidate config
         f.candidate_config[path][module.params['name']] = new_grp
 
     #compare config
     change_string = f.compare_config()
-    if change_string != "":
+    if change_string:
         result['change_string'] = change_string
         result['changed'] = True
 
     #Commit if not check mode
-    if module.check_mode is False and change_string != "":
+    if change_string and not module.check_mode:
         try:
             f.commit()
         except FailedCommit:
-            #rollback
+            #Something's wrong (rollback is automatic)
+            f.close()
             e = get_exception()
-            module.fail_json(msg="Unable to commit change, check your args, the error was {0}".format(e.message))
+            module.fail_json(msg="Unable to commit change, check your args, the error was %s" % (e.message))
 
     module.exit_json(**result)
 
