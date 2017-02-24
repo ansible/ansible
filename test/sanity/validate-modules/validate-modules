@@ -78,6 +78,7 @@ class ReporterEncoder(json.JSONEncoder):
 
 
 class Reporter(object):
+
     @staticmethod
     @contextmanager
     def _output_handle(output):
@@ -970,7 +971,7 @@ def main():
                 reports.update(mv.report())
 
         for root, dirs, files in os.walk(module):
-            basedir = root[len(module)+1:].split('/', 1)[0]
+            basedir = root[len(module) + 1:].split('/', 1)[0]
             if basedir in BLACKLIST_DIRS:
                 continue
             for dirname in dirs:
