@@ -241,11 +241,11 @@ def get_peers():
                 uuid = value
             if key.lower() == 'state':
                 state = value
-                peers[hostname] = [ uuid, state ]
+                peers[hostname] = [uuid, state]
         elif row.lower() == 'other names:':
             shortNames = True
-        elif row != '' and shortNames == True:
-            peers[row] = [ uuid, state ]
+        elif row != '' and shortNames is True:
+            peers[row] = [uuid, state]
         elif row == '':
             shortNames = False
     return peers

@@ -302,7 +302,7 @@ def package_latest(names, pkg_spec, module):
             # parse out a successful update above. This way we will report a
             # successful run when we actually modify something but fail
             # otherwise.
-            if pkg_spec[name]['changed'] != True:
+            if pkg_spec[name]['changed'] is not True:
                 if pkg_spec[name]['stderr']:
                     pkg_spec[name]['rc'] = 1
 
@@ -614,7 +614,7 @@ def main():
                 else:
                     combined_error_message = pkg_spec[n]['stdout']
 
-        if pkg_spec[n]['changed'] == True:
+        if pkg_spec[n]['changed'] is True:
             combined_changed = True
 
     # If combined_error_message contains anything at least some part of the

@@ -138,7 +138,7 @@ def get_docstring(filename, verbose=False):
 
     except:
         display.error("unable to parse %s" % filename)
-        if verbose == True:
+        if verbose is True:
             display.display("unable to parse %s" % filename)
             raise
 

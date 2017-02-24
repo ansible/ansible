@@ -115,7 +115,7 @@ class LookupModule(LookupBase):
             ... flat=0                                      # returns a dict; default is 1 == string
         '''
 
-        if HAVE_DNS == False:
+        if HAVE_DNS is False:
             raise AnsibleError("Can't LOOKUP(dig): module dns.resolver is not installed")
 
         # Create Resolver object so that we can set NS if necessary

@@ -233,7 +233,7 @@ def main():
     else:
         if changed:
             try:
-                if ubuntuMode==False:
+                if ubuntuMode is False:
                     apply_change(state, name)
                 else:
                     apply_change_ubuntu(state, name)

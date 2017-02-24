@@ -300,12 +300,12 @@ def get_commands_to_config_vpc(module, vpc, domain, existing):
                           ' source {1} vrf {2}'.format(pkl_dest, pkl_src, pkl_vrf))
             commands.append(pkl_command)
 
-    if vpc.get('auto_recovery') == False:
+    if vpc.get('auto_recovery') is False:
         vpc['auto_recovery'] = 'no'
     else:
         vpc['auto_recovery'] = ''
 
-    if vpc.get('peer_gw') == False:
+    if vpc.get('peer_gw') is False:
         vpc['peer_gw'] = 'no'
     else:
         vpc['peer_gw'] = ''

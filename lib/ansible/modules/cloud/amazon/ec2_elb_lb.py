@@ -1033,7 +1033,7 @@ class ElbManager(object):
                 policy = []
                 policy_type = 'LBCookieStickinessPolicyType'
 
-                if self.module.boolean(self.stickiness['enabled']) == True:
+                if self.module.boolean(self.stickiness['enabled']) is True:
 
                     if 'expiration' not in self.stickiness:
                         self.module.fail_json(msg='expiration must be set when type is loadbalancer')
@@ -1050,7 +1050,7 @@ class ElbManager(object):
                     policy.append(self._policy_name(policy_attrs['type']))
 
                     self._set_stickiness_policy(elb_info, listeners_dict, policy, **policy_attrs)
-                elif self.module.boolean(self.stickiness['enabled']) == False:
+                elif self.module.boolean(self.stickiness['enabled']) is False:
                     if len(elb_info.policies.lb_cookie_stickiness_policies):
                         if elb_info.policies.lb_cookie_stickiness_policies[0].policy_name == self._policy_name(policy_type):
                             self.changed = True
@@ -1062,7 +1062,7 @@ class ElbManager(object):
             elif self.stickiness['type'] == 'application':
                 policy = []
                 policy_type = 'AppCookieStickinessPolicyType'
-                if self.module.boolean(self.stickiness['enabled']) == True:
+                if self.module.boolean(self.stickiness['enabled']) is True:
 
                     if 'cookie' not in self.stickiness:
                         self.module.fail_json(msg='cookie must be set when type is application')
@@ -1076,7 +1076,7 @@ class ElbManager(object):
                     }
                     policy.append(self._policy_name(policy_attrs['type']))
                     self._set_stickiness_policy(elb_info, listeners_dict, policy, **policy_attrs)
-                elif self.module.boolean(self.stickiness['enabled']) == False:
+                elif self.module.boolean(self.stickiness['enabled']) is False:
                     if len(elb_info.policies.app_cookie_stickiness_policies):
                         if elb_info.policies.app_cookie_stickiness_policies[0].policy_name == self._policy_name(policy_type):
                             self.changed = True

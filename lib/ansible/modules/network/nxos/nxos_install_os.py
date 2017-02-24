@@ -210,7 +210,7 @@ def main():
                        kickstart_image_file):
         changed = True
 
-    if not module.check_mode and changed == True:
+    if not module.check_mode and changed is True:
         set_boot_options(module,
                          system_image_file,
                          kickstart=kickstart_image_file)
