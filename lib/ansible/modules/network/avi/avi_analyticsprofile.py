@@ -65,7 +65,7 @@ options:
     apdex_rum_threshold:
         description:
             - If a client is able to load a page in less than the satisfactory latency threshold, the pageload is considered satisfied.
-            - It is considered tolerated ifis greater than satisfied but less than the tolerated latency multiplied by satisifed latency.
+            - It is considered tolerated if it is greater than satisfied but less than the tolerated latency multiplied by satisifed latency.
             - Greater than this number and the client's request is considered frustrated.
             - A pageload includes the time for dns lookup, download of all http objects, and page render time.
             - Default value when not specified in API or module is interpreted by Avi Controller as 5000.
@@ -110,7 +110,7 @@ options:
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
     conn_lossy_zero_win_size_event_threshold:
         description:
-            - A client conection is considred lossy when percentage of times a packet could not be trasmitted due to tcp zero window is above this threshold.
+            - A client connection is considered lossy when percentage of times a packet could not be trasmitted due to tcp zero window is above this threshold.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2.
     conn_server_lossy_ooo_threshold:
         description:
@@ -126,7 +126,7 @@ options:
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
     conn_server_lossy_zero_win_size_event_threshold:
         description:
-            - A server conection is considred lossy when percentage of times a packet could not be trasmitted due to tcp zero window is above this threshold.
+            - A server connection is considered lossy when percentage of times a packet could not be trasmitted due to tcp zero window is above this threshold.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2.
     description:
         description:
