@@ -15,7 +15,7 @@
   nxos_template:
     src: basic/config.j2
     provider: "{{ nxapi }}"
-    match: none
+    force: yes
   register: result
 
 - assert:
@@ -27,7 +27,7 @@
   nxos_template:
     src: basic/config.j2
     provider: "{{ nxapi }}"
-    match: none
+    force: yes
   register: result
 
 - assert:
