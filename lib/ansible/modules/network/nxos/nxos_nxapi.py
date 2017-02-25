@@ -134,6 +134,11 @@ from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.six import iteritems
 
 def check_args(module, warnings):
+    transport = module.params['transport']
+    provider_transport = (module.params['provider'] or {}).get('transport')
+    if 'nxapi' in (transport, provider_transport):
+        module.fail_json(msg='transport=nxapi is not supporting when configuring nxapi')
+
     nxos_check_args(module, warnings)
 
     state = module.params['state']
