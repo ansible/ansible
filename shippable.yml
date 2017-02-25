@@ -9,7 +9,11 @@ matrix:
     - env: TEST=none
   include:
     - env: TEST=other
-    - env: TEST=units
+
+    - env: TEST=units/2.6
+    - env: TEST=units/2.7
+    - env: TEST=units/3.5
+    - env: TEST=units/3.6
 
     - env: TEST=osx/10.11
 
