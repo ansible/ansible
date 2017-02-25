@@ -22,13 +22,12 @@
     that:
       - "result.changed == true"
 # https://github.com/ansible/ansible-modules-core/issues/4807
-      - "result.updates is not defined"
+      - "result.updates is defined"
 
 - name: check device with config
   nxos_config:
     src: basic/config.j2
     provider: "{{ nxapi }}"
-    match: none
   register: result
 
 - assert:
