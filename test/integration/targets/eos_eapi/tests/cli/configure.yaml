@@ -21,13 +21,13 @@
 - name: Expect endpoint ports to be set
   assert:
     that:
-        - http_config.stdout[0].httpServer.port == 81
+        - http_config.stdout[0].httpServer.port == 80
         - http_config.stdout[0].httpsServer.port == 4443
         - http_config.stdout[0].localHttpServer.port == 8181
 
 - name: Change endpoint ports again
   eos_eapi:
-    http_port: 81
+    http_port: 80
     https_port: 4443
     enable_local_http: yes
     local_http_port: 8181
