@@ -342,7 +342,7 @@ def get_custom_command(existing_cmd, proposed, key, module):
 
     elif key.startswith('ip ospf message-digest-key'):
         if (proposed['message_digest_key_id'] != 'default' and
-            'options' not in key):
+                'options' not in key):
             if proposed['message_digest_encryption_type'] == '3des':
                 encryption_type = '3'
             elif proposed['message_digest_encryption_type'] == 'cisco_type_7':
@@ -513,8 +513,8 @@ def main():
     proposed['area'] = normalize_area(proposed['area'], module)
     result = {}
     if (state == 'present' or (state == 'absent' and
-        existing.get('ospf') == proposed['ospf'] and
-        existing.get('area') == proposed['area'])):
+            existing.get('ospf') == proposed['ospf'] and
+            existing.get('area') == proposed['area'])):
 
         candidate = CustomNetworkConfig(indent=3)
         invoke('state_%s' % state, module, existing, proposed, candidate)

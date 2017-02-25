@@ -1384,7 +1384,7 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
         for key, value in instance_tags.items():
             filters["tag:" + key] = value
 
-     # Check that our instances are not in the state we want to take
+    # Check that our instances are not in the state we want to take
 
     # Check (and eventually change) instances attributes and instances state
     existing_instances_array = []
@@ -1492,7 +1492,7 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
         for key, value in instance_tags.items():
             filters["tag:" + key] = value
 
-     # Check that our instances are not in the state we want to take
+    # Check that our instances are not in the state we want to take
 
     # Check (and eventually change) instances attributes and instances state
     for res in ec2.get_all_instances(instance_ids, filters=filters):

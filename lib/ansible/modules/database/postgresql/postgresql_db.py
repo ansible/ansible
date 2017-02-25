@@ -166,7 +166,7 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
     else:
         db_info = get_db_info(cursor, db)
         if (encoding and
-            get_encoding_id(cursor, encoding) != db_info['encoding_id']):
+                get_encoding_id(cursor, encoding) != db_info['encoding_id']):
             raise NotSupportedError(
                 'Changing database encoding is not supported. '
                 'Current encoding: %s' % db_info['encoding']
@@ -192,7 +192,7 @@ def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
     else:
         db_info = get_db_info(cursor, db)
         if (encoding and
-            get_encoding_id(cursor, encoding) != db_info['encoding_id']):
+                get_encoding_id(cursor, encoding) != db_info['encoding_id']):
             return False
         elif lc_collate and lc_collate != db_info['lc_collate']:
             return False
