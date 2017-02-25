@@ -17,6 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: auth0_user_facts
@@ -33,20 +37,17 @@ options:
   auth0_token:
     description:
      - Authentication token used for auth0 communication.
-    default: null
     required: true
     aliases: ['token']
   auth0_domain:
     description:
      - Auth0 domain used for authentication.
-    default: null
     required: true
     aliases: ['domain']
   search_engine:
     description:
       - Select required search engine for user queries.
     default: 'v2'
-    required: false
 '''
 
 EXAMPLES = '''
@@ -63,7 +64,11 @@ RETURN = '''
 #only defaults
 '''
 
-import sys
+import json
+import requests
+
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
 
 def main():
     module = AnsibleModule(
@@ -76,33 +81,30 @@ def main():
         supports_check_mode=False
     )
 
-    auth0_domain=module.params['auth0_domain']
-    auth0_token=module.params['auth0_token']
-    query=module.params['query']
-    search_engine=module.params['search_engine']
+    auth0_domain = module.params['auth0_domain']
+    auth0_token = module.params['auth0_token']
+    query = module.params['query']
+    search_engine = module.params['search_engine']
 
     http_headers = {
-              'content-type': 'application/json',
-              'Authorization': 'Bearer {token}'.format(token=auth0_token)
+        'content-type': 'application/json',
+        'Authorization': 'Bearer %s'%(auth0_token)
     }
 
     url_params = {
-      'q': query,
-      'search_engine': search_engine
+        'q': query,
+        'search_engine': search_engine
     }
 
-    url = 'https://{domain}/api/v2/users'.format(domain=auth0_domain)
+    url = 'https://%s/api/v2/users'%(auth0_domain)
 
-    r = requests.get(url, params=url_params, headers=http_headers)
+    req = requests.get(url, params=url_params, headers=http_headers)
 
-    if r.status_code != 200:
-      module.fail_json(msg='Request to Auth0 failed with return code %s, reason: %s'%(r.status_code, r.reason))
+    if req.status_code != 200:
+        module.fail_json(msg='Request to Auth0 failed with return code %s, reason: %s'%
+                         (req.status_code, req.reason))
 
-    module.exit_json(results=json.loads(r.text))
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+    module.exit_json(results=json.loads(req.text))
 
 if __name__ == '__main__':
     main()

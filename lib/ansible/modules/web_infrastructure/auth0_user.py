@@ -17,6 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: auth0_user
@@ -38,22 +42,18 @@ options:
   user_data:
     description:
      - Data used to update given user definition.
-    required: false
     aliases: ['body']
   user_id:
     description:
      - User id for a given user.
-    required: false
   auth_token:
     description:
      - Authentication token used for auth0 communication.
-    default: null
     required: true
     aliases: ['token']
   auth0_domain:
     description:
      - Auth0 domain used for authentication.
-    default: null
     required: true
     aliases: ['domain']
 '''
@@ -98,14 +98,19 @@ RETURN = '''
 #only defaults
 '''
 
-import sys
+import json
+import requests
+
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             auth0_token=dict(required=True, type='str', aliases=['token'], no_log=True),
             auth0_domain=dict(required=True, type='str', aliases=['domain']),
-            state=dict(required=True, default='present', choices=['present', 'absent', 'delete_all']),
+            state=dict(required=True, default='present',
+                       choices=['present', 'absent', 'delete_all']),
             user_id=dict(required=False, type='str'),
             user_data=dict(type='dict', required=False, aliases=['body']),
 
@@ -113,54 +118,49 @@ def main():
         supports_check_mode=False
     )
 
-    auth0_domain=module.params['auth0_domain']
-    auth0_token=module.params['auth0_token']
-    state=module.params['state']
-    user_id=module.params['user_id']
-    user_data=module.params['user_data']
+    auth0_domain = module.params['auth0_domain']
+    auth0_token = module.params['auth0_token']
+    state = module.params['state']
+    user_id = module.params['user_id']
+    user_data = module.params['user_data']
 
     if state == 'present' or state == 'absent':
-      if not user_data:
-        module.fail_json(msg='user_data is required parameter for this state')
+        if not user_data:
+            module.fail_json(msg='user_data is required parameter for this state')
 
     if state == 'absent':
-      if not user_id:
-        module.fail_json(msg='user_id is required parameter for this state')
+        if not user_id:
+            module.fail_json(msg='user_id is required parameter for this state')
 
     http_headers = {
-              'content-type': 'application/json',
-              'Authorization': 'Bearer {token}'.format(token=auth0_token)
+        'content-type': 'application/json',
+        'Authorization': 'Bearer {token}'.format(token=auth0_token)
     }
 
-    url_params = user_data
-
     if state == 'present':
-      if user_id:
-        url = 'https://{domain}/api/v2/users/{userid}'.format(domain=auth0_domain, userid=user_id)
-        r = requests.patch(url, json=user_data, headers=http_headers)
-      else:
-        url = 'https://{domain}/api/v2/users'.format(domain=auth0_domain)
-        r = requests.post(url, json=user_data, headers=http_headers)
+        if user_id:
+            url = 'https://%s/api/v2/users/%s'%(auth0_domain, user_id)
+            req = requests.patch(url, json=user_data, headers=http_headers)
+        else:
+            url = 'https://%s/api/v2/users'%(auth0_domain)
+            req = requests.post(url, json=user_data, headers=http_headers)
     elif state == 'absent':
-      url = 'https://{domain}/api/v2/users/{userid}'.format(domain=auth0_domain, userid=user_id)
-      r = requests.delete(url, headers=http_headers)
+        url = 'https://%s/api/v2/users/%s'%(auth0_domain, user_id)
+        req = requests.delete(url, headers=http_headers)
     elif state == 'delete_all':
-      url = 'https://{domain}/api/v2/users'.format(domain=auth0_domain)
-      r = requests.delete(url, headers=http_headers)
+        url = 'https://%s/api/v2/users'%(auth0_domain)
+        req = requests.delete(url, headers=http_headers)
 
-    if r.status_code not in [ 200, 201, 202, 203, 204 ]:
-      module.fail_json(msg='Request to Auth0 failed with return code %s, reason: %s'%(r.status_code, r.reason))
+    if req.status_code not in [200, 201, 202, 203, 204]:
+        module.fail_json(msg='Request to Auth0 failed with return code %s, reason: %s'%
+                         (req.status_code, req.reason))
 
-    if r.text:
-      result = json.loads(r.text)
+    if req.text:
+        result = json.loads(req.text)
     else:
-      result = "Rest call has not returned any data."
+        result = "Rest call has not returned any data."
 
     module.exit_json(results=result)
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()
