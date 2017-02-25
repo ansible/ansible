@@ -82,6 +82,6 @@
     that:
       - "config.changed == false"
 # FIXME: https://github.com/ansible/ansible-modules-core/issues/4955
-  ignore_erros: yes
+  ignore_errors: yes
 
 - debug: msg="END cli/config.yaml"
