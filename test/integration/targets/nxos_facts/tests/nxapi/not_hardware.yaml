@@ -7,6 +7,7 @@
     provider: "{{ nxapi }}"
     gather_subset:
       - "!hardware"
+    timeout: 30
   register: result
 
 - assert:
