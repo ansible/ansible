@@ -55,18 +55,6 @@ class HashiVault:
 
         self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
 
-        self.token = kwargs.get('token', os.environ.get('VAULT_TOKEN', None))
-        if self.token is None and os.environ.get('HOME'):
-            token_filename = os.path.join(
-                os.environ.get('HOME'),
-                '.vault-token'
-            )
-            if os.path.exists(token_filename):
-                with open(token_filename) as token_file:
-                    self.token = token_file.read().strip()
-        if self.token is None:
-            raise AnsibleError("No Vault Token specified")
-
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
         s = kwargs.get('secret')
         if s is None:
@@ -94,7 +82,16 @@ class HashiVault:
             except AttributeError:
                 raise AnsibleError("Authentication method '%s' not supported" % self.auth_method)
         else:
-            self.token = kwargs.get('token')
+            self.token = kwargs.get('token', os.environ.get('VAULT_TOKEN', None))
+            if self.token is None and os.environ.get('HOME'):
+                token_filename = os.path.join(
+                    os.environ.get('HOME'),
+                    '.vault-token'
+                )
+                if os.path.exists(token_filename):
+                    with open(token_filename) as token_file:
+                        self.token = token_file.read().strip()
+
             if self.token is None:
                 raise AnsibleError("No Vault Token specified")
 
