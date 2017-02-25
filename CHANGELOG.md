@@ -43,6 +43,13 @@ Ansible Changes By Release
   options will be merged with no way to go back to the old behaviour.
 * Modules
   * ec2_vpc will be deprecated in 2.3 and removed in 2.5
+  * cl_bond will be deprecated in 2.3 and removed in 2.5
+  * cl_bridge will be deprecated in 2.3 and removed in 2.5
+  * cl_img_install will be deprecated in 2.3 and removed in 2.5
+  * cl_interface will be deprecated in 2.3 and removed in 2.5
+  * cl_interface_policy will be deprecated in 2.3 and removed in 2.5
+  * cl_license will be deprecated in 2.3 and removed in 2.5
+  * cl_ports will be deprecated in 2.3 and removed in 2.5
 
 ###Modules Notes:
 - oVirt/RHV
