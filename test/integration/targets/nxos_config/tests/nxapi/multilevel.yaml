@@ -4,6 +4,7 @@
 - name: setup
   nxos_config:
     lines: feature bgp
+    match: none
     provider: "{{ nxapi }}"
 
 - name: configure multi level command
