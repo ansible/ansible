@@ -16,9 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'community',
+    'version': '1.0'
+}
 
 DOCUMENTATION = """
 ---
@@ -181,7 +183,6 @@ import re
 from ansible.module_utils.nxos import run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.connection import exec_command
 from ansible.module_utils.six import iteritems
 
 
@@ -239,7 +240,7 @@ class Config(FactsBase):
 class Hardware(FactsBase):
 
     COMMANDS = [
-        'dir',
+        {'command': 'dir', 'output': 'text'},
         'show system resources | json'
     ]
 
@@ -287,13 +288,12 @@ class Interfaces(FactsBase):
         data = run_commands(self.module, ['show interface | json'])[0]
         self.facts['interfaces'] = self.populate_interfaces(data)
 
-        rc, out, err = exec_command(self.module, 'show ipv6 interface | json')
-        if rc == 0:
-            if out:
-                self.parse_ipv6_interfaces(out)
+        out = run_commands(self.module, ['show ipv6 interface | json'])
+        if out[0]:
+            self.parse_ipv6_interfaces(out)
 
-        rc, out, err = exec_command(self.module, 'show lldp neighbors')
-        if rc == 0:
+        out = run_commands(self.module, ['show lldp neighbors'], check_rc=False)
+        if out and out[0]:
             self.facts['neighbors'] = self.populate_neighbors(out)
 
     def populate_interfaces(self, data):
