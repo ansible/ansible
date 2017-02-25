@@ -115,6 +115,9 @@ cmd:
 
 import os
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+
 def check_cert_present(module, executable, keystore_path, keystore_pass, alias):
     ''' Check if certificate with alias is present in keystore
         located at keystore_path '''
@@ -273,9 +276,6 @@ def main():
                                 keystore_pass, cert_alias)
 
     module.exit_json(changed=False)
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == "__main__":
     main()
