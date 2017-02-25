@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
+ANSIBLE_METADATA = {'status': ['deprecated'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
@@ -25,6 +25,7 @@ module: cl_interface_policy
 version_added: "2.1"
 author: "Cumulus Networks (@CumulusNetworks)"
 short_description: Configure interface enforcement policy on Cumulus Linux
+deprecated: Deprecated in 2.3. Use M(nclu) instead.
 description:
     - This module affects the configuration files located in the interfaces
       folder defined by ifupdown2. Interfaces port and port ranges listed in the

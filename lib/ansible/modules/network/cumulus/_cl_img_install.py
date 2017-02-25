@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
+ANSIBLE_METADATA = {'status': ['deprecated'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
@@ -25,6 +25,7 @@ module: cl_img_install
 version_added: "2.1"
 author: "Cumulus Networks (@CumulusLinux)"
 short_description: Install a different Cumulus Linux version.
+deprecated: Deprecated in 2.3. The image slot system no longer exists in Cumulus Linux.
 description:
     - install a different version of Cumulus Linux in the inactive slot. For
       more details go the Image Management User Guide at
