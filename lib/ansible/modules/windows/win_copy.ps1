@@ -17,47 +17,43 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args
+$params = Parse-Args $args -supports_check_mode $true
 
-$src = Get-Attr $params "src" $FALSE -type "path"
-If ($src -eq $FALSE)
-{
-    Fail-Json (New-Object psobject) "missing required argument: src"
-}
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-$dest = Get-Attr $params "dest" $FALSE -type "path"
-If ($dest -eq $FALSE)
-{
-    Fail-Json (New-Object psobject) "missing required argument: dest"
-}
+$src = Get-AnsibleParam -obj $params -name "src" -type "path" -failifempty $true
+$dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
+$force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $true
+$original_basename = Get-AnsibleParam -obj $params -name "original_basename" -type "str" -failifempty $true
 
-$original_basename = Get-Attr $params "original_basename" $FALSE
-If ($original_basename -eq $FALSE)
-{
-    Fail-Json (New-Object psobject) "missing required argument: original_basename "
-}
-
-$result = New-Object psobject @{
+$result = @{
     changed = $FALSE
     original_basename = $original_basename
+    src = $src
+    dest = $dest
 }
 
 # original_basename gets set if src and dest are dirs
 # but includes subdir if the source folder contains sub folders
-# e.g. you could get subdir/foo.txt 
+# e.g. you could get subdir/foo.txt
+
+if (($force -eq $false) -and (Test-Path -Path $dest)) {
+    $result.msg = "file already exists"
+    Exit-Json $result
+}
 
 # detect if doing recursive folder copy and create any non-existent destination sub folder
 $parent = Split-Path -Path $original_basename -Parent
-if ($parent.length -gt 0) 
+if ($parent.length -gt 0)
 {
     $dest_folder = Join-Path $dest $parent
-    New-Item -Force $dest_folder -Type directory
+    New-Item -Path $dest_folder -Type Directory -Force -WhatIf:$check_mode
 }
 
 # if $dest is a dir, append $original_basename so the file gets copied with its intended name.
-if (Test-Path $dest -PathType Container)
+if (Test-Path -Path $dest -PathType Container)
 {
-    $dest = Join-Path $dest $original_basename
+    $dest = Join-Path -Path $dest -ChildPath $original_basename
 }
 
 $orig_checksum = Get-FileChecksum ($dest)
@@ -69,8 +65,9 @@ If ($src_checksum.Equals($orig_checksum))
     If ($src_checksum.Equals("3"))
     {
        # New-Item -Force creates subdirs for recursive copies
-       New-Item -Force $dest -Type file
-       Copy-Item -Path $src -Destination $dest -Force
+       New-Item -Path $dest -Type File -Force -WhatIf:$check_mode
+       Copy-Item -Path $src -Destination $dest -Force -WhatIf:$check_mode
+       $result.changed = $true
        $result.operation = "folder_copy"
     }
 
@@ -79,24 +76,20 @@ ElseIf (-Not $src_checksum.Equals($orig_checksum))
 {
     If ($src_checksum.Equals("3"))
     {
-       Fail-Json (New-Object psobject) "If src is a folder, dest must also be a folder"
+        Fail-Json $result "If src is a folder, dest must also be a folder"
     }
     # The checksums don't match, there's something to do
-    Copy-Item -Path $src -Destination $dest -Force
+    Copy-Item -Path $src -Destination $dest -Force -WhatIf:$check_mode
+
+    $result.changed = $true
     $result.operation = "file_copy"
 }
 
-# verify before we return that the file has changed
-$dest_checksum = Get-FileChecksum ($dest)
-If ($src_checksum.Equals($dest_checksum))
+# Verify before we return that the file has changed
+$dest_checksum = Get-FileChecksum($dest)
+If (-Not $src_checksum.Equals($dest_checksum) -And -Not $check_mode)
 {
-    If (-Not $orig_checksum.Equals($dest_checksum)) {
-        $result.changed = $TRUE
-    }
-}
-Else
-{
-    Fail-Json (New-Object psobject) "src checksum $src_checksum did not match dest_checksum $dest_checksum  Failed to place file $original_basename in $dest"
+    Fail-Json $result "src checksum $src_checksum did not match dest_checksum $dest_checksum, failed to place file $original_basename in $dest"
 }
 
 $info = Get-Item $dest

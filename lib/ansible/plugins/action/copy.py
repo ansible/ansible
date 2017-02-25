@@ -25,7 +25,7 @@ import stat
 import tempfile
 
 from ansible.constants import mk_boolean as boolean
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum
@@ -155,23 +155,20 @@ class ActionModule(ActionBase):
         diffs = []
         for source_full, source_rel in source_files:
 
-            source_full = self._loader.get_real_file(source_full)
-
-            # Generate a hash of the local file.
-            local_checksum = checksum(source_full)
+            # If the local file does not exist, get_real_file() raises AnsibleFileNotFound
+            try:
+                source_full = self._loader.get_real_file(source_full)
+            except AnsibleFileNotFound as e:
+                result['failed'] = True
+                result['msg'] = "could not find src=%s, %s" % (source_full, e)
+                self._remove_tmp_path(tmp)
+                return result
 
             # Get the local mode and set if user wanted it preserved
             # https://github.com/ansible/ansible-modules-core/issues/1124
             if self._task.args.get('mode', None) == 'preserve':
                 lmode = '0%03o' % stat.S_IMODE(os.stat(source_full).st_mode)
                 self._task.args['mode'] = lmode
-
-            # If local_checksum is not defined we can't find the file so we should fail out.
-            if local_checksum is None:
-                result['failed'] = True
-                result['msg'] = "could not find src=%s" % source_full
-                self._remove_tmp_path(tmp)
-                return result
 
             # This is kind of optimization - if user told us destination is
             # dir, do path manipulation right away, otherwise we still check
@@ -182,7 +179,7 @@ class ActionModule(ActionBase):
                 dest_file = self._connection._shell.join_path(dest)
 
             # Attempt to get remote file info
-            dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp)
+            dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp, checksum=force)
 
             if dest_status['exists'] and dest_status['isdir']:
                 # The dest is a directory.
@@ -196,11 +193,14 @@ class ActionModule(ActionBase):
                 else:
                     # Append the relative source location to the destination and get remote stats again
                     dest_file = self._connection._shell.join_path(dest, source_rel)
-                    dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp)
+                    dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow, tmp=tmp, checksum=force)
 
             if dest_status['exists'] and not force:
-                # remote_file does not exist so continue to next iteration.
+                # remote_file exists so continue to next iteration.
                 continue
+
+            # Generate a hash of the local file.
+            local_checksum = checksum(source_full)
 
             if local_checksum != dest_status['checksum']:
                 # The checksums don't match and we will change or error out.
