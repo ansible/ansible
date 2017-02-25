@@ -269,13 +269,13 @@ class DocCLI(CLI):
         if 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0:
             text.append("DEPRECATED: \n%s\n" % doc['deprecated'])
 
-        metadata = doc['metadata']
-
-        supported_by = metadata['supported_by']
-        text.append("Supported by: %s\n" % supported_by)
-
-        status = metadata['status']
-        text.append("Status: %s\n" % ", ".join(status))
+        if doc['metadata'] and isinstance(doc['metadata'], dict):
+            text.append("Metadata:")
+        for k in doc['metadata']:
+            if isinstance(k, list):
+                text.append("\t%s: %s\n" % (k.capitalize(), ", ".join(doc['metadata'][k])))
+            else:
+                text.append("\t%s: %s\n" % (k.capitalize(), doc['metadata'][k]))
 
         if 'action' in doc and doc['action']:
             text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
