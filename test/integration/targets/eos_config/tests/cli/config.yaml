@@ -35,7 +35,6 @@
 - assert:
     that:
       - "result.changed == false"
-      - "'hostname foo' in result.updates"
 
 - name: teardown
   eos_config:

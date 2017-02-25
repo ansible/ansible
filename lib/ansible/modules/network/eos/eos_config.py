@@ -226,6 +226,12 @@ def get_candidate(module):
         candidate.add(module.params['lines'], parents=parents)
     return candidate
 
+def get_running_config(module):
+    flags = []
+    if module.params['defaults'] is True:
+        flags.append('all')
+    return get_config(module, flags)
+
 def run(module, result):
     match = module.params['match']
     replace = module.params['replace']
@@ -233,9 +239,10 @@ def run(module, result):
     candidate = get_candidate(module)
 
     if match != 'none' and replace != 'config':
-        config_text = get_config(module)
+        config_text = get_running_config(module)
         config = NetworkConfig(indent=3, contents=config_text)
-        configobjs = candidate.difference(config, match=match, replace=replace)
+        path = module.params['parents']
+        configobjs = candidate.difference(config, match=match, replace=replace, path=path)
     else:
         configobjs = candidate.items
 
@@ -256,8 +263,10 @@ def run(module, result):
         commit = not module.check_mode
 
         response = load_config(module, commands, replace=replace, commit=commit)
+
         if 'diff' in response:
             result['diff'] = {'prepared': response['diff']}
+
         if 'session' in response:
             result['session'] = response['session']
 
