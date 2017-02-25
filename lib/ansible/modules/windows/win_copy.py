@@ -44,6 +44,15 @@ options:
       - Remote absolute path where the file should be copied to. If src is a directory,
         this must be a directory too. Use \\ for path separators.
     required: true
+  force:
+    version_added: "2.3"
+    description:
+      - If set to C(yes), the remote file will be replaced when content is different than the source.
+      - If set to C(no), the remote file will only be transferred if the destination does not exist.
+    default: True
+    choices:
+    - yes
+    - no
 author: "Jon Hawkesworth (@jhawkesworth)"
 '''
 
@@ -51,29 +60,29 @@ EXAMPLES = r'''
 - name: Copy a single file
   win_copy:
     src: /srv/myfiles/foo.conf
-    dest: c:\Temp\foo.conf
+    dest: C:\Temp\foo.conf
 
 - name: Copy files/temp_files to c:\temp
   win_copy:
     src: files/temp_files/
-    dest: c:\Temp
+    dest: C:\Temp\
 '''
 RETURN = r'''
 dest:
     description: destination file/path
     returned: changed
     type: string
-    sample: c:\Temp
+    sample: C:\Temp\
 src:
     description: source file used for the copy on the target machine
     returned: changed
     type: string
-    sample: "/home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source"
+    sample: /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
 checksum:
     description: sha1 checksum of the file after running copy
     returned: success
     type: string
-    sample: "6e642bb8dd5c2e027bf21dd923337cbb4214f827"
+    sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 size:
     description: size of the target, after execution
     returned: changed (single files only)
@@ -83,11 +92,11 @@ operation:
     description: whether a single file copy took place or a folder copy
     returned: changed (single files only)
     type: string
-    sample: "file_copy"
+    sample: file_copy
 original_basename:
     description: basename of the copied file
     returned: changed (single files only)
     type: string
-    sample: "foo.txt"
+    sample: foo.txt
 '''
 

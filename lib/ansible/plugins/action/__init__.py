@@ -471,7 +471,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         res = self._low_level_execute_command(cmd, sudoable=sudoable)
         return res
 
-    def _execute_remote_stat(self, path, all_vars, follow, tmp=None):
+    def _execute_remote_stat(self, path, all_vars, follow, tmp=None, checksum=True):
         '''
         Get information from remote file.
         '''
@@ -479,7 +479,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             path=path,
             follow=follow,
             get_md5=False,
-            get_checksum=True,
+            get_checksum=checksum,
             checksum_algo='sha1',
         )
         mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars, tmp=tmp, delete_remote_tmp=(tmp is None), wrap_async=False)
