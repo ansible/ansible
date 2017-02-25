@@ -26,6 +26,10 @@ $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $tr
 $force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $true
 $original_basename = Get-AnsibleParam -obj $params -name "original_basename" -type "str"
 
+# original_basename gets set if src and dest are dirs
+# but includes subdir if the source folder contains sub folders
+# e.g. you could get subdir/foo.txt
+
 $result = @{
     changed = $false
     src = $src
@@ -40,7 +44,7 @@ if (($force -eq $false) -and (Test-Path -Path $dest)) {
 Function Copy-Folder($src, $dest) {
     if (Test-Path -Path $dest) {
         if (-not (Get-Item -Path $dest -Force).PSIsContainer) {
-            Fail-Json $result "If src is a folder, dest must also be a folder. src: $src, dest: $dest"            
+            Fail-Json $result "If src is a folder, dest must also be a folder. src: $src, dest: $dest"
         }
     } else {
         try {
@@ -55,7 +59,7 @@ Function Copy-Folder($src, $dest) {
         $dest_path = Join-Path -Path $dest -ChildPath $item.PSChildName
         if ($item.PSIsContainer) {
             Copy-Folder -src $item.FullName -dest $dest_path
-        } else {    
+        } else {
             Copy-File -src $item.FullName -dest $dest_path
         }
     }
@@ -64,7 +68,7 @@ Function Copy-Folder($src, $dest) {
 Function Copy-File($src, $dest) {
     if (Test-Path -Path $dest) {
         if ((Get-Item -Path $dest -Force).PSIsContainer) {
-            Fail-Json $result "If src is a file, dest must also be a file. src: $src, dest: $dest"            
+            Fail-Json $result "If src is a file, dest must also be a file. src: $src, dest: $dest"
         }
     }
 
