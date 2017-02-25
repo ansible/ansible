@@ -137,7 +137,6 @@ lib/ansible/modules/network/basics/slurp.py
 lib/ansible/modules/network/cloudflare_dns.py
 lib/ansible/modules/network/dnsimple.py
 lib/ansible/modules/network/dnsmadeeasy.py
-lib/ansible/modules/network/exoscale/exo_dns_record.py
 lib/ansible/modules/network/f5/bigip_facts.py
 lib/ansible/modules/network/f5/bigip_monitor_tcp.py
 lib/ansible/modules/network/f5/bigip_node.py
