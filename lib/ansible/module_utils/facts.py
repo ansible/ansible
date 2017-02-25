@@ -876,7 +876,7 @@ class LinuxHardware(Hardware):
                 else:
                     self.facts[k] = 'NA'
 
-    @timeout(10)
+    @timeout(60)
     def get_mount_facts(self):
         self.facts['mounts'] = []
         mtab = get_file_content('/etc/mtab', '')
