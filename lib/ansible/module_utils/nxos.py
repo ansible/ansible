@@ -208,7 +208,7 @@ class Nxapi:
 
         return dict(ins_api=msg)
 
-    def send_request(self, commands, output='text'):
+    def send_request(self, commands, output='text', check_status=True):
         # only 10 show commands can be encoded in each request
         # messages sent to the remote device
         if output != 'config':
@@ -255,12 +255,13 @@ class Nxapi:
             except ValueError:
                 self._module.fail_json(msg='unable to parse response')
 
-            output = response['ins_api']['outputs']['output']
-            for item in to_list(output):
-                if item['code'] != '200':
-                    self._error(output=output, **item)
-                else:
-                    result.append(item['body'])
+            if check_status:
+                output = response['ins_api']['outputs']['output']
+                for item in to_list(output):
+                    if item['code'] != '200':
+                        self._error(output=output, **item)
+                    else:
+                        result.append(item['body'])
 
         return result
 
@@ -288,7 +289,7 @@ class Nxapi:
         queue = list()
         responses = list()
 
-        _send = lambda commands, output: self.send_request(commands, output)
+        _send = lambda commands, output: self.send_request(commands, output, check_status=check_rc)
 
         for item in to_list(commands):
             if is_json(item['command']):
