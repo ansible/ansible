@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
+ANSIBLE_METADATA = {'status': ['deprecated'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
@@ -25,6 +25,7 @@ module: cl_license
 version_added: "2.1"
 author: "Cumulus Networks (@CumulusNetworks)"
 short_description: Install Cumulus Linux license
+deprecated: Deprecated in 2.3.
 description:
     - Installs a Cumulus Linux license. The module reports no change of status
       when a license is installed.
