@@ -15,7 +15,7 @@
     that:
       - "eos_eapi_output.failed == true"
       - "eos_eapi_output.changed == false"
-      - eos_eapi_output.msg == "vrf 'foobar' is not configured"
+      - eos_eapi_output.msg == "vrf `foobar` is not configured on the system"
 
 #----
 - name: Set VRF to default

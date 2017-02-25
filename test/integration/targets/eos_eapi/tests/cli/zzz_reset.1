@@ -1,8 +1,9 @@
 - debug: msg="START CLI/RESET.YAML"
 
 - name: Change endpoint ports back to default values
-  eos_eapi:
-    enable_local_http: yes
+  eos_config:
+    lines: default management api http-commands
+    match: none
     provider: "{{ cli }}"
   register: eos_eapi_output
   connection: local
@@ -22,8 +23,9 @@
         - http_config.stdout[0].localHttpServer.port == 8080
 
 - name: Change endpoint ports back to default values again
-  eos_eapi:
-    enable_local_http: yes
+  eos_config:
+    lines: default management api http-commands
+    match: none
     provider: "{{ cli }}"
   register: eos_eapi_output
   connection: local
