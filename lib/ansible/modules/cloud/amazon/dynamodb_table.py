@@ -191,7 +191,7 @@ INDEX_OPTIONS = INDEX_REQUIRED_OPTIONS + ['hash_key_type', 'range_key_name', 'ra
 INDEX_TYPE_OPTIONS = ['all', 'global_all', 'global_include', 'global_keys_only', 'include', 'keys_only']
 
 
-def create_or_update_dynamo_table(connection, module, boto3_dynamodb=None, boto3_iam=None):
+def create_or_update_dynamo_table(connection, module, boto3_dynamodb=None, boto3_sts=None):
     table_name = module.params.get('name')
     hash_key_name = module.params.get('hash_key_name')
     hash_key_type = module.params.get('hash_key_type')
@@ -244,9 +244,10 @@ def create_or_update_dynamo_table(connection, module, boto3_dynamodb=None, boto3
 
         if tags:
             # only tables which are active can be tagged
-            wait_until_table_active(module, boto3_dynamodb, table, wait_for_active_timeout)
-            account_id = get_account_id(boto3_iam)
+            wait_until_table_active(module, table, wait_for_active_timeout)
+            account_id = get_account_id(boto3_sts)
             boto3_dynamodb.tag_resource(ResourceArn='arn:aws:dynamodb:' + region + ':' + account_id + ':table/' + table_name, Tags=ansible_dict_to_boto3_tag_list(tags))
+            result['tags'] = tags
 
     except BotoServerError:
         result['msg'] = 'Failed to create/update dynamo table due to error: ' + traceback.format_exc()
@@ -255,12 +256,11 @@ def create_or_update_dynamo_table(connection, module, boto3_dynamodb=None, boto3
         module.exit_json(**result)
 
 
-def get_account_id(boto3_iam):
-    users = boto3_iam.list_users(MaxItems=1)
-    return users['Users'][0]['Arn'].split(':')[4]
+def get_account_id(boto3_sts):
+    return boto3_sts.get_caller_identity()["Account"]
 
 
-def wait_until_table_active(module, boto3_dynamodb, table, wait_timeout):
+def wait_until_table_active(module, table, wait_timeout):
     max_wait_time = time.time() + wait_timeout
     while (max_wait_time > time.time()) and (table.describe()['Table']['TableStatus'] != 'ACTIVE'):
         time.sleep(5)
@@ -466,16 +466,16 @@ def main():
         try:
             region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
             boto3_dynamodb = boto3_conn(module, conn_type='client', resource='dynamodb', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-            boto3_iam = boto3_conn(module, conn_type='client', resource='iam', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+            boto3_sts = boto3_conn(module, conn_type='client', resource='sts', region=region, endpoint=ec2_url, **aws_connect_kwargs)
         except botocore.exceptions.NoCredentialsError as e:
             module.fail_json(msg='cannot connect to AWS', exception=traceback.format_exc(e))
     else:
         boto3_dynamodb = None
-        boto3_iam = None
+        boto3_sts = None
 
     state = module.params.get('state')
     if state == 'present':
-        create_or_update_dynamo_table(connection, module, boto3_dynamodb, boto3_iam)
+        create_or_update_dynamo_table(connection, module, boto3_dynamodb, boto3_sts)
     elif state == 'absent':
         delete_dynamo_table(connection, module)
 
