@@ -1,0 +1,20 @@
+# Cluster settings
+clusters:
+    prod-cluster:
+        address: prod-cluster.example.com
+        port: 9440
+        username: admin
+        password: pass123
+        verify_ssl: False
+    qa-cluster:
+        address: qa-cluster.example.com
+        port: 9440
+        username: admin
+        password: pass123
+        verify_ssl: False
+
+# Global caching settings
+caching:
+    cache_max_age: 300
+    cache_path: '/tmp/'
+    cache_base_name: 'ansible-nutanix.cache'
