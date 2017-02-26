@@ -78,7 +78,7 @@ def load_config(module, commands, commit=False, comment=None):
         module.fail_json(msg='unable to enter configuration mode', output=err)
 
     for cmd in to_list(commands):
-        rc, out, err = exec_command(module, cmd, check_rc=False)
+        rc, out, err = exec_command(module, cmd)
         if rc != 0:
             # discard any changes in case of failure
             exec_command(module, 'exit discard')

@@ -221,10 +221,9 @@ def run(module, result):
 
     commit = not module.check_mode
     comment = module.params['comment']
-    save = module.params['save']
 
     if commands:
-        load_config(module, commands, commit=commit, comment=comment, save=save)
+        load_config(module, commands, commit=commit, comment=comment)
 
         if result.get('filtered'):
             result['warnings'].append('Some configuration commands were '

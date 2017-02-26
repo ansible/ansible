@@ -43,10 +43,7 @@ class ActionModule(_ActionModule):
             except ValueError as exc:
                 return dict(failed=True, msg=exc.message)
 
-        if self._play_context.connection == 'local':
-            result = self.normal(tmp, task_vars)
-        else:
-            result = super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         if self._task.args.get('backup') and result.get('__backup__'):
             # User requested backup and no error occurred in module.
@@ -64,22 +61,6 @@ class ActionModule(_ActionModule):
 
         return result
 
-    def normal(self, tmp=None, task_vars=None):
-        if task_vars is None:
-            task_vars = dict()
-
-        #results = super(ActionModule, self).run(tmp, task_vars)
-        # remove as modules might hide due to nolog
-        #del results['invocation']['module_args']
-
-        results = {}
-        results = merge_hash(results, self._execute_module(tmp=tmp, task_vars=task_vars))
-
-        # hack to keep --verbose from showing all the setup module results
-        if self._task.action == 'setup':
-            results['_ansible_verbose_override'] = True
-
-        return results
     def _get_working_path(self):
         cwd = self._loader.get_basedir()
         if self._task._role is not None:
