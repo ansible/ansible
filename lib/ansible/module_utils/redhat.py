@@ -66,7 +66,7 @@ class RegistrationBase(object):
                 cfg.set('main', 'enabled', 1)
             else:
                 cfg.set('main', 'enabled', 0)
-            fd = open(plugin_conf, 'rwa+')
+            fd = open(plugin_conf, 'w+')
             cfg.write(fd)
             fd.close()
 
