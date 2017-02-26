@@ -40,7 +40,6 @@ except ImportError:
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
-
         if self._play_context.connection != 'local':
             return dict(
                 failed=True,
@@ -114,6 +113,3 @@ class ActionModule(_ActionModule):
             return strategy(*args, **kwargs)
         except AnsibleFallbackNotFound:
             pass
-
-
-
