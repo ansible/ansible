@@ -65,54 +65,25 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-proposed:
-    description: proposed feature state
-    returned: always
-    type: dict
-    sample: {"state": "disabled"}
-existing:
-    description: existing state of feature
-    returned: always
-    type: dict
-    sample: {"state": "enabled"}
-end_state:
-    description: feature state after executing module
-    returned: always
-    type: dict
-    sample: {"state": "disabled"}
-updates:
-    description: commands sent to the device
+commands:
+    description: The set of commands to be sent to the remote device
     returned: always
     type: list
-    sample: ["no feature eigrp"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
-feature:
-    description: the feature that has been examined
-    returned: always
-    type: string
-    sample: "vpc"
+    sample: ['nv overlay evpn']
 '''
 import re
 
-from ansible.module_utils.nxos import load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.nxos import load_config, run_commands
+from ansible.module_utils.nxos import nxos_argument_spec
+from ansible.module_utils.nxos import check_args as nxos_check_args
 
-def apply_key_map(key_map, table):
-    new_dict = {}
-    for key, value in table.items():
-        new_key = key_map.get(key)
-        if new_key:
-            value = table.get(key)
-            if value:
-                new_dict[new_key] = str(value)
-            else:
-                new_dict[new_key] = value
-    return new_dict
+def check_args(module, warnings):
+    nxos_check_args(module, warnings)
+
+    for key in ('include_defaults', 'config', 'save'):
+        if module.params[key] is not None:
+            warnings.append('argument %s is no longer supported, ignoring value' % key)
 
 
 def get_available_features(feature, module):
@@ -121,6 +92,7 @@ def get_available_features(feature, module):
     command = 'show feature'
 
     command = {'command': command, 'output': 'text'}
+
     body = run_commands(module, [command])
     split_body = body[0].splitlines()
 
@@ -212,11 +184,12 @@ def validate_feature(module, mode='show'):
 def main():
     argument_spec = dict(
         feature=dict(type='str', required=True),
-        state=dict(choices=['enabled', 'disabled'], default='enabled',
-                       required=False),
-        include_defaults=dict(default=False),
+        state=dict(choices=['enabled', 'disabled'], default='enabled'),
+
+        # deprecated in Ans2.3
+        include_defaults=dict(),
         config=dict(),
-        save=dict(type='bool', default=False)
+        save=dict()
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -226,7 +199,6 @@ def main():
 
     warnings = list()
     check_args(module, warnings)
-
 
     feature = validate_feature(module)
     state = module.params['state'].lower()
@@ -248,25 +220,15 @@ def main():
         cmds = get_commands(proposed, existing, state, module)
 
         if cmds:
-            if module.check_mode:
-                module.exit_json(changed=True, commands=cmds)
-            else:
+            if not module.check_mode:
                 load_config(module, cmds)
-                changed = True
-                updated_features = get_available_features(feature, module)
-                existstate = updated_features[feature]
-                end_state = dict(state=existstate)
-                if 'configure' in cmds:
-                    cmds.pop(0)
+            changed = True
 
-    results = {}
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['end_state'] = end_state
-    results['updates'] = cmds
-    results['changed'] = changed
-    results['warnings'] = warnings
-    results['feature'] = module.params['feature']
+    results = {
+        'commands': cmds,
+        'changed': changed,
+        'warnings': warnings
+    }
 
     module.exit_json(**results)
 

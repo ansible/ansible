@@ -1,0 +1,60 @@
+---
+- debug: msg="START cli/configure.yaml"
+
+- name: setup
+  nxos_config:
+    lines: no feature vn-segment-vlan-based
+    match: none
+    provider: "{{ cli }}"
+
+- name: enable vn-segment-vlan-based
+  nxos_feature:
+    feature: vn-segment-vlan-based
+    state: enabled
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify vn-segment-vlan-based
+  nxos_feature:
+    feature: vn-segment-vlan-based
+    state: enabled
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: disable vn-segment-vlan-based
+  nxos_feature:
+    feature: vn-segment-vlan-based
+    state: disabled
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify vn-segment-vlan-based
+  nxos_feature:
+    feature: vn-segment-vlan-based
+    state: disabled
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  nxos_config:
+    lines: no feature vn-segment-vlan-based
+    match: none
+    provider: "{{ cli }}"
+
+- debug: msg="END cli/configure.yaml"
