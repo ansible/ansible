@@ -20,22 +20,21 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 ---
-  module: cloudfront
-  short_description: Create, update and delete AWS CloudFront distributions
-  description:
-      - Allows for easy creation, updating and deletion of CloudFront distributions
-  requirements:
-        - boto3 >= 1.0.0
-        - python >= 2.6
-  version_added: "2.3"
-  author: Willem van Ketwich (@wilvk)
+module: cloudfront
+short_description: Create, update and delete AWS CloudFront distributions
+description:
+  - Allows for easy creation, updating and deletion of CloudFront distributions
+requirements:
+  - boto3 >= 1.0.0
+  - python >= 2.6
+version_added: "2.3"
+author: Willem van Ketwich (@wilvk)
   
-  options:
- 
+options:
   distribution_id:
-    description:
-      - The id of the CloudFront distribution. Used with distribution, distribution_config, invalidation, streaming_distribution, streaming_distribution_config, list_invalidations.
-    required: false
+      description:
+        - The id of the CloudFront distribution. Used with distribution, distribution_config, invalidation, streaming_distribution, streaming_distribution_config, list_invalidations.
+      1required: false
 
 extends_documentation_fragment:
   - aws
@@ -94,32 +93,58 @@ class CloudFrontServiceManager:
     def __init__(self, module):
         self.module = module
 
-    try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        self.client = boto3_conn(module, conn_type='client', resource='cloudfront', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except botocore.exceptions.NoRegionError:
-        self.module.fail_json(msg="Region must be specified as a parameter, in AWS_DEFAULT_REGION environment variable or in boto configuration file")
-    except Exception as e:
-        self.module.fail_json(msg="Can't establish connection - " + str(e), exception=traceback.format_exc())
-
-    def get_distribution(self, distribution_id):
         try:
-            func = partial(self.client.get_distribution,Id=distribution_id)
+            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+            self.client = boto3_conn(module, conn_type='client', resource='cloudfront', 
+                                     region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        except botocore.exceptions.NoRegionError:
+            self.module.fail_json(msg = ("Region must be specified as a parameter, in "
+                                         "AWS_DEFAULT_REGION environment variable or in "
+                                         "boto configuration file") )
+        except Exception as e:
+            self.module.fail_json(msg="Can't establish connection - " + str(e),
+                                  exception=traceback.format_exc())
+
+    def create_cloud_front_origin_access_identity(self, content, caller_reference, comment):
+        try:
+            if(content == ""):
+                content = { 'CallerReference': 'caller', 'Comment': comment }
+
+            func = partial(self.client.create_cloud_front_origin_access_identity,
+                           CloudFrontOriginAccessIdentityConfig = content)
             return self.paginated_response(func)
         except Exception as e:
-            self.module.fail_json(msg="Error describing distribution - " + str(e), exception=traceback.format_exc())
+            self.module.fail_json(msg="Error creating cloud front origin access identity - " + str(e), 
+                                  exception=traceback.format_exc())
+
+    def paginated_response(self, func, result_key=""):
+        '''
+        Returns expanded response for paginated operations.
+        The 'result_key' is used to define the concatenated results that are combined 
+        from each paginated response.
+        '''
+        args = dict()
+        results = dict()
+        loop = True
+        while loop:
+            response = func(**args)
+            if result_key == "":
+                result = response
+                result.pop('ResponseMetadata', None)
+            else:
+                result = response.get(result_key)
+            results.update(result)
+            args['NextToken'] = response.get('NextToken')
+            loop = args['NextToken'] is not None
+        return results
 
 def main():
     argument_spec = ec2_argument_spec()
 
     argument_spec.update(dict(
-        
         create_cloud_front_origin_access_identity = dict(required=False, type='bool'),
-        cloud_front_origin_access_identity.id = dict(required=False, type='string'),
-        cloud_front_origin_access_identity.s3_cannonical_user_id = dict(required=False, type='string'),
-        cloud_front_origin_access_identity.cloud_front_origin_access_identity_config.caller_reference = dict(required=False, type='string'),
-        cloud_front_origin_access_identity.cloud_front_origin_access_identity_config.comment = dict(required=False, type='string'),
-
+        caller_reference = dict(required=False, type='string'),
+        comment = dict(required=False, type='string'),
         create_distribution = dict(required=False, type='bool'),
         create_distribution_with_tags = dict(required=False, type='bool'),
         create_invalidation = dict(required=False, type='bool'),
@@ -134,24 +159,25 @@ def main():
         update_cloud_front_origin_access_identity = dict(required=False, type='bool'),
         update_distribution = dict(required=False, type='bool'),
         update_streaming_distribution = dict(required=False, type='bool'),
-        content = dict(required=False, type='string'),
-        location = dict(required=False, type='string'),
-        etag = dict(required=False, type='string')
+        content = dict(required=False, type='string')
     ))
 
     result = {}
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
     
     if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required.')
+        module.fail_json(msg='Error boto3 is required.')
     
     service_mgr = CloudFrontServiceManager(module)
     
+    create_cloud_front_origin_access_identity = module.params.get('create_cloud_front_origin_access_identity')
+    content = module.params.get('content')
+    caller_reference = module.params.get('caller_reference')
+    comment = module.params.get('comment')
+    
     if(create_cloud_front_origin_access_identity):
-        service_mgr.
-    
-    list_streaming_distributions = module.params.get('list_streaming_distributions')
-    
+        service_mgr.create_cloud_front_origin_access_identity(content, caller_reference, comment)
+
     module.exit_json(msg="Did some cloudfront stuff", ansible_facts=result)
 
 if __name__ == '__main__':
