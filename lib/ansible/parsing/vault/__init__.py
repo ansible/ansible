@@ -147,19 +147,10 @@ def is_encrypted_file(file_obj, start_pos=0, count=-1):
     current_position = file_obj.tell()
     try:
         file_obj.seek(start_pos)
-        vaulttext = file_obj.read(count)
-        try:
-            b_vaulttext = to_bytes(to_text(vaulttext, encoding='ascii', errors='strict'), encoding='ascii', errors='strict')
-        except (UnicodeError, TypeError):
-            # At present, vault files contain only ascii characters.  The encoding is utf-8
-            # without BOM (for future expansion).  If the header does not
-            # decode as ascii then we know we do not have proper vault
-            # encrypted data.
-            return False
+        return is_encrypted(file_obj.read(count))
+
     finally:
         file_obj.seek(current_position)
-
-    return is_encrypted(b_vaulttext)
 
 
 class VaultLib:
