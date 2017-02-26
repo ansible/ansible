@@ -179,6 +179,9 @@ def map_obj_to_commands(want, have, module):
             cmd = 'no ip name-server %s' % item['server']
             remove(cmd, commands, item['vrf'])
 
+        if have['system_mtu']:
+            commands.append('no system jumbomtu')
+
     if state == 'present':
         if needs_update('hostname'):
             commands.append('hostname %s' % want['hostname'])
@@ -212,6 +215,9 @@ def map_obj_to_commands(want, have, module):
             for item in difference(want, have, 'name_servers'):
                 cmd = 'ip name-server %s' % item['server']
                 add(cmd, commands, item['vrf'])
+
+        if needs_update('system_mtu'):
+            commands.append('system jumbomtu %s' % want['system_mtu'])
 
     return commands
 
@@ -262,6 +268,11 @@ def parse_name_servers(config, vrf_config):
 
     return objects
 
+def parse_system_mtu(config):
+    match = re.search('^system jumbomtu (\d+)', config, re.M)
+    if match:
+        return int(match.group(1))
+
 def map_config_to_obj(module):
     config = get_config(module)
     configobj = NetworkConfig(indent=2, contents=config)
@@ -278,13 +289,19 @@ def map_config_to_obj(module):
         'domain_lookup': 'no ip domain-lookup' not in config,
         'domain_name': parse_domain_name(config, vrf_config),
         'domain_search': parse_domain_search(config, vrf_config),
-        'name_servers': parse_name_servers(config, vrf_config)
+        'name_servers': parse_name_servers(config, vrf_config),
+        'system_mtu': parse_system_mtu(config)
     }
+
+def validate_system_mtu(value, module):
+    if not 1500 <= value <= 9216:
+        module.fail_json(msg='system_mtu must be between 1500 and 9216')
 
 def map_params_to_obj(module):
     obj = {
         'hostname': module.params['hostname'],
         'domain_lookup': module.params['domain_lookup'],
+        'system_mtu': module.params['system_mtu']
     }
 
     domain_name = ComplexList(dict(
@@ -326,6 +343,8 @@ def main():
 
         # { server: <str>; vrf: <str> }
         name_servers=dict(type='list'),
+
+        system_mtu=dict(type='int'),
 
         state=dict(default='present', choices=['present', 'absent'])
     )
