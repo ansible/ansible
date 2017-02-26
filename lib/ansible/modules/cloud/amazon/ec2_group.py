@@ -133,6 +133,8 @@ EXAMPLES = '''
         group_desc: other example EC2 group
 '''
 
+import ipaddress
+
 try:
     import boto.ec2
     from boto.ec2.securitygroup import SecurityGroup
@@ -163,6 +165,14 @@ def addRulesToLookup(rules, prefix, dict):
             dict[make_rule_key(prefix, rule, grant.group_id, grant.cidr_ip)] = (rule, grant)
 
 
+def validate_cidr_ip(module, cidr_ip):
+    # takes cidr_ip string and returns valid cidr_ip string or aborts module execution
+    try:
+        return str(ipaddress.IPv4Interface(cidr_ip.decode('utf-8')).network)
+    except:
+        module.fail_json(msg='cidr_ip not valid: %s' % str(cidr_ip))
+
+
 def validate_rule(module, rule):
     VALID_PARAMS = ('cidr_ip',
                     'group_id', 'group_name', 'group_desc',
@@ -174,6 +184,8 @@ def validate_rule(module, rule):
     for k in rule:
         if k not in VALID_PARAMS:
             module.fail_json(msg='Invalid rule parameter \'{}\''.format(k))
+        if k == 'cidr_ip':
+            rule['cidr_ip'] = validate_cidr_ip(module, rule['cidr_ip'])
 
     if 'group_id' in rule and 'cidr_ip' in rule:
         module.fail_json(msg='Specify group_id OR cidr_ip, not both')
