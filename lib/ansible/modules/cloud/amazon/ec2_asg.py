@@ -250,6 +250,11 @@ from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 from ansible.module_utils.six import iteritems
 
+try:
+    import botocore
+except ImportError:
+    pass  # will be detected by imported HAS_BOTO3
+
 #log.basicConfig(filename='/tmp/ansible_ec2_asg.log', level=log.DEBUG, format='%(asctime)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 ASG_ATTRIBUTES = ('AvailabilityZones', 'DefaultCooldown', 'DesiredCapacity',
