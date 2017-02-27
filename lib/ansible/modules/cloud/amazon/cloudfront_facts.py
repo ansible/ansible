@@ -206,20 +206,17 @@ summary:
     type: dict
 '''
 
-try:
-    import boto3
-    import botocore
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
-from ansible.module_utils.ec2 import get_aws_connection_info
-from ansible.module_utils.ec2 import ec2_argument_spec
-from ansible.module_utils.ec2 import boto3_conn
+from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, boto3_conn, HAS_BOTO3
+from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict
 from ansible.module_utils.basic import AnsibleModule
 from functools import partial
-import json
 import traceback
+
+try:
+    import botocore
+except ImportError:
+    pass  # will be caught by imported HAS_BOTO3
+
 
 class CloudFrontServiceManager:
     """Handles CloudFront Services"""
@@ -400,6 +397,8 @@ class CloudFrontServiceManager:
                     invalidation_ids = self.get_list_of_invalidation_ids_from_distribution_id(dist['Id'])
                     if invalidation_ids:
                         temp_distribution.update( { 'Invalidations': invalidation_ids } )
+                resource_tags = self.client.list_tags_for_resource(Resource=dist['ARN'])
+                temp_distribution['Tags'] = boto3_tag_list_to_ansible_dict(resource_tags['Tags'].get('Items', []))
                 distribution_list[list_name].append(temp_distribution)
             return distribution_list
         except Exception as e:
