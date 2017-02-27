@@ -29,7 +29,7 @@
 
 import os
 import re
-import stat 
+import stat
 import json
 import ast
 import os.path as osp
@@ -144,9 +144,9 @@ def hdfs_argument_spec():
         verify= dict(required=False, default=False, type='bool'),
         # For secure connections the server certificate file(trust store) to trust.
         truststore= dict(required=False,default=None, no_log=True),
-        # Connection timeouts, forwarded to the request handler. How long to wait for the server to send data before giving up, 
+        # Connection timeouts, forwarded to the request handler. How long to wait for the server to send data before giving up,
         timeout= dict(required=False, default=None, type='float'),
-        # Root path, this will be prefixed to all HDFS paths passed to the client. If the root is relative, 
+        # Root path, this will be prefixed to all HDFS paths passed to the client. If the root is relative,
         # the path will be assumed relative to the user's home directory.
         root= dict(required=False, default=None),
     )
@@ -158,13 +158,16 @@ def hdfs_mutually_exclusive():
     return [['password', 'keytab'],['user', 'principal'],['token', 'principal'],['token', 'user'],['token', 'password'],['token', 'keytab']]
 
 def hdfs_required_one_of_if():
-  return [ ('authentication', 'kerberos', ['password','keytab']) ]
+    return [ ('authentication', 'kerberos', ['password','keytab']) ]
 
 def hdfs_required_if():
-  return [ ('authentication', 'kerberos', ['principal']),('authentication', 'token', ['token'])  ]
+    return [ ('authentication', 'kerberos', ['principal']),('authentication', 'token', ['token'])  ]
 
 def hdfs_invalid_if():
-    return [ ('verify', False, ['truststore']),('authentication', 'none', ['principal','password','keytab','token']),('authentication', 'token', ['principal','password','keytab','user']),('authentication', 'kerberos', ['token','user'])  ]
+    return [('verify', False, ['truststore']),
+            ('authentication', 'none', ['principal','password','keytab','token']),
+            ('authentication', 'token', ['principal','password','keytab','user']),
+            ('authentication', 'kerberos', ['token','user'])]
 
 def kinit(principal,password=None,keytab=None):
     kinit = '/usr/bin/kinit'
@@ -217,11 +220,11 @@ class HDFSAnsibleModule(object):
         self.hdfs_invalid_if = hdfs_invalid_if()
 
         if required_if is not None:
-             self.hdfs_required_if.extend(required_if)
+            self.hdfs_required_if.extend(required_if)
         if required_one_of_if is not None:
-             self.hdfs_required_one_of_if.extend(required_one_of_if)
+            self.hdfs_required_one_of_if.extend(required_one_of_if)
         if invalid_if is not None:
-             self.hdfs_invalid_if.extend(invalid_if)
+            self.hdfs_invalid_if.extend(invalid_if)
 
         # Need to be performed here since ansible does not provide yet a way to check
         # required one of with if
@@ -236,23 +239,23 @@ class HDFSAnsibleModule(object):
             password = module.params['password']
             keytab = module.params['keytab']
             try:
-               kinit(principal, password, keytab)
+                kinit(principal, password, keytab)
             except Exception:
-               self.hdfs_fail_json(msg="Kerberos authentication failed: %s." % str(get_exception()))
+                self.hdfs_fail_json(msg="Kerberos authentication failed: %s." % str(get_exception()))
 
         ## Get the client
         try:
-          self.client = self.get_client()
+            self.client = self.get_client()
         except Exception:
-          self.hdfs_fail_json(msg="Error instanciating pywhdfs client: %s." % str(get_exception()))
+            self.hdfs_fail_json(msg="Error instanciating pywhdfs client: %s." % str(get_exception()))
 
     def __del__(self):
         authentication = self.module.params.get('authentication')
         if authentication == 'kerberos':
             try:
-               kdestroy()
+                kdestroy()
             except Exception:
-               self.hdfs_fail_json(msg="failed to clean kerberos TGT: %s." % str(get_exception()))
+                self.hdfs_fail_json(msg="failed to clean kerberos TGT: %s." % str(get_exception()))
 
     '''
        Note: about error handling and clean up.
@@ -292,7 +295,7 @@ class HDFSAnsibleModule(object):
                     pass
 
         if self.local_file_restore_onfail is not None and len(self.local_file_restore_onfail) != 0:
-             for restore_path, backup_path in self.local_file_cleanup_onfail:
+            for restore_path, backup_path in self.local_file_cleanup_onfail:
                 try:
                     if osp.exists(restore_path):
                         if not osp.isdir(restore_path):
@@ -313,7 +316,7 @@ class HDFSAnsibleModule(object):
                         self.client.delete(f)
                 except:
                     pass
-                    
+
         if self.file_restore_onfail is not None and len(self.file_restore_onfail) != 0:
             for restore_path, backup_path in self.file_cleanup_onfail:
                 try:
@@ -324,29 +327,29 @@ class HDFSAnsibleModule(object):
 
     def _parse_nameservice_parameter(self,nameservice):
         if not isinstance(nameservice, dict):
-          # well not a dict nor a list then it is just a urls string most likely
-          return { 'urls' : [ url  for url in re.split(r',|;', str(nameservice).strip(' ').strip('"').strip('\'')) ], 'mounts' : [ '/' ] }
+            # well not a dict nor a list then it is just a urls string most likely
+            return { 'urls' : [ url for url in re.split(r',|;', str(nameservice).strip(' ').strip('"').strip('\'')) ], 'mounts' : [ '/' ] }
         else:
-          # nameservice is just a dict
-          if "urls" in nameservice:
-            if isinstance(nameservice["urls"], list):
-              urls = [ str(url).strip(' ').strip('"').strip('\'')  for url in nameservice["urls"] ]
+            # nameservice is just a dict
+            if "urls" in nameservice:
+                if isinstance(nameservice["urls"], list):
+                    urls = [ str(url).strip(' ').strip('"').strip('\'') for url in nameservice["urls"] ]
+                else:
+                    urls = [ str(url) for url in re.split(r',|;', str(nameservice["urls"]).strip(' ').strip('"').strip('\'')) ]
             else:
-              urls = [ str(url)  for url in re.split(r',|;', str(nameservice["urls"]).strip(' ').strip('"').strip('\'')) ]
-          else:
-            raise HdfsError('missing urls parameter in namespace %s.', nameservice)
-          if "mounts" in nameservice:
-            if isinstance(nameservice["mounts"], list):
-              # list of mounts
-              mounts = [ str(mount).strip(' ').strip('"').strip('\'')  for mount in nameservice["mounts"] ]
+                raise HdfsError('missing urls parameter in namespace %s.', nameservice)
+            if "mounts" in nameservice:
+                if isinstance(nameservice["mounts"], list):
+                    # list of mounts
+                    mounts = [ str(mount).strip(' ').strip('"').strip('\'') for mount in nameservice["mounts"] ]
+                else:
+                    # only one mount point or comma separated list of mounts
+                    mounts =  [ str(mount) for mount in re.split(r',|;', str(nameservice["mounts"]).strip(' ').strip('"').strip('\'')) ]
             else:
-              # only one mount point or comma separated list of mounts
-              mounts =  [ str(mount)  for mount in re.split(r',|;', str(nameservice["mounts"]).strip(' ').strip('"').strip('\'')) ]
-          else:
-            # no mount point provided so mount to /
-            mounts = [ "/" ]
-          return { 'urls' : urls, 'mounts' : mounts }
-                     
+                # no mount point provided so mount to /
+                mounts = [ "/" ]
+            return { 'urls' : urls, 'mounts' : mounts }
+
     def get_client(self):
         """Load HDFS client.
 
@@ -359,18 +362,18 @@ class HDFSAnsibleModule(object):
         options = {}
 
         try:
-          #nameservices = json.loads(params.get('nameservices'))
-          nameservices = ast.literal_eval(params.get('nameservices'))
+            #nameservices = json.loads(params.get('nameservices'))
+            nameservices = ast.literal_eval(params.get('nameservices'))
         except:
-          raise HdfsError('nameservices parameter "%s" does not have a valid format, it need to be json.', params.get('nameservices'))
+            raise HdfsError('nameservices parameter "%s" does not have a valid format, it need to be json.', params.get('nameservices'))
 
         # nameservices could be parsed, check its format now
         if not isinstance(nameservices, list):
-          # one nameservice defined
-          options['nameservices'] = [ self._parse_nameservice_parameter(nameservices) ]
+            # one nameservice defined
+            options['nameservices'] = [ self._parse_nameservice_parameter(nameservices) ]
         else:
-          # provided a list of namespaces
-          options['nameservices'] = [ self._parse_nameservice_parameter(nameservice) for nameservice in nameservices ]
+            # provided a list of namespaces
+            options['nameservices'] = [ self._parse_nameservice_parameter(nameservice) for nameservice in nameservices ]
 
         options.update ({
             'root'          : params.get('root', None),
@@ -383,20 +386,20 @@ class HDFSAnsibleModule(object):
 
         if (authentication == 'token'):
             options.update({
-            'auth_mechanism' : 'TOKEN',
-            'token'    : params.get('token'),
+                'auth_mechanism' : 'TOKEN',
+                'token'    : params.get('token'),
             })
         elif (authentication == 'kerberos'):
             options.update({
-            'auth_mechanism' : 'GSSAPI',
+                'auth_mechanism' : 'GSSAPI',
             })
         else:
             options.update({
-            'auth_mechanism' : 'NONE',
-            'user'     : params.get('user', None),
+                'auth_mechanism' : 'NONE',
+                'user'     : params.get('user', None),
             })
 
-        return WebHDFSClient(**options) 
+        return WebHDFSClient(**options)
 
     def get_authentication_type(self):
         return self.module.params.get('authentication')
@@ -456,7 +459,9 @@ class HDFSAnsibleModule(object):
             for fsobj in dirs + files:
                 # still works in hdfs :)
                 path = os.path.join(root, fsobj)
-                changed |= self.hdfs_set_attributes(path=path, owner=owner, group=group, replication=replication, quota=quota, spaceQuota=spaceQuota, permission=permission)
+                changed |= self.hdfs_set_attributes( path=path, owner=owner, group=group,
+                                                     replication=replication, quota=quota,
+                                                     spaceQuota=spaceQuota, permission=permission)
         return changed
 
     def hdfs_resolvepath(self, hdfs_path):
@@ -469,7 +474,7 @@ class HDFSAnsibleModule(object):
         except Exception:
             self.hdfs_fail_json(msg = str(get_exception()))
 
-        if status != None:
+        if status is not None:
             if status['type'] == 'DIRECTORY':
                 return 'directory'
             else: #FILE'
@@ -577,7 +582,7 @@ class HDFSAnsibleModule(object):
 
     def hdfs_is_dir(self,path):
         status = self.hdfs_status(path, strict=False)
-        if status != None and status['type'] == 'DIRECTORY':
+        if status is not None and status['type'] == 'DIRECTORY':
             return True
         else:
             return False
@@ -585,13 +590,13 @@ class HDFSAnsibleModule(object):
     def hdfs_exist(self,path):
         ''' Find out current state '''
         status = self.hdfs_status(path, strict=False)
-        if status != None:
+        if status is not None:
             return True
         return False
 
     def hdfs_is_file(self, path):
         status = self.hdfs_status(path, strict=False)
-        if status != None and status['type'] == 'FILE':
+        if status is not None and status['type'] == 'FILE':
             return True
         else:
             return False
@@ -647,13 +652,13 @@ class HDFSAnsibleModule(object):
             try:
                 call("hdfs dfsadmin -clrQuota %s" % path, shell=True)
             except Exception:
-                self.hdfs_fail_json(path=path, msg="clear name quota failed, maybe check that directory exist and is not a file and didn\'t already exceed the new quota : %s" % str(get_exception()))
+                self.hdfs_fail_json( path=path, msg="clear name quota failed : %s" % str(get_exception()))
         else:
             try:
                 # I don't know why this seems to work only this way
                 call("hdfs dfsadmin -setQuota %s %s" % (quota, path), shell=True)
             except Exception:
-                self.hdfs_fail_json(path=path, msg="set name quota failed, maybe check that directory exist and is not a file and didn\'t already exceed the new quota : %s" % str(get_exception()))
+                self.hdfs_fail_json(path=path, msg="set name quota failed : %s" % str(get_exception()))
         return True
 
     def hdfs_set_spacequota(self, path, quota):
@@ -665,12 +670,12 @@ class HDFSAnsibleModule(object):
             try:
                 call("hdfs dfsadmin -clrSpaceQuota %s" % path, shell=True)
             except Exception:
-                self.hdfs_fail_json(path=path, msg="set space quota failed, maybe check that directory exist and is not a file and didn\'t already exceed the new quota : %s" % str(get_exception()))
+                self.hdfs_fail_json(path=path, msg="set space quota failed : %s" % str(get_exception()))
         else:
             try:
                 call("hdfs dfsadmin -setSpaceQuota %s %s" % (quota, path), shell=True)
             except Exception:
-                self.hdfs_fail_json(path=path, msg="set space quota failed, maybe check that directory exist and is not a file and didn\'t already exceed the new quota : %s" % str(get_exception()))
+                self.hdfs_fail_json(path=path, msg="set space quota failed : %s" % str(get_exception()))
         return True
 
     #################################################################################################################
@@ -686,39 +691,21 @@ class HDFSAnsibleModule(object):
         stickybyte = aclStatus['stickyBit']
 
         if len(str(permission)) == 3:
-            if stickybyte == True:
+            if stickybyte is True:
                 permission = "1" + permission
             else:
                 permission = "0" + permission
 
         return int(permission,8)
 
-    def _symbolic_mode_to_octal(self, path, symbolic_mode):
-        new_mode = self.get_norm_permissions(path)
-        mode_re = re.compile(r'^(?P<users>[ugoa]+)(?P<operator>[-+=])(?P<perms>[rwxXst-]*|[ugo])$')
-
-        for mode in symbolic_mode.split(','):
-            match = mode_re.match(mode)
-            if match:
-                users = match.group('users')
-                operator = match.group('operator')
-                perms = match.group('perms')
-
-                if users == 'a':
-                    users = 'ugo'
-
-                for user in users:
-                    mode_to_apply = self._get_octal_mode_from_symbolic_perms(path, user, perms)
-                    new_mode = self._apply_operation_to_mode(user, operator, mode_to_apply, new_mode)
-            else:
-                raise ValueError("bad symbolic permission for mode: %s" % mode)
-        return new_mode
-
     def _apply_operation_to_mode(self, user, operator, mode_to_apply, current_mode):
         if operator  ==  '=':
-            if user == 'u': mask = stat.S_IRWXU | stat.S_ISUID
-            elif user == 'g': mask = stat.S_IRWXG | stat.S_ISGID
-            elif user == 'o': mask = stat.S_IRWXO | stat.S_ISVTX
+            if user == 'u':
+                mask = stat.S_IRWXU | stat.S_ISUID
+            elif user == 'g':
+                mask = stat.S_IRWXG | stat.S_ISGID
+            elif user == 'o':
+                mask = stat.S_IRWXO | stat.S_ISVTX
 
             # mask out u, g, or o permissions from current_mode and apply new permissions
             inverse_mask = mask ^ PERM_BITS
@@ -729,10 +716,10 @@ class HDFSAnsibleModule(object):
             new_mode = current_mode - (current_mode & mode_to_apply)
         return new_mode
 
-    def _get_octal_mode_from_symbolic_perms(self, path, user, perms):
-        prev_mode = self.get_norm_permissions(path)
+    def _get_octal_mode_from_symbolic_perms(self, path_stat, user, perms):
+        prev_mode = stat.S_IMODE(path_stat.st_mode)
 
-        is_directory = self.hdfs_is_dir(path)
+        is_directory = stat.S_ISDIR(path_stat.st_mode)
         has_x_permissions = (prev_mode & EXEC_PERM_BITS) > 0
         apply_X_permission = is_directory or has_x_permissions
 
@@ -787,6 +774,27 @@ class HDFSAnsibleModule(object):
 
         or_reduce = lambda mode, perm: mode | user_perms_to_modes[user][perm]
         return reduce(or_reduce, perms, 0)
+
+    def _symbolic_mode_to_octal(self, path, symbolic_mode):
+        new_mode = self.get_norm_permissions(path)
+        mode_re = re.compile(r'^(?P<users>[ugoa]+)(?P<operator>[-+=])(?P<perms>[rwxXst-]*|[ugo])$')
+
+        for mode in symbolic_mode.split(','):
+            match = mode_re.match(mode)
+            if match:
+                users = match.group('users')
+                operator = match.group('operator')
+                perms = match.group('perms')
+
+                if users == 'a':
+                    users = 'ugo'
+
+                for user in users:
+                    mode_to_apply = self._get_octal_mode_from_symbolic_perms(path, user, perms)
+                    new_mode = self._apply_operation_to_mode(user, operator, mode_to_apply, new_mode)
+            else:
+                raise ValueError("bad symbolic permission for mode: %s" % mode)
+        return new_mode
 
     def hdfs_set_mode(self, path, mode):
 
@@ -849,8 +857,8 @@ class HDFSAnsibleModule(object):
         chunk_size = 64 * 1024
 
         for chunk in self.client.read_stream(filename,chunk_size=chunk_size):
-           digest_method.update(chunk)
- 
+            digest_method.update(chunk)
+
         return digest_method.hexdigest()
 
 
@@ -886,7 +894,7 @@ class HDFSAnsibleModule(object):
             expiration_date = self.client.renewDelegationToken(token=tokenid)
         except HdfsError:
             e = get_exception()
-            if e.message == None:
+            if e.message is None:
                 if strict:
                     self.hdfs_fail_json(msg="Hdfs error, renew delegation token failed: token id %s is not a valid token." % tokenid)
                 else:
@@ -902,7 +910,7 @@ class HDFSAnsibleModule(object):
             self.client.cancelDelegationToken(token=tokenid)
         except HdfsError:
             e = get_exception()
-            if e.message == None:
+            if e.message is None:
                 if strict:
                     self.hdfs_fail_json(msg="Hdfs error, cancel delegation token failed: token id %s is not a valid token." % tokenid)
                 else:
@@ -990,7 +998,7 @@ class HDFSAnsibleModule(object):
     #################################################################################################################
     #                                         ACL functions
     #################################################################################################################
-    
+
     def validate_acl_entries(self, entries):
         ''' check and normalize acl entries'''
         for entry in entries:
@@ -1071,7 +1079,7 @@ class HDFSAnsibleModule(object):
         status = self.hdfs_status(path=path,strict=False)
         if status is None:
             return False
-             
+
         try:
             orig_entries = self.hdfs_getacls(path=path,strict=strict)
             raw_entries = ','.join(entries)
@@ -1113,7 +1121,7 @@ class HDFSAnsibleModule(object):
 
     def hdfs_add_file_acl(self, path, entries, strict=False):
         changed = False
-        
+
         status = self.hdfs_status(path=path,strict=False)
         if status is None:
             return False
@@ -1146,7 +1154,7 @@ class HDFSAnsibleModule(object):
         return changed
 
     def hdfs_addacls(self, path, entries, recursive=False, strict=False):
-        
+
         # Fail if file does not exist
         status = self.hdfs_status(path=path,strict=strict)
         if status is None:
@@ -1186,7 +1194,7 @@ class HDFSAnsibleModule(object):
             new_entries = self.hdfs_getacls(path=path,strict=strict)
             if not self.compare_acl_entries(orig_entries=orig_entries, new_entries=new_entries):
                 changed = True
-        
+
         except HdfsError:
             self.hdfs_fail_json(msg="hdfs error, could not set file acls: %s" % str(get_exception()))
         except Exception:
