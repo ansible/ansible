@@ -16,16 +16,18 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'community',
+    'version': '1.0',
+}
 
 DOCUMENTATION = """
 ---
 module: junos_facts
 version_added: "2.1"
-author: "Peter Sprygada (@privateip)"
-short_description: Collect facts from remote device running Junos
+author: "Nathaniel Case (@qalthos)"
+short_description: Collect facts from remote devices running Junos
 description:
   - Collects fact information from a remote device running the Junos
     operating system.  By default, the module will collect basic fact
@@ -62,9 +64,6 @@ notes:
 """
 
 EXAMPLES = """
-# the required set of connection arguments have been purposely left off
-# the examples for brevity
-
 - name: collect default set of facts
   junos_facts:
 
