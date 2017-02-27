@@ -17,7 +17,6 @@ lib/ansible/modules/cloud/amazon/_ec2_vpc.py
 lib/ansible/modules/cloud/amazon/aws_kms.py
 lib/ansible/modules/cloud/amazon/cloudformation.py
 lib/ansible/modules/cloud/amazon/cloudformation_facts.py
-lib/ansible/modules/cloud/amazon/cloudfront_facts.py
 lib/ansible/modules/cloud/amazon/cloudtrail.py
 lib/ansible/modules/cloud/amazon/cloudwatchevent_rule.py
 lib/ansible/modules/cloud/amazon/dynamodb_table.py
