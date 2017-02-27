@@ -187,6 +187,13 @@ from ansible.module_utils.eos import run_commands, load_config
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.eos import eos_argument_spec, check_args
 
+def check_transport(module):
+    transport = module.params['transport']
+    provider_transport = (module.params['provider'] or {}).get('transport')
+
+    if 'eapi' in (transport, provider_transport):
+        module.fail_json(msg='eos_eapi module is only supported over cli transport')
+
 def validate_http_port(value, module):
     if not 1 <= value <= 65535:
         module.fail_json(msg='http_port must be between 1 and 65535')
@@ -372,6 +379,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
+    check_transport(module)
 
     result = {'changed': False}
 
