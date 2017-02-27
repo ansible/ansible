@@ -1,14 +1,9 @@
-from nose.plugins.skip import SkipTest
-import pytest
 import os
+import pytest
 
-try:
-    import boto3
-    import botocore
-    import placebo
-except ImportError:
-    raise SkipTest("test_ec2_asg.py requires the `boto3`, `botocore`, and `placebo` modules")
-
+boto3 = pytest.importorskip("boto3")
+botocore = pytest.importorskip("botocore")
+placebo = pytest.importorskip("placebo")
 
 """
 Using Placebo to test modules using boto3:
