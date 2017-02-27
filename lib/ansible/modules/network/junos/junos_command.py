@@ -127,8 +127,6 @@ failed_conditions:
 """
 import time
 
-from functools import partial
-
 from ansible.module_utils.junos import run_commands
 from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.junos import check_args as junos_check_args
@@ -136,6 +134,13 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
 from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.network_common import ComplexList
+
+def check_transport(module):
+    transport = (module.params['provider'] or {}).get('transport')
+
+    if transport == 'netconf':
+        module.fail_json(msg='junos_command module is only supported over cli transport')
+
 
 def check_args(module, warnings):
     junos_check_args(module, warnings)
@@ -201,6 +206,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
+    check_transport(module)
 
     warnings = list()
     check_args(module, warnings)
