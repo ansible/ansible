@@ -83,7 +83,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = """
-- name: Example Adds/Deletes PKIProfile configuration from Avi Controller
+- name: Example to create PKIProfile object
   avi_pkiprofile:
     controller: 10.10.25.42
     username: admin
