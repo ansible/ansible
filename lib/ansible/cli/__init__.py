@@ -28,7 +28,6 @@ import time
 import yaml
 import re
 import getpass
-import signal
 import subprocess
 from abc import ABCMeta, abstractmethod
 
