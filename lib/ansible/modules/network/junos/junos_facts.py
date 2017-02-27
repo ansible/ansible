@@ -88,22 +88,38 @@ ansible_facts:
   returned: always
   type: dict
 """
-import ansible.module_utils.junos
-
-from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import xml_to_string, xml_to_json
+
+
+class FactsBase(object):
+
+    COMMANDS = frozenset()
+
+    def __init__(self, module):
+        self.module = module
+        self.facts = dict()
+        self.responses = None
+
+    def populate(self):
+        self.responses = run_commands(self.module, list(self.COMMANDS))
 
 def main():
     """ Main entry point for AnsibleModule
     """
-    spec = dict(
+    argument_spec = dict(
         config=dict(type='bool'),
         config_format=dict(default='text', choices=['xml', 'text']),
         transport=dict(default='netconf', choices=['netconf'])
     )
 
-    module = NetworkModule(argument_spec=spec,
+    argument_spec.update(junos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
 
     result = dict(changed=False)
 
