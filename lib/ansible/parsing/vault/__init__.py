@@ -201,10 +201,9 @@ class VaultLib:
             self.cipher_name = u"AES256"
 
         try:
-            Cipher = CIPHER_MAPPING[self.cipher_name]
+            this_cipher = CIPHER_MAPPING[self.cipher_name]()
         except KeyError:
             raise AnsibleError(u"{0} cipher could not be found".format(self.cipher_name))
-        this_cipher = Cipher()
 
         # encrypt data
         b_ciphertext = this_cipher.encrypt(b_plaintext, self.b_password)
@@ -238,11 +237,8 @@ class VaultLib:
         b_vaulttext = self._split_header(b_vaulttext)
 
         # create the cipher object
-        cipher_class_name = u'Vault{0}'.format(self.cipher_name)
-
-        if cipher_class_name in globals() and self.cipher_name in CIPHER_WHITELIST:
-            Cipher = globals()[cipher_class_name]
-            this_cipher = Cipher()
+        if self.cipher_name in CIPHER_WHITELIST:
+            this_cipher = CIPHER_MAPPING[self.cipher_name]()
         else:
             raise AnsibleError("{0} cipher could not be found".format(self.cipher_name))
 
