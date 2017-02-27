@@ -102,6 +102,7 @@ class Conditional:
         if hasattr(self, '_ds'):
             ds = getattr(self, '_ds')
 
+        conditional_results = []
         try:
             # this allows for direct boolean assignments to conditionals "when: False"
             if isinstance(self.when, bool):
@@ -109,13 +110,21 @@ class Conditional:
 
             for conditional in self.when:
                 if not self._check_conditional(conditional, templar, all_vars):
-                    return False
+                    conditional_results.append((False, conditional))
+                    # return False
         except Exception as e:
             raise AnsibleError(
                 "The conditional check '%s' failed. The error was: %s" % (to_native(conditional), to_native(e)), obj=ds
             )
 
+        # TODO: add a ConditionalValue class/type? would be truthy but also include the info about the conditional and why it failed, etc
+        conditional_results = [(True, self.when)]
+        print('conditional_results: %s' % conditional_results)
+
+        if not all(conditional_results):
+            return False
         return True
+
 
     def _check_conditional(self, conditional, templar, all_vars):
         '''
