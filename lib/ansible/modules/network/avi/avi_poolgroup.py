@@ -93,7 +93,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = """
-- name: Example Adds/Deletes PoolGroup configuration from Avi Controller
+- name: Example to create PoolGroup object
   avi_poolgroup:
     controller: 10.10.25.42
     username: admin
