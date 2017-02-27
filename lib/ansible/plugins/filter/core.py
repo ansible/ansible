@@ -114,15 +114,20 @@ def to_nice_json(a, indent=4, *args, **kw):
         return to_json(a, *args, **kw)
 
 
-def to_bool(a):
+def to_bool(a, style='yaml'):
     ''' return a bool for the arg '''
-    if a is None or isinstance(a, bool):
-        return a
-    if isinstance(a, string_types):
-        a = a.lower()
-    if a in ('yes', 'on', '1', 'true', 1):
-        return True
-    return False
+    if style == 'python':
+        return bool(a)
+    elif style == 'yaml':
+        if a is None or isinstance(a, bool):
+            return a
+        if isinstance(a, string_types):
+            a = a.lower()
+        if a in ('yes', 'on', '1', 'true', 1):
+            return True
+        return False
+    else:
+        raise errors.AnsibleFilterError('Unknown argument')
 
 
 def to_datetime(string, format="%Y-%d-%m %H:%M:%S"):
