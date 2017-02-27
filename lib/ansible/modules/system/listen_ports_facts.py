@@ -243,7 +243,7 @@ def main():
             whitelist_tcp = dict(required=False, type='list', default=list()),
             whitelist_udp = dict(required=False, type='list', default=list())
         ),
-        supports_check_mode=False
+        supports_check_mode=True
     )
 
     if platform.system() != 'Linux':
