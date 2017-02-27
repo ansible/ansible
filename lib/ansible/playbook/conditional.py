@@ -41,6 +41,34 @@ DEFINED_REGEX = re.compile(r'(hostvars\[.+\]|[\w_]+)\s+(not\s+is|is|is\s+not)\s+
 LOOKUP_REGEX = re.compile(r'lookup\s*\(')
 VALID_VAR_REGEX = re.compile("^[_A-Za-z][_a-zA-Z0-9]*$")
 
+# FIXME: any ideas for a better repr?
+class ConditionalResult:
+    def __init__(self, value=None, conditional=None):
+        self.conditional = conditional
+        self.value = value or False
+
+    def __nonzero__(self):
+        return self.value
+
+    def __repr__(self):
+        return "%s('%s')" % (self.value, self.conditional)
+
+
+class ConditionalResults:
+    def __init__(self, conditional_results=None):
+        self.conditional_results = conditional_results or []
+
+    def __nonzero__(self):
+        if not all(self.conditional_results):
+            return False
+        return True
+
+    def __repr__(self):
+        return "%s(%s)" % (bool(self), self.conditional_results)
+
+    def append(self, conditional_result):
+        return self.conditional_results.append(conditional_result)
+
 
 class Conditional:
 
@@ -102,29 +130,22 @@ class Conditional:
         if hasattr(self, '_ds'):
             ds = getattr(self, '_ds')
 
-        conditional_results = []
-        try:
-            # this allows for direct boolean assignments to conditionals "when: False"
-            if isinstance(self.when, bool):
-                return self.when
+        conditional_results = ConditionalResults()
 
-            for conditional in self.when:
-                if not self._check_conditional(conditional, templar, all_vars):
-                    conditional_results.append((False, conditional))
-                    # return False
-        except Exception as e:
-            raise AnsibleError(
-                "The conditional check '%s' failed. The error was: %s" % (to_native(conditional), to_native(e)), obj=ds
-            )
+        # this allows for direct boolean assignments to conditionals "when: False"
+        if isinstance(self.when, bool):
+            conditional_results.append(ConditionalResult(self.when, self.when))
+        else:
+            try:
+                for conditional in self.when:
+                    result = self._check_conditional(conditional, templar, all_vars)
+                    conditional_results.append(ConditionalResult(result, conditional))
+            except Exception as e:
+                raise AnsibleError(
+                    "The conditional check '%s' failed. The error was: %s" % (to_native(conditional), to_native(e)), obj=ds
+                )
 
-        # TODO: add a ConditionalValue class/type? would be truthy but also include the info about the conditional and why it failed, etc
-        conditional_results = [(True, self.when)]
-        print('conditional_results: %s' % conditional_results)
-
-        if not all(conditional_results):
-            return False
-        return True
-
+        return conditional_results
 
     def _check_conditional(self, conditional, templar, all_vars):
         '''

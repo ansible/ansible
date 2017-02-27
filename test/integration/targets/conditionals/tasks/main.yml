@@ -272,10 +272,33 @@
   when: not bool_test3
   register: result
 
+- name: debug result
+  debug:
+    var: result
+
 - name: assert that the task DID run for not false
   assert:
     that:
     - "result.changed"
+
+- name: when when is a list of whens
+  debug:
+    msg: 'I was truthy.'
+  when:
+    - "result.changed"
+    - True
+    - "'blippy' == 'blippy'"
+    - "result.rc <= 37"
+
+- name: when when is a list of whens with one false
+  debug:
+    msg: 'I was truthy.'
+  when:
+    - "result.changed"
+    - True
+    - "'blippy' == 'blippy'"
+    - "result.rc <= 37"
+    - "result.stdout == 'Some value that is different from stdout'"
 
 - set_fact: skipped_bad_attribute=True
 - block:
