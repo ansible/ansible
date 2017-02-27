@@ -98,9 +98,7 @@ EXAMPLES = r'''
   win_robocopy:
     src: C:\DirectoryOne
     dest: C:\DirectoryTwo
-    recurse: True
-    purge: True
-    flags: /XD SOME_DIR /XF SOME_FILE /MT:32
+    flags: /E /PURGE /XD SOME_DIR /XF SOME_FILE /MT:32
 '''
 
 RETURN = r'''
