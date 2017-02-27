@@ -1426,6 +1426,9 @@ class WindowsIntegrationConfig(IntegrationConfig):
 
         self.windows = args.windows  # type: list [str]
 
+        if self.windows:
+            self.allow_destructive = True
+
 
 class NetworkIntegrationConfig(IntegrationConfig):
     """Configuration for the network integration command."""
