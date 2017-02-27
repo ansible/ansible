@@ -144,8 +144,6 @@ def test_update_lambda_if_config_changed(monkeypatch):
     assert(len(fake_lambda_connection.update_function_code.mock_calls) == 0), \
         "updated lambda code when no change should have happened"
 
-
-@pytest.mark.skip(reason='test broken, fails when run in isolation')
 def test_update_lambda_if_only_one_config_item_changed(monkeypatch):
 
     fake_lambda_connection = MagicMock()
@@ -177,8 +175,6 @@ def test_update_lambda_if_only_one_config_item_changed(monkeypatch):
     assert(len(fake_lambda_connection.update_function_code.mock_calls) == 0), \
         "updated lambda code when no change should have happened"
 
-
-@pytest.mark.skip(reason='test broken, fails when run in isolation')
 def test_dont_update_lambda_if_nothing_changed(monkeypatch):
 
     fake_lambda_connection = MagicMock()
