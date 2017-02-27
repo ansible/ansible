@@ -60,12 +60,12 @@ options:
         required: False
         default: None
         description: Number of floating IP's to allow in Compute.
-        aliases: ['nova_floating_ips']
+        aliases: ['compute_floating_ips']
     floatingip:
         required: False
         default: None
         description: Number of floating IP's to allow in Network.
-        aliases: ['neutron_floating_ips']
+        aliases: ['network_floating_ips']
     gigabytes:
         required: False
         default: None
@@ -375,8 +375,8 @@ def main():
         backups=dict(required=False, type='int', default=None),
         cores=dict(required=False, type='int', default=None),
         fixed_ips=dict(required=False, type='int', default=None),
-        floating_ips=dict(required=False, type='int', default=None, aliases=['nova_floating_ips']),
-        floatingip=dict(required=False, type='int', default=None, aliases=['neutron_floating_ips']),
+        floating_ips=dict(required=False, type='int', default=None, aliases=['compute_floating_ips']),
+        floatingip=dict(required=False, type='int', default=None, aliases=['network_floating_ips']),
         gigabytes=dict(required=False, type='int', default=None),
         gigabytes_types=dict(required=False, type='dict', default={}),
         injected_file_size=dict(required=False, type='int', default=None),
