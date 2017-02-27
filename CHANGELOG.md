@@ -256,6 +256,7 @@ Ansible Changes By Release
   * jenkins_script
 - windows:
   * win_find
+  * win_msg
   * win_path
   * win_psexec
   * win_reg_stat
