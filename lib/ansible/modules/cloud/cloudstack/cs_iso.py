@@ -18,9 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['stableinterface'],
+    'supported_by': 'community',
+    'version': '1.0'
+}
 
 DOCUMENTATION = '''
 ---
@@ -47,7 +49,9 @@ options:
     default: null
   is_ready:
     description:
-      - This flag is used for searching existing ISOs. If set to C(true), it will only list ISO ready for deployment e.g. successfully downloaded and installed. Recommended to set it to C(false).
+      - This flag is used for searching existing ISOs.
+      - If set to C(true), it will only list ISO ready for deployment e.g. successfully downloaded and installed.
+      - Recommended to set it to C(false).
     required: false
     default: false
     aliases: []
@@ -207,8 +211,15 @@ project:
   sample: example project
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together,
+    CS_HYPERVISORS,
+    CS_TEMPLATE_FILTER
+)
 
 
 class AnsibleCloudStackIso(AnsibleCloudStack):
@@ -217,29 +228,28 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
         super(AnsibleCloudStackIso, self).__init__(module)
         self.returns = {
             'checksum': 'checksum',
-            'status':   'status',
-            'isready':  'is_ready',
+            'status': 'status',
+            'isready': 'is_ready',
         }
         self.iso = None
 
     def register_iso(self):
         iso = self.get_iso()
         if not iso:
-
-            args                            = {}
-            args['zoneid']                  = self.get_zone('id')
-            args['domainid']                = self.get_domain('id')
-            args['account']                 = self.get_account('name')
-            args['projectid']               = self.get_project('id')
-            args['bootable']                = self.module.params.get('bootable')
-            args['ostypeid']                = self.get_os_type('id')
-            args['name']                    = self.module.params.get('name')
-            args['displaytext']             = self.module.params.get('name')
-            args['checksum']                = self.module.params.get('checksum')
-            args['isdynamicallyscalable']   = self.module.params.get('is_dynamically_scalable')
-            args['isfeatured']              = self.module.params.get('is_featured')
-            args['ispublic']                = self.module.params.get('is_public')
-
+            args = {
+                'zoneid': self.get_zone('id'),
+                'domainid': self.get_domain('id'),
+                'account': self.get_account('name'),
+                'projectid': self.get_project('id'),
+                'bootable': self.module.params.get('bootable'),
+                'ostypeid': self.get_os_type('id'),
+                'name': self.module.params.get('name'),
+                'displaytext': self.module.params.get('name'),
+                'checksum': self.module.params.get('checksum'),
+                'isdynamicallyscalable': self.module.params.get('is_dynamically_scalable'),
+                'isfeatured': self.module.params.get('is_featured'),
+                'ispublic': self.module.params.get('is_public')
+            }
             if args['bootable'] and not args['ostypeid']:
                 self.module.fail_json(msg="OS type 'os_type' is requried if 'bootable=true'.")
 
@@ -255,18 +265,16 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
                 iso = res['iso'][0]
         return iso
 
-
     def get_iso(self):
         if not self.iso:
-
-            args                = {}
-            args['isready']     = self.module.params.get('is_ready')
-            args['isofilter']   = self.module.params.get('iso_filter')
-            args['domainid']    = self.get_domain('id')
-            args['account']     = self.get_account('name')
-            args['projectid']   = self.get_project('id')
-            args['zoneid']      = self.get_zone('id')
-
+            args = {
+                'isready': self.module.params.get('is_ready'),
+                'isofilter': self.module.params.get('iso_filter'),
+                'domainid': self.get_domain('id'),
+                'account': self.get_account('name'),
+                'projectid': self.get_project('id'),
+                'zoneid': self.get_zone('id')
+            }
             # if checksum is set, we only look on that.
             checksum = self.module.params.get('checksum')
             if not checksum:
@@ -283,17 +291,16 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
                             break
         return self.iso
 
-
     def remove_iso(self):
         iso = self.get_iso()
         if iso:
             self.result['changed'] = True
 
-            args                = {}
-            args['id']          = iso['id']
-            args['projectid']   = self.get_project('id')
-            args['zoneid']      = self.get_zone('id')
-
+            args = {
+                'id': iso['id'],
+                'projectid': self.get_project('id'),
+                'zoneid': self.get_zone('id')
+            }
             if not self.module.check_mode:
                 res = self.cs.deleteIso(**args)
                 if 'errortext' in res:
@@ -304,25 +311,24 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
         return iso
 
 
-
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        name = dict(required=True),
-        url = dict(default=None),
-        os_type = dict(default=None),
-        zone = dict(default=None),
-        iso_filter = dict(default='self', choices=[ 'featured', 'self', 'selfexecutable','sharedexecutable','executable', 'community' ]),
-        domain = dict(default=None),
-        account = dict(default=None),
-        project = dict(default=None),
-        checksum = dict(default=None),
-        is_ready = dict(type='bool', default=False),
-        bootable = dict(type='bool', default=True),
-        is_featured = dict(type='bool', default=False),
-        is_dynamically_scalable = dict(type='bool', default=False),
-        state = dict(choices=['present', 'absent'], default='present'),
-        poll_async = dict(type='bool', default=True),
+        name=dict(required=True),
+        url=dict(default=None),
+        os_type=dict(default=None),
+        zone=dict(default=None),
+        iso_filter=dict(choices=CS_TEMPLATE_FILTER, default='self'),
+        domain=dict(default=None),
+        account=dict(default=None),
+        project=dict(default=None),
+        checksum=dict(default=None),
+        is_ready=dict(type='bool', default=False),
+        bootable=dict(type='bool', default=True),
+        is_featured=dict(type='bool', default=False),
+        is_dynamically_scalable=dict(type='bool', default=False),
+        state=dict(choices=['present', 'absent'], default='present'),
+        poll_async=dict(type='bool', default=True),
     ))
 
     module = AnsibleModule(
@@ -347,7 +353,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

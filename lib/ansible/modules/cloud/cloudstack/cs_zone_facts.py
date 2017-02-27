@@ -18,9 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['stableinterface'],
+    'supported_by': 'community',
+    'version': '1.0'
+}
 
 DOCUMENTATION = '''
 ---
@@ -142,34 +144,38 @@ cloudstack_zone.tags:
 '''
 
 import base64
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together,
+)
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
 
 class AnsibleCloudStackZoneFacts(AnsibleCloudStack):
 
     def __init__(self, module):
         super(AnsibleCloudStackZoneFacts, self).__init__(module)
         self.returns = {
-            'dns1':                     'dns1',
-            'dns2':                     'dns2',
-            'internaldns1':             'internal_dns1',
-            'internaldns2':             'internal_dns2',
-            'ipv6dns1':                 'dns1_ipv6',
-            'ipv6dns2':                 'dns2_ipv6',
-            'domain':                   'network_domain',
-            'networktype':              'network_type',
-            'securitygroupsenabled':    'securitygroups_enabled',
-            'localstorageenabled':      'local_storage_enabled',
-            'guestcidraddress':         'guest_cidr_address',
-            'dhcpprovider':             'dhcp_provider',
-            'allocationstate':          'allocation_state',
-            'zonetoken':                'zone_token',
+            'dns1': 'dns1',
+            'dns2': 'dns2',
+            'internaldns1': 'internal_dns1',
+            'internaldns2': 'internal_dns2',
+            'ipv6dns1': 'dns1_ipv6',
+            'ipv6dns2': 'dns2_ipv6',
+            'domain': 'network_domain',
+            'networktype': 'network_type',
+            'securitygroupsenabled': 'securitygroups_enabled',
+            'localstorageenabled': 'local_storage_enabled',
+            'guestcidraddress': 'guest_cidr_address',
+            'dhcpprovider': 'dhcp_provider',
+            'allocationstate': 'allocation_state',
+            'zonetoken': 'zone_token',
         }
         self.facts = {
             'cloudstack_zone': None,
         }
-
 
     def get_zone(self):
         if not self.zone:
@@ -177,7 +183,6 @@ class AnsibleCloudStackZoneFacts(AnsibleCloudStack):
             self.module.params['zone'] = self.module.params.get('name')
             super(AnsibleCloudStackZoneFacts, self).get_zone()
         return self.zone
-
 
     def run(self):
         zone = self.get_zone()
@@ -188,7 +193,7 @@ class AnsibleCloudStackZoneFacts(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        name = dict(required=True),
+        name=dict(required=True),
     ))
 
     module = AnsibleModule(
@@ -200,6 +205,6 @@ def main():
     cs_facts_result = dict(changed=False, ansible_facts=cs_zone_facts)
     module.exit_json(**cs_facts_result)
 
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()

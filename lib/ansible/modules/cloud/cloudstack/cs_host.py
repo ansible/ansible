@@ -18,9 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'community',
+    'version': '1.0'
+}
 
 DOCUMENTATION = '''
 ---
@@ -63,7 +65,16 @@ options:
     description:
       - Name of the cluster.
       - Required if C(state=present) and host does not yet exist.
-    choices: [ 'KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM', 'Simulator' ]
+    choices:
+      - KVM
+      - VMware
+      - BareMetal
+      - XenServer
+      - LXC
+      - HyperV
+      - UCS
+      - OVM
+      - Simulator
     required: false
     default: null
   allocation_state:
@@ -306,7 +317,7 @@ state:
   type: string
   sample: Up
 suitable_for_migration:
-  description: Whether this host is suitable (has enough capacity and satisfies all conditions like hosttags, max guests VM limit, etc) to migrate a VM to it or not.
+  description: Whether the host is suitable (has enough capacity and satisfies all conditions, e.g. hosttags, max VMs limit) to migrate a VM to it or not.
   returned: success
   type: string
   sample: true
@@ -333,7 +344,13 @@ zone:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.cloudstack import AnsibleCloudStack, CloudStackException, cs_argument_spec, cs_required_together, CS_HYPERVISORS
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together,
+    CS_HYPERVISORS
+)
 
 
 class AnsibleCloudStackHost(AnsibleCloudStack):
