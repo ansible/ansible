@@ -79,7 +79,7 @@ def fail_json_double(*args, **kwargs):
     raise AnsibleFailJson(kwargs)
 
 
-#TODO: def test_handle_different_types_in_config_params(monkeypatch):
+#TODO: def test_handle_different_types_in_config_params():
 
 
 def test_update_lambda_if_code_changed():
@@ -223,6 +223,20 @@ def test_warn_region_not_specified():
         "role": 'arn:aws:iam::987654321012:role/lambda_basic_execution',
         "handler": 'lambda_python.my_handler'})
 
+    fake_lambda_connection = MagicMock()
+    fake_lambda_connection.get_function.configure_mock(
+        return_value={
+            'Configuration' : base_start_function_config_in_aws
+        }
+    )
+    fake_lambda_connection.update_function_configuration.configure_mock(
+        return_value={
+            'Version' : 1
+        }
+    )
+    fake_boto3_conn=Mock(return_value=fake_lambda_connection)
+
+    get_aws_connection_info_double=Mock(return_value=(None,None,None))
     class AnsibleFailJson(Exception):
         pass
 
@@ -230,10 +244,11 @@ def test_warn_region_not_specified():
         kwargs['failed'] = True
         raise AnsibleFailJson(kwargs)
 
-    with patch.object(basic.AnsibleModule, 'fail_json', fail_json_double):
-        try:
-            lda.main()
-        except AnsibleFailJson as e:
-            result = e.args[0]
-            assert("region must be specified" in result['msg'])
+    with patch.object(lda, 'get_aws_connection_info', get_aws_connection_info_double):
+        with patch.object(basic.AnsibleModule, 'fail_json', fail_json_double):
+            try:
+                lda.main()
+            except AnsibleFailJson as e:
+                result = e.args[0]
+                assert("region must be specified" in result['msg'])
 
