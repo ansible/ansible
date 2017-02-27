@@ -1,4 +1,3 @@
-
 - hosts: testhost3
   vars:
     - template_role: ./roles/test_template
@@ -59,8 +58,10 @@
       file: path={{ output_dir }}/tmp.txt state=absent
 
 
-# For testing the case that hit the traceback at https://github.com/ansible/ansible/issues/15365#issuecomment-282752186
-- hosts: testhost3
+# The next set of tests are for coverage of the code paths related to
+# https://github.com/ansible/ansible/issues/15365#issuecomment-282752186
+- name: "Test delegate_to in a loop ala issue #15365"
+  hosts: testhost3
   tasks:
     - name: Test delegate_to in a loop
       setup:
@@ -68,21 +69,22 @@
       with_items: "{{ groups.test_hosts }}"
 
 
-# For testing the case that hit the traceback at https://github.com/ansible/ansible/issues/15365#issuecomment-282752186
-- hosts: testhost3
+- name: "Test delegate_to in a loop with run_once=true ala issue #15365"
+  hosts: testhost3
+  gather_facts: false
   tasks:
-    - name: Test delegate_to in a loop with run_once is true
+    - name: "Test delegate_to in a loop with run_once=true"
       setup:
       delegate_to: "{{ item }}"
       with_items: "{{ groups.test_hosts }}"
       run_once: true
 
 
-# For testing the case that hit the traceback at https://github.com/ansible/ansible/issues/15365#issuecomment-282752186
-- name: Test delegate_to each testhost and delegate_facts is true and run_once is true and in a loop for a single host
+- name: "Test delegate_to each testhost and delegate_facts=true and run_once=true and in a loop for a single host"
   hosts: testhost3
+  gather_facts: false
   tasks:
-    - name: Gather facts from each host in test_hosts with delegate_to and delegate_facts is true and run once
+    - name: "Gather facts from each host in test_hosts with delegate_to=item and delegate_facts=true and run_once=true"
       setup:
       delegate_to: "{{ item }}"
       delegate_facts: true
@@ -90,11 +92,11 @@
       run_once: true
 
 
-# For testing the case that hit the traceback at https://github.com/ansible/ansible/issues/15365#issuecomment-282752186
-- name: Test delegate_to testhost4 and delegate_facts is true and run_once is true and in a loop for multiple hosts
+- name: "Test delegate_to testhost4 and delegate_facts=true and run_once=true and in a loop for multiple hosts"
   hosts: test_hosts
+  gather_facts: false
   tasks:
-    - name: Gather facts from other test hosts with run_once and delegate_to testhost4 and delegate_facts is false
+    - name: "Run setup on other test hosts with run_once=true and delegate_to=testhost4 and delegate_facts=false"
       setup:
       delegate_to: "{{ item }}"
       delegate_facts: true
@@ -103,16 +105,17 @@
       ignore_errors: true
 
 
-- name: Test delegate_to testhost4 and delegate_facts is true and run_once is true
+- name: "Test delegate_to=testhost4 and delegate_facts=true and run_once=true"
   hosts: test_hosts
+  gather_facts: false
   tasks:
-    - name: Gather facts from other test hosts with run_once and delegate_to testhost4
+    - name: "Run setup on other hosts with run_once=true and delegate_to=testhost4"
       setup:
       delegate_to: testhost4
       delegate_facts: true
       run_once: true
 
-    - name: Assert that the facts for testhost4 are delegated from testhost4 with delegate_facts is true and run_once is true
+    - name: "Assert that the facts for testhost4 are delegated from testhost4 with delegate_facts=true and run_once=true"
       assert:
         that:
           - '"127.0.0.4" in hostvars["testhost4"].ansible_env["SSH_CONNECTION"]'
@@ -120,23 +123,25 @@
 
 - name: Test delegate_to testhost4 and delegate_facts is false and run_once is true
   hosts: test_hosts
+  gather_facts: false
   tasks:
-    - name: Gather facts from other test hosts with run_once and delegate_to testhost4 and delegate_facts is false
+    - name: "Run setup on other test hosts with run_once=true and delegate_to=testhost4 and delegate_facts=false"
       setup:
       delegate_to: testhost4
       delegate_facts: false
       run_once: true
 
-    - name: Assert that the facts for testhost4 are delegated from testhost4 with delegate_facts is false and run_once is true
+    - name: "Assert that the facts for testhost4 are delegated from testhost4 with delegate_facts=false and run_once=true"
       assert:
         that:
           - '"127.0.0.4" in hostvars["testhost4"].ansible_env["SSH_CONNECTION"]'
 
 
-- hosts: testhost3
+- name: "Test delegate_to=testhost4 and delegate_facts=true when run for testhost3"
+  hosts: testhost3
   gather_facts: false
   tasks:
-    - name: Test delegate_to and delegate_facts
+    - name: "Test delegate_to=testhost4 and delegate_facts=true"
       setup:
         gather_subset:
             - "!network"
@@ -144,12 +149,17 @@
       delegate_to: testhost4
       delegate_facts: True
 
-    - name: Assert that the facts for testhost4 are delegated from testhost4 with delegate_facts is true
+    - name: "Assert that the facts for testhost4 are delegated from testhost4 with delegate_facts=true"
       assert:
         that:
           - '"127.0.0.4" in hostvars["testhost4"].ansible_env["SSH_CONNECTION"]'
 
-    - name: Test delegate_to and delegate_facts no delegate_facts
+
+- name: "Test delegate_to=testhost4 and delegate_facts=false when run for testhost3"
+  hosts: testhost3
+  gather_facts: false
+  tasks:
+    - name: "Test delegate_to=testhost4 and delegate_facts=false"
       setup:
         gather_subset:
             - "!network"
@@ -157,8 +167,7 @@
       delegate_to: testhost4
       delegate_facts: False
 
-    - name: Assert that the facts for testhost3 are delegated from testhost4 with delegate_facts is false
+    - name: "Assert that the facts for testhost3 are delegated from testhost4 with delegate_facts=false"
       assert:
         that:
           - '"127.0.0.4" in hostvars["testhost3"].ansible_env["SSH_CONNECTION"]'
-
