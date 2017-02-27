@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -14,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: hdfsfile
@@ -22,7 +28,7 @@ extends_documentation_fragment: hdfs
 description:
      - Sets attributes of HDFS files and directories, or removes
        files/directories.
-version_added: "1.9"
+version_added: "2.3"
 requirements: [ pywhdfs ]
 author: "Yassine Azzouz"
 options:
