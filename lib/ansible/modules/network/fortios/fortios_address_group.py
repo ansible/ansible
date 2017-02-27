@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {
 }
 
 DOCUMENTATION = """
---- 
+---
 module: fortios_address_group
 version_added: "2.3"
 author: "Benjamin Jolivot (@bjolivot)"
