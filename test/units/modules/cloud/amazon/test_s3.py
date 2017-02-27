@@ -1,13 +1,5 @@
-from nose.plugins.skip import SkipTest
-
-try:
-    import boto
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
-
-if not HAS_BOTO:
-    raise SkipTest("test_s3.py requires the python module 'boto'")
+import pytest
+boto = pytest.importorskip("boto")
 
 import unittest
 import ansible.modules.cloud.amazon.s3 as s3
