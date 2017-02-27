@@ -110,7 +110,7 @@ Function Choco-IsInstalled
         Throw "Error checking installation status for $package"
     }
 
-    If ("$results" -match "$package .* (\d+) packages installed.")
+    If ("$output" -match "(\d+) packages installed.")
     {
         return $matches[1] -gt 0
     }
@@ -200,7 +200,7 @@ Function Choco-Upgrade
         Throw "Error installing $package"
     }
 
-    if ("$results" -match ' upgraded (\d+)/\d+ package\(s\)\. ')
+    if ("$output" -match ' upgraded (\d+)/\d+ package\(s\)\. ')
     {
         if ($matches[1] -gt 0)
         {
