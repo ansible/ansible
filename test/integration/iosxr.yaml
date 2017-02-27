@@ -1,6 +1,7 @@
 ---
 - hosts: iosxr
   gather_facts: no
+  connection: local
 
   vars:
     limit_to: "*"
