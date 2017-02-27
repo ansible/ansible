@@ -32,11 +32,12 @@ author: Willem van Ketwich (@wilvk)
 options:
     distribution_id:
         description:
-          - The id of the CloudFront distribution. Used with distribution, distribution_config, invalidation, streaming_distribution, streaming_distribution_config, list_invalidations.
+          - The id of the CloudFront distribution. Used with I(distribution), I(distribution_config),
+            I(invalidation), I(streaming_distribution), I(streaming_distribution_config), I(list_invalidations).
         required: false
     invalidation_id:
         description:
-          - The id of the invalidation to get information about. Used with invalidation.
+          - The id of the invalidation to get information about. Used with I(invalidation).
         required: false
     origin_access_identity_id:
         description:
@@ -44,55 +45,62 @@ options:
         required: false
     web_acl_id:
         description:
-          - Used with list_distributions_by_web_acl_id.
+          - Used with I(list_distributions_by_web_acl_id).
         required: false
     domain_name_alias:
         description:
-          - Can be used instead of distribution_id - uses the aliased CNAME for the cloudfront distribution to get the distribution id where required.
+          - Can be used instead of I(distribution_id) - uses the aliased CNAME for the cloudfront
+            distribution to get the distribution id where required.
         required: false
     all_lists:
         description:
-            - Get all cloudfront lists that do not require parameters.
+          - Get all cloudfront lists that do not require parameters.
         required: false
         default: false
     origin_access_identity:
         description:
-            - Get information about an origin access identity. Requires origin_access_identity_id to be specified.
+          - Get information about an origin access identity. Requires I(origin_access_identity_id)
+            to be specified.
         required: false
         default: false
     origin_access_identity_config:
         description:
-            - Get the configuration information about an origin access identity. Requires origin_access_identity_id to be specified.
+          - Get the configuration information about an origin access identity. Requires
+            I(origin_access_identity_id) to be specified.
         required: false
         default: false
     distribution:
         description:
-            - Get information about a distribution. Requires distribution_id or domain_name_alias to be specified.
+          - Get information about a distribution. Requires I(distribution_id) or I(domain_name_alias)
+            to be specified.
         required: false
         default: false
     distribution_config:
         description:
-            - Get the configuration information about a distribution. Requires distribution_id or domain_name_alias to be specified.
+          - Get the configuration information about a distribution. Requires I(distribution_id)
+            or I(domain_name_alias) to be specified.
         required: false
         default: false
     invalidation:
         description:
-            - Get information about an invalidation. Requires invalidation_id to be specified.
+            - Get information about an invalidation. Requires I(invalidation_id) to be specified.
         required: false
         default: false
     streaming_distribution:
         description:
-            - Get information about a specified RTMP distribution. Requires distribution_id or domain_name_alias to be specified.
+            - Get information about a specified RTMP distribution. Requires I(distribution_id) or
+              I(domain_name_alias) to be specified.
         required: false
         default: false
     streaming_distribution_configuration:
         description:
-            - Get the configuration information about a specified RTMP distribution. Requires distribution_id or domain_name_alias to be specified.
+            - Get the configuration information about a specified RTMP distribution.
+              Requires I(distribution_id) or I(domain_name_alias) to be specified.
         required: false
         default: false
     list_origin_access_identities:
         description:
-            - Get a list of cloudfront origin access identities. Requires origin_access_identity_id to be set.
+            - Get a list of cloudfront origin access identities. Requires I(origin_access_identity_id) to be set.
         required: false
         default: false
     list_distributions:
@@ -102,12 +110,12 @@ options:
         default: false
     list_distributions_by_web_acl_id:
         description:
-            - Get a list of distributions using web acl id as a filter. Requires web_acl_id to be set.
+            - Get a list of distributions using web acl id as a filter. Requires I(web_acl_id) to be set.
         required: false
         default: false
     list_invalidations:
         description:
-            - Get a list of invalidations. Requires distribution_id or domain_name_alias to be specified.
+            - Get a list of invalidations. Requires I(distribution_id) or I(domain_name_alias) to be specified.
         required: false
         default: false
     list_streaming_distributions:
@@ -117,7 +125,8 @@ options:
         default: false
     summary:
         description:
-            - Returns a summary of all distributions, streaming distributions and origin_access_identities. This is the default behaviour if no option is selected.
+            - Returns a summary of all distributions, streaming distributions and origin_access_identities.
+              This is the default behaviour if no option is selected.
         required: false
         default: false
 
@@ -173,32 +182,42 @@ EXAMPLES = '''
 
 RETURN = '''
 origin_access_identity:
-    description: Describes the origin access identity information. Requires origin_access_identity_id to be set.
-    returned: only if origin_access_identity is true
+    description: Describes the origin access identity information. Requires I(origin_access_identity_id) to be set.
+    returned: only if I(origin_access_identity) is true
     type: dict
 origin_access_identity_configuration:
-    description: Describes the origin access identity information configuration information. Requires origin_access_identity_id to be set.
-    returned: only if origin_access_identity_configuration is true
+    description: Describes the origin access identity information configuration information. Requires I(origin_access_identity_id) to be set.
+    returned: only if I(origin_access_identity_configuration) is true
     type: dict
 distribution:
-    description: Facts about a cloudfront distribution. Requires distribution_id or domain_name_alias to be specified. Requires origin_access_identity_id to be set.
+    description: >
+      Facts about a cloudfront distribution. Requires I(distribution_id) or I(domain_name_alias)
+      to be specified. Requires I(origin_access_identity_id) to be set.
     returned: only if distribution is true
     type: dict
 distribution_config:
-    description: Facts about a cloudfront distribution's config. Requires distribution_id or domain_name_alias to be specified.
-    returned: only if distribution_config is true
+    description: >
+      Facts about a cloudfront distribution's config. Requires I(distribution_id) or I(domain_name_alias)
+      to be specified.
+    returned: only if I(distribution_config) is true
     type: dict
 invalidation:
-    description: Describes the invalidation information for the distribution. Requires invalidation_id to be specified and either distribution_id or domain_name_alias.
+    description: >
+      Describes the invalidation information for the distribution. Requires
+      I(invalidation_id) to be specified and either I(distribution_id) or I(domain_name_alias.)
     returned: only if invalidation is true
     type: dict
 streaming_distribution:
-    description: Describes the streaming information for the distribution. Requires distribution_id or domain_name_alias to be specified.
-    returned: only if streaming_distribution is true
+    description: >
+      Describes the streaming information for the distribution. Requires
+      I(distribution_id) or I(domain_name_alias) to be specified.
+    returned: only if I(streaming_distribution) is true
     type: dict
 streaming_distribution_configuration:
-    description: Describes the streaming configuration information for the distribution. Requires distribution_id or domain_name_alias to be specified.
-    returned: only if streaming_distribution_configuration is true
+    description: >
+      Describes the streaming configuration information for the distribution.
+      Requires I(distribution_id) or I(domain_name_alias) to be specified.
+    returned: only if I(streaming_distribution_configuration) is true
     type: dict
 summary:
     description: Gives a summary of distributions, streaming distributions and origin access identities.
@@ -230,77 +249,87 @@ class CloudFrontServiceManager:
                                      resource='cloudfront', region=region,
                                      endpoint=ec2_url, **aws_connect_kwargs)
         except botocore.exceptions.NoRegionError:
-            self.module.fail_json(msg="Region must be specified as a parameter, in AWS_DEFAULT_REGION environment variable or in boto configuration file")
-        except Exception as e:
+            self.module.fail_json(msg="Region must be specified as a parameter, in AWS_DEFAULT_REGION "
+                                  "environment variable or in boto configuration file")
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Can't establish connection - " + str(e),
-                                  exception=traceback.format_exc())
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
 
     def get_distribution(self, distribution_id):
         try:
             func = partial(self.client.get_distribution,Id=distribution_id)
             return self.paginated_response(func)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing distribution - " + str(e),
-                                  exception=traceback.format_exc())
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
 
     def get_distribution_config(self, distribution_id):
         try:
             func = partial(self.client.get_distribution_config,Id=distribution_id)
             return self.paginated_response(func)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing distribution configuration - " + str(e),
-                                  exception=traceback.format_exec())
+                                  exception=traceback.format_exec(e),
+                                  **camel_dict_to_snake_dict(e.response))
 
     def get_origin_access_identity(self, origin_access_identity_id):
         try:
             func = partial(self.client.get_cloud_front_origin_access_identity,Id=origin_access_identity_id)
             return self.paginated_response(func)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing origin access identity - " + str(e),
-                                  exception=traceback.format_exc())
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
 
     def get_origin_access_identity_config(self, origin_access_identity_id):
         try:
             func = partial(self.client.get_cloud_front_origin_access_identity_config,Id=origin_access_identity_id)
             return self.paginated_response(func)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing origin access identity configuration - " + str(e),
-                                  exception=traceback.format_exc())
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
 
     def get_invalidation(self, distribution_id, invalidation_id):
         try:
             func = partial(self.client.get_invalidation,DistributionId=distribution_id,Id=invalidation_id)
             return self.paginated_response(func)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing invalidation - " + str(e),
-                                  exception=traceback.format_exc())
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
 
     def get_streaming_distribution(self, distribution_id):
         try:
             func = partial(self.client.get_streaming_distribution,Id=distribution_id)
             return self.paginated_response(func)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing streaming distribution - " + str(e),
-                                  exception=traceback.format_exc())
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
 
     def get_streaming_distribution_config(self, distribution_id):
         try:
             func = partial(self.client.get_streaming_distribution_config,Id=distribution_id)
             return self.paginated_response(func)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing streaming distribution - " + str(e),
-                                  exception=traceback.format_exc())
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
 
     def list_origin_access_identities(self):
         try:
             func = partial(self.client.list_cloud_front_origin_access_identities)
             origin_access_identity_list = self.paginated_response(func, 'CloudFrontOriginAccessIdentityList')
             if origin_access_identity_list['Quantity'] > 0:
-              return origin_access_identity_list['Items']
+                return origin_access_identity_list['Items']
             return {}
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error listing cloud front origin access identities - " + str(e),
-                                  exception=traceback.format_exc())
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
 
     def list_distributions(self, keyed=True):
         try:
@@ -313,9 +342,10 @@ class CloudFrontServiceManager:
             if not keyed:
                 return distribution_list
             return self.keyed_list_helper(distribution_list)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error listing distributions - " + str(e),
-                                  exception=traceback.format_exc())
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
 
     def list_distributions_by_web_acl_id(self, web_acl_id):
         try:
@@ -326,9 +356,10 @@ class CloudFrontServiceManager:
             else:
                 distribution_list = distribution_list['Items']
             return self.keyed_list_helper(distribution_list)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error listing distributions by web acl id - " + str(e),
-                                  exception=traceback.format_exc())
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
 
     def list_invalidations(self, distribution_id):
         try:
@@ -337,9 +368,10 @@ class CloudFrontServiceManager:
             if invalidation_list['Quantity'] > 0:
                 return invalidation_list['Items']
             return {}
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error listing invalidations - " + str(e),
-                                  exception=traceback.format_exc())
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
 
     def list_streaming_distributions(self, keyed=True):
         try:
@@ -352,9 +384,10 @@ class CloudFrontServiceManager:
             if not keyed:
                 return streaming_distribution_list
             return self.keyed_list_helper(streaming_distribution_list)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error listing streaming distributions - " + str(e),
-                                  exception=traceback.format_exc())
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
 
     def summary(self):
         summary_dict = {}
@@ -373,9 +406,10 @@ class CloudFrontServiceManager:
                 oai_summary = { 'Id': oai_id, 'ETag': oai_full_response['ETag'] }
                 origin_access_identity_list['origin_access_identities'].append( oai_summary )
             return origin_access_identity_list
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error generating summary of origin access identities - " + str(e),
-                                  exception=traceback.format_exc())
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
 
     def summary_get_distribution_list(self, streaming=False):
         try:
@@ -386,21 +420,22 @@ class CloudFrontServiceManager:
             for dist in distributions:
                 temp_distribution = {}
                 for key_name in key_list:
-                    temp_distribution.update( { key_name: dist[key_name] } )
-                temp_distribution.update( { 'Aliases': [] } )
-                temp_distribution.update( { 'ETag': self.get_etag_from_distribution_id(dist['Id'], streaming) } )
-                if 'Items' in dist['Aliases']:
-                    for alias in dist['Aliases']['Items']:
-                        temp_distribution['Aliases'].append(alias)
+                    temp_distribution[key_name] = dist[key_name]
+                temp_distribution['Aliases'] = [alias for alias in dist['Aliases'].get('Items', [])]
+                temp_distribution['ETag'] = self.get_etag_from_distribution_id(dist['Id'], streaming)
                 if not streaming:
-                    temp_distribution.update( { 'WebACLId': dist['WebACLId'] } )
+                    temp_distribution['WebACLId'] = dist['WebACLId']
                     invalidation_ids = self.get_list_of_invalidation_ids_from_distribution_id(dist['Id'])
                     if invalidation_ids:
-                        temp_distribution.update( { 'Invalidations': invalidation_ids } )
+                        temp_distribution['Invalidations'] = invalidation_ids
                 resource_tags = self.client.list_tags_for_resource(Resource=dist['ARN'])
                 temp_distribution['Tags'] = boto3_tag_list_to_ansible_dict(resource_tags['Tags'].get('Items', []))
                 distribution_list[list_name].append(temp_distribution)
             return distribution_list
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg="Error generating summary of distributions - " + str(e),
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
         except Exception as e:
             self.module.fail_json(msg="Error generating summary of distributions - " + str(e),
                                   exception=traceback.format_exc())
@@ -420,9 +455,10 @@ class CloudFrontServiceManager:
             for invalidation in invalidations:
                 invalidation_ids.append(invalidation['Id'])
             return invalidation_ids
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error getting list of invalidation ids - " + str(e),
-                                  exception=traceback.format_exc())
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
 
     def get_distribution_id_from_domain_name(self, domain_name):
         try:
@@ -436,9 +472,10 @@ class CloudFrontServiceManager:
                             distribution_id = dist['Id']
                             break
             return distribution_id
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error getting distribution id from domain name - " + str(e),
-                                  exception=traceback.format_exc())
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
 
     def get_aliases_from_distribution_id(self, distribution_id):
         aliases = []
@@ -450,9 +487,10 @@ class CloudFrontServiceManager:
                         aliases.append(alias)
                     break
             return aliases
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error getting list of aliases from distribution_id - " + str(e),
-                                  exception=traceback.format_exc())
+                                  exception=traceback.format_exc(),
+                                  **camel_dict_to_snake_dict(e.response))
 
     def paginated_response(self, func, result_key=""):
         '''
