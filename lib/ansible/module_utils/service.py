@@ -33,6 +33,7 @@ import subprocess
 import glob
 import select
 import pickle
+import platform
 import traceback
 
 from ansible.module_utils.six import PY2, b
@@ -154,7 +155,7 @@ def daemonize(module, cmd):
         # make sure we always use byte strings
         run_cmd = []
         for c in cmd:
-            end_cmd.append(to_bytes(c, errors=errors))
+            run_cmd.append(to_bytes(c, errors=errors))
 
         # execute the command in forked process
         p = subprocess.Popen(run_cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=lambda: os.close(pipe[1]))
@@ -197,7 +198,7 @@ def daemonize(module, cmd):
             rfd, wfd, efd = select.select([pipe[0]], [], [pipe[0]])
             if pipe[0] in rfd:
                 data = os.read(pipe[0], chunk)
-                if not dat:
+                if not data:
                     break
                 return_data += b(data)
 
