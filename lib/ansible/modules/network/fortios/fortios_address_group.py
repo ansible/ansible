@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
 # Ansible module to manage IP addresses on fortios devices
-# (c) 2016, Benjamin Jolivot <bjolivot@gmail.com>
+# (c) 2017, Benjamin Jolivot <bjolivot@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {
 }
 
 DOCUMENTATION = """
----
+--- 
 module: fortios_address_group
 version_added: "2.3"
 author: "Benjamin Jolivot (@bjolivot)"
@@ -109,11 +109,13 @@ except:
     HAS_PYFG=False
 
 
+#regex for name validation
+#chars must be letters, digits, - , _ , .
+#must have between 1 and 63 chars
+REG_VALID_NAME=re.compile(r'^[a-zA-Z0-9\.\-_]{1,63}$')
+
 def is_invalid_name(input_str):
-    #char must be letters, digits, - , _ , .
-    #must have between 1 and 63 chars
-    reg=re.compile(r'^[a-zA-Z0-9\.\-_]{1,63}$')
-    return not reg.match(input_str)
+    return not REG_VALID_NAME.match(input_str)
 
 def main():
     #define module params
@@ -127,7 +129,7 @@ def main():
     #merge global argument_spec from module_utils/fortios.py
     argument_spec.update(fortios_argument_spec)
 
-    #decalre module
+    #declare module
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
@@ -135,12 +137,9 @@ def main():
     )
 
     #check params
-    if is_invalid_name(module.params['name']):
-        module.fail_json(msg="Bad name argument value %s, must contain only letters, digits, -, _, ." % (module.params['name']))
-
-    for member in module.params['member']:
+    for member in module.params['member'] + [module.params['name']]:
         if is_invalid_name(member):
-            module.fail_json(msg="Bad member argument value %s, must contain only letters, digits, -, _, ." % (member))
+            module.fail_json(msg="Bad argument value %s, must contain only letters, digits, -, _, ." % (member))
 
     #prepare return dict
     result = dict(changed=False)
@@ -153,7 +152,7 @@ def main():
     f = FortiOS( module.params['host'],
         username=module.params['username'],
         password=module.params['password'],
-        timeout=module.params['username'],
+        timeout=module.params['timeout'],
         vdom=module.params['vdom'])
 
     path = 'firewall addrgrp'
@@ -179,22 +178,20 @@ def main():
     group_members = []
     try:
         group_members = shlex.split(f.running_config[path][module.params['name']].get_param('member'))
-    except:
+    except KeyError:
+        #the group don't exists
         pass
 
     #generate target group list
     if module.params['state'] == 'absent':
-        for member in module.params['member']:
-            if member in group_members:
-                group_members.remove(member)
+        group_members = set(group_members) - set(module.params['member'])
     else:
         #state == present
-        for member in module.params['member']:
-            if member not in group_members:
-                group_members.append(member)
+        group_members = set(group_members) | set(module.params['member'])
+
 
     #delete group if empty
-    if len(group_members) == 0:
+    if not group_members:
         f.candidate_config[path].del_block(module.params['name'])
     else:
         #create addrgrp if not exist (when there is no address group)
@@ -207,7 +204,7 @@ def main():
         new_grp.set_param('member', " ".join(group_members) )
 
         if module.params['comment'] is not None:
-            new_grp.set_param('comment', '"%s"' % (module.params['comment']))
+            new_grp.set_param('comment', '"%s"' % module.params['comment'])
 
         #add to candidate config
         f.candidate_config[path][module.params['name']] = new_grp
@@ -226,7 +223,7 @@ def main():
             #Something's wrong (rollback is automatic)
             f.close()
             e = get_exception()
-            module.fail_json(msg="Unable to commit change, check your args, the error was %s" % (e.message))
+            module.fail_json(msg="Unable to commit change, check your args, the error was %s" % e.message)
 
     module.exit_json(**result)
 
