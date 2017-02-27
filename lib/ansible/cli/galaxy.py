@@ -28,7 +28,6 @@ import yaml
 import time
 import shutil
 
-from collections import defaultdict
 from jinja2 import Environment, FileSystemLoader
 
 import ansible.constants as C
@@ -40,7 +39,7 @@ from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.token import GalaxyToken
 from ansible.playbook.role.requirement import RoleRequirement
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_text
 
 try:
     from __main__ import display
@@ -177,7 +176,6 @@ class GalaxyCLI(CLI):
 
         init_path  = self.get_opt('init_path', './')
         force      = self.get_opt('force', False)
-        offline    = self.get_opt('offline', False)
 
         role_name = self.args.pop(0).strip() if self.args else None
         if not role_name:
