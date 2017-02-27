@@ -67,7 +67,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = """
-- name: Example Adds/Deletes CertificateManagementProfile configuration from Avi Controller
+- name: Example to create CertificateManagementProfile object
   avi_certificatemanagementprofile:
     controller: 10.10.25.42
     username: admin
