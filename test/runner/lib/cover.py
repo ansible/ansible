@@ -41,7 +41,12 @@ def command_coverage_combine(args):
     ansible_path = os.path.abspath('lib/ansible/') + '/'
     root_path = os.getcwd() + '/'
 
+    counter = 0
+
     for coverage_file in coverage_files:
+        counter += 1
+        display.info('[%4d/%4d] %s' % (counter, len(coverage_files), coverage_file), verbosity=2)
+
         original = coverage.CoverageData()
 
         if os.path.getsize(coverage_file) == 0:

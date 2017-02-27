@@ -168,7 +168,7 @@ from ansible.module_utils.nxos import nxos_argument_spec, check_args
 def to_lines(stdout):
     lines = list()
     for item in stdout:
-        if isinstance(item, basestring):
+        if isinstance(item, string_types):
             item = str(item).split('\n')
         lines.append(item)
     return lines

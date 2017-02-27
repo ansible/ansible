@@ -39,11 +39,21 @@ class TestEosEapiModule(TestEosModule):
         self.mock_load_config = patch('ansible.modules.network.eos.eos_eapi.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.mock_verify_state = patch('ansible.modules.network.eos.eos_eapi.verify_state')
+        self.verify_state = self.mock_verify_state.start()
+
         self.command_fixtures = {}
 
     def tearDown(self):
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
+
+        # hack for older version of mock
+        # should be using patch.stopall() but CI is still failing
+        try:
+            self.mock_verify_state.stop()
+        except RuntimeError:
+            pass
 
     def load_fixtures(self, commands=None):
         def run_commands(module, commands, **kwargs):
@@ -137,3 +147,14 @@ class TestEosEapiModule(TestEosModule):
         commands = ['management api http-commands', 'shutdown']
         self.start_configured(changed=True, commands=commands)
 
+    def test_eos_eapi_state_failed(self):
+        self.mock_verify_state.stop()
+        set_module_args(dict(state='stopped', timeout=1))
+        result = self.start_configured(failed=True)
+        'timeout expired before eapi running state changed' in result['msg']
+
+    def test_eos_eapi_state_failed(self):
+        self.mock_verify_state.stop()
+        set_module_args(dict(state='stopped', timeout=1))
+        result = self.start_configured(failed=True)
+        'timeout expired before eapi running state changed' in result['msg']

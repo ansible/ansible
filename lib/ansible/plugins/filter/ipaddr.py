@@ -323,7 +323,7 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
     if not value:
         return False
 
-    elif value == True:
+    elif value is True:
         return False
 
     # Check if value is a list and parse each element

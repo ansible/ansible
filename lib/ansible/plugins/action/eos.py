@@ -57,8 +57,8 @@ class ActionModule(_ActionModule):
             pc.connection = 'network_cli'
             pc.network_os = 'eos'
             pc.remote_user = provider['username'] or self._play_context.connection_user
-            pc.password = provider['password'] or self._play_context.password or 22
-            pc.privateip_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
+            pc.password = provider['password'] or self._play_context.password
+            pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
             pc.timeout = provider['timeout'] or self._play_context.timeout
             pc.become = provider['authorize'] or False
             pc.become_pass = provider['auth_pass']
@@ -87,6 +87,7 @@ class ActionModule(_ActionModule):
 
         else:
             provider_arg = {
+                'transport': 'eapi',
                 'host': provider.get('host') or self._play_context.remote_addr,
                 'port': provider.get('port'),
                 'username': provider.get('username') or self._play_context.connection_user,
@@ -137,4 +138,3 @@ class ActionModule(_ActionModule):
             return strategy(*args, **kwargs)
         except AnsibleFallbackNotFound:
             pass
-

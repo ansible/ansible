@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
+ANSIBLE_METADATA = {'status': ['deprecated'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
@@ -25,6 +25,7 @@ module: cl_bond
 version_added: "2.1"
 author: "Cumulus Networks (@CumulusNetworks)"
 short_description: Configures a bond port on Cumulus Linux
+deprecated: Deprecated in 2.3. Use M(nclu) instead.
 description:
     - Configures a bond interface on Cumulus Linux To configure a bridge port
       use the cl_bridge module. To configure any other type of interface use the

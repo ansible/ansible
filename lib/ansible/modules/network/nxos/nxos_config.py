@@ -235,7 +235,7 @@ def get_running_config(module):
         if module.params['defaults']:
             flags.append('all')
         contents = get_config(module, flags=flags)
-    return NetworkConfig(indent=1, contents=contents)
+    return NetworkConfig(indent=2, contents=contents)
 
 def get_candidate(module):
     candidate = NetworkConfig(indent=2)
@@ -325,7 +325,7 @@ def main():
     result = dict(changed=False, warnings=warnings)
 
     if module.params['backup']:
-        result['__backup__'] = module.config.get_config()
+        result['__backup__'] = get_config(module)
 
     if any((module.params['src'], module.params['lines'])):
         run(module, result)

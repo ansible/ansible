@@ -15,21 +15,25 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
+ANSIBLE_METADATA = {'status': ['deprecated'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
-module: cl_bridge
+module: cl_interface
 version_added: "2.1"
 author: "Cumulus Networks (@CumulusNetworks)"
-short_description: Configures a bridge port on Cumulus Linux
+short_description: Configures a front panel port, loopback or
+                  management port on Cumulus Linux.
+deprecated: Deprecated in 2.3. Use M(nclu) instead.
 description:
-    - Configures a bridge interface on Cumulus Linux To configure a bond port
-      use the cl_bond module. To configure any other type of interface use the
-      cl_interface module. Follow the guidelines for bridging found in the
-      Cumulus User Guide at U(http://docs.cumulusnetworks.com)
+    - Configures a front panel, sub-interface, SVI, management or loopback port
+      on a Cumulus Linux switch. For bridge ports use the cl_bridge module. For
+      bond ports use the cl_bond module. When configuring bridge related
+      features like the "vid" option, please follow the guidelines for
+      configuring "vlan aware" bridging. For more details review the Layer2
+      Interface Guide at U(http://docs.cumulusnetworks.com)
 options:
     name:
         description:
@@ -48,9 +52,14 @@ options:
               In the form I(X:X:X::X/YYY).
     addr_method:
         description:
-            - Configures the port to use DHCP.
-              To enable this feature use the option I(dhcp).
-        choices: ['dhcp']
+            - Address method.
+        choices:
+            - loopback
+            - dhcp
+    speed:
+        description:
+            - Set speed of the swp(front panel) or management(eth0) interface.
+              speed is in MB.
     mtu:
         description:
             - Set MTU. Configure Jumbo Frame by setting MTU to I(9000).
@@ -63,35 +72,41 @@ options:
     vids:
         description:
             - In vlan-aware mode, lists VLANs defined under the interface.
+    mstpctl_bpduguard:
+        description:
+            - Enables BPDU Guard on a port in vlan-aware mode.
+    mstpctl_portnetwork:
+        description:
+            - Enables bridge assurance in vlan-aware mode.
+    mstpctl_portadminedge:
+        description:
+            - Enables admin edge port.
+    clagd_enable:
+        description:
+            - Enables the clagd daemon. This command should only be applied to
+              the clag peerlink interface.
+    clagd_priority:
+        description:
+            - Integer that changes the role the switch has in the clag domain.
+              The lower priority switch will assume the primary role. The number
+              can be between 0 and 65535.
+    clagd_peer_ip:
+        description:
+            - IP address of the directly connected peer switch interface.
+    clagd_sys_mac:
+        description:
+            - Clagd system mac address. Recommended to use the range starting
+              with 44:38:39:ff. Needs to be the same between 2 Clag switches.
     pvid:
         description:
             - In vlan-aware mode, defines vlan that is the untagged vlan.
-    stp:
-        description:
-            - Enables spanning tree Protocol. As of Cumulus Linux 2.5 the default
-              bridging mode, only per vlan RSTP or 802.1d is supported. For the
-              vlan aware mode, only common instance STP is supported
-        default: 'yes'
-        choices: ['yes', 'no']
-    ports:
-        description:
-            - List of bridge members.
-        required: True
-    vlan_aware:
-        description:
-            - Enables vlan-aware mode.
-        choices: ['yes', 'no']
-    mstpctl_treeprio:
-        description:
-            - Set spanning tree root priority. Must be a multiple of 4096.
     location:
         description:
-            - Interface directory location.
+            - Interface directory location
         default:
             - '/etc/network/interfaces.d'
 
-
-requirements: [ Alternate Debian network interface manager
+requirements: [ Alternate Debian network interface manager - \
 ifupdown2 @ github.com/CumulusNetworks/ifupdown2 ]
 notes:
     - As this module writes the interface directory location, ensure that
@@ -104,49 +119,80 @@ notes:
 
 EXAMPLES = '''
 # Options ['virtual_mac', 'virtual_ip'] are required together
-# configure a bridge vlan aware bridge.
-- cl_bridge:
-    name: br0
-    ports: 'swp1-12'
-    vlan_aware: 'yes'
+- name: Configure a front panel port with an IP
+  cl_interface:
+    name: swp1
+    ipv4: 10.1.1.1/24
   notify: reload networking
 
-# configure bridge interface to define a default set of vlans
-- cl_bridge:
-    name: bridge
-    ports: 'swp1-12'
-    vlan_aware: 'yes'
-    vids: '1-100'
+- name: Configure front panel to use DHCP
+  cl_interface:
+    name: swp2
+    addr_family: dhcp
   notify: reload networking
 
-# define cl_bridge once in tasks file
-# then write interface config in variables file
+- name: Configure a SVI for vlan 100 interface with an IP
+  cl_interface:
+    name: bridge.100
+    ipv4: 10.1.1.1/24
+  notify: reload networking
+
+- name: Configure subinterface with an IP
+  cl_interface:
+    name: bond0.100
+    alias_name: my bond
+    ipv4: 10.1.1.1/24
+  notify: reload networking
+
+# define cl_interfaces once in tasks
+# then write interfaces in variables file
 # with just the options you want.
-- cl_bridge:
-    name: "{{ item.key }}"
-    ports: "{{ item.value.ports }}"
-    vlan_aware: "{{ item.value.vlan_aware|default(omit) }}"
-    ipv4:  "{{ item.value.ipv4|default(omit) }}"
-    ipv6: "{{ item.value.ipv6|default(omit) }}"
-    alias_name: "{{ item.value.alias_name|default(omit) }}"
-    addr_method: "{{ item.value.addr_method|default(omit) }}"
-    mtu: "{{ item.value.mtu|default(omit) }}"
-    vids: "{{ item.value.vids|default(omit) }}"
-    virtual_ip: "{{ item.value.virtual_ip|default(omit) }}"
-    virtual_mac: "{{ item.value.virtual_mac|default(omit) }}"
-    mstpctl_treeprio: "{{ item.value.mstpctl_treeprio|default(omit) }}"
-  with_dict: "{{ cl_bridges }}"
+- name: Create interfaces
+  cl_interface:
+      name: '{{ item.key }}'
+      ipv4: '{{ item.value.ipv4 | default(omit) }}'
+      ipv6: '{{ item.value.ipv6 | default(omit) }}'
+      alias_name: '{{ item.value.alias_name | default(omit) }}'
+      addr_method: '{{ item.value.addr_method | default(omit) }}'
+      speed: '{{ item.value.link_speed | default(omit) }}'
+      mtu: '{{ item.value.mtu | default(omit) }}'
+      clagd_enable: '{{ item.value.clagd_enable | default(omit) }}'
+      clagd_peer_ip: '{{ item.value.clagd_peer_ip | default(omit) }}'
+      clagd_sys_mac: '{{ item.value.clagd_sys_mac | default(omit) }}'
+      clagd_priority: '{{ item.value.clagd_priority | default(omit) }}'
+      vids: '{{ item.value.vids | default(omit) }}'
+      virtual_ip: '{{ item.value.virtual_ip | default(omit) }}'
+      virtual_mac: '{{ item.value.virtual_mac | default(omit) }}'
+      mstpctl_portnetwork: "{{ item.value.mstpctl_portnetwork | default('no') }}"
+      mstpctl_portadminedge: "{{ item.value.mstpctl_portadminedge | default('no') }}"
+      mstpctl_bpduguard: "{{ item.value.mstpctl_bpduguard | default('no') }}"
+  with_dict: '{{ cl_interfaces }}'
   notify: reload networking
 
 # In vars file
 # ============
 ---
-cl_bridge:
-  br0:
-    alias_name: 'vlan aware bridge'
-    ports: ['swp1', 'swp3']
-    vlan_aware: true
-    vids: ['1-100']
+cl_interfaces:
+  swp1:
+    alias_name: uplink to isp
+    ipv4: 10.1.1.1/24
+  swp2:
+    alias_name: l2 trunk connection
+    vids:
+      - 1
+      - 50
+  swp3:
+    speed: 1000
+    alias_name: connects to 1G link
+##########
+#   br0 interface is configured by cl_bridge
+##########
+  br0.100:
+    alias_name: SVI for vlan 100
+    ipv4: 10.2.2.2/24
+    ipv6: '10:2:2::2/127'
+    virtual_ip: 10.2.2.254
+    virtual_mac: 00:00:5E:00:10:10
 '''
 
 RETURN = '''
@@ -201,7 +247,6 @@ def build_address(module):
     _addresslist = []
     if _ipv4 and len(_ipv4) > 0:
         _addresslist += _ipv4
-
     if _ipv6 and len(_ipv6) > 0:
         _addresslist += _ipv6
     if len(_addresslist) > 0:
@@ -219,6 +264,13 @@ def build_pvid(module):
     _pvid = module.params.get('pvid')
     if _pvid:
         module.custom_desired_config['config']['bridge-pvid'] = str(_pvid)
+
+
+def build_speed(module):
+    _speed = module.params.get('speed')
+    if _speed:
+        module.custom_desired_config['config']['link-speed'] = str(_speed)
+        module.custom_desired_config['config']['link-duplex'] = 'full'
 
 
 def conv_bool_to_str(_value):
@@ -262,30 +314,6 @@ def build_vrr(module):
             ' '.join(vrr_config)
 
 
-def add_glob_to_array(_bridgemems):
-    """
-    goes through each bridge member if it sees a dash add glob
-    before it
-    """
-    result = []
-    if isinstance(_bridgemems, list):
-        for _entry in _bridgemems:
-            if re.search('-', _entry):
-                _entry = 'glob ' + _entry
-            result.append(_entry)
-        return ' '.join(result)
-    return _bridgemems
-
-
-def build_bridge_attr(module, _attr):
-    _value = module.params.get(_attr)
-    _value = conv_bool_to_str(_value)
-    _value = add_glob_to_array(_value)
-    if _value:
-        module.custom_desired_config['config'][
-            'bridge-' + re.sub('_', '-', _attr)] = str(_value)
-
-
 def build_desired_iface_config(module):
     """
     take parameters defined and build ifupdown2 compatible hash
@@ -297,15 +325,17 @@ def build_desired_iface_config(module):
         'name': module.params.get('name')
     }
 
-    for _attr in ['vlan_aware', 'pvid', 'ports', 'stp']:
-        build_bridge_attr(module, _attr)
-
     build_addr_method(module)
     build_address(module)
     build_vids(module)
+    build_pvid(module)
+    build_speed(module)
     build_alias_name(module)
     build_vrr(module)
-    for _attr in ['mtu', 'mstpctl_treeprio']:
+    for _attr in ['mtu', 'mstpctl_portnetwork', 'mstpctl_portadminedge',
+                  'mstpctl_bpduguard', 'clagd_enable',
+                  'clagd_priority', 'clagd_peer_ip',
+                  'clagd_sys_mac', 'clagd_args']:
         build_generic_attr(module, _attr)
 
 
@@ -358,26 +388,33 @@ def replace_config(module):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            ports=dict(required=True, type='list'),
             name=dict(required=True, type='str'),
             ipv4=dict(type='list'),
             ipv6=dict(type='list'),
             alias_name=dict(type='str'),
             addr_method=dict(type='str',
-                             choices=['', 'dhcp']),
+                             choices=['', 'loopback', 'dhcp']),
+            speed=dict(type='str'),
             mtu=dict(type='str'),
             virtual_ip=dict(type='str'),
             virtual_mac=dict(type='str'),
             vids=dict(type='list'),
             pvid=dict(type='str'),
-            mstpctl_treeprio=dict(type='str'),
-            vlan_aware=dict(type='bool', choices=BOOLEANS),
-            stp=dict(type='bool', default='yes', choices=BOOLEANS),
+            mstpctl_portnetwork=dict(type='bool', choices=BOOLEANS),
+            mstpctl_portadminedge=dict(type='bool', choices=BOOLEANS),
+            mstpctl_bpduguard=dict(type='bool', choices=BOOLEANS),
+            clagd_enable=dict(type='bool', choices=BOOLEANS),
+            clagd_priority=dict(type='str'),
+            clagd_peer_ip=dict(type='str'),
+            clagd_sys_mac=dict(type='str'),
+            clagd_args=dict(type='str'),
             location=dict(type='str',
                           default='/etc/network/interfaces.d')
         ),
         required_together=[
-            ['virtual_ip', 'virtual_mac']
+            ['virtual_ip', 'virtual_mac'],
+            ['clagd_enable', 'clagd_priority',
+             'clagd_peer_ip', 'clagd_sys_mac']
         ]
     )
 
@@ -412,7 +449,6 @@ def main():
 from ansible.module_utils.basic import *
 import tempfile
 import os
-import re
 
 if __name__ == '__main__':
     main()

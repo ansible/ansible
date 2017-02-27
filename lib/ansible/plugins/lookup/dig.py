@@ -121,7 +121,6 @@ class LookupModule(LookupBase):
             edns_size = 4096
             myres.use_edns(0, ednsflags=dns.flags.DO, payload=edns_size)
 
-
         domain = None
         qtype  = 'A'
         flat   = True

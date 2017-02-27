@@ -41,6 +41,7 @@ from ansible.compat.six.moves.urllib.parse import urlunsplit
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import exec_wrapper, become_wrapper, leaf_exec
 from ansible.utils.hashing import secure_hash
@@ -51,12 +52,14 @@ try:
     from winrm import Response
     from winrm.protocol import Protocol
 except ImportError:
-    raise AnsibleError("winrm is not installed")
+    e = get_exception()
+    raise AnsibleError("winrm or requests is not installed: %s" % str(e))
 
 try:
     import xmltodict
 except ImportError:
-    raise AnsibleError("xmltodict is not installed")
+    e = get_exception()
+    raise AnsibleError("xmltodict is not installed: %s" % str(e))
 
 try:
     from __main__ import display

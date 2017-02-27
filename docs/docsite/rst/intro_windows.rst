@@ -302,7 +302,7 @@ Getting to PowerShell 3.0 or higher
 
 PowerShell 3.0 or higher is needed for most provided Ansible modules for Windows, and is also required to run the above setup script. Note that PowerShell 3.0 is only supported on Windows 7 SP1, Windows Server 2008 SP1, and later releases of Windows.
 
-Looking at an Ansible checkout, copy the `examples/scripts/upgrade_to_ps3.ps1 <https://github.com/cchurch/ansible/blob/devel/examples/scripts/upgrade_to_ps3.ps1>`_ script onto the remote host and run a PowerShell console as an administrator.  You will now be running PowerShell 3 and can try connectivity again using the win_ping technique referenced above.
+Looking at an Ansible checkout, copy the `examples/scripts/upgrade_to_ps3.ps1 <https://github.com/ansible/ansible/blob/devel/examples/scripts/upgrade_to_ps3.ps1>`_ script onto the remote host and run a PowerShell console as an administrator.  You will now be running PowerShell 3 and can try connectivity again using the win_ping technique referenced above.
 
 .. _what_windows_modules_are_available:
 
@@ -312,8 +312,8 @@ What modules are available
 Most of the Ansible modules in core Ansible are written for a combination of Linux/Unix machines and arbitrary web services, though there are various
 Windows-only modules. These are listed in the `"windows" subcategory of the Ansible module index <http://docs.ansible.com/list_of_windows_modules.html>`_.
 
-In addition, the following core modules work with Windows:
-    assemble
+In addition, the following core modules work with Windows::
+
     fetch
     raw
     script
@@ -329,7 +329,10 @@ In addition, the following core modules work with Windows:
     pause
     set_fact
 
-Browse this index to see what is available.
+
+Some modules can be utilised in playbooks that target windows by delegating to localhost, depending on what you are
+attempting to achieve.  For example, assemble can be used to create a file on your ansible controller that is then 
+sent to your windows targets using win_copy.
 
 In many cases, it may not be necessary to even write or use an Ansible module.
 

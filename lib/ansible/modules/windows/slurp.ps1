@@ -17,30 +17,25 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args $true;
+$params = Parse-Args $args -supports_check_mode $true;
+$src = Get-AnsibleParam -obj $params -name "src" -type "path" -aliases "path" -failifempty $true;
 
-$src = Get-Attr $params "src" (Get-Attr $params "path" $FALSE);
-If (-not $src)
-{
-    Fail-Json (New-Object psobject) "missing required argument: src";
+$result = @{
+    changed = $false;
 }
 
-If (Test-Path -PathType Leaf $src)
+If (Test-Path -Path $src -PathType Leaf)
 {
     $bytes = [System.IO.File]::ReadAllBytes($src);
-    $content = [System.Convert]::ToBase64String($bytes);
-    $result = New-Object psobject @{
-        changed = $false
-        encoding = "base64"
-        content = $content
-    };
+    $result.content = [System.Convert]::ToBase64String($bytes);
+    $result.encoding = "base64";
     Exit-Json $result;
 }
-ElseIf (Test-Path -PathType Container $src)
+ElseIf (Test-Path -Path $src -PathType Container)
 {
-    Fail-Json (New-Object psobject) ("is a directory: " + $src);
+    Fail-Json $result "Path $src is a directory";
 }
 Else
 {
-    Fail-Json (New-Object psobject) ("file not found: " + $src);
+    Fail-Json $result "Path $src is not found";
 }

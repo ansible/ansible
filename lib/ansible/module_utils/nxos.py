@@ -50,7 +50,7 @@ nxos_argument_spec = {
     'validate_certs': dict(type='bool'),
     'timeout': dict(type='int'),
 
-    'provider': dict(type='dict', no_log=True),
+    'provider': dict(type='dict'),
     'transport': dict(choices=['cli', 'nxapi'])
 }
 
@@ -208,11 +208,11 @@ class Nxapi:
 
         return dict(ins_api=msg)
 
-    def send_request(self, commands, output='text'):
+    def send_request(self, commands, output='text', check_status=True):
         # only 10 show commands can be encoded in each request
         # messages sent to the remote device
         if output != 'config':
-            commands = collections.deque(commands)
+            commands = collections.deque(to_list(commands))
             stack = list()
             requests = list()
 
@@ -230,7 +230,8 @@ class Nxapi:
                 requests.append(data)
 
         else:
-            requests = commands
+            body = self._request_builder(commands, 'config')
+            requests = [self._module.jsonify(body)]
 
         headers = {'Content-Type': 'application/json'}
         result = list()
@@ -241,7 +242,7 @@ class Nxapi:
                 headers['Cookie'] = self._nxapi_auth
 
             response, headers = fetch_url(
-                self._module, self._url, data=data, headers=headers,
+                self._module, self._url, data=req, headers=headers,
                 timeout=timeout, method='POST'
             )
             self._nxapi_auth = headers.get('set-cookie')
@@ -254,12 +255,13 @@ class Nxapi:
             except ValueError:
                 self._module.fail_json(msg='unable to parse response')
 
-            output = response['ins_api']['outputs']['output']
-            for item in to_list(output):
-                if item['code'] != '200':
-                    self._error(output=output, **item)
-                else:
-                    result.append(item['body'])
+            if check_status:
+                output = response['ins_api']['outputs']['output']
+                for item in to_list(output):
+                    if item['code'] != '200':
+                        self._error(output=output, **item)
+                    else:
+                        result.append(item['body'])
 
         return result
 
@@ -275,7 +277,7 @@ class Nxapi:
             return self._device_configs[cmd]
         except KeyError:
             out = self.send_request(cmd)
-            cfg = str(out['result'][0]['output']).strip()
+            cfg = str(out[0]).strip()
             self._device_configs[cmd] = cfg
             return cfg
 
@@ -287,7 +289,7 @@ class Nxapi:
         queue = list()
         responses = list()
 
-        _send = lambda commands, output: self.send_request(commands, output)
+        _send = lambda commands, output: self.send_request(commands, output, check_status=check_rc)
 
         for item in to_list(commands):
             if is_json(item['command']):
@@ -306,11 +308,10 @@ class Nxapi:
 
         return responses
 
-    def load_config(self, config):
+    def load_config(self, commands):
         """Sends the ordered set of commands to the device
         """
-        cmds = ['configure terminal']
-        cmds.extend(commands)
+        commands = to_list(commands)
         self.send_request(commands, output='config')
 
 
