@@ -7,7 +7,7 @@ except ImportError:
     HAS_BOTO = False
 
 if not HAS_BOTO:
-    raise SkipTest("test_s3.py requires the python module 'boto3' and 'botocore'")
+    raise SkipTest("test_s3.py requires the python module 'boto'")
 
 import unittest
 import ansible.modules.cloud.amazon.s3 as s3
