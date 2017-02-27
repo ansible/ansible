@@ -142,7 +142,8 @@ class TaskExecutor:
                             if k == 'diff':
                                 # If this is a diff, substitute a replacement character if the value
                                 # is undecodable as utf8.  (Fix #21804)
-                                display.warning("We were unable to decode all characters, replaced some in an effort to return as much as possible")
+                                display.warning("We were unable to decode all characters in the module return data."
+                                                " Replaced some in an effort to return as much as possible")
                                 res[k] = _clean_res(res[k], errors='surrogate_then_replace')
                             else:
                                 raise
