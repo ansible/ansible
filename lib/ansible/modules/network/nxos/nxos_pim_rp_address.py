@@ -259,7 +259,6 @@ def main():
         exc = get_exception()
         module.fail_json(msg=str(exc))
 
-    result['connected'] = module.connected
     if module._verbosity > 0:
         end_state = invoke('get_existing', module, args)
         result['end_state'] = end_state
