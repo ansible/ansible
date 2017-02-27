@@ -21,7 +21,6 @@
 from __future__ import (absolute_import, division, print_function)
 
 from nose.plugins.skip import SkipTest
-import pytest
 import json
 import copy
 from ansible.module_utils._text import to_bytes
@@ -35,8 +34,6 @@ if not HAS_BOTO3:
 _temp = __import__("ansible.modules.cloud.amazon.lambda")
 
 lda = getattr(_temp.modules.cloud.amazon,"lambda")
-
-exit_return_dict={}
 
 def set_module_args(args):
     args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
@@ -73,10 +70,21 @@ base_module_args={
 }
 
 
+class AnsibleFailJson(Exception):
+    pass
+
+
+def fail_json_double(*args, **kwargs):
+    kwargs['failed'] = True
+    raise AnsibleFailJson(kwargs)
+
+
 #TODO: def test_handle_different_types_in_config_params(monkeypatch):
 
 
-def test_update_lambda_if_code_changed(monkeypatch):
+def test_update_lambda_if_code_changed():
+
+    set_module_args(base_module_args)
 
     fake_lambda_connection = MagicMock()
     fake_lambda_connection.get_function.configure_mock(
@@ -91,13 +99,11 @@ def test_update_lambda_if_code_changed(monkeypatch):
     )
     fake_boto3_conn=Mock(return_value=fake_lambda_connection)
 
-    set_module_args(base_module_args)
-    @patch("ansible.modules.cloud.amazon.lambda.boto3_conn", fake_boto3_conn)
-    def call_module():
-        with pytest.raises(SystemExit):
+    with patch.object(lda, 'boto3_conn', fake_boto3_conn):
+        try:
             lda.main()
-
-    call_module()
+        except SystemExit:
+            pass
 
     # guard against calling other than for a lambda connection (e.g. IAM)
     assert(len(fake_boto3_conn.mock_calls) == 1), "multiple boto connections used unexpectedly"
@@ -112,7 +118,9 @@ def test_update_lambda_if_code_changed(monkeypatch):
     assert(len(fake_lambda_connection.update_function_code.mock_calls) < 3), \
         "lambda function code update called multiple times when only one time should be needed"
 
-def test_update_lambda_if_config_changed(monkeypatch):
+def test_update_lambda_if_config_changed():
+
+    set_module_args(base_module_args)
 
     fake_lambda_connection = MagicMock()
     fake_lambda_connection.get_function.configure_mock(
@@ -125,15 +133,13 @@ def test_update_lambda_if_config_changed(monkeypatch):
             'Version' : 1
         }
     )
+
     fake_boto3_conn=Mock(return_value=fake_lambda_connection)
-
-    set_module_args(base_module_args)
-    @patch("ansible.modules.cloud.amazon.lambda.boto3_conn", fake_boto3_conn)
-    def call_module():
-        with pytest.raises(SystemExit):
+    with patch.object(lda, 'boto3_conn', fake_boto3_conn):
+        try:
             lda.main()
-
-    call_module()
+        except SystemExit:
+            pass
 
     # guard against calling other than for a lambda connection (e.g. IAM)
     assert(len(fake_boto3_conn.mock_calls) == 1), "multiple boto connections used unexpectedly"
@@ -144,7 +150,9 @@ def test_update_lambda_if_config_changed(monkeypatch):
     assert(len(fake_lambda_connection.update_function_code.mock_calls) == 0), \
         "updated lambda code when no change should have happened"
 
-def test_update_lambda_if_only_one_config_item_changed(monkeypatch):
+def test_update_lambda_if_only_one_config_item_changed():
+
+    set_module_args(base_module_args)
 
     fake_lambda_connection = MagicMock()
     fake_lambda_connection.get_function.configure_mock(
@@ -158,13 +166,12 @@ def test_update_lambda_if_only_one_config_item_changed(monkeypatch):
         }
     )
     fake_boto3_conn=Mock(return_value=fake_lambda_connection)
-
-    @patch("ansible.modules.cloud.amazon.lambda.boto3_conn", fake_boto3_conn)
-    def call_module():
-        with pytest.raises(SystemExit):
+    with patch.object(lda, 'boto3_conn', fake_boto3_conn):
+        try:
             lda.main()
+        except SystemExit:
+            pass
 
-    call_module()
 
     # guard against calling other than for a lambda connection (e.g. IAM)
     assert(len(fake_boto3_conn.mock_calls) == 1), "multiple boto connections used unexpectedly"
@@ -175,7 +182,9 @@ def test_update_lambda_if_only_one_config_item_changed(monkeypatch):
     assert(len(fake_lambda_connection.update_function_code.mock_calls) == 0), \
         "updated lambda code when no change should have happened"
 
-def test_dont_update_lambda_if_nothing_changed(monkeypatch):
+def test_dont_update_lambda_if_nothing_changed():
+
+    set_module_args(base_module_args)
 
     fake_lambda_connection = MagicMock()
     fake_lambda_connection.get_function.configure_mock(
@@ -189,13 +198,11 @@ def test_dont_update_lambda_if_nothing_changed(monkeypatch):
         }
     )
     fake_boto3_conn=Mock(return_value=fake_lambda_connection)
-
-    @patch("ansible.modules.cloud.amazon.lambda.boto3_conn", fake_boto3_conn)
-    def call_module():
-        with pytest.raises(SystemExit):
+    with patch.object(lda, 'boto3_conn', fake_boto3_conn):
+        try:
             lda.main()
-
-    call_module()
+        except SystemExit:
+            pass
 
     # guard against calling other than for a lambda connection (e.g. IAM)
     assert(len(fake_boto3_conn.mock_calls) == 1), "multiple boto connections used unexpectedly"
@@ -219,17 +226,14 @@ def test_warn_region_not_specified():
     class AnsibleFailJson(Exception):
         pass
 
-    def fail_json(*args, **kwargs):
+    def fail_json_double(*args, **kwargs):
         kwargs['failed'] = True
         raise AnsibleFailJson(kwargs)
 
-    def call_module():
-        with patch.object(basic.AnsibleModule, 'fail_json', fail_json):
-            try:
-                lda.main()
-            except AnsibleFailJson as e:
-                result = e.args[0]
-                assert("region must be specified" in result['msg'])
-
-    call_module()
+    with patch.object(basic.AnsibleModule, 'fail_json', fail_json_double):
+        try:
+            lda.main()
+        except AnsibleFailJson as e:
+            result = e.args[0]
+            assert("region must be specified" in result['msg'])
 
