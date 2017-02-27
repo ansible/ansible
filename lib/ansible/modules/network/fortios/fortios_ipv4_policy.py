@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
-# Ansible module to manage IPV4 policy objects in fortigate devices
-# (c) 2016, Benjamin Jolivot <bjolivot@gmail.com>
+# Ansible module to manage IPv4 policy objects in fortigate devices
+# (c) 2017, Benjamin Jolivot <bjolivot@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -30,9 +30,9 @@ DOCUMENTATION = """
 module: fortios_ipv4_policy
 version_added: "2.3"
 author: "Benjamin Jolivot (@bjolivot)"
-short_description: Manage fortios firewall ipv4 policy objects
+short_description: Manage fortios firewall IPv4 policy objects
 description:
-  - This module provides management of firewall ipv4 policies on FortiOS devices.
+  - This module provides management of firewall IPv4 policies on FortiOS devices.
 extends_documentation_fragment: fortios
 options:
   id:
@@ -103,7 +103,7 @@ options:
     choices: ["true", "false"]
   poolname:
     description:
-      - Specifies nat pool name.
+      - Specifies NAT pool name.
   av_profile:
     description:
       - Specifies Antivirus profile name.
@@ -211,12 +211,12 @@ def main():
     )
 
     #test params
-    #Nat related
+    #NAT related
     if not module.params['nat']:
         if module.params['poolname']:
-            module.fail_json(msg='Poolname param require Nat to be true.')
+            module.fail_json(msg='Poolname param require NAT to be true.')
         if module.params['fixedport']:
-            module.fail_json(msg='Fixedport param require Nat to be true.')
+            module.fail_json(msg='Fixedport param require NAT to be true.')
 
 
     result = dict(changed=False)
@@ -229,7 +229,7 @@ def main():
     f = FortiOS( module.params['host'],
         username=module.params['username'],
         password=module.params['password'],
-        timeout=module.params['username'],
+        timeout=module.params['timeout'],
         vdom=module.params['vdom'])
 
     path = 'firewall policy'
@@ -253,13 +253,10 @@ def main():
     #Absent State
     if module.params['state'] == 'absent':
         f.candidate_config[path].del_block(module.params['id'])
-        change_string = f.compare_config()
-        if change_string:
-            result['change_string'] = change_string
-            result['changed'] = True
+
 
     #Present state
-    if module.params['state'] == 'present':
+    elif module.params['state'] == 'present':
         new_policy = FortiConfig(module.params['id'], 'edit')
 
         #src / dest / service / interfaces
@@ -311,12 +308,11 @@ def main():
         #add to candidate config
         f.candidate_config[path][module.params['id']] = new_policy
 
-        #check if change needed
-        change_string = f.compare_config()
-
-        if change_string:
-            result['change_string'] = change_string
-            result['changed'] = True
+    #check if change needed
+    change_string = f.compare_config()
+    if change_string:
+        result['change_string'] = change_string
+        result['changed'] = True
 
     #Commit if not check mode
     if change_string and not module.check_mode:
