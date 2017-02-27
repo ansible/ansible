@@ -252,14 +252,6 @@ from ansible.module_utils.six import iteritems
 
 #log.basicConfig(filename='/tmp/ansible_ec2_asg.log', level=log.DEBUG, format='%(asctime)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
-try:
-    import boto3
-    import botocore
-
-    HAS_BOTO_3 = True
-except ImportError:
-    HAS_BOTO_3 = False
-
 ASG_ATTRIBUTES = ('AvailabilityZones', 'DefaultCooldown', 'DesiredCapacity',
                   'HealthCheckGracePeriod', 'HealthCheckType', 'LaunchConfigurationName',
                   'LoadBalancerNames', 'MaxSize', 'MinSize', 'AutoScalingGroupName', 'PlacementGroup',
@@ -1083,7 +1075,7 @@ def main():
         mutually_exclusive = [['replace_all_instances', 'replace_instances']]
     )
 
-    if not HAS_BOTO_3:
+    if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
 
     state = module.params.get('state')
