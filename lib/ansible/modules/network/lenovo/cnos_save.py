@@ -72,7 +72,7 @@ import json
 import time
 import re
 try:
-    from ansible.module_utils import cnos
+    import cnos
     HAS_LIB = True
 except:
     HAS_LIB = False
