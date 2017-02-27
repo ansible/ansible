@@ -188,14 +188,14 @@ class LookupModule(LookupBase):
                     pass
                 except Exception as e:
                     raise AnsibleError("dns.reversename unhandled exception", str(e))
-     
+
             try:
                 answers = myres.query(domain, qtype)
                 for rdata in answers:
                     s = rdata.to_text()
                     if qtype.upper() == 'TXT':
                         s = s[1:-1]  # Strip outside quotes on TXT rdata
-     
+
                     if flat:
                         ret.append(s)
                     else:
@@ -204,11 +204,11 @@ class LookupModule(LookupBase):
                             rd['owner']     = answers.canonical_name.to_text()
                             rd['type']      = dns.rdatatype.to_text(rdata.rdtype)
                             rd['ttl']       = answers.rrset.ttl
-     
+
                             ret.append(rd)
                         except Exception as e:
                             ret.append(str(e))
-     
+
             except dns.resolver.NXDOMAIN:
                 ret.append('NXDOMAIN')
             except dns.resolver.NoAnswer:
