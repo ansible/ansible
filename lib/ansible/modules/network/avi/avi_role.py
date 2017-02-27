@@ -63,7 +63,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = """
-- name: Example Adds/Deletes Role configuration from Avi Controller
+- name: Example to create Role object
   avi_role:
     controller: 10.10.25.42
     username: admin
