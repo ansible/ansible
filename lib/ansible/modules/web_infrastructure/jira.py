@@ -116,7 +116,9 @@ options:
   fields:
     required: false
     description:
-     - This is a free-form data structure that can contain arbitrary data. This is passed directly to the JIRA REST API (possibly after merging with other required data, as when passed to create). See examples for more information, and the JIRA REST API for the structure required for various fields.
+     - This is a free-form data structure that can contain arbitrary data. This is passed directly to the JIRA REST API
+       (possibly after merging with other required data, as when passed to create). See examples for more information,
+       and the JIRA REST API for the structure required for various fields.
 
   timeout:
     required: false
