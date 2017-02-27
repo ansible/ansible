@@ -43,7 +43,9 @@ options:
     default: 10
   wait:
     description:
-      - Whether to wait for users to respond.  Module will only wait for the number of seconds specified in display_seconds or 10 seconds if not specified.  However, if I(wait) is true, the message is sent to each logged on user in turn, waiting for the user to either press 'ok' or for the timeout to elapse before moving on to the next user.
+      - Whether to wait for users to respond.  Module will only wait for the number of seconds specified in display_seconds or 10 seconds if not specified.  
+        However, if I(wait) is true, the message is sent to each logged on user in turn, waiting for the user to either press 'ok' or for 
+        the timeout to elapse before moving on to the next user.
     required: false
     default: false
   msg:
@@ -51,7 +53,7 @@ options:
       - The text of the message to be displayed.
     default: Hello world!
 author: "Jon Hawkesworth (@jhawkesworth)"
-notes: 
+notes:
    - This module must run on a windows host, so ensure your play targets windows
      hosts, or delegates to a windows host.
    - Messages are only sent to the local host where the module is run.
