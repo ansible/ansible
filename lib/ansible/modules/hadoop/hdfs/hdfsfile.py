@@ -58,9 +58,9 @@ options:
     required: false
     default: null
     description:
-      - mode the file or directory should be. For those used to I(/usr/bin/chmod) 
-        remember that modes are actually octal numbers (like 0644). 
-        Leaving off the leading zero will likely have unexpected results. 
+      - mode the file or directory should be. For those used to I(/usr/bin/chmod)
+        remember that modes are actually octal numbers (like 0644).
+        Leaving off the leading zero will likely have unexpected results.
         The mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
   replication:
     required: false
@@ -130,21 +130,23 @@ from ansible.module_utils.hdfsbase import HDFSAnsibleModule, hdfs_argument_spec,
 
 # recursive,spacequota and namequota  options requires state to be 'directory'
 def invalid_if():
-    return [ ('state', 'file', ['recursive','spacequota','namequota']),('state', 'touch', ['recursive','spacequota','namequota']),('state', 'absent', ['recursive','spacequota','namequota']) ]
+    return [ ('state', 'file', ['recursive','spacequota','namequota']),
+             ('state', 'touch', ['recursive','spacequota','namequota']),
+             ('state', 'absent', ['recursive','spacequota','namequota']) ]
 
 def main():
-    
+
     argument_spec = hdfs_argument_spec()
     argument_spec.update( dict(
-            state = dict(choices=['file','directory','touch','absent'], default=None),
-            path  = dict(aliases=['dest', 'name'], required=True),
-            owner = dict(required=False,default=None),
-            group = dict(required=False,default=None),
-            mode = dict(required=False,default=None,type='raw'),
-            replication = dict(required=False,default=None),
-            namequota = dict(required=False,default=None),
-            spacequota = dict(required=False,default=None),
-            recursive  = dict(default=False, type='bool'),
+        state = dict(choices=['file','directory','touch','absent'], default=None),
+        path  = dict(aliases=['dest', 'name'], required=True),
+        owner = dict(required=False,default=None),
+        group = dict(required=False,default=None),
+        mode = dict(required=False,default=None,type='raw'),
+        replication = dict(required=False,default=None),
+        namequota = dict(required=False,default=None),
+        spacequota = dict(required=False,default=None),
+        recursive  = dict(default=False, type='bool'),
         )
     )
 
@@ -156,7 +158,6 @@ def main():
         argument_spec=argument_spec,
         required_together=required_together,
         mutually_exclusive=mutually_exclusive
-#        required_if=required_if
     )
 
     hdfs = HDFSAnsibleModule(module,invalid_if=invalid_if())
@@ -207,7 +208,7 @@ def main():
             # file is not absent and any other state is a conflict
             hdfs.hdfs_fail_json(path=path, msg="spacequota and namequota options requires state to be 'directory'" % (path))
 
-        changed |= hdfs.hdfs_set_attributes( path=path, owner=owner, group=group, 
+        changed |= hdfs.hdfs_set_attributes( path=path, owner=owner, group=group,
                                               replication=replication, permission=mode )
 
         module.exit_json(path=path, changed=changed)
@@ -223,17 +224,17 @@ def main():
                 curpath = '/'.join([curpath, dirname])
                 if not hdfs.hdfs_exist(curpath):
                     hdfs.hdfs_makedirs(curpath)
-                    changed |= hdfs.hdfs_set_attributes( path=curpath, owner=owner, group=group, 
+                    changed |= hdfs.hdfs_set_attributes( path=curpath, owner=owner, group=group,
                                                              replication=replication, permission=mode )
         # We already know prev_state is not 'absent', therefore it exists in some form.
         elif prev_state != 'directory':
             hdfs.hdfs_fail_json(path=path, msg='%s already exists as a %s' % (path, prev_state))
-        
+
         # Set the attribute for the actual destination path
         # Quotas are never set recursively; just to the destination directory
-        changed |= hdfs.hdfs_set_attributes(  path=path, owner=owner, group=group, replication=replication, 
+        changed |= hdfs.hdfs_set_attributes(  path=path, owner=owner, group=group, replication=replication,
                                               quota=namequota, spaceQuota=spacequota, permission=mode )
-        
+
         if recursive:
             changed |= hdfs.hdfs_set_attributes_recursive( path=path, owner=owner, group=group, replication=replication, permission=mode)
 
