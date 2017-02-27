@@ -361,6 +361,42 @@ class Rhsm(RegistrationBase):
     def subscribe(self, regexp):
         '''
             Subscribe current system to available pools matching the specified
+            regular expression. It matches regexp against available pool ids first.
+            If any pool ids match, subscribe to those pools and return.
+
+            If no pool ids match, then match regexp against available pool product
+            names. Note this can still easily match many many pools. Then subscribe
+            to those pools.
+
+            Since a pool id is a more specific match, we only fallback to matching
+            against names if we didnt match pool ids.
+
+            Raises:
+              * Exception - if error occurs while running command
+        '''
+        # See https://github.com/ansible/ansible/issues/19466
+
+        # subscribe to pools whose pool id matches regexp (and only the pool id)
+        subscribed_pool_ids = self.subscribe_pool(regexp)
+
+        # If we found any matches, we are done
+        # Don't attempt to match pools by product name
+        if subscribed_pool_ids:
+            return subscribed_pool_ids
+
+        # We didn't match any pool ids.
+        # Now try subscribing to pools based on product name match
+        # Note: This can match lots of product names.
+        subscribed_by_product_pool_ids = self.subscribe_product(regexp)
+        if subscribed_by_product_pool_ids:
+            return subscribed_by_product_pool_ids
+
+        # no matches
+        return []
+
+    def subscribe_pool(self, regexp):
+        '''
+            Subscribe current system to available pools matching the specified
             regular expression
             Raises:
               * Exception - if error occurs while running command
@@ -370,7 +406,24 @@ class Rhsm(RegistrationBase):
         available_pools = RhsmPools(self.module)
 
         subscribed_pool_ids = []
-        for pool in available_pools.filter(regexp):
+        for pool in available_pools.filter_pools(regexp):
+            pool.subscribe()
+            subscribed_pool_ids.append(pool.get_pool_id())
+        return subscribed_pool_ids
+
+    def subscribe_product(self, regexp):
+        '''
+            Subscribe current system to available pools matching the specified
+            regular expression
+            Raises:
+              * Exception - if error occurs while running command
+        '''
+
+        # Available pools ready for subscription
+        available_pools = RhsmPools(self.module)
+
+        subscribed_pool_ids = []
+        for pool in available_pools.filter_products(regexp):
             pool.subscribe()
             subscribed_pool_ids.append(pool.get_pool_id())
         return subscribed_pool_ids
@@ -378,7 +431,8 @@ class Rhsm(RegistrationBase):
     def update_subscriptions(self, regexp):
         changed = False
         consumed_pools = RhsmPools(self.module, consumed=True)
-        pool_ids_to_keep = [p.get_pool_id() for p in consumed_pools.filter(regexp)]
+        pool_ids_to_keep = [p.get_pool_id() for p in consumed_pools.filter_pools(regexp)]
+        pool_ids_to_keep.extend([p.get_pool_id() for p in consumed_pools.filter_products(regexp)])
 
         serials_to_remove = [p.Serial for p in consumed_pools if p.get_pool_id() not in pool_ids_to_keep]
         serials = self.unsubscribe(serials=serials_to_remove)
@@ -464,15 +518,22 @@ class RhsmPools(object):
                     # warnings.warn("Unhandled subscription key/value: %s/%s" % (key,value))
         return products
 
-    def filter(self, regexp='^$'):
+    def filter_pools(self, regexp='^$'):
         '''
-            Return a list of RhsmPools whose name matches the provided regular expression
+            Return a list of RhsmPools whose pool id matches the provided regular expression
+        '''
+        r = re.compile(regexp)
+        for product in self.products:
+            if r.search(product.get_pool_id()):
+                yield product
+
+    def filter_products(self, regexp='^$'):
+        '''
+            Return a list of RhsmPools whose product name matches the provided regular expression
         '''
         r = re.compile(regexp)
         for product in self.products:
             if r.search(product._name):
-                yield product
-            if r.search(product.PoolID):
                 yield product
 
 
