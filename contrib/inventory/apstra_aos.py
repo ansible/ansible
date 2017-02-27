@@ -313,6 +313,12 @@ class AosInventory(object):
         # Save session information in variables of group all
         self.add_var_to_group('all', 'aos_session', aos.session)
 
+        # Add the AOS server itself in the inventory
+        self.add_host_to_group("all", 'aos' )
+        self.add_var_to_host("aos", "ansible_ssh_host", self.aos_server )
+        self.add_var_to_host("aos", "ansible_ssh_pass", self.aos_password )
+        self.add_var_to_host("aos", "ansible_ssh_user", self.aos_username )
+
         # ----------------------------------------------------
         # Build the inventory
         #  2 modes are supported: device based or blueprint based
