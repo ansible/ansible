@@ -45,16 +45,8 @@ class CallbackModule(CallbackBase):
         return buf + "\n"
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
-        if 'exception' in result._result:
-            if self._display.verbosity < 3:
-                # extract just the actual error message from the exception text
-                error = result._result['exception'].strip().split('\n')[-1]
-                msg = "An exception occurred during task execution. To see the full traceback, use -vvv. The error was: %s" % error
-            else:
-                msg = "An exception occurred during task execution. The full traceback is:\n" + result._result['exception']
 
-            self._display.display(msg, color=C.COLOR_ERROR)
-
+        self._handle_exception(result._result)
         self._handle_warnings(result._result)
 
         if result._task.action in C.MODULE_NO_JSON and 'module_stderr' not in result._result:
