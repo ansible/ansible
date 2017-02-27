@@ -256,7 +256,7 @@ def main():
     f = FortiOS( module.params['host'],
         username=module.params['username'],
         password=module.params['password'],
-        timeout=module.params['username'],
+        timeout=module.params['timeout'],
         vdom=module.params['vdom'])
 
     #Config path
