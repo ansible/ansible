@@ -389,6 +389,31 @@
     that:
       - "check62_result.changed == false"
 
+# check can use yaml array of bytes as input 
+- name: regedit binary data using yaml syntax 
+  win_regedit:
+      key: 'HKCU:\SOFTWARE\Cow Corp'
+      value: hellobinaryfromyaml
+      data: [0x21, 0xb3, 0x33, 0xf9, 0x0d, 0xff, 0xd0, 0x01]
+      datatype: binary
+  register: check63_result
+
+- assert:
+    that:
+      - "check63_result.changed == true"
+
+- name: regedit binary data using yaml syntax again
+  win_regedit:
+      key: 'HKCU:\SOFTWARE\Cow Corp'
+      value: hellobinaryfromyaml
+      data: [0x21, 0xb3, 0x33, 0xf9, 0x0d, 0xff, 0xd0, 0x01]
+      datatype: binary
+  register: check64_result
+
+- assert:
+    that:
+      - "check64_result.changed == false"
+
 # test dword
 
 - name: check basic set dword works
