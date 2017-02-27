@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# (c) 2015, Yassine Azzouz <yassine.azzouz@gmail.com>
+# (c) 2017, Yassine Azzouz <yassine.azzouz@gmail.com>
 #
 # This code is part of Ansible, but is an independent component.
 # This particular file snippet, and this file snippet only, is BSD licensed.
