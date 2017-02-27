@@ -20,7 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
-import os
 import random
 import uuid
 
@@ -120,6 +119,7 @@ def merge_hash(a, b):
 def load_extra_vars(loader, options):
     extra_vars = {}
     for extra_vars_opt in options.extra_vars:
+        data = None
         extra_vars_opt = to_text(extra_vars_opt, errors='surrogate_or_strict')
         if extra_vars_opt.startswith(u"@"):
             # Argument is a YAML file (JSON is a subset of YAML)
@@ -130,7 +130,10 @@ def load_extra_vars(loader, options):
         else:
             # Arguments as Key-value
             data = parse_kv(extra_vars_opt)
-        extra_vars = combine_vars(extra_vars, data)
+
+        if data is not None:
+            extra_vars = combine_vars(extra_vars, data)
+
     return extra_vars
 
 
