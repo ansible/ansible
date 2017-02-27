@@ -42,8 +42,8 @@ options:
   state:
     description:
       - Specifies if address need to be added or deleted.
-    required: true
     choices: ['present', 'absent']
+    default: present
   src_intf:
     description:
       - Specifies source interface name.
@@ -70,11 +70,12 @@ options:
       - Negate destination address param.
     default: false
     choices: ["true", "false"]
-  action:
+  policy_action:
     description:
       - Specifies accept or deny action policy.
     choices: ['accept', 'deny']
     required: true
+    aliases: ['action']
   service:
     description:
       - "Specifies policy service(s), could be a list (ex: ['MAIL','DNS'])."
@@ -134,7 +135,7 @@ EXAMPLES = """
     service: dns
     nat: True
     state: present
-    action: accept
+    policy_action: accept
 
 - name: Public Web
   fortios_ipv4_policy:
@@ -148,7 +149,7 @@ EXAMPLES = """
       - http
       - https
     state: present
-    action: accept
+    policy_action: accept
 """
 
 RETURN = """
@@ -187,7 +188,7 @@ def main():
         dst_addr                  = dict(required=True, type='list'),
         src_addr_negate           = dict(type='bool', default=False),
         dst_addr_negate           = dict(type='bool', default=False),
-        action                    = dict(choices=['accept','deny'], required=True),
+        policy_action             = dict(choices=['accept','deny'], required=True, aliases=['action']),
         service                   = dict(aliases=['services'], required=True, type='list'),
         service_negate            = dict(type='bool', default=False),
         schedule                  = dict(type='str', default='always'),
@@ -279,7 +280,7 @@ def main():
             new_policy.set_param('service-negate', 'enable')
 
         # action
-        new_policy.set_param('action', '%s' % (module.params['action']))
+        new_policy.set_param('action', '%s' % (module.params['policy_action']))
 
         # Schedule
         new_policy.set_param('schedule', '%s' % (module.params['schedule']))
