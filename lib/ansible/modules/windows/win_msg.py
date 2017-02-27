@@ -43,8 +43,8 @@ options:
     default: 10
   wait:
     description:
-      - Whether to wait for users to respond.  Module will only wait for the number of seconds specified in display_seconds or 10 seconds if not specified.  
-        However, if I(wait) is true, the message is sent to each logged on user in turn, waiting for the user to either press 'ok' or for 
+      - Whether to wait for users to respond.  Module will only wait for the number of seconds specified in display_seconds or 10 seconds if not specified.
+        However, if I(wait) is true, the message is sent to each logged on user in turn, waiting for the user to either press 'ok' or for
         the timeout to elapse before moving on to the next user.
     required: false
     default: false
