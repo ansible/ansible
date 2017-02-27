@@ -78,7 +78,7 @@ EXAMPLES = """
     api_key: my_api_key
     text: '{{ inventory_hostname }} completed'
 
-- name: Send notification message via Slack all options
+- name: Send notification message via Mattermost all options
   mattermost:
     url: http://mattermost.example.com
     api_key: my_api_key
