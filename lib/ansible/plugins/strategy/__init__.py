@@ -236,7 +236,7 @@ class StrategyBase:
             host_list = [task_host]
         return host_list
 
-    def get_delegated_hosts(self, result, loop_var, task):
+    def get_delegated_hosts(self, result, task):
 
         host_name = task.delegate_to
         actual_host = self._inventory.get_host(host_name)
@@ -488,7 +488,7 @@ class StrategyBase:
                         if original_task.action == 'include_vars':
 
                             if original_task.delegate_to is not None:
-                                host_list = self.get_delegated_hosts(result_item, loop_var, original_task)
+                                host_list = self.get_delegated_hosts(result_item, original_task)
                             else:
                                 host_list = self.get_task_hosts(iterator, original_host, original_task)
 
@@ -500,7 +500,7 @@ class StrategyBase:
                         else:
                             # if delegated fact and we are delegating facts, we need to change target host for them
                             if original_task.delegate_to is not None and original_task.delegate_facts:
-                                host_list = self.get_delegated_hosts(result_item, loop_var, original_task)
+                                host_list = self.get_delegated_hosts(result_item, original_task)
                             else:
                                 host_list = self.get_task_hosts(iterator, original_host, original_task)
 
