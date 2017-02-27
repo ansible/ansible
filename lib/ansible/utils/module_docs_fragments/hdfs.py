@@ -1,4 +1,4 @@
-# (c) 2014, Matt Martz <matt@sivel.net>
+# (c) 2017, Yassine Azzouz <yassine.azzouz@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -33,7 +33,8 @@ options:
     default: none
     choices: [ none, kerberos, token ]
     description:
-      - The authentication type to use : if C(local), the user issuing the requests will be the current user.
+      - The authentication type to use
+      - if C(local) the user issuing the requests will be the current user.
       - if C(kerberos), the C(principal) and C(keytab) or C(password) will be used to kinit.
       - if C(token), the C(token) will be used to authenticate the user.
   principal:
