@@ -534,7 +534,7 @@ def create_autoscaling_group(connection, module):
 
     asg_tags = []
     for tag in set_tags:
-        for k,v in iteritems(tag):
+        for k,v in tag.items():
             if k !='propagate_at_launch':
                 asg_tags.append(dict(Key=k,
                                      Value=v,
