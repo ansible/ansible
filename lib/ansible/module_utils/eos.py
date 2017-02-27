@@ -432,15 +432,7 @@ def to_command(module, commands):
         answer=dict()
     ), module)
 
-    commands = transform(to_list(commands))
-
-    for index, item in enumerate(commands):
-        if is_json(item['command']):
-            item['output'] = 'json'
-        elif is_text(item['command']):
-            item['output'] = 'text'
-
-    return commands
+    return transform(to_list(commands))
 
 def get_config(module, flags=[]):
     conn = get_connection(module)

@@ -123,9 +123,20 @@ responses:
 """
 import re
 
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.eos import load_config, get_config
-from ansible.module_utils.basic import AnsibleModle
+from ansible.module_utils.eos import eos_argument_spec
+from ansible.module_utils.eos import check_args as eos_check_args
 from ansible.module_utils.netcfg import NetworkConfig, dumps
+
+def check_args(module, warnings):
+    eos_check_args(module, warnings)
+
+    transport = module.params['transport']
+    provider_transport = (module.params['provider'] or {}).get('transport')
+
+    if module.params['replace'] and 'eapi' in (transport, provider_transport):
+        module.fail_json(msg='config replace is only supported over cli')
 
 def get_current_config(module):
     config = module.params.get('config')
@@ -133,7 +144,7 @@ def get_current_config(module):
         flags = []
         if module.params['include_defaults']:
             flags.append('all')
-        config = module.config.get_config(include_defaults=defaults)
+        config = get_config(module, flags)
     return config
 
 def filter_exit(commands):
@@ -173,7 +184,7 @@ def main():
         config=dict()
     )
 
-    argument_spec.update(eos_local.eapi_argument_spec)
+    argument_spec.update(eos_argument_spec)
 
     mutually_exclusive = [('config', 'backup'), ('config', 'force')]
 
@@ -181,7 +192,8 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
-    warnings = check_args(module)
+    warnings = list()
+    check_args(module, warnings)
 
     result = {'changed': False}
     if warnings:
@@ -191,7 +203,7 @@ def main():
     candidate = NetworkConfig(contents=src, indent=3)
 
     if module.params['backup']:
-        result['__backup__'] = get_config()
+        result['__backup__'] = get_config(module)
 
     if not module.params['force']:
         contents = get_current_config(module)
@@ -202,18 +214,16 @@ def main():
     else:
         commands = [c.strip() for c in str(candidate).split('\n')]
 
-    # FIXME not implemented yet!!
-    if replace:
-        if module.params['transport'] == 'cli':
-            module.fail_json(msg='config replace is only supported over eos_local')
-        commands = str(candidate).split('\n')
+    #commands = str(candidate).split('\n')
 
     if commands:
         commands = filter_exit(commands)
         commit = not module.check_mode
-        load_config(commands, commit=commit)
+        replace = module.params['replace'] or False
+        load_config(module, commands, commit=commit, replace=replace)
         result['changed'] = True
 
+    result['commands'] = commands
     result['updates'] = commands
 
     module.exit_json(**result)
