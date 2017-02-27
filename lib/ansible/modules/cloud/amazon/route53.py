@@ -507,49 +507,97 @@ def main():
         else:
             wanted_rset.add_value(v)
 
+
     sets = invoke_with_throttling_retries(conn.get_all_rrsets, zone.id, name=record_in,
                                           type=type_in, identifier=identifier_in)
-    for rset in sets:
-        # Due to a bug in either AWS or Boto, "special" characters are returned as octals, preventing round
-        # tripping of things like * and @.
-        decoded_name = rset.name.replace(r'\052', '*')
-        decoded_name = decoded_name.replace(r'\100', '@')
-        #Need to save this changes in rset, because of comparing rset.to_xml() == wanted_rset.to_xml() in next block
-        rset.name = decoded_name
 
-        if identifier_in is not None:
-            identifier_in = str(identifier_in)
+    sets_iterator = iter(sets)
 
-        if rset.type == type_in and decoded_name.lower() == record_in.lower() and rset.identifier == identifier_in:
-            found_record = True
-            record['zone'] = zone_in
-            record['type'] = rset.type
-            record['record'] = decoded_name
-            record['ttl'] = rset.ttl
-            record['value'] = ','.join(sorted(rset.resource_records))
-            record['values'] = sorted(rset.resource_records)
-            if hosted_zone_id_in:
-                record['hosted_zone_id'] = hosted_zone_id_in
-            record['identifier'] = rset.identifier
-            record['weight'] = rset.weight
-            record['region'] = rset.region
-            record['failover'] = rset.failover
-            record['health_check'] = rset.health_check
-            if hosted_zone_id_in:
-                record['hosted_zone_id'] = hosted_zone_id_in
-            if rset.alias_dns_name:
-                record['alias'] = True
-                record['value'] = rset.alias_dns_name
-                record['values'] = [rset.alias_dns_name]
-                record['alias_hosted_zone_id'] = rset.alias_hosted_zone_id
-                record['alias_evaluate_target_health'] = rset.alias_evaluate_target_health
-            else:
-                record['alias'] = False
+    retries = 0
+
+    while True:
+
+        try:
+
+            # This line is where we are expecting a throttling exception to
+            # potentially occur. 'sets' is a ResourceRecordSets object, and
+            # when there are many records to go through, invoking the 'next'
+            # method will eventually result in additional calls to the AWS API
+            # to get more records, at which point we are subject to throttling.
+            rset = sets_iterator.next()
+
+            # Due to a bug in either AWS or Boto, "special" characters are returned as octals, preventing round
+            # tripping of things like * and @.
+            decoded_name = rset.name.replace(r'\052', '*')
+            decoded_name = decoded_name.replace(r'\100', '@')
+            #Need to save this changes in rset, because of comparing rset.to_xml() == wanted_rset.to_xml() in next block
+            rset.name = decoded_name
+
+            if identifier_in is not None:
+                identifier_in = str(identifier_in)
+
+            if rset.type == type_in and decoded_name.lower() == record_in.lower() and rset.identifier == identifier_in:
+                found_record = True
+                record['zone'] = zone_in
+                record['type'] = rset.type
+                record['record'] = decoded_name
+                record['ttl'] = rset.ttl
                 record['value'] = ','.join(sorted(rset.resource_records))
                 record['values'] = sorted(rset.resource_records)
-            if command_in == 'create' and rset.to_xml() == wanted_rset.to_xml():
-                module.exit_json(changed=False)
-            break
+                if hosted_zone_id_in:
+                    record['hosted_zone_id'] = hosted_zone_id_in
+                record['identifier'] = rset.identifier
+                record['weight'] = rset.weight
+                record['region'] = rset.region
+                record['failover'] = rset.failover
+                record['health_check'] = rset.health_check
+                if hosted_zone_id_in:
+                    record['hosted_zone_id'] = hosted_zone_id_in
+                if rset.alias_dns_name:
+                    record['alias'] = True
+                    record['value'] = rset.alias_dns_name
+                    record['values'] = [rset.alias_dns_name]
+                    record['alias_hosted_zone_id'] = rset.alias_hosted_zone_id
+                    record['alias_evaluate_target_health'] = rset.alias_evaluate_target_health
+                else:
+                    record['alias'] = False
+                    record['value'] = ','.join(sorted(rset.resource_records))
+                    record['values'] = sorted(rset.resource_records)
+                if command_in == 'create' and rset.to_xml() == wanted_rset.to_xml():
+                    module.exit_json(changed=False)
+                break
+
+        except StopIteration:
+
+          break
+
+        except boto.exception.BotoServerError as e:
+
+            if (
+                 e.code != IGNORE_CODE or
+                 retries == MAX_RETRIES or
+                 # This is very unlikely to occur, but just in case we somehow
+                 # encountered this exception on the first iteration of the while
+                 # loop before decoded_name was assigned...
+                 decoded_name not in locals()
+               ):
+
+                raise e
+
+            else:
+
+                time.sleep(5 * (2**(retries)))
+                retries += 1
+
+                # Re-request all rrsets, but start at the last successfully
+                # retrieved record before being throttled, based on current
+                # value of 'decoded_name'
+                sets = invoke_with_throttling_retries(conn.get_all_rrsets, zone.id,
+                                                      name=decoded_name, type=type_in,
+                                                      identifier=identifier_in)
+
+                sets_iterator = iter(sets)
+
 
     if command_in == 'get':
         if type_in == 'NS':
