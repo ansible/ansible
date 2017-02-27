@@ -207,7 +207,6 @@ def main():
             changed = True
             end_state = invoke('get_existing', module)
 
-    result['connected'] = module.connected
     result['changed'] = changed
     if module._verbosity > 0:
         end_state = invoke('get_existing', module)

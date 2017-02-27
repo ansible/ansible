@@ -207,15 +207,12 @@ changed:
     type: boolean
     sample: true
 '''
-
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
-
 import os
 import re
-import re
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.nxos import load_config, run_commands
+from ansible.module_utils.nxos import nxos_argument_spec, check_args
 
 
 def execute_show_command(command, module, command_type='cli_show_ascii'):
@@ -379,36 +376,29 @@ def write_on_file(content, filename, module):
 
 def main():
     argument_spec = dict(
-        action=dict(required=True, choices=['create', 'add',
-                                                'compare', 'delete',
-                                                'delete_all']),
-        snapshot_name=dict(required=False, type='str'),
-        description=dict(required=False, type='str'),
-        snapshot1=dict(required=False, type='str'),
-        snapshot2=dict(required=False, type='str'),
-        compare_option=dict(required=False,
-                        choices=['summary', 'ipv4routes', 'ipv6routes']),
-        comparison_results_file=dict(required=False, type='str'),
-        section=dict(required=False, type='str'),
-        show_command=dict(required=False, type='str'),
-        row_id=dict(required=False, type='str'),
-        element_key1=dict(required=False, type='str'),
-        element_key2=dict(required=False, type='str'),
-        save_snapshot_locally=dict(required=False, type='bool',
-                                       default=False),
-        path=dict(required=False, type='str', default='./')
+        action=dict(required=True, choices=['create', 'add', 'compare', 'delete', 'delete_all']),
+        snapshot_name=dict(type='str'),
+        description=dict(type='str'),
+        snapshot1=dict(type='str'),
+        snapshot2=dict(type='str'),
+        compare_option=dict(choices=['summary', 'ipv4routes', 'ipv6routes']),
+        comparison_results_file=dict(type='str'),
+        section=dict(type='str'),
+        show_command=dict(type='str'),
+        row_id=dict(type='str'),
+        element_key1=dict(type='str'),
+        element_key2=dict(type='str'),
+        save_snapshot_locally=dict(type='bool', default=False),
+        path=dict(type='str', default='./')
     )
 
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                mutually_exclusive=[['delete_all',
-                                                     'delete_snapshot']],
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
 
     action = module.params['action']
     comparison_results_file = module.params['comparison_results_file']
@@ -469,7 +459,6 @@ def main():
                     written_file = write_on_file(snapshot,
                                     module.params['snapshot_name'], module)
 
-    result['connected'] = module.connected
     result['changed'] = changed
     if module._verbosity > 0:
         end_state = invoke('get_existing', module)

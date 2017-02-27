@@ -305,7 +305,6 @@ def main():
             changed = True
 
     result = {}
-    result['connected'] = module.connected
     result['changed'] = changed
     if module._verbosity > 0:
         final_system_mode = get_system_mode(module)
