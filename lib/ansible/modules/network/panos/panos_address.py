@@ -40,11 +40,11 @@ options:
         required: true
     username:
         description:
-            - Username credentials to use for auth.
+            - Username credentials to use for authentication.
         default: "admin"
     password:
         description:
-            - Password credentials to use for auth.
+            - Password credentials to use for authentication.
         required: true
     address:
         description:
@@ -71,7 +71,7 @@ options:
         default: None
     commit:
         description:
-            - Commit configuration if changed.
+            - Commit configuration to the Firewall if it is changed.
         default: true
 '''
 
@@ -164,9 +164,9 @@ def main():
         password=dict(required=True, no_log=True),
         username=dict(default='admin'),
         address_name=dict(required=True),
-        address=dict(default=None),
-        description=dict(default=None),
-        tag=dict(default=None),
+        address=dict(),
+        description=dict(),
+        tag=dict(),
         type=dict(default='ip-netmask', choices=['ip-netmask', 'ip-range', 'fqdn']),
         commit=dict(type='bool', default=True)
     )
