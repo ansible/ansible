@@ -430,7 +430,6 @@ def main():
     else:
         result['updates'] = []
 
-    result['connected'] = module.connected
     if module._verbosity > 0:
         end_state, interface_exist = invoke('get_existing', module, args)
         result['end_state'] = end_state
