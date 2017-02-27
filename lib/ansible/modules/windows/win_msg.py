@@ -21,7 +21,11 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-DOCUMENTATION = '''
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
+DOCUMENTATION = r'''
 ---
 module: win_msg
 version_added: "2.3"
@@ -32,12 +36,10 @@ options:
   to:
     description:
       - Who to send the message to. Can be a username, sessionname or sessionid.
-    required: false
-    default: all logged in users on the windows target.
+    default: '*'
   display_seconds:
     description:
       - How long to wait for receiver to acknowledge message.
-    required: false
     default: 10
   wait:
     description:
@@ -47,8 +49,7 @@ options:
   msg:
     description:
       - The text of the message to be displayed.
-    required: true
-    default: no default
+    default: Hello world!
 author: "Jon Hawkesworth (@jhawkesworth)"
 notes: 
    - This module must run on a windows host, so ensure your play targets windows
@@ -58,14 +59,14 @@ notes:
    - Setting wait to true can result in long run times on systems with many logged in users.
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
   # Warn logged in users of impending upgrade
   win_msg:
     display_seconds: 60
     msg: "Automated upgrade about to start.  Please save your work and log off before {{ deployment_start_time  }}"
 '''
 
-RETURN = '''
+RETURN = r'''
 msg:
     description: Test of the message that was sent.
     returned: changed

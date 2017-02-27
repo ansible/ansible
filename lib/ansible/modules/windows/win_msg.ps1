@@ -21,18 +21,18 @@
 
 $stopwatch = [system.diagnostics.stopwatch]::startNew()
 
-$params = Parse-Args $args
-$result = New-Object PSObject
-Set-Attr $result "changed" $False
-$to = Get-Attr -obj $params -name to -default "*" -failifempty $False -resultobj $result
-$display_seconds = Get-Attr -obj $params -name display_seconds -default "10" -failifempty $False -resultobj $result
-$wait = Get-Attr -obj $params -name wait -default $False -failifempty $False -resultobj $result
-$msg = Get-Attr -obj $params -name msg -failifempty $True -resultobj $result
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-If($msg.Length -lt 1) {
+$display_seconds = Get-AnsibleParam -obj $params -name display_seconds -default "10" -failifempty $False -resultobj $result
+$msg = Get-AnsibleParam -obj $params -name msg -default "Hello world!" -resultobj $result
+$to = Get-AnsibleParam -obj $params -name to -default "*" -failifempty $False -resultobj $result
+$wait = Get-AnsibleParam -obj $params -name wait -default $False -failifempty $False -resultobj $result
 
-    Fail-Json $result "msg was empty, please supply message text"
+$result = @{
+    changed = $false
 }
+
 
 $msg_args = @($to, "/TIME:$display_seconds")
 
@@ -42,23 +42,24 @@ If ($wait)
 }
 
 $msg_args += $msg
-$ret = & msg.exe $msg_args 2>&1
-Set-Attr $result "rc" $LASTEXITCODE
+if (-not $check_mode) {
+  $ret = & msg.exe $msg_args 2>&1
+  $result.rc = $LASTEXITCODE
+}
+
 $endsend_at = Get-Date| Out-String
 $stopwatch.Stop()
-If ($LASTEXITCODE -eq 0) 
-{
-    Set-Attr $result "changed" $True
-    Set-Attr $result "runtime_seconds" $stopwatch.Elapsed.TotalSeconds
-    Set-Attr $result "display_seconds" $display_seconds
-    Set-Attr $result "msg" $msg
-    Set-Attr $result "sent_localtime" $endsend_at.Trim()
-    Set-Attr $result "wait" $wait
-} 
-Else 
+
+$result.changed = $True
+$result.display_seconds = $display_seconds
+$result.msg = $msg
+$result.runtime_seconds = $stopwatch.Elapsed.TotalSeconds
+$result.sent_localtime = $endsend_at.Trim()
+$result.wait = $wait
+
+If (-not $result.rc -eq 0 ) 
 {
     Fail-Json $result "$ret"
 }
   
 Exit-Json $result
-
