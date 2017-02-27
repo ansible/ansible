@@ -25,7 +25,9 @@ options:
     required: false
     default: null
     description:
-      - Identity of the user running the query, (applies only to C(authentication=local)). When security is off the authenticated user is the username specified in the user.name query parameter, specified by this parameter. Defaults to the current user (as determined by I(whoami)).
+      - Identity of the user running the query, (applies only to C(authentication=local)).
+      - When security is off the authenticated user is the username specified in the user.name query parameter, specified by this parameter.
+      - Defaults to the current user (as determined by I(whoami)).
   authentication:
     required: false
     default: none
@@ -54,7 +56,8 @@ options:
     required: false
     default: null
     description:
-      - The keytab used to authenticate the principle, this is only valid with C(authentication=kerberos) only one credentials type can be used so this is mutually exclusive with C(password).
+      - The keytab used to authenticate the principle, this is only valid with C(authentication=kerberos)
+      - Only one credentials type can be used so this is mutually exclusive with C(password).
   token:
     required: false
     default: null
