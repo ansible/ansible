@@ -153,7 +153,7 @@ CODENAME = Malachite
         "result":{
             "distribution": "openSUSE Leap",
             "distribution_major_version": "42",
-            "distribution_release": "x86_64",
+            "distribution_release": "1",
             "os_family": "Suse",
             "distribution_version": "42.1",
         }
@@ -179,7 +179,7 @@ ID_LIKE="suse"
         'platform.dist': ('SuSE', '13.2', 'x86_64'),
         'result': {'distribution': u'openSUSE',
                    'distribution_major_version': u'13',
-                   'distribution_release': u'Harlequin',
+                   'distribution_release': u'2',
                    'os_family': u'Suse',
                    'distribution_version': u'13.2'}
     },
@@ -196,7 +196,7 @@ ID_LIKE="suse"
         },
         "name": "openSUSE Tumbleweed 20160917",
         "result": {
-            "distribution_release": "NA",
+            "distribution_release": "",
             "distribution": "openSUSE Tumbleweed",
             "distribution_major_version": "NA",
             "os_family": "Suse",
