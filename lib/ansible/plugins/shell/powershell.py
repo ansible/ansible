@@ -87,7 +87,7 @@ end {
     # dynamically create/load modules
     ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
         $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
-        New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module | Out-Null
+        New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module -WarningAction SilentlyContinue | Out-Null
     }
 
     $output = $entrypoint.Run($payload)
@@ -115,7 +115,7 @@ Function Run($payload) {
     ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
         $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
         $ps.AddStatement().AddCommand("New-Module").AddParameters(@{ScriptBlock=([scriptblock]::Create($decoded_module));Name=$mod.Key}) | Out-Null
-        $ps.AddCommand("Import-Module") | Out-Null
+        $ps.AddCommand("Import-Module").AddParameters(@{WarningAction="SilentlyContinue"}) | Out-Null
         $ps.AddCommand("Out-Null") | Out-Null
     }
 
@@ -298,7 +298,7 @@ Set-Variable -Scope global -Name complex_args -Value $payload["module_args"] | O
 # dynamically create/load modules
 ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
     $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
-    New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module | Out-Null
+    New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module -WarningAction SilentlyContinue | Out-Null
 }
 
 $output = $entrypoint.Run($payload)
@@ -454,7 +454,7 @@ Set-Variable -Scope global -Name complex_args -Value $payload["module_args"] | O
 # dynamically create/load modules
 ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
     $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
-    New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module | Out-Null
+    New-Module -ScriptBlock ([scriptblock]::Create($decoded_module)) -Name $mod.Key | Import-Module -WarningAction SilentlyContinue | Out-Null
 }
 
 $output = $entrypoint.Run($payload)
