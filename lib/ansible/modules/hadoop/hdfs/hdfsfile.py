@@ -128,6 +128,10 @@ EXAMPLES = '''
     path: "/user/yassine/subdir"
     urls: "{{namenodes_urls}}"
 '''
+
+RETURN = '''
+'''
+
 import time
 
 # import module snippets
