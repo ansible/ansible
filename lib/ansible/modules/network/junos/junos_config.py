@@ -178,7 +178,6 @@ import re
 import json
 
 from xml.etree import ElementTree
-from ncclient.xml_ import to_xml
 
 from ansible.module_utils.junos import get_diff, load
 from ansible.module_utils.junos import junos_argument_spec
@@ -189,6 +188,13 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import NetworkConfig
 
 DEFAULT_COMMENT = 'configured by junos_config'
+
+def check_transport(module):
+    transport = (module.params['provider'] or {}).get('transport')
+
+    if transport == 'netconf':
+        module.fail_json(msg='junos_config module is only supported over cli transport')
+
 
 def check_args(module, warnings):
     junos_check_args(module, warnings)
@@ -292,7 +298,7 @@ def update_result(module, result, diff=None):
         diff = None
     result['changed'] = diff is not None
     if module._diff:
-        result['diff'] =  {'prepared': diff}
+        result['diff'] = {'prepared': diff}
 
 
 def main():
@@ -328,6 +334,8 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
+
+    check_transport(module)
 
     warnings = list()
     check_args(module, warnings)

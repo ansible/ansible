@@ -83,6 +83,13 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
 
+def check_transport(module):
+    transport = (module.params['provider'] or {}).get('transport')
+
+    if transport == 'netconf':
+        module.fail_json(msg='junos_netconf module is only supported over cli transport')
+
+
 def map_obj_to_commands(updates, module):
     want, have = updates
     commands = list()
@@ -148,6 +155,8 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
+
+    check_transport(module)
 
     warnings = list()
     check_args(module, warnings)
