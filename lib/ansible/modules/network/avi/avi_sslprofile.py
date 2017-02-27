@@ -44,7 +44,7 @@ options:
         choices: ["absent","present"]
     accepted_ciphers:
         description:
-            - Ciphers suites represented as defined by http //www.openssl.org/docs/apps/ciphers.html.
+            - Ciphers suites represented as defined by U(http://www.openssl.org/docs/apps/ciphers.html).
             - Default value when not specified in API or module is interpreted by Avi Controller as AES:3DES:RC4.
     accepted_versions:
         description:
