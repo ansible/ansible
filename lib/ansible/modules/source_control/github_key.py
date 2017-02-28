@@ -188,12 +188,12 @@ def ensure_key_present(module, session, name, pubkey, force, check_mode):
     new_signature = pubkey.split(' ')[1]
     for key in all_keys:
         existing_signature = key['key'].split(' ')[1]
-        if new_signature == existing_signature:
+        if new_signature == existing_signature and key['title'] != name:
             module.fail_json(msg=(
                 "another key with the same content is already registered "
                 "under the name |{}|").format(key['title']))
 
-    if matching_keys and force and matching_keys[0]['key'] != pubkey:
+    if matching_keys and force and matching_keys[0]['key'].split(' ')[1] != new_signature:
         delete_keys(session, matching_keys, check_mode=check_mode)
         (deleted_keys, matching_keys) = (matching_keys, [])
 
