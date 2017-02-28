@@ -276,28 +276,33 @@ options:
 EXAMPLES = '''
 
 - name: CloudEngine advance acl test
+  hosts: cloudengine
+  connection: local
+  gather_facts: no
   vars:
-    host: "{{ inventory_hostname }}"
-    username: admin
-    password: admin
-    transport: cli
+    cli:
+      host: "{{ inventory_hostname }}"
+      port: "{{ ansible_ssh_port }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      transport: cli
 
   tasks:
 
   - name: "Config ACL"
-    ce_acl:
+    ce_acl_advance:
       state:  present
       acl_name:  3200
       provider: "{{ cli }}"
 
   - name: "Undo ACL"
-    ce_acl:
+    ce_acl_advance:
       state:  delete_acl
       acl_name:  3200
       provider: "{{ cli }}"
 
   - name: "Config ACL advance rule"
-    ce_acl:
+    ce_acl_advance:
       state:  present
       acl_name:  test
       rule_name:  test_rule
@@ -310,7 +315,7 @@ EXAMPLES = '''
       provider: "{{ cli }}"
 
   - name: "Undo ACL advance rule"
-    ce_acl:
+    ce_acl_advance:
       state:  absent
       acl_name:  test
       rule_name:  test_rule
@@ -355,13 +360,7 @@ import socket
 import sys
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_netconf, ce_argument_spec
-
-try:
-    from ncclient.operations.rpc import RPCError
-    HAS_NCCLIENT = True
-except ImportError:
-    HAS_NCCLIENT = False
+from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 
 # get acl
@@ -544,10 +543,6 @@ class AdvanceAcl(object):
 
         # module args
         self.state = self.module.params['state']
-        self.host = self.module.params['provider']['host']
-        self.port = self.module.params['provider']['port']
-        self.username = self.module.params['provider']['username']
-        self.password = self.module.params['provider']['password']
         self.acl_name = self.module.params['acl_name'] or None
         self.acl_num = self.module.params['acl_num'] or None
         self.acl_type = None
@@ -616,40 +611,19 @@ class AdvanceAcl(object):
         self.existing = dict()
         self.end_state = dict()
 
-        # netconf
-        if not HAS_NCCLIENT:
-            raise Exception("Error: The ncclient library is required.")
-
-        self.netconf = get_netconf(host=self.host,
-                                   port=self.port,
-                                   username=self.username,
-                                   password=self.password)
-        if not self.netconf:
-            self.module.fail_json(msg='Error: netconf init failed.')
-
     def netconf_get_config(self, conf_str):
         """ Get configure by netconf """
 
-        try:
-            con_obj = self.netconf.get_config(filter=conf_str)
-        except RPCError:
-            err = sys.exc_info()[1]
-            self.module.fail_json(msg='Error: %s.' %
-                                  err.message.replace("\r\n", ""))
+        xml_str = get_nc_config(self.module, conf_str)
 
-        return con_obj
+        return xml_str
 
     def netconf_set_config(self, conf_str):
         """ Set configure by netconf """
 
-        try:
-            con_obj = self.netconf.set_config(config=conf_str)
-        except RPCError:
-            err = sys.exc_info()[1]
-            self.module.fail_json(msg='Error: %s.' %
-                                  err.message.replace("\r\n", ""))
+        xml_str = set_nc_config(self.module, conf_str)
 
-        return con_obj
+        return xml_str
 
     def get_protocol_num(self):
         """ Get protocol num by name """
@@ -728,13 +702,13 @@ class AdvanceAcl(object):
                 conf_str += "<aclDescription></aclDescription>"
 
             conf_str += CE_GET_ACL_TAIL
-            con_obj = self.netconf_get_config(conf_str=conf_str)
+            recv_xml = self.netconf_get_config(conf_str=conf_str)
 
-            if "<data/>" in con_obj.xml:
+            if "<data/>" in recv_xml:
                 find_flag = False
 
             else:
-                xml_str = con_obj.xml.replace('\r', '').replace('\n', '').\
+                xml_str = recv_xml.replace('\r', '').replace('\n', '').\
                     replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
                     replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
@@ -1105,13 +1079,13 @@ class AdvanceAcl(object):
                 conf_str += "<aclLogFlag></aclLogFlag>"
 
                 conf_str += CE_GET_ACL_ADVANCE_RULE_TAIL
-                con_obj = self.netconf_get_config(conf_str=conf_str)
+                recv_xml = self.netconf_get_config(conf_str=conf_str)
 
-                if "<data/>" in con_obj.xml:
+                if "<data/>" in recv_xml:
                     find_flag = False
 
                 else:
-                    xml_str = con_obj.xml.replace('\r', '').replace('\n', '').\
+                    xml_str = recv_xml.replace('\r', '').replace('\n', '').\
                         replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
                         replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
@@ -1358,9 +1332,9 @@ class AdvanceAcl(object):
 
         conf_str += CE_MERGE_ACL_TAIL
 
-        con_obj = self.netconf_set_config(conf_str=conf_str)
+        recv_xml = self.netconf_set_config(conf_str=conf_str)
 
-        if "<ok/>" not in con_obj.xml:
+        if "<ok/>" not in recv_xml:
             self.module.fail_json(msg='Error: Merge acl failed.')
 
         if self.acl_name.isdigit():
@@ -1400,9 +1374,9 @@ class AdvanceAcl(object):
 
         conf_str += CE_DELETE_ACL_TAIL
 
-        con_obj = self.netconf_set_config(conf_str=conf_str)
+        recv_xml = self.netconf_set_config(conf_str=conf_str)
 
-        if "<ok/>" not in con_obj.xml:
+        if "<ok/>" not in recv_xml:
             self.module.fail_json(msg='Error: Delete acl failed.')
 
         if self.acl_description:
@@ -1494,9 +1468,9 @@ class AdvanceAcl(object):
 
         conf_str += CE_MERGE_ACL_ADVANCE_RULE_TAIL
 
-        con_obj = self.netconf_set_config(conf_str=conf_str)
+        recv_xml = self.netconf_set_config(conf_str=conf_str)
 
-        if "<ok/>" not in con_obj.xml:
+        if "<ok/>" not in recv_xml:
             self.module.fail_json(msg='Error: Merge acl base rule failed.')
 
         if self.rule_action and self.protocol:
@@ -1648,9 +1622,9 @@ class AdvanceAcl(object):
 
         conf_str += CE_DELETE_ACL_ADVANCE_RULE_TAIL
 
-        con_obj = self.netconf_set_config(conf_str=conf_str)
+        recv_xml = self.netconf_set_config(conf_str=conf_str)
 
-        if "<ok/>" not in con_obj.xml:
+        if "<ok/>" not in recv_xml:
             self.module.fail_json(msg='Error: Delete acl base rule failed.')
 
         if self.rule_description:
