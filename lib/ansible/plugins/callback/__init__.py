@@ -45,6 +45,17 @@ except ImportError:
 __all__ = ["CallbackBase"]
 
 
+class AnsibleJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        # Handle ConditionalResult and ConditionalResults
+        if hasattr(obj, '_conditional_result'):
+            return obj.__getstate__()
+        if hasattr(obj, '_conditional_results'):
+            return obj.__getstate__()
+
+        return super(AnsibleJSONEncoder, self).default(obj)
+
+
 class CallbackBase:
 
     '''
@@ -70,12 +81,16 @@ class CallbackBase:
             version = getattr(self, 'CALLBACK_VERSION', '1.0')
             self._display.vvvv('Loading callback plugin %s of type %s, v%s from %s' % (name, ctype, version, __file__))
 
+        self.json_encoder = AnsibleJSONEncoder()
+
     ''' helper for callbacks, so they don't all have to include deepcopy '''
     _copy_result = deepcopy
 
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
         if result.get('_ansible_no_log', False):
-            return json.dumps(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"))
+            #return self.json_encoder.encode(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"))
+            return json.dumps(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"),
+                              cls=AnsibleJSONEncoder)
 
         if not indent and (result.get('_ansible_verbose_always') or self._display.verbosity > 2):
             indent = 4
@@ -95,7 +110,8 @@ class CallbackBase:
         if 'exception' in abridged_result:
             del abridged_result['exception']
 
-        return json.dumps(abridged_result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+        return json.dumps(abridged_result, indent=indent, ensure_ascii=False,
+                          sort_keys=sort_keys, cls=AnsibleJSONEncoder)
 
     def _handle_warnings(self, res):
         ''' display warnings, if enabled and any exist in the result '''

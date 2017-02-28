@@ -41,8 +41,12 @@ DEFINED_REGEX = re.compile(r'(hostvars\[.+\]|[\w_]+)\s+(not\s+is|is|is\s+not)\s+
 LOOKUP_REGEX = re.compile(r'lookup\s*\(')
 VALID_VAR_REGEX = re.compile("^[_A-Za-z][_a-zA-Z0-9]*$")
 
+
 # FIXME: any ideas for a better repr?
 class ConditionalResult:
+    _boolable = False
+    _conditional_result = True
+
     def __init__(self, value=None, conditional=None):
         self.conditional = conditional
         self.value = value or False
@@ -51,23 +55,55 @@ class ConditionalResult:
         return self.value
 
     def __repr__(self):
-        return "%s('%s')" % (self.value, self.conditional)
+        return "'%s' is %s" % (self.conditional, self.value)
+
+    def __getstate__(self):
+        return {'conditional': self.conditional,
+                'value': self.value}
 
 
 class ConditionalResults:
-    def __init__(self, conditional_results=None):
+    # for the json encoder to determine we can be cast to a bool
+    _boolable = False
+    _conditional_results = True
+
+    def __init__(self, conditional_results=None, when=None):
         self.conditional_results = conditional_results or []
+        self.when = when or None
+        print('self.failed_because: %s' % self.failed_because)
 
     def __nonzero__(self):
         if not all(self.conditional_results):
             return False
         return True
 
-    def __repr__(self):
+    def __repr2__(self):
         return "%s(%s)" % (bool(self), self.conditional_results)
+
+    def __repr__(self):
+        failed_msg = ''
+        #if self.failed_because:
+        #    failed_msg = ','.join(self.failed_because)
+        return '%s(when=%s, conditional_results=%s %s)' % (self.__class__.__name__,
+                                                           self.when,
+                                                           self.conditional_results,
+                                                           failed_msg)
+
+    @property
+    def failed_because(self):
+        return self.conditional_results or []
+        #return [x for x in self.conditional_results if x is False]
+
+    #def __str__(self):
+    #    buf = "The conditional clause '%s' was False" % self.failed_because
 
     def append(self, conditional_result):
         return self.conditional_results.append(conditional_result)
+
+    def __getstate__(self):
+        return {'when': self.when,
+                'conditional_results': self.conditional_results,
+                'failed_because': self.failed_because}
 
 
 class Conditional:
@@ -130,7 +166,7 @@ class Conditional:
         if hasattr(self, '_ds'):
             ds = getattr(self, '_ds')
 
-        conditional_results = ConditionalResults()
+        conditional_results = ConditionalResults(when=self.when)
 
         # this allows for direct boolean assignments to conditionals "when: False"
         if isinstance(self.when, bool):

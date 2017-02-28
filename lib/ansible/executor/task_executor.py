@@ -424,9 +424,12 @@ class TaskExecutor:
         # the fact that the conditional may specify that the task be skipped due to a
         # variable not being present which would otherwise cause validation to fail
         try:
-            if not self._task.evaluate_conditional(templar, variables):
+            result = self._task.evaluate_conditional(templar, variables)
+            if not result:
+                print('cr: %s' % result)
                 display.debug("when evaluation is False, skipping this task")
-                return dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=self._play_context.no_log)
+                #return dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=self._play_context.no_log)
+                return dict(changed=False, skipped=True, skip_reason=result, _ansible_no_log=self._play_context.no_log)
         except AnsibleError:
             # loop error takes precedence
             if self._loop_eval_error is not None:
