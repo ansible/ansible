@@ -255,6 +255,8 @@ Ansible Changes By Release
 - web_infrastructure
   * jenkins_script
 - windows:
+  * win_dns_client
+  * win_domain_membership
   * win_find
   * win_path
   * win_psexec
