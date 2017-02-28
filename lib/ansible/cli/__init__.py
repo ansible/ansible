@@ -156,6 +156,9 @@ class CLI(with_metaclass(ABCMeta, object)):
         running an Ansible command.
         """
 
+        if self.options.verbosity > 1:
+            display.display(self.parser.get_version())
+
         if self.options.verbosity > 0:
             if C.CONFIG_FILE:
                 display.display(u"Using %s as config file" % to_text(C.CONFIG_FILE))
