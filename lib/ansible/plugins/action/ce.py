@@ -56,7 +56,7 @@ class ActionModule(_ActionModule):
             pc = copy.deepcopy(self._play_context)
             pc.connection = 'network_cli'
             pc.network_os = 'ce'
-            pc.port = provider['port'] or self._play_context.port or 22
+            pc.port = int(provider['port']) or int(self._play_context.port) or 22
             pc.remote_user = provider['username'] or self._play_context.connection_user
             pc.password = provider['password'] or self._play_context.password
             pc.timeout = provider['timeout'] or self._play_context.timeout
