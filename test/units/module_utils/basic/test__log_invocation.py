@@ -30,7 +30,6 @@ from ansible.compat.tests.mock import MagicMock
 
 
 class TestModuleUtilsBasic(unittest.TestCase):
-    @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
     def test_module_utils_basic__log_invocation(self):
         with swap_stdin_and_argv(stdin_data=json.dumps(
             dict(
