@@ -29,25 +29,26 @@
 #
 
 import re
-import collections
 
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network_common import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.urls import fetch_url
 
 
 try:
-    from ncclient import manager
-    from ncclient import xml_
+    from ncclient import manager, xml_
+    from ncclient.operations.rpc import RPCError
+    from ncclient.transport.errors import AuthenticationError
+    from ncclient.operations.errors import TimeoutExpiredError
     HAS_NCCLIENT = True
 except ImportError:
     HAS_NCCLIENT = False
-    pass
 
 
-_DEVICE_CONNECTION = None
+_DEVICE_CLI_CONNECTION = None
+_DEVICE_NC_CONNECTION = None
 
 ce_argument_spec = {
     'host': dict(),
@@ -61,12 +62,14 @@ ce_argument_spec = {
     'transport': dict(choices=['cli'])
 }
 
+
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in ce_argument_spec:
         if key not in ['provider', 'transport'] and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
-                    'removed in a future version' % key)
+                            'removed in a future version' % key)
+
 
 def load_params(module):
     provider = module.params.get('provider') or dict()
@@ -75,13 +78,15 @@ def load_params(module):
             if module.params.get(key) is None and value is not None:
                 module.params[key] = value
 
+
 def get_connection(module):
-    global _DEVICE_CONNECTION
-    if not _DEVICE_CONNECTION:
+    global _DEVICE_CLI_CONNECTION
+    if not _DEVICE_CLI_CONNECTION:
         load_params(module)
         conn = Cli(module)
-        _DEVICE_CONNECTION = conn
-    return _DEVICE_CONNECTION
+        _DEVICE_CLI_CONNECTION = conn
+    return _DEVICE_CLI_CONNECTION
+
 
 def rm_config_prefix(cfg):
     if not cfg:
@@ -96,6 +101,7 @@ def rm_config_prefix(cfg):
             if cmds[i][:index] == ' ' * index:
                 cmds[i] = cmds[i].replace("~", "", 1)
     return '\n'.join(cmds)
+
 
 class Cli:
 
@@ -215,13 +221,16 @@ def to_command(module, commands):
 
     return commands
 
+
 def get_config(module, flags=[]):
     conn = get_connection(module)
     return conn.get_config(flags)
 
+
 def run_commands(module, commands, check_rc=True):
     conn = get_connection(module)
     return conn.run_commands(to_command(module, commands), check_rc)
+
 
 def load_config(module, config):
     conn = get_connection(module)
@@ -232,6 +241,7 @@ def ce_unknown_host_cb(host, fingerprint):
     """ ce_unknown_host_cb """
 
     return True
+
 
 def get_nc_set_id(xml_str):
     """get netconf set-id value"""
@@ -259,7 +269,7 @@ def get_xml_line(xml_list, index):
     return ele
 
 
-def merge_xml(xml1, xml2):
+def merge_nc_xml(xml1, xml2):
     """merge xml1 and xml2"""
 
     xml1_list = xml1.split("</data>")[0].split("\n")
@@ -292,48 +302,60 @@ def merge_xml(xml1, xml2):
 class Netconf(object):
     """ Netconf """
 
-    def __init__(self, **kwargs):
+    def __init__(self, module):
+
+        self._module = module
 
         if not HAS_NCCLIENT:
-            raise Exception("the ncclient library is required")
+            self._module.fail_json(msg='Error: The ncclient library is required.')
 
-        self.mc = None
-
-        host = kwargs["host"]
-        port = kwargs["port"]
-        username = kwargs["username"]
-        password = kwargs["password"]
-
-        self.mc = manager.connect(host=host, port=port,
-                                  username=username,
-                                  password=password,
-                                  unknown_host_cb=ce_unknown_host_cb,
-                                  allow_agent=False,
-                                  look_for_keys=False,
-                                  hostkey_verify=False,
-                                  device_params={'name': 'huawei'},
-                                  timeout=30)
+        try:
+            self.mc = manager.connect(host=module.params["host"], port=module.params["port"],
+                                      username=module.params["username"],
+                                      password=module.params["password"],
+                                      unknown_host_cb=ce_unknown_host_cb,
+                                      allow_agent=False,
+                                      look_for_keys=False,
+                                      hostkey_verify=False,
+                                      device_params={'name': 'huawei'},
+                                      timeout=30)
+        except AuthenticationError:
+            self._module.fail_json(msg='Error: Authentication failed while connecting to device.')
+        except Exception:
+            err = get_exception()
+            self._module.fail_json(msg='Error: %s' % str(err).replace("\r\n", ""))
+            raise
 
     def __del__(self):
 
         self.mc.close_session()
 
-    def set_config(self, **kwargs):
+    def set_config(self, xml_str):
         """ set_config """
 
-        confstr = kwargs["config"]
-        con_obj = self.mc.edit_config(target='running', config=confstr)
+        con_obj = None
 
-        return con_obj
+        try:
+            con_obj = self.mc.edit_config(target='running', config=xml_str)
+        except RPCError:
+            err = get_exception()
+            self._module.fail_json(msg='Error: %s' % str(err).replace("\r\n", ""))
 
-    def get_config(self, **kwargs):
+        return con_obj.xml
+
+    def get_config(self, xml_str):
         """ get_config """
 
-        filterstr = kwargs["filter"]
-        con_obj = self.mc.get(filter=filterstr)
+        con_obj = None
+        try:
+            con_obj = self.mc.get(filter=xml_str)
+        except RPCError:
+            err = get_exception()
+            self._module.fail_json(msg='Error: %s' % str(err).replace("\r\n", ""))
+
         set_id = get_nc_set_id(con_obj.xml)
         if not set_id:
-            return con_obj
+            return con_obj.xml
 
         # continue to get next
         xml_str = con_obj.xml
@@ -342,34 +364,82 @@ class Netconf(object):
             set_attr["set-id"] = str(set_id)
             xsd_fetch = xml_.new_ele_ns('get-next', "http://www.huawei.com/netconf/capability/base/1.0", set_attr)
             # get next data
-            con_obj_next = self.mc.dispatch(xsd_fetch)
+            try:
+                con_obj_next = self.mc.dispatch(xsd_fetch)
+            except RPCError:
+                err = get_exception()
+                self._module.fail_json(msg='Error: %s' % str(err).replace("\r\n", ""))
+
             if "<data/>" in con_obj_next.xml:
                 break
+
             # merge two xml data
-            xml_str = merge_xml(xml_str, con_obj_next.xml)
+            xml_str = merge_nc_xml(xml_str, con_obj_next.xml)
             set_id = get_nc_set_id(con_obj_next.xml)
 
-        con_obj._raw = xml_str
-        return con_obj
+        return xml_str
 
-    def execute_action(self, **kwargs):
+    def execute_action(self, xml_str):
         """huawei execute-action"""
 
-        confstr = kwargs["action"]
-        con_obj = self.mc.action(action=confstr)
+        con_obj = None
 
-        return con_obj
+        try:
+            con_obj = self.mc.action(action=xml_str)
+        except RPCError:
+            err = get_exception()
+            self._module.fail_json(msg='Error: %s' % str(err).replace("\r\n", ""))
+        except TimeoutExpiredError:
+            raise
 
-    def execute_cli(self, **kwargs):
+        return con_obj.xml
+
+    def execute_cli(self, xml_str):
         """huawei execute-cli"""
 
-        confstr = kwargs["command"]
-        con_obj = self.mc.cli(command=confstr)
+        con_obj = None
 
-        return con_obj
+        try:
+            con_obj = self.mc.cli(command=xml_str)
+        except RPCError:
+            err = get_exception()
+            self._module.fail_json(msg='Error: %s' % str(err).replace("\r\n", ""))
+
+        return con_obj.xml
 
 
-def get_netconf(**kwargs):
-    """ get_netconf """
+def get_nc_connection(module):
+    global _DEVICE_NC_CONNECTION
+    if not _DEVICE_NC_CONNECTION:
+        load_params(module)
+        conn = Netconf(module)
+        _DEVICE_NC_CONNECTION = conn
+    return _DEVICE_NC_CONNECTION
 
-    return Netconf(**kwargs)
+
+def set_nc_config(module, xml_str):
+    """ set_config """
+
+    conn = get_nc_connection(module)
+    return conn.set_config(xml_str)
+
+
+def get_nc_config(module, xml_str):
+    """ get_config """
+
+    conn = get_nc_connection(module)
+    return conn.get_config(xml_str)
+
+
+def execute_nc_action(module, xml_str):
+    """ huawei execute-action """
+
+    conn = get_nc_connection(module)
+    return conn.execute_action(xml_str)
+
+
+def execute_nc_cli(module, xml_str):
+    """ huawei execute-cli """
+
+    conn = get_nc_connection(module)
+    return conn.execute_cli(xml_str)
