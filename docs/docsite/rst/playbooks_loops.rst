@@ -520,7 +520,7 @@ Subsequent loops over the registered variable to inspect the results may look li
       when: item.rc != 0
       with_items: "{{ echo.results }}"
 
-During iteration, the result of the current item will be placed in the variable:
+During iteration, the result of the current item will be placed in the variable::
 
     - shell: echo "{{ item }}"
       with_items:
