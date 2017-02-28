@@ -200,7 +200,7 @@ class VMwareResourcePool(object):
                     break
         return pool_obj
 
-    def get_obj(self, vimtype, name, return_all=False):
+    def get_obj(self, vimtype, name, return_all = False):
         obj = list()
         container = self.content.viewManager.CreateContainerView(
             self.content.rootFolder, vimtype, True)
@@ -235,14 +235,14 @@ class VMwareResourcePool(object):
             rp_states[self.state][self.check_rp_state()]()
 
         except vmodl.RuntimeFault as runtime_fault:
-            self.module.fail_json(msg=runtime_fault.msg)
+            self.module.fail_json(msg = runtime_fault.msg)
         except vmodl.MethodFault as method_fault:
-            self.module.fail_json(msg=method_fault.msg)
+            self.module.fail_json(msg = method_fault.msg)
         except Exception as e:
-            self.module.fail_json(msg=str(e))
+            self.module.fail_json(msg = str(e))
 
     def state_exit_unchanged(self):
-        self.module.exit_json(changed=False)
+        self.module.exit_json(changed = False)
 
     def state_remove_rp(self):
         changed = True
@@ -253,8 +253,8 @@ class VMwareResourcePool(object):
             success, result = wait_for_task(task)
 
         except:
-            self.module.fail_json(msg="Failed to remove resource pool '%s' '%s'" % (self.resource_pool,resource_pool))
-        self.module.exit_json(changed=changed, result=str(result))
+            self.module.fail_json(msg = "Failed to remove resource pool '%s' '%s'" % (self.resource_pool,resource_pool))
+        self.module.exit_json(changed = changed, result = str(result))
 
     def state_add_rp(self):
         changed = True
@@ -284,7 +284,7 @@ class VMwareResourcePool(object):
         rootResourcePool = self.cluster_obj.resourcePool
         task = rootResourcePool.CreateResourcePool(self.resource_pool, rp_spec)
 
-        self.module.exit_json(changed=changed)
+        self.module.exit_json(changed = changed)
 
     def check_rp_state(self):
 
@@ -315,10 +315,10 @@ def main():
                               cpu_expandable_reservations = dict(type = 'bool',default = "True"),
                               state = dict(default = 'present', choices = ['present', 'absent'], type = 'str')))
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleModule(argument_spec = argument_spec, supports_check_mode = True)
 
     if not HAS_PYVMOMI:
-        module.fail_json(msg='pyvmomi is required for this module')
+        module.fail_json(msg = 'pyvmomi is required for this module')
 
     vmware_rp = VMwareResourcePool(module)
     vmware_rp.process_state()
