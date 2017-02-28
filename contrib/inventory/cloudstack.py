@@ -72,7 +72,6 @@ usage: cloudstack.py [--list] [--host HOST] [--project PROJECT]  [--domain DOMAI
 
 from __future__ import print_function
 
-import os
 import sys
 import argparse
 
@@ -102,9 +101,8 @@ class CloudStackInventory(object):
         options = parser.parse_args()
         try:
             self.cs = CloudStack(**read_config())
-        except CloudStackException as e:
+        except CloudStackException:
             print("Error: Could not connect to CloudStack API", file=sys.stderr)
-            sys.exit(1)
 
         domain_id = None
         if options.domain:
@@ -122,8 +120,7 @@ class CloudStackInventory(object):
             data = self.get_list(project_id, domain_id)
             print(json.dumps(data, indent=2))
         else:
-            print("usage: --list | --host <hostname> [--project <project>] [--domain <domain_path>]",
-                  file=sys.stderr)
+            print("usage: --list | --host <hostname> [--project <project>] [--domain <domain_path>]", file=sys.stderr)
             sys.exit(1)
 
     def get_domain_id(self, domain):
@@ -143,7 +140,6 @@ class CloudStackInventory(object):
                     return p['id']
         print("Error: Project %s not found." % project, file=sys.stderr)
         sys.exit(1)
-
 
     def get_host(self, name, project_id=None, domain_id=None):
         hosts = self.cs.listVirtualMachines(projectid=project_id, domainid=domain_id)
@@ -182,22 +178,21 @@ class CloudStackInventory(object):
                 break
         return data
 
-
     def get_list(self, project_id=None, domain_id=None):
         data = {
             'all': {
                 'hosts': [],
-                },
+            },
             '_meta': {
                 'hostvars': {},
-                },
-            }
+            },
+        }
 
         groups = self.cs.listInstanceGroups(projectid=project_id, domainid=domain_id)
         if groups:
             for group in groups['instancegroup']:
                 group_name = group['name']
-                if group_name and not group_name in data:
+                if group_name and group_name not in data:
                     data[group_name] = {
                         'hosts': []
                     }
@@ -242,7 +237,7 @@ class CloudStackInventory(object):
                     'netmask': nic['netmask'],
                     'gateway': nic['gateway'],
                     'type': nic['type'],
-                    })
+                })
                 if nic['isdefault']:
                     data['_meta']['hostvars'][host_name]['default_ip'] = nic['ipaddress']
 
