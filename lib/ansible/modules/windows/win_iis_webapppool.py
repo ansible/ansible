@@ -18,22 +18,22 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
+
 
 DOCUMENTATION = r'''
 ---
 module: win_iis_webapppool
 version_added: "2.0"
-short_description: Configures a IIS Web Application Pool.
+short_description: Configures an IIS Web Application Pool.
 description:
-     - Creates, Removes and configures a IIS Web Application Pool
+     - Creates, Removes and configures an IIS Web Application Pool
 options:
   name:
     description:
-      - Names of application pool
+      - Name of application pool
     required: true
     default: null
     aliases: []
@@ -47,51 +47,107 @@ options:
       - restarted
     required: false
     default: null
-    aliases: []
   attributes:
     description:
-      - Application Pool attributes from string where attributes are separated by a pipe and attribute name/values by colon Ex. "foo:1|bar:2"
+      - Application Pool attributes from string where attributes are separated by a pipe and attribute name/values by colon Ex. "foo:1|bar:2".
+      - The following attributes may only have the following names.
+      - managedPipelineMode may be either "Integrated" or  "Classic".
+      - startMode may be either "OnDemand" or  "AlwaysRunning".
+      - state may be one of "Starting", "Started", "Stopping", "Stopped", "Unknown".
+        Use the C(state) module parameter to modify, states shown are reflect the possible runtime values.
     required: false
     default: null
-    aliases: []
 author: Henrik Wallström
 '''
 
 EXAMPLES = r'''
-- name: Return information about an existing application pool
+- name: return information about an existing application pool
   win_iis_webapppool:
     name: DefaultAppPool
 
-- name: Ensure AppPool is started
+- name: Create a new application pool in 'Started' state
   win_iis_webapppool:
     name: AppPool
     state: started
 
-- name: Ensure AppPool is stopped
+- name: Stop an application pool
   win_iis_webapppool:
     name: AppPool
     state: stopped
 
-- name: Restart AppPool
+- name: Restart an application pool
   win_iis_webapppool:
     name: AppPool
     state: restart
 
-- name: Change application pool attributes without touching state
+- name: Changes application pool attributes without touching state
   win_iis_webapppool:
     name: AppPool
-    attributes: managedRuntimeVersion:v4.0|autoStart:false
+    attributes: 'managedRuntimeVersion:v4.0|autoStart:false'
 
-- name: Create AnotherAppPool and start it using .NET 4.0 and disabling autostart
+- name: Creates an application pool and sets attributes
   win_iis_webapppool:
     name: AnotherAppPool
     state: started
-    attributes: managedRuntimeVersion:v4.0|autoStart:false
+    attributes: 'managedRuntimeVersion:v4.0|autoStart:false'
 
-- name: Create AppPool and start it using .NET 4.0
+# Playbook example
+---
+
+- name: App Pool with .NET 4.0
   win_iis_webapppool:
-    name: AppPool
+    name: 'AppPool'
     state: started
     attributes: managedRuntimeVersion:v4.0
   register: webapppool
+
 '''
+
+RETURN = '''
+attributes:
+  description:
+    - Application Pool attributes from that were processed by this module invocation.
+  returned: success
+  type: dictionary
+  sample:
+     "enable32BitAppOnWin64": "true"
+     "managedRuntimeVersion": "v4.0"
+     "managedPipelineMode": "Classic"
+info:
+  description: Information on current state of the Application Pool
+  returned: success
+  type: dictionary
+  sample:
+  contains:
+    attributes:
+      description: key value pairs showing the current Application Pool attributes
+      returned: success
+      type: dictionary
+      sample:
+            "autoStart": true
+            "managedRuntimeLoader": "webengine4.dll"
+            "managedPipelineMode": "Classic"
+            "name": "DefaultAppPool"
+            "CLRConfigFile": ""
+            "passAnonymousToken": true
+            "applicationPoolSid": "S-1-5-82-1352790163-598702362-1775843902-1923651883-1762956711"
+            "queueLength": 1000
+            "managedRuntimeVersion": "v4.0"
+            "state": "Started"
+            "enableConfigurationOverride": true
+            "startMode": "OnDemand"
+            "enable32BitAppOnWin64": true
+    name:
+      description:
+        - Name of Application Pool that was processed by this module invocation.
+      returned: success
+      type: string
+      sample: "DefaultAppPool"
+    state:
+      description:
+        - Current runtime state of the pool as the module completed.
+      returned: success
+      type: string
+      sample: "Started"
+'''
+
