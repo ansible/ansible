@@ -27,7 +27,7 @@ DOCUMENTATION = """
 module: ce_config
 version_added: "2.3"
 author: "QijunPan (@CloudEngine-Ansible)"
-short_description: Manage Huawei CloudEngine configuration sections
+short_description: Manage Huawei CloudEngine configuration sections.
 description:
   - Huawei CloudEngine configurations use a simple block indent file syntax
     for segmenting configuration into sections.  This module provides
@@ -141,7 +141,7 @@ options:
         is collected from the device.  When the value is set to true,
         the command used to collect the current-configuration is append with
         the all keyword.  When the value is set to false, the command
-        is issued without the all keyword
+        is issued without the all keyword.
     required: false
     default: false
   save:
@@ -161,11 +161,15 @@ EXAMPLES = """
 #       transport and authentication to the node.
 
 - name: CloudEngine config test
+  hosts: cloudengine
+  connection: local
+  gather_facts: no
   vars:
     cli:
       host: "{{ inventory_hostname }}"
-      username: admin
-      password: admin
+      port: "{{ ansible_ssh_port }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
       transport: cli
 
   tasks:
@@ -215,9 +219,9 @@ backup_path:
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.cloudengine import get_config, load_config, run_commands
-from ansible.module_utils.cloudengine import ce_argument_spec
-from ansible.module_utils.cloudengine import check_args as ce_check_args
+from ansible.module_utils.ce import get_config, load_config, run_commands
+from ansible.module_utils.ce import ce_argument_spec
+from ansible.module_utils.ce import check_args as ce_check_args
 
 def check_args(module, warnings):
     ce_check_args(module, warnings)
