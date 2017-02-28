@@ -287,7 +287,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # base opts
         parser = SortedOptParser(usage, version=CLI.version("%prog"))
-        parser.add_option('-v','--verbose', dest='verbosity', default=0, action="count",
+        parser.add_option('-v','--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
             help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
 
         if inventory_opts:
