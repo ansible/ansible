@@ -33,29 +33,32 @@ notes:
 options:
     evpn_overlay_enable:
         description:
-            - configure EVPN as the VXLAN control plane.
+            - Configure EVPN as the VXLAN control plane.
         required: true
         choices: ['enable','disable']
 '''
 
 EXAMPLES = '''
-
-- name: CloudEngine evpn global test
+- name: evpn global module test
+  hosts: cloudengine
+  connection: local
+  gather_facts: no
   vars:
     cli:
       host: "{{ inventory_hostname }}"
-      username: admin
-      password: admin
+      port: "{{ ansible_ssh_port }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
       transport: cli
 
   tasks:
 
-  - name: "Configure EVPN as the VXLAN control plan"
+  - name: Configure EVPN as the VXLAN control plan
     ce_evpn_global:
       evpn_overlay_enable: enable
       provider: "{{ cli }}"
 
-  - name: "Unconfigure EVPN as the VXLAN control plan"
+  - name: Undo EVPN as the VXLAN control plan
     ce_evpn_global:
       evpn_overlay_enable: disable
       provider: "{{ cli }}"
@@ -98,8 +101,8 @@ changed:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.cloudengine import get_config, load_config
-from ansible.module_utils.cloudengine import ce_argument_spec
+from ansible.module_utils.ce import get_config, load_config
+from ansible.module_utils.ce import ce_argument_spec
 
 
 class EvpnGlobal(object):
@@ -116,13 +119,6 @@ class EvpnGlobal(object):
         self.commands = list()
         self.global_info = dict()
         self.conf_exist = False
-
-        # host info
-        self.host = self.module.params['host']
-        self.username = self.module.params['username']
-        self.password = self.module.params['password']
-        self.port = self.module.params['port']
-
         # state
         self.changed = False
         self.updates_cmd = list()
