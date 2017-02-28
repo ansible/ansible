@@ -101,6 +101,11 @@ options:
     description: The destination file for the certificate.
     required: true
     aliases: ['cert']
+  fullchain:
+    description: Include the full certificate chain in the destination file.
+    required: false
+    default: false
+    version_added: 2.3
   remaining_days:
     description:
       - "The number of days the certificate must have left being valid.
