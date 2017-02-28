@@ -127,7 +127,7 @@ class LookupModule(LookupBase):
 
         for t in terms:
             if t.startswith('@'):       # e.g. "@10.0.1.2,192.0.2.1" is ok.
-                if HAVE_DNSRESOLVER == False:
+                if HAVE_DNSRESOLVER is False:
                     raise AnsibleError("Can't LOOKUP(dig): module dns.resolver is required to specify nameserver")
                 nsset = t[1:].split(',')
                 nameservers = []
@@ -171,11 +171,11 @@ class LookupModule(LookupBase):
 
         ret = []
 
-        if HAVE_DNSRESOLVER == False and domain and qtype.upper() == 'A' and flat:
+        if HAVE_DNSRESOLVER is False and domain and qtype.upper() == 'A' and flat:
             ret.append(socket.gethostbyname(domain.rstrip('.')))
 
         #this is as far as we could go without dns.resolver
-        elif HAVE_DNSRESOLVER == False:
+        elif HAVE_DNSRESOLVER is False:
             raise AnsibleError("Can't LOOKUP(dig): module dns.resolver is required for this request")
 
         else:
