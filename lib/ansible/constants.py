@@ -195,6 +195,7 @@ MERGE_MULTIPLE_CLI_TAGS = get_config(p, DEFAULTS, 'merge_multiple_cli_tags', 'AN
 
 #### GENERALLY CONFIGURABLE THINGS ####
 DEFAULT_DEBUG             = get_config(p, DEFAULTS, 'debug',            'ANSIBLE_DEBUG',            False, value_type='boolean')
+DEFAULT_VERBOSITY         = get_config(p, DEFAULTS, 'verbosity',        'ANSIBLE_VERBOSITY',        0, value_type='integer')
 DEFAULT_HOST_LIST         = get_config(p, DEFAULTS,'inventory', 'ANSIBLE_INVENTORY', DEPRECATED_HOST_LIST, value_type='path')
 DEFAULT_ROLES_PATH        = get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       '/etc/ansible/roles', value_type='pathlist', expand_relative_paths=True)
 DEFAULT_REMOTE_TMP        = get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '~/.ansible/tmp')
