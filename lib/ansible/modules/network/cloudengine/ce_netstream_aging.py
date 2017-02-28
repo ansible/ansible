@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -62,18 +61,21 @@ options:
 """
 
 EXAMPLES = '''
-
-- name: CloudEngine netstream aging test
+- name: netstream aging module test
+  hosts: cloudengine
+  connection: local
+  gather_facts: no
   vars:
     cli:
       host: "{{ inventory_hostname }}"
-      username: admin
-      password: admin
+      port: "{{ ansible_ssh_port }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
       transport: cli
 
   tasks:
 
-  - name: "Configure netstream ip timeout active interval , the interval is 40 minutes"
+  - name: Configure netstream ip timeout active interval , the interval is 40 minutes.
     ce_netstream_aging:
       timeout_interval: 40
       type: ip
@@ -81,7 +83,7 @@ EXAMPLES = '''
       state: present
       provider: "{{ cli }}"
 
-  - name: "Configure netstream vxlan timeout active interval , the interval is 40 minutes"
+  - name: Configure netstream vxlan timeout active interval , the interval is 40 minutes.
     ce_netstream_aging:
       timeout_interval: 40
       type: vxlan
@@ -89,42 +91,42 @@ EXAMPLES = '''
       active_state: present
       provider: "{{ cli }}"
 
-  - name: "Delete netstream ip timeout active interval , set the ip timeout interval to 30 minutes"
+  - name: Delete netstream ip timeout active interval , set the ip timeout interval to 30 minutes.
     ce_netstream_aging:
       type: ip
       timeout_type: active
       state: absent
       provider: "{{ cli }}"
 
-  - name: "Delete netstream vxlan timeout active interval , set the vxlan timeout interval to 30 minutes"
+  - name: Delete netstream vxlan timeout active interval , set the vxlan timeout interval to 30 minutes.
     ce_netstream_aging:
       type: vxlan
       timeout_type: active
       state: absent
       provider: "{{ cli }}"
 
-  - name: "Enable netstream ip tcp session timeout"
+  - name: Enable netstream ip tcp session timeout.
     ce_netstream_aging:
       type: ip
       timeout_type: tcp-session
       state: present
       provider: "{{ cli }}"
 
-  - name: "Enable netstream vxlan tcp session timeout"
+  - name: Enable netstream vxlan tcp session timeout.
     ce_netstream_aging:
       type: vxlan
       timeout_type: tcp-session
       state: present
       provider: "{{ cli }}"
 
-  - name: "Disable netstream ip tcp session timeout"
+  - name: Disable netstream ip tcp session timeout.
     ce_netstream_aging:
       type: ip
       timeout_type: tcp-session
       state: absent
       provider: "{{ cli }}"
 
-  - name: "Disable netstream vxlan tcp session timeout"
+  - name: Disable netstream vxlan tcp session timeout.
     ce_netstream_aging:
       type: vxlan
       timeout_type: tcp-session
@@ -197,10 +199,9 @@ changed:
     sample: true
 '''
 
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.cloudengine import get_config, load_config
-from ansible.module_utils.cloudengine import ce_argument_spec
+from ansible.module_utils.ce import get_config, load_config
+from ansible.module_utils.ce import ce_argument_spec
 
 
 class NetStreamAging(object):
