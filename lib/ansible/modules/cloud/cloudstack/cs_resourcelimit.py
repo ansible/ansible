@@ -158,6 +158,8 @@ class AnsibleCloudStackResourceLimit(AnsibleCloudStack):
         args['resourcetype'] = self.get_resource_type()
         resource_limit = self.cs.listResourceLimits(**args)
         if resource_limit:
+            if 'limit' in resource_limit['resourcelimit'][0]:
+                resource_limit['resourcelimit'][0]['limit'] = int(resource_limit['resourcelimit'][0])
             return resource_limit['resourcelimit'][0]
         self.module.fail_json(msg="Resource limit type '%s' not found." % self.module.params.get('resource_type'))
 
@@ -192,10 +194,10 @@ def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
         resource_type = dict(required=True, choices=RESOURCE_TYPES.keys(), aliases=['type']),
-        limit = dict(default=-1, aliases=['max']),
         domain = dict(default=None),
         account = dict(default=None),
         project = dict(default=None),
+        limit=dict(default=-1, aliases=['max'], type='int'),
     ))
 
     module = AnsibleModule(
