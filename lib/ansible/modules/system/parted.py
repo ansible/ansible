@@ -41,8 +41,9 @@ notes:
     through C(/sys/) to obtain disk information. In this case the units CHS and
     CYL are not supported.
 requirements:
-  - This module requires parted version >= 3.1 or, if parted version < 3.1,
-    then it requires a Linux version running the sysfs file system C(/sys/).
+  - This module requires parted version 1.8.3 and above.
+  - If the version of parted is below 3.1, it requires a Linux version running
+    the sysfs file system C(/sys/).
 options:
   device:
     description: The block device (disk) where to operate.
@@ -84,12 +85,16 @@ options:
   part_start:
     description:
      - Where the partition will start as offset from the beginning of the disk,
-       that is, the "distance" from the start of the disk.
+       that is, the "distance" from the start of the disk. The distance can be
+       specified with all the units supported by parted (except compat) and
+       it is case sensitive. E.g. C(10GiB), C(15%).
     default: 0%
   part_end :
     description:
      - Where the partition will end as offset from the beginning of the disk,
-       that is, the "distance" from the start of the disk.
+       that is, the "distance" from the start of the disk. The distance can be
+       specified with all the units supported by parted (except compat) and
+       it is case sensitive. E.g. C(10GiB), C(15%).
     default: 100%
   name:
     description:
@@ -98,10 +103,10 @@ options:
     description: A list of the flags that has to be set on the partition.
   state:
     description:
-     - If to create or delete a partition. If not present the module will return
-       only the device information.
-    choices: ['present', 'absent']
-    default: present
+     - If to create or delete a partition. If set to C(info) the module will
+       only return the device information.
+    choices: ['present', 'absent', 'info']
+    default: info
 '''
 
 RETURN = '''
@@ -141,8 +146,7 @@ partition_info:
           "fstype": null,
           "num": 2,
           "size": 4.0
-        }],
-        "script": "unit 'GiB' print"
+        }]
       }
 '''
 
@@ -164,7 +168,7 @@ EXAMPLES = """
     device: /dev/sdb
     number: 1
     state: present
-    part_end: 1GiB
+    part_end: 1gib
 
 # Create a new primary partition for LVM
 - parted:
@@ -172,7 +176,7 @@ EXAMPLES = """
     number: 2
     flags: [ lvm ]
     state: present
-    part_start: 1GiB
+    part_start: 1gib
 
 # Read device information (always use unit when probing)
 - parted: device=/dev/sdb unit=MiB
@@ -195,7 +199,43 @@ import re
 import os
 
 
-def parse_partition_info(output, unit):
+# Reference prefixes (International System of Units and IEC)
+units_si  = ['B', 'KB', 'MB', 'GB', 'TB']
+units_iec = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
+parted_units = units_si + units_iec + ['s', '%', 'cyl', 'chs', 'compact']
+
+
+def parse_unit(size_str, unit=''):
+    """
+    Parses a string containing a size of information
+    """
+    matches = re.search(r'^([\d.]+)([\w%]+)?$', size_str)
+    if matches is None:
+        # "<cylinder>,<head>,<sector>" format
+        matches = re.search(r'^(\d+),(\d+),(\d+)$', size_str)
+        if matches is None:
+            module.fail_json(
+                msg="Error interpreting parted size output: '%s'" % size_str
+            )
+
+        size = {
+            'cylinder': int(matches.group(1)),
+            'head':     int(matches.group(2)),
+            'sector':   int(matches.group(3))
+        }
+        unit = 'chs'
+
+    else:
+        # Normal format: "<number>[<unit>]"
+        if matches.group(2) is not None:
+            unit = matches.group(2)
+
+        size = float(matches.group(1))
+
+    return size, unit
+
+
+def parse_partition_info(parted_output, unit):
     """
     Parses the output of parted and transforms the data into
     a dictionary.
@@ -218,36 +258,62 @@ def parse_partition_info(output, unit):
        (for CHS/CYL)
        "number":"begin":"end":"filesystem-type":"partition-name":"flags-set";
     """
-    lines = output.split('\n')
+    lines = [x for x in parted_output.split('\n') if x.strip() != '']
+
+    # Generic device info
     generic_params = lines[1].rstrip(';').split(':')
+
+    # The unit is read once, because parted always returns the same unit
     size, unit = parse_unit(generic_params[1], unit)
 
     generic = {
         'dev':   generic_params[0],
         'size':  size,
-        'unit':  unit,
+        'unit':  unit.lower(),
         'table': generic_params[5],
         'model': generic_params[6],
         'logical_block':  int(generic_params[3]),
         'physical_block': int(generic_params[4])
     }
 
+    # CYL and CHS have an additional line in the output
+    if unit in ['cyl', 'chs']:
+        chs_info = lines[2].rstrip(';').split(':')
+        cyl_size, cyl_unit = parse_unit(chs_info[3])
+        generic['chs_info'] = {
+            'cylinders': int(chs_info[0]),
+            'heads':     int(chs_info[1]),
+            'sectors':   int(chs_info[2]),
+            'cyl_size':  cyl_size,
+            'cyl_size_unit': cyl_unit.lower()
+        }
+        lines = lines[1:]
+
     parts = []
     for line in lines[2:]:
-        line = line.strip().rstrip(';')
-        if not line:
-            continue
+        part_params = line.rstrip(';').split(':')
 
-        part_params = line.split(':')
-        flags = [f for f in part_params[6].split(', ') if f != '']
+        # CHS use a different format than BYT, but contrary to what stated by
+        # the author, CYL is the same as BYT. I've tested this undocumented
+        # behaviour down to parted version 1.8.3, which is the first version
+        # that supports the machine parseable output.
+        if unit != 'chs':
+            size   = parse_unit(part_params[3])[0]
+            fstype = part_params[4]
+            flags  = part_params[5]
+        else:
+            size   = ""
+            fstype = part_params[3]
+            flags  = part_params[4]
 
         parts.append({
             'num':    int(part_params[0]),
-            'begin':  parse_unit(part_params[1], unit)[0],
-            'end':    parse_unit(part_params[2], unit)[0],
-            'size':   parse_unit(part_params[3], unit)[0],
-            'fstype': part_params[4] or None,
-            'flags':  flags,
+            'begin':  parse_unit(part_params[1])[0],
+            'end':    parse_unit(part_params[2])[0],
+            'size':   size,
+            'fstype': fstype,
+            'flags':  [f.strip() for f in flags.split(', ') if f != ''],
+            'unit':  unit.lower(),
         })
 
     return {'generic': generic, 'partitions': parts}
@@ -260,15 +326,13 @@ def format_disk_size(size_bytes, unit):
     This function has been adapted from https://github.com/Distrotech/parted/blo
     b/279d9d869ff472c52b9ec2e180d568f0c99e30b0/libparted/unit.c
     """
+    global units_si, units_iec
+
     unit = unit.lower()
 
     # Shortcut
     if size_bytes == 0:
         return 0.0
-
-    # Reference prefixes (International System of Units and IEC)
-    units_si  = ['b', 'kb',  'mb',  'gb',  'tb',  'pb',  'eb',  'zb',  'yb']
-    units_iec = ['b', 'kib', 'mib', 'gib', 'tib', 'pib', 'eib', 'zib', 'yib']
 
     # Cases where we default to 'compact'
     if unit in ['', 'compact', 'cyl', 'chs']:
@@ -307,20 +371,6 @@ def format_disk_size(size_bytes, unit):
     return round(output, precision), unit
 
 
-def read_record(file_path, default=None):
-    """
-    Reads the first line of a file and returns it.
-    """
-    try:
-        f = open(file_path, 'r')
-        try:
-            return f.readline().strip()
-        finally:
-            f.close()
-    except IOError:
-        return default
-
-
 def get_unlabeled_device_info(device, unit):
     """
     Fetches device information directly from the kernel and it is used when
@@ -328,7 +378,7 @@ def get_unlabeled_device_info(device, unit):
     label.
     """
     device_name = os.path.basename(device)
-    base = "/sys/block/{0}".format(device_name)
+    base = "/sys/block/%s" % device_name
 
     vendor      = read_record(base + "/device/vendor", "Unknown")
     model       = read_record(base + "/device/model", "model")
@@ -346,7 +396,7 @@ def get_unlabeled_device_info(device, unit):
             'unit':           unit,
             'logical_block':  logic_block,
             'physical_block': phys_block,
-            'model':          "{0} {1}".format(vendor, model),
+            'model':          "%s %s" % (vendor, model),
         },
         'partitions': []
     }
@@ -366,12 +416,12 @@ def get_device_info(device, unit):
     if label_needed:
         return get_unlabeled_device_info(device, unit)
 
-    command = "parted -s -m {0} -- unit '{1}' print".format(device, unit)
+    command = "parted -s -m %s -- unit '%s' print" % (device, unit)
     rc, out, err = module.run_command(command)
     if rc != 0 and 'unrecognised disk label' not in err:
         module.fail_json(msg=(
             "Error while getting device information with parted "
-            "script: '{0}'".format(command)),
+            "script: '%s'" % command),
             rc=rc, out=out, err=err
         )
 
@@ -385,12 +435,12 @@ def check_parted_label(device):
     http://upstream.rosalinux.ru/changelogs/libparted/3.1/changelog.html
     """
     # Check the version
-    parted_major, parted_minor = parted_version()
+    parted_major, parted_minor, _ = parted_version()
     if (parted_major == 3 and parted_minor >= 1) or parted_major > 3:
         return False
 
     # Older parted versions return a message in the stdout and RC > 0.
-    rc, out, err = module.run_command("parted -s -m {0} print".format(device))
+    rc, out, err = module.run_command("parted -s -m %s print" % device)
     if rc != 0 and 'unrecognised disk label' in out.lower():
         return True
 
@@ -409,18 +459,22 @@ def parted_version():
             msg="Failed to get parted version.", rc=rc, out=out, err=err
         )
 
-    lines = out.split('\n')
+    lines = [x for x in out.split('\n') if x.strip() != '']
     if len(lines) == 0:
         module.fail_json(msg="Failed to get parted version.", rc=0, out=out)
 
-    matches = re.search(r'^parted.+(\d+)\.(\d+)$', lines[0])
-    if len(matches.groups()) != 2:
+    matches = re.search(r'^parted.+(\d+)\.(\d+)(?:\.(\d+))?$', lines[0])
+    if matches is None:
         module.fail_json(msg="Failed to get parted version.", rc=0, out=out)
 
+    # Convert version to numbers
     major = int(matches.group(1))
     minor = int(matches.group(2))
+    rev   = 0
+    if matches.group(3) is not None:
+        rev = int(matches.group(3))
 
-    return major, minor
+    return major, minor, rev
 
 
 def parted(script, device, align):
@@ -430,16 +484,28 @@ def parted(script, device, align):
     global module
 
     if script and not module.check_mode:
-        command = "parted -s -m -a {0} {1} -- {2}".format(align, device, script)
+        command = "parted -s -m -a %s %s -- %s" % (align, device, script)
         rc, out, err = module.run_command(command)
 
         if rc != 0:
             module.fail_json(
-                msg="Error while running parted script: '{0}'".format(
-                    command.strip()
-                ),
+                msg="Error while running parted script: %s" % command.strip(),
                 rc=rc, out=out, err=err
             )
+
+
+def read_record(file_path, default=None):
+    """
+    Reads the first line of a file and returns it.
+    """
+    try:
+        f = open(file_path, 'r')
+        try:
+            return f.readline().strip()
+        finally:
+            f.close()
+    except IOError:
+        return default
 
 
 def part_exists(partitions, attribute, number):
@@ -453,51 +519,34 @@ def part_exists(partitions, attribute, number):
     )
 
 
-def parse_unit(size_str, unit, ceil=True):
+def check_size_format(size_str):
     """
-    Converts '123.1unit' string into ints. If ceil is True it will be rounded up
-    (124) and and down (123) if ceil is False.
+    Checks if the input string is an allowed size
     """
-    matches = re.search(r'^([\d.]+)(\w+)?$', size_str)
-    if matches is None:
-        module.fail_json(msg="Error interpreting the size of the disk given by parted.")
-
-    size = locale.atof(matches.group(1))
-    if len(matches.groups()) == 2:
-        unit = matches.group(2).lower()
-
-    size = math.floor(size)
-    if ceil:
-        math.ceil(size)
-
-    return size, unit
+    size, unit = parse_unit(size_str)
+    return unit in parted_units
 
 
 def main():
-    global module
+    global module, units_si, units_iec
+
     changed = False
     output_script = ""
     script = ""
-
     module = AnsibleModule(
         argument_spec={
             'device': {'required': True, 'type': 'str'},
             'align': {
                 'default': 'optimal',
                 'choices': ['none', 'cylinder', 'minimal', 'optimal'],
-                'required': False,
                 'type': 'str'
             },
-            'number': {'default': None, 'type': 'int', 'required': False},
+            'number': {'default': None, 'type': 'int'},
 
             # unit <unit> command
             'unit': {
                 'default': 'KiB',
-                'choices': [
-                    's', 'B', 'KB', 'KiB', 'MB', 'MiB', 'GB', 'GiB', 'TB',
-                    'TiB', '%', 'cyl', 'chs', 'compact'
-                ],
-                'required': False,
+                'choices': parted_units,
                 'type': 'str'
             },
 
@@ -507,7 +556,6 @@ def main():
                     'aix', 'amiga', 'bsd', 'dvh', 'gpt', 'loop', 'mac', 'msdos',
                     'pc98', 'sun', ''
                 ],
-                'required': False,
                 'type': 'str'
             },
 
@@ -515,38 +563,34 @@ def main():
             'part_type': {
                 'default': 'primary',
                 'choices': ['primary', 'extended', 'logical'],
-                'required': False,
                 'type': 'str'
             },
-            'part_start': {'default': '0%', 'type': 'str', 'required': False},
-            'part_end': {'default': '100%', 'type': 'str', 'required': False},
+            'part_start': {'default': '0%', 'type': 'str'},
+            'part_end': {'default': '100%', 'type': 'str'},
 
             # name <partition> <name> command
-            'name': {'type': 'str', 'required': False},
+            'name': {'type': 'str'},
 
             # set <partition> <flag> <state> command
-            'flags': {'type': 'list', 'required': False},
+            'flags': {'type': 'list'},
 
             # rm/mkpart command
             'state': {
-                'choices': ['present', 'absent'],
-                'required': False,
+                'choices': ['present', 'absent', 'info'],
+                'default': 'info',
                 'type': 'str'
             }
         },
-        required_together=[
-            ['number', 'state']
-        ],
         supports_check_mode=True,
     )
 
     # Data extraction
     device      = module.params['device']
-    align       = module.params['align'].lower()
+    align       = module.params['align']
     number      = module.params['number']
     unit        = module.params['unit']
     label       = module.params['label']
-    part_type   = module.params['part_type'].lower()
+    part_type   = module.params['part_type']
     part_start  = module.params['part_start']
     part_end    = module.params['part_end']
     name        = module.params['name']
@@ -554,16 +598,26 @@ def main():
     flags       = module.params['flags']
 
     # Conditioning
-    if state:
-        state = state.lower()
     if number and number < 0:
         module.fail_json(msg="The partition number must be non negative.")
+    if not check_size_format(part_start):
+        module.fail_json(
+            msg="The argument 'part_start' doesn't respect required format."
+                "The size unit is case sensitive.",
+            err=parse_unit(part_start)
+        )
+    if not check_size_format(part_end):
+        module.fail_json(
+            msg="The argument 'part_end' doesn't respect required format."
+                "The size unit is case sensitive.",
+            err=parse_unit(part_end)
+        )
 
     # Read the current disk information
     current_device = get_device_info(device, unit)
     current_parts = current_device['partitions']
 
-    if state and state == 'present':
+    if state == 'present':
         # Default value for the label
         if not current_device['generic']['table'] or \
            current_device['generic']['table'] == 'unknown' and \
@@ -572,11 +626,11 @@ def main():
 
         # Assign label if required
         if label:
-            script += "mklabel {0} ".format(label)
+            script += "mklabel %s " % label
 
         # Create partition if required
         if part_type and not part_exists(current_parts, 'num', number):
-            script += "mkpart {0} {1} {2} ".format(
+            script += "mkpart %s %s %s " % (
                 part_type,
                 part_start,
                 part_end
@@ -584,7 +638,7 @@ def main():
 
         # Set the unit of the run
         if unit and script:
-            script = "unit {0} ".format(unit) + script
+            script = "unit %s %s" % (unit, script)
 
         # Execute the script and update the data structure.
         # This will create the partition for the next steps
@@ -597,29 +651,29 @@ def main():
             current_parts = get_device_info(device, unit)['partitions']
 
         if part_exists(current_parts, 'num', number) or module.check_mode:
+            partition = {'flags': []}      # Empty structure for the check-mode
+            if not module.check_mode:
+                partition = [p for p in current_parts if p['num'] == number][0]
+
             # Assign name to the the partition
-            if name and name in ['gpt', 'mac', 'mips', 'pc98']:
-                script += "name {0} {1} ".format(number, name)
+            if name:
+                script += "name %s %s " % (number, name)
 
             # Manage flags
             if flags:
-                partition = {'flags': []}
-                if not module.check_mode:
-                    partition = [p for p in current_parts if p['num'] == number][0]
-
                 # Compute only the changes in flags status
                 flags_off = list(set(partition['flags']) - set(flags))
                 flags_on  = list(set(flags) - set(partition['flags']))
 
                 for f in flags_on:
-                    script += "set {0} {1} on ".format(number, f)
+                    script += "set %s %s on " % (number, f)
 
                 for f in flags_off:
-                    script += "set {0} {1} off ".format(number, f)
+                    script += "set %s %s off " % (number, f)
 
         # Set the unit of the run
         if unit and script:
-            script = "unit {0} ".format(unit) + script
+            script = "unit %s %s" % (unit, script)
 
         # Execute the script
         if script:
@@ -627,16 +681,16 @@ def main():
             changed = True
             parted(script, device, align)
 
-    elif state and state == 'absent':
+    elif state == 'absent':
         # Remove the partition
         if part_exists(current_parts, 'num', number) or module.check_mode:
-            script = "rm {0} ".format(number)
+            script = "rm %s " % number
             output_script += script
             changed = True
             parted(script, device, align)
 
-    elif not state:
-        output_script = "unit '{0}' print ".format(unit)
+    elif state == 'info':
+        output_script = "unit '%s' print " % unit
 
     # Final status of the device
     final_device_status = get_device_info(device, unit)
@@ -647,8 +701,6 @@ def main():
         script=output_script.strip()
     )
 
-
-module = None
 
 if __name__ == '__main__':
     main()
