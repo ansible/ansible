@@ -20,42 +20,40 @@
 
 # WANT_JSON
 # POWERSHELL_COMMON
-
-$params = Parse-Args $args;
+$params = Parse-Args $args
 
 # Name parameter
-$name = Get-Attr $params "name" $FALSE;
-If ($name -eq $FALSE) {
-    Fail-Json (New-Object psobject) "missing required argument: name";
-}
+$name = Get-AnsibleParam -obj $params -name "name" -type "string" -failifempty $true
+
 
 # State parameter
-$state = Get-Attr $params "state" $FALSE;
-$valid_states = ('started', 'restarted', 'stopped', 'absent');
-If (($state -Ne $FALSE) -And ($state -NotIn $valid_states)) {
-  Fail-Json $result "state is '$state'; must be $($valid_states)"
-}
+$state = Get-AnsibleParam -obj $params -name "state" -default "present" -validateSet "started","restarted","stopped","absent"
 
 # Attributes parameter - Pipe separated list of attributes where
 # keys and values are separated by comma (paramA:valyeA|paramB:valueB)
 $attributes = @{};
 If (Get-Member -InputObject $params -Name attributes) {
   $params.attributes -split '\|' | foreach {
-    $key, $value = $_ -split "\:";
-    $attributes.Add($key, $value);
+    $key, $value = $_ -split "\:"
+    $attributes.Add($key, $value)
   }
 }
 
 # Ensure WebAdministration module is loaded
 if ((Get-Module "WebAdministration" -ErrorAction SilentlyContinue) -eq $NULL){
   Import-Module WebAdministration
+  $web_admin_dll_path = Join-Path $env:SystemRoot system32\inetsrv\Microsoft.Web.Administration.dll 
+  Add-Type -Path $web_admin_dll_path
+  $t = [Type]"Microsoft.Web.Administration.ApplicationPool"
 }
 
 # Result
-$result = New-Object psobject @{
+$result = @{
   changed = $FALSE
-  attributes = $attributes
-};
+#  attributes = $attributes
+}
+
+$result.attributes = $attributes
 
 # Get pool
 $pool = Get-Item IIS:\AppPools\$name
@@ -77,9 +75,15 @@ try {
   if($pool) {
     # Set properties
     $attributes.GetEnumerator() | foreach {
-      $newParameter = $_;
+      $newParameter = $_
       $currentParameter = Get-ItemProperty ("IIS:\AppPools\" + $name) $newParameter.Key
-      if(-not $currentParameter -or ($currentParameter.Value -as [String]) -ne $newParameter.Value) {
+      $currentParamVal = ""
+      try {
+        $currentParamVal = $currentParameter
+      } catch {
+        $currentParamVal = $currentParameter.Value
+      }
+      if(-not $currentParamVal -or ($currentParamVal -as [String]) -ne $newParameter.Value) {
         Set-ItemProperty ("IIS:\AppPools\" + $name) $newParameter.Key $newParameter.Value
         $result.changed = $TRUE
       }
@@ -90,17 +94,17 @@ try {
       Stop-WebAppPool -Name $name -ErrorAction Stop
       $result.changed = $TRUE
     }
-    if ((($state -eq 'started') -and ($pool.State -eq 'Stopped'))) {
+    if (($state -eq 'started') -and ($pool.State -eq 'Stopped')) {
       Start-WebAppPool -Name $name -ErrorAction Stop
       $result.changed = $TRUE
     }
     if ($state -eq 'restarted') {
-      switch ($pool.State)
-        { 
-          'Stopped' { Start-WebAppPool -Name $name -ErrorAction Stop }
-          default { Restart-WebAppPool -Name $name -ErrorAction Stop }
-        }
-      $result.changed = $TRUE   
+     switch ($pool.State)
+       { 
+         'Stopped' { Start-WebAppPool -Name $name -ErrorAction Stop }
+         default { Restart-WebAppPool -Name $name -ErrorAction Stop }
+       }
+     $result.changed = $TRUE   
     }
   }
 } catch {
@@ -114,10 +118,22 @@ if ($pool)
   $result.info = @{
     name = $pool.Name
     state = $pool.State
-    attributes =  New-Object psobject @{}
+    attributes =  @{}
   };
-  
-  $pool.Attributes | ForEach { $result.info.attributes.Add($_.Name, $_.Value)};
+
+  $pool.Attributes | ForEach {
+     # lookup name if enum
+     if ($_.Schema.Type -eq 'enum') {
+        $propertyName = $_.Name.Substring(0,1).ToUpper() + $_.Name.Substring(1)
+        $enum = [Microsoft.Web.Administration.ApplicationPool].GetProperty($propertyName).PropertyType.FullName
+        $enum_names = [Enum]::GetNames($enum)
+        $result.info.attributes.Add($_.Name, $enum_names[$_.Value])
+     } else {
+        $result.info.attributes.Add($_.Name, $_.Value);
+     }
+  }
+
 }
 
 Exit-Json $result
+
