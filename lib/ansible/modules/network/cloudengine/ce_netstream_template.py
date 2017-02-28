@@ -74,40 +74,46 @@ options:
 '''
 
 EXAMPLES = '''
-# config ipv4 netstream record
-- ce_netstream_template:
-    state:  present
-    type:  ip
-    record_name:  test
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
-# undo ipv4 netstream record
-- ce_netstream_template:
-    state:  absent
-    type:  ip
-    record_name:  test
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
-# config ipv4 netstream record collect_counter
-- ce_netstream_template:
-    state:  present
-    type:  ip
-    record_name:  test
-    collect_counter:  bytes
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
-# undo ipv4 netstream record collect_counter
-- ce_netstream_template:
-    state:  absent
-    type:  ip
-    record_name:  test
-    collect_counter:  bytes
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
+- name: netstream template module test
+  hosts: cloudengine
+  connection: local
+  gather_facts: no
+  vars:
+    cli:
+      host: "{{ inventory_hostname }}"
+      port: "{{ ansible_ssh_port }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      transport: cli
+
+  tasks:
+
+  - name: Config ipv4 netstream record
+    ce_netstream_template:
+      state:  present
+      type:  ip
+      record_name:  test
+      provider: "{{ cli }}"
+  - name: Undo ipv4 netstream record
+    ce_netstream_template:
+      state:  absent
+      type:  ip
+      record_name:  test
+      provider: "{{ cli }}"
+  - name: Config ipv4 netstream record collect_counter
+    ce_netstream_template:
+      state:  present
+      type:  ip
+      record_name:  test
+      collect_counter:  bytes
+      provider: "{{ cli }}"
+  - name: Undo ipv4 netstream record collect_counter
+    ce_netstream_template:
+      state:  absent
+      type:  ip
+      record_name:  test
+      collect_counter:  bytes
+      provider: "{{ cli }}"
 '''
 
 RETURN = '''
