@@ -1,3 +1,4 @@
+boto
 boto3
 jinja2
 mock
