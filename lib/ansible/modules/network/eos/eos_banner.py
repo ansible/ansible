@@ -94,6 +94,7 @@ session_name:
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.eos import load_config, run_commands
+from ansible.module_utils.eos import eos_argument_spec, check_args
 
 def map_obj_to_commands(updates, module):
     commands = list()
@@ -139,13 +140,20 @@ def main():
         state=dict(default='present', choices=['present', 'absent'])
     )
 
+    argument_spec.update(eos_argument_spec)
+
     required_if = [('state', 'present', ('text',))]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_if=required_if,
                            supports_check_mode=True)
 
+    warnings = list()
+    check_args(module, warnings)
+
     result = {'changed': False}
+    if warnings:
+        result['warnings'] = warnings
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
