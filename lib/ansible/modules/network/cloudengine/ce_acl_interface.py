@@ -58,11 +58,16 @@ options:
 EXAMPLES = '''
 
 - name: CloudEngine acl interface test
+  hosts: cloudengine
+  connection: local
+  gather_facts: no
   vars:
-    host: "{{ inventory_hostname }}"
-    username: admin
-    password: admin
-    transport: cli
+    cli:
+      host: "{{ inventory_hostname }}"
+      port: "{{ ansible_ssh_port }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      transport: cli
 
   tasks:
 
@@ -70,7 +75,7 @@ EXAMPLES = '''
     ce_acl_interface:
       state:  present
       acl_name:  2000
-      interface:  40GE2/0/1
+      interface:  40GE1/0/1
       direction:  outbound
       provider: "{{ cli }}"
 
@@ -78,7 +83,7 @@ EXAMPLES = '''
     ce_acl_interface:
       state:  absent
       acl_name:  2000
-      interface:  40GE2/0/1
+      interface:  40GE1/0/1
       direction:  outbound
       provider: "{{ cli }}"
 '''
