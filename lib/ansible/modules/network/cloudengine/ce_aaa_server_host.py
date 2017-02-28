@@ -26,7 +26,7 @@ module: ce_aaa_server_host
 version_added: "2.3"
 short_description: Manages AAA server host configuration.
 description:
-    - Manages AAA server host configuration
+    - Manages AAA server host configuration.
 author:
     - wangdezhuang (@CloudEngine-Ansible)
 options:
@@ -286,13 +286,7 @@ import sys
 import socket
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.cloudengine import get_netconf, ce_argument_spec
-
-try:
-    from ncclient.operations.rpc import RPCError
-    HAS_NCCLIENT = True
-except ImportError:
-    HAS_NCCLIENT = False
+from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 
 SUCCESS = """success"""
@@ -747,27 +741,15 @@ CE_DELETE_HWTACACS_HOST_SERVER_CFG = """
 class AaaServerHost(object):
     """ Manages aaa server host configuration """
 
-    def __init__(self, **kwargs):
-        """ Class init """
-
-        self.netconf = get_netconf(**kwargs)
-
-        if not self.netconf:
-            return None
-
     def netconf_get_config(self, **kwargs):
         """ Get configure by netconf """
 
         module = kwargs["module"]
         conf_str = kwargs["conf_str"]
 
-        try:
-            con_obj = self.netconf.get_config(filter=conf_str)
-        except RPCError:
-            err = sys.exc_info()[1]
-            module.fail_json(msg='Error: %s' % err.message.replace("\r\n", ""))
+        xml_str = get_nc_config(module, conf_str)
 
-        return con_obj
+        return xml_str
 
     def netconf_set_config(self, **kwargs):
         """ Set configure by netconf """
@@ -775,13 +757,9 @@ class AaaServerHost(object):
         module = kwargs["module"]
         conf_str = kwargs["conf_str"]
 
-        try:
-            con_obj = self.netconf.set_config(config=conf_str)
-        except RPCError:
-            err = sys.exc_info()[1]
-            module.fail_json(msg='Error: %s' % err.message.replace("\r\n", ""))
+        recv_xml = set_nc_config(module, conf_str)
 
-        return con_obj
+        return recv_xml
 
     def get_local_user_info(self, **kwargs):
         """ Get local user information """
@@ -844,14 +822,14 @@ class AaaServerHost(object):
 
         conf_str += CE_GET_LOCAL_USER_INFO_TAIL
 
-        con_obj = self.netconf_get_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
-        if "<data/>" in con_obj.xml:
+        if "<data/>" in recv_xml:
             if state == "present":
                 need_cfg = True
 
         else:
-            xml_str = con_obj.xml.replace('\r', '').replace('\n', '').\
+            xml_str = recv_xml.replace('\r', '').replace('\n', '').\
                 replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
                 replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
@@ -1052,9 +1030,9 @@ class AaaServerHost(object):
 
         conf_str += CE_MERGE_LOCAL_USER_INFO_TAIL
 
-        con_obj = self.netconf_set_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_set_config(module=module, conf_str=conf_str)
 
-        if "<ok/>" not in con_obj.xml:
+        if "<ok/>" not in recv_xml:
             module.fail_json(msg='Error: Merge local user info failed.')
 
         return cmds
@@ -1069,9 +1047,9 @@ class AaaServerHost(object):
 
         cmds = []
 
-        con_obj = self.netconf_set_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_set_config(module=module, conf_str=conf_str)
 
-        if "<ok/>" not in con_obj.xml:
+        if "<ok/>" not in recv_xml:
             module.fail_json(msg='Error: Delete local user info failed.')
 
         cmd = "undo local-user %s" % local_user_name
@@ -1097,14 +1075,14 @@ class AaaServerHost(object):
 
         conf_str = CE_GET_RADIUS_SERVER_CFG_IPV4 % radius_group_name
 
-        con_obj = self.netconf_get_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
-        if "<data/>" in con_obj.xml:
+        if "<data/>" in recv_xml:
             if state == "present":
                 need_cfg = True
 
         else:
-            xml_str = con_obj.xml.replace('\r', '').replace('\n', '').\
+            xml_str = recv_xml.replace('\r', '').replace('\n', '').\
                 replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
                 replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
@@ -1177,9 +1155,9 @@ class AaaServerHost(object):
             radius_server_ip, radius_server_port,
             radius_server_mode, radius_vpn_name)
 
-        con_obj = self.netconf_set_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_set_config(module=module, conf_str=conf_str)
 
-        if "<ok/>" not in con_obj.xml:
+        if "<ok/>" not in recv_xml:
             module.fail_json(
                 msg='Error: Merge radius server config ipv4 failed.')
 
@@ -1226,9 +1204,9 @@ class AaaServerHost(object):
             radius_server_ip, radius_server_port,
             radius_server_mode, radius_vpn_name)
 
-        con_obj = self.netconf_set_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_set_config(module=module, conf_str=conf_str)
 
-        if "<ok/>" not in con_obj.xml:
+        if "<ok/>" not in recv_xml:
             module.fail_json(
                 msg='Error: Create radius server config ipv4 failed.')
 
@@ -1276,14 +1254,14 @@ class AaaServerHost(object):
 
         conf_str = CE_GET_RADIUS_SERVER_CFG_IPV6 % radius_group_name
 
-        con_obj = self.netconf_get_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
-        if "<data/>" in con_obj.xml:
+        if "<data/>" in recv_xml:
             if state == "present":
                 need_cfg = True
 
         else:
-            xml_str = con_obj.xml.replace('\r', '').replace('\n', '').\
+            xml_str = recv_xml.replace('\r', '').replace('\n', '').\
                 replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
                 replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
@@ -1348,9 +1326,9 @@ class AaaServerHost(object):
             radius_server_ipv6, radius_server_port,
             radius_server_mode)
 
-        con_obj = self.netconf_set_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_set_config(module=module, conf_str=conf_str)
 
-        if "<ok/>" not in con_obj.xml:
+        if "<ok/>" not in recv_xml:
             module.fail_json(
                 msg='Error: Merge radius server config ipv6 failed.')
 
@@ -1390,9 +1368,9 @@ class AaaServerHost(object):
             radius_server_ipv6, radius_server_port,
             radius_server_mode)
 
-        con_obj = self.netconf_set_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_set_config(module=module, conf_str=conf_str)
 
-        if "<ok/>" not in con_obj.xml:
+        if "<ok/>" not in recv_xml:
             module.fail_json(
                 msg='Error: Create radius server config ipv6 failed.')
 
@@ -1435,14 +1413,14 @@ class AaaServerHost(object):
 
         conf_str = CE_GET_RADIUS_SERVER_NAME % radius_group_name
 
-        con_obj = self.netconf_get_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
-        if "<data/>" in con_obj.xml:
+        if "<data/>" in recv_xml:
             if state == "present":
                 need_cfg = True
 
         else:
-            xml_str = con_obj.xml.replace('\r', '').replace('\n', '').\
+            xml_str = recv_xml.replace('\r', '').replace('\n', '').\
                 replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
                 replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
@@ -1515,9 +1493,9 @@ class AaaServerHost(object):
             radius_server_name, radius_server_port,
             radius_server_mode, radius_vpn_name)
 
-        con_obj = self.netconf_set_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_set_config(module=module, conf_str=conf_str)
 
-        if "<ok/>" not in con_obj.xml:
+        if "<ok/>" not in recv_xml:
             module.fail_json(msg='Error: Merge radius server name failed.')
 
         cmds = []
@@ -1563,9 +1541,9 @@ class AaaServerHost(object):
             radius_server_name, radius_server_port,
             radius_server_mode, radius_vpn_name)
 
-        con_obj = self.netconf_set_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_set_config(module=module, conf_str=conf_str)
 
-        if "<ok/>" not in con_obj.xml:
+        if "<ok/>" not in recv_xml:
             module.fail_json(msg='Error: delete radius server name failed.')
 
         cmds = []
@@ -1614,14 +1592,14 @@ class AaaServerHost(object):
 
         conf_str = CE_GET_HWTACACS_SERVER_CFG_IPV4 % hwtacacs_template
 
-        con_obj = self.netconf_get_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
-        if "<data/>" in con_obj.xml:
+        if "<data/>" in recv_xml:
             if state == "present":
                 need_cfg = True
 
         else:
-            xml_str = con_obj.xml.replace('\r', '').replace('\n', '').\
+            xml_str = recv_xml.replace('\r', '').replace('\n', '').\
                 replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
                 replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
@@ -1695,9 +1673,9 @@ class AaaServerHost(object):
             hwtacacs_server_type, str(hwtacacs_is_secondary_server).lower(),
             hwtacacs_vpn_name, str(hwtacacs_is_public_net).lower())
 
-        con_obj = self.netconf_set_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_set_config(module=module, conf_str=conf_str)
 
-        if "<ok/>" not in con_obj.xml:
+        if "<ok/>" not in recv_xml:
             module.fail_json(
                 msg='Error: Merge hwtacacs server config ipv4 failed.')
 
@@ -1762,9 +1740,9 @@ class AaaServerHost(object):
             hwtacacs_server_type, str(hwtacacs_is_secondary_server).lower(),
             hwtacacs_vpn_name, str(hwtacacs_is_public_net).lower())
 
-        con_obj = self.netconf_set_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_set_config(module=module, conf_str=conf_str)
 
-        if "<ok/>" not in con_obj.xml:
+        if "<ok/>" not in recv_xml:
             module.fail_json(
                 msg='Error: Delete hwtacacs server config ipv4 failed.')
 
@@ -1830,14 +1808,14 @@ class AaaServerHost(object):
 
         conf_str = CE_GET_HWTACACS_SERVER_CFG_IPV6 % hwtacacs_template
 
-        con_obj = self.netconf_get_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
-        if "<data/>" in con_obj.xml:
+        if "<data/>" in recv_xml:
             if state == "present":
                 need_cfg = True
 
         else:
-            xml_str = con_obj.xml.replace('\r', '').replace('\n', '').\
+            xml_str = recv_xml.replace('\r', '').replace('\n', '').\
                 replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
                 replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
@@ -1903,9 +1881,9 @@ class AaaServerHost(object):
             hwtacacs_server_type, str(hwtacacs_is_secondary_server).lower(),
             hwtacacs_vpn_name)
 
-        con_obj = self.netconf_set_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_set_config(module=module, conf_str=conf_str)
 
-        if "<ok/>" not in con_obj.xml:
+        if "<ok/>" not in recv_xml:
             module.fail_json(
                 msg='Error: Merge hwtacacs server config ipv6 failed.')
 
@@ -1961,9 +1939,9 @@ class AaaServerHost(object):
             hwtacacs_server_type, str(hwtacacs_is_secondary_server).lower(),
             hwtacacs_vpn_name)
 
-        con_obj = self.netconf_set_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_set_config(module=module, conf_str=conf_str)
 
-        if "<ok/>" not in con_obj.xml:
+        if "<ok/>" not in recv_xml:
             module.fail_json(
                 msg='Error: Delete hwtacacs server config ipv6 failed.')
 
@@ -2022,14 +2000,14 @@ class AaaServerHost(object):
 
         conf_str = CE_GET_HWTACACS_HOST_SERVER_CFG % hwtacacs_template
 
-        con_obj = self.netconf_get_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_get_config(module=module, conf_str=conf_str)
 
-        if "<data/>" in con_obj.xml:
+        if "<data/>" in recv_xml:
             if state == "present":
                 need_cfg = True
 
         else:
-            xml_str = con_obj.xml.replace('\r', '').replace('\n', '').\
+            xml_str = recv_xml.replace('\r', '').replace('\n', '').\
                 replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
                 replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
@@ -2103,9 +2081,9 @@ class AaaServerHost(object):
             hwtacacs_server_type, str(hwtacacs_is_secondary_server).lower(),
             hwtacacs_vpn_name, str(hwtacacs_is_public_net).lower())
 
-        con_obj = self.netconf_set_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_set_config(module=module, conf_str=conf_str)
 
-        if "<ok/>" not in con_obj.xml:
+        if "<ok/>" not in recv_xml:
             module.fail_json(
                 msg='Error: Merge hwtacacs host server config failed.')
 
@@ -2167,9 +2145,9 @@ class AaaServerHost(object):
             hwtacacs_server_type, str(hwtacacs_is_secondary_server).lower(),
             hwtacacs_vpn_name, str(hwtacacs_is_public_net).lower())
 
-        con_obj = self.netconf_set_config(module=module, conf_str=conf_str)
+        recv_xml = self.netconf_set_config(module=module, conf_str=conf_str)
 
-        if "<ok/>" not in con_obj.xml:
+        if "<ok/>" not in recv_xml:
             module.fail_json(
                 msg='Error: Delete hwtacacs host server config failed.')
 
@@ -2213,12 +2191,6 @@ class AaaServerHost(object):
 
         cmds.append(cmd)
         return cmds
-
-
-def get_aaa_server_host(**kwargs):
-    """ Get aaa server host instance """
-
-    return AaaServerHost(**kwargs)
 
 
 def check_ip_addr(ipaddr):
@@ -2390,9 +2362,6 @@ def main():
         hwtacacs_server_host_name=dict(type='str')
     )
 
-    if not HAS_NCCLIENT:
-        raise Exception("Error: The ncclient library is required.")
-
     argument_spec.update(ce_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -2408,10 +2377,6 @@ def main():
 
     # common para
     state = module.params['state']
-    host = module.params['provider']['host']
-    port = module.params['provider']['port']
-    username = module.params['provider']['username']
-    password = module.params['provider']['password']
 
     # local para
     local_user_name = module.params['local_user_name']
@@ -2442,8 +2407,7 @@ def main():
     hwtacacs_is_public_net = module.params['hwtacacs_is_public_net']
     hwtacacs_server_host_name = module.params['hwtacacs_server_host_name']
 
-    ce_aaa_server_host = get_aaa_server_host(
-        host=host, port=port, username=username, password=password)
+    ce_aaa_server_host = AaaServerHost()
 
     if not ce_aaa_server_host:
         module.fail_json(msg='Error: Construct ce_aaa_server failed.')
