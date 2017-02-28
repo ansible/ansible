@@ -82,18 +82,21 @@ options:
         choices: ['present','absent']
 '''
 EXAMPLES = '''
-
-- name: CloudEngine evpn bgp test
+- name: evpn bgp module test
+  hosts: cloudengine
+  connection: local
+  gather_facts: no
   vars:
     cli:
       host: "{{ inventory_hostname }}"
-      username: admin
-      password: admin
+      port: "{{ ansible_ssh_port }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
       transport: cli
 
   tasks:
 
-  - name: "Enable peer address"
+  - name: Enable peer address.
     ce_evpn_bgp:
       bgp_instance: 100
       peer_address: 1.1.1.1
@@ -101,14 +104,14 @@ EXAMPLES = '''
       peer_enable: true
       provider: "{{ cli }}"
 
-  - name: "Enable peer group arp"
+  - name: Enable peer group arp.
     ce_evpn_bgp:
       bgp_instance: 100
       peer_group_name: aaa
       advertise_router_type: arp
       provider: "{{ cli }}"
 
-  - name: "Enable advertise l2vpn evpn"
+  - name: Enable advertise l2vpn evpn.
     ce_evpn_bgp:
       bgp_instance: 100
       vpn_name: aaa
@@ -149,8 +152,8 @@ end_state:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.cloudengine import get_config, load_config
-from ansible.module_utils.cloudengine import ce_argument_spec
+from ansible.module_utils.ce import get_config, load_config
+from ansible.module_utils.ce import ce_argument_spec
 
 
 def is_config_exist(cmp_cfg, test_cfg):
