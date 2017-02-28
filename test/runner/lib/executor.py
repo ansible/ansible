@@ -816,13 +816,16 @@ def command_sanity_shellcheck(args, targets):
     with open('test/sanity/shellcheck/skip.txt', 'r') as skip_fd:
         skip_paths = set(skip_fd.read().splitlines())
 
+    with open('test/sanity/shellcheck/exclude.txt', 'r') as exclude_fd:
+        exclude = set(exclude_fd.read().splitlines())
+
     paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.sh' and i.path not in skip_paths)
 
     if not paths:
         display.info('No tests applicable.', verbosity=1)
         return
 
-    run_command(args, ['shellcheck'] + paths)
+    run_command(args, ['shellcheck', '-e', ','.join(sorted(exclude))] + paths)
 
 
 def command_sanity_pep8(args, targets):
