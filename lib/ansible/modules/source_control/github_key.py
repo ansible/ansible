@@ -234,9 +234,6 @@ def main():
         # Keys consist of a protocol, the key data, and an optional comment.
         if len(pubkey_parts) < 2:
             module.fail_json(msg='"pubkey" parameter has an invalid format')
-
-        # Strip out comment so we can compare to the keys GitHub returns.
-        pubkey = ' '.join(pubkey_parts[:2])
     elif state == 'present':
         module.fail_json(msg='"pubkey" is required when state=present')
 
