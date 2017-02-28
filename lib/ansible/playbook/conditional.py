@@ -91,8 +91,8 @@ class ConditionalResults:
 
     @property
     def failed_because(self):
-        return self.conditional_results or []
-        #return [x for x in self.conditional_results if x is False]
+        #return self.conditional_results or []
+        return [x for x in self.conditional_results if x.value is False]
 
     #def __str__(self):
     #    buf = "The conditional clause '%s' was False" % self.failed_because
