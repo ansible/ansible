@@ -271,11 +271,12 @@ class DocCLI(CLI):
 
         if doc['metadata'] and isinstance(doc['metadata'], dict):
             text.append("Metadata:")
-        for k in doc['metadata']:
-            if isinstance(k, list):
-                text.append("\t%s: %s\n" % (k.capitalize(), ", ".join(doc['metadata'][k])))
-            else:
-                text.append("\t%s: %s\n" % (k.capitalize(), doc['metadata'][k]))
+            for k in doc['metadata']:
+                if isinstance(k, list):
+                    text.append("\t%s: %s" % (k.capitalize(), ", ".join(doc['metadata'][k])))
+                else:
+                    text.append("\t%s: %s" % (k.capitalize(), doc['metadata'][k]))
+            text.append("")
 
         if 'action' in doc and doc['action']:
             text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
