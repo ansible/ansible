@@ -81,6 +81,7 @@ EXAMPLES = '''
 
   - name: "Config jumboframe on 40GE1/0/22"
     ce_mtu:
+      interface: 40GE1/0/22
       jumbo_max: 9000
       jumbo_min: 8000
       provider: "{{ cli }}"
@@ -93,7 +94,7 @@ EXAMPLES = '''
 
   - name: "Config mtu on 40GE1/0/23 (switched interface)"
     ce_mtu:
-      interface: 40GE1/0/23
+      interface: 40GE1/0/22
       mtu: 9216
       provider: "{{ cli }}"
 
@@ -140,17 +141,10 @@ changed:
     sample: true
 '''
 
-import sys
 import re
 import copy
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_netconf, ce_argument_spec, get_config, load_config
-
-try:
-    from ncclient.operations.rpc import RPCError
-    HAS_NCCLIENT = True
-except ImportError:
-    HAS_NCCLIENT = False
+from ansible.module_utils.ce import ce_argument_spec, get_config, load_config, get_nc_config, set_nc_config
 
 CE_NC_GET_INTF = """
 <filter type="subtree">
@@ -263,7 +257,6 @@ class Mtu(object):
     def __init__(self, argument_spec):
         self.spec = argument_spec
         self.module = None
-        self.netconf = None
         self.init_module()
 
         # interface info
@@ -276,11 +269,6 @@ class Mtu(object):
         self.jbf_cli = ""
         self.commands = list()
 
-        # host info
-        self.host = self.module.params['provider']['host']
-        self.username = self.module.params['provider']['username']
-        self.port = self.module.params['provider']['port']
-
         # state
         self.changed = False
         self.updates_cmd = list()
@@ -291,30 +279,15 @@ class Mtu(object):
         self.intf_info = dict()         # one interface info
         self.intf_type = None           # loopback tunnel ...
 
-        # init netconf connect
-        self.init_netconf()
-
     def init_module(self):
         """ init_module"""
 
         self.module = AnsibleModule(
             argument_spec=self.spec, supports_check_mode=True)
 
-    def init_netconf(self):
-        """ init_netconf"""
-
-        if HAS_NCCLIENT:
-            self.netconf = get_netconf(host=self.host, port=self.port,
-                                       username=self.username,
-                                       password=self.module.params['provider']['password'])
-        else:
-            self.module.fail_json(
-                msg='Error: No ncclient package, please install it.')
-
-    def check_response(self, con_obj, xml_name):
+    def check_response(self, xml_str, xml_name):
         """Check if response message is already succeed."""
 
-        xml_str = con_obj.xml
         if "<ok/>" not in xml_str:
             self.module.fail_json(msg='Error: %s failed.' % xml_name)
 
@@ -322,19 +295,14 @@ class Mtu(object):
         """ get one interface attributes dict."""
         intf_info = dict()
         conf_str = CE_NC_GET_INTF % ifname
-        try:
-            con_obj = self.netconf.get_config(filter=conf_str)
-        except RPCError:
-            err = sys.exc_info()[1]
-            self.module.fail_json(msg='Error: %s' % err.message.replace("\r\n", ""))
-
-        if "<data/>" in con_obj.xml:
+        ret_xml = get_nc_config(self.module, conf_str)
+        if "<data/>" in ret_xml:
             return intf_info
 
         intf = re.findall(
             r'.*<ifName>(.*)</ifName>.*\s*'
             r'<isL2SwitchPort>(.*)</isL2SwitchPort>.*\s*'
-            r'<ifMtu>(.*)</ifMtu>.*', con_obj.xml)
+            r'<ifMtu>(.*)</ifMtu>.*', ret_xml)
 
         if intf:
             intf_info = dict(ifName=intf[0][0],
@@ -474,14 +442,9 @@ class Mtu(object):
             return
 
         conf_str = build_config_xml(xmlstr)
-
-        try:
-            con_obj = self.netconf.set_config(config=conf_str)
-            self.check_response(con_obj, "MERGE_INTF_MTU")
-            self.changed = True
-        except RPCError:
-            err = sys.exc_info()[1]
-            self.module.fail_json(msg='Error: %s' % err.message.replace("\r\n", ""))
+        ret_xml = set_nc_config(self.module, conf_str)
+        self.check_response(ret_xml, "MERGE_INTF_MTU")
+        self.changed = True
 
     def check_params(self):
         """Check all input params"""
