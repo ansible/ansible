@@ -709,10 +709,21 @@ class ACMEClient(object):
             "csr": nopad_b64(out),
         }
         result, info = self.account.send_signed_request(self.directory['new-cert'], new_cert)
+
+        chain = []
+        if 'link' in info:
+            link = info['link']
+            parsed_link = re.match(r'<(.+)>;rel="(\w+)"', link)
+            if parsed_link and parsed_link.group(2) == "up":
+                chain_link = parsed_link.group(1)
+                chain_result, chain_info = fetch_url(self.module, chain_link, method='GET')
+                if chain_info['status'] in [200,201]:
+                    chain = [chain_result.read()]
+
         if info['status'] not in [200, 201]:
             self.module.fail_json(msg="Error new cert: CODE: {0} RESULT: {1}".format(info['status'], result))
         else:
-            return {'cert': result, 'uri': info['location']}
+            return {'cert': result, 'uri': info['location'], 'chain': chain}
 
     def _der_to_pem(self, der_cert):
         '''
@@ -764,6 +775,11 @@ class ACMEClient(object):
         cert = self._new_cert()
         if cert['cert'] is not None:
             pem_cert = self._der_to_pem(cert['cert'])
+
+            chain = [self._der_to_pem(link) for link in cert.get('chain', [])]
+            if chain and self.module.params['fullchain']:
+                pem_cert += "\n".join(chain)
+
             if write_file(self.module, self.dest, pem_cert):
                 self.cert_days = get_cert_days(self.module, self.dest)
                 self.changed = True
@@ -779,6 +795,7 @@ def main():
             challenge=dict(required=False, default='http-01', choices=['http-01', 'dns-01', 'tls-sni-02'], type='str'),
             csr=dict(required=True, aliases=['src'], type='path'),
             data=dict(required=False, no_log=True, default=None, type='dict'),
+            fullchain=dict(required=False, default=True, type='bool'),
             dest=dict(required=True, aliases=['cert'], type='path'),
             remaining_days=dict(required=False, default=10, type='int'),
         ),
