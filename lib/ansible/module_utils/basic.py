@@ -1832,14 +1832,7 @@ class AnsibleModule(object):
                     param_val = param_val.encode('utf-8')
                 log_args[param] = heuristic_log_sanitize(param_val, self.no_log_values)
 
-        msg = []
-        for arg in log_args:
-            arg_val = log_args[arg]
-            if not isinstance(arg_val, (text_type, binary_type)):
-                arg_val = str(arg_val)
-            elif isinstance(arg_val, text_type):
-                arg_val = arg_val.encode('utf-8')
-            msg.append('%s=%s' % (arg, arg_val))
+        msg = ['%s=%s' % (to_native(arg), to_native(val)) for arg, val in log_args.items()]
         if msg:
             msg = 'Invoked with %s' % ' '.join(msg)
         else:
