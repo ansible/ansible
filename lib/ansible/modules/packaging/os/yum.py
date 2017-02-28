@@ -93,6 +93,17 @@ options:
     type: bool
     default: "yes"
     version_added: "2.1"
+
+  update_only:
+    description:
+      - When using latest, only update installed packages. Do not install packages.
+      - Has an effect only if state is I(latest)
+    required: false
+    default: "no"
+    choices: ["yes", "no"]
+    aliases: []
+    version_added: "2.4"
+
   installroot:
     description:
       - Specifies an alternative installroot, relative to which all packages
@@ -926,7 +937,7 @@ def parse_check_update(check_update_output):
     return updates
 
 
-def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot='/'):
+def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, update_only, installroot='/'):
 
     res = {}
     res['results'] = []
@@ -1000,7 +1011,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
 
             # dep/pkgname  - find it
             else:
-                if is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot):
+                if is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot) or update_only:
                     pkgs['update'].append(spec)
                 else:
                     pkgs['install'].append(spec)
@@ -1032,6 +1043,9 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
                         will_update_from_other_package[spec] = this_name_only
                     break
 
+            if not is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, installroot=installroot) and update_only:
+                res['results'].append("Packages providing %s not installed due to update_only specified" % spec)
+                continue
             if nothing_to_do:
                 res['results'].append("All packages providing %s are up to date" % spec)
                 continue
@@ -1092,7 +1106,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, in
 
 
 def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
-           disable_gpg_check, exclude, repoq, skip_broken, security,
+           disable_gpg_check, exclude, repoq, skip_broken, update_only, security,
            installroot='/', allow_downgrade=False):
 
     # fedora will redirect yum to dnf, which has incompatibilities
@@ -1195,7 +1209,7 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
             yum_basecmd.append('--nogpgcheck')
         if security:
             yum_basecmd.append('--security')
-        res = latest(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot=installroot)
+        res = latest(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos, update_only, installroot=installroot)
     else:
         # should be caught by AnsibleModule argument_spec
         module.fail_json(msg="we should never get here unless this all failed",
@@ -1230,6 +1244,7 @@ def main():
             update_cache=dict(type='bool', default=False, aliases=['expire-cache']),
             validate_certs=dict(type='bool', default=True),
             installroot=dict(type='str', default="/"),
+            update_only=dict(required=False, default="no", type='bool'),
             # this should not be needed, but exists as a failsafe
             install_repoquery=dict(type='bool', default=True),
             allow_downgrade=dict(type='bool', default=False),
@@ -1287,11 +1302,12 @@ def main():
         disablerepo = params.get('disablerepo', '')
         disable_gpg_check = params['disable_gpg_check']
         skip_broken = params['skip_broken']
+        update_only = params['update_only']
         security = params['security']
         allow_downgrade = params['allow_downgrade']
         results = ensure(module, state, pkg, params['conf_file'], enablerepo,
                          disablerepo, disable_gpg_check, exclude, repoquery,
-                         skip_broken, security, params['installroot'], allow_downgrade)
+                         skip_broken, update_only, security, params['installroot'], allow_downgrade)
         if repoquery:
             results['msg'] = '%s %s' % (results.get('msg', ''),
                              'Warning: Due to potential bad behaviour with rhnplugin and certificates, used slower repoquery calls instead of Yum API.')
