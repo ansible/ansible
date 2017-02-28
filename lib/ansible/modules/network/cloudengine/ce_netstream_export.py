@@ -86,59 +86,61 @@ options:
 '''
 
 EXAMPLES = '''
-# Configures the source address for the exported packets carrying IPv4 flow statistics.
-- ce_netstream_export:
-    type: ip
-    source_ip: 192.8.2.2
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
+- name: netstream export module test
+  hosts: cloudengine
+  connection: local
+  gather_facts: no
+  vars:
+    cli:
+      host: "{{ inventory_hostname }}"
+      port: "{{ ansible_ssh_port }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      transport: cli
 
-#Configures the source IP address for the exported packets carrying VXLAN flexible flow statistics.
-- ce_netstream_export:
-    type: vxlan
-    source_ip: 192.8.2.3
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
+  tasks:
 
-#Configures the destination IP address and destination UDP port number for the exported packets carrying IPv4 flow statistics.
-- ce_netstream_export:
-    type: ip
-    host_ip: 192.8.2.4
-    host_port: 25
-    host_vpn: test
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
+  - name: Configures the source address for the exported packets carrying IPv4 flow statistics.
+    ce_netstream_export:
+      type: ip
+      source_ip: 192.8.2.2
+      provider: "{{ cli }}"
 
-#Configures the destination IP address and destination UDP port number for the exported packets carrying VXLAN flexible flow statistics.
-- ce_netstream_export:
-    type: vxlan
-    host_ip: 192.8.2.5
-    host_port: 26
-    host_vpn: test
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
+  - name: Configures the source IP address for the exported packets carrying VXLAN flexible flow statistics.
+    ce_netstream_export:
+      type: vxlan
+      source_ip: 192.8.2.3
+      provider: "{{ cli }}"
 
-#Configures the version number of the exported packets carrying IPv4 flow statistics.
-- ce_netstream_export:
-    type: ip
-    version: 9
-    as_option: origin
-    bgp_nexthop: enable
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
+  - name: Configures the destination IP address and destination UDP port number for the exported packets carrying IPv4 flow statistics.
+    ce_netstream_export:
+      type: ip
+      host_ip: 192.8.2.4
+      host_port: 25
+      host_vpn: test
+      provider: "{{ cli }}"
 
-#Configures the version for the exported packets carrying VXLAN flexible flow statistics.
-- ce_netstream_export:
-    type: vxlan
-    version: 9
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
+  - name: Configures the destination IP address and destination UDP port number for the exported packets carrying VXLAN flexible flow statistics.
+    ce_netstream_export:
+      type: vxlan
+      host_ip: 192.8.2.5
+      host_port: 26
+      host_vpn: test
+      provider: "{{ cli }}"
+
+  - name: Configures the version number of the exported packets carrying IPv4 flow statistics.
+    ce_netstream_export:
+      type: ip
+      version: 9
+      as_option: origin
+      bgp_nexthop: enable
+      provider: "{{ cli }}"
+
+  - name: Configures the version for the exported packets carrying VXLAN flexible flow statistics.
+    ce_netstream_export:
+      type: vxlan
+      version: 9
+      provider: "{{ cli }}"
 '''
 
 RETURN = '''
@@ -248,12 +250,6 @@ class NetstreamExport(object):
         self.config = None
         self.exist_conf = dict()
 
-        # host info
-        self.host = self.module.params['host']
-        self.username = self.module.params['username']
-        self.password = self.module.params['password']
-        self.port = self.module.params['port']
-
         # state
         self.changed = False
         self.updates_cmd = list()
@@ -343,7 +339,8 @@ class NetstreamExport(object):
 
         self.commands.append(cmd)          # set to device
         if command.lower() not in ["quit", "return"]:
-            self.updates_cmd.append(cmd)   # show updates result
+            if cmd not in self.updates_cmd:
+                self.updates_cmd.append(cmd)   # show updates result
 
     def config_nets_export_src_addr(self):
         """Configures the source address for the exported packets"""
