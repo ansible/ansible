@@ -161,10 +161,14 @@ change_string:
   description: The commands executed by the module
   returned: only if config changed
   type: string
+msg_error_list:
+  description: "List of errors returned by CLI (use -vvv for better readability)."
+  returned: only when error
+  type: string
 """
 
 from ansible.module_utils.fortios import fortios_argument_spec, fortios_required_if
-from ansible.module_utils.fortios import backup
+from ansible.module_utils.fortios import backup, AnsibleFortios
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
@@ -219,41 +223,13 @@ def main():
             module.fail_json(msg='Fixedport param require NAT to be true.')
 
 
-    result = dict(changed=False)
-
-    # fail if libs not present
-    if not HAS_PYFG:
-        module.fail_json(msg='Could not import the python library pyFG required by this module')
-
-    #define device
-    f = FortiOS( module.params['host'],
-        username=module.params['username'],
-        password=module.params['password'],
-        timeout=module.params['timeout'],
-        vdom=module.params['vdom'])
-
-    path = 'firewall policy'
-
-    #connect
-    try:
-        f.open()
-    except Exception:
-        e = get_exception()
-        module.fail_json(msg='Error connecting device. %s' % e)
-
-    #get  config
-    try:
-        f.load_config(path=path)
-        result['firewall_address_config'] = f.running_config.to_text()
-    except Exception:
-        f.close()
-        e = get_exception()
-        module.fail_json(msg='Error reading running config. %s' % e)
+    #init forti_device object
+    forti_device = AnsibleFortios(module)
+    forti_device.load_config('firewall policy')
 
     #Absent State
     if module.params['state'] == 'absent':
-        f.candidate_config[path].del_block(module.params['id'])
-
+        forti_device.candidate_config[path].del_block(module.params['id'])
 
     #Present state
     elif module.params['state'] == 'present':
@@ -305,27 +281,11 @@ def main():
         if module.params['comment'] is not None:
             new_policy.set_param('comment', '"%s"' % (module.params['comment']))
 
-        #add to candidate config
-        f.candidate_config[path][module.params['id']] = new_policy
+        #add the new policy to the device
+        forti_device.add_block(module.params['id'] , new_policy)
 
-    #check if change needed
-    change_string = f.compare_config()
-    if change_string:
-        result['change_string'] = change_string
-        result['changed'] = True
-
-    #Commit if not check mode
-    if change_string and not module.check_mode:
-        try:
-            f.commit()
-        except FailedCommit:
-            #Something's wrong (rollback is automatic)
-            f.close()
-            e = get_exception()
-            module.fail_json(msg="Unable to commit change, check your args, the error was %s" % (e.message))
-
-    f.close()
-    module.exit_json(**result)
+    #Apply changes
+    forti_device.apply_changes()
 
 if __name__ == '__main__':
     main()
