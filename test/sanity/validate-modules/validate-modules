@@ -646,6 +646,13 @@ class ModuleValidator(Validator):
                          'with DOCUMENTATION.extends_documentation_fragment')
                     ))
 
+                if self.object_name.startswith('_') and not os.path.islink(self.object_path):
+                    if 'deprecated' not in doc or not doc.get('deprecated'):
+                        self.errors.append((
+                            318,
+                            'Module deprecated, but DOCUMENTATION.deprecated is missing'
+                        ))
+
                 self._validate_docs_schema(doc, doc_schema, 'DOCUMENTATION', 305)
                 self._check_version_added(doc)
                 self._check_for_new_args(doc)
