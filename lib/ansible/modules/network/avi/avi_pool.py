@@ -289,12 +289,10 @@ obj:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.avi import avi_common_argument_spec
 
-
-HAS_AVI = True
 try:
-    from avi.sdk.utils.ansible_utils import avi_ansible_api
+    from ansible.module_utils.avi_ansible_utils import (
+        avi_common_argument_spec, HAS_AVI, avi_ansible_api)
 except ImportError:
     HAS_AVI = False
 
@@ -362,7 +360,7 @@ def main():
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:
         return module.fail_json(msg=(
-            'Avi python API SDK (avisdk) is not installed. '
+            'Avi python API SDK (avisdk>=16.3.5.post1) is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'pool',
                            set([]))
