@@ -68,7 +68,8 @@ class ActionModule(_ActionModule):
             # start the connection if it isn't started
             rc, out, err = connection.exec_command('open_shell()')
             if not rc == 0:
-                return {'failed': True, 'msg': 'unable to open shell', 'rc': rc}
+                return {'failed': True, 'msg': 'unable to open shell', 'rc': rc,
+                        'err': err, 'out': out}
         else:
             # make sure we are in the right cli context which should be
             # enable mode and not config module

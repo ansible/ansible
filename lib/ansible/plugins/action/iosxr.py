@@ -66,7 +66,8 @@ class ActionModule(_ActionModule):
             # start the connection if it isn't started
             rc, out, err = connection.exec_command('open_shell()')
             if rc != 0:
-                return {'failed': True, 'msg': 'unable to open shell', 'rc': rc}
+                return {'failed': True, 'msg': 'unable to open shell', 'rc': rc,
+                        'out': out, 'err': err}
 
         task_vars['ansible_socket'] = socket_path
 
