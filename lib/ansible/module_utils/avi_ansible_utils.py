@@ -27,6 +27,12 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+# This module initially matched the namespace of network module avi. However,
+# that causes namespace import error when other modules from avi namespaces
+# are imported. In order to avoid the import collisions this was renamed to
+# avi_ansible_utils to allow this module to be ceterpiece of all integration
+# with external avi modules.
+
 import os
 from pkg_resources import parse_version
 
