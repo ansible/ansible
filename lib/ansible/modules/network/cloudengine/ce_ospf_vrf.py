@@ -63,8 +63,8 @@ options:
         description:
             - Specifies the mode of timer to calculate interval of arrive LSA.
               If set the parameter but not specifies value ,the default will be used.
-              If true use general timer
-              If false use intelligent timer
+              If true use general timer.
+              If false use intelligent timer.
         required: false
         default: False
     lsaainterval:
@@ -96,7 +96,7 @@ options:
             - Specifies whether cancel the interval of LSA originate or not.
               If set the parameter but noe specifies value ,the default will be used.
               true:cancel the interval of LSA originate,the interval is 0.
-              false:do not cancel the interval of LSA originate
+              false:do not cancel the interval of LSA originate.
         required: false
         default: False
     lsaointerval:
@@ -127,9 +127,9 @@ options:
         description:
             - Specifies the mode of timer which used to calculate SPF.
               If set the parameter but noe specifies value ,the default will be used.
-              If is intelligent-timer, then use intelligent timer
-              If is timer, then use second level  timer
-              If is millisecond, then use millisecond  level timer
+              If is intelligent-timer, then use intelligent timer.
+              If is timer, then use second level timer.
+              If is millisecond, then use millisecond level timer.
         required: false
         choices: ['intelligent-timer','timer','millisecond']
         default: intelligent-timer
@@ -186,13 +186,13 @@ EXAMPLES = '''
 
   tasks:
 
-- name: Configure ospf route id
-  ce_ospf_vrf:
-    ospf: 2
-    route_id: 2.2.2.2
-    lsaointervalflag: False
-    lsaointerval: 2
-    provider: "{{ cli }}"
+  - name: Configure ospf route id
+    ce_ospf_vrf:
+      ospf: 2
+      route_id: 2.2.2.2
+      lsaointervalflag: False
+      lsaointerval: 2
+      provider: "{{ cli }}"
 '''
 
 RETURN = '''
@@ -291,14 +291,7 @@ changed:
 import sys
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ce import get_netconf, ce_argument_spec
-
-HAS_NCCLIENT = False
-try:
-    from ncclient.operations.rpc import RPCError
-    HAS_NCCLIENT = True
-except ImportError:
-    HAS_NCCLIENT = False
+from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
 
 CE_NC_GET_OSPF_VRF = """
     <filter type="subtree">
@@ -396,7 +389,6 @@ class OspfVrf(object):
     def __init__(self, argument_spec):
         self.spec = argument_spec
         self.module = None
-        self.netconf = None
         self.init_module()
 
         # module input info
@@ -423,11 +415,6 @@ class OspfVrf(object):
         self.spfholdinterval = self.module.params['spfholdinterval']
         self.state = self.module.params['state']
 
-        # host info
-        self.host = self.module.params['provider']['host']
-        self.username = self.module.params['provider']['username']
-        self.port = self.module.params['provider']['port']
-
         # ospf info
         self.ospf_info = dict()
 
@@ -445,8 +432,6 @@ class OspfVrf(object):
         self.bandwidth_changed = False
         self.description_changed = False
         self.vrf_changed = False
-        # init netconf connect
-        self.init_netconf()
 
     def init_module(self):
         """" init module """
@@ -454,23 +439,9 @@ class OspfVrf(object):
         self.module = AnsibleModule(
             argument_spec=self.spec, supports_check_mode=True)
 
-    def init_netconf(self):
-        """ init netconf """
-
-        if not HAS_NCCLIENT:
-            raise Exception("the ncclient library is required")
-
-        self.netconf = get_netconf(host=self.host,
-                                   port=self.port,
-                                   username=self.username,
-                                   password=self.module.params['provider']['password'])
-        if not self.netconf:
-            self.module.fail_json(msg='Error: netconf init failed')
-
-    def check_response(self, con_obj, xml_name):
+    def check_response(self, xml_str, xml_name):
         """Check if response message is already succeed."""
 
-        xml_str = con_obj.xml
         if "<ok/>" not in xml_str:
             self.module.fail_json(msg='Error: %s failed.' % xml_name)
 
@@ -1098,15 +1069,11 @@ class OspfVrf(object):
         self.ospf_info["ospfsite"] = list()
 
         getxmlstr = CE_NC_GET_OSPF_VRF
-        try:
-            get_obj = self.netconf.get_config(filter=getxmlstr)
-        except RPCError:
-            err = sys.exc_info()[1]
-            self.module.fail_json(msg='Error: %s' % err.message.replace("\r\n", ""))
-
-        if 'data/' in get_obj.xml:
+        xml_str = get_nc_config(self.module, getxmlstr)
+        if 'data/' in xml_str:
             return
-        xml_str = get_obj.xml.replace('\r', '').replace('\n', '').\
+
+        xml_str = xml_str.replace('\r', '').replace('\n', '').\
             replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
             replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
@@ -1223,12 +1190,9 @@ class OspfVrf(object):
                 configxmlstr = CE_NC_DELETE_OSPF % (
                     self.ospf, self.get_exist_route(), self.get_exist_vrf())
                 conf_str = build_config_xml(configxmlstr)
-                try:
-                    con_obj = self.netconf.set_config(config=conf_str)
-                    self.check_response(con_obj, "OPERATE_VRF_AF")
-                except RPCError:
-                    err = sys.exc_info()[1]
-                    self.module.fail_json(msg='Error: %s' % err.message.replace("\r\n", ""))
+
+                recv_xml = set_nc_config(self.module, conf_str)
+                self.check_response(recv_xml, "OPERATE_VRF_AF")
                 self.changed = True
                 return
         if self.vrf != '_public_':
@@ -1244,12 +1208,8 @@ class OspfVrf(object):
                 configxmlstr = CE_NC_DELETE_OSPF % (
                     self.ospf, self.get_exist_route(), self.get_exist_vrf())
                 conf_str = build_config_xml(configxmlstr)
-                try:
-                    con_obj = self.netconf.set_config(config=conf_str)
-                    self.check_response(con_obj, "OPERATE_VRF_AF")
-                except RPCError:
-                    err = sys.exc_info()[1]
-                    self.module.fail_json(msg='Error: %s' % err.message.replace("\r\n", ""))
+                recv_xml = set_nc_config(self.module, conf_str)
+                self.check_response(recv_xml, "OPERATE_VRF_AF")
                 self.changed = True
                 return
         if self.bandwidth:
@@ -1491,13 +1451,8 @@ class OspfVrf(object):
             spf_max_interval, spf_start_interval, spf_hold_interval)
 
         conf_str = build_config_xml(configxmlstr)
-
-        try:
-            con_obj = self.netconf.set_config(config=conf_str)
-            self.check_response(con_obj, "OPERATE_VRF_AF")
-        except RPCError:
-            err = sys.exc_info()[1]
-            self.module.fail_json(msg='Error: %s' % err.message.replace("\r\n", ""))
+        recv_xml = set_nc_config(self.module, conf_str)
+        self.check_response(recv_xml, "OPERATE_VRF_AF")
 
     def get_existing(self):
         """get existing info"""
@@ -1685,6 +1640,7 @@ def main():
         spfholdinterval=dict(required=False, type='str'),
         state=dict(required=False, choices=['present', 'absent'], default='present'),
     )
+
     argument_spec.update(ce_argument_spec)
     module = OspfVrf(argument_spec)
     module.work()
