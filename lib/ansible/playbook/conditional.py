@@ -70,7 +70,6 @@ class ConditionalResults:
     def __init__(self, conditional_results=None, when=None):
         self.conditional_results = conditional_results or []
         self.when = when or None
-        print('self.failed_because: %s' % self.failed_because)
 
     def __nonzero__(self):
         if not all(self.conditional_results):
@@ -82,8 +81,6 @@ class ConditionalResults:
 
     def __not_repr__(self):
         failed_msg = ''
-        #if self.failed_because:
-        #    failed_msg = ','.join(self.failed_because)
         return '%s(when=%s, conditional_results=%s %s)' % (self.__class__.__name__,
                                                            self.when,
                                                            self.conditional_results,

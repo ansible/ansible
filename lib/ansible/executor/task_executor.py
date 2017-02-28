@@ -426,7 +426,6 @@ class TaskExecutor:
         try:
             result = self._task.evaluate_conditional(templar, variables)
             if not result:
-                print('cr: %s' % result)
                 display.debug("when evaluation is False, skipping this task")
                 #return dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=self._play_context.no_log)
                 return dict(changed=False, skipped=True, skip_reason=result.failed_because, _ansible_no_log=self._play_context.no_log)
