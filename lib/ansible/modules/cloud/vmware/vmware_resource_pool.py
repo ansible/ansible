@@ -299,21 +299,21 @@ class VMwareResourcePool(object):
 
 def main():
     argument_spec = vmware_argument_spec()
-    argument_spec.update(dict(datacenter=dict(required=True, type='str'),
-                              cluster=dict(required=True, type='str'),
-                              resource_pool=dict(required=True, type='str'),
-                              hostname=dict(required=True, type='str'),
-                              username=dict(required=True, type='str'),
-                              password=dict(required=True, type='str', no_log=True),
-                              mem_shares=dict(type='str', default="normal", choices=['high','custom','normal', 'low']),
-                              mem_limit=dict(type='int',default="-1"),
-                              mem_reservation=dict(type='int',default="0"),
-                              mem_expandable_reservations=dict(type='bool',default="True"),
-                              cpu_shares=dict(type='str', default="normal", choices=['high','custom','normal', 'low']),
-                              cpu_limit=dict(type='int',default="-1"),
-                              cpu_reservation=dict(type='int',default="0"),
-                              cpu_expandable_reservations=dict(type='bool',default="True"),
-                              state=dict(default='present', choices=['present', 'absent'], type='str')))
+    argument_spec.update(dict(datacenter = dict(required = True, type = 'str'),
+                              cluster = dict(required = True, type = 'str'),
+                              resource_pool = dict(required=True, type='str'),
+                              hostname = dict(required = True, type = 'str'),
+                              username = dict(required = True, type = 'str'),
+                              password = dict(required = True, type = 'str', no_log = True),
+                              mem_shares = dict(type = 'str', default = "normal", choices = ['high','custom','normal', 'low']),
+                              mem_limit = dict(type = 'int',default = "-1"),
+                              mem_reservation = dict(type = 'int',default = "0"),
+                              mem_expandable_reservations = dict(type = 'bool',default = "True"),
+                              cpu_shares = dict(type = 'str', default = "normal", choices = ['high','custom','normal', 'low']),
+                              cpu_limit = dict(type = 'int',default = "-1"),
+                              cpu_reservation = dict(type = 'int',default = "0"),
+                              cpu_expandable_reservations = dict(type = 'bool',default = "True"),
+                              state = dict(default = 'present', choices = ['present', 'absent'], type = 'str')))
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
