@@ -115,9 +115,18 @@ class CallbackModule(CallbackBase):
                 self._process_items(result)
             else:
                 msg = "skipping: [%s]" % result._host.get_name()
-                if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
+                if (self._display.verbosity >= 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
+                    reasons = self._dump_skipped_reasons(result._result)
+                    if reasons:
+                        msg += " because:\n"
+                        for reason in reasons:
+                            msg += "    %s\n" % reason
+                if (self._display.verbosity > 1 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
                     msg += " => %s" % self._dump_results(result._result)
                 self._display.display(msg, color=C.COLOR_SKIP)
+
+    def _dump_skipped_reasons(self, result):
+        return result.get('skip_reason', None)
 
     def v2_runner_on_unreachable(self, result):
         if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:

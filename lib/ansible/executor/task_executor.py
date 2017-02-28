@@ -429,7 +429,7 @@ class TaskExecutor:
                 print('cr: %s' % result)
                 display.debug("when evaluation is False, skipping this task")
                 #return dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=self._play_context.no_log)
-                return dict(changed=False, skipped=True, skip_reason=result, _ansible_no_log=self._play_context.no_log)
+                return dict(changed=False, skipped=True, skip_reason=result.failed_because, _ansible_no_log=self._play_context.no_log)
         except AnsibleError:
             # loop error takes precedence
             if self._loop_eval_error is not None:

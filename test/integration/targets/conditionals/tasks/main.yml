@@ -300,6 +300,18 @@
     - "result.rc <= 37"
     - "result.stdout == 'Some value that is different from stdout'"
 
+
+- name: when when is a list of whens with many many falses
+  debug:
+    msg: 'I was truthy.'
+  when:
+    - "True == False"
+    - False
+    - "'blippy' == 'sdfblippy'"
+    - "result.rc >= 37"
+    - "result.stdout == 'Some value that is different from stdout'"
+
+
 - set_fact: skipped_bad_attribute=True
 - block:
   - name: test a with_items loop using a variable with a missing attribute

@@ -80,7 +80,7 @@ class ConditionalResults:
     def __repr2__(self):
         return "%s(%s)" % (bool(self), self.conditional_results)
 
-    def __repr__(self):
+    def __not_repr__(self):
         failed_msg = ''
         #if self.failed_because:
         #    failed_msg = ','.join(self.failed_because)
@@ -93,9 +93,6 @@ class ConditionalResults:
     def failed_because(self):
         #return self.conditional_results or []
         return [x for x in self.conditional_results if x.value is False]
-
-    #def __str__(self):
-    #    buf = "The conditional clause '%s' was False" % self.failed_because
 
     def append(self, conditional_result):
         return self.conditional_results.append(conditional_result)
