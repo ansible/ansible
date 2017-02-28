@@ -246,7 +246,15 @@ def docker_run(args, image, options):
     if not options:
         options = []
 
-    return docker_command(args, ['run'] + options + [image], capture=True)
+    for _ in range(1, 3):
+        try:
+            return docker_command(args, ['run'] + options + [image], capture=True)
+        except SubprocessError as ex:
+            display.error(ex)
+            display.warning('Failed to run docker image "%s". Waiting a few seconds before trying again.' % image)
+            time.sleep(3)
+
+    raise ApplicationError('Failed to run docker image "%s".' % image)
 
 
 def docker_rm(args, container_id):
