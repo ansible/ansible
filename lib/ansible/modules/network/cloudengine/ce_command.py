@@ -27,7 +27,7 @@ DOCUMENTATION = """
 module: ce_command
 version_added: "2.3"
 author: "JackyGao2016 (@CloudEngine-Ansible)"
-short_description: Run arbitrary command on HUAWEI CloudEngine devices
+short_description: Run arbitrary command on HUAWEI CloudEngine devices.
 description:
   - Sends an arbitrary command to an HUAWEI CloudEngine node and returns
     the results read from the device.  The ce_command module includes an
@@ -85,11 +85,18 @@ EXAMPLES = """
 #       transport and authentication to the node.
 
 - name: CloudEngine command test
+  hosts: cloudengine
+  connection: local
+  gather_facts: no
   vars:
-    host: "{{ inventory_hostname }}"
-    username: admin
-    password: admin
-    transport: cli
+    cli:
+      host: "{{ inventory_hostname }}"
+      port: "{{ ansible_ssh_port }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      transport: cli
+
+  tasks:
 
   tasks:
   - name: "Run display version on remote devices"
@@ -144,12 +151,12 @@ failed_conditions:
 
 import time
 
-from ansible.module_utils.cloudengine import run_commands
+from ansible.module_utils.ce import run_commands
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.network_common import ComplexList
-from ansible.module_utils.cloudengine import ce_argument_spec, check_args
+from ansible.module_utils.ce import ce_argument_spec, check_args
 
 
 def to_lines(stdout):
