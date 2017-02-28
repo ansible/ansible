@@ -28,8 +28,8 @@ find lib/ansible/modules -type d -empty -print -delete
 
 function cleanup
 {
-    if [ "$(ls test/results/coverage/)" ]; then
-        ansible-test coverage xml --color -vv --requirements
+    if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | grep -q .; then
+        ansible-test coverage xml --color -v --requirements
         cp -av test/results/reports/coverage.xml shippable/codecoverage/coverage.xml
     fi
 
