@@ -360,7 +360,6 @@ class TaskQueueManager:
                 except Exception as e:
                     # TODO: add config toggle to make this fatal or not?
                     display.warning(u"Failure using method (%s) in callback plugin (%s): %s" % (to_text(method_name), to_text(callback_plugin), to_text(e)))
-                    raise
                     from traceback import format_tb
                     from sys import exc_info
                     display.debug('Callback Exception: \n' + ' '.join(format_tb(exc_info()[2])))
