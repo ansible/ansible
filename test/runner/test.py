@@ -24,9 +24,7 @@ from lib.executor import (
     command_windows_integration,
     command_units,
     command_compile,
-    command_sanity,
     command_shell,
-    SANITY_TESTS,
     SUPPORTED_PYTHON_VERSIONS,
     COMPILE_PYTHON_VERSIONS,
     PosixIntegrationConfig,
@@ -40,6 +38,11 @@ from lib.executor import (
     Delegate,
     generate_pip_install,
     check_startup,
+)
+
+from lib.sanity import (
+    command_sanity,
+    SANITY_TESTS,
 )
 
 from lib.target import (
