@@ -863,7 +863,7 @@ Another important thing to consider (for all versions) is that connection variab
 
     ansible -u lola myhost
 
-This will still connect as ``ramon`` as ``ansible_ssh_user`` is set to ``ramon`` in inventory for myhost.
+This will still connect as ``ramon`` because ``ansible_ssh_user`` is set to ``ramon`` in inventory for myhost.
 For plays/tasks this is also true for ``remote_user``::
 
  - hosts: myhost
@@ -871,8 +871,8 @@ For plays/tasks this is also true for ``remote_user``::
     - command: i'll connect as ramon still
       remote_user: lola
 
-This is done so host specific settings can override the general settings. These variables are normally defined per host or group in inventory,
-but they behave like other variables, so if you really want to override the remote user globally even over inventory you can use extra vars::
+This is done so host-specific settings can override the general settings. These variables are normally defined per host or group in inventory,
+but they behave like other variables. If you want to override the remote user globally (even over inventory) you can use extra vars::
 
     ansible... -e "ansible_user=<user>"
 
