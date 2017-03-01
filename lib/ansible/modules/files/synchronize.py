@@ -310,6 +310,19 @@ EXAMPLES = '''
       - "--no-motd"
       - "--exclude=.git"
 '''
+
+import os
+
+# Python3 compat.  six.moves.shlex_quote will be available once we're free to
+# upgrade beyond six-1.4 module-side.
+try:
+    from shlex import quote as shlex_quote
+except ImportError:
+    from pipes import quote as shlex_quote
+
+from ansible.module_utils.basic import AnsibleModule
+
+
 client_addr = None
 
 
@@ -462,7 +475,7 @@ def main():
         ssh_opts = '%s -o StrictHostKeyChecking=no' % ssh_opts
 
     if ssh_args:
-        ssh_opts = '%s %s' % (ssh_opts, ssh_args)
+        ssh_opts = '%s %s' % (ssh_opts, shlex_quote(ssh_args))
 
     if source.startswith('"rsync://') and dest.startswith('"rsync://'):
         module.fail_json(msg='either src or dest must be a localhost', rc=1)
@@ -472,9 +485,9 @@ def main():
         # Note:  The action plugin takes care of setting this to a port from
         # inventory if the user didn't specify an explicit dest_port
         if dest_port is not None:
-            cmd += " --rsh 'ssh %s %s -o Port=%s'" % (private_key, ssh_opts, dest_port)
+            cmd += " --rsh '%s %s %s -o Port=%s'" % (ssh, private_key, ssh_opts, dest_port)
         else:
-            cmd += " --rsh 'ssh %s %s'" % (private_key, ssh_opts)
+            cmd += " --rsh '%s %s %s'" % (ssh, private_key, ssh_opts)
 
     if rsync_path:
         cmd = cmd + " --rsync-path=%s" % (rsync_path)
@@ -514,8 +527,6 @@ def main():
             return module.exit_json(changed=changed, msg=out_clean,
                                     rc=rc, cmd=cmdstr, stdout_lines=out_lines)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
