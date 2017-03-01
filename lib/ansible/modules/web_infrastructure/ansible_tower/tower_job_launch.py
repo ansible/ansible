@@ -95,14 +95,17 @@ status:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ansible_tower import tower_argument_spec
 
 try:
     import tower_cli
     import tower_cli.utils.exceptions as exc
 
     from tower_cli.conf import settings
-    from ansible.module_utils.ansible_tower import tower_auth_config, tower_check_mode
+    from ansible.module_utils.ansible_tower import (
+        tower_auth_config,
+        tower_check_mode,
+        tower_argument_spec,
+    )
 
     HAS_TOWER_CLI = True
 except ImportError:
@@ -137,7 +140,7 @@ def main():
         tower_check_mode(module)
         try:
             params = module.params.copy()
-            if type(tags) == list:
+            if isinstance(tags, list):
                 params['tags'] = ','.join(tags)
             job = tower_cli.get_resource('job')
 
