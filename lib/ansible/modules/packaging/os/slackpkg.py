@@ -190,10 +190,20 @@ def upgrade_packages(module, slackpkg_path, packages):
 
 
 def update_cache(module, slackpkg_path):
-    rc, out, err = module.run_command("%s -batch=on update" % (slackpkg_path))
-    if rc != 0:
-        module.fail_json(msg="Could not update package cache")
-
+    rc, out, err = module.run_command("%s check-updates" % (slackpkg_path))
+    for line in out.split('\n'):
+        if "News on ChangeLog.txt" in line:
+            rc, out, err = module.run_command(
+                "%s -batch=on update" % (slackpkg_path))
+            if rc != 0:
+                module.fail_json(msg="Could not update package cache")
+            return
+        if "No news is good news" in line:
+            return
+    module.fail_json(
+        msg="Could not check on change lock state",
+        out=out,
+        err=err)
 
 def main():
     module = AnsibleModule(
