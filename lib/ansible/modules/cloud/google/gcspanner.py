@@ -48,7 +48,7 @@ options:
     description:
        - Name of database contained on the instance.
     required: False
-  display_name:
+  instance_display_name:
     description:
        - Name of Instance to display.  If not specified, instance_id will be used instead.
     required: False
@@ -103,7 +103,7 @@ previous_values:
    description: List of dictionaries containing previous values prior to update.
    returned: When an instance update has occurred and a field has been modified.
    type: dict
-   sample: "'previous_values': { 'instance': { 'display_name': 'my-instance', 'node_count': 1 } }"
+   sample: "'previous_values': { 'instance': { 'instance_display_name': 'my-instance', 'node_count': 1 } }"
 
 updated:
    description: Boolean field to denote an update has occurred.
@@ -140,7 +140,7 @@ def instance_update(instance):
     Call update method on spanner client.
 
     Note: A ValueError exception is thrown despite the client succeeding.
-    So, we validate the node_count and display_name parameters and then
+    So, we validate the node_count and instance_display_name parameters and then
     ignore the ValueError exception.
 
     :param instance: a Spanner instance object
@@ -155,7 +155,7 @@ def instance_update(instance):
             instance.node_count, type(instance.node_count))
     if instance.display_name and not isinstance(instance.display_name,
                                                 basestring):
-        errmsg = 'display_name must be an string %s (%s)' % (
+        errmsg = 'instance_display_name must be an string %s (%s)' % (
             instance.display_name, type(instance.display_name))
     if errmsg:
         raise ValueError(errmsg)
@@ -176,7 +176,7 @@ def main():
         database_name=dict(type='str', default=None),
         configuration=dict(type='str', required=True),
         node_count=dict(type='int'),
-        display_name=dict(type='str', default=None),
+        instance_display_name=dict(type='str', default=None),
         service_account_email=dict(),
         credentials_file=dict(),
         project_id=dict(), ), )
@@ -198,7 +198,7 @@ def main():
     mod_params['database_name'] = module.params.get('database_name')
     mod_params['configuration'] = module.params.get('configuration')
     mod_params['node_count'] = module.params.get('node_count', None)
-    mod_params['display_name'] = module.params.get('display_name')
+    mod_params['instance_display_name'] = module.params.get('instance_display_name')
 
     creds, params = get_google_cloud_credentials(module)
     spanner_client = spanner.Client(project=params['project_id'],
@@ -237,13 +237,12 @@ def main():
             # update instance
             i.reload()
             inst_prev_vals = {}
-            if i.display_name != mod_params['display_name']:
-                inst_prev_vals['display_name'] = i.display_name
-                i.display_name = mod_params['display_name']
+            if i.display_name != mod_params['instance_display_name']:
+                inst_prev_vals['instance_display_name'] = i.display_name
+                i.display_name = mod_params['instance_display_name']
             if mod_params['node_count']:
                 if i.node_count != mod_params['node_count']:
                     inst_prev_vals['node_count'] = i.node_count
-                    inst_prev_vals['foobar'] = 'yes'
                     i.node_count = mod_params['node_count']
             if inst_prev_vals:
                 changed = instance_update(i)
