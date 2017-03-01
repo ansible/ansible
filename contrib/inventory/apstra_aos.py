@@ -51,9 +51,9 @@ Version: 0.2.0
 """
 import os
 import argparse
+import re
 
 from ansible.compat.six.moves import configparser
-import os
 
 try:
     from apstra.aosom.session import Session
@@ -485,6 +485,7 @@ class AosInventory(object):
         except:
             pass
 
+
     def parse_cli_args(self):
         """ Command line argument processing """
 
@@ -503,13 +504,16 @@ class AosInventory(object):
 
     def add_host_to_group(self, group, host):
 
-        # Check if the group exist, if not initialize it
-        if group not in self.inventory.keys():
-            self.inventory[group] = {}
-            self.inventory[group]['hosts'] = []
-            self.inventory[group]['vars'] = {}
+        # Cleanup group name first
+        clean_group = self.cleanup_group_name(group)
 
-        self.inventory[group]['hosts'].append(host)
+        # Check if the group exist, if not initialize it
+        if clean_group not in self.inventory.keys():
+            self.inventory[clean_group] = {}
+            self.inventory[clean_group]['hosts'] = []
+            self.inventory[clean_group]['vars'] = {}
+
+        self.inventory[clean_group]['hosts'].append(host)
 
     def add_var_to_host(self, host, var, value):
 
@@ -521,13 +525,16 @@ class AosInventory(object):
 
     def add_var_to_group(self, group, var, value):
 
-        # Check if the group exist, if not initialize it
-        if group not in self.inventory.keys():
-            self.inventory[group] = {}
-            self.inventory[group]['hosts'] = []
-            self.inventory[group]['vars'] = {}
+        # Cleanup group name first
+        clean_group = self.cleanup_group_name(group)
 
-        self.inventory[group]['vars'][var] = value
+        # Check if the group exist, if not initialize it
+        if clean_group not in self.inventory.keys():
+            self.inventory[clean_group] = {}
+            self.inventory[clean_group]['hosts'] = []
+            self.inventory[clean_group]['vars'] = {}
+
+        self.inventory[clean_group]['vars'][var] = value
 
     def add_device_facts_to_var(self, device_name, device):
 
@@ -545,6 +552,17 @@ class AosInventory(object):
             elif key == 'hw_model':
                 self.add_host_to_group(value, device_name)
 
+    def cleanup_group_name(self, group_name):
+        """
+        Clean up group name by :
+          - Replacing all non-alphanumeric caracter by underscore
+          - Converting to lowercase
+        """
+
+        rx = re.compile('\W+')
+        clean_group = rx.sub('_', group_name).lower()
+
+        return clean_group
 
 # Run the script
 if __name__ == '__main__':
