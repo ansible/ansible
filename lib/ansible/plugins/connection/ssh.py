@@ -25,6 +25,7 @@ import fcntl
 import hashlib
 import os
 import pty
+import socket
 import subprocess
 import time
 
@@ -61,7 +62,7 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(*args, **kwargs)
 
         self.host = self._play_context.remote_addr
-        self.port = self._play_context.port
+        self.port = int(self._play_context.port or 22)
         self.user = self._play_context.remote_user
         self.control_path = C.ANSIBLE_SSH_CONTROL_PATH
         self.control_path_dir = C.ANSIBLE_SSH_CONTROL_PATH_DIR
@@ -72,6 +73,12 @@ class Connection(ConnectionBase):
 
     def _connect(self):
         return self
+
+    def transport_test(self, connect_timeout):
+        ''' Test the transport mechanism, if available '''
+        display.vvv("attempting transport test to %s:%s" % (self.host, self.port))
+        sock = socket.create_connection((self.host, self.port), connect_timeout)
+        sock.close()
 
     @staticmethod
     def _create_control_path(host, port, user):
