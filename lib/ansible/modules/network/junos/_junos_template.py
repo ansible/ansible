@@ -16,9 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['deprecated'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['deprecated'],
+    'supported_by': 'community',
+    'version': '1.0'
+}
 
 
 DOCUMENTATION = """
@@ -108,10 +110,11 @@ EXAMPLES = """
     src: config.j2
     action: overwrite
 """
-import ansible.module_utils.junos
 
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.network import NetworkModule, NetworkError
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.junos import check_args, junos_argument_spec
+from ansible.module_utils.junos import get_configuration, load
+from ansible.module_utils.six import text_type
 
 DEFAULT_COMMENT = 'configured by junos_template'
 
@@ -127,8 +130,15 @@ def main():
         transport=dict(default='netconf', choices=['netconf'])
     )
 
+    argument_spec.update(junos_argument_spec)
+
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
+
+    result = {'changed': False, 'warnings': warnings}
 
     comment = module.params['comment']
     confirm = module.params['confirm']
@@ -141,18 +151,16 @@ def main():
         module.fail_json(msg="overwrite cannot be used when format is "
             "set per junos-pyez documentation")
 
-    results = {'changed': False}
+    if module.params['backup']:
+        result['__backup__'] = text_type(get_configuration(module))
 
-    if module.praams['backup']:
-        results['__backup__'] = unicode(get_configuration(module))
-
-    diff = load(module, src, **kwargs)
+    diff = load(module, src, action=action, commit=commit, format=fmt)
     if diff:
-        results['changed'] = True
+        result['changed'] = True
         if module._diff:
-            results['diff'] = {'prepared': diff}
+            result['diff'] = {'prepared': diff}
 
-    module.exit_json(**results)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
