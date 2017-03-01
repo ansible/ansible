@@ -63,7 +63,7 @@ Ansible Changes By Release
 
 ###New Modules:
 - a10_server_axapi3
-- amazon
+- amazon:
   * aws_kms
   * cloudfront_facts
   * ec2_group_facts
@@ -81,10 +81,10 @@ Ansible Changes By Release
 - bigswitch:
   * bigmon_chain
   * bigmon_policy
-- cloudengine
+- cloudengine:
   * ce_command
 - cloudscale_server
-- cloudstack
+- cloudstack:
   * cs_host
   * cs_nic
   * cs_region
@@ -95,7 +95,7 @@ Ansible Changes By Release
   * eos_banner
   * eos_system
   * eos_user
-- f5
+- f5:
   * bigip_gtm_facts
   * bigip_hostname
   * bigip_snat_pool
@@ -106,11 +106,15 @@ Ansible Changes By Release
 - fortios
   * fortios_config
 - gconftool2
-- google
+- google:
   * gce_eip
   * gce_snapshot
   * gcpubsub
   * gcpubsub_facts
+- hpilo:
+  * hpilo_boot
+  * hpilo_facts
+  * hponcfg
 - icinga2_feature
 - illumos:
   * dladm_iptun
@@ -126,7 +130,7 @@ Ansible Changes By Release
   * infini_host
   * infini_pool
   * infini_vol
-- ipa
+- ipa:
   * ipa_group
   * ipa_hbacrule
   * ipa_host
@@ -148,7 +152,7 @@ Ansible Changes By Release
 - logstash_plugin
 - mattermost
 - net_command
-- netapp
+- netapp:
   * sf_account_manager
   * sf_snapshot_schedule_manager
   * sf_volume_manager
@@ -159,11 +163,11 @@ Ansible Changes By Release
 - openssl:
   * openssl_privatekey
   * openssl_publickey
-- openstack
+- openstack:
   * os_nova_host_aggregate
   * os_quota
 - openwrt_init
-- ordnance
+- ordnance:
   * ordnance_config
   * ordnance_facts
 - ovirt:
@@ -237,7 +241,7 @@ Ansible Changes By Release
 - stacki_host
 - swupd
 - tempfile
-- tower
+- tower:
   * tower_credential
   * tower_group
   * tower_host
@@ -252,7 +256,7 @@ Ansible Changes By Release
 - vmware:
   * vmware_guest_facts
   * vmware_guest_snapshot
-- web_infrastructure
+- web_infrastructure:
   * jenkins_script
 - windows:
   * win_dns_client
