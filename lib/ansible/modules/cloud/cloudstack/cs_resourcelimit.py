@@ -120,21 +120,29 @@ project:
 '''
 
 # import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_required_together,
+    cs_argument_spec
+)
+
 
 RESOURCE_TYPES = {
-    'instance':             0,
-    'ip_address':           1,
-    'volume':               2,
-    'snapshot':             3,
-    'template':             4,
-    'network':              6,
-    'vpc':                  7,
-    'cpu':                  8,
-    'memory':               9,
-    'primary_storage':      10,
-    'secondary_storage':    11,
+    'instance': 0,
+    'ip_address': 1,
+    'volume': 2,
+    'snapshot': 3,
+    'template': 4,
+    'network': 6,
+    'vpc': 7,
+    'cpu': 8,
+    'memory': 9,
+    'primary_storage': 10,
+    'secondary_storage': 11,
 }
+
 
 class AnsibleCloudStackResourceLimit(AnsibleCloudStack):
 
@@ -144,33 +152,34 @@ class AnsibleCloudStackResourceLimit(AnsibleCloudStack):
             'max': 'limit',
         }
 
-
     def get_resource_type(self):
         resource_type = self.module.params.get('resource_type')
         return RESOURCE_TYPES.get(resource_type)
 
-
     def get_resource_limit(self):
-        args                 = {}
-        args['account']      = self.get_account(key='name')
-        args['domainid']     = self.get_domain(key='id')
-        args['projectid']    = self.get_project(key='id')
-        args['resourcetype'] = self.get_resource_type()
+        args = {
+            'account': self.get_account(key='name'),
+            'domainid': self.get_domain(key='id'),
+            'projectid': self.get_project(key='id'),
+            'resourcetype': self.get_resource_type()
+        }
         resource_limit = self.cs.listResourceLimits(**args)
         if resource_limit:
+            if 'limit' in resource_limit['resourcelimit'][0]:
+                resource_limit['resourcelimit'][0]['limit'] = int(resource_limit['resourcelimit'][0])
             return resource_limit['resourcelimit'][0]
         self.module.fail_json(msg="Resource limit type '%s' not found." % self.module.params.get('resource_type'))
-
 
     def update_resource_limit(self):
         resource_limit = self.get_resource_limit()
 
-        args                 = {}
-        args['account']      = self.get_account(key='name')
-        args['domainid']     = self.get_domain(key='id')
-        args['projectid']    = self.get_project(key='id')
-        args['resourcetype'] = self.get_resource_type()
-        args['max']          = self.module.params.get('limit', -1)
+        args = {
+            'account': self.get_account(key='name'),
+            'domainid': self.get_domain(key='id'),
+            'projectid': self.get_project(key='id'),
+            'resourcetype': self.get_resource_type(),
+            'max': self.module.params.get('limit', -1)
+        }
 
         if self.has_changed(args, resource_limit):
             self.result['changed'] = True
@@ -181,7 +190,6 @@ class AnsibleCloudStackResourceLimit(AnsibleCloudStack):
                 resource_limit = res['resourcelimit']
         return resource_limit
 
-
     def get_result(self, resource_limit):
         self.result = super(AnsibleCloudStackResourceLimit, self).get_result(resource_limit)
         self.result['resource_type'] = self.module.params.get('resource_type')
@@ -191,11 +199,11 @@ class AnsibleCloudStackResourceLimit(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        resource_type = dict(required=True, choices=RESOURCE_TYPES.keys(), aliases=['type']),
-        limit = dict(default=-1, aliases=['max']),
-        domain = dict(default=None),
-        account = dict(default=None),
-        project = dict(default=None),
+        resource_type=dict(required=True, choices=RESOURCE_TYPES.keys(), aliases=['type']),
+        limit=dict(default=-1, aliases=['max'], type='int'),
+        domain=dict(default=None),
+        account=dict(default=None),
+        project=dict(default=None),
     ))
 
     module = AnsibleModule(
@@ -214,7 +222,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()
