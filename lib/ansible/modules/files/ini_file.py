@@ -178,8 +178,8 @@ def do_ini(module, filename, section=None, option=None, value=None,
 
     # ini file could be empty
     if not ini_lines:
-      ini_lines.append('\n')
-    
+        ini_lines.append('\n')
+
     # last line of file may not contain a trailing newline
     if ini_lines[-1] == "" or ini_lines[-1][-1] != '\n':
         ini_lines[-1] += '\n'
