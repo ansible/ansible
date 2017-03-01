@@ -230,7 +230,7 @@ class GalaxyCLI(CLI):
                     continue
                 elif ext == ".j2" and not in_templates_dir:
                     src_template = os.path.join(rel_root, f)
-                    dest_file = os.path.join(role_path, rel_root, filename) 
+                    dest_file = os.path.join(role_path, rel_root, filename)
                     template_env.get_template(src_template).stream(inject_data).dump(dest_file)
                 else:
                     f_rel_path = os.path.relpath(os.path.join(root, f), role_skeleton)

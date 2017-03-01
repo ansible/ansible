@@ -297,7 +297,7 @@ class ValidRoleTests(object):
         gc.parse()
         gc.run()
         cls.gc = gc
-        
+
         if skeleton_path is None:
             cls.role_skeleton_path = gc.galaxy.default_role_skeleton_path
 
