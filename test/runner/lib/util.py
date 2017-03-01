@@ -287,6 +287,8 @@ class Display(object):
         self.verbosity = 0
         self.color = True
         self.warnings = []
+        self.warnings_unique = set()
+        self.info_stderr = False
 
     def __warning(self, message):
         """
@@ -304,10 +306,17 @@ class Display(object):
         for warning in self.warnings:
             self.__warning(warning)
 
-    def warning(self, message):
+    def warning(self, message, unique=False):
         """
         :type message: str
+        :type unique: bool
         """
+        if unique:
+            if message in self.warnings_unique:
+                return
+
+            self.warnings_unique.add(message)
+
         self.__warning(message)
         self.warnings.append(message)
 
@@ -330,7 +339,7 @@ class Display(object):
         """
         if self.verbosity >= verbosity:
             color = self.verbosity_colors.get(verbosity, self.yellow)
-            self.print_message(message, color=color)
+            self.print_message(message, color=color, fd=sys.stderr if self.info_stderr else sys.stdout)
 
     def print_message(self, message, color=None, fd=sys.stdout):  # pylint: disable=locally-disabled, invalid-name
         """
