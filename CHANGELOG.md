@@ -145,6 +145,7 @@ Ansible Changes By Release
   * ios_system
   * ios_vrf
 - iosxr_system
+- iso_extract
 - jenkins_script
 - ldap:
   * ldap_attr
