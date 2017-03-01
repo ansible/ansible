@@ -29,10 +29,10 @@
 
 # This module initially matched the namespace of network module avi. However,
 # that causes namespace import error when other modules from avi namespaces
-# are imported. In order to avoid the import collisions this was renamed to
-# avi_ansible_utils to allow this module to be ceterpiece of all integration
-# with external avi modules.
+# are imported. Added import of absolute_import to avoid import collisions for
+# avi.sdk.
 
+from __future__ import absolute_import
 import os
 from pkg_resources import parse_version
 
