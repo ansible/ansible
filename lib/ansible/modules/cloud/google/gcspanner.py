@@ -231,6 +231,10 @@ def main():
                 changed = True
     elif mod_params['state'] == 'present':
         if not i.exists():
+            i = spanner_client.instance(mod_params['instance_id'],
+                                        configuration_name=config_name,
+                                        display_name=mod_params['instance_display_name'],
+                                        node_count=mod_params['node_count'] or 1)
             i.create()
             changed = True
         else:
