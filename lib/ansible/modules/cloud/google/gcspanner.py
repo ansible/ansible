@@ -19,7 +19,6 @@
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
-# TODO(supertom): in progress, all docs are WRONG
 DOCUMENTATION = '''
 ---
 module: gcspanner
@@ -112,10 +111,6 @@ updated:
    type: bool
    sample: True
 '''
-CLOUD_CLIENT = 'google-cloud-spanner'
-CLOUD_CLIENT_MINIMUM_VERSION = '0.23.0'
-CLOUD_CLIENT_USER_AGENT = 'ansible-spanner-0.1'
-
 try:
     from ast import literal_eval
     HAS_PYTHON26 = True
@@ -128,6 +123,10 @@ try:
     HAS_GOOGLE_CLOUD_SPANNER = True
 except ImportError as e:
     HAS_GOOGLE_CLOUD_SPANNER = False
+
+CLOUD_CLIENT = 'google-cloud-spanner'
+CLOUD_CLIENT_MINIMUM_VERSION = '0.23.0'
+CLOUD_CLIENT_USER_AGENT = 'ansible-spanner-0.1'
 
 
 def get_spanner_configuration_name(config_name, project_name):
@@ -262,6 +261,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-from ansible.module_utils.gcp import *
+from ansible.module_utils.gcp import check_min_pkg_version, get_google_cloud_credentials
 if __name__ == '__main__':
     main()
