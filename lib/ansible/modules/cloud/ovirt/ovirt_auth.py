@@ -93,6 +93,9 @@ notes:
   - "In order to use this module you have to install oVirt Python SDK.
      To ensure it's installed with correct version you can create the following task:
      I(pip: name=ovirt-engine-sdk-python version=4.0.0)"
+  - "Note that in oVirt 4.1 if you want to use a user which is not administrator
+     you must enable the I(ENGINE_API_FILTER_BY_DEFAULT) variable in engine. In
+     oVirt 4.2 and later it's enabled by default."
 '''
 
 EXAMPLES = '''
