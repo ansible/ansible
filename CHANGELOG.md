@@ -259,6 +259,8 @@ Ansible Changes By Release
   * vmware_guest_snapshot
 - web_infrastructure:
   * jenkins_script
+- system
+  * parted
 - windows:
   * win_dns_client
   * win_domain_membership
