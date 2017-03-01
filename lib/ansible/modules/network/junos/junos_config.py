@@ -242,12 +242,14 @@ def config_to_commands(config):
 
 def filter_delete_statements(module, candidate):
     config = get_config(module)
+
+    modified_candidate = candidate[:]
     for index, line in enumerate(candidate):
         if line.startswith('delete'):
             newline = re.sub('^delete', 'set', line)
             if newline not in config:
-                del candidate[index]
-    return candidate
+                del modified_candidate[index]
+    return modified_candidate
 
 def load(module):
     candidate = module.params['lines'] or module.params['src']
