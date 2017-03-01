@@ -48,6 +48,11 @@ options:
     description:
        - Name of database contained on the instance.
     required: False
+  force_instance_delete:
+    description:
+       - To delete an instance, this argument must exist and be true (along with state being equal to absent).
+    required: False
+    default: False
   instance_display_name:
     description:
        - Name of Instance to display.  If not specified, instance_id will be used instead.
@@ -78,6 +83,13 @@ gcspanner:
   configuration: "{{ configuration }}"
   database_name: "{{ database_name }}"
   state: present
+
+# Delete instance (and all databases)
+gcspanner:
+  instance_id: "{{ instance_id }}"
+  configuration: "{{ configuration }}"
+  state: absent
+  force_instance_delete: yes
 '''
 
 RETURN = '''
@@ -117,7 +129,7 @@ try:
 except ImportError:
     HAS_PYTHON26 = False
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.gcp import check_min_pkg_version, get_google_cloud_credentials
 
 try:
@@ -180,6 +192,7 @@ def main():
         configuration=dict(type='str', required=True),
         node_count=dict(type='int'),
         instance_display_name=dict(type='str', default=None),
+        force_instance_delete=dict(type='bool', default=False),
         service_account_email=dict(),
         credentials_file=dict(),
         project_id=dict(), ), )
@@ -202,6 +215,7 @@ def main():
     mod_params['configuration'] = module.params.get('configuration')
     mod_params['node_count'] = module.params.get('node_count', None)
     mod_params['instance_display_name'] = module.params.get('instance_display_name')
+    mod_params['force_instance_delete'] = module.params.get('force_instance_delete')
 
     creds, params = get_google_cloud_credentials(module)
     spanner_client = spanner.Client(project=params['project_id'],
@@ -230,7 +244,12 @@ def main():
             changed = True
         else:
             if i.exists():
-                i.delete()
+                if mod_params['force_instance_delete']:
+                    i.delete()
+                else:
+                    module.fail_json(
+                        msg=(("Cannot delete Spanner instance: "
+                              "'force_instance_delete' argument not specified")))
                 changed = True
     elif mod_params['state'] == 'present':
         if not i.exists():
