@@ -36,8 +36,7 @@ $result = @{
 
 $msg_args = @($to, "/TIME:$display_seconds")
 
-If ($wait) 
-{
+If ($wait) {
   $msg_args += "/W"
 }
 
@@ -57,8 +56,7 @@ $result.runtime_seconds = $stopwatch.Elapsed.TotalSeconds
 $result.sent_localtime = $endsend_at.Trim()
 $result.wait = $wait
 
-If (-not $result.rc -eq 0 ) 
-{
+If (-not $result.rc -eq 0 ) {
     Fail-Json $result "$ret"
 }
   
