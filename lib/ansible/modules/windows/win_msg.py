@@ -39,7 +39,7 @@ options:
     default: '*'
   display_seconds:
     description:
-      - How long to wait for receiver to acknowledge message.
+      - How long to wait for receiver to acknowledge message, in seconds.
     default: 10
   wait:
     description:
