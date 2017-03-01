@@ -99,11 +99,17 @@ def query_repository(module, slackpkg_path, name):
     if rc != 0:
         module.fail_json(msg="Could not search repository")
     machine = platform.machine()
-    pattern = re.compile(" {}-([^-]+)-({}|noarch)-.*".format(name, machine))
+    pattern = re.compile(" ({}-([^-]+)-({}|noarch)-[^ ]*)".format(name, machine))
     for line in out.split('\n'):
-        match = pattern.search(line)
-        if match is not None:
-            return line[match.start() + 1:]
+        matches = re.findall(pattern, line)
+        if len(matches) == 1:
+            return (matches[0][0], None)
+            return (line[matches[0].start() + 1:matches[0].end()], None)
+        elif len(matches) == 2:
+            return (matches[0][0], matches[1][0])
+            return (
+                line[matches[0].start() + 1:matches[0].end()],
+                line[matches[1].start() + 1:matches[1].end()])
     module.fail_json(
         msg="failed to locate package {} in repository".format(name))
 
@@ -145,7 +151,7 @@ def install_packages(module, slackpkg_path, packages):
             rc, out, err = module.run_command(
                 "%s -default_answer=y -batch=on install %s" % (
                     slackpkg_path,
-                    query_repository(module, slackpkg_path, package)))
+                    query_repository(module, slackpkg_path, package)[0]))
 
         if not module.check_mode and not query_package(package):
             module.fail_json(msg="failed to install %s: %s" % (package, out),
@@ -154,7 +160,7 @@ def install_packages(module, slackpkg_path, packages):
         install_c += 1
 
     if install_c > 0:
-        module.exit_json(changed=True, msg="present %s package(s)"
+        module.exit_json(changed=True, msg="installed %s package(s)"
                          % (install_c))
 
     module.exit_json(changed=False, msg="package(s) already present")
@@ -165,25 +171,32 @@ def upgrade_packages(module, slackpkg_path, packages):
 
     for package in packages:
         installed_package = query_package(package)
+        current_version, newer_version = query_repository(
+            module, slackpkg_path, package)
         if not installed_package and not module.check_mode:
+            install_c += 1
             rc, out, err = module.run_command(
                 "%s -default_answer=y -batch=on install %s" % (
                     slackpkg_path,
-                    query_repository(module, slackpkg_path, package)))
-        elif not module.check_mode:
+                    current_version))
+        elif not module.check_mode and newer_version is not None:
+            install_c += 1
             rc, out, err = module.run_command(
                 "%s -default_answer=y -batch=on upgrade %s" % (
-                    slackpkg_path, installed_package))
+                    slackpkg_path, newer_version))
+            if query_package(package) != newer_version:
+                module.fail_json(
+                    msg="failed to upgrade %s: %s" % (package, out),
+                    stderr=err,
+                    current_version=current_version,
+                    newer_version=newer_version)
 
         if not module.check_mode and not query_package(package):
             module.fail_json(msg="failed to install %s: %s" % (package, out),
                              stderr=err)
 
-        if installed_package != query_package(package):
-            install_c += 1
-
     if install_c > 0:
-        module.exit_json(changed=True, msg="present %s package(s)"
+        module.exit_json(changed=True, msg="updated or installed %s package(s)"
                          % (install_c))
 
     module.exit_json(changed=False, msg="package(s) already present")
