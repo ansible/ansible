@@ -448,7 +448,8 @@ def main():
     try:
         disk = None
         state = module.params['state']
-        connection = create_connection(module.params.get('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         disks_service = connection.system_service().disks_service()
         disks_module = DisksModule(
             connection=connection,
@@ -518,7 +519,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":
