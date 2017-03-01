@@ -24,6 +24,7 @@
 import re
 import glob
 import platform
+from packaging import version
 
 # import module snippets
 from ansible.module_utils.basic import *
@@ -103,13 +104,9 @@ def query_repository(module, slackpkg_path, name):
     for line in out.split('\n'):
         matches = re.findall(pattern, line)
         if len(matches) == 1:
-            return (matches[0][0], None)
-            return (line[matches[0].start() + 1:matches[0].end()], None)
+            return (matches[0], None)
         elif len(matches) == 2:
-            return (matches[0][0], matches[1][0])
-            return (
-                line[matches[0].start() + 1:matches[0].end()],
-                line[matches[1].start() + 1:matches[1].end()])
+            return (matches[0], matches[1])
     module.fail_json(
         msg="failed to locate package {} in repository".format(name))
 
@@ -151,7 +148,7 @@ def install_packages(module, slackpkg_path, packages):
             rc, out, err = module.run_command(
                 "%s -default_answer=y -batch=on install %s" % (
                     slackpkg_path,
-                    query_repository(module, slackpkg_path, package)[0]))
+                    query_repository(module, slackpkg_path, package)[0][0]))
 
         if not module.check_mode and not query_package(package):
             module.fail_json(msg="failed to install %s: %s" % (package, out),
@@ -178,18 +175,22 @@ def upgrade_packages(module, slackpkg_path, packages):
             rc, out, err = module.run_command(
                 "%s -default_answer=y -batch=on install %s" % (
                     slackpkg_path,
-                    current_version))
+                    current_version[0]))
         elif not module.check_mode and newer_version is not None:
+            if version.parse(newer_version[1]) < version.parse(current_version[1]):
+                # don't do anything if a newer version than the one in the
+                # repository is installed already
+                continue
             install_c += 1
             rc, out, err = module.run_command(
                 "%s -default_answer=y -batch=on upgrade %s" % (
-                    slackpkg_path, newer_version))
-            if query_package(package) != newer_version:
+                    slackpkg_path, newer_version[0]))
+            if query_package(package) != newer_version[0]:
                 module.fail_json(
                     msg="failed to upgrade %s: %s" % (package, out),
                     stderr=err,
-                    current_version=current_version,
-                    newer_version=newer_version)
+                    current_version=current_version[0],
+                    newer_version=newer_version[0])
 
         if not module.check_mode and not query_package(package):
             module.fail_json(msg="failed to install %s: %s" % (package, out),
