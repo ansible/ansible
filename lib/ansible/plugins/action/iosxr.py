@@ -64,18 +64,22 @@ class ActionModule(_ActionModule):
         socket_path = self._get_socket_path(pc)
         if not os.path.exists(socket_path):
             # start the connection if it isn't started
+            display.vvvv('calling open_shell()', pc.remote_addr)
             rc, out, err = connection.exec_command('open_shell()')
             if rc != 0:
                 return {'failed': True, 'msg': 'unable to open shell', 'rc': rc}
+        else:
+            # make sure we are in the right cli context which should be
+            # enable mode and not config module
+            rc, out, err = connection.exec_command('prompt()')
+            while str(out).strip().endswith(')#'):
+                display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
+                connection.exec_command('exit')
+                rc, out, err = connection.exec_command('prompt()')
 
         task_vars['ansible_socket'] = socket_path
 
         result = super(ActionModule, self).run(tmp, task_vars)
-
-        # need to make sure to leave config mode if the module didn't clean up
-        rc, out, err = connection.exec_command('prompt()')
-        if str(out).strip().endswith(')#'):
-            connection.exec_command('exit')
 
         return result
 
