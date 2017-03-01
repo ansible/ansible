@@ -1441,7 +1441,10 @@ class DockerManager(object):
             for link, alias in (self.links or {}).items():
                 expected_links.add("/{0}:{1}/{2}".format(link, container["Name"], alias))
 
-            actual_links = set(container['HostConfig']['Links'] or [])
+            actual_links = set()
+            for link in (container['HostConfig']['Links'] or []):
+                actual_links.add(link)
+
             if actual_links != expected_links:
                 self.reload_reasons.append('links ({0} => {1})'.format(actual_links, expected_links))
                 differing.append(container)
