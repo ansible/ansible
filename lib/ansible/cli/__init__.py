@@ -36,6 +36,7 @@ from ansible import constants as C
 from ansible.compat.six import with_metaclass
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.utils.path import unfrackpath
 
 try:
     from __main__ import display
@@ -266,6 +267,10 @@ class CLI(with_metaclass(ABCMeta, object)):
         setattr(parser.values, option.dest, os.path.expanduser(value))
 
     @staticmethod
+    def unfrack_path(option, opt, value, parser):
+        setattr(parser.values, option.dest, unfrackpath(value))
+
+    @staticmethod
     def expand_paths(option, opt, value, parser):
         """optparse action callback to convert a PATH style string arg to a list of path strings.
 
@@ -339,7 +344,8 @@ class CLI(with_metaclass(ABCMeta, object)):
             connect_group.add_option('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
                 help='ask for connection password')
             connect_group.add_option('--private-key','--key-file', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
-                help='use this file to authenticate the connection')
+                help='use this file to authenticate the connection',
+                action="callback", callback=CLI.unfrack_path, type=str)
             connect_group.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',
                 help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
             connect_group.add_option('-c', '--connection', dest='connection', default=C.DEFAULT_TRANSPORT,
