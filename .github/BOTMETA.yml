@@ -530,6 +530,7 @@ files:
   $modules/packaging/os/apt_key.py: jvantuyl
   $modules/packaging/os/apt_repository.py: $team_ansible sashka
   $modules/packaging/os/apt_rpm.py: evgkrsk
+  $modules/packaging/os/bindep.py: mordred pabelanger rcarrillocruz
   $modules/packaging/os/dnf.py: DJMuggs berenddeschouwer ignatenkobrain
   $modules/packaging/os/dpkg_selections.py: brian-brazil
   $modules/packaging/os/homebrew.py: andrew-d danieljaouen indrajitr

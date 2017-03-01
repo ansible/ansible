@@ -1,0 +1,2 @@
+hello [platform:dpkg]
+sos [platform:rpm]

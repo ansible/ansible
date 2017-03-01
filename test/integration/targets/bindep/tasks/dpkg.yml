@@ -1,0 +1,55 @@
+- name: make sure packages aren't installed
+  package:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+  - finger
+  - hello
+
+- name: ask bindep what should be installed
+  bindep:
+  register: bindep_missing
+
+- name: verify bindep wants us to install hello
+  assert:
+    that:
+        - "'hello' in bindep_missing.missing"
+
+- name: ask bindep directly if finger is installed
+  bindep:
+    requirements:
+    - finger
+  register: bindep_finger
+
+- name: verify bindep wants us to install finger
+  assert:
+    that:
+        - "'finger' in bindep_finger.missing"
+
+- name: ask bindep directly if about a mixed list
+  bindep:
+    requirements:
+    - "finger [platform:dpkg]"
+    - "libssl-devel [platform:rpm]"
+  register: bindep_mixed
+
+- name: verify bindep wants us to install finger and not libssl-devel
+  assert:
+    that:
+        - "'finger' in bindep_mixed.missing"
+        - "'libssl-devel' not in bindep_mixed.missing"
+
+- name: install packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ bindep_missing.missing }}"
+
+- name: ask bindep what should be installed again
+  bindep:
+  register: bindep_missing_again
+
+- name: verify uninstallation of hello
+  assert:
+    that:
+        - "not bindep_missing_again.missing"
