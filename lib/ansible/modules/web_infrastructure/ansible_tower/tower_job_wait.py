@@ -35,11 +35,11 @@ options:
       required: True
     min_interval:
       description:
-        - Minimum interval to request an update from Tower.
+        - Minimum interval in seconds, to request an update from Tower.
       default: 1
     max_interval:
       description:
-        - Maximum interval to request an update from Tower.
+        - Maximum interval in seconds, to request an update from Tower.
       default: 30
     timeout:
       description:
@@ -131,16 +131,17 @@ def main():
     json_output = {}
     fail_json = None
 
-    # tower-cli gets very noisy when monitoring.
-    # We use nostdout to surppress the stdout during our monitor call.
     tower_auth = tower_auth_config(module)
     with settings.runtime_values(**tower_auth):
         tower_check_mode(module)
         job = tower_cli.get_resource('job')
         params = module.params.copy()
 
+        # tower-cli gets very noisy when monitoring.
+        # We pass in our our outfile to supress the out during our monitor call.
         outfile = StringIO()
         params['outfile'] = outfile
+
         job_id = params.get('job_id')
         try:
             result = job.monitor(job_id, **params)
