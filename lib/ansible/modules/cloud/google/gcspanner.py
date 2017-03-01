@@ -48,27 +48,19 @@ options:
     description:
        - Name of database contained on the instance.
     required: False
-<<<<<<< HEAD
   force_instance_delete:
     description:
        - To delete an instance, this argument must exist and be true (along with state being equal to absent).
     required: False
     default: False
   instance_display_name:
-=======
-  display_name:
->>>>>>> 8ce1527... [GCE] Google Cloud Spanner module
     description:
        - Name of Instance to display.  If not specified, instance_id will be used instead.
     required: False
   node_count:
     description:
-<<<<<<< HEAD
        - Number of nodes in the instance.  If not specified while creating an instance,
          node_count will be set to 1.
-=======
-       - Number of nodes in the instance.  Default is 1.
->>>>>>> 8ce1527... [GCE] Google Cloud Spanner module
     required: False
   state:
     description: State of the instance or database (absent, present). Applies to the most granular
@@ -162,11 +154,7 @@ def instance_update(instance):
     Call update method on spanner client.
 
     Note: A ValueError exception is thrown despite the client succeeding.
-<<<<<<< HEAD
     So, we validate the node_count and instance_display_name parameters and then
-=======
-    So, we validate the node_count and display_name parameters and then
->>>>>>> 8ce1527... [GCE] Google Cloud Spanner module
     ignore the ValueError exception.
 
     :param instance: a Spanner instance object
