@@ -413,6 +413,9 @@ def main():
     # currently a bit ugly. (e.g. headers='{"Content-Type":"application/json"}')
     for key, value in six.iteritems(module.params):
         if key.startswith("HEADER_"):
+            module.deprecate('Supplying headers via HEADER_* is deprecated and '
+                             'will be removed in a future version. Please use '
+                             '`headers` to supply headers for the request')
             skey = key.replace("HEADER_", "")
             dict_headers[skey] = value
 
