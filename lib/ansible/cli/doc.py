@@ -341,12 +341,12 @@ class DocCLI(CLI):
         text.append('')
 
         if doc['metadata'] and isinstance(doc['metadata'], dict):
-            text.append("Metadata:")
+            text.append("METADATA:")
             for k in doc['metadata']:
                 if isinstance(k, list):
                     text.append("\t%s: %s" % (k.capitalize(), ", ".join(doc['metadata'][k])))
                 else:
                     text.append("\t%s: %s" % (k.capitalize(), doc['metadata'][k]))
-            text.append("")
+            text.append('')
 
         return "\n".join(text)
