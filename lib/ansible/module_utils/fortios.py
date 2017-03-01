@@ -157,7 +157,7 @@ class AnsibleFortios(object):
 
     def get_error_infos(self, cli_errors):
         error_list = []
-        for errors in cli_errors:
+        for errors in cli_errors.args:
             for error in errors:
                 error_code = error[0]
                 error_string = error[1]
@@ -166,4 +166,6 @@ class AnsibleFortios(object):
 
         return error_list
 
+    def get_empty_configuration_block(self, block_name, block_type):
+        return FortiConfig(block_name, block_type)
 

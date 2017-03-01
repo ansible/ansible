@@ -131,7 +131,7 @@ EXAMPLES = """
     password: password
     id: 42
     srcaddr: internal_network
-    dstaddr: any
+    dstaddr: all
     service: dns
     nat: True
     state: present
@@ -143,7 +143,7 @@ EXAMPLES = """
     username: admin
     password: password
     id: 42
-    srcaddr: any
+    srcaddr: all
     dstaddr: webservers
     services:
       - http
@@ -173,18 +173,11 @@ from ansible.module_utils.fortios import backup, AnsibleFortios
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 
-#check for pyFG lib
-try:
-    from pyFG import FortiOS, FortiConfig
-    from pyFG.exceptions import CommandExecutionException, FailedCommit
-    HAS_PYFG=True
-except:
-    HAS_PYFG=False
 
 def main():
     argument_spec = dict(
         comment                   = dict(type='str'),
-        id                        = dict(type='str', required=True),
+        id                        = dict(type='int', required=True),
         src_intf                  = dict(default='any'),
         dst_intf                  = dict(default='any'),
         state                     = dict(choices=['present', 'absent'], default='present'),
@@ -214,26 +207,30 @@ def main():
         required_if=fortios_required_if,
     )
 
+    #init forti object
+    fortigate = AnsibleFortios(module)
+
     #test params
     #NAT related
     if not module.params['nat']:
         if module.params['poolname']:
-            module.fail_json(msg='Poolname param require NAT to be true.')
+            module.fail_json(msg='Poolname param requires NAT to be true.')
         if module.params['fixedport']:
-            module.fail_json(msg='Fixedport param require NAT to be true.')
+            module.fail_json(msg='Fixedport param requires NAT to be true.')
 
+    #id must be str(int) for pyFG to work
+    policy_id = str(module.params['id'])
 
-    #init forti_device object
-    forti_device = AnsibleFortios(module)
-    forti_device.load_config('firewall policy')
+    #load config
+    fortigate.load_config('firewall policy')
 
     #Absent State
     if module.params['state'] == 'absent':
-        forti_device.candidate_config[path].del_block(module.params['id'])
+        fortigate.candidate_config[path].del_block(policy_id)
 
     #Present state
     elif module.params['state'] == 'present':
-        new_policy = FortiConfig(module.params['id'], 'edit')
+        new_policy = fortigate.get_empty_configuration_block(policy_id, 'edit')
 
         #src / dest / service / interfaces
         new_policy.set_param('srcintf', '"%s"' % (module.params['src_intf']))
@@ -282,10 +279,10 @@ def main():
             new_policy.set_param('comment', '"%s"' % (module.params['comment']))
 
         #add the new policy to the device
-        forti_device.add_block(module.params['id'] , new_policy)
+        fortigate.add_block(policy_id, new_policy)
 
     #Apply changes
-    forti_device.apply_changes()
+    fortigate.apply_changes()
 
 if __name__ == '__main__':
     main()
