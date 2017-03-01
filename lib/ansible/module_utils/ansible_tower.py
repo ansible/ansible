@@ -75,3 +75,13 @@ def tower_check_mode(module):
             module.exit_json(changed=True, tower_version='{0}'.format(result['version']))
         except (exc.ServerError, exc.ConnectionError, exc.BadRequest) as excinfo:
             module.fail_json(changed=False, msg='Failed check mode: {0}'.format(excinfo))
+
+
+def tower_argument_spec():
+    return dict(
+        tower_host = dict(),
+        tower_username = dict(),
+        tower_password = dict(no_log=True),
+        tower_verify_ssl = dict(type='bool', default=True),
+        tower_config_file = dict(type='path'),
+    )
