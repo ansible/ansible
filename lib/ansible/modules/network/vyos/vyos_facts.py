@@ -26,7 +26,7 @@ DOCUMENTATION = """
 module: vyos_facts
 version_added: "2.2"
 author: "Nathaniel Case (@qalthos)"
-short_description: Collect facts from remote devices running OS
+short_description: Collect facts from remote devices running VyOS
 description:
   - Collects a base set of device facts from a remote device that
     is running VyOS.  This module prepends all of the
