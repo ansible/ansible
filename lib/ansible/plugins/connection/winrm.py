@@ -92,8 +92,8 @@ class Connection(ConnectionBase):
 
     def transport_test(self, connect_timeout):
         ''' Test the transport mechanism, if available '''
-        host = self._play_context.remote_addr
-        port = int(self._play_context.port or 5986)
+        host = self._winrm_host
+        port = int(self._winrm_port)
         display.vvv("attempting transport test to %s:%s" % (host, port))
         sock = socket.create_connection((host, port), connect_timeout)
         sock.close()
