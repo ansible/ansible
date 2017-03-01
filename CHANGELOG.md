@@ -263,6 +263,7 @@ Ansible Changes By Release
   * win_dns_client
   * win_domain_membership
   * win_find
+  * win_msg
   * win_path
   * win_psexec
   * win_reg_stat
