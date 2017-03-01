@@ -110,7 +110,8 @@ def main():
     check_sdk(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         affinity_labels_service = connection.system_service().affinity_labels_service()
         labels = []
         all_labels = affinity_labels_service.list()
@@ -155,7 +156,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == '__main__':
