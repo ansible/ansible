@@ -1,5 +1,6 @@
 - name: enable nxapi on remote device
-  nxos_config:
-    lines:
-      - feature nxapi
+  nxos_nxapi:
+    http: yes
+    sandbox: yes
+    state: present
     provider: "{{ cli }}"
