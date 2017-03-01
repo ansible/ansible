@@ -180,7 +180,8 @@
     url: 'http://{{ httpbin_host }}/digest-auth/auth/user/passwd'
     user: user
     password: passwd
-    HEADER_Cookie: "fake=fake_value"
+    headers:
+      Cookie: "fake=fake_value"
 
 - name: test PUT
   uri:
