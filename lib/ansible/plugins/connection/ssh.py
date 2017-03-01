@@ -62,7 +62,7 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(*args, **kwargs)
 
         self.host = self._play_context.remote_addr
-        self.port = int(self._play_context.port or 22)
+        self.port = self._play_context.port
         self.user = self._play_context.remote_user
         self.control_path = C.ANSIBLE_SSH_CONTROL_PATH
         self.control_path_dir = C.ANSIBLE_SSH_CONTROL_PATH_DIR
@@ -76,8 +76,9 @@ class Connection(ConnectionBase):
 
     def transport_test(self, connect_timeout):
         ''' Test the transport mechanism, if available '''
-        display.vvv("attempting transport test to %s:%s" % (self.host, self.port))
-        sock = socket.create_connection((self.host, self.port), connect_timeout)
+        port = int(self.port or 22)
+        display.vvv("attempting transport test to %s:%s" % (self.host, port))
+        sock = socket.create_connection((self.host, port), connect_timeout)
         sock.close()
 
     @staticmethod
