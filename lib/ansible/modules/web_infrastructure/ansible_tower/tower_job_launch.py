@@ -77,7 +77,6 @@ options:
 extends_documentation_fragment: tower
 '''
 
-
 EXAMPLES = '''
 - name: Launch a job
   tower_job_launch:
@@ -88,6 +87,23 @@ EXAMPLES = '''
     job_id: job.id
     timeout: 120
 '''
+
+RETURN = '''
+id:
+    description: job id of the newly launched job
+    returned: success
+    type: int
+    sample: 86
+status:
+    description: status of newly launched job
+    returned: success
+    type: string
+    sample: pending
+'''
+
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ansible_tower import tower_argument_spec
 
 try:
     import tower_cli
@@ -147,10 +163,6 @@ def main():
 
     json_output['changed'] = result['changed']
     module.exit_json(**json_output)
-
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ansible_tower import tower_argument_spec
 
 
 if __name__ == '__main__':
