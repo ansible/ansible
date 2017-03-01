@@ -132,6 +132,9 @@ try:
 except ImportError:
     HAS_PYTHON26 = False
 
+from ansible.module_utils.basic import *
+from ansible.module_utils.gcp import check_min_pkg_version, get_google_cloud_credentials
+
 try:
     from google.cloud import spanner
     from google.gax.errors import GaxError
