@@ -21,6 +21,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
+import glob
+import platform
+
+# import module snippets
+from ansible.module_utils.basic import *
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
@@ -77,37 +83,45 @@ EXAMPLES = '''
 '''
 
 
-def query_package(module, slackpkg_path, name):
-
-    import glob
-    import platform
-
+def query_package(name):
     machine = platform.machine()
     packages = glob.glob("/var/log/packages/%s-*-[%s|noarch]*" % (name,
                                                                   machine))
-
-    if len(packages) > 0:
-        return True
-
+    pattern = re.compile("{}-([^-]+)-({}|noarch)-.*".format(name, machine))
+    for package in packages:
+        package = package[len("/var/log/packages/"):]
+        if pattern.match(package):
+            return package
     return False
 
+def query_repository(module, slackpkg_path, name):
+    rc, out, err = module.run_command("%s search %s" % (slackpkg_path, name))
+    if rc != 0:
+        module.fail_json(msg="Could not search repository")
+    machine = platform.machine()
+    pattern = re.compile(" {}-([^-]+)-({}|noarch)-.*".format(name, machine))
+    for line in out.split('\n'):
+        match = pattern.search(line)
+        if match is not None:
+            return line[match.start() + 1:]
+    module.fail_json(
+        msg="failed to locate package {} in repository".format(name))
 
 def remove_packages(module, slackpkg_path, packages):
-
     remove_c = 0
     # Using a for loop in case of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
-        if not query_package(module, slackpkg_path, package):
+        installed_package = query_package(package)
+        if not installed_package:
             continue
 
         if not module.check_mode:
-            rc, out, err = module.run_command("%s -default_answer=y -batch=on \
-                                              remove %s" % (slackpkg_path,
-                                              package))
+            rc, out, err = module.run_command(
+                "%s -default_answer=y -batch=on remove %s" % (
+                    slackpkg_path, installed_package))
 
-        if not module.check_mode and query_package(module, slackpkg_path,
-                                                   package):
+        if not module.check_mode and query_package(package):
             module.fail_json(msg="failed to remove %s: %s" % (package, out))
 
         remove_c += 1
@@ -124,16 +138,16 @@ def install_packages(module, slackpkg_path, packages):
     install_c = 0
 
     for package in packages:
-        if query_package(module, slackpkg_path, package):
+        if query_package(package):
             continue
 
         if not module.check_mode:
-            rc, out, err = module.run_command("%s -default_answer=y -batch=on \
-                                              install %s" % (slackpkg_path,
-                                              package))
+            rc, out, err = module.run_command(
+                "%s -default_answer=y -batch=on install %s" % (
+                    slackpkg_path,
+                    query_repository(module, slackpkg_path, package)))
 
-        if not module.check_mode and not query_package(module, slackpkg_path,
-                                                       package):
+        if not module.check_mode and not query_package(package):
             module.fail_json(msg="failed to install %s: %s" % (package, out),
                              stderr=err)
 
@@ -150,17 +164,23 @@ def upgrade_packages(module, slackpkg_path, packages):
     install_c = 0
 
     for package in packages:
-        if not module.check_mode:
-            rc, out, err = module.run_command("%s -default_answer=y -batch=on \
-                                              upgrade %s" % (slackpkg_path,
-                                              package))
+        installed_package = query_package(package)
+        if not installed_package and not module.check_mode:
+            rc, out, err = module.run_command(
+                "%s -default_answer=y -batch=on install %s" % (
+                    slackpkg_path,
+                    query_repository(module, slackpkg_path, package)))
+        elif not module.check_mode:
+            rc, out, err = module.run_command(
+                "%s -default_answer=y -batch=on upgrade %s" % (
+                    slackpkg_path, installed_package))
 
-        if not module.check_mode and not query_package(module, slackpkg_path,
-                                                       package):
+        if not module.check_mode and not query_package(package):
             module.fail_json(msg="failed to install %s: %s" % (package, out),
                              stderr=err)
 
-        install_c += 1
+        if installed_package != query_package(package):
+            install_c += 1
 
     if install_c > 0:
         module.exit_json(changed=True, msg="present %s package(s)"
@@ -202,9 +222,6 @@ def main():
 
     elif p["state"] in ['removed', 'absent']:
         remove_packages(module, slackpkg_path, pkgs)
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
