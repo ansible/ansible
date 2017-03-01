@@ -148,3 +148,7 @@
   assert:
     that:
         - "dpkg_force.changed"
+
+- name: test module without package specified
+  apt:
+    autoremove: yes
