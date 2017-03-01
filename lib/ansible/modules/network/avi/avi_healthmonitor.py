@@ -135,7 +135,7 @@ obj:
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from ansible.module_utils.avi_ansible_utils import (
+    from ansible.module_utils.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
 except ImportError:
     HAS_AVI = False

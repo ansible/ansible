@@ -389,19 +389,11 @@ obj:
     type: dict
 '''
 
-from pkg_resources import parse_version
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.avi import avi_common_argument_spec
 
-HAS_AVI = True
 try:
-    import avi.sdk
-    sdk_version = getattr(avi.sdk, '__version__', None)
-    if ((sdk_version is None) or (sdk_version and
-            (parse_version(sdk_version) < parse_version('16.3.5.post1')))):
-        # It allows the __version__ to be '' as that value is used in development builds
-        raise ImportError
-    from avi.sdk.utils.ansible_utils import avi_ansible_api
+    from ansible.module_utils.avi import (
+        avi_common_argument_spec, HAS_AVI, avi_ansible_api)
 except ImportError:
     HAS_AVI = False
 
