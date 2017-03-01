@@ -48,11 +48,14 @@ options:
     description:
        - Name of database contained on the instance.
     required: False
+<<<<<<< HEAD
   force_instance_delete:
     description:
        - To delete an instance, this argument must exist and be true (along with state being equal to absent).
     required: False
     default: False
+=======
+>>>>>>> d0ea4f4... [GCE] rename display_name to instance_display_name
   instance_display_name:
     description:
        - Name of Instance to display.  If not specified, instance_id will be used instead.
