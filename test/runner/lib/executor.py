@@ -769,9 +769,11 @@ def command_sanity_code_smell(args, _):
                    and os.path.isfile(p)
                    and os.path.basename(p) not in skip_tests)
 
+    env = ansible_environment(args)
+
     for test in tests:
         display.info('Code smell check using %s' % os.path.basename(test))
-        run_command(args, [test])
+        run_command(args, [test], env=env)
 
 
 def command_sanity_validate_modules(args, targets):
