@@ -194,3 +194,27 @@
       - "not win_service_stop_disabled_again|changed"
       - "win_service_stop_disabled_again.start_mode == 'disabled'"
       - "win_service_stop_disabled_again.state == 'stopped'"
+
+- name: restart EventSystem service
+  win_service: name=EventSystem state=restarted
+  ignore_errors: yes
+  register: win_service_eventsystem_restart
+
+- name: check that restarting the service failed
+  assert:
+    that:
+      - "win_service_eventsystem_restart|failed"
+      - "win_service_eventsystem_restart.start_mode == 'auto'"
+      - "win_service_eventsystem_restart.state == 'running'"
+
+- name: force restart EventSystem service
+  win_service: name=EventSystem state=restarted force=yes
+  register: win_service_eventsystem_restart_force
+
+- name: check that stopping the service again succeeds without changes
+  assert:
+    that:
+      - "win_service_eventsystem_restart_force|changed"
+      - "win_service_eventsystem_restart_force.start_mode == 'auto'"
+      - "win_service_eventsystem_restart_force.state == 'running'"
+

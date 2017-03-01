@@ -27,6 +27,7 @@ Set-Attr $result "changed" $false;
 $name = Get-Attr $params "name" -failifempty $true
 $state = Get-Attr $params "state" $false
 $startMode = Get-Attr $params "start_mode" $false
+$force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
 
 If ($state) {
     $state = $state.ToString().ToLower()
@@ -54,6 +55,7 @@ If ($svcName -ne $svc.ServiceName) {
 
 Set-Attr $result "name" $svc.ServiceName
 Set-Attr $result "display_name" $svc.DisplayName
+Set-Attr $result "state" $svc.Status.ToString().ToLower()
 
 $svcMode = Get-WmiObject -Class Win32_Service -Property StartMode -Filter "Name='$svcName'"
 If ($startMode) {
@@ -82,7 +84,7 @@ If ($state) {
     }
     ElseIf ($state -eq "stopped" -and $svc.Status -ne "Stopped") {
         try {
-            Stop-Service -Name $svcName -ErrorAction Stop
+            Stop-Service -Name $svcName -Force:$force -ErrorAction Stop
         }
         catch {
             Fail-Json $result $_.Exception.Message
@@ -91,7 +93,7 @@ If ($state) {
     }
     ElseIf ($state -eq "restarted") {
         try {
-            Restart-Service -Name $svcName -ErrorAction Stop
+            Restart-Service -Name $svcName -Force:$force -ErrorAction Stop
         }
         catch {
             Fail-Json $result $_.Exception.Message
