@@ -205,7 +205,7 @@ def load_config(module, config, commit=False, comment=None,
         cmd = 'commit'
         if commit:
             cmd = 'commit confirmed'
-            if commit_timeout:
+            if confirm_timeout:
                 cmd +' %s' % confirm_timeout
         if comment:
             cmd += ' comment "%s"' % comment

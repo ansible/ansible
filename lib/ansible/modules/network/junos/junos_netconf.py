@@ -144,6 +144,8 @@ def main():
         state=dict(default='present', choices=['present', 'absent']),
     )
 
+    argument_spec.update(junos_argument_spec)
+
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
