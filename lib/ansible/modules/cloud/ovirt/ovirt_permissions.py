@@ -285,7 +285,8 @@ def main():
         module.fail_json(msg='"user_name" or "group_name" is required')
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         permissions_service = _object_service(connection, module).permissions_service()
         permissions_module = PermissionsModule(
             connection=connection,
@@ -304,7 +305,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":
