@@ -108,7 +108,7 @@ options:
      version_added: "1.6"
   autoremove:
     description:
-      - If C(yes), remove unused dependency packages for all module states except I(build-dep).
+      - If C(yes), remove unused dependency packages for all module states except I(build-dep). It can also be used as the only option.
     required: false
     default: no
     choices: [ "yes", "no" ]
@@ -393,35 +393,36 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
     # a PR to add some sort of explicit regex matching:
     # https://github.com/ansible/ansible-modules-core/issues/1258
     new_pkgspec = []
-    for pkgspec_pattern in pkgspec:
-        pkgname_pattern, version = package_split(pkgspec_pattern)
+    if pkgspec:
+        for pkgspec_pattern in pkgspec:
+            pkgname_pattern, version = package_split(pkgspec_pattern)
 
-        # note that none of these chars is allowed in a (debian) pkgname
-        if frozenset('*?[]!').intersection(pkgname_pattern):
-            # handle multiarch pkgnames, the idea is that "apt*" should
-            # only select native packages. But "apt*:i386" should still work
-            if ":" not in pkgname_pattern:
-                # Filter the multiarch packages from the cache only once
-                try:
-                    pkg_name_cache = _non_multiarch
-                except NameError:
-                    pkg_name_cache = _non_multiarch = [pkg.name for pkg in cache if ':' not in pkg.name]  # noqa: F841
+            # note that none of these chars is allowed in a (debian) pkgname
+            if frozenset('*?[]!').intersection(pkgname_pattern):
+                # handle multiarch pkgnames, the idea is that "apt*" should
+                # only select native packages. But "apt*:i386" should still work
+                if ":" not in pkgname_pattern:
+                    # Filter the multiarch packages from the cache only once
+                    try:
+                        pkg_name_cache = _non_multiarch
+                    except NameError:
+                        pkg_name_cache = _non_multiarch = [pkg.name for pkg in cache if ':' not in pkg.name]  # noqa: F841
+                else:
+                    # Create a cache of pkg_names including multiarch only once
+                    try:
+                        pkg_name_cache = _all_pkg_names
+                    except NameError:
+                        pkg_name_cache = _all_pkg_names = [pkg.name for pkg in cache]  # noqa: F841
+
+                matches = fnmatch.filter(pkg_name_cache, pkgname_pattern)
+
+                if len(matches) == 0:
+                    m.fail_json(msg="No package(s) matching '%s' available" % str(pkgname_pattern))
+                else:
+                    new_pkgspec.extend(matches)
             else:
-                # Create a cache of pkg_names including multiarch only once
-                try:
-                    pkg_name_cache = _all_pkg_names
-                except NameError:
-                    pkg_name_cache = _all_pkg_names = [pkg.name for pkg in cache]  # noqa: F841
-
-            matches = fnmatch.filter(pkg_name_cache, pkgname_pattern)
-
-            if len(matches) == 0:
-                m.fail_json(msg="No package(s) matching '%s' available" % str(pkgname_pattern))
-            else:
-                new_pkgspec.extend(matches)
-        else:
-            # No wildcards in name
-            new_pkgspec.append(pkgspec_pattern)
+                # No wildcards in name
+                new_pkgspec.append(pkgspec_pattern)
     return new_pkgspec
 
 
@@ -790,7 +791,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             state = dict(default='present', choices=['installed', 'latest', 'removed', 'absent', 'present', 'build-dep']),
-            update_cache = dict(default=False, aliases=['update-cache'], type='bool'),
+            update_cache = dict(aliases=['update-cache'], type='bool'),
             cache_valid_time = dict(type='int', default=0),
             purge = dict(default=False, type='bool'),
             package = dict(default=None, aliases=['pkg', 'name'], type='list'),
@@ -800,12 +801,12 @@ def main():
             force = dict(default='no', type='bool'),
             upgrade = dict(choices=['no', 'yes', 'safe', 'full', 'dist']),
             dpkg_options = dict(default=DPKG_OPTIONS),
-            autoremove = dict(type='bool', default=False, aliases=['autoclean']),
+            autoremove = dict(type='bool', aliases=['autoclean']),
             only_upgrade = dict(type='bool', default=False),
             allow_unauthenticated = dict(default='no', aliases=['allow-unauthenticated'], type='bool'),
         ),
         mutually_exclusive = [['package', 'upgrade', 'deb']],
-        required_one_of = [['package', 'upgrade', 'update_cache', 'deb']],
+        required_one_of = [['package', 'upgrade', 'update_cache', 'deb', 'autoremove']],
         supports_check_mode = True
     )
 
@@ -911,11 +912,12 @@ def main():
 
         packages = p['package']
         latest = p['state'] == 'latest'
-        for package in packages:
-            if package.count('=') > 1:
-                module.fail_json(msg="invalid package spec: %s" % package)
-            if latest and '=' in package:
-                module.fail_json(msg='version number inconsistent with state=latest: %s' % package)
+        if packages:
+            for package in packages:
+                if package.count('=') > 1:
+                    module.fail_json(msg="invalid package spec: %s" % package)
+                if latest and '=' in package:
+                    module.fail_json(msg='version number inconsistent with state=latest: %s' % package)
 
         if p['state'] in ('latest', 'present', 'build-dep'):
             state_upgrade = False
