@@ -57,7 +57,7 @@ def parse_s3_url(url):
     if match:
         return match.group(1), match.group(2)
     return None, None
-    
+
 class GalaxyRole(object):
 
     SUPPORTED_SCMS = set(['git', 'hg'])
