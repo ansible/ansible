@@ -130,14 +130,15 @@ def main():
         module.fail_json(msg='ansible-tower-cli required for this module')
 
     json_output = {}
-    tags = module.params.get('tags', [])
+    tags = module.params.get('tags')
 
     tower_auth = tower_auth_config(module)
     with settings.runtime_values(**tower_auth):
         tower_check_mode(module)
         try:
             params = module.params.copy()
-            params['tags'] = ','.join(tags)
+            if type(tags) == list:
+                params['tags'] = ','.join(tags)
             job = tower_cli.get_resource('job')
 
             lookup_fields = ('job_template', 'inventory', 'credential')
