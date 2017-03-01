@@ -180,6 +180,8 @@ from xml.etree import ElementTree
 from ncclient.xml_ import to_xml
 
 from ansible.module_utils.junos import get_diff, load
+from ansible.module_utils.junos import junos_argument_spec
+from ansible.module_utils.junos import check_args as junos_check_args
 from ansible.module_utils.junos import locked_config, load_configuration
 from ansible.module_utils.junos import get_configuration
 from ansible.module_utils.basic import AnsibleModule
@@ -188,6 +190,7 @@ from ansible.module_utils.netcfg import NetworkConfig
 DEFAULT_COMMENT = 'configured by junos_config'
 
 def check_args(module, warnings):
+    junos_check_args(module, warnings)
     if module.params['zeroize']:
         module.fail_json(msg='argument zeroize is deprecated and no longer '
                 'supported, use junos_command instead')
@@ -252,7 +255,7 @@ def load_config(module):
 
     kwargs = {
         'confirm': module.params['confirm'] is not None,
-        'confirm_timeout': module.params['confirm_timeout'],
+        'confirm_timeout': module.params['confirm'],
         'comment': module.params['comment'],
         'commit': not module.check_mode,
     }
@@ -316,6 +319,8 @@ def main():
         # deprecated zeroize in Ansible 2.3
         zeroize=dict(default=False, type='bool'),
     )
+
+    argument_spec.update(junos_argument_spec)
 
     mutually_exclusive = [('lines', 'src', 'rollback')]
 
