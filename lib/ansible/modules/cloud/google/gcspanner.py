@@ -55,7 +55,8 @@ options:
     required: False
   node_count:
     description:
-       - Number of nodes in the instance.  Default is 1.
+       - Number of nodes in the instance.  If not specified while creating an instance,
+         node_count will be set to 1.
     required: False
   state:
     description: State of the instance or database (absent, present). Applies to the most granular
@@ -78,7 +79,6 @@ gcspanner:
   configuration: "{{ configuration }}"
   database_name: "{{ database_name }}"
   state: present
-  node_count: 1
 '''
 
 RETURN = '''
@@ -176,7 +176,7 @@ def main():
         state=dict(choices=['absent', 'present'], default='present'),
         database_name=dict(type='str', default=None),
         configuration=dict(type='str', required=True),
-        node_count=dict(type='int', default=1),
+        node_count=dict(type='int'),
         display_name=dict(type='str', default=None),
         service_account_email=dict(),
         credentials_file=dict(),
@@ -198,7 +198,7 @@ def main():
     mod_params['instance_id'] = module.params.get('instance_id')
     mod_params['database_name'] = module.params.get('database_name')
     mod_params['configuration'] = module.params.get('configuration')
-    mod_params['node_count'] = module.params.get('node_count')
+    mod_params['node_count'] = module.params.get('node_count', None)
     mod_params['display_name'] = module.params.get('display_name')
 
     creds, params = get_google_cloud_credentials(module)
@@ -241,9 +241,11 @@ def main():
             if i.display_name != mod_params['display_name']:
                 inst_prev_vals['display_name'] = i.display_name
                 i.display_name = mod_params['display_name']
-            if i.node_count != mod_params['node_count']:
-                inst_prev_vals['node_count'] = i.node_count
-                i.node_count = mod_params['node_count']
+            if mod_params['node_count']:
+                if i.node_count != mod_params['node_count']:
+                    inst_prev_vals['node_count'] = i.node_count
+                    inst_prev_vals['foobar'] = 'yes'
+                    i.node_count = mod_params['node_count']
             if inst_prev_vals:
                 changed = instance_update(i)
                 json_output['updated'] = changed
