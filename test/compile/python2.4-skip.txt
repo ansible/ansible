@@ -32,6 +32,7 @@
 /lib/ansible/modules/web_infrastructure/ansible_tower/
 /lib/ansible/module_utils/a10.py
 /lib/ansible/module_utils/ansible_tower.py
+/lib/ansible/module_utils/avi.py
 /lib/ansible/module_utils/azure_rm_common.py
 /lib/ansible/module_utils/cloud.py
 /lib/ansible/module_utils/docker_common.py
