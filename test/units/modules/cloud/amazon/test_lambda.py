@@ -19,15 +19,14 @@
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 
-from nose.plugins.skip import SkipTest
+import pytest
+boto3 = pytest.importorskip("boto3")
+
 import json
 import copy
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils import basic
 from ansible.compat.tests.mock import MagicMock, Mock, patch
-from ansible.module_utils.ec2 import HAS_BOTO3
-if not HAS_BOTO3:
-    raise SkipTest("test_ec2_asg.py requires the `boto3`, and `botocore` modules")
 
 # lambda is a keyword so we have to hack this.
 _temp = __import__("ansible.modules.cloud.amazon.lambda")
