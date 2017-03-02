@@ -1,0 +1,57 @@
+---
+
+- name: setup - remove motd
+  eos_banner:
+    banner: motd
+    state: absent
+    authorize: yes
+
+- name: Set motd
+  eos_banner:
+    banner: motd
+    text: |
+      a 汉语 bb
+      this is my motd banner
+      that has a multiline
+      string
+    state: present
+    authorize: yes
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'a 汉语 bb' in result.commands" # does this break due to "contains?"
+      - "'that has a multiline' in result.commands" # does this break due to "contains?"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "'ansible_1' in result.session_name"
+
+- name: Set motd again (idempotent)
+  eos_banner:
+    banner: motd
+    text: |
+      a 汉语 bb
+      this is my motd banner
+      that has a multiline
+      string
+    state: present
+    authorize: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands is not defined"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "result.session_name contains 'ansible_1'"
+# FIXME BUG https://github.com/ansible/ansible/issues/22194
+  ignore_errors: yes
+
+
+# FIXME add in tests for everything defined in docs
+# FIXME Test state:absent + test:
+# FIXME Without powers ensure "privileged mode required"
+
