@@ -129,6 +129,14 @@ Don't query the galaxy API when creating roles
 
 Initialize the new role with files appropriate for a Container Enabled role.
 
+*--role-skeleton=*'ROLE_SKELETON'::
+
+By default a new role is based on a template delivered with Ansible. Use 
+this option to provide an alternate template. Specify a path to a directory 
+that contains subdirectories and Jinja templates from which to base the new 
+role. Alternatively, the role_skeleton option can be configured in 
+*ansible.cfg*. 
+
 LIST
 ----
 
