@@ -135,7 +135,7 @@ def create_connection(auth):
     :return: Python SDK connection
     """
 
-    connection = sdk.Connection(
+    return sdk.Connection(
         url=auth.get('url'),
         username=auth.get('username'),
         password=auth.get('password'),
@@ -144,15 +144,6 @@ def create_connection(auth):
         token=auth.get('token', None),
         kerberos=auth.get('kerberos', None),
     )
-    api_version = LooseVersion(engine_version(connection))
-    python_sdk_version = LooseVersion(sdk_version.VERSION)
-    if python_sdk_version < api_version:
-        raise Exception(
-            "Your SDK version is lower than engine version, please use same "
-            "version of the SDK as engine, or unexpected errors may appear."
-        )
-
-    return connection
 
 
 def convert_to_bytes(param):
