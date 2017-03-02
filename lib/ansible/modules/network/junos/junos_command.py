@@ -128,14 +128,21 @@ failed_conditions:
 import time
 
 from functools import partial
+from xml.etree import ElementTree as etree
 
 from ansible.module_utils.junos import run_commands
 from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.junos import check_args as junos_check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
-from ansible.module_utils.netcli import Conditional
+from ansible.module_utils.netcli import Conditional, FailedConditionalError
 from ansible.module_utils.network_common import ComplexList
+
+try:
+    import jxmlease
+    HAS_JXMLEASE = True
+except ImportError:
+    HAS_JXMLEASE = False
 
 def check_args(module, warnings):
     junos_check_args(module, warnings)
@@ -155,9 +162,9 @@ def to_lines(stdout):
 def parse_commands(module, warnings):
     spec = dict(
         command=dict(key=True),
-        output=dict(default=module.params['display'], choices=['text', 'json']),
+        output=dict(default=module.params['display'], choices=['text', 'json', 'xml']),
         prompt=dict(),
-        response=dict()
+        answer=dict()
     )
 
     transform = ComplexList(spec, module)
@@ -172,9 +179,13 @@ def parse_commands(module, warnings):
 
         if item['output'] == 'json' and 'display json' not in item['command']:
             item['command'] += '| display json'
-        elif item['output'] == 'text' and 'display json' in item['command']:
-            item['command'] = item['command'].replace('| display json', '')
-
+        elif item['output'] == 'xml' and 'display xml' not in item['command']:
+            item['command'] += '| display xml'
+        else:
+            if '| display json' in item['command']:
+                item['command'] = str(item['command']).replace(' | display json', '')
+            elif '| display xml' in item['command']:
+                item['command'] = str(item['command']).replace(' | display xml', '')
         commands[index] = item
 
     return commands
@@ -184,7 +195,7 @@ def main():
     """
     argument_spec = dict(
         commands=dict(type='list', required=True),
-        display=dict(choices=['text', 'json'], default='text'),
+        display=dict(choices=['text', 'json', 'xml'], default='text', aliases=['format', 'output']),
 
         # deprecated (Ansible 2.3) - use junos_rpc
         rpcs=dict(type='list'),
@@ -208,6 +219,7 @@ def main():
     commands = parse_commands(module, warnings)
 
     wait_for = module.params['wait_for'] or list()
+    display = module.params['display']
     conditionals = [Conditional(c) for c in wait_for]
 
     retries = module.params['retries']
@@ -218,11 +230,22 @@ def main():
         responses = run_commands(module, commands)
 
         for item in list(conditionals):
-            if item(responses):
-                if match == 'any':
-                    conditionals = list()
-                    break
-                conditionals.remove(item)
+
+            for index, (resp, cmd) in enumerate(zip(responses, commands)):
+                if cmd['output'] == 'xml':
+                    if not HAS_JXMLEASE:
+                        module.fail_json(msg='jxmlease is required but does not appear to '
+                            'be installed.  It can be installed using `pip install jxmlease`')
+                    responses[index] = jxmlease.parse(resp)
+
+            try:
+                if item(responses):
+                    if match == 'any':
+                        conditionals = list()
+                        break
+                    conditionals.remove(item)
+            except FailedConditionalError:
+                pass
 
         if not conditionals:
             break
