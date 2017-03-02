@@ -680,7 +680,7 @@ class SanityFailure(SanityResult):
         if self.summary:
             display.error(self.summary)
         else:
-            display.error('Found %d %s issue(s) which need to be resolved.' % (len(self.messages), self.test))
+            display.error('Found %d %s issue(s) which need to be resolved:' % (len(self.messages), self.test))
 
             for message in self.messages:
                 display.error(message)
