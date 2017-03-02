@@ -738,7 +738,7 @@ class SanityError(SanityResult):
         """
         :rtype: str
         """
-        command = 'ansible-test sanity %s' % self.test
+        command = 'ansible-test sanity --test %s' % self.test
 
         if self.python_version:
             command += ' --python %s' % self.python_version
