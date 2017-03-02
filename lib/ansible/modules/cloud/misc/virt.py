@@ -461,7 +461,7 @@ def core(module):
 
         res['changed'] = False
         autostart_res = v.autostart(guest, autostart)
-        if autostart_res != False:
+        if autostart_res is not False:
             res['changed'] = True
             res['msg'] = autostart_res
 
