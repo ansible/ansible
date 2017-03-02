@@ -94,6 +94,11 @@ options:
       - Ignore dependencies, only install/upgrade the package itself
     default: false
     version_added: '2.1'
+  execution_timeout:
+    description:
+      - Timeout to pass to the native installer
+    require: false
+    version_added: '2.3'
 author: "Trond Hindenes (@trondhindenes), Peter Mounce (@petemounce), Pepe Barbe (@elventear), Adam Keech (@smadam813)"
 '''
 
