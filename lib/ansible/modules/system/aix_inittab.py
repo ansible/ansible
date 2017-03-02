@@ -113,7 +113,21 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-
+name:
+    description: name of the adjusted inittab entry
+    returned: always
+    type: string
+    sample: startmyservice
+mgs:
+    description: action done with the inittab entry
+    returned: changed
+    type: string
+    sample: changed inittab entry startmyservice
+changed:
+    description: whether the inittab changed or not
+    return: always
+    type: boolean
+    sample: true
 '''
 
 # Import necessary libraries
