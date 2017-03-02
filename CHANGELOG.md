@@ -235,6 +235,8 @@ Ansible Changes By Release
 - runit
 - serverless
 - set_stats
+- panos:
+  * panos_security_policy
 - smartos:
   * imgadm
   * vmadm
