@@ -145,3 +145,40 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
+
+# Test for https://github.com/ansible/ansible/pull/18730
+# Make sure switching from tag to branch (master) works with shallow clone
+
+- name: initial clone from tag
+  git:
+    repo: https://github.com/adamchainz/nose-randomly.git
+    dest: "{{ checkout_dir }}"
+    version: 1.2.0
+    depth: 1
+
+- name: update to branch (master)
+  git:
+    repo: https://github.com/adamchainz/nose-randomly.git
+    dest: "{{ checkout_dir }}"
+    version: master
+    depth: 1
+  register: git_update_to_branch
+
+- name: check if tag to branch (master) switch worked
+  assert:
+    that:
+      - git_update_to_branch|changed
+
+- name: check if checkout_dir is shallow
+  stat: path={{ checkout_dir }}/.git/shallow
+  register: is_shallow
+  when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=')
+
+- name: assert than checkout_dir is still shallow
+  assert:
+    that:
+      - is_shallow.stat.exists
+  when: git_version.stdout | version_compare("{{git_version_supporting_depth}}", '>=')
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
