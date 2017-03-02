@@ -82,10 +82,13 @@ def command_sanity(args):
 
             display.info('Sanity check using %s%s' % (test.name, ' with Python %s' % version if version else ''))
 
+            options = ''
+
             if test.script:
                 result = test.func(args, targets, test.script)
             elif test.intercept:
                 result = test.func(args, targets, python_version=version)
+                options = ' --python %s' % version
             else:
                 result = test.func(args, targets)
 
@@ -94,7 +97,7 @@ def command_sanity(args):
             total += 1
 
             if isinstance(result, SanityError):
-                failed.append(result.test)
+                failed.append(result.test + options)
 
     if failed:
         raise ApplicationError('The %d sanity test(s) listed below (out of %d) failed. See error output above for details.\n%s' % (
