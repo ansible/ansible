@@ -13,3 +13,4 @@
     - { role: eos_template, when: "limit_to in ['*', 'eos_template']" }
     - { role: eos_facts, when: "limit_to in ['*', 'eos_facts']" }
     - { role: eos_eapi, debug: yes, when: "limit_to in ['*', 'eos_eapi']" }
+    - { role: eos_system, debug: yes, when: "limit_to in ['*', 'eos_system']" }
