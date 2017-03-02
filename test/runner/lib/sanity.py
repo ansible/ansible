@@ -7,7 +7,11 @@ import glob
 import json
 import os
 import re
-import textwrap
+
+from xml.etree.ElementTree import (
+    fromstring,
+    Element,
+)
 
 from lib.util import (
     ApplicationError,
@@ -229,7 +233,7 @@ def command_sanity_shellcheck(args, targets):
     cmd = [
         'shellcheck',
         '-e', ','.join(sorted(exclude)),
-        '--format', 'json',
+        '--format', 'checkstyle',
     ] + paths
 
     try:
@@ -246,36 +250,21 @@ def command_sanity_shellcheck(args, targets):
     if args.explain:
         return SanitySkipped(test)
 
-    entries = json.loads(stdout)
+    # json output is missing file paths in older versions of shellcheck, so we'll use xml instead
+    root = fromstring(stdout)  # type: Element
+
     results = []
-    previous = None
 
-    for entry in entries:
-        try:
-            message = SanityMessage(
-                message=entry['message'],
-                path=entry.get('file', ''),
-                line=entry['line'],
-                column=entry['column'],
-                level=entry['level'],
-                code='SC%s' % entry['code'],
-            )
-        except KeyError as ex:
-            raise ApplicationError('KeyError: %s:\n%s' % (ex.args[0], json.dumps(entry, indent=4, sort_keys=True)))
-
-        if message.level == 'info' and not message.path:
-            # Older versions of shellcheck (such as the one on Shippable) may provide info without a path.
-            # If a previous message exists, use the path from that message, otherwise omit the message.
-
-            if not previous:
-                display.warning('Omitting shellcheck message without path: %s' % message)
-                continue
-
-            message.path = previous.path
-
-        previous = message
-
-        results.append(message)
+    for item in root:  # type: Element
+        for entry in item:  # type: Element
+            results.append(SanityMessage(
+                message=entry.attrib['message'],
+                path=item.attrib['name'],
+                line=int(entry.attrib['line']),
+                column=int(entry.attrib['column']),
+                level=entry.attrib['severity'],
+                code=entry.attrib['source'].replace('ShellCheck.', ''),
+            ))
 
     if results:
         return SanityFailure(test, messages=results)
