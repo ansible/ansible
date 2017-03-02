@@ -47,17 +47,6 @@ options:
         not be collected.
     required: false
     default: "!config"
-  config_format:
-    description:
-      - The C(config_format) argument is used to specify the desired
-        format of the configuration file.  Devices support three
-        configuration file formats.  By default, the configuration
-        from the device is returned as text.  The other option xml.
-        If the xml option is chosen, the configuration file is
-        returned as both xml and json.
-    required: false
-    default: text
-    choices: ['xml', 'text']
 """
 
 EXAMPLES = """
@@ -67,16 +56,6 @@ EXAMPLES = """
 - name: collect default set of facts and configuration
   junos_facts:
     gather_subset: config
-
-- name: collect default set of facts and configuration in text format
-  junos_facts:
-    gather_subset: config
-    config_format: text
-
-- name: collect default set of facts and configuration in XML and JSON format
-  junos_facts:
-    gather_subset: config
-    config_format: xml
 """
 
 RETURN = """
@@ -90,7 +69,7 @@ import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.junos import run_commands
+from ansible.module_utils.junos import get_config, run_commands
 from ansible.module_utils.junos import junos_argument_spec, check_args
 
 
@@ -183,7 +162,7 @@ class Hardware(FactsBase):
 FACT_SUBSETS = dict(
     default=Default,
     hardware=Hardware,
-    config=Config,
+    config=None,
     interfaces=Interfaces,
 )
 
@@ -211,15 +190,6 @@ def main():
     runable_subsets = set()
     exclude_subsets = set()
 
-    """if module.params['config'] is True:
-        config_format = module.params['config_format']
-        resp_config = module.config.get_config(config_format=config_format)
-
-        if config_format in ['text']:
-            facts['config'] = resp_config
-        elif config_format == "xml":
-            facts['config'] = xml_to_string(resp_config)
-            facts['config_json'] = xml_to_json(resp_config)"""
     for subset in gather_subset:
         if subset == 'all':
             runable_subsets.update(VALID_SUBSETS)
@@ -251,6 +221,10 @@ def main():
 
     facts = dict()
     facts['gather_subset'] = list(runable_subsets)
+
+    if 'config' in runable_subsets:
+        facts['config'] = get_config(module)
+        runable_subsets.remove('config')
 
     instances = list()
     for key in runable_subsets:
