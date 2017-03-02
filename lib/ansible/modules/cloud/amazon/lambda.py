@@ -456,8 +456,8 @@ def main():
                        'MemorySize': memory_size,
                        }
 
-        if (environment_variables is not None):
-            func_kwargs['Environment'] = {'Variables': environment_variables}
+        if environment_variables:
+            func_kwargs.update({'Environment': {'Variables': environment_variables}})
 
         if dead_letter_arn:
             func_kwargs.update({'DeadLetterConfig': {'TargetARN': dead_letter_arn}})

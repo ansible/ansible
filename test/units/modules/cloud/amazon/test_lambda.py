@@ -136,9 +136,9 @@ def test_create_lambda_if_not_exist():
 
     try:
         # For now I assume that we should NOT send an empty environment.  It might
-        # be okay / better to explicitly send an empty environment.  However `None' 
+        # be okay / better to explicitly send an empty environment.  However `None'
         # is not acceptable - mikedlr
-        my_env=create_kwargs["Environment"]
+        create_kwargs["Environment"]
         raise(Exception("Environment sent to boto when none expected"))
     except KeyError:
         pass #We are happy, no environment is fine
