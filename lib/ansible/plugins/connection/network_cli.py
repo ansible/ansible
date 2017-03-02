@@ -183,7 +183,7 @@ class Connection(_Connection):
         cleaned = []
         command = obj.get('command') if obj else None
         for line in resp.splitlines():
-            if (command and line.startswith(command.strip())) or self._find_prompt(line):
+            if (command and line.startswith(command.strip())) or self._matched_prompt.strip() in line:
                 continue
             cleaned.append(line)
         return str("\n".join(cleaned)).strip()
