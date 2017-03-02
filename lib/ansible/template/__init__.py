@@ -157,6 +157,9 @@ def _count_newlines_from_end(in_str):
         return i
 
 
+BAD_ATTRS = set(['get', 'when', 'items', 'copy', 'blippy'])
+
+
 class AnsibleContext(Context):
     '''
     A custom context, which intercepts resolve() calls and sets a flag
@@ -205,7 +208,7 @@ class AnsibleContext(Context):
         self._update_unsafe(val)
         return val
 
-
+import types
 class AnsibleEnvironment(Environment):
     '''
     Our custom environment, which simply allows us to override the class-level
@@ -213,6 +216,23 @@ class AnsibleEnvironment(Environment):
     '''
     context_class = AnsibleContext
     template_class = AnsibleJ2Template
+
+    def getattr(self, obj, attribute):
+        #if attribute in BAD_ATTRS:
+        #    display.warning("obj.attribute access with the attr named '%s' should be avoided."
+        #                    "See http://docs.ansible.com/ansible/playbooks_variables.html#what-makes-a-valid-variable-name" % attribute)
+
+        # We could just warn, or we could just always prefer getitem to DWIM
+        ret = super(AnsibleEnvironment, self).getattr(obj, attribute)
+        #ret = super(AnsibleEnvironment, self).getitem(obj=obj, argument=attribute)
+        print(type(ret))
+        if isinstance(ret, (types.BuiltinMethodType,
+                            types.BuiltinFunctionType,
+                            types.MethodType,
+                            types.FunctionType)):
+            display.warning("obj.attribute access with the attr named '%s' should be avoided."
+                            "See http://docs.ansible.com/ansible/playbooks_variables.html#what-makes-a-valid-variable-name" % attribute)
+        return ret
 
 
 class Templar:
