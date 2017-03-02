@@ -274,6 +274,7 @@ Ansible Changes By Release
   * win_reg_stat
   * win_region
   * win_say
+  * win_service_stat
   * win_shortcut
   * win_tempfile
 - xbps

@@ -1,0 +1,86 @@
+---
+# Until changes are merged into win_service to create a new module we will need
+# to do it ourselves
+- name: stop test services before test
+  win_command: sc stop TestService
+  ignore_errors: True
+
+- name: make sure we clean up any test services
+  win_command: sc delete TestService
+  ignore_errors: True
+
+- name: get stats on service that doesn't exist
+  win_service_stat:
+    name: TestService
+  register: missing_service
+
+- name: assert missing service doesn't exist
+  assert:
+    that:
+    - not missing_service|changed
+    - missing_service.exists == False
+
+- name: create a new test service
+  win_command: powershell.exe "New-Service -Name TestService -BinaryPathname C:\Windows\System32\snmptrap.exe"
+
+- name: get stats on newly created service
+  win_service_stat:
+    name: TestService
+  register: new_service
+
+- name: assert new service results are what we expect
+  assert:
+    that:
+    - not new_service|changed
+    - new_service.exists == True
+    - new_service.depended_by == []
+    - new_service.dependencies == []
+    - new_service.description == ""
+    - new_service.desktop_interact == False
+    - new_service.display_name == 'TestService'
+    - new_service.name == 'TestService'
+    - new_service.path == 'C:\Windows\System32\snmptrap.exe'
+    - new_service.start_mode == 'auto'
+    - new_service.state == 'stopped'
+    - new_service.username == 'LocalSystem'
+
+- name: change details about the service
+  win_command: powershell.exe "Set-Service -Name TestService -DisplayName NewDisplayName -Description description -StartupType Manual"
+
+- name: get stats on changed service
+  win_service_stat:
+    name: TestService
+  register: changed_service
+
+- name: assert changed service details have changed
+  assert:
+    that:
+    - not changed_service|changed
+    - changed_service.exists == True
+    - changed_service.description == 'description'
+    - changed_service.display_name == 'NewDisplayName'
+    - changed_service.start_mode == 'manual'
+
+- name: start the service
+  win_service:
+    name: TestService
+    state: started
+  register: started_service
+
+- name: get stats on started service
+  win_service_stat:
+    name: TestService
+  register: started_service
+
+- name: assert service stats is started
+  assert:
+    that:
+    - started_service.state == 'running'
+
+# TODO: Change other service info through win_service once we can do it with a module
+
+- name: stop test services before deleting
+  win_command: sc stop TestService
+
+- name: clean up test service at the end
+  win_command: sc delete TestService

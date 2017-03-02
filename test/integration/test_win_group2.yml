@@ -13,3 +13,4 @@
     - { role: win_package, tags: test_win_package }
     - { role: win_path, tags: test_win_path }
     - { role: win_shortcut, tags: test_win_shortcut }
+    - { role: win_service_stat, tags: test_win_service_stat }
