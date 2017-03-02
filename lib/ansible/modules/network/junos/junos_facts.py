@@ -146,6 +146,40 @@ class Default(FactsBase):
             return match.group(1)
 
 
+class Hardware(FactsBase):
+
+    COMMANDS = [
+        'show system memory',
+        'show system storage',
+    ]
+
+    def populate(self):
+        super(Hardware, self).populate()
+        memory = self.responses[0]
+        self.facts['memfree_mb'] = self.parse_memfree(memory)
+        self.facts['memtotal_mb'] = self.parse_memtotal(memory)
+        self.facts['filesystems'] = self.parse_filesystems(self.responses[1])
+
+    def parse_memtotal(self, data):
+        match = re.search(r'Total memory:\s+(\d+)', data)
+        if match:
+            return int(match.group(1)) // 1024
+
+    def parse_memfree(self, data):
+        match = re.search(r'Free memory:\s+(\d+)', data)
+        if match:
+            return int(match.group(1)) // 1024
+
+    def parse_filesystems(self, data):
+        paths = []
+        for line in data.split('\n'):
+            path = line.split()[-1]
+            if path.startswith('/'):
+                paths.append(path)
+
+        return paths
+
+
 FACT_SUBSETS = dict(
     default=Default,
     hardware=Hardware,
