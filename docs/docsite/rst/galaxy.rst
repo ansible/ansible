@@ -211,7 +211,31 @@ If you are creating a Container Enabled role, use the *--container-enabled* opti
 with default files appropriate for a Container Enabled role. For instance, the README.md has a slightly different structure, the *.travis.yml* file tests
 the role using `Ansible Container <https://github.com/ansible/ansible-container>`_, and the meta directory includes a *container.yml* file.
 
-Search for roles
+Using a Custom Role Skeleton
+============================
+
+A custom role skeleton directory can be supplied as follows:
+
+::
+
+   $ ansible-galaxy init --role-skeleton=/path/to/skeleton role_name
+
+When a skeleton is provided, init will:
+
+- copy all files and directories from the skeleton to the new role
+- any .j2 files found outside of a templates folder will be rendered as templates. The only useful variable at the moment is role_name
+- The .git folder and any .git_keep files will not be copied
+
+Alternatively, the role_skeleton and ignoring of files can be configured via ansible.cfg
+
+::
+
+  [galaxy]
+  role_skeleton = /path/to/skeleton
+  role_skeleton_ignore = ^.git$,^.*/.git_keep$
+
+
+Search for Roles
 ----------------
 
 Search the Galaxy database by tags, platforms, author and multiple keywords. For example:

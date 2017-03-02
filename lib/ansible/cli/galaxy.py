@@ -26,6 +26,7 @@ import os.path
 import sys
 import yaml
 import time
+import re
 import shutil
 
 from jinja2 import Environment, FileSystemLoader
@@ -88,6 +89,7 @@ class GalaxyCLI(CLI):
             self.parser.add_option('-p', '--init-path', dest='init_path', default="./", help='The path in which the skeleton role will be created. The default is the current working directory.')
             self.parser.add_option('--container-enabled', dest='container_enabled', action='store_true', default=False,
                                    help='Initialize the skeleton role with default contents for a Container Enabled role.')
+            self.parser.add_option('--role-skeleton', dest='role_skeleton', default=None, help='The path to a role skeleton that the new role should be based upon.')
         elif self.action == "install":
             self.parser.set_usage("usage: %prog install [options] [-r FILE | role_name(s)[,version] | scm+role_repo_url[,version] | tar_file(s)]")
             self.parser.add_option('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False, help='Ignore errors and continue with the next specified role.')
@@ -176,6 +178,7 @@ class GalaxyCLI(CLI):
 
         init_path  = self.get_opt('init_path', './')
         force      = self.get_opt('force', False)
+        role_skeleton = self.get_opt('role_skeleton', C.GALAXY_ROLE_SKELETON)
 
         role_name = self.args.pop(0).strip() if self.args else None
         if not role_name:
@@ -205,16 +208,27 @@ class GalaxyCLI(CLI):
         if not os.path.exists(role_path):
             os.makedirs(role_path)
 
-        role_skeleton = self.galaxy.default_role_skeleton_path
+        if role_skeleton is not None:
+            skeleton_ignore_expressions = C.GALAXY_ROLE_SKELETON_IGNORE
+        else:
+            role_skeleton = self.galaxy.default_role_skeleton_path
+            skeleton_ignore_expressions = ['^.*/.git_keep$']
+
         role_skeleton = os.path.expanduser(role_skeleton)
+        skeleton_ignore_re = list(map(lambda x: re.compile(x), skeleton_ignore_expressions))
+
         template_env = Environment(loader=FileSystemLoader(role_skeleton))
 
         for root, dirs, files in os.walk(role_skeleton, topdown=True):
             rel_root = os.path.relpath(root, role_skeleton)
             in_templates_dir = rel_root.split(os.sep, 1)[0] == 'templates'
+            dirs[:] = filter(lambda d: not any(map(lambda r: r.match(os.path.join(rel_root, d)), skeleton_ignore_re)), dirs)
+
             for f in files:
                 filename, ext = os.path.splitext(f)
-                if ext == ".j2" and not in_templates_dir:
+                if any(map(lambda r: r.match(os.path.join(rel_root, f)), skeleton_ignore_re)):
+                    continue
+                elif ext == ".j2" and not in_templates_dir:
                     src_template = os.path.join(rel_root, f)
                     dest_file = os.path.join(role_path, rel_root, filename)
                     template_env.get_template(src_template).stream(inject_data).dump(dest_file)
