@@ -670,7 +670,7 @@ class SanityError(SanityResult):
         output = self.format_block()
 
         test_case = self.junit.TestCase(name=self.test)
-        test_case.add_error_info(output='\n%s\n' % output)
+        test_case.add_failure_info(output='\n%s\n' % output)
 
         properties = dict(
             confirmed=str(confirmed),
