@@ -549,6 +549,8 @@ class AosInventory(object):
                              'ansible_ssh_host',
                              device.value['facts']['mgmt_ipaddr'])
 
+        self.add_var_to_host(device_name,'id', device.id)
+        
         # self.add_host_to_group('all', device.name)
         for key, value in device.value['facts'].items():
             self.add_var_to_host(device_name, key, value)
