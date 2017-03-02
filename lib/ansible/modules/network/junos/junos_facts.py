@@ -66,6 +66,7 @@ ansible_facts:
 """
 
 import re
+import xml.etree.ElementTree as ET
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
@@ -158,6 +159,30 @@ class Hardware(FactsBase):
 
         return paths
 
+
+class Interfaces(FactsBase):
+
+    COMMANDS = [
+        'show interfaces detail | display xml'
+    ]
+
+    def populate(self):
+        super(Interfaces, self).populate()
+        interfaces = ET.fromstring(self.responses[0])
+        self.facts['interfaces'] = self.parse_interfaces(interfaces)
+
+    def parse_interfaces(self, data):
+        interfaces = dict()
+        for interface in data.findall('./physical-interface'):
+            iface_data = dict(
+                state=interface.findtext('./oper-status'),
+                duplex=interface.findtext('./link-type'),
+                speed=interface.findtext('./speed'),
+                macaddress=interface.findtext('./hardware-physical-address'),
+                mtu=interface.findtext('./mtu'),
+                type=interface.findtext('./if-type'),
+            )
+            interfaces[interface.findtext('./name')] = iface_data
 
 FACT_SUBSETS = dict(
     default=Default,
