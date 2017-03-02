@@ -282,18 +282,6 @@ def yum_base(conf_file=None, installroot='/'):
 
     return my
 
-def ensure_yum_utils(module):
-
-    repoquerybin = module.get_bin_path('repoquery', required=False)
-
-    if module.params['install_repoquery'] and not repoquerybin and not module.check_mode:
-        yum_path = module.get_bin_path('yum')
-        if yum_path:
-            rc, so, se = module.run_command('%s -y install yum-utils' % yum_path)
-        repoquerybin = module.get_bin_path('repoquery', required=False)
-
-    return repoquerybin
-
 def fetch_rpm_from_url(spec, module=None):
     """ download rpm package
 
@@ -1209,8 +1197,6 @@ def main():
             update_cache=dict(required=False, default="no", aliases=['expire-cache'], type='bool'),
             validate_certs=dict(required=False, default="yes", type='bool'),
             installroot=dict(required=False, default="/", type='str'),
-            # this should not be needed, but exists as a failsafe
-            install_repoquery=dict(required=False, default="yes", type='bool'),
         ),
         required_one_of = [['name','list']],
         mutually_exclusive = [['name','list']],
@@ -1237,7 +1223,7 @@ def main():
     conf_file = params['conf_file']
 
     if params['list']:
-        repoquerybin = ensure_yum_utils(module)
+        repoquerybin = module.get_bin_path('repoquery', required=False)
         if not repoquerybin:
             module.fail_json(msg="repoquery is required to use list= with this module. Please install the yum-utils package.")
         results = dict(results=list_stuff(module, repoquerybin, params['conf_file'], params['list'], params['installroot']))
@@ -1256,7 +1242,7 @@ def main():
         pass
     else:
         if 'rhnplugin' in yum_plugins:
-            repoquerybin = ensure_yum_utils(module)
+            repoquerybin = module.get_bin_path('repoquery', required=False)
             if repoquerybin:
                 repoquery = [repoquerybin, '--show-duplicates', '--plugins', '--quiet']
                 if params['installroot'] != '/':
