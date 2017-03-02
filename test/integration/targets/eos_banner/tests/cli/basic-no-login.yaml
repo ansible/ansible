@@ -1,0 +1,49 @@
+---
+- name: Setup
+  eos_banner:
+    banner: login
+    text: |
+      Junk login banner
+      over multiple lines
+    state: present
+    authorize: yes
+
+- name: remove login
+  eos_banner:
+    banner: login
+    state: absent
+    authorize: yes
+  register: result
+
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'no banner login' in result.commands" # does this break due to "contains?"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "'ansible_1' in result.session_name"
+
+- name: remove login (idempotent)
+  eos_banner:
+    banner: login
+    state: absent
+    authorize: yes
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands is not defined"
+      # Ensure sessions contains epoc. Will fail after 18th May 2033
+      - "result.session_name contains 'ansible_1'"
+# FIXME BUG https://github.com/ansible/ansible/issues/22194
+  ignore_errors: yes
+
+
+# FIXME add in tests for everything defined in docs
+# FIXME Test state:absent + test:
+# FIXME Without powers ensure "privileged mode required"
+
