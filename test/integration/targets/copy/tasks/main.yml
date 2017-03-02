@@ -278,7 +278,16 @@
     src: foo.txt
     dest: /tmp/10834
 
-- name: make hard link to test_file
+- name: check if the hard link we're about to make already exists
+  stat: path=/tmp/10834_hardlink
+  register: hardlink_stat
+
+- name: assert hard link does not exist
+  assert:
+    that:
+      - "hardlink_stat.stat.exists == False"
+
+- name: make hard link
   file:
     src: /tmp/10834
     dest: /tmp/10834_hardlink
