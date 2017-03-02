@@ -341,6 +341,13 @@ class AosInventory(object):
                 if 'facts' in device.value.keys():
                     self.add_device_facts_to_var(dev_name, device)
 
+                # Define admin State and Status
+                if 'user_config' in device.value.keys():
+                    if 'admin_state' in device.value['user_config'].keys():
+                        self.add_var_to_host(dev_name, 'admin_state', device.value['user_config']['admin_state'] )
+
+                self.add_device_status_to_var(device.name, device)
+
                 # Go over the contents data structure
                 for node in bp.contents['system']['nodes']:
                     if node['display_name'] == dev_name:
@@ -405,9 +412,7 @@ class AosInventory(object):
                 self.add_host_to_group('all', device.name)
 
                 # populate information for this host
-                if 'status' in device.value.keys():
-                    for key, value in device.value['status'].items():
-                        self.add_var_to_host(device.name, key, value)
+                self.add_device_status_to_var(device.name, device)
 
                 if 'user_config' in device.value.keys():
                     for key, value in device.value['user_config'].items():
@@ -550,7 +555,7 @@ class AosInventory(object):
                              device.value['facts']['mgmt_ipaddr'])
 
         self.add_var_to_host(device_name,'id', device.id)
-        
+
         # self.add_host_to_group('all', device.name)
         for key, value in device.value['facts'].items():
             self.add_var_to_host(device_name, key, value)
@@ -571,6 +576,12 @@ class AosInventory(object):
         clean_group = rx.sub('_', group_name).lower()
 
         return clean_group
+
+    def add_device_status_to_var(self, device_name, device):
+
+        if 'status' in device.value.keys():
+            for key, value in device.value['status'].items():
+                self.add_var_to_host(device.name, key, value)
 
 # Run the script
 if __name__ == '__main__':
