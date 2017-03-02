@@ -255,13 +255,16 @@ class Nxapi:
             except ValueError:
                 self._module.fail_json(msg='unable to parse response')
 
-            if check_status:
-                output = response['ins_api']['outputs']['output']
-                for item in to_list(output):
-                    if item['code'] != '200':
-                        self._error(output=output, **item)
-                    else:
-                        result.append(item['body'])
+            output = response['ins_api']['outputs']['output']
+            for item in to_list(output):
+                if check_status and item['code'] != '200':
+                    self._error(output=output, **item)
+                elif 'body' in item:
+                    result.append(item['body'])
+                #else:
+                    # error in command but since check_status is disabled
+                    # silently drop it.
+                    #result.append(item['msg'])
 
         return result
 

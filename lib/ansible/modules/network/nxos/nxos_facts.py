@@ -180,7 +180,7 @@ vlan_list:
 """
 import re
 
-from ansible.module_utils.nxos import run_commands
+from ansible.module_utils.nxos import run_commands, get_config
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
@@ -188,15 +188,24 @@ from ansible.module_utils.six import iteritems
 
 class FactsBase(object):
 
-    COMMANDS = frozenset()
-
     def __init__(self, module):
         self.module = module
+        self.warnings = list()
         self.facts = dict()
-        self.responses = None
 
     def populate(self):
-        self.responses = run_commands(self.module, list(self.COMMANDS))
+        pass
+
+    def run(self, command, output=None):
+        command_string = command
+        if output:
+            command = {'command': command, 'output': output}
+        resp = run_commands(self.module, command, check_rc=False)
+        try:
+            return resp[0]
+        except IndexError:
+            self.warnings.append('command %s returned to data, facts will not be populated' % command_string)
+            return None
 
     def transform_dict(self, data, keymap):
         transform = dict()
@@ -210,6 +219,7 @@ class FactsBase(object):
             yield self.transform_dict(item, keymap)
 
 
+
 class Default(FactsBase):
 
     VERSION_MAP = frozenset([
@@ -220,38 +230,30 @@ class Default(FactsBase):
         ('host_name', 'hostname')
     ])
 
-    COMMANDS = ['show version | json']
-
     def populate(self):
-        super(Default, self).populate()
-        data = self.responses[0]
-        self.facts.update(self.transform_dict(data, self.VERSION_MAP))
+        data = self.run('show version', 'json')
+        if data:
+            self.facts.update(self.transform_dict(data, self.VERSION_MAP))
 
 class Config(FactsBase):
 
-    COMMANDS = ['show running-config']
-
     def populate(self):
         super(Config, self).populate()
-        data = self.responses[0]
-        self.facts['config'] = data
+        self.facts['config'] = get_config(self.module)
 
 
 class Hardware(FactsBase):
 
-    COMMANDS = [
-        {'command': 'dir', 'output': 'text'},
-        'show system resources | json'
-    ]
-
     def populate(self):
-        super(Hardware, self).populate()
-        data = self.responses[0]
-        self.facts['filesystems'] = self.parse_filesystems(data)
+        cmd = {'command': 'dir', 'output': 'text'},
+        data = self.run('dir', 'text')
+        if data:
+            self.facts['filesystems'] = self.parse_filesystems(data)
 
-        data = self.responses[1]
-        self.facts['memtotal_mb'] = int(data['memory_usage_total']) / 1024
-        self.facts['memfree_mb'] = int(data['memory_usage_free']) / 1024
+        data = self.run('show system resources', 'json')
+        if data:
+            self.facts['memtotal_mb'] = int(data['memory_usage_total']) / 1024
+            self.facts['memfree_mb'] = int(data['memory_usage_free']) / 1024
 
     def parse_filesystems(self, data):
         return re.findall(r'^Usage for (\S+)//', data, re.M)
@@ -285,15 +287,16 @@ class Interfaces(FactsBase):
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        data = run_commands(self.module, ['show interface | json'])[0]
-        self.facts['interfaces'] = self.populate_interfaces(data)
+        data = self.run('show interface', 'json')
+        if data:
+            self.facts['interfaces'] = self.populate_interfaces(data)
 
-        out = run_commands(self.module, ['show ipv6 interface | json'])
-        if out[0]:
+        data = self.run('show ipv6 inteface', 'json')
+        if data:
             self.parse_ipv6_interfaces(out)
 
-        out = run_commands(self.module, ['show lldp neighbors'], check_rc=False)
-        if out and out[0]:
+        data = self.run('show lldp neighbors')
+        if data:
             self.facts['neighbors'] = self.populate_neighbors(out)
 
     def populate_interfaces(self, data):
@@ -371,32 +374,27 @@ class Legacy(FactsBase):
         ('total_capa', 'total_capacity')
     ])
 
-    COMMANDS = [
-        'show version | json',
-        'show module | json',
-        'show environment | json',
-        'show interface | json',
-        'show vlan brief | json'
-    ]
-
-
     def populate(self):
-        super(Legacy, self).populate()
-        data = self.responses[0]
-        self.facts.update(self.transform_dict(data, self.VERSION_MAP))
+        data = self.run('show version', 'json')
+        if data:
+            self.facts.update(self.transform_dict(data, self.VERSION_MAP))
 
-        data = self.responses[3]
-        self.facts['_interfaces_list'] = self.parse_interfaces(data)
+        data = self.run('show interface', 'json')
+        if data:
+            self.facts['_interfaces_list'] = self.parse_interfaces(data)
 
-        data = self.responses[4]
-        self.facts['_vlan_list'] = self.parse_vlans(data)
+        data = self.run('show vlan brief', 'json')
+        if data:
+            self.facts['_vlan_list'] = self.parse_vlans(data)
 
-        data = self.responses[1]
-        self.facts['_module'] = self.parse_module(data)
+        data = self.run('show module', 'json')
+        if data:
+            self.facts['_module'] = self.parse_module(data)
 
-        data = self.responses[2]
-        self.facts['_fan_info'] = self.parse_fan_info(data)
-        self.facts['_power_supply_info'] = self.parse_power_supply_info(data)
+        data = self.run('show environment', 'json')
+        if data:
+            self.facts['_fan_info'] = self.parse_fan_info(data)
+            self.facts['_power_supply_info'] = self.parse_power_supply_info(data)
 
     def parse_interfaces(self, data):
         objects = list()
@@ -497,6 +495,7 @@ def main():
     for inst in instances:
         inst.populate()
         facts.update(inst.facts)
+        warnings.extend(inst.warnings)
 
     ansible_facts = dict()
     for key, value in iteritems(facts):
