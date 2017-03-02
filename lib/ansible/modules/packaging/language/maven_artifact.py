@@ -283,7 +283,13 @@ class FileSystemMavenClient:
             self.module.fail_json(msg='Copy failed. %s' % (':'.join([artifact.group_id, artifact.artifact_id, artifact.classifier, artifact.extension, artifact.url, destination, str(why)])))
 
     def checksum(self, artifact, dest):
-        return True # There is nothing to check if the artifact is local
+        if not os.path.isfile(dest):
+            return False
+        with open(create_artifact_location(artifact), 'rb') as file:
+            remote_md5 = hashlib.md5(file.read()).hexdigest()
+        with open(dest, 'rb') as file:
+            local_md5 = hashlib.md5(file.read()).hexdigest()
+        return remote_md5 == local_md5
 
 
 def main():
