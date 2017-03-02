@@ -249,18 +249,16 @@ class VariableManager:
             all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()))
 
         if host:
-            # next, if a host is specified, we load any vars from group_vars
-            # files and then any vars from host_vars files which may apply to
-            # this host or the groups it belongs to
+            # first we merge in vars from groups specified in the inventory (INI or script)
+            all_vars = combine_vars(all_vars, host.get_group_vars())
 
-            # we merge in the special 'all' group_vars first, if they exist
+            # next, we load any vars from group_vars files and then any vars from host_vars
+            # files which may apply to this host or the groups it belongs to. We merge in the
+            # special 'all' group_vars first, if they exist
             if 'all' in self._group_vars_files:
                 data = preprocess_vars(self._group_vars_files['all'])
                 for item in data:
                     all_vars = combine_vars(all_vars, item)
-
-            # we merge in vars from groups specified in the inventory (INI or script)
-            all_vars = combine_vars(all_vars, host.get_group_vars())
 
             for group in sorted(host.get_groups(), key=lambda g: (g.depth, g.name)):
                 if group.name in self._group_vars_files and group.name != 'all':
