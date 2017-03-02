@@ -7,7 +7,7 @@
       - show version
       - show interfaces fxp0
     wait_for:
-      - "result[1].interface-information[0].physical-interface[0].name[0].data foo fxp0"
+      - "result[1].rpc-reply.interface-information[0].physical-interface[0].name[0].data foo fxp0"
     format: xml
     provider: "{{ netconf }}"
   register: result
