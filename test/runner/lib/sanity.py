@@ -593,7 +593,7 @@ class SanityResult(object):
 
         test_suites = [
             self.junit.TestSuite(
-                name='ansible-test sanity',
+                name='ansible-test',
                 test_cases=[test_case],
                 timestamp=datetime.datetime.utcnow().replace(microsecond=0).isoformat(),
                 properties=properties,
@@ -694,10 +694,11 @@ class SanityFailure(SanityResult):
         :type changed_paths: list[str] | None
         """
         confirmed = self.check_confirmed(changed_paths)
+        title = self.format_title()
         output = self.format_block()
 
-        test_case = self.junit.TestCase(name=self.test)
-        test_case.add_failure_info(output='\n%s\n' % output)
+        test_case = self.junit.TestCase(classname='sanity', name=self.test)
+        test_case.add_failure_info(message=title, output='\n%s\n' % output)
 
         properties = dict(
             confirmed=str(confirmed),
@@ -745,26 +746,31 @@ class SanityFailure(SanityResult):
 
         return command
 
-    def format_block(self):
+    def format_title(self):
         """
         :rtype: str
         """
         command = self.format_command()
 
         if self.summary:
-            block = self.summary
             reason = 'error'
         else:
-            block = '\n'.join(str(m) for m in self.messages)
             reason = 'error' if len(self.messages) == 1 else 'errors'
 
-        message = textwrap.dedent('''
-        The test `%s` failed with the following %s:
+        title = 'The test `%s` failed with the following %s:' % (command, reason)
 
-        ```
-        %s
-        ```
-        ''').strip() % (command, reason, block.strip())
+        return title
+
+    def format_block(self):
+        """
+        :rtype: str
+        """
+        if self.summary:
+            block = self.summary
+        else:
+            block = '\n'.join(str(m) for m in self.messages)
+
+        message = block.strip()
 
         return message
 
