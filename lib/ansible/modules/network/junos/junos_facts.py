@@ -88,8 +88,12 @@ ansible_facts:
   returned: always
   type: dict
 """
+from ncclient.xml_ import new_ele, sub_ele, to_xml, to_ele
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import xml_to_string, xml_to_json
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.netconf import send_request
+from ansible.module_utils.junos import junos_argument_spec, check_args
 
 
 class FactsBase(object):
@@ -102,12 +106,36 @@ class FactsBase(object):
         self.responses = None
 
     def populate(self):
-        self.responses = run_commands(self.module, list(self.COMMANDS))
+        commands = [new_ele(c) for c in self.COMMANDS]
+        self.responses = [send_request(self.module, c) for c in commands]
+
+
+class Default(FactsBase):
+
+    COMMANDS = [
+        'get-software-information',
+    ]
+
+    def populate(self):
+        super(Default, self).populate()
+        software = self.responses[0].find('.//software-information')
+        self.facts['hostname'] = software.findtext('./host-name')
+        self.facts['model'] = software.findtext('./product-model')
+        self.facts['version'] = software.findtext('./junos-version')
+
+
+FACT_SUBSETS = dict(
+    default=Default,
+)
+
+VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
+
 
 def main():
     """ Main entry point for AnsibleModule
     """
     argument_spec = dict(
+        gather_subset=dict(default=['!config'], type='list'),
         config=dict(type='bool'),
         config_format=dict(default='text', choices=['xml', 'text']),
         transport=dict(default='netconf', choices=['netconf'])
@@ -121,17 +149,12 @@ def main():
     warnings = list()
     check_args(module, warnings)
 
-    result = dict(changed=False)
+    gather_subset = module.params['gather_subset']
 
-    facts = module.connection.get_facts()
+    runable_subsets = set()
+    exclude_subsets = set()
 
-    if '2RE' in facts:
-        facts['has_2RE'] = facts['2RE']
-        del facts['2RE']
-
-    facts['version_info'] = dict(facts['version_info'])
-
-    if module.params['config'] is True:
+    """if module.params['config'] is True:
         config_format = module.params['config_format']
         resp_config = module.config.get_config(config_format=config_format)
 
@@ -139,10 +162,30 @@ def main():
             facts['config'] = resp_config
         elif config_format == "xml":
             facts['config'] = xml_to_string(resp_config)
-            facts['config_json'] = xml_to_json(resp_config)
+            facts['config_json'] = xml_to_json(resp_config)"""
+    if not runable_subsets:
+        runable_subsets.update(VALID_SUBSETS)
 
-    result['ansible_facts'] = facts
-    module.exit_json(**result)
+    runable_subsets.difference_update(exclude_subsets)
+    runable_subsets.add('default')
+
+    facts = dict()
+    facts['gather_subset'] = list(runable_subsets)
+
+    instances = list()
+    for key in runable_subsets:
+        instances.append(FACT_SUBSETS[key](module))
+
+    for inst in instances:
+        inst.populate()
+        facts.update(inst.facts)
+
+    ansible_facts = dict()
+    for key, value in iteritems(facts):
+        key = 'ansible_net_%s' % key
+        ansible_facts[key] = value
+
+    module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
 
 if __name__ == '__main__':
