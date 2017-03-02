@@ -36,6 +36,12 @@ options:
     description:
     - Seconds for shutdown to wait before requesting reboot
     default: 2
+  post_reboot_delay_sec:
+    description:
+    - Seconds to wait after the reboot was successful and the connection was re-established
+    - This is useful if you want wait for something to settle despite your connection already working
+    default: 0
+    version_added: '2.3'
   shutdown_timeout_sec:
     description:
     - Maximum seconds to wait for shutdown to occur
