@@ -246,16 +246,21 @@ def command_sanity_shellcheck(args, targets):
     if args.explain:
         return SanitySkipped(test)
 
-    results = json.loads(stdout)
+    entries = json.loads(stdout)
+    results = []
 
-    results = [SanityMessage(
-        message=r['message'],
-        path=r['file'],
-        line=r['line'],
-        column=r['column'],
-        level=r['level'],
-        code='SC%s' % r['code'],
-    ) for r in results]
+    for entry in entries:
+        try:
+            results.append(SanityMessage(
+                message=entry['message'],
+                path=entry['file'],
+                line=entry['line'],
+                column=entry['column'],
+                level=entry['level'],
+                code='SC%s' % entry['code'],
+            ))
+        except KeyError as ex:
+            raise ApplicationError('KeyError: %s:\n%s' % (ex.args[0], json.dumps(entry, indent=4, sort_keys=True)))
 
     if results:
         return SanityFailure(test, messages=results)
