@@ -124,6 +124,9 @@ def command_sanity_code_smell(args, _, script):
     cmd = [script]
     env = ansible_environment(args)
 
+    # Since the output from scripts end up in other places besides the console, we don't want color here.
+    env.pop('ANSIBLE_FORCE_COLOR')
+
     try:
         stdout, stderr = run_command(args, cmd, env=env, capture=True)
         status = 0
@@ -705,6 +708,9 @@ class SanityFailure(SanityResult):
         confirmed = self.check_confirmed(changed_paths)
         title = self.format_title()
         output = self.format_block()
+
+        # Hack to remove ANSI color reset code from SubprocessError messages.
+        output = output.replace(display.clear, '')
 
         test_case = self.junit.TestCase(classname='sanity', name=self.test)
 
