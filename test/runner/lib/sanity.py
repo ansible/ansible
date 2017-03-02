@@ -38,12 +38,6 @@ from lib.executor import (
     SanityConfig,
 )
 
-try:
-    import junit_xml
-except ImportError:
-    junit_xml = None
-
-
 def command_sanity(args):
     """
     :type args: SanityConfig
@@ -515,6 +509,13 @@ class SanityResult(object):
         self.test = test
         self.python_version = python_version
 
+        try:
+            import junit_xml
+        except ImportError:
+            junit_xml = None
+
+        self.junit = junit_xml
+
     def write(self, args, changed_paths):
         """
         :type args: SanityConfig
@@ -526,7 +527,10 @@ class SanityResult(object):
             self.write_lint()
 
         if args.junit:
-            self.write_junit(args, changed_paths)
+            if self.junit:
+                self.write_junit(args, changed_paths)
+            else:
+                display.warning('Skipping junit xml output because the `junit-xml` python package was not found.', unique=True)
 
     def write_console(self):
         """Write results to console."""
@@ -550,10 +554,6 @@ class SanityResult(object):
         :type properties: dict[str, str] | None
         :rtype: str | None
         """
-        if not junit_xml:
-            display.warning('Skipping junit xml output because the `junit_xml` python package was not found.', unique=True)
-            return
-
         path = 'test/results/junit/ansible-test-%s' % self.test
 
         if self.python_version:
@@ -562,7 +562,7 @@ class SanityResult(object):
         path += '.xml'
 
         test_suites = [
-            junit_xml.TestSuite(
+            self.junit.TestSuite(
                 name='ansible-test sanity',
                 test_cases=[test_case],
                 timestamp=datetime.datetime.utcnow().replace(microsecond=0).isoformat(),
@@ -570,7 +570,7 @@ class SanityResult(object):
             ),
         ]
 
-        report = junit_xml.TestSuite.to_xml_string(test_suites=test_suites, prettyprint=True, encoding='utf-8')
+        report = self.junit.TestSuite.to_xml_string(test_suites=test_suites, prettyprint=True, encoding='utf-8')
 
         if args.explain:
             return
@@ -593,7 +593,7 @@ class SanitySuccess(SanityResult):
         :type args: SanityConfig
         :type changed_paths: list[str] | None
         """
-        test_case = junit_xml.TestCase(name=self.test)
+        test_case = self.junit.TestCase(name=self.test)
 
         self.save_junit(args, test_case)
 
@@ -616,7 +616,7 @@ class SanitySkipped(SanityResult):
         :type args: SanityConfig
         :type changed_paths: list[str] | None
         """
-        test_case = junit_xml.TestCase(name=self.test)
+        test_case = self.junit.TestCase(name=self.test)
         test_case.add_skipped_info('No tests applicable.')
 
         self.save_junit(args, test_case)
@@ -666,7 +666,7 @@ class SanityError(SanityResult):
         confirmed = self.check_confirmed(changed_paths)
         output = self.format_block()
 
-        test_case = junit_xml.TestCase(name=self.test)
+        test_case = self.junit.TestCase(name=self.test)
         test_case.add_error_info(output='\n%s\n' % output)
 
         properties = dict(
