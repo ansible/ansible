@@ -408,8 +408,7 @@ def command_integration_filter(args, targets):
     :rtype: tuple[IntegrationTarget]
     """
     targets = tuple(targets)
-    changed_paths = detect_changes(args)
-    changes = get_changes_filter(args, changed_paths)
+    changes = get_changes_filter(args)
     require = (args.require or []) + changes
     exclude = (args.exclude or [])
 
@@ -602,8 +601,7 @@ def command_units(args):
     """
     :type args: UnitsConfig
     """
-    changed_paths = detect_changes(args)
-    changes = get_changes_filter(args, changed_paths)
+    changes = get_changes_filter(args)
     require = (args.require or []) + changes
     include, exclude = walk_external_targets(walk_units_targets(), args.include, args.exclude, require)
 
@@ -662,8 +660,7 @@ def command_compile(args):
     """
     :type args: CompileConfig
     """
-    changed_paths = detect_changes(args)
-    changes = get_changes_filter(args, changed_paths)
+    changes = get_changes_filter(args)
     require = (args.require or []) + changes
     include, exclude = walk_external_targets(walk_compile_targets(), args.include, args.exclude, require)
 
@@ -792,12 +789,13 @@ def cleanup_coverage_dir():
     shutil.rmtree(coverage_path)
 
 
-def get_changes_filter(args, paths):
+def get_changes_filter(args):
     """
     :type args: TestConfig
-    :type paths: list[str] | None
     :rtype: list[str]
     """
+    paths = detect_changes(args)
+
     if paths is None:
         return []  # change detection not enabled, do not filter targets
 

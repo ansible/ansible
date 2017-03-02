@@ -32,7 +32,6 @@ from lib.target import (
 )
 
 from lib.executor import (
-    detect_changes,
     get_changes_filter,
     AllTargetsSkipped,
     Delegate,
@@ -50,8 +49,7 @@ def command_sanity(args):
     """
     :type args: SanityConfig
     """
-    changed_paths = detect_changes(args)
-    changes = get_changes_filter(args, changed_paths)
+    changes = get_changes_filter(args)
     require = (args.require or []) + changes
     targets = SanityTargets(args.include, args.exclude, require)
 
@@ -100,7 +98,7 @@ def command_sanity(args):
             else:
                 result = test.func(args, targets)
 
-            result.write(args, changed_paths)
+            result.write(args)
 
             total += 1
 
@@ -561,10 +559,9 @@ class SanityResult(object):
 
         self.junit = junit_xml
 
-    def write(self, args, changed_paths):
+    def write(self, args):
         """
         :type args: SanityConfig
-        :type changed_paths: list[str] | None
         """
         self.write_console()
 
@@ -573,7 +570,7 @@ class SanityResult(object):
 
         if args.junit:
             if self.junit:
-                self.write_junit(args, changed_paths)
+                self.write_junit(args)
             else:
                 display.warning('Skipping junit xml output because the `junit-xml` python package was not found.', unique=True)
 
@@ -585,10 +582,9 @@ class SanityResult(object):
         """Write lint results to stdout."""
         pass
 
-    def write_junit(self, args, changed_paths):
+    def write_junit(self, args):
         """
         :type args: SanityConfig
-        :type changed_paths: list[str] | None
         """
         pass
 
@@ -633,10 +629,9 @@ class SanitySuccess(SanityResult):
         """
         super(SanitySuccess, self).__init__(test, python_version)
 
-    def write_junit(self, args, changed_paths):
+    def write_junit(self, args):
         """
         :type args: SanityConfig
-        :type changed_paths: list[str] | None
         """
         test_case = self.junit.TestCase(name=self.test)
 
@@ -656,10 +651,9 @@ class SanitySkipped(SanityResult):
         """Write results to console."""
         display.info('No tests applicable.', verbosity=1)
 
-    def write_junit(self, args, changed_paths):
+    def write_junit(self, args):
         """
         :type args: SanityConfig
-        :type changed_paths: list[str] | None
         """
         test_case = self.junit.TestCase(name=self.test)
         test_case.add_skipped_info('No tests applicable.')
@@ -703,12 +697,10 @@ class SanityFailure(SanityResult):
             for message in self.messages:
                 print(message)
 
-    def write_junit(self, args, changed_paths):
+    def write_junit(self, args):
         """
         :type args: SanityConfig
-        :type changed_paths: list[str] | None
         """
-        confirmed = self.check_confirmed(changed_paths)
         title = self.format_title()
         output = self.format_block()
 
@@ -721,40 +713,7 @@ class SanityFailure(SanityResult):
         # Without this, the first line becomes indented.
         test_case.add_failure_info(message=title, output='\n%s' % output)
 
-        properties = dict(
-            confirmed=str(confirmed),
-        )
-
-        self.save_junit(args, test_case, properties)
-
-    def check_confirmed(self, changed_paths):
-        """
-        :type changed_paths: list[str] | None
-        :rtype: bool
-        """
-        if changed_paths is None:
-            # changed paths not available
-            return False
-
-        if self.summary:
-            # no paths to check
-            return False
-
-        # There are a few special paths which may need to be changed due to changes in other files.
-        # For confirmation purposes these paths must always be considered changed.
-        changed_paths += [
-            PEP8_LEGACY_PATH,
-            PEP8_SKIP_PATH,
-        ]
-
-        paths = set(changed_paths)
-
-        if all(m.path in paths for m in self.messages):
-            # all paths in messages are changed paths
-            return True
-
-        # unrelated paths found in messages
-        return False
+        self.save_junit(args, test_case)
 
     def format_command(self):
         """
