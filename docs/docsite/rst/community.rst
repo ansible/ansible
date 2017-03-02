@@ -77,7 +77,7 @@ To be respectful of reviewers' time and allow us to help everyone efficiently, p
 provide minimal well-reduced and well-commented examples versus sharing your entire production
 playbook.  Include playbook snippets and output where possible.  
 
-When sharing YAML in playbooks, formatting can be preserved by using `code blocks <https://help.github.com/articles/github-flavored-markdown#fenced-code-blocks>`_.
+When sharing YAML in playbooks, formatting can be preserved by using `code blocks <https://help.github.com/articles/creating-and-highlighting-code-blocks/>`_.
 
 For multiple-file content, we encourage use of gist.github.com.  Online pastebin content can expire, so it's nice to have things around for a longer term if they
 are referenced in a ticket.
