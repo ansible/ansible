@@ -258,3 +258,38 @@
   assert:
     that:
     - replace_follow_result.checksum == target_file_result.stdout
+
+## demonstrate copy module failing to overwrite a file that's been hard linked
+## https://github.com/ansible/ansible/issues/10834
+
+- name: init
+  file:
+    path: /tmp/10834
+    state: absent
+
+- name: copy test file to system 1
+  copy:
+    src: foo.txt
+    dest: /tmp/10834
+
+# not an issue when not hard linked
+- name: copy test file to system 2
+  copy:
+    src: foo.txt
+    dest: /tmp/10834
+
+- name: make hard link to test_file
+  file:
+    src: /tmp/10834
+    dest: /tmp/10834_hardlink
+    state: hard
+
+- name: copy test file to system 3
+  copy:
+    src: foo.txt
+    dest: /tmp/10834
+
+- name: cleanup
+  file:
+    path: /tmp/10834
+    state: absent
