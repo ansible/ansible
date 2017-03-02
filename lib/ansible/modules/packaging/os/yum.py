@@ -256,12 +256,14 @@ rpmbin = None
 
 
 def yum_base(conf_file=None, installroot='/'):
+    """ initiate yum.YumBase() primary structure and base class of yum. It houses the
+    objects and methods needed to perform most things in yum.
+    """
 
     my = yum.YumBase()
     my.preconf.debuglevel=0
     my.preconf.errorlevel=0
     my.preconf.plugins = True
-    #my.preconf.releasever = '/'
     if installroot != '/':
         # do not setup installroot by default, because of error
         # CRITICAL:yum.cli:Config Error: Error accessing file for config file:////etc/yum.conf
@@ -293,19 +295,33 @@ def ensure_yum_utils(module):
     return repoquerybin
 
 def fetch_rpm_from_url(spec, module=None):
-    # download package so that we can query it
+    """ download rpm package
+
+    Args:
+        spec ():
+        module (): AnsibleModule class instance
+
+
+
+    Returns:
+        
+    ---------
+    string: Path to the downloaded RPM file."""
+
     tempdir = tempfile.mkdtemp()
     package = os.path.join(tempdir, str(spec.rsplit('/', 1)[1]))
     try:
-        rsp, info = fetch_url(module, spec)
-        if not rsp:
+        response, info = fetch_url(module, spec)
+
+        if not response:
             module.fail_json(msg="Failure downloading %s, %s" % (spec, info['msg']))
-        f = open(package, 'w')
-        data = rsp.read(BUFSIZE)
-        while data:
-            f.write(data)
-            data = rsp.read(BUFSIZE)
-        f.close()
+
+        with open(package, 'w') as file:
+            data = response.read(BUFSIZE)
+            while data:
+                file.write(data)
+                data = response.read(BUFSIZE)
+
     except Exception:
         e = get_exception()
         shutil.rmtree(tempdir)
