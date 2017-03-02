@@ -31,10 +31,6 @@
 # This module is based on python-crontab by Martin Owens.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
-
 DOCUMENTATION = """
 ---
 module: cron

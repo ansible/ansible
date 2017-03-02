@@ -238,3 +238,5 @@ lib/ansible/plugins/strategy/linear.py
 lib/ansible/template/__init__.py
 lib/ansible/utils/encrypt.py
 lib/ansible/vars/__init__.py
+invalid
+test/runner/test.py
