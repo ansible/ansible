@@ -229,15 +229,17 @@ def main():
     while retries > 0:
         responses = run_commands(module, commands)
 
-        for item in list(conditionals):
-
-            for index, (resp, cmd) in enumerate(zip(responses, commands)):
-                if cmd['output'] == 'xml':
-                    if not HAS_JXMLEASE:
-                        module.fail_json(msg='jxmlease is required but does not appear to '
-                            'be installed.  It can be installed using `pip install jxmlease`')
+        for index, (resp, cmd) in enumerate(zip(responses, commands)):
+            if cmd['output'] == 'xml':
+                if not HAS_JXMLEASE:
+                    module.fail_json(msg='jxmlease is required but does not appear to '
+                        'be installed.  It can be installed using `pip install jxmlease`')
+                try:
                     responses[index] = jxmlease.parse(resp)
+                except:
+                    raise ValueError(resp)
 
+        for item in list(conditionals):
             try:
                 if item(responses):
                     if match == 'any':
