@@ -143,7 +143,12 @@ ElseIf ($inherit -eq "") {
 }
  
 Try {
+    If ($path -match "^HK(CC|CR|CU|LM|U):\\") {
+    $colRights = [System.Security.AccessControl.RegistryRights]$rights
+    }
+    Else {
     $colRights = [System.Security.AccessControl.FileSystemRights]$rights
+    }
     $InheritanceFlag = [System.Security.AccessControl.InheritanceFlags]$inherit
     $PropagationFlag = [System.Security.AccessControl.PropagationFlags]$propagation
  
@@ -155,17 +160,33 @@ Try {
     }
  
     $objUser = New-Object System.Security.Principal.SecurityIdentifier($sid)
+    If ($path -match "^HK(CC|CR|CU|LM|U):\\") {
+    $objACE = New-Object System.Security.AccessControl.RegistryAccessRule ($objUser, $colRights, $InheritanceFlag, $PropagationFlag, $objType)
+    }
+    Else {
     $objACE = New-Object System.Security.AccessControl.FileSystemAccessRule ($objUser, $colRights, $InheritanceFlag, $PropagationFlag, $objType)
+    }
     $objACL = Get-ACL $path
  
     # Check if the ACE exists already in the objects ACL list
     $match = $false
+    If ($path -match "^HK(CC|CR|CU|LM|U):\\") {
+    ForEach($rule in $objACL.Access){
+        $ruleIdentity = $rule.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier])
+        If (($rule.RegistryRights -eq $objACE.RegistryRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($ruleIdentity -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) {
+            $match = $true
+            Break
+        }
+    }
+    }
+    Else {
     ForEach($rule in $objACL.Access){
         $ruleIdentity = $rule.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier])
         If (($rule.FileSystemRights -eq $objACE.FileSystemRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($ruleIdentity -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) { 
             $match = $true
             Break
         } 
+    }
     }
 
     If ($state -eq "present" -And $match -eq $false) {
