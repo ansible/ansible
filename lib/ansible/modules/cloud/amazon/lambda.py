@@ -454,8 +454,10 @@ def main():
                        'Code': code,
                        'Timeout': timeout,
                        'MemorySize': memory_size,
-                       'Environment':{'Variables': environment_variables}
                        }
+
+        if environment_variables:
+            func_kwargs.update({'Environment': {'Variables': environment_variables}})
 
         if dead_letter_arn:
             func_kwargs.update({'DeadLetterConfig': {'TargetARN': dead_letter_arn}})

@@ -68,6 +68,20 @@ base_module_args={
 }
 
 
+def make_mock_no_connection_connection(config):
+    """return a mock of ansible's boto3_conn ready to return a mock AWS API client"""
+    lambda_client_double = MagicMock()
+    lambda_client_double.get_function.configure_mock(
+        return_value=False
+    )
+    lambda_client_double.update_function_configuration.configure_mock(
+        return_value={
+            'Version' : 1
+        }
+    )
+    fake_boto3_conn=Mock(return_value=lambda_client_double)
+    return (fake_boto3_conn, lambda_client_double)
+
 def make_mock_connection(config):
     """return a mock of ansible's boto3_conn ready to return a mock AWS API client"""
     lambda_client_double = MagicMock()
@@ -97,6 +111,37 @@ def fail_json_double(*args, **kwargs):
 
 #TODO: def test_handle_different_types_in_config_params():
 
+
+def test_create_lambda_if_not_exist():
+
+    set_module_args(base_module_args)
+    (boto3_conn_double, lambda_client_double)=make_mock_no_connection_connection(code_change_lambda_config)
+
+    with patch.object(lda, 'boto3_conn', boto3_conn_double):
+        try:
+            lda.main()
+        except SystemExit:
+            pass
+
+    # guard against calling other than for a lambda connection (e.g. IAM)
+    assert(len(boto3_conn_double.mock_calls) == 1), "multiple boto connections used unexpectedly"
+    assert(len(lambda_client_double.update_function_configuration.mock_calls) == 0), \
+        "unexpectedly updated lambda configuration when should have only created"
+    assert(len(lambda_client_double.update_function_code.mock_calls) == 0), \
+        "update lambda function code when function should have been created only"
+    assert(len(lambda_client_double.create_function.mock_calls) > 0), \
+        "failed to call create_function "
+    (create_args, create_kwargs)=lambda_client_double.create_function.call_args
+    assert (len(create_kwargs) > 0), "expected create called with keyword args, none found"
+
+    try:
+        # For now I assume that we should NOT send an empty environment.  It might
+        # be okay / better to explicitly send an empty environment.  However `None'
+        # is not acceptable - mikedlr
+        create_kwargs["Environment"]
+        raise(Exception("Environment sent to boto when none expected"))
+    except KeyError:
+        pass #We are happy, no environment is fine
 
 def test_update_lambda_if_code_changed():
 
