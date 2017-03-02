@@ -1227,49 +1227,47 @@ def main():
         module.fail_json(msg='. '.join(error_msgs))
 
     params = module.params
+    package_list = [ package.strip() for package in params['name']]
+    exclude = params['exclude']
+    state = params['state']
+    enablerepo = params.get('enablerepo', '')
+    disablerepo = params.get('disablerepo', '')
+    disable_gpg_check = params['disable_gpg_check']
+    skip_broken = params['skip_broken']
+    conf_file = params['conf_file']
 
     if params['list']:
         repoquerybin = ensure_yum_utils(module)
         if not repoquerybin:
             module.fail_json(msg="repoquery is required to use list= with this module. Please install the yum-utils package.")
         results = dict(results=list_stuff(module, repoquerybin, params['conf_file'], params['list'], params['installroot']))
+        module.exit_json(**results)
 
+    """ If rhn-plugin is installed and no rhn-certificate is available on
+    the system then users will see an error message using the yum API.
+    Use repoquery in those cases. """
+
+    my = yum_base(params['conf_file'], params['installroot'])
+    my.conf # A sideeffect of accessing conf is that the configuration is loaded and plugins are discovered, this is used to veryif if rhnplugin is in enabled
+    repoquery = None
+    try:
+        yum_plugins = my.plugins._plugins
+    except AttributeError:
+        pass
     else:
-        # If rhn-plugin is installed and no rhn-certificate is available on
-        # the system then users will see an error message using the yum API.
-        # Use repoquery in those cases.
+        if 'rhnplugin' in yum_plugins:
+            repoquerybin = ensure_yum_utils(module)
+            if repoquerybin:
+                repoquery = [repoquerybin, '--show-duplicates', '--plugins', '--quiet']
+                if params['installroot'] != '/':
+                    repoquery.extend(['--installroot', params['installroot']])
 
-        my = yum_base(params['conf_file'], params['installroot'])
-        # A sideeffect of accessing conf is that the configuration is
-        # loaded and plugins are discovered
-        my.conf
-        repoquery = None
-        try:
-            yum_plugins = my.plugins._plugins
-        except AttributeError:
-            pass
-        else:
-            if 'rhnplugin' in yum_plugins:
-                repoquerybin = ensure_yum_utils(module)
-                if repoquerybin:
-                    repoquery = [repoquerybin, '--show-duplicates', '--plugins', '--quiet']
-                    if params['installroot'] != '/':
-                        repoquery.extend(['--installroot', params['installroot']])
-
-        package_list = [ package.strip() for package in params['name']]
-        exclude = params['exclude']
-        state = params['state']
-        enablerepo = params.get('enablerepo', '')
-        disablerepo = params.get('disablerepo', '')
-        disable_gpg_check = params['disable_gpg_check']
-        skip_broken = params['skip_broken']
-        conf_file = params['conf_file']
-        results = ensure(module, state, package_list, conf_file, enablerepo,
-                     disablerepo, disable_gpg_check, exclude, repoquery, skip_broken,
-                     params['installroot'])
-        if repoquery:
-            results['msg'] = '%s %s' % (results.get('msg',''),
-                    'Warning: Due to potential bad behaviour with rhnplugin and certificates, used slower repoquery calls instead of Yum API.')
+    results = ensure(module, state, package_list, conf_file, enablerepo,
+                 disablerepo, disable_gpg_check, exclude, repoquery, skip_broken,
+                 params['installroot'])
+    if repoquery:
+        results['msg'] = '%s %s' % (results.get('msg',''),
+                'Warning: Due to potential bad behaviour with rhnplugin and certificates, used slower repoquery calls instead of Yum API.')
 
     module.exit_json(**results)
 
