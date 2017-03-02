@@ -26,6 +26,7 @@ import os
 import pwd
 import re
 import time
+import types
 
 from io import StringIO
 from numbers import Number
@@ -157,8 +158,6 @@ def _count_newlines_from_end(in_str):
         return i
 
 
-BAD_ATTRS = set(['get', 'when', 'items', 'copy', 'blippy'])
-
 
 class AnsibleContext(Context):
     '''
@@ -208,7 +207,7 @@ class AnsibleContext(Context):
         self._update_unsafe(val)
         return val
 
-import types
+
 class AnsibleEnvironment(Environment):
     '''
     Our custom environment, which simply allows us to override the class-level
@@ -225,7 +224,6 @@ class AnsibleEnvironment(Environment):
         # We could just warn, or we could just always prefer getitem to DWIM
         ret = super(AnsibleEnvironment, self).getattr(obj, attribute)
         #ret = super(AnsibleEnvironment, self).getitem(obj=obj, argument=attribute)
-        print(type(ret))
         if isinstance(ret, (types.BuiltinMethodType,
                             types.BuiltinFunctionType,
                             types.MethodType,
