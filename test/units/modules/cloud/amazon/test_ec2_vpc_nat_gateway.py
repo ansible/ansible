@@ -1,16 +1,8 @@
-from nose.plugins.skip import SkipTest
-
-try:
-    import boto3
-    import botocore
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
-if not HAS_BOTO3:
-    raise SkipTest("test_ec2_vpc_nat_gateway.py requires the python module 'boto3' and 'botocore'")
-
+import pytest
 import unittest
+
+boto3 = pytest.importorskip("boto3")
+botocore = pytest.importorskip("botocore")
 
 from collections import namedtuple
 from ansible.parsing.dataloader import DataLoader
