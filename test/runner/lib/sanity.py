@@ -351,7 +351,8 @@ def command_sanity_pep8(args, targets):
         if not os.path.exists(path):
             # Keep files out of the list which no longer exist in the repo.
             errors.append(SanityMessage(
-                message='Remove "%s" since it does not exist.' % path,
+                code='A101',
+                message='Remove "%s" since it does not exist' % path,
                 path=PEP8_LEGACY_PATH,
                 line=line,
                 column=1,
@@ -360,7 +361,8 @@ def command_sanity_pep8(args, targets):
         if path in used_paths and path not in failed_result_paths:
             # Keep files out of the list which no longer require the relaxed rule set.
             errors.append(SanityMessage(
-                message='Remove "%s" since it passes the current rule set.' % path,
+                code='A201',
+                message='Remove "%s" since it passes the current rule set' % path,
                 path=PEP8_LEGACY_PATH,
                 line=line,
                 column=1,
@@ -374,7 +376,8 @@ def command_sanity_pep8(args, targets):
         if not os.path.exists(path):
             # Keep files out of the list which no longer exist in the repo.
             errors.append(SanityMessage(
-                message='Remove "%s" since it does not exist.' % path,
+                code='A101',
+                message='Remove "%s" since it does not exist' % path,
                 path=PEP8_SKIP_PATH,
                 line=line,
                 column=1,
@@ -801,6 +804,7 @@ class SanityMessage(object):
         :type path: str
         :type line: int
         :type column: int
+        :type level: str
         :type code: str | None
         """
         self.path = path
