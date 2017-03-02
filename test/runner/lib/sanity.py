@@ -576,7 +576,7 @@ class SanityResult(object):
             return
 
         with open(path, 'wb') as xml:
-            xml.write(report.encode(encoding='utf-8', errors='strict'))
+            xml.write(report.encode('utf-8', 'strict'))
 
 
 class SanitySuccess(SanityResult):
