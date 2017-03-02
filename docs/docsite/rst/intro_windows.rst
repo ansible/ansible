@@ -28,7 +28,7 @@ On a Linux control machine::
 
    pip install "pywinrm>=0.2.2"
 
-Note:: on distributions with multiple python versions, use pip2 or pip2.x, where x matches the python minor version Ansible is running under.
+.. Note:: on distributions with multiple python versions, use pip2 or pip2.x, where x matches the python minor version Ansible is running under.
 
 
 Authentication Options
@@ -215,7 +215,7 @@ Ansible's windows support relies on a few standard variables to indicate the use
 
 .. include:: ../rst_common/ansible_ssh_changes_note.rst
 
-In group_vars/windows.yml, define the following inventory variables::
+In ``group_vars/windows.yml``, define the following inventory variables::
 
     # it is suggested that these be encrypted with ansible-vault:
     # ansible-vault edit group_vars/windows.yml
@@ -229,11 +229,11 @@ In group_vars/windows.yml, define the following inventory variables::
 
 Attention for the older style variables (``ansible_ssh_*``): ansible_ssh_password doesn't exist, should be ansible_ssh_pass.
 
-Although Ansible is mostly an SSH-oriented system, Windows management will not happen over SSH (`yet <http://blogs.msdn.com/b/powershell/archive/2015/06/03/looking-forward-microsoft-support-for-secure-shell-ssh.aspx>`).
+Although Ansible is mostly an SSH-oriented system, Windows management will not happen over SSH (`yet <http://blogs.msdn.com/b/powershell/archive/2015/06/03/looking-forward-microsoft-support-for-secure-shell-ssh.aspx>`_).
 
 If you have installed the ``kerberos`` module and ``ansible_user`` contains ``@`` (e.g. ``username@realm``), Ansible will first attempt Kerberos authentication. *This method uses the principal you are authenticated to Kerberos with on the control machine and not* ``ansible_user``. If that fails, either because you are not signed into Kerberos on the control machine or because the corresponding domain account on the remote host is not available, then Ansible will fall back to "plain" username/password authentication.
 
-When using your playbook, don't forget to specify --ask-vault-pass to provide the password to unlock the file.
+When using your playbook, don't forget to specify ``--ask-vault-pass`` to provide the password to unlock the file.
 
 Test your configuration like so, by trying to contact your Windows nodes.  Note this is not an ICMP ping, but tests the Ansible
 communication channel that leverages Windows remoting::
@@ -262,25 +262,25 @@ Windows System Prep
 
 In order for Ansible to manage your windows machines, you will have to enable and configure PowerShell remoting.
 
-To automate the setup of WinRM, you can run `this PowerShell script <https://github.com/ansible/ansible/blob/devel/examples/scripts/ConfigureRemotingForAnsible.ps1>`_ on the remote machine.
+To automate the setup of WinRM, you can run the `examples/scripts/ConfigureRemotingForAnsible.ps1 <https://github.com/ansible/ansible/blob/devel/examples/scripts/ConfigureRemotingForAnsible.ps1>`_ script on the remote machine in a PowerShell console as an administrator.
 
 The example script accepts a few arguments which Admins may choose to use to modify the default setup slightly, which might be appropriate in some cases.
 
-Pass the -CertValidityDays option to customize the expiration date of the generated certificate::
+Pass the ``-CertValidityDays`` option to customize the expiration date of the generated certificate::
 
     powershell.exe -File ConfigureRemotingForAnsible.ps1 -CertValidityDays 100
 
-Pass the -SkipNetworkProfileCheck switch to configure winrm to listen on PUBLIC zone interfaces.  (Without this option, the script will fail if any network interface on device is in PUBLIC zone)::
+Pass the ``-EnableCredSSP`` switch to enable CredSSP as an authentication option::
 
-    powershell.exe -File ConfigureRemotingForAnsible.ps1 -SkipNetworkProfileCheck
+    powershell.exe -File ConfigureRemotingForAnsible.ps1 -EnableCredSSP
 
-Pass the -ForceNewSSLCert switch to force a new SSL certificate to be attached to an already existing winrm listener. (Avoids SSL winrm errors on syspreped Windows images after the CN changes)::
+Pass the ``-ForceNewSSLCert`` switch to force a new SSL certificate to be attached to an already existing winrm listener. (Avoids SSL winrm errors on syspreped Windows images after the CN changes)::
 
     powershell.exe -File ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert
 
-Pass the -EnableCredSSP switch to enable CredSSP as an authentication option::
+Pass the ``-SkipNetworkProfileCheck`` switch to configure winrm to listen on PUBLIC zone interfaces.  (Without this option, the script will fail if any network interface on device is in PUBLIC zone)::
 
-    powershell.exe -File ConfigureRemotingForAnsible.ps1 -EnableCredSSP
+    powershell.exe -File ConfigureRemotingForAnsible.ps1 -SkipNetworkProfileCheck
 
 To troubleshoot the ``ConfigureRemotingForAnsible.ps1`` writes every change it makes to the Windows EventLog (useful when run unattendedly). Additionally the ``-Verbose`` option can be used to get more information on screen about what it is doing.
 
@@ -302,7 +302,7 @@ Getting to PowerShell 3.0 or higher
 
 PowerShell 3.0 or higher is needed for most provided Ansible modules for Windows, and is also required to run the above setup script. Note that PowerShell 3.0 is only supported on Windows 7 SP1, Windows Server 2008 SP1, and later releases of Windows.
 
-Looking at an Ansible checkout, copy the `examples/scripts/upgrade_to_ps3.ps1 <https://github.com/ansible/ansible/blob/devel/examples/scripts/upgrade_to_ps3.ps1>`_ script onto the remote host and run a PowerShell console as an administrator.  You will now be running PowerShell 3 and can try connectivity again using the win_ping technique referenced above.
+Looking at an Ansible checkout, copy the `examples/scripts/upgrade_to_ps3.ps1 <https://github.com/ansible/ansible/blob/devel/examples/scripts/upgrade_to_ps3.ps1>`_ script onto the remote host and run a PowerShell console as an administrator.  You will now be running PowerShell 3 and can try connectivity again using the ``win_ping`` technique referenced above.
 
 .. _what_windows_modules_are_available:
 
@@ -312,37 +312,43 @@ What modules are available
 Most of the Ansible modules in core Ansible are written for a combination of Linux/Unix machines and arbitrary web services, though there are various
 Windows-only modules. These are listed in the `"windows" subcategory of the Ansible module index <http://docs.ansible.com/list_of_windows_modules.html>`_.
 
-In addition, the following core modules work with Windows::
+In addition, the following core modules/action-plugins work with Windows:
 
-    fetch
-    raw
-    script
-    slurp
-    template
-    add_host
-    assert
-    debug
-    fail
-    group_by
-    include_vars
-    meta
-    pause
-    set_fact
-
+* add_host
+* assert
+* async
+* debug
+* fail
+* fetch
+* group_by
+* include_vars
+* meta
+* pause
+* raw
+* script
+* set_fact
+* setup
+* slurp
+* template (also: win_template)
 
 Some modules can be utilised in playbooks that target windows by delegating to localhost, depending on what you are
-attempting to achieve.  For example, assemble can be used to create a file on your ansible controller that is then 
-sent to your windows targets using win_copy.
+attempting to achieve.  For example, ``assemble`` can be used to create a file on your ansible controller that is then 
+sent to your windows targets using ``win_copy``.
 
-In many cases, it may not be necessary to even write or use an Ansible module.
-
-In particular, the "script" module can be used to run arbitrary PowerShell scripts, allowing Windows administrators familiar with PowerShell a very native way to do things, as in the following playbook::
+In many cases, there is no need to use or write an Ansible module. In particular, the ``script`` module can be used to run arbitrary PowerShell scripts, allowing Windows administrators familiar with PowerShell a very native way to do things, as in the following playbook::
 
     - hosts: windows
       tasks:
         - script: foo.ps1 --argument --other-argument
 
-Note:: There are a few other Ansible modules that don't start with "win" that also function with Windows, including "fetch", "slurp", "raw", and "setup" (which is how fact gathering works).
+But also the ``win_shell`` module allows for running Powershell snippets inline::
+
+    - hosts: windows
+      tasks:
+        - name: Remove Appx packages (and their hindering file assocations)
+          win_shell: |
+            Get-AppxPackage -name "Microsoft.ZuneMusic" | Remove-AppxPackage
+            Get-AppxPackage -name "Microsoft.ZuneVideo" | Remove-AppxPackage
 
 .. _developers_developers_developers:
 
@@ -352,7 +358,7 @@ Developers: Supported modules and how it works
 Developing Ansible modules are covered in a `later section of the documentation <http://docs.ansible.com/developing_modules.html>`_, with a focus on Linux/Unix.
 What if you want to write Windows modules for Ansible though?
 
-For Windows, Ansible modules are implemented in PowerShell.  Skim those Linux/Unix module development chapters before proceeding. Windows modules in the core and extras repo live in a "windows/" subdir. Custom modules can go directly into the Ansible "library/" directories or those added in ansible.cfg. Documentation lives in a `.py` file with the same name. For example, if a module is named "win_ping", there will be embedded documentation in the "win_ping.py" file, and the actual PowerShell code will live in a "win_ping.ps1" file. Take a look at the sources and this will make more sense.
+For Windows, Ansible modules are implemented in PowerShell.  Skim those Linux/Unix module development chapters before proceeding. Windows modules in the core and extras repo live in a ``windows/`` subdir. Custom modules can go directly into the Ansible ``library/`` directories or those added in ansible.cfg. Documentation lives in a ``.py`` file with the same name. For example, if a module is named ``win_ping``, there will be embedded documentation in the ``win_ping.py`` file, and the actual PowerShell code will live in a ``win_ping.ps1`` file. Take a look at the sources and this will make more sense.
 
 Modules (ps1 files) should start as follows::
 
@@ -366,7 +372,7 @@ Modules (ps1 files) should start as follows::
 
 The above magic is necessary to tell Ansible to mix in some common code and also know how to push modules out.  The common code contains some nice wrappers around working with hash data structures and emitting JSON results, and possibly a few more useful things.  Regular Ansible has this same concept for reusing Python code - this is just the windows equivalent.
 
-What modules you see in windows/ are just a start.  Additional modules may be submitted as pull requests to github.
+What modules you see in ``windows/`` are just a start.  Additional modules may be submitted as pull requests to github.
 
 .. _windows_and_linux_control_machine:
 
@@ -395,8 +401,6 @@ Note that this command invocation is exactly the same as the Linux/Unix equivale
 Windows Playbook Examples
 `````````````````````````
 
-Look to the list of windows modules for most of what is possible, though also some modules like "raw" and "script" also work on Windows, as do "fetch" and "slurp".
-
 Here is an example of pushing and running a PowerShell script::
 
     - name: test script module
@@ -405,7 +409,7 @@ Here is an example of pushing and running a PowerShell script::
         - name: run test script
           script: files/test_script.ps1
 
-Running individual commands uses the 'win_command <https://docs.ansible.com/ansible/win_command_module.html>' or 'win_shell <https://docs.ansible.com/ansible/win_shell_module.html>' module, as opposed to the shell or command module as is common on Linux/Unix operating systems::
+Running individual commands uses the ``win_command <https://docs.ansible.com/ansible/win_command_module.html>`` or ``win_shell <https://docs.ansible.com/ansible/win_shell_module.html>`` module, as opposed to the shell or command module as is common on Linux/Unix operating systems::
 
     - name: test raw module
       hosts: windows
@@ -415,7 +419,7 @@ Running individual commands uses the 'win_command <https://docs.ansible.com/ansi
           register: ipconfig
         - debug: var=ipconfig
 
-Running common DOS commands like 'del", 'move', or 'copy" is unlikely to work on a remote Windows Server using Powershell, but they can work by prefacing the commands with "CMD /C" and enclosing the command in double quotes as in this example::
+Running common DOS commands like ``del``, ``move``, or ``copy`` is unlikely to work on a remote Windows Server using Powershell, but they can work by prefacing the commands with ``CMD /C`` and enclosing the command in double quotes as in this example::
 
     - name: another raw module example
       hosts: windows
@@ -431,9 +435,9 @@ You may wind up with a more readable playbook by using the PowerShell equivalent
          - name: Move file on remote Windows Server from one location to another
            win_command: Powershell.exe "Move-Item C:\teststuff\myfile.conf C:\builds\smtp.conf"
 
-Bear in mind that using C(win_command) or C(win_shell) will always report "changed", and it is your responsiblity to ensure PowerShell will need to handle idempotency as appropriate (the move examples above are inherently not idempotent), so where possible use (or write) a module.
+Bear in mind that using ``win_command`` or ``win_shell`` will always report ``changed``, and it is your responsiblity to ensure PowerShell will need to handle idempotency as appropriate (the move examples above are inherently not idempotent), so where possible use (or write) a module.
 
-Here's an example of how to use the win_stat module to test for file existence.  Note that the data returned by the win_stat module is slightly different than what is provided by the Linux equivalent::
+Here's an example of how to use the ``win_stat`` module to test for file existence. Note that the data returned by the ``win_stat`` module is slightly different than what is provided by the Linux equivalent::
 
     - name: test stat module
       hosts: windows
@@ -451,8 +455,6 @@ Here's an example of how to use the win_stat module to test for file existence. 
                  - "not stat_file.stat.isdir"
                  - "stat_file.stat.size > 0"
                  - "stat_file.stat.md5"
-
-Again, recall that the Windows modules are all listed in the Windows category of modules, with the exception that the "raw", "script", "slurp" and "fetch" modules are also available.  These modules do not start with a "win" prefix.
 
 .. _windows_contributions:
 
