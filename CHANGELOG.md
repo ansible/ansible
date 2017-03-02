@@ -264,6 +264,7 @@ Ansible Changes By Release
 - windows:
   * win_disk_image
   * win_dns_client
+  * win_domain_controller
   * win_domain_membership
   * win_find
   * win_msg
