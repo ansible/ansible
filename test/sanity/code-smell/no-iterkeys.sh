@@ -1,13 +1,11 @@
 #!/bin/sh
 
-ITERKEYS_USERS=$(grep -r -I iterkeys . \
-    --exclude-dir .git \
-    --exclude-dir .tox \
-    --exclude-dir docsite \
+ITERKEYS_USERS=$(git grep -I iterkeys  \
     | grep -v \
     -e lib/ansible/compat/six/_six.py \
     -e lib/ansible/module_utils/six.py \
     -e test/sanity/code-smell/no-iterkeys.sh \
+    docs/docsite/ \
     -e '^[^:]*:#'
     )
 

@@ -1,23 +1,18 @@
 #!/bin/sh
 
-metaclass1=$(find ./bin -type f -exec grep -HL '__metaclass__ = type' '{}' '+')
-future1=$(find ./bin -type f -exec grep -HL 'from __future__ import (absolute_import, division, print_function)' '{}' '+')
+metaclass1=$(git ls-files bin/ | xargs grep -HL '__metaclass__ = type')
+future1=$(git ls-files bin/ | xargs grep -HL 'from __future__ import (absolute_import, division, print_function)')
 
-metaclass2=$(find ./lib/ansible -path ./lib/ansible/modules -prune \
-        -o -path ./lib/ansible/modules/__init__.py \
-        -o -path ./lib/ansible/module_utils -prune \
-        -o -path ./lib/ansible/compat/six/_six.py -prune \
-        -o -path ./lib/ansible/compat/selectors/_selectors2.py -prune \
-        -o -path ./lib/ansible/utils/module_docs_fragments -prune \
-        -o -name '*.py' -exec grep -HL '__metaclass__ = type' '{}' '+')
+py_files=$(git ls-files lib/ansible | grep '.*\.py$'| \
+           grep -v \
+           -e 'lib/ansible/modules/' \
+           -e 'lib/ansible/utils/module_docs' \
+           -e 'lib/ansible/module_utils/' \
+           -e 'lib/ansible/compat/selectors/_selectors2.py' \
+           -e 'lib/ansible/compat/six')
 
-future2=$(find ./lib/ansible -path ./lib/ansible/modules -prune \
-        -o -path ./lib/ansible/modules/__init__.py \
-        -o -path ./lib/ansible/module_utils -prune \
-        -o -path ./lib/ansible/compat/six/_six.py -prune \
-        -o -path ./lib/ansible/compat/selectors/_selectors2.py -prune \
-        -o -path ./lib/ansible/utils/module_docs_fragments -prune \
-        -o -name '*.py' -exec grep -HL 'from __future__ import (absolute_import, division, print_function)' '{}' '+')
+metaclass2=$(echo "${py_files}" | xargs grep -HL '__metaclass__ = type')
+future2=$(echo "${py_files}" | xargs grep -HL 'from __future__ import (absolute_import, division, print_function)')
 
 ### TODO:
 ### - contrib/

@@ -1,9 +1,6 @@
 #!/bin/sh
 
-ITERVALUES_USERS=$(grep -rI '\.itervalues' . \
-    --exclude-dir .git \
-    --exclude-dir .tox \
-    --exclude-dir docsite \
+ITERVALUES_USERS=$(git grep -I '\.itervalues' \
     | grep -v \
     -e 'six\.itervalues' \
     -e lib/ansible/compat/six/_six.py \
