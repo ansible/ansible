@@ -24,77 +24,136 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 $src = Get-AnsibleParam -obj $params -name "src" -type "path" -failifempty $true
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
 $force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $true
-$original_basename = Get-AnsibleParam -obj $params -name "original_basename" -type "str" -failifempty $true
-
-$result = @{
-    changed = $FALSE
-    original_basename = $original_basename
-    src = $src
-    dest = $dest
-}
+$original_basename = Get-AnsibleParam -obj $params -name "original_basename" -type "str"
 
 # original_basename gets set if src and dest are dirs
 # but includes subdir if the source folder contains sub folders
 # e.g. you could get subdir/foo.txt
+
+$result = @{
+    changed = $false
+    src = $src
+    dest = $dest
+}
 
 if (($force -eq $false) -and (Test-Path -Path $dest)) {
     $result.msg = "file already exists"
     Exit-Json $result
 }
 
-# detect if doing recursive folder copy and create any non-existent destination sub folder
-$parent = Split-Path -Path $original_basename -Parent
-if ($parent.length -gt 0)
-{
-    $dest_folder = Join-Path $dest $parent
-    New-Item -Path $dest_folder -Type Directory -Force -WhatIf:$check_mode
-}
-
-# if $dest is a dir, append $original_basename so the file gets copied with its intended name.
-if (Test-Path -Path $dest -PathType Container)
-{
-    $dest = Join-Path -Path $dest -ChildPath $original_basename
-}
-
-$orig_checksum = Get-FileChecksum ($dest)
-$src_checksum = Get-FileChecksum ($src)
-
-If ($src_checksum.Equals($orig_checksum))
-{
-    # if both are "3" then both are folders, ok to copy
-    If ($src_checksum.Equals("3"))
-    {
-       # New-Item -Force creates subdirs for recursive copies
-       New-Item -Path $dest -Type File -Force -WhatIf:$check_mode
-       Copy-Item -Path $src -Destination $dest -Force -WhatIf:$check_mode
-       $result.changed = $true
-       $result.operation = "folder_copy"
+Function Copy-Folder($src, $dest) {
+    if (Test-Path -Path $dest) {
+        if (-not (Get-Item -Path $dest -Force).PSIsContainer) {
+            Fail-Json $result "If src is a folder, dest must also be a folder. src: $src, dest: $dest"
+        }
+    } else {
+        try {
+            New-Item -Path $dest -ItemType Directory -Force -WhatIf:$check_mode
+            $result.changed = $true
+        } catch {
+            Fail-Json $result "Failed to create new folder $dest $($_.Exception.Message)"
+        }
     }
 
-}
-ElseIf (-Not $src_checksum.Equals($orig_checksum))
-{
-    If ($src_checksum.Equals("3"))
-    {
-        Fail-Json $result "If src is a folder, dest must also be a folder"
+    foreach ($item in Get-ChildItem -Path $src) {
+        $dest_path = Join-Path -Path $dest -ChildPath $item.PSChildName
+        if ($item.PSIsContainer) {
+            Copy-Folder -src $item.FullName -dest $dest_path
+        } else {
+            Copy-File -src $item.FullName -dest $dest_path
+        }
     }
-    # The checksums don't match, there's something to do
-    Copy-Item -Path $src -Destination $dest -Force -WhatIf:$check_mode
-
-    $result.changed = $true
-    $result.operation = "file_copy"
 }
 
-# Verify before we return that the file has changed
-$dest_checksum = Get-FileChecksum($dest)
-If (-Not $src_checksum.Equals($dest_checksum) -And -Not $check_mode)
-{
-    Fail-Json $result "src checksum $src_checksum did not match dest_checksum $dest_checksum, failed to place file $original_basename in $dest"
+Function Copy-File($src, $dest) {
+    if (Test-Path -Path $dest) {
+        if ((Get-Item -Path $dest -Force).PSIsContainer) {
+            Fail-Json $result "If src is a file, dest must also be a file. src: $src, dest: $dest"
+        }
+    }
+
+    $src_checksum = Get-FileChecksum -Path $src
+    $dest_checksum = Get-FileChecksum -Path $dest
+    if ($src_checksum -ne $dest_checksum) {
+        try {
+            Copy-Item -Path $src -Destination $dest -Force -WhatIf:$check_mode
+            $result.changed = $true
+        } catch {
+            Fail-Json $result "Failed to copy file $($_.Exception.Message)"
+        }
+    }
+
+    # Verify the file we copied is the same
+    $dest_checksum_verify = Get-FileChecksum -Path $dest
+    if (-not ($check_mode) -and ($src_checksum -ne $dest_checksum_verify)) {
+        Fail-Json $result "Copied file does not match checksum. src: $src_checksum, dest: $dest_checksum_verify. Failed to copy file from $src to $dest"
+    }
 }
 
-$info = Get-Item $dest
-$result.size = $info.Length
-$result.src = $src
-$result.dest = $dest
+Function Get-FileSize($path) {
+    $file = Get-Item -Path $path -Force
+    $size = $null
+    if ($file.PSIsContainer) {
+        $dir_files_sum = Get-ChildItem $file.FullName -Recurse
+        if ($dir_files_sum -eq $null -or ($dir_files_sum.PSObject.Properties.name -contains 'length' -eq $false)) {
+            $size = 0
+        } else {
+            $size = ($dir_files_sum | Measure-Object -property length -sum).Sum
+        }
+    } else {
+        $size = $file.Length
+    }
+
+    $size
+}
+
+if (-not (Test-Path -Path $src)) {
+    Fail-Json $result "Cannot copy src file: $src as it does not exist"
+}
+
+# If copying from remote we need to get the original folder path and name and change dest to this path
+if ($original_basename) {
+    $parent_path = Split-Path -Path $original_basename -Parent
+    if ($parent_path.length -gt 0) {
+        $dest_folder = Join-Path -Path $dest -ChildPath $parent_path
+        try {
+            New-Item -Path $dest_folder -Type directory -Force -WhatIf:$check_mode
+            $result.changed = $true
+        } catch {
+            Fail-Json $result "Failed to create directory $($dest_folder): $($_.Exception.Message)"
+        }
+        $dest = Join-Path $dest -ChildPath $original_basename
+    }
+}
+
+# If the source is a container prepare for some recursive magic
+if ((Get-Item -Path $src -Force).PSIsContainer) {
+    if (Test-Path -Path $dest) {
+        if (-not (Get-Item -Path $dest -Force).PSIsContainer) {
+            Fail-Json $result "If src is a folder, dest must also be a folder. src: $src, dest: $dest"
+        }
+    }
+
+    $folder_name = (Get-Item -Path $src -Force).Name
+    $dest_path = Join-Path -Path $dest -ChildPath $folder_name
+    Copy-Folder -src $src -dest $dest_path
+    if ($result.changed -eq $true) {
+        $result.operation = "folder_copy"
+    }
+} else {
+    Copy-File -src $src -dest $dest
+    if ($result.changed -eq $true) {
+        $result.operation = "file_copy"
+    }
+    $result.original_basename = (Get-Item -Path $src -Force).Name
+    $result.checksum = Get-FileChecksum -Path $src
+}
+
+if ($check_mode) {
+    # When in check mode the dest won't exit, just get the source size
+    $result.size = Get-FileSize -path $src
+} else {
+    $result.size = Get-FileSize -path $dest
+}
 
 Exit-Json $result
