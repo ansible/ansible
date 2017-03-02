@@ -307,6 +307,8 @@ def bucket_check(module, s3, bucket, validate=True):
     return bool(result)
 
 def create_bucket(module, s3, bucket, location=None):
+    if module.check_mode:
+        module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
     if location is None:
         location = Location.DEFAULT
     try:
@@ -334,6 +336,8 @@ def list_keys(module, bucket_object, prefix, marker, max_keys):
     module.exit_json(msg="LIST operation complete", s3_keys=keys)
 
 def delete_bucket(module, s3, bucket):
+    if module.check_mode:
+        module.exit_json(msg="DELETE operation skipped - running in check mode", changed=True)
     try:
         bucket = s3.lookup(bucket)
         bucket_contents = bucket.list()
@@ -344,6 +348,8 @@ def delete_bucket(module, s3, bucket):
         module.fail_json(msg= str(e))
 
 def delete_key(module, s3, bucket, obj, validate=True):
+    if module.check_mode:
+        module.exit_json(msg="DELETE operation skipped - running in check mode", changed=True)
     try:
         bucket = s3.lookup(bucket, validate=validate)
         bucket.delete_key(obj)
@@ -352,6 +358,8 @@ def delete_key(module, s3, bucket, obj, validate=True):
         module.fail_json(msg= str(e))
 
 def create_dirkey(module, s3, bucket, obj, validate=True):
+    if module.check_mode:
+        module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
     try:
         bucket = s3.lookup(bucket, validate=validate)
         key = bucket.new_key(obj)
@@ -368,6 +376,8 @@ def path_check(path):
 
 
 def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers, validate=True):
+    if module.check_mode:
+        module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
     try:
         bucket = s3.lookup(bucket, validate=validate)
         key = bucket.new_key(obj)
@@ -384,6 +394,8 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
         module.fail_json(msg= str(e))
 
 def download_s3file(module, s3, bucket, obj, dest, retries, version=None, validate=True):
+    if module.check_mode:
+        module.exit_json(msg="GET operation skipped - running in check mode", changed=True)
     # retries is the number of loops; range/xrange needs to be one
     # more to get that count of loops.
     bucket = s3.lookup(bucket, validate=validate)
@@ -402,6 +414,8 @@ def download_s3file(module, s3, bucket, obj, dest, retries, version=None, valida
             pass
 
 def download_s3str(module, s3, bucket, obj, version=None, validate=True):
+    if module.check_mode:
+        module.exit_json(msg="GET operation skipped - running in check mode", changed=True)
     try:
         bucket = s3.lookup(bucket, validate=validate)
         key = bucket.get_key(obj, version_id=version)
@@ -461,7 +475,10 @@ def main():
         ignore_nonexistent_bucket       = dict(default=False, type='bool')
         ),
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+    )
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
