@@ -230,6 +230,7 @@ class AnsibleEnvironment(Environment):
                             types.FunctionType)):
             display.warning("obj.attribute access with the attr named '%s' should be avoided."
                             "See http://docs.ansible.com/ansible/playbooks_variables.html#what-makes-a-valid-variable-name" % attribute)
+            return super(AnsibleEnvironment, self).getitem(obj=obj, argument=attribute)
         return ret
 
 
