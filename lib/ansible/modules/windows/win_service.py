@@ -59,6 +59,15 @@ options:
       - restarted
     default: null
     aliases: []
+  delayed:
+    description:
+      - If True, when start_mode is C(auto) the service is flagged for a delayed start.
+    default: false
+    choices:
+      - True
+      - False
+    version_added: '2.3'
+
 author: "Chris Hoffman (@chrishoffman)"
 '''
 
