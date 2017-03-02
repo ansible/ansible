@@ -248,19 +248,34 @@ def command_sanity_shellcheck(args, targets):
 
     entries = json.loads(stdout)
     results = []
+    previous = None
 
     for entry in entries:
         try:
-            results.append(SanityMessage(
+            message = SanityMessage(
                 message=entry['message'],
-                path=entry['file'],
+                path=entry.get('file', ''),
                 line=entry['line'],
                 column=entry['column'],
                 level=entry['level'],
                 code='SC%s' % entry['code'],
-            ))
+            )
         except KeyError as ex:
             raise ApplicationError('KeyError: %s:\n%s' % (ex.args[0], json.dumps(entry, indent=4, sort_keys=True)))
+
+        if message.level == 'info' and not message.path:
+            # Older versions of shellcheck (such as the one on Shippable) may provide info without a path.
+            # If a previous message exists, use the path from that message, otherwise omit the message.
+
+            if not previous:
+                display.warning('Omitting shellcheck message without path: %s' % message)
+                continue
+
+            message.path = previous.path
+
+        previous = message
+
+        results.append(message)
 
     if results:
         return SanityFailure(test, messages=results)
