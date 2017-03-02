@@ -271,10 +271,10 @@ def command_sanity_pep8(args, targets):
     legacy_path = 'test/sanity/pep8/legacy-files.txt'
 
     with open(skip_path, 'r') as skip_fd:
-        skip_paths = set(skip_fd.read().splitlines())
+        skip_paths = skip_fd.read().splitlines()
 
     with open(legacy_path, 'r') as legacy_fd:
-        legacy_paths = set(legacy_fd.read().splitlines())
+        legacy_paths = legacy_fd.read().splitlines()
 
     with open('test/sanity/pep8/legacy-ignore.txt', 'r') as ignore_fd:
         legacy_ignore = set(ignore_fd.read().splitlines())
@@ -282,7 +282,10 @@ def command_sanity_pep8(args, targets):
     with open('test/sanity/pep8/current-ignore.txt', 'r') as ignore_fd:
         current_ignore = sorted(ignore_fd.read().splitlines())
 
-    paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and i.path not in skip_paths)
+    skip_paths_set = set(skip_paths)
+    legacy_paths_set = set(legacy_paths)
+
+    paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and i.path not in skip_paths_set)
 
     if not paths:
         return SanitySkipped(test)
@@ -322,27 +325,50 @@ def command_sanity_pep8(args, targets):
     ) for r in results]
 
     failed_result_paths = set([result.path for result in results])
-    passed_legacy_paths = set([path for path in paths if path in legacy_paths and path not in failed_result_paths])
+    used_paths = set(paths)
 
     errors = []
     summary = {}
 
-    for path in sorted(passed_legacy_paths):
-        # Keep files out of the list which no longer require the relaxed rule set.
-        errors.append(SanityMessage(path, 'Passes current rule set. Remove from legacy list (%s).' % legacy_path))
+    line = 0
 
-    for path in sorted(skip_paths):
+    for path in legacy_paths:
+        line += 1
+
         if not os.path.exists(path):
             # Keep files out of the list which no longer exist in the repo.
-            errors.append(SanityMessage(path, 'Does not exist. Remove from skip list (%s).' % skip_path))
+            errors.append(SanityMessage(
+                message='Remove "%s" since it does not exist.' % path,
+                path=legacy_path,
+                line=line,
+                column=1,
+            ))
 
-    for path in sorted(legacy_paths):
+        if path in used_paths and path not in failed_result_paths:
+            # Keep files out of the list which no longer require the relaxed rule set.
+            errors.append(SanityMessage(
+                message='Remove "%s" since it passes the current rule set.' % path,
+                path=legacy_path,
+                line=line,
+                column=1,
+            ))
+
+    line = 0
+
+    for path in skip_paths:
+        line += 1
+
         if not os.path.exists(path):
             # Keep files out of the list which no longer exist in the repo.
-            errors.append(SanityMessage(path, 'Does not exist. Remove from legacy list (%s).' % legacy_path))
+            errors.append(SanityMessage(
+                message='Remove "%s" since it does not exist.' % path,
+                path=skip_path,
+                line=line,
+                column=1,
+            ))
 
     for result in results:
-        if result.path in legacy_paths and result.code in legacy_ignore:
+        if result.path in legacy_paths_set and result.code in legacy_ignore:
             # Files on the legacy list are permitted to have errors on the legacy ignore list.
             # However, we want to report on their existence to track progress towards eliminating these exceptions.
             display.info('PEP 8: %s (legacy)' % result, verbosity=3)
