@@ -707,7 +707,10 @@ class SanityFailure(SanityResult):
         output = self.format_block()
 
         test_case = self.junit.TestCase(classname='sanity', name=self.test)
-        test_case.add_failure_info(message=title, output='\n%s\n' % output)
+
+        # Include a leading newline to improve readability on Shippable "Tests" tab.
+        # Without this, the first line becomes indented.
+        test_case.add_failure_info(message=title, output='\n%s' % output)
 
         properties = dict(
             confirmed=str(confirmed),
