@@ -38,6 +38,10 @@ from lib.executor import (
     SanityConfig,
 )
 
+PEP8_SKIP_PATH = 'test/sanity/pep8/skip.txt'
+PEP8_LEGACY_PATH = 'test/sanity/pep8/legacy-files.txt'
+
+
 def command_sanity(args):
     """
     :type args: SanityConfig
@@ -267,13 +271,10 @@ def command_sanity_pep8(args, targets):
     """
     test = 'pep8'
 
-    skip_path = 'test/sanity/pep8/skip.txt'
-    legacy_path = 'test/sanity/pep8/legacy-files.txt'
-
-    with open(skip_path, 'r') as skip_fd:
+    with open(PEP8_SKIP_PATH, 'r') as skip_fd:
         skip_paths = skip_fd.read().splitlines()
 
-    with open(legacy_path, 'r') as legacy_fd:
+    with open(PEP8_LEGACY_PATH, 'r') as legacy_fd:
         legacy_paths = legacy_fd.read().splitlines()
 
     with open('test/sanity/pep8/legacy-ignore.txt', 'r') as ignore_fd:
@@ -339,7 +340,7 @@ def command_sanity_pep8(args, targets):
             # Keep files out of the list which no longer exist in the repo.
             errors.append(SanityMessage(
                 message='Remove "%s" since it does not exist.' % path,
-                path=legacy_path,
+                path=PEP8_LEGACY_PATH,
                 line=line,
                 column=1,
             ))
@@ -348,7 +349,7 @@ def command_sanity_pep8(args, targets):
             # Keep files out of the list which no longer require the relaxed rule set.
             errors.append(SanityMessage(
                 message='Remove "%s" since it passes the current rule set.' % path,
-                path=legacy_path,
+                path=PEP8_LEGACY_PATH,
                 line=line,
                 column=1,
             ))
@@ -362,7 +363,7 @@ def command_sanity_pep8(args, targets):
             # Keep files out of the list which no longer exist in the repo.
             errors.append(SanityMessage(
                 message='Remove "%s" since it does not exist.' % path,
-                path=skip_path,
+                path=PEP8_SKIP_PATH,
                 line=line,
                 column=1,
             ))
@@ -716,6 +717,13 @@ class SanityError(SanityResult):
         if self.summary:
             # no paths to check
             return False
+
+        # There are a few special paths which may need to be changed due to changes in other files.
+        # For confirmation purposes these paths must always be considered changed.
+        changed_paths += [
+            PEP8_LEGACY_PATH,
+            PEP8_SKIP_PATH,
+        ]
 
         paths = set(changed_paths)
 
