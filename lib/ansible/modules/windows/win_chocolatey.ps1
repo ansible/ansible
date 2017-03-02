@@ -43,9 +43,9 @@ if ($source) {$source = $source.Tolower()}
 
 if ($upgrade)
 {
-    Add-DeprecateWarning $result "Parameter upgrade=yes is replaced with state=latest"
+    Add-DeprecationWarning $result "Parameter upgrade=yes is replaced with state=latest"
     if ($state -eq "present")
-{
+    {
         $state = "latest"
     }
 }
