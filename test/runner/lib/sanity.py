@@ -441,7 +441,7 @@ def command_sanity_ansible_doc(args, targets, python_version):
                      skip_modules)
 
     if not modules:
-        return SanitySkipped(test)
+        return SanitySkipped(test, python_version=python_version)
 
     env = ansible_environment(args)
     cmd = ['ansible-doc'] + modules
@@ -465,7 +465,7 @@ def command_sanity_ansible_doc(args, targets, python_version):
         summary = 'Output on stderr from ansible-doc is considered an error.\n\n%s' % SubprocessError(cmd, stderr=stderr)
         return SanityError(test, summary=summary, python_version=python_version)
 
-    return SanitySuccess(test)
+    return SanitySuccess(test, python_version=python_version)
 
 
 def collect_code_smell_tests():
