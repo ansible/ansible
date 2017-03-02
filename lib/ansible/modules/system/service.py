@@ -622,7 +622,7 @@ class LinuxService(Service):
         # if we have decided the service is managed by upstart, we check for some additional output...
         if self.svc_initctl and self.running is None:
             # check the job status by upstart response
-            initctl_rc, initctl_status_stdout, initctl_status_stderr = self.execute_command("%s status %s" % (self.svc_initctl, self.name))
+            initctl_rc, initctl_status_stdout, initctl_status_stderr = self.execute_command("%s status %s %s" % (self.svc_initctl, self.name, self.arguments ))
             if "stop/waiting" in initctl_status_stdout:
                 self.running = False
             elif "start/running" in initctl_status_stdout:
