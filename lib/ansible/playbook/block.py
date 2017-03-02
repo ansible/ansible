@@ -36,7 +36,6 @@ class Block(Base, Become, Conditional, Taggable):
     _always           = FieldAttribute(isa='list', default=[], inherit=False)
 
     # other fields
-    _any_errors_fatal = FieldAttribute(isa='bool', default=False, always_post_validate=True)
     _delegate_to      = FieldAttribute(isa='string')
     _delegate_facts   = FieldAttribute(isa='bool', default=False)
     _name             = FieldAttribute(isa='string', default='')

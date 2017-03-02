@@ -163,6 +163,7 @@ class Base(with_metaclass(BaseMeta, object)):
     _run_once            = FieldAttribute(isa='bool')
     _ignore_errors       = FieldAttribute(isa='bool')
     _check_mode          = FieldAttribute(isa='bool')
+    _any_errors_fatal     = FieldAttribute(isa='bool', default=False, always_post_validate=True)
 
     # param names which have been deprecated/removed
     DEPRECATED_ATTRIBUTES = [

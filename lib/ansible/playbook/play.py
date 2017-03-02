@@ -86,7 +86,6 @@ class Play(Base, Taggable, Become):
     _tasks               = FieldAttribute(isa='list', default=[])
 
     # Flag/Setting Attributes
-    _any_errors_fatal    = FieldAttribute(isa='bool', default=False, always_post_validate=True)
     _force_handlers      = FieldAttribute(isa='bool', always_post_validate=True)
     _max_fail_percentage = FieldAttribute(isa='percent', always_post_validate=True)
     _serial              = FieldAttribute(isa='list', default=[], always_post_validate=True)
