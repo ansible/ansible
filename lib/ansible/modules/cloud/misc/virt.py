@@ -53,6 +53,7 @@ options:
     description:
       - start VM at host startup
     choices: [True, False]
+    version_added: "2.3"
   uri:
     description:
       - libvirt connection uri
