@@ -53,7 +53,7 @@ options:
   test_command:
     description:
     - Command to expect success for to determine the machine is ready for management
-    default: whoami
+    - By default C(win_reboot) will try the M(win_ping) module for determining end-to-end connectivity
   msg:
     description:
     - Message to display to users
@@ -86,4 +86,10 @@ rebooted:
     returned: always
     type: boolean
     sample: true
+
+elapsed:
+  description: The number of seconds that elapsed waiting for the system to be rebooted.
+  returned: always
+  type: integer
+  sample: 23
 '''

@@ -19,9 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import socket
 import time
-
 from datetime import datetime, timedelta
 
 from ansible.plugins.action import ActionBase
@@ -44,24 +42,24 @@ class ActionModule(ActionBase):
     DEFAULT_REBOOT_TIMEOUT_SEC = 600
     DEFAULT_CONNECT_TIMEOUT_SEC = 5
     DEFAULT_PRE_REBOOT_DELAY_SEC = 2
-    DEFAULT_TEST_COMMAND = 'whoami'
+    DEFAULT_TEST_COMMAND = None
     DEFAULT_REBOOT_MESSAGE = 'Reboot initiated by Ansible.'
 
-    def do_until_success_or_timeout(self, what, timeout_sec, what_desc, fail_sleep_sec=1):
+    def do_until_success_or_timeout(self, what, timeout_sec, connect_timeout, what_desc, fail_sleep_sec=1):
         max_end_time = datetime.utcnow() + timedelta(seconds=timeout_sec)
 
         while datetime.utcnow() < max_end_time:
             try:
-                what()
+                what(connect_timeout)
                 if what_desc:
                     display.debug("win_reboot: %s success" % what_desc)
                 return
-            except:
+            except Exception as e:
                 if what_desc:
                     display.debug("win_reboot: %s fail (expected), sleeping before retry..." % what_desc)
                 time.sleep(fail_sleep_sec)
 
-        raise TimedOutException("timed out waiting for %s" % what_desc)
+        raise TimedOutException("timed out waiting for %s: %s" % (what_desc, e))
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
@@ -77,9 +75,6 @@ class ActionModule(ActionBase):
         if self._play_context.check_mode:
             display.vvv("win_reboot: skipping for check_mode")
             return dict(skipped=True)
-
-        winrm_host = self._connection._winrm_host
-        winrm_port = self._connection._winrm_port
 
         result = super(ActionModule, self).run(tmp, task_vars)
         result['warnings'] = []
@@ -105,41 +100,51 @@ class ActionModule(ActionBase):
             result['msg'] = "Shutdown command failed, error text was %s" % stderr
             return result
 
-        def raise_if_port_open():
+        def ping_module_test(connect_timeout):
+            ''' Test ping module, if available '''
+            display.vvv("wait_for_connection: attempting ping module test")
+            # call connection reset between runs if it's there
             try:
-                sock = socket.create_connection((winrm_host, winrm_port), connect_timeout_sec)
-                sock.close()
-            except:
-                return False
+                self._connection._reset()
+            except AttributeError:
+                pass
 
-            raise Exception("port is open")
+            # Use win_ping on powershell
+            ping_result = self._execute_module(module_name='win_ping', module_args=dict(), tmp=tmp, task_vars=task_vars)
+
+            # Test module output
+            if ping_result['ping'] != 'pong':
+                raise Exception('ping test failed')
+
+        def run_test_command(connect_timeout):
+            display.vvv("win_reboot: attempting post-reboot test command '%s'" % test_command)
+            # call connection reset between runs if it's there
+            try:
+                self._connection._reset()
+            except AttributeError:
+                pass
+
+            (rc, stdout, stderr) = self._connection.exec_command(test_command)
+
+            if rc != 0:
+                raise Exception('test command failed')
+
+        start = datetime.now()
 
         try:
-            self.do_until_success_or_timeout(raise_if_port_open, shutdown_timeout_sec, what_desc="winrm port down")
-
-            def connect_winrm_port():
-                sock = socket.create_connection((winrm_host, winrm_port), connect_timeout_sec)
-                sock.close()
-
-            self.do_until_success_or_timeout(connect_winrm_port, reboot_timeout_sec, what_desc="winrm port up")
-
-            def run_test_command():
-                display.vvv("attempting post-reboot test command '%s'" % test_command)
-                # call connection reset between runs if it's there
-                try:
-                    self._connection._reset()
-                except AttributeError:
-                    pass
-
-                (rc, stdout, stderr) = self._connection.exec_command(test_command)
-
-                if rc != 0:
-                    raise Exception('test command failed')
+            # If the connection has a transport_test method, use it first
+            if hasattr(self._connection, 'transport_test'):
+                self.do_until_success_or_timeout(self._connection.transport_test, reboot_timeout_sec, connect_timeout,
+                    what_desc="connection port up", sleep=sleep)
 
             # FUTURE: ensure that a reboot has actually occurred by watching for change in last boot time fact
             # FUTURE: add a stability check (system must remain up for N seconds) to deal with self-multi-reboot updates
 
-            self.do_until_success_or_timeout(run_test_command, reboot_timeout_sec, what_desc="post-reboot test command success")
+            # Use the ping module test to determine end-to-end connectivity
+            if not test_command:
+                self.do_until_success_or_timeout(ping_module_test, reboot_timeout_sec, connect_timeout, what_desc="ping module test success", sleep=sleep)
+            else:
+                self.do_until_success_or_timeout(run_test_command, reboot_timeout_sec, connect_timeout, what_desc="post-reboot test command success")
 
             result['rebooted'] = True
             result['changed'] = True
@@ -148,5 +153,8 @@ class ActionModule(ActionBase):
             result['failed'] = True
             result['rebooted'] = True
             result['msg'] = toex.message
+
+        elapsed = datetime.now() - start
+        result['elapsed'] = elapsed.seconds
 
         return result
