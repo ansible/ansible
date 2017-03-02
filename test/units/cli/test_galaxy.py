@@ -23,6 +23,7 @@ import os
 import shutil
 import tarfile
 import tempfile
+import yaml
 
 from ansible.compat.six import PY3
 from ansible.compat.tests import unittest
@@ -264,6 +265,170 @@ class TestGalaxy(unittest.TestCase):
         ''' testing the options parser when the action 'setup' is given '''
         gc = GalaxyCLI(args=["setup"])
         self.run_parse_common(gc, "setup")
+
         self.assertEqual(gc.options.verbosity, 0)
         self.assertEqual(gc.options.remove_id, None)
         self.assertEqual(gc.options.setup_list, False)
+
+
+class ValidRoleTests(object):
+
+    expected_role_dirs = ('defaults', 'files', 'handlers', 'meta', 'tasks', 'templates', 'vars', 'tests')
+
+    @classmethod
+    def setUpRole(cls, role_name, galaxy_args=None, skeleton_path=None):
+        if galaxy_args is None:
+            galaxy_args = []
+
+        if skeleton_path is not None:
+            cls.role_skeleton_path = skeleton_path
+            galaxy_args += ['--role-skeleton', skeleton_path]
+
+        # Make temp directory for testing
+        cls.test_dir = tempfile.mkdtemp()
+        if not os.path.isdir(cls.test_dir):
+            os.makedirs(cls.test_dir)
+
+        cls.role_dir = os.path.join(cls.test_dir, role_name)
+        cls.role_name = role_name
+
+        # create role using default skeleton
+        gc = GalaxyCLI(args=['init', '-c', '--offline'] + galaxy_args + ['-p', cls.test_dir, cls.role_name])
+        gc.parse()
+        gc.run()
+        cls.gc = gc
+
+        if skeleton_path is None:
+            cls.role_skeleton_path = gc.galaxy.default_role_skeleton_path
+
+    @classmethod
+    def tearDownClass(cls):
+        if os.path.isdir(cls.test_dir):
+            shutil.rmtree(cls.test_dir)
+
+    def test_metadata(self):
+        with open(os.path.join(self.role_dir, 'meta', 'main.yml'), 'r') as mf:
+            metadata = yaml.safe_load(mf)
+        self.assertIn('galaxy_info', metadata, msg='unable to find galaxy_info in metadata')
+        self.assertIn('dependencies', metadata, msg='unable to find dependencies in metadata')
+
+    def test_readme(self):
+        readme_path = os.path.join(self.role_dir, 'README.md')
+        self.assertTrue(os.path.exists(readme_path), msg='Readme doesn\'t exist')
+
+    def test_main_ymls(self):
+        need_main_ymls = set(self.expected_role_dirs) - set(['meta', 'tests', 'files', 'templates'])
+        for d in need_main_ymls:
+            main_yml = os.path.join(self.role_dir, d, 'main.yml')
+            self.assertTrue(os.path.exists(main_yml))
+            expected_string = "---\n# {0} file for {1}".format(d, self.role_name)
+            with open(main_yml, 'r') as f:
+                self.assertEqual(expected_string, f.read().strip())
+
+    def test_role_dirs(self):
+        for d in self.expected_role_dirs:
+            self.assertTrue(os.path.isdir(os.path.join(self.role_dir, d)), msg="Expected role subdirectory {0} doesn't exist".format(d))
+
+    def test_travis_yml(self):
+        with open(os.path.join(self.role_dir,'.travis.yml'), 'r') as f:
+            contents = f.read()
+
+        with open(os.path.join(self.role_skeleton_path, '.travis.yml'), 'r') as f:
+            expected_contents = f.read()
+
+        self.assertEqual(expected_contents, contents, msg='.travis.yml does not match expected')
+
+    def test_readme_contents(self):
+        with open(os.path.join(self.role_dir, 'README.md'), 'r') as readme:
+            contents = readme.read()
+
+        with open(os.path.join(self.role_skeleton_path, 'README.md'), 'r') as f:
+            expected_contents = f.read()
+
+        self.assertEqual(expected_contents, contents, msg='README.md does not match expected')
+
+    def test_test_yml(self):
+        with open(os.path.join(self.role_dir, 'tests', 'test.yml'), 'r') as f:
+            test_playbook = yaml.safe_load(f)
+        print(test_playbook)
+        self.assertEqual(len(test_playbook), 1)
+        self.assertEqual(test_playbook[0]['hosts'], 'localhost')
+        self.assertEqual(test_playbook[0]['remote_user'], 'root')
+        self.assertListEqual(test_playbook[0]['roles'], [self.role_name], msg='The list of roles included in the test play doesn\'t match')
+
+
+class TestGalaxyInitDefault(unittest.TestCase, ValidRoleTests):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setUpRole(role_name='delete_me')
+
+    def test_metadata_contents(self):
+        with open(os.path.join(self.role_dir, 'meta', 'main.yml'), 'r') as mf:
+            metadata = yaml.safe_load(mf)
+        self.assertEqual(metadata.get('galaxy_info', dict()).get('author'), 'your name', msg='author was not set properly in metadata')
+
+
+class TestGalaxyInitContainerEnabled(unittest.TestCase, ValidRoleTests):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.setUpRole('delete_me_container', galaxy_args=['--container-enabled'])
+
+    def test_metadata_container_tag(self):
+        with open(os.path.join(self.role_dir, 'meta', 'main.yml'), 'r') as mf:
+            metadata = yaml.safe_load(mf)
+        self.assertIn('container', metadata.get('galaxy_info', dict()).get('galaxy_tags',[]), msg='container tag not set in role metadata')
+
+    def test_metadata_contents(self):
+        with open(os.path.join(self.role_dir, 'meta', 'main.yml'), 'r') as mf:
+            metadata = yaml.safe_load(mf)
+        self.assertEqual(metadata.get('galaxy_info', dict()).get('author'), 'your name', msg='author was not set properly in metadata')
+
+    def test_meta_container_yml(self):
+        self.assertTrue(os.path.exists(os.path.join(self.role_dir, 'meta', 'container.yml')), msg='container.yml was not created')
+
+    def test_test_yml(self):
+        with open(os.path.join(self.role_dir, 'tests', 'test.yml'), 'r') as f:
+            test_playbook = yaml.safe_load(f)
+        print(test_playbook)
+        self.assertEqual(len(test_playbook), 1)
+        self.assertEqual(test_playbook[0]['hosts'], 'localhost')
+        self.assertFalse(test_playbook[0]['gather_facts'])
+        self.assertEqual(test_playbook[0]['connection'], 'local')
+        self.assertIsNone(test_playbook[0]['tasks'], msg='We\'re expecting an unset list of tasks in test.yml')
+
+
+class TestGalaxyInitSkeleton(unittest.TestCase, ValidRoleTests):
+
+    @classmethod
+    def setUpClass(cls):
+        role_skeleton_path = os.path.join(os.path.split(__file__)[0], 'test_data', 'role_skeleton')
+        cls.setUpRole('delete_me_skeleton', skeleton_path=role_skeleton_path)
+
+    def test_empty_files_dir(self):
+        files_dir = os.path.join(self.role_dir, 'files')
+        self.assertTrue(os.path.isdir(files_dir))
+        self.assertListEqual(os.listdir(files_dir), [], msg='we expect the files directory to be empty, is ignore working?')
+
+    def test_template_ignore_jinja(self):
+        test_conf_j2 = os.path.join(self.role_dir, 'templates', 'test.conf.j2')
+        self.assertTrue(os.path.exists(test_conf_j2), msg="The test.conf.j2 template doesn't seem to exist, is it being rendered as test.conf?")
+        with open(test_conf_j2, 'r') as f:
+            contents = f.read()
+        expected_contents = '[defaults]\ntest_key = {{ test_variable }}'
+        self.assertEqual(expected_contents, contents.strip(), msg="test.conf.j2 doesn't contain what it should, is it being rendered?")
+
+    def test_template_ignore_jinja_subfolder(self):
+        test_conf_j2 = os.path.join(self.role_dir, 'templates', 'subfolder', 'test.conf.j2')
+        self.assertTrue(os.path.exists(test_conf_j2), msg="The test.conf.j2 template doesn't seem to exist, is it being rendered as test.conf?")
+        with open(test_conf_j2, 'r') as f:
+            contents = f.read()
+        expected_contents = '[defaults]\ntest_key = {{ test_variable }}'
+        self.assertEqual(expected_contents, contents.strip(), msg="test.conf.j2 doesn't contain what it should, is it being rendered?")
+
+    def test_template_ignore_similar_folder(self):
+        self.assertTrue(os.path.exists(os.path.join(self.role_dir, 'templates_extra', 'templates.txt')))
+
+    def test_skeleton_option(self):
+        self.assertEquals(self.role_skeleton_path, self.gc.get_opt('role_skeleton'), msg='Skeleton path was not parsed properly from the command line')
