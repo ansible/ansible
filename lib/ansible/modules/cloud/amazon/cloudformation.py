@@ -244,17 +244,6 @@ def boto_exception(err):
     return error
 
 
-def boto_version_required(version_tuple):
-    parts = boto3.__version__.split('.')
-    boto_version = []
-    try:
-        for part in parts:
-            boto_version.append(int(part))
-    except ValueError:
-        boto_version.append(-1)
-    return tuple(boto_version) >= tuple(version_tuple)
-
-
 def get_stack_events(cfn, stack_name):
     '''This event data was never correct, it worked as a side effect. So the v2.3 format is different.'''
     ret = {'events':[], 'log':[]}
