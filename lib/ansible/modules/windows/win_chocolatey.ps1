@@ -32,6 +32,7 @@ $upgrade = Get-AnsibleParam -obj $params -name "upgrade" -type "bool" -default $
 $version = Get-AnsibleParam -obj $params -name "version" -type "str"
 $source = Get-AnsibleParam -obj $params -name "source" -type "str"
 $showlog = Get-AnsibleParam -obj $params -name "showlog" -type "bool" -default $false
+$executiontimeout = Get-Attr -obj $params -name execution_timeout -default $null
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent","latest"
 $installargs = Get-AnsibleParam -obj $params -name "install_args" -type "str"
 $packageparams = Get-AnsibleParam -obj $params -name "params" -type "str"
@@ -140,7 +141,9 @@ Function Choco-Upgrade
         [Parameter(Mandatory=$false, Position=8)]
         [bool]$ignorechecksums,
         [Parameter(Mandatory=$false, Position=9)]
-        [bool]$ignoredependencies
+        [bool]$ignoredependencies,
+        [Parameter(Mandatory=$false, Position=10)]
+        [string]$executiontimeout
     )
 
     if (-not (Choco-IsInstalled $package))
@@ -190,7 +193,12 @@ Function Choco-Upgrade
         $cmd += " -ignoredependencies"
     }
 
-    $output = invoke-expression $cmd
+    if ($executiontimeout)
+    {
+        $cmd += " --execution-timeout=$executiontimeout"
+    }
+
+    $results = invoke-expression $cmd
 
     $result.rc = $LastExitCode
     if ($LastExitCode -notin $successexitcodes)
@@ -233,12 +241,27 @@ Function Choco-Install
         [Parameter(Mandatory=$false, Position=9)]
         [bool]$ignorechecksums,
         [Parameter(Mandatory=$false, Position=10)]
-        [bool]$ignoredependencies
+        [bool]$ignoredependencies,
+        [Parameter(Mandatory=$false, Position=11)]
+        [string]$executiontimeout
     )
 
     if ((Choco-IsInstalled $package) -and -not $force)
     {
-        return
+        if ($upgrade)
+        {
+            Choco-Upgrade -package $package -version $version -source $source -force $force `
+                -installargs $installargs -packageparams $packageparams `
+                -allowemptychecksums $allowemptychecksums -ignorechecksums $ignorechecksums `
+                -ignoredependencies $ignoredependencies -executiontimeout $executiontimeout
+
+            return
+        }
+
+        if (-not $force)
+        {
+            return
+        }
     }
 
     $cmd = "$executable install -dv -y $package"
@@ -283,7 +306,12 @@ Function Choco-Install
         $cmd += " -ignoredependencies"
     }
 
-    $output = invoke-expression $cmd
+    if ($executiontimeout)
+    {
+        $cmd += " --execution-timeout=$executiontimeout"
+    }
+
+    $results = invoke-expression $cmd
 
     $result.rc = $LastExitCode
     if ($LastExitCode -notin $successexitcodes)
@@ -306,7 +334,10 @@ Function Choco-Uninstall
         [Parameter(Mandatory=$false, Position=2)]
         [string]$version,
         [Parameter(Mandatory=$false, Position=3)]
-        [bool]$force
+        [bool]$force,
+        [Parameter(Mandatory=$false, Position=4)]
+        [string]$executiontimeout
+
     )
 
     if (-not (Choco-IsInstalled $package))
@@ -331,7 +362,12 @@ Function Choco-Uninstall
         $cmd += " -params '$packageparams'"
     }
 
-    $output = invoke-expression $cmd
+    if ($executiontimeout)
+    {
+        $cmd += " --execution-timeout=$executiontimeout"
+    }
+
+    $results = invoke-expression $cmd
 
     $result.rc = $LastExitCode
     if ($LastExitCode -notin $successexitcodes)
@@ -353,7 +389,7 @@ Try
         Choco-Install -package $package -version $version -source $source -force $force `
             -installargs $installargs -packageparams $packageparams `
             -allowemptychecksums $allowemptychecksums -ignorechecksums $ignorechecksums `
-            -ignoredependencies $ignoredependencies
+            -ignoredependencies $ignoredependencies -executiontimeout $executiontimeout
     }
     elseif ($state -eq "latest")
     {
@@ -364,7 +400,8 @@ Try
     }
     elseif ($state -eq "absent")
     {
-        Choco-Uninstall -package $package -version $version -force $force
+        Choco-Uninstall -package $package -version $version -force $force `
+            -executiontimeout $executiontimeout
     }
 
     Exit-Json $result
