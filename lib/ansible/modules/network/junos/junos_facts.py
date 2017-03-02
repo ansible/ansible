@@ -36,15 +36,16 @@ description:
     configured set of arguments.
 extends_documentation_fragment: junos
 options:
-  config:
+  gather_subset:
     description:
-      - The C(config) argument instructs the fact module to collect
-        the configuration from the remote device.  The configuration
-        is then included in return facts.  By default, the configuration
-        is returned as text.  The C(config_format) can be used to return
-        different Junos configuration formats.
+      - When supplied, this argument will restrict the facts collected
+        to a given subset.  Possible values for this argument include
+        all, default, config, and neighbors.  Can specify a list of
+        values to include a larger subset.  Values can also be used
+        with an initial C(M(!)) to specify that a specific subset should
+        not be collected.
     required: false
-    default: null
+    default: "!config"
   config_format:
     description:
       - The C(config_format) argument is used to specify the desired
@@ -56,11 +57,6 @@ options:
     required: false
     default: text
     choices: ['xml', 'text']
-requirements:
-  - junos-eznc
-notes:
-  - This module requires the netconf system service be enabled on
-    the remote device being managed
 """
 
 EXAMPLES = """
@@ -69,16 +65,16 @@ EXAMPLES = """
 
 - name: collect default set of facts and configuration
   junos_facts:
-    config: yes
+    gather_subset: config
 
 - name: collect default set of facts and configuration in text format
   junos_facts:
-    config: yes
+    gather_subset: config
     config_format: text
 
 - name: collect default set of facts and configuration in XML and JSON format
   junos_facts:
-    config: yes
+    gather_subset: config
     config_format: xml
 """
 
@@ -88,11 +84,12 @@ ansible_facts:
   returned: always
   type: dict
 """
-from ncclient.xml_ import new_ele, sub_ele, to_xml, to_ele
+
+import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.netconf import send_request
+from ansible.module_utils.junos import run_commands
 from ansible.module_utils.junos import junos_argument_spec, check_args
 
 
@@ -106,8 +103,7 @@ class FactsBase(object):
         self.responses = None
 
     def populate(self):
-        commands = [new_ele(c) for c in self.COMMANDS]
-        self.responses = [send_request(self.module, c) for c in commands]
+        self.responses = run_commands(self.module, list(self.COMMANDS))
 
 
 class Default(FactsBase):
@@ -126,6 +122,9 @@ class Default(FactsBase):
 
 FACT_SUBSETS = dict(
     default=Default,
+    hadware=Hardware,
+    config=Config,
+    interfaces=Interfaces,
 )
 
 VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
@@ -136,9 +135,7 @@ def main():
     """
     argument_spec = dict(
         gather_subset=dict(default=['!config'], type='list'),
-        config=dict(type='bool'),
         config_format=dict(default='text', choices=['xml', 'text']),
-        transport=dict(default='netconf', choices=['netconf'])
     )
 
     argument_spec.update(junos_argument_spec)
@@ -163,6 +160,29 @@ def main():
         elif config_format == "xml":
             facts['config'] = xml_to_string(resp_config)
             facts['config_json'] = xml_to_json(resp_config)"""
+    for subset in gather_subset:
+        if subset == 'all':
+            runable_subsets.update(VALID_SUBSETS)
+            continue
+
+        if subset.startswith('!'):
+            subset = subset[1:]
+            if subset == 'all':
+                exclude_subsets.update(VALID_SUBSETS)
+                continue
+            exclude = True
+        else:
+            exclude = False
+
+        if subset not in VALID_SUBSETS:
+            module.fail_json(msg='Subset must be one of [%s], got %s' %
+                             (', '.join(VALID_SUBSETS), subset))
+
+        if exclude:
+            exclude_subsets.add(subset)
+        else:
+            runable_subsets.add(subset)
+
     if not runable_subsets:
         runable_subsets.update(VALID_SUBSETS)
 
