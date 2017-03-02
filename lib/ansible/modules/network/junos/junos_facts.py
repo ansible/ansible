@@ -15,10 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+from __future__ import division
 
 ANSIBLE_METADATA = {
     'status': ['preview'],
-    'supported_by': 'community',
+    'supported_by': 'core',
     'version': '1.0',
 }
 
@@ -40,7 +41,7 @@ options:
     description:
       - When supplied, this argument will restrict the facts collected
         to a given subset.  Possible values for this argument include
-        all, default, config, and neighbors.  Can specify a list of
+        all, hardware, config, and interfaces.  Can specify a list of
         values to include a larger subset.  Values can also be used
         with an initial C(M(!)) to specify that a specific subset should
         not be collected.
@@ -109,20 +110,45 @@ class FactsBase(object):
 class Default(FactsBase):
 
     COMMANDS = [
-        'get-software-information',
+        'show version',
+        'show chassis hardware',
     ]
 
     def populate(self):
         super(Default, self).populate()
-        software = self.responses[0].find('.//software-information')
-        self.facts['hostname'] = software.findtext('./host-name')
-        self.facts['model'] = software.findtext('./product-model')
-        self.facts['version'] = software.findtext('./junos-version')
+
+        version = self.responses[0]
+        self.facts['hostname'] = self.parse_hostname(version)
+        self.facts['version'] = self.parse_version(version)
+        self.facts['model'] = self.parse_model(version)
+
+        hardware = self.responses[1]
+        self.facts['serialnum'] = self.parse_serialnum(hardware)
+
+    def parse_hostname(self, data):
+        match = re.search(r'Hostname:\s*(\S+)', data)
+        if match:
+            return match.group(1)
+
+    def parse_version(self, data):
+        match = re.search(r'Junos:\s*(\S+)', data)
+        if match:
+            return match.group(1)
+
+    def parse_model(self, data):
+        match = re.search(r'Model:\s*(\S+)', data)
+        if match:
+            return match.group(1)
+
+    def parse_serialnum(self, data):
+        match = re.search(r'Chassis\s+(\w+)', data)
+        if match:
+            return match.group(1)
 
 
 FACT_SUBSETS = dict(
     default=Default,
-    hadware=Hardware,
+    hardware=Hardware,
     config=Config,
     interfaces=Interfaces,
 )
