@@ -50,16 +50,16 @@ Target: February/March 2017
 
 - **Windows modules** (nitzmahone)
 
-  - win_domain module
-  - win_domain_membership module
-  - win_domain_controller module
-  - win_dns_client module
+  - win_domain module **(done)**
+  - win_domain_membership module **(done)**
+  - win_domain_controller module **(done)**
+  - win_dns_client module **(done)**
   - win_wait_for module
-  - win_disk_image module
-  - Updates to win_chocolatey, adopt to core (stretch)
-  - Updates/rewrite to win_unzip, adopt to core (stretch)
-  - Updates to win_updates, adopt to core (stretch)
-  - Updates to win_package, adopt to core (+ deprecate win_msi)
+  - win_disk_image module **(done)**
+  - Updates to win_chocolatey, adopt to core (stretch) **(bump to 2.4)**
+  - Updates/rewrite to win_unzip, adopt to core (stretch) **(bump to 2.4)**
+  - Updates to win_updates, adopt to core (stretch) **(bump to 2.4)**
+  - Updates to win_package, adopt to core (+ deprecate win_msi) (stretch) **(bump to 2.4)**
   
 - **Azure modules** (nitzmahone/mattclay)
 
