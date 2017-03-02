@@ -100,7 +100,7 @@ def command_sanity(args):
 
             total += 1
 
-            if isinstance(result, SanityError):
+            if isinstance(result, SanityFailure):
                 failed.append(result.test + options)
 
     if failed:
@@ -130,7 +130,7 @@ def command_sanity_code_smell(args, _, script):
 
     if stderr or status:
         summary = str(SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout))
-        return SanityError(test, summary=summary)
+        return SanityFailure(test, summary=summary)
 
     return SanitySuccess(test)
 
@@ -202,7 +202,7 @@ def command_sanity_validate_modules(args, targets):
             ))
 
     if results:
-        return SanityError(test, messages=results)
+        return SanityFailure(test, messages=results)
 
     return SanitySuccess(test)
 
@@ -258,7 +258,7 @@ def command_sanity_shellcheck(args, targets):
     ) for r in results]
 
     if results:
-        return SanityError(test, messages=results)
+        return SanityFailure(test, messages=results)
 
     return SanitySuccess(test)
 
@@ -399,7 +399,7 @@ def command_sanity_pep8(args, targets):
             display.info(line, verbosity=1)
 
     if errors:
-        return SanityError(test, messages=errors)
+        return SanityFailure(test, messages=errors)
 
     return SanitySuccess(test)
 
@@ -449,7 +449,7 @@ def command_sanity_yamllint(args, targets):
     ) for r in results]
 
     if results:
-        return SanityError(test, messages=results)
+        return SanityFailure(test, messages=results)
 
     return SanitySuccess(test)
 
@@ -486,14 +486,14 @@ def command_sanity_ansible_doc(args, targets, python_version):
 
     if status:
         summary = str(SubprocessError(cmd=cmd, status=status, stderr=stderr))
-        return SanityError(test, summary=summary, python_version=python_version)
+        return SanityFailure(test, summary=summary, python_version=python_version)
 
     if stdout:
         display.info(stdout.strip(), verbosity=3)
 
     if stderr:
         summary = 'Output on stderr from ansible-doc is considered an error.\n\n%s' % SubprocessError(cmd, stderr=stderr)
-        return SanityError(test, summary=summary, python_version=python_version)
+        return SanityFailure(test, summary=summary, python_version=python_version)
 
     return SanitySuccess(test, python_version=python_version)
 
@@ -652,8 +652,8 @@ class SanitySkipped(SanityResult):
         self.save_junit(args, test_case)
 
 
-class SanityError(SanityResult):
-    """Sanity test error."""
+class SanityFailure(SanityResult):
+    """Sanity test failure."""
     def __init__(self, test, python_version=None, messages=None, summary=None):
         """
         :type test: str
@@ -661,7 +661,7 @@ class SanityError(SanityResult):
         :type messages: list[SanityMessage]
         :type summary: str
         """
-        super(SanityError, self).__init__(test, python_version)
+        super(SanityFailure, self).__init__(test, python_version)
 
         self.messages = messages
         self.summary = summary
