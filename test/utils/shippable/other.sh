@@ -18,5 +18,5 @@ ln -sf x86_64-linux-gnu-gcc-4.9 /usr/bin/x86_64-linux-gnu-gcc
 retry.py pip install tox --disable-pip-version-check
 
 ansible-test compile --color -v
-ansible-test sanity --color -v --tox --skip-test ansible-doc --python 2.7
-ansible-test sanity --color -v --tox --test ansible-doc --coverage
+ansible-test sanity --color -v --junit --tox --skip-test ansible-doc --python 2.7
+ansible-test sanity --color -v --junit --tox --test ansible-doc --coverage

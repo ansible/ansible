@@ -30,11 +30,11 @@ function cleanup
 {
     if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | grep -q .; then
         ansible-test coverage xml --color -v --requirements
-        cp -av test/results/reports/coverage.xml shippable/codecoverage/coverage.xml
+        cp -a test/results/reports/coverage.xml shippable/codecoverage/coverage.xml
     fi
 
     rmdir shippable/testresults/
-    cp -av test/results/junit/ shippable/testresults/
+    cp -a test/results/junit/ shippable/testresults/
 }
 
 trap cleanup EXIT
