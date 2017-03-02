@@ -304,7 +304,7 @@ def fetch_rpm_from_url(spec, module=None):
 
 
     Returns:
-        
+
     ---------
     string: Path to the downloaded RPM file."""
 
@@ -1256,14 +1256,15 @@ def main():
                     if params['installroot'] != '/':
                         repoquery.extend(['--installroot', params['installroot']])
 
-        pkg = [ p.strip() for p in params['name']]
+        package_list = [ package.strip() for package in params['name']]
         exclude = params['exclude']
         state = params['state']
         enablerepo = params.get('enablerepo', '')
         disablerepo = params.get('disablerepo', '')
         disable_gpg_check = params['disable_gpg_check']
         skip_broken = params['skip_broken']
-        results = ensure(module, state, pkg, params['conf_file'], enablerepo,
+        conf_file = params['conf_file']
+        results = ensure(module, state, package_list, conf_file, enablerepo,
                      disablerepo, disable_gpg_check, exclude, repoquery, skip_broken,
                      params['installroot'])
         if repoquery:
