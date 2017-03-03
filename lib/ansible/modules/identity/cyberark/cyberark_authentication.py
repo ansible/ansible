@@ -18,7 +18,7 @@
 
 
 ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
+                    'supported_by': 'committer',
                     'version': '1.0'}
 
 DOCUMENTATION = '''
@@ -30,7 +30,7 @@ version_added: "2.3"
 description:
     - "Authenticates to CyberArk Vault using Privileged Account Security Web Services SDK and
        creates a session fact that can be used by other modules. It returns an Ansible fact
-       called I(cyberarkSession). Every module can use this fact as C(cyberarkSession) parameter."
+       called I(cyberark_session). Every module can use this fact as C(cyberark_session) parameter."
 
 
 options:
@@ -38,59 +38,59 @@ options:
         default: present
         choices: ['present', 'absent']
         description:
-            - Specifies if an authentication logon/logoff and a cyberarkSession should be added/removed
-    userName:
+            - Specifies if an authentication logon/logoff and a cyberark_session should be added/removed.
+    username:
         description:
-            - The name of the user who will logon to the Vault
+            - The name of the user who will logon to the Vault.
     password:
         description:
-            - The password of the user
-    newPassword:
+            - The password of the user.
+    new_password:
         description:
-            - The new password of the user. This parameter is optional, and enables you to change a password
-    apiBaseUrl:
+            - The new password of the user. This parameter is optional, and enables you to change a password.
+    api_base_url:
         description:
-            - A string containing the base URL of the server hosting CyberArk's Privileged Account Security Web Services SDK
+            - A string containing the base URL of the server hosting CyberArk's Privileged Account Security Web Services SDK.
     validate_certs:
         default: true
         description:
             - If C(false), SSL certificates will not be validated.  This should only
               set to C(false) used on personally controlled sites using self-signed
               certificates.
-    useSharedLogonAuthentication:
+    use_shared_logon_authentication:
         default: false
         description:
             - Whether or not Shared Logon Authentication will be used.
-    useRadiusAuthentication:
+    use_radius_authentication:
         default: false
         description:
-            - Whether or not users will be authenticated via a RADIUS server. Valid values are true/false
-    cyberarkSession:
+            - Whether or not users will be authenticated via a RADIUS server. Valid values are true/false.
+    cyberark_session:
         description:
-            - Dictionary set by a CyberArk authentication containing the different values to perform actions on a logged-on CyberArk session
+            - Dictionary set by a CyberArk authentication containing the different values to perform actions on a logged-on CyberArk session.
 '''
 
 EXAMPLES = '''
-- name: Logon to CyberArk Vault using PAS Web Services SDK - UseSharedLogonAuthentication
+- name: Logon to CyberArk Vault using PAS Web Services SDK - use_shared_logon_authentication
   cyberark_authentication:
-    apiBaseUrl: "{{ WebServicesBaseURL }}"
-    useSharedLogonAuthentication: true
+    api_base_url: "{{ web_services_base_url }}"
+    use_shared_logon_authentication: true
 
-- name: Logon to CyberArk Vault using PAS Web Services SDK - Not UseSharedLogonAuthentication
+- name: Logon to CyberArk Vault using PAS Web Services SDK - Not use_shared_logon_authentication
   cyberark_authentication:
-    apiBaseUrl: "{{ WebServicesBaseURL }}"
-    username: "{{ PasswordObject.password }}"
-    password: "{{ PasswordObject.passprops.username }}"
-    useSharedLogonAuthentication: false
+    api_base_url: "{{ web_services_base_url }}"
+    username: "{{ password_object.password }}"
+    password: "{{ password_object.passprops.username }}"
+    use_shared_logon_authentication: false
 
 - name: Logoff from CyberArk Vault
   cyberark_authentication:
     state: absent
-    cyberarkSession: "{{ cyberarkSession }}"
+    cyberark_session: "{{ cyberark_session }}"
 '''
 
 RETURN = '''
-cyberarkSession:
+cyberark_session:
     description: Authentication facts.
     returned: success
     type: dictionary
@@ -100,7 +100,7 @@ cyberarkSession:
             returned: success
             type: string
             sample: "AAEAAAD/////AQAAAAA......NiNWMtNDhhNy00ZDc5LWE2MTQtMmRlMTBjMWI1ZWQ2BgYAAAABNAs="
-        apiBaseUrl:
+        api_base_url:
             description: A string containing the base URL of the server hosting CyberArk's Privileged Account Security Web Services SDK.
             returned: success
             type: string
@@ -110,7 +110,7 @@ cyberarkSession:
             returned: success
             type: bool
             sample: true
-        useSharedLogonAuthentication:
+        use_shared_logon_authentication:
             description: Whether or not Shared Logon Authentication will be used.
             returned: success
             type: bool
@@ -128,68 +128,69 @@ import json
 
 def processAuthentication(module):
 
-    apiBaseUrl = module.params["apiBaseUrl"]
+    # Getting parameters from module
+
+    api_base_url = module.params["api_base_url"]
     validate_certs = module.params["validate_certs"]
     username = module.params["username"]
     password = module.params["password"]
-    newPassword = module.params["newPassword"]
-    useSharedLogonAuthentication = module.params[
-        "useSharedLogonAuthentication"]
-    useRadiusAuthentication = module.params["useRadiusAuthentication"]
+    new_password = module.params["new_password"]
+    use_shared_logon_authentication = module.params[
+        "use_shared_logon_authentication"]
+    use_radius_authentication = module.params["use_radius_authentication"]
     state = module.params["state"]
-    cyberarkSession = module.params["cyberarkSession"]
+    cyberark_session = module.params["cyberark_session"]
 
+    # if in check mode it will not perform password changes
+    if module.check_mode and new_password is not None:
+        new_password = None
+
+    # Defining initial values for open_url call 
     headers = {'Content-Type': 'application/json'}
     payload = ""
 
-    if state == "present":
+    if state == "present": # Logon Action
 
-        if (not useSharedLogonAuthentication and (
-                username is None or password is None)):
-            module.fail_json(
-                msg="with state=%s and useSharedLogonAuthentication=%s, " +
-                "both username and password are required" %
-                (state, useSharedLogonAuthentication))
+        # Different end_points based on the use of shared logon authentication 
+        if use_shared_logon_authentication:
 
-        if cyberarkSession is not None:
-            module.fail_json(
-                msg="with state=%s you cannot specify cyberarkSession" %
-                (state))
+            end_point = "/PasswordVault/WebServices/auth/Shared/RestfulAuthenticationService.svc/Logon"
 
-        if apiBaseUrl is None:
-            module.fail_json(
-                msg="with state=%s apiBaseUrl is required" % (state))
-
-        if useSharedLogonAuthentication:
-            endPoint = "/PasswordVault/WebServices/auth/Shared/RestfulAuthenticationService.svc/Logon"
         else:
-            endPoint = "/PasswordVault/WebServices/auth/Cyberark/CyberArkAuthenticationService.svc/Logon"
-            payload = json.dumps({"username": module.params.get(
-                "username"), "password": module.params.get("password")})
 
-    else:
+            end_point = "/PasswordVault/WebServices/auth/Cyberark/CyberArkAuthenticationService.svc/Logon"
 
-        if cyberarkSession is None:
-            module.fail_json(
-                msg="with state=%s cyberarkSession is required" %
-                (state))
+            # The payload will contain username, password 
+            # and optionally use_radius_authentication and new_password
+            payload_dict = {"username": username, "password": password}
 
-        if apiBaseUrl is None:
-            apiBaseUrl = cyberarkSession["apiBaseUrl"]
-            validate_certs = cyberarkSession["validate_certs"]
-            useSharedLogonAuthentication = cyberarkSession[
-                "useSharedLogonAuthentication"]
-            headers["Authorization"] = cyberarkSession["token"]
+            if use_radius_authentication:
+                payload_dict["useRadiusAuthentication"] = use_radius_authentication
 
-        if useSharedLogonAuthentication:
-            endPoint = "/PasswordVault/WebServices/auth/Shared/RestfulAuthenticationService.svc/Logoff"
+            if new_password is not None:
+                payload_dict["newPassword"] = new_password
+            
+            payload = json.dumps(payload_dict)
+
+    else: # Logoff Action
+
+        # Get values from cyberark_session already established
+        api_base_url = cyberark_session["api_base_url"]
+        validate_certs = cyberark_session["validate_certs"]
+        use_shared_logon_authentication = cyberark_session[
+            "use_shared_logon_authentication"]
+        headers["Authorization"] = cyberark_session["token"]
+
+        # Different end_points based on the use of shared logon authentication 
+        if use_shared_logon_authentication:
+            end_point = "/PasswordVault/WebServices/auth/Shared/RestfulAuthenticationService.svc/Logoff"
         else:
-            endPoint = "/PasswordVault/WebServices/auth/Cyberark/CyberArkAuthenticationService.svc/Logoff"
+            end_point = "/PasswordVault/WebServices/auth/Cyberark/CyberArkAuthenticationService.svc/Logoff"
 
     try:
 
         response = open_url(
-            apiBaseUrl + endPoint,
+            api_base_url + end_point,
             method="POST",
             headers=headers,
             data=payload,
@@ -198,59 +199,73 @@ def processAuthentication(module):
         result = None
         changed = False
 
-        if response.getcode() == 200:
+        if response.getcode() == 200: # Success
 
-            if state == "present":
+            if state == "present": # Logon Action
 
-                if useSharedLogonAuthentication:
+                # Result token from REST Api uses a different key based 
+                # the use of shared logon authentication
+                if use_shared_logon_authentication:
                     token = json.loads(response.read())["LogonResult"]
                 else:
                     token = json.loads(response.read())["CyberArkLogonResult"]
 
+                # Preparing result of the module
                 result = {
-                    "cyberarkSession": {
+                    "cyberark_session": {
                         "token": token,
-                        "apiBaseUrl": apiBaseUrl,
+                        "api_base_url": api_base_url,
                         "validate_certs": validate_certs,
-                        "useSharedLogonAuthentication":
-                        useSharedLogonAuthentication},
+                        "use_shared_logon_authentication":
+                        use_shared_logon_authentication},
                 }
 
-                if newPassword is not None:
+                if new_password is not None:
+                    # Only marks change if new_password was received resulting
+                    # in a password change
                     changed = True
 
-            else:
+            else: # Logoff Action clears cyberark_session
+
                 result = {
-                    "cyberarkSession": {}
+                    "cyberark_session": {}
                 }
 
             return (changed, result, response.getcode())
+
         else:
             module.fail_json(
-                msg="error in endpoint=>" +
-                endPoint +
+                msg="error in end_point=>" +
+                end_point +
                 json.dumps(headers))
 
     except httplib.HTTPException:
+
         t, e = sys.exc_info()[:2]
         module.fail_json(
-            msg="EndPoint=" +
-            apiBaseUrl +
-            endPoint +
+            msg="end_point=" +
+            api_base_url +
+            end_point +
             " headers=[" +
             json.dumps(headers) +
+            "] payload=[" +
+            payload + 
             "] ===>" +
             str(e),
             exception=traceback.format_exc(),
             status_code=e.code)
+
     except Exception:
+
         t, e = sys.exc_info()[:2]
         module.fail_json(
-            msg="EndPoint=" +
-            apiBaseUrl +
-            endPoint +
+            msg="end_point=" +
+            api_base_url +
+            end_point +
             " headers=[" +
             json.dumps(headers) +
+            "] payload=[" +
+            payload + 
             "] ===>" +
             str(e),
             exception=traceback.format_exc(),
@@ -260,23 +275,30 @@ def processAuthentication(module):
 def main():
 
     fields = {
-        "apiBaseUrl": {"required": False, "type": "str"},
-        "validate_certs": {"required": False, "type": "bool",
+        "api_base_url": {"type": "str"},
+        "validate_certs": {"type": "bool",
                           "default": "true"},
-        "username": {"required": False, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
-        "newPassword": {"required": False, "type": "str", "no_log": True},
-        "useSharedLogonAuthentication": {"default": False, "type": "bool"},
-        "useRadiusAuthentication": {"default": False, "type": "bool"},
-        "state": {"required": False, "type": "str",
+        "username": {"type": "str"},
+        "password": {"type": "str", "no_log": True},
+        "new_password": {"type": "str", "no_log": True},
+        "use_shared_logon_authentication": {"default": False, "type": "bool"},
+        "use_radius_authentication": {"default": False, "type": "bool"},
+        "state": {"type": "str",
                   "choices": ["present", "absent"],
                   "default": "present"},
-        "cyberarkSession": {"required": False, "type": "dict"},
+        "cyberark_session": {"type": "dict"},
     }
 
+    mutually_exclusive = [
+        ["use_shared_logon_authentication", "use_radius_authentication"],
+        ["use_shared_logon_authentication", "new_password"],
+        ["api_base_url", "cyberark_session"],
+        ["cyberark_session", "username", "use_shared_logon_authentication"]
+    ]
+
     required_if = [
-        ("state", "present", ["apiBaseUrl"]),
-        ("state", "absent", ["cyberarkSession"])
+        ("state", "present", ["api_base_url"]),
+        ("state", "absent", ["cyberark_session"])
     ]
 
     required_together = [
@@ -285,12 +307,10 @@ def main():
 
     module = AnsibleModule(
         argument_spec=fields,
+        mutually_exclusive=mutually_exclusive,
         required_if=required_if,
         required_together=required_together,
         supports_check_mode=True)
-
-    if module.check_mode:
-        module.exit_json(change=False)
 
     (changed, result, status_code) = processAuthentication(module)
 
