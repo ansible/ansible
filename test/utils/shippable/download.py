@@ -138,7 +138,7 @@ def extract_contents(args, path, output_dir):
             items = json.load(json_fd)
 
             for item in items:
-                contents = item['contents']
+                contents = item['contents'].encode('utf-8')
                 path = output_dir + '/' + re.sub('^/*', '', item['path'])
 
                 directory = os.path.dirname(path)
