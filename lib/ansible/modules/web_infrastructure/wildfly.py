@@ -87,45 +87,85 @@ EXAMPLES = """
     server_groups: all-relevant-server-groups
 """
 
-import requests
-
 
 def undeploy(deployment, server_groups):
-    deployment = '"'+deployment+'"'
-    server_groups = '"'+server_groups+'"'
-    address_remove_from_server = '[{"server-group": ' + server_groups+'}, {"deployment": ' + deployment + '}]'
-    address = '[{"deployment": ' + deployment + '}]'
-    request_data = '{"operation" : "composite", "address" : [], "steps": [{"operation":"remove", "address": '+address_remove_from_server+'}, {"operation":"remove", "address": '+address+'}], "json.pretty":1}'
-    return get_response(request_data)
+    deployment = "{}".format(deployment)
+    server_groups = "{}".format(server_groups)
+    remove_from_server = {'operation':'remove', 'address': [{'server-group': server_groups}, {'deployment': deployment}], 'json.pretty':1}
+    remove_content = {'operation':'remove', 'address': [{'deployment': deployment}]}
+    response = get_response(remove_from_server)
+    if response.code is 200:
+        return get_response(remove_content)
+    else:
+        return response
 
 def deploy(deployment, server_groups, src):
-    deployment = '"'+deployment+'"'
-    server_groups = '"'+server_groups+'"'
-    address_add_content = '[{"deployment": ' + deployment + '}]'
-    request_data_add_content = '{"operation" : "add", "address" :'+ address_add_content +', "content" : [{"url" : "file:'+src+'"}], "json.pretty":1}'
-    response_add_content = get_response(request_data_add_content)
-    if response_add_content.status_code is 200: 
-        address = '[{"server-group": ' + server_groups+'}, {"deployment": ' + deployment + '}]'
-        request_data_add_content_server_group = '{"operation" : "add", "address" :'+ address +', "content" : [{"url" : "file:'+src+'"}], "json.pretty":1}'
-        response_add_content_server_group = get_response(request_data_add_content_server_group)
-        if response_add_content_server_group.status_code is 200:
-            request_data = '{"operation" : "deploy", "address" :'+ address +',"json.pretty":1}'
+    deployment = "{}".format(deployment)
+    server_groups = "{}".format(server_groups)
+    add_content = {'operation' : 'add', 'address' : [{'deployment': deployment}], 'content' : [{'url' : 'file:'+src+''}], 'json.pretty':1}
+    response_add_content = get_response(add_content)
+    if response_add_content.code is 200: 
+        add_content_server_group = {'operation' : 'add', 'address' : [{'server-group': server_groups}, {'deployment': deployment}], 'content' : [{'url' : 'file:'+src+''}], 'json.pretty':1}
+        response_add_content_server_group = get_response(add_content_server_group)
+        if response_add_content_server_group.code is 200:
+            request_data = {'operation' : 'deploy', 'address' : [{'server-group': server_groups}, {'deployment': deployment}],'json.pretty':1}
             return get_response(request_data)
         else:
             return response_add_content_server_group
     else:
         return response_add_content
 
+
+
 def get_response(request_data):
-    return requests.post(controller_address+'/management',data=request_data, auth=requests.auth.HTTPDigestAuth(username, password), headers={'Content-Type':'application/json'})
+    headers = {'Content-Type':'application/json'}
+    response = ""
+    try:
+        response = open_url(controller_address+'/management',follow_redirects=None, method="POST",headers=headers,url_username=username,url_password=password,force_basic_auth=False, data=json.dumps(request_data))
+    except urllib_error.HTTPError as e:
+        return e
+
+    return response
+
 
 def is_deployed(deployment):
-    deployment = '"'+deployment+'"'
-    request_data ='{"operation":"read-resource", "address":["deployment",'+deployment+'], "json.pretty":1}'
-    return get_response(request_data).json()
+    deployment = "{}".format(deployment)
+    request_data = {"operation":"read-resource", "address":["deployment", deployment], "json.pretty":1}
+    return get_response(request_data)
+
+def deploy_disable(result):
+    if result.get('outcome') == 'failed':
+        module.exit_json(changed=False, stdout="", stderr="") 
+    elif result.get('outcome') == 'success':
+        undeploy_result = undeploy(deployment, server_groups)
+        if undeploy_result.code is 200:
+            module.exit_json(changed=True, stdout="undeployed", stderr="") 
+        else:
+            module.fail_json(msg="Failed to undeploy", stdout=undeploy_result.read(), stderr=undeploy_result.read())
+
+def deploy_enable(result):
+    if result.get('outcome') == 'failed':
+        deployment_result = deploy(deployment, server_groups, src)
+        if deployment_result.code is 200:
+            module.exit_json(changed=True, stdout="deployed", stderr="") 
+        else:
+            module.fail_json(msg="Failed to deploy", stdout=deployment_result.read(), stderr=deployment_result.read())
+    elif result.get('outcome') == 'success':
+        undeploy_result = undeploy(deployment, server_groups)
+        if undeploy_result.code is 200:
+            deployment_result = deploy(deployment, server_groups, src)
+            if deployment_result.code is 200:
+                module.exit_json(changed=True, stdout="deployed", stderr="") 
+            else:
+                module.fail_json(msg="Failed to deploy", stdout=deployment_result.read(), stderr=deployment_result.read())
+        else:
+            module.fail_json(msg="Failed to undeploy", stdout=undeploy_result.read(), stderr=undeploy_result.read())
 
 
 def main():
+
+    global module, changed, username, password, controller_address, deployment, src, server_groups
+
     module = AnsibleModule(
         argument_spec = dict(
             src=dict(),
@@ -138,7 +178,7 @@ def main():
             server_groups=dict(required=True)
         ),
     )
-    global username, password, controller_address, deploy_response
+    
     changed = False
 
     src = module.params['src']
@@ -150,38 +190,21 @@ def main():
     controller_address = module.params['controller_address']
     server_groups = module.params['server_groups']
 
-
-    if state == 'present' and not src:
-        module.fail_json(msg="Argument 'src' required.")
-
     deployed = is_deployed(deployment)
-    
+    result = json.loads(deployed.read())
+
     if state == 'present':
-        if deployed.get('outcome') == 'success':
-            response = undeploy(deployment, server_groups)
-            if response.status_code is 200:
-                deploy_response = deploy(deployment, server_groups, src)
-                if deploy_response.status_code is 200:
-                    changed = True
-                else:
-                    module.fail_json(msg="Failed to deploy", stdout="", stderr=deploy_response.reason)
-        else:
-            deploy_response = deploy(deployment, server_groups, src)
-            if deploy_response.status_code is 200:
-                changed = True
-            else:
-                module.fail_json(msg="Failed to deploy", stdout="", stderr=deploy_response.reason)
-
-    if state == 'absent':
-        if deployed.get('outcome') == 'success':
-            response = undeploy(deployment, server_groups)
-            changed = True
-
-        module.exit_json(changed=changed, stdout="Undeployed", stderr="") 
+        if 'outcome' in result:
+            deploy_enable(result)
+    elif state == 'absent':
+        if 'outcome' in result:
+            deploy_disable(result)      
+    else:
+        module.fail_json(msg="Missing Configurations", stdout="", stderr="Missing Configurations")
        
 
-    module.exit_json(changed=changed, stdout="Deployed", stderr="")
-
-# import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
+from ansible.module_utils.pycompat24 import get_exception
+import json
 main()
