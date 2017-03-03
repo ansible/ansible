@@ -147,7 +147,8 @@ EXAMPLES = '''
 import traceback
 
 from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+from ansible.module_utils.ec2 import ec2_argument_spec, ec2_connect, connect_to_aws, \
+    get_ec2_security_group_ids_from_names, get_aws_connection_info, AnsibleAWSError
 
 try:
     from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
