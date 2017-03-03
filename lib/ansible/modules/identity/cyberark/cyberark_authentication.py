@@ -145,13 +145,13 @@ def processAuthentication(module):
     if module.check_mode and new_password is not None:
         new_password = None
 
-    # Defining initial values for open_url call 
+    # Defining initial values for open_url call
     headers = {'Content-Type': 'application/json'}
     payload = ""
 
     if state == "present": # Logon Action
 
-        # Different end_points based on the use of shared logon authentication 
+        # Different end_points based on the use of shared logon authentication
         if use_shared_logon_authentication:
 
             end_point = "/PasswordVault/WebServices/auth/Shared/RestfulAuthenticationService.svc/Logon"
@@ -160,7 +160,7 @@ def processAuthentication(module):
 
             end_point = "/PasswordVault/WebServices/auth/Cyberark/CyberArkAuthenticationService.svc/Logon"
 
-            # The payload will contain username, password 
+            # The payload will contain username, password
             # and optionally use_radius_authentication and new_password
             payload_dict = {"username": username, "password": password}
 
@@ -169,7 +169,7 @@ def processAuthentication(module):
 
             if new_password is not None:
                 payload_dict["newPassword"] = new_password
-            
+
             payload = json.dumps(payload_dict)
 
     else: # Logoff Action
@@ -181,7 +181,7 @@ def processAuthentication(module):
             "use_shared_logon_authentication"]
         headers["Authorization"] = cyberark_session["token"]
 
-        # Different end_points based on the use of shared logon authentication 
+        # Different end_points based on the use of shared logon authentication
         if use_shared_logon_authentication:
             end_point = "/PasswordVault/WebServices/auth/Shared/RestfulAuthenticationService.svc/Logoff"
         else:
@@ -203,7 +203,7 @@ def processAuthentication(module):
 
             if state == "present": # Logon Action
 
-                # Result token from REST Api uses a different key based 
+                # Result token from REST Api uses a different key based
                 # the use of shared logon authentication
                 if use_shared_logon_authentication:
                     token = json.loads(response.read())["LogonResult"]
@@ -249,7 +249,7 @@ def processAuthentication(module):
             " headers=[" +
             json.dumps(headers) +
             "] payload=[" +
-            payload + 
+            payload +
             "] ===>" +
             str(e),
             exception=traceback.format_exc(),
@@ -265,7 +265,7 @@ def processAuthentication(module):
             " headers=[" +
             json.dumps(headers) +
             "] payload=[" +
-            payload + 
+            payload +
             "] ===>" +
             str(e),
             exception=traceback.format_exc(),
