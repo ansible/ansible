@@ -392,6 +392,8 @@ def main():
         elif prev_state == 'link':
             b_old_src = os.readlink(b_path)
             if b_old_src != b_src:
+                diff['before']['src'] = to_native(b_old_src, errors='strict')
+                diff['after']['src'] = src
                 changed = True
         elif prev_state == 'hard':
             if not (state == 'hard' and os.stat(b_path).st_ino == os.stat(b_src).st_ino):
