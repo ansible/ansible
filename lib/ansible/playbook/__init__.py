@@ -89,7 +89,9 @@ class Playbook:
                 self._loader.set_basedir(cur_basedir)
                 raise AnsibleParserError("playbook entries must be either a valid play or an include statement", obj=entry)
 
-            if 'include' in entry:
+            if 'include' in entry or 'import_playbook' in entry:
+                if 'include' in entry:
+                    display.deprecated("You should use 'import_playbook' instead of 'include' for playbook includes")
                 pb = PlaybookInclude.load(entry, basedir=self._basedir, variable_manager=variable_manager, loader=self._loader)
                 if pb is not None:
                     self._entries.extend(pb._entries)
