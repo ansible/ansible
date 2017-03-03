@@ -175,7 +175,7 @@ class VaultCLI(CLI):
         if name:
             block_format_var_name = "%s: " % name
 
-        block_format_header = "%s!vault-encrypted |" % block_format_var_name
+        block_format_header = "%s!vault |" % block_format_var_name
         lines = []
         vault_ciphertext = to_text(b_ciphertext)
 
