@@ -135,6 +135,19 @@
     that:
       - "file6_touch_result.changed == true"
 
+- name: stat1
+  stat: path={{output_file}}
+  register: hlstat1
+
+- name: stat2
+  stat: path={{output_dir}}/hard.txt
+  register: hlstat2
+
+- name: verify that hard link was made
+  assert:
+    that:
+      - "hlstat1.stat.inode == hlstat2.stat.inode"
+
 - name: create a directory
   file: path={{output_dir}}/foobar state=directory
   register: file7_result
