@@ -160,12 +160,11 @@
     msg: "valid_test.confused_for_a_list.popitem(): {{ valid_test.confused_for_a_list.popitem() }}"
     # built-in method popitem
 
-
 - name: "Try to access and call valid_list.confused_for_list.popitem (builtin method) and expect the method to be accessed and called without a warning"
   assert:
     that:
-      - valid_test.confused_for_a_list.popitem()[0] == "pop"
-      - valid_test.confused_for_a_list.popitem()[1] == "cheerwine"
+      - valid_test.confused_for_a_list.popitem()[0] in ['pop', 'soda']
+      - valid_test.confused_for_a_list.popitem()[1] in ['cheerwine', 'RC']
 
 # these fail with or without the patch
 #    - debug:
