@@ -330,6 +330,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        supports_check_mode=True,
     )
 
     if not HAS_BOTO:
