@@ -1051,7 +1051,7 @@ If set, this will pass a specific set of options to Ansible rather than Ansible'
     ssh_args = -o ControlMaster=auto -o ControlPersist=60s
 
 In particular, users may wish to raise the ControlPersist time to encourage performance.  A value of 30 minutes may
-be appropriate. If `ssh_args` is set, the default ``control_path`` setting is not used.
+be appropriate. If ``-o ControlPath`` is set in ``ssh_args``, the ``control_path`` setting is not used.
 
 .. _control_path:
 
@@ -1071,7 +1071,7 @@ may wish to shorten the string to something like the below::
 
 Ansible 1.4 and later will instruct users to run with "-vvvv" in situations where it hits this problem
 and if so it is easy to tell there is too long of a Control Path filename.  This may be frequently
-encountered on EC2. This setting is ignored if ``ssh_args`` is set.
+encountered on EC2. This setting is ignored if ``-o ControlPath`` is set in ``ssh_args``.
 
 .. _control_path_dir:
 
