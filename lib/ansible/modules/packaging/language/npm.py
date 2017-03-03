@@ -149,7 +149,7 @@ class Npm(object):
 
             if self.glbl:
                 cmd.append('--global')
-            if self.production:
+            if self.production and args[0] == 'install':
                 cmd.append('--production')
             if self.ignore_scripts:
                 cmd.append('--ignore-scripts')
