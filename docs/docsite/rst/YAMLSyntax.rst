@@ -125,7 +125,7 @@ While YAML is generally friendly, the following is going to result in a YAML syn
 
     windows_drive: c:
 
-But this will work::
+...but this will work::
 
     windows_path: c:\windows
 
@@ -135,7 +135,7 @@ You will want to quote hash values using colons followed by a space or the end o
     
     windows_drive: "c:"
 
-And then the colon will be preserved.
+...and then the colon will be preserved.
 
 Further, Ansible uses "{{ var }}" for variables.  If a value after a colon starts
 with a "{", YAML will think it is a dictionary, so you must quote it, like so::
