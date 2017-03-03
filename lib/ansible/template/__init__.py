@@ -217,20 +217,21 @@ class AnsibleEnvironment(Environment):
     template_class = AnsibleJ2Template
 
     def getattr(self, obj, attribute):
-        #if attribute in BAD_ATTRS:
-        #    display.warning("obj.attribute access with the attr named '%s' should be avoided."
-        #                    "See http://docs.ansible.com/ansible/playbooks_variables.html#what-makes-a-valid-variable-name" % attribute)
-
-        # We could just warn, or we could just always prefer getitem to DWIM
         ret = super(AnsibleEnvironment, self).getattr(obj, attribute)
-        #ret = super(AnsibleEnvironment, self).getitem(obj=obj, argument=attribute)
         if isinstance(ret, (types.BuiltinMethodType,
                             types.BuiltinFunctionType,
                             types.MethodType,
                             types.FunctionType)):
-            display.warning("obj.attribute access with the attr named '%s' should be avoided."
-                            "See http://docs.ansible.com/ansible/playbooks_variables.html#what-makes-a-valid-variable-name" % attribute)
-            return super(AnsibleEnvironment, self).getitem(obj=obj, argument=attribute)
+            try:
+                item = obj.__getitem__(attribute)
+            except (TypeError, KeyError):
+                # getattr, got a method, but there is no item by that name so the method
+                # is ok
+                return ret
+
+            display.warning("The attribute '%s' for this object shadows a builtin method name. Returning the data item instead. "
+                            "See http://docs.ansible.com/ansible/playbooks_variables.html#what-makes-a-valid-variable-name" % (attribute))
+            return item
         return ret
 
 

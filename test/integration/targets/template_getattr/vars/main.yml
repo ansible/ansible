@@ -1,0 +1,23 @@
+ oops: "{{ this_is_not_declared }}"
+ valid_test:
+    get: "is_get_valid"
+    endswith: 'not the method endswith'
+    items: "is_items_valid"
+    when: "is_when_valid"
+    some_var: "some_var_v"
+    level2:
+        foo2: 'foo2 v'
+        level3:
+          foo3: 'foo3 v'
+          level4:
+              foo4: 'foo4 v'
+              get: 'level4_get'
+    confused:
+      startswith: "not the startswith method"
+      endswith: "not the endswith method"
+    a_list:
+        - 'thing 1'
+        - 'thing 2'
+    confused_for_a_list:
+        pop: 'cheerwine'
+        soda: 'RC'
