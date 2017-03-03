@@ -102,6 +102,48 @@ Starting in version 1.4, password accepts a "chars" parameter to allow defining 
 
 To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double quotes are not supported.
 
+.. _passwordstore_lookup:
+
+The Passwordstore Lookup
+```````````````````
+.. versionadded:: 2.3
+
+The ``passwordstore`` lookup enables Ansible to retrieve, create or update passwords from
+the passwordstore.org ``pass`` utility. It also retrieves YAML style keys stored as multilines
+in the passwordfile.
+
+Examples
+--------
+Basic lookup. Fails if example/test doesn't exist::
+
+    password="{{ lookup('pass', 'example/test')}}`
+
+Create pass with random 16 character password. If password exists just give the password::
+
+    password="{{ lookup('pass', 'example/test create=true')}}`
+
+Different size password::
+
+    password="{{ lookup('pass', 'example/test create=true length=42')}}`
+
+Create password and overwrite the password if it exists. As a bonus, this module includes the old password inside the pass file::
+
+    password="{{ lookup('pass', 'example/test create=true overwrite=true')}}`
+
+Return the value for user in the KV pair user: username::
+
+    password="{{ lookup('pass', 'example/test subkey=user')}}`
+
+Return the entire password file content::
+
+    password="{{ lookup('pass', 'example/test returnall=true')}}`
+
+The location of the password-store directory can be specified in the following ways:
+  - Default is ~/.password-store
+  - Can be overruled by PASSWORD_STORE_DIR environment variable
+  - Can be overruled by 'passwordstore: path/to/.password-store' ansible setting
+  - Can be overrules by 'directory=path' argument in the lookup call
+
 .. _csvfile_lookup:
 
 The CSV File Lookup
