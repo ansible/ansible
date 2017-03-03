@@ -46,4 +46,3 @@
 # FIXME add in tests for everything defined in docs
 # FIXME Test state:absent + test:
 # FIXME Without powers ensure "privileged mode required"
-
