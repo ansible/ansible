@@ -142,7 +142,7 @@
 - name: "Try to access valid_list.confused_for_list.pop which is an item so expect ['pop'] to be returned with a warning"
   assert:
     that:
-      -  valid_test.confused_for_a_list.pop == "cheerwine"
+      - valid_test.confused_for_a_list.pop == "cheerwine"
 
 
 - name: "Try to access valid_list.confused_for_list.popitem (builtin method) and expect the method to be returned without a warning"
@@ -175,4 +175,3 @@
 
 #    - debug:
 #        msg: "valid_test.confused.startswith('r_v'): {{ valid_test.confused.startsswith('r_v') }}"
-
