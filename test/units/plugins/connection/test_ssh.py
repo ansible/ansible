@@ -516,10 +516,11 @@ class TestSSHConnectionRun(object):
 
 @pytest.mark.usefixtures('mock_run_env')
 class TestSSHConnectionRetries(object):
-    @patch('time.sleep')
-    def test_retry_then_success(self, mock_sleep, monkeypatch):
+    def test_retry_then_success(self, monkeypatch):
         monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
         monkeypatch.setattr(C, 'ANSIBLE_SSH_RETRIES', 3)
+
+        monkeypatch.setattr('time.sleep', lambda x: None)
 
         self.mock_popen_res.stdout.read.side_effect = [b"", b"my_stdout\n", b"second_line"]
         self.mock_popen_res.stderr.read.side_effect = [b"", b"my_stderr"]
@@ -544,10 +545,11 @@ class TestSSHConnectionRetries(object):
         assert b_stdout == b'my_stdout\nsecond_line'
         assert b_stderr == b'my_stderr'
 
-    @patch('time.sleep')
-    def test_multiple_failures(self, mock_sleep, monkeypatch):
+    def test_multiple_failures(self, monkeypatch):
         monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
         monkeypatch.setattr(C, 'ANSIBLE_SSH_RETRIES', 9)
+
+        monkeypatch.setattr('time.sleep', lambda x: None)
 
         self.mock_popen_res.stdout.read.side_effect = [b""] * 11
         self.mock_popen_res.stderr.read.side_effect = [b""] * 11
@@ -566,10 +568,11 @@ class TestSSHConnectionRetries(object):
         pytest.raises(AnsibleConnectionFailure, self.conn.exec_command, 'ssh', 'some data')
         assert self.mock_popen.call_count == 10
 
-    @patch('time.sleep')
-    def test_abitrary_exceptions(self, mock_sleep, monkeypatch):
+    def test_abitrary_exceptions(self, monkeypatch):
         monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
         monkeypatch.setattr(C, 'ANSIBLE_SSH_RETRIES', 9)
+
+        monkeypatch.setattr('time.sleep', lambda x: None)
 
         self.conn._build_command = MagicMock()
         self.conn._build_command.return_value = 'ssh'
@@ -578,13 +581,12 @@ class TestSSHConnectionRetries(object):
         pytest.raises(Exception, self.conn.exec_command, 'ssh', 'some data')
         assert self.mock_popen.call_count == 10
 
-    @patch('time.sleep')
-    @patch('ansible.plugins.connection.ssh.os')
-    def test_put_file_retries(self, os_mock, time_mock, monkeypatch):
+    def test_put_file_retries(self, monkeypatch):
         monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
         monkeypatch.setattr(C, 'ANSIBLE_SSH_RETRIES', 3)
 
-        os_mock.path.exists.return_value = True
+        monkeypatch.setattr('time.sleep', lambda x: None)
+        monkeypatch.setattr('ansible.plugins.connection.ssh.os.path.exists', lambda x: True)
 
         self.mock_popen_res.stdout.read.side_effect = [b"", b"my_stdout\n", b"second_line"]
         self.mock_popen_res.stderr.read.side_effect = [b"", b"my_stderr"]
@@ -610,13 +612,12 @@ class TestSSHConnectionRetries(object):
         assert b_stderr == b"my_stderr"
         assert self.mock_popen.call_count == 2
 
-    @patch('time.sleep')
-    @patch('ansible.plugins.connection.ssh.os')
-    def test_fetch_file_retries(self, os_mock, time_mock, monkeypatch):
+    def test_fetch_file_retries(self, monkeypatch):
         monkeypatch.setattr(C, 'HOST_KEY_CHECKING', False)
         monkeypatch.setattr(C, 'ANSIBLE_SSH_RETRIES', 3)
 
-        os_mock.path.exists.return_value = True
+        monkeypatch.setattr('time.sleep', lambda x: None)
+        monkeypatch.setattr('ansible.plugins.connection.ssh.os.path.exists', lambda x: True)
 
         self.mock_popen_res.stdout.read.side_effect = [b"", b"my_stdout\n", b"second_line"]
         self.mock_popen_res.stderr.read.side_effect = [b"", b"my_stderr"]
