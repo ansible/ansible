@@ -1748,9 +1748,12 @@ class ContainerManager(DockerBaseClass):
         if not self.check_mode:
             if not image or self.parameters.pull:
                 self.log("Pull the image.")
-                image = self.client.pull_image(repository, tag)
-                self.results['actions'].append(dict(pulled_image="%s:%s" % (repository, tag)))
-                self.results['changed'] = True
+                image, alreadyToLatest = self.client.pull_image(repository, tag)
+                if alreadyToLatest:
+                    self.results['changed'] = False
+                else:
+                    self.results['changed'] = True
+                    self.results['actions'].append(dict(pulled_image="%s:%s" % (repository, tag)))
         self.log("image")
         self.log(image, pretty_print=True)
         return image
