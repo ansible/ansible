@@ -35,8 +35,6 @@ options:
   title:
     description:
       - A message can also contain a title.
-    required: false
-    default: None
   text:
     description:
       - The contents of text will be displayed in a card format, along with a
@@ -51,8 +49,6 @@ options:
       - You can also control a color bar by setting color to a color hex code.
         This bar appears to the left of the cards content, and is primarily
         used to indicate status to the user.
-    required: false
-    default: None
   url:
     description:
       - The webhook URL is given to you when you create a new Connector in
@@ -80,11 +76,7 @@ EXAMPLES = """
 """
 
 RETURN = """
-msg:
-  description: OK or error message with payload
-  returned: success
-  type: string
-  sample: "OK"
+
 """
 
 # import module snippets
@@ -117,7 +109,9 @@ def do_notify_teams(module, teams_incoming_webhook, payload):
         data=payload
     )
 
-    if info['status'] != 200:
+    if info['status'] == 200:
+        module.exit_json(changed=True)
+    else:
         module.fail_json(
             msg=" failed to send %s to Teams incoming webhook: %s" % (
                 payload,
@@ -131,9 +125,10 @@ def main():
         argument_spec = dict(
             url = dict(type='str', required=True, no_log=True),
             text = dict(type='str', required=True),
-            title = dict(type='str', required=False, default=None),
-            color = dict(type='str', required=False, default=None)
-        )
+            title = dict(type='str'),
+            color = dict(type='str')
+        ),
+        supports_check_mode=True
     )
 
     url = module.params['url']
@@ -141,10 +136,11 @@ def main():
     title = module.params['title']
     color = module.params['color']
 
+    if module.check_mode:
+        module.exit_json(changed=False)
+
     payload = build_payload_for_teams(module, text, title, color)
     do_notify_teams(module, url, payload)
-
-    module.exit_json(msg="OK")
 
 
 if __name__ == '__main__':
