@@ -270,8 +270,23 @@ class ModuleValidator(Validator):
         except AttributeError:
             return False
 
+    def _get_base_branch_module_path(self):
+        """List all paths within lib/ansible/modules to try and match a moved module"""
+        command = ['git', 'ls-tree', '-r', '--name-only', self.base_branch, 'lib/ansible/modules/']
+        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
+
+        for path in stdout.splitlines():
+            if path.endswith('/%s' % self.object_name):
+                return path
+
+        return None
+
     def _get_base_file(self):
-        command = ['git', 'show', '%s:%s' % (self.base_branch, self.path)]
+        # In case of module moves, look for the original location
+        base_path = self._get_base_branch_module_path()
+
+        command = ['git', 'show', '%s:%s' % (self.base_branch, base_path or self.path)]
         p = subprocess.Popen(command, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
