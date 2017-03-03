@@ -7,35 +7,71 @@
   debug:
     msg: "valid_test.get {{ valid_test.get }}"
 
+- name: "Try to access a data item called 'get' that shows a builtin. Expect it to return the item and a warning"
+  assert:
+    that:
+      - valid_test.get == "is_get_valid"
+
 
 - name: "Try to access a data item called 'get' via ['get'] that shadows a builtin. Expect it to return the item but without a warning"
   debug:
     msg: "valid_test['get'] {{ valid_test['get'] }}"
+
+- name: "Assert access to a data item called 'get' via ['get'] that shadows a builtin. Expect it to return the item but without a warning"
+  assert:
+    that:
+      - valid_test['get'] == "is_get_valid"
 
 
 - name: "Try to access a nested dict with via .get. This shadows a builtin so expect the item returned and a warning"
   debug:
     msg: "l4.get: {{ valid_test.level2.level3.level4.get }}"
 
+- name: "Assert access to a nested dict with via .get. This shadows a builtin so expect the item returned and a warning"
+  assert:
+    that:
+      - valid_test.level2.level3.level4.get == "level4_get"
+
 
 - name: "Try to access a nested dict with via ['item']. This shadows a builtin but uses getitem so expect the item returned and no warning"
   debug:
     msg: "l4 item: {{valid_test['level2']['level3']['level4']['get'] }}"
+
+- name: "Assert access to a nested dict with via ['item']. This shadows a builtin but uses getitem so expect the item returned and no warning"
+  assert:
+    that:
+      - valid_test['level2']['level3']['level4']['get'] == "level4_get"
 
 
 - name: "Try to access and valid_test['some_var'].startswith and call it (builtin). Not shadowed, so no warning."
   debug:
     msg: "valid_test['some_var'].startswith('fo'): {{ valid_test['some_var'].startswith('fo') }}"
 
+- name: "Assert access to valid_test['some_var'].startswith and call it (builtin). Not shadowed, so no warning."
+  assert:
+    that:
+      - valid_test['some_var'].startswith('fo') == false
+
 
 - name: "Try to access and valid_test.some_var.startswith and call it (builtin). Not shadowed, so no warning."
   debug:
     msg: "valid_test.some_var.startswith('r_v'): {{ valid_test.some_var.startswith('r_v') }}"
 
+- name: "Assert access to valid_test.some_var.startswith and call it (builtin). Not shadowed, so no warning."
+  assert:
+    that:
+      - valid_test.some_var.startswith('r_v') == false
+
 
 - name: "Try to access and call a builtin method (upper). This is not shadowed so expect it to return can call without a warning."
   debug:
     msg: "valid_test.some_var.upper(): {{ valid_test.some_var.upper() }}"
+
+
+- name: "Assert access and call a builtin method (upper). This is not shadowed so expect it to be accessed and called without a warning."
+  assert:
+    that:
+      - valid_test.some_var.upper() == "SOME_VAR_V"
 
 
 - name: "Try to call valid_test.get(), but 'get' is a data item that shadows a builtin method and we return the data so call fails"
@@ -73,6 +109,10 @@
   debug:
     msg: "valid_test.a_list.count(): {{ valid_test.a_list.count('thing 1') }}"
 
+- name: "Assert that access and call valid_list.a_list.count() (builtin method) but it is not shadowed so it works"
+  assert:
+    that:
+      - valid_test.a_list.count('thing 1') == 1
 
 - name: "Try to access valid_list.a_list.pop (builtin method) but it is not shadowed so it works"
   debug:
@@ -82,6 +122,11 @@
 - name: "Try to access and call valid_list.a_list.pop() (builtin method) but it is not shadowed so it works"
   debug:
     msg: "valid_test.a_list.pop(): {{ valid_test.a_list.pop() }}"
+
+- name: "Try to access and call valid_list.a_list.pop() (builtin method) but it is not shadowed so it works"
+  assert:
+    that:
+      - valid_test.a_list.pop() == "thing 3"
 
 
 - name: "Try to access and call valid_test.confused_for_a_list.pop() (builtin method) but it is shadowed with an item so it we expect the ['pop'] item to be returned with a warning and call to fail"
@@ -94,16 +139,33 @@
   debug:
     msg: "valid_test.confused_for_a_list.pop: {{ valid_test.confused_for_a_list.pop }}"
 
+- name: "Try to access valid_list.confused_for_list.pop which is an item so expect ['pop'] to be returned with a warning"
+  assert:
+    that:
+      -  valid_test.confused_for_a_list.pop == "cheerwine"
+
 
 - name: "Try to access valid_list.confused_for_list.popitem (builtin method) and expect the method to be returned without a warning"
   debug:
     msg: "valid_test.confused_for_a_list.popitem: {{ valid_test.confused_for_a_list.popitem }}"
 
+- name: "Try to access valid_list.confused_for_list.popitem (builtin method) and expect the method object to be returned without a warning"
+  assert:
+    that:
+      - valid_test.confused_for_a_list.popitem != "foo"
+
 
 - name: "Try to access and call valid_list.confused_for_list.popitem (builtin method) and expect the method to be returned and called without a warning"
   debug:
     msg: "valid_test.confused_for_a_list.popitem(): {{ valid_test.confused_for_a_list.popitem() }}"
+    # built-in method popitem
 
+
+- name: "Try to access and call valid_list.confused_for_list.popitem (builtin method) and expect the method to be accessed and called without a warning"
+  assert:
+    that:
+      - valid_test.confused_for_a_list.popitem()[0] == "pop"
+      - valid_test.confused_for_a_list.popitem()[1] == "cheerwine"
 
 # these fail with or without the patch
 #    - debug:

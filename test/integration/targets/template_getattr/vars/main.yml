@@ -16,8 +16,10 @@
       startswith: "not the startswith method"
       endswith: "not the endswith method"
     a_list:
+        # these get 'pop()'ed' in the intg test, so the count matters
         - 'thing 1'
         - 'thing 2'
+        - 'thing 3'
     confused_for_a_list:
         pop: 'cheerwine'
         soda: 'RC'
