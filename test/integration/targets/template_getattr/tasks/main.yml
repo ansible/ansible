@@ -2,35 +2,36 @@
   debug:
     var: valid_test
 
+
 - name: "Try to access a data item called 'get' that shows a builtin. Expect it to return the item and a warning"
   debug:
     msg: "valid_test.get {{ valid_test.get }}"
+
 
 - name: "Try to access a data item called 'get' via ['get'] that shadows a builtin. Expect it to return the item but without a warning"
   debug:
     msg: "valid_test['get'] {{ valid_test['get'] }}"
 
+
 - name: "Try to access a nested dict with via .get. This shadows a builtin so expect the item returned and a warning"
   debug:
     msg: "l4.get: {{ valid_test.level2.level3.level4.get }}"
+
 
 - name: "Try to access a nested dict with via ['item']. This shadows a builtin but uses getitem so expect the item returned and no warning"
   debug:
     msg: "l4 item: {{valid_test['level2']['level3']['level4']['get'] }}"
 
-- debug:
-    var: some_var
-
-- debug:
-    var: some_var()
 
 - name: "Try to access and valid_test['some_var'].startswith and call it (builtin). Not shadowed, so no warning."
   debug:
     msg: "valid_test['some_var'].startswith('fo'): {{ valid_test['some_var'].startswith('fo') }}"
 
+
 - name: "Try to access and valid_test.some_var.startswith and call it (builtin). Not shadowed, so no warning."
   debug:
     msg: "valid_test.some_var.startswith('r_v'): {{ valid_test.some_var.startswith('r_v') }}"
+
 
 - name: "Try to access and call a builtin method (upper). This is not shadowed so expect it to return can call without a warning."
   debug:
@@ -42,17 +43,19 @@
     var: valid_test.get()
   ignore_errors: true
 
+
 - debug:
     var: valid_test.values
 
+
 - debug:
     var: valid_test.values()
+
 
 - name: Try to access a item that doesnt exist as attr or item so it fails.
   debug:
     msg: "valid_test.not_a_key: {{ valid_test.not_a_key }}"
   ignore_errors: true
-  register: result1
 
 
 - name: "Try to access a item via ['not_a_key'] but not_a_key does not exist as attr or item so it fails."
@@ -60,49 +63,47 @@
     msg: "valid_test['not_a_key']: {{ valid_test['not_a_key'] }}"
   ignore_errors: true
 
-    #    - debug:
-    #msg: "valid_test.a_list[0]: {{ valid_test.a_list[0] }}"
-
-    #- debug:
-    #msg: "valid_test.a_list[13]: {{ valid_test.a_list[13] }}"
-    #- debug:
-    #msg: "valid_test.a_list['blip']: {{ valid_test.a_list['blip'] }}"
-
-    #- debug:
-    #  msg: "valid_test.confused_for_a_list[0]: {{ valid_test.confused_for_a_list[0] }}"
 
 - name: "Try to access valid_list.a_list.count (builtin method) but it is not shadowed so it works"
   debug:
     msg: "valid_test.a_list.count: {{ valid_test.a_list.count }}"
 
+
 - name: "Try to access and call valid_list.a_list.count() (builtin method) but it is not shadowed so it works"
   debug:
     msg: "valid_test.a_list.count(): {{ valid_test.a_list.count('thing 1') }}"
+
 
 - name: "Try to access valid_list.a_list.pop (builtin method) but it is not shadowed so it works"
   debug:
     msg: "valid_test.a_list.pop: {{ valid_test.a_list.pop }}"
 
+
 - name: "Try to access and call valid_list.a_list.pop() (builtin method) but it is not shadowed so it works"
   debug:
     msg: "valid_test.a_list.pop(): {{ valid_test.a_list.pop() }}"
+
 
 - name: "Try to access and call valid_test.confused_for_a_list.pop() (builtin method) but it is shadowed with an item so it we expect the ['pop'] item to be returned with a warning and call to fail"
   debug:
     msg: "valid_test.confused_for_a_list.pop(): {{ valid_test.confused_for_a_list.pop() }}"
   ignore_errors: true
 
+
 - name: "Try to access valid_list.confused_for_list.pop which is an item so expect ['pop'] to be returned with a warning"
   debug:
     msg: "valid_test.confused_for_a_list.pop: {{ valid_test.confused_for_a_list.pop }}"
+
 
 - name: "Try to access valid_list.confused_for_list.popitem (builtin method) and expect the method to be returned without a warning"
   debug:
     msg: "valid_test.confused_for_a_list.popitem: {{ valid_test.confused_for_a_list.popitem }}"
 
+
 - name: "Try to access and call valid_list.confused_for_list.popitem (builtin method) and expect the method to be returned and called without a warning"
   debug:
     msg: "valid_test.confused_for_a_list.popitem(): {{ valid_test.confused_for_a_list.popitem() }}"
+
 
 # these fail with or without the patch
 #    - debug:
@@ -111,18 +112,6 @@
 #    - debug:
 #        msg: "valid_test.confused.endswith('r_v'): {{ valid_test.confused.endswith('r_v') }}"
 
-    #    - debug:
-    #        msg: "valid_test.confused.startswith('r_v'): {{ valid_test.confused.startsswith('r_v') }}"
+#    - debug:
+#        msg: "valid_test.confused.startswith('r_v'): {{ valid_test.confused.startsswith('r_v') }}"
 
-    #    - include_vars:
-    #    file: "vars/blns_vars.yml"
-    #name: blns
-
-    #  - debug:
-    #var: blns
-
-    #    - debug:
-    #        msg: "{{ item.key }}  {{ item.value }}"
-    #      with_dict: blns.blns
-    #    - debug:
-    #msg: "minus {{ valid_test-some_var }}"
