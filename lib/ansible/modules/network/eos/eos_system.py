@@ -215,22 +215,29 @@ def map_obj_to_commands(want, have, module):
                 if item not in want['name_servers']:
                     if not has_vrf(module, item['vrf']):
                         module.fail_json(msg='vrf %s is not configured' % item['vrf'])
-                    values = (item['vrf'], item['server'])
-                    commands.append('no ip name-server vrf %s %s' %  values)
+                    if item['vrf'] not in ('default', None):
+                        values = (item['vrf'], item['server'])
+                        commands.append('no ip name-server vrf %s %s' %  values)
+                    else:
+                        commands.append('no ip name-server %s' %  item['server'])
 
             # handle name_servers items to be added
             for item in want['name_servers']:
                 if item not in have['name_servers']:
                     if not has_vrf(module, item['vrf']):
                         module.fail_json(msg='vrf %s is not configured' % item['vrf'])
-                    values = (item['vrf'], item['server'])
-                    commands.append('ip name-server vrf %s %s' % values)
+                    if item['vrf'] not in ('default', None):
+                        values = (item['vrf'], item['server'])
+                        commands.append('ip name-server vrf %s %s' % values)
+                    else:
+                        commands.append('ip name-server %s' % item['server'])
 
     return commands
 
 def parse_hostname(config):
     match = re.search('^hostname (\S+)', config, re.M)
-    return match.group(1)
+    if match:
+        return match.group(1)
 
 def parse_domain_name(config):
     match = re.search('^ip domain-name (\S+)', config, re.M)
