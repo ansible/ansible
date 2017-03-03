@@ -20,7 +20,7 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'version': '0.1'}
 
 DOCUMENTATION = """
 module: teams
@@ -79,7 +79,18 @@ EXAMPLES = """
   delegate_to: localhost
 """
 
-import urllib
+RETURN = """
+msg:
+  description: OK or error message with payload
+  returned: success
+  type: string
+  sample: "OK"
+"""
+
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+
 
 def build_payload_for_teams(module, text, title, color):
     payload = dict(text=text)
@@ -135,8 +146,6 @@ def main():
 
     module.exit_json(msg="OK")
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+
 if __name__ == '__main__':
     main()
