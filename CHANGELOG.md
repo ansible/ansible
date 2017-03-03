@@ -215,6 +215,7 @@ Ansible Changes By Release
   * packet_sshkey
 - pamd
 - panos:
+  * panos_address
   * panos_admin
   * panos_admpwd
   * panos_cert_gen_ssh
@@ -222,11 +223,14 @@ Ansible Changes By Release
   * panos_commit
   * panos_dag
   * panos_import
+  * panos_interface
+  * panos_lic
   * panos_loadcfg
   * panos_mgtconfig
   * panos_nat_policy
   * panos_pg
   * panos_restart
+  * panos_security_policy
   * panos_service
 - postgresql_schema
 - proxmox_kvm
