@@ -108,7 +108,11 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
             )
             task_list.append(t)
         else:
-            if 'include' in task_ds:
+            if 'include' in task_ds or 'import_tasks' in task_ds or 'include_tasks' in task_ds:
+                if 'include' in task_ds:
+                    display.deprecated("The use of 'include' for tasks has been deprecated. " \
+                                       "Use 'import_tasks' for static inclusions or 'include_tasks' for dynamic inclusions")
+
                 if use_handlers:
                     include_class = HandlerTaskInclude
                 else:
@@ -129,7 +133,13 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 # check to see if this include is dynamic or static:
                 # 1. the user has set the 'static' option to false or true
                 # 2. one of the appropriate config options was set
-                if t.static is not None:
+                if 'include_tasks' in task_ds:
+                    is_static = False
+                elif 'import_tasks' in task_ds:
+                    is_static = True
+                elif t.static is not None:
+                    display.deprecated("The use of 'static' has been deprecated. " \
+                                       "Use 'import_role' for static inclusion, or 'include_role' for dynamic inclusion")
                     is_static = t.static
                 else:
                     is_static = C.DEFAULT_TASK_INCLUDES_STATIC or \
@@ -138,7 +148,10 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                 if is_static:
                     if t.loop is not None:
-                        raise AnsibleParserError("You cannot use 'static' on an include with a loop", obj=task_ds)
+                        if 'import_tasks' in task_ds:
+                            raise AnsibleParserError("You cannot use loops on 'import_tasks' statements. You should use 'include_tasks' instead.", obj=task_ds)
+                        else:
+                            raise AnsibleParserError("You cannot use 'static' on an include with a loop", obj=task_ds)
 
                     # we set a flag to indicate this include was static
                     t.statically_loaded = True
@@ -202,7 +215,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         # the same fashion used by the on_include callback. We also do it here,
                         # because the recursive nature of helper methods means we may be loading
                         # nested includes, and we want the include order printed correctly
-                        display.vv("statically included: %s" % include_file)
+                        display.vv("statically imported: %s" % include_file)
                     except AnsibleFileNotFound:
                         if t.static or \
                            C.DEFAULT_TASK_INCLUDES_STATIC or \
@@ -267,8 +280,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 else:
                     task_list.append(t)
 
-            elif 'include_role' in task_ds:
-
+            elif 'include_role' in task_ds or 'import_role' in task_ds:
                 ir = IncludeRole.load(
                     task_ds,
                     block=block,
@@ -280,7 +292,11 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                 #   1. the user has set the 'static' option to false or true
                 #   2. one of the appropriate config options was set
+                if 'import_role' in task_ds:
+                    is_static = True
                 if ir.static is not None:
+                    display.deprecated("The use of 'static' for 'include_role' has been deprecated. " \
+                                       "Use 'import_role' for static inclusion, or 'include_role' for dynamic inclusion")
                     is_static = ir.static
                 else:
                     display.debug('Determine if include_role is static')

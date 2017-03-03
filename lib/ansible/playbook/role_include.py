@@ -23,7 +23,7 @@ from os.path import basename
 
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
-from ansible.playbook.task import Task
+from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role import Role
 from ansible.playbook.role.include import RoleInclude
 
@@ -36,7 +36,7 @@ except ImportError:
 __all__ = ['IncludeRole']
 
 
-class IncludeRole(Task):
+class IncludeRole(TaskInclude):
 
     """
     A Role include is derived from a regular role to handle the special
@@ -55,7 +55,6 @@ class IncludeRole(Task):
 
         super(IncludeRole, self).__init__(block=block, role=role, task_include=task_include)
 
-        self.statically_loaded = False
         self._from_files = {}
         self._parent_role = role
         self._role_name = None
