@@ -541,6 +541,7 @@ ATTACH_TEMPLATE = """#!/usr/bin/env bash
 pushd "$(getent passwd $(whoami)|cut -f6 -d':')"
     if [[ -f ".bashrc" ]];then
         source .bashrc
+        unset HOSTNAME
     fi
 popd
 
