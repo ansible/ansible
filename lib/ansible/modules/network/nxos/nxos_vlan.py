@@ -16,10 +16,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
-
 DOCUMENTATION = '''
 ---
 module: nxos_vlan
@@ -75,33 +71,16 @@ options:
 
 '''
 EXAMPLES = '''
-- name: Ensure a range of VLANs are not present on the switch
-  nxos_vlan:
-    vlan_range: "2-10,20,50,55-60,100-150"
-    host: 68.170.147.165
-    username: cisco
-    password: cisco
-    state: absent
-    transport: nxapi
+# Ensure a range of VLANs are not present on the switch
+- nxos_vlan: vlan_range="2-10,20,50,55-60,100-150" host=68.170.147.165 username=cisco password=cisco state=absent transport=nxapi
 
-- name: Ensure VLAN 50 exists with the name WEB and is in the shutdown state
-  nxos_vlan:
-    vlan_id: 50
-    host: 68.170.147.165
-    admin_state: down
-    name: WEB
-    transport: nxapi
-    username: cisco
-    password: cisco
+# Ensure VLAN 50 exists with the name WEB and is in the shutdown state
+- nxos_vlan: vlan_id=50 host=68.170.147.165 admin_state=down name=WEB transport=nxapi username=cisco password=cisco
 
-- name: Ensure VLAN is NOT on the device
-  nxos_vlan:
-    vlan_id: 50
-    host: 68.170.147.165
-    state: absent
-    transport: nxapi
-    username: cisco
-    password: cisco
+# Ensure VLAN is NOT on the device
+- nxos_vlan: vlan_id=50 host=68.170.147.165 state=absent transport=nxapi username=cisco password=cisco
+
+
 '''
 
 RETURN = '''
@@ -167,7 +146,7 @@ from ansible.module_utils.shell import ShellError
 try:
     from ansible.module_utils.nxos import get_module
 except ImportError:
-    from ansible.module_utils.nxos import NetworkModule
+    from ansible.module_utils.nxos import NetworkModule, NetworkError
 
 
 def to_list(val):
@@ -381,7 +360,7 @@ def get_vlan_config_commands(vlan, vid):
 
     commands = []
 
-    for param, value in vlan.items():
+    for param, value in vlan.iteritems():
         if param == 'mapped_vni' and value == 'default':
             command = 'no vn-segment'
         else:
@@ -479,10 +458,8 @@ def execute_config_command(commands, module):
                          error=str(clie), commands=commands)
     except AttributeError:
         try:
-            commands.insert(0, 'configure')
-            module.cli.add_commands(commands, output='config')
-            module.cli.run_commands()
-        except ShellError:
+            module.config.load_config(commands)
+        except NetworkError:
             clie = get_exception()
             module.fail_json(msg='Error sending CLI commands',
                              error=str(clie), commands=commands)
@@ -532,7 +509,7 @@ def execute_show(cmds, module, command_type=None):
             else:
                 module.cli.add_commands(cmds, raw=True)
                 response = module.cli.run_commands()
-        except ShellError:
+        except NetworkError:
             clie = get_exception()
             module.fail_json(msg='Error sending {0}'.format(cmds),
                              error=str(clie))
@@ -589,7 +566,7 @@ def main():
     args = dict(name=name, vlan_state=vlan_state,
                 admin_state=admin_state, mapped_vni=mapped_vni)
 
-    proposed = dict((k, v) for k, v in args.items() if v is not None)
+    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
 
     proposed_vlans_list = numerical_sort(vlan_range_to_list(
         vlan_id or vlan_range))
@@ -620,7 +597,7 @@ def main():
                 proposed.get('mapped_vni') == 'default'):
                 proposed.pop('mapped_vni')
             delta = dict(set(
-                proposed.items()).difference(existing.items()))
+                proposed.iteritems()).difference(existing.iteritems()))
             if delta or not existing:
                 commands = get_vlan_config_commands(delta, vlan_id)
 
@@ -628,7 +605,7 @@ def main():
     end_state_vlans_list = existing_vlans_list
 
     if commands:
-        if existing.get('mapped_vni') and state != 'absent':
+        if existing.get('mapped_vni'):
             if (existing.get('mapped_vni') != proposed.get('mapped_vni') and
                 existing.get('mapped_vni') != '0' and proposed.get('mapped_vni') != 'default'):
                 commands.insert(1, 'no vn-segment')
@@ -639,8 +616,6 @@ def main():
             execute_config_command(commands, module)
             changed = True
             end_state_vlans_list = numerical_sort(get_list_of_vlans(module))
-            if 'configure' in commands:
-                commands.pop(0)
             if vlan_id:
                 end_state = get_vlan(vlan_id, module)
 
