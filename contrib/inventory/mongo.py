@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+#
 # (c) 2015, Prakritish Sen Eshore
 #
 # This file is part of Ansible,
@@ -37,8 +39,6 @@ Other Fields non mandatory fields:
 All other fields will be used as Host Variables.
     
 '''
-
-#!/usr/bin/env python
 
 import os
 import argparse
