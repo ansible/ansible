@@ -14,12 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'committer',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
 module: elb_target_group
 short_description: Manage a target group for an Application load balancer
 description:
-    - Manage an AWS Application Elastic Load Balancer target group. See U(http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html) for details.
+    - Manage an AWS Application Elastic Load Balancer target group. See \
+    U(http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html) for details.
 version_added: "2.3"
 author: "Rob White (@wimnat)"
 options:
@@ -34,7 +39,8 @@ options:
     choices: [ 'http', 'https' ]
   port:
     description:
-      - The port on which the targets receive traffic. This port is used unless you specify a port override when registering the target. Required if state=present.
+      - The port on which the targets receive traffic. This port is used unless you specify a port override when registering the target. Required if \
+      state=present.
     required: false
   vpc_id:
     description:
@@ -76,7 +82,8 @@ options:
     default: 2
   successful_response_codes:
     description:
-      - The HTTP codes to use when checking for a successful response from a target.
+      - "The HTTP codes to use when checking for a successful response from a target. You can specify multiple values (for example, \"200,202\") or a range \
+      of values (for example, \"200-299\")."
     required: false
     default: 200
   state:
@@ -97,7 +104,7 @@ EXAMPLES = '''
 # Create a target group with a default health check
 - elb_target_group:
     name: mytargetgroup
-    protocol: HTTP
+    protocol: http
     port: 80
     vpc_id: vpc-01234567
     state: present
@@ -105,7 +112,7 @@ EXAMPLES = '''
 # Modify the target group with a custom health check
 - elb_target_group:
     name: mytargetgroup
-    protocol: HTTP
+    protocol: http
     port: 80
     vpc_id: vpc-01234567
     health_check_path: /
@@ -125,7 +132,7 @@ EXAMPLES = '''
   vpc_id: vpc-01234567
   health_check_path: /
   successful_response_codes: "200,250-260"
-  targets: 
+  targets:
    - Id: i-01234567
      Port: 80
    - Id: i-98765432
@@ -136,65 +143,70 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-target_group_arn:
-    description: The Amazon Resource Name (ARN) of the target group.
-    type: string
-    sample: "arn:aws:elasticloadbalancing:ap-southeast-2:01234567890:targetgroup/mytargetgroup/aabbccddee0044332211"
-target_group_name:
-    description: The name of the target group.
-    type: string
-    sample: mytargetgroup
-protocol:
-    description: The protocol to use for routing traffic to the targets.
-    type: string
-    sample: HTTP
-port:
-    description: The port on which the targets are listening.
-    type: int
-    sample: 80
-vpc_id:
-    description: The ID of the VPC for the targets.
-    type: string
-    sample: vpc-0123456
-health_check_protocol:
-    description: The protocol to use to connect with the target.
-    type: string
-    sample: HTTP
-health_check_port:
-    description: The port to use to connect with the target.
-    type: string
-    sample: traffic-port
-health_check_interval_seconds:
-    description: The approximate amount of time, in seconds, between health checks of an individual target.
-    type: int
-    sample: 30
-health_check_timeout_seconds:
-    description: The amount of time, in seconds, during which no response means a failed health check.
-    type: int
-    sample: 5
-healthy_threshold_count:
-    description: The number of consecutive health checks successes required before considering an unhealthy target healthy.
-    type: int
-    sample: 5
-unhealthy_threshold_count:
-    description: The number of consecutive health check failures required before considering the target unhealthy.
-    type: int
-    sample: 2
-health_check_path:
-    description: The destination for the health check request.
-    type: string
-    sample: /index.html
-matcher:
-    description: The HTTP codes to use when checking for a successful response from a target.
-    type: dict
-    sample: {
-        "http_code": "200"
-    }
-load_balancer_arns:
-    description: The Amazon Resource Names (ARN) of the load balancers that route traffic to this target group.
-    type: list
-    sample: []
+target_group:
+    target_group_arn:
+        description: The Amazon Resource Name (ARN) of the target group.
+        type: string
+        sample: "arn:aws:elasticloadbalancing:ap-southeast-2:01234567890:targetgroup/mytargetgroup/aabbccddee0044332211"
+    target_group_name:
+        description: The name of the target group.
+        type: string
+        sample: mytargetgroup
+    protocol:
+        description: The protocol to use for routing traffic to the targets.
+        type: string
+        sample: HTTP
+    port:
+        description: The port on which the targets are listening.
+        type: int
+        sample: 80
+    vpc_id:
+        description: The ID of the VPC for the targets.
+        type: string
+        sample: vpc-0123456
+    health_check_protocol:
+        description: The protocol to use to connect with the target.
+        type: string
+        sample: HTTP
+    health_check_port:
+        description: The port to use to connect with the target.
+        type: string
+        sample: traffic-port
+    health_check_interval_seconds:
+        description: The approximate amount of time, in seconds, between health checks of an individual target.
+        type: int
+        sample: 30
+    health_check_timeout_seconds:
+        description: The amount of time, in seconds, during which no response means a failed health check.
+        type: int
+        sample: 5
+    healthy_threshold_count:
+        description: The number of consecutive health checks successes required before considering an unhealthy target healthy.
+        type: int
+        sample: 5
+    unhealthy_threshold_count:
+        description: The number of consecutive health check failures required before considering the target unhealthy.
+        type: int
+        sample: 2
+    health_check_path:
+        description: The destination for the health check request.
+        type: string
+        sample: /index.html
+    matcher:
+        description: The HTTP codes to use when checking for a successful response from a target.
+        type: dict
+        sample: {
+            "http_code": "200"
+        }
+    load_balancer_arns:
+        description: The Amazon Resource Names (ARN) of the load balancers that route traffic to this target group.
+        type: list
+        sample: []
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, camel_dict_to_snake_dict, ec2_argument_spec
+import time
 
 try:
     import boto3
@@ -367,7 +379,6 @@ def create_or_update_target_group(connection, module):
                     if not status_achieved:
                         module.fail_json(msg='Error waiting for target registration - please check the AWS console')
 
-
             remove_instances = diff_list(current_instance_ids, new_instance_ids)
 
             if remove_instances:
@@ -387,7 +398,7 @@ def create_or_update_target_group(connection, module):
                     if not status_achieved:
                         module.fail_json(msg='Error waiting for target deregistration - please check the AWS console')
 
-        else:  
+        else:
             try:
                 current_targets = connection.describe_target_health(TargetGroupArn=tg['TargetGroupArn'])
             except (ClientError, NoCredentialsError) as e:
@@ -459,7 +470,7 @@ def main():
     argument_spec.update(
         dict(
             name=dict(required=True, type='str'),
-            protocol=dict(required=False, choices=['http', 'https'], type='str'),
+            protocol=dict(required=False, choices=['http', 'https', 'HTTP', 'HTTPS'], type='str'),
             port=dict(required=False, type='int'),
             vpc_id=dict(required=False, type='str'),
             health_check_protocol=dict(required=False, choices=['http', 'https'], type='str'),
@@ -499,9 +510,6 @@ def main():
         create_or_update_target_group(connection, module)
     else:
         delete_target_group(connection, module)
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
