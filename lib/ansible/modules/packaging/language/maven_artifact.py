@@ -183,7 +183,11 @@ class Artifact(object):
 
     @property
     def url(self):
-        return posixpath.join(self.group_id.replace(".", "/"), self.artifact_id, self.version, self.filename)
+        return posixpath.join(self.shorturl, self.version, self.filename)
+
+    @property
+    def shorturl(self):
+        return posixpath.join(self.group_id.replace(".", "/"), self.artifact_id)
 
     @property
     def filename(self):
@@ -216,7 +220,7 @@ class HttpMavenClient:
         return response.read()
 
     def download_metadata(self, artifact):
-        url = "%s/maven-metadata.xml" % (posixpath.join(*artifact.url.split("/")[0:-2]))
+        url = "%s/maven-metadata.xml" % (posixpath.join(artifact.shorturl))
         response = self.get(url)
         return etree.fromstring(response)
 
@@ -251,10 +255,12 @@ class HttpMavenClient:
 class FileSystemMavenClient:
     def __init__(self, module, repository, timeout=None):
         self.module = module
-        self.repo = repository.rstrip("/")
+        self.repo = repository.rstrip("/").replace('file:/', '').replace('//', '/')
+        if os.path.isfile(self.repo):
+            self.module.fail_json(msg='Repository must be a directory, not a file: %s' % (self.repo))
 
     def get_latest_version(self, artifact):
-        path = posixpath.join(self.repo, artifact.group_id.replace(".", "/"), artifact.artifact_id).replace('file:/', '')
+        path = posixpath.join(self.repo, artifact.shorturl)
         versions = []
         for root, dirs, files in os.walk(path):
             for d in dirs:
@@ -264,7 +270,7 @@ class FileSystemMavenClient:
         return sorted(versions, key=distutils.version.LooseVersion)[-1]
 
     def get_release_version(self, artifact):
-        path = posixpath.join(self.repo, artifact.group_id.replace(".", "/"), artifact.artifact_id).replace('file:/', '')
+        path = posixpath.join(self.repo, artifact.shorturl)
         versions = []
         for root, dirs, files in os.walk(path):
             for d in dirs:
@@ -277,7 +283,7 @@ class FileSystemMavenClient:
 
     def download(self, artifact, destination):
         try:
-            src = posixpath.join(self.repo, artifact.url).replace('file:/', '').replace('//', '/')
+            src = posixpath.join(self.repo, artifact.url)
             return shutil.copy2(src, destination)
         except (IOError, os.error) as why:
             self.module.fail_json(msg='Copy failed. %s' % (':'.join([artifact.group_id, artifact.artifact_id, artifact.classifier, artifact.extension, artifact.url, destination, str(why)])))
@@ -285,7 +291,7 @@ class FileSystemMavenClient:
     def checksum(self, artifact, dest):
         if not os.path.isfile(dest):
             return False
-        with open(create_artifact_location(artifact), 'rb') as file:
+        with open(posixpath.join(self.repo, artifact.url), 'rb') as file:
             remote_md5 = hashlib.md5(file.read()).hexdigest()
         with open(dest, 'rb') as file:
             local_md5 = hashlib.md5(file.read()).hexdigest()
