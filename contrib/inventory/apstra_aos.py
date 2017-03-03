@@ -346,7 +346,7 @@ class AosInventory(object):
                     if 'admin_state' in device.value['user_config'].keys():
                         self.add_var_to_host(dev_name, 'admin_state', device.value['user_config']['admin_state'] )
 
-                self.add_device_status_to_var(device.name, device)
+                self.add_device_status_to_var(dev_name, device)
 
                 # Go over the contents data structure
                 for node in bp.contents['system']['nodes']:
