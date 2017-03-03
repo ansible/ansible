@@ -39,6 +39,7 @@ options:
      required: true
      default: None
    id:
+     version_added: "2.3.0"
      description:
         - The Id of the image
      required: false
