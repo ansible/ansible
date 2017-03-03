@@ -200,7 +200,7 @@ def all_keys(module, keyring, short_format):
     results = []
     lines = to_native(out).split('\n')
     for line in lines:
-        if line.startswith("pub") or line.startswith("sub"):
+        if (line.startswith("pub") or line.startswith("sub")) and not "expired" in line:
             tokens = line.split()
             code = tokens[1]
             (len_type, real_code) = code.split("/")
