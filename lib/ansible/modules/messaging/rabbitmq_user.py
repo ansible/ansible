@@ -153,7 +153,7 @@ class RabbitMqUser(object):
         self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
 
     def _exec(self, args, run_in_check_mode=False):
-        if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
+        if not self.module.check_mode or run_in_check_mode:
             cmd = [self._rabbitmqctl, '-q']
             if self.node is not None:
                 cmd.extend(['-n', self.node])
