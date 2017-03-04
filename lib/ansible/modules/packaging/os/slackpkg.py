@@ -91,6 +91,14 @@ EXAMPLES = '''
     state: latest
 '''
 
+import re
+import glob
+import platform
+from distutils.version import LooseVersion
+
+# import module snippets
+from ansible.module_utils.basic import *
+
 
 def query_package(name):
     machine = platform.machine()
