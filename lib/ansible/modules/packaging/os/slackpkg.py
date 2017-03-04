@@ -24,7 +24,7 @@
 import re
 import glob
 import platform
-from distutils.version import LooseVersion, StrictVersion
+from distutils.version import LooseVersion
 
 # import module snippets
 from ansible.module_utils.basic import *
@@ -62,8 +62,16 @@ options:
         default: false
         choices: [ true, false ]
 
+    ignore_blacklist:
+        description:
+            - ignore slackpkg blacklist when I(state) is set to C(absent) or C(removed).
+        required: false
+        default: false
+        choices: [ true, false ]
+        version_added: "2.3"
+
 author: Kim Nørgaard (@KimNorgaard)
-requirements: [ "Slackware >= 12.2" ]
+requirements: [ "Slackware >= 12.2", "slackpkg" ]
 '''
 
 EXAMPLES = '''
@@ -110,37 +118,62 @@ def query_repository(module, slackpkg_path, name):
     module.fail_json(
         msg="failed to locate package {} in repository".format(name))
 
-def remove_packages(module, slackpkg_path, packages):
+def remove_packages(module, slackpkg_path, blacklist, ignore_blacklist, packages):
     remove_c = 0
+    blacklisted_c = 0
     # Using a for loop in case of error, we can report the package that failed
     for package in packages:
-        # Query the package first, to see if we even need to remove
         installed_package = query_package(package)
-        if not installed_package:
+        if package in blacklist and not ignore_blacklist:
+            blacklisted_c += 1
             continue
-
-        if not module.check_mode:
+        elif not installed_package:
+            continue
+        elif module.check_mode:
+            remove_c += 1
+        elif package in blacklist and ignore_blacklist:
+            while installed_package:
+                remove_c += 1
+                rc, out, err = module.run_command(
+                    "removepkg %s" % (installed_package))
+                if rc != 0:
+                    # prevent endless loop this package fails to uninstall
+                    module.fail_json(
+                        msg="failed to remove %s: %s, stderr: %s" % (
+                            package, out, err))
+                installed_package = query_package(package)
+        else:
+            remove_c += 1
             rc, out, err = module.run_command(
                 "%s -default_answer=y -batch=on remove %s" % (
                     slackpkg_path, installed_package))
 
-        if not module.check_mode and query_package(package):
-            module.fail_json(msg="failed to remove %s: %s" % (package, out))
+            if query_package(package):
+                module.fail_json(msg="failed to remove %s: %s" % (package, out))
 
-        remove_c += 1
-
-    if remove_c > 0:
-
+    if remove_c > 0 and blacklisted_c == 0:
         module.exit_json(changed=True, msg="removed %s package(s)" % remove_c)
+    elif remove_c > 0 and blacklisted_c > 0:
+        module.exit_json(
+            changed=True,
+            msg="removed %s package(s), %s blacklisted" % (remove_c, blacklisted_c))
+    elif blacklisted_c > 0:
+        module.exit_json(
+            changed=False,
+            msg="package(s) already absent, %s blacklisted" % blacklisted_c)
+    else:
+        module.exit_json(changed=False, msg="package(s) already absent")
 
-    module.exit_json(changed=False, msg="package(s) already absent")
-
-
-def install_packages(module, slackpkg_path, packages):
+def install_packages(module, slackpkg_path, blacklist, packages):
 
     install_c = 0
+    blacklisted_c = 0
 
     for package in packages:
+        if package in blacklist:
+            blacklisted_c += 1
+            continue
+
         if query_package(package):
             continue
 
@@ -156,17 +189,30 @@ def install_packages(module, slackpkg_path, packages):
 
         install_c += 1
 
-    if install_c > 0:
+    if install_c > 0 and blacklisted_c == 0:
         module.exit_json(changed=True, msg="installed %s package(s)"
                          % (install_c))
+    elif install_c > 0 and blacklisted_c > 0:
+        module.exit_json(
+            changed=True,
+            msg="installed %s package(s), %s blacklisted" % (install_c, blacklisted_c))
+    elif blacklisted_c > 0:
+        module.exit_json(
+            changed=False,
+            msg="package(s) already present, %s blacklisted" % (blacklisted_c))
+    else:
+        module.exit_json(changed=False, msg="package(s) already present")
 
-    module.exit_json(changed=False, msg="package(s) already present")
 
-
-def upgrade_packages(module, slackpkg_path, packages):
+def upgrade_packages(module, slackpkg_path, blacklist, packages):
     install_c = 0
+    blacklisted_c = 0
 
     for package in packages:
+        if package in blacklist:
+            blacklisted_c += 1
+            continue
+
         installed_package = query_package(package)
         current_version, newer_version = query_repository(
             module, slackpkg_path, package)
@@ -196,11 +242,20 @@ def upgrade_packages(module, slackpkg_path, packages):
             module.fail_json(msg="failed to install %s: %s" % (package, out),
                              stderr=err)
 
-    if install_c > 0:
-        module.exit_json(changed=True, msg="updated or installed %s package(s)"
+    if install_c > 0 and blacklisted_c == 0:
+        module.exit_json(changed=True, msg="upgraded or installed %s package(s)"
                          % (install_c))
-
-    module.exit_json(changed=False, msg="package(s) already present")
+    elif install_c > 0 and blacklisted_c > 0:
+        module.exit_json(
+            changed=True,
+            msg="upgraded or installed %s package(s), %s blacklisted" % (
+                install_c, blacklisted_c))
+    elif blacklisted_c > 0:
+        module.exit_json(
+            changed=False,
+            msg="package(s) already present, %s blacklisted" % (blacklisted_c))
+    else:
+        module.exit_json(changed=False, msg="package(s) already present")
 
 
 def update_cache(module, slackpkg_path):
@@ -222,15 +277,24 @@ def update_cache(module, slackpkg_path):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default="installed", choices=['installed', 'removed', 'absent', 'present', 'latest']),
+            state=dict(
+                default="installed",
+                choices=['installed', 'removed', 'absent', 'present', 'latest']),
             name=dict(aliases=["pkg"], required=True, type='list'),
-            update_cache=dict(default=False, aliases=["update-cache"],
-                              type='bool'),
+            update_cache=dict(
+                default=False,
+                aliases=["update-cache"],
+                type='bool'),
+            ignore_blacklist=dict(
+                default=False, aliases=["ignore-blacklist"], type='bool'),
         ),
         supports_check_mode=True)
 
     slackpkg_path = module.get_bin_path('slackpkg', True)
-
+    with open('/etc/slackpkg/blacklist', 'r') as f:
+        blacklist = [
+            line.strip() for line in f.read().split('\n') \
+            if not line.strip().startswith('#') and len(line.strip()) > 0]
     p = module.params
 
     pkgs = p['name']
@@ -239,13 +303,14 @@ def main():
         update_cache(module, slackpkg_path)
 
     if p['state'] == 'latest':
-        upgrade_packages(module, slackpkg_path, pkgs)
+        upgrade_packages(module, slackpkg_path, blacklist, pkgs)
 
     elif p['state'] in ['present', 'installed']:
-        install_packages(module, slackpkg_path, pkgs)
+        install_packages(module, slackpkg_path, blacklist, pkgs)
 
     elif p["state"] in ['removed', 'absent']:
-        remove_packages(module, slackpkg_path, pkgs)
+        remove_packages(
+            module, slackpkg_path, blacklist, p["ignore_blacklist"], pkgs)
 
 if __name__ == '__main__':
     main()
