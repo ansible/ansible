@@ -453,6 +453,9 @@ There's also a `clever playbook <https://github.com/ansible/ansible-examples/blo
 Tips and Tricks
 ```````````````
 
+To check the syntax of a playbook, use ``ansible-playbook`` with the ``--syntax-check`` flag. This will run the
+playbook file through the parser to ensure its included files, roles, etc. have no syntax problems.
+
 Look at the bottom of the playbook execution for a summary of the nodes that were targeted
 and how they performed.   General failures and fatal "unreachable" communication attempts are
 kept separate in the counts.
