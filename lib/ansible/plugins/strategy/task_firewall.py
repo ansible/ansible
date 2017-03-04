@@ -27,10 +27,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import cmd
 import sys
 import yaml
-import pprint
 
 from ansible.plugins.strategy.linear import StrategyModule as LinearStrategyModule
 from ansible.errors import AnsibleError
