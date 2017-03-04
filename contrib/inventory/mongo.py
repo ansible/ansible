@@ -99,7 +99,7 @@ class MongoInventory(object):
                 else:
                     self.result[hostgroup].append(host['host'])
                     self.result['_meta']['hostvars'][host['host']] = {}
-                    for key, value in host.iteritems():
+                    for key, value in host.items():
                         if key in ('_id', 'host', 'group', 'updated_at', 'created_at'):
                             next
                         else:
