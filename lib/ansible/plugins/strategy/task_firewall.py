@@ -111,9 +111,9 @@ class Firewall:
             # is the entire action blocked?
             # NOTE: we expect a dict, but future-proof and check for list too
             if not isinstance(self.policy[task.action], list) and not isinstance(self.policy[task.action], dict):
-                raise AnsibleError('firewall policy: module (%s) blocked' % task.action)
+                raise AnsibleError('firewall policy: module [%s] blocked' % task.action)
 
-            display.v('firewall rule: module [%s]' % (self.policy[task.action]))
+            display.v('firewall rule passed: module [%s] generally allowed' % task.action)
 
             # now check the action args
             for key in self.policy[task.action]:
@@ -123,6 +123,6 @@ class Firewall:
 
                 # is an arg of this action blocked?
                 if not isinstance(self.policy[task.action][key], list):
-                    raise AnsibleError('firewall policy: module (%s) arg (%s) blocked' % (task.action, key))
+                    raise AnsibleError('firewall policy: module [%s] arg [%s] blocked' % (task.action, key))
 
                 display.v('firewall rule passed: [%s:%s] against %s' % (self.policy[task.action], self.policy[task.action][key], task.args[key]))
