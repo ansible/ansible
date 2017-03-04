@@ -35,9 +35,9 @@ Following Fields are needed:
 Other Fields non mandatory fields:
     * updated_at
     * created_at
-    
+
 All other fields will be used as Host Variables.
-    
+
 '''
 
 import os
@@ -91,12 +91,12 @@ class MongoInventory(object):
                         hostname = res.group(1) + str(counter).zfill(pad) + res.group(4)
                         self.result[hostgroup].append(hostname)
                         self.result['_meta']['hostvars'][hostname] = {}
-                        for key, value in host.iteritems():
+                        for key, value in iter(host.items()):
                             if key in ('_id', 'host', 'group', 'updated_at', 'created_at'):
                                 next
                             else:
                                 self.result['_meta']['hostvars'][hostname][key] = value
-                else:            
+                else:
                     self.result[hostgroup].append(host['host'])
                     self.result['_meta']['hostvars'][host['host']] = {}
                     for key, value in host.iteritems():
