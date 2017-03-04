@@ -1,7 +1,7 @@
 # file: ./ansible/plugins/strategy/task_firewall.py
 
-# A strategy plugin for Ansible (2.2+) to enforce task action restrictions 
-# by policy.  
+# A strategy plugin for Ansible (2.2+) to enforce task action restrictions
+# by policy.
 #
 # NOTE: Enforcement of the plugin itself can be implemented in various ways,
 # but currently needs to be done outside of Ansible itself (eg, git commit
@@ -18,7 +18,7 @@
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.   
+# GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software Foundation,
@@ -66,7 +66,7 @@ class Firewall:
     '''
     Enforces a security policy (/etc/ansible/task_firewall_policy.yml) by halting playbook
     execution if a task matching a policy rule attempts to run.
-    
+
     Policy file format, a dictionary defining what should be blocked:
 
     # file: /etc/ansible/task_firewall_policy.yml
@@ -79,8 +79,8 @@ class Firewall:
 
     def __init__(self, firewall_policy_path=None):
         '''
-        Attempts to load the policy file.   If a policy exists but fails because of 
-        yaml errors, then fail because I assume the user intention was to include a 
+        Attempts to load the policy file.   If a policy exists but fails because of
+        yaml errors, then fail because I assume the user intention was to include a
         policy.
         '''
 
