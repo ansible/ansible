@@ -67,7 +67,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
     # When running over this connection type, prefer modules written in a certain language
     # as discovered by the specified file extension.  An empty string as the
     # language means any language.
-    module_implementation_preferences = ('',)
+    module_implementation_preferences = ('.py', '',)
     allow_executable = True
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
