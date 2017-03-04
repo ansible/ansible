@@ -291,10 +291,15 @@ def main():
         supports_check_mode=True)
 
     slackpkg_path = module.get_bin_path('slackpkg', True)
-    with open('/etc/slackpkg/blacklist', 'r') as f:
+
+    f = open('/etc/slackpkg/blacklist', 'r')
+    try:
         blacklist = [
             line.strip() for line in f.read().split('\n') \
             if not line.strip().startswith('#') and len(line.strip()) > 0]
+    finally:
+        f.close()
+
     p = module.params
 
     pkgs = p['name']
