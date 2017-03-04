@@ -24,7 +24,7 @@
 import re
 import glob
 import platform
-from packaging import version
+from distutils.version import LooseVersion, StrictVersion
 
 # import module snippets
 from ansible.module_utils.basic import *
@@ -177,7 +177,7 @@ def upgrade_packages(module, slackpkg_path, packages):
                     slackpkg_path,
                     current_version[0]))
         elif not module.check_mode and newer_version is not None:
-            if version.parse(newer_version[1]) < version.parse(current_version[1]):
+            if LooseVersion(newer_version[1]) < LooseVersion(current_version[1]):
                 # don't do anything if a newer version than the one in the
                 # repository is installed already
                 continue
