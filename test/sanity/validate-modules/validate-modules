@@ -798,8 +798,9 @@ class ModuleValidator(Validator):
         strict_ansible_version = StrictVersion(should_be)
 
         for option, details in options.items():
-            new = not bool(existing_options.get(option))
-            if not new:
+            names = [option] + details.get('aliases', [])
+
+            if any(name in existing_options for name in names):
                 continue
 
             try:
