@@ -33,6 +33,7 @@ description:
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
     Please use M(iosxr_config) to configure iosxr devices.
+extends_documentation_fragment: iosxr
 options:
   commands:
     description:
