@@ -31,7 +31,7 @@ description:
   - It is recommended to restart C(crond) after changing the timezone, otherwise the jobs may run at the wrong time.
   - Several different tools are used depending on the OS/Distribution involved.
     For Linux it can use C(timedatectl)  or edit C(/etc/sysconfig/clock) or C(/etc/timezone) andC(hwclock).
-    On SmartOS , C(sm-set-timezone), for *BSD, C(/etc/localtime) is modified.
+    On SmartOS , C(sm-set-timezone), for BSD, C(/etc/localtime) is modified.
   - As of version 2.3 support was added for SmartOS and BSDs.
   - Windows, AIX and HPUX are not supported, please let us know if you find any other OS/distro in which this fails.
 version_added: "2.2"
