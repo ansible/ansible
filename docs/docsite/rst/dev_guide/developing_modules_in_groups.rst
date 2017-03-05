@@ -3,10 +3,9 @@ Information for submitting a group of modules
 
 .. contents:: Topics
 
-.. _module_dev_welcome:
+Submitting a group of modules
+`````````````````````````````
 
-Welcome
-```````
 This section discusses how to get multiple related modules into Ansible.
 
 This document is intended for both companies wishing to add modules for their own products as well as users of 3rd party products wishing to add Ansible functionality.
@@ -60,7 +59,7 @@ Where to get support
 
 Ansible has a thriving and knowledgeable community of module developers that is a great resource for getting your questions answered.
 
-On :doc:`community` you can find how to:
+On :doc:`../community` you can find how to:
 
 * Subscribe to the Mailing Lists - We suggest "Ansible Development List" (for codefreeze info) and "Ansible Announce list"
 * ``#ansible-devel`` - We have found that IRC ``#ansible-devel`` on FreeNodes IRC network works best for module developers so we can have an interactive dialogue.
@@ -92,7 +91,7 @@ And that's it.
 
 Before pushing your PR to GitHub it's a good idea to review the :doc:`developing_modules_checklist` again.
 
-After publishing your PR to https://github.com/ansible/ansible, a Shippable CI test should run within a few minutes. Check the results (at the end of the PR page) to ensure that it's passing (green). If it's not passing, inspect each of the results. Most of the errors should be self-explanatory and are often related to badly formatted documentation (see :doc:`YAMLSyntax`) or code that isn't valid Python 2.4 & Python 2.6 (see :doc:`developing_modules_python3`). If you aren't sure what a Shippable test message means, copy it into the PR along with a comment and we will review.
+After publishing your PR to https://github.com/ansible/ansible, a Shippable CI test should run within a few minutes. Check the results (at the end of the PR page) to ensure that it's passing (green). If it's not passing, inspect each of the results. Most of the errors should be self-explanatory and are often related to badly formatted documentation (see :doc:`../YAMLSyntax`) or code that isn't valid Python 2.4 & Python 2.6 (see :doc:`developing_modules_python3`). If you aren't sure what a Shippable test message means, copy it into the PR along with a comment and we will review.
 
 If you need further advice, consider join the ``#ansible-devel`` IRC channel (see how in the "Where to get support").
 

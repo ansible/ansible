@@ -22,22 +22,22 @@ Target: February/March 2017
   - Script that a committer can run to fork a PR and then merge to ansible/ansible **(mostly done)**
   - Move all the issues (remove old ones that can be removed) **(done)**
   - Enhance ansibullbot to accommodate the changes (jctanner) **(in progress, going well)**
-  
+
 - **Metadata**
 
   - Add metadata to the modules we ship **(done)**
   - Write code to use metadata in docs **(done)**
   - If needed for python2/3 write code to use metadata in module_common or pluginloader **(not needed)**
-  
+
 - **Documentation**
-  
+
   - Update developing_modules **(in progress, will continue in 2.4)**
   - Set up rst skeleton for module_utils docs.
   - Plugin development docs
   - Speed up `make webdocs` https://github.com/ansible/ansible/issues/17406   **(done)**
-  
+
 - **Windows platform** (nitzmahone)
-  
+
   - Pipelining support **(done)**
   - Become support **(done)**
   - Integrated kerberos ticket management (via ansible_user/ansible_password) **(done)**
@@ -60,7 +60,7 @@ Target: February/March 2017
   - Updates/rewrite to win_unzip, adopt to core (stretch) **(bump to 2.4)**
   - Updates to win_updates, adopt to core (stretch) **(bump to 2.4)**
   - Updates to win_package, adopt to core (+ deprecate win_msi) (stretch) **(bump to 2.4)**
-  
+
 - **Azure modules** (nitzmahone/mattclay)
 
   - Ensure Azure SDK rc6/RTM work **(done)**
@@ -69,7 +69,7 @@ Target: February/March 2017
   - Expose endpoint overrides (support AzureChinaCloud, Azure Stack) **(bump to 2.4)**
   - Get Azure tests running in CI (stretch, depends on availability of sponsored account) **(bump to 2.4, no CI resources)**
   - azure_rm_loadbalancer module (stretch) **(bump to 2.4)**
-  
+
 - **Networking**
 
   - Code stability and tidy up **(done)**
@@ -77,21 +77,22 @@ Target: February/March 2017
   - User facing documentation
   - Persistent connection manager **(done)**
   - Netconf/YANG implementation (only feature) **(done)**
-  - Deferred from 2.2: Network facts modules (sros) 
+  - Deferred from 2.2: Network facts modules (sros)
 
 - **Python3**
 
   - For 2.3:
-  
+
     - We want all tests to pass
+
       - Just the mercurial tests left because we haven't created an image with
         both python2 and python3 to test it on yet.
-      - Check by doing ``grep skip/python3 test/integration/targets/\*/aliases``
+      - Check by doing ``grep skip/python3 test/integration/targets/*/aliases``
     - If users report bugs on python3, these should be fixed and will prioritize our work on porting other modules.
-  - Still have to solve the python3-only and python2-only modules.  Thinking of doing this via metadata.  Will mean we have to use metadata at the module_common level.  Will also mean we don’t support py2-only or py3-only old style python modules. 
+  - Still have to solve the python3-only and python2-only modules.  Thinking of doing this via metadata.  Will mean we have to use metadata at the module_common level.  Will also mean we don’t support py2-only or py3-only old style python modules.
   - Note: Most of the currently tested ansible features now run.  But there’s still a lot of code that’s untested.
 
-- **Testing and CI** (mattclay)  
+- **Testing and CI** (mattclay)
 
   - *Static Code Analysis:* Create custom pylint extensions to automate detection of common Ansible specific issues reported during code review. Automate feedback on PRs for new code only to avoid noise from existing code which does not pass.
 
@@ -140,13 +141,13 @@ Target: February/March 2017
 
   - Add module_utils to the plugin loader (feature) [done]
   - Split plugin loader: Plugin_search, plugin_loader (modules only use first) [pushed to 2.4]
-  
+
 - **ansible-ssh**
 
   - Add a ‘ansible-ssh’ convenience and debugging tool (will slip to 2.4)
   - Tool to invoke an interactive ssh to a host with the same args/env/config that ansible would.
   - There are at least three external versions
-  
+
     - https://github.com/2ndQuadrant/ansible-ssh
     - https://github.com/haad/ansible-ssh
     - https://github.com/mlvnd/ansible-ssh
