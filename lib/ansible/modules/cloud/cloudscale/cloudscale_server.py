@@ -144,6 +144,19 @@ EXAMPLES = '''
     name: my-other-shiny-server
     state: absent
     api_token: xxxxxx
+
+# Start a server and wait for the SSH host keys to be generated
+- name: Start server and wait for SSH host keys
+  cloudscale_server:
+    name: my-cloudscale-server-with-ssh-key
+    image: debian-8
+    flavor: flex-4
+    ssh_keys: ssh-rsa XXXXXXXXXXX ansible@cloudscale
+    api_token: xxxxxx
+  register: server
+  until: server.ssh_fingerprints
+  retries: 60
+  delay: 2
 '''
 
 RETURN = '''
@@ -187,6 +200,16 @@ interfaces:
   returned: success when not state == absent
   type: list
   sample: [ { "type": "public", "addresses": [ ... ] } ]
+ssh_fingerprints:
+  description: A list of SSH host key fingerprints. Will be null until the host keys could be retrieved from the server.
+  returned: success when not state == absent
+  type: list
+  sample: ["ecdsa-sha2-nistp256 SHA256:XXXX", ... ]
+ssh_host_keys:
+  description: A list of SSH host keys. Will be null until the host keys could be retrieved from the server.
+  returned: success when not state == absent
+  type: list
+  sample: ["ecdsa-sha2-nistp256 XXXXX", ... ]
 anti_affinity_with:
   description: List of servers in the same anti-affinity group
   returned: success when not state == absent
