@@ -300,7 +300,7 @@ built in the ``docs/docsite/_build/html/$MODULENAME_module.html`` directory.
 
 To test your documentation against your ``argument_spec`` you can use ``validate-modules``. Note that this option isn't currently enabled in Shippable due to the time it takes to run.
 
-.. code-block:: shell-session
+.. code-block:: bash
 
    # If you don't already, ensure you are using your local checkout
    source hacking/env-setup
