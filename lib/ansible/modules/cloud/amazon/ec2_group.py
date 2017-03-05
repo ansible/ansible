@@ -133,14 +133,24 @@ EXAMPLES = '''
         group_desc: other example EC2 group
 '''
 
-import ipaddress
-
 try:
     import boto.ec2
     from boto.ec2.securitygroup import SecurityGroup
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+try:
+    import ipaddress
+    HAS_IPADDRESS = True
+    HAS_NETADDR = False
+except ImportError:
+    HAS_IPADDRESS = False
+    try:
+        import netaddr
+        HAS_NETADDR = True
+    except ImportError:
+        HAS_NETADDR = False
 
 
 def make_rule_key(prefix, rule, group_id, cidr_ip):
@@ -168,7 +178,14 @@ def addRulesToLookup(rules, prefix, dict):
 def validate_cidr_ip(module, cidr_ip):
     # takes cidr_ip string and returns valid cidr_ip string or aborts module execution
     try:
-        return str(ipaddress.IPv4Interface(cidr_ip.decode('utf-8')).network)
+        if HAS_IPADDRESS:
+            return str(ipaddress.IPv4Interface(cidr_ip.decode('utf-8')).network)
+        elif HAS_NETADDR:
+            return str(netaddr.IPNetwork(cidr_ip).cidr)
+        else:
+            module.warnings.append('CIDR validation was skipped - ipaddress or'
+                                   ' netaddr python module is required.')
+            return cidr_ip
     except:
         module.fail_json(msg='cidr_ip not valid: %s' % str(cidr_ip))
 
@@ -271,6 +288,8 @@ def main():
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
+
+    module.warnings = []
 
     name = module.params['name']
     description = module.params['description']
@@ -483,9 +502,9 @@ def main():
                 changed = True
 
     if group:
-        module.exit_json(changed=changed, group_id=group.id)
+        module.exit_json(changed=changed, group_id=group.id, warnings=module.warnings)
     else:
-        module.exit_json(changed=changed, group_id=None)
+        module.exit_json(changed=changed, group_id=None, warnings=module.warnings)
 
 # import module snippets
 from ansible.module_utils.basic import *
