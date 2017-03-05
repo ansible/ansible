@@ -57,7 +57,6 @@ options:
       - 'A dictionary array of subnets to add of the form: { cidr: ..., az: ... , resource_tags: ... }. Where az is the desired availability zone of the subnet, but it is not required. Tags (i.e.: resource_tags) is also optional and use dictionary form: { "Environment":"Dev", "Tier":"Web", ...}. All VPC subnets not in this list will be removed as well. As of 1.8, if the subnets parameter is not specified, no existing subnets will be modified.'
     required: false
     default: null
-    resource_tags: See resource_tags for VPC below. The main difference is subnet tags not specified here will be deleted.
   vpc_id:
     description:
       - A VPC id to terminate when state=absent

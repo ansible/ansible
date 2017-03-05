@@ -28,6 +28,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_bgp
+author: "Dave Kasberg (@dkasberg)"
 short_description: Manage BGP resources and attributes on devices running Lenovo CNOS
 description:
     - This module allows you to work with Border Gateway Protocol (BGP) related configurations.

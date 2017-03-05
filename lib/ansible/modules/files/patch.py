@@ -85,7 +85,7 @@ options:
     required: false
     type: "bool"
     default: "no"
-note:
+notes:
   - This module requires GNU I(patch) utility to be installed on the remote host.
 '''
 
