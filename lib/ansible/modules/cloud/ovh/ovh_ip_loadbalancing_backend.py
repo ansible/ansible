@@ -76,11 +76,10 @@ options:
             - The consumer key to use
     timeout:
         required: false
-        type: "int"
         default: 120
         description:
             - The timeout in seconds used to wait for a task to be
-              completed. Default is 120 seconds.
+              completed.
 
 '''
 

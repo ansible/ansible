@@ -134,7 +134,6 @@ options:
       - Provide a dictionary of C(key:value) build arguments that map to Dockerfile ARG directive.
       - Docker expects the value to be a string. For convenience any non-string values will be converted to strings.
       - Requires Docker API >= 1.21 and docker-py >= 1.7.0.
-    type: complex
     required: false
     version_added: "2.2"
   container_limits:
@@ -142,7 +141,6 @@ options:
       - A dictionary of limits applied to each container created by the build process.
     required: false
     version_added: "2.1"
-    type: complex
     contains:
       memory:
         description: Set memory limit for build

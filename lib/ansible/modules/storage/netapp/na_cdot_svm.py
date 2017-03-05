@@ -55,7 +55,7 @@ options:
   root_volume_aggregate:
     description:
     - The aggregate on which the root volume will be created.
-    note: required when C(state=present)
+    - Required when C(state=present).
 
   root_volume_security_style:
     description:
@@ -65,7 +65,7 @@ options:
     -   Possible values are 'unix', 'ntfs', 'mixed'.
     -   The 'unified' security style, which applies only to Infinite Volumes, cannot be applied to a Vserver's root volume.
     -   Valid options are "unix" for NFS, "ntfs" for CIFS, "mixed" for Mixed, "unified" for Unified.
-    note: required when C(state=present)
+    -   Required when C(state=present)
     choices: ['unix', 'ntfs', 'mixed', 'unified']
 
 '''

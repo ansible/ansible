@@ -36,20 +36,17 @@ options:
         description:
             - ZFS dataset name.
         alias: [ "ds", "dataset" ]
-        type: str
         required: yes
     recurse:
         description:
             - Specifies if properties for any children should be recursively
               displayed.
-        type: bool
         default: False
         required: false
     parsable:
         description:
             - Specifies if property values should be displayed in machine
               friendly format.
-        type: bool
         default: False
         required: false
     properties:
@@ -57,7 +54,6 @@ options:
             - Specifies which dataset properties should be queried in comma-separated format.
               For more information about dataset properties, check zfs(1M) man page.
         alias: [ "props" ]
-        type: str
         default: all
         required: false
     type:
@@ -65,14 +61,12 @@ options:
             - Specifies which datasets types to display. Multiple values have to be
               provided in comma-separated form.
         alias: [ "props" ]
-        type: str
         default: all
         choices: [ 'all', 'filesystem', 'volume', 'snapshot', 'bookmark' ]
         required: false
     depth:
         description:
             - Specifiies recurion depth.
-        type: int
         default: None
         required: false
 '''

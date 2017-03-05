@@ -90,11 +90,10 @@ options:
         default: 'gb'
 
     access:
-        description:
-        - Access allowed for the volume.
         required: false
         choices: ['readOnly', 'readWrite', 'locked', 'replicationTarget']
-        access_type_description:
+        description:
+        - Access allowed for the volume.
         - readOnly: Only read operations are allowed.
         - readWrite: Reads and writes are allowed.
         - locked: No reads or writes are allowed.

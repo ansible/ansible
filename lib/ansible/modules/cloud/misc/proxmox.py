@@ -53,7 +53,6 @@ options:
       - enable / disable https certificate verification
     default: false
     required: false
-    type: boolean
   node:
     description:
       - Proxmox VE node, when new VM will be created
@@ -111,56 +110,47 @@ options:
       - specifies network interfaces for the container
     default: null
     required: false
-    type:  A hash/dictionary defining interfaces
   mounts:
     description:
       - specifies additional mounts (separate disks) for the container
     default: null
     required: false
-    type:  A hash/dictionary defining mount points
     version_added: "2.2"
   ip_address:
     description:
       - specifies the address the container will be assigned
     default: null
     required: false
-    type: string
   onboot:
     description:
       - specifies whether a VM will be started during system bootup
     default: false
     required: false
-    type: boolean
   storage:
     description:
       - target storage
     default: 'local'
     required: false
-    type: string
   cpuunits:
     description:
       - CPU weight for a VM
     default: 1000
     required: false
-    type: integer
   nameserver:
     description:
       - sets DNS server IP address for a container
     default: null
     required: false
-    type: string
   searchdomain:
     description:
       - sets DNS search domain for a container
     default: null
     required: false
-    type: string
   timeout:
     description:
       - timeout for operations
     default: 30
     required: false
-    type: integer
   force:
     description:
       - forcing operations
@@ -169,7 +159,6 @@ options:
       - with states C(stopped) , C(restarted) allow to force stop instance
     default: false
     required: false
-    type: boolean
   state:
     description:
      - Indicate desired state of the instance

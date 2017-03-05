@@ -50,12 +50,12 @@ options:
           - Operation applied to the metric
           - Works in conjunction with period and evaluation_periods to determine the comparison value
         required: false
-        options: ['SampleCount','Average','Sum','Minimum','Maximum']
+        choices: ['SampleCount','Average','Sum','Minimum','Maximum']
     comparison:
         description:
           - Determines how the threshold value is compared
         required: false
-        options: ['<=','<','>','>=']
+        choices: ['<=','<','>','>=']
     threshold:
         description:
           - Sets the min/max bound for triggering the alarm
@@ -72,7 +72,7 @@ options:
         description:
           - The threshold's unit of measurement
         required: false
-        options: ['Seconds','Microseconds','Milliseconds','Bytes','Kilobytes','Megabytes','Gigabytes','Terabytes','Bits','Kilobits','Megabits','Gigabits','Terabits','Percent','Count','Bytes/Second','Kilobytes/Second','Megabytes/Second','Gigabytes/Second','Terabytes/Second','Bits/Second','Kilobits/Second','Megabits/Second','Gigabits/Second','Terabits/Second','Count/Second','None']
+        choices: ['Seconds','Microseconds','Milliseconds','Bytes','Kilobytes','Megabytes','Gigabytes','Terabytes','Bits','Kilobits','Megabits','Gigabits','Terabits','Percent','Count','Bytes/Second','Kilobytes/Second','Megabytes/Second','Gigabytes/Second','Terabytes/Second','Bits/Second','Kilobits/Second','Megabits/Second','Gigabits/Second','Terabits/Second','Count/Second','None']
     description:
         description:
           - A longer description of the alarm

@@ -45,7 +45,6 @@ options:
       - enable / disable https certificate verification
     default: false
     required: false
-    type: boolean
   node:
     description:
       - Proxmox VE node, when you will operate with template
@@ -76,19 +75,16 @@ options:
       - target storage
     default: 'local'
     required: false
-    type: string
   timeout:
     description:
       - timeout for operations
     default: 30
     required: false
-    type: integer
   force:
     description:
       - can be used only with C(state=present), exists template will be overwritten
     default: false
     required: false
-    type: boolean
   state:
     description:
      - Indicate desired state of the template
