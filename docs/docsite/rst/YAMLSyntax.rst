@@ -142,6 +142,16 @@ with a "{", YAML will think it is a dictionary, so you must quote it, like so::
 
     foo: "{{ variable }}"
 
+If your value starts with a quote the entire value must be quoted, not just part of it. Here are some additional examples of how to properly quote things::
+
+    foo: "{{ variable }}/additional/string/literal"
+    foo2: "{{ variable }}\\backslashes\\are\\also\\special\\characters"
+    foo3: "even if it's just a string literal it must all be quoted"
+
+Not valid::
+
+    foo: "E:\\path\\"rest\\of\\path
+
 The same applies for strings that start or contain any YAML special characters ``[] {} : > |`` .
 
 Boolean conversion is helpful, but this can be a problem when you want a literal `yes` or other boolean values as a string.
