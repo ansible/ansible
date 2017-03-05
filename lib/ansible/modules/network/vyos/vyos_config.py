@@ -34,6 +34,7 @@ description:
     configuration file and state of the active configuration.   All
     configuration statements are based on `set` and `delete` commands
     in the device configuration.
+extends_documentation_fragment: vyos
 options:
   lines:
     description:
