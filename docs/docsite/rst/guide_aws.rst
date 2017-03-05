@@ -42,6 +42,13 @@ For storing these in a vars_file, ideally encrypted with ansible-vault::
     ec2_access_key: "--REMOVED--"
     ec2_secret_key: "--REMOVED--"
 
+Note that if you store your credentials in vars_file, you need to refer to them in each AWS-module. For example::
+
+    - ec2
+      aws_access_key: "{{ec2_access_key}}"
+      aws_secret_key: "{{ec2_secret_key}}"
+      image: "..."
+
 .. _aws_provisioning:
 
 Provisioning
