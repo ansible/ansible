@@ -157,17 +157,26 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
                     # delete the ssh key with matching name but wrong fingerprint
                     args['name'] = name
                     self.cs.deleteSSHKeyPair(**args)
-                    args['publickey'] = public_key
-                    res = self.cs.registerSSHKeyPair(**args)
+
             elif ssh_key['name'].lower() != name.lower():
                 self.result['changed'] = True
                 if not self.module.check_mode:
                     # delete the ssh key with matching fingerprint but wrong name
                     args['name'] = ssh_key['name']
                     self.cs.deleteSSHKeyPair(**args)
-                    args['publickey'] = public_key
-                    args['name'] = name
-                    res = self.cs.registerSSHKeyPair(**args)
+                    # First match for key retrievment will be the fingerprint.
+                    # We need to make another lookup if there is a key with identical name.
+                    self.ssh_key = None
+                    ssh_key = self.get_ssh_key()
+                    if ssh_key['fingerprint'] != fingerprint:
+                        args['name'] = name
+                        self.cs.deleteSSHKeyPair(**args)
+
+            if not self.module.check_mode and self.result['changed']:
+                args['publickey'] = public_key
+                args['name'] = name
+                res = self.cs.registerSSHKeyPair(**args)
+
         if res and 'keypair' in res:
             ssh_key = res['keypair']
 
@@ -205,18 +214,19 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
         if not self.ssh_key:
             public_key = self.module.params.get('public_key')
             if public_key:
+                # Query by fingerprint of the public key
                 args_fingerprint = self._get_common_args()
                 args_fingerprint['fingerprint'] = self._get_ssh_fingerprint(public_key)
                 ssh_keys = self.cs.listSSHKeyPairs(**args_fingerprint)
                 if ssh_keys and 'sshkeypair' in ssh_keys:
                     self.ssh_key = ssh_keys['sshkeypair'][0]
-
-            args_name = self._get_common_args()
-            args_name['name'] = self.module.params.get('name')
-            ssh_keys = self.cs.listSSHKeyPairs(**args_name)
-            if ssh_keys and 'sshkeypair' in ssh_keys:
-                self.ssh_key = ssh_keys['sshkeypair'][0]
-
+            # When key has not been found by fingerprint, use the name
+            if not self.ssh_key:
+                args_name = self._get_common_args()
+                args_name['name'] = self.module.params.get('name')
+                ssh_keys = self.cs.listSSHKeyPairs(**args_name)
+                if ssh_keys and 'sshkeypair' in ssh_keys:
+                    self.ssh_key = ssh_keys['sshkeypair'][0]
         return self.ssh_key
 
     def _get_ssh_fingerprint(self, public_key):
