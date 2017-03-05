@@ -141,6 +141,15 @@ It is also possible to make groups of groups using the ``:children`` suffix. Jus
 If you need to store lists or hash data, or prefer to keep host and group specific variables
 separate from the inventory file, see the next section.
 
+.. _default_groups:
+
+Default groups
+++++++++++++++
+
+There are two default groups: ``all`` and ``ungrouped``. ``all`` contains every host.
+``ungrouped`` contains all hosts declared without an explicit section, even if they belong to
+another group.
+
 .. _splitting_out_vars:
 
 Splitting Out Host and Group Specific Data
