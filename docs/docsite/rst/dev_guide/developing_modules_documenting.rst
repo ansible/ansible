@@ -35,7 +35,9 @@ ANSIBLE_METADATA Block
 
 ANSIBLE_METADATA contains information about the module for use by other tools. At the moment, it informs other tools which type of maintainer the module has and to what degree users can rely on a module's behaviour remaining the same over time.
 
-For new modules, the following block can be simply added into your module::
+For new modules, the following block can be simply added into your module
+
+.. code-block:: python
 
    ANSIBLE_METADATA = {'status': ['preview'],
                        'supported_by': 'community',
@@ -55,7 +57,7 @@ Version 1.0 of the metadata
 Structure
 `````````
 
-Format::
+.. code-block:: python
 
   ANSIBLE_METADATA = {
       'version': '1.0',
@@ -301,8 +303,8 @@ To test your documentation against your ``argument_spec`` you can use ``validate
 .. code-block:: shell-session
 
    # If you don't already, ensure you are using your local checkout
-   $ source hacking/env-setup
-   $ ./test/sanity/validate-modules/validate-modules --arg-spec --warnings  lib/ansible/modules/your/modules/
+   source hacking/env-setup
+   ./test/sanity/validate-modules/validate-modules --arg-spec --warnings  lib/ansible/modules/your/modules/
 
 .. tip::
 

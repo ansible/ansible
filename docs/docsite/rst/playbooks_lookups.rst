@@ -105,7 +105,7 @@ To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and
 .. _passwordstore_lookup:
 
 The Passwordstore Lookup
-```````````````````
+````````````````````````
 .. versionadded:: 2.3
 
 The ``passwordstore`` lookup enables Ansible to retrieve, create or update passwords from
