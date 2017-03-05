@@ -24,7 +24,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = """
 ---
-module: eos_banner_
+module: eos_banner
 version_added: "2.3"
 author: "Peter Sprygada (@privateip)"
 short_description: Manage multiline banners on Arista EOS devices
@@ -32,6 +32,7 @@ description:
   - This will configure both login and motd banners on remote devices
     running Arista EOS.  It allows playbooks to add or remote
     banner text from the active running configuration.
+extends_documentation_fragment: eos
 options:
   banner:
     description:

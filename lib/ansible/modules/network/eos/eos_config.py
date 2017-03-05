@@ -34,6 +34,7 @@ description:
     an implementation for working with eos configuration sections in
     a deterministic way.  This module works with either CLI or eAPI
     transports.
+extends_documentation_fragment: eos
 options:
   lines:
     description:

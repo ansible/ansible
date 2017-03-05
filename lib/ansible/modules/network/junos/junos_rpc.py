@@ -33,6 +33,7 @@ description:
     specified RPC using the NetConf transport.  The reply is then
     returned to the playbook in the c(xml) key.  If an alternate output
     format is requested, the reply is transformed to the requested output.
+extends_documentation_fragment: junos
 options:
   rpc:
     description:

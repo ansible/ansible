@@ -38,6 +38,7 @@ description:
     use a custom pager that can cause this module to hang.  If the
     value of the environment variable C(ANSIBLE_VYOS_TERMINAL_LENGTH)
     is not set, the default number of 10000 is used.
+extends_documentation_fragment: vyos
 options:
   commands:
     description:

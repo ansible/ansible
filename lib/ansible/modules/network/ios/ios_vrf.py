@@ -33,6 +33,7 @@ description:
     Cisco IOS devices.  It allows playbooks to manage individual or
     the entire VRF collection.  It also supports purging VRF definitions from
     the configuration that are not explicitly defined.
+extends_documentation_fragment: ios
 options:
   vrfs:
     description:

@@ -38,6 +38,7 @@ description:
     Unix socket server. Use the options listed below to override the
     default configuration.
   - Requires EOS v4.12 or greater.
+extends_documentation_fragment: eos
 options:
   http:
     description:
