@@ -177,7 +177,7 @@ requirements:
   - "docker-py >= 1.7.0"
   - "Docker API >= 1.20"
 
-authors:
+author:
   - Pavel Antonov (@softzilla)
   - Chris Houseknecht (@chouseknecht)
   - James Tanner (@jctanner)

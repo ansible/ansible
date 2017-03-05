@@ -30,6 +30,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_vlan
+author: "Dave Kasberg (@dkasberg)"
 short_description: Manage VLAN resources and attributes on devices running Lenovo CNOS
 description:
     - This module allows you to work with VLAN related configurations. The

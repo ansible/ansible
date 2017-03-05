@@ -27,7 +27,6 @@ DOCUMENTATION = """
 module: pn_vrouter
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
-version: 1
 short_description: CLI command to create/delete/modify a vrouter.
 description:
   - Execute vrouter-create, vrouter-delete, vrouter-modify command.

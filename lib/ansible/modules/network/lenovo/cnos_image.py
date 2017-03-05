@@ -29,6 +29,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_image
+author: "Dave Kasberg (@dkasberg)"
 short_description: Perform firmware upgrade/download from a remote server on devices running Lenovo CNOS
 description:
     - This module allows you to work with switch firmware images. It provides a way to download a firmware image

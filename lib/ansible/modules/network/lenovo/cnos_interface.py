@@ -28,6 +28,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_interface
+author: "Dave Kasberg (@dkasberg)"
 short_description: Manage interface configuration on devices running Lenovo CNOS
 description:
     - This module allows you to work with interface related configurations. The operators used are
