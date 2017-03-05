@@ -27,7 +27,7 @@ ANSIBLE_METADATA = {'status': ['preview'], 'supported_by': 'community', 'version
 
 DOCUMENTATION = '''
 ---
-module: avi_api
+module: avi_api_session
 author: Gaurav Rastogi (grastogi@avinetworks.com)
 
 short_description: Avi API Module

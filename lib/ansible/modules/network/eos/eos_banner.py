@@ -24,7 +24,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = """
 ---
-module: eos_banner
+module: eos_banner_
 version_added: "2.3"
 author: "Peter Sprygada (@privateip)"
 short_description: Manage multiline banners on Arista EOS devices
