@@ -33,6 +33,7 @@ description:
     network devices running the JUNOS operating system.  It provides
     a set of arguments for creating, removing and updating locally
     defined accounts
+extends_documentation_fragment: junos
 options:
   users:
     description:

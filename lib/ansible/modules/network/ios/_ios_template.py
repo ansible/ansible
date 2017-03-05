@@ -35,6 +35,7 @@ description:
     commands that are not already configured.  The config source can
     be a set of commands or a template.
 deprecated: Deprecated in 2.2. Use M(ios_config) instead.
+extends_documentation_fragment: ios
 options:
   src:
     description:

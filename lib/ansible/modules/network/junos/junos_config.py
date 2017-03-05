@@ -33,6 +33,7 @@ description:
     configuration running on Juniper JUNOS devices.  It provides a set
     of arguments for loading configuration, performing rollback operations
     and zeroing the active configuration on the device.
+extends_documentation_fragment: junos
 options:
   lines:
     description:

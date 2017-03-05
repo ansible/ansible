@@ -35,6 +35,7 @@ description:
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
     Please use M(ios_config) to configure IOS devices.
+extends_documentation_fragment: ios
 options:
   commands:
     description:

@@ -33,6 +33,7 @@ description:
   - Runs one or more commands on remote devices running VyOS.
     This module can also be introspected to validate key parameters before
     returning successfully.
+extends_documentation_fragment: vyos
 options:
   hostname:
     description:

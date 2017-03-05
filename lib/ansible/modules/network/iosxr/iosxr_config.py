@@ -31,6 +31,7 @@ description:
     for segmenting configuration into sections.  This module provides
     an implementation for working with IOS XR configuration sections in
     a deterministic way.
+extends_documentation_fragment: iosxr
 options:
   lines:
     description:

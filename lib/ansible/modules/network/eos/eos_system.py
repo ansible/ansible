@@ -33,6 +33,7 @@ description:
     on Arista EOS devices.  It provides an option to configure host system
     parameters or remove those parameters from the device active
     configuration.
+extends_documentation_fragment: eos
 options:
   hostname:
     description:
