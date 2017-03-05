@@ -19,30 +19,30 @@ as we work through this tutorial.
 See :doc:`../modules` for a list of existing modules.
 
 Modules can be written in any language and are found in the path specified
-by :envvar:`ANSIBLE_LIBRARY` or the ``--module-path`` command line option or 
-in the `library section of the Ansible configration file <http://docs.ansible.com/ansible/intro_configuration.html#library>`_.   
+by :envvar:`ANSIBLE_LIBRARY` or the ``--module-path`` command line option or
+in the `library section of the Ansible configration file <http://docs.ansible.com/ansible/intro_configuration.html#library>`_.
 
 .. _module_dev_should_you:
 
 Should You Develop A Module?
 ````````````````````````````
-Before diving into the work of creating a new module, you should think about whether you actually *should* 
+Before diving into the work of creating a new module, you should think about whether you actually *should*
 develop a module. Ask the following questions:
 
-1. Does a similar module already exist? 
+1. Does a similar module already exist?
 
 There are a lot of existing modules available, and more that are in development. You should check out the list of existing modules at :doc:`../modules` or look at the `module PRs <https://github.com/ansible/ansible/labels/module>`_ for the ansible repository on Github to see if a module that does what you want exists or is in development.
 
-2. Should you use or develop an action plugin instead? 
+2. Should you use or develop an action plugin instead?
 
-Action plugins get run on the master instead of on the target. For modules like file/copy/template, some of the work needs to be done on the master before the module executes on the target. Action plugins execute first on the master and can then execute the normal module on the target if necessary. 
+Action plugins get run on the master instead of on the target. For modules like file/copy/template, some of the work needs to be done on the master before the module executes on the target. Action plugins execute first on the master and can then execute the normal module on the target if necessary.
 
-For more information about action plugins, go `here <https://docs.ansible.com/ansible/dev_guide/developing_plugins.html>`_. 
+For more information about action plugins, go `here <https://docs.ansible.com/ansible/dev_guide/developing_plugins.html>`_.
 
 3. Should you use a role instead?
 
-Check out the roles documentation `here <http://docs.ansible.com/ansible/playbooks_roles.html#roles>`_.  
- 
+Check out the roles documentation `here <http://docs.ansible.com/ansible/playbooks_roles.html#roles>`_.
+
 
 .. _developing_modules_all:
 
