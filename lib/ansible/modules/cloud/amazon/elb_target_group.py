@@ -23,8 +23,8 @@ DOCUMENTATION = '''
 module: elb_target_group
 short_description: Manage a target group for an Application load balancer
 description:
-    - Manage an AWS Application Elastic Load Balancer target group. See \
-    U(http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html) for details.
+    - "Manage an AWS Application Elastic Load Balancer target group. See \
+    U(http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html) for details."
 version_added: "2.3"
 author: "Rob White (@wimnat)"
 options:
@@ -39,8 +39,8 @@ options:
     choices: [ 'http', 'https' ]
   port:
     description:
-      - The port on which the targets receive traffic. This port is used unless you specify a port override when registering the target. Required if \
-      state=present.
+      - "The port on which the targets receive traffic. This port is used unless you specify a port override when registering the target. Required if \
+      state=present."
     required: false
   vpc_id:
     description:
@@ -82,8 +82,8 @@ options:
     default: 2
   successful_response_codes:
     description:
-      - "The HTTP codes to use when checking for a successful response from a target. You can specify multiple values (for example, \"200,202\") or a range \
-      of values (for example, \"200-299\")."
+      - "The HTTP codes to use when checking for a successful response from a target. You can specify multiple values (for example, \"200,202\") or a range of \
+      values (for example, \"200-299\")."
     required: false
     default: 200
   state:
