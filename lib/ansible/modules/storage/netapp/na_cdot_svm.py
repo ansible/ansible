@@ -49,8 +49,7 @@ options:
 
   root_volume:
     description:
-    - Root volume of the SVM.
-    note: required when C(state=present)
+    - Root volume of the SVM. Required when C(state=present).
 
   root_volume_aggregate:
     description:

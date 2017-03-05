@@ -66,7 +66,6 @@ options:
     description:
     - Set threshold in MB of bandwidth in alerts.
     default: null
-    type: integer
     version_added: "2.3"
   alert_bwout_enabled:
     description:

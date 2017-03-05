@@ -35,7 +35,7 @@ options:
   name:
     description: Name of the inittab entry.
     required: True
-    alias: service
+    aliases: service
   runlevel:
     description: Runlevel of the entry.
     required: True

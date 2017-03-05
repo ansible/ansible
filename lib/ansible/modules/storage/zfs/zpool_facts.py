@@ -35,7 +35,7 @@ options:
     name:
         description:
             - ZFS pool name.
-        alias: [ "pool", "zpool" ]
+        aliases: [ "pool", "zpool" ]
         required: false
     parsable:
         description:
@@ -47,7 +47,7 @@ options:
         description:
             - Specifies which dataset properties should be queried in comma-separated format.
               For more information about dataset properties, check zpool(1M) man page.
-        alias: [ "props" ]
+        aliases: [ "props" ]
         default: all
         required: false
 '''
