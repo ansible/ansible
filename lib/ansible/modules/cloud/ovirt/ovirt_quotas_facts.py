@@ -28,6 +28,7 @@ DOCUMENTATION = '''
 module: ovirt_quotas_facts
 short_description: Retrieve facts about one or more oVirt quotas
 version_added: "2.3"
+author: "Red Hat"
 description:
     - "Retrieve facts about one or more oVirt quotas."
 notes:
