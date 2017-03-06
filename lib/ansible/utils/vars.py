@@ -29,7 +29,7 @@ from collections import MutableMapping
 from ansible.compat.six import iteritems, string_types
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.parsing.splitter import parse_kv
 from ansible.module_utils._text import to_native, to_text
 
@@ -49,13 +49,19 @@ def get_unique_id():
         ("%012x" % cur_id)[:12],
     ])
 
+
+class AnsibleMutableMappingsError(AnsibleError):
+    '''An arg passed to _validate_mutable_mappings was not a MutableMapping.'''
+    pass
+
+
 def _validate_mutable_mappings(a, b):
     """
     Internal convenience function to ensure arguments are MutableMappings
 
     This checks that all arguments are MutableMappings or raises an error
 
-    :raises AnsibleError: if one of the arguments is not a MutableMapping
+    :raises AnsibleMutableMappingsError: if one of the arguments is not a MutableMapping
     """
 
     # If this becomes generally needed, change the signature to operate on
@@ -68,9 +74,11 @@ def _validate_mutable_mappings(a, b):
                 myvars.append(dumps(x))
             except:
                 myvars.append(to_native(x))
-        raise AnsibleError("failed to combine variables, expected dicts but got a '{0}' and a '{1}': \n{2}\n{3}".format(
-            a.__class__.__name__, b.__class__.__name__, myvars[0], myvars[1])
-        )
+
+        msg_tmp = "failed to combine variables, expected dicts but got a '{0}' and a '{1}': \n{2}\n{3}"
+        msg = msg_tmp.format(a.__class__.__name__, b.__class__.__name__,
+                             myvars[0], myvars[1])
+        raise AnsibleMutableMappingsError(msg)
 
 
 def combine_vars(a, b):
@@ -131,8 +139,10 @@ def load_extra_vars(loader, options):
             # Arguments as Key-value
             data = parse_kv(extra_vars_opt)
 
-        if data is not None:
+        try:
             extra_vars = combine_vars(extra_vars, data)
+        except AnsibleMutableMappingsError:
+            raise AnsibleOptionsError("Invalid extra vars data supplied. The extra var '%s' could not be made into a dictionary" % extra_vars_opt)
 
     return extra_vars
 
