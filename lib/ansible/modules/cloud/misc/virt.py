@@ -54,6 +54,7 @@ options:
       - start VM at host startup
     choices: [True, False]
     version_added: "2.3"
+    default: False
   uri:
     description:
       - libvirt connection uri
@@ -441,7 +442,7 @@ class Virt(object):
 def core(module):
 
     state      = module.params.get('state', None)
-    autostart  = module.params.get('autostart', False)
+    autostart  = module.params.get('autostart')
     guest      = module.params.get('name', None)
     command    = module.params.get('command', None)
     uri        = module.params.get('uri', None)
@@ -461,10 +462,8 @@ def core(module):
             module.fail_json(msg = "state change requires a guest specified")
 
         res['changed'] = False
-        autostart_res = v.autostart(guest, autostart)
-        if autostart_res is not False:
+        if v.autostart(guest, autostart):
             res['changed'] = True
-            res['msg'] = autostart_res
 
         if state == 'running':
             if v.status(guest) is 'paused':
