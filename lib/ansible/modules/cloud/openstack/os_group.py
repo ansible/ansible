@@ -146,7 +146,10 @@ def main():
 
     try:
         cloud = shade.operator_cloud(**module.params)
-        group = cloud.get_group(name, filters={'domain_id': domain_id})
+        if domain_id:
+            group = cloud.get_group(name, filters={'domain_id': domain_id})
+        else:
+            group = cloud.get_group(name)
 
         if module.check_mode:
             module.exit_json(changed=_system_state_change(state, description, group))
