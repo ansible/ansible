@@ -305,7 +305,6 @@ def _get_pip(module, env=None, executable=None):
 
     pip = None
     if executable is not None:
-        executable = os.path.expanduser(executable)
         if os.path.isabs(executable):
             pip = executable
         else:
@@ -402,7 +401,7 @@ def main():
             extra_args=dict(),
             editable=dict(default=True, type='bool'),
             chdir=dict(type='path'),
-            executable=dict(),
+            executable=dict(type='path'),
             umask=dict(),
         ),
         required_one_of=[['name', 'requirements']],
