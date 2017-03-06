@@ -142,24 +142,24 @@ def main():
     argument_spec = ec2_argument_spec()
 
     argument_spec.update(dict(
-        create_cloud_front_origin_access_identity = dict(required=False, type='bool'),
-        caller_reference = dict(required=False, type='string'),
-        comment = dict(required=False, type='string'),
-        create_distribution = dict(required=False, type='bool'),
-        create_distribution_with_tags = dict(required=False, type='bool'),
-        create_invalidation = dict(required=False, type='bool'),
-        create_streaming_distribution = dict(required=False, type='bool'),
-        create_streaming_distribution_with_tags = dict(required=False, type='bool'),
-        delete_cloud_front_origin_access_identity = dict(required=False, type='bool'),
-        delete_distribution = dict(required=False, type='bool'),
-        delete_streaming_distribution = dict(required=False, type='bool'),
-        generate_presigned_url = dict(required=False, type='bool'),
-        tag_resource =  dict(required=False, type='bool'),
-        untag_resource = dict(required=False, type='bool'),
-        update_cloud_front_origin_access_identity = dict(required=False, type='bool'),
-        update_distribution = dict(required=False, type='bool'),
-        update_streaming_distribution = dict(required=False, type='bool'),
-        content = dict(required=False, type='string')
+        create_cloud_front_origin_access_identity=dict(required=False, type='bool'),
+        caller_reference=dict(required=False, type='string'),
+        comment=dict(required=False, type='string'),
+        create_distribution=dict(required=False, type='bool'),
+        create_distribution_with_tags=dict(required=False, type='bool'),
+        create_invalidation=dict(required=False, type='bool'),
+        create_streaming_distribution=dict(required=False, type='bool'),
+        create_streaming_distribution_with_tags=dict(required=False, type='bool'),
+        delete_cloud_front_origin_access_identity=dict(required=False, type='bool'),
+        delete_distribution=dict(required=False, type='bool'),
+        delete_streaming_distribution=dict(required=False, type='bool'),
+        generate_presigned_url=dict(required=False, type='bool'),
+        tag_resource=dict(required=False, type='bool'),
+        untag_resource=dict(required=False, type='bool'),
+        update_cloud_front_origin_access_identity=dict(required=False, type='bool'),
+        update_distribution=dict(required=False, type='bool'),
+        update_streaming_distribution=dict(required=False, type='bool'),
+        content=dict(required=False, type='string')
     ))
 
     result = {}
