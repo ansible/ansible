@@ -29,11 +29,11 @@ DOCUMENTATION = """
 module: dellos9_config
 version_added: "2.2"
 author: "Dhivya P (@dhivyap)"
-short_description: Manage Dell OS9 configuration sections
+short_description: Manage Dell EMC Networking OS9 configuration sections
 description:
-  - Dell OS9 configurations use a simple block indent file syntax
+  - OS9 configurations use a simple block indent file syntax
     for segmenting configuration into sections.  This module provides
-    an implementation for working with Dell OS9 configuration sections in
+    an implementation for working with OS9 configuration sections in
     a deterministic way.
 extends_documentation_fragment: dellos9
 options:
@@ -41,17 +41,15 @@ options:
     description:
       - The ordered set of commands that should be configured in the
         section.  The commands must be the exact same commands as found
-        in the device running-config.  Be sure to note the configuration
-        command syntax as some commands are automatically modified by the
-        device config parser. This argument is mutually exclusive with I(src).
+        in the device running-config. Note the configuration
+        command syntax as the device config parser automatically modifies some commands. This argument is mutually exclusive with I(src).
     required: false
     default: null
     aliases: ['commands']
   parents:
     description:
       - The ordered set of parents that uniquely identify the section
-        the commands should be checked against.  If the parents argument
-        is omitted, the commands are checked against the set of top
+        the commands should be checked against.  If you omit the parents argument, the commands are checked against the set of top
         level or global commands.
     required: false
     default: null
@@ -67,8 +65,7 @@ options:
   before:
     description:
       - The ordered set of commands to push on to the command stack if
-        a change needs to be made.  This allows the playbook designer
-        the opportunity to perform configuration commands prior to pushing
+        a change needs to be made.  The playbook designer can use this opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
     required: false
@@ -76,20 +73,19 @@ options:
   after:
     description:
       - The ordered set of commands to append to the end of the command
-        stack if a change needs to be made.  Just like with I(before) this
-        allows the playbook designer to append a set of commands to be
+        stack if a change needs to be made. As with I(before), this
+        the playbook designer can append a set of commands to be
         executed after the command set.
     required: false
     default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
-        the set of commands against the current device config.  If
-        match is set to I(line), commands are matched line by line.  If
-        match is set to I(strict), command lines are matched with respect
-        to position.  If match is set to I(exact), command lines
-        must be an equal match.  Finally, if match is set to I(none), the
-        module will not attempt to compare the source configuration with
+        the set of commands against the current device config.  If you set
+        match to I(line), commands match line by line.  If you set
+        match to I(strict), command lines match by position.  If you set match to I(exact), command lines
+        must be an equal match.  Finally, if you set match to I(none), the
+        module does  not attempt to compare the source configuration with
         the running configuration on the remote device.
     required: false
     default: line
@@ -97,10 +93,10 @@ options:
   replace:
     description:
       - Instructs the module on the way to perform the configuration
-        on the device.  If the replace argument is set to I(line) then
-        the modified lines are pushed to the device in configuration
-        mode.  If the replace argument is set to I(block) then the entire
-        command block is pushed to the device in configuration mode if any
+        on the device.  If you set the replace argument to I(line), then
+        the modified lines push to the device in configuration
+        mode.  If you set the replace argument to I(block), then the entire
+        command block pushes to the device in configuration mode if any
         line is not correct.
     required: false
     default: line
@@ -109,9 +105,9 @@ options:
     description:
       - The I(update) argument controls how the configuration statements
         are processed on the remote device.  Valid choices for the I(update)
-        argument are I(merge) and I(check).  When the argument is set to
-        I(merge), the configuration changes are merged with the current
-        device running configuration.  When the argument is set to I(check)
+        argument are I(merge) and I(check).  When you set this argument to
+        I(merge), the configuration changes merge with the current
+        device running configuration.  When you set this argument to I(check)
         the configuration updates are determined but not actually configured
         on the remote device.
     required: false
@@ -127,15 +123,15 @@ options:
     choices: ['yes', 'no']
   config:
     description:
-      - The C(config) argument allows the playbook designer to supply
-        the base configuration to be used to validate configuration
-        changes necessary.  If this argument is provided, the module
-        will not download the running-config from the remote node.
+      - The playbook designer can use the  C(config) argument to supply
+        the base configuration to be used to validate necessary configuration
+        changes.  If you provide this argument, the module
+        does not download the running-config from the remote node.
     required: false
     default: null
   backup:
     description:
-      - This argument will cause the module to create a full backup of
+      - This argument causes the module to create a full backup of
         the current C(running-config) from the remote device before any
         changes are made.  The backup file is written to the C(backup)
         folder in the playbook root directory.  If the directory does not
@@ -149,8 +145,7 @@ notes:
 
   - This module requires to increase the ssh connection rate limit.
     Use the following command I(ip ssh connection-rate-limit 60)
-    to configure the same. This can be done via C(dellos9_config) module
-    as well.
+    to configure the same. This can also be done with the M(dellos9_config) module.
 """
 
 EXAMPLES = """
@@ -185,21 +180,22 @@ EXAMPLES = """
 
 RETURN = """
 updates:
-  description: The set of commands that will be pushed to the remote device
-  returned: always
+  description: The set of commands that will be pushed to the remote device.
+  returned: Always.
   type: list
   sample: ['...', '...']
 
 responses:
-  description: The set of responses from issuing the commands on the device
-  returned: when not check_mode
+  description: The set of responses from issuing the commands on the device.
+  returned: When not check_mode.
   type: list
   sample: ['...', '...']
 
 saved:
   description: Returns whether the configuration is saved to the startup
                configuration or not.
-  returned: when not check_mode
+  returned: When not check_mode.
+
   type: bool
   sample: True
 
