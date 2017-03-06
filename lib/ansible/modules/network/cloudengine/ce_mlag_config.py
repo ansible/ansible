@@ -65,12 +65,12 @@ options:
         default: null
     priority_id:
         description:
-            - Priority of a DFS group. The value is an integer that ranges from 1 to 254.
+            - Priority of a DFS group. The value is an integer that ranges from 1 to 254. The default value is 100.
         required: false
         default: null
     eth_trunk_id:
         description:
-            - Name of the peer-link interface. The value is a string of 1 to 63 characters.
+            - Name of the peer-link interface. The value is in the range from 0 to 511.
         required: false
         default: null
     peer_link_id:
@@ -160,10 +160,9 @@ updates:
     description: command sent to the device
     returned: always
     type: list
-    sample: ["peer-link 1"]
+    sample: {"peer-link 1"}
 '''
 
-import sys
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ce import load_config
@@ -345,7 +344,6 @@ class MlagConfig(object):
         # peer link info
         self.peer_link_info = None
 
-
     def init_module(self):
         """ init module """
 
@@ -389,7 +387,6 @@ class MlagConfig(object):
             xml_str = xml_str.replace('\r', '').replace('\n', '').\
                 replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
                 replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
-
             root = ElementTree.fromstring(xml_str)
             dfs_info = root.findall(
                 "data/dfs/groupInstances/groupInstance")
@@ -407,7 +404,6 @@ class MlagConfig(object):
                     for site in tmp:
                         if site.tag in ["localNickname", "pseudoNickname", "pseudoPriority"]:
                             dfs_group_info[site.tag] = site.text
-
             return dfs_group_info
 
     def get_peer_link_info(self):
@@ -513,16 +509,19 @@ class MlagConfig(object):
                 self.updates_cmd.append("priority %s" % self.priority_id)
             if self.ip_address:
                 if self.vpn_instance_name:
-                    self.updates_cmd.append("source ip %s vpn-instance %s" % (self.ip_address, self.vpn_instance_name))
+                    self.updates_cmd.append(
+                        "source ip %s vpn-instance %s" % (self.ip_address, self.vpn_instance_name))
                 else:
                     self.updates_cmd.append("source ip %s" % self.ip_address)
             if self.nickname:
                 self.updates_cmd.append("source nickname %s" % self.nickname)
             if self.pseudo_nickname:
                 if self.pseudo_priority:
-                    self.updates_cmd.append("pseudo-nickname %s priority %s" % (self.pseudo_nickname, self.pseudo_priority))
+                    self.updates_cmd.append(
+                        "pseudo-nickname %s priority %s" % (self.pseudo_nickname, self.pseudo_priority))
                 else:
-                    self.updates_cmd.append("pseudo-nickname %s" % self.pseudo_nickname)
+                    self.updates_cmd.append(
+                        "pseudo-nickname %s" % self.pseudo_nickname)
 
             self.changed = True
 
@@ -564,16 +563,19 @@ class MlagConfig(object):
             self.updates_cmd.append("priority %s" % self.priority_id)
         if self.ip_address:
             if self.vpn_instance_name:
-                self.updates_cmd.append("source ip %s vpn-instance %s" % (self.ip_address, self.vpn_instance_name))
+                self.updates_cmd.append(
+                    "source ip %s vpn-instance %s" % (self.ip_address, self.vpn_instance_name))
             else:
                 self.updates_cmd.append("source ip %s" % self.ip_address)
         if self.nickname:
             self.updates_cmd.append("source nickname %s" % self.nickname)
         if self.pseudo_nickname:
             if self.pseudo_priority:
-                self.updates_cmd.append("pseudo-nickname %s priority %s" % (self.pseudo_nickname, self.pseudo_priority))
+                self.updates_cmd.append(
+                    "pseudo-nickname %s priority %s" % (self.pseudo_nickname, self.pseudo_priority))
             else:
-                self.updates_cmd.append("pseudo-nickname %s" % self.pseudo_nickname)
+                self.updates_cmd.append(
+                    "pseudo-nickname %s" % self.pseudo_nickname)
 
         self.changed = True
 
@@ -603,20 +605,22 @@ class MlagConfig(object):
 
         if self.ip_address and self.dfs_group_info["ipAddress"] == self.ip_address:
             if self.vpn_instance_name and self.dfs_group_info["srcVpnName"] == self.vpn_instance_name:
-                cmd = "source ip %s vpn-instance %s" % (self.ip_address, self.vpn_instance_name)
+                cmd = "source ip %s vpn-instance %s" % (
+                    self.ip_address, self.vpn_instance_name)
                 self.cli_add_command(cmd, True)
             else:
-                cmd =  "source ip %s" % self.ip_address
+                cmd = "source ip %s" % self.ip_address
                 self.cli_add_command(cmd, True)
             change = True
 
         if self.nickname and self.dfs_group_info["localNickname"] == self.nickname:
-            cmd =  "source nickname %s" % self.nickname
+            cmd = "source nickname %s" % self.nickname
             self.cli_add_command(cmd, True)
             change = True
         if self.pseudo_nickname and self.dfs_group_info["pseudoNickname"] == self.pseudo_nickname:
             if self.pseudo_priority:
-                cmd = "pseudo-nickname %s priority %s" % (self.pseudo_nickname, self.pseudo_priority)
+                cmd = "pseudo-nickname %s priority %s" % (
+                    self.pseudo_nickname, self.pseudo_priority)
                 self.cli_add_command(cmd, True)
             else:
                 cmd = "pseudo-nickname %s" % self.pseudo_nickname
@@ -628,26 +632,30 @@ class MlagConfig(object):
 
     def modify_peer_link(self):
         """modify peer link info"""
+
         eth_trunk_id = "Eth-Trunk"
         eth_trunk_id += self.eth_trunk_id
-        conf_str = CE_NC_MERGE_PEER_LINK_INFO % (self.peer_link_id, eth_trunk_id)
+        conf_str = CE_NC_MERGE_PEER_LINK_INFO % (
+            self.peer_link_id, eth_trunk_id)
         recv_xml = set_nc_config(self.module, conf_str)
         if "<ok/>" not in recv_xml:
             self.module.fail_json(
                 msg='Error: Merge peer link failed.')
-        self.updates_cmd.append("peer-link 1")
+        self.updates_cmd.append("peer-link %s" % self.peer_link_id)
         self.changed = True
 
     def delete_peer_link(self):
         """delete peer link info"""
+
         eth_trunk_id = "Eth-Trunk"
         eth_trunk_id += self.eth_trunk_id
-        conf_str = CE_NC_DELETE_PEER_LINK_INFO % (self.peer_link_id, eth_trunk_id)
+        conf_str = CE_NC_DELETE_PEER_LINK_INFO % (
+            self.peer_link_id, eth_trunk_id)
         recv_xml = set_nc_config(self.module, conf_str)
         if "<ok/>" not in recv_xml:
             self.module.fail_json(
                 msg='Error: Delete peer link failed.')
-        self.updates_cmd.append("undo peer-link 1")
+        self.updates_cmd.append("undo peer-link %s" % self.peer_link_id)
         self.changed = True
 
     def check_params(self):
@@ -749,20 +757,27 @@ class MlagConfig(object):
 
     def get_existing(self):
         """get existing info"""
-
+        if self.dfs_group_id:
+            self.dfs_group_info = self.get_dfs_group_info()
+        if self.peer_link_id and not self.eth_trunk_id:
+            self.peer_link_info = self.get_peer_link_info()
         if self.dfs_group_info:
             if self.dfs_group_id:
                 self.existing["dfs_group_id"] = self.dfs_group_info["groupId"]
             if self.nickname:
-                self.existing["nickname"] = self.dfs_group_info["localNickname"]
+                self.existing["nickname"] = self.dfs_group_info[
+                    "localNickname"]
             if self.pseudo_nickname:
-                self.existing["pseudo_nickname"] = self.dfs_group_info["pseudoNickname"]
+                self.existing["pseudo_nickname"] = self.dfs_group_info[
+                    "pseudoNickname"]
             if self.pseudo_priority:
-                self.existing["pseudo_priority"] = self.dfs_group_info["pseudoPriority"]
+                self.existing["pseudo_priority"] = self.dfs_group_info[
+                    "pseudoPriority"]
             if self.ip_address:
                 self.existing["ip_address"] = self.dfs_group_info["ipAddress"]
             if self.vpn_instance_name:
-                self.existing["vpn_instance_name"] = self.dfs_group_info["srcVpnName"]
+                self.existing["vpn_instance_name"] = self.dfs_group_info[
+                    "srcVpnName"]
             if self.priority_id:
                 self.existing["priority_id"] = self.dfs_group_info["priority"]
         if self.peer_link_info:
@@ -773,27 +788,34 @@ class MlagConfig(object):
 
     def get_end_state(self):
         """get end state info"""
-        self.dfs_group_info = self.get_dfs_group_info()
-        self.peer_link_info = self.get_peer_link_info()
+        if self.dfs_group_id:
+            self.dfs_group_info = self.get_dfs_group_info()
+        if self.peer_link_id and not self.eth_trunk_id:
+            self.peer_link_info = self.get_peer_link_info()
 
         if self.dfs_group_info:
             if self.dfs_group_id:
                 self.end_state["dfs_group_id"] = self.dfs_group_info["groupId"]
             if self.nickname:
-                self.end_state["nickname"] = self.dfs_group_info["localNickname"]
+                self.end_state["nickname"] = self.dfs_group_info[
+                    "localNickname"]
             if self.pseudo_nickname:
-                self.end_state["pseudo_nickname"] = self.dfs_group_info["pseudoNickname"]
+                self.end_state["pseudo_nickname"] = self.dfs_group_info[
+                    "pseudoNickname"]
             if self.pseudo_priority:
-                self.end_state["pseudo_priority"] = self.dfs_group_info["pseudoPriority"]
+                self.end_state["pseudo_priority"] = self.dfs_group_info[
+                    "pseudoPriority"]
             if self.ip_address:
                 self.end_state["ip_address"] = self.dfs_group_info["ipAddress"]
             if self.vpn_instance_name:
-                self.end_state["vpn_instance_name"] = self.dfs_group_info["srcVpnName"]
+                self.end_state["vpn_instance_name"] = self.dfs_group_info[
+                    "srcVpnName"]
             if self.priority_id:
                 self.end_state["priority_id"] = self.dfs_group_info["priority"]
         if self.peer_link_info:
             if self.eth_trunk_id:
-                self.end_state["eth_trunk_id"] = self.peer_link_info["portName"]
+                self.end_state[
+                    "eth_trunk_id"] = self.peer_link_info["portName"]
             if self.peer_link_id:
                 self.end_state["peer_link_id"] = self.peer_link_info["linkId"]
 
@@ -801,9 +823,6 @@ class MlagConfig(object):
         """worker"""
 
         self.check_params()
-
-        self.dfs_group_info = self.get_dfs_group_info()
-        self.peer_link_info = self.get_peer_link_info()
         self.get_existing()
         self.get_proposed()
         if self.dfs_group_id:
@@ -811,6 +830,14 @@ class MlagConfig(object):
                 if self.dfs_group_info:
                     if self.nickname or self.pseudo_nickname or self.pseudo_priority or self.priority_id \
                             or self.ip_address or self.vpn_instance_name:
+                        if self.nickname:
+                            if self.dfs_group_info["ipAddress"] != "0.0.0.0":
+                                self.module.fail_json(msg='Error: nickname and ip_address can not be exist at the '
+                                                          'same time.')
+                        if self.ip_address:
+                            if self.dfs_group_info["localNickname"] != "0":
+                                self.module.fail_json(msg='Error: nickname and ip_address can not be exist at the '
+                                                          'same time.')
                         self.modify_dfs_group()
                 else:
                     self.create_dfs_group()
@@ -823,6 +850,13 @@ class MlagConfig(object):
                     self.delete_dfs_group()
                 else:
                     self.delete_dfs_group_attribute()
+
+        if self.eth_trunk_id and not self.peer_link_id:
+            self.module.fail_json(
+                msg='Error: eth_trunk_id and peer_link_id must be config at the same time.')
+        if self.peer_link_id and not self.eth_trunk_id:
+            self.module.fail_json(
+                msg='Error: eth_trunk_id and peer_link_id must be config at the same time.')
 
         if self.eth_trunk_id and self.peer_link_id:
             if self.state == "present":
@@ -857,7 +891,8 @@ def main():
         priority_id=dict(type='str'),
         eth_trunk_id=dict(type='str'),
         peer_link_id=dict(type='str'),
-        state=dict(type='str', default='present', choices=['present', 'absent'])
+        state=dict(type='str', default='present',
+                   choices=['present', 'absent'])
     )
     argument_spec.update(ce_argument_spec)
     module = MlagConfig(argument_spec=argument_spec)
