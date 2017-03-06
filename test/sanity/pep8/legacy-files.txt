@@ -104,7 +104,7 @@ lib/ansible/modules/cloud/webfaction/webfaction_site.py
 lib/ansible/modules/clustering/consul.py
 lib/ansible/modules/commands/script.py
 lib/ansible/modules/database/influxdb/influxdb_retention_policy.py
-lib/ansible/modules/database/misc/mongodb_user.py
+lib/ansible/modules/database/mongodb/mongodb_user.py
 lib/ansible/modules/database/mssql/mssql_db.py
 lib/ansible/modules/database/mysql/mysql_db.py
 lib/ansible/modules/database/mysql/mysql_replication.py
