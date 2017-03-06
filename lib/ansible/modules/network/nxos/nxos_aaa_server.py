@@ -24,6 +24,7 @@ DOCUMENTATION = '''
 ---
 
 module: nxos_aaa_server
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages AAA server global configuration.
 description:

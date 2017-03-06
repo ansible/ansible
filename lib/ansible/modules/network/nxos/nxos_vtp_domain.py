@@ -22,6 +22,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_vtp_domain
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages VTP domain configuration.
 description:

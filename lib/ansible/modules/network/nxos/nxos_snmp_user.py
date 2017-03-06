@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_snmp_user
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages SNMP users for monitoring.
 description:

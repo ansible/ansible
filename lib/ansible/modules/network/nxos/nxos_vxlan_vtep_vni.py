@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_vxlan_vtep_vni
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Creates a Virtual Network Identifier member (VNI)
 description:

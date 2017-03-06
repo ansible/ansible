@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_snapshot
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manage snapshots of the running states of selected features.
 description:

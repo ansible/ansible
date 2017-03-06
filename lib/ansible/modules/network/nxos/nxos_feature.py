@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_feature
+extends_documentation_fragment: nxos
 version_added: "2.1"
 short_description: Manage features in NX-OS switches.
 description:
