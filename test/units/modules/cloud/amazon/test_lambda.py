@@ -65,6 +65,9 @@ base_module_args={
     "timeout" : 3,
     "handler": 'lambda_python.my_handler'
 }
+module_args_with_environment=dict(base_module_args, environment_variables={
+    "variable_name": "variable_value"
+})
 
 
 def make_mock_no_connection_connection(config):
@@ -205,6 +208,30 @@ def test_update_lambda_if_only_one_config_item_changed():
         "lambda function update called multiple times when only one time should be needed"
     assert(len(lambda_client_double.update_function_code.mock_calls) == 0), \
         "updated lambda code when no change should have happened"
+
+def test_update_lambda_if_added_environment_variable():
+
+    set_module_args(module_args_with_environment)
+    (boto3_conn_double,lambda_client_double)=make_mock_connection(base_lambda_config)
+
+    with patch.object(lda, 'boto3_conn', boto3_conn_double):
+        try:
+            lda.main()
+        except SystemExit:
+            pass
+
+    # guard against calling other than for a lambda connection (e.g. IAM)
+    assert(len(boto3_conn_double.mock_calls) == 1), "multiple boto connections used unexpectedly"
+    assert(len(lambda_client_double.update_function_configuration.mock_calls) > 0), \
+        "failed to update lambda function when configuration changed"
+    assert(len(lambda_client_double.update_function_configuration.mock_calls) < 2), \
+        "lambda function update called multiple times when only one time should be needed"
+    assert(len(lambda_client_double.update_function_code.mock_calls) == 0), \
+        "updated lambda code when no change should have happened"
+
+    (update_args, update_kwargs)=lambda_client_double.update_function_configuration.call_args
+    assert (len(update_kwargs) > 0), "expected update configuration called with keyword args, none found"
+    assert update_kwargs['Environment']['Variables'] == module_args_with_environment['environment_variables']
 
 def test_dont_update_lambda_if_nothing_changed():
 
