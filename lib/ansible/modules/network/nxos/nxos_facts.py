@@ -162,7 +162,6 @@ kickstart:
   returned: when legacy is configured
   type: str
 module:
-extends_documentation_fragment: nxos
   description: A hash of facts about the modules in a remote device
   returned: when legacy is configured
   type: dict
