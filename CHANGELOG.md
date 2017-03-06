@@ -30,6 +30,7 @@ Ansible Changes By Release
 * added optional 'piped' transfer method to ssh plugin for when scp and sftp are missing
 * default controlpersist path is now a custom hash of host-port-user to avoid the socket path length errors for long hostnames
 * Various fixes for Python3 compatibility
+* The AWS Lambda module previously ignored changes that only affected one parameter. Existing deployments may have outstanding changes that this bugfix will apply.
 
 ###Deprecations:
 * Specifying --tags (or --skip-tags) multiple times on the command line
