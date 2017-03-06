@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_install_os
+extends_documentation_fragment: nxos
 short_description: Set boot options like boot image and kickstart image.
 description:
     - Install an operating system by setting the boot options like boot

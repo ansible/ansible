@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_file_copy
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Copy a file to a remote NXOS device over SCP.
 description:

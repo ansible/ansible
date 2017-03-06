@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_pim_rp_address
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages configuration of an PIM static RP address instance.
 description:

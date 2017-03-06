@@ -24,6 +24,7 @@ DOCUMENTATION = '''
 ---
 
 module: nxos_ntp_auth
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages NTP authentication.
 description:

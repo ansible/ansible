@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_ospf_vrf
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages a VRF for an OSPF router.
 description:
