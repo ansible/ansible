@@ -16,7 +16,10 @@ Standard Loops
 To save some typing, repeated tasks can be written in short-hand like so::
 
     - name: add several users
-      user: name={{ item }} state=present groups=wheel
+      user:
+        name: "{{ item }}"
+        state: present
+        groups: "wheel"
       with_items:
          - testuser1
          - testuser2
@@ -28,9 +31,15 @@ If you have defined a YAML list in a variables file, or the 'vars' section, you 
 The above would be the equivalent of::
 
     - name: add user testuser1
-      user: name=testuser1 state=present groups=wheel
+      user:
+        name: "testuser1"
+        state: present
+        groups: "wheel"
     - name: add user testuser2
-      user: name=testuser2 state=present groups=wheel
+      user:
+        name: "testuser2"
+        state: present
+        groups: "wheel"
 
 The yum and apt modules use with_items to execute fewer package manager transactions.
 
@@ -38,7 +47,10 @@ Note that the types of items you iterate over with 'with_items' do not have to b
 If you have a list of hashes, you can reference subkeys using things like::
 
     - name: add several users
-      user: name={{ item.name }} state=present groups={{ item.groups }}
+      user:
+        name: "{{ item.name }}"
+        state: present
+        groups: "{{ item.groups }}"
       with_items:
         - { name: 'testuser1', groups: 'wheel' }
         - { name: 'testuser2', groups: 'root' }
@@ -55,7 +67,11 @@ Nested Loops
 Loops can be nested as well::
 
     - name: give users access to multiple databases
-      mysql_user: name={{ item[0] }} priv={{ item[1] }}.*:ALL append_privs=yes password=foo
+      mysql_user:
+        name: "{{ item[0] }}"
+        priv: "{{ item[1] }}.*:ALL"
+        append_privs: yes
+        password: "foo"
       with_nested:
         - [ 'alice', 'bob' ]
         - [ 'clientdb', 'employeedb', 'providerdb' ]
@@ -63,7 +79,11 @@ Loops can be nested as well::
 As with the case of 'with_items' above, you can use previously defined variables.::
 
     - name: here, 'users' contains the above list of employees
-      mysql_user: name={{ item[0] }} priv={{ item[1] }}.*:ALL append_privs=yes password=foo
+      mysql_user:
+        name: "{{ item[0] }}"
+        priv: "{{ item[1] }}.*:ALL"
+        append_privs: yes
+        password: "foo"
       with_nested:
         - "{{ users }}"
         - [ 'clientdb', 'employeedb', 'providerdb' ]
@@ -90,8 +110,10 @@ And you want to print every user's name and phone number.  You can loop through 
 
     tasks:
       - name: Print phone records
-        debug: msg="User {{ item.key }} is {{ item.value.name }} ({{ item.value.telephone }})"
-        with_dict: "{{ users }}"
+        debug:
+          msg: "User {{ item.key }} is {{ item.value.name }} ({{ item.value.telephone }})"
+        with_dict:
+          - "{{ users }}"
 
 .. _looping_over_fileglobs:
 
@@ -138,12 +160,20 @@ Looping over Fileglobs
       tasks:
 
         # first ensure our target directory exists
-        - file: dest=/etc/fooapp state=directory
+        - name: Ensure target directory exists
+          file:
+            dest: "/etc/fooapp"
+            state: directory
 
         # copy each file over that matches the given pattern
-        - copy: src={{ item }} dest=/etc/fooapp/ owner=root mode=600
+        - name: Copy each file over that matches the given pattern
+          copy:
+            src: "{{ item }}"
+            dest: "/etc/fooapp/"
+            owner: "root"
+            mode: 600
           with_fileglob:
-            - /playbooks/files/fooapp/*
+            - "/playbooks/files/fooapp/*"
 
 .. note:: When using a relative path with ``with_fileglob`` in a role, Ansible resolves the path relative to the `roles/<rolename>/files` directory.
 
@@ -161,7 +191,8 @@ Suppose you have the following variable data was loaded in via somewhere::
 And you want the set of '(a, 1)' and '(b, 2)' and so on.   Use 'with_together' to get this::
 
     tasks:
-        - debug: msg="{{ item.0 }} and {{ item.1 }}"
+        - debug:
+            msg: "{{ item.0 }} and {{ item.1 }}"
           with_together:
             - "{{ alpha }}"
             - "{{ numbers }}"
@@ -203,10 +234,18 @@ How might that be accomplished?  Let's assume you had the following defined and 
 
 It might happen like so::
 
-    - user: name={{ item.name }} state=present generate_ssh_key=yes
-      with_items: "{{ users }}"
+    - name: Create User
+      user:
+        name: "{{ item.name }}"
+        state: present
+        generate_ssh_key: yes
+      with_items:
+        - "{{ users }}"
 
-    - authorized_key: "user={{ item.0.name }} key='{{ lookup('file', item.1) }}'"
+    - name: Set authorized ssh key
+      authorized_key:
+        user: "{{ item.0.name }}"
+        key: "{{ lookup('file', item.1) }}"
       with_subelements:
          - "{{ users }}"
          - authorized
@@ -214,10 +253,14 @@ It might happen like so::
 Given the mysql hosts and privs subkey lists, you can also iterate over a list in a nested subkey::
 
     - name: Setup MySQL users
-      mysql_user: name={{ item.0.name }} password={{ item.0.mysql.password }} host={{ item.1 }} priv={{ item.0.mysql.privs | join('/') }}
+      mysql_user:
+        name: "{{ item.0.name }}"
+        password: "{{ item.0.mysql.password }}"
+        host: "{{ item.1 }}"
+        priv: "{{ item.0.mysql.privs | join('/') }}"
       with_subelements:
         - "{{ users }}"
-        - mysql.hosts
+        - "{{ mysql.hosts }}"
 
 Subelements walks a list of hashes (aka dictionaries) and then traverses a list with a given (nested sub-)key inside of those
 records.
@@ -249,21 +292,39 @@ Negative numbers are not supported.  This works as follows::
       tasks:
 
         # create groups
-        - group: name=evens state=present
-        - group: name=odds state=present
+        - group:
+            name: "evens"
+            state: present
+        - group:
+            name: "odds"
+            state: present
 
         # create some test users
-        - user: name={{ item }} state=present groups=evens
-          with_sequence: start=0 end=32 format=testuser%02x
+        - user:
+            name: "{{ item }}"
+            state: present
+            groups: "evens"
+          with_sequence:
+            - start: 0
+            - end: 32
+            - format: testuser%02x
 
         # create a series of directories with even numbers for some reason
-        - file: dest=/var/stuff/{{ item }} state=directory
-          with_sequence: start=4 end=16 stride=2
+        - file:
+            dest: "/var/stuff/{{ item }}"
+            state: directory
+          with_sequence:
+            - start: 4
+            - end: 16
+            - stride: 2
 
         # a simpler way to use the sequence plugin
         # create 4 groups
-        - group: name=group{{ item }} state=present
-          with_sequence: count=4
+        - group:
+            name: "group{{ item }}"
+            state: present
+          with_sequence:
+            count: 4
 
 .. _random_choice:
 
@@ -273,7 +334,8 @@ Random Choices
 The 'random_choice' feature can be used to pick something at random.  While it's not a load balancer (there are modules
 for those), it can somewhat be used as a poor man's load balancer in a MacGyver like situation::
 
-    - debug: msg={{ item }}
+    - debug:
+        msg: "{{ item }}"
       with_random_choice:
          - "go through the door"
          - "drink from the goblet"
@@ -293,7 +355,8 @@ Do-Until Loops
 
 Sometimes you would want to retry a task until a certain condition is met.  Here's an example::
 
-    - action: shell /usr/bin/foo
+    - action:
+        shell /usr/bin/foo
       register: result
       until: result.stdout.find("all systems go") != -1
       retries: 5
@@ -316,7 +379,9 @@ This isn't exactly a loop, but it's close.  What if you want to use a reference 
 that matches a given criteria, and some of the filenames are determined by variable names?  Yes, you can do that as follows::
 
     - name: INTERFACES | Create Ansible header for /etc/network/interfaces
-      template: src={{ item }} dest=/etc/foo.conf
+      template:
+        src: "{{ item }}"
+        dest: "/etc/foo.conf"
       with_first_found:
         - "{{ ansible_virtualization_type }}_foo.conf"
         - "default_foo.conf"
@@ -324,7 +389,12 @@ that matches a given criteria, and some of the filenames are determined by varia
 This tool also has a long form version that allows for configurable search paths.  Here's an example::
 
     - name: some configuration template
-      template: src={{ item }} dest=/etc/file.cfg mode=0444 owner=root group=root
+      template:
+        src: "{{ item }}"
+        dest: "/etc/file.cfg"
+        mode: 0444
+        owner: "root"
+        group: "root"
       with_first_found:
         - files:
            - "{{ inventory_hostname }}/etc/file.cfg"
@@ -348,8 +418,9 @@ Ansible provides a neat way to do that, though you should remember, this is alwa
 machine::
 
     - name: Example of looping over a command result
-      shell: /usr/bin/frobnicate {{ item }}
-      with_lines: /usr/bin/frobnications_per_host --param {{ inventory_hostname }}
+      shell: "/usr/bin/frobnicate {{ item }}"
+      with_lines:
+        - "/usr/bin/frobnications_per_host --param {{ inventory_hostname }}"
 
 Ok, that was a bit arbitrary.  In fact, if you're doing something that is inventory related you might just want to write a dynamic
 inventory source instead (see :doc:`intro_dynamic_inventory`), but this can be occasionally useful in quick-and-dirty implementations.
@@ -357,12 +428,13 @@ inventory source instead (see :doc:`intro_dynamic_inventory`), but this can be o
 Should you ever need to execute a command remotely, you would not use the above method.  Instead do this::
 
     - name: Example of looping over a REMOTE command result
-      shell: /usr/bin/something
+      shell: "/usr/bin/something"
       register: command_result
 
     - name: Do something with each result
-      shell: /usr/bin/something_else --param {{ item }}
-      with_items: "{{ command_result.stdout_lines }}"
+      shell: "/usr/bin/something_else --param {{ item }}"
+      with_items:
+        - "{{ command_result.stdout_lines }}"
 
 .. _indexed_lists:
 
@@ -377,8 +449,10 @@ If you want to loop over an array and also get the numeric index of where you ar
 It's uncommonly used::
 
     - name: indexed loop demo
-      debug: msg="at array position {{ item.0 }} there is a value {{ item.1 }}"
-      with_indexed_items: "{{ some_list }}"
+      debug:
+        msg: "at array position {{ item.0 }} there is a value {{ item.1 }}"
+      with_indexed_items:
+        - "{{ some_list }}"
 
 .. _using_ini_with_a_loop:
 
@@ -400,8 +474,13 @@ The ini plugin can use regexp to retrieve a set of keys. As a consequence, we ca
 
 Here is an example of using ``with_ini``::
 
-    - debug: msg="{{ item }}"
-      with_ini: value[1-2] section=section1 file=lookup.ini re=true
+    - debug:
+        msg: "{{ item }}"
+      with_ini:
+        - value[1-2]
+        - section: section1
+        - file: "lookup.ini"
+        - re: true
 
 And here is the returned value::
 
@@ -451,7 +530,9 @@ a really crazy hypothetical datastructure::
 As you can see the formatting of packages in these lists is all over the place.  How can we install all of the packages in both lists?::
 
     - name: flattened loop demo
-      yum: name={{ item }} state=installed
+      yum:
+        name: "{{ item }}"
+        state: present
       with_flattened:
          - "{{ packages_base }}"
          - "{{ packages_apps }}"
@@ -467,10 +548,10 @@ After using ``register`` with a loop, the data structure placed in the variable 
 
 Here is an example of using ``register`` with ``with_items``::
 
-    - shell: echo "{{ item }}"
+    - shell: "echo {{ item }}"
       with_items:
-        - one
-        - two
+        - "one"
+        - "two"
       register: echo
 
 This differs from the data structure returned when using ``register`` without a loop::
@@ -540,22 +621,30 @@ If you wish to loop over the inventory, or just a subset of it, there is multipl
 One can use a regular ``with_items`` with the ``play_hosts`` or ``groups`` variables, like this::
 
     # show all the hosts in the inventory
-    - debug: msg={{ item }}
-      with_items: "{{ groups['all'] }}"
+    - debug:
+        msg: "{{ item }}"
+      with_items:
+        - "{{ groups['all'] }}"
 
     # show all the hosts in the current play
-    - debug: msg={{ item }}
-      with_items: "{{ play_hosts }}"
+    - debug:
+        msg: "{{ item }}"
+      with_items:
+        - "{{ play_hosts }}"
 
 There is also a specific lookup plugin ``inventory_hostnames`` that can be used like this::
 
     # show all the hosts in the inventory
-    - debug: msg={{ item }}
-      with_inventory_hostnames: all
+    - debug:
+        msg: "{{ item }}"
+      with_inventory_hostnames:
+        - all
 
     # show all the hosts matching the pattern, ie all but the group www
-    - debug: msg={{ item }}
-      with_inventory_hostnames: all:!www
+    - debug:
+        msg: "{{ item }}"
+      with_inventory_hostnames:
+        - all:!www
 
 More information on the patterns can be found on :doc:`intro_patterns`
 
@@ -580,7 +669,8 @@ As of Ansible 2.1, the `loop_control` option can be used to specify the name of 
         loop_var: outer_item
 
     # inner.yml
-    - debug: msg="outer item={{ outer_item }} inner item={{ item }}"
+    - debug:
+        msg: "outer item={{ outer_item }} inner item={{ item }}"
       with_items:
         - a
         - b
@@ -593,7 +683,9 @@ As of Ansible 2.1, the `loop_control` option can be used to specify the name of 
 When using complex data structures for looping the display might get a bit too "busy", this is where the C(label) directive comes to help::
 
     - name: create servers
-      digital_ocean: name={{item.name}} state=present ....
+      digital_ocean:
+        name: "{{ item.name }}"
+        state: present
       with_items:
         - name: server1
           disks: 3gb
@@ -613,7 +705,9 @@ Another option to loop control is C(pause), which allows you to control the time
 
     # main.yml
     - name: create servers, pause 3s before creating next
-      digital_ocean: name={{item}} state=present ....
+      digital_ocean:
+        name: "{{ item }}"
+        state: present
       with_items:
         - server1
         - server2
@@ -672,4 +766,3 @@ information.  Each of the above features are implemented as plugins in ansible, 
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
