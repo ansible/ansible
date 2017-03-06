@@ -189,6 +189,13 @@ EXAMPLES = '''
 
 '''
 
+RETURN = '''
+user:
+    description: The name of the user to add or remove.
+    returned: success
+    type: string
+'''
+
 import os
 import ssl as ssl_lib
 from distutils.version import LooseVersion
