@@ -387,14 +387,14 @@ def update_user(module, iam, name, new_name, new_path, key_state, key_count, key
                                          (name, current_keys, keys)
                                      )
 
-                if key_state == 'remove':
-                    if access_key in current_keys:
-                        try:
-                            iam.delete_access_key(access_key, user_name=name)
-                        except boto.exception.BotoServerError as err:
-                            module.fail_json(changed=False, msg=str(err))
-                        else:
-                            changed = True
+            if key_state == 'remove':
+                if access_key in current_keys:
+                    try:
+                        iam.delete_access_key(access_key, user_name=name)
+                    except boto.exception.BotoServerError as err:
+                        module.fail_json(changed=False, msg=str(err))
+                    else:
+                        changed = True
 
     try:
         final_keys, final_key_status = \
