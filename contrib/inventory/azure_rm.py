@@ -23,7 +23,7 @@
 Azure External Inventory Script
 ===============================
 Generates dynamic inventory by making API requests to the Azure Resource
-Manager using the AAzure Python SDK. For instruction on installing the
+Manager using the Azure Python SDK. For instruction on installing the
 Azure Python SDK see http://azure-sdk-for-python.readthedocs.org/
 
 Authentication
@@ -32,7 +32,7 @@ The order of precedence is command line arguments, environment variables,
 and finally the [default] profile found in ~/.azure/credentials.
 
 If using a credentials file, it should be an ini formatted file with one or
-more sections, which we refer to as profiles. The script looks for a 
+more sections, which we refer to as profiles. The script looks for a
 [default] section, if a profile is not specified either on the command line
 or with an environment variable. The keys in a profile will match the
 list of command line arguments below.
@@ -42,7 +42,7 @@ in your ~/.azure/credentials file, or a service principal or Active Directory
 user.
 
 Command line arguments:
- - profile 
+ - profile
  - client_id
  - secret
  - subscription_id
@@ -61,7 +61,7 @@ Environment variables:
 
 Run for Specific Host
 -----------------------
-When run for a specific host using the --host option, a resource group is 
+When run for a specific host using the --host option, a resource group is
 required. For a specific host, this script returns the following variables:
 
 {
@@ -191,7 +191,7 @@ import os
 import re
 import sys
 
-from distutils.version import LooseVersion
+from packaging.version import Version
 
 from os.path import expanduser
 
@@ -362,7 +362,11 @@ class AzureRM(object):
             resource_client = self.rm_client
             resource_client.providers.register(key)
         except Exception as exc:
-            self.fail("One-time registration of {0} failed - {1}".format(key, str(exc)))
+            self.log("One-time registration of {0} failed - {1}".format(key, str(exc)))
+            self.log("You might need to register {0} using an admin account".format(key))
+            self.log(("To register a provider using the Python CLI: "
+                      "https://docs.microsoft.com/azure/azure-resource-manager/"
+                      "resource-manager-common-deployment-errors#noregisteredproviderfound"))
 
     @property
     def network_client(self):
@@ -442,7 +446,7 @@ class AzureInventory(object):
     def _parse_cli_args(self):
         # Parse command line arguments
         parser = argparse.ArgumentParser(
-                description='Produce an Ansible Inventory file for an Azure subscription')
+            description='Produce an Ansible Inventory file for an Azure subscription')
         parser.add_argument('--list', action='store_true', default=True,
                            help='List instances (default: True)')
         parser.add_argument('--debug', action='store_true', default=False,
@@ -786,11 +790,11 @@ class AzureInventory(object):
 
 def main():
     if not HAS_AZURE:
-        sys.exit("The Azure python sdk is not installed (try 'pip install azure==2.0.0rc5') - {0}".format(HAS_AZURE_EXC))
+        sys.exit("The Azure python sdk is not installed (try `pip install 'azure>=2.0.0rc5' --upgrade`) - {0}".format(HAS_AZURE_EXC))
 
-    if LooseVersion(azure_compute_version) != LooseVersion(AZURE_MIN_VERSION):
+    if Version(azure_compute_version) < Version(AZURE_MIN_VERSION):
         sys.exit("Expecting azure.mgmt.compute.__version__ to be {0}. Found version {1} "
-                 "Do you have Azure == 2.0.0rc5 installed?".format(AZURE_MIN_VERSION, azure_compute_version))
+                 "Do you have Azure >= 2.0.0rc5 installed? (try `pip install 'azure>=2.0.0rc5' --upgrade`)".format(AZURE_MIN_VERSION, azure_compute_version))
 
     AzureInventory()
 
