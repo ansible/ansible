@@ -255,7 +255,6 @@ changed:
     sample: true
 '''
 
-import sys
 import copy
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
