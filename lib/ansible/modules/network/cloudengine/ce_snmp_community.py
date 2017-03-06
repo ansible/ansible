@@ -155,7 +155,6 @@ updates:
     sample: ["snmp-agent group v3 wdz_group noauthentication acl 2000"]
 '''
 
-import sys
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
