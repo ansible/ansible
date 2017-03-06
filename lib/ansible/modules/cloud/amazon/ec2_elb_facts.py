@@ -196,9 +196,13 @@ class ElbInformation(object):
             elb_info['instances_inservice_count'] = len(elb_info['instances_inservice'])
             elb_info['instances_outofservice'] = [inst.instance_id for inst in instance_health if inst.state == 'OutOfService']
             elb_info['instances_outofservice_count'] = len(elb_info['instances_outofservice'])
-            elb_info['instances_inservice_percent'] = float(elb_info['instances_inservice_count'])/(
-                float(elb_info['instances_inservice_count']) +
-                float(elb_info['instances_outofservice_count']))*100
+            try:
+                elb_info['instances_inservice_percent'] = (
+                    float(elb_info['instances_inservice_count']) /
+                    float(elb_info['instances_inservice_count'] + elb_info['instances_outofservice_count'])
+                ) * 100.
+            except ZeroDivisionError:
+                elb_info['instances_inservice_percent'] = 0.
         return elb_info
 
 
