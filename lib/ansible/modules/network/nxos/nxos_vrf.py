@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_vrf
+extends_documentation_fragment: nxos
 version_added: "2.1"
 short_description: Manages global VRF configuration.
 description:

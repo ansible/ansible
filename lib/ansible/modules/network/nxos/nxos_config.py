@@ -25,6 +25,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: nxos_config
+extends_documentation_fragment: nxos
 version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
 short_description: Manage Cisco NXOS configuration sections

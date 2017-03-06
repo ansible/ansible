@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_overlay_global
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Configures anycast gateway MAC of the switch.
 description:

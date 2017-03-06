@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_ping
+extends_documentation_fragment: nxos
 version_added: "2.1"
 short_description: Tests reachability using ping from Nexus switch.
 description:
