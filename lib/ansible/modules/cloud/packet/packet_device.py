@@ -26,10 +26,10 @@ DOCUMENTATION = '''
 ---
 module: packet_device
 
-short_description: create, destroy, start, stop, and reboot a Packet Host machine.
+short_description: create, destroy, start, stop, and reboot a bare metal server at Packet.
 
 description:
-    - create, destroy, update, start, stop, and reboot a Packet Host machine. When the machine is created it can optionally wait for it to have an IP address before returning. This module has a dependency on packet >= 1.0.
+    - create, destroy, update, start, stop, and reboot a bare metal server at Packet. Bare metal server is a "device" in Packet API terms. When the device is created, the module can optionally wait for public IP address assignment before returning. This module has a dependency on packet >= 1.0.
     - API is documented at U(https://www.packet.net/help/api/#page:devices,header:devices-devices-post).
 
 version_added: 2.3
