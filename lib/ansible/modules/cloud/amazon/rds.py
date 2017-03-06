@@ -313,6 +313,8 @@ EXAMPLES = '''
 import sys
 import time
 
+from ansible.module_utils.ec2 import AWSRetry
+
 try:
     import boto.rds
     HAS_BOTO = True
@@ -650,23 +652,31 @@ class RDS2Snapshot:
 
 
 def await_resource(conn, resource, status, module):
-    wait_timeout = module.params.get('wait_timeout') + time.time()
+    start_time = time.time()
+    wait_timeout = module.params.get('wait_timeout') + start_time
+    check_interval = 5
     while wait_timeout > time.time() and resource.status != status:
-        time.sleep(5)
+        time.sleep(check_interval)
         if wait_timeout <= time.time():
             module.fail_json(msg="Timeout waiting for RDS resource %s" % resource.name)
         if module.params.get('command') == 'snapshot':
             # Temporary until all the rds2 commands have their responses parsed
             if resource.name is None:
                 module.fail_json(msg="There was a problem waiting for RDS snapshot %s" % resource.snapshot)
-            resource = conn.get_db_snapshot(resource.name)
+            # Back off if we're getting throttled, since we're just waiting anyway
+            resource = AWSRetry.backoff(tries=5, delay=20, backoff=1.5)(conn.get_db_snapshot)(resource.name)
         else:
             # Temporary until all the rds2 commands have their responses parsed
             if resource.name is None:
                 module.fail_json(msg="There was a problem waiting for RDS instance %s" % resource.instance)
-            resource = conn.get_db_instance(resource.name)
+            # Back off if we're getting throttled, since we're just waiting anyway
+            resource = AWSRetry.backoff(tries=5, delay=20, backoff=1.5)(conn.get_db_instance)(resource.name)
             if resource is None:
                 break
+        # Some RDS resources take much longer than others to be ready. Check
+        # less aggressively for slow ones to avoid throttling.
+        if time.time() > start_time + 90:
+          check_interval = 20
     return resource
 
 
