@@ -54,7 +54,7 @@ options:
       - start VM at host startup
     choices: [True, False]
     version_added: "2.3"
-    default: False
+    default: null
   uri:
     description:
       - libvirt connection uri
@@ -442,7 +442,7 @@ class Virt(object):
 def core(module):
 
     state      = module.params.get('state', None)
-    autostart  = module.params.get('autostart')
+    autostart  = module.params.get('autostart', None)
     guest      = module.params.get('name', None)
     command    = module.params.get('command', None)
     uri        = module.params.get('uri', None)
@@ -460,10 +460,6 @@ def core(module):
     if state:
         if not guest:
             module.fail_json(msg = "state change requires a guest specified")
-
-        res['changed'] = False
-        if v.autostart(guest, autostart):
-            res['changed'] = True
 
         if state == 'running':
             if v.status(guest) is 'paused':
@@ -488,6 +484,9 @@ def core(module):
             module.fail_json(msg="unexpected state")
 
         return VIRT_SUCCESS, res
+
+    if autostart is not None and v.autostart(guest, autostart):
+        res['changed'] = True
 
     if command:
         if command in VM_COMMANDS:
@@ -523,7 +522,7 @@ def main():
     module = AnsibleModule(argument_spec=dict(
         name = dict(aliases=['guest']),
         state = dict(choices=['running', 'shutdown', 'destroyed', 'paused']),
-        autostart = dict(type='bool', default=False),
+        autostart = dict(type='bool'),
         command = dict(choices=ALL_COMMANDS),
         uri = dict(default='qemu:///system'),
         xml = dict(),
