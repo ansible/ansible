@@ -58,6 +58,7 @@ options:
     description:
     - If adding/removing a role and invalid grantees are found, remove them. These entries will cause an update to fail in all known cases.
     - Only cleans if changes are being made.
+    choices: ['yes', 'no']
     default: true
 
 author: tedder
