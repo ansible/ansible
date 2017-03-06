@@ -302,6 +302,7 @@ CE_NC_DELETE_MLAG_ERROR_DOWN_INFO = """
 
 """
 
+
 def get_interface_type(interface):
     """Gets the type of interface, such as 10GE, ETH-TRUNK, VLANIF..."""
 
@@ -496,7 +497,8 @@ class MlagInterface(object):
                     for ele in mlag_error_info:
                         if ele.tag in ["dfsgroupId", "portName"]:
                             mlag_error_dict[ele.tag] = ele.text
-                    mlag_error_down_info["mlagErrorDownInfos"].append(mlag_error_dict)
+                    mlag_error_down_info[
+                        "mlagErrorDownInfos"].append(mlag_error_dict)
             return mlag_error_down_info
 
     def check_macaddr(self):
@@ -559,9 +561,9 @@ class MlagInterface(object):
             if not self.mlag_priority_id.isdigit():
                 self.module.fail_json(
                     msg='Error: The value of mlag_priority_id is an integer.')
-            if int(self.mlag_priority_id) < 0 or int(self.mlag_priority_id) > 65535:
+            if int(self.mlag_priority_id) < 0 or int(self.mlag_priority_id) > 254:
                 self.module.fail_json(
-                    msg='Error: The value of mlag_priority_id is not in the range from 0 to 65535.')
+                    msg='Error: The value of mlag_priority_id is not in the range from 0 to 254.')
 
         # interface check
         if self.interface:
@@ -706,14 +708,16 @@ class MlagInterface(object):
         if self.is_mlag_info_change():
             mlag_port = "Eth-Trunk"
             mlag_port += self.eth_trunk_id
-            conf_str = CE_NC_CREATE_MLAG_INFO % (self.dfs_group_id, self.mlag_id, mlag_port)
+            conf_str = CE_NC_CREATE_MLAG_INFO % (
+                self.dfs_group_id, self.mlag_id, mlag_port)
             recv_xml = set_nc_config(self.module, conf_str)
             if "<ok/>" not in recv_xml:
                 self.module.fail_json(
                     msg='Error: create mlag info failed.')
 
             self.updates_cmd.append("interface %s" % mlag_port)
-            self.updates_cmd.append("dfs-group %s m-lag %s" % (self.dfs_group_id, self.mlag_id))
+            self.updates_cmd.append("dfs-group %s m-lag %s" %
+                                    (self.dfs_group_id, self.mlag_id))
             self.changed = True
 
     def delete_mlag(self):
@@ -722,14 +726,16 @@ class MlagInterface(object):
         if self.is_mlag_info_exist():
             mlag_port = "Eth-Trunk"
             mlag_port += self.eth_trunk_id
-            conf_str = CE_NC_DELETE_MLAG_INFO % (self.dfs_group_id, self.mlag_id, mlag_port)
+            conf_str = CE_NC_DELETE_MLAG_INFO % (
+                self.dfs_group_id, self.mlag_id, mlag_port)
             recv_xml = set_nc_config(self.module, conf_str)
             if "<ok/>" not in recv_xml:
                 self.module.fail_json(
                     msg='Error: delete mlag info failed.')
 
             self.updates_cmd.append("interface %s" % mlag_port)
-            self.updates_cmd.append("undo dfs-group %s m-lag %s" % (self.dfs_group_id, self.mlag_id))
+            self.updates_cmd.append(
+                "undo dfs-group %s m-lag %s" % (self.dfs_group_id, self.mlag_id))
             self.changed = True
 
     def create_mlag_error_down(self):
@@ -780,10 +786,12 @@ class MlagInterface(object):
 
             self.updates_cmd.append("interface %s" % mlag_port)
             if self.mlag_priority_id:
-                self.updates_cmd.append("lacp m-lag priority %s" % self.mlag_priority_id)
+                self.updates_cmd.append(
+                    "lacp m-lag priority %s" % self.mlag_priority_id)
 
             if self.mlag_system_id:
-                self.updates_cmd.append("lacp m-lag system-id %s" % self.mlag_system_id)
+                self.updates_cmd.append(
+                    "lacp m-lag system-id %s" % self.mlag_system_id)
             self.changed = True
 
     def delete_mlag_interface(self):
@@ -824,10 +832,12 @@ class MlagInterface(object):
                     msg='Error: set mlag interface atrribute info failed.')
 
             if self.mlag_priority_id:
-                self.updates_cmd.append("lacp m-lag priority %s" % self.mlag_priority_id)
+                self.updates_cmd.append(
+                    "lacp m-lag priority %s" % self.mlag_priority_id)
 
             if self.mlag_system_id:
-                self.updates_cmd.append("lacp m-lag system-id %s" % self.mlag_system_id)
+                self.updates_cmd.append(
+                    "lacp m-lag system-id %s" % self.mlag_system_id)
             self.changed = True
 
     def delete_mlag_global(self):
@@ -882,19 +892,24 @@ class MlagInterface(object):
             if self.eth_trunk_id:
                 if self.mlag_trunk_attribute_info:
                     if self.mlag_system_id:
-                        self.end_state["lacpMlagSysId"] = self.mlag_trunk_attribute_info["lacpMlagSysId"]
+                        self.end_state["lacpMlagSysId"] = self.mlag_trunk_attribute_info[
+                            "lacpMlagSysId"]
                     if self.mlag_priority_id:
-                        self.end_state["lacpMlagPriority"] = self.mlag_trunk_attribute_info["lacpMlagPriority"]
+                        self.end_state["lacpMlagPriority"] = self.mlag_trunk_attribute_info[
+                            "lacpMlagPriority"]
             else:
                 if self.mlag_global_info:
                     if self.mlag_system_id:
-                        self.end_state["lacpMlagSysId"] = self.mlag_global_info["lacpMlagSysId"]
+                        self.end_state["lacpMlagSysId"] = self.mlag_global_info[
+                            "lacpMlagSysId"]
                     if self.mlag_priority_id:
-                        self.end_state["lacpMlagPriority"] = self.mlag_global_info["lacpMlagPriority"]
+                        self.end_state["lacpMlagPriority"] = self.mlag_global_info[
+                            "lacpMlagPriority"]
 
         if self.interface or self.mlag_error_down:
             if self.mlag_error_down_info:
-                self.existing["mlagErrorDownInfos"] = self.mlag_error_down_info["mlagErrorDownInfos"]
+                self.existing["mlagErrorDownInfos"] = self.mlag_error_down_info[
+                    "mlagErrorDownInfos"]
 
     def get_end_state(self):
         """get end state info"""
@@ -910,21 +925,26 @@ class MlagInterface(object):
                 self.mlag_trunk_attribute_info = self.get_mlag_trunk_attribute_info()
                 if self.mlag_trunk_attribute_info:
                     if self.mlag_system_id:
-                        self.end_state["lacpMlagSysId"] = self.mlag_trunk_attribute_info["lacpMlagSysId"]
+                        self.end_state["lacpMlagSysId"] = self.mlag_trunk_attribute_info[
+                            "lacpMlagSysId"]
                     if self.mlag_priority_id:
-                        self.end_state["lacpMlagPriority"] = self.mlag_trunk_attribute_info["lacpMlagPriority"]
+                        self.end_state["lacpMlagPriority"] = self.mlag_trunk_attribute_info[
+                            "lacpMlagPriority"]
             else:
                 self.mlag_global_info = self.get_mlag_global_info()
                 if self.mlag_global_info:
                     if self.mlag_system_id:
-                        self.end_state["lacpMlagSysId"] = self.mlag_global_info["lacpMlagSysId"]
+                        self.end_state["lacpMlagSysId"] = self.mlag_global_info[
+                            "lacpMlagSysId"]
                     if self.mlag_priority_id:
-                        self.end_state["lacpMlagPriority"] = self.mlag_global_info["lacpMlagPriority"]
+                        self.end_state["lacpMlagPriority"] = self.mlag_global_info[
+                            "lacpMlagPriority"]
 
         if self.interface or self.mlag_error_down:
             self.mlag_error_down_info = self.get_mlag_error_down_info()
             if self.mlag_error_down_info:
-                self.end_state["mlagErrorDownInfos"] = self.mlag_error_down_info["mlagErrorDownInfos"]
+                self.end_state["mlagErrorDownInfos"] = self.mlag_error_down_info[
+                    "mlagErrorDownInfos"]
 
     def work(self):
         """worker"""
@@ -997,7 +1017,8 @@ def main():
         mlag_priority_id=dict(type='str'),
         interface=dict(type='str'),
         mlag_error_down=dict(type='str', choices=['enable', 'disable']),
-        state=dict(type='str', default='present', choices=['present', 'absent'])
+        state=dict(type='str', default='present',
+                   choices=['present', 'absent'])
     )
     argument_spec.update(ce_argument_spec)
     module = MlagInterface(argument_spec=argument_spec)
