@@ -349,8 +349,8 @@ class Virt(object):
         self.conn = self.__get_conn()
         # Change autostart flag only if needed
         if self.conn.get_autostart(vmid) != as_flag:
-                self.conn.set_autostart(vmid, as_flag)
-                return True
+            self.conn.set_autostart(vmid, as_flag)
+            return True
 
         return False
 
