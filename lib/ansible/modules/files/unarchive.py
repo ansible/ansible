@@ -149,7 +149,7 @@ import time
 import binascii
 import codecs
 from zipfile import ZipFile, BadZipfile
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_bytes, to_text
 
 try:  # python 3.3+
     from shlex import quote
@@ -803,12 +803,14 @@ def main():
                 # If download fails, raise a proper exception
                 if rsp is None:
                     raise Exception(info['msg'])
-                f = open(package, 'w')
+                # open in binary mode for python3
+                f = open(package, 'wb')
                 # Read 1kb at a time to save on ram
                 while True:
                     data = rsp.read(BUFSIZE)
+                    data = to_bytes(data, errors='surrogate_or_strict')
 
-                    if data == "":
+                    if len(data) < 1:
                         break # End of file, break while loop
 
                     f.write(data)
