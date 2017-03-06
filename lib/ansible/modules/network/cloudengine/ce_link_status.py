@@ -77,17 +77,17 @@ EXAMPLES = '''
 
   tasks:
 
-  - name: "Get specified interface link status information"
+  - name: Get specified interface link status information
     ce_link_status:
       interface: 40GE1/0/1
       provider: "{{ cli }}"
 
-  - name: "Get specified interface type link status information"
+  - name: Get specified interface type link status information
     ce_link_status:
       interface: 40GE
       provider: "{{ cli }}"
 
-  - name: "Get all interface link status information"
+  - name: Get all interface link status information
     ce_link_status:
       interface: all
       provider: "{{ cli }}"
@@ -273,7 +273,8 @@ class LinkStatus(object):
 
         if self.interface and self.interface != 'all':
             if not self.if_type:
-                self.module.fail_json(msg='Error: Interface name of %s is error.' % self.interface)
+                self.module.fail_json(
+                    msg='Error: Interface name of %s is error.' % self.interface)
 
     def init_module(self):
         """Init module object"""
@@ -298,13 +299,17 @@ class LinkStatus(object):
             for eles in dyn_info:
                 if eles.tag in ["ifPhyStatus", "ifV4State", "ifV6State", "ifLinkStatus"]:
                     if eles.tag == "ifPhyStatus":
-                        self.result[intf_name]['Current physical state'] = eles.text
+                        self.result[intf_name][
+                            'Current physical state'] = eles.text
                     elif eles.tag == "ifLinkStatus":
-                        self.result[intf_name]['Current link state'] = eles.text
+                        self.result[intf_name][
+                            'Current link state'] = eles.text
                     elif eles.tag == "ifV4State":
-                        self.result[intf_name]['Current IPv4 state'] = eles.text
+                        self.result[intf_name][
+                            'Current IPv4 state'] = eles.text
                     elif eles.tag == "ifV6State":
-                        self.result[intf_name]['Current IPv6 state'] = eles.text
+                        self.result[intf_name][
+                            'Current IPv6 state'] = eles.text
 
     def get_intf_statistics_info(self, stat_info, intf_name):
         """Get interface statistics information"""
@@ -323,29 +328,41 @@ class LinkStatus(object):
                                 "sendUniPacket", "sendMutiPacket", "sendBroadPacket", "rcvErrorPacket",
                                 "rcvDropPacket", "sendErrorPacket", "sendDropPacket"]:
                     if eles.tag == "receiveByte":
-                        self.result[intf_name]['Inbound octets(bytes)'] = eles.text
+                        self.result[intf_name][
+                            'Inbound octets(bytes)'] = eles.text
                     elif eles.tag == "rcvUniPacket":
-                        self.result[intf_name]['Inbound unicast(pkts)'] = eles.text
+                        self.result[intf_name][
+                            'Inbound unicast(pkts)'] = eles.text
                     elif eles.tag == "rcvMutiPacket":
-                        self.result[intf_name]['Inbound multicast(pkts)'] = eles.text
+                        self.result[intf_name][
+                            'Inbound multicast(pkts)'] = eles.text
                     elif eles.tag == "rcvBroadPacket":
-                        self.result[intf_name]['Inbound broadcast(pkts)'] = eles.text
+                        self.result[intf_name][
+                            'Inbound broadcast(pkts)'] = eles.text
                     elif eles.tag == "rcvErrorPacket":
-                        self.result[intf_name]['Inbound error(pkts)'] = eles.text
+                        self.result[intf_name][
+                            'Inbound error(pkts)'] = eles.text
                     elif eles.tag == "rcvDropPacket":
-                        self.result[intf_name]['Inbound drop(pkts)'] = eles.text
+                        self.result[intf_name][
+                            'Inbound drop(pkts)'] = eles.text
                     elif eles.tag == "sendByte":
-                        self.result[intf_name]['Outbound octets(bytes)'] = eles.text
+                        self.result[intf_name][
+                            'Outbound octets(bytes)'] = eles.text
                     elif eles.tag == "sendUniPacket":
-                        self.result[intf_name]['Outbound unicast(pkts)'] = eles.text
+                        self.result[intf_name][
+                            'Outbound unicast(pkts)'] = eles.text
                     elif eles.tag == "sendMutiPacket":
-                        self.result[intf_name]['Outbound multicast(pkts)'] = eles.text
+                        self.result[intf_name][
+                            'Outbound multicast(pkts)'] = eles.text
                     elif eles.tag == "sendBroadPacket":
-                        self.result[intf_name]['Outbound broadcast(pkts)'] = eles.text
+                        self.result[intf_name][
+                            'Outbound broadcast(pkts)'] = eles.text
                     elif eles.tag == "sendErrorPacket":
-                        self.result[intf_name]['Outbound error(pkts)'] = eles.text
+                        self.result[intf_name][
+                            'Outbound error(pkts)'] = eles.text
                     elif eles.tag == "sendDropPacket":
-                        self.result[intf_name]['Outbound drop(pkts)'] = eles.text
+                        self.result[intf_name][
+                            'Outbound drop(pkts)'] = eles.text
 
     def get_intf_cleared_stat(self, clr_stat, intf_name):
         """Get interface cleared state information"""
@@ -362,13 +379,17 @@ class LinkStatus(object):
             for eles in clr_stat:
                 if eles.tag in ["inByteRate", "inPacketRate", "outByteRate", "outPacketRate"]:
                     if eles.tag == "inByteRate":
-                        self.result[intf_name]['Inbound rate(byte/sec)'] = eles.text
+                        self.result[intf_name][
+                            'Inbound rate(byte/sec)'] = eles.text
                     elif eles.tag == "inPacketRate":
-                        self.result[intf_name]['Inbound rate(pkts/sec)'] = eles.text
+                        self.result[intf_name][
+                            'Inbound rate(pkts/sec)'] = eles.text
                     elif eles.tag == "outByteRate":
-                        self.result[intf_name]['Outbound rate(byte/sec)'] = eles.text
+                        self.result[intf_name][
+                            'Outbound rate(byte/sec)'] = eles.text
                     elif eles.tag == "outPacketRate":
-                        self.result[intf_name]['Outbound rate(pkts/sec)'] = eles.text
+                        self.result[intf_name][
+                            'Outbound rate(pkts/sec)'] = eles.text
 
     def get_all_interface_info(self, intf_type=None):
         """Get interface information all or by interface type"""
@@ -411,7 +432,8 @@ class LinkStatus(object):
                         elif ele.tag == "ifClearedStat":
                             self.get_intf_cleared_stat(ele, intf_name)
         if intf_type and not flag:
-            self.module.fail_json(msg='Error: %s interface type doesnot exist.' % intf_type.upper())
+            self.module.fail_json(
+                msg='Error: %s interface type does not exist.' % intf_type.upper())
 
     def get_interface_info(self):
         """Get interface information"""
@@ -419,7 +441,8 @@ class LinkStatus(object):
         xml_str = CE_NC_GET_INT_STATISTICS % self.interface.upper()
         con_obj = get_nc_config(self.module, xml_str)
         if "<data/>" in con_obj:
-            self.module.fail_json(msg='Error: %s interface doesnot exist.' % self.interface.upper())
+            self.module.fail_json(
+                msg='Error: %s interface does not exist.' % self.interface.upper())
             return
 
         xml_str = con_obj.replace('\r', '').replace('\n', '').\
