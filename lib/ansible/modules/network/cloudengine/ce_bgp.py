@@ -253,7 +253,6 @@ updates:
 '''
 
 import re
-import sys
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ce import get_nc_config, set_nc_config, ce_argument_spec
 
