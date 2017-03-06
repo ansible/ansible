@@ -330,7 +330,7 @@ def main():
             func_kwargs.update({'Timeout': timeout})
         if memory_size and current_config['MemorySize'] != memory_size:
             func_kwargs.update({'MemorySize': memory_size})
-        if (environment_variables is not None) and (current_config['Environment']['Variables'] != environment_variables):
+        if (environment_variables is not None) and (current_config.get('Environment', {}).get('Variables', {}) != environment_variables):
             func_kwargs.update({'Environment':{'Variables': environment_variables}})
         if dead_letter_arn is not None:
             if current_config.get('DeadLetterConfig'):
