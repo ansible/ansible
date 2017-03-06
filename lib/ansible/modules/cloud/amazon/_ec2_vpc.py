@@ -54,9 +54,9 @@ options:
     choices: [ "yes", "no" ]
   subnets:
     description:
-      - A dictionary array of subnets to add of the form C({ cidr: ..., az: ... , resource_tags: ... }).
+      - 'A dictionary array of subnets to add of the form C({ cidr: ..., az: ... , resource_tags: ... }).'
       - Where C(az) is the desired availability zone of the subnet, optional.
-      - Tags C(resource_tags) use dictionary form C({ "Environment":"Dev", "Tier":"Web", ...}), optional.
+      - 'Tags C(resource_tags) use dictionary form C({ "Environment":"Dev", "Tier":"Web", ...}), optional.'
       - C(resource_tags) see resource_tags for VPC below. The main difference is subnet tags not specified here will be deleted.
       - All VPC subnets not in this list will be removed as well.
       - As of 1.8, if the subnets parameter is not specified, no existing subnets will be modified.'
