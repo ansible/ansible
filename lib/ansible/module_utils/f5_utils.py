@@ -282,17 +282,12 @@ class AnsibleF5Client(object):
             )
 
 
-class AnsibleF5Parameters(with_metaclass(ABCMeta, object)):
+class AnsibleF5Parameters(object):
     def __init__(self, params=None):
         self._values = defaultdict(lambda: None)
         if params:
-            for k in params:
-                self._values[k] = params[k]
-
-    @abstractproperty
-    def param_api_map(self):
-        """Dict used to map module parameters to API parameters"""
-        pass
+            for k,v in iteritems(params):
+                setattr(self, k, v)
 
     @property
     def partition(self):
@@ -300,46 +295,22 @@ class AnsibleF5Parameters(with_metaclass(ABCMeta, object)):
             return 'Common'
         return self._values['partition'].strip('/')
 
+    def __getattr__(self, item):
+        return self._values[item]
+
+    def __setattr__(self, key, value):
+        if key == '_values':
+            self.__dict__['_values'] = value
+        else:
+            super(AnsibleF5Parameters, self).__setattr__(key, value)
+
     @partition.setter
     def partition(self, value):
         self._values['partition'] = value
 
-    @classmethod
-    def from_api(cls, params):
-        """Create Parameters instance from values return by the API
-
-        The API returns values found on the "values" side of the
-        param_api_map dictionary. These need to be mapped to the names
-        of keys expected by the Parameters class (the "key" side of
-        the param_api_map dictionary)
-
-        :param params:
-        :return:
-        """
-        for key,value in iteritems(cls.param_api_map):
-            params[key] = params.pop(value, None)
-        p = cls(params)
-        return p
-
-    def __getattr__(self, item):
-        return self._values[item]
-
-    def api_params(self):
-        return self._filter_params(self._api_params_from_map())
-
-    def _api_params_from_map(self):
-        result = dict()
-        for k,v in iteritems(self.param_api_map):
-            value = getattr(self, k)
-            result[v] = value
-        return result
-
-    def to_return(self):
-        result = self._values
-        return self._filter_params(result)
-
     def _filter_params(self, params):
         return dict((k, v) for k, v in iteritems(params) if v is not None)
+
 
 
 class F5ModuleError(Exception):
