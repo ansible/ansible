@@ -171,13 +171,13 @@ options:
         default: null
     route_limit_type:
         description:
-            - noparameter, After the number of received routes exceeds the threshold and the timeout
+            - Noparameter, After the number of received routes exceeds the threshold and the timeout
               timer expires,no action.
-              alertOnly, An alarm is generated and no additional routes will be accepted if the maximum
+              AlertOnly, An alarm is generated and no additional routes will be accepted if the maximum
               number of routes allowed have been received.
-              idleForever, The connection that is interrupted is not automatically re-established if the
+              IdleForever, The connection that is interrupted is not automatically re-established if the
               maximum number of routes allowed have been received.
-              idleTimeout, After the number of received routes exceeds the threshold and the timeout timer
+              IdleTimeout, After the number of received routes exceeds the threshold and the timeout timer
               expires, the connection that is interrupted is automatically re-established.
         required: false
         default: null
@@ -306,7 +306,8 @@ options:
         default: null
     orf_mode:
         description:
-            - null, Default value.
+            - ORF mode.
+              null, Default value.
               receive, ORF for incoming packets.
               send, ORF for outgoing packets.
               both, ORF for incoming and outgoing packets.
