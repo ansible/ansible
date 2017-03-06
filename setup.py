@@ -136,28 +136,14 @@ with open('requirements.txt') as requirements_file:
               "That indicates this copy of the source code is incomplete.")
         sys.exit(2)
 
-# pycrypto or cryptography.   We choose a default but allow the user to
-# override it.  This translates into pip install of the sdist deciding what
-# package to install and also the runtime dependencies that pkg_resources
-# knows about
-crypto_backend = os.environ.get('ANSIBLE_CRYPTO_BACKEND', None)
-if crypto_backend:
-    if crypto_backend.strip() == 'pycrypto':
-        # Attempt to set version requirements
-        crypto_backend = 'pycrypto >= 2.6'
+longdesc = '''Ansible is a radically simple IT automation system. It handles configuration-management, application deployment, cloud provisioning, ad-hoc task-execution, and multinode orchestration - including trivializing things like zero downtime rolling updates with load balancers.
 
-    install_requirements = [r for r in install_requirements if not (r.lower().startswith('pycrypto') or r.lower().startswith('cryptography'))]
-    install_requirements.append(crypto_backend)
+Read the documentation and more at https://ansible.com/
+'''
 
-# specify any extra requirements for installation
-extra_requirements = dict()
-extra_requirements_dir = 'packaging/requirements'
-for extra_requirements_filename in os.listdir(extra_requirements_dir):
-    filename_match = re.search(r'^requirements-(\w*).txt$', extra_requirements_filename)
-    if filename_match:
-        with open(os.path.join(extra_requirements_dir, extra_requirements_filename)) as extra_requirements_file:
-            extra_requirements[filename_match.group(1)] = extra_requirements_file.read().splitlines()
-
+if os.path.exists('README.rst'):
+    with open('README.rst', 'r+') as readme_file:
+        longdesc = readme_file.read()
 
 setup(
     # Use the distutils SDist so that symlinks are not expanded
@@ -172,6 +158,7 @@ setup(
     name='ansible',
     version=__version__,
     description='Radically simple IT automation',
+    long_description=longdesc,
     author=__author__,
     author_email='info@ansible.com',
     url='https://ansible.com/',
