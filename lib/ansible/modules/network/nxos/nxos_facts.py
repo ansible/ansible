@@ -25,6 +25,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: nxos_facts
+extends_documentation_fragment: nxos
 version_added: "2.1"
 short_description: Gets facts about NX-OS switches
 description:
@@ -34,7 +35,6 @@ description:
     with C(ansible_net_<fact>).  The facts module will always collect a
     base set of facts from the device and can enable or disable
     collection of additional facts.
-extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)

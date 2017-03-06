@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_vlan
+extends_documentation_fragment: nxos
 version_added: "2.1"
 short_description: Manages VLAN resources and attributes.
 description:

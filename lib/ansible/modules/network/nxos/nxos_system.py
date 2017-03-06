@@ -25,6 +25,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: nxos_system
+extends_documentation_fragment: nxos
 version_added: "2.3"
 author: "Peter Sprygada (@privateip)"
 short_description: Manage the system attributes on Cisco NXOS devices

@@ -25,6 +25,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: nxos_evpn_global
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Handles the EVPN control plane for VXLAN.
 description:

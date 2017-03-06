@@ -25,6 +25,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: nxos_user
+extends_documentation_fragment: nxos
 version_added: "2.3"
 author: "Peter Sprygada (@privateip)"
 short_description: Manage the collection of local users on Nexus devices

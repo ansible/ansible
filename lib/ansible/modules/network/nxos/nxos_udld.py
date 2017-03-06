@@ -24,6 +24,7 @@ DOCUMENTATION = '''
 ---
 
 module: nxos_udld
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages UDLD global configuration params.
 description:

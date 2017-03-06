@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_gir
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Trigger a graceful removal or insertion (GIR) of the switch.
 description:

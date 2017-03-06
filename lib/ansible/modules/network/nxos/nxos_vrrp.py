@@ -24,6 +24,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_vrrp
+extends_documentation_fragment: nxos
 version_added: "2.1"
 short_description: Manages VRRP configuration on NX-OS switches.
 description:
