@@ -136,10 +136,11 @@ with open('requirements.txt') as requirements_file:
               "That indicates this copy of the source code is incomplete.")
         sys.exit(2)
 
-longdesc = '''Ansible is a radically simple IT automation system. It handles configuration-management, application deployment, cloud provisioning, ad-hoc task-execution, and multinode orchestration - including trivializing things like zero downtime rolling updates with load balancers.
+longdesc = 'Ansible is a radically simple IT automation system. It handles configuration-management, application deployment, cloud provisioning, ad-hoc ' \
+    'task-execution, and multinode orchestration - including trivializing things like zero downtime rolling updates with load balancers.\n' \
+    '\n' \
+    'Read the documentation and more at https://ansible.com/'
 
-Read the documentation and more at https://ansible.com/
-'''
 
 if os.path.exists('README.rst'):
     with open('README.rst', 'r+') as readme_file:
