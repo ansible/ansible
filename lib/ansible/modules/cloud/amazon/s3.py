@@ -713,22 +713,18 @@ def main():
 def get_s3_connection(aws_connect_kwargs, location, rgw, s3_url):
     if s3_url and rgw:
         rgw = urlparse(s3_url)
-        s3 = boto.connect_s3(
-            is_secure=rgw.scheme == 'https',
-            host=rgw.hostname,
-            port=rgw.port,
-            calling_format=OrdinaryCallingFormat(),
-            **aws_connect_kwargs
-        )
+        aws_connect_kwargs['is_secure'] = rgw.scheme == 'https'
+        aws_connect_kwargs['host'] = rgw.hostname
+        aws_connect_kwargs['port'] = rgw.port
+        aws_connect_kwargs['calling_format'] = OrdinaryCallingFormat()
+        s3 = boto.connect_s3(**aws_connect_kwargs)
     elif is_fakes3(s3_url):
         fakes3 = urlparse(s3_url)
-        s3 = S3Connection(
-            is_secure=fakes3.scheme == 'fakes3s',
-            host=fakes3.hostname,
-            port=fakes3.port,
-            calling_format=OrdinaryCallingFormat(),
-            **aws_connect_kwargs
-        )
+        aws_connect_kwargs['is_secure'] = fakes3.scheme == 'fakes3s'
+        aws_connect_kwargs['host'] = fakes3.hostname
+        aws_connect_kwargs['port'] = fakes3.port
+        aws_connect_kwargs['calling_format'] = OrdinaryCallingFormat()
+        s3 = S3Connection(**aws_connect_kwargs)
     elif is_walrus(s3_url):
         walrus = urlparse(s3_url).hostname
         s3 = boto.connect_walrus(walrus, **aws_connect_kwargs)
