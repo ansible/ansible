@@ -198,7 +198,7 @@ Function Choco-Upgrade
         $cmd += " --execution-timeout=$executiontimeout"
     }
 
-    $results = invoke-expression $cmd
+    $output = invoke-expression $cmd
 
     $result.rc = $LastExitCode
     if ($LastExitCode -notin $successexitcodes)
@@ -208,7 +208,7 @@ Function Choco-Upgrade
         Throw "Error installing $package"
     }
 
-    if ("$output" -match ' upgraded (\d+)/\d+ package\(s\)\. ')
+    if ("$output" -match ' upgraded (\d+)/\d+ package')
     {
         if ($matches[1] -gt 0)
         {
