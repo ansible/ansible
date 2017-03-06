@@ -20,7 +20,6 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
-
 DOCUMENTATION = '''
 ---
 module: ce_netconf
@@ -122,7 +121,6 @@ end_state:
     sample: {"result": ["ok"]}
 '''
 
-import sys
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ce import get_nc_config, set_nc_config
 from ansible.module_utils.ce import execute_nc_action, ce_argument_spec, execute_nc_cli
