@@ -105,7 +105,7 @@ options:
     description:
       - The I(update) argument controls how the configuration statements
         are processed on the remote device.  Valid choices for the I(update)
-        argument are: I(merge) and I(check).  When you set this argument to
+        argument are I(merge) and I(check).  When you set this argument to
         I(merge), the configuration changes merge with the current
         device running configuration.  When you set this argument to I(check)
         the configuration updates are determined but not actually configured
