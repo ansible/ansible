@@ -116,6 +116,8 @@ def build_cors_xml(rules):
         max_age_seconds = rule.get('max_age_seconds', False)
         if max_age_seconds:
             ruleoptions_xml.append(tagwrap('MaxAgeSeconds', max_age_seconds))
+        for method in rule.get('allowed_headers', []):
+            ruleoptions_xml.append(tagwrap('AllowedHeader', method))
         for method in rule.get('expose_headers', []):
             ruleoptions_xml.append(tagwrap('ExposeHeader', method))
         rules_xml.append('  <CORSRule>\n%s  </CORSRule>\n' % ''.join(ruleoptions_xml))
