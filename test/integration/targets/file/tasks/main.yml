@@ -97,6 +97,26 @@
     that:
       - "file5_result.changed == true"
 
+- name: change soft link to relative
+  file: src={{output_file|basename}} dest={{output_dir}}/soft.txt state=link
+  register: file5a_result
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "file5a_result.changed == true"
+      - "file5a_result.diff.before.src == output_file|expanduser"
+      - "file5a_result.diff.after.src == output_file|basename"
+
+- name: soft link idempotency check
+  file: src={{output_file|basename}} dest={{output_dir}}/soft.txt state=link
+  register: file5b_result
+
+- name: verify that the file was not marked as changed
+  assert:
+    that:
+      - "file5b_result.changed == false"
+
 - name: create hard link to file
   file: src={{output_file}} dest={{output_dir}}/hard.txt state=hard
   register: file6_result
