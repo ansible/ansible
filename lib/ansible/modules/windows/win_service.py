@@ -40,7 +40,6 @@ options:
       service.
     - This works by C(dependency_action) to either add/remove or set the
       services in this list.
-    required: False
     version_added: "2.3"
   dependency_action:
     description:
@@ -49,7 +48,6 @@ options:
     - Remove the dependencies to the existing dependencies.
     - Set the dependencies to only the values in the list replacing the
       existing dependencies.
-    required: False
     default: set
     choices:
     - set
@@ -60,18 +58,15 @@ options:
     description:
       - Whether to allow the service user to interact with the desktop.
       - This should only be set to true when using the LocalSystem username.
-    required: False
     default: False
     version_added: "2.3"
   description:
     description:
       - The description to set for the service.
-    required: False
     version_added: "2.3"
   display_name:
     description:
       - The display name to set for the service.
-    required: False
     version_added: "2.3"
   name:
     description:
@@ -80,7 +75,6 @@ options:
   path:
     description:
       - The path to the executable to set for the service.
-    required: False
     version_added: "2.3"
   password:
     description:
@@ -88,13 +82,11 @@ options:
       - This and the C(username) argument must be supplied together.
       - If specifying LocalSystem, NetworkService or LocalService this field
         must be an empty string and not null.
-    required: False
     version_added: "2.3"
   start_mode:
     description:
       - Set the startup type for the service.
       - C(delayed) added in Ansible 2.3
-    required: false
     choices:
       - auto
       - manual
@@ -106,7 +98,6 @@ options:
         commands unless necessary.
       - C(restarted) will always bounce the service.
       - C(absent) added in Ansible 2.3
-    required: false
     choices:
       - started
       - stopped
@@ -116,7 +107,6 @@ options:
     description:
       - The username to set the service to start as.
       - This and the C(password) argument must be supplied together.
-    required: False
     version_added: "2.3"
 author: "Chris Hoffman (@chrishoffman)"
 '''
