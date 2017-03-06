@@ -40,12 +40,9 @@ options:
   text:
     description:
       - Message to send.
-    required: false
-    default: None
   markdown:
     description:
       - If C(yes), text will be parsed as markdown.
-    required: false
     default: 'yes'
     choices:
       - 'yes'
@@ -53,14 +50,10 @@ options:
     description:
       - Channel to send the message to. If absent, the message goes to the
         default channel selected by the I(url).
-    required: false
-    default: None
   attachments:
     description:
       - Define a list of attachments. For more information, see
         https://github.com/bearyinnovative/bearychat-tutorial/blob/master/robots/incoming.md#attachments
-    required: false
-    default: None
 """
 
 EXAMPLES = """
@@ -148,8 +141,6 @@ def build_payload_for_bearychat_attachment(module, title, text, color, images):
 
 
 def do_notify_bearychat(module, url, payload):
-    if not HAS_URLPARSE:
-        module.fail_json(msg='urlparse is not installed')
     response, info = fetch_url(module, url, data=payload)
     if info['status'] != 200:
         url_info = urlparse(url)
@@ -163,11 +154,14 @@ def do_notify_bearychat(module, url, payload):
 def main():
     module = AnsibleModule(argument_spec={
         'url': dict(type='str', required=True, no_log=True),
-        'text': dict(type='str', required=False, default=None),
+        'text': dict(type='str'),
         'markdown': dict(default='yes', type='bool'),
-        'channel': dict(type='str', default=None),
-        'attachments': dict(type='list', required=False, default=None),
+        'channel': dict(type='str'),
+        'attachments': dict(type='list'),
     })
+
+    if not HAS_URLPARSE:
+        module.fail_json(msg='urlparse is not installed')
 
     url = module.params['url']
     text = module.params['text']
