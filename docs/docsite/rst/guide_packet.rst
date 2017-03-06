@@ -1,8 +1,9 @@
+**********************************
 Using Ansible with the Packet host
-==================================
+**********************************
 
 Introduction
-------------
+============
 
 `Packet.net <https://packet.net>`_ is a bare metal infrastructure host that's supported by Ansible (>=2.3) via a dynamic inventory script and two cloud modules. The two modules are:
 
@@ -12,7 +13,7 @@ Introduction
 Note, this guide assumes you are familiar with Ansible and how it works. If you're not, have a look at their `docs <http://docs.ansible.com/>`_ before getting started.
 
 Requirements
-------------
+============
 
 The Packet modules and inventory script connect to the Packet API using the packet-python package. You can install it with pip:
 
@@ -43,7 +44,7 @@ If you want to use an existing keypair, just copy the private and public key ove
 
 
 Device Creation
----------------
+===============
 
 The following code block is a simple playbook that creates one `Type 0 <https://www.packet.net/bare-metal/servers/type-0/>`_ server (the 'plan' parameter). You have to supply 'plan' and 'operating_system'. 'location' defaults to 'ewr1' (Parsippany, NJ). You can find all the possible values for the parameters via a `CLI client <https://www.packet.net/developers/integrations/api-cli/>`_.
 
@@ -72,7 +73,7 @@ If you get an error with the message "failed to set machine state present, error
 
 
 Updating Devices
-----------------
+================
 
 The two parameters used to uniquely identify Packet devices are: "device_ids" and "hostnames". Both parameters accept either a single string (later converted to a one-element list), or a list of strings.
 
@@ -120,7 +121,7 @@ You can also identify specific Packet devices with the 'device_ids' parameter. T
 
 
 More Complex Playbooks
-----------------------
+======================
 
 In this example, we'll create a CoreOS cluster with `user data <https://support.packet.net/en/support/solutions/articles/22000058261-the-basics-of-cloud-config-and-user-data>`_.
 
@@ -203,7 +204,7 @@ Once you create a couple of devices, you might appreciate the dynamic inventory 
 
 
 Dynamic Inventory Script
-------------------------
+========================
 
 The dynamic inventory script queries the Packet API for a list of hosts, and exposes it to Ansible so you can easily identify and act on Packet devices. You can find it in Ansible's git repo at `contrib/inventory/packet_net.py <https://github.com/ansible/ansible/blob/devel/contrib/inventory/packet_net.py>`_.
 
