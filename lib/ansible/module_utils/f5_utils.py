@@ -293,11 +293,14 @@ class AnsibleF5Parameters(object):
                     setattr(self, self.api_params[k], v)
                 except (KeyError, TypeError):
                     # Otherwise set things to attributes as normal
-                    setattr(self, k, v)
-                except AttributeError:
-                    # If all else fails, stash them in a dictionary. For
-                    # instance, if the module developer forgot a map.
-                    self._values[k] = v
+                    try:
+                        setattr(self, k, v)
+                    except AttributeError:
+                        # If all else fails, stash them in a dictionary. For
+                        # instance, if the module developer forgot a map,
+                        # or said developer didn't need to add a setter for
+                        # the property
+                        self._values[k] = v
 
     def __getattr__(self, item):
         # Ensures that properties that weren't defined, and therefore stashed
