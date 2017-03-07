@@ -133,6 +133,11 @@ options:
             - "Note that this parameter isn't idempotent, as it's not possible
                to check if the disk should be or should not be sparsified."
         version_added: "2.4"
+    openstack_volume_type:
+        description:
+            - "Name of the openstack volume type. This is valid when working
+               with cinder."
+        version_added: "2.4"
 extends_documentation_fragment: ovirt
 '''
 
@@ -398,6 +403,9 @@ class DisksModule(BaseModule):
                 self._module.params.get('format')
             ) if self._module.params.get('format') else None,
             sparse=self._module.params.get('format') != 'raw',
+            openstack_volume_type=otypes.OpenStackVolumeType(
+                name=self.param('openstack_volume_type')
+            ) if self.param('openstack_volume_type') else None,
             provisioned_size=convert_to_bytes(
                 self._module.params.get('size')
             ),
@@ -522,6 +530,7 @@ def main():
         upload_image_path=dict(default=None, aliases=['image_path']),
         force=dict(default=False, type='bool'),
         sparsify=dict(default=None, type='bool'),
+        openstack_volume_type=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
