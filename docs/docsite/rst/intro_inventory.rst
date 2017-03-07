@@ -147,8 +147,7 @@ Default groups
 ++++++++++++++
 
 There are two default groups: ``all`` and ``ungrouped``. ``all`` contains every host.
-``ungrouped`` contains all hosts declared without an explicit section, even if they belong to
-another group.
+``ungrouped`` contains all hosts that don't have another group aside from ``all``.
 
 .. _splitting_out_vars:
 
