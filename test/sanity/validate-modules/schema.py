@@ -27,7 +27,7 @@ option_schema = Schema(
         'version_added': Any(basestring, float),
         'default': Any(None, basestring, float, int, bool, list, dict),
         # FIXME: Recursive Schema: https://github.com/alecthomas/voluptuous/issues/128
-        'subspec': Any(None, basestring),
+        'suboptions': Any(None, dict),
     },
     extra=PREVENT_EXTRA
 )
@@ -68,5 +68,10 @@ metadata_schema = Schema(
 )
 
 # FIXME: Don't allow empty options for choices, aliases, etc
-# Validate RETURN
+
 # If type: bool can we ensure choices isn't set?
+
+
+# Validate RETURN
+#  Check for contains
+#  Tool that takes JSON and generates RETURN skeleton (needs to support complex structures)
