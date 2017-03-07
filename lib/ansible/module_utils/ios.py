@@ -46,7 +46,7 @@ ios_argument_spec = {
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in ios_argument_spec:
-        if key != 'provider' and module.params[key]:
+        if key not in ['provider', 'authorize'] and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
                     'removed in a future version' % key)
 
