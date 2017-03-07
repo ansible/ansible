@@ -182,7 +182,7 @@ def _delete_router(module, neutron, router_id):
     try:
         neutron.delete_router(router_id)
     except:
-        module.fail_json("Error in deleting the router")
+        module.fail_json(msg="Error in deleting the router")
     return True
 
 def main():
