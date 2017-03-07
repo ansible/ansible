@@ -18,7 +18,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-########################################################
+import os
 
 from ansible import constants as C
 from ansible.cli import CLI
@@ -29,12 +29,9 @@ from ansible.parsing.splitter import parse_kv
 from ansible.playbook import Playbook
 from ansible.playbook.play import Play
 from ansible.plugins.loader import get_all_plugin_loaders
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 ########################################################

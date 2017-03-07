@@ -35,13 +35,10 @@ from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import action_loader, fragment_loader
+from ansible.utils.display import Display
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class DocCLI(CLI):

@@ -236,12 +236,9 @@ Here's a simple lookup plugin implementation --- this lookup returns the content
   """
   from ansible.errors import AnsibleError, AnsibleParserError
   from ansible.plugins.lookup import LookupBase
+  from ansible.utils.display import Display
 
-  try:
-      from __main__ import display
-  except ImportError:
-      from ansible.utils.display import Display
-      display = Display()
+  display = Display()
 
 
   class LookupModule(LookupBase):
