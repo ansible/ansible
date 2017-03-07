@@ -20,12 +20,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from collections import defaultdict
+from collections import defaultdict, Mapping
+
+from units.mock.loader import DictDataLoader
 
 from ansible.compat.tests import mock, unittest
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleOptionsError
 
-from ansible.utils.vars import combine_vars, merge_hash
+from ansible.utils.vars import combine_vars, merge_hash, load_extra_vars, _validate_mutable_mappings
+from ansible.utils.vars import AnsibleMutableMappingsError
+
 
 class TestVariableUtils(unittest.TestCase):
 
@@ -96,3 +100,103 @@ class TestVariableUtils(unittest.TestCase):
         with mock.patch('ansible.constants.DEFAULT_HASH_BEHAVIOUR', 'merge'):
             for test in self.test_merge_data:
                 self.assertEqual(combine_vars(test['a'], test['b']), test['result'])
+
+    def test_combine_vars_string(self):
+        with mock.patch('ansible.constants.DEFAULT_HASH_BEHAVIOUR', 'replace'):
+            with self.assertRaises(AnsibleError):
+                combine_vars('some_string', dict(a=1))
+
+        with mock.patch('ansible.constants.DEFAULT_HASH_BEHAVIOUR', 'merge'):
+            with self.assertRaises(AnsibleError):
+                combine_vars('some_string', dict(a=1))
+
+    def test_merge_hash_string(self):
+        with self.assertRaises(AnsibleError):
+            merge_hash('some_string', dict(a=1))
+
+
+class Options:
+    def __init__(self, extra_vars):
+        self.extra_vars = extra_vars
+
+
+class TestLoadExtraVars(unittest.TestCase):
+    def test(self):
+        loader = DictDataLoader({'test_file.yml': 'foo: bar'})
+        options = Options(['@test_file.yml'])
+
+        ev = load_extra_vars(loader, options)
+        self.assertEqual(ev['foo'], 'bar')
+
+    def test_string(self):
+        loader = DictDataLoader({'test_file.yml': 'just_a_string foo_bar'})
+        options = Options(['@test_file.yml'])
+
+        self.assertRaisesRegexp(AnsibleOptionsError,
+                                'Invalid extra vars data supplied. The extra var.*@test_file.yml.*could not be made into a dictionary',
+                                load_extra_vars,
+                                loader, options)
+
+    def test_json_list(self):
+        options_json = '''["foo", "bar"]'''
+        options = Options([options_json])
+
+        loader = DictDataLoader({})
+        self.assertRaisesRegexp(AnsibleOptionsError,
+                                'Invalid extra vars data supplied.*foo.*bar',
+                                load_extra_vars,
+                                loader, options)
+
+    def test_json_dict(self):
+        options_json = '''{"foo": "bar"}'''
+        options = Options([options_json])
+
+        loader = DictDataLoader({})
+        ev = load_extra_vars(loader, options)
+        self.assertEqual(ev['foo'], 'bar')
+
+    def test_kv(self):
+        options = Options(['foo=bar'])
+        loader = DictDataLoader({})
+
+        ev = load_extra_vars(loader, options)
+        self.assertEqual(ev['foo'], 'bar')
+
+
+class TestValidateMutableMappings(unittest.TestCase):
+    def test_none(self):
+        self.assertRaisesRegexp(AnsibleMutableMappingsError,
+                                'failed to combine variables, expected dicts but got a.*NoneType',
+                                _validate_mutable_mappings,
+                                None, None)
+
+    def test_string(self):
+        self.assertRaisesRegexp(AnsibleMutableMappingsError,
+                                'failed to combine variables, expected dicts but got.*str',
+                                _validate_mutable_mappings,
+                                'this is just a string', None)
+
+    def test_empty_dicts(self):
+        # no exception is passing
+        _validate_mutable_mappings({}, {})
+
+    def test_default_dict(self):
+        _validate_mutable_mappings(defaultdict(list), defaultdict(set))
+
+    def test_mapping(self):
+        class SomeMapping(Mapping):
+            def __getitem__(self, item):
+                return None
+
+            def __len__(self):
+                return 0
+
+            def __iter__(self):
+                return iter({})
+
+        sm1 = SomeMapping()
+
+        self.assertRaisesRegexp(AnsibleMutableMappingsError,
+                                'failed to combine variables, expected dicts.*SomeMapping.*dict',
+                                _validate_mutable_mappings,
+                                sm1, {})
