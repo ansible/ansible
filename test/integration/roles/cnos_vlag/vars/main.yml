@@ -6,7 +6,7 @@ test_vlag_data2:
 test_vlag_data3:
   - {vlagArg1: "config-consistency", vlagArg2: "strict"}
 test_vlag_data4:
-  - {vlagArg1: "isl", vlagArg2: 23}
+  - {vlagArg1: "isl", vlagArg2: 33}
 test_vlag_data5:
   - {vlagArg1: "mac-address-table"}
 test_vlag_data6:

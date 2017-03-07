@@ -280,7 +280,7 @@ def main():
     # need to add logic to check when changes occur or not
     errorMsg = cnos.checkOutputForError(output)
     if(errorMsg is None):
-        module.exit_json(changed=True, msg="VLAN configuration isaccomplished")
+        module.exit_json(changed=True, msg="VLAN configuration is accomplished")
     else:
         module.fail_json(msg=errorMsg)
 
