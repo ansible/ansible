@@ -167,7 +167,7 @@ def check_valid_modification(module, values, modifiable_params):
 
         # check valid modifiable parameters
         if parameter not in modifiable_params:
-            module.fail_json("%s is not a modifiable parameter. Valid parameters to modify are: %s." % (parameter, modifiable_params.keys()))
+            module.fail_json(msg="%s is not a modifiable parameter. Valid parameters to modify are: %s." % (parameter, modifiable_params.keys()))
 
         # check allowed datatype for modified parameters
         str_to_type = {"integer": int, "string": text_type}

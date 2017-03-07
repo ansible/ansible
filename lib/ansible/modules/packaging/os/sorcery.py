@@ -238,7 +238,7 @@ def codex_list(module):
     rc, stdout, stderr = module.run_command(cmd_scribe)
 
     if rc != 0:
-        module.fail_json("unable to list grimoire collection, fix your Codex")
+        module.fail_json(msg="unable to list grimoire collection, fix your Codex")
 
     rex = re.compile("^\s*\[\d+\] : (?P<grim>[\w\-\+\.]+) : [\w\-\+\./]+(?: : (?P<ver>[\w\-\+\.]+))?\s*$")
 

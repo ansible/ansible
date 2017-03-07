@@ -191,7 +191,7 @@ class AnsibleCloudStackNic(AnsibleCloudStack):
         if nics:
             self.nic = nics['nic'][0]
             return self.nic
-        self.module.fail_json("NIC for VM %s in network %s not found" (self.get_vm(key='name'), self.get_network(key='name')))
+        self.module.fail_json(msg="NIC for VM %s in network %s not found" %(self.get_vm(key='name'), self.get_network(key='name')))
 
     def get_secondary_ip(self):
         nic = self.get_nic()

@@ -287,7 +287,7 @@ class ExoDnsRecord(ExoDns):
         self.multiple = self.module.params.get('multiple')
         self.record_type = self.module.params.get('record_type')
         if self.multiple and self.record_type != 'A':
-            self.module.fail_json("Multiple is only usable with record_type A")
+            self.module.fail_json(msg="Multiple is only usable with record_type A")
 
     def _create_record(self, record):
         self.result['changed'] = True
