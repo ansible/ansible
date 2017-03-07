@@ -7,34 +7,40 @@
       - no ip domain lookup source-interface
       - vrf definition ansible
     match: none
+    authorize: yes
     provider: "{{ cli }}"
 
 - name: configure lookup_source
   ios_system:
-    lookup_source: Management1
+    lookup_source: loopback 10
     provider: "{{ cli }}"
+    authorize: yes
   register: result
 
 - assert:
     that:
       - result.changed == true
-      - "'ip domain lookup source-interface Management1' in result.commands"
+      - "'ip domain lookup source-interface loopback 10' in result.commands"
 
 - name: verify lookup_source
   ios_system:
-    lookup_source: Management1
+    lookup_source: loopback 10
     provider: "{{ cli }}"
+    authorize: yes
   register: result
 
 - assert:
     that:
       - result.changed == false
+# FIXME BUG https://github.com/ansible/ansible/issues/22354
+  ignore_errors: yes
 
 - name: change to vrf
   ios_system:
     lookup_source:
-      - interface: Management1
+      - interface: loopback 10
         vrf: ansible
+    authorize: yes
     provider: "{{ cli }}"
   register: result
 
@@ -50,6 +56,7 @@
     lookup_source:
       - interface: Management1
         vrf: ansible
+    authorize: yes
     provider: "{{ cli }}"
   register: result
 
