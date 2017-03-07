@@ -31,13 +31,10 @@ from ansible.module_utils._text import to_bytes
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.encrypt import key_for_hostname, keyczar_encrypt, keyczar_decrypt
+from ansible.utils.display import Display
 
+display = Display()
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 # the chunk size to read and send, assuming mtu 1500 and
 # leaving room for base64 (+33%) encoding and header (8 bytes)

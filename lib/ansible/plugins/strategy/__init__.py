@@ -43,15 +43,12 @@ from ansible.playbook.role_include import IncludeRole
 from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
 from ansible.vars import combine_vars, strip_internal_keys
-
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
 __all__ = ['StrategyBase']
+
+display = Display()
+
 
 class StrategySentinel:
     pass

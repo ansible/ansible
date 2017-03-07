@@ -29,12 +29,9 @@ from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
 from ansible.utils.path import makedirs_safe
 from ansible.utils.ssh_functions import check_for_controlpersist
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class PlaybookExecutor:

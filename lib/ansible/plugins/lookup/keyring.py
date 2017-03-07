@@ -15,10 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
 '''
 Lookup plugin to grab secrets from the OS keyring.
 ========================================================================================
@@ -41,20 +40,16 @@ ansible localhost -m debug -a "msg=\"{{item}}\" with_keyring= 'servicename usern
 HAS_KEYRING = True
 
 from ansible.errors import AnsibleError
+from ansible.utils.display import Display
+from ansible.plugins.lookup import LookupBase
 
 try:
     import keyring
 except ImportError:
     HAS_KEYRING = False
 
+display = Display()
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
-from ansible.plugins.lookup import LookupBase
 
 class LookupModule(LookupBase):
 

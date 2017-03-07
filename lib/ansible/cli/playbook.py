@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-########################################################
-
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -33,15 +31,10 @@ from ansible.playbook.play_context import PlayContext
 from ansible.utils.vars import load_extra_vars
 from ansible.utils.vars import load_options_vars
 from ansible.vars import VariableManager
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
-
-#---------------------------------------------------------------------------------------------------
 
 class PlaybookCLI(CLI):
     ''' the tool to run *Ansible playbooks*, which are a configuration and multinode deployment system.

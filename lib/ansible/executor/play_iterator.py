@@ -27,17 +27,14 @@ from ansible.module_utils.six import iteritems
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 from ansible.playbook.role_include import IncludeRole
+from ansible.utils.display import Display
 
 
 boolean = C.mk_boolean
 
 __all__ = ['PlayIterator']
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class HostState:

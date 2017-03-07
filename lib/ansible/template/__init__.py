@@ -46,15 +46,11 @@ from ansible.plugins import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
+from ansible.utils.display import Display
 
 __all__ = ['Templar']
+
+display = Display()
 
 # A regex for checking to see if a variable we're trying to
 # expand is just a single variable name.

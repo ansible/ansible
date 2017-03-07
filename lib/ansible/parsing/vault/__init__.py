@@ -66,12 +66,9 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six import PY3, binary_type
 from ansible.module_utils.six.moves import zip
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 # OpenSSL pbkdf2_hmac
 HAS_PBKDF2HMAC = False

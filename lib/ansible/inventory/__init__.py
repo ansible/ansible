@@ -38,12 +38,9 @@ from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins import vars_loader
 from ansible.utils.vars import combine_vars
 from ansible.utils.path import unfrackpath
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 HOSTS_PATTERNS_CACHE = {}

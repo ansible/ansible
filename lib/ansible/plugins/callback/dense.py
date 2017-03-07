@@ -31,14 +31,12 @@ except ImportError:
 from ansible.module_utils.six import binary_type, text_type
 from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
 from ansible.utils.color import colorize, hostcolor
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
 import sys
+
+display = Display()
+
 
 # Design goals:
 #

@@ -22,12 +22,10 @@ __metaclass__ = type
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
+
 
 class Become:
 

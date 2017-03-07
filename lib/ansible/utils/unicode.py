@@ -20,12 +20,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.module_utils._text import to_bytes as _to_bytes, to_text, to_native
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 __all__ = ('to_bytes', 'to_unicode', 'to_str', 'unicode_wrap')

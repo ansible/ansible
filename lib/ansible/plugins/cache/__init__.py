@@ -28,12 +28,9 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six import with_metaclass
 from ansible.module_utils._text import to_bytes
 from ansible.plugins import cache_loader
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class BaseCacheModule(with_metaclass(ABCMeta, object)):

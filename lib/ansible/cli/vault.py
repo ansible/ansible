@@ -27,12 +27,9 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import VaultEditor
 from ansible.cli import CLI
 from ansible.module_utils._text import to_text, to_bytes
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class VaultCLI(CLI):

@@ -35,6 +35,8 @@ from termios import TIOCGWINSZ
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.utils.color import stringc
+from ansible.utils.singleton import Singleton
+from ansible.compat.six import with_metaclass
 from ansible.module_utils._text import to_bytes, to_text
 
 
@@ -63,7 +65,9 @@ b_COW_PATHS = (b"/usr/bin/cowsay",
                b"/usr/local/bin/cowsay",  # BSD path for cowsay
                b"/opt/local/bin/cowsay",  # MacPorts path for cowsay
               )
-class Display:
+
+
+class Display(with_metaclass(Singleton, object)):
 
     def __init__(self, verbosity=0):
 

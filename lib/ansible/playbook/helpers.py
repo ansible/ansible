@@ -23,12 +23,9 @@ import os
 from ansible import constants as C
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
 from ansible.module_utils.six import string_types
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):

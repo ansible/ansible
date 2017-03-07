@@ -43,12 +43,9 @@ from ansible.plugins.shell.powershell import async_watchdog, async_wrapper, beco
 # variable to the object and then it never gets updated.
 from ansible.executor import action_write_locks
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
+display = Display()
 
 REPLACER          = b"#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_VERSION  = b"\"<<ANSIBLE_VERSION>>\""

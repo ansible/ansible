@@ -36,15 +36,12 @@ from ansible.utils.encrypt import key_for_hostname
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.ssh_functions import check_for_controlpersist
 from ansible.vars.unsafe_proxy import UnsafeProxy, wrap_var
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
 
 __all__ = ['TaskExecutor']
+
+display = Display()
 
 
 class TaskExecutor:

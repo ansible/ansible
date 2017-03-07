@@ -32,12 +32,9 @@ from ansible.module_utils.six.moves import StringIO
 from ansible.plugins import terminal_loader
 from ansible.plugins.connection import ensure_connect
 from ansible.plugins.connection.paramiko_ssh import Connection as _Connection
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Connection(_Connection):
