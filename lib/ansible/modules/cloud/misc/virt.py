@@ -47,8 +47,14 @@ options:
       - in addition to state management, various non-idempotent commands are available. See examples
     required: false
     choices: ["create","status", "start", "stop", "pause", "unpause",
-              "shutdown", "undefine", "destroy", "get_xml", "autostart",
+              "shutdown", "undefine", "destroy", "get_xml",
               "freemem", "list_vms", "info", "nodeinfo", "virttype", "define"]
+  autostart:
+    description:
+      - start VM at host startup
+    choices: [True, False]
+    version_added: "2.3"
+    default: null
   uri:
     description:
       - libvirt connection uri
@@ -127,7 +133,7 @@ else:
 
 ALL_COMMANDS = []
 VM_COMMANDS = ['create','status', 'start', 'stop', 'pause', 'unpause',
-                'shutdown', 'undefine', 'destroy', 'get_xml', 'autostart', 'define']
+                'shutdown', 'undefine', 'destroy', 'get_xml', 'define']
 HOST_COMMANDS = ['freemem', 'list_vms', 'info', 'nodeinfo', 'virttype']
 ALL_COMMANDS.extend(VM_COMMANDS)
 ALL_COMMANDS.extend(HOST_COMMANDS)
@@ -339,9 +345,14 @@ class Virt(object):
     def virttype(self):
         return self.__get_conn().get_type()
 
-    def autostart(self, vmid):
+    def autostart(self, vmid, as_flag):
         self.conn = self.__get_conn()
-        return self.conn.set_autostart(vmid, True)
+        # Change autostart flag only if needed
+        if self.conn.get_autostart(vmid) != as_flag:
+            self.conn.set_autostart(vmid, as_flag)
+            return True
+
+        return False
 
     def freemem(self):
         self.conn = self.__get_conn()
@@ -431,6 +442,7 @@ class Virt(object):
 def core(module):
 
     state      = module.params.get('state', None)
+    autostart  = module.params.get('autostart', None)
     guest      = module.params.get('name', None)
     command    = module.params.get('command', None)
     uri        = module.params.get('uri', None)
@@ -449,7 +461,6 @@ def core(module):
         if not guest:
             module.fail_json(msg = "state change requires a guest specified")
 
-        res['changed'] = False
         if state == 'running':
             if v.status(guest) is 'paused':
                 res['changed'] = True
@@ -473,6 +484,9 @@ def core(module):
             module.fail_json(msg="unexpected state")
 
         return VIRT_SUCCESS, res
+
+    if autostart is not None and v.autostart(guest, autostart):
+        res['changed'] = True
 
     if command:
         if command in VM_COMMANDS:
@@ -508,6 +522,7 @@ def main():
     module = AnsibleModule(argument_spec=dict(
         name = dict(aliases=['guest']),
         state = dict(choices=['running', 'shutdown', 'destroyed', 'paused']),
+        autostart = dict(type='bool'),
         command = dict(choices=ALL_COMMANDS),
         uri = dict(default='qemu:///system'),
         xml = dict(),
