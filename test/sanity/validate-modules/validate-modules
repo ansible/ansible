@@ -609,16 +609,6 @@ class ModuleValidator(Validator):
                 error.data = doc
             errors.extend(e.errors)
 
-        options = doc.get('options', {})
-        for key, option in (options or {}).items():
-            try:
-                option_schema(option)
-            except Exception as e:
-                for error in e.errors:
-                    error.path[:0] = ['options', key]
-                    error.data = option
-                errors.extend(e.errors)
-
         for error in errors:
             path = [str(p) for p in error.path]
 
