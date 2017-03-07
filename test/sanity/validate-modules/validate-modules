@@ -674,12 +674,6 @@ class ModuleValidator(Validator):
                             318,
                             'Module deprecated, but DOCUMENTATION.deprecated is missing'
                         ))
-                else:
-                    if 'module' in doc and doc['module'] != self.name:
-                        self.errors.append((
-                            319,
-                            ("'Expected 'module: %s', found 'module: %s'" % (self.name, doc['module']))
-                        ))
 
                 self._validate_docs_schema(doc, doc_schema, 'DOCUMENTATION', 305)
                 self._check_version_added(doc)
