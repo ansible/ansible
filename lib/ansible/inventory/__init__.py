@@ -170,6 +170,11 @@ class Inventory(object):
             host.vars = combine_vars(host.vars, self.get_host_variables(host.name))
             self.get_host_vars(host)
 
+            # clear ungrouped of any incorrectly stored by parser
+            mygroups = host.get_groups()
+            if len(mygroups) > 2 and ungrouped in mygroups:
+                host.remove_group(ungrouped)
+
     def _match(self, str, pattern_str):
         try:
             if pattern_str.startswith('~'):
