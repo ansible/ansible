@@ -70,9 +70,9 @@ class DataLoader():
         # initialize the vault stuff with an empty password
         self.set_vault_password(None)
 
-    def set_vault_password(self, vault_password):
-        self._vault_password = vault_password
-        self._vault = VaultLib(password=vault_password)
+    def set_vault_password(self, b_vault_password):
+        self._b_vault_password = b_vault_password
+        self._vault = VaultLib(b_password=b_vault_password)
 
     def load(self, data, file_name='<string>', show_content=True):
         '''
@@ -150,7 +150,7 @@ class DataLoader():
     def _safe_load(self, stream, file_name=None):
         ''' Implements yaml.safe_load(), except using our custom loader class. '''
 
-        loader = AnsibleLoader(stream, file_name, self._vault_password)
+        loader = AnsibleLoader(stream, file_name, self._b_vault_password)
         try:
             return loader.get_single_data()
         finally:
@@ -372,7 +372,7 @@ class DataLoader():
             raise AnsibleFileNotFound("the file_name '%s' does not exist, or is not readable" % to_native(file_path))
 
         if not self._vault:
-            self._vault = VaultLib(password="")
+            self._vault = VaultLib(b_password="")
 
         real_path = self.path_dwim(file_path)
 
@@ -386,7 +386,7 @@ class DataLoader():
                     # the decrypt call would throw an error, but we check first
                     # since the decrypt function doesn't know the file name
                     data = f.read()
-                    if not self._vault_password:
+                    if not self._b_vault_password:
                         raise AnsibleParserError("A vault password must be specified to decrypt %s" % file_path)
 
                     data = self._vault.decrypt(data, filename=real_path)
