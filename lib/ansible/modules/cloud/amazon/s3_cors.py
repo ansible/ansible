@@ -166,7 +166,7 @@ def _create_or_update_bucket_cors(connection, module, location):
                 bucket.set_cors_xml(cors_xml)
                 changed = True
                 current_cors_xml = bucket.get_cors().to_xml()
-            except S3ResponseError, e:
+            except S3ResponseError as e:
                 module.fail_json(msg=e.message)
 
 
