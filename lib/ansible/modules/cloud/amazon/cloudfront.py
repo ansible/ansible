@@ -115,6 +115,15 @@ class CloudFrontServiceManager:
             self.module.fail_json(msg="Error creating cloud front origin access identity - " + str(e), 
                                   exception=traceback.format_exc())
 
+            def create_invalidation(self, distribution_id, invalidation_batch):
+        try:
+            func = partial(self.client.create_invalidation, DistributionId = distribution_id, 
+                           InvalidationBatch=invalidation_batch)
+            return self.paginated_response(func)
+        except Exception as e:
+            self.module.fail_json(msg="Error creating invalidation(s) - " + str(e),
+                                  exception=traceback.format_exec())
+
     def paginated_response(self, func, result_key=""):
         '''
         Returns expanded response for paginated operations.
@@ -144,8 +153,11 @@ def main():
         caller_reference=dict(required=False, type='str'),
         comment=dict(required=False, type='str'),
         create_distribution=dict(required=False, type='bool'),
+        distribution_config=dict(required=False, type='str'),
         create_distribution_with_tags=dict(required=False, type='bool'),
         create_invalidation=dict(required=False, type='bool'),
+        distribution_id=dict(required=False, type='str'),
+        invalidation_batch=dict(required=False, type='str'),
         create_streaming_distribution=dict(required=False, type='bool'),
         create_streaming_distribution_with_tags=dict(required=False, type='bool'),
         delete_cloud_front_origin_access_identity=dict(required=False, type='bool'),
@@ -172,9 +184,13 @@ def main():
     
     caller_reference = module.params.get('caller_reference')
     comment = module.params.get('comment')
-    
+    distribution_id = module.params.get('distribution_id')
+    invalidation_batch = module.params.get('invalidation_batch')
+
     if(create_cloud_front_origin_access_identity):
         result=service_mgr.create_cloud_front_origin_access_identity(caller_reference, comment)
+    elif(create_invalidation):
+        result=service_mgr.create_invalidation(distribution_id, invalidation_batch)
 
     module.exit_json(msg="Cloudfront operation completed successfully", cloudfront_result=result)
 
