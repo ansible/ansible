@@ -35,6 +35,7 @@ function cleanup
 
     rmdir shippable/testresults/
     cp -a test/results/junit/ shippable/testresults/
+    cp -aT test/results/bot/ shippable/testresults/
 }
 
 trap cleanup EXIT
