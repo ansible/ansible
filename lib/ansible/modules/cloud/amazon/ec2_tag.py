@@ -135,7 +135,7 @@ def main():
         state = dict(default='present', choices=['present', 'absent', 'list']),
     )
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
@@ -167,8 +167,8 @@ def main():
             for (key, value) in set(tags.items()):
                 if (key, value) not in set(tagdict.items()):
                     dictadd[key] = value
-        tagger = ec2.create_tags(resource, dictadd)
-        gettags = ec2.get_all_tags(filters=filters)
+        if not module.check_mode:
+            ec2.create_tags(resource, dictadd)
         module.exit_json(msg="Tags %s created for resource %s." % (dictadd,resource), changed=True)
 
     if state == 'absent':
@@ -182,8 +182,8 @@ def main():
         for (key, value) in set(tags.items()):
             if (key, value) in set(tagdict.items()):
                 dictremove[key] = value
-        tagger = ec2.delete_tags(resource, dictremove)
-        gettags = ec2.get_all_tags(filters=filters)
+        if not module.check_mode:
+            ec2.delete_tags(resource, dictremove)
         module.exit_json(msg="Tags %s removed for resource %s." % (dictremove,resource), changed=True)
 
     if state == 'list':
