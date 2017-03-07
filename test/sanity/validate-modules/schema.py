@@ -66,3 +66,7 @@ metadata_schema = Schema(
                                       'committer')
     }
 )
+
+# FIXME: Don't allow empty options for choices, aliases, etc
+# Validate RETURN
+# If type: bool can we ensure choices isn't set?
