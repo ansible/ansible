@@ -103,7 +103,7 @@ class Icinga2FeatureHelper:
 
         if self.module.params["state"] == "present":
             if rc != 0:
-                self.module.fail_json("Fail to %s feature %s. icinga2 command returned %s"
+                self.module.fail_json(msg="Fail to %s feature %s. icinga2 command returned %s"
                                       % (feature_enable_str, self.module.params["name"], out))
 
             if re.search("already enabled", out) is None:

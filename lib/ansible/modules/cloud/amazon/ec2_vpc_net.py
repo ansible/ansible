@@ -230,7 +230,7 @@ def main():
         module.fail_json(msg="region must be specified")
 
     if dns_hostnames and not dns_support:
-        module.fail_json('In order to enable DNS Hostnames you must also enable DNS support')
+        module.fail_json(msg='In order to enable DNS Hostnames you must also enable DNS support')
 
     if state == 'present':
 
