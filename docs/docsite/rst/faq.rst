@@ -119,10 +119,9 @@ used when executing python modules.   Thus, you can point to any python you want
 system does not point to a Python 2.X interpreter.  
 
 Some Linux operating systems, such as Arch, may only have Python 3 installed by default.  This is not sufficient and you will
-get syntax errors trying to run modules with Python 3.  Python 3 is essentially not the same
-language as Python 2.  Ansible modules currently need to support older Pythons for users that  still have Enterprise Linux 5 deployed, so they are not yet ported to run under Python 3.0.  This is not a problem though as you can just install Python 2 also on a managed host.
-
-Python 3.0 support will likely be addressed at a later point in time when usage becomes more mainstream.
+get syntax errors trying to run modules with Python 3.  Python 3 is essentially not the same language as Python 2.  Python 3
+support is being worked on but some Ansible modules are not yet ported to run under Python 3.0.  This is not a problem though
+as you can just install Python 2 also on a managed host.
 
 Do not replace the shebang lines of your python modules.  Ansible will do this for you automatically at deploy time.
 
