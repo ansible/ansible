@@ -141,7 +141,7 @@ options:
       - A dictionary of limits applied to each container created by the build process.
     required: false
     version_added: "2.1"
-    contains:
+    suboptions:
       memory:
         description: Set memory limit for build
         type: int
