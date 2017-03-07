@@ -80,6 +80,9 @@ EXAMPLES = '''
 
 import traceback
 
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
 try:
     import boto.ec2.elb
     from boto.ec2.tag import Tag
@@ -251,8 +254,6 @@ def main():
 
     module.exit_json(**ec2_facts_result)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
