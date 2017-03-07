@@ -190,7 +190,7 @@ def _destroy_bucket_cors(connection, module):
     try:
         current_cors_config = bucket.get_cors()
         current_cors_xml = current_cors_config.to_xml()
-    except S3ResponseError, e:
+    except S3ResponseError as e:
         if e.error_code == "NoSuchCORSConfiguration":
             current_cors_xml = None
         else:
