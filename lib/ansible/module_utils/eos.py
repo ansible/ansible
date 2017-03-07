@@ -61,7 +61,7 @@ eos_argument_spec = {
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in eos_argument_spec:
-        if key not in ['provider', 'transport'] and module.params[key]:
+        if key not in ['provider', 'transport', 'authorize'] and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
                     'removed in a future version' % key)
 
