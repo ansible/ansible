@@ -27,7 +27,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = """
 ---
-module: fortios_address
+module: fortios_config
 version_added: "2.3"
 author: "Benjamin Jolivot (@bjolivot)"
 short_description: Manage fortios firewall config
