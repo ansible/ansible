@@ -22,7 +22,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = """
 ---
-module: Ordnance_config
+module: ordnance_config
 version_added: "2.3"
 author: "Alexander Turner (alex.turner@ordnance.io)"
 short_description: Manage Ordnance configuration sections

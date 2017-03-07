@@ -22,7 +22,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: kms
+module: aws_kms
 short_description: Perform various KMS management tasks.
 description:
      - Manage role/user access to a KMS key. Not designed for encrypting/decrypting.
