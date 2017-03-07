@@ -564,6 +564,7 @@ class SanityResult(object):
         :type args: SanityConfig
         """
         self.write_console()
+        self.write_bot(args)
 
         if args.lint:
             self.write_lint()
@@ -582,11 +583,32 @@ class SanityResult(object):
         """Write lint results to stdout."""
         pass
 
+    def write_bot(self, args):
+        """
+        :type args: SanityConfig
+        """
+        pass
+
     def write_junit(self, args):
         """
         :type args: SanityConfig
         """
         pass
+
+    def create_path(self, directory, extension):
+        """
+        :type directory: str
+        :type extension: str
+        :rtype: str
+        """
+        path = 'test/results/%s/ansible-test-%s' % (directory, self.test)
+
+        if self.python_version:
+            path += '-python-%s' % self.python_version
+
+        path += extension
+
+        return path
 
     def save_junit(self, args, test_case, properties=None):
         """
@@ -595,12 +617,7 @@ class SanityResult(object):
         :type properties: dict[str, str] | None
         :rtype: str | None
         """
-        path = 'test/results/junit/ansible-test-%s' % self.test
-
-        if self.python_version:
-            path += '-python-%s' % self.python_version
-
-        path += '.xml'
+        path = self.create_path('junit', '.xml')
 
         test_suites = [
             self.junit.TestSuite(
@@ -704,9 +721,6 @@ class SanityFailure(SanityResult):
         title = self.format_title()
         output = self.format_block()
 
-        # Hack to remove ANSI color reset code from SubprocessError messages.
-        output = output.replace(display.clear, '')
-
         test_case = self.junit.TestCase(classname='sanity', name=self.test)
 
         # Include a leading newline to improve readability on Shippable "Tests" tab.
@@ -714,6 +728,31 @@ class SanityFailure(SanityResult):
         test_case.add_failure_info(message=title, output='\n%s' % output)
 
         self.save_junit(args, test_case)
+
+    def write_bot(self, args):
+        """
+        :type args: SanityConfig
+        """
+        message = self.format_title()
+        output = self.format_block()
+
+        bot_data = dict(
+            results=[
+                dict(
+                    message=message,
+                    output=output,
+                ),
+            ],
+        )
+
+        path = self.create_path('bot', '.json')
+
+        if args.explain:
+            return
+
+        with open(path, 'wb') as bot_fd:
+            json.dump(bot_data, bot_fd, indent=4, sort_keys=True)
+            bot_fd.write('\n')
 
     def format_command(self):
         """
@@ -751,6 +790,9 @@ class SanityFailure(SanityResult):
             block = '\n'.join(str(m) for m in self.messages)
 
         message = block.strip()
+
+        # Hack to remove ANSI color reset code from SubprocessError messages.
+        message = message.replace(display.clear, '')
 
         return message
 
