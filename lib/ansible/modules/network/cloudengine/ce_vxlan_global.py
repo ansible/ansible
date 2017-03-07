@@ -90,7 +90,7 @@ options:
 
 EXAMPLES = '''
 - name: vxlan global module test
-  hosts: cd128
+  hosts: ce128
   connection: local
   gather_facts: no
   vars:
