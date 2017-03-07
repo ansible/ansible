@@ -105,7 +105,7 @@ EXAMPLES = '''
 
 # Disable all repositories (mode=incremental must be specified for now)
 - redhat_repositories:
-    id: *
+    id: "*"
     state: disabled
     mode: incremental
 '''
