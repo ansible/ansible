@@ -169,7 +169,7 @@ def main():
         argument_spec = dict(
             command              = dict(default="install", type="str", required=False),
             arguments            = dict(default="", type="str", required=False),
-            working_dir          = dict(aliases=["working-dir"], required=True),
+            working_dir          = dict(type="path", aliases=["working-dir"], required=True),
             prefer_source        = dict(default="no", type="bool", aliases=["prefer-source"]),
             prefer_dist          = dict(default="no", type="bool", aliases=["prefer-dist"]),
             no_dev               = dict(default="yes", type="bool", aliases=["no-dev"]),
@@ -203,7 +203,7 @@ def main():
             option = "--%s" % option
             options.append(option)
 
-    options.extend(['--working-dir', os.path.abspath(module.params['working_dir'])])
+    options.extend(['--working-dir', "'%s'" % module.params['working_dir']])
 
     option_params = {
         'prefer_source':        'prefer-source',
