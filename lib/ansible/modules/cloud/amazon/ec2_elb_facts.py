@@ -105,17 +105,12 @@ class ElbInformation(object):
 
     def _get_tags(self, elbname):
         params = {'LoadBalancerNames.member.1': elbname}
-        try:
-            elb_tags = self.connection.get_list('DescribeTags', params, [('member', Tag)])
-            return dict((tag.Key, tag.Value) for tag in elb_tags if hasattr(tag, 'Key'))
-        except:
-            return {}
+        elb_tags = self.connection.get_list('DescribeTags', params, [('member', Tag)])
+        return dict((tag.Key, tag.Value) for tag in elb_tags if hasattr(tag, 'Key'))
 
+    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
     def _get_elb_connection(self):
-        try:
-            return connect_to_aws(boto.ec2.elb, self.region, **self.aws_connect_params)
-        except BotoServerError as err:
-            self.module.fail_json(msg=err.message)
+        return connect_to_aws(boto.ec2.elb, self.region, **self.aws_connect_params)
 
     def _get_elb_listeners(self, listeners):
         listener_list = []
@@ -161,6 +156,7 @@ class ElbInformation(object):
             health_check_dict['ping_path'] = path
         return health_check_dict
 
+    @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
     def _get_elb_info(self, elb):
         elb_info = {
             'name': elb.name,
@@ -188,10 +184,7 @@ class ElbInformation(object):
             elb_info['vpc_id'] = elb.vpc_id
 
         if elb.instances:
-            try:
-                instance_health = self.connection.describe_instance_health(elb.name)
-            except BotoServerError as err:
-                self.module.fail_json(msg=err.message)
+            instance_health = self.connection.describe_instance_health(elb.name)
             elb_info['instances_inservice'] = [inst.instance_id for inst in instance_health if inst.state == 'InService']
             elb_info['instances_inservice_count'] = len(elb_info['instances_inservice'])
             elb_info['instances_outofservice'] = [inst.instance_id for inst in instance_health if inst.state == 'OutOfService']
@@ -206,12 +199,8 @@ class ElbInformation(object):
         elb_array, token = [], None
 
         while True:
-            try:
-                all_elbs = self.connection.get_all_load_balancers(marker=token)
-                token = all_elbs.next_token
-            except BotoServerError as err:
-                self.module.fail_json(msg = "%s: %s" % (err.error_code, err.error_message),
-                    exception=traceback.format_exc())
+            all_elbs = AWSRetry.backoff(tries=5, delay=5, backoff=2.0)(self.connection.get_all_load_balancers)(marker=token)
+            token = all_elbs.next_token
 
             if all_elbs:
                 if self.names:
@@ -240,19 +229,25 @@ def main():
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+    try:
 
-    if not region:
-        module.fail_json(msg="region must be specified")
+        region, ec2_url, aws_connect_params = get_aws_connection_info(module)
 
-    names = module.params['names']
-    elb_information = ElbInformation(module,
-                              names,
-                              region,
-                              **aws_connect_params)
+        if not region:
+            module.fail_json(msg="region must be specified")
 
-    ec2_facts_result = dict(changed=False,
-                            elbs=elb_information.list_elbs())
+        names = module.params['names']
+        elb_information = ElbInformation(module,
+                                         names,
+                                         region,
+                                         **aws_connect_params)
+
+        ec2_facts_result = dict(changed=False,
+                                elbs=elb_information.list_elbs())
+
+    except BotoServerError as err:
+        self.module.fail_json(msg="{}: {}".format(err.error_code, err.error_message),
+                              exception=traceback.format_exc())
 
     module.exit_json(**ec2_facts_result)
 
