@@ -287,7 +287,22 @@ class AnsibleF5Parameters(object):
         self._values = defaultdict(lambda: None)
         if params:
             for k,v in iteritems(params):
-                setattr(self, k, v)
+                try:
+                    # Handle weird API parameters like `dns.proxy.__iter__` by
+                    # using a map provided by the module developer
+                    setattr(self, self.api_params[k], v)
+                except (KeyError, TypeError):
+                    # Otherwise set things to attributes as normal
+                    setattr(self, k, v)
+                except AttributeError:
+                    # If all else fails, stash them in a dictionary. For
+                    # instance, if the module developer forgot a map.
+                    self._values[k] = v
+
+    def __getattr__(self, item):
+        # Ensures that properties that weren't defined, and therefore stashed
+        # in the `_values` dict, will be retrievable.
+        return self._values[item]
 
     @property
     def partition(self):
@@ -295,22 +310,12 @@ class AnsibleF5Parameters(object):
             return 'Common'
         return self._values['partition'].strip('/')
 
-    def __getattr__(self, item):
-        return self._values[item]
-
-    def __setattr__(self, key, value):
-        if key == '_values':
-            self.__dict__['_values'] = value
-        else:
-            super(AnsibleF5Parameters, self).__setattr__(key, value)
-
     @partition.setter
     def partition(self, value):
         self._values['partition'] = value
 
     def _filter_params(self, params):
         return dict((k, v) for k, v in iteritems(params) if v is not None)
-
 
 
 class F5ModuleError(Exception):
