@@ -134,7 +134,7 @@ def load_extra_vars(loader, options):
         if isinstance(data, MutableMapping):
             extra_vars = combine_vars(extra_vars, data)
         else:
-            raise AnsibleOptionsError("Invalid extra vars data supplied, it must be a dictionary but got: %s" % data)
+            raise AnsibleOptionsError("Invalid extra vars data supplied. '%s' could not be made into a dictionary" % extra_vars_opt)
 
     return extra_vars
 
