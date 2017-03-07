@@ -91,7 +91,7 @@ options:
         after the last match of specified regular expression. A special value is
         available; C(EOF) for inserting the line at the end of the file.
         If specified regular expression has no matches, EOF will be used instead.
-        May not be used with C(backrefs).
+        May not be used with C(backrefs). To use the first occurence set C(findfirst=true)
     choices: [ 'EOF', '*regex*' ]
   insertbefore:
     required: false
@@ -102,7 +102,15 @@ options:
         available; C(BOF) for inserting the line at the beginning of the file.
         If specified regular expression has no matches, the line will be
         inserted at the end of the file.  May not be used with C(backrefs).
+        To use the first occurence set C(findfirst=true)
     choices: [ 'BOF', '*regex*' ]
+  findfirst:
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+    description:
+      - Used with C(state=present) and C(insertbefore) or C(insertafter). If specified, 
+        the insert will be done with the first occurence. 
   create:
     required: false
     choices: [ "yes", "no" ]
@@ -232,7 +240,7 @@ def check_file_attrs(module, changed, message, diff):
     return message, changed
 
 
-def present(module, dest, regexp, line, insertafter, insertbefore, create,
+def present(module, dest, regexp, line, insertafter, insertbefore, findfirst, create,
             backup, backrefs):
 
     diff = {'before': '',
@@ -283,9 +291,11 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             if insertafter:
                 # + 1 for the next line
                 index[1] = lineno + 1
+                if findfirst: break
             if insertbefore:
                 # + 1 for the previous line
                 index[1] = lineno
+                if findfirst: break
 
     msg = ''
     changed = False
@@ -422,6 +432,7 @@ def main():
             line=dict(aliases=['value']),
             insertafter=dict(default=None),
             insertbefore=dict(default=None),
+            findfirst=dict(default=False, type='bool'),
             backrefs=dict(default=False, type='bool'),
             create=dict(default=False, type='bool'),
             backup=dict(default=False, type='bool'),
@@ -434,6 +445,7 @@ def main():
 
     params = module.params
     create = params['create']
+    findfirst = params['findfirst']
     backup = params['backup']
     backrefs = params['backrefs']
     path = params['path']
@@ -458,7 +470,7 @@ def main():
         line = params['line']
 
         present(module, path, params['regexp'], line,
-                ins_aft, ins_bef, create, backup, backrefs)
+                ins_aft, ins_bef, findfirst, create, backup, backrefs)
     else:
         if params['regexp'] is None and params.get('line', None) is None:
             module.fail_json(msg='one of line= or regexp= is required with state=absent')
