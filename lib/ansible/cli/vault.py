@@ -46,11 +46,9 @@ class VaultCLI(CLI):
 
     def __init__(self, args):
 
-        self.vault_pass = None
-        self.new_vault_pass = None
-
+        self.b_vault_pass = None
+        self.b_new_vault_pass = None
         self.encrypt_string_read_stdin = False
-
         super(VaultCLI, self).__init__(args)
 
     def parse(self):
@@ -128,29 +126,29 @@ class VaultCLI(CLI):
 
         if self.options.vault_password_file:
             # read vault_pass from a file
-            self.vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader)
+            self.b_vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader)
 
         if self.options.new_vault_password_file:
             # for rekey only
-            self.new_vault_pass = CLI.read_vault_password_file(self.options.new_vault_password_file, loader)
+            self.b_new_vault_pass = CLI.read_vault_password_file(self.options.new_vault_password_file, loader)
 
-        if not self.vault_pass or self.options.ask_vault_pass:
-            self.vault_pass = self.ask_vault_passwords()
+        if not self.b_vault_pass or self.options.ask_vault_pass:
+            self.b_vault_pass = self.ask_vault_passwords()
 
-        if not self.vault_pass:
+        if not self.b_vault_pass:
             raise AnsibleOptionsError("A password is required to use Ansible's Vault")
 
         if self.action == 'rekey':
-            if not self.new_vault_pass:
-                self.new_vault_pass = self.ask_new_vault_passwords()
-            if not self.new_vault_pass:
+            if not self.b_new_vault_pass:
+                self.b_new_vault_pass = self.ask_new_vault_passwords()
+            if not self.b_new_vault_pass:
                 raise AnsibleOptionsError("A password is required to rekey Ansible's Vault")
 
         if self.action == 'encrypt_string':
             if self.options.encrypt_string_prompt:
                 self.encrypt_string_prompt = True
 
-        self.editor = VaultEditor(self.vault_pass)
+        self.editor = VaultEditor(self.b_vault_pass)
 
         self.execute()
 
@@ -347,6 +345,6 @@ class VaultCLI(CLI):
                 raise AnsibleError(f + " does not exist")
 
         for f in self.args:
-            self.editor.rekey_file(f, self.new_vault_pass)
+            self.editor.rekey_file(f, self.b_new_vault_pass)
 
         display.display("Rekey successful", stderr=True)

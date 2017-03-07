@@ -105,7 +105,7 @@ class AdHocCLI(CLI):
 
         sshpass    = None
         becomepass = None
-        vault_pass = None
+        b_vault_pass = None
 
         self.normalize_become_options()
         (sshpass, becomepass) = self.ask_passwords()
@@ -115,11 +115,11 @@ class AdHocCLI(CLI):
 
         if self.options.vault_password_file:
             # read vault_pass from a file
-            vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
-            loader.set_vault_password(vault_pass)
+            b_vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
+            loader.set_vault_password(b_vault_pass)
         elif self.options.ask_vault_pass:
-            vault_pass = self.ask_vault_passwords()
-            loader.set_vault_password(vault_pass)
+            b_vault_pass = self.ask_vault_passwords()
+            loader.set_vault_password(b_vault_pass)
 
         variable_manager = VariableManager()
         variable_manager.extra_vars = load_extra_vars(loader=loader, options=self.options)

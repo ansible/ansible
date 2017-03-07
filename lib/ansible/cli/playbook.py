@@ -90,7 +90,7 @@ class PlaybookCLI(CLI):
         # Manage passwords
         sshpass    = None
         becomepass    = None
-        vault_pass = None
+        b_vault_pass = None
         passwords = {}
 
         # initial error check, to make sure all specified playbooks are accessible
@@ -111,11 +111,11 @@ class PlaybookCLI(CLI):
 
         if self.options.vault_password_file:
             # read vault_pass from a file
-            vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
-            loader.set_vault_password(vault_pass)
+            b_vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
+            loader.set_vault_password(b_vault_pass)
         elif self.options.ask_vault_pass:
-            vault_pass = self.ask_vault_passwords()
-            loader.set_vault_password(vault_pass)
+            b_vault_pass = self.ask_vault_passwords()
+            loader.set_vault_password(b_vault_pass)
 
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables

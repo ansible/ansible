@@ -34,7 +34,7 @@ if HAVE_PYYAML_C:
     class AnsibleLoader(CParser, AnsibleConstructor, Resolver):
         def __init__(self, stream, file_name=None, vault_password=None):
             CParser.__init__(self, stream)
-            AnsibleConstructor.__init__(self, file_name=file_name, vault_password=vault_password)
+            AnsibleConstructor.__init__(self, file_name=file_name, b_vault_password=vault_password)
             Resolver.__init__(self)
 else:
     from yaml.composer import Composer
@@ -48,5 +48,5 @@ else:
             Scanner.__init__(self)
             Parser.__init__(self)
             Composer.__init__(self)
-            AnsibleConstructor.__init__(self, file_name=file_name, vault_password=vault_password)
+            AnsibleConstructor.__init__(self, file_name=file_name, b_vault_password=vault_password)
             Resolver.__init__(self)
