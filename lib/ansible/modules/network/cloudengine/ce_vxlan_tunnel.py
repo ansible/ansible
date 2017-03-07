@@ -20,7 +20,6 @@ ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
 
-
 DOCUMENTATION = '''
 ---
 module: ce_vxlan_tunnel
@@ -132,7 +131,6 @@ end_state:
     sample: {nve_interface_name": "Nve1", nve_mode": "mode-l3", "source_ip": "0.0.0.0"}
 '''
 
-import sys
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ce import get_nc_config, set_nc_config, get_config, ce_argument_spec
