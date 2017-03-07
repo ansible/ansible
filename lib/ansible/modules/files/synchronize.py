@@ -175,6 +175,8 @@ notes:
    - "The user and permissions for the synchronize `src` are those of the user running the Ansible task on the local host (or the remote_user for a delegate_to host when delegate_to is used)."
    - The user and permissions for the synchronize `dest` are those of the `remote_user` on the destination host or the `become_user` if `become=yes` is active.
    - In 2.0.0.0 a bug in the synchronize module made become occur on the "local host".  This was fixed in 2.0.1.
+   - Currently, synchronize is limited to elevating permissions via passwordless sudo.  This is because rsync itself is connecting to the remote machine and rsync doesn't give us a way to pass sudo credentials in.
+   - Currently there are only a few connection types which support synchronize (ssh, paramiko, local, and docker) because a sync strategy has been determined for those connection types.  Note that the connection for these must not need a password as rsync itself is making the connection and rsync does not provide us a way to pass a password to the connection.
    - Expect that dest=~/x will be ~<remote_user>/x even if using sudo.
    - Inspect the verbose output to validate the destination user/host/path
      are what was expected.
