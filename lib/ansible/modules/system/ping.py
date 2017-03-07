@@ -20,11 +20,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['stableinterface'],
-                    'supported_by': 'core'}
-
-
 DOCUMENTATION = '''
 ---
 module: ping
