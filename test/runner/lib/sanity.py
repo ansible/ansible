@@ -595,13 +595,13 @@ class SanityResult(object):
         """
         pass
 
-    def create_path(self, dir, extension):
+    def create_path(self, directory, extension):
         """
-        :type dir: str
+        :type directory: str
         :type extension: str
         :rtype: str
         """
-        path = 'test/results/%s/ansible-test-%s' % (dir, self.test)
+        path = 'test/results/%s/ansible-test-%s' % (directory, self.test)
 
         if self.python_version:
             path += '-python-%s' % self.python_version
