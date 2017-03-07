@@ -162,7 +162,6 @@ EXAMPLES = """
 - name: load a config from disk and replace the current config
   iosxr_config:
     src: config.cfg
-    update: replace
     backup: yes
 """
 
