@@ -29,7 +29,7 @@ from collections import MutableMapping
 from ansible.compat.six import iteritems, string_types
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.parsing.splitter import parse_kv
 from ansible.module_utils._text import to_native, to_text
 
@@ -131,8 +131,10 @@ def load_extra_vars(loader, options):
             # Arguments as Key-value
             data = parse_kv(extra_vars_opt)
 
-        if data is not None:
+        if isinstance(data, MutableMapping):
             extra_vars = combine_vars(extra_vars, data)
+        else:
+            raise AnsibleOptionsError("Invalid extra vars data supplied. '%s' could not be made into a dictionary" % extra_vars_opt)
 
     return extra_vars
 
