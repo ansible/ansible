@@ -105,13 +105,11 @@ class CloudFrontServiceManager:
             self.module.fail_json(msg="Can't establish connection - " + str(e),
                                   exception=traceback.format_exc())
 
-    def create_cloud_front_origin_access_identity(self, content, caller_reference, comment):
+    def create_cloud_front_origin_access_identity(self, caller_reference, comment):
         try:
-            if(content == ""):
-                content = { 'CallerReference': 'caller', 'Comment': comment }
-
-            func = partial(self.client.create_cloud_front_origin_access_identity,
-                           CloudFrontOriginAccessIdentityConfig = content)
+            func = partial(self.client.create_cloud_front_origin_access_identity, 
+                           CloudFrontOriginAccessIdentityConfig = 
+                           { 'CallerReference': caller_reference, 'Comment': comment })
             return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error creating cloud front origin access identity - " + str(e), 
@@ -143,8 +141,8 @@ def main():
 
     argument_spec.update(dict(
         create_cloud_front_origin_access_identity=dict(required=False, type='bool'),
-        caller_reference=dict(required=False, type='string'),
-        comment=dict(required=False, type='string'),
+        caller_reference=dict(required=False, type='str'),
+        comment=dict(required=False, type='str'),
         create_distribution=dict(required=False, type='bool'),
         create_distribution_with_tags=dict(required=False, type='bool'),
         create_invalidation=dict(required=False, type='bool'),
@@ -159,7 +157,7 @@ def main():
         update_cloud_front_origin_access_identity=dict(required=False, type='bool'),
         update_distribution=dict(required=False, type='bool'),
         update_streaming_distribution=dict(required=False, type='bool'),
-        content=dict(required=False, type='string')
+        content=dict(required=False, type='str')
     ))
 
     result = {}
@@ -171,14 +169,14 @@ def main():
     service_mgr = CloudFrontServiceManager(module)
     
     create_cloud_front_origin_access_identity = module.params.get('create_cloud_front_origin_access_identity')
-    content = module.params.get('content')
+    
     caller_reference = module.params.get('caller_reference')
     comment = module.params.get('comment')
     
     if(create_cloud_front_origin_access_identity):
-        service_mgr.create_cloud_front_origin_access_identity(content, caller_reference, comment)
+        result=service_mgr.create_cloud_front_origin_access_identity(caller_reference, comment)
 
-    module.exit_json(msg="Did some cloudfront stuff", ansible_facts=result)
+    module.exit_json(msg="Cloudfront operation completed successfully", cloudfront_result=result)
 
 if __name__ == '__main__':
     main()
