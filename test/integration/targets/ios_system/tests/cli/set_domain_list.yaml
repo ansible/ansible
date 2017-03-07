@@ -1,5 +1,5 @@
 ---
-- debug: msg="START cli/set_domain_list.yaml"
+- debug: msg="START cli/set_domain_search.yaml"
 
 - name: setup
   ios_config:
@@ -7,28 +7,31 @@
       - no ip domain-list ansible.com
       - no ip domain-list redhat.com
     match: none
+    authorize: yes
     provider: "{{ cli }}"
 
-- name: configure domain_list
+- name: configure domain_search
   ios_system:
-    domain_list:
+    domain_search:
       - ansible.com
       - redhat.com
     provider: "{{ cli }}"
+    authorize: yes
   register: result
 
 - assert:
     that:
       - result.changed == true
-      - "'ip domain-list ansible.com' in result.commands"
-      - "'ip domain-list redhat.com' in result.commands"
+      - "'ip domain list ansible.com' in result.commands"
+      - "'ip domain list redhat.com' in result.commands"
 
-- name: verify domain_list
+- name: verify domain_search
   ios_system:
-    domain_list:
+    domain_search:
       - ansible.com
       - redhat.com
     provider: "{{ cli }}"
+    authorize: yes
   register: result
 
 - assert:
@@ -37,21 +40,23 @@
 
 - name: remove one entry
   ios_system:
-    domain_list:
+    domain_search:
       - ansible.com
     provider: "{{ cli }}"
+    authorize: yes
   register: result
 
 - assert:
     that:
       - result.changed == true
-      - "'no ip domain-list redhat.com' in result.commands"
+      - "'no ip domain list redhat.com' in result.commands"
 
 - name: verify remove one entry
   ios_system:
-    domain_list:
+    domain_search:
       - ansible.com
     provider: "{{ cli }}"
+    authorize: yes
   register: result
 
 - assert:
@@ -60,23 +65,25 @@
 
 - name: add one entry
   ios_system:
-    domain_list:
+    domain_search:
       - ansible.com
       - redhat.com
     provider: "{{ cli }}"
+    authorize: yes
   register: result
 
 - assert:
     that:
       - result.changed == true
-      - "'ip domain-list redhat.com' in result.commands"
+      - "'ip domain list redhat.com' in result.commands"
 
 - name: verify add one entry
   ios_system:
-    domain_list:
+    domain_search:
       - ansible.com
       - redhat.com
     provider: "{{ cli }}"
+    authorize: yes
   register: result
 
 - assert:
@@ -85,25 +92,27 @@
 
 - name: add and remove one entry
   ios_system:
-    domain_list:
+    domain_search:
       - ansible.com
       - eng.ansible.com
     provider: "{{ cli }}"
+    authorize: yes
   register: result
 
 - assert:
     that:
       - result.changed == true
-      - "'no ip domain-list redhat.com' in result.commands"
-      - "'ip domain-list eng.ansible.com' in result.commands"
+      - "'no ip domain list redhat.com' in result.commands"
+      - "'ip domain list eng.ansible.com' in result.commands"
       - result.commands|length == 2
 
 - name: verify add and remove one entry
   ios_system:
-    domain_list:
+    domain_search:
       - ansible.com
       - eng.ansible.com
     provider: "{{ cli }}"
+    authorize: yes
   register: result
 
 - assert:
@@ -117,6 +126,7 @@
       - no ip domain-list redhat.com
       - no ip domain-list eng.ansible.com
     match: none
+    authorize: yes
     provider: "{{ cli }}"
 
-- debug: msg="END cli/set_domain_list.yaml"
+- debug: msg="END cli/set_domain_search.yaml"

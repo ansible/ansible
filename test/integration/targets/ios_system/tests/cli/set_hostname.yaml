@@ -5,11 +5,13 @@
   ios_config:
     lines: hostname switch
     match: none
+    authorize: yes
     provider: "{{ cli }}"
 
 - name: configure hostname
   ios_system:
     hostname: foo
+    authorize: yes
     provider: "{{ cli }}"
   register: result
 
@@ -20,6 +22,7 @@
 - name: verify hostname
   ios_system:
     hostname: foo
+    authorize: yes
     provider: "{{ cli }}"
   register: result
 
@@ -31,6 +34,7 @@
   ios_config:
     lines: "hostname {{ inventory_hostname }}"
     match: none
+    authorize: yes
     provider: "{{ cli }}"
 
 - debug: msg="END cli/set_hostname.yaml"
