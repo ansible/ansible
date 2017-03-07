@@ -110,6 +110,10 @@ class Host:
 
         self.groups.append(group)
 
+    def remove_group(self, group):
+
+        self.groups.remove(group)
+
     def set_variable(self, key, value):
 
         self.vars[key]=value
