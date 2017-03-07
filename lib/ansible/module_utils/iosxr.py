@@ -27,7 +27,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 from ansible.module_utils.basic import env_fallback
-from ansible.module_utils.network_common import to_list
+from ansible.module_utils.network_common import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
 
 _DEVICE_CONFIGS = {}
@@ -64,9 +64,20 @@ def get_config(module, flags=[]):
         _DEVICE_CONFIGS[cmd] = cfg
         return cfg
 
+
+def to_commands(module, commands):
+    spec = {
+        'command': dict(key=True),
+        'prompt': dict(),
+        'answer': dict()
+    }
+    transform = ComplexList(spec, module)
+    return transform(commands)
+
+
 def run_commands(module, commands, check_rc=True):
     responses = list()
-
+    commands = to_commands(module, to_list(commands))
     for cmd in to_list(commands):
         rc, out, err = exec_command(module, cmd)
         if check_rc and rc != 0:
@@ -75,6 +86,7 @@ def run_commands(module, commands, check_rc=True):
     return responses
 
 def load_config(module, commands, commit=False, replace=False, comment=None):
+
     rc, out, err = exec_command(module, 'configure terminal')
     if rc != 0:
         module.fail_json(msg='unable to enter configuration mode', err=err)
@@ -82,7 +94,7 @@ def load_config(module, commands, commit=False, replace=False, comment=None):
     failed = False
     for command in to_list(commands):
         if command == 'end':
-            pass
+            continue
 
         rc, out, err = exec_command(module, command)
         if rc != 0:
