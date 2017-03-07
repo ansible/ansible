@@ -201,7 +201,7 @@ def _destroy_bucket_cors(connection, module):
             bucket.delete_cors()
             changed = True
             current_cors_xml = None
-        except S3ResponseError, e:
+        except S3ResponseError as e:
             module.fail_json(msg=e.message)
 
     module.exit_json(changed=changed)
