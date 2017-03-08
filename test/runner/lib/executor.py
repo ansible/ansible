@@ -3,6 +3,7 @@
 from __future__ import absolute_import, print_function
 
 import os
+import re
 import tempfile
 import time
 import textwrap
@@ -42,6 +43,10 @@ from lib.util import (
     is_shippable,
 )
 
+from lib.test import (
+    TestConfig,
+)
+
 from lib.ansible_util import (
     ansible_environment,
 )
@@ -68,6 +73,13 @@ from lib.git import (
 
 from lib.classification import (
     categorize_changes,
+)
+
+from lib.test import (
+    TestMessage,
+    TestSuccess,
+    TestFailure,
+    TestSkipped,
 )
 
 SUPPORTED_PYTHON_VERSIONS = (
@@ -124,18 +136,18 @@ def install_command_requirements(args):
     if not args.requirements:
         return
 
-    cmd = generate_pip_install(args.command)
-
-    if not cmd:
-        return
+    packages = []
 
     if isinstance(args, TestConfig):
         if args.coverage:
-            cmd += ['coverage']
-
-    if isinstance(args, SanityConfig):
+            packages.append('coverage')
         if args.junit:
-            cmd += ['junit-xml']
+            packages.append('junit-xml')
+
+    cmd = generate_pip_install(args.command, packages)
+
+    if not cmd:
+        return
 
     try:
         run_command(args, cmd)
@@ -163,18 +175,27 @@ def generate_egg_info(args):
     run_command(args, ['python', 'setup.py', 'egg_info'], capture=args.verbosity < 3)
 
 
-def generate_pip_install(command):
+def generate_pip_install(command, packages=None):
     """
     :type command: str
+    :type packages: list[str] | None
     :rtype: list[str] | None
     """
     constraints = 'test/runner/requirements/constraints.txt'
     requirements = 'test/runner/requirements/%s.txt' % command
 
-    if not os.path.exists(requirements) or not os.path.getsize(requirements):
+    options = []
+
+    if os.path.exists(requirements) and os.path.getsize(requirements):
+        options += ['-r', requirements]
+
+    if packages:
+        options += packages
+
+    if not options:
         return None
 
-    return ['pip', 'install', '--disable-pip-version-check', '-r', requirements, '-c', constraints]
+    return ['pip', 'install', '--disable-pip-version-check', '-c', constraints] + options
 
 
 def command_shell(args):
@@ -672,40 +693,91 @@ def command_compile(args):
 
     install_command_requirements(args)
 
-    version_commands = []
+    total = 0
+    failed = []
 
     for version in COMPILE_PYTHON_VERSIONS:
         # run all versions unless version given, in which case run only that version
         if args.python and version != args.python:
             continue
 
-        # optional list of regex patterns to exclude from tests
-        skip_file = 'test/compile/python%s-skip.txt' % version
-
-        if os.path.exists(skip_file):
-            with open(skip_file, 'r') as skip_fd:
-                skip_paths = skip_fd.read().splitlines()
-        else:
-            skip_paths = []
-
-        # augment file exclusions
-        skip_paths += [e.path for e in exclude]
-
-        skip_paths = sorted(skip_paths)
-
-        python = 'python%s' % version
-        cmd = [python, 'test/compile/compile.py']
-
-        if skip_paths:
-            cmd += ['-x', '|'.join(skip_paths)]
-
-        cmd += [target.path if target.path == '.' else './%s' % target.path for target in include]
-
-        version_commands.append((version, cmd))
-
-    for version, command in version_commands:
         display.info('Compile with Python %s' % version)
-        run_command(args, command)
+
+        result = compile_version(args, version, include, exclude)
+        result.write(args)
+
+        total += 1
+
+        if isinstance(result, TestFailure):
+            failed.append('compile --python %s' % version)
+
+    if failed:
+        raise ApplicationError('The %d compile test(s) listed below (out of %d) failed. See error output above for details.\n%s' % (
+            len(failed), total, '\n'.join(failed)))
+
+
+def compile_version(args, python_version, include, exclude):
+    """
+    :type args: CompileConfig
+    :type python_version: str
+    :type include: tuple[CompletionTarget]
+    :param exclude: tuple[CompletionTarget]
+    :rtype: TestResult
+    """
+    command = 'compile'
+    test = ''
+
+    # optional list of regex patterns to exclude from tests
+    skip_file = 'test/compile/python%s-skip.txt' % python_version
+
+    if os.path.exists(skip_file):
+        with open(skip_file, 'r') as skip_fd:
+            skip_paths = skip_fd.read().splitlines()
+    else:
+        skip_paths = []
+
+    # augment file exclusions
+    skip_paths += [e.path for e in exclude]
+
+    skip_paths = sorted(skip_paths)
+
+    python = 'python%s' % python_version
+    cmd = [python, 'test/compile/compile.py']
+
+    if skip_paths:
+        cmd += ['-x', '|'.join(skip_paths)]
+
+    cmd += [target.path if target.path == '.' else './%s' % target.path for target in include]
+
+    try:
+        stdout, stderr = run_command(args, cmd, capture=True)
+        status = 0
+    except SubprocessError as ex:
+        stdout = ex.stdout
+        stderr = ex.stderr
+        status = ex.status
+
+    if stderr:
+        raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
+
+    if args.explain:
+        return TestSkipped(command, test, python_version=python_version)
+
+    pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
+
+    results = [re.search(pattern, line).groupdict() for line in stdout.splitlines()]
+
+    results = [TestMessage(
+        message=r['message'],
+        path=r['path'].replace('./', ''),
+        line=int(r['line']),
+        column=int(r['column']),
+    ) for r in results]
+
+    if results:
+        return TestFailure(command, test, messages=results, python_version=python_version)
+
+    return TestSuccess(command, test, python_version=python_version)
 
 
 def intercept_command(args, cmd, capture=False, env=None, data=None, cwd=None, python_version=None):
@@ -1013,30 +1085,6 @@ class NoTestsForChanges(ApplicationWarning):
         super(NoTestsForChanges, self).__init__('No tests found for detected changes.')
 
 
-class TestConfig(EnvironmentConfig):
-    """Configuration common to all test commands."""
-    def __init__(self, args, command):
-        """
-        :type args: any
-        :type command: str
-        """
-        super(TestConfig, self).__init__(args, command)
-
-        self.coverage = args.coverage  # type: bool
-        self.include = args.include  # type: list [str]
-        self.exclude = args.exclude  # type: list [str]
-        self.require = args.require  # type: list [str]
-
-        self.changed = args.changed  # type: bool
-        self.tracked = args.tracked  # type: bool
-        self.untracked = args.untracked  # type: bool
-        self.committed = args.committed  # type: bool
-        self.staged = args.staged  # type: bool
-        self.unstaged = args.unstaged  # type: bool
-        self.changed_from = args.changed_from  # type: str
-        self.changed_path = args.changed_path  # type: list [str]
-
-
 class ShellConfig(EnvironmentConfig):
     """Configuration for the shell command."""
     def __init__(self, args):
@@ -1057,8 +1105,6 @@ class SanityConfig(TestConfig):
         self.test = args.test  # type: list [str]
         self.skip_test = args.skip_test  # type: list [str]
         self.list_tests = args.list_tests  # type: bool
-        self.lint = args.lint  # type: bool
-        self.junit = args.junit  # type: bool
 
         if args.base_branch:
             self.base_branch = args.base_branch  # str
