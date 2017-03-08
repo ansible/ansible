@@ -690,12 +690,11 @@ def command_compile(args):
 
         # augment file exclusions
         skip_paths += [e.path for e in exclude]
-        skip_paths.append('/.tox/')
 
         skip_paths = sorted(skip_paths)
 
         python = 'python%s' % version
-        cmd = [python, '-m', 'compileall', '-fq']
+        cmd = [python, 'test/compile/compile.py']
 
         if skip_paths:
             cmd += ['-x', '|'.join(skip_paths)]
