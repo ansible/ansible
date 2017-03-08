@@ -12,7 +12,7 @@
 
 - name: configure lookup_source
   ios_system:
-    lookup_source: loopback 10
+    lookup_source: Loopback10
     provider: "{{ cli }}"
     authorize: yes
   register: result
@@ -20,11 +20,11 @@
 - assert:
     that:
       - result.changed == true
-      - "'ip domain lookup source-interface loopback 10' in result.commands"
+      - "'ip domain lookup source-interface Loopback10' in result.commands"
 
 - name: verify lookup_source
   ios_system:
-    lookup_source: loopback 10
+    lookup_source: Loopback10
     provider: "{{ cli }}"
     authorize: yes
   register: result
@@ -32,13 +32,11 @@
 - assert:
     that:
       - result.changed == false
-# FIXME BUG https://github.com/ansible/ansible/issues/22354
-  ignore_errors: yes
 
 #- name: change to vrf
 #  ios_system:
 #    lookup_source:
-#      - interface: loopback 10
+#      - interface: Loopback10
 #        vrf: ansible
 #    authorize: yes
 #    provider: "{{ cli }}"
