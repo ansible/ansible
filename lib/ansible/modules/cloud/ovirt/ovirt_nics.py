@@ -185,7 +185,8 @@ def main():
     try:
         # Locate the service that manages the virtual machines and use it to
         # search for the NIC:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         vms_service = connection.system_service().vms_service()
 
         # Locate the VM, where we will manage NICs:
@@ -240,7 +241,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 if __name__ == "__main__":
     main()

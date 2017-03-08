@@ -94,6 +94,11 @@ options:
       - Ignore dependencies, only install/upgrade the package itself
     default: false
     version_added: '2.1'
+  execution_timeout:
+    description:
+      - Timeout to pass to the native installer
+    require: false
+    version_added: '2.3'
 author: "Trond Hindenes (@trondhindenes), Peter Mounce (@petemounce), Pepe Barbe (@elventear), Adam Keech (@smadam813)"
 '''
 
@@ -106,19 +111,25 @@ EXAMPLES = r'''
   # Install git
   win_chocolatey:
     name: git
+    state: present
+
+  # Upgrade installed packages
+  win_chocolatey:
+    name: all
+    state: latest
 
   # Install notepadplusplus version 6.6
   win_chocolatey:
     name: notepadplusplus.install
     version: '6.6'
 
-  # Uninstall git
-  win_chocolatey:
-    name: git
-    state: absent
-
   # Install git from specified repository
   win_chocolatey:
     name: git
     source: https://someserver/api/v2/
+
+  # Uninstall git
+  win_chocolatey:
+    name: git
+    state: absent
 '''

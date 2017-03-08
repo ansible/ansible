@@ -34,8 +34,8 @@ options:
     required: true
   description:
     description:
-      - Description of the security group.
-    required: true
+      - Description of the security group. Required when C(state) is C(present).
+    required: false
   vpc_id:
     description:
       - ID of the VPC to create the group in.
@@ -242,7 +242,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         name=dict(type='str', required=True),
-        description=dict(type='str', required=True),
+        description=dict(type='str', required=False),
         vpc_id=dict(type='str'),
         rules=dict(type='list'),
         rules_egress=dict(type='list'),
@@ -268,6 +268,9 @@ def main():
     state = module.params.get('state')
     purge_rules = module.params['purge_rules']
     purge_rules_egress = module.params['purge_rules_egress']
+
+    if state == 'present' and not description:
+        module.fail_json(msg='Must provide description when state is present.')
 
     changed = False
 

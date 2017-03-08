@@ -651,7 +651,7 @@ def main():
     state = module.params.get('state', 'present')
 
     if lookup == 'id' and route_table_id is None:
-        module.fail_json("You must specify route_table_id if lookup is set to id")
+        module.fail_json(msg="You must specify route_table_id if lookup is set to id")
 
     try:
         if state == 'present':

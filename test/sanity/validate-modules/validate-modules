@@ -69,6 +69,14 @@ BLACKLIST_IMPORTS = {
 }
 
 
+class ReporterEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, Exception):
+            return str(o)
+
+        return json.JSONEncoder.default(self, o)
+
+
 class Reporter(object):
     @staticmethod
     @contextmanager
@@ -135,7 +143,7 @@ class Reporter(object):
         ret = [len(r['errors']) for _, r in reports.items()]
 
         with Reporter._output_handle(output) as handle:
-            print(json.dumps(Reporter._filter_out_ok(reports), indent=4), file=handle)
+            print(json.dumps(Reporter._filter_out_ok(reports), indent=4, cls=ReporterEncoder), file=handle)
 
         return 3 if sum(ret) else 0
 
@@ -262,8 +270,23 @@ class ModuleValidator(Validator):
         except AttributeError:
             return False
 
+    def _get_base_branch_module_path(self):
+        """List all paths within lib/ansible/modules to try and match a moved module"""
+        command = ['git', 'ls-tree', '-r', '--name-only', self.base_branch, 'lib/ansible/modules/']
+        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
+
+        for path in stdout.splitlines():
+            if path.endswith('/%s' % self.object_name):
+                return path
+
+        return None
+
     def _get_base_file(self):
-        command = ['git', 'show', '%s:%s' % (self.base_branch, self.path)]
+        # In case of module moves, look for the original location
+        base_path = self._get_base_branch_module_path()
+
+        command = ['git', 'show', '%s:%s' % (self.base_branch, base_path or self.path)]
         p = subprocess.Popen(command, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
@@ -504,7 +527,6 @@ class ModuleValidator(Validator):
                     self.errors.append(msg)
                 else:
                     self.warnings.append(msg)
-
 
     def _find_ps_replacers(self):
         if 'WANT_JSON' not in self.text:
@@ -776,8 +798,9 @@ class ModuleValidator(Validator):
         strict_ansible_version = StrictVersion(should_be)
 
         for option, details in options.items():
-            new = not bool(existing_options.get(option))
-            if not new:
+            names = [option] + details.get('aliases', [])
+
+            if any(name in existing_options for name in names):
                 continue
 
             try:

@@ -25,9 +25,11 @@ import fcntl
 import hashlib
 import os
 import pty
+import socket
 import subprocess
 import time
 
+from functools import wraps
 from ansible import constants as C
 from ansible.compat import selectors
 from ansible.compat.six import PY3, text_type, binary_type
@@ -48,6 +50,54 @@ except ImportError:
     display = Display()
 
 SSHPASS_AVAILABLE = None
+
+
+def _ssh_retry(func):
+    """
+    Decorator to retry ssh/scp/sftp in the case of a connection failure
+
+    Will retry if:
+    * an exception is caught
+    * ssh returns 255
+    Will not retry if
+    * remaining_tries is <2
+    * retries limit reached
+    """
+    @wraps(func)
+    def wrapped(self, *args, **kwargs):
+        remaining_tries = int(C.ANSIBLE_SSH_RETRIES) + 1
+        cmd_summary = "%s..." % args[0]
+        for attempt in range(remaining_tries):
+            try:
+                return_tuple = func(self, *args, **kwargs)
+                display.vvv(return_tuple, host=self.host)
+                # 0 = success
+                # 1-254 = remote command return code
+                # 255 = failure from the ssh command itself
+                if return_tuple[0] != 255:
+                    break
+                else:
+                    raise AnsibleConnectionFailure("Failed to connect to the host via ssh: %s" % to_native(return_tuple[2]))
+            except (AnsibleConnectionFailure, Exception) as e:
+                if attempt == remaining_tries - 1:
+                    raise
+                else:
+                    pause = 2 ** attempt - 1
+                    if pause > 30:
+                        pause = 30
+
+                    if isinstance(e, AnsibleConnectionFailure):
+                        msg = "ssh_retry: attempt: %d, ssh return code is 255. cmd (%s), pausing for %d seconds" % (attempt, cmd_summary, pause)
+                    else:
+                        msg = "ssh_retry: attempt: %d, caught exception(%s) from cmd (%s), pausing for %d seconds" % (attempt, e, cmd_summary, pause)
+
+                    display.vv(msg, host=self.host)
+
+                    time.sleep(pause)
+                    continue
+
+        return return_tuple
+    return wrapped
 
 
 class Connection(ConnectionBase):
@@ -72,6 +122,13 @@ class Connection(ConnectionBase):
 
     def _connect(self):
         return self
+
+    def transport_test(self, connect_timeout):
+        ''' Test the transport mechanism, if available '''
+        port = int(self.port or 22)
+        display.vvv("attempting transport test to %s:%s" % (self.host, port))
+        sock = socket.create_connection((self.host, port), connect_timeout)
+        sock.close()
 
     @staticmethod
     def _create_control_path(host, port, user):
@@ -344,6 +401,7 @@ class Connection(ConnectionBase):
 
         return b''.join(output), remainder
 
+    @_ssh_retry
     def _run(self, cmd, in_data, sudoable=True, checkrc=True):
         '''
         Starts the command and communicates with it until it ends.
@@ -610,28 +668,6 @@ class Connection(ConnectionBase):
 
         return (p.returncode, b_stdout, b_stderr)
 
-    def _exec_command(self, cmd, in_data=None, sudoable=True):
-        ''' run a command on the remote host '''
-
-        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
-
-        display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
-
-
-        # we can only use tty when we are not pipelining the modules. piping
-        # data into /usr/bin/python inside a tty automatically invokes the
-        # python interactive-mode but the modules are not compatible with the
-        # interactive-mode ("unexpected indent" mainly because of empty lines)
-        if not in_data and sudoable:
-            args = ('ssh', '-tt', self.host, cmd)
-        else:
-            args = ('ssh', self.host, cmd)
-
-        cmd = self._build_command(*args)
-        (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable)
-
-        return (returncode, stdout, stderr)
-
     def _file_transport_command(self, in_path, out_path, sftp_action):
         # scp and sftp require square brackets for IPv6 addresses, but
         # accept them for hostnames and IPv4 addresses too.
@@ -666,7 +702,6 @@ class Connection(ConnectionBase):
                 methods = ['sftp']
 
         success = False
-        res = None
         for method in methods:
             returncode = stdout = stderr = None
             if method == 'sftp':
@@ -685,77 +720,58 @@ class Connection(ConnectionBase):
                 if sftp_action == 'get':
                     # we pass sudoable=False to disable pty allocation, which
                     # would end up mixing stdout/stderr and screwing with newlines
-                    (returncode, stdout, stderr) = self._exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE), sudoable=False)
+                    (returncode, stdout, stderr) = self.exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE), sudoable=False)
                     out_file = open(to_bytes(out_path, errors='surrogate_or_strict'), 'wb+')
                     out_file.write(stdout)
                     out_file.close()
                 else:
                     in_data = open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb').read()
                     in_data = to_bytes(in_data, nonstring='passthru')
-                    (returncode, stdout, stderr) = self._exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), in_data=in_data)
+                    (returncode, stdout, stderr) = self.exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), in_data=in_data)
 
             # Check the return code and rollover to next method if failed
             if returncode == 0:
-                success = True
-                break
+                return (returncode, stdout, stderr)
             else:
                 # If not in smart mode, the data will be printed by the raise below
                 if len(methods) > 1:
                     display.warning(msg='%s transfer mechanism failed on %s. Use ANSIBLE_DEBUG=1 to see detailed information' % (method, host))
                     display.debug(msg='%s' % to_native(stdout))
                     display.debug(msg='%s' % to_native(stderr))
-                res = (returncode, stdout, stderr)
 
-        if not success:
-            raise AnsibleError("failed to transfer file {0} to {1}:\n{2}\n{3}"\
-            .format(to_native(in_path), to_native(out_path), to_native(res[1]), to_native(res[2])))
+        if returncode == 255:
+            raise AnsibleConnectionFailure("Failed to connect to the host via %s: %s" % (method, to_native(stderr)))
+        else:
+            raise AnsibleError("failed to transfer file to {0} {1}:\n{2}\n{3}"\
+                    .format(to_native(in_path), to_native(out_path), to_native(stdout), to_native(stderr)))
 
     #
     # Main public methods
     #
-    def exec_command(self, *args, **kwargs):
-        """
-        Wrapper around _exec_command to retry in the case of an ssh failure
+    def exec_command(self, cmd, in_data=None, sudoable=True):
+        ''' run a command on the remote host '''
 
-        Will retry if:
-        * an exception is caught
-        * ssh returns 255
-        Will not retry if
-        * remaining_tries is <2
-        * retries limit reached
-        """
+        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        remaining_tries = int(C.ANSIBLE_SSH_RETRIES) + 1
-        cmd_summary = "%s..." % args[0]
-        for attempt in range(remaining_tries):
-            try:
-                return_tuple = self._exec_command(*args, **kwargs)
-                # 0 = success
-                # 1-254 = remote command return code
-                # 255 = failure from the ssh command itself
-                if return_tuple[0] != 255:
-                    break
-                else:
-                    raise AnsibleConnectionFailure("Failed to connect to the host via ssh: %s" % to_native(return_tuple[2]))
-            except (AnsibleConnectionFailure, Exception) as e:
-                if attempt == remaining_tries - 1:
-                    raise
-                else:
-                    pause = 2 ** attempt - 1
-                    if pause > 30:
-                        pause = 30
+        display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
 
-                    if isinstance(e, AnsibleConnectionFailure):
-                        msg = "ssh_retry: attempt: %d, ssh return code is 255. cmd (%s), pausing for %d seconds" % (attempt, cmd_summary, pause)
-                    else:
-                        msg = "ssh_retry: attempt: %d, caught exception(%s) from cmd (%s), pausing for %d seconds" % (attempt, e, cmd_summary, pause)
 
-                    display.vv(msg, host=self.host)
+        # we can only use tty when we are not pipelining the modules. piping
+        # data into /usr/bin/python inside a tty automatically invokes the
+        # python interactive-mode but the modules are not compatible with the
+        # interactive-mode ("unexpected indent" mainly because of empty lines)
 
-                    time.sleep(pause)
-                    continue
+        ssh_executable = self._play_context.ssh_executable
 
-        return return_tuple
+        if not in_data and sudoable:
+            args = (ssh_executable, '-tt', self.host, cmd)
+        else:
+            args = (ssh_executable, self.host, cmd)
+
+        cmd = self._build_command(*args)
+        (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable)
+
+        return (returncode, stdout, stderr)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
@@ -766,7 +782,7 @@ class Connection(ConnectionBase):
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(to_native(in_path)))
 
-        self._file_transport_command(in_path, out_path, 'put')
+        return self._file_transport_command(in_path, out_path, 'put')
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from remote to local '''
@@ -774,7 +790,7 @@ class Connection(ConnectionBase):
         super(Connection, self).fetch_file(in_path, out_path)
 
         display.vvv(u"FETCH {0} TO {1}".format(in_path, out_path), host=self.host)
-        self._file_transport_command(in_path, out_path, 'get')
+        return self._file_transport_command(in_path, out_path, 'get')
 
     def reset(self):
         # If we have a persistent ssh connection (ControlPersist), we can ask it to stop listening.

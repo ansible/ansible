@@ -233,7 +233,7 @@ def main():
             az = dict(default=None, required=False),
             cidr = dict(default=None, required=True),
             state = dict(default='present', choices=['present', 'absent']),
-            tags = dict(default=None, required=False, type='dict', aliases=['resource_tags']),
+            tags = dict(default={}, required=False, type='dict', aliases=['resource_tags']),
             vpc_id = dict(default=None, required=True)
         )
     )

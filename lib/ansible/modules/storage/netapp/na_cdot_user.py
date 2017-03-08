@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = '''
 
-module: na_cdot_users
+module: na_cdot_user
 
 short_description: useradmin configuration and management
 extends_documentation_fragment:

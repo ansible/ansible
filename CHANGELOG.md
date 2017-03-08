@@ -30,6 +30,7 @@ Ansible Changes By Release
 * added optional 'piped' transfer method to ssh plugin for when scp and sftp are missing
 * default controlpersist path is now a custom hash of host-port-user to avoid the socket path length errors for long hostnames
 * Various fixes for Python3 compatibility
+* The AWS Lambda module previously ignored changes that only affected one parameter. Existing deployments may have outstanding changes that this bugfix will apply.
 
 ###Deprecations:
 * Specifying --tags (or --skip-tags) multiple times on the command line
@@ -215,6 +216,7 @@ Ansible Changes By Release
   * packet_sshkey
 - pamd
 - panos:
+  * panos_address
   * panos_admin
   * panos_admpwd
   * panos_cert_gen_ssh
@@ -222,11 +224,14 @@ Ansible Changes By Release
   * panos_commit
   * panos_dag
   * panos_import
+  * panos_interface
+  * panos_lic
   * panos_loadcfg
   * panos_mgtconfig
   * panos_nat_policy
   * panos_pg
   * panos_restart
+  * panos_security_policy
   * panos_service
 - postgresql_schema
 - proxmox_kvm
@@ -235,6 +240,8 @@ Ansible Changes By Release
 - runit
 - serverless
 - set_stats
+- panos:
+  * panos_security_policy
 - smartos:
   * imgadm
   * vmadm
@@ -259,8 +266,13 @@ Ansible Changes By Release
   * vmware_guest_snapshot
 - web_infrastructure:
   * jenkins_script
+- system
+  * parted
 - windows:
+  * win_disk_image
   * win_dns_client
+  * win_domain
+  * win_domain_controller
   * win_domain_membership
   * win_find
   * win_msg

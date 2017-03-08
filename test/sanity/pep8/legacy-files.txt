@@ -78,7 +78,6 @@ lib/ansible/modules/cloud/cloudstack/cs_host.py
 lib/ansible/modules/cloud/cloudstack/cs_instance.py
 lib/ansible/modules/cloud/cloudstack/cs_iso.py
 lib/ansible/modules/cloud/cloudstack/cs_portforward.py
-lib/ansible/modules/cloud/cloudstack/cs_sshkeypair.py
 lib/ansible/modules/cloud/digital_ocean/digital_ocean.py
 lib/ansible/modules/cloud/google/gc_storage.py
 lib/ansible/modules/cloud/google/gce_tag.py
@@ -105,7 +104,7 @@ lib/ansible/modules/cloud/webfaction/webfaction_site.py
 lib/ansible/modules/clustering/consul.py
 lib/ansible/modules/commands/script.py
 lib/ansible/modules/database/influxdb/influxdb_retention_policy.py
-lib/ansible/modules/database/misc/mongodb_user.py
+lib/ansible/modules/database/mongodb/mongodb_user.py
 lib/ansible/modules/database/mssql/mssql_db.py
 lib/ansible/modules/database/mysql/mysql_db.py
 lib/ansible/modules/database/mysql/mysql_replication.py
@@ -159,7 +158,6 @@ lib/ansible/modules/network/snmp_facts.py
 lib/ansible/modules/notification/hall.py
 lib/ansible/modules/notification/sendgrid.py
 lib/ansible/modules/notification/sns.py
-lib/ansible/modules/packaging/language/composer.py
 lib/ansible/modules/packaging/language/maven_artifact.py
 lib/ansible/modules/packaging/os/apt.py
 lib/ansible/modules/packaging/os/apt_key.py

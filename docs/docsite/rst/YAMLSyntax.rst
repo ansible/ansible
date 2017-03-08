@@ -123,16 +123,34 @@ While YAML is generally friendly, the following is going to result in a YAML syn
 
     foo: somebody said I should put a colon here: so I did
 
-You will want to quote any hash values using colons, like so::
+    windows_drive: c:
+
+...but this will work::
+
+    windows_path: c:\windows
+
+You will want to quote hash values using colons followed by a space or the end of the line::
 
     foo: "somebody said I should put a colon here: so I did"
+    
+    windows_drive: "c:"
 
-And then the colon will be preserved.
+...and then the colon will be preserved.
 
 Further, Ansible uses "{{ var }}" for variables.  If a value after a colon starts
 with a "{", YAML will think it is a dictionary, so you must quote it, like so::
 
     foo: "{{ variable }}"
+
+If your value starts with a quote the entire value must be quoted, not just part of it. Here are some additional examples of how to properly quote things::
+
+    foo: "{{ variable }}/additional/string/literal"
+    foo2: "{{ variable }}\\backslashes\\are\\also\\special\\characters"
+    foo3: "even if it's just a string literal it must all be quoted"
+
+Not valid::
+
+    foo: "E:\\path\\"rest\\of\\path
 
 The same applies for strings that start or contain any YAML special characters ``[] {} : > |`` .
 
