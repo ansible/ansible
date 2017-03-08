@@ -6,13 +6,14 @@
   register: test_cases
 
 - name: set test_items
-  set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
+  set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}" #"
 
 - name: enable eapi
-  nxos_config:
-    lines:
-      - feature eapi
-      - eapi http port 80
+  eos_eapi:
+    enable_http: yes
+    enable_https: yes
+    enable_local_http: yes
+    enable_socket: yes
     provider: "{{ cli }}"
 
 - name: run test case
@@ -22,7 +23,9 @@
     loop_var: test_case_to_run
 
 - name: disable eapi
-  nxos_config:
-    lines:
-      - no feature eapi
+  eos_eapi:
+    enable_http: no
+    enable_https: no
+    enable_local_http: no
+    enable_socket: no
     provider: "{{ cli }}"
