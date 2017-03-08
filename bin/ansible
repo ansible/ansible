@@ -69,17 +69,23 @@ if __name__ == '__main__':
         display.debug("starting run")
 
         sub = None
+        target = me.split('-')
+        if target[-1][0].isdigit():
+            # Remove any version or pthon version info as downstreams
+            # sometimes add that
+            target = target[:-1]
+
+        if len(target) > 1:
+            sub = target[1]
+            myclass = "%sCLI" % sub.capitalize()
+        elif target[0] == 'ansible':
+            sub = 'adhoc'
+            myclass = 'AdHocCLI'
+        else:
+            raise AnsibleError("Unknown Ansible alias: %s" % me)
+
         try:
-            if me.find('-') != -1:
-                target = me.split('-')
-                if len(target) > 1:
-                    sub = target[1]
-                    myclass = "%sCLI" % sub.capitalize()
-                    mycli = getattr(__import__("ansible.cli.%s" % sub, fromlist=[myclass]), myclass)
-            elif me == 'ansible':
-                from ansible.cli.adhoc import AdHocCLI as mycli
-            else:
-                raise AnsibleError("Unknown Ansible alias: %s" % me)
+            mycli = getattr(__import__("ansible.cli.%s" % sub, fromlist=[myclass]), myclass)
         except ImportError as e:
             # ImportError members have changed in py3
             if 'msg' in dir(e):
