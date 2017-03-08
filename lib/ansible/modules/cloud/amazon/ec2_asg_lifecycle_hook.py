@@ -144,17 +144,16 @@ def create_lifecycle_hook(connection, module):
     existing_hook = connection.describe_lifecycle_hooks(
         AutoScalingGroupName=asg_name,
         LifecycleHookNames=[ lch_name ]
-    )['LifecycleHooks'][0]
-
-    # GlobalTimeout is not configurable, but exists in response.
-    # Removing it helps to compare both dicts in order to understand
-    # what changes were done.
-    del(existing_hook['GlobalTimeout'])
+    )['LifecycleHooks']
 
     if not existing_hook:
         changed = True
     else:
-        added, removed, modified, same = dict_compare(lch_params, existing_hook)
+        # GlobalTimeout is not configurable, but exists in response.
+        # Removing it helps to compare both dicts in order to understand
+        # what changes were done.
+        del(existing_hook[0]['GlobalTimeout'])
+        added, removed, modified, same = dict_compare(lch_params, existing_hook[0])
         if added or removed or modified:
             changed = True
 
