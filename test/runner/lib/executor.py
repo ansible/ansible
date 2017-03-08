@@ -136,16 +136,18 @@ def install_command_requirements(args):
     if not args.requirements:
         return
 
-    cmd = generate_pip_install(args.command)
-
-    if not cmd:
-        return
+    packages = []
 
     if isinstance(args, TestConfig):
         if args.coverage:
-            cmd += ['coverage']
+            packages.append('coverage')
         if args.junit:
-            cmd += ['junit-xml']
+            packages.append('junit-xml')
+
+    cmd = generate_pip_install(args.command, packages)
+
+    if not cmd:
+        return
 
     try:
         run_command(args, cmd)
@@ -173,18 +175,27 @@ def generate_egg_info(args):
     run_command(args, ['python', 'setup.py', 'egg_info'], capture=args.verbosity < 3)
 
 
-def generate_pip_install(command):
+def generate_pip_install(command, packages=None):
     """
     :type command: str
+    :type packages: list[str] | None
     :rtype: list[str] | None
     """
     constraints = 'test/runner/requirements/constraints.txt'
     requirements = 'test/runner/requirements/%s.txt' % command
 
-    if not os.path.exists(requirements) or not os.path.getsize(requirements):
+    options = []
+
+    if os.path.exists(requirements) and os.path.getsize(requirements):
+        options += ['-r', requirements]
+
+    if packages:
+        options += packages
+
+    if not options:
         return None
 
-    return ['pip', 'install', '--disable-pip-version-check', '-r', requirements, '-c', constraints]
+    return ['pip', 'install', '--disable-pip-version-check', '-c', constraints] + options
 
 
 def command_shell(args):
