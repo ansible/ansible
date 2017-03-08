@@ -287,20 +287,27 @@ class AnsibleF5Parameters(object):
         self._values = defaultdict(lambda: None)
         if params:
             for k,v in iteritems(params):
-                try:
+                if self.api_map is not None and k in self.api_map:
                     # Handle weird API parameters like `dns.proxy.__iter__` by
                     # using a map provided by the module developer
-                    setattr(self, self.api_params[k], v)
-                except (KeyError, TypeError):
-                    # Otherwise set things to attributes as normal
-                    try:
-                        setattr(self, k, v)
-                    except AttributeError:
-                        # If all else fails, stash them in a dictionary. For
-                        # instance, if the module developer forgot a map,
-                        # or said developer didn't need to add a setter for
-                        # the property
-                        self._values[k] = v
+                    class_attr = getattr(type(self), self.api_map[k], None)
+                    if isinstance(class_attr, property):
+                        # There is a mapped value for the api_map key
+                        if class_attr.fset is None:
+                            # If the mapped value does not have an associated setter
+                            self._values[self.api_map[k]] = v
+                        else:
+                            # The mapped value has a setter
+                            setattr(self, self.api_map[k], v)
+                    else:
+                        # If the mapped value is not a @property
+                        self._values[self.api_map[k]] = v
+                try:
+                    # There is no map, or the provided param is not in the api_map
+                    setattr(self, k, v)
+                except AttributeError:
+                    # At a minimum put it in values.
+                    self._values[k] = v
 
     def __getattr__(self, item):
         # Ensures that properties that weren't defined, and therefore stashed
