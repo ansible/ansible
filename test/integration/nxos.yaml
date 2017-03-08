@@ -15,4 +15,5 @@
     - { role: nxos_nxapi, when: "limit_to in ['*', 'nxos_nxapi']" }
     - { role: nxos_evpn_global, when: "limit_to in ['*', 'nxos_evpn_global']" }
     - { role: nxos_feature, when: "limit_to in ['*', 'nxos_feature']" }
-    - { role: nxos_feature, when: "limit_to in ['*', 'nxos_mtu']" }
+    - { role: nxos_mtu, when: "limit_to in ['*', 'nxos_mtu']" }
+    - { role: nxos_system, when: "limit_to in ['*', 'nxos_system']" }
