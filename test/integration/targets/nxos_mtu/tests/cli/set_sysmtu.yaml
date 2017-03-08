@@ -11,6 +11,7 @@
   nxos_mtu:
     sysmtu: 2000
     provider: "{{ cli }}"
+    transport: nxapi
   register: result
 
 - assert:
