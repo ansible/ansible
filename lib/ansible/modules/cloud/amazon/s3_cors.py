@@ -80,173 +80,81 @@ EXAMPLES = '''
     state: absent
 '''
 
-import json
-import os
-import traceback
-import xml.etree.ElementTree as ET
-import xml.sax
-
-import ansible.module_utils.six.moves.urllib.parse as urlparse
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec
+import re
 
 try:
-    import boto.ec2
-    from boto.s3.connection import OrdinaryCallingFormat, Location, S3Connection
-    from boto.s3.tagging import Tags, TagSet
-    from boto.exception import BotoServerError, S3CreateError, S3ResponseError
-    from boto.handler import XmlHandler
-    from boto.s3.cors import CORSConfiguration
-    HAS_BOTO = True
+    import boto3
+    from botocore.exceptions import ClientError
+    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO = False
+    HAS_BOTO3 = False
 
-def tagwrap(tag, content):
-    return '    <%s>%s</%s>\n' % (tag, content, tag)
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 
-def build_cors_xml(rules):
+def key_to_lowdash(key):
+    parts = re.findall('[A-Z][a-z]*', key)
+    return '_'.join([part.lower() for part in parts])
 
-    rules_xml = []
-    for rule in rules:
-        ruleoptions_xml = []
-        for origin in rule.get('allowed_origins', []):
-            ruleoptions_xml.append(tagwrap('AllowedOrigin', origin))
-        for method in rule.get('allowed_methods', []):
-            ruleoptions_xml.append(tagwrap('AllowedMethod', method))
-        max_age_seconds = rule.get('max_age_seconds', False)
-        if max_age_seconds:
-            ruleoptions_xml.append(tagwrap('MaxAgeSeconds', max_age_seconds))
-        for method in rule.get('allowed_headers', []):
-            ruleoptions_xml.append(tagwrap('AllowedHeader', method))
-        for method in rule.get('expose_headers', []):
-            ruleoptions_xml.append(tagwrap('ExposeHeader', method))
-        rules_xml.append('  <CORSRule>\n%s  </CORSRule>\n' % ''.join(ruleoptions_xml))
+def key_to_camel(key):
+    parts = key.split('_')
+    return ''.join([part.title() for part in parts])
 
-    return '''<?xml version="1.0" encoding="UTF-8"?>
-<CORSConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-%s</CORSConfiguration>''' % ''.join(rules_xml)
-
-def _create_or_update_bucket_cors(connection, module, location):
+def create_or_update_bucket_cors(connection, module):
 
     name = module.params.get("name")
     rules = module.params.get("rules")
     changed = False
 
     try:
-        bucket = connection.get_bucket(name)
-    except S3ResponseError as e:
-        module.fail_json(msg=e.message)
+        current_camel_rules = connection.get_bucket_cors(Bucket=name)['CORSRules']
+    except ClientError as  e:
+        module.fail_json(msg=str(e))
 
-    # CORS xml
-    cors_xml = build_cors_xml(rules)
+    if len(rules) != len(current_camel_rules):
+        changed = True
 
-    try:
-        current_cors_config = bucket.get_cors()
-        current_cors_xml = current_cors_config.to_xml()
-    except S3ResponseError as e:
-        if e.error_code == "NoSuchCORSConfiguration":
-            current_cors_xml = None
-        else:
-            module.fail_json(msg=e.message)
+    camel_rules = []
+    for rule in rules:
+        camel_rule = dict([(key_to_camel(k), v) for k, v in rule.items()])
+        camel_rules.append(camel_rule)
 
-    if cors_xml is not None:
-        cors_rule_change = False
-        if current_cors_xml is None:
-            cors_rule_change = True  # Create
-        else:
-            # Convert cors_xml to a Boto CorsConfiguration object for comparison
-            cors_config = CORSConfiguration()
-            h = XmlHandler(cors_config, bucket)
-            xml.sax.parseString(cors_xml, h)
-            if cors_config.to_xml() != current_cors_config.to_xml():
-                cors_rule_change = True  # Update
-
-        if cors_rule_change:
-            try:
-                bucket.set_cors_xml(cors_xml)
+    if not changed:
+        for idx, rule in enumerate(camel_rules):
+            if set(rule.keys()) != set(current_camel_rules[idx].keys()):
                 changed = True
-                current_cors_xml = bucket.get_cors().to_xml()
-            except S3ResponseError as e:
-                module.fail_json(msg=e.message)
+                break
+        for key in rule.keys():
+            if key == 'MaxAgeSeconds':
+                if rule[key] != current_camel_rules[idx].get(key, None):
+                    changed = True
+                    break
+            else:
+                if set(rule[key]) != set(current_camel_rules[idx].get(key, [])):
+                    changed = True
+                    break
+
+    if changed:
+        try:
+            cors = connection.put_bucket_cors(Bucket=name, CORSConfiguration={'CORSRules': camel_rules})
+        except ClientError as e:
+            module.fail_json(msg=str(e))
+
+    module.exit_json(changed=changed, name=name, rules=rules)
 
 
-    module.exit_json(changed=changed, name=bucket.name, cors_xml=cors_xml)
-
-
-def _destroy_bucket_cors(connection, module):
+def destroy_bucket_cors(connection, module):
 
     name = module.params.get("name")
     changed = False
 
     try:
-        bucket = connection.get_bucket(name)
-    except S3ResponseError as e:
-        if e.error_code != "NoSuchBucket":
-            module.fail_json(msg=e.message)
-        else:
-            # Bucket already absent
-            module.exit_json(changed=changed)
-
-    try:
-        current_cors_config = bucket.get_cors()
-        current_cors_xml = current_cors_config.to_xml()
-    except S3ResponseError as e:
-        if e.error_code == "NoSuchCORSConfiguration":
-            current_cors_xml = None
-        else:
-            module.fail_json(msg=e.message)
-
-    if current_cors_xml is not None:
-        try:
-            bucket.delete_cors()
-            changed = True
-            current_cors_xml = None
-        except S3ResponseError as e:
-            module.fail_json(msg=e.message)
+        cors = connection.delete_bucket_cors(Bucket=name)
+        changed = True
+    except ClientError as e:
+        module.fail_json(msg=str(e))
 
     module.exit_json(changed=changed)
-
-
-def _create_or_update_bucket_cors_ceph(connection, module, location):
-    #TODO: add update
-    _destroy_bucket_cors(connection, module)
-
-def _destroy_bucket_cors_ceph(connection, module):
-
-    _destroy_bucket_cors(connection, module)
-
-
-def create_or_update_bucket_cors(connection, module, location, flavour='aws'):
-    if flavour == 'ceph':
-        _create_or_update_bucket_cors_ceph(connection, module, location)
-    else:
-        _create_or_update_bucket_cors(connection, module, location)
-
-
-def destroy_bucket_cors(connection, module, flavour='aws'):
-    if flavour == 'ceph':
-        _destroy_bucket_cors_ceph(connection, module)
-    else:
-        _destroy_bucket_cors(connection, module)
-
-
-def is_fakes3(s3_url):
-    """ Return True if s3_url has scheme fakes3:// """
-    if s3_url is not None:
-        return urlparse.urlparse(s3_url).scheme in ('fakes3', 'fakes3s')
-    else:
-        return False
-
-
-def is_walrus(s3_url):
-    """ Return True if it's Walrus endpoint, not S3
-
-    We assume anything other than *.amazonaws.com is Walrus"""
-    if s3_url is not None:
-        o = urlparse.urlparse(s3_url)
-        return not o.hostname.endswith('amazonaws.com')
-    else:
-        return False
 
 def main():
 
@@ -255,85 +163,38 @@ def main():
         dict(
             name=dict(required=True, type='str'),
             rules=dict(type='list'),
-            s3_url=dict(aliases=['S3_URL'], type='str'),
-            state=dict(default='present', type='str', choices=['present', 'absent']),
-            ceph=dict(default='no', type='bool')
+            state=dict(default='present', type='str', choices=['present', 'absent'])
         )
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 is required.')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-
-    if region in ('us-east-1', '', None):
-        # S3ism for the US Standard region
-        location = Location.DEFAULT
-    else:
-        # Boto uses symbolic names for locations but region strings will
-        # actually work fine for everything except us-east-1 (US Standard)
-        location = region
-
-    s3_url = module.params.get('s3_url')
-
-    # allow eucarc environment variables to be used if ansible vars aren't set
-    if not s3_url and 'S3_URL' in os.environ:
-        s3_url = os.environ['S3_URL']
-
-    ceph = module.params.get('ceph')
-
-    if ceph and not s3_url:
-        module.fail_json(msg='ceph flavour requires s3_url')
-
-    flavour = 'aws'
-
-    # Look at s3_url and tweak connection settings
-    # if connecting to Walrus or fakes3
+    check_mode = module.check_mode
     try:
-        if s3_url and ceph:
-            ceph = urlparse.urlparse(s3_url)
-            connection = boto.connect_s3(
-                host=ceph.hostname,
-                port=ceph.port,
-                is_secure=ceph.scheme == 'https',
-                calling_format=OrdinaryCallingFormat(),
-                **aws_connect_params
+        region, ec2_url, aws_connect_kwargs = (
+            get_aws_connection_info(module, boto3=True)
+        )
+        client = (
+            boto3_conn(
+                module, conn_type='client', resource='s3',
+                region=region, endpoint=ec2_url, **aws_connect_kwargs
             )
-            flavour = 'ceph'
-        elif is_fakes3(s3_url):
-            fakes3 = urlparse.urlparse(s3_url)
-            connection = S3Connection(
-                is_secure=fakes3.scheme == 'fakes3s',
-                host=fakes3.hostname,
-                port=fakes3.port,
-                calling_format=OrdinaryCallingFormat(),
-                **aws_connect_params
-            )
-        elif is_walrus(s3_url):
-            walrus = urlparse.urlparse(s3_url).hostname
-            connection = boto.connect_walrus(walrus, **aws_connect_params)
-        else:
-            connection = boto.s3.connect_to_region(location, is_secure=True, calling_format=OrdinaryCallingFormat(), **aws_connect_params)
-            # use this as fallback because connect_to_region seems to fail in boto + non 'classic' aws accounts in some cases
-            if connection is None:
-                connection = boto.connect_s3(**aws_connect_params)
-
-    except boto.exception.NoAuthHandlerFound as e:
-        module.fail_json(msg='No Authentication Handler found: %s ' % str(e))
-    except Exception as e:
-        module.fail_json(msg='Failed to connect to S3: %s' % str(e))
-
-    if connection is None: # this should never happen
-        module.fail_json(msg ='Unknown error, failed to create s3 connection, no information from boto.')
-
+        )
+    except ClientError, e:
+        err_msg = 'Boto3 Client Error - {0}'.format(str(e.msg))
+        module.fail_json(
+            success=False, changed=False, result={}, msg=err_msg
+        )
     state = module.params.get("state")
 
     if state == 'present':
-        create_or_update_bucket_cors(connection, module, location)
+        create_or_update_bucket_cors(client, module)
     elif state == 'absent':
-        destroy_bucket_cors(connection, module, flavour=flavour)
+        destroy_bucket_cors(client, module)
 
 if __name__ == '__main__':
     main()
+
