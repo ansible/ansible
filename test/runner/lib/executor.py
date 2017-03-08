@@ -42,6 +42,10 @@ from lib.util import (
     is_shippable,
 )
 
+from lib.test import (
+    TestConfig,
+)
+
 from lib.ansible_util import (
     ansible_environment,
 )
@@ -132,8 +136,6 @@ def install_command_requirements(args):
     if isinstance(args, TestConfig):
         if args.coverage:
             cmd += ['coverage']
-
-    if isinstance(args, SanityConfig):
         if args.junit:
             cmd += ['junit-xml']
 
@@ -1013,30 +1015,6 @@ class NoTestsForChanges(ApplicationWarning):
         super(NoTestsForChanges, self).__init__('No tests found for detected changes.')
 
 
-class TestConfig(EnvironmentConfig):
-    """Configuration common to all test commands."""
-    def __init__(self, args, command):
-        """
-        :type args: any
-        :type command: str
-        """
-        super(TestConfig, self).__init__(args, command)
-
-        self.coverage = args.coverage  # type: bool
-        self.include = args.include  # type: list [str]
-        self.exclude = args.exclude  # type: list [str]
-        self.require = args.require  # type: list [str]
-
-        self.changed = args.changed  # type: bool
-        self.tracked = args.tracked  # type: bool
-        self.untracked = args.untracked  # type: bool
-        self.committed = args.committed  # type: bool
-        self.staged = args.staged  # type: bool
-        self.unstaged = args.unstaged  # type: bool
-        self.changed_from = args.changed_from  # type: str
-        self.changed_path = args.changed_path  # type: list [str]
-
-
 class ShellConfig(EnvironmentConfig):
     """Configuration for the shell command."""
     def __init__(self, args):
@@ -1057,8 +1035,6 @@ class SanityConfig(TestConfig):
         self.test = args.test  # type: list [str]
         self.skip_test = args.skip_test  # type: list [str]
         self.list_tests = args.list_tests  # type: bool
-        self.lint = args.lint  # type: bool
-        self.junit = args.junit  # type: bool
 
         if args.base_branch:
             self.base_branch = args.base_branch  # str
