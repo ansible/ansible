@@ -35,7 +35,7 @@ description:
      and returns a file containing all the system information of the target network device. This module uses SSH to
      manage network device configuration. The results of the operation can be viewed in results directory.
      For more information about this module from Lenovo and customizing it usage for your
-     use cases, please visit our [User Guide](http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_facts.html)
+     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_facts.html)
 version_added: "2.3"
 extends_documentation_fragment: cnos
 options: {}
