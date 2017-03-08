@@ -80,8 +80,13 @@ EXAMPLES = '''
 
 import traceback
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (
+    AWSRetry,
+    connect_to_aws,
+    ec2_argument_spec,
+    get_aws_connection_info,
+)
 
 try:
     import boto.ec2.elb
@@ -91,8 +96,9 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+
 class ElbInformation(object):
-    """ Handles ELB information """
+    """Handles ELB information."""
 
     def __init__(self,
                  module,
@@ -219,6 +225,7 @@ class ElbInformation(object):
                 break
 
         return list(map(self._get_elb_info, elb_array))
+
 
 def main():
     argument_spec = ec2_argument_spec()
