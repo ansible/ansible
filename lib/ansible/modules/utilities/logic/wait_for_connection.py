@@ -48,7 +48,7 @@ options:
   timeout:
     description:
       - Maximum number of seconds to wait for.
-    default: 300
+    default: 600
 author: "Dag Wieers (@dagwieers)"
 '''
 
