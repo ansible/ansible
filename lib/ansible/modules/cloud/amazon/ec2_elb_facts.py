@@ -80,6 +80,13 @@ EXAMPLES = '''
 
 import traceback
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (
+    connect_to_aws,
+    ec2_argument_spec,
+    get_aws_connection_info,
+)
+
 try:
     import boto.ec2.elb
     from boto.ec2.tag import Tag
@@ -88,8 +95,9 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+
 class ElbInformation(object):
-    """ Handles ELB information """
+    """Handles ELB information."""
 
     def __init__(self,
                  module,
@@ -232,6 +240,7 @@ class ElbInformation(object):
 
         return list(map(self._get_elb_info, elb_array))
 
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -260,8 +269,6 @@ def main():
 
     module.exit_json(**ec2_facts_result)
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
