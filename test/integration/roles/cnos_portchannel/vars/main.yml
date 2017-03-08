@@ -26,7 +26,7 @@ test_portchannel_data12:
 test_portchannel_data13:
   - {interfaceRange: 33, interfaceArg1: "service-policy", interfaceArg2: "input", interfaceArg3: "Anil"}
 test_portchannel_data14:
-  - {interfaceRange: 33, interfaceArg1: "speed", interfaceArg2: "auto"}
+  - {interfaceRange: 13, interfaceArg1: "speed", interfaceArg2: "auto"}
 test_portchannel_data15:
   - {interfaceRange: 33, interfaceArg1: "storm-control", interfaceArg2: "broadcast", interfaceArg3: 12.5 }
 test_portchannel_data16:

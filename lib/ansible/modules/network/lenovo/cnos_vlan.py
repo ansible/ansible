@@ -45,7 +45,7 @@ description:
      The results of the operation will be placed in a directory named 'results'
      that must be created by the user in their local directory to where the playbook is run.
      For more information about this module from Lenovo and customizing it usage for your
-     use cases, please visit our [User Guide](http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_vlan.html)
+     use cases, please visit U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_vlan.html)
 version_added: "2.3"
 extends_documentation_fragment: cnos
 options:
@@ -280,7 +280,7 @@ def main():
     # need to add logic to check when changes occur or not
     errorMsg = cnos.checkOutputForError(output)
     if(errorMsg is None):
-        module.exit_json(changed=True, msg="VLAN configuration isaccomplished")
+        module.exit_json(changed=True, msg="VLAN configuration is accomplished")
     else:
         module.fail_json(msg=errorMsg)
 
