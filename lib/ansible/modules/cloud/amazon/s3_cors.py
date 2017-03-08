@@ -20,7 +20,8 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
 DOCUMENTATION = '''
 ---
 module: s3_cors
-short_description: Manage CORS for S3 buckets in AWSdescription:
+short_description: Manage CORS for S3 buckets in AWS
+description:
     - Manage CORS for S3 buckets in AWS
 version_added: "2.3"
 author: "Oyvind Saltvik (@fivethreeo)"
@@ -34,17 +35,6 @@ options:
     description:
       - Cors rules to put on the s3 bucket
     required: false
-    default: []
-  s3_url:
-    description:
-      - S3 URL endpoint for usage with Ceph, Eucalypus, fakes3, etc. Otherwise assumes AWS
-    default: null
-    aliases: [ S3_URL ]
-  ceph:
-    description:
-      - Enable API compatibility with Ceph. It takes into account the S3 API subset working
-        with Ceph in order to provide the same module behaviour where possible.
-    version_added: "2.2"
   state:
     description:
       - Create or remove cors on the s3 bucket
@@ -53,7 +43,6 @@ options:
     choices: [ 'present', 'absent' ]
 extends_documentation_fragment:
     - aws
-    - ec2
 '''
 
 EXAMPLES = '''
@@ -61,54 +50,55 @@ EXAMPLES = '''
 
 # Create a simple cors for s3 bucket
 - s3_cors:
-    name: mys3bucket
-    rules:
-        - allowed_origins:
-            - http://www.example.com/
-          allowed_methods:
-            - GET
-            - POST
-          allowed_headers:
-            - Authorization
-          expose_headers:
-            - x-amz-server-side-encryption
-            - x-amz-request-id
-          max_age_seconds: 30000
+  name: mys3bucket
+  rules:
+    - allowed_origins:
+        - http://www.example.com/
+      allowed_methods:
+        - GET
+        - POST
+      allowed_headers:
+        - Authorization
+      expose_headers:
+        - x-amz-server-side-encryption
+        - x-amz-request-id
+      max_age_seconds: 30000
 
 # Remove cors for s3 bucket
 - s3_cors:
-    name: mys3bucket
-    state: absent
+  name: mys3bucket
+  state: absent
 '''
 
 RETURN = '''
 changed:
-    description: check to see if a change was made to the rules
-    returned: always
-    type: boolean
-    sample: true
+  description: check to see if a change was made to the rules
+  returned: always
+  type: boolean
+  sample: true
 name:
-    description: name of bucket
-    returned: always
-    type: string
-    sample: 'bucket-name'
+  description: name of bucket
+  returned: always
+  type: string
+  sample: 'bucket-name'
 rules:
-    description: list of current rules
-    returned: always
-    type: list
-    sample: [
-        {
-            "allowed_headers": [
-                "Authorization"
-            ],
-            "allowed_methods": [
-                "GET"
-            ],
-            "allowed_origins": [
-                "*"
-            ],
-            "max_age_seconds": 30000
-        }
+  description: list of current rules
+  returned: always
+  type: list
+  sample: [
+     {
+        "allowed_headers": [
+          "Authorization"
+        ],
+        "allowed_methods": [
+          "GET"
+        ],
+        
+        "allowed_origins": [
+          "*"
+        ],
+        "max_age_seconds": 30000
+      }
     ]
 '''
 
@@ -229,4 +219,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
