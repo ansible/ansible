@@ -1045,7 +1045,7 @@ def create_instances(module, ec2, vpc, override_count=None):
             unmatched = set(group_name).difference(str(grp.name) for grp in grp_details)
             if len(unmatched) > 0:
                 module.fail_json(msg="The following group names are not valid: %s" % ', '.join(unmatched))
-            group_id = [ str(grp.id) for grp in grp_details if str(grp.name) in group_name ]
+            group_id = [str(grp.id) for grp in grp_details if str(grp.name) in group_name]
         # Now we try to lookup the group id testing if group exists.
         elif group_id:
             # wrap the group_id in a list if it's not one already
@@ -1166,11 +1166,11 @@ def create_instances(module, ec2, vpc, override_count=None):
                 else:
                     params.update(
                         dict(
-                             min_count=count_remaining,
-                             max_count=count_remaining,
-                             client_token=id,
-                             placement_group=placement_group,
-                             private_ip_address=private_ip,
+                            min_count=count_remaining,
+                            max_count=count_remaining,
+                            client_token=id,
+                            placement_group=placement_group,
+                            private_ip_address=private_ip,
                         )
                     )
 
