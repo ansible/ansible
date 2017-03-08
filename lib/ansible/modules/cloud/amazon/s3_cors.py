@@ -68,6 +68,8 @@ EXAMPLES = '''
           allowed_methods:
             - GET
             - POST
+          allowed_headers:
+            - Authorization
           expose_headers:
             - x-amz-server-side-encryption
             - x-amz-request-id
