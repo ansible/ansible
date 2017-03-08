@@ -110,8 +110,8 @@ options:
     choices: [ "yes", "no" ]
     default: "no"
     description:
-      - Used with C(state=present) and C(insertbefore) or C(insertafter). If specified, 
-        the insert will be done with the first occurence. 
+      - Used with C(state=present) and C(insertbefore) or C(insertafter). If specified,
+        the insert will be done with the first occurence.
   create:
     required: false
     choices: [ "yes", "no" ]
