@@ -106,6 +106,7 @@ options:
     choices: [ 'BOF', '*regex*' ]
   findfirst:
     required: false
+    version_added: "2.3"
     choices: [ "yes", "no" ]
     default: "no"
     description:
@@ -291,11 +292,13 @@ def present(module, dest, regexp, line, insertafter, insertbefore, findfirst, cr
             if insertafter:
                 # + 1 for the next line
                 index[1] = lineno + 1
-                if findfirst: break
+                if findfirst:
+                    break
             if insertbefore:
                 # + 1 for the previous line
                 index[1] = lineno
-                if findfirst: break
+                if findfirst:
+                    break
 
     msg = ''
     changed = False
