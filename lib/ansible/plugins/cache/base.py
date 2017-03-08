@@ -95,7 +95,8 @@ class BaseFileCacheModule(BaseCacheModule):
         else:
             for x in (os.R_OK, os.W_OK, os.X_OK):
                 if not os.access(self._cache_dir, x):
-                    raise AnsibleError("error in '%s' cache, configured path (%s) does not have necessary permissions (rwx), disabling plugin" % (self.plugin_name, self._cache_dir))
+                    raise AnsibleError("error in '%s' cache, configured path (%s) does not have necessary permissions (rwx), disabling plugin" % (
+                        self.plugin_name, self._cache_dir))
 
     def get(self, key):
         """ This checks the in memory cache first as the fact was not expired at 'gather time'
