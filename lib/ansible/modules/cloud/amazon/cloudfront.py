@@ -83,6 +83,7 @@ from ansible.module_utils.ec2 import get_aws_connection_info
 from ansible.module_utils.ec2 import ec2_argument_spec
 from ansible.module_utils.ec2 import boto3_conn
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from functools import partial
 import json
 import traceback
@@ -115,7 +116,7 @@ class CloudFrontServiceManager:
             self.module.fail_json(msg="Error creating cloud front origin access identity - " + str(e), 
                                   exception=traceback.format_exc())
 
-            def create_invalidation(self, distribution_id, invalidation_batch):
+    def create_invalidation(self, distribution_id, invalidation_batch):
         try:
             func = partial(self.client.create_invalidation, DistributionId = distribution_id, 
                            InvalidationBatch=invalidation_batch)
@@ -149,27 +150,28 @@ def main():
     argument_spec = ec2_argument_spec()
 
     argument_spec.update(dict(
-        create_cloud_front_origin_access_identity=dict(required=False, type='bool'),
-        caller_reference=dict(required=False, type='str'),
-        comment=dict(required=False, type='str'),
-        create_distribution=dict(required=False, type='bool'),
-        distribution_config=dict(required=False, type='str'),
-        create_distribution_with_tags=dict(required=False, type='bool'),
-        create_invalidation=dict(required=False, type='bool'),
-        distribution_id=dict(required=False, type='str'),
-        invalidation_batch=dict(required=False, type='str'),
-        create_streaming_distribution=dict(required=False, type='bool'),
-        create_streaming_distribution_with_tags=dict(required=False, type='bool'),
-        delete_cloud_front_origin_access_identity=dict(required=False, type='bool'),
-        delete_distribution=dict(required=False, type='bool'),
-        delete_streaming_distribution=dict(required=False, type='bool'),
-        generate_presigned_url=dict(required=False, type='bool'),
-        tag_resource=dict(required=False, type='bool'),
-        untag_resource=dict(required=False, type='bool'),
-        update_cloud_front_origin_access_identity=dict(required=False, type='bool'),
-        update_distribution=dict(required=False, type='bool'),
-        update_streaming_distribution=dict(required=False, type='bool'),
-        content=dict(required=False, type='str')
+        create_cloud_front_origin_access_identity=dict(required=False, default=False, type='bool'),
+        caller_reference=dict(required=False, default=None, type='str'),
+        comment=dict(required=False, default=None, type='str'),
+        create_distribution=dict(required=False, default=False, type='bool'),
+        distribution_config=dict(required=False, default=None, type='json'),
+        create_distribution_with_tags=dict(required=False, default=False, type='bool'),
+        distribution_with_tags_config=dict(required=False, default=None, type='json'),
+        create_invalidation=dict(required=False, default=False, type='bool'),
+        distribution_id=dict(required=False, default=None, type='str'),
+        invalidation_batch=dict(required=False, default=None, type='str'),
+        create_streaming_distribution=dict(required=False, default=False, type='bool'),
+        create_streaming_distribution_with_tags=dict(required=False, default=False, type='bool'),
+        delete_cloud_front_origin_access_identity=dict(required=False, default=False, type='bool'),
+        delete_distribution=dict(required=False, default=False, type='bool'),
+        delete_streaming_distribution=dict(required=False, default=False, type='bool'),
+        generate_presigned_url=dict(required=False, default=False, type='bool'),
+        tag_resource=dict(required=False, default=False, type='bool'),
+        untag_resource=dict(required=False, default=False, type='bool'),
+        update_cloud_front_origin_access_identity=dict(required=False, default=False, type='bool'),
+        update_distribution=dict(required=False, default=False, type='bool'),
+        update_streaming_distribution=dict(required=False, default=False, type='bool'),
+        content=dict(required=False, default=None, type='str')
     ))
 
     result = {}
@@ -192,7 +194,7 @@ def main():
     elif(create_invalidation):
         result=service_mgr.create_invalidation(distribution_id, invalidation_batch)
 
-    module.exit_json(msg="Cloudfront operation completed successfully", cloudfront_result=result)
+    module.exit_json(changed=True, **camel_dict_to_snake_dict(result))
 
 if __name__ == '__main__':
     main()
