@@ -14,9 +14,12 @@ from lib.executor import (
     IntegrationConfig,
     SubprocessError,
     ShellConfig,
-    TestConfig,
     SanityConfig,
     create_shell_command,
+)
+
+from lib.test import (
+    TestConfig,
 )
 
 from lib.core_ci import (
