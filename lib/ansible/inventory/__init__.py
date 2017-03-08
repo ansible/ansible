@@ -140,6 +140,7 @@ class Inventory(object):
                         display.warning("A duplicate localhost-like entry was found (%s). First found localhost was %s" % (h, self.localhost.name))
                     display.vvvv("Set default localhost to %s" % h)
                     self.localhost = new_host
+                all.add_host(new_host)
         elif self._loader.path_exists(host_list):
             # TODO: switch this to a plugin loader and a 'condition' per plugin on which it should be tried, restoring 'inventory pllugins'
             if self.is_directory(host_list):
