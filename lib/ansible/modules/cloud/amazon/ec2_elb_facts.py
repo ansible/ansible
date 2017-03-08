@@ -143,7 +143,7 @@ class ElbInformation(object):
         protocol, port_path = health_check.target.split(':')
         try:
             port, path = port_path.split('/', 1)
-            path = '/{}'.format(path)
+            path = '/{0}'.format(path)
         except ValueError:
             port = port_path
             path = None
