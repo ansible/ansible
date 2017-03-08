@@ -25,25 +25,22 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: wakeonlan
-version_added: 2.2
+version_added: '2.2'
 short_description: Send a magic Wake-on-LAN (WoL) broadcast packet
 description:
-   - The C(wakeonlan) module sends magic Wake-on-LAN (WoL) broadcast packets.
+- The C(wakeonlan) module sends magic Wake-on-LAN (WoL) broadcast packets.
 options:
   mac:
     description:
-      - MAC address to send Wake-on-LAN broadcast packet for
+    - MAC address to send Wake-on-LAN broadcast packet for.
     required: true
-    default: null
   broadcast:
     description:
-      - Network broadcast address to use for broadcasting magic Wake-on-LAN packet
-    required: false
+    - Network broadcast address to use for broadcasting magic Wake-on-LAN packet.
     default: 255.255.255.255
   port:
     description:
-      - UDP port to use for magic Wake-on-LAN packet
-    required: false
+    - UDP port to use for magic Wake-on-LAN packet.
     default: 7
 author: "Dag Wieers (@dagwieers)"
 todo:
@@ -57,8 +54,8 @@ notes:
 '''
 
 EXAMPLES = '''
-# Send a magic Wake-on-LAN packet to 00:00:5E:00:53:66
-- wakeonlan:
+- name: Send a magic Wake-on-LAN packet to 00:00:5E:00:53:66
+  wakeonlan:
     mac: '00:00:5E:00:53:66'
     broadcast: 192.0.2.23
   delegate_to: localhost
@@ -111,23 +108,28 @@ def wakeonlan(module, mac, broadcast, port):
         sock.sendto(data, (broadcast, port))
     except socket.error:
         e = get_exception()
+        sock.close()
         module.fail_json(msg=str(e))
+    sock.close()
 
 
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            mac = dict(required=True, type='str'),
-            broadcast = dict(required=False, default='255.255.255.255'),
-            port = dict(required=False, type='int', default=7),
+            mac = dict(type='str', required=True),
+            broadcast = dict(type='str', default='255.255.255.255'),
+            port = dict(type='int', default=7),
         ),
+        supports_check_mode = True,
     )
 
-    mac = module.params.get('mac')
-    broadcast = module.params.get('broadcast')
-    port = module.params.get('port')
+    mac = module.params['mac']
+    broadcast = module.params['broadcast']
+    port = module.params['port']
 
-    wakeonlan(module, mac, broadcast, port)
+    if not module.check_mode:
+        wakeonlan(module, mac, broadcast, port)
+
     module.exit_json(changed=True)
 
 
