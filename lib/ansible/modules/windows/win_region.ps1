@@ -18,16 +18,15 @@
 # POWERSHELL_COMMON
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
-$check_mode = Get-AnsibleParam -obj $params "_ansible_check_mode" -type "bool" -default $false
+$check_mode = Get-AnsibleParam -obj $params "_ansible_check_mode" -type 'bool' -default $false
 
-$location = Get-AnsibleParam -obj $params -name 'location' -failifempty $false -default $null
-$format = Get-AnsibleParam -obj $params -name 'format' -failifempty $false -default $null
-$unicode_language = Get-AnsibleParam -obj $params -name 'unicode_language' -failifempty $false -default $null
-$copy_settings = Get-AnsibleParam -obj $params -name 'copy_settings' -type "bool" -failifempty $false -default $false
+$location = Get-AnsibleParam -obj $params -name 'location' -type 'str'
+$format = Get-AnsibleParam -obj $params -name 'format' -type 'str'
+$unicode_language = Get-AnsibleParam -obj $params -name 'unicode_language' -type 'str'
+$copy_settings = Get-AnsibleParam -obj $params -name 'copy_settings' -type 'bool' -default $false
 
 $result = @{
     changed = $false
-    warnings = @()
     restart_required = $false
 }
 
@@ -83,11 +82,7 @@ Function Test-RegistryProperty($reg_key, $property) {
 
 Function Copy-RegistryKey($source, $target) {
     # Using Copy-Item -Recurse is giving me weird results, doing it recursively
-    if ($check_mode) {
-        Copy-Item -Path $source -Destination $target -WhatIf
-    } else {
-        Copy-Item -Path $source -Destination $target
-    }
+    Copy-Item -Path $source -Destination $target -WhatIf:$check_mode
 
     foreach($key in Get-ChildItem $source) {
         $sourceKey = "$source\$($key.PSChildName)"
@@ -163,11 +158,7 @@ Function Set-CultureLegacy($culture) {
             $new_value = $wanted_values.$name
 
             if ($new_value -ne $old_value) {
-                if ($check_mode) {
-                    Set-ItemProperty -Path $reg_key -Name $name -Value $new_value -WhatIf
-                } else {
-                    Set-ItemProperty -Path $reg_key -Name $name -Value $new_value
-                }
+                Set-ItemProperty -Path $reg_key -Name $name -Value $new_value -WhatIf:$check_mode
                 $result.changed = $true
             }
         }
@@ -179,11 +170,7 @@ Function Set-SystemLocaleLegacy($unicode_language) {
     $current_language_value = (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Nls\Language').Default
     $wanted_language_value = '{0:x4}' -f ([System.Globalization.CultureInfo]$unicode_language).LCID
     if ($current_language_value -ne $wanted_language_value) {
-        if ($check_mode) {
-            Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Nls\Language' -Name 'Default' -Value $wanted_language_value -WhatIf
-        } else {
-            Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Nls\Language' -Name 'Default' -Value $wanted_language_value
-        }
+        Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Nls\Language' -Name 'Default' -Value $wanted_language_value -WhatIf:$check_mode
         $result.changed = $true
         $result.restart_required = $true
     }
@@ -216,29 +203,17 @@ Function Set-SystemLocaleLegacy($unicode_language) {
     $wanted_mac_cp = $wanted_codepage_info.MacCodePage
 
     if ($current_a_cp -ne $wanted_a_cp) {
-        if ($check_mode) {
-            Set-ItemProperty -Path $codepage_path -Name 'ACP' -Value $wanted_a_cp -WhatIf
-        } else {
-            Set-ItemProperty -Path $codepage_path -Name 'ACP' -Value $wanted_a_cp
-        }
+        Set-ItemProperty -Path $codepage_path -Name 'ACP' -Value $wanted_a_cp -WhatIf:$check_mode
         $result.changed = $true
         $result.restart_required = $true
     }
     if ($current_oem_cp -ne $wanted_oem_cp) {
-        if ($check_mode) {
-            Set-ItemProperty -Path $codepage_path -Name 'OEMCP' -Value $wanted_oem_cp -WhatIf
-        } else {
-            Set-ItemProperty -Path $codepage_path -Name 'OEMCP' -Value $wanted_oem_cp
-        }
+        Set-ItemProperty -Path $codepage_path -Name 'OEMCP' -Value $wanted_oem_cp -WhatIf:$check_mode
         $result.changed = $true
         $result.restart_required = $true
     }
     if ($current_mac_cp -ne $wanted_mac_cp) {
-        if ($check_mode) {
-            Set-ItemProperty -Path $codepage_path -Name 'MACCP' -Value $wanted_mac_cp -WhatIf
-        } else {
-            Set-ItemProperty -Path $codepage_path -Name 'MACCP' -Value $wanted_mac_cp
-        }
+        Set-ItemProperty -Path $codepage_path -Name 'MACCP' -Value $wanted_mac_cp -WhatIf:$check_mode
         $result.changed = $true
         $result.restart_required = $true
     }
@@ -283,11 +258,7 @@ if ($location -ne $null) {
     } else {
         $current_location = (Get-ItemProperty -Path 'HKCU:\Control Panel\International\Geo').Nation
         if ($current_location -ne $location) {
-            if ($check_mode) {
-                Set-ItemProperty -Path 'HKCU:\Control Panel\International\Geo' -Name 'Nation' -Value $location -WhatIf
-            } else {
-                Set-ItemProperty -Path 'HKCU:\Control Panel\International\Geo' -Name 'Nation' -Value $location
-            }
+            Set-ItemProperty -Path 'HKCU:\Control Panel\International\Geo' -Name 'Nation' -Value $location -WhatIf:$check_mode
             $result.changed = $true
         }
     }
