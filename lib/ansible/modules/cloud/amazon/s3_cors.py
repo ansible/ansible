@@ -148,7 +148,7 @@ def create_or_update_bucket_cors(connection, module):
                             changed = True
                             break
                     else:
-                        if set(rule[key]) != set(current_camel_rules[idx].get(key, [])):
+                        if not (set(rule[key]) == set(current_camel_rules[idx].get(key, []))):
                             changed = True
                             break
             else:
