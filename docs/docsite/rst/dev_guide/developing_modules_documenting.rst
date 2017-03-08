@@ -252,7 +252,7 @@ Starting with Ansible version 2.2, all new modules are required to use imports i
 
 .. warning::
 
-   The use of "iwildcard" imports such as ``from module_utils.basic import *`` is no longer allowed.
+   The use of "wildcard" imports such as ``from module_utils.basic import *`` is no longer allowed.
 
 Formatting options
 ------------------
