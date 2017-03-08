@@ -20,9 +20,8 @@ ANSIBLE_METADATA = {'status': ['stableinterface'],
 DOCUMENTATION = '''
 ---
 module: s3_cors
-short_description: Manage CORS for S3 buckets in AWS, Ceph, Walrus and FakeS3
-description:
-    - Manage CORS for S3 buckets in AWS, Ceph, Walrus and FakeS3
+short_description: Manage CORS for S3 buckets in AWSdescription:
+    - Manage CORS for S3 buckets in AWS
 version_added: "2.3"
 author: "Oyvind Saltvik (@fivethreeo)"
 options:
