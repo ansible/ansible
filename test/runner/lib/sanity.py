@@ -128,10 +128,7 @@ def command_sanity_code_smell(args, _, script):
     test = os.path.splitext(os.path.basename(script))[0]
 
     cmd = [script]
-    env = ansible_environment(args)
-
-    # Since the output from scripts end up in other places besides the console, we don't want color here.
-    env.pop('ANSIBLE_FORCE_COLOR')
+    env = ansible_environment(args, color=False)
 
     try:
         stdout, stderr = run_command(args, cmd, env=env, capture=True)
@@ -155,7 +152,7 @@ def command_sanity_validate_modules(args, targets):
     :rtype: SanityResult
     """
     test = 'validate-modules'
-    env = ansible_environment(args)
+    env = ansible_environment(args, color=False)
 
     paths = [deepest_path(i.path, 'lib/ansible/modules/') for i in targets.include_external]
     paths = sorted(set(p for p in paths if p))
@@ -494,7 +491,7 @@ def command_sanity_ansible_doc(args, targets, python_version):
     if not modules:
         return SanitySkipped(test, python_version=python_version)
 
-    env = ansible_environment(args)
+    env = ansible_environment(args, color=False)
     cmd = ['ansible-doc'] + modules
 
     try:
