@@ -138,18 +138,21 @@ def create_or_update_bucket_cors(connection, module):
 
     if not changed:
         for idx, rule in enumerate(camel_rules):
-            if set(rule.keys()) != set(current_camel_rules[idx].keys()):
+            if not (rule.keys() == current_camel_rules[idx].keys()):
                 changed = True
                 break
-        for key in rule.keys():
-            if key == 'MaxAgeSeconds':
-                if rule[key] != current_camel_rules[idx].get(key, None):
-                    changed = True
-                    break
+            if not changed:
+                for key in rule.keys():
+                    if key == 'MaxAgeSeconds':
+                        if not (rule[key] == current_camel_rules[idx].get(key, None)):
+                            changed = True
+                            break
+                    else:
+                        if set(rule[key]) != set(current_camel_rules[idx].get(key, [])):
+                            changed = True
+                            break
             else:
-                if set(rule[key]) != set(current_camel_rules[idx].get(key, [])):
-                    changed = True
-                    break
+                break
 
     if changed:
         try:
