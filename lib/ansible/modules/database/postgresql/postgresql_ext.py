@@ -58,6 +58,21 @@ options:
       - Database port to connect to.
     required: false
     default: 5432
+  ssl_mode:
+    description:
+      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+      - Default of C(prefer) matches libpq default.
+    required: false
+    default: prefer
+    choices: [disable, allow, prefer, require, verify-ca, verify-full]
+    version_added: '2.3'
+  ssl_rootcert:
+    description:
+      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+    required: false
+    default: null
+    version_added: '2.3'
   state:
     description:
       - The database extension state
@@ -130,6 +145,8 @@ def main():
             db=dict(required=True),
             ext=dict(required=True, aliases=['name']),
             state=dict(default="present", choices=["absent", "present"]),
+            ssl_mode=dict(default="prefer", choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+            ssl_rootcert=dict(default=None)
         ),
         supports_check_mode = True
     )
@@ -150,7 +167,9 @@ def main():
         "login_host":"host",
         "login_user":"user",
         "login_password":"password",
-        "port":"port"
+        "port":"port",
+        "ssl_mode":"sslmode",
+        "ssl_rootcert":"sslrootcert"
     }
     kw = dict( (params_map[k], v) for (k, v) in module.params.items()
               if k in params_map and v != '' )
