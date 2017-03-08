@@ -93,7 +93,6 @@ rules:
         "allowed_methods": [
           "GET"
         ],
-        
         "allowed_origins": [
           "*"
         ],
@@ -130,7 +129,7 @@ def create_or_update_bucket_cors(connection, module):
 
     try:
         current_camel_rules = connection.get_bucket_cors(Bucket=name)['CORSRules']
-    except ClientError as  e:
+    except ClientError as e:
         module.fail_json(msg=str(e))
 
     if len(rules) != len(current_camel_rules):
