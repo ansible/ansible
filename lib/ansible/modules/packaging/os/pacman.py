@@ -91,6 +91,14 @@ options:
         version_added: "2.0"
 '''
 
+RETURN = '''
+packages:
+    description: a list of packages that have been changed
+    returned: when upgrade is set to yes
+    type: list of strings
+    sample: ['package', 'other-package']
+'''
+
 EXAMPLES = '''
 # Install package foo
 - pacman:
@@ -189,22 +197,43 @@ def update_package_db(module, pacman_path):
 
 def upgrade(module, pacman_path):
     cmdupgrade = "%s -Suq --noconfirm" % (pacman_path)
-    cmdneedrefresh = "%s -Qqu" % (pacman_path)
+    cmdneedrefresh = "%s -Qu" % (pacman_path)
     rc, stdout, stderr = module.run_command(cmdneedrefresh, check_rc=False)
+    data = stdout.split('\n')
+    data.remove('')
+    packages = []
+    diff = {
+        'before': '',
+        'after': '',
+    }
 
     if rc == 0:
+        regex = re.compile('(\w+) ((?:\S+)-(?:\S+)) -> ((?:\S+)-(?:\S+))')
+        b = []
+        a = []
+        for p in data:
+            m = regex.search(p)
+            packages.append(m.group(1))
+            if module._diff:
+                diff['before'] += "%s-%s\n" % (m.group(1), m.group(2))
+                diff['after'] += "%s-%s\n" % (m.group(1), m.group(3))
         if module.check_mode:
-            data = stdout.split('\n')
-            module.exit_json(changed=True, msg="%s package(s) would be upgraded" % (len(data) - 1))
+            module.exit_json(changed=True, msg="%s package(s) would be upgraded" % (len(data)), packages=packages, diff=diff)
         rc, stdout, stderr = module.run_command(cmdupgrade, check_rc=False)
         if rc == 0:
-            module.exit_json(changed=True, msg='System upgraded')
+            module.exit_json(changed=True, msg='System upgraded', packages=packages, diff=diff)
         else:
             module.fail_json(msg="Could not upgrade")
     else:
-        module.exit_json(changed=False, msg='Nothing to upgrade')
+        module.exit_json(changed=False, msg='Nothing to upgrade', packages=packages)
 
 def remove_packages(module, pacman_path, packages):
+    data = []
+    diff = {
+        'before': '',
+        'after': '',
+    }
+
     if module.params["recurse"] or module.params["force"]:
         if module.params["recurse"]:
             args = "Rs"
@@ -226,14 +255,20 @@ def remove_packages(module, pacman_path, packages):
         cmd = "%s -%s %s --noconfirm --noprogressbar" % (pacman_path, args, package)
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
+        if module._diff:
+            d = stdout.split('\n')[2].split(' ')[2:]
+            for i, pkg in enumerate(d):
+                d[i] = re.sub('-[0-9].*$', '', d[i].split('/')[-1])
+                diff['before'] += "%s\n" % pkg
+            data.append('\n'.join(d))
+
         if rc != 0:
             module.fail_json(msg="failed to remove %s" % (package))
 
         remove_c += 1
 
     if remove_c > 0:
-
-        module.exit_json(changed=True, msg="removed %s package(s)" % remove_c)
+        module.exit_json(changed=True, msg="removed %s package(s)" % remove_c, diff=diff)
 
     module.exit_json(changed=False, msg="package(s) already absent")
 
@@ -242,6 +277,11 @@ def install_packages(module, pacman_path, state, packages, package_files):
     install_c = 0
     package_err = []
     message = ""
+    data = []
+    diff = {
+        'before': '',
+        'after': '',
+    }
 
     to_install_repos = []
     to_install_files = []
@@ -262,6 +302,12 @@ def install_packages(module, pacman_path, state, packages, package_files):
     if to_install_repos:
         cmd = "%s -S %s --noconfirm --noprogressbar --needed" % (pacman_path, " ".join(to_install_repos))
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+        data = stdout.split('\n')[3].split(' ')[2:]
+        data = [ i for i in data if i != '' ]
+        for i, pkg in enumerate(data):
+            data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
+            if module._diff:
+                diff['after'] += "%s\n" % pkg
 
         if rc != 0:
             module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_repos), stderr))
@@ -271,6 +317,13 @@ def install_packages(module, pacman_path, state, packages, package_files):
     if to_install_files:
         cmd = "%s -U %s --noconfirm --noprogressbar --needed" % (pacman_path, " ".join(to_install_files))
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+        data = stdout.split('\n')[3].split(' ')[2:]
+        data = [ i for i in data if i != '' ]
+        for i, pkg in enumerate(data):
+            data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
+            if module._diff:
+                diff['after'] += "%s\n" % pkg
+
         if rc != 0:
             module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_files), stderr))
 
@@ -280,12 +333,19 @@ def install_packages(module, pacman_path, state, packages, package_files):
         message = "But could not ensure 'latest' state for %s package(s) as remote version could not be fetched." % (package_err)
 
     if install_c > 0:
-        module.exit_json(changed=True, msg="installed %s package(s). %s" % (install_c, message))
+        module.exit_json(changed=True, msg="installed %s package(s). %s" % (install_c, message), diff=diff)
 
-    module.exit_json(changed=False, msg="package(s) already installed. %s" % (message))
+    module.exit_json(changed=False, msg="package(s) already installed. %s" % (message), diff=diff)
 
 def check_packages(module, pacman_path, packages, state):
     would_be_changed = []
+    diff = {
+        'before': '',
+        'after': '',
+        'before_header': '',
+        'after_header': ''
+    }
+
     for package in packages:
         installed, updated, unknown = query_package(module, pacman_path, package)
         if ((state in ["present", "latest"] and not installed) or
@@ -295,10 +355,18 @@ def check_packages(module, pacman_path, packages, state):
     if would_be_changed:
         if state == "absent":
             state = "removed"
+
+        if module._diff and (state == 'removed'):
+            diff['before_header'] = 'removed'
+            diff['before'] = '\n'.join(would_be_changed) + '\n'
+        elif module._diff and ((state == 'present') or (state == 'latest')):
+            diff['after_header'] = 'installed'
+            diff['after'] = '\n'.join(would_be_changed) + '\n'
+
         module.exit_json(changed=True, msg="%s package(s) would be %s" % (
-            len(would_be_changed), state))
+            len(would_be_changed), state), diff=diff)
     else:
-        module.exit_json(changed=False, msg="package(s) already %s" % state)
+        module.exit_json(changed=False, msg="package(s) already %s" % state, diff=diff)
 
 
 def expand_package_groups(module, pacman_path, pkgs):
