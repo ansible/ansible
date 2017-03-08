@@ -84,7 +84,7 @@ extends_documentation_fragment:
     - ec2
     - asg
 requires:
-    - "boto >= 3"
+    - "boto3 >= 1.4.4"
 """
 
 EXAMPLES = '''
