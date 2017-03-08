@@ -39,6 +39,10 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+class TaskFirewallAnsibleError(AnsibleError):
+    ''' a task policy rule has been matched '''
+    pass
+
 class StrategyModule(LinearStrategyModule):
     def __init__(self, tqm):
 
@@ -111,7 +115,7 @@ class Firewall:
             # is the entire action blocked?
             # NOTE: we expect a dict, but future-proof and check for list too
             if not isinstance(self.policy[task.action], dict) and not isinstance(self.policy[task.action], list):
-                raise AnsibleError('firewall policy: module [%s] blocked' % task.action)
+                raise TaskFirewallAnsibleError('firewall policy: module [%s] blocked' % task.action)
 
             display.v('firewall rule passed: module [%s] generally allowed' % task.action)
 
@@ -120,6 +124,6 @@ class Firewall:
 
                 # is an arg of this action blocked?
                 if key in task.args:
-                    raise AnsibleError('firewall policy: module [%s] arg [%s] blocked' % (task.action, key))
+                    raise TaskFirewallAnsibleError('firewall policy: module [%s] arg [%s] blocked' % (task.action, key))
 
                 display.v('firewall rule passed: [%s:%s] against %s' % (task.action, key, task.args))
