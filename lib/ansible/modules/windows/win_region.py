@@ -40,14 +40,12 @@ options:
               for a list of GeoIDs you can use and what location it relates to.
               This needs to be set if C(format) or C(unicode_language) is not
               set.
-        required: false
     format:
         description:
             - The language format to set for the current user, see
               U(https://msdn.microsoft.com/en-us/library/system.globalization.cultureinfo.aspx)
               for a list of culture names to use. This needs to be set if
               C(location) or C(unicode_language) is not set.
-        required: false
     unicode_language:
         description:
             - The unicode language format to set for all users, see
@@ -55,7 +53,6 @@ options:
               for a list of culture names to use. This needs to be set if
               C(location) or C(format) is not set. After setting this
               value a reboot is required for it to take effect.
-        required: false
     copy_settings:
         description:
             - This will copy the current format and location values to new user
@@ -63,7 +60,6 @@ options:
               C(location), C(format) or C(unicode_language) has resulted in a
               change. If this process runs then it will always result in a
               change.
-        required: false
         default: false
         choices: ['true', 'false']
 author: "Jordan Borean (@jborean93)"
