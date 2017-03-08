@@ -124,13 +124,13 @@ def key_to_camel(key):
 def create_or_update_bucket_cors(connection, module):
 
     name = module.params.get("name")
-    rules = module.params.get("rules")
+    rules = module.params.get("rules", [])
     changed = False
 
     try:
         current_camel_rules = connection.get_bucket_cors(Bucket=name)['CORSRules']
     except ClientError as e:
-        module.fail_json(msg=str(e))
+        current_camel_rules = []
 
     if len(rules) != len(current_camel_rules):
         changed = True
