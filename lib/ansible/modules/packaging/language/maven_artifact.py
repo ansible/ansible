@@ -61,12 +61,24 @@ options:
             - The maven type/extension coordinate
         required: false
         default: jar
+    unique_snapshot:
+        description:
+            - Deactivate if your maven repository overwrites snapshot versions instead of timestamping them. (added in version 2.4)
+        required: false
+        default: 'yes'
+        choices: ['yes', 'no']
     repository_url:
         description:
             - The URL of the Maven Repository to download from.
             - Use s3://... if the repository is hosted on Amazon S3, added in version 2.2.
         required: false
         default: http://repo1.maven.org/maven2
+    repository_url:
+        description:
+            - The URL of the Maven Repository to download snapshots from. (added in version 2.4)
+            - Use s3://... if the repository is hosted on Amazon S3, added in version 2.4.
+        required: false
+        default: null
     username:
         description:
             - The username to authenticate as to the Maven Repository. Use AWS secret key of the repository is hosted on S3
@@ -126,6 +138,15 @@ EXAMPLES = '''
     repository_url: 'https://repo.company.com/maven'
     username: user
     password: pass
+    dest: /tmp/library-name-latest.jar
+
+# Download an artifact from a private repository with separate snapshots / releases url
+- maven_artifact:
+    group_id: com.company
+    artifact_id: library-name
+    version: 4.11-SNAPSHOT
+    repository_url: 'https://repo.company.com/maven-releases'
+    repository_snapshot_url: 'https://repo.company.com/maven-snapshots'
     dest: /tmp/library-name-latest.jar
 
 # Download a WAR File to the Tomcat webapps directory to be deployed
@@ -224,12 +245,19 @@ class MavenDownloader:
         self.module = module
         if base.endswith("/"):
             base = base.rstrip("/")
-        self.base = base
+        self._base = base
+        base_snapshot = module.params.get("repository_snapshot_url", "")
+        if base_snapshot and base_snapshot.endswith("/"):
+            base_snapshot = base_snapshot.rstrip("/")
+        self._base_snapshot = base_snapshot if base_snapshot else self._base
         self.user_agent = "Maven Artifact Downloader/1.0"
+
+    def get_base(self, artifact):
+        return self._base_snapshot if artifact.is_snapshot() else self._base
 
     def _find_latest_version_available(self, artifact):
         path = "/%s/maven-metadata.xml" % (artifact.path(False))
-        xml = self._request(self.base + path, "Failed to download maven-metadata.xml", lambda r: etree.parse(r))
+        xml = self._request(self.get_base(artifact) + path, "Failed to download maven-metadata.xml", lambda r: etree.parse(r))
         v = xml.xpath("/metadata/versioning/versions/version[last()]/text()")
         if v:
             return v[0]
@@ -238,9 +266,9 @@ class MavenDownloader:
         if artifact.version == "latest":
             artifact.version = self._find_latest_version_available(artifact)
 
-        if artifact.is_snapshot():
+        if artifact.is_snapshot() and self.module.params['unique_snapshot']:
             path = "/%s/maven-metadata.xml" % (artifact.path())
-            xml = self._request(self.base + path, "Failed to download maven-metadata.xml", lambda r: etree.parse(r))
+            xml = self._request(self.get_base(artifact) + path, "Failed to download maven-metadata.xml", lambda r: etree.parse(r))
             timestamp = xml.xpath("/metadata/versioning/snapshot/timestamp/text()")[0]
             buildNumber = xml.xpath("/metadata/versioning/snapshot/buildNumber/text()")[0]
             for snapshotArtifact in xml.xpath("/metadata/versioning/snapshotVersions/snapshotVersion"):
@@ -256,9 +284,9 @@ class MavenDownloader:
         elif not artifact.is_snapshot():
             version = artifact.version
         if artifact.classifier:
-            return posixpath.join(self.base, artifact.path(), artifact.artifact_id + "-" + version + "-" + artifact.classifier + "." + artifact.extension)
+            return posixpath.join(self.get_base(artifact), artifact.path(), artifact.artifact_id + "-" + version + "-" + artifact.classifier + "." + artifact.extension)
 
-        return posixpath.join(self.base, artifact.path(), artifact.artifact_id + "-" + version + "." + artifact.extension)
+        return posixpath.join(self.get_base(artifact), artifact.path(), artifact.artifact_id + "-" + version + "." + artifact.extension)
 
     def _request(self, url, failmsg, f):
         url_to_use = url
@@ -356,7 +384,9 @@ def main():
             version = dict(default="latest"),
             classifier = dict(default=None),
             extension = dict(default='jar'),
+            unique_snapshot = dict(required=False, default=True, type='bool'),
             repository_url = dict(default=None),
+            repository_snapshot_url = dict(default=None),
             username = dict(default=None,aliases=['aws_secret_key']),
             password = dict(default=None, no_log=True,aliases=['aws_secret_access_key']),
             state = dict(default="present", choices=["present","absent"]), # TODO - Implement a "latest" state
@@ -411,7 +441,18 @@ def main():
 
     try:
         if downloader.download(artifact, dest):
-            module.exit_json(state=state, dest=dest, group_id=group_id, artifact_id=artifact_id, version=version, classifier=classifier, extension=extension, repository_url=repository_url, changed=True)
+            module.exit_json(
+                state=state,
+                dest=dest,
+                group_id=group_id,
+                artifact_id=artifact_id,
+                version=version,
+                classifier=classifier,
+                extension=extension,
+                repository_url=repository_url,
+                repository_snapshot_url=module.params["repository_snapshot_url"],
+                changed=True,
+            )
         else:
             module.fail_json(msg="Unable to download the artifact")
     except ValueError as e:
