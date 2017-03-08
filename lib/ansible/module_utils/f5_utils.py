@@ -288,26 +288,26 @@ class AnsibleF5Parameters(object):
         if params:
             for k,v in iteritems(params):
                 if self.api_map is not None and k in self.api_map:
-                    # Handle weird API parameters like `dns.proxy.__iter__` by
-                    # using a map provided by the module developer
-                    class_attr = getattr(type(self), self.api_map[k], None)
-                    if isinstance(class_attr, property):
-                        # There is a mapped value for the api_map key
-                        if class_attr.fset is None:
-                            # If the mapped value does not have an associated setter
-                            self._values[self.api_map[k]] = v
-                        else:
-                            # The mapped value has a setter
-                            setattr(self, self.api_map[k], v)
+                    dict_to_use = self.api_map
+                    map_key = self.api_map[k]
+                else:
+                    dict_to_use = self._values
+                    map_key = k
+
+                # Handle weird API parameters like `dns.proxy.__iter__` by
+                # using a map provided by the module developer
+                class_attr = getattr(type(self), map_key, None)
+                if isinstance(class_attr, property):
+                    # There is a mapped value for the api_map key
+                    if class_attr.fset is None:
+                        # If the mapped value does not have an associated setter
+                        self._values[map_key] = v
                     else:
-                        # If the mapped value is not a @property
-                        self._values[self.api_map[k]] = v
-                try:
-                    # There is no map, or the provided param is not in the api_map
-                    setattr(self, k, v)
-                except AttributeError:
-                    # At a minimum put it in values.
-                    self._values[k] = v
+                        # The mapped value has a setter
+                        setattr(self, map_key, v)
+                else:
+                    # If the mapped value is not a @property
+                    self._values[map_key] = v
 
     def __getattr__(self, item):
         # Ensures that properties that weren't defined, and therefore stashed
