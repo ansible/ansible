@@ -161,7 +161,9 @@ def main():
         distribution_id=dict(required=False, default=None, type='str'),
         invalidation_batch=dict(required=False, default=None, type='str'),
         create_streaming_distribution=dict(required=False, default=False, type='bool'),
+        streaming_distribution_config=dict(required=False, default=None, type='json'),
         create_streaming_distribution_with_tags=dict(required=False, default=False, type='bool'),
+        streaming_distribution_with_tags_config=dict(required=False, default=False, type='json'),
         delete_cloud_front_origin_access_identity=dict(required=False, default=False, type='bool'),
         delete_distribution=dict(required=False, default=False, type='bool'),
         delete_streaming_distribution=dict(required=False, default=False, type='bool'),
@@ -183,11 +185,21 @@ def main():
     service_mgr = CloudFrontServiceManager(module)
     
     create_cloud_front_origin_access_identity = module.params.get('create_cloud_front_origin_access_identity')
-    
     caller_reference = module.params.get('caller_reference')
     comment = module.params.get('comment')
+
+    create_distribution = module.params.get('create_distribution')
+    distribution_config = module.params.get('distribution_config')
+
+    create_distribution_with_tags = module.params.get('create_distribution_with_tags')
+    distribution_with_tags_config = module.params.get('distribution_with_tags_config')
+
+    create_invalidation = module.params.get('create_invalidation')
     distribution_id = module.params.get('distribution_id')
     invalidation_batch = module.params.get('invalidation_batch')
+
+    create_streaming_distribution_with_tags = module.params.get('create_streaming_distribution_with_tags')
+    streaming_distribution_with_tags_config = module.params.get('streaming_distribution_with_tags_config')
 
     if(create_cloud_front_origin_access_identity):
         result=service_mgr.create_cloud_front_origin_access_identity(caller_reference, comment)
