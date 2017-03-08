@@ -91,8 +91,11 @@ class BaseFileCacheModule(BaseCacheModule):
             try:
                 os.makedirs(self._cache_dir)
             except (OSError,IOError) as e:
-                display.warning("error in '%s' cache plugin while trying to create cache dir %s : %s" % (self.plugin_name, self._cache_dir, to_bytes(e)))
-                return None
+                raise AnsibleError("error in '%s' cache plugin while trying to create cache dir %s : %s" % (self.plugin_name, self._cache_dir, to_bytes(e)))
+        else:
+            for x in (os.R_OK, os.W_OK, os.X_OK):
+                if not os.access(self._cache_dir, x):
+                    raise AnsibleError("error in '%s' cache, configured path (%s) does not have necessary permissions (rwx), disabling plugin" % (self.plugin_name, self._cache_dir))
 
     def get(self, key):
         """ This checks the in memory cache first as the fact was not expired at 'gather time'
@@ -146,7 +149,7 @@ class BaseFileCacheModule(BaseCacheModule):
                 return False
             else:
                 display.warning("error in '%s' cache plugin while trying to stat %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
-                pass
+                return False
 
         if time.time() - st.st_mtime <= self._timeout:
             return False
