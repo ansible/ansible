@@ -52,6 +52,20 @@ options:
      - if false, the ssh host key of the device is not checked
     default: true
     required: false
+  look_for_keys:
+    description:
+     - if true, enables looking in the usual locations for ssh keys (e.g. ~/.ssh/id_*)
+     - if false, disables looking for ssh keys
+    default: true
+    required: false
+    version_added: "2.3"
+  allow_agent:
+    description:
+     - if true, enables querying SSH agent (if found) for keys
+     - if false, disables querying the SSH agent for ssh keys
+    default: true
+    required: false
+    version_added: "2.3"
   username:
     description:
      - the username to authenticate with
@@ -164,6 +178,8 @@ def main():
             host=dict(type='str', required=True),
             port=dict(type='int', default=830),
             hostkey_verify=dict(type='bool', default=True),
+            allow_agent=dict(type='bool', default=True),
+            look_for_keys=dict(type='bool', default=True),
             username=dict(type='str', required=True, no_log=True),
             password=dict(type='str', required=True, no_log=True),
             xml=dict(type='str', required=True),
@@ -188,6 +204,8 @@ def main():
         host=module.params['host'],
         port=module.params['port'],
         hostkey_verify=module.params['hostkey_verify'],
+        allow_agent=module.params['allow_agent'],
+        look_for_keys=module.params['look_for_keys'],
         username=module.params['username'],
         password=module.params['password'],
     )
