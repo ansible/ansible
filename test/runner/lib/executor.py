@@ -3,6 +3,7 @@
 from __future__ import absolute_import, print_function
 
 import os
+import re
 import tempfile
 import time
 import textwrap
@@ -72,6 +73,13 @@ from lib.git import (
 
 from lib.classification import (
     categorize_changes,
+)
+
+from lib.test import (
+    TestMessage,
+    TestSuccess,
+    TestFailure,
+    TestSkipped,
 )
 
 SUPPORTED_PYTHON_VERSIONS = (
@@ -674,40 +682,91 @@ def command_compile(args):
 
     install_command_requirements(args)
 
-    version_commands = []
+    total = 0
+    failed = []
 
     for version in COMPILE_PYTHON_VERSIONS:
         # run all versions unless version given, in which case run only that version
         if args.python and version != args.python:
             continue
 
-        # optional list of regex patterns to exclude from tests
-        skip_file = 'test/compile/python%s-skip.txt' % version
-
-        if os.path.exists(skip_file):
-            with open(skip_file, 'r') as skip_fd:
-                skip_paths = skip_fd.read().splitlines()
-        else:
-            skip_paths = []
-
-        # augment file exclusions
-        skip_paths += [e.path for e in exclude]
-
-        skip_paths = sorted(skip_paths)
-
-        python = 'python%s' % version
-        cmd = [python, 'test/compile/compile.py']
-
-        if skip_paths:
-            cmd += ['-x', '|'.join(skip_paths)]
-
-        cmd += [target.path if target.path == '.' else './%s' % target.path for target in include]
-
-        version_commands.append((version, cmd))
-
-    for version, command in version_commands:
         display.info('Compile with Python %s' % version)
-        run_command(args, command)
+
+        result = compile_version(args, version, include, exclude)
+        result.write(args)
+
+        total += 1
+
+        if isinstance(result, TestFailure):
+            failed.append('compile --python %s' % version)
+
+    if failed:
+        raise ApplicationError('The %d compile test(s) listed below (out of %d) failed. See error output above for details.\n%s' % (
+            len(failed), total, '\n'.join(failed)))
+
+
+def compile_version(args, python_version, include, exclude):
+    """
+    :type args: CompileConfig
+    :type python_version: str
+    :type include: tuple[CompletionTarget]
+    :param exclude: tuple[CompletionTarget]
+    :rtype: TestResult
+    """
+    command = 'compile'
+    test = ''
+
+    # optional list of regex patterns to exclude from tests
+    skip_file = 'test/compile/python%s-skip.txt' % python_version
+
+    if os.path.exists(skip_file):
+        with open(skip_file, 'r') as skip_fd:
+            skip_paths = skip_fd.read().splitlines()
+    else:
+        skip_paths = []
+
+    # augment file exclusions
+    skip_paths += [e.path for e in exclude]
+
+    skip_paths = sorted(skip_paths)
+
+    python = 'python%s' % python_version
+    cmd = [python, 'test/compile/compile.py']
+
+    if skip_paths:
+        cmd += ['-x', '|'.join(skip_paths)]
+
+    cmd += [target.path if target.path == '.' else './%s' % target.path for target in include]
+
+    try:
+        stdout, stderr = run_command(args, cmd, capture=True)
+        status = 0
+    except SubprocessError as ex:
+        stdout = ex.stdout
+        stderr = ex.stderr
+        status = ex.status
+
+    if stderr:
+        raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
+
+    if args.explain:
+        return TestSkipped(command, test, python_version=python_version)
+
+    pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
+
+    results = [re.search(pattern, line).groupdict() for line in stdout.splitlines()]
+
+    results = [TestMessage(
+        message=r['message'],
+        path=r['path'].replace('./', ''),
+        line=int(r['line']),
+        column=int(r['column']),
+    ) for r in results]
+
+    if results:
+        return TestFailure(command, test, messages=results, python_version=python_version)
+
+    return TestSuccess(command, test, python_version=python_version)
 
 
 def intercept_command(args, cmd, capture=False, env=None, data=None, cwd=None, python_version=None):

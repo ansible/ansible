@@ -260,6 +260,7 @@ def parse_args():
                           choices=COMPILE_PYTHON_VERSIONS,
                           help='python version: %s' % ', '.join(COMPILE_PYTHON_VERSIONS))
 
+    add_lint(compiler)
     add_extra_docker_options(compiler, integration=False)
 
     sanity = subparsers.add_parser('sanity',
@@ -286,14 +287,6 @@ def parse_args():
                         action='store_true',
                         help='list available tests')
 
-    sanity.add_argument('--lint',
-                        action='store_true',
-                        help='write lint output to stdout, everything else stderr')
-
-    sanity.add_argument('--junit',
-                        action='store_true',
-                        help='write test failures to junit xml files')
-
     sanity.add_argument('--python',
                         metavar='VERSION',
                         choices=SUPPORTED_PYTHON_VERSIONS,
@@ -302,6 +295,7 @@ def parse_args():
     sanity.add_argument('--base-branch',
                         help=argparse.SUPPRESS)
 
+    add_lint(sanity)
     add_extra_docker_options(sanity, integration=False)
 
     shell = subparsers.add_parser('shell',
@@ -375,6 +369,19 @@ def parse_args():
         args.color = sys.stdout.isatty()
 
     return args
+
+
+def add_lint(parser):
+    """
+    :type parser: argparse.ArgumentParser
+    """
+    parser.add_argument('--lint',
+                        action='store_true',
+                        help='write lint output to stdout, everything else stderr')
+
+    parser.add_argument('--junit',
+                        action='store_true',
+                        help='write test failures to junit xml files')
 
 
 def add_changes(parser, argparse):
