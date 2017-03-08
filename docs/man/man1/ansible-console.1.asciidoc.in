@@ -1,0 +1,261 @@
+ansible-console(1)
+==================
+:doctype:manpage
+3:man source:   Ansible
+:man version:  %VERSION%
+:man manual:   System administration commands
+
+NAME
+----
+ansible-console - a REPL for ad-hoc ansible tasks
+
+
+SYNOPSIS
+--------
+ansible-console [-m module_name] [-a args] [options] [host-pattern]
+
+
+DESCRIPTION
+-----------
+
+*Ansible console* is a REPL that allows for running ad-hoc tasks against
+a chosen inventory (based on dominis' ansible-shell).
+
+
+ARGUMENTS
+---------
+
+*host-pattern*::
+
+A name of a group in the inventory, a shell-like glob selecting
+hosts in inventory or any combination of the two separated by commas.
+
+OPTIONS
+-------
+
+*-a* \'_ARGUMENTS_', *--args=*\'_ARGUMENTS_'::
+
+The 'ARGUMENTS' to pass to the module.
+
+*-b*, *--become*::
+
+Use privilege escalation (specific one depends on become_method),
+this does not imply prompting for passwords.
+
+*K*, *--ask-become-pass*::
+
+Ask for privilege escalation password.
+
+*-k*, *--ask-pass*::
+
+Prompt for the connection password, if it is needed for the transport used.
+For example, using ssh and not having  a key-based authentication with ssh-agent.
+
+*--ask-su-pass*::
+
+Prompt for su password, used with --su (deprecated, use become).
+
+*--ask-sudo-pass*::
+
+Prompt for the password to use with --sudo, if any (deprecated, use become).
+
+*--ask-vault-pass*::
+
+Prompt for vault password.
+
+*-B* 'NUM', *--background=*'NUM'::
+
+Run commands in the background, killing the task after 'NUM' seconds.
+
+*--become-method=*'BECOME_METHOD'::
+
+Privilege escalation method to use (default=sudo),
+valid choices: [ sudo | su | pbrun | pfexec | runas | doas | dzdo ]
+
+*--become-user=*'BECOME_USER'::
+
+Run operations as this user (default=root).
+
+*-C*, *--check*::
+
+Do not make any changes on the remote system, but test resources to see what might
+have changed.  Note this can not scan all possible resource types and is only
+a simulation.
+
+*-c* 'CONNECTION', *--connection=*'CONNECTION'::
+
+Connection type to use.  Most common options are 'paramiko' (SSH), 'ssh', 'winrm'
+and 'local'.  'local' is mostly useful for crontab or kickstarts.
+
+*-e* 'EXTRA_VARS, *--extra-vars=*'EXTRA_VARS'::
+
+Extra variables to inject into a playbook, in key=value key=value format or
+as quoted YAML/JSON (hashes and arrays). To load variables from a file, specify
+the file preceded by @ (e.g. @vars.yml).
+
+*-f* 'NUM', *--forks=*'NUM'::
+
+Level of parallelism. 'NUM' is specified as an integer, the default is 5.
+
+*-h*, *--help*::
+
+Show help message and exit.
+
+*-i* 'PATH', *--inventory=*'PATH'::
+
+The 'PATH' to the inventory, which defaults to '/etc/ansible/hosts'.
+Alternatively you can use a comma separated list of hosts or single host with traling comma 'host,'.
+
+*-l* 'SUBSET', *--limit=*'SUBSET'::
+
+Further limits the selected host/group patterns.
+You can prefix it with '~' to indicate that the pattern is a regex.
+
+*--list-hosts*::
+
+Outputs a list of matching hosts; does not execute anything else.
+
+*-m* 'NAME', *--module-name=*'NAME'::
+
+Execute the module called 'NAME'.
+
+*-M* 'DIRECTORY', *--module-path=*'DIRECTORY'::
+
+The 'DIRECTORY' search path to load modules from. The default is
+'/usr/share/ansible'. This can also be set with the ANSIBLE_LIBRARY
+environment variable.
+
+*-o*, *--one-line*::
+
+Try to output everything on one line.
+
+*-P* 'NUM', *--poll=*'NUM'::
+
+Poll a background job every 'NUM' seconds. Requires *-B*.
+
+*--private-key=*'PRIVATE_KEY_FILE'::
+
+Use this file to authenticate the connection.
+
+*-S*, *--su*::
+
+Run operations with su (deprecated, use become).
+
+*-R* 'SU_USER', *--se-user=*'SUDO_USER'::
+
+Run operations with su as this user (default=root) (deprecated, use become).
+
+*-s*, *--sudo*::
+
+Run the command as the user given by -u and sudo to root (deprecated, use become).
+
+*--ssh-common-args=*''-o ProxyCommand="ssh -W %h:%p ..." ...''::
+
+Add the specified arguments to any sftp/scp/ssh command-line. Useful to
+set a ProxyCommand to use a jump host, but any arguments that are
+accepted by all three programs may be specified.
+
+*--sftp-extra-args=*''-f ...''::
+
+Add the specified arguments to any sftp command-line.
+
+*--scp-extra-args=*''-l ...''::
+
+Add the specified arguments to any scp command-line.
+
+*--ssh-extra-args=*''-R ...''::
+
+Add the specified arguments to any ssh command-line.
+
+*-U* 'SUDO_USERNAME', *--sudo-user=*'SUDO_USERNAME'::
+
+Sudo to 'SUDO_USERNAME' default is root. (deprecated, use become).
+
+*-t* 'DIRECTORY', *--tree=*'DIRECTORY'::
+
+Save contents in this output 'DIRECTORY', with the results saved in a
+file named after each host.
+
+*-T* 'SECONDS', *--timeout=*'SECONDS'::
+
+Connection timeout to use when trying to talk to hosts, in 'SECONDS'.
+
+*-u* 'USERNAME', *--user=*'USERNAME'::
+
+Use this 'USERNAME' to login to the target host, instead of the current user.
+
+*--vault-password-file=*'VAULT_PASSWORD_FILE'::
+
+A file containing the vault password to be used during the decryption of vault encrypted files.
+Be sure to keep this file secured if it is used. If the file is executable,
+it will be run and its standard output will be used as the password.
+
+*-v*, *--verbose*::
+
+Verbose mode, more output from successful actions will be shown.
+Give up to three times for more output.
+
+*--version*::
+
+Show program version number and exit.
+
+INVENTORY
+---------
+
+Ansible stores the hosts it can potentially operate on in an inventory.
+This can be an ini-like file, a script, directory or a list.
+The ini syntax is one host per line.  Groups headers are allowed and
+are included on their own line, enclosed in square brackets that start the line.
+
+Ranges of hosts are also supported.  For more information and
+additional options, see the documentation on http://docs.ansible.com/.
+
+
+ENVIRONMENT
+-----------
+
+The following environment variables may be specified.
+
+ANSIBLE_INVENTORY  -- Override the default ansible inventory file
+
+ANSIBLE_LIBRARY -- Override the default ansible module library path
+
+ANSIBLE_CONFIG -- Override the default ansible config file
+
+Many more are available for most options in ansible.cfg
+
+
+FILES
+-----
+
+/etc/ansible/hosts -- Default inventory file
+
+/usr/share/ansible/ -- Default module library
+
+/etc/ansible/ansible.cfg -- Config file, used if present
+
+~/.ansible.cfg -- User config file, overrides the default config if present
+
+
+AUTHOR
+------
+
+Ansible was originally written by Michael DeHaan.
+See the AUTHORS file for a complete list of contributors.
+
+
+COPYRIGHT
+---------
+
+Copyright © 2012, Michael DeHaan
+Ansible is released under the terms of the GPLv3 License.
+
+
+SEE ALSO
+--------
+
+*ansible-playbook*(1), *ansible-pull*(1), *ansible-doc*(1), *ansible-vault*(1), *ansible-galaxy*(1)
+
+Extensive documentation is available in the documentation site:
+<http://docs.ansible.com>. IRC and mailing list info can be found
+in file CONTRIBUTING.md, available in: <https://github.com/ansible/ansible>
