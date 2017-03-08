@@ -47,19 +47,21 @@ class ConditionalResult:
     _boolable = False
     _conditional_result = True
 
-    def __init__(self, value=None, conditional=None):
+    def __init__(self, value=None, conditional=None, templated_expr=None):
         self.conditional = conditional
         self.value = value or False
+        self.templated_expr = templated_expr
 
     def __nonzero__(self):
         return self.value
 
     def __repr__(self):
-        return "'%s' is %s" % (self.conditional, self.value)
+        return "'%s' is %s expanded_to [%s]" % (self.conditional, self.value, self.templated_expr)
 
     def __getstate__(self):
         return {'conditional': self.conditional,
-                'value': self.value}
+                'value': self.value,
+                'templated_expr': self.templated_expr}
 
 
 class ConditionalResults:
@@ -76,10 +78,10 @@ class ConditionalResults:
             return False
         return True
 
-    def __repr2__(self):
+    def __repr__(self):
         return "%s(%s)" % (bool(self), self.conditional_results)
 
-    def __not_repr__(self):
+    def _x_repr__(self):
         failed_msg = ''
         return '%s(when=%s, conditional_results=%s %s)' % (self.__class__.__name__,
                                                            self.when,
@@ -169,7 +171,8 @@ class Conditional:
             try:
                 for conditional in self.when:
                     result = self._check_conditional(conditional, templar, all_vars)
-                    conditional_results.append(ConditionalResult(result, conditional))
+                    #conditional_results.append(ConditionalResult(result, conditional))
+                    conditional_results.append(result)
             except Exception as e:
                 raise AnsibleError(
                     "The conditional check '%s' failed. The error was: %s" % (to_native(conditional), to_native(e)), obj=ds
@@ -262,10 +265,14 @@ class Conditional:
             # and finally we generate and template the presented string and look at the resulting string
             presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
             val = templar.template(presented, disable_lookups=disable_lookups).strip()
+            conditional_val = templar.template(conditional, disable_lookups=disable_lookups).strip()
+            print('conditional_val: %s' % conditional_val)
             if val == "True":
-                return True
+                return ConditionalResult(True, conditional=conditional, templated_expr=conditional_val)
+                #return True
             elif val == "False":
-                return False
+                return ConditionalResult(False, conditional=conditional, templated_expr=conditional_val)
+                #return False
             else:
                 raise AnsibleError("unable to evaluate conditional: %s" % original)
         except (AnsibleUndefinedVariable, UndefinedError) as e:
@@ -288,9 +295,11 @@ class Conditional:
                         # against the state (defined or undefined)
                         should_exist = ('not' in logic) != (state == 'defined')
                         if should_exist:
-                            return False
+                            return ConditionalResult(False, conditional=conditional)
+                            #return False
                         else:
-                            return True
+                            return ConditionalResult(True, conditional=conditional)
+                            #return True
                 # as nothing above matched the failed var name, re-raise here to
                 # trigger the AnsibleUndefinedVariable exception again below
                 raise
