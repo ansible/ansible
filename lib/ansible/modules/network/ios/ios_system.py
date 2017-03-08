@@ -78,7 +78,7 @@ options:
     choices: ['true', 'false']
   name_servers:
     description:
-      - The C(name_servers) argument accepts a list of DNS name servers by
+      - The C(name_serves) argument accepts a list of DNS name servers by
         way of either FQDN or IP address to use to perform name resolution
         lookups.  This argument accepts wither a list of DNS servers See
         examples.
@@ -105,16 +105,13 @@ EXAMPLES = """
       - ansible.com
       - redhat.com
       - cisco.com
-
 - name: remove configuration
   ios_system:
     state: absent
-
 - name: configure DNS lookup sources
   ios_system:
     lookup_source: MgmtEth0/0/CPU0/0
     lookup_enabled: yes
-
 - name: configure name servers
   ios_system:
     name_servers:
