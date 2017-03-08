@@ -19,9 +19,13 @@ retry.py pip install tox --disable-pip-version-check
 
 errors=0
 
+set +e
+
 ansible-test compile --color -v --junit --requirements || ((errors++))
 ansible-test sanity --color -v --junit --tox --skip-test ansible-doc --python 2.7 || ((errors++))
 ansible-test sanity --color -v --junit --tox --test ansible-doc --coverage || ((errors++))
+
+set -e
 
 if [ ${errors} -gt 0 ]; then
     echo "${errors} of the above ansible-test command(s) failed."
