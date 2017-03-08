@@ -35,7 +35,6 @@ description:
 author: "Chris Schmidt (@chrisisbeef)"
 requirements:
     - "python >= 2.6"
-    - lxml
     - boto if using a S3 repository (s3://...)
 options:
     group_id:
@@ -158,7 +157,7 @@ EXAMPLES = '''
     dest: /var/lib/tomcat7/webapps/web-app.war
 '''
 
-from lxml import etree
+import xml.etree.ElementTree as etree
 import os
 import hashlib
 import sys
@@ -258,9 +257,9 @@ class MavenDownloader:
     def _find_latest_version_available(self, artifact):
         path = "/%s/maven-metadata.xml" % (artifact.path(False))
         xml = self._request(self.get_base(artifact) + path, "Failed to download maven-metadata.xml", lambda r: etree.parse(r))
-        v = xml.xpath("/metadata/versioning/versions/version[last()]/text()")
+        v = xml.find("./versioning/versions/version[last()]")
         if v:
-            return v[0]
+            return v.text
 
     def find_uri_for_artifact(self, artifact):
         if artifact.version == "latest":
@@ -269,11 +268,11 @@ class MavenDownloader:
         if artifact.is_snapshot() and self.module.params['unique_snapshot']:
             path = "/%s/maven-metadata.xml" % (artifact.path())
             xml = self._request(self.get_base(artifact) + path, "Failed to download maven-metadata.xml", lambda r: etree.parse(r))
-            timestamp = xml.xpath("/metadata/versioning/snapshot/timestamp/text()")[0]
-            buildNumber = xml.xpath("/metadata/versioning/snapshot/buildNumber/text()")[0]
-            for snapshotArtifact in xml.xpath("/metadata/versioning/snapshotVersions/snapshotVersion"):
-                if len(snapshotArtifact.xpath("classifier/text()")) > 0 and snapshotArtifact.xpath("classifier/text()")[0] == artifact.classifier and len(snapshotArtifact.xpath("extension/text()")) > 0 and snapshotArtifact.xpath("extension/text()")[0] == artifact.extension:
-                    return self._uri_for_artifact(artifact, snapshotArtifact.xpath("value/text()")[0])
+            timestamp = xml.find("./versioning/snapshot/timestamp").text
+            buildNumber = xml.find("./versioning/snapshot/buildNumber").text
+            for snapshotArtifact in xml.findall("./versioning/snapshotVersions/snapshotVersion"):
+                if snapshotArtifact.find("classifier").text == artifact.classifier and snapshotArtifact.find("extension").text == artifact.extension:
+                    return self._uri_for_artifact(artifact, snapshotArtifact.find("value").text)
             return self._uri_for_artifact(artifact, artifact.version.replace("SNAPSHOT", timestamp + "-" + buildNumber))
 
         return self._uri_for_artifact(artifact, artifact.version)
