@@ -184,7 +184,7 @@ def main():
                 region=region, endpoint=ec2_url, **aws_connect_kwargs
             )
         )
-    except ClientError, e:
+    except ClientError as e:
         err_msg = 'Boto3 Client Error - {0}'.format(str(e.msg))
         module.fail_json(
             success=False, changed=False, result={}, msg=err_msg
