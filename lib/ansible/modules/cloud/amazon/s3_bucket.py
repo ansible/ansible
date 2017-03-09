@@ -154,61 +154,16 @@ def create_tags_container(tags):
     return tags_obj
 
 
-def _create_or_update_bucket(connection, module, location):
-
+def _update_policy(module, bucket):
+    current_policy=''
     policy = module.params.get("policy")
-    name = module.params.get("name")
-    requester_pays = module.params.get("requester_pays")
-    tags = module.params.get("tags")
-    versioning = module.params.get("versioning")
-    changed = False
-
-    try:
-        bucket = connection.get_bucket(name)
-    except S3ResponseError as e:
-        try:
-            bucket = connection.create_bucket(name, location=location)
-            changed = True
-        except S3CreateError as e:
-            module.fail_json(msg=e.message)
-
-    # Versioning
-    versioning_status = bucket.get_versioning_status()
-    if versioning is not None:
-        if versioning and versioning_status.get('Versioning') != "Enabled":
-            try:
-                bucket.configure_versioning(versioning)
-                changed = True
-                versioning_status = bucket.get_versioning_status()
-            except S3ResponseError as e:
-                module.fail_json(msg=e.message, exception=traceback.format_exc())
-        elif not versioning and versioning_status.get('Versioning') == "Enabled":
-            try:
-                bucket.configure_versioning(versioning)
-                changed = True
-                versioning_status = bucket.get_versioning_status()
-            except S3ResponseError as e:
-                module.fail_json(msg=e.message, exception=traceback.format_exc())
-
-    # Requester pays
-    requester_pays_status = get_request_payment_status(bucket)
-    if requester_pays_status != requester_pays:
-        if requester_pays:
-            payer='Requester'
-        else:
-            payer='BucketOwner'
-        bucket.set_request_payment(payer=payer)
-        changed = True
-        requester_pays_status = get_request_payment_status(bucket)
-
-    # Policy
     try:
         current_policy = json.loads(bucket.get_policy())
     except S3ResponseError as e:
         if e.error_code == "NoSuchBucketPolicy":
             current_policy = {}
         else:
-            module.fail_json(msg=e.message)
+            module.fail_json(msg='Failed to get S3 bucket policy: %s' % e)
     if policy is not None:
         if isinstance(policy, basestring):
             policy = json.loads(policy)
@@ -224,16 +179,19 @@ def _create_or_update_bucket(connection, module, location):
                 changed = True
                 current_policy = json.loads(bucket.get_policy())
             except S3ResponseError as e:
-                module.fail_json(msg=e.message)
+                module.fail_json(msg='Failed to set S3 bucket policy: %s' % e)
 
-    # Tags
+    return current_policy
+
+def _update_tags(module, bucket):
+    tags = module.params.get("tags")
     try:
         current_tags = bucket.get_tags()
     except S3ResponseError as e:
         if e.error_code == "NoSuchTagSet":
             current_tags = None
         else:
-            module.fail_json(msg=e.message)
+            module.fail_json(msg='Failed to get tags for bucket: %s' % e)
 
     if current_tags is None:
         current_tags_dict = {}
@@ -250,13 +208,81 @@ def _create_or_update_bucket(connection, module, location):
                 current_tags_dict = tags
                 changed = True
             except S3ResponseError as e:
-                module.fail_json(msg=e.message)
+                module.fail_json(msg='Failed to set tags for S3 bucket: %s' % e)
+
+    return current_tags_dict
+
+
+def create_or_update_bucket(connection, module, location, flavour='aws'):
+    name = module.params.get("name")
+    requester_pays = module.params.get("requester_pays")
+    versioning = module.params.get("versioning")
+    changed = False
+
+    try:
+        bucket = connection.get_bucket(name)
+    except S3ResponseError as e:
+        try:
+            bucket = connection.create_bucket(name, location=location)
+            changed = True
+        except S3CreateError as e:
+            module.fail_json(msg='Failed to create S3 bucket: %s' % e)
+
+    if not bucket:
+        module.fail_json(msg='Unable to create bucket, no error from the API')
+
+    # Versioning
+    versioning_status = bucket.get_versioning_status()
+    if versioning is not None:
+        if versioning and versioning_status.get('Versioning') != "Enabled":
+            try:
+                bucket.configure_versioning(versioning)
+                changed = True
+                versioning_status = bucket.get_versioning_status()
+            except S3ResponseError as e:
+                module.fail_json(msg='Failed to enable versioning for S3 bucket: %s' % e, exception=traceback.format_exc())
+        elif not versioning and versioning_status.get('Versioning') == "Enabled":
+            try:
+                bucket.configure_versioning(versioning)
+                changed = True
+                versioning_status = bucket.get_versioning_status()
+            except S3ResponseError as e:
+                module.fail_json(msg='Failed to disable versioning for S3 bucket: %s' % e, exception=traceback.format_exc())
+
+    # Requester pays
+    requester_pays_status = get_request_payment_status(bucket)
+    if requester_pays_status != requester_pays:
+        if requester_pays:
+            payer='Requester'
+        else:
+            payer='BucketOwner'
+        bucket.set_request_payment(payer=payer)
+        changed = True
+        requester_pays_status = get_request_payment_status(bucket)
+
+    # Policy
+    current_policy=None
+    if flavour != 'ceph':
+        current_policy = _update_policy(module, bucket)
+    if module.params["policy"] is not None and flavour == 'ceph':
+        # policy not supported by Ceph Object Gateway (radosgw)
+        # http://docs.ceph.com/docs/master/radosgw/s3/#features-support
+        module.fail_json(msg="policy not supported by ceph object gateway")
+
+    # Tags
+    current_tags_dict=None
+    if flavour != 'ceph':
+        current_tags_dict = _update_tags(module, bucket)
+    if module.params["tags"] is not None and flavour == 'ceph':
+        # tagging not supported by Ceph Object Gateway (radosgw)
+        # http://docs.ceph.com/docs/hammer/dev/radosgw/s3_compliance/
+        module.fail_json(msg="tags not supported by ceph object gateway")
 
     module.exit_json(changed=changed, name=bucket.name, versioning=versioning_status,
                      requester_pays=requester_pays_status, policy=current_policy, tags=current_tags_dict)
 
 
-def _destroy_bucket(connection, module):
+def destroy_bucket(connection, module, flavour='aws'):
 
     force = module.params.get("force")
     name = module.params.get("name")
@@ -266,7 +292,7 @@ def _destroy_bucket(connection, module):
         bucket = connection.get_bucket(name)
     except S3ResponseError as e:
         if e.error_code != "NoSuchBucket":
-            module.fail_json(msg=e.message)
+            module.fail_json(msg="Failed to get S3 bucket: %s" % e)
         else:
             # Bucket already absent
             module.exit_json(changed=changed)
@@ -278,56 +304,15 @@ def _destroy_bucket(connection, module):
                 key.delete()
 
         except BotoServerError as e:
-            module.fail_json(msg=e.message)
+            module.fail_json(msg='Failed to empty S3 bucket: %s' % e)
 
     try:
         bucket = connection.delete_bucket(name)
         changed = True
     except S3ResponseError as e:
-        module.fail_json(msg=e.message)
+        module.fail_json(msg='Failed to delete S3 bucket: %s' % e)
 
     module.exit_json(changed=changed)
-
-
-def _create_or_update_bucket_ceph(connection, module, location):
-    #TODO: add update
-
-    name = module.params.get("name")
-
-    changed = False
-
-    try:
-        bucket = connection.get_bucket(name)
-    except S3ResponseError as e:
-        try:
-            bucket = connection.create_bucket(name, location=location)
-            changed = True
-        except S3CreateError as e:
-            module.fail_json(msg=e.message)
-
-    if bucket:
-        module.exit_json(changed=changed)
-    else:
-        module.fail_json(msg='Unable to create bucket, no error from the API')
-
-
-def _destroy_bucket_ceph(connection, module):
-
-    _destroy_bucket(connection, module)
-
-
-def create_or_update_bucket(connection, module, location, flavour='aws'):
-    if flavour == 'ceph':
-        _create_or_update_bucket_ceph(connection, module, location)
-    else:
-        _create_or_update_bucket(connection, module, location)
-
-
-def destroy_bucket(connection, module, flavour='aws'):
-    if flavour == 'ceph':
-        _destroy_bucket_ceph(connection, module)
-    else:
-        _destroy_bucket(connection, module)
 
 
 def is_fakes3(s3_url):
