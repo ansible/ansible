@@ -614,9 +614,9 @@ EXAMPLES = '''
 
 import time
 from ast import literal_eval
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.six import get_function_code
-
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect, connect_to_aws
 from distutils.version import LooseVersion
 
 try:
@@ -675,14 +675,14 @@ def get_reservations(module, ec2, tags=None, state=None, zone=None):
             for x in tags:
                 if isinstance(x, dict):
                     x = _set_none_to_blank(x)
-                    filters.update(dict(("tag:"+tn, tv) for (tn, tv) in iteritems(x)))
+                    filters.update(dict(("tag:"+tn, tv) for (tn, tv) in x.items()))
                 else:
                     filters.update({"tag-key": x})
 
         # if dict, add the key and value to the filter
         if isinstance(tags, dict):
             tags = _set_none_to_blank(tags)
-            filters.update(dict(("tag:"+tn, tv) for (tn, tv) in iteritems(tags)))
+            filters.update(dict(("tag:"+tn, tv) for (tn, tv) in tags.items()))
 
     if state:
         # http://stackoverflow.com/questions/437511/what-are-the-valid-instancestates-for-the-amazon-ec2-api
@@ -1557,43 +1557,44 @@ def restart_instances(module, ec2, instance_ids, state, instance_tags):
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        key_name=dict(aliases=['keypair']),
-        id=dict(),
-        group=dict(type='list', aliases=['groups']),
-        group_id=dict(type='list'),
-        zone=dict(aliases=['aws_zone', 'ec2_zone']),
-        instance_type=dict(aliases=['type']),
-        spot_price=dict(),
-        spot_type=dict(default='one-time', choices=["one-time", "persistent"]),
-        spot_launch_group=dict(),
-        image=dict(),
-        kernel=dict(),
-        count=dict(type='int', default='1'),
-        monitoring=dict(type='bool', default=False),
-        ramdisk=dict(),
-        wait=dict(type='bool', default=False),
-        wait_timeout=dict(default=300),
-        spot_wait_timeout=dict(default=600),
-        placement_group=dict(),
-        user_data=dict(),
-        instance_tags=dict(type='dict'),
-        vpc_subnet_id=dict(),
-        assign_public_ip=dict(type='bool', default=False),
-        private_ip=dict(),
-        instance_profile_name=dict(),
-        instance_ids=dict(type='list', aliases=['instance_id']),
-        source_dest_check=dict(type='bool', default=True),
-        termination_protection=dict(type='bool', default=None),
-        state=dict(default='present', choices=['present', 'absent', 'running', 'restarted', 'stopped']),
-        instance_initiated_shutdown_behavior=dict(default=None, choices=['stop', 'terminate']),
-        exact_count=dict(type='int', default=None),
-        count_tag=dict(),
-        volumes=dict(type='list'),
-        ebs_optimized=dict(type='bool', default=False),
-        tenancy=dict(default='default'),
-        network_interfaces=dict(type='list', aliases=['network_interface'])
-    )
+    argument_spec.update(
+        dict(
+            key_name=dict(aliases=['keypair']),
+            id=dict(),
+            group=dict(type='list', aliases=['groups']),
+            group_id=dict(type='list'),
+            zone=dict(aliases=['aws_zone', 'ec2_zone']),
+            instance_type=dict(aliases=['type']),
+            spot_price=dict(),
+            spot_type=dict(default='one-time', choices=["one-time", "persistent"]),
+            spot_launch_group=dict(),
+            image=dict(),
+            kernel=dict(),
+            count=dict(type='int', default='1'),
+            monitoring=dict(type='bool', default=False),
+            ramdisk=dict(),
+            wait=dict(type='bool', default=False),
+            wait_timeout=dict(default=300),
+            spot_wait_timeout=dict(default=600),
+            placement_group=dict(),
+            user_data=dict(),
+            instance_tags=dict(type='dict'),
+            vpc_subnet_id=dict(),
+            assign_public_ip=dict(type='bool', default=False),
+            private_ip=dict(),
+            instance_profile_name=dict(),
+            instance_ids=dict(type='list', aliases=['instance_id']),
+            source_dest_check=dict(type='bool', default=True),
+            termination_protection=dict(type='bool', default=None),
+            state=dict(default='present', choices=['present', 'absent', 'running', 'restarted', 'stopped']),
+            instance_initiated_shutdown_behavior=dict(default=None, choices=['stop', 'terminate']),
+            exact_count=dict(type='int', default=None),
+            count_tag=dict(),
+            volumes=dict(type='list'),
+            ebs_optimized=dict(type='bool', default=False),
+            tenancy=dict(default='default'),
+            network_interfaces=dict(type='list', aliases=['network_interface'])
+        )
     )
 
     module = AnsibleModule(
@@ -1664,9 +1665,6 @@ def main():
 
     module.exit_json(changed=changed, instance_ids=new_instance_ids, instances=instance_dict_array, tagged_instances=tagged_instances)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
