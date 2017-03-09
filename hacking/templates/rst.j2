@@ -70,10 +70,9 @@ Options
     </tr>
     {% for k in option_keys %}
     {% set v = options[k] %}
-    <tr>
+    {% if not v['suboptions'] %}
     <td>@{ k }@<br/><div style="font-size: small;">{% if v['version_added'] %} (added in @{v['version_added']}@){% endif %}</div></td>
     <td>{% if v.get('required', False) %}yes{% else %}no{% endif %}</td>
-    {% if not v['suboptions'] %}
 
         <td>{% if v['default'] %}@{ v['default'] }@{% endif %}</td>
         {% if v.get('type', 'not_bool') == 'bool' %}
@@ -84,14 +83,15 @@ Options
         <td>{% for desc in v.description -%}<div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>{% endfor -%} {% if 'aliases' in v and v.aliases -%}</br>
             <div style="font-size: small;">aliases: @{ v.aliases|join(', ') }@<div>{%- endif %}
     {% else %}
+    <td rowspan="2">@{ k }@<br/><div style="font-size: small;">{% if v['version_added'] %} (added in @{v['version_added']}@){% endif %}</div></td>
+    <td>{% if v.get('required', False) %}yes{% else %}no{% endif %}</td>
         <td></td><td></td>
         <td> {% for desc in v.description -%}<div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>{% endfor -%} {% if 'aliases' in v and v.aliases -%}</br>
             <div style="font-size: small;">aliases: @{ v.aliases|join(', ') }@<div>{%- endif %}
         </tr>
         <tr>
-        <td>
-        <td colspan="4">
-        <table border=3 cellpadding=4>
+        <td colspan="5">
+        <table border=1 cellpadding=4>
         <caption><b>Options for @{ k }@</b></caption>
         <tr>
         <th class="head">parameter</th>
