@@ -131,6 +131,13 @@ options:
         - Whether to boot the server with config drive enabled
      required: false
      default: 'no'
+   files:
+     description:
+       - Files to insert into the instance.
+         Equivalent of files= option in nova boot for personality
+     required: false
+     default: null
+     version_added: "2.3"
    userdata:
      description:
         - Opaque blob of data which is made available to the instance
@@ -372,6 +379,22 @@ EXAMPLES = '''
         volumes:
         - photos
         - music
+
+# Creates a new instance and passes a file via config-drive option
+- name: launch a virtual-router instance
+  hosts: localhost
+  task:
+    - name: launch instance
+      os_server:
+        name: csr1kv
+        image: csr1kv
+        flavor: small.csr1000v
+        nics:
+          - net-id: 34605f38-e52a-25d2-b6ec-754a13ffb723
+        config_drive: true
+        files: iosxe_config.txt="{{ lookup('template', 'files/day0.j2') }}
+        state: present
+
 '''
 
 try:
@@ -487,6 +510,7 @@ def _create_server(module, cloud):
         security_groups=module.params['security_groups'],
         userdata=module.params['userdata'],
         config_drive=module.params['config_drive'],
+        files=module.params['files'],
     )
     for optional_param in (
             'key_name', 'availability_zone', 'network',
@@ -613,6 +637,7 @@ def main():
         meta                            = dict(default=None, type='raw'),
         userdata                        = dict(default=None, aliases=['user_data']),
         config_drive                    = dict(default=False, type='bool'),
+        files                           = dict(default=[], type='dict'),
         auto_ip                         = dict(default=True, type='bool', aliases=['auto_floating_ip', 'public_ip']),
         floating_ips                    = dict(default=None, type='list'),
         floating_ip_pools               = dict(default=None, type='list'),
