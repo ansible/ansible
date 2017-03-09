@@ -61,16 +61,20 @@ active_config_dict = defaultdict(dict)
 
 
 class ConfigItem:
-    def __init__(self, section=None, key=None, value=None, source=None):
+    def __init__(self, section=None, key=None, value=None, source=None, default=None):
         self.section = section
         self.key = key
         self.value = value
         self.source = source
+        self.default = default
 
     def __str__(self):
-        buf = '# from %s\n%s = %s\n' % \
-            (self.source, self.key, self.value)
-        return buf
+        lines = []
+        lines.append('# from %s' % self.source)
+        if self.default is not None:
+            lines.append('# default: %s' % self.default)
+        lines.append('%s = %s' % (self.key, self.value))
+        return '\n'.join(lines)
 
 
 def get_config(p, section, key, env_var, default, value_type=None, expand_relative_paths=False):
@@ -147,7 +151,8 @@ def _get_config(p, section, key, env_var, default):
         try:
             value = p.get(section, key, raw=True)
             active_config_dict[section][key] = ConfigItem(section, key, value,
-                                                          source='file %s' % CONFIG_FILE)
+                                                          source='file %s' % CONFIG_FILE,
+                                                          default=default)
         except:
             pass
 
@@ -157,7 +162,8 @@ def _get_config(p, section, key, env_var, default):
             value = env_value
 
             active_config_dict[section][key] = ConfigItem(section, key, value,
-                                                          source='environment variable %s' % env_var)
+                                                          source='environment variable %s' % env_var,
+                                                          default=default)
 
     return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
 
@@ -198,6 +204,7 @@ def dumps_config():
         lines.append('[%s]' % section)
         for config_item in config_dict.values():
             lines.append(str(config_item))
+            lines.append('')
 
     return '\n'.join(lines)
 
