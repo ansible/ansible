@@ -88,7 +88,7 @@ commands:
     - EOF
 session_name:
   description: The EOS config session name used to load the configuration
-  returned: always
+  returned: if changes
   type: str
   sample: ansible_1479315771
 """

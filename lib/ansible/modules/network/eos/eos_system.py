@@ -70,7 +70,7 @@ options:
     default: null
   name_servers:
     description:
-      - The C(name_serves) argument accepts a list of DNS name servers by
+      - The C(name_servers) argument accepts a list of DNS name servers by
         way of either FQDN or IP address to use to perform name resolution
         lookups.  This argument accepts wither a list of DNS servers or
         a list of hashes that configure the name server and VRF name.  See
