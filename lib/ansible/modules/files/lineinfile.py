@@ -53,8 +53,8 @@ options:
     version_added: 1.7
     description:
       - The regular expression to look for in every line of the file. For
-        C(state=present), the pattern to replace if found (even if you use insertafter
-        or insertbefore); only the last line found will be replaced.
+        C(state=present), the pattern to replace if found (also if you use insertafter
+        or insertbefore in combination with regexp); only the last line found will be replaced.
         For C(state=absent), the pattern of the line to remove. Uses Python regular
         expressions; see U(http://docs.python.org/2/library/re.html).
   state:
