@@ -1127,8 +1127,10 @@ class ShellModule(object):
             script = '%s\nFinally { %s }' % (script, rm_cmd)
         return self._encode_script(script, preserve_rc=False)
 
-    def wrap_for_exec(self, cmd):
-        return '& %s' % cmd
+    def wrap_for_exec(self, cmd, env_string):
+        if not env_string:
+            return '& %s' % cmd
+        return '%s ; & %s' % (env_string, cmd)
 
     def _unquote(self, value):
         '''Remove any matching quotes that wrap the given value.'''

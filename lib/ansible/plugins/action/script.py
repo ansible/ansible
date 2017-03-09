@@ -82,8 +82,8 @@ class ActionModule(ActionBase):
 
         # add preparation steps to one ssh roundtrip executing the script
         env_string = self._compute_environment_string()
-        script_cmd = ' '.join([env_string, tmp_src, args])
-        script_cmd = self._connection._shell.wrap_for_exec(script_cmd)
+        script_cmd = ' '.join([tmp_src, args])
+        script_cmd = self._connection._shell.wrap_for_exec(script_cmd, env_string)
 
         result.update(self._low_level_execute_command(cmd=script_cmd, sudoable=True))
 
