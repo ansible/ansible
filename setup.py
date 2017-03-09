@@ -143,7 +143,7 @@ longdesc = 'Ansible is a radically simple IT automation system. It handles confi
 
 
 if os.path.exists('README.rst'):
-    with open('README.rst', 'r+') as readme_file:
+    with open('README.rst', 'r') as readme_file:
         longdesc = readme_file.read()
 
 setup(
