@@ -274,11 +274,9 @@ class SupervisorProgram(object):
     def get_config(self, config_file):
         conf = SupervisorConfigParser()
         try:
-            conf.read( config_file )
-        except Error, e:
+            return conf.read( config_file )
+        except Error as e:
                 raise(e)
-        finally:
-            return conf
 
     def get_main_config_file(self):
         if self._supervisor_conf:
