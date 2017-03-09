@@ -61,11 +61,10 @@ active_config_dict = defaultdict(dict)
 
 
 class ConfigItem:
-    def __init__(self, section=None, key=None, value=None, comment=None, source=None):
+    def __init__(self, section=None, key=None, value=None, source=None):
         self.section = section
         self.key = key
         self.value = value
-        self.comment = comment
         self.source = source
 
     def __str__(self):
@@ -158,8 +157,7 @@ def _get_config(p, section, key, env_var, default):
             value = env_value
 
             active_config_dict[section][key] = ConfigItem(section, key, value,
-                                                          source='env var %s' % env_var,
-                                                          comment='the default is %s' % default)
+                                                          source='environment variable %s' % env_var)
 
     return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
 
