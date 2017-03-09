@@ -105,8 +105,8 @@ class NetAppCDOTSVM(object):
             name=dict(required=True, type='str'),
             root_volume=dict(type='str'),
             root_volume_aggregate=dict(type='str'),
-            root_volume_security_style=dict(type='str', choices=['nfs',
-                                                                 'cifs',
+            root_volume_security_style=dict(type='str', choices=['unix',
+                                                                 'ntfs',
                                                                  'mixed',
                                                                  'unified'
                                                                  ]),
