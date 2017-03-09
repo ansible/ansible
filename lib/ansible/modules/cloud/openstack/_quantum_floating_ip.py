@@ -23,7 +23,6 @@ ANSIBLE_METADATA = {'status': ['deprecated'],
 DOCUMENTATION = '''
 ---
 module: quantum_floating_ip
-author: "Benno Joy (@bennojoy)"
 version_added: "1.2"
 author:
     - "Benno Joy (@bennojoy)"
