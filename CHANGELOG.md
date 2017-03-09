@@ -5,32 +5,32 @@ Ansible Changes By Release
 
 ###Major Changes:
 * Documented and renamed the previously released 'single var vaulting' feature, allowing user to use vault encryption for single variables in a normal YAML vars file.
-* Allow module_utils for custom modules to be placed in site-specific
-  directories and shipped in roles
-* On platforms that support it, use more modern system polling API instead of
-  select in the ssh connection plugin.  This removes one limitation on how many
-  parallel forks are feasible on these systems.
+* Allow module_utils for custom modules to be placed in site-specific directories and shipped in roles
+* On platforms that support it, use more modern system polling API instead of select in the ssh connection plugin.
+  This removes one limitation on how many parallel forks are feasible on these systems.
 * Windows supports become method "runas" to run modules as a different user, and to transparently access network resources.
 * Windows now uses pipelining when executing modules, resulting in significantly faster execution for small tasks.
-* Refactored/standardized most Windows modules, adding check-mode and
-  diff support where possible.
-* Extended Windows module API with parameter-type support, helper functions.
-  (i.e. Expand-Environment, Add-Warning, Add-DeprecatationWarning)
+* Refactored/standardized most Windows modules, adding check-mode and diff support where possible.
+* Extended Windows module API with parameter-type support, helper functions. (i.e. Expand-Environment, Add-Warning, Add-DeprecatationWarning)
+* restructured how async works to allow it to apply to action plugins that choose to support it.
 
 ###Minor Changes:
-* The version and release facts for OpenBSD hosts were reversed.  This has been
-  changed so that version has the numeric portion and release has the name of
-  the release.
+* The version and release facts for OpenBSD hosts were reversed.
+  This has been changed so that version has the numeric portion and release has the name of the release.
 * removed 'package' from default squash actions as not all package managers support it and it creates errors when using loops,
   any user can add back via config options if they don't use those package managers or otherwise avoid the errors.
 * Blocks can now have a `name` field, to aid in playbook readability.
 * default strategy is now configurable via ansible.cfg or environment variable.
 * Added 'ansible_playbook_python' which contains 'current python executable', it can be blank in some cases in which Ansible is not invoked via the standard CLI (sys.executable limitation).
-* ansible-doc now displays path to module
-* added optional 'piped' transfer method to ssh plugin for when scp and sftp are missing
+* Added 'metadata' to modules to enable classification
+* ansible-doc now displays path to module and existing 'metadata'
+* added optional 'piped' transfer method to ssh plugin for when scp and sftp are missing, ssh plugin is also now 'smarter' when using these options
 * default controlpersist path is now a custom hash of host-port-user to avoid the socket path length errors for long hostnames
 * Various fixes for Python3 compatibility
-* The AWS Lambda module previously ignored changes that only affected one parameter. Existing deployments may have outstanding changes that this bugfix will apply.
+* Fixed issues with inventory formats not handling 'all' and 'ungrouped' in an uniform way.
+* 'service' tasks can now use async again, we had lost this capability when changed into an action plugin.
+* made any_errors_fatal inheritable from play to task and all other objects in between.
+* many small performance improvements in inventory and variable handling and in task execution.
 
 ###Deprecations:
 * Specifying --tags (or --skip-tags) multiple times on the command line
@@ -51,13 +51,12 @@ Ansible Changes By Release
   * cl_license
   * cl_ports
 
-###Modules Notes:
-- oVirt/RHV
-  * Add dynamic inventory.
-  * Add support for 4.1 features.
-  * Add support for data centers, clusters, hosts, storage domains and networks management.
-  * Add support for hosts and virtual machines affinity groups and labels.
-  * Add support for users, groups and permissions management.
+###Module Notes:
+- AWS lambda: previously ignored changes that only affected one parameter. Existing deployments may have outstanding changes that this bugfix will apply.
+- oVirt/RHV: Added support for 4.1 features and the following:
+  * data centers, clusters, hosts, storage domains and networks management.
+  * hosts and virtual machines affinity groups and labels.
+  * users, groups and permissions management.
   * Improved virtual machines and disks management.
 - Mount: Some fixes so bind mounts are not mounted each time the playbook runs.
 
@@ -290,16 +289,25 @@ Ansible Changes By Release
 
 ####New Callbacks:
 
-* dense: minimal stdout output with fallback to default when verbose
+- dense: minimal stdout output with fallback to default when verbose
 
 ####New: lookups
 
-* keyring: allows getting password from system keyrings
+- keyring: allows getting password from the 'controller' system's keyrings
 
 ####New: cache
 
-* pickle (uses python's own serializer)
-* yaml
+- pickle (uses python's own serializer)
+- yaml
+
+####New: inventory scripts
+- oVirt/RHV
+
+####New: filters
+- combinations
+- permutations
+- zip
+- zip_longest
 
 
 ## 2.2.1 "The Battle of Evermore" - 2017-01-16
