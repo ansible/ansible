@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import os
 import tempfile
+from collections import defaultdict
 from string import ascii_letters, digits
 
 from ansible.errors import AnsibleOptionsError
@@ -54,6 +55,24 @@ def shell_expand(path, expand_relative_paths=False):
                 path = os.path.join(CFGDIR, path)
             path = os.path.abspath(path)
     return path
+
+
+active_config_dict = defaultdict(dict)
+
+
+class ConfigItem:
+    def __init__(self, section=None, key=None, value=None, comment=None, source=None):
+        self.section = section
+        self.key = key
+        self.value = value
+        self.comment = comment
+        self.source = source
+
+    def __repr__(self):
+        buf = '# from %s\n%s = %s\n' % \
+            (self.source, self.key, self.value)
+        return buf
+
 
 def get_config(p, section, key, env_var, default, value_type=None, expand_relative_paths=False):
     ''' return a configuration variable with casting
@@ -125,9 +144,14 @@ def _get_config(p, section, key, env_var, default):
     ''' helper function for get_config '''
     value = default
 
+    used_default = True
+
     if p is not None:
         try:
             value = p.get(section, key, raw=True)
+            used_default = False
+            active_config_dict[section][key] = ConfigItem(section, key, value,
+                                                          source='file %s' % CONFIG_FILE)
         except:
             pass
 
@@ -135,6 +159,15 @@ def _get_config(p, section, key, env_var, default):
         env_value = os.environ.get(env_var, None)
         if env_value is not None:
             value = env_value
+
+            used_default = False
+            active_config_dict[section][key] = ConfigItem(section, key, value,
+                                                          source='env var %s' % env_var,
+                                                          comment='the default is %s' % default)
+
+    if used_default:
+        # seems odd to do this last, but we should not be shadowing any set config values
+        active_config_dict[section][key] = ConfigItem(section, key, value, source='default')
 
     return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
 
@@ -167,6 +200,20 @@ def load_config_file():
 
 
 p, CONFIG_FILE = load_config_file()
+
+
+def dumps_config():
+    lines = []
+    for section in active_config_dict:
+        config_dict = active_config_dict[section]
+        if [x for x in config_dict.values() if x.source != 'default']:
+            lines.append('[%s]' % section)
+        for config_item in config_dict.values():
+            if config_item.source != 'default':
+                lines.append(repr(config_item))
+
+    return '\n'.join(lines)
+
 
 # check all of these extensions when looking for yaml files for things like
 # group variables -- really anything we can load
