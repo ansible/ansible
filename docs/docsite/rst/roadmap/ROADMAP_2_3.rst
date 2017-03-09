@@ -131,11 +131,11 @@ Target: February/March 2017
 
 - **Amazon resources** (ryansb)
 
-  - Improve ec2.py integration tests (pending, likely to make 2.3)
-  - ELB version 2 (pending, will make 2.3 easily)
-  - CloudFormation YAML, cross-stack reference, and roles support (done)
-  - ECS module refactor (partial, may slip to 2.4)
-  - AWS module unit testing w/ placebo (boto3 only) (pending, will make 2.3)
+  - Improve ec2.py integration tests **(partial, more to do in 2.4)**
+  - ELB version 2 **(pushed - needs_revision [PR](https://github.com/ansible/ansible/pull/19491))**
+  - CloudFormation YAML, cross-stack reference, and roles support **(done)**
+  - ECS module refactor **(done)**
+  - AWS module unit testing w/ placebo (boto3 only) **(pushed 2.4)**
 
 - **Plugin Loader**
 
