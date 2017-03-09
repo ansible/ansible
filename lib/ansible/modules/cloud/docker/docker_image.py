@@ -144,16 +144,12 @@ options:
     suboptions:
       memory:
         description: Set memory limit for build
-        type: int
       memswap:
         description: Total memory (memory + swap), -1 to disable swap
-        type: int
       cpushares:
         description: CPU shares (relative weight)
-        type: int
       cpusetcpus:
         description: CPUs in which to allow execution, e.g., "0-3", "0,1"
-        type: str
   use_tls:
     description:
       - "DEPRECATED. Whether to use tls to connect to the docker server. Set to C(no) when TLS will not be used. Set to

@@ -159,8 +159,8 @@ options:
       - with C(state=present) force option allow to overwrite existing container
       - with states C(stopped) , C(restarted) allow to force stop instance
     default: false
-    type: bool
     required: false
+    type: bool
   state:
     description:
      - Indicate desired state of the instance
