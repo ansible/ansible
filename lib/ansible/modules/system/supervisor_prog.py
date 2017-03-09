@@ -1,5 +1,17 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
+#
+# This is a free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This Ansible library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -94,7 +106,7 @@ options:
     description:
       - whether to combine logs?
     required: false
-    choices: BOOLEANS
+    choices: [true, false]
     default: false
   stdout_logfile:
     description:
@@ -108,7 +120,7 @@ options:
     default: 50MB
   stdout_logfile_backups:
     description:
-      - # of stdout_logfile backups to keep around
+      - Number of stdout_logfile backups to keep around
     required: false
     default: 10
   stdout_capture_maxbytes:
@@ -133,7 +145,7 @@ options:
     default: 50MB
   stderr_logfile_backups:
     description:
-      - # of stderr_logfile backups to keep around
+      - Number of stderr_logfile backups to keep around
     required: false
     default: 10
   stderr_capture_maxbytes:
@@ -568,7 +580,7 @@ def main():
         stopasgroup=dict(required=False),
         killasgroup=dict(required=False),
         user=dict(required=True),
-        redirect_stderr=dict(default=False, required=False, choices=BOOLEANS),
+        redirect_stderr=dict(required=False, default="false", choices=BOOLEANS),
         stdout_logfile=dict(required=False),
         stdout_logfile_maxbytes=dict(required=False),
         stdout_logfile_backups=dict(required=False),
