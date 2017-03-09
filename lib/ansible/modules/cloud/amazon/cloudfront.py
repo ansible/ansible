@@ -34,7 +34,7 @@ options:
   distribution_id:
       description:
         - The id of the CloudFront distribution. Used with distribution, distribution_config, invalidation, streaming_distribution, streaming_distribution_config, list_invalidations.
-      1required: false
+      required: false
 
 extends_documentation_fragment:
   - aws
@@ -116,15 +116,26 @@ class CloudFrontServiceManager:
             self.module.fail_json(msg="Error creating cloud front origin access identity - " + str(e), 
                                   exception=traceback.format_exc())
 
-    def delete_origin_access_identity(self, origin_access_identity_id, etag):
+    def delete_origin_access_identity(self, origin_access_identity_id, e_tag):
         try:
             func = partial(self.client.delete_cloud_front_origin_access_identity,
-                           Id=origin_access_identity_id, IfMatch=etag)
+                           Id=origin_access_identity_id, IfMatch=e_tag)
             return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error deleting cloud front origin access identity - " + str(e),
                                   exception=traceback.format_exc())
 
+    def edit_origin_access_identity(self, caller_reference, comment, origin_access_identity_id, e_tag):
+        try:
+            func = partial(self.client.edit_cloud_front_origin_access_identity,
+                           CloudFrontOriginAccessIdentityConfig = 
+                           { 'CallerReference': caller_reference, 'Comment': comment },
+                           Id=origin_access_identity_id, IfMatch=e_tag)
+            return self.paginated_response(func)
+        except Exception as e:
+            self.module.fail_json(msg="Error deleting cloud front origin access identity - " + str(e),
+                                  exception=traceback.format_exc())
+    
     def create_invalidation(self, distribution_id, invalidation_batch):
         try:
             func = partial(self.client.create_invalidation, DistributionId = distribution_id, 
@@ -175,7 +186,7 @@ def main():
         streaming_distribution_with_tags_config=dict(required=False, default=None, type='json'),
         delete_origin_access_identity=dict(required=False, default=False, type='bool'),
         origin_access_identity_id=dict(required=False, default=None, type='str'),
-        etag=dict(required=False, default=None, type='str'),
+        e_tag=dict(required=False, default=None, type='str'),
         delete_distribution=dict(required=False, default=False, type='bool'),
         delete_streaming_distribution=dict(required=False, default=False, type='bool'),
         generate_presigned_url=dict(required=False, default=False, type='bool'),
@@ -201,7 +212,7 @@ def main():
 
     delete_origin_access_identity = module.params.get('delete_origin_access_identity')
     origin_access_identity_id = module.params.get('origin_access_identity_id')
-    etag = module.params.get('etag')
+    e_tag = module.params.get('e_tag')
 
     create_distribution = module.params.get('create_distribution')
     distribution_config = module.params.get('distribution_config')
@@ -219,7 +230,9 @@ def main():
     if(create_origin_access_identity):
         result=service_mgr.create_origin_access_identity(caller_reference, comment)
     elif(delete_origin_access_identity):
-        result=service_mgr.delete_origin_access_identity(origin_access_identity_id, etag)
+        result=service_mgr.delete_origin_access_identity(origin_access_identity_id, e_tag)
+    elif(update_origin_access_identity):
+        result=service_mgr.update_origin_access_identity(caller_reference, comment, origin_access_identity_id, e_tag)
     elif(create_invalidation):
         result=service_mgr.create_invalidation(distribution_id, invalidation_batch)
 
