@@ -68,7 +68,7 @@ class ConfigItem:
         self.comment = comment
         self.source = source
 
-    def __repr__(self):
+    def __str__(self):
         buf = '# from %s\n%s = %s\n' % \
             (self.source, self.key, self.value)
         return buf
@@ -144,12 +144,9 @@ def _get_config(p, section, key, env_var, default):
     ''' helper function for get_config '''
     value = default
 
-    used_default = True
-
     if p is not None:
         try:
             value = p.get(section, key, raw=True)
-            used_default = False
             active_config_dict[section][key] = ConfigItem(section, key, value,
                                                           source='file %s' % CONFIG_FILE)
         except:
@@ -160,14 +157,9 @@ def _get_config(p, section, key, env_var, default):
         if env_value is not None:
             value = env_value
 
-            used_default = False
             active_config_dict[section][key] = ConfigItem(section, key, value,
                                                           source='env var %s' % env_var,
                                                           comment='the default is %s' % default)
-
-    if used_default:
-        # seems odd to do this last, but we should not be shadowing any set config values
-        active_config_dict[section][key] = ConfigItem(section, key, value, source='default')
 
     return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
 
@@ -204,13 +196,10 @@ p, CONFIG_FILE = load_config_file()
 
 def dumps_config():
     lines = []
-    for section in active_config_dict:
-        config_dict = active_config_dict[section]
-        if [x for x in config_dict.values() if x.source != 'default']:
-            lines.append('[%s]' % section)
+    for section, config_dict in active_config_dict.items():
+        lines.append('[%s]' % section)
         for config_item in config_dict.values():
-            if config_item.source != 'default':
-                lines.append(repr(config_item))
+            lines.append(str(config_item))
 
     return '\n'.join(lines)
 
