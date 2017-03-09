@@ -23,7 +23,7 @@ module: supervisor_prog
 short_description: Create/Change/Delete a supervisord-managed program
 description:
   - Manage the state of a supervisord program.  *** This module assumes supervisor configs are stored in /etc/supervisor.d ***
-version_added: "0.9"
+version_added: "2.3"
 author: Guy Matz (guymatz@github)
 options:
   name:
@@ -214,6 +214,7 @@ EXAMPLES = '''
 '''
 from ConfigParser import RawConfigParser
 import os
+from ansible.module_utils.basic import *
 
 class SupervisorConfigParser(RawConfigParser):
 
@@ -275,20 +276,20 @@ class SupervisorProgram(object):
         conf = SupervisorConfigParser()
         try:
             return conf.read( config_file )
-        except Error as e:
-                raise(e)
+        except Error:
+                raise(sys.exc_info()[0])
 
     def get_main_config_file(self):
         if self._supervisor_conf:
             return self._supervisor_conf
         config_file = False
         locations = [
-                # rhel
-                '/etc/supervisord.conf',
-                # debian (as far as I know
-                '/etc/supervisor/supervisord.conf'
-                # does anyone use any other OS'es?
-                ]
+            # rhel
+            '/etc/supervisord.conf',
+            # debian (as far as I know
+            '/etc/supervisor/supervisord.conf'
+            # does anyone use any other OS'es?
+            ]
 
         for path in locations:
             if os.path.exists(path):
@@ -304,37 +305,37 @@ class SupervisorProgram(object):
         new_config = ''
         #create_section(option, value)
         possible_options = {
-                'name': self._name,
-                'command': self._command,
-                'process_name': self._name,
-                'numprocs': self._numprocs,
-                'numprocs_start': self._numprocs_start,
-                'priority': self._priority,
-                'autostart': self._autostart,
-                'autorestart': self._autorestart,
-                'startsecs': self._startsecs,
-                'startretries': self._startretries,
-                'exitcodes': self._exitcodes,
-                'stopsignal': self._stopsignal,
-                'stopwaitsecs': self._stopwaitsecs,
-                'stopasgroup': self._stopasgroup,
-                'killasgroup': self._killasgroup,
-                'user': self._user,
-                'redirect_stderr': self._redirect_stderr,
-                'stdout_logfile': self._stdout_logfile,
-                'stdout_logfile_maxbytes': self._stdout_logfile_maxbytes,
-                'stdout_logfile_backups': self._stdout_logfile_backups,
-                'stdout_capture_maxbytes': self._stdout_capture_maxbytes,
-                'stdout_events_enabled': self._stdout_events_enabled,
-                'stderr_logfile': self._stderr_logfile,
-                'stderr_logfile_maxbytes': self._stderr_logfile_maxbytes,
-                'stderr_logfile_backups': self._stderr_logfile_backups,
-                'stderr_capture_maxbytes': self._stderr_capture_maxbytes,
-                'stderr_events_enabled': self._stderr_events_enabled,
-                'environment': self._environment,
-                'directory': self._directory,
-                'umask': self._umask,
-                'serverurl': self._serverurl
+            'name': self._name,
+            'command': self._command,
+            'process_name': self._name,
+            'numprocs': self._numprocs,
+            'numprocs_start': self._numprocs_start,
+            'priority': self._priority,
+            'autostart': self._autostart,
+            'autorestart': self._autorestart,
+            'startsecs': self._startsecs,
+            'startretries': self._startretries,
+            'exitcodes': self._exitcodes,
+            'stopsignal': self._stopsignal,
+            'stopwaitsecs': self._stopwaitsecs,
+            'stopasgroup': self._stopasgroup,
+            'killasgroup': self._killasgroup,
+            'user': self._user,
+            'redirect_stderr': self._redirect_stderr,
+            'stdout_logfile': self._stdout_logfile,
+            'stdout_logfile_maxbytes': self._stdout_logfile_maxbytes,
+            'stdout_logfile_backups': self._stdout_logfile_backups,
+            'stdout_capture_maxbytes': self._stdout_capture_maxbytes,
+            'stdout_events_enabled': self._stdout_events_enabled,
+            'stderr_logfile': self._stderr_logfile,
+            'stderr_logfile_maxbytes': self._stderr_logfile_maxbytes,
+            'stderr_logfile_backups': self._stderr_logfile_backups,
+            'stderr_capture_maxbytes': self._stderr_capture_maxbytes,
+            'stderr_events_enabled': self._stderr_events_enabled,
+            'environment': self._environment,
+            'directory': self._directory,
+            'umask': self._umask,
+            'serverurl': self._serverurl
             }
         c = SupervisorConfigParser()
         section = 'program:%s' % self._name
@@ -386,9 +387,10 @@ class SupervisorWithInclude(SupervisorProgram):
     def set_config(self, new_config):
         prog_conf = os.path.join(self. get_conf_include_path(),
                                         self._name + ".conf")
-        with open(prog_conf, 'w') as cfile:
-            new_config.write(cfile)
-            
+        cfile = open(prog_conf, 'w')
+        new_config.write(cfile)
+        cfile.close()
+
     def conf_has_group(self):
         group = 'group:%s' % self._group
         group_conf = os.path.join(self. get_conf_include_path(),
@@ -408,8 +410,9 @@ class SupervisorWithInclude(SupervisorProgram):
         if c.has_section(group):
             return False
         c.add_section(group)
-        with open(group_conf, 'w') as file:
-            c.write(file)
+        file = open(group_conf, 'w')
+        c.write(file)
+        file.close()
 
     def has_prog_in_group(self):
         group = 'group:' + self._group
@@ -434,8 +437,9 @@ class SupervisorWithInclude(SupervisorProgram):
             programs = c.get(group, 'programs').split(',')
             programs.append(self._name)
             c.set(group, 'programs', ",".join(programs) )
-        with open(group_conf, 'w') as file:
-            c.write(file)
+        file = open(group_conf, 'w')
+        c.write(file)
+        file.close()
         return True
 
     def del_from_group(self):
@@ -454,8 +458,9 @@ class SupervisorWithInclude(SupervisorProgram):
                 c.set(group, 'programs', ",".join(programs) )
             else:
                 return False
-            with open(group_conf, 'w') as file:
-                c.write(file)
+            file = open(group_conf, 'w')
+            c.write(file)
+            file.close()
             return True
 
 class SupervisorNoInclude(SupervisorProgram):
@@ -474,8 +479,9 @@ class SupervisorNoInclude(SupervisorProgram):
         program = "program:%s" % self._name
         config = self.get_main_config()
         config.remove_section(program)
-        with open(self.get_main_config_file(), 'w') as cfile:
-            config.write(cfile)
+        cfile = open(self.get_main_config_file(), 'w')
+        config.write(cfile)
+        cfile.close()
 
     def get_program_config(self):
         main_conf = self.get_main_config()
@@ -489,7 +495,7 @@ class SupervisorNoInclude(SupervisorProgram):
     def set_config(self, new_config):
         # Need to implement this . . .
         print("WE SHOULD NOT HAVE GOTTEN HERE!!")
-            
+
     # TODO - needs to be recoded for SupervisorNoInclude class to work correctly
     def add_group(self):
         group = 'group:' + self._group
@@ -498,8 +504,9 @@ class SupervisorNoInclude(SupervisorProgram):
         if c.has_section(group):
             return False
         c.add_section(group)
-        with open(self.get_main_config_file(), 'w') as file:
-            c.write(file)
+        file = open(self.get_main_config_file(), 'w')
+        c.write(file)
+        file.close()
 
     # TODO - needs to be recoded for SupervisorNoInclude class to work correctly
     def has_prog_in_group(self):
@@ -524,8 +531,9 @@ class SupervisorNoInclude(SupervisorProgram):
             programs = c.get(group, 'programs').split(',')
             programs.append(self._name)
             c.set(group, 'programs', ",".join(programs) )
-        with open(self.get_main_config_file(), 'w') as file:
-            c.write(file)
+        file = open(self.get_main_config_file(), 'w')
+        c.write(file)
+        file.close()
         return True
 
     # TODO - needs to be recoded for SupervisorNoInclude class to work correctly
@@ -543,8 +551,9 @@ class SupervisorNoInclude(SupervisorProgram):
                 c.set(group, 'programs', ",".join(programs) )
             else:
                 return False
-            with open(self.get_main_config_file(), 'w') as file:
-                c.write(file)
+            file = open(self.get_main_config_file(), 'w')
+            c.write(file)
+            file.close()
             return True
 
 # main
@@ -613,12 +622,12 @@ def main():
         supervisor_main_config = module.params['supervisor_conf']
     else:
         locations = [
-                # rhel
-                '/etc/supervisord.conf',
-                # debian (as far as I know
-                '/etc/supervisor/supervisord.conf'
-                # does anyone use any other OS'es?
-                ]
+            # rhel
+            '/etc/supervisord.conf',
+            # debian (as far as I know
+            '/etc/supervisor/supervisord.conf'
+            # does anyone use any other OS'es?
+            ]
         for path in locations:
             if os.path.exists(path):
                 supervisor_main_config = path
@@ -659,5 +668,4 @@ def main():
     module.exit_json(changed=changed, name=name, state=state)
 
 # import module snippets
-from ansible.module_utils.basic import *
 main()
