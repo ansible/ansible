@@ -99,6 +99,7 @@ options:
         required: false
         default: "readWrite"
     state:
+        state:
         description:
             - The database user state
         required: false
