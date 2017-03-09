@@ -83,10 +83,6 @@ class TestDataLoader(unittest.TestCase):
         ret = self._loader.get_real_file(__file__)
         self.assertEquals(ret, __file__)
 
-    def test_is_directory(self):
-        ret = self._loader.is_directory('parsing/test_data')
-        self.assertTrue(ret)
-
     def test_is_directory_full_path(self):
         ret = self._loader.is_directory(os.path.join(os.path.dirname(__file__), 'test_data'))
         self.assertTrue(ret)
