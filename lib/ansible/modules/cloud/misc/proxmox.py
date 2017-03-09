@@ -52,8 +52,8 @@ options:
     description:
       - enable / disable https certificate verification
     default: false
-    type: bool
     required: false
+    type: bool
   node:
     description:
       - Proxmox VE node, when new VM will be created
@@ -108,12 +108,12 @@ options:
     required: false
   netif:
     description:
-      - specifies network interfaces for the container
+      - specifies network interfaces for the container. As a hash/dictionary defining interfaces.
     default: null
     required: false
   mounts:
     description:
-      - specifies additional mounts (separate disks) for the container
+      - specifies additional mounts (separate disks) for the container. As a hash/dictionary defining mount points
     default: null
     required: false
     version_added: "2.2"

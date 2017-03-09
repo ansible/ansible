@@ -77,8 +77,8 @@ options:
   dependencies:
       description:
         - When C(state) is I(present) specify whether or not to include linked services.
-      required: false
       type: bool
+      required: false
       default: true
   definition:
       description:
@@ -88,8 +88,8 @@ options:
   hostname_check:
       description:
         - Whether or not to check the Docker daemon's hostname against the name provided in the client certificate.
-      required: false
       type: bool
+      required: false
       default: false
   recreate:
       description:
@@ -109,28 +109,29 @@ options:
         - Images will only be rebuilt if Docker detects a change in the Dockerfile or build directory contents.
         - Use the C(nocache) option to ignore the image cache when performing the build.
         - If an existing image is replaced, services using the image will be recreated unless C(recreate) is I(never).
-      required: false
       type: bool
+      required: false
       default: false
   pull:
       description:
         - Use with state I(present) to always pull images prior to starting the application.
         - Same as running docker-compose pull.
         - When a new image is pulled, services using the image will be recreated unless C(recreate) is I(never).
-      required: false
       type: bool
+      required: false
       default: false
       version_added: "2.2"
   nocache:
       description:
         - Use with the build option to ignore the cache during the image build process.
-      required: false
       type: bool
+      required: false
       default: false
       version_added: "2.2"
   remove_images:
       description:
         - Use with state I(absent) to remove the all images or only local images.
+      type: str
       required: false
       default: null
   remove_volumes:

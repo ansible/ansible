@@ -44,8 +44,8 @@ options:
     description:
       - enable / disable https certificate verification
     default: false
-    type: bool
     required: false
+    type: bool
   node:
     description:
       - Proxmox VE node, when you will operate with template
