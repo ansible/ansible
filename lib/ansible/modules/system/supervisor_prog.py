@@ -213,7 +213,7 @@ EXAMPLES = '''
   supervisor_program: name=foo command='/opt/somewheres/special.py'
 '''
 
-RETURN = ''
+RETURN = 'I dont think I return anything . . .'
 
 from ConfigParser import RawConfigParser
 import os
