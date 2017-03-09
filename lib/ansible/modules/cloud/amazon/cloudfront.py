@@ -106,7 +106,7 @@ class CloudFrontServiceManager:
             self.module.fail_json(msg="Can't establish connection - " + str(e),
                                   exception=traceback.format_exc())
 
-    def create_cloud_front_origin_access_identity(self, caller_reference, comment):
+    def create_origin_access_identity(self, caller_reference, comment):
         try:
             func = partial(self.client.create_cloud_front_origin_access_identity, 
                            CloudFrontOriginAccessIdentityConfig = 
@@ -114,6 +114,15 @@ class CloudFrontServiceManager:
             return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error creating cloud front origin access identity - " + str(e), 
+                                  exception=traceback.format_exc())
+
+    def delete_origin_access_identity(self, origin_access_identity_id, etag):
+        try:
+            func = partial(self.client.delete_cloud_front_origin_access_identity,
+                           Id=origin_access_identity_id, IfMatch=etag)
+            return self.paginated_response(func)
+        except Exception as e:
+            self.module.fail_json(msg="Error deleting cloud front origin access identity - " + str(e),
                                   exception=traceback.format_exc())
 
     def create_invalidation(self, distribution_id, invalidation_batch):
@@ -150,7 +159,7 @@ def main():
     argument_spec = ec2_argument_spec()
 
     argument_spec.update(dict(
-        create_cloud_front_origin_access_identity=dict(required=False, default=False, type='bool'),
+        create_origin_access_identity=dict(required=False, default=False, type='bool'),
         caller_reference=dict(required=False, default=None, type='str'),
         comment=dict(required=False, default=None, type='str'),
         create_distribution=dict(required=False, default=False, type='bool'),
@@ -163,14 +172,16 @@ def main():
         create_streaming_distribution=dict(required=False, default=False, type='bool'),
         streaming_distribution_config=dict(required=False, default=None, type='json'),
         create_streaming_distribution_with_tags=dict(required=False, default=False, type='bool'),
-        streaming_distribution_with_tags_config=dict(required=False, default=False, type='json'),
-        delete_cloud_front_origin_access_identity=dict(required=False, default=False, type='bool'),
+        streaming_distribution_with_tags_config=dict(required=False, default=None, type='json'),
+        delete_origin_access_identity=dict(required=False, default=False, type='bool'),
+        origin_access_identity_id=dict(required=False, default=None, type='str'),
+        etag=dict(required=False, default=None, type='str'),
         delete_distribution=dict(required=False, default=False, type='bool'),
         delete_streaming_distribution=dict(required=False, default=False, type='bool'),
         generate_presigned_url=dict(required=False, default=False, type='bool'),
         tag_resource=dict(required=False, default=False, type='bool'),
         untag_resource=dict(required=False, default=False, type='bool'),
-        update_cloud_front_origin_access_identity=dict(required=False, default=False, type='bool'),
+        update_origin_access_identity=dict(required=False, default=False, type='bool'),
         update_distribution=dict(required=False, default=False, type='bool'),
         update_streaming_distribution=dict(required=False, default=False, type='bool'),
         content=dict(required=False, default=None, type='str')
@@ -184,9 +195,13 @@ def main():
     
     service_mgr = CloudFrontServiceManager(module)
     
-    create_cloud_front_origin_access_identity = module.params.get('create_cloud_front_origin_access_identity')
+    create_origin_access_identity = module.params.get('create_origin_access_identity')
     caller_reference = module.params.get('caller_reference')
     comment = module.params.get('comment')
+
+    delete_origin_access_identity = module.params.get('delete_origin_access_identity')
+    origin_access_identity_id = module.params.get('origin_access_identity_id')
+    etag = module.params.get('etag')
 
     create_distribution = module.params.get('create_distribution')
     distribution_config = module.params.get('distribution_config')
@@ -201,8 +216,10 @@ def main():
     create_streaming_distribution_with_tags = module.params.get('create_streaming_distribution_with_tags')
     streaming_distribution_with_tags_config = module.params.get('streaming_distribution_with_tags_config')
 
-    if(create_cloud_front_origin_access_identity):
-        result=service_mgr.create_cloud_front_origin_access_identity(caller_reference, comment)
+    if(create_origin_access_identity):
+        result=service_mgr.create_origin_access_identity(caller_reference, comment)
+    elif(delete_origin_access_identity):
+        result=service_mgr.delete_origin_access_identity(origin_access_identity_id, etag)
     elif(create_invalidation):
         result=service_mgr.create_invalidation(distribution_id, invalidation_batch)
 
