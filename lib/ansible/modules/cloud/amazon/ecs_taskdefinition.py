@@ -45,12 +45,10 @@ options:
         description:
             - A revision number for the task definition
         required: False
-        type: int
     containers:
         description:
             - A list of containers definitions
         required: False
-        type: list of dicts with container definitions
     network_mode:
         description:
             - The Docker networking mode to use for the containers in the task.
@@ -67,7 +65,6 @@ options:
         description:
             - A list of names of volumes to be attached
         required: False
-        type: list of name
 extends_documentation_fragment:
     - aws
     - ec2

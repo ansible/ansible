@@ -34,7 +34,7 @@ description:
 - Unzips compressed files and archives.
 - Supports .zip files natively
 - Supports other formats supported by the Powershell Community Extensions (PSCX) module (basically everything 7zip supports)
-requires:
+requirements:
 - PSCX
 options:
   src:

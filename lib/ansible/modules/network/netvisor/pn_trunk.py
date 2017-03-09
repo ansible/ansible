@@ -27,7 +27,6 @@ DOCUMENTATION = """
 module: pn_trunk
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
-version: 1.0
 short_description: CLI command to create/delete/modify a trunk.
 description:
   - Execute trunk-create or trunk-delete command.

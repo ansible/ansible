@@ -61,13 +61,11 @@ options:
 
   aggregate_name:
     description:
-    - The name of the aggregate the flexvol should exist on.
-    note: required when C(state=present)
+    - The name of the aggregate the flexvol should exist on. Required when C(state=present).
 
   size:
     description:
-    - The size of the volume in (size_unit).
-    note: required when C(state=present)
+    - The size of the volume in (size_unit). Required when C(state=present).
 
   size_unit:
     description:

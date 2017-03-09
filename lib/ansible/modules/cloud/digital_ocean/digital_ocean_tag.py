@@ -25,6 +25,7 @@ module: digital_ocean_tag
 short_description: Create and remove tag(s) to DigitalOcean resource.
 description:
     - Create and remove tag(s) to DigitalOcean resource.
+author: "Victor Volle (@kontrafiktion)"
 version_added: "2.2"
 options:
   name:

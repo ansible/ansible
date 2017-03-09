@@ -88,7 +88,7 @@ options:
          will lead to an individual challenge that must be fulfilled for the
          CSR to be signed."
     required: true
-    alias: ['src']
+    aliases: ['src']
   data:
     description:
       - "The data to validate ongoing challenges."
@@ -99,7 +99,7 @@ options:
   dest:
     description: The destination file for the certificate.
     required: true
-    alias: ['cert']
+    aliases: ['cert']
   remaining_days:
     description:
       - "The number of days the certificate must have left being valid.

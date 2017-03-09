@@ -27,6 +27,7 @@ DOCUMENTATION = '''
 ---
 module: ovirt_external_providers_facts
 short_description: Retrieve facts about one or more oVirt external providers
+author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
     - "Retrieve facts about one or more oVirt external providers."

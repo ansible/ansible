@@ -39,7 +39,7 @@ options:
 
   recipient_type:
     description:
-       - The request parametmer you would like to send the message to.
+       - The request parameter you would like to send the message to.
        - Messages can be sent to either a room or individual (by ID or E-Mail).
     required: True
     choices: ['roomId', 'toPersonEmail', 'toPersonId']
@@ -59,7 +59,7 @@ options:
   personal_token:
     description:
       - Your personal access token required to validate the Spark API.
-    require: true
+    required: true
     aliases: ['token']
 
   message:

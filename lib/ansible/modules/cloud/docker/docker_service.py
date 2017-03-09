@@ -44,19 +44,16 @@ options:
         - Path to a directory containing a docker-compose.yml or docker-compose.yaml file.
         - Mutually exclusive with C(definition).
         - Required when no C(definition) is provided.
-      type: path
       required: false
   project_name:
       description:
         - Provide a project name. If not provided, the project name is taken from the basename of C(project_src).
         - Required when no C(definition) is provided.
-      type: str
       required: false
   files:
       description:
         - List of file names relative to C(project_src). Overrides docker-compose.yml or docker-compose.yaml.
         - Files are loaded and merged in the order given.
-      type: list
       required: false
   state:
       description:
@@ -67,18 +64,15 @@ options:
         - absent
         - present
       default: present
-      type: str
       required: false
   services:
       description:
         - When C(state) is I(present) run I(docker-compose up) on a subset of services.
-      type: list
       required: false
   scale:
       description:
         - When C(state) is I(present) scale services. Provide a dictionary of key/value pairs where the key
           is the name of the service and the value is an integer count for the number of containers.
-      type: complex
       required: false
   dependencies:
       description:
@@ -90,7 +84,6 @@ options:
       description:
         - Provide docker-compose yaml describing one or more services, networks and volumes.
         - Mutually exclusive with C(project_src) and C(files).
-      type: complex
       required: false
   hostname_check:
       description:
@@ -103,7 +96,6 @@ options:
         - By default containers will be recreated when their configuration differs from the service definition.
         - Setting to I(never) ignores configuration differences and leaves existing containers unchanged.
         - Setting to I(always) forces recreation of all existing containers.
-      type: str
       required: false
       choices:
         - always
@@ -139,7 +131,6 @@ options:
   remove_images:
       description:
         - Use with state I(absent) to remove the all images or only local images.
-      type: str
       required: false
       default: null
   remove_volumes:

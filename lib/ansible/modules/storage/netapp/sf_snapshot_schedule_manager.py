@@ -98,8 +98,8 @@ options:
         - Starting date for the schedule.
         - Required when C(state=present).
         - Please use two '-' in the above format, or you may see an error- TypeError, is not JSON serializable description.
+        - "Format: C(2016--12--01T00:00:00Z)"
         required: false
-        format: 2016--12--01T00:00:00Z
 '''
 
 EXAMPLES = """

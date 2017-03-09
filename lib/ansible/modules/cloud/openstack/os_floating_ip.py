@@ -23,6 +23,7 @@ DOCUMENTATION = '''
 ---
 module: os_floating_ip
 version_added: "2.0"
+author: "Davide Guerri <davide.guerri@hp.com>"
 short_description: Add/Remove floating IP from an instance
 extends_documentation_fragment: openstack
 description:

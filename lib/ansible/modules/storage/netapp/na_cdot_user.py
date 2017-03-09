@@ -58,7 +58,6 @@ options:
     - Authentication method for the application.
     - Not all authentication methods are valid for an application.
     - Valid authentication methods for each application are as denoted in I(authentication_choices_description).
-    authentication_choices_description:
     - password for console application
     - password, domain, nsswitch, cert for http application.
     - password, domain, nsswitch, cert for ontapi application.
@@ -80,8 +79,7 @@ options:
 
   role_name:
     description:
-    - The name of the role.
-    note: required when C(state=present)
+    - The name of the role. Required when C(state=present)
 
 
   vserver:

@@ -29,6 +29,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_backup
+author: "Dave Kasberg (@dkasberg)"
 short_description: Backup the current running or startup configuration to a remote server on devices running Lenovo CNOS
 description:
     - This module allows you to work with switch configurations. It provides a

@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: tower_job_launch
+author: "Wayne Witzel III (@wwitzel3)"
 version_added: "2.3"
 short_description: Launch an Ansible Job.
 description:

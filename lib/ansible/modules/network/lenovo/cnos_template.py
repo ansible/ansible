@@ -29,6 +29,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_template
+author: "Dave Kasberg (@dkasberg)"
 short_description: Manage switch configuration using templates on devices running Lenovo CNOS
 description:
     - This module allows you to work with the running configuration of a switch. It provides a way

@@ -29,6 +29,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_showrun
+author: "Dave Kasberg (@dkasberg)"
 short_description: Collect the current running configuration on devices running Lenovo CNOS
 description:
     - This module allows you to view the switch running configuration. It executes the display running-config CLI

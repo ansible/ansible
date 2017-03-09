@@ -27,7 +27,6 @@ DOCUMENTATION = """
 module: pn_vlag
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
-version: 1.0
 short_description: CLI command to create/delete/modify vlag.
 description:
   - Execute vlag-create/vlag-delete/vlag-modify command.

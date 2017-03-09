@@ -44,7 +44,6 @@ options:
               C(checksum_algorithm=md5).
         required: no
         default: True
-        version_removed: "2.3"
     get_checksum:
         description:
             - Whether to return a checksum of the file (default sha1)

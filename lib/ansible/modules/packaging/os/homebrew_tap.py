@@ -46,11 +46,10 @@ options:
             - The optional git URL of the repository to tap. The URL is not
               assumed to be on GitHub, and the protocol doesn't have to be HTTP.
               Any location and protocol that git can handle is fine.
-        required: false
-        version_added: "2.2"
-        note:
             - I(name) option may not be a list of multiple taps (but a single
               tap instead) when this option is provided.
+        required: false
+        version_added: "2.2"
     state:
         description:
             - state of the repository.

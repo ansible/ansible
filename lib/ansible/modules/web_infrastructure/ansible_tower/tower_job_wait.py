@@ -24,6 +24,7 @@ DOCUMENTATION = '''
 ---
 module: tower_job_wait
 version_added: "2.3"
+author: "Wayne Witzel III (@wwitzel3)"
 short_description: Wait for Ansible Tower job to finish.
 description:
     - Wait for Ansible Tower job to finish and report success or failure. See

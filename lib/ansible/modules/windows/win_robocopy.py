@@ -47,7 +47,7 @@ options:
     choices:
       - true
       - false
-    defaults: false
+    default: false
     required: false
   purge:
     description:
@@ -55,7 +55,7 @@ options:
     choices:
       - true
       - false
-    defaults: false
+    default: false
     required: false
   flags:
     description:

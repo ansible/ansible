@@ -36,7 +36,7 @@ options:
     name:
         description:
             - ZFS boot environment name.
-        alias: [ "be" ]
+        aliases: [ "be" ]
         required: True
     snapshot:
         description:

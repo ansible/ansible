@@ -29,6 +29,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_conditional_command
+author: "Dave Kasberg (@dkasberg)"
 short_description: Execute a single command based on condition on devices running Lenovo CNOS
 description:
    - This module allows you to modify the running configuration of a switch. It provides a way to

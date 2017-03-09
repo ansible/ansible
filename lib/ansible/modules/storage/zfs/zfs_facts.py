@@ -35,8 +35,7 @@ options:
     name:
         description:
             - ZFS dataset name.
-        alias: [ "ds", "dataset" ]
-        type: str
+        aliases: [ "ds", "dataset" ]
         required: yes
     recurse:
         description:
@@ -56,23 +55,20 @@ options:
         description:
             - Specifies which dataset properties should be queried in comma-separated format.
               For more information about dataset properties, check zfs(1M) man page.
-        alias: [ "props" ]
-        type: str
+        aliases: [ "props" ]
         default: all
         required: false
     type:
         description:
             - Specifies which datasets types to display. Multiple values have to be
               provided in comma-separated form.
-        alias: [ "props" ]
-        type: str
+        aliases: [ "props" ]
         default: all
         choices: [ 'all', 'filesystem', 'volume', 'snapshot', 'bookmark' ]
         required: false
     depth:
         description:
             - Specifiies recurion depth.
-        type: int
         default: None
         required: false
 '''

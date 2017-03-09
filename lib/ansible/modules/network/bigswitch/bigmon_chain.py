@@ -26,6 +26,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: bigmon_chain
+author: "Ted (@tedelhourani)"
 short_description: Create and remove a bigmon inline service chain.
 description:
     - Create and remove a bigmon inline service chain.

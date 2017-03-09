@@ -41,9 +41,7 @@ options:
     api_url:
         required: true
         description:
-        - The url to the SANtricity WebServices Proxy or embedded REST API.
-        example:
-        - https://prod-1.wahoo.acme.com/devmgr/v2
+        - The url to the SANtricity WebServices Proxy or embedded REST API, for example C(https://prod-1.wahoo.acme.com/devmgr/v2).
     validate_certs:
         required: false
         default: true

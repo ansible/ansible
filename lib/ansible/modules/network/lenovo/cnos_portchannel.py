@@ -28,6 +28,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_portchannel
+author: "Dave Kasberg (@dkasberg)"
 short_description: Manage portchannel (port aggregation) configuration on devices running Lenovo CNOS
 description:
     - This module allows you to work with port aggregation related configurations. The operators

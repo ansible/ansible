@@ -26,7 +26,7 @@ description:
     - Gather facts about Network ACLs in an AWS VPC
 version_added: "2.2"
 author: "Brad Davidson (@brandond)"
-requires: [ boto3 ]
+requirements: [ boto3 ]
 options:
   nacl_ids:
     description:

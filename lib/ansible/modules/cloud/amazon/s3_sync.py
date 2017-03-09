@@ -62,10 +62,8 @@ options:
     choices: [ '', private, public-read, public-read-write, authenticated-read, aws-exec-read, bucket-owner-read, bucket-owner-full-control ]
   mime_map:
     description:
-    - Dict entry from extension to MIME type. This will override any default/sniffed MIME type.
-    type: dict
+    - 'Dict entry from extension to MIME type. This will override any default/sniffed MIME type. For example C({".txt": "application/text", ".yml": "appication/text"})'
     required: false
-    sample: {".txt": "application/text", ".yml": "appication/text"}
   include:
     description:
     - Shell pattern-style file matching.
