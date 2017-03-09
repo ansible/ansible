@@ -134,7 +134,6 @@ options:
       - Provide a dictionary of C(key:value) build arguments that map to Dockerfile ARG directive.
       - Docker expects the value to be a string. For convenience any non-string values will be converted to strings.
       - Requires Docker API >= 1.21 and docker-py >= 1.7.0.
-    type: complex
     required: false
     version_added: "2.2"
   container_limits:
@@ -142,20 +141,15 @@ options:
       - A dictionary of limits applied to each container created by the build process.
     required: false
     version_added: "2.1"
-    type: complex
-    contains:
+    suboptions:
       memory:
         description: Set memory limit for build
-        type: int
       memswap:
         description: Total memory (memory + swap), -1 to disable swap
-        type: int
       cpushares:
         description: CPU shares (relative weight)
-        type: int
       cpusetcpus:
         description: CPUs in which to allow execution, e.g., "0-3", "0,1"
-        type: str
   use_tls:
     description:
       - "DEPRECATED. Whether to use tls to connect to the docker server. Set to C(no) when TLS will not be used. Set to
@@ -177,7 +171,7 @@ requirements:
   - "docker-py >= 1.7.0"
   - "Docker API >= 1.20"
 
-authors:
+author:
   - Pavel Antonov (@softzilla)
   - Chris Houseknecht (@chouseknecht)
   - James Tanner (@jctanner)

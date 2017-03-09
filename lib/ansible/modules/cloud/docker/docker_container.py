@@ -185,7 +185,7 @@ options:
   kill_signal:
     description:
       - Override default signal used to kill a running container.
-    default null:
+    default: null
     required: false
   kernel_memory:
     description:

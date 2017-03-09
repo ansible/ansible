@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['deprecated'],
 DOCUMENTATION = '''
 ---
 module: quantum_subnet
+author: "Benno Joy (@bennojoy)"
 deprecated: Deprecated in 2.0. Use M(os_subnet) instead.
 version_added: "1.2"
 short_description: Add/remove subnet from a network

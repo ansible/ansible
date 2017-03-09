@@ -491,8 +491,6 @@ options:
       - Creates a virtual hardware watchdog device.
     required: false
     default: null
-Notes:
-  - Requires proxmoxer and requests modules on host. This modules can be installed with pip.
 requirements: [ "proxmoxer", "requests" ]
 '''
 

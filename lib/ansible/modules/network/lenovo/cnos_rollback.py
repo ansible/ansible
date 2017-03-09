@@ -30,6 +30,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_rollback
+author: "Dave Kasberg (@dkasberg)"
 short_description: Roll back the running or startup configuration from a remote server on devices running Lenovo CNOS
 description:
     - This module allows you to work with switch configurations. It provides a way to roll back configurations

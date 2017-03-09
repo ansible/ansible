@@ -104,7 +104,7 @@ author: "James S. Martin (@jsmartin)"
 extends_documentation_fragment:
 - aws
 - ec2
-requires: [ botocore>=1.4.57 ]
+requirements: [ botocore>=1.4.57 ]
 '''
 
 EXAMPLES = '''

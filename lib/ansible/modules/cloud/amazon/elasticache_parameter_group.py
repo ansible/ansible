@@ -33,12 +33,10 @@ options:
       - The name of the cache parameter group family that the cache parameter group can be used with.
     choices: ['memcached1.4', 'redis2.6', 'redis2.8', 'redis3.2']
     required: yes
-    type: string
   name:
     description:
      - A user-specified name for the cache parameter group.
     required: yes
-    type: string
   description:
     description:
       - A user-specified description for the cache parameter group.
@@ -51,7 +49,6 @@ options:
     description:
       - A user-specified list of parameters to reset or modify for the cache parameter group.
     required: no
-    type: dict
     default: None
 """
 

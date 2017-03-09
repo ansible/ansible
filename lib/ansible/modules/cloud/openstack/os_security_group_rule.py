@@ -24,6 +24,7 @@ DOCUMENTATION = '''
 ---
 module: os_security_group_rule
 short_description: Add/Delete rule from an existing security group
+author: "Benno Joy (@bennojoy)"
 extends_documentation_fragment: openstack
 version_added: "2.0"
 description:

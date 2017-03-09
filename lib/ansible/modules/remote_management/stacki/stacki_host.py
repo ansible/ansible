@@ -62,7 +62,7 @@ options:
   force_install:
     description:
      - Set value to True to force node into install state if it already exists in stacki.
-    requiored: False
+    required: False
 
 author: "Hugh Ma <Hugh.Ma@flextronics.com>"
 '''

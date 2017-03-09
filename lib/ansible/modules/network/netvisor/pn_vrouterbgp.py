@@ -27,7 +27,6 @@ DOCUMENTATION = """
 module: pn_vrouterbgp
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
-version: 1.0
 short_description: CLI command to add/remove/modify vrouter-bgp.
 description:
   - Execute vrouter-bgp-add, vrouter-bgp-remove, vrouter-bgp-modify command.

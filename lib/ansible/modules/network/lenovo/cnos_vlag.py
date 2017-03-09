@@ -29,6 +29,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_vlag
+author: "Dave Kasberg (@dkasberg)"
 short_description: Manage VLAG resources and attributes on devices running Lenovo CNOS
 description:
     - This module allows you to work with virtual Link Aggregation Groups

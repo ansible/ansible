@@ -29,6 +29,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_factory
+author: "Dave Kasberg (@dkasberg)"
 short_description: Reset the switch's startup configuration to default (factory) on devices running Lenovo CNOS
 description:
     - This module allows you to reset a switch’s startup configuration. The method provides a way to reset the

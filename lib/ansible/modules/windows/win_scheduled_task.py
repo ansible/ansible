@@ -25,6 +25,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = r'''
 ---
 module: win_scheduled_task
+author: "Peter Mounce"
 version_added: "2.0"
 short_description: Manage scheduled tasks
 description:

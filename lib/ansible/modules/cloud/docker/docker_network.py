@@ -100,7 +100,7 @@ options:
 extends_documentation_fragment:
     - docker
 
-authors:
+author:
     - "Ben Keith (@keitwb)"
     - "Chris Houseknecht (@chouseknecht)"
 

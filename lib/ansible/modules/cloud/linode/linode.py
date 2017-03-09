@@ -40,19 +40,16 @@ options:
      - Name to give the instance (alphanumeric, dashes, underscore)
      - To keep sanity on the Linode Web Console, name is prepended with LinodeID_
     default: null
-    type: string
   displaygroup:
     description:
      - Add the instance to a Display Group in Linode Manager
     default: null
-    type: string
     version_added: "2.3"
   linode_id:
     description:
      - Unique ID of a linode server
     aliases: [ 'lid' ]
     default: null
-    type: integer
   additional_disks:
     description: >
       List of dictionaries for creating additional disks that are added to the Linode configuration settings.
@@ -69,7 +66,6 @@ options:
     description:
     - Set threshold in MB of bandwidth in alerts.
     default: null
-    type: integer
     version_added: "2.3"
   alert_bwout_enabled:
     description:
@@ -81,7 +77,6 @@ options:
     description:
     - Set threshold in MB of bandwidth out alerts.
     default: null
-    type: integer
     version_added: "2.3"
   alert_bwquota_enabled:
     description:
@@ -93,7 +88,6 @@ options:
     description:
     - Set threshold in MB of bandwidth quota alerts.
     default: null
-    type: integer
     version_added: "2.3"
   alert_cpu_enabled:
     description:
@@ -105,7 +99,6 @@ options:
     description:
     - Set percentage threshold for receiving CPU usage alerts. Each CPU core adds 100% to total.
     default: null
-    type: integer
     version_added: "2.3"
   alert_diskio_enabled:
     description:
@@ -117,30 +110,25 @@ options:
     description:
     - Set threshold for average IO ops/sec over 2 hour period.
     default: null
-    type: integer
     version_added: "2.3"
   backupweeklyday:
     description:
     - Integer value for what day of the week to store weekly backups.
     default: null
-    type: integer
     version_added: "2.3"
   plan:
     description:
      - plan to use for the instance (Linode plan)
     default: null
-    type: integer
   payment_term:
     description:
      - payment term to use for the instance (payment term in months)
     default: 1
-    type: integer
     choices: [1, 12, 24]
   password:
     description:
      - root password to apply to a new server (auto generated if missing)
     default: null
-    type: string
   private_ip:
     description:
     - Add private IPv4 address when Linode is created.
@@ -151,22 +139,18 @@ options:
     description:
      - SSH public key applied to root user
     default: null
-    type: string
   swap:
     description:
      - swap size in MB
     default: 512
-    type: integer
   distribution:
     description:
      - distribution to use for the instance (Linode Distribution)
     default: null
-    type: integer
   datacenter:
     description:
      - datacenter to create an instance in (Linode Datacenter)
     default: null
-    type: integer
   wait:
     description:
      - wait for the instance to be in state 'running' before returning

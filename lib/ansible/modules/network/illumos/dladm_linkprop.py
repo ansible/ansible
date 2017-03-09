@@ -35,32 +35,28 @@ options:
     link:
         description:
             - Link interface name.
-        type: str
         required: true
         aliases: [ "nic", "interface" ]
     property:
         description:
             - Specifies the name of the property we want to manage.
-        type: str
         required: true
         aliases: [ "name" ]
     value:
         description:
             - Specifies the value we want to set for the link property.
-        type: str
         required: false
     temporary:
         description:
             - Specifies that lin property configuration is temporary. Temporary
               link property configuration does not persist across reboots.
         required: false
-        type: boolean
+        type: bool
         default: false
     state:
         description:
             - Set or reset the property value.
         required: false
-        type: str
         default: "present"
         choices: [ "present", "absent", "reset" ]
 '''

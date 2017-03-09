@@ -32,7 +32,7 @@ deprecated: >-
 options:
   cidr_block:
     description:
-      - "The cidr block representing the VPC, e.g. 10.0.0.0/16, required when I(state) is 'present'."
+      - "The cidr block representing the VPC, e.g. C(10.0.0.0/16), required when I(state=present)."
     required: false
   instance_tenancy:
     description:
@@ -42,56 +42,61 @@ options:
     choices: [ "default", "dedicated" ]
   dns_support:
     description:
-      - toggles the "Enable DNS resolution" flag
+      - Toggles the "Enable DNS resolution" flag.
     required: false
     default: "yes"
     choices: [ "yes", "no" ]
   dns_hostnames:
     description:
-      - toggles the "Enable DNS hostname support for instances" flag
+      - Toggles the "Enable DNS hostname support for instances" flag.
     required: false
     default: "yes"
     choices: [ "yes", "no" ]
   subnets:
     description:
-      - 'A dictionary array of subnets to add of the form: { cidr: ..., az: ... , resource_tags: ... }. Where az is the desired availability zone of the subnet, but it is not required. Tags (i.e.: resource_tags) is also optional and use dictionary form: { "Environment":"Dev", "Tier":"Web", ...}. All VPC subnets not in this list will be removed as well. As of 1.8, if the subnets parameter is not specified, no existing subnets will be modified.'
+      - 'A dictionary array of subnets to add of the form C({ cidr: ..., az: ... , resource_tags: ... }).'
+      - Where C(az) is the desired availability zone of the subnet, optional.
+      - 'Tags C(resource_tags) use dictionary form C({ "Environment":"Dev", "Tier":"Web", ...}), optional.'
+      - C(resource_tags) see resource_tags for VPC below. The main difference is subnet tags not specified here will be deleted.
+      - All VPC subnets not in this list will be removed as well.
+      - As of 1.8, if the subnets parameter is not specified, no existing subnets will be modified.'
     required: false
     default: null
-    resource_tags: See resource_tags for VPC below. The main difference is subnet tags not specified here will be deleted.
   vpc_id:
     description:
-      - A VPC id to terminate when state=absent
+      - A VPC id to terminate when I(state=absent).
     required: false
     default: null
   resource_tags:
     description:
-      - 'A dictionary array of resource tags of the form: { tag1: value1, tag2: value2 }.  Tags in this list are used in conjunction with CIDR block to uniquely identify a VPC in lieu of vpc_id. Therefore, if CIDR/Tag combination does not exist, a new VPC will be created.  VPC tags not on this list will be ignored. Prior to 1.7, specifying a resource tag was optional.'
+      - 'A dictionary array of resource tags of the form C({ tag1: value1, tag2: value2 }).
+      - Tags in this list are used in conjunction with CIDR block to uniquely identify a VPC in lieu of vpc_id. Therefore, if CIDR/Tag combination does not exist, a new VPC will be created.  VPC tags not on this list will be ignored. Prior to 1.7, specifying a resource tag was optional.'
     required: true
     version_added: "1.6"
   internet_gateway:
     description:
-      - Toggle whether there should be an Internet gateway attached to the VPC
+      - Toggle whether there should be an Internet gateway attached to the VPC.
     required: false
     default: "no"
     choices: [ "yes", "no" ]
   route_tables:
     description:
-      - 'A dictionary array of route tables to add of the form: { subnets: [172.22.2.0/24, 172.22.3.0/24,], routes: [{ dest: 0.0.0.0/0, gw: igw},], resource_tags: ... }. Where the subnets list is those subnets the route table should be associated with, and the routes list is a list of routes to be in the table.  The special keyword for the gw of igw specifies that you should the route should go through the internet gateway attached to the VPC. gw also accepts instance-ids, interface-ids, and vpc-peering-connection-ids in addition igw. resource_tags is optional and uses dictionary form: { "Name": "public", ... }. This module is currently unable to affect the "main" route table due to some limitations in boto, so you must explicitly define the associated subnets or they will be attached to the main table implicitly. As of 1.8, if the route_tables parameter is not specified, no existing routes will be modified.'
+      - 'A dictionary array of route tables to add of the form: C({ subnets: [172.22.2.0/24, 172.22.3.0/24,], routes: [{ dest: 0.0.0.0/0, gw: igw},], resource_tags: ... }). Where the subnets list is those subnets the route table should be associated with, and the routes list is a list of routes to be in the table.  The special keyword for the gw of igw specifies that you should the route should go through the internet gateway attached to the VPC. gw also accepts instance-ids, interface-ids, and vpc-peering-connection-ids in addition igw. resource_tags is optional and uses dictionary form: C({ "Name": "public", ... }). This module is currently unable to affect the "main" route table due to some limitations in boto, so you must explicitly define the associated subnets or they will be attached to the main table implicitly. As of 1.8, if the route_tables parameter is not specified, no existing routes will be modified.'
     required: false
     default: null
   wait:
     description:
-      - wait for the VPC to be in state 'available' before returning
+      - Wait for the VPC to be in state 'available' before returning.
     required: false
     default: "no"
     choices: [ "yes", "no" ]
   wait_timeout:
     description:
-      - how long before wait gives up, in seconds
+      - How long before wait gives up, in seconds.
     default: 300
   state:
     description:
-      - Create or terminate the VPC
+      - Create or terminate the VPC.
     required: true
     choices: [ "present", "absent" ]
 author: "Carson Gee (@carsongee)"

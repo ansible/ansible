@@ -165,7 +165,6 @@ options:
       - Specifies the number of packages to build simultaneously.
     required: false
     default: None
-    type: int
     version_added: 2.3
 
   loadavg:
@@ -174,7 +173,6 @@ options:
       - other builds running and the load average is at least LOAD
     required: false
     default: None
-    type: float
     version_added: 2.3
 
 requirements: [ gentoolkit ]

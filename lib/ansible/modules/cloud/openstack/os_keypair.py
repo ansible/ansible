@@ -25,6 +25,7 @@ DOCUMENTATION = '''
 ---
 module: os_keypair
 short_description: Add/Delete a keypair from OpenStack
+author: "Benno Joy (@bennojoy)"
 extends_documentation_fragment: openstack
 version_added: "2.0"
 description:

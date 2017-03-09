@@ -54,7 +54,7 @@ options:
 extends_documentation_fragment:
     - azure
 
-authors:
+author:
     - "Chris Houseknecht house@redhat.com"
     - "Matt Davis mdavis@redhat.com"
 

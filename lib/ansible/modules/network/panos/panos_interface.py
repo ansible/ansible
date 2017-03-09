@@ -33,7 +33,7 @@ author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
     - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
-note:
+notes:
     - Checkmode is not supported.
 options:
     ip_address:

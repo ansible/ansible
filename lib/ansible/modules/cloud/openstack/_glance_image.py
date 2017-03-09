@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['deprecated'],
 DOCUMENTATION = '''
 ---
 module: glance_image
+author: "Benno Joy (@bennojoy)"
 version_added: "1.2"
 deprecated: Deprecated in 1.10. Use M(os_image) instead.
 short_description: Add/Delete images from glance

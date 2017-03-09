@@ -25,6 +25,7 @@ DOCUMENTATION = '''
 ---
 module: nova_compute
 version_added: "1.2"
+author: "Benno Joy (@bennojoy)"
 deprecated: Deprecated in 2.0. Use M(os_server) instead.
 short_description: Create/Delete VMs from OpenStack
 description:

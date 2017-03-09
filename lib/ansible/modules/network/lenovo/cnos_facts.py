@@ -29,6 +29,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cnos_facts
+author: "Dave Kasberg (@dkasberg)"
 short_description: Collect facts on devices running Lenovo CNOS
 description:
     - This module allows you to view the switch information. It executes the show sysinfo CLI command on a switch

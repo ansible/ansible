@@ -59,7 +59,6 @@ options:
     description:
       - If package is already installed it, try to upgrade to the latest version or to the specified version.
       - As of Ansible v2.3 this is deprecated, set parameter C(state) to "latest" for the same result.
-    version_removed: '2.3'
     choices:
       - yes
       - no
@@ -97,7 +96,7 @@ options:
   execution_timeout:
     description:
       - Timeout to pass to the native installer
-    require: false
+    required: false
     version_added: '2.3'
 author: "Trond Hindenes (@trondhindenes), Peter Mounce (@petemounce), Pepe Barbe (@elventear), Adam Keech (@smadam813)"
 '''

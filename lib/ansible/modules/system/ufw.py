@@ -53,7 +53,7 @@ options:
     description:
       - Change the default policy for incoming or outgoing traffic.
     required: false
-    alias: default
+    aliases: ['default']
     choices: ['allow', 'deny', 'reject']
   direction:
     description:
