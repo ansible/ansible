@@ -133,7 +133,12 @@ class VaultCLI(CLI):
             self.b_new_vault_pass = CLI.read_vault_password_file(self.options.new_vault_password_file, loader)
 
         if not self.b_vault_pass or self.options.ask_vault_pass:
-            self.b_vault_pass = self.ask_vault_passwords()
+            # the 'read' options dont need to ask for password confirmation.
+            # 'edit' is read/write, but the decrypt will confirm.
+            if self.action in ['decrypt', 'edit', 'view', 'rekey']:
+                self.b_vault_pass = self.ask_vault_passwords()
+            else:
+                self.b_vault_pass = self.ask_new_vault_passwords()
 
         if not self.b_vault_pass:
             raise AnsibleOptionsError("A password is required to use Ansible's Vault")
