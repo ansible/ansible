@@ -25,7 +25,7 @@ from six import PY3
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, mock_open
-from ansible.errors import AnsibleParserError, AnsibleFileNotFound
+from ansible.errors import AnsibleParserError, AnsibleError, AnsibleFileNotFound
 from ansible.errors import yaml_strings
 
 from ansible.parsing.dataloader import DataLoader
@@ -232,14 +232,18 @@ class TestDataLoaderWithVault(unittest.TestCase):
             self.assertEqual(output, dict(foo='bar'))
 
     def test_get_real_file_vault(self):
-        self._loader.set_vault_password('ansible')
+        self._loader.set_vault_password(b'ansible')
         real_file_path = self._loader.get_real_file(self.test_vault_data_path)
         self.assertTrue(os.path.exists(real_file_path))
 
     def test_get_real_file_vault_no_vault(self):
         self._loader._vault_password = None
         self._loader._vault = None
-        self.assertRaisesRegexp(AnsibleParserError, 'password', self._loader.get_real_file, self.test_vault_data_path)
+        self.assertRaises(AnsibleError, self._loader.get_real_file, self.test_vault_data_path)
+
+    def test_get_real_file_vault_wrong_password(self):
+        self._loader.set_vault_password(b'nope_wrong')
+        self.assertRaises(AnsibleError, self._loader.get_real_file, self.test_vault_data_path)
 
     def test_get_real_file(self):
         real_file_path = self._loader.get_real_file(self.test_data_path)
@@ -248,15 +252,3 @@ class TestDataLoaderWithVault(unittest.TestCase):
 
     def test_get_real_file_not_a_path(self):
         self.assertRaisesRegexp(AnsibleParserError, 'Invalid filename', self._loader.get_real_file, None)
-
-    def test_read_vault_password_file(self):
-        self._loader.set_vault_password('wrong password')
-        self._loader.read_vault_password_file(self.vault_password_path)
-        self.assertEquals(self._loader._vault_password, b'ansible')
-
-    def test_read_vault_password_file_doesnt_exist(self):
-        self.assertRaises(AnsibleFileNotFound, self._loader.read_vault_password_file, self.vault_password_bogus_path)
-
-    def test_read_vault_password_script(self):
-        ret = self._loader.read_vault_password_file(self.vault_password_script_path)
-        self.assertEquals(self._loader._vault_password, b'ansible')
