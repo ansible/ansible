@@ -59,7 +59,7 @@ options:
     description:
       - libvirt connection uri
     required: false
-    defaults: qemu:///system
+    default: qemu:///system
   xml:
     description:
       - XML document used with the define command

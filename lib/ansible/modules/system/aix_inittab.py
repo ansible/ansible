@@ -35,12 +35,10 @@ options:
   name:
     description: Name of the inittab entry.
     required: True
-    alias: service
-    type: string
+    aliases: ['service']
   runlevel:
     description: Runlevel of the entry.
     required: True
-    type: string
   action:
     description: Action what the init has to do with this entry.
     required: True
@@ -58,22 +56,17 @@ options:
                'initdefault',
                'sysinit'
               ]
-    type: string
   command:
     description: What command has to run.
     required: True
-    type: string
   insertafter:
     description: After which inittabline should the new entry inserted.
-    type: string
   state:
     description: Whether the entry should be present or absent in the inittab file
-    type: string
     choices: [ "present", "absent" ]
     default: present
 notes:
-  - The changes are persistent across reboots.
-  - You need root rights to read or adjust the inittab with the lsitab, chitab,
+  - The changes are persistent across reboots, you need root rights to read or adjust the inittab with the lsitab, chitab,
     mkitab or rmitab commands.
   - tested on AIX 7.1.
 requirements: [ 'itertools']

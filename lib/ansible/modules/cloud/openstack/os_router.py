@@ -52,13 +52,11 @@ options:
      description:
         - Unique name or ID of the external gateway network.
         - required I(interfaces) or I(enable_snat) are provided.
-     type: string
      required: false
      default: None
    project:
      description:
         - Unique name or ID of the project.
-     type: string
      required: false
      default: None
      version_added: "2.2"

@@ -71,24 +71,24 @@ options:
   security_group_ids:
     description:
       - A list of security groups to apply to the elb
-    require: false
+    required: false
     default: None
     version_added: "1.6"
   security_group_names:
     description:
       - A list of security group names to apply to the elb
-    require: false
+    required: false
     default: None
     version_added: "2.0"
   health_check:
     description:
       - An associative array of health check configuration settings (see example)
-    require: false
+    required: false
     default: None
   access_logs:
     description:
       - An associative array of access logs configuration settings (see example)
-    require: false
+    required: false
     default: None
     version_added: "2.0"
   subnets:

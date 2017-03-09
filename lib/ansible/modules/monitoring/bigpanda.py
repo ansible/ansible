@@ -33,7 +33,7 @@ options:
     description:
       - "The name of the component being deployed. Ex: billing"
     required: true
-    alias: name
+    aliases: ['name']
   version:
     description:
       - The deployment version.
@@ -52,7 +52,7 @@ options:
       - Name of affected host name. Can be a list.
     required: false
     default: machine's hostname
-    alias: host
+    aliases: ['host']
   env:
     description:
       - The environment name, typically 'production', 'staging', etc.
