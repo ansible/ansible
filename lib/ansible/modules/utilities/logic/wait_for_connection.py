@@ -48,18 +48,18 @@ options:
   timeout:
     description:
       - Maximum number of seconds to wait for.
-    default: 300
+    default: 600
 author: "Dag Wieers (@dagwieers)"
 '''
 
 EXAMPLES = r'''
-- name: Wait 300 seconds for target connection to become reachable/usable
+- name: Wait 600 seconds for target connection to become reachable/usable
   wait_for_connection:
 
-- name: Wait 600 seconds, but only start checking after 60 seconds
+- name: Wait 300 seconds, but only start checking after 60 seconds
   wait_for_connection:
     delay: 60
-    timeout: 600
+    timeout: 300
 
 # Wake desktops, wait for them to become ready and continue playbook
 - hosts: all
@@ -89,11 +89,12 @@ EXAMPLES = r'''
       customization:
         hostname: '{{ vm_shortname }}'
         runonce:
-        - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\ConfigureRemotingForAnsible.ps1 -CertValidityDays 3650 -ForceNewSSLCert
+        - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert -EnableCredSSP
     delegate_to: localhost
 
   - name: Wait for system to become reachable over WinRM
     wait_for_connection:
+      timeout: 900
 
   - name: Gather facts for first time
     setup:
