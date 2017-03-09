@@ -69,6 +69,7 @@ options:
       - If set, ask that system firmware uses this device beyond next boot.
         Be aware many systems do not honor this.
     required: false
+    type: bool
     default: false
   uefiboot:
     description:
@@ -76,6 +77,7 @@ options:
         Strictly speaking, the spec suggests that if not set, the system should BIOS boot and offers no "don't care" option.
         In practice, this flag not being set does not preclude UEFI boot on any system I've encountered.
     required: false
+    type: bool
     default: false
 requirements:
   - "python >= 2.6"

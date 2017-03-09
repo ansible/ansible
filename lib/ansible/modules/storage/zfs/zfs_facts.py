@@ -41,12 +41,14 @@ options:
         description:
             - Specifies if properties for any children should be recursively
               displayed.
+        type: bool
         default: False
         required: false
     parsable:
         description:
             - Specifies if property values should be displayed in machine
               friendly format.
+        type: bool
         default: False
         required: false
     properties:

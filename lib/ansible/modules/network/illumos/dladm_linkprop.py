@@ -51,6 +51,7 @@ options:
             - Specifies that lin property configuration is temporary. Temporary
               link property configuration does not persist across reboots.
         required: false
+        type: bool
         default: false
     state:
         description:

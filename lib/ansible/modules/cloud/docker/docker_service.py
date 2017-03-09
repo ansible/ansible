@@ -78,6 +78,7 @@ options:
       description:
         - When C(state) is I(present) specify whether or not to include linked services.
       required: false
+      type: bool
       default: true
   definition:
       description:
@@ -88,6 +89,7 @@ options:
       description:
         - Whether or not to check the Docker daemon's hostname against the name provided in the client certificate.
       required: false
+      type: bool
       default: false
   recreate:
       description:
@@ -108,6 +110,7 @@ options:
         - Use the C(nocache) option to ignore the image cache when performing the build.
         - If an existing image is replaced, services using the image will be recreated unless C(recreate) is I(never).
       required: false
+      type: bool
       default: false
   pull:
       description:
@@ -115,12 +118,14 @@ options:
         - Same as running docker-compose pull.
         - When a new image is pulled, services using the image will be recreated unless C(recreate) is I(never).
       required: false
+      type: bool
       default: false
       version_added: "2.2"
   nocache:
       description:
         - Use with the build option to ignore the cache during the image build process.
       required: false
+      type: bool
       default: false
       version_added: "2.2"
   remove_images:
@@ -132,21 +137,25 @@ options:
       description:
         - Use with state I(absent) to remove data volumes.
       required: false
+      type: bool
       default: false
   stopped:
       description:
         - Use with state I(present) to leave the containers in an exited or non-running state.
       required: false
+      type: bool
       default: false
   restarted:
       description:
         - Use with state I(present) to restart all containers.
       required: false
+      type: bool
       default: false
   debug:
       description:
         - Include I(actions) in the return values.
       required: false
+      type: bool
       default: false
 
 extends_documentation_fragment:

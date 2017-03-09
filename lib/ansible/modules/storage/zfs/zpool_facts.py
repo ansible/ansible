@@ -41,6 +41,7 @@ options:
         description:
             - Specifies if property values should be displayed in machine
               friendly format.
+        type: bool
         default: False
         required: false
     properties:

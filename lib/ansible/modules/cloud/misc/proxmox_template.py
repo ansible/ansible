@@ -44,6 +44,7 @@ options:
     description:
       - enable / disable https certificate verification
     default: false
+    type: bool
     required: false
   node:
     description:
@@ -85,6 +86,7 @@ options:
       - can be used only with C(state=present), exists template will be overwritten
     default: false
     required: false
+    type: bool
   state:
     description:
      - Indicate desired state of the template

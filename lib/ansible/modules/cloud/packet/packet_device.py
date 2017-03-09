@@ -103,6 +103,7 @@ options:
       - Whether to wait for the instance to be assigned IP address before returning.
     required: false
     default: False
+    type: bool
 
   wait_timeout:
     description:
