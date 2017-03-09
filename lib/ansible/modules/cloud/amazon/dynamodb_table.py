@@ -332,7 +332,11 @@ def get_changed_global_indexes(table, global_indexes):
     removed_indexes = dict((name, index) for name, index in table_index_info.items() if name not in set_index_info)
     added_indexes = dict((name, set_index_objects[name]) for name, index in set_index_info.items() if name not in table_index_info)
     # todo: uncomment once boto has https://github.com/boto/boto/pull/3447 fixed
-    # index_throughput_changes = dict((name, index.throughput) for name, index in set_index_objects.items() if name not in added_indexes and (index.throughput['read'] != str(table_index_objects[name].throughput['read']) or index.throughput['write'] != str(table_index_objects[name].throughput['write'])))
+    # for name, index in set_index_objects.items():
+    #      if (name not in added_indexes and
+    #             (index.throughput['read'] != str(table_index_objects[name].throughput['read']) or
+    #              index.throughput['write'] != str(table_index_objects[name].throughput['write']))):
+    #         index_throughput_changes[name] = index.throughput
     # todo: remove once boto has https://github.com/boto/boto/pull/3447 fixed
     index_throughput_changes = dict((name, index.throughput) for name, index in set_index_objects.items() if name not in added_indexes)
 

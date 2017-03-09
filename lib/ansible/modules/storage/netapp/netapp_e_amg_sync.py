@@ -58,7 +58,8 @@ options:
     state:
         description:
             - The synchronization action you'd like to take.
-            - If C(running) then it will begin syncing if there is no active sync or will resume a suspended sync. If there is already a sync in progress, it will return with an OK status.
+            - If C(running) then it will begin syncing if there is no active sync or will resume a suspended sync. If there is already a sync in
+              progress, it will return with an OK status.
             - If C(suspended) it will suspend any ongoing sync action, but return OK if there is no active sync or if the sync is already suspended
         choices:
             - running
@@ -67,8 +68,10 @@ options:
     delete_recovery_point:
         description:
             - Indicates whether the failures point can be deleted on the secondary if necessary to achieve the synchronization.
-            - If true, and if the amount of unsynchronized data exceeds the CoW repository capacity on the secondary for any member volume, the last failures point will be deleted and synchronization will continue.
-            - If false, the synchronization will be suspended if the amount of unsynchronized data exceeds the CoW Repository capacity on the secondary and the failures point will be preserved.
+            - If true, and if the amount of unsynchronized data exceeds the CoW repository capacity on the secondary for any member volume, the last
+              failures point will be deleted and synchronization will continue.
+            - If false, the synchronization will be suspended if the amount of unsynchronized data exceeds the CoW Repository capacity on the secondary
+              and the failures point will be preserved.
             - "NOTE: This only has impact for newly launched syncs."
         choices:
             - yes

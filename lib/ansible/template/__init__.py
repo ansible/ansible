@@ -331,7 +331,8 @@ class Templar:
         self._available_variables = variables
         self._cached_result       = {}
 
-    def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, convert_data=True, static_vars=[''], cache=True, bare_deprecated=True, disable_lookups=False):
+    def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None,
+                 convert_data=True, static_vars=[''], cache=True, bare_deprecated=True, disable_lookups=False):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
@@ -372,7 +373,14 @@ class Templar:
                     sha1_hash = None
                     if cache:
                         variable_hash = sha1(text_type(variable).encode('utf-8'))
-                        options_hash  = sha1((text_type(preserve_trailing_newlines) + text_type(escape_backslashes) + text_type(fail_on_undefined) + text_type(overrides)).encode('utf-8'))
+                        options_hash = sha1(
+                            (
+                                text_type(preserve_trailing_newlines) +
+                                text_type(escape_backslashes) +
+                                text_type(fail_on_undefined) +
+                                text_type(overrides)
+                            ).encode('utf-8')
+                        )
                         sha1_hash = variable_hash.hexdigest() + options_hash.hexdigest()
                     if cache and sha1_hash in self._cached_result:
                         result = self._cached_result[sha1_hash]
@@ -507,7 +515,8 @@ class Templar:
                 raise AnsibleUndefinedVariable(e)
             except Exception as e:
                 if self._fail_on_lookup_errors:
-                    raise AnsibleError("An unhandled exception occurred while running the lookup plugin '%s'. Error was a %s, original message: %s" % (name, type(e), e))
+                    raise AnsibleError("An unhandled exception occurred while running the lookup plugin '%s'. Error was a %s, "
+                                       "original message: %s" % (name, type(e), e))
                 ran = None
 
             if ran:

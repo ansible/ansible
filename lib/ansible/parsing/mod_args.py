@@ -140,7 +140,8 @@ class ModuleArgsParser:
                 if templar._contains_vars(additional_args):
                     final_args['_variable_params'] = additional_args
                 else:
-                    raise AnsibleParserError("Complex args containing variables cannot use bare variables, and must use the full variable style ('{{var_name}}')")
+                    raise AnsibleParserError("Complex args containing variables cannot use bare variables, and must use the full variable style "
+                                             "('{{var_name}}')")
             elif isinstance(additional_args, dict):
                 final_args.update(additional_args)
             else:
@@ -301,14 +302,17 @@ class ModuleArgsParser:
                         obj=self._task_ds)
 
             else:
-                raise AnsibleParserError("no action detected in task. This often indicates a misspelled module name, or incorrect module path.", obj=self._task_ds)
+                raise AnsibleParserError("no action detected in task. This often indicates a misspelled module name, or incorrect module path.",
+                                         obj=self._task_ds)
         elif args.get('_raw_params', '') != '' and action not in RAW_PARAM_MODULES:
             templar = Templar(loader=None)
             raw_params = args.pop('_raw_params')
             if templar._contains_vars(raw_params):
                 args['_variable_params'] = raw_params
             else:
-                raise AnsibleParserError("this task '%s' has extra params, which is only allowed in the following modules: %s" % (action, ", ".join(RAW_PARAM_MODULES)), obj=self._task_ds)
+                raise AnsibleParserError("this task '%s' has extra params, which is only allowed in the following modules: %s" % (action,
+                                                                                                                                  ", ".join(RAW_PARAM_MODULES)),
+                                         obj=self._task_ds)
 
         # shell modules require special handling
         (action, args) = self._handle_shell_weirdness(action, args)

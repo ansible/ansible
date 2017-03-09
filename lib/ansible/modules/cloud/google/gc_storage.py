@@ -25,7 +25,10 @@ module: gc_storage
 version_added: "1.4"
 short_description: This module manages objects/buckets in Google Cloud Storage.
 description:
-    - This module allows users to manage their objects/buckets in Google Cloud Storage.  It allows upload and download operations and can set some canned permissions. It also allows retrieval of URLs for objects for use in playbooks, and retrieval of string contents of objects.  This module requires setting the default project in GCS prior to playbook usage.  See U(https://developers.google.com/storage/docs/reference/v1/apiversion1) for information about setting the default project.
+    - This module allows users to manage their objects/buckets in Google Cloud Storage.  It allows upload and download operations and can set some
+      canned permissions. It also allows retrieval of URLs for objects for use in playbooks, and retrieval of string contents of objects.  This module
+      requires setting the default project in GCS prior to playbook usage.  See U(https://developers.google.com/storage/docs/reference/v1/apiversion1) for
+      information about setting the default project.
 
 options:
   bucket:
@@ -54,7 +57,8 @@ options:
     aliases: [ 'overwrite' ]
   permission:
     description:
-      - This option let's the user set the canned permissions on the object/bucket that are created. The permissions that can be set are 'private', 'public-read', 'authenticated-read'.
+      - This option let's the user set the canned permissions on the object/bucket that are created. The permissions that can be set are 'private',
+        'public-read', 'authenticated-read'.
     required: false
     default: private
   headers:
@@ -65,12 +69,14 @@ options:
     default: '{}'
   expiration:
     description:
-      - Time limit (in seconds) for the URL generated and returned by GCA when performing a mode=put or mode=get_url operation. This url is only available when public-read is the acl for the object.
+      - Time limit (in seconds) for the URL generated and returned by GCA when performing a mode=put or mode=get_url operation. This url is only
+        available when public-read is the acl for the object.
     required: false
     default: null
   mode:
     description:
-      - Switches the module behaviour between upload, download, get_url (return download url) , get_str (download object as string), create (bucket) and delete (bucket).
+      - Switches the module behaviour between upload, download, get_url (return download url) , get_str (download object as string), create (bucket) and
+        delete (bucket).
     required: true
     default: null
     choices: [ 'get', 'put', 'get_url', 'get_str', 'delete', 'create' ]

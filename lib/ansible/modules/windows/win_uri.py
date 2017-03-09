@@ -68,7 +68,9 @@ options:
       - 'Key Value pairs for headers. Example "Host: www.somesite.com"'
   use_basic_parsing:
     description:
-      - This module relies upon 'Invoke-WebRequest', which by default uses the Internet Explorer Engine to parse a webpage. There's an edge-case where if a user hasn't run IE before, this will fail. The only advantage to using the Internet Explorer praser is that you can traverse the DOM in a powershell script. That isn't useful for Ansible, so by default we toggle 'UseBasicParsing'. However, you can toggle that off here.
+      - This module relies upon 'Invoke-WebRequest', which by default uses the Internet Explorer Engine to parse a webpage. There's an edge-case where if a
+        user hasn't run IE before, this will fail. The only advantage to using the Internet Explorer praser is that you can traverse the DOM in a
+        powershell script. That isn't useful for Ansible, so by default we toggle 'UseBasicParsing'. However, you can toggle that off here.
     choices:
       - True
       - False
@@ -143,7 +145,7 @@ raw_content:
   description: The raw content of the HTTP response.
   returned: success
   type: string
-  sample: 'HTTP/1.1 200 OK\nX-XSS-Protection: 1; mode=block\nX-Frame-Options: SAMEORIGIN\nAlternate-Protocol: 443:quic,p=1\nAlt-Svc: quic="www.google.com:443"; ma=2592000; v="30,29,28,27,26,25",quic=":443"; ma=2...'
+  sample: 'HTTP/1.1 200 OK\nX-XSS-Protection: 1; mode=block\nAlternate-Protocol: 443:quic,p=1\nAlt-Svc: quic="www.google.com:443";'
 headers:
   description: The Headers of the response.
   returned: success

@@ -247,7 +247,9 @@ class GalaxyRole(object):
                         self.version = 'master'
                 elif self.version != 'master':
                     if role_versions and str(self.version) not in [a.get('name', None) for a in role_versions]:
-                        raise AnsibleError("- the specified version (%s) of %s was not found in the list of available versions (%s)." % (self.version, self.name, role_versions))
+                        raise AnsibleError("- the specified version (%s) of %s was not found in the list of available versions (%s)." % (self.version,
+                                                                                                                                         self.name,
+                                                                                                                                         role_versions))
 
                 tmp_file = self.fetch(role_data)
 
@@ -306,7 +308,8 @@ class GalaxyRole(object):
                             else:
                                 # using --force, remove the old path
                                 if not self.remove():
-                                    raise AnsibleError("%s doesn't appear to contain a role.\n  please remove this directory manually if you really want to put the role here." % self.path)
+                                    raise AnsibleError("%s doesn't appear to contain a role.\n  please remove this directory manually if you really "
+                                                       "want to put the role here." % self.path)
                         else:
                             os.makedirs(self.path)
 
