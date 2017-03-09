@@ -34,23 +34,22 @@ Ansible Changes By Release
 
 ###Deprecations:
 * Specifying --tags (or --skip-tags) multiple times on the command line
-  currently leads to the last one overridding all the previous ones.  This
-  behaviour is deprecated.  In the future, if you specify --tags multiple times
-  the tags will be merged together.  In 2.3, using --tags multiple times on one
-  command line will emit a deprecation warning.  Setting the
-  merge_multiple_cli_tags option to True in the ansible.cfg file will enable
-  the new behaviour.  In 2.4, the default will be to merge and you can enable
-  the old overwriting behaviour via the config option.  In 2.5, multiple --tags
-  options will be merged with no way to go back to the old behaviour.
-* Modules
-  * ec2_vpc will be deprecated in 2.3 and removed in 2.5
-  * cl_bond will be deprecated in 2.3 and removed in 2.5
-  * cl_bridge will be deprecated in 2.3 and removed in 2.5
-  * cl_img_install will be deprecated in 2.3 and removed in 2.5
-  * cl_interface will be deprecated in 2.3 and removed in 2.5
-  * cl_interface_policy will be deprecated in 2.3 and removed in 2.5
-  * cl_license will be deprecated in 2.3 and removed in 2.5
-  * cl_ports will be deprecated in 2.3 and removed in 2.5
+  currently leads to the last one overridding all the previous ones. This behaviour is deprecated.
+  In the future, if you specify --tags multiple times the tags will be merged together.
+  From now on, using --tags multiple times on one command line will emit a deprecation warning.
+  Setting the merge_multiple_cli_tags option to True in the ansible.cfg file will enable the new behaviour.
+  In 2.4, the default will be to merge and you can enable the old overwriting behaviour via the config option.
+  In 2.5, multiple --tags options will be merged with no way to go back to the old behaviour.
+
+* Modules (scheduled for removal in 2.5)
+  * ec2_vpc
+  * cl_bond
+  * cl_bridge
+  * cl_img_install
+  * cl_interface
+  * cl_interface_policy
+  * cl_license
+  * cl_ports
 
 ###Modules Notes:
 - oVirt/RHV
@@ -147,6 +146,7 @@ Ansible Changes By Release
   * ios_vrf
 - iosxr_system
 - iso_extract
+- java_cert
 - jenkins_script
 - ldap:
   * ldap_attr
