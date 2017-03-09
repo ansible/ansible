@@ -102,7 +102,7 @@ def map_obj_to_commands(updates, module):
     want, have = updates
     state = module.params['state']
 
-    if state == 'absent':
+    if state == 'absent' and have['text']:
         commands.append('no banner %s' % module.params['banner'])
 
     elif state == 'present':
@@ -117,7 +117,7 @@ def map_config_to_obj(module):
     output = run_commands(module, ['show banner %s' % module.params['banner']])
     obj = {'banner': module.params['banner'], 'state': 'absent'}
     if output:
-        obj['text'] = output
+        obj['text'] = output[0]
         obj['state'] = 'present'
     return obj
 
@@ -155,7 +155,6 @@ def main():
     result = {'changed': False}
     if warnings:
         result['warnings'] = warnings
-
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
 

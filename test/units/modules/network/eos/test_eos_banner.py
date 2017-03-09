@@ -40,7 +40,7 @@ class TestEosBannerModule(TestEosModule):
         self.mock_load_config.stop()
 
     def load_fixtures(self, commands=None):
-        self.run_commands.return_value = load_fixture('eos_banner_show_banner.txt').strip()
+        self.run_commands.return_value = [load_fixture('eos_banner_show_banner.txt').strip()]
         self.load_config.return_value = dict(diff=None, session='session')
 
     def test_eos_banner_create(self):
