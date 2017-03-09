@@ -84,9 +84,15 @@ Options
         <td>{% for desc in v.description -%}<div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>{% endfor -%} {% if 'aliases' in v and v.aliases -%}</br>
             <div style="font-size: small;">aliases: @{ v.aliases|join(', ') }@<div>{%- endif %}
     {% else %}
-        <td colspan="3">{% for desc in v.description -%}<div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>{% endfor -%} {% if 'aliases' in v and v.aliases -%}</br>
+        <td></td><td></td>
+        <td> {% for desc in v.description -%}<div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>{% endfor -%} {% if 'aliases' in v and v.aliases -%}</br>
             <div style="font-size: small;">aliases: @{ v.aliases|join(', ') }@<div>{%- endif %}
-        <table border=1 cellpadding=4>
+        </tr>
+        <tr>
+        <td>
+        <td colspan="4">
+        <table border=3 cellpadding=4>
+        <caption><b>Options for @{ k }@</b></caption>
         <tr>
         <th class="head">parameter</th>
         <th class="head">required</th>
@@ -110,6 +116,8 @@ Options
             </td></tr>
         {% endfor %}
         </table>
+        </td>
+        </tr>
     {% endif %}
     </td></tr>
     {% endfor %}
