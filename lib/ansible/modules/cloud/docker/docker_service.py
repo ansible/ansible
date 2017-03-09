@@ -131,7 +131,6 @@ options:
   remove_images:
       description:
         - Use with state I(absent) to remove the all images or only local images.
-      type: str
       required: false
       default: null
   remove_volumes:
