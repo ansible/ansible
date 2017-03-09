@@ -125,7 +125,7 @@ options:
     default: 10
   stdout_capture_maxbytes:
     description:
-      - Max number of bytes written to capture FIFO when process is in “stdout capture mode”
+      - Max number of bytes written to capture FIFO when process is in "stdout capture mode"
     required: false
     default: 0
   stdout_events_enabled:
@@ -150,7 +150,7 @@ options:
     default: 10
   stderr_capture_maxbytes:
     description:
-      - Max number of bytes written to capture FIFO when process is in “stderr capture mode”
+      - Max number of bytes written to capture FIFO when process is in "stderr capture mode"
     required: false
     default: 0
   stderr_events_enabled:
@@ -160,7 +160,7 @@ options:
     default: 0
   environment:
     description:
-      - A list of key/value pairs in the form KEY="val",KEY2="val2" that will be placed in the child process’ environment
+      - A list of key/value pairs in the form KEY="val",KEY2="val2" that will be placed in the child process' environment
     required: false
     default: null
   directory:
@@ -212,9 +212,12 @@ EXAMPLES = '''
 - name: One more example here
   supervisor_program: name=foo command='/opt/somewheres/special.py'
 '''
+
+RETURN = ''
+
 from ConfigParser import RawConfigParser
 import os
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule,BOOLEANS
 
 class SupervisorConfigParser(RawConfigParser):
 
