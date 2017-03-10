@@ -1,5 +1,10 @@
 #!/usr/bin/python
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
+
 DOCUMENTATION = '''
 ---
 module: bugzilla
@@ -56,6 +61,16 @@ EXAMPLES = '''
     get_status: True
   register: status
 
+'''
+
+
+RETURN = '''
+---
+status:
+  description: Fetches status of bugzilla
+  returned: Only when commands get_status is set to True and Bug_id is provided
+  type: string
+  sample: "ASSIGNED" / "NEW" / "CLOSED" / "MODIFIED"
 '''
 
 
