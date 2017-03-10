@@ -193,8 +193,8 @@ def main():
             members = dict(type='list'),
             state = dict(default='present'),
             service_account_email = dict(),
-            pem_file = dict(),
-            credentials_file = dict(),
+            pem_file = dict(type='path'),
+            credentials_file = dict(type='path'),
             project_id = dict(),
         )
     )

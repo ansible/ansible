@@ -176,8 +176,8 @@ def main():
             state = dict(default='present'),
             zone = dict(default='us-central1-b'),
             service_account_email = dict(),
-            pem_file = dict(),
-            credentials_file = dict(),
+            pem_file = dict(type='path'),
+            credentials_file = dict(type='path'),
             project_id = dict(),
         )
     )
