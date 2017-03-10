@@ -774,7 +774,7 @@ class TaskExecutor:
         Returns the correct action plugin to handle the requestion task action
         '''
 
-        network_group_modules = frozenset(['eos', 'nxos', 'ios', 'iosxr', 'junos', 'vyos'])
+        network_group_modules = frozenset(['eos', 'nxos', 'ios', 'iosxr', 'junos', 'vyos', 'ce'])
         module_prefix = self._task.action.split('_')[0]
 
         # let action plugin override module, fallback to 'normal' action plugin otherwise
