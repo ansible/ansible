@@ -179,8 +179,8 @@ def main():
         region=dict(required=True),
         service_account_email=dict(),
         service_account_permissions=dict(type='list'),
-        pem_file=dict(),
-        credentials_file=dict(),
+        pem_file=dict(type='path'),
+        credentials_file=dict(type='path'),
         project_id=dict(), ), )
 
     if not HAS_PYTHON26:
