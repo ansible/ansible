@@ -182,11 +182,33 @@ class TestGetConfig:
         assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', '10', value_type='integer') == 10
         assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', 10, value_type='integer') == 10
 
+    def test_value_type_integer_0(self, cfgparser):
+        assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', '0', value_type='integer') == 0
+        assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', 0, value_type='integer') == 0
+
+    def test_value_type_integer_0_from_env_var_empty_default_int(self, cfgparser):
+        os.environ['ANSIBLE_TEST_VAR'] = ''
+
+        assert constants.get_config(cfgparser, 'unknown', 'defaults_one', 'ANSIBLE_TEST_VAR', 0, value_type='integer') == 0
+        del os.environ['ANSIBLE_TEST_VAR']
+
     def test_value_type_float(self, cfgparser):
         assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', '10', value_type='float') == 10.0
         assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', 10, value_type='float') == 10.0
         assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', '11.5', value_type='float') == 11.5
         assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', 11.5, value_type='float') == 11.5
+
+    def test_value_type_float_0(self, cfgparser):
+        assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', 0.0, value_type='float') == 0.0
+        assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', '0.0', value_type='float') == 0.0
+
+    def test_value_type_float_0_from_env_var_empty(self, cfgparser):
+        os.environ['ANSIBLE_TEST_VAR'] = ''
+
+        assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', 0.0, value_type='float') == 0.0
+        assert constants.get_config(cfgparser, 'unknown_section', 'unknown_key', 'ANSIBLE_TEST_VAR', 0.0, value_type='float') == 0.0
+
+        del os.environ['ANSIBLE_TEST_VAR']
 
     def test_value_type_list(self, cfgparser):
         assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', 'one,two,three', value_type='list') == ['one', 'two', 'three']

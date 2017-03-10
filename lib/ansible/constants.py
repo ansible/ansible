@@ -57,6 +57,41 @@ def shell_expand(path, expand_relative_paths=False):
             path = os.path.abspath(path)
     return path
 
+def _cast_config_value(value, value_type, expand_relative_paths):
+    if value_type == 'integer':
+        value = int(value)
+
+    elif value_type == 'float':
+        value = float(value)
+
+    elif value_type == 'list':
+        if isinstance(value, string_types):
+            value = [x.strip() for x in value.split(',')]
+
+    elif value_type == 'none':
+        if value == "None":
+            value = None
+
+    elif value_type == 'path':
+        value = shell_expand(value, expand_relative_paths=expand_relative_paths)
+
+    elif value_type == 'tmppath':
+        value = shell_expand(value)
+        if not os.path.exists(value):
+            makedirs_safe(value, 0o700)
+        prefix = 'ansible-local-%s' % os.getpid()
+        value = tempfile.mkdtemp(prefix=prefix, dir=value)
+
+    elif value_type == 'pathlist':
+        if isinstance(value, string_types):
+            value = [shell_expand(x, expand_relative_paths=expand_relative_paths) \
+                        for x in value.split(os.pathsep)]
+
+    elif isinstance(value, string_types):
+        value = unquote(value)
+
+    return value
+
 
 def get_config(p, section, key, env_var, default, value_type=None, expand_relative_paths=False):
     ''' return a configuration variable with casting
@@ -88,37 +123,11 @@ def get_config(p, section, key, env_var, default, value_type=None, expand_relati
     if value_type == 'boolean':
         value = mk_boolean(value)
 
-    elif value:
-        if value_type == 'integer':
-            value = int(value)
-
-        elif value_type == 'float':
-            value = float(value)
-
-        elif value_type == 'list':
-            if isinstance(value, string_types):
-                value = [x.strip() for x in value.split(',')]
-
-        elif value_type == 'none':
-            if value == "None":
-                value = None
-
-        elif value_type == 'path':
-            value = shell_expand(value, expand_relative_paths=expand_relative_paths)
-
-        elif value_type == 'tmppath':
-            value = shell_expand(value)
-            if not os.path.exists(value):
-                makedirs_safe(value, 0o700)
-            prefix = 'ansible-local-%s' % os.getpid()
-            value = tempfile.mkdtemp(prefix=prefix, dir=value)
-
-        elif value_type == 'pathlist':
-            if isinstance(value, string_types):
-                value = [shell_expand(x, expand_relative_paths=expand_relative_paths) for x in value.split(os.pathsep)]
-
-        elif isinstance(value, string_types):
-            value = unquote(value)
+    elif value or value != default:
+        try:
+            value = _cast_config_value(value, value_type, expand_relative_paths)
+        except ValueError:
+            value = default
 
     return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
 
@@ -130,12 +139,12 @@ def _get_config(p, section, key, env_var, default):
     if p is not None:
         try:
             value = p.get(section, key, raw=True)
-        except:
+        except configparser.Error:
             pass
 
     if env_var is not None:
         env_value = os.environ.get(env_var, None)
-        if env_value is not None:
+        if env_value is not None and env_value != default:
             value = env_value
 
     return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
