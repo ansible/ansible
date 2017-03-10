@@ -85,16 +85,25 @@ def get_config(p, section, key, env_var, default, value_type=None, expand_relati
     if value_type == 'boolean':
         value = mk_boolean(value)
 
-    elif value:
+    elif value is not None:
         if value_type == 'integer':
-            value = int(value)
+            try:
+                value = int(value)
+            except ValueError:
+                value = default
 
         elif value_type == 'float':
-            value = float(value)
+            try:
+                value = float(value)
+            except ValueError:
+                value = default
 
         elif value_type == 'list':
-            if isinstance(value, string_types):
-                value = [x.strip() for x in value.split(',')]
+            try:
+                if isinstance(value, string_types):
+                    value = [x.strip() for x in value.split(',')]
+            except ValueError:
+                value = default
 
         elif value_type == 'none':
             if value == "None":
