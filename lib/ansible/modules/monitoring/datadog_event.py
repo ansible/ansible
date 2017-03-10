@@ -67,6 +67,11 @@ options:
         required: false
         default: normal
         choices: [normal, low]
+    host:
+        description: ["Host name to associate with the event."]
+        required: false
+        default: "{{ ansible_hostname }}"
+        version_added: "2.3"
     tags:
         description: ["Comma separated list of tags to apply to the event."]
         required: false
@@ -114,6 +119,9 @@ try:
 except:
     HAS_DATADOG = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+
 
 def main():
     module = AnsibleModule(
@@ -126,6 +134,7 @@ def main():
             priority=dict(
                 required=False, default='normal', choices=['normal', 'low']
             ),
+            host=dict(required=False, default=None),
             tags=dict(required=False, default=None, type='list'),
             alert_type=dict(
                 required=False, default='info',
@@ -152,8 +161,11 @@ def main():
 
 def _post_event(module):
     try:
+        if module.params['host'] is None:
+            module.params['host'] = platform.node().split('.')[0]
         msg = api.Event.create(title=module.params['title'],
                                text=module.params['text'],
+                               host=module.params['host'],
                                tags=module.params['tags'],
                                priority=module.params['priority'],
                                alert_type=module.params['alert_type'],
