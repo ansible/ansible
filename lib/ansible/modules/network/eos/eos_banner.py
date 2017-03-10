@@ -36,21 +36,27 @@ extends_documentation_fragment: eos
 options:
   banner:
     description:
-      - Specifies the banner that should be
-        configured on the remote device.
+      - The C(banner) argument specifies the banner that should be
+        configured on the remote device.  Current this module supports
+        configuration of either C(login) or C(motd) banners.
     required: true
     default: null
-    choices: ['login', 'banner']
   text:
     description:
-      - The banner text that should be
+      - The C(text) argument specifics the banner text that should be
         present in the remote device running configuration.  This argument
-        accepts a multiline string. Requires I(state=present).
+        accepts a multiline string.
+    required: false
     default: null
   state:
     description:
-      - Specifies whether or not the configuration is
-        present in the current devices active running configuration.
+      - The C(state) argument specifies whether or not the configuration is
+        present in the current devices active running configuration.  When
+        this value is set to C(present), the configuration stanzas should be
+        in the current device configuration.  When this value is set to
+        C(absent), the configuration should not be in the current running
+        configuration.
+    required: false
     default: present
     choices: ['present', 'absent']
 """
