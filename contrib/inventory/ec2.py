@@ -1254,12 +1254,13 @@ class Ec2Inventory(object):
         if not self.all_elasticache_replication_groups and replication_group['Status'] != 'available':
             return
 
+        # Skip clusters we cannot address (e.g. private VPC subnet or clustered redis)
+        if replication_group['NodeGroups'][0]['PrimaryEndpoint'] is None or \
+           replication_group['NodeGroups'][0]['PrimaryEndpoint']['Address'] is None:
+            return
+
         # Select the best destination address (PrimaryEndpoint)
         dest = replication_group['NodeGroups'][0]['PrimaryEndpoint']['Address']
-
-        if not dest:
-            # Skip clusters we cannot address (e.g. private VPC subnet)
-            return
 
         # Add to index
         self.index[dest] = [region, replication_group['ReplicationGroupId']]
