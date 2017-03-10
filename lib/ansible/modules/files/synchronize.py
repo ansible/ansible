@@ -457,10 +457,11 @@ def main():
         # If the user specified a port value
         # Note:  The action plugin takes care of setting this to a port from
         # inventory if the user didn't specify an explicit dest_port
+        cmd += " --rsh "
         if dest_port is not None:
-            cmd += " --rsh 'ssh %s %s -o Port=%s'" % (private_key, ssh_opts, dest_port)
+            cmd += shlex_quote("ssh %s %s -o port=%s" % (private_key, ssh_opts, dest_port))
         else:
-            cmd += " --rsh 'ssh %s %s'" % (private_key, ssh_opts)
+            cmd += shlex_quote("ssh %s %s" % (private_key, ssh_opts))
 
     if rsync_path:
         cmd = cmd + " --rsync-path=%s" % (rsync_path)
@@ -502,6 +503,7 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.compat.six.moves import shlex_quote
 
 if __name__ == '__main__':
     main()
