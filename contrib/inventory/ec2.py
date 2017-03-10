@@ -132,6 +132,7 @@ from boto import ec2
 from boto import rds
 from boto import elasticache
 from boto import route53
+from boto import sts
 import six
 
 from ansible.module_utils import ec2 as ec2_utils
