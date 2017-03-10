@@ -29,7 +29,6 @@ options:
         attempt to execute all commands in non-privileged mode. If the value
         is not specified in the task, the value of environment variable
         C(ANSIBLE_NET_AUTHORIZE) will be used instead.
-    required: false
     default: no
     choices: ['yes', 'no']
   auth_pass:
@@ -43,6 +42,7 @@ options:
     description:
       - A dict object containing connection details.
     default: null
+    suboptions:
       host:
         description:
           - Specifies the DNS host name or address for connecting to the remote

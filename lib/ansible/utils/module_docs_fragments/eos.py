@@ -41,7 +41,6 @@ options:
   provider:
     description:
       - A dict object containing connection details.
-    required: false
     default: null
     suboptions:
       host:

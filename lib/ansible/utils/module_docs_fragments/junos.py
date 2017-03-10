@@ -25,8 +25,8 @@ options:
   provider:
     description:
       - A dict object containing connection details.
-    required: false
     default: null
+    suboptions:
       host:
         description:
           - Specifies the DNS host name or address for connecting to the remote
