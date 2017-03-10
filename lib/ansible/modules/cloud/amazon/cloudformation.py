@@ -99,6 +99,16 @@ options:
     required: false
     default: null
     version_added: "2.3"
+  delay:
+    description:
+    - Number of seconds to wait for the next retry. By default, if failed, this module will retry 3 times and wait 5 seconds for each time.
+    required: false
+    version_added: "2.4"
+  repeat:
+    description:
+    - Number of times to retry get_stack_facts operation. AWS API throttling mechanism fails Cloudformation module so we have to retry a couple of times.
+    required: false
+    version_added: "2.4"
 
 author: "James S. Martin (@jsmartin)"
 extends_documentation_fragment:
@@ -141,10 +151,12 @@ EXAMPLES = '''
       Stack: "ansible-cloudformation"
 
 # Removal example
-- name: tear down old deployment
+- name: tear down old deployment, retry 3 times with 5 seconds deplay for each retry
   cloudformation:
     stack_name: "ansible-cloudformation-old"
     state: "absent"
+    repeat: 3
+    delay: 5
 
 # Use a template from a URL
 - name: launch ansible cloudformation example
@@ -278,7 +290,7 @@ def get_stack_events(cfn, stack_name):
     return ret
 
 
-def create_stack(module, stack_params, cfn):
+def create_stack(module, stack_params, cfn, repeat, delay):
     if 'TemplateBody' not in stack_params and 'TemplateURL' not in stack_params:
         module.fail_json(msg="Either 'template' or 'template_url' is required when the stack does not exist.")
 
@@ -287,7 +299,7 @@ def create_stack(module, stack_params, cfn):
 
     try:
         cfn.create_stack(**stack_params)
-        result = stack_operation(cfn, stack_params['StackName'], 'CREATE')
+        result = stack_operation(cfn, stack_params['StackName'], 'CREATE', repeat, delay)
     except Exception as err:
         error_msg = boto_exception(err)
         module.fail_json(msg=error_msg)
@@ -296,7 +308,7 @@ def create_stack(module, stack_params, cfn):
     return result
 
 
-def update_stack(module, stack_params, cfn):
+def update_stack(module, stack_params, cfn, repeat, delay):
     if 'TemplateBody' not in stack_params and 'TemplateURL' not in stack_params:
         stack_params['UsePreviousTemplate'] = True
 
@@ -305,7 +317,7 @@ def update_stack(module, stack_params, cfn):
     # don't need to be updated.
     try:
         cfn.update_stack(**stack_params)
-        result = stack_operation(cfn, stack_params['StackName'], 'UPDATE')
+        result = stack_operation(cfn, stack_params['StackName'], 'UPDATE', repeat, delay)
     except Exception as err:
         error_msg = boto_exception(err)
         if 'No updates are to be performed.' in error_msg:
@@ -317,12 +329,12 @@ def update_stack(module, stack_params, cfn):
     return result
 
 
-def stack_operation(cfn, stack_name, operation):
+def stack_operation(cfn, stack_name, operation, repeat, delay):
     '''gets the status of a stack while it is created/updated/deleted'''
     existed = []
     while True:
         try:
-            stack = get_stack_facts(cfn, stack_name)
+            stack = get_stack_facts(cfn, stack_name, repeat, delay)
             existed.append('yes')
         except:
             # If the stack previously existed, and now can't be found then it's
@@ -361,11 +373,12 @@ def stack_operation(cfn, stack_name, operation):
             time.sleep(5)
     return {'failed': True, 'output':'Failed for unknown reasons.'}
 
-@AWSRetry.backoff(tries=3, delay=5)
-def describe_stacks(cfn, stack_name):
-    return cfn.describe_stacks(StackName=stack_name)
+def get_stack_facts(cfn, stack_name, repeat, delay):
 
-def get_stack_facts(cfn, stack_name):
+    @AWSRetry.backoff(tries=repeat, delay=delay)
+    def describe_stacks(cfn, stack_name):
+        return cfn.describe_stacks(StackName=stack_name)
+
     try:
         stack_response = describe_stacks(cfn, stack_name)
         stack_info = stack_response['Stacks'][0]
@@ -400,8 +413,9 @@ def main():
         template_url=dict(default=None, required=False),
         template_format=dict(default=None, choices=['json', 'yaml'], required=False),
         role_arn=dict(default=None, required=False),
-        tags=dict(default=None, type='dict')
-    )
+        tags=dict(default=None, type='dict'),
+        repeat=dict(required=False, default=3, type='int'),
+        delay=dict(required=False, default=5, type='int'))
     )
 
     module = AnsibleModule(
@@ -442,23 +456,26 @@ def main():
 
     result = {}
 
+    repeat = module.params['repeat']
+    delay = module.params['delay']
+
     try:
         region, ec2_url, aws_connect_kwargs = ansible.module_utils.ec2.get_aws_connection_info(module, boto3=True)
         cfn = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='cloudformation', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoCredentialsError as e:
         module.fail_json(msg=boto_exception(e))
 
-    stack_info = get_stack_facts(cfn, stack_params['StackName'])
+    stack_info = get_stack_facts(cfn, stack_params['StackName'], repeat, delay)
 
     if state == 'present':
         if not stack_info:
-            result = create_stack(module, stack_params, cfn)
+            result = create_stack(module, stack_params, cfn, repeat, delay)
         else:
-            result = update_stack(module, stack_params, cfn)
+            result = update_stack(module, stack_params, cfn, repeat, delay)
 
         # format the stack output
 
-        stack = get_stack_facts(cfn, stack_params['StackName'])
+        stack = get_stack_facts(cfn, stack_params['StackName'], repeat, delay)
         if result.get('stack_outputs') is None:
             # always define stack_outputs, but it may be empty
             result['stack_outputs'] = {}
@@ -483,12 +500,12 @@ def main():
         # so must describe the stack first
 
         try:
-            stack = get_stack_facts(cfn, stack_params['StackName'])
+            stack = get_stack_facts(cfn, stack_params['StackName'], repeat, delay)
             if not stack:
                 result = {'changed': False, 'output': 'Stack not found.'}
             else:
                 cfn.delete_stack(StackName=stack_params['StackName'])
-                result = stack_operation(cfn, stack_params['StackName'], 'DELETE')
+                result = stack_operation(cfn, stack_params['StackName'], 'DELETE', repeat, delay)
         except Exception as err:
             module.fail_json(msg=boto_exception(err), exception=traceback.format_exc())
 
