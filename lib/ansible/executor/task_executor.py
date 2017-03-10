@@ -774,13 +774,12 @@ class TaskExecutor:
         Returns the correct action plugin to handle the requestion task action
         '''
 
-        network_group_modules = frozenset(['eos', 'nxos', 'ios', 'iosxr', 'junos', 'vyos'])
         module_prefix = self._task.action.split('_')[0]
 
         # let action plugin override module, fallback to 'normal' action plugin otherwise
         if self._task.action in self._shared_loader_obj.action_loader:
             handler_name = self._task.action
-        elif all((module_prefix in network_group_modules, module_prefix in self._shared_loader_obj.action_loader)):
+        elif all((module_prefix in C.NETWORK_GROUP_MODULES, module_prefix in self._shared_loader_obj.action_loader)):
             handler_name = module_prefix
         else:
             handler_name = 'normal'
