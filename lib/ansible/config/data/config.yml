@@ -697,6 +697,7 @@ DEFAULT_LOG_PATH:
   default: ''
   desc: 'TODO: write it'
   env: [{name: ANSIBLE_LOG_PATH}]
+  expand_relative_paths: True
   ini:
   - {key: log_path, section: defaults}
   value_type: path
