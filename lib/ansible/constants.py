@@ -200,9 +200,10 @@ p, CONFIG_FILE = load_config_file()
 
 def dumps_config():
     lines = []
-    for section, config_dict in active_config_dict.items():
+    # sort by section to get a stable format
+    for section, config_dict in sorted(active_config_dict.items()):
         lines.append('[%s]' % section)
-        for config_item in config_dict.values():
+        for config_item_key, config_item in sorted(config_dict.items()):
             lines.append(str(config_item))
             lines.append('')
 
