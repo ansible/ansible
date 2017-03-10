@@ -176,9 +176,16 @@ class Inventory(object):
             if all not in mygroups:
                 all.add_host(host)
 
-            # clear ungrouped of any incorrectly stored by parser
-            if len(mygroups) > 2 and ungrouped in mygroups:
-                host.remove_group(ungrouped)
+            if ungrouped in mygroups:
+                # clear ungrouped of any incorrectly stored by parser
+                if set(mygroups).difference(set([all, ungrouped])):
+                    host.remove_group(ungrouped)
+            else:
+                # add ungrouped hosts to ungrouped
+                length = len(mygroups)
+                if length == 0 or (length == 1 and all in mygroups):
+                    ungrouped.add_host(host)
+
 
     def _match(self, str, pattern_str):
         try:
