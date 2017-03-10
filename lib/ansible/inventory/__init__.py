@@ -119,6 +119,7 @@ class Inventory(object):
         ungrouped = Group('ungrouped')
         all = Group('all')
         all.add_child_group(ungrouped)
+        base_groups = frozenset([all, ungrouped])
 
         self.groups = dict(all=all, ungrouped=ungrouped)
 
@@ -159,16 +160,22 @@ class Inventory(object):
 
         self._vars_plugins = [ x for x in vars_loader.all(self) ]
 
+        ### POST PROCESS groups and hosts after specific parser was invoked
+
+        group_names = set()
         # set group vars from group_vars/ files and vars plugins
         for g in self.groups:
             group = self.groups[g]
             group.vars = combine_vars(group.vars, self.get_group_variables(group.name))
             self.get_group_vars(group)
+            group_names.add(group.name)
 
+        host_names = set()
         # get host vars from host_vars/ files and vars plugins
         for host in self.get_hosts(ignore_limits=True, ignore_restrictions=True):
             host.vars = combine_vars(host.vars, self.get_host_variables(host.name))
             self.get_host_vars(host)
+            host_names.add(host.name)
 
             mygroups = host.get_groups()
 
@@ -178,7 +185,7 @@ class Inventory(object):
 
             if ungrouped in mygroups:
                 # clear ungrouped of any incorrectly stored by parser
-                if set(mygroups).difference(set([all, ungrouped])):
+                if set(mygroups).difference(base_groups):
                     host.remove_group(ungrouped)
             else:
                 # add ungrouped hosts to ungrouped
@@ -186,6 +193,9 @@ class Inventory(object):
                 if length == 0 or (length == 1 and all in mygroups):
                     ungrouped.add_host(host)
 
+        # warn if overloading identifier as both group and host
+        for conflict in group_names.intersection(host_names):
+            display.warning("Found both group and host with same name: %s" % conflict)
 
     def _match(self, str, pattern_str):
         try:
