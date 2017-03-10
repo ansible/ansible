@@ -168,7 +168,7 @@ BUFSIZE = 65536
 
 def crc32(path):
     ''' Return a CRC32 checksum of a file '''
-    return binascii.crc32(open(path).read()) & 0xffffffff
+    return binascii.crc32(open(path, 'rb').read()) & 0xffffffff
 
 def shell_escape(string):
     ''' Quote meta-characters in the args for the unix shell '''
@@ -799,7 +799,7 @@ def main():
                 # If download fails, raise a proper exception
                 if rsp is None:
                     raise Exception(info['msg'])
-                f = open(package, 'w')
+                f = open(package, 'wb')
                 # Read 1kb at a time to save on ram
                 while True:
                     data = rsp.read(BUFSIZE)
