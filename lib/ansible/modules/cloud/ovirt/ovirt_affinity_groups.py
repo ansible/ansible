@@ -298,18 +298,12 @@ def main():
         auth = module.params.pop('auth')
         connection = create_connection(auth)
         # Check if unsupported parameters were passed:
-        supported_41 = ('host_enforcing', 'host_rule', 'hosts')
-        if not check_support(
+        check_support(
             version='4.1',
             connection=connection,
             module=module,
-            params=supported_41,
-        ):
-            module.fail_json(
-                msg='Following parameters are supported since 4.1: {params}'.format(
-                    params=supported_41,
-                )
-            )
+            params=('host_enforcing', 'host_rule', 'hosts'),
+        )
         clusters_service = connection.system_service().clusters_service()
         vms_service = connection.system_service().vms_service()
         hosts_service = connection.system_service().hosts_service()

@@ -308,7 +308,7 @@ options:
     lease:
         description:
             - "Name of the storage domain this virtual machine lease reside on."
-        version_added: "2.3"
+        version_added: "2.4"
 notes:
     - "If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
        If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).

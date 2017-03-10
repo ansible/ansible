@@ -414,8 +414,8 @@ def check_support(version, connection, module, params):
     for param in params:
         if module.params.get(param) is not None:
             if not (
-                LooseVersion(sdk_version.VERSION) >= version
-                and api_version >= version
+                LooseVersion(sdk_version.VERSION) >= version and
+                api_version >= version
             ):
                 module.fail_json(
                     msg='Following parameters are supported since 4.1: {params}'.format(
