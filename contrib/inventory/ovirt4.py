@@ -60,11 +60,15 @@ Author: Ondra Machacek (@machacekondra)
 """
 
 import argparse
-import ConfigParser
 import os
 import sys
 
 from collections import defaultdict
+
+try:
+    import ConfigParser as configparser
+except ImportError:
+    import configparser
 
 try:
     import json
@@ -118,7 +122,7 @@ def create_connection():
     config_path = os.environ.get('OVIRT_INI_PATH', default_path)
 
     # Create parser and add ovirt section if it doesn't exist:
-    config = ConfigParser.SafeConfigParser(
+    config = configparser.SafeConfigParser(
         defaults={
             'ovirt_url': None,
             'ovirt_username': None,
@@ -135,8 +139,8 @@ def create_connection():
         url=config.get('ovirt', 'ovirt_url'),
         username=config.get('ovirt', 'ovirt_username'),
         password=config.get('ovirt', 'ovirt_password'),
-        ca_file=config.get('ovirt', 'ovirt_ca_file', None),
-        insecure=config.get('ovirt', 'ovirt_ca_file', None) is None,
+        ca_file=config.get('ovirt', 'ovirt_ca_file'),
+        insecure=config.get('ovirt', 'ovirt_ca_file') is None,
     )
 
 
