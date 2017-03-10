@@ -5,18 +5,18 @@
     banner: login
     state: absent
     authorize: yes
-    transport: "{{ cli }}"
+    provider: "{{ cli }}"
 
 - name: Set login
   eos_banner:
     banner: login
     text: |
-      a 汉语 bb
       this is my login banner
       that has a multiline
       string
     state: present
     authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - debug:
@@ -25,8 +25,8 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'a 汉语 bb' in result.commands" # does this break due to "contains?"
-      - "'that has a multiline' in result.commands" # does this break due to "contains?"
+      - "'this is my login banner' in result.commands"
+      - "'that has a multiline' in result.commands"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'ansible_1' in result.session_name"
 
@@ -34,20 +34,20 @@
   eos_banner:
     banner: login
     text: |
-      a 汉语 bb
       this is my login banner
       that has a multiline
       string
     state: present
     authorize: yes
+    provider: "{{ cli }}"
   register: result
 
 - assert:
     that:
       - "result.changed == false"
-      - "result.commands is not defined"
+      - "result.commands | length == 0"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
-      - "result.session_name contains 'ansible_1'"
+      - "result.session_name is not defined"
 
 
 # FIXME add in tests for everything defined in docs
