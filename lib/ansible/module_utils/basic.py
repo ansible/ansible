@@ -1892,7 +1892,7 @@ class AnsibleModule(object):
             if not d:
                 continue
             path = os.path.join(d, arg)
-            if os.path.exists(path) and is_executable(path):
+            if os.path.exists(path) and not os.path.isdir(path) and is_executable(path):
                 bin_path = path
                 break
         if required and bin_path is None:
