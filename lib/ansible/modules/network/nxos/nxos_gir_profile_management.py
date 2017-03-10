@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_gir_profile_management
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Create a maintenance-mode or normal-mode profile for GIR.
 description:
@@ -207,7 +208,6 @@ def main():
             changed = True
             end_state = invoke('get_existing', module)
 
-    result['connected'] = module.connected
     result['changed'] = changed
     if module._verbosity > 0:
         end_state = invoke('get_existing', module)

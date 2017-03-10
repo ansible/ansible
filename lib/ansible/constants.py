@@ -195,6 +195,7 @@ MERGE_MULTIPLE_CLI_TAGS = get_config(p, DEFAULTS, 'merge_multiple_cli_tags', 'AN
 
 #### GENERALLY CONFIGURABLE THINGS ####
 DEFAULT_DEBUG             = get_config(p, DEFAULTS, 'debug',            'ANSIBLE_DEBUG',            False, value_type='boolean')
+DEFAULT_VERBOSITY         = get_config(p, DEFAULTS, 'verbosity',        'ANSIBLE_VERBOSITY',        0, value_type='integer')
 DEFAULT_HOST_LIST         = get_config(p, DEFAULTS,'inventory', 'ANSIBLE_INVENTORY', DEPRECATED_HOST_LIST, value_type='path')
 DEFAULT_ROLES_PATH        = get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       '/etc/ansible/roles', value_type='pathlist', expand_relative_paths=True)
 DEFAULT_REMOTE_TMP        = get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '~/.ansible/tmp')
@@ -246,7 +247,7 @@ DEFAULT_NO_TARGET_SYSLOG   = get_config(p, DEFAULTS, 'no_target_syslog', 'ANSIBL
 ALLOW_WORLD_READABLE_TMPFILES = get_config(p, DEFAULTS, 'allow_world_readable_tmpfiles', None, False, value_type='boolean')
 
 # selinux
-DEFAULT_SELINUX_SPECIAL_FS = get_config(p, 'selinux', 'special_context_filesystems', None, 'fuse, nfs, vboxsf, ramfs', value_type='list')
+DEFAULT_SELINUX_SPECIAL_FS = get_config(p, 'selinux', 'special_context_filesystems', None, 'fuse, nfs, vboxsf, ramfs, 9p', value_type='list')
 DEFAULT_LIBVIRT_LXC_NOSECLABEL = get_config(p, 'selinux', 'libvirt_lxc_noseclabel', 'LIBVIRT_LXC_NOSECLABEL', False, value_type='boolean')
 
 ### PRIVILEGE ESCALATION ###
@@ -297,6 +298,8 @@ DEFAULT_VARS_PLUGIN_PATH       = get_config(p, DEFAULTS, 'vars_plugins',       '
 DEFAULT_FILTER_PLUGIN_PATH     = get_config(p, DEFAULTS, 'filter_plugins',     'ANSIBLE_FILTER_PLUGINS', '~/.ansible/plugins/filter:/usr/share/ansible/plugins/filter', value_type='pathlist')
 DEFAULT_TEST_PLUGIN_PATH       = get_config(p, DEFAULTS, 'test_plugins',       'ANSIBLE_TEST_PLUGINS', '~/.ansible/plugins/test:/usr/share/ansible/plugins/test', value_type='pathlist')
 DEFAULT_STRATEGY_PLUGIN_PATH   = get_config(p, DEFAULTS, 'strategy_plugins',   'ANSIBLE_STRATEGY_PLUGINS', '~/.ansible/plugins/strategy:/usr/share/ansible/plugins/strategy', value_type='pathlist')
+
+NETWORK_GROUP_MODULES          = get_config(p, DEFAULTS, 'network_group_modules','NETWORK_GROUP_MODULES', ['eos', 'nxos', 'ios', 'iosxr', 'junos', 'vyos'], value_type='list')
 
 DEFAULT_STRATEGY               = get_config(p, DEFAULTS, 'strategy',           'ANSIBLE_STRATEGY', 'linear')
 DEFAULT_STDOUT_CALLBACK        = get_config(p, DEFAULTS, 'stdout_callback',    'ANSIBLE_STDOUT_CALLBACK', 'default')
@@ -363,6 +366,8 @@ GALAXY_SERVER                  = get_config(p, 'galaxy', 'server', 'ANSIBLE_GALA
 GALAXY_IGNORE_CERTS            = get_config(p, 'galaxy', 'ignore_certs', 'ANSIBLE_GALAXY_IGNORE', False, value_type='boolean')
 # this can be configured to blacklist SCMS but cannot add new ones unless the code is also updated
 GALAXY_SCMS                    = get_config(p, 'galaxy', 'scms', 'ANSIBLE_GALAXY_SCMS', 'git, hg', value_type='list')
+GALAXY_ROLE_SKELETON = get_config(p, 'galaxy', 'role_skeleton', 'ANSIBLE_GALAXY_ROLE_SKELETON', None, value_type='path')
+GALAXY_ROLE_SKELETON_IGNORE = get_config(p, 'galaxy', 'role_skeleton_ignore', 'ANSIBLE_GALAXY_ROLE_SKELETON_IGNORE', ['^.git$', '^.*/.git_keep$'], value_type='list')
 
 STRING_TYPE_FILTERS = get_config(p, 'jinja2', 'dont_type_filters', 'ANSIBLE_STRING_TYPE_FILTERS', ['string', 'to_json', 'to_nice_json', 'to_yaml', 'ppretty', 'json'], value_type='list' )
 

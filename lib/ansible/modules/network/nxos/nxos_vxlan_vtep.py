@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_vxlan_vtep
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages VXLAN Network Virtualization Endpoint (NVE).
 description:
@@ -371,7 +372,6 @@ def main():
     else:
         result['updates'] = []
 
-    result['connected'] = module.connected
     if module._verbosity > 0:
         end_state = invoke('get_existing', module, args)
         result['end_state'] = end_state

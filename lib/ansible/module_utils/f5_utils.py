@@ -282,17 +282,37 @@ class AnsibleF5Client(object):
             )
 
 
-class AnsibleF5Parameters(with_metaclass(ABCMeta, object)):
+class AnsibleF5Parameters(object):
     def __init__(self, params=None):
         self._values = defaultdict(lambda: None)
         if params:
-            for k in params:
-                self._values[k] = params[k]
+            for k,v in iteritems(params):
+                if self.api_map is not None and k in self.api_map:
+                    dict_to_use = self.api_map
+                    map_key = self.api_map[k]
+                else:
+                    dict_to_use = self._values
+                    map_key = k
 
-    @abstractproperty
-    def param_api_map(self):
-        """Dict used to map module parameters to API parameters"""
-        pass
+                # Handle weird API parameters like `dns.proxy.__iter__` by
+                # using a map provided by the module developer
+                class_attr = getattr(type(self), map_key, None)
+                if isinstance(class_attr, property):
+                    # There is a mapped value for the api_map key
+                    if class_attr.fset is None:
+                        # If the mapped value does not have an associated setter
+                        self._values[map_key] = v
+                    else:
+                        # The mapped value has a setter
+                        setattr(self, map_key, v)
+                else:
+                    # If the mapped value is not a @property
+                    self._values[map_key] = v
+
+    def __getattr__(self, item):
+        # Ensures that properties that weren't defined, and therefore stashed
+        # in the `_values` dict, will be retrievable.
+        return self._values[item]
 
     @property
     def partition(self):
@@ -303,40 +323,6 @@ class AnsibleF5Parameters(with_metaclass(ABCMeta, object)):
     @partition.setter
     def partition(self, value):
         self._values['partition'] = value
-
-    @classmethod
-    def from_api(cls, params):
-        """Create Parameters instance from values return by the API
-
-        The API returns values found on the "values" side of the
-        param_api_map dictionary. These need to be mapped to the names
-        of keys expected by the Parameters class (the "key" side of
-        the param_api_map dictionary)
-
-        :param params:
-        :return:
-        """
-        for key,value in iteritems(cls.param_api_map):
-            params[key] = params.pop(value, None)
-        p = cls(params)
-        return p
-
-    def __getattr__(self, item):
-        return self._values[item]
-
-    def api_params(self):
-        return self._filter_params(self._api_params_from_map())
-
-    def _api_params_from_map(self):
-        result = dict()
-        for k,v in iteritems(self.param_api_map):
-            value = getattr(self, k)
-            result[v] = value
-        return result
-
-    def to_return(self):
-        result = self._values
-        return self._filter_params(result)
 
     def _filter_params(self, params):
         return dict((k, v) for k, v in iteritems(params) if v is not None)

@@ -114,7 +114,6 @@ options:
   tags:
     description:
       - tag:value pairs to add to the volume after creation
-    type: dict
     required: false
     default: {}
     version_added: "2.3"

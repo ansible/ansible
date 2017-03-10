@@ -49,7 +49,6 @@ options:
     description:
       - List of VMs to assign to or remove from the rule.
     required: true
-    type: list
     aliases: [ 'vm' ]
   state:
     description:

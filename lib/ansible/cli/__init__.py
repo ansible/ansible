@@ -28,7 +28,6 @@ import time
 import yaml
 import re
 import getpass
-import signal
 import subprocess
 from abc import ABCMeta, abstractmethod
 
@@ -175,7 +174,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # enforce no newline chars at the end of passwords
         if vault_pass:
-            vault_pass = to_text(vault_pass, errors='surrogate_or_strict', nonstring='simplerepr').strip()
+            vault_pass = to_bytes(vault_pass, errors='surrogate_or_strict', nonstring='simplerepr').strip()
 
         return vault_pass
 
@@ -191,7 +190,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             pass
 
         if new_vault_pass:
-            new_vault_pass = to_text(new_vault_pass, errors='surrogate_or_strict', nonstring='simplerepr').strip()
+            new_vault_pass = to_bytes(new_vault_pass, errors='surrogate_or_strict', nonstring='simplerepr').strip()
 
         return new_vault_pass
 
@@ -288,7 +287,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # base opts
         parser = SortedOptParser(usage, version=CLI.version("%prog"))
-        parser.add_option('-v','--verbose', dest='verbosity', default=0, action="count",
+        parser.add_option('-v','--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
             help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
 
         if inventory_opts:
@@ -477,6 +476,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         else:
             cpath = C.DEFAULT_MODULE_PATH
         result = result + "\n  configured module search path = %s" % cpath
+        result = result + "\n  python version = %s" % ''.join(sys.version.splitlines())
         return result
 
     @staticmethod
@@ -641,7 +641,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             except (OSError, IOError) as e:
                 raise AnsibleError("Could not read vault password file %s: %s" % (this_path, e))
 
-        return to_text(vault_pass, errors='surrogate_or_strict')
+        return vault_pass
 
     def get_opt(self, k, defval=""):
         """

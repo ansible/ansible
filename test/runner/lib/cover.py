@@ -41,7 +41,12 @@ def command_coverage_combine(args):
     ansible_path = os.path.abspath('lib/ansible/') + '/'
     root_path = os.getcwd() + '/'
 
+    counter = 0
+
     for coverage_file in coverage_files:
+        counter += 1
+        display.info('[%4d/%4d] %s' % (counter, len(coverage_files), coverage_file), verbosity=2)
+
         original = coverage.CoverageData()
 
         if os.path.getsize(coverage_file) == 0:
@@ -55,7 +60,7 @@ def command_coverage_combine(args):
             continue
 
         for filename in original.measured_files():
-            arcs = original.arcs(filename)
+            arcs = set(original.arcs(filename))
 
             if '/ansible_modlib.zip/ansible/' in filename:
                 new_name = re.sub('^.*/ansible_modlib.zip/ansible/', ansible_path, filename)
@@ -72,9 +77,9 @@ def command_coverage_combine(args):
                 filename = new_name
 
             if filename not in arc_data:
-                arc_data[filename] = []
+                arc_data[filename] = set()
 
-            arc_data[filename] += arcs
+            arc_data[filename].update(arcs)
 
     updated = coverage.CoverageData()
 
@@ -83,7 +88,7 @@ def command_coverage_combine(args):
             display.warning('Invalid coverage path: %s' % filename)
             continue
 
-        updated.add_arcs({filename: arc_data[filename]})
+        updated.add_arcs({filename: list(arc_data[filename])})
 
     if not args.explain:
         updated.write_file(COVERAGE_FILE)

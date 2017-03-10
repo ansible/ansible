@@ -236,6 +236,15 @@ class StrategyBase:
             host_list = [task_host]
         return host_list
 
+    def get_delegated_hosts(self, result, task):
+
+        host_name = task.delegate_to
+        actual_host = self._inventory.get_host(host_name)
+        if actual_host is None:
+            actual_host = Host(name=host_name)
+
+        return [actual_host]
+
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
         '''
         Reads results off the final queue and takes appropriate action
@@ -476,20 +485,12 @@ class StrategyBase:
 
                     if 'ansible_facts' in result_item:
 
-                        # if delegated fact and we are delegating facts, we need to change target host for them
-                        if original_task.delegate_to is not None and original_task.delegate_facts:
-                            item = result_item.get(loop_var, None)
-                            if item is not None:
-                                task_vars[loop_var] = item
-                            host_name = original_task.delegate_to
-                            actual_host = self._inventory.get_host(host_name)
-                            if actual_host is None:
-                                actual_host = Host(name=host_name)
-                        else:
-                            actual_host = original_host
-
-                        host_list = self.get_task_hosts(iterator, actual_host, original_task)
                         if original_task.action == 'include_vars':
+
+                            if original_task.delegate_to is not None:
+                                host_list = self.get_delegated_hosts(result_item, original_task)
+                            else:
+                                host_list = self.get_task_hosts(iterator, original_host, original_task)
 
                             for (var_name, var_value) in iteritems(result_item['ansible_facts']):
                                 # find the host we're actually referring too here, which may
@@ -497,6 +498,12 @@ class StrategyBase:
                                 for target_host in host_list:
                                     self._variable_manager.set_host_variable(target_host, var_name, var_value)
                         else:
+                            # if delegated fact and we are delegating facts, we need to change target host for them
+                            if original_task.delegate_to is not None and original_task.delegate_facts:
+                                host_list = self.get_delegated_hosts(result_item, original_task)
+                            else:
+                                host_list = self.get_task_hosts(iterator, original_host, original_task)
+
                             for target_host in host_list:
                                 if original_task.action == 'set_fact':
                                     self._variable_manager.set_nonpersistent_facts(target_host, result_item['ansible_facts'].copy())

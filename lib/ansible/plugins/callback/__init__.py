@@ -109,6 +109,20 @@ class CallbackBase:
                     self._display.deprecated(**warning)
                 del res['deprecations']
 
+    def _handle_exception(self, result):
+
+        if 'exception' in result:
+            msg = "An exception occurred during task execution. "
+            if self._display.verbosity < 3:
+                # extract just the actual error message from the exception text
+                error = result['exception'].strip().split('\n')[-1]
+                msg += "To see the full traceback, use -vvv. The error was: %s" % error
+            else:
+                msg = "The full traceback is:\n" + result['exception']
+                del result['exception']
+
+            self._display.display(msg, color=C.COLOR_ERROR)
+
     def _get_diff(self, difflist):
 
         if not isinstance(difflist, list):
@@ -196,6 +210,7 @@ class CallbackBase:
     def _clean_results(self, result, task_name):
         if 'invocation' in result and task_name in ['debug']:
             del result['invocation']
+
 
     def set_play_context(self, play_context):
         pass

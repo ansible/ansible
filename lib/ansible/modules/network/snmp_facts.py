@@ -209,7 +209,7 @@ def main():
 
     # Verify that we receive a community when using snmp v2
     if m_args['version'] == "v2" or m_args['version'] == "v2c":
-        if m_args['community'] == False:
+        if m_args['community'] is False:
             module.fail_json(msg='Community not set when using snmp version 2')
 
     if m_args['version'] == "v3":

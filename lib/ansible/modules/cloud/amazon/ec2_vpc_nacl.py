@@ -448,7 +448,7 @@ def find_default_vpc_nacl(vpc_id, client, module):
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=str(e))
     nacls = response['NetworkAcls']
-    return [n['NetworkAclId'] for n in nacls if n['IsDefault'] == True]
+    return [n['NetworkAclId'] for n in nacls if n['IsDefault'] is True]
 
 
 def find_subnet_ids_by_nacl_id(nacl_id, client, module):

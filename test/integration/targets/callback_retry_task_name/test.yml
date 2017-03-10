@@ -1,0 +1,28 @@
+---
+- hosts: testhost
+  gather_facts: False
+  vars:
+      foo: blippy
+  tasks:
+  - name: First run {{ foo }}
+    command: echo "18236 callback task template fix OUTPUT 1"
+    register: the_result_var
+
+  - block:
+      - name: "{{ the_result_var.stdout }}"
+        command: echo "18236 callback task template fix OUTPUT 2"
+        register: the_result_var
+        retries: 1
+        delay: 1
+        until: False
+        ignore_errors: true
+
+      #  - name: assert task_name was
+
+  - name: "{{ the_result_var.stdout }}"
+    command: echo "18236 callback taskadfadf template fix OUTPUT 3"
+    register: the_result_var
+
+  - name: "{{ the_result_var.stdout }}"
+    debug:
+        msg: "nothing to see here."

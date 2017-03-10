@@ -45,7 +45,7 @@ class ActionModule(_ActionModule):
 
         if self._play_context.connection != 'local':
             return dict(
-                fail=True,
+                failed=True,
                 msg='invalid connection specified, expected connection=local, '
                     'got %s' % self._play_context.connection
             )
@@ -87,7 +87,7 @@ class ActionModule(_ActionModule):
             # enable mode and not config module
             rc, out, err = connection.exec_command('prompt()')
             while str(out).strip().endswith(')#'):
-                display.debug('wrong context, sending exit to device', self._play_context.remote_addr)
+                display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
                 connection.exec_command('exit')
                 rc, out, err = connection.exec_command('prompt()')
 

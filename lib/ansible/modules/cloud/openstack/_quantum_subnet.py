@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['deprecated'],
 DOCUMENTATION = '''
 ---
 module: quantum_subnet
+author: "Benno Joy (@bennojoy)"
 deprecated: Deprecated in 2.0. Use M(os_subnet) instead.
 version_added: "1.2"
 short_description: Add/remove subnet from a network
@@ -200,7 +201,7 @@ def _get_net_id(neutron, module):
     try:
         networks = neutron.list_networks(**kwargs)
     except Exception as e:
-        module.fail_json("Error in listing neutron networks: %s" % e.message)
+        module.fail_json(msg="Error in listing neutron networks: %s" % e.message)
     if not networks['networks']:
         return None
     return networks['networks'][0]['id']

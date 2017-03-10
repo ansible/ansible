@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_switchport
+extends_documentation_fragment: nxos
 version_added: "2.1"
 short_description: Manages Layer 2 switchport interfaces.
 description:

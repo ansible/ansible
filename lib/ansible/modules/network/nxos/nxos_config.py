@@ -25,6 +25,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: nxos_config
+extends_documentation_fragment: nxos
 version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
 short_description: Manage Cisco NXOS configuration sections
@@ -325,7 +326,7 @@ def main():
     result = dict(changed=False, warnings=warnings)
 
     if module.params['backup']:
-        result['__backup__'] = module.config.get_config()
+        result['__backup__'] = get_config(module)
 
     if any((module.params['src'], module.params['lines'])):
         run(module, result)

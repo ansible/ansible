@@ -33,6 +33,7 @@ description:
     for segmenting configuration into sections.  This module provides
     an implementation for working with IOS configuration sections in
     a deterministic way.
+extends_documentation_fragment: ios
 options:
   lines:
     description:

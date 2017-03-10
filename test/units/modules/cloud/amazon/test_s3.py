@@ -1,13 +1,5 @@
-from nose.plugins.skip import SkipTest
-
-try:
-    import boto
-    HAS_BOTO = True
-except ImportError:
-    HAS_BOTO = False
-
-if not HAS_BOTO:
-    raise SkipTest("test_s3.py requires the python module 'boto3' and 'botocore'")
+import pytest
+boto = pytest.importorskip("boto")
 
 import unittest
 import ansible.modules.cloud.amazon.s3 as s3
@@ -40,7 +32,3 @@ class TestUrlparse(unittest.TestCase):
         s3_url="http://bla.blubb"
         actual = s3.get_s3_connection(aws_connect_kwargs, location, rgw, s3_url)
         self.assertEqual("bla.blubb", actual.host)
-
-
-if __name__ == '__main__':
-    unittest.main()

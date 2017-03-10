@@ -25,6 +25,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: nxos_command
+extends_documentation_fragment: nxos
 version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
 short_description: Run arbitrary command on Cisco NXOS devices
@@ -161,14 +162,14 @@ from ansible.module_utils.nxos import run_commands
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
-from ansible.module_utils.netcli import Conditional
+from ansible.module_utils.netcli import Conditional, FailedConditionalError
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 
 def to_lines(stdout):
     lines = list()
     for item in stdout:
-        if isinstance(item, basestring):
+        if isinstance(item, string_types):
             item = str(item).split('\n')
         lines.append(item)
     return lines
@@ -241,11 +242,15 @@ def main():
         responses = run_commands(module, commands)
 
         for item in list(conditionals):
-            if item(responses):
-                if match == 'any':
-                    conditionals = list()
-                    break
-                conditionals.remove(item)
+            try:
+                if item(responses):
+                    if match == 'any':
+                        conditionals = list()
+                        break
+                    conditionals.remove(item)
+            except FailedConditionalError:
+                exc = get_exception()
+                module.fail_json(msg=str(exc))
 
         if not conditionals:
             break

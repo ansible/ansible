@@ -62,7 +62,7 @@ options:
   password:
     description:
       - The password to connect to the jenkins server with.
-    require: false
+    required: false
     default: null
   args:
     description:

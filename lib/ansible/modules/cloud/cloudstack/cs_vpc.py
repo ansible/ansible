@@ -207,7 +207,12 @@ tags:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together,
+)
 
 
 class AnsibleCloudStackVpc(AnsibleCloudStack):
@@ -251,11 +256,11 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
             'projectid': self.get_project(key='id'),
             'zoneid': self.get_zone(key='id'),
         }
-        vpcs = self.cs.listVPCs()
+        vpcs = self.cs.listVPCs(**args)
         if vpcs:
             vpc_name = self.module.params.get('name')
             for v in vpcs['vpc']:
-                if vpc_name.lower() in [ v['name'].lower(), v['id']]:
+                if vpc_name.lower() in [v['name'].lower(), v['id']]:
                     self.vpc = v
                     break
         return self.vpc
@@ -344,7 +349,7 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
 
 
 def main():
-    argument_spec=cs_argument_spec()
+    argument_spec = cs_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True),
         cidr=dict(default=None),
@@ -386,6 +391,7 @@ def main():
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

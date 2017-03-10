@@ -31,7 +31,6 @@ options:
   name:
     description:
       - The name of the snapshot we want to create, copy, delete
-    type: string
     required: yes
   state:
     description:
@@ -40,25 +39,21 @@ options:
   replication_id:
     description:
       - The name of the existing replication group to make the snapshot.
-    type: string
     required: no
     default: null
   cluster_id:
     description:
       - The name of an existing cache cluster in the replication group to make the snapshot.
-    type: string
     required: no
     default: null
   target:
     description:
       - The name of a snapshot copy
-    type: string
     required: no
     default: null
   bucket:
     description:
       - The s3 bucket to which the snapshot is exported
-    type: string
     required: no
     default: null
 """

@@ -27,6 +27,7 @@ DOCUMENTATION = '''
 ---
 module: ovirt_external_providers_facts
 short_description: Retrieve facts about one or more oVirt external providers
+author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
     - "Retrieve facts about one or more oVirt external providers."
@@ -119,7 +120,8 @@ def main():
     check_sdk(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         external_providers_service = _external_provider_service(
             provider_type=module.params.pop('type'),
             system_service=connection.system_service(),
@@ -148,7 +150,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == '__main__':

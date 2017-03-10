@@ -33,6 +33,7 @@ description:
     on Cisco IOS-XR devices.  It provides an option to configure host system
     parameters or remove those parameters from the device active
     configuration.
+extends_documentation_fragment: iosxr
 options:
   hostname:
     description:
@@ -257,10 +258,8 @@ def main():
     result['commands'] = commands
 
     if commands:
-        commit = not module.check_mode
-        response = load_config(module, commands, commit=commit)
-        if response.get('diff') and module._diff:
-            result['diff'] = {'prepared': response.get('diff')}
+        if not module.check_mode:
+            load_config(module, commands, commit=True)
         result['changed'] = True
 
     module.exit_json(**result)

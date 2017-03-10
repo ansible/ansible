@@ -2179,6 +2179,17 @@ def vlanAccessMapConfig(
 # EOM
 
 
+def checkVlanNameNotAssigned(
+        obj, deviceType, prompt, timeout, vlanId, vlanName):
+    retVal = "ok"
+    command = "display vlan id " + vlanId + " \n"
+    retVal = waitForDeviceResponse(command, prompt, timeout, obj)
+    if(retVal.find(vlanName) != -1):
+        return "Nok"
+    return retVal
+# EOM
+
+
 # Utility Method to create vlan
 def createVlan(
         obj, deviceType, prompt, timeout, vlanArg1, vlanArg2, vlanArg3,
@@ -2194,7 +2205,12 @@ def createVlan(
         command = vlanArg2 + " "
         value = checkSanityofVariable(deviceType, "vlan_name", vlanArg3)
         if(value == "ok"):
-            command = command + vlanArg3
+            value = checkVlanNameNotAssigned(obj, deviceType, prompt, timeout,
+                                             vlanArg1, vlanArg3)
+            if(value == "ok"):
+                command = command + vlanArg3
+            else:
+                command = "\n"
         else:
             retVal = "Error-139"
             return retVal
@@ -3118,7 +3134,7 @@ def enterEnableModeForDevice(enablePassword, timeout, obj):
     flag = False
     retVal = ""
     count = 5
-    while (flag is False):
+    while not flag:
         # If wait time is execeeded.
         if(count == 0):
             flag = True
@@ -3168,7 +3184,7 @@ def waitForDeviceResponse(command, prompt, timeout, obj):
     obj.send(command)
     flag = False
     retVal = ""
-    while (flag is False):
+    while not flag:
         time.sleep(1)
         try:
             buffByte = obj.recv(9999)
@@ -3179,7 +3195,10 @@ def waitForDeviceResponse(command, prompt, timeout, obj):
             if(gotit != -1):
                 flag = True
         except:
-            retVal = retVal + "\n Error-101"
+            if prompt != "(yes/no)?":
+                retVal = retVal + "\n Error-101"
+            else:
+                retVal = retVal
             flag = True
     return retVal
 # EOM

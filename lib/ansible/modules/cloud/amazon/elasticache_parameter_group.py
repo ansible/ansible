@@ -20,7 +20,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = """
 ---
-module: elasticache_group_parameter
+module: elasticache_parameter_group
 short_description: Manage cache security groups in Amazon Elasticache.
 description:
   - Manage cache security groups in Amazon Elasticache.
@@ -33,12 +33,10 @@ options:
       - The name of the cache parameter group family that the cache parameter group can be used with.
     choices: ['memcached1.4', 'redis2.6', 'redis2.8', 'redis3.2']
     required: yes
-    type: string
   name:
     description:
      - A user-specified name for the cache parameter group.
     required: yes
-    type: string
   description:
     description:
       - A user-specified description for the cache parameter group.
@@ -51,7 +49,6 @@ options:
     description:
       - A user-specified list of parameters to reset or modify for the cache parameter group.
     required: no
-    type: dict
     default: None
 """
 
@@ -167,7 +164,7 @@ def check_valid_modification(module, values, modifiable_params):
 
         # check valid modifiable parameters
         if parameter not in modifiable_params:
-            module.fail_json("%s is not a modifiable parameter. Valid parameters to modify are: %s." % (parameter, modifiable_params.keys()))
+            module.fail_json(msg="%s is not a modifiable parameter. Valid parameters to modify are: %s." % (parameter, modifiable_params.keys()))
 
         # check allowed datatype for modified parameters
         str_to_type = {"integer": int, "string": text_type}

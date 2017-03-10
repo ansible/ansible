@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_install_os
+extends_documentation_fragment: nxos
 short_description: Set boot options like boot image and kickstart image.
 description:
     - Install an operating system by setting the boot options like boot
@@ -210,7 +211,7 @@ def main():
                        kickstart_image_file):
         changed = True
 
-    if not module.check_mode and changed == True:
+    if not module.check_mode and changed is True:
         set_boot_options(module,
                          system_image_file,
                          kickstart=kickstart_image_file)

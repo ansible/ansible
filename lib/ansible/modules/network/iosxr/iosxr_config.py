@@ -31,6 +31,7 @@ description:
     for segmenting configuration into sections.  This module provides
     an implementation for working with IOS XR configuration sections in
     a deterministic way.
+extends_documentation_fragment: iosxr
 options:
   lines:
     description:
@@ -161,7 +162,6 @@ EXAMPLES = """
 - name: load a config from disk and replace the current config
   iosxr_config:
     src: config.cfg
-    update: replace
     backup: yes
 """
 
@@ -180,7 +180,7 @@ backup_path:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.iosxr import load_config,get_config
-from ansible.module_utils.iosxr import iosxr_argument_spec, check_args
+from ansible.module_utils.iosxr import iosxr_argument_spec
 
 DEFAULT_COMMIT_COMMENT = 'configured by iosxr_config'
 

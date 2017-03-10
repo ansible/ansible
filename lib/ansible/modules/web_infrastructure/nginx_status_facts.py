@@ -135,7 +135,9 @@ class NginxStatusFacts(object):
             return result
 
         result['nginx_status_facts']['data'] = data
-        match = re.match(r'Active connections: ([0-9]+) \nserver accepts handled requests\n ([0-9]+) ([0-9]+) ([0-9]+) \nReading: ([0-9]+) Writing: ([0-9]+) Waiting: ([0-9]+)', data, re.S)
+        expr = r'Active connections: ([0-9]+) \nserver accepts handled requests\n ([0-9]+) ([0-9]+) ([0-9]+) \n' \
+            r'Reading: ([0-9]+) Writing: ([0-9]+) Waiting: ([0-9]+)'
+        match = re.match(expr, data, re.S)
         if match:
             result['nginx_status_facts']['active_connections'] = int(match.group(1))
             result['nginx_status_facts']['accepts'] = int(match.group(2))
@@ -145,6 +147,7 @@ class NginxStatusFacts(object):
             result['nginx_status_facts']['writing'] = int(match.group(6))
             result['nginx_status_facts']['waiting'] = int(match.group(7))
         return result
+
 
 def main():
     global module
@@ -159,6 +162,7 @@ def main():
     nginx_status_facts = NginxStatusFacts().run()
     result = dict(changed=False, ansible_facts=nginx_status_facts)
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

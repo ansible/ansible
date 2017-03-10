@@ -169,7 +169,7 @@ def delete_keys(session, to_delete, check_mode):
         return
 
     for key in to_delete:
-        session.request('DELETE', API_BASE + '/user/keys/%s' % key[id])
+        session.request('DELETE', API_BASE + '/user/keys/%s' % key["id"])
 
 
 def ensure_key_absent(session, name, check_mode):

@@ -27,7 +27,6 @@ DOCUMENTATION = """
 module: pn_ospfarea
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
-version: 1.0
 short_description: CLI command to add/remove ospf area to/from a vrouter.
 description:
   - Execute vrouter-ospf-add, vrouter-ospf-remove command.

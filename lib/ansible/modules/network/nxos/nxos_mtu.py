@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_mtu
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages MTU settings on Nexus switch.
 description:

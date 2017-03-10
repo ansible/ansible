@@ -38,6 +38,7 @@ description:
     use a custom pager that can cause this module to hang.  If the
     value of the environment variable C(ANSIBLE_VYOS_TERMINAL_LENGTH)
     is not set, the default number of 10000 is used.
+extends_documentation_fragment: vyos
 options:
   commands:
     description:
@@ -134,6 +135,7 @@ warnings:
 import time
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.six import string_types
@@ -185,7 +187,11 @@ def main():
     commands = parse_commands(module, warnings)
 
     wait_for = module.params['wait_for'] or list()
-    conditionals = [Conditional(c) for c in wait_for]
+    try:
+        conditionals = [Conditional(c) for c in wait_for]
+    except AttributeError:
+        exc = get_exception()
+        module.fail_json(msg=str(exc))
 
     retries = module.params['retries']
     interval = module.params['interval']

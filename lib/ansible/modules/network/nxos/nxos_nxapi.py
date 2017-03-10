@@ -25,6 +25,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: nxos_nxapi
+extends_documentation_fragment: nxos
 version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
 short_description: Manage NXAPI configuration on an NXOS device.
@@ -134,6 +135,11 @@ from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.six import iteritems
 
 def check_args(module, warnings):
+    transport = module.params['transport']
+    provider_transport = (module.params['provider'] or {}).get('transport')
+    if 'nxapi' in (transport, provider_transport):
+        module.fail_json(msg='transport=nxapi is not supporting when configuring nxapi')
+
     nxos_check_args(module, warnings)
 
     state = module.params['state']

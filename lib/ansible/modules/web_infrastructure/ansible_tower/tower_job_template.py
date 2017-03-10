@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: tower_job_template
+author: "Wayne Witzel III (@wwitzel3)"
 version_added: "2.3"
 short_description: create, update, or destroy Ansible Tower job_template.
 description:

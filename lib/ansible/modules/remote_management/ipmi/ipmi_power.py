@@ -36,7 +36,6 @@ options:
     description:
       - Remote RMCP port.
     required: false
-    type: int
     default: 623
   user:
     description:
@@ -61,7 +60,6 @@ options:
     description:
       - Maximum number of seconds before interrupt request.
     required: false
-    type: int
     default: 300
 requirements:
   - "python >= 2.6"

@@ -26,6 +26,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: bigmon_policy
+author: "Ted (@tedelhourani)"
 short_description: Create and remove a bigmon out-of-band policy.
 description:
     - Create and remove a bigmon out-of-band policy.

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # (c) 2016, Tom Melendez <tom@supertom.com>
 #
@@ -180,6 +179,3 @@ class GCPAuthTestCase(unittest.TestCase):
         expected = tuple(['my-sa-email', '/path/to/creds.json', 'my-project'])
         actual = _get_gcp_environment_credentials('my-sa-email', '/path/to/creds.json', None)
         self.assertEqual(expected, actual)
-
-if __name__ == '__main__':
-    unittest.main()
