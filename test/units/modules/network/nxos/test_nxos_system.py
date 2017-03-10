@@ -109,6 +109,11 @@ class TestNxosSystemModule(TestNxosModule):
                     'vrf context management', 'ip name-server 1.2.3.4', 'exit']
         self.execute_module(changed=True, commands=commands)
 
+    def test_nxos_system_system_mtu(self):
+        set_module_args(dict(system_mtu=2000))
+        commands = ['system jumbomtu 2000']
+        self.execute_module(changed=True, commands=commands)
+
     def test_nxos_system_state_absent(self):
         set_module_args(dict(state='absent'))
         commands = ['no hostname', 'no ip domain-name ansible.com',
@@ -118,7 +123,8 @@ class TestNxosSystemModule(TestNxosModule):
                     'vrf context management', 'no ip domain-list redhat.com', 'exit',
                     'no ip name-server 8.8.8.8', 'no ip name-server 172.26.1.1',
                     'vrf context management', 'no ip name-server 8.8.8.8', 'exit',
-                    'vrf context management', 'no ip name-server 172.26.1.1', 'exit']
+                    'vrf context management', 'no ip name-server 172.26.1.1', 'exit',
+                    'no system jumbomtu']
         self.execute_module(changed=True, commands=commands)
 
 

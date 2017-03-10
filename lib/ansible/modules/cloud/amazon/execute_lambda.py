@@ -231,7 +231,7 @@ def main():
                              "the ARN is correct and your profile has "
                              "permissions to execute this function.",
                              exception=traceback.format_exc())
-        module.fail_json("Client-side error when invoking Lambda, check inputs and specific error",
+        module.fail_json(msg="Client-side error when invoking Lambda, check inputs and specific error",
                          exception=traceback.format_exc())
     except botocore.exceptions.ParamValidationError as ve:
         module.fail_json(msg="Parameters to `invoke` failed to validate",

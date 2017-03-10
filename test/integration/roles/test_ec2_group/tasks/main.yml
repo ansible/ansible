@@ -18,7 +18,7 @@
   assert:
     that:
        - 'result.failed'
-       - 'result.msg == "missing required arguments: description,name"'
+       - 'result.msg == "missing required arguments: name"'
 
 # ============================================================
 - name: test failure with only name
@@ -31,7 +31,7 @@
   assert:
     that:
        - 'result.failed'
-       - 'result.msg == "missing required arguments: description"'
+       - 'result.msg == "Must provide description when state is present."'
 
 # ============================================================
 - name: test failure with only description
@@ -45,6 +45,21 @@
     that:
        - 'result.failed'
        - 'result.msg == "missing required arguments: name"'
+
+# ============================================================
+- name: test failure with empty description (AWS API requires non-empty string desc)
+  ec2_group:
+    name='{{ec2_group_name}}'
+    description=''
+    region='{{ec2_region}}'
+  register: result
+  ignore_errors: true
+
+- name: assert failure with empty description
+  assert:
+    that:
+       - 'result.failed'
+       - 'result.msg == "Must provide description when state is present."'
 
 # ============================================================
 - name: test invalid region parameter
@@ -213,7 +228,6 @@
 - name: test state=absent (expected changed=true)
   ec2_group:
     name='{{ec2_group_name}}'
-    description='{{ec2_group_description}}'
     state=absent
   environment:
     EC2_REGION: '{{ec2_region}}'
@@ -231,7 +245,6 @@
 - name: test state=absent (expected changed=false)
   ec2_group:
     name='{{ec2_group_name}}'
-    description='{{ec2_group_description}}'
     state=absent
   environment:
     EC2_REGION: '{{ec2_region}}'

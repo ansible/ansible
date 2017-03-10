@@ -23,6 +23,7 @@ import inspect
 import os
 import re
 import shlex
+import socket
 import traceback
 import json
 import tempfile
@@ -41,6 +42,7 @@ from ansible.compat.six.moves.urllib.parse import urlunsplit
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import exec_wrapper, become_wrapper, leaf_exec
 from ansible.utils.hashing import secure_hash
@@ -51,12 +53,14 @@ try:
     from winrm import Response
     from winrm.protocol import Protocol
 except ImportError:
-    raise AnsibleError("winrm is not installed")
+    e = get_exception()
+    raise AnsibleError("winrm or requests is not installed: %s" % str(e))
 
 try:
     import xmltodict
 except ImportError:
-    raise AnsibleError("xmltodict is not installed")
+    e = get_exception()
+    raise AnsibleError("xmltodict is not installed: %s" % str(e))
 
 try:
     from __main__ import display
@@ -85,6 +89,14 @@ class Connection(ConnectionBase):
         # FUTURE: Add runas support
 
         super(Connection, self).__init__(*args, **kwargs)
+
+    def transport_test(self, connect_timeout):
+        ''' Test the transport mechanism, if available '''
+        host = self._winrm_host
+        port = int(self._winrm_port)
+        display.vvv("attempting transport test to %s:%s" % (host, port))
+        sock = socket.create_connection((host, port), connect_timeout)
+        sock.close()
 
     def set_host_overrides(self, host, hostvars=None):
         '''

@@ -31,6 +31,7 @@ description:
     base network fact keys with C(ansible_net_<fact>).  The facts
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
+extends_documentation_fragment: iosxr
 options:
   gather_subset:
     description:
@@ -166,11 +167,11 @@ class Default(FactsBase):
 class Hardware(FactsBase):
 
     def commands(self):
-        return(['dir /all | include Directory', 'show memory summary'])
+        return(['dir /all', 'show memory summary'])
 
     def populate(self, results):
         self.facts['filesystems'] = self.parse_filesystems(
-            results['dir /all | include Directory'])
+            results['dir /all'])
 
         match = re.search(r'Physical Memory (\d+)M total \((\d+)',
             results['show memory summary'])

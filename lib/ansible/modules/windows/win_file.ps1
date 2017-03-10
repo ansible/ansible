@@ -23,7 +23,7 @@ $params = Parse-Args $args -supports_check_mode $true
 
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
 
-$path = Get-AnsibleParam -obj $params -name "path" -type "path" -default $false -failifempty $true -aliases "dest","name"
+$path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -aliases "dest","name"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -validateset "absent","directory","file","touch"
 
 $result = @{
@@ -52,16 +52,18 @@ namespace Ansible.Command {
 Add-Type -TypeDefinition $symlink_util
 
 # Used to delete directories and files with logic on handling symbolic links
-function Remove-File($file) {
+function Remove-File($file, $checkmode) {
     try {
         if ($file.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
             # Bug with powershell, if you try and delete a symbolic link that is pointing
             # to an invalid path it will fail, using Win32 API to do this instead
-            [Ansible.Command.SymLinkHelper]::DeleteSymLink($file.FullName)
+            if (-Not $checkmode) {
+                [Ansible.Command.SymLinkHelper]::DeleteSymLink($file.FullName)
+            }
         } elseif ($file.PSIsContainer) {
-            Remove-Directory -directory $file
+            Remove-Directory -directory $file -WhatIf:$checkmode
         } else {
-            Remove-Item -Path $file.FullName -Force
+            Remove-Item -Path $file.FullName -Force -WhatIf:$checkmode
         }
     } catch [Exception] {
         Fail-Json (New-Object psobject) "Failed to delete $($file.FullName): $($_.Exception.Message)"
@@ -77,22 +79,18 @@ function Remove-Directory($directory) {
 
 
 if ($state -eq "touch") {
-    if (-not $check_mode) {
-        if (Test-Path $path) {
-            (Get-ChildItem $path).LastWriteTime = Get-Date
-        } else {
-            Write-Output $null | Out-File -FilePath $path -Encoding ASCII
-        }
+    if (Test-Path -Path $path) {
+        (Get-ChildItem -Path $path).LastWriteTime = Get-Date
+    } else {
+        Write-Output $null | Out-File -FilePath $path -Encoding ASCII -WhatIf:$check_mode
+        $result.changed = $true
     }
-    $result.changed = $true
 }
 
 if (Test-Path $path) {
-    $fileinfo = Get-Item $path
+    $fileinfo = Get-Item -Path $path
     if ($state -eq "absent") {
-        if (-not $check_mode) {
-            Remove-File -file $fileinfo
-        }
+        Remove-File -File $fileinfo -CheckMode $check_mode
         $result.changed = $true
     } else {
         if ($state -eq "directory" -and -not $fileinfo.PsIsContainer) {
@@ -118,9 +116,7 @@ if (Test-Path $path) {
     }
 
     if ($state -eq "directory") {
-        if (-not $check_mode) {
-            New-Item -ItemType directory -Path $path | Out-Null
-        }
+        New-Item -Path $path -ItemType Directory -WhatIf:$check_mode | Out-Null
         $result.changed = $true
     } elseif ($state -eq "file") {
         Fail-Json $result "path $path will not be created"

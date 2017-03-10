@@ -23,25 +23,26 @@ $ErrorActionPreference = "Stop"
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args;
+$params = Parse-Args $args
 
-$result = New-Object PSObject;
-Set-Attr $result "changed" $false;
+$result = @{
+    changed = $false
+}
 
-$name = Get-Attr $params "name" -failifempty $true
-$state = Get-Attr $params "state" -default "present" -validateSet "present", "absent", "started", "stopped", "restarted" -resultobj $result
+$name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent","started","stopped","restarted" -resultobj $result
 
-$application = Get-Attr $params "application" -default $null
-$appParameters = Get-Attr $params "app_parameters" -default $null
-$appParametersFree  = Get-Attr $params "app_parameters_free_form" -default $null 
-$startMode = Get-Attr $params "start_mode" -default "auto" -validateSet "auto", "manual", "disabled" -resultobj $result
+$application = Get-AnsibleParam -obj $params -name "application" -type "str"
+$appParameters = Get-AnsibleParam -obj $params -name "app_parameters" -type "str"
+$appParametersFree  = Get-AnsibleParam -obj $params -name "app_parameters_free_form" -type "str"
+$startMode = Get-AnsibleParam -obj $params -name "start_mode" -type "str" -default "auto" -validateset "auto","manual","disabled" -resultobj $result
 
-$stdoutFile = Get-Attr $params "stdout_file" -default $null
-$stderrFile = Get-Attr $params "stderr_file" -default $null
-$dependencies = Get-Attr $params "dependencies" -default $null
+$stdoutFile = Get-AnsibleParam -obj $params -name "stdout_file" -type "str"
+$stderrFile = Get-AnsibleParam -obj $params -name "stderr_file" -type "str"
+$dependencies = Get-AnsibleParam -obj $params -name "dependencies" -type "str"
 
-$user = Get-Attr $params "user" -default $null
-$password = Get-Attr $params "password" -default $null
+$user = Get-AnsibleParam -obj $params -name "user" -type "str"
+$password = Get-AnsibleParam -obj $params -name "password" -type "str"
 
 if (($appParameters -ne $null) -and ($appParametersFree -ne $null))
 {
@@ -103,12 +104,12 @@ Function Nssm-Remove
 
         if ($LastExitCode -ne 0)
         {
-            Set-Attr $result "nssm_error_cmd" $cmd
-            Set-Attr $result "nssm_error_log" "$results"
+            $result.nssm_error_cmd = $cmd
+            $result.nssm_error_log = "$results"
             Throw "Error removing service ""$name"""
         }
 
-        Set-Attr $result "changed_by" "remove_service"
+        $result.changed_by = "remove_service"
         $result.changed = $true
      }
 }
@@ -138,21 +139,21 @@ Function Nssm-Install
 
         if ($LastExitCode -ne 0)
         {
-            Set-Attr $result "nssm_error_cmd" $cmd
-            Set-Attr $result "nssm_error_log" "$results"
+            $result.nssm_error_cmd = $cmd
+            $result.nssm_error_log = "$results"
             Throw "Error installing service ""$name"""
         }
 
-        Set-Attr $result "changed_by" "install_service"
+        $result.changed_by = "install_service"
         $result.changed = $true
-        
+
      } else {
         $results = Nssm-Invoke "get ""$name"" Application"
 
         if ($LastExitCode -ne 0)
         {
-            Set-Attr $result "nssm_error_cmd" $cmd
-            Set-Attr $result "nssm_error_log" "$results"
+            $result.nssm_error_cmd = $cmd
+            $result.nssm_error_log = "$results"
             Throw "Error installing service ""$name"""
         }
 
@@ -164,13 +165,13 @@ Function Nssm-Install
 
             if ($LastExitCode -ne 0)
             {
-                Set-Attr $result "nssm_error_cmd" $cmd
-                Set-Attr $result "nssm_error_log" "$results"
+                $result.nssm_error_cmd = $cmd
+                $result.nssm_error_log = "$results"
                 Throw "Error installing service ""$name"""
             }
-            Set-Attr $result "application" "$application"
+            $result.application = "$application"
 
-            Set-Attr $result "changed_by" "reinstall_service"
+            $result.changed_by = "reinstall_service"
             $result.changed = $true
         }
      }
@@ -184,8 +185,8 @@ Function Nssm-Install
 
         if ($LastExitCode -ne 0)
         {
-            Set-Attr $result "nssm_error_cmd" $cmd
-            Set-Attr $result "nssm_error_log" "$results"
+            $result.nssm_error_cmd = $cmd
+            $result.nssm_error_log = "$results"
             Throw "Error installing service ""$name"""
         }
      }
@@ -223,15 +224,15 @@ Function Nssm-Update-AppParameters
 
     if ($LastExitCode -ne 0)
     {
-        Set-Attr $result "nssm_error_cmd" $cmd
-        Set-Attr $result "nssm_error_log" "$results"
+        $result.nssm_error_cmd = $cmd
+        $result.nssm_error_log = "$results"
         Throw "Error updating AppParameters for service ""$name"""
     }
 
     $appParamKeys = @()
     $appParamVals = @()
     $singleLineParams = ""
-    
+
     if ($appParameters)
     {
         $appParametersHash = ParseAppParameters -appParameters $appParameters
@@ -250,17 +251,17 @@ Function Nssm-Update-AppParameters
                 }
             }
 
-        Set-Attr $result "nssm_app_parameters_parsed" $appParametersHash
-        Set-Attr $result "nssm_app_parameters_keys" $appParamKeys
-        Set-Attr $result "nssm_app_parameters_vals" $appParamVals
+        $result.nssm_app_parameters_parsed = $appParametersHash
+        $result.nssm_app_parameters_keys = $appParamKeys
+        $result.nssm_app_parameters_vals = $appParamVals
     }
     elseif ($appParametersFree) {
-        Set-Attr $result "nssm_app_parameters_free_form" $appParametersFree
+        $result.nssm_app_parameters_free_form = $appParametersFree
         $singleLineParams = $appParametersFree
     }
 
-    Set-Attr $result "nssm_app_parameters" $appParameters
-    Set-Attr $result "nssm_single_line_app_parameters" $singleLineParams
+    $result.nssm_app_parameters = $appParameters
+    $result.nssm_single_line_app_parameters = $singleLineParams
 
     if ($results -ne $singleLineParams)
     {
@@ -274,12 +275,12 @@ Function Nssm-Update-AppParameters
 
         if ($LastExitCode -ne 0)
         {
-            Set-Attr $result "nssm_error_cmd" $cmd
-            Set-Attr $result "nssm_error_log" "$results"
+            $result.nssm_error_cmd = $cmd
+            $result.nssm_error_log = "$results"
             Throw "Error updating AppParameters for service ""$name"""
         }
 
-        Set-Attr $result "changed_by" "update_app_parameters"
+        $result.changed_by = "update_app_parameters"
         $result.changed = $true
     }
 }
@@ -299,8 +300,8 @@ Function Nssm-Set-Output-Files
 
     if ($LastExitCode -ne 0)
     {
-        Set-Attr $result "nssm_error_cmd" $cmd
-        Set-Attr $result "nssm_error_log" "$results"
+        $result.nssm_error_cmd = $cmd
+        $result.nssm_error_log = "$results"
         Throw "Error retrieving existing stdout file for service ""$name"""
     }
 
@@ -310,19 +311,19 @@ Function Nssm-Set-Output-Files
         {
             $cmd = "reset ""$name"" AppStdout"
         } else {
-            $cmd = "set ""$name"" AppStdout $stdout"        
+            $cmd = "set ""$name"" AppStdout $stdout"
         }
-    
+
         $results = Nssm-Invoke $cmd
 
         if ($LastExitCode -ne 0)
         {
-            Set-Attr $result "nssm_error_cmd" $cmd
-            Set-Attr $result "nssm_error_log" "$results"
+            $result.nssm_error_cmd = $cmd
+            $result.nssm_error_log = "$results"
             Throw "Error setting stdout file for service ""$name"""
         }
 
-        Set-Attr $result "changed_by" "set_stdout"
+        $result.changed_by = "set_stdout"
         $result.changed = $true
     }
 
@@ -331,8 +332,8 @@ Function Nssm-Set-Output-Files
 
     if ($LastExitCode -ne 0)
     {
-        Set-Attr $result "nssm_error_cmd" $cmd
-        Set-Attr $result "nssm_error_log" "$results"
+        $result.nssm_error_cmd = $cmd
+        $result.nssm_error_log = "$results"
         Throw "Error retrieving existing stderr file for service ""$name"""
     }
 
@@ -345,8 +346,8 @@ Function Nssm-Set-Output-Files
 
             if ($LastExitCode -ne 0)
             {
-                Set-Attr $result "nssm_error_cmd" $cmd
-                Set-Attr $result "nssm_error_log" "$results"
+                $result.nssm_error_cmd = $cmd
+                $result.nssm_error_log = "$results"
                 Throw "Error clearing stderr file setting for service ""$name"""
             }
         } else {
@@ -355,13 +356,13 @@ Function Nssm-Set-Output-Files
 
             if ($LastExitCode -ne 0)
             {
-                Set-Attr $result "nssm_error_cmd" $cmd
-                Set-Attr $result "nssm_error_log" "$results"
+                $result.nssm_error_cmd = $cmd
+                $result.nssm_error_log = "$results"
                 Throw "Error setting stderr file for service ""$name"""
             }
         }
 
-        Set-Attr $result "changed_by" "set_stderr"
+        $result.changed_by = "set_stderr"
         $result.changed = $true
     }
 
@@ -411,8 +412,8 @@ Function Nssm-Update-Credentials
 
     if ($LastExitCode -ne 0)
     {
-        Set-Attr $result "nssm_error_cmd" $cmd
-        Set-Attr $result "nssm_error_log" "$results"
+        $result.nssm_error_cmd = $cmd
+        $result.nssm_error_log = "$results"
         Throw "Error updating credentials for service ""$name"""
     }
 
@@ -432,12 +433,12 @@ Function Nssm-Update-Credentials
 
                 if ($LastExitCode -ne 0)
                 {
-                    Set-Attr $result "nssm_error_cmd" $cmd
-                    Set-Attr $result "nssm_error_log" "$results"
+                    $result.nssm_error_cmd = $cmd
+                    $result.nssm_error_log = "$results"
                     Throw "Error updating credentials for service ""$name"""
                 }
 
-                Set-Attr $result "changed_by" "update_credentials"
+                $result.changed_by = "update_credentials"
                 $result.changed = $true
             }
         }
@@ -459,8 +460,8 @@ Function Nssm-Update-Dependencies
 
     if ($LastExitCode -ne 0)
     {
-        Set-Attr $result "nssm_error_cmd" $cmd
-        Set-Attr $result "nssm_error_log" "$results"
+        $result.nssm_error_cmd = $cmd
+        $result.nssm_error_log = "$results"
         Throw "Error updating dependencies for service ""$name"""
     }
 
@@ -470,12 +471,12 @@ Function Nssm-Update-Dependencies
 
         if ($LastExitCode -ne 0)
         {
-            Set-Attr $result "nssm_error_cmd" $cmd
-            Set-Attr $result "nssm_error_log" "$results"
+            $result.nssm_error_cmd = $cmd
+            $result.nssm_error_log = "$results"
             Throw "Error updating dependencies for service ""$name"""
         }
 
-        Set-Attr $result "changed_by" "update-dependencies"
+        $result.changed_by = "update-dependencies"
         $result.changed = $true
     }
 }
@@ -495,8 +496,8 @@ Function Nssm-Update-StartMode
 
     if ($LastExitCode -ne 0)
     {
-        Set-Attr $result "nssm_error_cmd" $cmd
-        Set-Attr $result "nssm_error_log" "$results"
+        $result.nssm_error_cmd = $cmd
+        $result.nssm_error_log = "$results"
         Throw "Error updating start mode for service ""$name"""
     }
 
@@ -508,12 +509,12 @@ Function Nssm-Update-StartMode
 
         if ($LastExitCode -ne 0)
         {
-            Set-Attr $result "nssm_error_cmd" $cmd
-            Set-Attr $result "nssm_error_log" "$results"
+            $result.nssm_error_cmd = $cmd
+            $result.nssm_error_log = "$results"
             Throw "Error updating start mode for service ""$name"""
         }
 
-        Set-Attr $result "changed_by" "start_mode"
+        $result.changed_by = "start_mode"
         $result.changed = $true
     }
 }
@@ -544,8 +545,8 @@ Function Nssm-Start
 
     if ($LastExitCode -ne 0)
     {
-        Set-Attr $result "nssm_error_cmd" $cmd
-        Set-Attr $result "nssm_error_log" "$results"
+        $result.nssm_error_cmd = $cmd
+        $result.nssm_error_log = "$results"
         Throw "Error starting service ""$name"""
     }
 
@@ -553,7 +554,7 @@ Function Nssm-Start
     {
         "SERVICE_RUNNING" { <# Nothing to do #> }
         "SERVICE_STOPPED" { Nssm-Start-Service-Command -name $name }
-        
+
         "SERVICE_CONTINUE_PENDING" { Nssm-Stop-Service-Command -name $name; Nssm-Start-Service-Command -name $name }
         "SERVICE_PAUSE_PENDING" { Nssm-Stop-Service-Command -name $name; Nssm-Start-Service-Command -name $name }
         "SERVICE_PAUSED" { Nssm-Stop-Service-Command -name $name; Nssm-Start-Service-Command -name $name }
@@ -576,12 +577,12 @@ Function Nssm-Start-Service-Command
 
     if ($LastExitCode -ne 0)
     {
-        Set-Attr $result "nssm_error_cmd" $cmd
-        Set-Attr $result "nssm_error_log" "$results"
+        $result.nssm_error_cmd = $cmd
+        $result.nssm_error_log = "$results"
         Throw "Error starting service ""$name"""
     }
 
-    Set-Attr $result "changed_by" "start_service"
+    $result.changed_by = "start_service"
     $result.changed = $true
 }
 
@@ -599,12 +600,12 @@ Function Nssm-Stop-Service-Command
 
     if ($LastExitCode -ne 0)
     {
-        Set-Attr $result "nssm_error_cmd" $cmd
-        Set-Attr $result "nssm_error_log" "$results"
+        $result.nssm_error_cmd = $cmd
+        $result.nssm_error_log = "$results"
         Throw "Error stopping service ""$name"""
     }
 
-    Set-Attr $result "changed_by" "stop_service_command"
+    $result.changed_by = "stop_service_command"
     $result.changed = $true
 }
 
@@ -620,8 +621,8 @@ Function Nssm-Stop
 
     if ($LastExitCode -ne 0)
     {
-        Set-Attr $result "nssm_error_cmd" $cmd
-        Set-Attr $result "nssm_error_log" "$results"
+        $result.nssm_error_cmd = $cmd
+        $result.nssm_error_log = "$results"
         Throw "Error stopping service ""$name"""
     }
 
@@ -633,12 +634,12 @@ Function Nssm-Stop
 
         if ($LastExitCode -ne 0)
         {
-            Set-Attr $result "nssm_error_cmd" $cmd
-            Set-Attr $result "nssm_error_log" "$results"
+            $result.nssm_error_cmd = $cmd
+            $result.nssm_error_log = "$results"
             Throw "Error stopping service ""$name"""
         }
 
-        Set-Attr $result "changed_by" "stop_service"
+        $result.changed_by = "stop_service"
         $result.changed = $true
     }
 }
@@ -669,7 +670,9 @@ Try
 {
     switch ($state)
     {
-        "absent" { Nssm-Remove -name $name }
+        "absent" {
+            Nssm-Remove -name $name
+        }
         "present" {
             NssmProcedure
         }
@@ -687,7 +690,7 @@ Try
         }
     }
 
-    Exit-Json $result;
+    Exit-Json $result
 }
 Catch
 {

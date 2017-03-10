@@ -5,58 +5,64 @@ Ansible Changes By Release
 
 ###Major Changes:
 * Documented and renamed the previously released 'single var vaulting' feature, allowing user to use vault encryption for single variables in a normal YAML vars file.
-* Allow module_utils for custom modules to be placed in site-specific
-  directories and shipped in roles
-* On platforms that support it, use more modern system polling API instead of
-  select in the ssh connection plugin.  This removes one limitation on how many
-  parallel forks are feasible on these systems.
+* Allow module_utils for custom modules to be placed in site-specific directories and shipped in roles
+* On platforms that support it, use more modern system polling API instead of select in the ssh connection plugin.
+  This removes one limitation on how many parallel forks are feasible on these systems.
 * Windows supports become method "runas" to run modules as a different user, and to transparently access network resources.
 * Windows now uses pipelining when executing modules, resulting in significantly faster execution for small tasks.
-* Refactored/standardized most Windows modules, adding check-mode and
-  diff support where possible.
-* Extended Windows module API with parameter-type support, helper functions.
-  (i.e. Expand-Environment, Add-Warning, Add-DeprecatationWarning)
+* Refactored/standardized most Windows modules, adding check-mode and diff support where possible.
+* Extended Windows module API with parameter-type support, helper functions. (i.e. Expand-Environment, Add-Warning, Add-DeprecatationWarning)
+* restructured how async works to allow it to apply to action plugins that choose to support it.
 
 ###Minor Changes:
-* The version and release facts for OpenBSD hosts were reversed.  This has been
-  changed so that version has the numeric portion and release has the name of
-  the release.
+* The version and release facts for OpenBSD hosts were reversed.
+  This has been changed so that version has the numeric portion and release has the name of the release.
 * removed 'package' from default squash actions as not all package managers support it and it creates errors when using loops,
   any user can add back via config options if they don't use those package managers or otherwise avoid the errors.
 * Blocks can now have a `name` field, to aid in playbook readability.
 * default strategy is now configurable via ansible.cfg or environment variable.
 * Added 'ansible_playbook_python' which contains 'current python executable', it can be blank in some cases in which Ansible is not invoked via the standard CLI (sys.executable limitation).
-* ansible-doc now displays path to module
-* added optional 'piped' transfer method to ssh plugin for when scp and sftp are missing
+* Added 'metadata' to modules to enable classification
+* ansible-doc now displays path to module and existing 'metadata'
+* added optional 'piped' transfer method to ssh plugin for when scp and sftp are missing, ssh plugin is also now 'smarter' when using these options
 * default controlpersist path is now a custom hash of host-port-user to avoid the socket path length errors for long hostnames
 * Various fixes for Python3 compatibility
+* Fixed issues with inventory formats not handling 'all' and 'ungrouped' in an uniform way.
+* 'service' tasks can now use async again, we had lost this capability when changed into an action plugin.
+* made any_errors_fatal inheritable from play to task and all other objects in between.
+* many small performance improvements in inventory and variable handling and in task execution.
 
 ###Deprecations:
 * Specifying --tags (or --skip-tags) multiple times on the command line
-  currently leads to the last one overridding all the previous ones.  This
-  behaviour is deprecated.  In the future, if you specify --tags multiple times
-  the tags will be merged together.  In 2.3, using --tags multiple times on one
-  command line will emit a deprecation warning.  Setting the
-  merge_multiple_cli_tags option to True in the ansible.cfg file will enable
-  the new behaviour.  In 2.4, the default will be to merge and you can enable
-  the old overwriting behaviour via the config option.  In 2.5, multiple --tags
-  options will be merged with no way to go back to the old behaviour.
-* Modules
-  * ec2_vpc will be deprecated in 2.3 and removed in 2.5
+  currently leads to the last one overridding all the previous ones. This behaviour is deprecated.
+  In the future, if you specify --tags multiple times the tags will be merged together.
+  From now on, using --tags multiple times on one command line will emit a deprecation warning.
+  Setting the merge_multiple_cli_tags option to True in the ansible.cfg file will enable the new behaviour.
+  In 2.4, the default will be to merge and you can enable the old overwriting behaviour via the config option.
+  In 2.5, multiple --tags options will be merged with no way to go back to the old behaviour.
 
-###Modules Notes:
-- oVirt/RHV
-  * Add dynamic inventory.
-  * Add support for 4.1 features.
-  * Add support for data centers, clusters, hosts, storage domains and networks management.
-  * Add support for hosts and virtual machines affinity groups and labels.
-  * Add support for users, groups and permissions management.
+* Modules (scheduled for removal in 2.5)
+  * ec2_vpc
+  * cl_bond
+  * cl_bridge
+  * cl_img_install
+  * cl_interface
+  * cl_interface_policy
+  * cl_license
+  * cl_ports
+
+###Module Notes:
+- AWS lambda: previously ignored changes that only affected one parameter. Existing deployments may have outstanding changes that this bugfix will apply.
+- oVirt/RHV: Added support for 4.1 features and the following:
+  * data centers, clusters, hosts, storage domains and networks management.
+  * hosts and virtual machines affinity groups and labels.
+  * users, groups and permissions management.
   * Improved virtual machines and disks management.
 - Mount: Some fixes so bind mounts are not mounted each time the playbook runs.
 
 ###New Modules:
 - a10_server_axapi3
-- amazon
+- amazon:
   * aws_kms
   * cloudfront_facts
   * ec2_group_facts
@@ -74,10 +80,10 @@ Ansible Changes By Release
 - bigswitch:
   * bigmon_chain
   * bigmon_policy
-- cloudengine
+- cloudengine:
   * ce_command
 - cloudscale_server
-- cloudstack
+- cloudstack:
   * cs_host
   * cs_nic
   * cs_region
@@ -88,7 +94,7 @@ Ansible Changes By Release
   * eos_banner
   * eos_system
   * eos_user
-- f5
+- f5:
   * bigip_gtm_facts
   * bigip_hostname
   * bigip_snat_pool
@@ -96,12 +102,18 @@ Ansible Changes By Release
 - foreman:
   * foreman
   * katello
+- fortios
+  * fortios_config
 - gconftool2
-- google
+- google:
   * gce_eip
   * gce_snapshot
   * gcpubsub
   * gcpubsub_facts
+- hpilo:
+  * hpilo_boot
+  * hpilo_facts
+  * hponcfg
 - icinga2_feature
 - illumos:
   * dladm_iptun
@@ -117,7 +129,7 @@ Ansible Changes By Release
   * infini_host
   * infini_pool
   * infini_vol
-- ipa
+- ipa:
   * ipa_group
   * ipa_hbacrule
   * ipa_host
@@ -132,6 +144,8 @@ Ansible Changes By Release
   * ios_system
   * ios_vrf
 - iosxr_system
+- iso_extract
+- java_cert
 - jenkins_script
 - ldap:
   * ldap_attr
@@ -139,7 +153,7 @@ Ansible Changes By Release
 - logstash_plugin
 - mattermost
 - net_command
-- netapp
+- netapp:
   * sf_account_manager
   * sf_snapshot_schedule_manager
   * sf_volume_manager
@@ -150,11 +164,11 @@ Ansible Changes By Release
 - openssl:
   * openssl_privatekey
   * openssl_publickey
-- openstack
+- openstack:
   * os_nova_host_aggregate
   * os_quota
 - openwrt_init
-- ordnance
+- ordnance:
   * ordnance_config
   * ordnance_facts
 - ovirt:
@@ -201,6 +215,7 @@ Ansible Changes By Release
   * packet_sshkey
 - pamd
 - panos:
+  * panos_address
   * panos_admin
   * panos_admpwd
   * panos_cert_gen_ssh
@@ -208,11 +223,14 @@ Ansible Changes By Release
   * panos_commit
   * panos_dag
   * panos_import
+  * panos_interface
+  * panos_lic
   * panos_loadcfg
   * panos_mgtconfig
   * panos_nat_policy
   * panos_pg
   * panos_restart
+  * panos_security_policy
   * panos_service
 - postgresql_schema
 - proxmox_kvm
@@ -221,6 +239,8 @@ Ansible Changes By Release
 - runit
 - serverless
 - set_stats
+- panos:
+  * panos_security_policy
 - smartos:
   * imgadm
   * vmadm
@@ -228,7 +248,7 @@ Ansible Changes By Release
 - stacki_host
 - swupd
 - tempfile
-- tower
+- tower:
   * tower_credential
   * tower_group
   * tower_host
@@ -243,10 +263,18 @@ Ansible Changes By Release
 - vmware:
   * vmware_guest_facts
   * vmware_guest_snapshot
-- web_infrastructure
+- web_infrastructure:
   * jenkins_script
+- system
+  * parted
 - windows:
+  * win_disk_image
+  * win_dns_client
+  * win_domain
+  * win_domain_controller
+  * win_domain_membership
   * win_find
+  * win_msg
   * win_path
   * win_psexec
   * win_reg_stat
@@ -261,11 +289,25 @@ Ansible Changes By Release
 
 ####New Callbacks:
 
-* dense: minimal stdout output with fallback to default when verbose
+- dense: minimal stdout output with fallback to default when verbose
 
 ####New: lookups
 
-* keyring: allows getting password from system keyrings
+- keyring: allows getting password from the 'controller' system's keyrings
+
+####New: cache
+
+- pickle (uses python's own serializer)
+- yaml
+
+####New: inventory scripts
+- oVirt/RHV
+
+####New: filters
+- combinations
+- permutations
+- zip
+- zip_longest
 
 
 ## 2.2.1 "The Battle of Evermore" - 2017-01-16
@@ -3110,4 +3152,3 @@ in kickstarts
 ## 0.0.2 and 0.0.1
 
 * Initial stages of project
-

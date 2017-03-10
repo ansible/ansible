@@ -30,18 +30,19 @@ galaxy_info:
   #github_branch:
 
   #
-  # Below are all platforms currently available in Galaxy. Uncomment any that match the base images
-  # of the services defined in meta/container.yml
+  # platforms is a list of platforms, and each platform has a name and a list of versions.
   #
-  #platforms:
-  {%- for platform,versions in platforms.items() %}
-  #- name: {{ platform }}
-  #  versions:
-  #  - all
-    {%- for version in versions %}
-  #  - {{ version }}
-    {%- endfor -%}
-  {%- endfor %}
+  # platforms:
+  # - name: Fedora
+  #   versions:
+  #   - all
+  #   - 25
+  # - name: SomePlatform
+  #   versions:
+  #   - all
+  #   - 1.0
+  #   - 7
+  #   - 99.99
 
   galaxy_tags:
     - container

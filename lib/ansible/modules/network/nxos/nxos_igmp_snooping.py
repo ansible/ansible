@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_igmp_snooping
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages IGMP snooping global configuration.
 description:

@@ -22,12 +22,11 @@ __metaclass__ = type
 import copy
 import os
 import json
-import subprocess
 import tempfile
 from yaml import YAMLError
 
 from ansible.compat.six import text_type, string_types
-from ansible.errors import AnsibleFileNotFound, AnsibleParserError, AnsibleError
+from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
 from ansible.module_utils.basic import is_executable
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -71,9 +70,9 @@ class DataLoader():
         # initialize the vault stuff with an empty password
         self.set_vault_password(None)
 
-    def set_vault_password(self, vault_password):
-        self._vault_password = vault_password
-        self._vault = VaultLib(password=vault_password)
+    def set_vault_password(self, b_vault_password):
+        self._b_vault_password = b_vault_password
+        self._vault = VaultLib(b_password=b_vault_password)
 
     def load(self, data, file_name='<string>', show_content=True):
         '''
@@ -151,7 +150,7 @@ class DataLoader():
     def _safe_load(self, stream, file_name=None):
         ''' Implements yaml.safe_load(), except using our custom loader class. '''
 
-        loader = AnsibleLoader(stream, file_name, self._vault_password)
+        loader = AnsibleLoader(stream, file_name, self._b_vault_password)
         try:
             return loader.get_single_data()
         finally:
@@ -227,7 +226,7 @@ class DataLoader():
             basedir = to_text(self._basedir, errors='surrogate_or_strict')
             return os.path.abspath(os.path.join(basedir, given))
 
-    def path_dwim_relative(self, path, dirname, source):
+    def path_dwim_relative(self, path, dirname, source, is_role=False):
         '''
         find one file in either a role or playbook dir with or without
         explicitly named dirname subdirs
@@ -247,12 +246,14 @@ class DataLoader():
             search.append(os.path.join(path, dirname, source))
             basedir = unfrackpath(path)
 
+            #FIXME: this role detection will not work with alternate/missing main.yml
             # is it a role and if so make sure you get correct base path
             if path.endswith('tasks') and os.path.exists(to_bytes(os.path.join(path,'main.yml'), errors='surrogate_or_strict')) \
                     or os.path.exists(to_bytes(os.path.join(path,'tasks/main.yml'), errors='surrogate_or_strict')):
-                isrole = True
-                if path.endswith('tasks'):
-                    basedir = unfrackpath(os.path.dirname(path))
+                is_role = True
+
+            if is_role and path.endswith('tasks'):
+                basedir = unfrackpath(os.path.dirname(path))
 
             cur_basedir = self._basedir
             self.set_basedir(basedir)
@@ -277,7 +278,7 @@ class DataLoader():
 
         return candidate
 
-    def path_dwim_relative_stack(self, paths, dirname, source):
+    def path_dwim_relative_stack(self, paths, dirname, source, is_role=False):
         '''
         find one file in first path in stack taking roles into account and adding play basedir as fallback
 
@@ -307,10 +308,11 @@ class DataLoader():
                 b_upath = to_bytes(upath, errors='surrogate_or_strict')
                 b_mydir = os.path.dirname(b_upath)
 
+                # FIXME: this detection fails with non main.yml roles
                 # if path is in role and 'tasks' not there already, add it into the search
-                if b_upath.endswith(b'tasks') and os.path.exists(os.path.join(b_upath, b'main.yml')) \
+                if is_role or (b_upath.endswith(b'tasks') and os.path.exists(os.path.join(b_upath, b'main.yml')) \
                         or os.path.exists(os.path.join(b_upath, b'tasks/main.yml')) \
-                        or os.path.exists(os.path.join(b_mydir, b'tasks/main.yml')):
+                        or os.path.exists(os.path.join(b_mydir, b'tasks/main.yml'))):
                     if b_mydir.endswith(b'tasks'):
                         search.append(os.path.join(os.path.dirname(b_mydir), b_dirname, b_source))
                         search.append(os.path.join(b_mydir, b_source))
@@ -370,7 +372,7 @@ class DataLoader():
             raise AnsibleFileNotFound("the file_name '%s' does not exist, or is not readable" % to_native(file_path))
 
         if not self._vault:
-            self._vault = VaultLib(password="")
+            self._vault = VaultLib(b_password="")
 
         real_path = self.path_dwim(file_path)
 
@@ -384,7 +386,7 @@ class DataLoader():
                     # the decrypt call would throw an error, but we check first
                     # since the decrypt function doesn't know the file name
                     data = f.read()
-                    if not self._vault_password:
+                    if not self._b_vault_password:
                         raise AnsibleParserError("A vault password must be specified to decrypt %s" % file_path)
 
                     data = self._vault.decrypt(data, filename=real_path)

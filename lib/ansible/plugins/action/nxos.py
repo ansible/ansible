@@ -78,7 +78,7 @@ class ActionModule(_ActionModule):
                 # enable mode and not config module
                 rc, out, err = connection.exec_command('prompt()')
                 while str(out).strip().endswith(')#'):
-                    display.debug('wrong context, sending exit to device', self._play_context.remote_addr)
+                    display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
                     connection.exec_command('exit')
                     rc, out, err = connection.exec_command('prompt()')
 
@@ -87,6 +87,7 @@ class ActionModule(_ActionModule):
 
         else:
             provider_arg = {
+                'transport': 'nxapi',
                 'host': self._play_context.remote_addr,
                 'port': provider.get('port'),
                 'username': provider.get('username') or self._play_context.connection_user,
@@ -96,6 +97,12 @@ class ActionModule(_ActionModule):
                 'validate_certs': task_vars.get('nxapi_validate_certs') or True
             }
             self._task.args['provider'] = provider_arg
+
+        # make sure a transport value is set in args
+        transport = self._task.args.get('transport')
+        provider_transport = (self._task.args.get('provider') or {}).get('transport')
+        if all((transport is None, provider_transport is None)):
+            self._task.args['transport'] = 'cli'
 
         return super(ActionModule, self).run(tmp, task_vars)
 

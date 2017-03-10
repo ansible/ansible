@@ -24,7 +24,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = """
 ---
-module: eos_banner_
+module: eos_banner
 version_added: "2.3"
 author: "Peter Sprygada (@privateip)"
 short_description: Manage multiline banners on Arista EOS devices
@@ -32,6 +32,7 @@ description:
   - This will configure both login and motd banners on remote devices
     running Arista EOS.  It allows playbooks to add or remote
     banner text from the active running configuration.
+extends_documentation_fragment: eos
 options:
   banner:
     description:
@@ -94,13 +95,14 @@ session_name:
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.eos import load_config, run_commands
+from ansible.module_utils.eos import eos_argument_spec, check_args
 
 def map_obj_to_commands(updates, module):
     commands = list()
     want, have = updates
     state = module.params['state']
 
-    if state == 'absent':
+    if state == 'absent' and have['text']:
         commands.append('no banner %s' % module.params['banner'])
 
     elif state == 'present':
@@ -115,7 +117,7 @@ def map_config_to_obj(module):
     output = run_commands(module, ['show banner %s' % module.params['banner']])
     obj = {'banner': module.params['banner'], 'state': 'absent'}
     if output:
-        obj['text'] = output
+        obj['text'] = output[0]
         obj['state'] = 'present'
     return obj
 
@@ -139,14 +141,20 @@ def main():
         state=dict(default='present', choices=['present', 'absent'])
     )
 
+    argument_spec.update(eos_argument_spec)
+
     required_if = [('state', 'present', ('text',))]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_if=required_if,
                            supports_check_mode=True)
 
-    result = {'changed': False}
+    warnings = list()
+    check_args(module, warnings)
 
+    result = {'changed': False}
+    if warnings:
+        result['warnings'] = warnings
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
 

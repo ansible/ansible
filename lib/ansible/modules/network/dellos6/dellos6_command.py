@@ -28,10 +28,11 @@ DOCUMENTATION = """
 ---
 module: dellos6_command
 version_added: "2.2"
+author: "Abirami N (@abirami-n)"
 short_description: Run commands on remote devices running Dell OS6
 description:
   - Sends arbitrary commands to a Dell OS6 node and returns the results
-    read from the device. The C(dellos6_command) module includes an
+    read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
@@ -143,6 +144,10 @@ from ansible.module_utils.basic import get_exception
 from ansible.module_utils.netcli import CommandRunner, FailedConditionsError
 from ansible.module_utils.network import NetworkModule, NetworkError
 import ansible.module_utils.dellos6
+from ansible.module_utils.six import string_types
+
+VALID_KEYS = ['command', 'prompt', 'response']
+
 
 def to_lines(stdout):
     for item in stdout:
@@ -150,6 +155,15 @@ def to_lines(stdout):
             item = str(item).split('\n')
         yield item
 
+def parse_commands(module):
+    for cmd in module.params['commands']:
+        if isinstance(cmd, string_types):
+            cmd = dict(command=cmd, output=None)
+        elif 'command' not in cmd:
+            module.fail_json(msg='command keyword argument is required')
+        elif not set(cmd.keys()).issubset(VALID_KEYS):
+            module.fail_json(msg='unknown keyword specified')
+        yield cmd
 
 def main():
     spec = dict(
@@ -162,8 +176,7 @@ def main():
     module = NetworkModule(argument_spec=spec,
                            connect_on_load=False,
                            supports_check_mode=True)
-
-    commands = module.params['commands']
+    commands = list(parse_commands(module))
     conditionals = module.params['wait_for'] or list()
 
     warnings = list()
@@ -171,15 +184,19 @@ def main():
     runner = CommandRunner(module)
 
     for cmd in commands:
-        if module.check_mode and not cmd.startswith('show'):
+        if module.check_mode and not cmd['command'].startswith('show'):
             warnings.append('only show commands are supported when using '
                             'check mode, not executing `%s`' % cmd)
         else:
-            if cmd.startswith('conf'):
+            if cmd['command'].startswith('conf'):
                 module.fail_json(msg='dellos6_command does not support running '
                                      'config mode commands.  Please use '
                                      'dellos6_config instead')
-            runner.add_command(cmd)
+            try:
+                runner.add_command(**cmd)
+            except AddCommandError:
+                exc = get_exception()
+                warnings.append('duplicate command detected: %s' % cmd)
 
     for item in conditionals:
         runner.add_conditional(item)
@@ -201,7 +218,7 @@ def main():
     result['stdout'] = list()
     for cmd in commands:
         try:
-            output = runner.get_command(cmd)
+            output = runner.get_command(cmd['command'])
         except ValueError:
             output = 'command not executed due to check_mode, see warnings'
         result['stdout'].append(output)

@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_pim_rp_address
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages configuration of an PIM static RP address instance.
 description:
@@ -259,7 +260,6 @@ def main():
         exc = get_exception()
         module.fail_json(msg=str(exc))
 
-    result['connected'] = module.connected
     if module._verbosity > 0:
         end_state = invoke('get_existing', module, args)
         result['end_state'] = end_state

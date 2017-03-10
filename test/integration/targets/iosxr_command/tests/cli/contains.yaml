@@ -5,10 +5,10 @@
   iosxr_command:
     commands:
       - show version
-      - show interfaces GigabitEthernet0/0/0/1
+      - show interfaces Loopback 888
     wait_for:
-      - "result[0] contains 6.0.0"
-      - "result[1] contains GigabitEthernet0/0/0/1"
+      - "result[0] contains 'Cisco IOS XR Software'"
+      - "result[1] contains 'Hardware is Loopback interface'"
   register: result
 
 - assert:

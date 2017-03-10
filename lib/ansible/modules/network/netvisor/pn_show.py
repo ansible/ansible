@@ -27,7 +27,6 @@ DOCUMENTATION = """
 module: pn_show
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
-version: 1.0
 short_description: Run show commands on nvOS device.
 description:
   - Execute show command in the nodes and returns the results

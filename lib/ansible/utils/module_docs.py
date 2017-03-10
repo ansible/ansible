@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
 #
 # This file is part of Ansible
@@ -139,7 +138,7 @@ def get_docstring(filename, verbose=False):
 
     except:
         display.error("unable to parse %s" % filename)
-        if verbose == True:
+        if verbose is True:
             display.display("unable to parse %s" % filename)
             raise
 

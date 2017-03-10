@@ -103,6 +103,12 @@ options:
     default: None
     aliases: [ 'environment' ]
     version_added: "2.3"
+  dead_letter_arn:
+    description:
+      - The parent object that contains the target Amazon Resource Name (ARN) of an Amazon SQS queue or Amazon SNS topic.
+    required: false
+    default: None
+    version_added: "2.3"
 author:
     - 'Steyn Huizinga (@steynovich)'
 extends_documentation_fragment:
@@ -236,6 +242,7 @@ def main():
         vpc_subnet_ids=dict(type='list', default=None),
         vpc_security_group_ids=dict(type='list', default=None),
         environment_variables=dict(type='dict', default=None),
+        dead_letter_arn=dict(type='str', default=None),
         )
     )
 
@@ -266,6 +273,7 @@ def main():
     vpc_subnet_ids = module.params.get('vpc_subnet_ids')
     vpc_security_group_ids = module.params.get('vpc_security_group_ids')
     environment_variables = module.params.get('environment_variables')
+    dead_letter_arn = module.params.get('dead_letter_arn')
 
     check_mode = module.check_mode
     changed = False
@@ -322,8 +330,15 @@ def main():
             func_kwargs.update({'Timeout': timeout})
         if memory_size and current_config['MemorySize'] != memory_size:
             func_kwargs.update({'MemorySize': memory_size})
-        if (environment_variables is not None) and (current_config['Environment']['Variables'] != environment_variables):
+        if (environment_variables is not None) and (current_config.get('Environment', {}).get('Variables', {}) != environment_variables):
             func_kwargs.update({'Environment':{'Variables': environment_variables}})
+        if dead_letter_arn is not None:
+            if current_config.get('DeadLetterConfig'):
+                if current_config['DeadLetterConfig']['TargetArn'] != dead_letter_arn:
+                    func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
+            else:
+                if dead_letter_arn != "":
+                    func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
 
         # Check for unsupported mutation
         if current_config['Runtime'] != runtime:
@@ -439,8 +454,13 @@ def main():
                        'Code': code,
                        'Timeout': timeout,
                        'MemorySize': memory_size,
-                       'Environment':{'Variables': environment_variables}
                        }
+
+        if environment_variables:
+            func_kwargs.update({'Environment': {'Variables': environment_variables}})
+
+        if dead_letter_arn:
+            func_kwargs.update({'DeadLetterConfig': {'TargetARN': dead_letter_arn}})
 
         # If VPC configuration is given
         if vpc_subnet_ids or vpc_security_group_ids:

@@ -895,7 +895,7 @@ class Distribution(object):
                 if distribution_version:
                     self.facts['distribution_version'] = distribution_version.group(1)
                 if 'open' in data.lower():
-                    release = re.search("^PRETTY_NAME=[^(]+ \(?([^)]+?)\)", line)
+                    release = re.search('^VERSION_ID="?[0-9]+\.?([0-9]*)"?', line)
                     if release:
                         self.facts['distribution_release'] = release.groups()[0]
                 elif 'enterprise' in data.lower() and 'VERSION_ID' in line:

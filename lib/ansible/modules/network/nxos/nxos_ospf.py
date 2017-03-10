@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_ospf
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages configuration of an ospf instance.
 description:
@@ -196,7 +197,6 @@ def main():
     else:
         result['updates'] = []
 
-    result['connected'] = module.connected
     if module._verbosity > 0:
         end_state = invoke('get_existing', module)
         result['end_state'] = end_state

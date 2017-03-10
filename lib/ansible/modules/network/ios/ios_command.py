@@ -35,6 +35,7 @@ description:
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
     Please use M(ios_config) to configure IOS devices.
+extends_documentation_fragment: ios
 options:
   commands:
     description:
@@ -148,7 +149,7 @@ def parse_commands(module, warnings):
     command = ComplexList(dict(
         command=dict(key=True),
         prompt=dict(),
-        response=dict()
+        answer=dict()
     ), module)
     commands = command(module.params['commands'])
     for index, item in enumerate(commands):
@@ -168,7 +169,6 @@ def main():
     """main entry point for module execution
     """
     argument_spec = dict(
-        # { command: <str>, prompt: <str>, response: <str> }
         commands=dict(type='list', required=True),
 
         wait_for=dict(type='list', aliases=['waitfor']),

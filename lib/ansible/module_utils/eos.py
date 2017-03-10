@@ -28,16 +28,13 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import os
-import re
 import time
 
-from ansible.module_utils.basic import env_fallback, get_exception
-from ansible.module_utils.network_common import to_list
-from ansible.module_utils.netcli import Command
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.network import NetworkError
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.connection import exec_command
+from ansible.module_utils.network_common import to_list, ComplexList
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.urls import fetch_url
 
 _DEVICE_CONNECTION = None
 
@@ -57,14 +54,14 @@ eos_argument_spec = {
     'validate_certs': dict(type='bool'),
     'timeout': dict(type='int'),
 
-    'provider': dict(type='dict', no_log=True),
+    'provider': dict(type='dict'),
     'transport': dict(choices=['cli', 'eapi'])
 }
 
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in eos_argument_spec:
-        if key not in ['provider', 'transport'] and module.params[key]:
+        if key not in ['provider', 'transport', 'authorize'] and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
                     'removed in a future version' % key)
 
@@ -79,9 +76,9 @@ def get_connection(module):
     global _DEVICE_CONNECTION
     if not _DEVICE_CONNECTION:
         load_params(module)
-        if 'transport' not in module.params:
-            conn = Cli(module)
-        elif module.params['transport'] == 'eapi':
+        transport = module.params['transport']
+        provider_transport = (module.params['provider'] or {}).get('transport')
+        if 'eapi' in (transport, provider_transport):
             conn = Eapi(module)
         else:
             conn = Cli(module)
@@ -225,7 +222,7 @@ class Cli:
             self._module.fail_json(msg=err, commands=commands)
 
         rc, out, err = self.exec_command('show session-config diffs')
-        if rc == 0:
+        if rc == 0 and out:
             result['diff'] = out.strip()
 
         if commit:
@@ -327,7 +324,7 @@ class Eapi:
                 item['command'] = str(item['command']).replace('| json', '')
                 item['output'] == 'json'
 
-            if output != item['output']:
+            if output and output != item['output']:
                 responses.extend(_send(queue, output))
                 queue = list()
 
@@ -407,7 +404,7 @@ class Eapi:
 
         response = self.send_request(commands, output='text')
         diff = response['result'][1]['output']
-        if diff:
+        if len(diff) > 0:
             result['diff'] = diff
 
         return result
@@ -417,13 +414,33 @@ is_text = lambda x: not str(x).endswith('| json')
 
 supports_sessions = lambda x: get_connection(module).supports_sessions
 
+def is_eapi(module):
+    transport = module.params['transport']
+    provider_transport = (module.params['provider'] or {}).get('transport')
+    return 'eapi' in (transport, provider_transport)
+
+def to_command(module, commands):
+    if is_eapi(module):
+        default_output = 'json'
+    else:
+        default_output = 'text'
+
+    transform = ComplexList(dict(
+        command=dict(key=True),
+        output=dict(default=default_output),
+        prompt=dict(),
+        answer=dict()
+    ), module)
+
+    return transform(to_list(commands))
+
 def get_config(module, flags=[]):
     conn = get_connection(module)
     return conn.get_config(flags)
 
 def run_commands(module, commands):
     conn = get_connection(module)
-    return conn.run_commands(commands)
+    return conn.run_commands(to_command(module, commands))
 
 def load_config(module, config, commit=False, replace=False):
     conn = get_connection(module)

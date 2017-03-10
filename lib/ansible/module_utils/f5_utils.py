@@ -140,6 +140,10 @@ def fq_list_names(partition,list_names):
 
 # New style
 
+from abc import ABCMeta, abstractproperty
+from ansible.module_utils.six import with_metaclass
+from collections import defaultdict
+
 try:
     from f5.bigip import ManagementRoot as BigIpMgmt
     from f5.bigip.contexts import TransactionContextManager as BigIpTxContext
@@ -280,51 +284,48 @@ class AnsibleF5Client(object):
 
 class AnsibleF5Parameters(object):
     def __init__(self, params=None):
-        self._partition = None
-        if params is None:
-            return
-        for key, value in iteritems(params):
-            setattr(self, key, value)
+        self._values = defaultdict(lambda: None)
+        if params:
+            for k,v in iteritems(params):
+                if self.api_map is not None and k in self.api_map:
+                    dict_to_use = self.api_map
+                    map_key = self.api_map[k]
+                else:
+                    dict_to_use = self._values
+                    map_key = k
+
+                # Handle weird API parameters like `dns.proxy.__iter__` by
+                # using a map provided by the module developer
+                class_attr = getattr(type(self), map_key, None)
+                if isinstance(class_attr, property):
+                    # There is a mapped value for the api_map key
+                    if class_attr.fset is None:
+                        # If the mapped value does not have an associated setter
+                        self._values[map_key] = v
+                    else:
+                        # The mapped value has a setter
+                        setattr(self, map_key, v)
+                else:
+                    # If the mapped value is not a @property
+                    self._values[map_key] = v
+
+    def __getattr__(self, item):
+        # Ensures that properties that weren't defined, and therefore stashed
+        # in the `_values` dict, will be retrievable.
+        return self._values[item]
 
     @property
     def partition(self):
-        if self._partition is None:
+        if self._values['partition'] is None:
             return 'Common'
-        return self._partition.strip('/')
+        return self._values['partition'].strip('/')
 
     @partition.setter
     def partition(self, value):
-        self._partition = value
+        self._values['partition'] = value
 
-    @classmethod
-    def from_api(cls, params):
-        for key,value in iteritems(cls.param_api_map):
-            params[key] = params.pop(value, None)
-        p = cls(params)
-        return p
-
-    def __getattr__(self, item):
-        return None
-
-    def api_params(self):
-        result = self._api_params_from_map()
-        return self._filter_none(result)
-
-    def _filter_none(self, params):
-        result = dict()
-        for k, v in iteritems(params):
-            if v is None:
-                continue
-            result[k] = v
-        return result
-
-    def _api_params_from_map(self):
-        result = dict()
-        pmap = self.__class__.param_api_map
-        for k,v in iteritems(pmap):
-            value = getattr(self, k)
-            result[v] = value
-        return result
+    def _filter_params(self, params):
+        return dict((k, v) for k, v in iteritems(params) if v is not None)
 
 
 class F5ModuleError(Exception):

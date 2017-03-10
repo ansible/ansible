@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_pim
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages configuration of a PIM instance.
 description:
@@ -179,7 +180,6 @@ def main():
         exc = get_exception()
         module.fail_json(msg=str(exc))
 
-    result['connected'] = module.connected
     if module._verbosity > 0:
         end_state = invoke('get_existing', module, args)
         result['end_state'] = end_state

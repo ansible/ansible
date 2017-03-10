@@ -90,16 +90,15 @@ options:
         default: 'gb'
 
     access:
-        description:
-        - Access allowed for the volume.
         required: false
         choices: ['readOnly', 'readWrite', 'locked', 'replicationTarget']
-        access_type_description:
-        - readOnly: Only read operations are allowed.
-        - readWrite: Reads and writes are allowed.
-        - locked: No reads or writes are allowed.
-        - replicationTarget: Identify a volume as the target volume for a paired set of volumes. If the volume is not paired, the access status is locked.
-        - If unspecified, the access settings of the clone will be the same as the source.
+        description:
+        - "Access allowed for the volume."
+        - "readOnly: Only read operations are allowed."
+        - "readWrite: Reads and writes are allowed."
+        - "locked: No reads or writes are allowed."
+        - "replicationTarget: Identify a volume as the target volume for a paired set of volumes. If the volume is not paired, the access status is locked."
+        - "If unspecified, the access settings of the clone will be the same as the source."
         default: None
 
 '''

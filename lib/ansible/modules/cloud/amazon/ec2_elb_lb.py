@@ -71,24 +71,24 @@ options:
   security_group_ids:
     description:
       - A list of security groups to apply to the elb
-    require: false
+    required: false
     default: None
     version_added: "1.6"
   security_group_names:
     description:
       - A list of security group names to apply to the elb
-    require: false
+    required: false
     default: None
     version_added: "2.0"
   health_check:
     description:
       - An associative array of health check configuration settings (see example)
-    require: false
+    required: false
     default: None
   access_logs:
     description:
       - An associative array of access logs configuration settings (see example)
-    require: false
+    required: false
     default: None
     version_added: "2.0"
   subnets:
@@ -1033,7 +1033,7 @@ class ElbManager(object):
                 policy = []
                 policy_type = 'LBCookieStickinessPolicyType'
 
-                if self.module.boolean(self.stickiness['enabled']) == True:
+                if self.module.boolean(self.stickiness['enabled']) is True:
 
                     if 'expiration' not in self.stickiness:
                         self.module.fail_json(msg='expiration must be set when type is loadbalancer')
@@ -1050,7 +1050,7 @@ class ElbManager(object):
                     policy.append(self._policy_name(policy_attrs['type']))
 
                     self._set_stickiness_policy(elb_info, listeners_dict, policy, **policy_attrs)
-                elif self.module.boolean(self.stickiness['enabled']) == False:
+                elif self.module.boolean(self.stickiness['enabled']) is False:
                     if len(elb_info.policies.lb_cookie_stickiness_policies):
                         if elb_info.policies.lb_cookie_stickiness_policies[0].policy_name == self._policy_name(policy_type):
                             self.changed = True
@@ -1062,7 +1062,7 @@ class ElbManager(object):
             elif self.stickiness['type'] == 'application':
                 policy = []
                 policy_type = 'AppCookieStickinessPolicyType'
-                if self.module.boolean(self.stickiness['enabled']) == True:
+                if self.module.boolean(self.stickiness['enabled']) is True:
 
                     if 'cookie' not in self.stickiness:
                         self.module.fail_json(msg='cookie must be set when type is application')
@@ -1076,7 +1076,7 @@ class ElbManager(object):
                     }
                     policy.append(self._policy_name(policy_attrs['type']))
                     self._set_stickiness_policy(elb_info, listeners_dict, policy, **policy_attrs)
-                elif self.module.boolean(self.stickiness['enabled']) == False:
+                elif self.module.boolean(self.stickiness['enabled']) is False:
                     if len(elb_info.policies.app_cookie_stickiness_policies):
                         if elb_info.policies.app_cookie_stickiness_policies[0].policy_name == self._policy_name(policy_type):
                             self.changed = True
@@ -1242,8 +1242,8 @@ def main():
         purge_subnets={'default': False, 'required': False, 'type': 'bool'},
         scheme={'default': 'internet-facing', 'required': False},
         connection_draining_timeout={'default': None, 'required': False},
-        idle_timeout={'default': None, 'required': False},
-        cross_az_load_balancing={'default': None, 'required': False},
+        idle_timeout={'default': None, 'type': 'int', 'required': False},
+        cross_az_load_balancing={'default': None, 'type': 'bool', 'required': False},
         stickiness={'default': None, 'required': False, 'type': 'dict'},
         access_logs={'default': None, 'required': False, 'type': 'dict'},
         wait={'default': False, 'type': 'bool', 'required': False},

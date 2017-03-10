@@ -28,6 +28,7 @@ DOCUMENTATION = '''
 module: ovirt_quotas_facts
 short_description: Retrieve facts about one or more oVirt quotas
 version_added: "2.3"
+author: "Red Hat"
 description:
     - "Retrieve facts about one or more oVirt quotas."
 notes:
@@ -86,7 +87,8 @@ def main():
     check_sdk(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         datacenters_service = connection.system_service().data_centers_service()
         dc_name = module.params['datacenter']
         dc = search_by_name(datacenters_service, dc_name)
@@ -118,7 +120,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == '__main__':

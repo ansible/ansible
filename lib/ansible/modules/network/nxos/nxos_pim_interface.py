@@ -23,6 +23,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: nxos_pim_interface
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages PIM interface configuration.
 description:
@@ -680,7 +681,7 @@ def main():
             commands.append(defaults)
 
     elif state == 'absent':
-        if existing.get('sparse') == True:
+        if existing.get('sparse') is True:
             delta['sparse'] = False
             # defaults is a list of commands
             defaults = config_pim_interface_defaults(existing, jp_bidir, isauth)

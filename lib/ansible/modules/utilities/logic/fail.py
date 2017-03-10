@@ -34,7 +34,7 @@ options:
   msg:
     description:
       - The customized message used for failing execution. If omitted,
-        fail will simple bail out with a generic message.
+        fail will simply bail out with a generic message.
     required: false
     default: "'Failed as requested from task'"
 

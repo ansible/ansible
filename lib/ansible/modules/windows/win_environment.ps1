@@ -19,35 +19,68 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args;
-$state = Get-AnsibleParam -obj $params -name "state" -default "present" -validateSet "present","absent"
-$name = Get-AnsibleParam -obj $params -name "name" -failifempty $true
-$level = Get-AnsibleParam -obj $params -name "level" -validateSet "machine","process","user" -failifempty $true
-$value = Get-AnsibleParam -obj $params -name "value"
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+$diff_support = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
 
-If ($level) {
-    $level = $level.ToString().ToLower()
-}
+$name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
+$value = Get-AnsibleParam -obj $params -name "value" -type "str"
+$level = Get-AnsibleParam -obj $params -name "level" -type "str" -validateSet "machine","user","process" -failifempty $true
 
 $before_value = [Environment]::GetEnvironmentVariable($name, $level)
 
-$state = $state.ToString().ToLower()
-if ($state -eq "present" ) {
-   [Environment]::SetEnvironmentVariable($name, $value, $level)
-} Elseif ($state -eq "absent") {
-   [Environment]::SetEnvironmentVariable($name, $null, $level)
+# When removing environment, set value to $null if set
+if ($state -eq "absent" -and $value) {
+    $value = $null
 }
 
-$after_value = [Environment]::GetEnvironmentVariable($name, $level)
-
-$result = New-Object PSObject;
-Set-Attr $result "changed" $false;
-Set-Attr $result "name" $name;
-Set-Attr $result "before_value" $before_value;
-Set-Attr $result "value" $after_value;
-Set-Attr $result "level" $level;
-if ($before_value -ne $after_value) {
-   Set-Attr $result "changed" $true;
+$result = @{
+    before_value = $before_value
+    changed = $false
+    level = $level
+    name = $name
+    value = $value
 }
 
-Exit-Json $result;
+if ($diff_support) {
+    $result.diff = @{}
+}
+
+if ($state -eq "present" -and $before_value -ne $value) {
+    if (-not $check_mode) {
+        [Environment]::SetEnvironmentVariable($name, $value, $level)
+    }
+    $result.changed = $true
+
+    if ($diff_support) {
+        if ($before_value -eq $null) {
+            $result.diff.prepared = @"
+[$level]
++$NAME = $value
+"@
+        } else {
+            $result.diff.prepared = @"
+[$level]
+-$NAME = $before_value
++$NAME = $value
+"@
+        }
+    }
+
+} elseif ($state -eq "absent" -and $before_value -ne $null) {
+    if (-not $check_mode) {
+        [Environment]::SetEnvironmentVariable($name, $null, $level)
+    }
+    $result.changed = $true
+
+    if ($diff_support) {
+        $result.diff.prepared = @"
+[$level]
+-$NAME = $before_value
+"@
+    }
+
+}
+
+Exit-Json $result

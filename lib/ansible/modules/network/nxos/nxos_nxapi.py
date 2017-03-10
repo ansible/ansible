@@ -25,6 +25,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: nxos_nxapi
+extends_documentation_fragment: nxos
 version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
 short_description: Manage NXAPI configuration on an NXOS device.
@@ -134,6 +135,11 @@ from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.six import iteritems
 
 def check_args(module, warnings):
+    transport = module.params['transport']
+    provider_transport = (module.params['provider'] or {}).get('transport')
+    if 'nxapi' in (transport, provider_transport):
+        module.fail_json(msg='transport=nxapi is not supporting when configuring nxapi')
+
     nxos_check_args(module, warnings)
 
     state = module.params['state']
@@ -192,20 +198,23 @@ def map_obj_to_commands(updates, module):
 def parse_http(data):
     match = re.search('HTTP Port:\s+(\d+)', data, re.M)
     if match:
-        return {'http': True, 'http_port': match.group(1)}
+        return {'http': True, 'http_port': int(match.group(1))}
     else:
         return {'http': False, 'http_port': None}
 
 def parse_https(data):
     match = re.search('HTTPS Port:\s+(\d+)', data, re.M)
     if match:
-        return {'https': True, 'https_port': match.group(1)}
+        return {'https': True, 'https_port': int(match.group(1))}
     else:
         return {'https': False, 'https_port': None}
 
 def parse_sandbox(data):
     match = re.search('Sandbox:\s+(.+)$', data, re.M)
-    return {'sandbox': match.group(1) == 'Enabled'}
+    value = None
+    if match:
+        value = match.group(1) == 'Enabled'
+    return {'sandbox': value}
 
 def map_config_to_obj(module):
     out = run_commands(module, ['show nxapi'], check_rc=False)

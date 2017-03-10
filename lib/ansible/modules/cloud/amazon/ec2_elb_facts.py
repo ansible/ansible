@@ -78,6 +78,8 @@ EXAMPLES = '''
 
 '''
 
+import traceback
+
 try:
     import boto.ec2.elb
     from boto.ec2.tag import Tag
@@ -194,27 +196,39 @@ class ElbInformation(object):
             elb_info['instances_inservice_count'] = len(elb_info['instances_inservice'])
             elb_info['instances_outofservice'] = [inst.instance_id for inst in instance_health if inst.state == 'OutOfService']
             elb_info['instances_outofservice_count'] = len(elb_info['instances_outofservice'])
-            elb_info['instances_inservice_percent'] = float(elb_info['instances_inservice_count'])/(
-                float(elb_info['instances_inservice_count']) +
-                float(elb_info['instances_outofservice_count']))*100
+            try:
+                elb_info['instances_inservice_percent'] = (
+                    float(elb_info['instances_inservice_count']) /
+                    float(elb_info['instances_inservice_count'] + elb_info['instances_outofservice_count'])
+                ) * 100.
+            except ZeroDivisionError:
+                elb_info['instances_inservice_percent'] = 0.
         return elb_info
 
 
     def list_elbs(self):
-        elb_array = []
+        elb_array, token = [], None
 
-        try:
-            all_elbs = self.connection.get_all_load_balancers()
-        except BotoServerError as err:
-            self.module.fail_json(msg = "%s: %s" % (err.error_code, err.error_message))
+        while True:
+            try:
+                all_elbs = self.connection.get_all_load_balancers(marker=token)
+                token = all_elbs.next_token
+            except BotoServerError as err:
+                self.module.fail_json(msg = "%s: %s" % (err.error_code, err.error_message),
+                    exception=traceback.format_exc())
 
-        if all_elbs:
-            if self.names:
-                for existing_lb in all_elbs:
-                    if existing_lb.name in self.names:
-                        elb_array.append(existing_lb)
+            if all_elbs:
+                if self.names:
+                    for existing_lb in all_elbs:
+                        if existing_lb.name in self.names:
+                            elb_array.append(existing_lb)
+                else:
+                    elb_array.extend(all_elbs)
             else:
-                elb_array = all_elbs
+                break
+
+            if token is None:
+                break
 
         return list(map(self._get_elb_info, elb_array))
 

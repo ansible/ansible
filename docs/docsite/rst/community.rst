@@ -77,7 +77,7 @@ To be respectful of reviewers' time and allow us to help everyone efficiently, p
 provide minimal well-reduced and well-commented examples versus sharing your entire production
 playbook.  Include playbook snippets and output where possible.  
 
-When sharing YAML in playbooks, formatting can be preserved by using `code blocks <https://help.github.com/articles/github-flavored-markdown#fenced-code-blocks>`_.
+When sharing YAML in playbooks, formatting can be preserved by using `code blocks <https://help.github.com/articles/creating-and-highlighting-code-blocks/>`_.
 
 For multiple-file content, we encourage use of gist.github.com.  Online pastebin content can expire, so it's nice to have things around for a longer term if they
 are referenced in a ticket.
@@ -154,7 +154,7 @@ In order to keep the history clean and better audit incoming code, we will requi
 contain merge commits.  Use ``git pull --rebase`` (rather than ``git pull``) and ``git rebase`` (rather than ``git merge``). Also be sure to use topic
 branches to keep your additions on different branches, such that they won't pick up stray commits later.
 
-If you make a mistake you do not need to close your PR, create a clean branch locally and then push to GitHub
+If you make a mistake you do not need to close your PR. Instead, create a clean branch locally and then push to GitHub
 with ``--force`` to overwrite the existing branch (permissible in this case as no one else should be using that
 branch as reference). Code comments won't be lost, they just won't be attached to the existing branch.
 
@@ -248,7 +248,7 @@ Tower Support Questions
 
 Ansible `Tower <https://ansible.com/tower>`_ is a UI, Server, and REST endpoint for Ansible, produced by Ansible, Inc.
 
-If you have a question about Tower, visit `support.ansible.com <https://support.ansible.com/>`_ rather than using the IRC
+If you have a question about Tower, visit `Red Hat support <https://access.redhat.com/products/ansible-tower-red-hat/>`_ rather than using the IRC
 channel or the general project mailing list.
 
 IRC Channel

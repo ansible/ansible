@@ -69,10 +69,9 @@ options:
     rules:
         description:
             - Set of rules shaping traffic flow to or from a subnet or NIC. Each rule is a dictionary.
-        type: complex
         required: false
         default: null
-        contains:
+        suboptions:
             name:
                 description: Unique name for the rule.
                 required: true

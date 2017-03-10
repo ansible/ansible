@@ -24,9 +24,7 @@ from lib.executor import (
     command_windows_integration,
     command_units,
     command_compile,
-    command_sanity,
     command_shell,
-    SANITY_TESTS,
     SUPPORTED_PYTHON_VERSIONS,
     COMPILE_PYTHON_VERSIONS,
     PosixIntegrationConfig,
@@ -40,6 +38,12 @@ from lib.executor import (
     Delegate,
     generate_pip_install,
     check_startup,
+)
+
+from lib.sanity import (
+    command_sanity,
+    sanity_init,
+    sanity_get_tests,
 )
 
 from lib.target import (
@@ -64,10 +68,12 @@ def main():
     try:
         git_root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
         os.chdir(git_root)
+        sanity_init()
         args = parse_args()
         config = args.config(args)
         display.verbosity = config.verbosity
         display.color = config.color
+        display.info_stderr = isinstance(config, SanityConfig) and config.lint
         check_startup()
 
         try:
@@ -254,6 +260,7 @@ def parse_args():
                           choices=COMPILE_PYTHON_VERSIONS,
                           help='python version: %s' % ', '.join(COMPILE_PYTHON_VERSIONS))
 
+    add_lint(compiler)
     add_extra_docker_options(compiler, integration=False)
 
     sanity = subparsers.add_parser('sanity',
@@ -267,14 +274,14 @@ def parse_args():
     sanity.add_argument('--test',
                         metavar='TEST',
                         action='append',
-                        choices=[t.name for t in SANITY_TESTS],
-                        help='tests to run')
+                        choices=[test.name for test in sanity_get_tests()],
+                        help='tests to run').completer = complete_sanity_test
 
     sanity.add_argument('--skip-test',
                         metavar='TEST',
                         action='append',
-                        choices=[t.name for t in SANITY_TESTS],
-                        help='tests to skip')
+                        choices=[test.name for test in sanity_get_tests()],
+                        help='tests to skip').completer = complete_sanity_test
 
     sanity.add_argument('--list-tests',
                         action='store_true',
@@ -288,6 +295,7 @@ def parse_args():
     sanity.add_argument('--base-branch',
                         help=argparse.SUPPRESS)
 
+    add_lint(sanity)
     add_extra_docker_options(sanity, integration=False)
 
     shell = subparsers.add_parser('shell',
@@ -361,6 +369,19 @@ def parse_args():
         args.color = sys.stdout.isatty()
 
     return args
+
+
+def add_lint(parser):
+    """
+    :type parser: argparse.ArgumentParser
+    """
+    parser.add_argument('--lint',
+                        action='store_true',
+                        help='write lint output to stdout, everything else stderr')
+
+    parser.add_argument('--junit',
+                        action='store_true',
+                        help='write test failures to junit xml files')
 
 
 def add_changes(parser, argparse):
@@ -538,6 +559,19 @@ def complete_network_platform(prefix, parsed_args, **_):
         images = completion_fd.read().splitlines()
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.platform or i not in parsed_args.platform)]
+
+
+def complete_sanity_test(prefix, parsed_args, **_):
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    del parsed_args
+
+    tests = sorted(t.name for t in sanity_get_tests())
+
+    return [i for i in tests if i.startswith(prefix)]
 
 
 if __name__ == '__main__':

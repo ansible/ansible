@@ -33,6 +33,7 @@ description:
     read from the device.  This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
+extends_documentation_fragment: eos
 options:
   commands:
     description:
@@ -147,7 +148,7 @@ def parse_commands(module, warnings):
         command=dict(key=True),
         output=dict(),
         prompt=dict(),
-        response=dict()
+        answer=dict()
     )
 
     transform = ComplexList(spec, module)

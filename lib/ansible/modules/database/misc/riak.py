@@ -39,46 +39,37 @@ options:
       - The command you would like to perform against the cluster.
     required: false
     default: null
-    aliases: []
     choices: ['ping', 'kv_test', 'join', 'plan', 'commit']
   config_dir:
     description:
       - The path to the riak configuration directory
     required: false
     default: /etc/riak
-    aliases: []
   http_conn:
     description:
       - The ip address and port that is listening for Riak HTTP queries
     required: false
     default: 127.0.0.1:8098
-    aliases: []
   target_node:
     description:
       - The target node for certain operations (join, ping)
     required: false
     default: riak@127.0.0.1
-    aliases: []
   wait_for_handoffs:
     description:
       - Number of seconds to wait for handoffs to complete.
     required: false
     default: null
-    aliases: []
-    type: 'int'
   wait_for_ring:
     description:
       - Number of seconds to wait for all nodes to agree on the ring.
     required: false
     default: null
-    aliases: []
-    type: 'int'
   wait_for_service:
     description:
       - Waits for a riak service to come online before continuing.
     required: false
     default: None
-    aliases: []
     choices: ['kv']
   validate_certs:
     description:

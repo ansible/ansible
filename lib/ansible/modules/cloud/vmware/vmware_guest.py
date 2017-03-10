@@ -107,7 +107,7 @@ options:
    datacenter:
         description:
             - Destination datacenter for the deploy operation
-        required: True
+        required: False
         default: ha-datacenter
    cluster:
         description:
@@ -1262,7 +1262,7 @@ def main():
             disk=dict(required=False, type='list', default=[]),
             hardware=dict(required=False, type='dict', default={}),
             force=dict(required=False, type='bool', default=False),
-            datacenter=dict(required=True, type='str', default='ha-datacenter'),
+            datacenter=dict(required=False, type='str', default='ha-datacenter'),
             esxi_hostname=dict(required=False, type='str', default=None),
             cluster=dict(required=False, type='str', default=None),
             wait_for_ip_address=dict(required=False, type='bool', default=False),

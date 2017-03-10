@@ -27,7 +27,26 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+# This module initially matched the namespace of network module avi. However,
+# that causes namespace import error when other modules from avi namespaces
+# are imported. Added import of absolute_import to avoid import collisions for
+# avi.sdk.
+
+from __future__ import absolute_import
 import os
+from pkg_resources import parse_version
+
+HAS_AVI = True
+try:
+    import avi.sdk
+    sdk_version = getattr(avi.sdk, '__version__', None)
+    if ((sdk_version is None) or (sdk_version and
+            (parse_version(sdk_version) < parse_version('16.3.5.post1')))):
+        # It allows the __version__ to be '' as that value is used in development builds
+        raise ImportError
+    from avi.sdk.utils.ansible_utils import avi_ansible_api
+except ImportError:
+    HAS_AVI = False
 
 
 def avi_common_argument_spec():

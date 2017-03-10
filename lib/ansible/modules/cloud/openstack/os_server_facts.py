@@ -23,6 +23,7 @@ DOCUMENTATION = '''
 ---
 module: os_server_facts
 short_description: Retrieve facts about one or more compute instances
+author: Monty
 version_added: "2.0"
 description:
     - Retrieve facts about server instances from OpenStack.
@@ -35,7 +36,7 @@ requirements:
 options:
    server:
      description:
-       - restrict results to servers with names matching
+       - restrict results to servers with names or UUID matching
          this glob expression (e.g., C<web*>).
      required: false
      default: None
@@ -92,7 +93,7 @@ def main():
             # filter servers by name
             pattern = module.params['server']
             openstack_servers = [server for server in openstack_servers
-                                 if fnmatch.fnmatch(server['name'], pattern)]
+                                 if fnmatch.fnmatch(server['name'], pattern) or fnmatch.fnmatch(server['id'], pattern)]
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_servers=openstack_servers))
 

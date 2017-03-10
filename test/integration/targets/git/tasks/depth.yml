@@ -64,6 +64,28 @@
   args:
     chdir: '{{ checkout_dir }}'
 
+- name: clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+# Test for https://github.com/ansible/ansible/issues/21316
+- name: Shallow clone with tag
+  git:
+    repo: 'file://{{ repo_dir|expanduser }}/shallow'
+    dest: '{{ checkout_dir }}'
+    depth: 1
+    version: earlytag
+  register: cloneold
+
+- assert:
+    that: "cloneold|success"
+
+- name: clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
 
   # Test for https://github.com/ansible/ansible-modules-core/issues/3456
   # clone a repo with depth and version specified
