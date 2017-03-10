@@ -406,8 +406,6 @@ def construct_rule(params):
     elif params['ctstate']:
         append_match(rule, params['ctstate'], 'conntrack')
         append_csv(rule, params['ctstate'], '--ctstate')
-    else:
-        return False
     append_match(rule, params['limit'] or params['limit_burst'], 'limit')
     append_param(rule, params['limit'], '--limit', False)
     append_param(rule, params['limit_burst'], '--limit-burst', False)
