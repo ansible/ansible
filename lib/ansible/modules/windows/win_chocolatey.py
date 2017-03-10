@@ -106,6 +106,18 @@ options:
     type: bool
     default: 'no'
     version_added: '2.4'
+  proxy_url:
+    description:
+      - Proxy url used to install chocolatey and the package
+    version_added: '2.4'
+  proxy_username:
+    description:
+      - Proxy username used to install chocolatey and the package
+    version_added: '2.4'
+  proxy_password:
+    description:
+      - Proxy password used to install chocolatey and the package
+    version_added: '2.4'
 notes:
 - Provide the C(version) parameter value as a string (e.g. C('6.1')), otherwise it
   is considered to be a floating-point number and depending on the locale could
@@ -115,6 +127,7 @@ author:
 - Peter Mounce (@petemounce)
 - Pepe Barbe (@elventear)
 - Adam Keech (@smadam813)
+- Pierre Templier (@ptemplier)
 '''
 
 # TODO:
@@ -164,4 +177,11 @@ EXAMPLES = r'''
   with_items:
     - pscx
     - windirstat
+
+- name: Install curl using proxy
+  win_chocolatey:
+    name: curl
+    proxy_url: http://proxy-server:8080/
+    proxy_username: joe
+    proxy_password: p@ssw0rd
 '''
