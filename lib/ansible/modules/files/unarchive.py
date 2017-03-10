@@ -217,7 +217,7 @@ class ZipArchive(object):
         for line in out.splitlines()[3:-2]:
             fields = line.split(None, 7)
             self._files_in_archive.append(fields[7])
-            self._infodict[fields[7]] = long(fields[6])
+            self._infodict[fields[7]] = int(fields[6])
 
     def _crc32(self, path):
         if self._infodict:
@@ -236,7 +236,7 @@ class ZipArchive(object):
         else:
             try:
                 for item in archive.infolist():
-                    self._infodict[item.filename] = long(item.CRC)
+                    self._infodict[item.filename] = int(item.CRC)
             except:
                 archive.close()
                 raise UnarchiveError('Unable to list files in the archive')
