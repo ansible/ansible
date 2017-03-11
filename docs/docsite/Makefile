@@ -40,7 +40,7 @@ clean:
 .PHONEY: docs clean
 
 directives: $(FORMATTER) ../../hacking/templates/rst.j2
-	PYTHONPATH=../../lib $(DUMPER) --template-dir=../../hacking/templates --output-dir=rst/
+	PYTHONPATH=../../lib $(DUMPER) --template-dir=../../hacking/templates --output-dir=rst/ -d ./directive_desc.yml
 
 modules: $(FORMATTER) ../../hacking/templates/rst.j2
 	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../../hacking/templates --module-dir=../../lib/ansible/modules -o rst/

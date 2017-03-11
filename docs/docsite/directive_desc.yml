@@ -7,12 +7,12 @@ connection: Allows you to change the connection plugin used for tasks to execute
 environment: A dictionary that gets converted into environment vars to be provided for the task upon execution.
 gather_facts: A boolean that controls if the play will automatically run the 'setup' task to gather facts for the hosts.
 hosts: A list of groups, hosts or host pattern that translates into a list of hosts that are the play's target.
-ingore_errors: Boolean that allows you to ignore task failures and continue with play. It does not affect connection errors.
+ignore_errors: Boolean that allows you to ignore task failures and continue with play. It does not affect connection errors.
 name: It's a name, works mostly for documentation, in the case of tasks/handlers it can be an identifier.
 remote_user: User used to log into the target via the connection plugin. AKA login user.
 no_log: Boolean that controls information disclosure.
 run_once: Boolean that will bypass the host loop, forcing the task to execute on the first host available and will also apply any facts to all active hosts.
-when: Conditional expression, determines if a task is run or not.
+when: Conditional expression, determines if an iteration of a task is run or not.
 strategy: Allows you to choose the connection plugin to use for the play.
 tags: Tags applied to the task or included tasks, this allows selecting subsets of tasks from the command line.
 vars: Dictionary/map of variables
