@@ -66,7 +66,7 @@
 
 
 - name: set instance id fact
-  set_fact: instance_id={{ output.instances[0].id }}
+  set_fact: instance_id="{{ output.tagged_instances[0].id }}"
 
 # eip allocated:0 assigned:0
 
@@ -106,6 +106,7 @@
     ec2_secret_key={{ ec2_secret_key }}
     public_ip={{ eip }}
     region={{ ec2_region }}
+    in_vpc=yes
   register: result
 
 - name: assert new EIP was assigned
@@ -142,6 +143,7 @@
     ec2_access_key={{ ec2_access_key }}
     ec2_secret_key={{ ec2_secret_key }}
     region={{ ec2_region }}
+    in_vpc=yes
   register: result
 
 - name: assert new EIP was assigned
