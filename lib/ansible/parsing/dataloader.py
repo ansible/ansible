@@ -237,8 +237,8 @@ class DataLoader():
             b_main = b'main%s' % (suffix)
             b_tasked = b'tasks/%s' % (b_main)
 
-            if (b_path.endswith(b'tasks') and os.path.exists(os.path.join(b_path, b_main)) \
-            or os.path.exists(os.path.join(b_upath), b_tasked)) \
+            if b_path.endswith(b'tasks') and os.path.exists(os.path.join(b_path, b_main)) \
+            or os.path.exists(os.path.join(b_upath, b_tasked)) \
             or os.path.exists(os.path.join(os.path.dirname(b_path), b_tasked)):
                 isit = True
                 break
