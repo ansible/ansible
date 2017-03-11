@@ -658,7 +658,9 @@ class ModuleValidator(Validator):
                          'with DOCUMENTATION.extends_documentation_fragment')
                     ))
 
+                deprecated = False
                 if self.object_name.startswith('_') and not os.path.islink(self.object_path):
+                    deprecated = True
                     if 'deprecated' not in doc or not doc.get('deprecated'):
                         self.errors.append((
                             318,
@@ -708,7 +710,7 @@ class ModuleValidator(Validator):
                 self.traces.extend(traces)
 
             if metadata:
-                self._validate_docs_schema(metadata, metadata_schema,
+                self._validate_docs_schema(metadata, metadata_schema(deprecated),
                                            'ANSIBLE_METADATA', 316)
 
         return doc_info

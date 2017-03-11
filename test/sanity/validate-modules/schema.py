@@ -18,6 +18,20 @@
 
 from voluptuous import PREVENT_EXTRA, Any, Required, Schema
 
+suboption_schema = Schema(
+    {
+        Required('description'): Any(basestring, [basestring]),
+        'required': bool,
+        'choices': list,
+        'aliases': Any(basestring, list),
+        'version_added': Any(basestring, float),
+        'default': Any(None, basestring, float, int, bool, list, dict),
+        # Note: Types are strings, not literal bools, such as True or False
+        'type': Any(None, "bool")
+    },
+    extra=PREVENT_EXTRA
+)
+
 option_schema = Schema(
     {
         Required('description'): Any(basestring, [basestring]),
@@ -27,7 +41,7 @@ option_schema = Schema(
         'version_added': Any(basestring, float),
         'default': Any(None, basestring, float, int, bool, list, dict),
         # FIXME: Recursive Schema: https://github.com/alecthomas/voluptuous/issues/128
-        'suboptions': Any(None, dict),
+        'suboptions': Any(None, {basestring: suboption_schema,}),
         # Note: Types are strings, not literal bools, such as True or False
         'type': Any(None, "bool")
     },
@@ -49,31 +63,25 @@ def doc_schema(module_name):
             'notes': Any(None, [basestring]),
             'requirements': [basestring],
             'todo': Any(None, basestring, [basestring]),
-            'options': Any(
-                None,
-                {
-                    basestring: option_schema
-                    }
-            ),
+            'options': Any(None, { basestring: option_schema }),
             'extends_documentation_fragment': Any(basestring, [basestring])
         },
         extra=PREVENT_EXTRA
     )
 
-# FIXME Factory to allow changing of metadata_status
-metadata_schema = Schema(
-    {
-        Required('status'): [Any('stableinterface', 'preview', 'deprecated',
-                                 'removed')],
-        Required('version'): '1.0',
-        Required('supported_by'): Any('core', 'community', 'unmaintained',
-                                      'committer')
-    }
-)
+def metadata_schema(deprecated):
+    valid_status = Any('stableinterface', 'preview', 'deprecated', 'removed')
+    if deprecated:
+        valid_status = Any('deprecated')
 
-# FIXME make metadata_schema a factory function, and if deprecated, make the only available option `deprecated`, otherwise make it one of the others. e.g. set a list of allowable "status" that depends on deprecated or not
-# FIXME: Module name
-
+    return Schema(
+        {
+            Required('status'): [valid_status],
+            Required('version'): '1.0',
+            Required('supported_by'): Any('core', 'community', 'unmaintained',
+                                          'committer')
+        }
+    )
 
 
 
@@ -85,9 +93,9 @@ metadata_schema = Schema(
 # Possible Future Enhancements
 ##############################
 
-# Don't allow empty options for choices, aliases, etc
-# If type: bool can we ensure choices isn't set?
-# both version_added should be quoted floats
+# 1) Don't allow empty options for choices, aliases, etc
+# 2) If type: bool ensure choices isn't set - perhaps use Exclusive
+# 3) both version_added should be quoted floats
 
 # Validate RETURN
 #  Check for contains
