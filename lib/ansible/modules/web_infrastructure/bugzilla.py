@@ -132,7 +132,7 @@ def main():
         bzapi = bugzilla.Bugzilla(url, user, password)
         bug = bzapi.getbug(bug_id)
 
-    except xmlrpclib.Fault as err:
+    except xmlrpclib.Fault, err:
         response = {err.faultCode:err.faultString}
         module.fail_json(msg="FaultError", FaultError=response)
 
