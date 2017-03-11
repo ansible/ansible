@@ -167,7 +167,7 @@ class StrategyModule(StrategyBase):
 
             try:
                 display.debug("getting the remaining hosts for this loop")
-                hosts_left = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
+                hosts_left = self.get_hosts_left(iterator)
                 display.debug("done getting the remaining hosts for this loop")
 
                 # queue up this task for each host in the inventory

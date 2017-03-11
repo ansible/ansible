@@ -918,3 +918,11 @@ class StrategyBase:
         display.vv("META: %s" % msg)
 
         return [TaskResult(target_host, task, result)]
+
+    def get_hosts_left(self, iterator):
+
+        hosts_left = []
+        for host in self._inventory.get_hosts(iterator._play.hosts, order=iterator._play.order):
+            if host.name not in self._tqm._unreachable_hosts:
+                hosts_left.append(host)
+        return hosts_left
