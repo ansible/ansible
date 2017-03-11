@@ -55,7 +55,7 @@ class ActionModule(_ActionModule):
         pc = copy.deepcopy(self._play_context)
         pc.network_os = 'junos'
 
-        if self._task.action in ('junos_command', 'junos_netconf', 'junos_config', '_junos_template'):
+        if self._task.action in ('junos_command', 'junos_facts', 'junos_netconf', 'junos_config', '_junos_template'):
             pc.connection = 'network_cli'
             pc.port = provider['port'] or self._play_context.port or 22
         else:
