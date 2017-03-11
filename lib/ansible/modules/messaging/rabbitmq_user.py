@@ -32,7 +32,7 @@ options:
     description:
       - Password of user to add.
       - To change the password of an existing user, you must also specify
-        C(force=yes).
+        C(update_password=yes) or C(force=yes).
     required: false
     default: null
   tags:
@@ -91,6 +91,13 @@ options:
     required: false
     default: "no"
     choices: [ "yes", "no" ]
+  update_password:
+    description:
+      - Update user password without user recreation
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    version_added: "2.4"
   state:
     description:
       - Specify if user is to be added or removed
@@ -229,6 +236,12 @@ class RabbitMqUser(object):
     def has_permissions_modifications(self):
         return sorted(self._permissions) != sorted(self.permissions)
 
+    def set_password(self):
+        if self.password is not None:
+            self._exec(['change_password', self.username, self.password])
+        else:
+            self._exec(['clear_password', self.username])
+
 
 def main():
     arg_spec = dict(
@@ -241,6 +254,7 @@ def main():
         write_priv=dict(default='^$'),
         read_priv=dict(default='^$'),
         force=dict(default='no', type='bool'),
+        update_password=dict(default='no', type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
         node=dict(default=None)
     )
@@ -258,6 +272,7 @@ def main():
     write_priv = module.params['write_priv']
     read_priv = module.params['read_priv']
     force = module.params['force']
+    update_password = module.params['update_password']
     state = module.params['state']
     node = module.params['node']
 
@@ -286,6 +301,9 @@ def main():
                 rabbitmq_user.delete()
                 rabbitmq_user.add()
                 rabbitmq_user.get()
+                result['changed'] = True
+            elif update_password:
+                rabbitmq_user.set_password()
                 result['changed'] = True
 
             if rabbitmq_user.has_tags_modifications():
