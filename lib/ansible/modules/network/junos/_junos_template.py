@@ -116,6 +116,7 @@ from ansible.module_utils.junos import check_args, junos_argument_spec
 from ansible.module_utils.junos import get_configuration, load
 from ansible.module_utils.six import text_type
 
+USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_template'
 
 def check_transport(module):

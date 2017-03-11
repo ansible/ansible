@@ -18,7 +18,7 @@
 #
 from contextlib import contextmanager
 
-from ncclient.xml_ import new_ele, sub_ele, to_xml
+from xml.etree.ElementTree import Element, SubElement, tostring
 
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.netconf import send_request
@@ -41,6 +41,7 @@ junos_argument_spec = {
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int', default=10),
     'provider': dict(type='dict'),
+    'transport': dict(choices=['cli', 'netconf'])
 }
 
 def check_args(module, warnings):
@@ -81,17 +82,17 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
     else:
         xattrs = {'action': action, 'format': format}
 
-    obj = new_ele('load-configuration', xattrs)
+    obj = Element('load-configuration', xattrs)
 
     if candidate is not None:
         lookup = {'xml': 'configuration', 'text': 'configuration-text',
                   'set': 'configuration-set', 'json': 'configuration-json'}
 
         if action == 'set':
-            cfg = sub_ele(obj, 'configuration-set')
+            cfg = SubElement(obj, 'configuration-set')
             cfg.text = '\n'.join(candidate)
         else:
-            cfg = sub_ele(obj, lookup[format])
+            cfg = SubElement(obj, lookup[format])
             cfg.append(candidate)
 
     return send_request(module, obj)
@@ -104,22 +105,22 @@ def get_configuration(module, compare=False, format='xml', rollback='0'):
         validate_rollback_id(rollback)
         xattrs['compare'] = 'rollback'
         xattrs['rollback'] = str(rollback)
-    return send_request(module, new_ele('get-configuration', xattrs))
+    return send_request(module, Element('get-configuration', xattrs))
 
 def commit_configuration(module, confirm=False, check=False, comment=None, confirm_timeout=None):
-    obj = new_ele('commit-configuration')
+    obj = Element('commit-configuration')
     if confirm:
-        sub_ele(obj, 'confirmed')
+        SubElement(obj, 'confirmed')
     if check:
-        sub_ele(obj, 'check')
+        SubElement(obj, 'check')
     if comment:
         children(obj, ('log', str(comment)))
     if confirm_timeout:
         children(obj, ('confirm-timeout', int(confirm_timeout)))
     return send_request(module, obj)
 
-lock_configuration = lambda x: send_request(x, new_ele('lock-configuration'))
-unlock_configuration = lambda x: send_request(x, new_ele('unlock-configuration'))
+lock_configuration = lambda x: send_request(x, Element('lock-configuration'))
+unlock_configuration = lambda x: send_request(x, Element('unlock-configuration'))
 
 @contextmanager
 def locked_config(module):
@@ -131,7 +132,7 @@ def locked_config(module):
 
 def get_diff(module):
     reply = get_configuration(module, compare=True, format='text')
-    output = reply.xpath('//configuration-output')
+    output = reply.find('.//configuration-output')
     if output:
         return output[0].text
 

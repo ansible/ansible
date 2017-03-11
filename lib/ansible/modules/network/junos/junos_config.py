@@ -186,6 +186,7 @@ from ansible.module_utils.junos import check_args as junos_check_args
 from ansible.module_utils.netcfg import NetworkConfig
 from ansible.module_utils.six import string_types
 
+USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_config'
 
 def check_transport(module):
