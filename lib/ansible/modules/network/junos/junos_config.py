@@ -178,17 +178,23 @@ import re
 import json
 
 from xml.etree import ElementTree
-from ncclient.xml_ import to_xml
 
-from ansible.module_utils.junos import get_diff, load
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.junos import get_config, get_diff, load_config
 from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.junos import check_args as junos_check_args
-from ansible.module_utils.junos import locked_config, load_configuration
-from ansible.module_utils.junos import get_configuration
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import NetworkConfig
+from ansible.module_utils.six import string_types
 
+USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_config'
+
+def check_transport(module):
+    transport = (module.params['provider'] or {}).get('transport')
+
+    if transport == 'netconf':
+        module.fail_json(msg='junos_config module is only supported over cli transport')
+
 
 def check_args(module, warnings):
     junos_check_args(module, warnings)
@@ -219,7 +225,7 @@ def guess_format(config):
 
 def config_to_commands(config):
     set_format = config.startswith('set') or config.startswith('delete')
-    candidate = NetworkConfig(indent=4, contents=config, device_os='junos')
+    candidate = NetworkConfig(indent=4, contents=config)
     if not set_format:
         candidate = [c.line for c in candidate.items]
         commands = list()
@@ -237,22 +243,20 @@ def config_to_commands(config):
     return commands
 
 def filter_delete_statements(module, candidate):
-    reply = get_configuration(module, format='set')
-    config = reply.xpath('//configuration-set')[0].text.strip()
+    config = get_config(module)
+
+    modified_candidate = candidate[:]
     for index, line in enumerate(candidate):
         if line.startswith('delete'):
             newline = re.sub('^delete', 'set', line)
             if newline not in config:
-                del candidate[index]
-    return candidate
+                del modified_candidate[index]
+    return modified_candidate
 
-def load_config(module):
-    candidate =  module.params['lines'] or module.params['src']
-    if isinstance(candidate, basestring):
+def load(module):
+    candidate = module.params['lines'] or module.params['src']
+    if isinstance(candidate, string_types):
         candidate = candidate.split('\n')
-
-    confirm = module.params['confirm'] > 0
-    confirm_timeout = module.params['confirm']
 
     kwargs = {
         'confirm': module.params['confirm'] is not None,
@@ -269,30 +273,15 @@ def load_config(module):
     # nothing in the config as that will cause an exception to be raised
     if module.params['lines']:
         candidate = filter_delete_statements(module, candidate)
-        kwargs.update({'action': 'set', 'format': 'text'})
 
-    return load(module, candidate, **kwargs)
-
-def rollback_config(module, result):
-    rollback = module.params['rollback']
-    diff = None
-
-    with locked_config:
-        load_configuration(module, rollback=rollback)
-        diff = get_diff(module)
-
-    return diff
-
-def confirm_config(module):
-    with locked_config:
-        commit_configuration(confirm=True)
+    return load_config(module, candidate, **kwargs)
 
 def update_result(module, result, diff=None):
     if diff == '':
         diff = None
     result['changed'] = diff is not None
     if module._diff:
-        result['diff'] =  {'prepared': diff}
+        result['diff'] = {'prepared': diff}
 
 
 def main():
@@ -329,23 +318,22 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
+    check_transport(module)
+
     warnings = list()
     check_args(module, warnings)
 
     result = {'changed': False, 'warnings': warnings}
 
     if module.params['backup']:
-        result['__backup__'] = get_configuration()
+        result['__backup__'] = get_config(module)
 
     if module.params['rollback']:
         diff = get_diff(module)
         update_result(module, result, diff)
 
-    elif not any((module.params['src'], module.params['lines'])):
-        confirm_config(module)
-
     else:
-        diff = load_config(module)
+        diff = load(module)
         update_result(module, result, diff)
 
     module.exit_json(**result)
