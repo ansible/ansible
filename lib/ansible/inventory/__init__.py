@@ -480,18 +480,26 @@ class Inventory(object):
                     results.append(host)
 
         groups = self.get_groups()
+        matched = False
         for group in groups.values():
             if self._match(group.name, pattern):
+                matched = True
                 for host in group.get_hosts():
                     __append_host_to_results(host)
             else:
                 matching_hosts = self._match_list(group.get_hosts(), 'name', pattern)
-                for host in matching_hosts:
-                    __append_host_to_results(host)
+                if matching_hosts:
+                    matched = True
+                    for host in matching_hosts:
+                        __append_host_to_results(host)
 
         if pattern in C.LOCALHOST and len(results) == 0:
             new_host = self._create_implicit_localhost(pattern)
             results.append(new_host)
+            matched = True
+
+        if not matched:
+            display.warning("Could not match supplied host pattern, ignoring: %s" %  pattern)
         return results
 
     def _create_implicit_localhost(self, pattern):
