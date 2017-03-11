@@ -665,7 +665,7 @@ class ModuleValidator(Validator):
                             'Module deprecated, but DOCUMENTATION.deprecated is missing'
                         ))
 
-                self._validate_docs_schema(doc, doc_schema, 'DOCUMENTATION', 305)
+                self._validate_docs_schema(doc, doc_schema(self.object_name.split('.')[0]), 'DOCUMENTATION', 305)
                 self._check_version_added(doc)
                 self._check_for_new_args(doc)
 

@@ -28,35 +28,39 @@ option_schema = Schema(
         'default': Any(None, basestring, float, int, bool, list, dict),
         # FIXME: Recursive Schema: https://github.com/alecthomas/voluptuous/issues/128
         'suboptions': Any(None, dict),
-    },
-    extra=PREVENT_EXTRA
-)
-
-doc_schema = Schema(
-    {
-        Required('module'): basestring,
-        'deprecated': basestring,
-        Required('short_description'): basestring,
-        Required('description'): Any(basestring, [basestring]),
-        # FIXME version_added should be a quoted float, legacy marker, NOT an int/float
-        Required('version_added'): Any(basestring, float),
-        Required('author'): Any(None, basestring, [basestring]),
-        'notes': Any(None, [basestring]),
-        'requirements': [basestring],
-        'todo': Any(None, basestring, [basestring]),
         # Note: Types are strings, not literal bools, such as True or False
-        'type': Any(None, "bool"),
-        'options': Any(
-            None,
-            {
-                basestring: option_schema
-                }
-        ),
-        'extends_documentation_fragment': Any(basestring, [basestring])
+        'type': Any(None, "bool")
     },
     extra=PREVENT_EXTRA
 )
 
+def doc_schema(module_name):
+    if module_name.startswith('_'):
+        module_name = module_name[1:]
+    return Schema(
+        {
+            Required('module'): module_name,
+            'deprecated': basestring,
+            Required('short_description'): basestring,
+            Required('description'): Any(basestring, [basestring]),
+            # FIXME version_added should be a quoted float, legacy marker, NOT an int/float
+            Required('version_added'): Any(basestring, float),
+            Required('author'): Any(None, basestring, [basestring]),
+            'notes': Any(None, [basestring]),
+            'requirements': [basestring],
+            'todo': Any(None, basestring, [basestring]),
+            'options': Any(
+                None,
+                {
+                    basestring: option_schema
+                    }
+            ),
+            'extends_documentation_fragment': Any(basestring, [basestring])
+        },
+        extra=PREVENT_EXTRA
+    )
+
+# FIXME Factory to allow changing of metadata_status
 metadata_schema = Schema(
     {
         Required('status'): [Any('stableinterface', 'preview', 'deprecated',
@@ -67,10 +71,23 @@ metadata_schema = Schema(
     }
 )
 
-# FIXME: Don't allow empty options for choices, aliases, etc
+# FIXME make metadata_schema a factory function, and if deprecated, make the only available option `deprecated`, otherwise make it one of the others. e.g. set a list of allowable "status" that depends on deprecated or not
+# FIXME: Module name
 
+
+
+
+# Things to add soon
+####################
+# Validate RETURN
+#  Check for contains
+
+# Possible Future Enhancements
+##############################
+
+# Don't allow empty options for choices, aliases, etc
 # If type: bool can we ensure choices isn't set?
-
+# both version_added should be quoted floats
 
 # Validate RETURN
 #  Check for contains
