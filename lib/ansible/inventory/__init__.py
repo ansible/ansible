@@ -463,19 +463,16 @@ class Inventory(object):
         """
 
         results = []
-        hostnames = set()
 
         def __append_host_to_results(host):
-            if host.name not in hostnames:
-                hostnames.add(host.name)
-                results.append(host)
+            if host.name not in results:
+                if not host.implicit:
+                    results.append(host)
 
         groups = self.get_groups()
         for group in groups.values():
             if self._match(group.name, pattern):
                 for host in group.get_hosts():
-                    if host.implicit:
-                        continue
                     __append_host_to_results(host)
             else:
                 matching_hosts = self._match_list(group.get_hosts(), 'name', pattern)
