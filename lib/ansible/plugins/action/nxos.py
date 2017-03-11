@@ -86,17 +86,30 @@ class ActionModule(_ActionModule):
             task_vars['ansible_socket'] = socket_path
 
         else:
-            provider_arg = {
-                'transport': 'nxapi',
-                'host': self._play_context.remote_addr,
-                'port': provider.get('port'),
-                'username': provider.get('username') or self._play_context.connection_user,
-                'password': provider.get('password') or self._play_context.password,
-                'timeout': provider.get('timeout') or self._play_context.timeout,
-                'use_ssl': task_vars.get('nxapi_use_ssl') or False,
-                'validate_certs': task_vars.get('nxapi_validate_certs') or True
-            }
-            self._task.args['provider'] = provider_arg
+            provider['transport'] = 'nxapi'
+
+            if provider.get('host') is None:
+                provider['host'] = self._play_context.remote_addr
+
+            if provider.get('port') is None:
+                provider['port'] = 80
+
+            if provider.get('timeout') is None:
+                provider['timeout'] = self._play_context.timeout
+
+            if provider.get('username') is None:
+                provider['username'] = self._play_context.connection_user
+
+            if provider.get('password') is None:
+                provider['password'] = self._play_context.password
+
+            if provider.get('use_ssl') is None:
+                provider['use_ssl'] = False
+
+            if provider.get('validate_certs') is None:
+                provider['validate_certs'] = True
+
+            self._task.args['provider'] = provider
 
         # make sure a transport value is set in args
         self._task.args['transport'] = transport
