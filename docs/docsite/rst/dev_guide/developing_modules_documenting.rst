@@ -143,9 +143,13 @@ The following fields can be used and are all required unless specified otherwise
   This is a `string`, and not a float, i.e. ``version_added: "2.1"``
 :author:
   Name of the module author in the form ``First Last (@GitHubID)``. Use a multi-line list if there is more than one author.
+:deprecated:
+  If this module is deprecated, detail when that happened, and what to use instead, e.g.
+  `Deprecated in 2.3. Use M(whatmoduletouseinstead) instead.`
+  Ensure `CHANGELOG.md` is updated to reflect this.
 :options:
   One per module argument:
-  
+
   :option-name:
 
     * Declarative operation (not CRUD)–this makes it easy for a user not to care what the existing state is, just about the final state, for example `online:`, rather than `is_online:`.
@@ -155,7 +159,6 @@ The following fields can be used and are all required unless specified otherwise
 
     * Detailed explanation of what this option does. It should be written in full sentences.
     * Should not list the options values (that's what ``choices:`` is for, though it should explain `what` the values do if they aren't obvious.
-    * If an argument takes both True)/False and Yes)/No, the documentation should use True and False.
     * If an optional parameter is sometimes required this need to be reflected in the documentation, e.g. "Required when I(state=present)."
     * Mutually exclusive options must be documented as the final sentence on each of the options.
   :required:
@@ -167,22 +170,24 @@ The following fields can be used and are all required unless specified otherwise
     * The default option must not be listed as part of the description.
   :choices:
     List of option values. Should be absent if empty.
+  :type:
+    If an argument is ``type='bool'``, this field should be set to ``type: bool`` and no ``choices`` should be specified.
   :aliases:
     List of option name aliases; generally not needed.
   :version_added:
     Only needed if this option was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
     This is a string, and not a float, i.e. ``version_added: "2.3"``.
-  :requirements:
-    List of requirements, and minimum versions (if applicable)
-  :notes:
+  :suboptions:
+    If this option takes a dict, you can define it here. See `azure_rm_securitygroup`, `os_ironic_node` for examples.
+:requirements:
+  List of requirements, and minimum versions (if applicable)
+:notes:
     Details of any important information that doesn't fit in one of the above sections; for example if ``check_mode`` isn't supported, or a link to external documentation.
 
 
 .. note::
 
    - The above fields are are all in lowercase.
-
-   - There is no need to document the ``type:`` of an option.
 
    - If the module doesn't doesn't have any options (for example, it's a ``_facts`` module), you can use ``options: {}``.
 
@@ -252,7 +257,7 @@ Starting with Ansible version 2.2, all new modules are required to use imports i
 
 .. warning::
 
-   The use of "iwildcard" imports such as ``from module_utils.basic import *`` is no longer allowed.
+   The use of "wildcard" imports such as ``from module_utils.basic import *`` is no longer allowed.
 
 Formatting options
 ------------------
