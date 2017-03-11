@@ -74,8 +74,8 @@ options:
     version_added: "2.2"
   attributes:
     description:
-      - Attributes of the file or directory should be. To get supported flags look at the man page for I(chattr) on the taget system.
-        This string should contain the attributes in the same order than they are displayed by I(lsattr).
+      - Attributes the file or directory should have. To get supported flags look at the man page for I(chattr) on the target system.
+        This string should contain the attributes in the same order as the one displayed by I(lsattr).
     required: false
     default: None
     aliases: ['attr']
