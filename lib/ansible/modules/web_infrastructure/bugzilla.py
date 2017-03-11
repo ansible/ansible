@@ -1,7 +1,28 @@
 #!/usr/bin/python
+#
+# Created on Mar 10, 2017
+# @author: Bhavik Bhavsar (9.bhavik@gmail.com)
+#
+#
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
+                    'supported_by': 'maintainer',
                     'version': '1.0'}
 
 
@@ -11,9 +32,10 @@ module: bugzilla
 short_description: Perform various actions with bugzilla
 description:
     - Fetch status of particular bugzilla id from Bugzilla url provided.
-version_added: "2.2"
+version_added: "2.3"
 author: Bhavik Bhavsar
 requirements:
+    - "python >= 2.6"
     - "python-bugzilla >= 2.0.0"
 options:
     url:
@@ -65,14 +87,14 @@ EXAMPLES = '''
 
 
 RETURN = '''
----
 status:
   description: Fetches status of bugzilla
   returned: Only when commands get_status is set to True and Bug_id is provided
   type: string
-  sample: "ASSIGNED" / "NEW" / "CLOSED" / "MODIFIED"
+  sample: "NEW"
 '''
 
+from ansible.module_utils.basic import AnsibleModule
 
 import bugzilla
 import xmlrpclib
@@ -85,11 +107,11 @@ def bugzilla_status(bug):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-           url = dict(required=True, type='str'),
-           bug_id = dict(required=True, type='int'),
-           user = dict(required=False, type='str'),
-           password = dict(required=False, type='str', no_log=True),
-           get_status = dict(required=False, type='bool')
+            url = dict(required=True, type='str'),
+            bug_id = dict(required=True, type='int'),
+            user = dict(required=False, type='str'),
+            password = dict(required=False, type='str', no_log=True),
+            get_status = dict(required=False, type='bool')
         ),
         required_together=[['user', 'password']]
     )
@@ -118,6 +140,5 @@ def main():
         status = bugzilla_status(bug)
         module.exit_json(changed=False, status=status)
 
-from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()
