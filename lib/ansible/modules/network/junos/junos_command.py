@@ -127,17 +127,21 @@ failed_conditions:
   sample: ['...', '...']
 """
 import time
+import re
+import shlex
 
 from functools import partial
 from xml.etree import ElementTree as etree
+from xml.etree.ElementTree import Element, SubElement, tostring
+
 
 from ansible.module_utils.junos import run_commands
-from ansible.module_utils.junos import junos_argument_spec
-from ansible.module_utils.junos import check_args as junos_check_args
+from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import string_types
 from ansible.module_utils.netcli import Conditional, FailedConditionalError
-from ansible.module_utils.network_common import ComplexList
+from ansible.module_utils.netconf import send_request
+from ansible.module_utils.network_common import ComplexList, to_list
+from ansible.module_utils.six import string_types, iteritems
 
 try:
     import jxmlease
@@ -145,12 +149,22 @@ try:
 except ImportError:
     HAS_JXMLEASE = False
 
-def check_args(module, warnings):
-    junos_check_args(module, warnings)
+USE_PERSISTENT_CONNECTION = True
 
-    if module.params['rpcs']:
-        module.fail_json(msg='argument rpcs has been deprecated, please use '
-                             'junos_rpc instead')
+
+VALID_KEYS = {
+    'cli': frozenset(['command', 'output', 'prompt', 'response']),
+    'rpc': frozenset(['command', 'output'])
+}
+
+def check_transport(module):
+    transport = (module.params['provider'] or {}).get('transport')
+
+    if transport == 'netconf' and not module.params['rpcs']:
+        module.fail_json(msg='argument commands is only supported over cli transport')
+
+    elif transport == 'cli' and not module.params['commands']:
+        module.fail_json(msg='argument rpcs is only supported over netconf transport')
 
 def to_lines(stdout):
     lines = list()
@@ -160,7 +174,78 @@ def to_lines(stdout):
         lines.append(item)
     return lines
 
-def parse_commands(module, warnings):
+def run_rpcs(module, items):
+
+    responses = list()
+
+    for item in items:
+        name = item['name']
+        args = item['args']
+
+        name = str(name).replace('_', '-')
+
+        if all((module.check_mode, not name.startswith('get'))):
+            module.fail_json(msg='invalid rpc for running in check_mode')
+
+        xattrs = {'format': item['output']}
+
+        element = Element(name, xattrs)
+
+        for key, value in iteritems(args):
+            key = str(key).replace('_', '-')
+            if isinstance(value, list):
+                for item in value:
+                    child = SubElement(element, key)
+                    if item is not True:
+                        child.text = item
+            else:
+                child = SubElement(element, key)
+                if value is not True:
+                    child.text = value
+
+        reply = send_request(module, element)
+
+        if module.params['display'] == 'text':
+            data = reply.find('.//output')
+            responses.append(data.text.strip())
+        elif module.params['display'] == 'json':
+            responses.append(module.from_json(reply.text.strip()))
+        else:
+            responses.append(tostring(reply))
+
+    return responses
+
+def split(value):
+    lex = shlex.shlex(value)
+    lex.quotes = '"'
+    lex.whitespace_split = True
+    lex.commenters = ''
+    return list(lex)
+
+def parse_rpcs(module):
+    items = list()
+    for rpc in module.params['rpcs']:
+        parts = split(rpc)
+
+        name = parts.pop(0)
+        args = dict()
+
+        for item in parts:
+            key, value = item.split('=')
+            if str(value).upper() in ['TRUE', 'FALSE']:
+                args[key] = bool(value)
+            elif re.match(r'^[0-9]+$', value):
+                args[key] = int(value)
+            else:
+                args[key] = str(value)
+
+        output = module.params['display'] or 'xml'
+        items.append({'name': name, 'args': args, 'output': output})
+
+    return items
+
+
+def parse_commands(module):
     spec = dict(
         command=dict(key=True),
         output=dict(default=module.params['display'], choices=['text', 'json', 'xml']),
@@ -178,6 +263,8 @@ def parse_commands(module, warnings):
                 'executing %s' % item['command']
             )
 
+        if item['command'].startswith('show configuration'):
+            item['output'] = 'text'
         if item['output'] == 'json' and 'display json' not in item['command']:
             item['command'] += '| display json'
         elif item['output'] == 'xml' and 'display xml' not in item['command']:
@@ -195,11 +282,10 @@ def main():
     """entry point for module execution
     """
     argument_spec = dict(
-        commands=dict(type='list', required=True),
-        display=dict(choices=['text', 'json', 'xml'], default='text', aliases=['format', 'output']),
-
-        # deprecated (Ansible 2.3) - use junos_rpc
+        commands=dict(type='list'),
         rpcs=dict(type='list'),
+
+        display=dict(choices=['text', 'json', 'xml'], aliases=['format', 'output']),
 
         wait_for=dict(type='list', aliases=['waitfor']),
         match=dict(default='all', choices=['all', 'any']),
@@ -210,14 +296,25 @@ def main():
 
     argument_spec.update(junos_argument_spec)
 
+    mutually_exclusive = [('commands', 'rpcs')]
+
+    required_one_of = [('commands', 'rpcs')]
+
     module = AnsibleModule(argument_spec=argument_spec,
+                           mutually_exclusive=mutually_exclusive,
+                           required_one_of=required_one_of,
                            supports_check_mode=True)
 
+    check_transport(module)
 
     warnings = list()
     check_args(module, warnings)
 
-    commands = parse_commands(module, warnings)
+    if module.params['commands']:
+        items = parse_commands(module)
+    else:
+        items = parse_rpcs(module)
+
 
     wait_for = module.params['wait_for'] or list()
     display = module.params['display']
@@ -228,21 +325,29 @@ def main():
     match = module.params['match']
 
     while retries > 0:
-        responses = run_commands(module, commands)
+        if module.params['commands']:
+            responses = run_commands(module, items)
+        else:
+            responses = run_rpcs(module, items)
 
-        for index, (resp, cmd) in enumerate(zip(responses, commands)):
-            if cmd['output'] == 'xml':
+        transformed = list()
+
+        for item, resp in zip(items, responses):
+            if item['output'] == 'xml':
                 if not HAS_JXMLEASE:
                     module.fail_json(msg='jxmlease is required but does not appear to '
                         'be installed.  It can be installed using `pip install jxmlease`')
+
                 try:
-                    responses[index] = jxmlease.parse(resp)
+                    transformed.append(jxmlease.parse(resp))
                 except:
                     raise ValueError(resp)
+            else:
+                transformed.append(resp)
 
         for item in list(conditionals):
             try:
-                if item(responses):
+                if item(transformed):
                     if match == 'any':
                         conditionals = list()
                         break
