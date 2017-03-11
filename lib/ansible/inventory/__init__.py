@@ -221,7 +221,7 @@ class Inventory(object):
                 results.append(item)
         return results
 
-    def get_hosts(self, pattern="all", ignore_limits=False, ignore_restrictions=False):
+    def get_hosts(self, pattern="all", ignore_limits=False, ignore_restrictions=False, order=None):
         """
         Takes a pattern or list of patterns and returns a list of matching
         inventory host names, taking into account any active restrictions
@@ -258,7 +258,21 @@ class Inventory(object):
             seen = set()
             HOSTS_PATTERNS_CACHE[pattern_hash] = [x for x in hosts if x not in seen and not seen.add(x)]
 
-        return HOSTS_PATTERNS_CACHE[pattern_hash][:]
+        # sort hosts list if needed (should only happen when called from strategy)
+        if order in ['sorted', 'reverse_sorted']:
+            from operator import attrgetter
+            hosts = sorted(HOSTS_PATTERNS_CACHE[pattern_hash][:], key=attrgetter('name'), reverse=(order == 'reverse_sorted'))
+        elif order == 'reverse_inventory':
+            hosts = sorted(HOSTS_PATTERNS_CACHE[pattern_hash][:], reverse=True)
+        else:
+            hosts = HOSTS_PATTERNS_CACHE[pattern_hash][:]
+            if order == 'shuffle':
+                from random import shuffle
+                shuffle(hosts)
+            elif order not in [None, 'inventory']:
+                AnsibleError("Invalid 'order' specified for inventory hosts: %s" % order)
+
+        return hosts
 
     @classmethod
     def split_host_pattern(cls, pattern):
