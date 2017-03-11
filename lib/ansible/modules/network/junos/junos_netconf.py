@@ -82,6 +82,14 @@ from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
+USE_PERSISTENT_CONNECTION = True
+
+def check_transport(module):
+    transport = (module.params['provider'] or {}).get('transport')
+
+    if transport == 'netconf':
+        module.fail_json(msg='junos_netconf module is only supported over cli transport')
+
 
 def map_obj_to_commands(updates, module):
     want, have = updates
@@ -145,9 +153,12 @@ def main():
     )
 
     argument_spec.update(junos_argument_spec)
+    argument_spec['transport'] = dict(choices=['cli'], default='cli')
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
+
+    check_transport(module)
 
     warnings = list()
     check_args(module, warnings)
@@ -163,7 +174,7 @@ def main():
     if commands:
         commit = not module.check_mode
         diff = load_config(module, commands, commit=commit)
-        if diff and module._diff:
+        if diff:
             if module._diff:
                 result['diff'] = {'prepared': diff}
             result['changed'] = True

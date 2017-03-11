@@ -116,7 +116,15 @@ from ansible.module_utils.junos import check_args, junos_argument_spec
 from ansible.module_utils.junos import get_configuration, load
 from ansible.module_utils.six import text_type
 
+USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_template'
+
+def check_transport(module):
+    transport = (module.params['provider'] or {}).get('transport')
+
+    if transport == 'netconf':
+        module.fail_json(msg='junos_template module is only supported over cli transport')
+
 
 def main():
 
@@ -127,13 +135,14 @@ def main():
         action=dict(default='merge', choices=['merge', 'overwrite', 'replace']),
         config_format=dict(choices=['text', 'set', 'xml']),
         backup=dict(default=False, type='bool'),
-        transport=dict(default='netconf', choices=['netconf'])
     )
 
     argument_spec.update(junos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
+
+    check_transport(module)
 
     warnings = list()
     check_args(module, warnings)
