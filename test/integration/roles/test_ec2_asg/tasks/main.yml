@@ -116,7 +116,7 @@
     load_balancers: "{{ resource_prefix }}-lb"
     region: "{{ ec2_region }}"
     wait_for_instances: yes
-    wait_timeout: 600
+    wait_timeout: 1200
     state: present
   register: output
 
