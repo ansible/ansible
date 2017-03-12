@@ -59,6 +59,30 @@ options:
             - Specify CDN baseurl
         required: False
         default: Current value from C(/etc/rhsm/rhsm.conf) is the default
+    server_proxy_hostname:
+        description:
+            - Specify a HTTP proxy hostname
+        required: False
+        default: Current value from C(/etc/rhsm/rhsm.conf) is the default
+        version_added: "2.3"
+    server_proxy_port:
+        description:
+            - Specify a HTTP proxy port
+        required: False
+        default: Current value from C(/etc/rhsm/rhsm.conf) is the default
+        version_added: "2.3"
+    server_proxy_user:
+        description:
+            - Specify a user for HTTP proxy with basic authentication
+        required: False
+        default: Current value from C(/etc/rhsm/rhsm.conf) is the default
+        version_added: "2.3"
+    server_proxy_password:
+        description:
+            - Specify a password for HTTP proxy with basic authentication
+        required: False
+        default: Current value from C(/etc/rhsm/rhsm.conf) is the default
+        version_added: "2.3"
     autosubscribe:
         description:
             - Upon successful registration, auto-consume available subscriptions
