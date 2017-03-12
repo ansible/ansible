@@ -14,9 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'committer',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
 ---
-module: elb_lb_application
+module: elb_application_lb
 short_description: Manage an Application load balancer
 description:
     - Manage an AWS Application Elastic Load Balancer. See U(https://aws.amazon.com/blogs/aws/new-aws-application-load-balancer/) for details.
@@ -25,7 +29,8 @@ author: "Rob White (@wimnat)"
 options:
   access_logs_s3_bucket:
     description:
-      - The name of the S3 bucket for the access logs. This attribute is required if access logs in Amazon S3 are enabled. The bucket must exist in the same region as the load balancer and have a bucket policy that grants Elastic Load Balancing permission to write to the bucket.
+      - "The name of the S3 bucket for the access logs. This attribute is required if access logs in Amazon S3 are enabled. The bucket must exist in the same \
+      region as the load balancer and have a bucket policy that grants Elastic Load Balancing permission to write to the bucket."
     required: false
   access_logs_s3_prefix:
     description:
@@ -58,7 +63,8 @@ options:
     choices: [ 'yes', 'no' ]
   subnets:
     description:
-      - A list of the IDs of the subnets to attach to the load balancer. You can specify only one subnet per Availability Zone. You must specify subnets from at least two Availability Zones. Required if state=present.
+      - "A list of the IDs of the subnets to attach to the load balancer. You can specify only one subnet per Availability Zone. You must specify subnets from \
+      at least two Availability Zones. Required if state=present."
     required: false
   security_groups:
     description:
@@ -151,73 +157,79 @@ EXAMPLES = '''
         Rules:
           - Conditions: 
             - Field: path-pattern
-                Values:
-                  - '/test'
+              Values:
+                - '/test'
             Priority: '1'
             Actions:
-              - 'TargetGroupName': 'test-target-group'
+              - TargetGroupName: test-target-group
                 Type: forward
     state: present
 '''
 
 RETURN = '''
-load_balancer_arn:
-    description: The Amazon Resource Name (ARN) of the load balancer.
-    type: string
-    sample: TBA
-dns_name:
-    description: The public DNS name of the load balancer.
-    type: string
-    sample: TBA
-canonical_hosted_zone_id:
-    description: The ID of the Amazon Route 53 hosted zone associated with the load balancer.
-    type: string
-    sample: TBA
-created_time:
-    description: The date and time the load balancer was created.
-    type: datetime
-    sample: 2015-02-12T02:14:02+00:00
-load_balancer_name:
-    description: The name of the load balancer.
-    type: string
-    sample: TBA
-scheme:
-    description: Internet-facing or internal load balancer.
-    type: string
-    sample: internet-facing
-vpc_id:
-    description: The ID of the VPC for the load balancer.
-    type: string
-    sample: My important backup
-state:
-    description: The state of the load balancer.
-    type: dict
-    sample: TBA
-type:
-    description: The type of load balancer.
-    type: string
-    sample: application
-availability_zones:
-    description: The Availability Zones for the load balancer.
-    type: list
-    sample: TBA
-security_groups:
-    description: The IDs of the security groups for the load balancer.
-    type: list
-    sample: TBA
-tags:
-    description: The tags attached to the load balancer.
-    type: dict
-    sample: "{
-        'Tag': 'Example'
-    }"
+load_balancer:
+    load_balancer_arn:
+        description: The Amazon Resource Name (ARN) of the load balancer.
+        type: string
+        sample: TBA
+    dns_name:
+        description: The public DNS name of the load balancer.
+        type: string
+        sample: TBA
+    canonical_hosted_zone_id:
+        description: The ID of the Amazon Route 53 hosted zone associated with the load balancer.
+        type: string
+        sample: TBA
+    created_time:
+        description: The date and time the load balancer was created.
+        type: datetime
+        sample: 2015-02-12T02:14:02+00:00
+    load_balancer_name:
+        description: The name of the load balancer.
+        type: string
+        sample: TBA
+    scheme:
+        description: Internet-facing or internal load balancer.
+        type: string
+        sample: internet-facing
+    vpc_id:
+        description: The ID of the VPC for the load balancer.
+        type: string
+        sample: My important backup
+    state:
+        description: The state of the load balancer.
+        type: dict
+        sample: TBA
+    type:
+        description: The type of load balancer.
+        type: string
+        sample: application
+    availability_zones:
+        description: The Availability Zones for the load balancer.
+        type: list
+        sample: TBA
+    security_groups:
+        description: The IDs of the security groups for the load balancer.
+        type: list
+        sample: TBA
+    tags:
+        description: The tags attached to the load balancer.
+        type: dict
+        sample: "{
+            'Tag': 'Example'
+        }"
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, camel_dict_to_snake_dict, ec2_argument_spec, get_ec2_security_group_ids_from_names, \
+    ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict
+import ast
+import collections
+from copy import deepcopy
+import traceback
 
 try:
     import boto3
-    import ast
-    import collections
-    from copy import deepcopy
     from botocore.exceptions import ClientError, NoCredentialsError
     HAS_BOTO3 = True
 except ImportError:
@@ -239,26 +251,24 @@ def convert_tg_name_arn(connection, module, tg_name):
         
     try:
         response = connection.describe_target_groups(Names=[tg_name])
-    except botocore.exceptions.ClientError as e:
+    except ClientError as e:
         module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
     tg_arn =response['TargetGroups'][0]['TargetGroupArn']
 
-    result = tg_arn
-    return result
+    return tg_arn
 
 
 def convert_tg_arn_name(connection, module, tg_arn):
         
     try:
         response = connection.describe_target_groups(TargetGroupArns=[tg_arn])
-    except botocore.exceptions.ClientError as e:
+    except ClientError as e:
         module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
     tg_name = response['TargetGroups'][0]['TargetGroupName']
 
-    result = tg_name
-    return result
+    return tg_name
 
 
 def wait_for_status(connection, module, elb_arn, status):
@@ -274,7 +284,7 @@ def wait_for_status(connection, module, elb_arn, status):
                 break
             else:
                 time.sleep(polling_increment_secs)
-        except botocore.exceptions.ClientError as e:
+        except ClientError as e:
             module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
     result = response
@@ -346,7 +356,7 @@ def update_elb_attributes(connection, module, elb):
         try:
             connection.modify_load_balancer_attributes(LoadBalancerArn=elb['LoadBalancerArn'], Attributes=params['Attributes'])
         except (ClientError, NoCredentialsError) as e:
-                module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     
     return attribute_changed
 
@@ -455,10 +465,10 @@ def create_or_update_elb_listeners(connection, module, elb):
                             if rules_to_remove:
                                 rule_arns_to_remove = []
                                 current_rules = connection.describe_rules(ListenerArn=current_listener['ListenerArn'])['Rules']
-                                #listener_changed = True
+                                # listener_changed = True
                                 for rules in rules_to_remove:
                                     for current_rule in current_rules:
-                                        #if current_rule['Priority'] != 'default':
+                                        # if current_rule['Priority'] != 'default':
                                         if current_rule['Conditions'] == rules['Conditions'] and current_rule['Priority'] == rules['Priority']:
                                             rule_arns_to_remove.append(current_rule['RuleArn'])
 
@@ -483,12 +493,13 @@ def create_or_update_elb_listeners(connection, module, elb):
                                     connection.create_rule(**rule)
 
         else:
+            module.exit_json(list=listeners)
             for listener in listeners:
                 listener['LoadBalancerArn'] = elb['LoadBalancerArn']
                 if 'Rules' in listener.keys():
                     del listener['Rules']
 
-                #handle default
+                # handle default
                 for default_action in listener['DefaultActions']:
                     default_action['TargetGroupArn'] = convert_tg_name_arn(connection, module, default_action['TargetGroupName'])  
                     del default_action['TargetGroupName']
@@ -550,7 +561,7 @@ def create_or_update_elb(connection, connection_ec2, module):
             try:
                 connection.set_subnets(LoadBalancerArn=elb['LoadBalancerArn'], Subnets=params['Subnets'])
             except (ClientError, NoCredentialsError) as e:
-                module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
             changed = True
 
         # Security Groups
@@ -558,7 +569,7 @@ def create_or_update_elb(connection, connection_ec2, module):
             try:
                 connection.set_security_groups(LoadBalancerArn=elb['LoadBalancerArn'], SecurityGroups=params['SecurityGroups'])
             except (ClientError, NoCredentialsError) as e:
-                module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
             changed = True
 
         # Tags - only need to play with tags if tags parameter has been set to something
@@ -566,7 +577,7 @@ def create_or_update_elb(connection, connection_ec2, module):
             try:
                 elb_tags = connection.describe_tags(ResourceArns=[elb['LoadBalancerArn']])['TagDescriptions'][0]['Tags']
             except (ClientError, NoCredentialsError) as e:
-                module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
             # Delete necessary tags
             tags_to_delete, tags_need_modify = _compare_tags(elb_tags, params['Tags'], purge_tags)
@@ -582,7 +593,7 @@ def create_or_update_elb(connection, connection_ec2, module):
                 try:
                     connection.add_tags(ResourceArns=[elb['LoadBalancerArn']], Tags=params['Tags'])
                 except (ClientError, NoCredentialsError) as e:
-                    module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                 changed = True
 
     else:
@@ -591,7 +602,7 @@ def create_or_update_elb(connection, connection_ec2, module):
             changed = True
             new_load_balancer = True
         except (ClientError, NoCredentialsError) as e:
-            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
  
         if module.params.get("wait"):
             status_achieved, new_elb = wait_for_status(connection, module, elb['LoadBalancerArn'], 'active')
@@ -605,7 +616,7 @@ def create_or_update_elb(connection, connection_ec2, module):
         # Something went wrong setting attributes. If this ELB was created during this task, delete it to leave a consistent state
         if new_load_balancer:
             connection.delete_load_balancer(LoadBalancerArn=elb['LoadBalancerArn'])
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     # Now, if required, set ELB listeners. Use try statement here so we can remove the ELB if this stage fails
     try:
@@ -616,7 +627,7 @@ def create_or_update_elb(connection, connection_ec2, module):
         # Something went wrong setting listeners. If this ELB was created during this task, delete it to leave a consistent state
         if new_load_balancer:
             connection.delete_load_balancer(LoadBalancerArn=elb['LoadBalancerArn'])
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     
     # Get the ELB again
     elb = get_elb(connection, module)
@@ -637,7 +648,7 @@ def delete_elb(connection, module):
             connection.delete_load_balancer(LoadBalancerArn=elb['LoadBalancerArn'])
             changed = True
         except (ClientError, NoCredentialsError) as e:
-            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     module.exit_json(changed=changed)
 
@@ -699,9 +710,6 @@ def main():
         create_or_update_elb(connection, connection_ec2, module)
     else:
         delete_elb(connection, module)
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
