@@ -80,6 +80,7 @@ import re
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
+from ansible.module_utils.network_common import to_list
 from ansible.module_utils.six import iteritems
 
 USE_PERSISTENT_CONNECTION = True
@@ -97,10 +98,11 @@ def map_obj_to_commands(updates, module):
     elif want['state'] == 'absent' and have['state'] == 'present':
         commands.append('delete system services netconf')
 
-    elif want['netconf_port'] != have.get('netconf_port'):
-        commands.append(
-            'set system services netconf ssh port %s' % want['netconf_port']
-        )
+    elif want['state'] == 'present':
+        if want['netconf_port'] != have.get('netconf_port'):
+            commands.append(
+                'set system services netconf ssh port %s' % want['netconf_port']
+            )
 
     return commands
 
@@ -110,7 +112,12 @@ def parse_port(config):
         return int(match.group(1))
 
 def map_config_to_obj(module):
-    config = get_config(module, ['system services netconf'])
+    cmd = 'show configuration system services netconf'
+    rc, out, err = exec_command(module, cmd)
+    if rc != 0:
+        module.fail_json(msg='unable to retrieve current config', stderr=err)
+    config = str(out).strip()
+
     obj = {'state': 'absent'}
     if config:
         obj.update({
@@ -137,12 +144,6 @@ def map_params_to_obj(module):
             validator(value, module)
 
     return obj
-
-def get_config(module, flags=[]):
-    rc, out, err = exec_command(module, cmd)
-    if rc != 0:
-        module.fail_json(msg='unable to retrieve current config', stderr=err)
-    return str(out).strip()
 
 def load_config(module, config, commit=False):
 
