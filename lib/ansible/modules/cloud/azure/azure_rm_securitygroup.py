@@ -104,7 +104,6 @@ options:
                 default: Allow
             priority:
                 description: Order in which to apply the rule. Must a unique integer between 100 and 4096 inclusive.
-                type: int
                 required: true
             direction:
                 description: Indicates the direction of the traffic flow.
