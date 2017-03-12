@@ -144,7 +144,6 @@ from functools import partial
 from xml.etree import ElementTree as etree
 from xml.etree.ElementTree import Element, SubElement, tostring
 
-
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcli import Conditional, FailedConditionalError
@@ -159,21 +158,6 @@ except ImportError:
     HAS_JXMLEASE = False
 
 USE_PERSISTENT_CONNECTION = True
-
-
-VALID_KEYS = {
-    'cli': frozenset(['command', 'output', 'prompt', 'response']),
-    'rpc': frozenset(['command', 'output'])
-}
-
-def check_transport(module):
-    transport = (module.params['provider'] or {}).get('transport')
-
-    if transport == 'netconf' and not module.params['rpcs']:
-        module.fail_json(msg='argument commands is only supported over cli transport')
-
-    elif transport == 'cli' and not module.params['commands']:
-        module.fail_json(msg='argument rpcs is only supported over netconf transport')
 
 def to_lines(stdout):
     lines = list()
@@ -313,8 +297,6 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
                            supports_check_mode=True)
-
-    check_transport(module)
 
     warnings = list()
     check_args(module, warnings)
