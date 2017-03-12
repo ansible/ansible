@@ -152,6 +152,13 @@ from ansible.module_utils.netconf import send_request
 from ansible.module_utils.network_common import ComplexList, to_list
 from ansible.module_utils.six import string_types, iteritems
 
+
+def check_transport(module):
+    transport = (module.params['provider'] or {}).get('transport')
+
+    if transport == 'netconf':
+        module.fail_json(msg='junos_command module is only supported over cli transport')
+
 try:
     import jxmlease
     HAS_JXMLEASE = True
