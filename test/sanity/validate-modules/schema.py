@@ -40,7 +40,6 @@ option_schema = Schema(
         'aliases': Any(basestring, list),
         'version_added': Any(basestring, float),
         'default': Any(None, basestring, float, int, bool, list, dict),
-        # FIXME: Recursive Schema: https://github.com/alecthomas/voluptuous/issues/128
         'suboptions': Any(None, {basestring: suboption_schema,}),
         # Note: Types are strings, not literal bools, such as True or False
         'type': Any(None, "bool")
@@ -57,13 +56,12 @@ def doc_schema(module_name):
             'deprecated': basestring,
             Required('short_description'): basestring,
             Required('description'): Any(basestring, [basestring]),
-            # FIXME version_added should be a quoted float, legacy marker, NOT an int/float
             Required('version_added'): Any(basestring, float),
             Required('author'): Any(None, basestring, [basestring]),
             'notes': Any(None, [basestring]),
             'requirements': [basestring],
             'todo': Any(None, basestring, [basestring]),
-            'options': Any(None, { basestring: option_schema }),
+            'options': Any(None, {basestring: option_schema}),
             'extends_documentation_fragment': Any(basestring, [basestring])
         },
         extra=PREVENT_EXTRA
@@ -87,8 +85,8 @@ def metadata_schema(deprecated):
 
 # Things to add soon
 ####################
-# Validate RETURN
-#  Check for contains
+# 1) Validate RETURN, including `contains` if `type: complex`
+#
 
 # Possible Future Enhancements
 ##############################
@@ -96,7 +94,6 @@ def metadata_schema(deprecated):
 # 1) Don't allow empty options for choices, aliases, etc
 # 2) If type: bool ensure choices isn't set - perhaps use Exclusive
 # 3) both version_added should be quoted floats
+# 4) Use Recursive Schema: https://github.com/alecthomas/voluptuous/issues/128 though don't allow two layers
 
-# Validate RETURN
-#  Check for contains
 #  Tool that takes JSON and generates RETURN skeleton (needs to support complex structures)
