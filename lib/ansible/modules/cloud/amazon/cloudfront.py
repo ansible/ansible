@@ -125,15 +125,15 @@ class CloudFrontServiceManager:
             self.module.fail_json(msg="Error deleting cloud front origin access identity - " + str(e),
                                   exception=traceback.format_exc())
 
-    def edit_origin_access_identity(self, caller_reference, comment, origin_access_identity_id, e_tag):
+    def update_origin_access_identity(self, caller_reference, comment, origin_access_identity_id, e_tag):
         try:
-            func = partial(self.client.edit_cloud_front_origin_access_identity,
+            func = partial(self.client.update_cloud_front_origin_access_identity,
                            CloudFrontOriginAccessIdentityConfig = 
                            { 'CallerReference': caller_reference, 'Comment': comment },
                            Id=origin_access_identity_id, IfMatch=e_tag)
             return self.paginated_response(func)
         except Exception as e:
-            self.module.fail_json(msg="Error deleting cloud front origin access identity - " + str(e),
+            self.module.fail_json(msg="Error updating cloud front origin access identity - " + str(e),
                                   exception=traceback.format_exc())
     
     def create_invalidation(self, distribution_id, invalidation_batch):
@@ -213,6 +213,9 @@ def main():
     delete_origin_access_identity = module.params.get('delete_origin_access_identity')
     origin_access_identity_id = module.params.get('origin_access_identity_id')
     e_tag = module.params.get('e_tag')
+
+    update_origin_access_identity = module.params.get('update_origin_access_identity')
+    origin_access_identity_id = module.params.get('origin_access_identity_id')
 
     create_distribution = module.params.get('create_distribution')
     distribution_config = module.params.get('distribution_config')
