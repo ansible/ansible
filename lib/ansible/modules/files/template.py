@@ -55,15 +55,13 @@ options:
     default: "no"
   decode:
     description:
-      - read template using a different encoding (iso8859-15, cp1252)
-    required: false
-    default: null
+      - Read template using a different encoding (iso8859-15, cp1252).
+    default: "utf-8"
     version_added: "2.3"
   encode:
     description:
-      - write file using a alternative encoding (iso8859-15, cp1252)
-    required: false
-    default: null
+      - Write file using a alternative encoding (iso8859-15, cp1252).
+    default: "utf-8"
     version_added: "2.3"
   force:
     description:

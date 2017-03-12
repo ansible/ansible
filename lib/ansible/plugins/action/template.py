@@ -62,8 +62,8 @@ class ActionModule(ActionBase):
         dest   = self._task.args.get('dest', None)
         force  = boolean(self._task.args.get('force', True))
         state  = self._task.args.get('state', None)
-        decode = self._task.args.pop('decode', None)
-        encode = self._task.args.pop('encode', None)
+        decode = self._task.args.pop('decode', 'utf-8')
+        encode = self._task.args.pop('encode', 'utf-8')
 
         if state is not None:
             result['failed'] = True
@@ -94,11 +94,13 @@ class ActionModule(ActionBase):
         b_source = to_bytes(source)
         try:
             with open(b_source, 'r') as f:
+                file_data = f.read()
                 template_data = None
-                if decode is not None:
-                    template_data = to_text(f.read(), encoding=decode)
-                else:
-                    template_data = to_text(f.read())
+                try:
+                    template_data = to_text(file_data, encoding=decode, errors='strict')
+                except UnicodeDecodeError:
+                    msg = "Error while decoding text from template (decode=%s). Please specify decode parameters (ex: decode=iso8859-15)." % decode
+                    return dict(failed=True, msg=to_text(msg))
 
             try:
                 template_uid = pwd.getpwuid(os.stat(b_source).st_uid).pw_name
@@ -145,10 +147,7 @@ class ActionModule(ActionBase):
 
             old_vars = self._templar._available_variables
             self._templar.set_available_variables(temp_vars)
-            resultant = self._templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False)
-            # if encode is set, we change template result encoding
-            if encode is not None:
-                resultant = resultant.encode(encode)
+            resultant = self._templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False).encode(encode)
             self._templar.set_available_variables(old_vars)
         except Exception as e:
             result['failed'] = True
@@ -173,7 +172,7 @@ class ActionModule(ActionBase):
             result['changed'] = True
             # if showing diffs, we need to get the remote value
             if self._play_context.diff:
-                diff = self._get_diff_data(dest, resultant, task_vars, source_file=False)
+                diff = self._get_diff_data(dest, resultant, task_vars, source_file=False, encoding=encode)
 
             if not self._play_context.check_mode:  # do actual work through copy
                 xfered = self._transfer_data(self._connection._shell.join_path(tmp, 'source'), resultant)

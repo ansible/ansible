@@ -906,7 +906,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         display.debug(u"_low_level_execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, out, err))
         return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err)
 
-    def _get_diff_data(self, destination, source, task_vars, source_file=True):
+    def _get_diff_data(self, destination, source, task_vars, source_file=True, encoding = 'utf-8'):
 
         diff = {}
         display.debug("Going to peek to see if file has changed permissions")
@@ -940,7 +940,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     display.debug("Reading local copy of the file %s" % source)
                     try:
                         src = open(source)
-                        src_contents = src.read()
+                        src_contents = to_text(src.read(), encoding=encoding)
                     except Exception as e:
                         raise AnsibleError("Unexpected error while reading source (%s) for diff: %s " % (source, str(e)))
 
@@ -959,7 +959,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 diff["before"] = ""
             if 'after' in diff:
                 diff["after"] = " [[ Diff output has been hidden because 'no_log: true' was specified for this result ]]\n"
-
+        diff["after"] = to_text(diff["after"], encoding=encoding)
         return diff
 
     def _find_needle(self, dirname, needle):
