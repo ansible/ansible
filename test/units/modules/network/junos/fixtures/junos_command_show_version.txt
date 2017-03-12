@@ -1,4 +1,0 @@
-Hostname: vsrx01
-Model: vSRX
-Junos: 15.1X49-D15.4
-JUNOS Software Release [15.1X49-D15.4]

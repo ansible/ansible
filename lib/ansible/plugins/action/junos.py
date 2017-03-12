@@ -29,9 +29,6 @@ from ansible.plugins import connection_loader, module_loader
 from ansible.compat.six import iteritems
 from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.basic import AnsibleFallbackNotFound
-from ansible.module_utils._text import to_bytes
-
-from ncclient.xml_ import new_ele, sub_ele, to_xml
 
 try:
     from __main__ import display
@@ -56,12 +53,11 @@ class ActionModule(_ActionModule):
             return super(ActionModule, self).run(tmp, task_vars)
 
         provider = self.load_provider()
-        transport = provider['transport'] or 'cli'
 
         pc = copy.deepcopy(self._play_context)
         pc.network_os = 'junos'
 
-        if transport == 'cli':
+        if self._task.action == 'junos_netconf':
             pc.connection = 'network_cli'
             pc.port = provider['port'] or self._play_context.port or 22
         else:
@@ -98,7 +94,6 @@ class ActionModule(_ActionModule):
                 connection.exec_command('exit')
                 rc, out, err = connection.exec_command('prompt()')
 
-
         task_vars['ansible_socket'] = socket_path
 
         return super(ActionModule, self).run(tmp, task_vars)
@@ -106,6 +101,9 @@ class ActionModule(_ActionModule):
     def _get_socket_path(self, play_context):
         ssh = connection_loader.get('ssh', class_only=True)
         path = unfrackpath("$HOME/.ansible/pc")
+        # use play_context.connection instea of play_context.port to avoid
+        # collision if netconf is listening on port 22
+        #cp = ssh._create_control_path(play_context.remote_addr, play_context.connection, play_context.remote_user)
         cp = ssh._create_control_path(play_context.remote_addr, play_context.port, play_context.remote_user)
         return cp % dict(directory=path)
 
