@@ -60,24 +60,26 @@ options:
             - The maven type/extension coordinate
         required: false
         default: jar
-    unique_snapshot:
-        description:
-            - Deactivate if your maven repository overwrites snapshot versions instead of timestamping them. (added in version 2.4)
-        required: false
-        default: 'yes'
-        choices: ['yes', 'no']
     repository_url:
         description:
             - The URL of the Maven Repository to download from.
             - Use s3://... if the repository is hosted on Amazon S3, added in version 2.2.
         required: false
         default: http://repo1.maven.org/maven2
-    repository_url:
+    repository_snapshot_url:
         description:
-            - The URL of the Maven Repository to download snapshots from. (added in version 2.4)
-            - Use s3://... if the repository is hosted on Amazon S3, added in version 2.4.
+            - The URL of the Maven Repository to download snapshots from.
+            - Use s3://... if the repository is hosted on Amazon S3.
         required: false
         default: null
+        version_added: "2.3"
+    unique_snapshot:
+        description:
+            - Deactivate if your maven repository overwrites snapshot versions instead of timestamping them.
+        required: false
+        default: 'yes'
+        choices: ['yes', 'no']
+        version_added: "2.3"
     username:
         description:
             - The username to authenticate as to the Maven Repository. Use AWS secret key of the repository is hosted on S3
