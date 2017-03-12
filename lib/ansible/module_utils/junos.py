@@ -21,7 +21,7 @@ from contextlib import contextmanager
 from xml.etree.ElementTree import Element, SubElement, tostring
 
 from ansible.module_utils.basic import env_fallback
-from ansible.module_utils.netconf import send_request
+from ansible.module_utils.netconf import send_request, children
 from ansible.module_utils.netconf import discard_changes, validate
 from ansible.module_utils.network_common import to_list
 from ansible.module_utils.connection import exec_command
@@ -91,7 +91,7 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
             cfg.text = '\n'.join(candidate)
         else:
             cfg = SubElement(obj, lookup[format])
-            cfg.append(candidate)
+            cfg.text = '\n'.join(candidate)
 
     return send_request(module, obj)
 
@@ -112,9 +112,11 @@ def commit_configuration(module, confirm=False, check=False, comment=None, confi
     if check:
         SubElement(obj, 'check')
     if comment:
-        children(obj, ('log', str(comment)))
+        subele = SubElement(obj, 'log')
+        subele.text = str(comment)
     if confirm_timeout:
-        children(obj, ('confirm-timeout', int(confirm_timeout)))
+        subele = SubElement(obj, 'confirm-timeout')
+        subele.text = int(confirm_timeout)
     return send_request(module, obj)
 
 def command(module, command, format='text', rpc_only=False):
@@ -138,14 +140,14 @@ def locked_config(module):
 def get_diff(module):
     reply = get_configuration(module, compare=True, format='text')
     output = reply.find('.//configuration-output')
-    if output:
-        return output[0].text
+    if output is not None:
+        return output.text
 
 def load_config(module, candidate, action='merge', commit=False, format='xml',
                 comment=None, confirm=False, confirm_timeout=None):
 
     with locked_config(module):
-        resp = load_configuration(module, candidate, action=action, format=format)
+        reply = load_configuration(module, candidate, action=action, format=format)
 
         validate(module)
         diff = get_diff(module)

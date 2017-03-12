@@ -21,9 +21,8 @@
 ###################################
 
 - name: Ensure we can communicate over netconf
-  junos_config:
-    lines:
-      - set system host-name {{ inventory_hostname_short }}
+  junos_command:
+    rpcs: get-software-information
     provider: "{{ netconf }}"
 
 # Disable netconf
@@ -48,11 +47,13 @@
     that:
       - "result.changed == false"
 
+- name: wait for persistent socket to timeout
+  pause:
+    seconds: 30
 
 - name: Ensure we can NOT talk via netconf
-  junos_config:
-    lines:
-      - set system host-name {{ inventory_hostname_short }}
+  junos_command:
+    rpcs: get-software-information
     provider: "{{ netconf }}"
   register: result
   ignore_errors: true
