@@ -31,8 +31,6 @@ JSON_ACTIONS = frozenset(['merge', 'override', 'update'])
 FORMATS = frozenset(['xml', 'text', 'json'])
 CONFIG_FORMATS = frozenset(['xml', 'text', 'json', 'set'])
 
-_DEVICE_CONFIGS = {}
-
 junos_argument_spec = {
     'host': dict(),
     'port': dict(type='int'),
@@ -41,17 +39,17 @@ junos_argument_spec = {
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int', default=10),
     'provider': dict(type='dict'),
-    'transport': dict(choices=['cli', 'netconf'])
+    'transport': dict()
 }
 
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in junos_argument_spec:
-        if key in ('provider', 'transport') and module.params[key]:
+        if key in ('provider',) and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
                     'removed in a future version' % key)
 
-def validate_rollback_id(value):
+def _validate_rollback_id(value):
     try:
         if not 0 <= int(value) <= 49:
             raise ValueError
@@ -77,7 +75,7 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
         module.fail_json(msg='format must be text when action is set')
 
     if rollback is not None:
-        validate_rollback_id(rollback)
+        _validate_rollback_id(rollback)
         xattrs = {'rollback': str(rollback)}
     else:
         xattrs = {'action': action, 'format': format}
@@ -102,7 +100,7 @@ def get_configuration(module, compare=False, format='xml', rollback='0'):
         module.fail_json(msg='invalid config format specified')
     xattrs = {'format': format}
     if compare:
-        validate_rollback_id(rollback)
+        _validate_rollback_id(rollback)
         xattrs['compare'] = 'rollback'
         xattrs['rollback'] = str(rollback)
     return send_request(module, Element('get-configuration', xattrs))
@@ -118,6 +116,13 @@ def commit_configuration(module, confirm=False, check=False, comment=None, confi
     if confirm_timeout:
         children(obj, ('confirm-timeout', int(confirm_timeout)))
     return send_request(module, obj)
+
+def command(module, command, format='text', rpc_only=False):
+    xattrs = {'format': format}
+    if rpc_only:
+        command += ' | display xml rpc'
+        xattrs['format'] = 'text'
+    return send_request(module, Element('command', xattrs, text=command))
 
 lock_configuration = lambda x: send_request(x, Element('lock-configuration'))
 unlock_configuration = lambda x: send_request(x, Element('unlock-configuration'))
@@ -136,9 +141,9 @@ def get_diff(module):
     if output:
         return output[0].text
 
-def load(module, candidate, action='merge', commit=False, format='xml'):
-    """Loads a configuration element into the target system
-    """
+def load_config(module, candidate, action='merge', commit=False, format='xml',
+                comment=None, confirm=False, confirm_timeout=None):
+
     with locked_config(module):
         resp = load_configuration(module, candidate, action=action, format=format)
 
@@ -148,72 +153,10 @@ def load(module, candidate, action='merge', commit=False, format='xml'):
         if diff:
             diff = str(diff).strip()
             if commit:
-                commit_configuration(module)
+                commit_configuration(module, confirm=confirm, comment=comment,
+                                     confirm_timeout=confirm_timeout)
             else:
                 discard_changes(module)
 
         return diff
 
-
-
-# START CLI FUNCTIONS
-
-def get_config(module, flags=[]):
-    cmd = 'show configuration '
-    cmd += ' '.join(flags)
-    cmd = cmd.strip()
-
-    try:
-        return _DEVICE_CONFIGS[cmd]
-    except KeyError:
-        rc, out, err = exec_command(module, cmd)
-        if rc != 0:
-            module.fail_json(msg='unable to retrieve current config', stderr=err)
-        cfg = str(out).strip()
-        _DEVICE_CONFIGS[cmd] = cfg
-        return cfg
-
-def run_commands(module, commands, check_rc=True):
-    responses = list()
-    for cmd in to_list(commands):
-        cmd = module.jsonify(cmd)
-        rc, out, err = exec_command(module, cmd)
-        if check_rc and rc != 0:
-            module.fail_json(msg=err, rc=rc)
-
-        try:
-            out = module.from_json(out)
-        except ValueError:
-            out = str(out).strip()
-
-        responses.append(out)
-    return responses
-
-def load_config(module, config, commit=False, comment=None,
-        confirm=False, confirm_timeout=None):
-
-    exec_command(module, 'configure')
-
-    for item in to_list(config):
-        rc, out, err = exec_command(module, item)
-        if rc != 0:
-            module.fail_json(msg=str(err))
-
-    exec_command(module, 'top')
-    rc, diff, err = exec_command(module, 'show | compare')
-
-    if commit:
-        cmd = 'commit'
-        if commit:
-            cmd = 'commit confirmed'
-            if confirm_timeout:
-                cmd +' %s' % confirm_timeout
-        if comment:
-            cmd += ' comment "%s"' % comment
-        cmd += ' and-quit'
-        exec_command(module, cmd)
-    else:
-        for cmd in ['rollback 0', 'exit']:
-            exec_command(module, cmd)
-
-    return str(diff).strip()

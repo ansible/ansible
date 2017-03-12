@@ -77,18 +77,12 @@ commands:
 """
 import re
 
-from ansible.module_utils.junos import load_config, get_config
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import exec_command
 from ansible.module_utils.six import iteritems
 
 USE_PERSISTENT_CONNECTION = True
-
-def check_transport(module):
-    transport = (module.params['provider'] or {}).get('transport')
-
-    if transport == 'netconf':
-        module.fail_json(msg='junos_netconf module is only supported over cli transport')
 
 
 def map_obj_to_commands(updates, module):
@@ -144,6 +138,32 @@ def map_params_to_obj(module):
 
     return obj
 
+def get_config(module, flags=[]):
+    rc, out, err = exec_command(module, cmd)
+    if rc != 0:
+        module.fail_json(msg='unable to retrieve current config', stderr=err)
+    return str(out).strip()
+
+def load_config(module, config, commit=False):
+
+    exec_command(module, 'configure')
+
+    for item in to_list(config):
+        rc, out, err = exec_command(module, item)
+        if rc != 0:
+            module.fail_json(msg=str(err))
+
+    exec_command(module, 'top')
+    rc, diff, err = exec_command(module, 'show | compare')
+
+    if commit:
+        exec_command(module, 'commit and-quit')
+    else:
+        for cmd in ['rollback 0', 'exit']:
+            exec_command(module, cmd)
+
+    return str(diff).strip()
+
 def main():
     """main entry point for module execution
     """
@@ -153,12 +173,9 @@ def main():
     )
 
     argument_spec.update(junos_argument_spec)
-    argument_spec['transport'] = dict(choices=['cli'], default='cli')
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
-
-    check_transport(module)
 
     warnings = list()
     check_args(module, warnings)
