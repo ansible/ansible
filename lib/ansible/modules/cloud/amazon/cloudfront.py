@@ -97,53 +97,62 @@ class CloudFrontServiceManager:
         try:
             region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
             self.client = boto3_conn(module, conn_type='client', resource='cloudfront', 
-                                     region=region, endpoint=ec2_url, **aws_connect_kwargs)
+                    region=region, endpoint=ec2_url, **aws_connect_kwargs)
         except botocore.exceptions.NoRegionError:
             self.module.fail_json(msg = ("Region must be specified as a parameter, in "
                                          "AWS_DEFAULT_REGION environment variable or in "
                                          "boto configuration file") )
         except Exception as e:
             self.module.fail_json(msg="Can't establish connection - " + str(e),
-                                  exception=traceback.format_exc())
+                    exception=traceback.format_exc())
 
     def create_origin_access_identity(self, caller_reference, comment):
         try:
             func = partial(self.client.create_cloud_front_origin_access_identity, 
-                           CloudFrontOriginAccessIdentityConfig = 
-                           { 'CallerReference': caller_reference, 'Comment': comment })
+                    CloudFrontOriginAccessIdentityConfig =
+                    { 'CallerReference': caller_reference, 'Comment': comment })
             return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error creating cloud front origin access identity - " + str(e), 
-                                  exception=traceback.format_exc())
+                    exception=traceback.format_exc())
 
     def delete_origin_access_identity(self, origin_access_identity_id, e_tag):
         try:
             func = partial(self.client.delete_cloud_front_origin_access_identity,
-                           Id=origin_access_identity_id, IfMatch=e_tag)
+                    Id=origin_access_identity_id, IfMatch=e_tag)
             return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error deleting cloud front origin access identity - " + str(e),
-                                  exception=traceback.format_exc())
+                    exception=traceback.format_exc())
 
     def update_origin_access_identity(self, caller_reference, comment, origin_access_identity_id, e_tag):
         try:
             func = partial(self.client.update_cloud_front_origin_access_identity,
-                           CloudFrontOriginAccessIdentityConfig = 
-                           { 'CallerReference': caller_reference, 'Comment': comment },
-                           Id=origin_access_identity_id, IfMatch=e_tag)
+                    CloudFrontOriginAccessIdentityConfig =
+                    { 'CallerReference': caller_reference, 'Comment': comment },
+                    Id=origin_access_identity_id, IfMatch=e_tag)
             return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error updating cloud front origin access identity - " + str(e),
-                                  exception=traceback.format_exc())
+                    exception=traceback.format_exc())
     
     def create_invalidation(self, distribution_id, invalidation_batch):
         try:
             func = partial(self.client.create_invalidation, DistributionId = distribution_id, 
-                           InvalidationBatch=invalidation_batch)
+                    InvalidationBatch=invalidation_batch)
             return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error creating invalidation(s) - " + str(e),
-                                  exception=traceback.format_exec())
+                    exception=traceback.format_exec())
+
+    def generate_presigned_url(client_method, params, expires_in, http_method):
+        try:
+            func = partial(self.client.generate_presigned_url, ClientMethod=client_method,
+                    Params=params, ExpiresIn=expires_in, HttpMethod=http_method)
+            return self.paginated_response(func)
+        except Exception as e:
+            self.module.fail_json(msg="Error generating presigned url - " + str(e),
+                    exception=traceback.format_exec())
 
     def paginated_response(self, func, result_key=""):
         '''
@@ -174,28 +183,27 @@ def main():
         caller_reference=dict(required=False, default=None, type='str'),
         comment=dict(required=False, default=None, type='str'),
         create_distribution=dict(required=False, default=False, type='bool'),
-        distribution_config=dict(required=False, default=None, type='json'),
-        create_distribution_with_tags=dict(required=False, default=False, type='bool'),
-        distribution_with_tags_config=dict(required=False, default=None, type='json'),
         create_invalidation=dict(required=False, default=False, type='bool'),
         distribution_id=dict(required=False, default=None, type='str'),
         invalidation_batch=dict(required=False, default=None, type='str'),
         create_streaming_distribution=dict(required=False, default=False, type='bool'),
-        streaming_distribution_config=dict(required=False, default=None, type='json'),
-        create_streaming_distribution_with_tags=dict(required=False, default=False, type='bool'),
-        streaming_distribution_with_tags_config=dict(required=False, default=None, type='json'),
         delete_origin_access_identity=dict(required=False, default=False, type='bool'),
         origin_access_identity_id=dict(required=False, default=None, type='str'),
         e_tag=dict(required=False, default=None, type='str'),
         delete_distribution=dict(required=False, default=False, type='bool'),
         delete_streaming_distribution=dict(required=False, default=False, type='bool'),
         generate_presigned_url=dict(required=False, default=False, type='bool'),
+        client_method=dict(required=False, default=None, type='str'),
+        params=dict(required=False, default=None, type='json'),
+        expires_in=dict(required=False, default=3600, type='int'),
+        http_method=dict(required=False, default=None, type='str'),
         tag_resource=dict(required=False, default=False, type='bool'),
         untag_resource=dict(required=False, default=False, type='bool'),
         update_origin_access_identity=dict(required=False, default=False, type='bool'),
         update_distribution=dict(required=False, default=False, type='bool'),
         update_streaming_distribution=dict(required=False, default=False, type='bool'),
-        content=dict(required=False, default=None, type='str')
+        config=dict(required=False, default=None, type='json'),
+        tags=dict(required=False, default=None, type='json')
     ))
 
     result = {}
@@ -216,6 +224,12 @@ def main():
 
     update_origin_access_identity = module.params.get('update_origin_access_identity')
     origin_access_identity_id = module.params.get('origin_access_identity_id')
+
+    generate_presigned_url = module.params.get('generate_presigned_url')
+    client_method = module.params.get('client_method')
+    params = module.params.get('params')
+    expires_in = module.params.get('expires_in')
+    http_method = module.params.get('http_method')
 
     create_distribution = module.params.get('create_distribution')
     distribution_config = module.params.get('distribution_config')
@@ -238,6 +252,8 @@ def main():
         result=service_mgr.update_origin_access_identity(caller_reference, comment, origin_access_identity_id, e_tag)
     elif(create_invalidation):
         result=service_mgr.create_invalidation(distribution_id, invalidation_batch)
+    elif(generate_presigned_url):
+        result=service_mgr.generate_presigned_url(client_method, params, expires_in, http_method)
 
     module.exit_json(changed=True, **camel_dict_to_snake_dict(result))
 
