@@ -17,8 +17,6 @@
 - assert:
     that:
       - "result.changed == true"
-# https://github.com/ansible/ansible-modules-core/issues/4807
-      - "result.updates is not defined"
 
 - name: check device with config
   junos_config:
@@ -29,7 +27,5 @@
 - assert:
     that:
       - "result.changed == false"
-# https://github.com/ansible/ansible-modules-core/issues/4807
-      - "result.updates is not defined"
 
 - debug: msg="END netconf/src_basic.yaml"
