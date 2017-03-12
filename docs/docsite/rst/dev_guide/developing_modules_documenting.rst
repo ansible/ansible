@@ -221,6 +221,41 @@ The RETURN section documents what the module returns, and is required for all ne
 For each value returned, provide a ``description``, in what circumstances the value is ``returned``,
 the ``type`` of the value and a ``sample``.  For example, from the ``copy`` module::
 
+
+The following fields can be used and are all required unless specified otherwise.
+
+:return name:
+  Name of the returned field.
+
+  :description:
+    Detailed description of what this value represents.
+  :returned:
+    When this value is returned, such as `always`, on `success`, `always`
+  :type:
+    Data type
+  :sample:
+    One or more examples.
+  :contains:
+    Optional, if you set `type: complex` you can detail the dictionary here by repeating the above elements.
+
+    :return name:
+      One per return
+
+      :description:
+        Detailed description of what this value represents.
+      :returned:
+        When this value is returned, such as `always`, on `success`, `always`
+      :type:
+        Data type
+      :sample:
+        One or more examples.
+
+
+For complex nested returns type can be specified as ``type: complex``.
+
+Example::
+
+
     RETURN = '''
     dest:
         description: destination file/path
@@ -238,7 +273,7 @@ the ``type`` of the value and a ``sample``.  For example, from the ``copy`` modu
         type: string
         sample: 2a5aeecc61dc98c4d780b14b330e3282
     ...
-    '''
+
 
 .. note::
 
