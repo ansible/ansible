@@ -86,7 +86,7 @@ def metadata_schema(deprecated):
 # Things to add soon
 ####################
 # 1) Validate RETURN, including `contains` if `type: complex`
-#
+#    This will improve documentation, though require fair amount of module tidyup
 
 # Possible Future Enhancements
 ##############################
