@@ -93,10 +93,12 @@ class CloudFrontServiceManager:
 
     def __init__(self, module):
         self.module = module
+        self.create_client('cloudfront')
 
+    def create_client(self, resource):
         try:
-            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-            self.client = boto3_conn(module, conn_type='client', resource='cloudfront', 
+            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self.module, boto3=True)
+            self.client = boto3_conn(self.module, conn_type='client', resource=resource,
                     region=region, endpoint=ec2_url, **aws_connect_kwargs)
         except botocore.exceptions.NoRegionError:
             self.module.fail_json(msg = ("Region must be specified as a parameter, in "
@@ -143,16 +145,18 @@ class CloudFrontServiceManager:
             return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error creating invalidation(s) - " + str(e),
-                    exception=traceback.format_exec())
+                    exception=traceback.format_exc())
 
-    def generate_presigned_url(client_method, params, expires_in, http_method):
+    def generate_presigned_url(self, client_method, s3_bucket_name, s3_key_name, expires_in, http_method):
         try:
-            func = partial(self.client.generate_presigned_url, ClientMethod=client_method,
-                    Params=params, ExpiresIn=expires_in, HttpMethod=http_method)
-            return self.paginated_response(func)
+            self.create_client('s3')
+            params = { "Bucket": s3_bucket_name, "Key": s3_key_name }
+            response = self.client.generate_presigned_url(client_method, Params=params,
+                    ExpiresIn=expires_in, HttpMethod=http_method)
+            return { "presigned_url": response }
         except Exception as e:
             self.module.fail_json(msg="Error generating presigned url - " + str(e),
-                    exception=traceback.format_exec())
+                    exception=traceback.format_exc())
 
     def paginated_response(self, func, result_key=""):
         '''
@@ -194,7 +198,8 @@ def main():
         delete_streaming_distribution=dict(required=False, default=False, type='bool'),
         generate_presigned_url=dict(required=False, default=False, type='bool'),
         client_method=dict(required=False, default=None, type='str'),
-        params=dict(required=False, default=None, type='json'),
+        s3_bucket_name=dict(required=False, default=None, type='str'),
+        s3_key_name=dict(required=False, default=None, type='str'),
         expires_in=dict(required=False, default=3600, type='int'),
         http_method=dict(required=False, default=None, type='str'),
         tag_resource=dict(required=False, default=False, type='bool'),
@@ -227,7 +232,8 @@ def main():
 
     generate_presigned_url = module.params.get('generate_presigned_url')
     client_method = module.params.get('client_method')
-    params = module.params.get('params')
+    s3_bucket_name = module.params.get('s3_bucket_name')
+    s3_key_name = module.params.get('s3_key_name')
     expires_in = module.params.get('expires_in')
     http_method = module.params.get('http_method')
 
@@ -253,7 +259,7 @@ def main():
     elif(create_invalidation):
         result=service_mgr.create_invalidation(distribution_id, invalidation_batch)
     elif(generate_presigned_url):
-        result=service_mgr.generate_presigned_url(client_method, params, expires_in, http_method)
+        result=service_mgr.generate_presigned_url(client_method, s3_bucket_name, s3_key_name, expires_in, http_method)
 
     module.exit_json(changed=True, **camel_dict_to_snake_dict(result))
 
