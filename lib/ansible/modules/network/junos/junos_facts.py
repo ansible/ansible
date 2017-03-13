@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import division
 
 ANSIBLE_METADATA = {
     'status': ['preview'],
@@ -47,6 +46,7 @@ options:
         not be collected.
     required: false
     default: "!config"
+    version_added: "2.3"
 """
 
 EXAMPLES = """
@@ -66,128 +66,133 @@ ansible_facts:
 """
 
 import re
-import xml.etree.ElementTree as ET
+from xml.etree.ElementTree import Element, SubElement
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.junos import get_config, run_commands
 from ansible.module_utils.junos import junos_argument_spec, check_args
+from ansible.module_utils.junos import command, get_configuration
+from ansible.module_utils.netconf import send_request
 
+
+USE_PERSISTENT_CONNECTION = True
 
 class FactsBase(object):
-
-    COMMANDS = frozenset()
 
     def __init__(self, module):
         self.module = module
         self.facts = dict()
-        self.responses = None
 
     def populate(self):
-        self.responses = run_commands(self.module, list(self.COMMANDS))
+        raise NotImplementedError
+
+    def cli(self, command):
+        reply = command(self.module, command)
+        output = reply.find('.//output')
+        if not output:
+            module.fail_json(msg='failed to retrieve facts for command %s' % command)
+        return str(output.text).strip()
+
+    def rpc(self, rpc):
+        return send_request(self.module, Element(rpc))
+
+    def get_text(self, ele, tag):
+        try:
+            return str(ele.find(tag).text).strip()
+        except AttributeError:
+            pass
 
 
 class Default(FactsBase):
 
-    COMMANDS = [
-        'show version',
-        'show chassis hardware',
-    ]
+    def populate(self):
+        reply = self.rpc('get-software-information')
+        data = reply.find('.//software-information')
+
+        self.facts.update({
+            'hostname': self.get_text(data, 'host-name'),
+            'version': self.get_text(data, 'junos-version'),
+            'model': self.get_text(data, 'product-model')
+        })
+
+        reply = self.rpc('get-chassis-inventory')
+        data = reply.find('.//chassis-inventory/chassis')
+
+        self.facts['serialnum'] = self.get_text(data, 'serial-number')
+
+
+class Config(FactsBase):
 
     def populate(self):
-        super(Default, self).populate()
+        config_format = self.module.params['config_format']
+        reply = get_configuration(self.module, format=config_format)
 
-        version = self.responses[0]
-        self.facts['hostname'] = self.parse_hostname(version)
-        self.facts['version'] = self.parse_version(version)
-        self.facts['model'] = self.parse_model(version)
+        if config_format =='xml':
+            config = tostring(reply.find('configuration')).strip()
 
-        hardware = self.responses[1]
-        self.facts['serialnum'] = self.parse_serialnum(hardware)
+        elif config_format == 'text':
+            config = self.get_text(reply, 'configuration-text')
 
-    def parse_hostname(self, data):
-        match = re.search(r'Hostname:\s*(\S+)', data)
-        if match:
-            return match.group(1)
+        elif config_format == 'json':
+            config = str(reply.text).strip()
 
-    def parse_version(self, data):
-        match = re.search(r'Junos:\s*(\S+)', data)
-        if match:
-            return match.group(1)
+        elif config_format == 'set':
+            config = self.get_text(reply, 'configuration-set')
 
-    def parse_model(self, data):
-        match = re.search(r'Model:\s*(\S+)', data)
-        if match:
-            return match.group(1)
+        self.facts['config'] = config
 
-    def parse_serialnum(self, data):
-        match = re.search(r'Chassis\s+(\w+)', data)
-        if match:
-            return match.group(1)
 
 
 class Hardware(FactsBase):
 
-    COMMANDS = [
-        'show system memory',
-        'show system storage',
-    ]
-
     def populate(self):
-        super(Hardware, self).populate()
-        memory = self.responses[0]
-        self.facts['memfree_mb'] = self.parse_memfree(memory)
-        self.facts['memtotal_mb'] = self.parse_memtotal(memory)
-        self.facts['filesystems'] = self.parse_filesystems(self.responses[1])
 
-    def parse_memtotal(self, data):
-        match = re.search(r'Total memory:\s+(\d+)', data)
-        if match:
-            return int(match.group(1)) // 1024
+        reply = self.rpc('get-system-memory-information')
+        data = reply.find('.//system-memory-information/system-memory-summary-information')
 
-    def parse_memfree(self, data):
-        match = re.search(r'Free memory:\s+(\d+)', data)
-        if match:
-            return int(match.group(1)) // 1024
+        self.facts.update({
+            'memfree_mb': int(self.get_text(data, 'system-memory-free')),
+            'memtotal_mb': int(self.get_text(data, 'system-memory-total'))
+        })
 
-    def parse_filesystems(self, data):
-        paths = []
-        for line in data.split('\n'):
-            path = line.split()[-1]
-            if path.startswith('/'):
-                paths.append(path)
+        reply = self.rpc('get-system-storage')
+        data = reply.find('.//system-storage-information')
 
-        return paths
+        filesystems = list()
+        for obj in data:
+            filesystems.append(self.get_text(obj, 'filesystem-name'))
+        self.facts['filesystems'] = filesystems
 
 
 class Interfaces(FactsBase):
 
-    COMMANDS = [
-        'show interfaces detail | display xml'
-    ]
-
     def populate(self):
-        super(Interfaces, self).populate()
-        interfaces = ET.fromstring(self.responses[0])
-        self.facts['interfaces'] = self.parse_interfaces(interfaces)
+        ele = Element('get-interface-information')
+        SubElement(ele, 'detail')
+        reply = send_request(self.module, ele)
 
-    def parse_interfaces(self, data):
-        interfaces = dict()
-        for interface in data.findall('./physical-interface'):
-            iface_data = dict(
-                state=interface.findtext('./oper-status'),
-                duplex=interface.findtext('./link-type'),
-                speed=interface.findtext('./speed'),
-                macaddress=interface.findtext('./hardware-physical-address'),
-                mtu=interface.findtext('./mtu'),
-                type=interface.findtext('./if-type'),
-            )
-            interfaces[interface.findtext('./name')] = iface_data
+        interfaces = {}
+
+        for item in reply[0]:
+            name = self.get_text(item, 'name')
+            obj = {
+                'oper-status': self.get_text(item, 'oper-status'),
+                'admin-status': self.get_text(item, 'admin-status'),
+                'speed': self.get_text(item, 'speed'),
+                'macaddress': self.get_text(item, 'hardware-physical-address'),
+                'mtu': self.get_text(item, 'mtu'),
+                'type': self.get_text(item, 'if-type'),
+            }
+
+            interfaces[name] = obj
+
+        self.facts['interfaces'] = interfaces
+
 
 FACT_SUBSETS = dict(
     default=Default,
     hardware=Hardware,
-    config=None,
+    config=Config,
     interfaces=Interfaces,
 )
 
@@ -199,7 +204,7 @@ def main():
     """
     argument_spec = dict(
         gather_subset=dict(default=['!config'], type='list'),
-        config_format=dict(default='text', choices=['xml', 'text']),
+        config_format=dict(default='text', choices=['xml', 'text', 'set', 'json']),
     )
 
     argument_spec.update(junos_argument_spec)
@@ -246,10 +251,6 @@ def main():
 
     facts = dict()
     facts['gather_subset'] = list(runable_subsets)
-
-    if 'config' in runable_subsets:
-        facts['config'] = get_config(module)
-        runable_subsets.remove('config')
 
     instances = list()
     for key in runable_subsets:
