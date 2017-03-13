@@ -141,7 +141,7 @@ owner_alias:
     sample: 033440102211
 tags:
     description: Any tags assigned to the snapshot.
-    type: list
+    type: dict
     sample: "{ 'my_tag_key': 'my_tag_value' }"
 encrypted:
     description: Indicates whether the snapshot is encrypted.
