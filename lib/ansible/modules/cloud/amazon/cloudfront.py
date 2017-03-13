@@ -158,6 +158,35 @@ class CloudFrontServiceManager:
             self.module.fail_json(msg="Error generating presigned url - " + str(e),
                     exception=traceback.format_exc())
 
+    def create_distribution(self, config, tags):
+        try:
+            if tags is None:
+                func = partial(self.client.create_distribution, DistributionConfig=config)
+            else:
+                distribution_config_with_tags = self.join_tags_to_config(config, tags)
+                func = partial(self.client.create_disribution_with_tags, 
+                        DistributionConfigWithTags=distribution_config_with_tags)
+            return self.paginated_response(func)
+        except Exception as e:
+            self.module.fail_json(msg="Error creating distribution - " + str(e),
+                    exception=traceback.format_exc())
+
+    def create_streaming_distribution(self, config, tags):
+        try:
+            if tags is None:
+                func = partial(self.client.create_streaming_distribution, StreamingDistributionConfig=config)
+            else:
+                streaming_distribution_config_with_tags = self.join_tags_to_config(config, tags)
+                func = partial(self.client.create_streaming_disribution_with_tags, 
+                        StreamingDistributionConfigWithTags=streaming_distribution_config_with_tags)
+            return self.paginated_response(func)
+        except Exception as e:
+            self.module.fail_json(msg="Error creating distribution - " + str(e),
+                    exception=traceback.format_exc())
+    
+    def join_tags_to_config(self, config, tags):
+        return config.update(tags)
+
     def paginated_response(self, func, result_key=""):
         '''
         Returns expanded response for paginated operations.
@@ -238,10 +267,9 @@ def main():
     http_method = module.params.get('http_method')
 
     create_distribution = module.params.get('create_distribution')
-    distribution_config = module.params.get('distribution_config')
-
-    create_distribution_with_tags = module.params.get('create_distribution_with_tags')
-    distribution_with_tags_config = module.params.get('distribution_with_tags_config')
+    create_streaming_distribution = module.params.get('create_streaming_distribution')
+    config = module.params.get('config')
+    tags = module.params.get('tags')
 
     create_invalidation = module.params.get('create_invalidation')
     distribution_id = module.params.get('distribution_id')
@@ -260,6 +288,10 @@ def main():
         result=service_mgr.create_invalidation(distribution_id, invalidation_batch)
     elif(generate_presigned_url):
         result=service_mgr.generate_presigned_url(client_method, s3_bucket_name, s3_key_name, expires_in, http_method)
+    elif(create_distribution):
+        result=service_mgr.create_distribution(config, tags)
+    elif(create_streaming_distribution):
+        result=service_mgr.create_streaming_distribution(cofig, tags)
 
     module.exit_json(changed=True, **camel_dict_to_snake_dict(result))
 
