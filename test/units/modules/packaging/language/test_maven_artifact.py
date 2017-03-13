@@ -1,4 +1,4 @@
-from StringIO import StringIO
+from io import StringIO
 from ansible.compat.tests import unittest, mock
 
 from ansible.modules.packaging.language import maven_artifact
@@ -37,7 +37,7 @@ class TestMavenDownloader(unittest.TestCase):
         module = self.AnsibleModuleMock()
         artifact = maven_artifact.Artifact("com.ansible", "test", "1.0")
         downloader = maven_artifact.MavenDownloader(module, base="http://repo.test.org/maven")
-        
+
         assert downloader.find_uri_for_artifact(artifact) == "http://repo.test.org/maven/com/ansible/test/1.0/test-1.0.jar"
 
     @mock.patch('ansible.modules.packaging.language.maven_artifact.fetch_url')
@@ -60,10 +60,10 @@ class TestMavenDownloader(unittest.TestCase):
         """
         downloader = maven_artifact.MavenDownloader(module, base="http://repo.test.org/maven")
         fetch_url_fn.return_value = (StringIO(maven_metadata_xml_str), {"status": 200})
-        
+
         assert downloader.find_uri_for_artifact(artifact) == "http://repo.test.org/maven/com/ansible/test/2.0/test-2.0.jar"
         assert fetch_url_fn.call_args[0] == (module, "http://repo.test.org/maven/com/ansible/test/maven-metadata.xml")
-    
+
     @mock.patch('ansible.modules.packaging.language.maven_artifact.fetch_url')
     def test_find_uri_for_artifact_is_snapshot(self, fetch_url_fn):
         module = self.AnsibleModuleMock()
@@ -92,16 +92,14 @@ class TestMavenDownloader(unittest.TestCase):
         """
         downloader = maven_artifact.MavenDownloader(module, base="http://repo.test.org/maven")
         fetch_url_fn.return_value = (StringIO(maven_metadata_xml_str), {"status": 200})
-        
+
         assert downloader.find_uri_for_artifact(artifact) == "http://repo.test.org/maven/com/ansible/test/1.0-SNAPSHOT/test-1.0-20150330.174014-12.jar"
         assert fetch_url_fn.call_args[0] == (module, "http://repo.test.org/maven/com/ansible/test/1.0-SNAPSHOT/maven-metadata.xml")
 
-    
     def test_find_uri_for_artifact_is_snapshot_nonunique(self):
         module = self.AnsibleModuleMock()
         module.params["unique_snapshot"] = False
         artifact = maven_artifact.Artifact("com.ansible", "test", "1.0-SNAPSHOT")
         downloader = maven_artifact.MavenDownloader(module, base="http://repo.test.org/maven")
-        
+
         assert downloader.find_uri_for_artifact(artifact) == "http://repo.test.org/maven/com/ansible/test/1.0-SNAPSHOT/test-1.0-SNAPSHOT.jar"
-    
