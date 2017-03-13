@@ -81,7 +81,7 @@ EXAMPLES = '''
 
 RETURN = '''
 result:
-  description: The result of the describe.
+  description: The result of the describe, converted to ansible snake case style.
     See http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.describe_nat_gateways for the response.
   returned: success
   type: list
@@ -114,7 +114,7 @@ def get_nat_gateways(client, module, nat_gateway_id=None):
     except Exception as e:
         module.fail_json(msg=str(e.message))
 
-    return result['NatGateways']
+    return [camel_dict_to_snake_dict(gateway) for gateway in result['NatGateways']]
 
 
 def main():
