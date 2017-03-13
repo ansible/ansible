@@ -34,9 +34,9 @@ options:
     required: false
   tags:
     description:
-    required: false
       - "A dictionary/hash of tags in the format { tag1_name: 'tag1_value', tag2_name: 'tag2_value' }
         to match against the security group(s) you are searching for."
+    required: false
 extends_documentation_fragment:
     - aws
     - ec2
