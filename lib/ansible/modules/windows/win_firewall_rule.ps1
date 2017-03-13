@@ -72,9 +72,11 @@ function getFirewallRule ($fwsettings) {
                     if ( $output.$($fwsetting.Key) -ne $fwsettings.$($fwsetting.Key)) {
 
                         if (($fwsetting.Key -eq 'RemoteIP') -and ($output.$($fwsetting.Key) -eq ($fwsettings.$($fwsetting.Key)+'-'+$fwsettings.$($fwsetting.Key)))) {
-                            $donothing=$false
+                            Continue
                         } elseif (($fwsetting.Key -eq 'DisplayName') -and ($output."Rule Name" -eq $fwsettings.$($fwsetting.Key))) {
-                            $donothing=$false
+                            Continue
+                        } elseif (($fwsetting.Key -eq 'Profiles') -and ($fwsettings.$($fwsetting.Key) -eq "any") -and ($output.$($fwsetting.Key) -eq "Domain,Private,Public")) {
+                            Continue
                         } else {
                             $diff=$true;
                             $difference+=@($fwsettings.$($fwsetting.Key));
