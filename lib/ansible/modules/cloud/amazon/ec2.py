@@ -675,14 +675,14 @@ def get_reservations(module, ec2, tags=None, state=None, zone=None):
             for x in tags:
                 if isinstance(x, dict):
                     x = _set_none_to_blank(x)
-                    filters.update(dict(("tag:"+tn, tv) for (tn, tv) in x.items()))
+                    filters.update(dict(("tag:" + tn, tv) for (tn, tv) in x.items()))
                 else:
                     filters.update({"tag-key": x})
 
         # if dict, add the key and value to the filter
         if isinstance(tags, dict):
             tags = _set_none_to_blank(tags)
-            filters.update(dict(("tag:"+tn, tv) for (tn, tv) in tags.items()))
+            filters.update(dict(("tag:" + tn, tv) for (tn, tv) in tags.items()))
 
     if state:
         # http://stackoverflow.com/questions/437511/what-are-the-valid-instancestates-for-the-amazon-ec2-api
@@ -1019,10 +1019,6 @@ def create_instances(module, ec2, vpc, override_count=None):
     network_interfaces = module.params.get('network_interfaces')
     spot_launch_group = module.params.get('spot_launch_group')
     instance_initiated_shutdown_behavior = module.params.get('instance_initiated_shutdown_behavior')
-
-    # group_id and group_name are exclusive of each other
-    if group_id and group_name:
-        module.fail_json(msg=str("Use only one type of parameter (group_name) or (group_id)"))
 
     vpc_id = None
     if vpc_subnet_id:
@@ -1600,6 +1596,7 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive=[
+            ['group_name', 'group_id'],
             ['exact_count', 'count'],
             ['exact_count', 'state'],
             ['exact_count', 'instance_ids'],
