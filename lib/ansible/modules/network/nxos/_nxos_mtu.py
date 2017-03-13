@@ -25,14 +25,14 @@ DOCUMENTATION = '''
 module: nxos_mtu
 extends_documentation_fragment: nxos
 version_added: "2.2"
-deprecated: Deprecated in 2.2 use FIXME instead.
+deprecated: Deprecated in 2.2 use M(nxos_system)'s C(mtu) option.
 short_description: Manages MTU settings on Nexus switch.
 description:
     - Manages MTU settings on Nexus switch.
 author:
     - Jason Edelman (@jedelman8)
 notes:
-    - Either C(sysmtu) param is required or C(interface) AND C(mtu) params are req'd.
+    - Either C(sysmtu) param is required or (C(interface) AND C(mtu)) parameters are required.
     - C(state=absent) unconfigures a given MTU if that value is currently present.
 options:
     interface:
