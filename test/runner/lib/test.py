@@ -344,4 +344,7 @@ class TestMessage(object):
 
     @property
     def sort_key(self):
+        """
+        :rtype: str
+        """
         return '%s:%6d:%6d:%s:%s' % (self.path, self.line, self.column, self.code or '', self.message)
