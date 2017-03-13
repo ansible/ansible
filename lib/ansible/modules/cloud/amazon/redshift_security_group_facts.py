@@ -14,18 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
-# Import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
-from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict
-
-try:
-    from botocore.exceptions import ClientError
-except ImportError:
-    pass  # will be picked up from imported HAS_BOTO3
-
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -47,7 +35,7 @@ options:
   tags:
     description:
     required: false
-      - A dictionary/hash of tags in the format { tag1_name: 'tag1_value', tag2_name: 'tag2_value' }
+      - A dictionary/hash of tags in the format C({ tag1_name: 'tag1_value', tag2_name: 'tag2_value' })
         to match against the security group(s) you are searching for."
 extends_documentation_fragment:
     - aws
@@ -154,6 +142,17 @@ tags:
         }
     ]
 '''
+
+import re
+# Import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
+from ansible.module_utils.ec2 import HAS_BOTO3, camel_dict_to_snake_dict
+
+try:
+    from botocore.exceptions import ClientError
+except ImportError:
+    pass  # will be picked up from imported HAS_BOTO3
 
 
 def match_csg_tags(tags_to_match, csg):
