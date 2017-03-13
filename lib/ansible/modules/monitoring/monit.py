@@ -61,7 +61,9 @@ EXAMPLES = '''
     state: started
 '''
 
-import time
+
+# Amount of time to wait between checks for initializing or pending services
+SLEEP_TIME = 5
 
 
 def main():
@@ -86,8 +88,10 @@ def main():
             # Sample output lines:
             # Process 'name'    Running
             # Process 'name'    Running - restart pending
+            # Program 'name'    Status ok
+            # Program 'name'    Status failed
             parts = line.split()
-            if len(parts) > 2 and parts[0].lower() == 'process' and parts[1] == "'%s'" % name:
+            if len(parts) > 2 and parts[0].lower() in ('process', 'program') and parts[1] == "'%s'" % name:
                 return ' '.join(parts[2:]).lower()
         else:
             return ''
@@ -97,13 +101,22 @@ def main():
         module.run_command('%s %s %s' % (MONIT, command, name), check_rc=True)
         return status()
 
+    def is_pending(cur_status):
+        # type: (str) -> bool
+        """Return True if the status is empty, pending, or initializing
+
+        :param cur_status: the current status string for a monitored
+            service, as returned by ``status()``
+        """
+        pending = cur_status == '' or 'pending' in cur_status or 'initializing' in cur_status
+        return pending
+
     def wait_for_monit_to_stop_pending():
         """Fails this run if there is no status or it's pending/initalizing for timeout"""
         timeout_time = time.time() + timeout
-        sleep_time = 5
 
         running_status = status()
-        while running_status == '' or 'pending' in running_status or 'initializing' in running_status:
+        while is_pending(running_status):
             if time.time() >= timeout_time:
                 module.fail_json(
                     msg='waited too long for "pending", or "initiating" status to go away ({0})'.format(
@@ -112,7 +125,7 @@ def main():
                     state=state
                 )
 
-            time.sleep(sleep_time)
+            time.sleep(SLEEP_TIME)
             running_status = status()
 
     if state == 'reloaded':
@@ -124,7 +137,8 @@ def main():
         wait_for_monit_to_stop_pending()
         module.exit_json(changed=True, name=name, state=state)
 
-    present = status() != ''
+    running_status = status()
+    present = running_status != ''
 
     if not present and not state == 'present':
         module.fail_json(msg='%s process not presently configured with monit' % name, name=name, state=state)
@@ -133,14 +147,16 @@ def main():
         if not present:
             if module.check_mode:
                 module.exit_json(changed=True)
-            status = run_command('reload')
-            if status == '':
+            running_status = run_command('reload')
+            if running_status == '':
                 wait_for_monit_to_stop_pending()
             module.exit_json(changed=True, name=name, state=state)
         module.exit_json(changed=False, name=name, state=state)
 
-    wait_for_monit_to_stop_pending()
-    running = 'running' in status()
+    if is_pending(running_status):
+        wait_for_monit_to_stop_pending()
+
+    running = 'running' in running_status or 'status ok' in running_status
 
     if running and state in ['started', 'monitored']:
         module.exit_json(changed=False, name=name, state=state)
@@ -148,42 +164,42 @@ def main():
     if running and state == 'stopped':
         if module.check_mode:
             module.exit_json(changed=True)
-        status = run_command('stop')
-        if status in ['not monitored'] or 'stop pending' in status:
+        running_status = run_command('stop')
+        if running_status in ['not monitored'] or 'stop pending' in running_status:
             module.exit_json(changed=True, name=name, state=state)
-        module.fail_json(msg='%s process not stopped' % name, status=status)
+        module.fail_json(msg='%s process not stopped' % name, status=running_status)
 
     if running and state == 'unmonitored':
         if module.check_mode:
             module.exit_json(changed=True)
-        status = run_command('unmonitor')
-        if status in ['not monitored'] or 'unmonitor pending' in status:
+        running_status = run_command('unmonitor')
+        if running_status in ['not monitored'] or 'unmonitor pending' in running_status:
             module.exit_json(changed=True, name=name, state=state)
-        module.fail_json(msg='%s process not unmonitored' % name, status=status)
+        module.fail_json(msg='%s process not unmonitored' % name, status=running_status)
 
     elif state == 'restarted':
         if module.check_mode:
             module.exit_json(changed=True)
-        status = run_command('restart')
-        if status in ['initializing', 'running'] or 'restart pending' in status:
+        running_status = run_command('restart')
+        if running_status in ['initializing', 'running', 'status ok'] or 'restart pending' in running_status:
             module.exit_json(changed=True, name=name, state=state)
-        module.fail_json(msg='%s process not restarted' % name, status=status)
+        module.fail_json(msg='%s process not restarted' % name, status=running_status)
 
     elif not running and state == 'started':
         if module.check_mode:
             module.exit_json(changed=True)
-        status = run_command('start')
-        if status in ['initializing', 'running'] or 'start pending' in status:
+        running_status = run_command('start')
+        if running_status in ['initializing', 'running', 'status ok'] or 'start pending' in running_status:
             module.exit_json(changed=True, name=name, state=state)
-        module.fail_json(msg='%s process not started' % name, status=status)
+        module.fail_json(msg='%s process not started' % name, status=running_status)
 
     elif not running and state == 'monitored':
         if module.check_mode:
             module.exit_json(changed=True)
-        status = run_command('monitor')
-        if status not in ['not monitored']:
+        running_status = run_command('monitor')
+        if running_status not in ['not monitored']:
             module.exit_json(changed=True, name=name, state=state)
-        module.fail_json(msg='%s process not monitored' % name, status=status)
+        module.fail_json(msg='%s process not monitored' % name, status=running_status)
 
     module.exit_json(changed=False, name=name, state=state)
 
