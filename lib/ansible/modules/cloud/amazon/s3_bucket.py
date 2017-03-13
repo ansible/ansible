@@ -434,7 +434,7 @@ def main():
     state = module.params.get("state")
 
     if state == 'present':
-        create_or_update_bucket(connection, module, location)
+        create_or_update_bucket(connection, module, location, flavour=flavour)
     elif state == 'absent':
         destroy_bucket(connection, module, flavour=flavour)
 
