@@ -397,13 +397,16 @@ try:
     import boto.vpc
     from boto.ec2.elb.healthcheck import HealthCheck
     from boto.ec2.tag import Tag
-    from boto.regioninfo import RegionInfo
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
 
 import time
 import random
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, connect_to_aws, AnsibleAWSError
+from ansible.module_utils.ec2 import get_aws_connection_info
 
 def _throttleable_operation(max_retries):
     def _operation_wrapper(op):
@@ -607,7 +610,7 @@ class ElbManager(object):
                 info['listeners'] = []
 
             if self._check_attribute_support('connection_draining'):
-                info['connection_draining_timeout'] = self.elb_conn.get_lb_attribute(self.name, 'ConnectionDraining').timeout
+                info['connection_draining_timeout'] = int(self.elb_conn.get_lb_attribute(self.name, 'ConnectionDraining').timeout)
 
             if self._check_attribute_support('connecting_settings'):
                 info['idle_timeout'] = self.elb_conn.get_lb_attribute(self.name, 'ConnectingSettings').idle_timeout
@@ -633,7 +636,7 @@ class ElbManager(object):
 
         for x in range(0, max_retries):
             try:
-                result = self.elb_conn.get_all_lb_attributes(self.name)
+                self.elb_conn.get_all_lb_attributes(self.name)
             except (boto.exception.BotoServerError, StandardError) as e:
                 if "LoadBalancerNotFound" in e.code:
                     status_achieved = True
@@ -1033,7 +1036,7 @@ class ElbManager(object):
                 policy = []
                 policy_type = 'LBCookieStickinessPolicyType'
 
-                if self.module.boolean(self.stickiness['enabled']) is True:
+                if self.module.boolean(self.stickiness['enabled']):
 
                     if 'expiration' not in self.stickiness:
                         self.module.fail_json(msg='expiration must be set when type is loadbalancer')
@@ -1050,7 +1053,7 @@ class ElbManager(object):
                     policy.append(self._policy_name(policy_attrs['type']))
 
                     self._set_stickiness_policy(elb_info, listeners_dict, policy, **policy_attrs)
-                elif self.module.boolean(self.stickiness['enabled']) is False:
+                elif not self.module.boolean(self.stickiness['enabled']):
                     if len(elb_info.policies.lb_cookie_stickiness_policies):
                         if elb_info.policies.lb_cookie_stickiness_policies[0].policy_name == self._policy_name(policy_type):
                             self.changed = True
@@ -1062,7 +1065,7 @@ class ElbManager(object):
             elif self.stickiness['type'] == 'application':
                 policy = []
                 policy_type = 'AppCookieStickinessPolicyType'
-                if self.module.boolean(self.stickiness['enabled']) is True:
+                if self.module.boolean(self.stickiness['enabled']):
 
                     if 'cookie' not in self.stickiness:
                         self.module.fail_json(msg='cookie must be set when type is application')
@@ -1076,7 +1079,7 @@ class ElbManager(object):
                     }
                     policy.append(self._policy_name(policy_attrs['type']))
                     self._set_stickiness_policy(elb_info, listeners_dict, policy, **policy_attrs)
-                elif self.module.boolean(self.stickiness['enabled']) is False:
+                elif not self.module.boolean(self.stickiness['enabled']):
                     if len(elb_info.policies.app_cookie_stickiness_policies):
                         if elb_info.policies.app_cookie_stickiness_policies[0].policy_name == self._policy_name(policy_type):
                             self.changed = True
@@ -1241,7 +1244,7 @@ def main():
         subnets={'default': None, 'required': False, 'type': 'list'},
         purge_subnets={'default': False, 'required': False, 'type': 'bool'},
         scheme={'default': 'internet-facing', 'required': False},
-        connection_draining_timeout={'default': None, 'required': False},
+        connection_draining_timeout={'default': None, 'required': False, 'type': 'int'},
         idle_timeout={'default': None, 'type': 'int', 'required': False},
         cross_az_load_balancing={'default': None, 'type': 'bool', 'required': False},
         stickiness={'default': None, 'required': False, 'type': 'dict'},
@@ -1299,7 +1302,7 @@ def main():
     if security_group_names:
         security_group_ids = []
         try:
-            ec2 = ec2_connect(module)
+            ec2 = connect_to_aws(boto.ec2, region, **aws_connect_params)
             if subnets: # We have at least one subnet, ergo this is a VPC
                 vpc_conn = _get_vpc_connection(module=module, region=region, aws_connect_params=aws_connect_params)
                 vpc_id = vpc_conn.get_all_subnets([subnets[0]])[0].vpc_id
@@ -1350,9 +1353,6 @@ def main():
 
     module.exit_json(**ec2_facts_result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
