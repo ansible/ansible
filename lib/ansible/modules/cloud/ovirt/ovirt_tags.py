@@ -51,6 +51,9 @@ options:
     vms:
         description:
             - "List of the VMs names, which should have assigned this tag."
+    hosts:
+        description:
+            - "List of the hosts names, which should have assigned this tag."
 extends_documentation_fragment: ovirt
 '''
 
