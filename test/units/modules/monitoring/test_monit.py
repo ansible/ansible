@@ -109,12 +109,12 @@ class TestMonitModule:
             False
         ),
         (  # Reload, bad RC
-                [(1, '', ''), ],
-                True
+            [(1, '', ''), ],
+            True
         ),
         (  # Reload, bad RC
-                [(2, '', ''), ],
-                True
+            [(2, '', ''), ],
+            True
         ),
     ])
     def test_reloaded(self, module, cmd_output, fail):
@@ -386,58 +386,58 @@ class TestMonitModule:
 
     @pytest.mark.parametrize('cmd_output, fail, fail_status', [
         (
-                [
-                    (0, "Process 'monit_test' Running", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Not monitored", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Process 'monit_test' Running", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Not monitored", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Process 'monit_test' Running", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Running - unmonitor pending", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Process 'monit_test' Running", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Running - unmonitor pending", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Program 'monit_test' Status ok", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Not monitored", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Program 'monit_test' Status ok", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Not monitored", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Program 'monit_test' Status ok", ''),
-                    (0, '', ''),
-                    (0, "Program 'monit_test' Status ok - unmonitor pending", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Program 'monit_test' Status ok", ''),
+                (0, '', ''),
+                (0, "Program 'monit_test' Status ok - unmonitor pending", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Process 'monit_test' Running", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Running", ''),
-                ],
-                True,
-                'running'
+            [
+                (0, "Process 'monit_test' Running", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Running", ''),
+            ],
+            True,
+            'running'
         ),
         (
-                [
-                    (0, "Program 'monit_test' Status ok", ''),
-                    (0, '', ''),
-                    (0, "Program 'monit_test' Status ok", ''),
-                ],
-                True,
-                'status ok'
+            [
+                (0, "Program 'monit_test' Status ok", ''),
+                (0, '', ''),
+                (0, "Program 'monit_test' Status ok", ''),
+            ],
+            True,
+            'status ok'
         ),
     ])
     def test_unmonitored(self, module, cmd_output, fail, fail_status):
@@ -472,76 +472,76 @@ class TestMonitModule:
 
     @pytest.mark.parametrize('cmd_output, fail, fail_status', [
         (
-                [
-                    (0, "Process 'monit_test' Running", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Running", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Process 'monit_test' Running", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Running", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Process 'monit_test' Running", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Initializing", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Process 'monit_test' Running", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Initializing", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Process 'monit_test' Running", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Running - restart pending", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Process 'monit_test' Running", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Running - restart pending", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Program 'monit_test' Status ok", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Status ok", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Program 'monit_test' Status ok", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Status ok", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Program 'monit_test' Status ok", ''),
-                    (0, '', ''),
-                    (0, "Program 'monit_test' Initializing", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Program 'monit_test' Status ok", ''),
+                (0, '', ''),
+                (0, "Program 'monit_test' Initializing", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Program 'monit_test' Status ok", ''),
-                    (0, '', ''),
-                    (0, "Program 'monit_test' Status ok - restart pending", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Program 'monit_test' Status ok", ''),
+                (0, '', ''),
+                (0, "Program 'monit_test' Status ok - restart pending", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Process 'monit_test' Running", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Stopped", ''),
-                ],
-                True,
-                'stopped'
+            [
+                (0, "Process 'monit_test' Running", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Stopped", ''),
+            ],
+            True,
+            'stopped'
         ),
         (
-                [
-                    (0, "Program 'monit_test' Status ok", ''),
-                    (0, '', ''),
-                    (0, "Program 'monit_test' Status failed", ''),
-                ],
-                True,
-                'status failed'
+            [
+                (0, "Program 'monit_test' Status ok", ''),
+                (0, '', ''),
+                (0, "Program 'monit_test' Status failed", ''),
+            ],
+            True,
+            'status failed'
         ),
     ])
     def test_restarted(self, module, cmd_output, fail, fail_status):
@@ -576,76 +576,76 @@ class TestMonitModule:
 
     @pytest.mark.parametrize('cmd_output, fail, fail_status', [
         (
-                [
-                    (0, "Process 'monit_test' Stopped", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Running", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Process 'monit_test' Stopped", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Running", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Process 'monit_test' Not monitored", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Running", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Process 'monit_test' Not monitored", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Running", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Process 'monit_test' Stopped", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Initializing", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Process 'monit_test' Stopped", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Initializing", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Process 'monit_test' Stopped", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Running - start pending", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Process 'monit_test' Stopped", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Running - start pending", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Program 'monit_test' Status failed", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Status ok", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Program 'monit_test' Status failed", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Status ok", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Program 'monit_test' Status failed", ''),
-                    (0, '', ''),
-                    (0, "Program 'monit_test' Initializing", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Program 'monit_test' Status failed", ''),
+                (0, '', ''),
+                (0, "Program 'monit_test' Initializing", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Process 'monit_test' Stopped", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Stopped", ''),
-                ],
-                True,
-                'stopped'
+            [
+                (0, "Process 'monit_test' Stopped", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Stopped", ''),
+            ],
+            True,
+            'stopped'
         ),
         (
-                [
-                    (0, "Program 'monit_test' Status failed", ''),
-                    (0, '', ''),
-                    (0, "Program 'monit_test' Status failed", ''),
-                ],
-                True,
-                'status failed'
+            [
+                (0, "Program 'monit_test' Status failed", ''),
+                (0, '', ''),
+                (0, "Program 'monit_test' Status failed", ''),
+            ],
+            True,
+            'status failed'
         ),
     ])
     def test_restarted(self, module, cmd_output, fail, fail_status):
@@ -680,103 +680,103 @@ class TestMonitModule:
 
     @pytest.mark.parametrize('cmd_output, fail, fail_status', [
         (
-                [
-                    (0, "Process 'monit_test' Not monitored", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Running", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Process 'monit_test' Not monitored", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Running", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Process 'monit_test' Stopped", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Running", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Process 'monit_test' Stopped", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Running", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Process 'monit_test' Stopped", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Stopped", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Process 'monit_test' Stopped", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Stopped", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Process 'monit_test' Not monitored", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Initializing", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Process 'monit_test' Not monitored", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Initializing", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Process 'monit_test' Not monitored", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Running - start pending", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Process 'monit_test' Not monitored", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Running - start pending", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Program 'monit_test' Status failed", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Status ok", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Program 'monit_test' Status failed", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Status ok", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Program 'monit_test' Status failed", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Status failed", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Program 'monit_test' Status failed", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Status failed", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Program 'monit_test' Not monitored", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Status ok", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Program 'monit_test' Not monitored", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Status ok", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Program 'monit_test' Status failed", ''),
-                    (0, '', ''),
-                    (0, "Program 'monit_test' Initializing", ''),
-                ],
-                False,
-                None
+            [
+                (0, "Program 'monit_test' Status failed", ''),
+                (0, '', ''),
+                (0, "Program 'monit_test' Initializing", ''),
+            ],
+            False,
+            None
         ),
         (
-                [
-                    (0, "Program 'monit_test' Not monitored", ''),
-                    (0, '', ''),
-                    (0, "Program 'monit_test' Not monitored", ''),
-                ],
-                True,
-                'not monitored'
+            [
+                (0, "Program 'monit_test' Not monitored", ''),
+                (0, '', ''),
+                (0, "Program 'monit_test' Not monitored", ''),
+            ],
+            True,
+            'not monitored'
         ),
         (
-                [
-                    (0, "Process 'monit_test' Not monitored", ''),
-                    (0, '', ''),
-                    (0, "Process 'monit_test' Not monitored", ''),
-                ],
-                True,
-                'not monitored'
+            [
+                (0, "Process 'monit_test' Not monitored", ''),
+                (0, '', ''),
+                (0, "Process 'monit_test' Not monitored", ''),
+            ],
+            True,
+            'not monitored'
         ),
     ])
     def test_restarted(self, module, cmd_output, fail, fail_status):
