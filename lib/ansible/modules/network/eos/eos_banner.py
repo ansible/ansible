@@ -35,7 +35,7 @@ extends_documentation_fragment: eos
 options:
   banner:
     description:
-      - Specifies the banner that should be
+      - Specifies which banner that should be
         configured on the remote device.
     required: true
     default: null
