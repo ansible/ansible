@@ -220,7 +220,7 @@ def main():
         cert_alias=dict(type='str'),
         cert_port=dict(default='443', type='int'),
         keystore_path=dict(type='str'),
-        keystore_pass=dict(required=True, type='str'),
+        keystore_pass=dict(required=True, type='str', no_log=True),
         keystore_create=dict(default=False, type='bool'),
         executable=dict(default='keytool', type='str'),
         state=dict(default='present',
