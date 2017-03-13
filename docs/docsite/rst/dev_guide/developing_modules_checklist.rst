@@ -222,7 +222,7 @@ When deprecating a module:
 
     deprecated: Deprecated in 2.3. Use M(whatmoduletouseinstead) instead.
 
-3) Add the deprecation to CHANGELOG.md
+3) Add the deprecation to CHANGELOG.md under the ``###Deprecations:`` section.
 
 Alias module names
 ------------------
