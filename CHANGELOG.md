@@ -81,6 +81,46 @@ Ansible Changes By Release
   * data centers, clusters, hosts, storage domains and networks management.
   * hosts and virtual machines affinity groups and labels.
   * users, groups and permissions management.
+  currently leads to the last one overridding all the previous ones.  This
+  behaviour is deprecated.  In the future, if you specify --tags multiple times
+  the tags will be merged together.  In 2.3, using --tags multiple times on one
+  command line will emit a deprecation warning.  Setting the
+  merge_multiple_cli_tags option to True in the ansible.cfg file will enable
+  the new behaviour.  In 2.4, the default will be to merge and you can enable
+  the old overwriting behaviour via the config option.  In 2.5, multiple --tags
+  options will be merged with no way to go back to the old behaviour.
+* Modules
+  * ec2_vpc will be deprecated in 2.3 and removed in 2.5
+  * cl_bond will be deprecated in 2.3 and removed in 2.5
+  * cl_bridge will be deprecated in 2.3 and removed in 2.5
+  * cl_img_install will be deprecated in 2.3 and removed in 2.5
+  * cl_interface will be deprecated in 2.3 and removed in 2.5
+  * cl_interface_policy will be deprecated in 2.3 and removed in 2.5
+  * cl_license will be deprecated in 2.3 and removed in 2.5
+  * cl_ports will be deprecated in 2.3 and removed in 2.5
+  * nxos_mtu will be deprecated in 2.3 and removed in 2.5, use nxos_system instead
+
+####New Callbacks:
+
+* dense: minimal stdout output with fallback to default when verbose
+
+####New: lookups
+
+* keyring: allows getting password from system keyrings
+
+####New: cache
+
+* pickle (uses python's own serializer)
+* yaml
+
+
+###Modules Notes:
+- oVirt/RHV
+  * Add dynamic inventory.
+  * Add support for 4.1 features.
+  * Add support for data centers, clusters, hosts, storage domains and networks management.
+  * Add support for hosts and virtual machines affinity groups and labels.
+  * Add support for users, groups and permissions management.
   * Improved virtual machines and disks management.
 - Mount: Some fixes so bind mounts are not mounted each time the playbook runs.
 
