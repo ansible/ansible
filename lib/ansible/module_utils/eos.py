@@ -54,7 +54,7 @@ eos_argument_spec = {
     'validate_certs': dict(type='bool'),
     'timeout': dict(type='int'),
 
-    'provider': dict(type='dict'),
+    'provider': dict(type='dict', no_log=True),
     'transport': dict(choices=['cli', 'eapi'])
 }
 
