@@ -240,9 +240,7 @@ def main():
         module.fail_json(msg='boto required for this module')
 
     try:
-
         region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-
         if not region:
             module.fail_json(msg="region must be specified")
 
