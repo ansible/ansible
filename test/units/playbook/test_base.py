@@ -248,49 +248,49 @@ class TestBase(unittest.TestCase):
 class TestExtendValue(unittest.TestCase):
     # _extend_value could be a module or staticmethod but since its
     # not, the test is here.
-    def test_extend_value_list_newlist(self):    
+    def test_extend_value_list_newlist(self):
         b = base.Base()
         value_list = ['first', 'second']
         new_value_list = ['new_first', 'new_second']
         ret = b._extend_value(value_list, new_value_list)
         self.assertEquals(value_list + new_value_list, ret)
 
-    def test_extend_value_list_newlist_prepend(self):    
+    def test_extend_value_list_newlist_prepend(self):
         b = base.Base()
         value_list = ['first', 'second']
-        new_value_list = ['new_first', 'new_second']        
+        new_value_list = ['new_first', 'new_second']
         ret_prepend = b._extend_value(value_list, new_value_list, prepend=True)
         self.assertEquals(new_value_list + value_list, ret_prepend)
 
-    def test_extend_value_newlist_list(self):    
+    def test_extend_value_newlist_list(self):
         b = base.Base()
         value_list = ['first', 'second']
-        new_value_list = ['new_first', 'new_second']        
+        new_value_list = ['new_first', 'new_second']
         ret = b._extend_value(new_value_list, value_list)
         self.assertEquals(new_value_list + value_list, ret)
-        
-    def test_extend_value_newlist_list_prepend(self):    
+
+    def test_extend_value_newlist_list_prepend(self):
         b = base.Base()
         value_list = ['first', 'second']
         new_value_list = ['new_first', 'new_second']
         ret = b._extend_value(new_value_list, value_list, prepend=True)
         self.assertEquals(value_list + new_value_list, ret)
-        
-    def test_extend_value_string_newlist(self):    
+
+    def test_extend_value_string_newlist(self):
         b = base.Base()
         some_string = 'some string'
         new_value_list = ['new_first', 'new_second']
         ret = b._extend_value(some_string, new_value_list)
         self.assertEquals([some_string] + new_value_list, ret)
-        
-    def test_extend_value_string_newstring(self):    
+
+    def test_extend_value_string_newstring(self):
         b = base.Base()
         some_string = 'some string'
         new_value_string = 'this is the new values'
         ret = b._extend_value(some_string, new_value_string)
         self.assertEquals([some_string, new_value_string], ret)
-        
-    def test_extend_value_list_newstring(self):    
+
+    def test_extend_value_list_newstring(self):
         b = base.Base()
         value_list = ['first', 'second']
         new_value_string = 'this is the new values'
