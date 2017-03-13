@@ -260,8 +260,7 @@ class MavenDownloader:
         path = "/%s/maven-metadata.xml" % (artifact.path(False))
         xml = self._request(self.get_base(artifact) + path, "Failed to download maven-metadata.xml", lambda r: etree.parse(r))
         v = xml.find("./versioning/versions/version[last()]")
-        if v:
-            return v.text
+        return v.text
 
     def find_uri_for_artifact(self, artifact):
         if artifact.version == "latest":
@@ -273,7 +272,10 @@ class MavenDownloader:
             timestamp = xml.find("./versioning/snapshot/timestamp").text
             buildNumber = xml.find("./versioning/snapshot/buildNumber").text
             for snapshotArtifact in xml.findall("./versioning/snapshotVersions/snapshotVersion"):
-                if snapshotArtifact.find("classifier").text == artifact.classifier and snapshotArtifact.find("extension").text == artifact.extension:
+                print snapshotArtifact.find("extension").text
+                classifier = snapshotArtifact.find("classifier") or etree.Element("classifier")
+                extension = snapshotArtifact.find("extension") or etree.Element("extension")
+                if classifier.text == artifact.classifier and extension.text == artifact.extension:
                     return self._uri_for_artifact(artifact, snapshotArtifact.find("value").text)
             return self._uri_for_artifact(artifact, artifact.version.replace("SNAPSHOT", timestamp + "-" + buildNumber))
 
