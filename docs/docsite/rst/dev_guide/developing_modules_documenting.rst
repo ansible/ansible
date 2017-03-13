@@ -143,9 +143,13 @@ The following fields can be used and are all required unless specified otherwise
   This is a `string`, and not a float, i.e. ``version_added: "2.1"``
 :author:
   Name of the module author in the form ``First Last (@GitHubID)``. Use a multi-line list if there is more than one author.
+:deprecated:
+  If this module is deprecated, detail when that happened, and what to use instead, e.g.
+  `Deprecated in 2.3. Use M(whatmoduletouseinstead) instead.`
+  Ensure `CHANGELOG.md` is updated to reflect this.
 :options:
   One per module argument:
-  
+
   :option-name:
 
     * Declarative operation (not CRUD)–this makes it easy for a user not to care what the existing state is, just about the final state, for example `online:`, rather than `is_online:`.
@@ -155,7 +159,6 @@ The following fields can be used and are all required unless specified otherwise
 
     * Detailed explanation of what this option does. It should be written in full sentences.
     * Should not list the options values (that's what ``choices:`` is for, though it should explain `what` the values do if they aren't obvious.
-    * If an argument takes both True)/False and Yes)/No, the documentation should use True and False.
     * If an optional parameter is sometimes required this need to be reflected in the documentation, e.g. "Required when I(state=present)."
     * Mutually exclusive options must be documented as the final sentence on each of the options.
   :required:
@@ -167,22 +170,24 @@ The following fields can be used and are all required unless specified otherwise
     * The default option must not be listed as part of the description.
   :choices:
     List of option values. Should be absent if empty.
+  :type:
+    If an argument is ``type='bool'``, this field should be set to ``type: bool`` and no ``choices`` should be specified.
   :aliases:
     List of option name aliases; generally not needed.
   :version_added:
     Only needed if this option was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
     This is a string, and not a float, i.e. ``version_added: "2.3"``.
-  :requirements:
-    List of requirements, and minimum versions (if applicable)
-  :notes:
+  :suboptions:
+    If this option takes a dict, you can define it here. See `azure_rm_securitygroup`, `os_ironic_node` for examples.
+:requirements:
+  List of requirements, and minimum versions (if applicable)
+:notes:
     Details of any important information that doesn't fit in one of the above sections; for example if ``check_mode`` isn't supported, or a link to external documentation.
 
 
 .. note::
 
    - The above fields are are all in lowercase.
-
-   - There is no need to document the ``type:`` of an option.
 
    - If the module doesn't doesn't have any options (for example, it's a ``_facts`` module), you can use ``options: {}``.
 
@@ -216,6 +221,41 @@ The RETURN section documents what the module returns, and is required for all ne
 For each value returned, provide a ``description``, in what circumstances the value is ``returned``,
 the ``type`` of the value and a ``sample``.  For example, from the ``copy`` module::
 
+
+The following fields can be used and are all required unless specified otherwise.
+
+:return name:
+  Name of the returned field.
+
+  :description:
+    Detailed description of what this value represents.
+  :returned:
+    When this value is returned, such as `always`, on `success`, `always`
+  :type:
+    Data type
+  :sample:
+    One or more examples.
+  :contains:
+    Optional, if you set `type: complex` you can detail the dictionary here by repeating the above elements.
+
+    :return name:
+      One per return
+
+      :description:
+        Detailed description of what this value represents.
+      :returned:
+        When this value is returned, such as `always`, on `success`, `always`
+      :type:
+        Data type
+      :sample:
+        One or more examples.
+
+
+For complex nested returns type can be specified as ``type: complex``.
+
+Example::
+
+
     RETURN = '''
     dest:
         description: destination file/path
@@ -233,7 +273,7 @@ the ``type`` of the value and a ``sample``.  For example, from the ``copy`` modu
         type: string
         sample: 2a5aeecc61dc98c4d780b14b330e3282
     ...
-    '''
+
 
 .. note::
 
