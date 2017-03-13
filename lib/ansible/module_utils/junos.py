@@ -24,7 +24,7 @@ from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.netconf import send_request, children
 from ansible.module_utils.netconf import discard_changes, validate
 from ansible.module_utils.network_common import to_list
-from ansible.module_utils.connection import exec_command
+from ansible.module_utils.six import string_types
 
 ACTIONS = frozenset(['merge', 'override', 'replace', 'update', 'set'])
 JSON_ACTIONS = frozenset(['merge', 'override', 'update'])
@@ -88,10 +88,13 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
 
         if action == 'set':
             cfg = SubElement(obj, 'configuration-set')
-            cfg.text = '\n'.join(candidate)
         else:
             cfg = SubElement(obj, lookup[format])
-            cfg.text = '\n'.join(candidate)
+
+        if isinstance(candidate, string_types):
+            cfg.text = candidate
+        else:
+            cfg.append(candidate)
 
     return send_request(module, obj)
 
@@ -138,6 +141,7 @@ def locked_config(module):
         unlock_configuration(module)
 
 def get_diff(module):
+
     reply = get_configuration(module, compare=True, format='text')
     output = reply.find('.//configuration-output')
     if output is not None:
@@ -147,6 +151,9 @@ def load_config(module, candidate, action='merge', commit=False, format='xml',
                 comment=None, confirm=False, confirm_timeout=None):
 
     with locked_config(module):
+        if isinstance(candidate, list):
+            candidate = '\n'.join(candidate)
+
         reply = load_configuration(module, candidate, action=action, format=format)
 
         validate(module)

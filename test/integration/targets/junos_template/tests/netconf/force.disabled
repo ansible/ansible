@@ -22,7 +22,7 @@
 
 - name: check basic config template idempotent
   junos_template:
-    src: basic/config.j2
+    src: basic/config-update.j2
     action: replace
     provider: "{{ netconf }}"
   register: result
