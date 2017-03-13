@@ -119,7 +119,7 @@ def get_config(p, section, key, env_var, default, value_type=None, expand_relati
         to True then also change any relative paths into absolute paths.  The
         default is False.
     '''
-    value = _get_config(p, section, key, env_var, default)
+    value = _get_config(p, section, key, env_var, default, value_type)
     if value_type == 'boolean':
         value = mk_boolean(value)
 
@@ -132,7 +132,7 @@ def get_config(p, section, key, env_var, default, value_type=None, expand_relati
     return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
 
 
-def _get_config(p, section, key, env_var, default):
+def _get_config(p, section, key, env_var, default, value_type):
     ''' helper function for get_config '''
     value = default
 
@@ -146,6 +146,10 @@ def _get_config(p, section, key, env_var, default):
         env_value = os.environ.get(env_var, None)
         if env_value is not None and env_value != default:
             value = env_value
+
+            # special case for unsetting type=list if we get an empty string
+            if value_type in ['list', 'pathlist'] and env_value == '':
+                value = []
 
     return to_text(value, errors='surrogate_or_strict', nonstring='passthru')
 
