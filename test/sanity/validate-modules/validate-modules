@@ -609,16 +609,6 @@ class ModuleValidator(Validator):
                 error.data = doc
             errors.extend(e.errors)
 
-        options = doc.get('options', {})
-        for key, option in (options or {}).items():
-            try:
-                option_schema(option)
-            except Exception as e:
-                for error in e.errors:
-                    error.path[:0] = ['options', key]
-                    error.data = option
-                errors.extend(e.errors)
-
         for error in errors:
             path = [str(p) for p in error.path]
 
@@ -668,14 +658,16 @@ class ModuleValidator(Validator):
                          'with DOCUMENTATION.extends_documentation_fragment')
                     ))
 
+                deprecated = False
                 if self.object_name.startswith('_') and not os.path.islink(self.object_path):
+                    deprecated = True
                     if 'deprecated' not in doc or not doc.get('deprecated'):
                         self.errors.append((
                             318,
                             'Module deprecated, but DOCUMENTATION.deprecated is missing'
                         ))
 
-                self._validate_docs_schema(doc, doc_schema, 'DOCUMENTATION', 305)
+                self._validate_docs_schema(doc, doc_schema(self.object_name.split('.')[0]), 'DOCUMENTATION', 305)
                 self._check_version_added(doc)
                 self._check_for_new_args(doc)
 
@@ -718,7 +710,7 @@ class ModuleValidator(Validator):
                 self.traces.extend(traces)
 
             if metadata:
-                self._validate_docs_schema(metadata, metadata_schema,
+                self._validate_docs_schema(metadata, metadata_schema(deprecated),
                                            'ANSIBLE_METADATA', 316)
 
         return doc_info

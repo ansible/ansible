@@ -70,17 +70,54 @@ Options
     </tr>
     {% for k in option_keys %}
     {% set v = options[k] %}
-    <tr>
-    <td>@{ k }@<br/><div style="font-size: small;">{% if v['version_added'] %} (added in @{v['version_added']}@){% endif %}</div></td>
+    {% if not v['suboptions'] %}
+    <tr><td>@{ k }@<br/><div style="font-size: small;">{% if v['version_added'] %} (added in @{v['version_added']}@){% endif %}</div></td>
     <td>{% if v.get('required', False) %}yes{% else %}no{% endif %}</td>
     <td>{% if v['default'] %}@{ v['default'] }@{% endif %}</td>
     {% if v.get('type', 'not_bool') == 'bool' %}
     <td><ul><li>yes</li><li>no</li></ul></td>
     {% else %}
-    <td><ul>{% for choice in v.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul></td>
+    <td>{% if v['choices'] %}<ul>{% for choice in v.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul>{% endif %}</td>
     {% endif %}
     <td>{% for desc in v.description -%}<div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>{% endfor -%} {% if 'aliases' in v and v.aliases -%}</br>
-        <div style="font-size: small;">aliases: @{ v.aliases|join(', ') }@<div>{%- endif %}</td></tr>
+    <div style="font-size: small;">aliases: @{ v.aliases|join(', ') }@<div>{%- endif %}
+    {% else %}
+    <tr><td rowspan="2">@{ k }@<br/><div style="font-size: small;">{% if v['version_added'] %} (added in @{v['version_added']}@){% endif %}</div></td>
+    <td>{% if v.get('required', False) %}yes{% else %}no{% endif %}</td>
+    <td></td><td></td>
+    <td> {% for desc in v.description -%}<div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>{% endfor -%} {% if 'aliases' in v and v.aliases -%}</br>
+    <div style="font-size: small;">aliases: @{ v.aliases|join(', ') }@<div>{%- endif %}
+    </tr>
+    <tr>
+    <td colspan="5">
+    <table border=1 cellpadding=4>
+    <caption><b>Dictionary object @{ k }@</b></caption>
+    <tr>
+    <th class="head">parameter</th>
+    <th class="head">required</th>
+    <th class="head">default</th>
+    <th class="head">choices</th>
+    <th class="head">comments</th>
+    </tr>
+    {% for k2 in v['suboptions'] %}
+        {% set v2 = v['suboptions'] [k2] %}
+        <tr><td>@{ k2 }@<br/><div style="font-size: small;">{% if v2['version_added'] %} (added in @{v2['version_added']}@){% endif %}</div></td>
+        <td>{% if v2.get('required', False) %}yes{% else %}no{% endif %}</td>
+        <td>{% if v2['default'] %}@{ v2['default'] }@{% endif %}</td>
+        {% if v2.get('type', 'not_bool') == 'bool' %}
+        <td><ul><li>yes</li><li>no</li></ul></td>
+        {% else %}
+        <td>{% if v2['choices'] %}<ul>{% for choice in v2.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul>{% endif %}</td>
+        {% endif %}
+        <td>{% for desc in v2.description -%}<div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>{% endfor -%} {% if 'aliases' in v and v2.aliases -%}</br>
+        <div style="font-size: small;">aliases: @{ v2.aliases|join(', ') }@<div>{%- endif %}
+        </td></tr>
+    {% endfor %}
+    </table>
+    </td>
+    </tr>
+    {% endif %}
+    </td></tr>
     {% endfor %}
     </table>
     </br>

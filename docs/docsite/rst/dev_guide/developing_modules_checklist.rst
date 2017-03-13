@@ -1,7 +1,8 @@
 .. _module_contribution:
 
+===================================
 Contributing Your Module to Ansible
-```````````````````````````````````
+===================================
 
 High-quality modules with minimal dependencies
 can be included in Ansible, but modules (just due to the programming
@@ -14,8 +15,9 @@ gives them slightly higher development priority (though they'll work in exactly 
 
 .. formerly marked with _module_dev_testing:
 
+------------------------------
 Contributing Modules Checklist
-``````````````````````````````
+------------------------------
 
 The following  checklist items are important guidelines for people who want to contribute to the development of modules to Ansible on GitHub. Please read the guidelines before you submit your PR/proposal.
 
@@ -133,7 +135,7 @@ The complete module metadata specification is here: https://github.com/ansible/p
   like :envvar:`API_USERNAME` would conflict between modules.
 
 Windows modules checklist
-`````````````````````````
+=========================
 * Favour native powershell and .net ways of doing things over calls to COM libraries or calls to native executables which may or may not be present in all versions of Windows
 * modules are in powershell (.ps1 files) but the docs reside in same name python file (.py)
 * look at ansible/lib/ansible/module_utils/powershell.ps1 for common code, avoid duplication
@@ -158,7 +160,7 @@ To parse all arguments into a variable modules generally use:
     $params = Parse-Args $args
 
 Arguments
-+++++++++
+---------
 
 * Try and use state present and state absent like other modules
 * You need to check that all your mandatory args are present. You can do this using the builtin Get-AnsibleParam function.
@@ -175,7 +177,7 @@ Required arguments with name validation:
         $state = Get-AnsibleParam -obj $params -name "State" -ValidateSet "Present","Absent" -resultobj $resultobj -failifempty $true
 
 Optional arguments with name validation
-+++++++++++++++++++++++++++++++++++++++
+---------------------------------------
 
 .. code-block:: powershell
 
@@ -186,7 +188,7 @@ Optional arguments with name validation
 * Look at existing modules for more examples of argument checking.
 
 Results
-+++++++
+-------
 * The result object should always contain an attribute called changed set to either $true or $false
 * Create your result object like this
 
@@ -208,17 +210,22 @@ Results
 * Have you tested for powershell 3.0 and 4.0 compliance?
 
 Deprecating and making module aliases
-``````````````````````````````````````
+======================================
 
-Starting in 1.8, you can deprecate modules by renaming them with a preceding _, i.e. old_cloud.py to
-_old_cloud.py. This keeps the module available, but hides it from the primary docs and listing.
+Starting in 1.8, you can deprecate modules by renaming them with a preceding ``_``, i.e. ``old_cloud.py`` to
+``_old_cloud.py``. This keeps the module available, but hides it from the primary docs and listing.
 
-When deprecating a module, set the `ANSIBLE_METADATA` `status` to `deprecated`.
-In the `DOCUMENTATION` section, add a `deprecated` field along the lines of::
+When deprecating a module:
+
+1) Set the ``ANSIBLE_METADATA`` `status` to `deprecated`.
+2) In the ``DOCUMENTATION`` section, add a `deprecated` field along the lines of::
 
     deprecated: Deprecated in 2.3. Use M(whatmoduletouseinstead) instead.
 
-Add the deprecation to CHANGELOG.md
+3) Add the deprecation to CHANGELOG.md under the ``###Deprecations:`` section.
+
+Alias module names
+------------------
 
 You can also rename modules and keep an alias to the old name by using a symlink that starts with _.
 This example allows the stat module to be called with fileinfo, making the following examples equivalent::
