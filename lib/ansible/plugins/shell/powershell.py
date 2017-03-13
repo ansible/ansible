@@ -315,6 +315,7 @@ Function Run($payload) {
     $password = $payload.become_password
 
     Add-Type -TypeDefinition $helper_def
+    Add-Type -TypeDefinition $helper_def -Debug:$false
 
     $exec_args = $null
 
@@ -664,6 +665,7 @@ Function Run($payload) {
     [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($results_path)) | Out-Null
 
     Add-Type -TypeDefinition $native_process_util
+    Add-Type -TypeDefinition $native_process_util -Debug:$false
 
     # FUTURE: create under new job to ensure all children die on exit?
 
