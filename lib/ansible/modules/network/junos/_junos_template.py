@@ -113,18 +113,11 @@ EXAMPLES = """
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import check_args, junos_argument_spec
-from ansible.module_utils.junos import get_configuration, load
+from ansible.module_utils.junos import get_configuration, load_config
 from ansible.module_utils.six import text_type
 
 USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_template'
-
-def check_transport(module):
-    transport = (module.params['provider'] or {}).get('transport')
-
-    if transport == 'netconf':
-        module.fail_json(msg='junos_template module is only supported over cli transport')
-
 
 def main():
 
@@ -133,7 +126,7 @@ def main():
         confirm=dict(default=0, type='int'),
         comment=dict(default=DEFAULT_COMMENT),
         action=dict(default='merge', choices=['merge', 'overwrite', 'replace']),
-        config_format=dict(choices=['text', 'set', 'xml']),
+        config_format=dict(choices=['text', 'set', 'xml'], default='text'),
         backup=dict(default=False, type='bool'),
     )
 
@@ -141,8 +134,6 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
-
-    check_transport(module)
 
     warnings = list()
     check_args(module, warnings)
@@ -161,9 +152,13 @@ def main():
             "set per junos-pyez documentation")
 
     if module.params['backup']:
-        result['__backup__'] = text_type(get_configuration(module))
+        reply = get_configuration(module, format='set')
+        match = reply.find('.//configuration-set')
+        if match is None:
+            module.fail_json(msg='unable to retrieve device configuration')
+        result['__backup__'] = str(match.text).strip()
 
-    diff = load(module, src, action=action, commit=commit, format=fmt)
+    diff = load_config(module, src, action=action, commit=commit, format=fmt)
     if diff:
         result['changed'] = True
         if module._diff:
