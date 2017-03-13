@@ -260,7 +260,7 @@ class VariableManager:
                 for item in data:
                     all_vars = combine_vars(all_vars, item)
 
-            for group in sorted(host.get_groups(), key=lambda g: (g.depth, g.name)):
+            for group in sorted(host.get_groups(), key=lambda g: (g.depth, g.priority, g.name)):
                 if group.name in self._group_vars_files and group.name != 'all':
                     for data in self._group_vars_files[group.name]:
                         data = preprocess_vars(data)
