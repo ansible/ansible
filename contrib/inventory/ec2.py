@@ -431,6 +431,7 @@ class Ec2Inventory(object):
             'group_by_instance_state',
             'group_by_key_pair',
             'group_by_vpc_id',
+            'group_by_vpc_subnet_id',
             'group_by_security_group',
             'group_by_tag_keys',
             'group_by_tag_none',
@@ -904,6 +905,13 @@ class Ec2Inventory(object):
             self.push(self.inventory, vpc_id_name, hostname)
             if self.nested_groups:
                 self.push_group(self.inventory, 'vpcs', vpc_id_name)
+
+        # Inventory: Group bu Subnet
+        if self.group_by_vpc_subnet_id and instance.subnet_id:
+            subnet_id = self.to_safe(instance.subnet_id)
+            self.push(self.inventory, subnet_id, hostname)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'subnets', subnet_id)
 
         # Inventory: Group by security group
         if self.group_by_security_group:
