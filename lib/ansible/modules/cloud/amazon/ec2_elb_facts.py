@@ -210,9 +210,9 @@ class ElbInformation(object):
 
     def list_elbs(self):
         elb_array, token = [], None
-
+        get_elb_with_backoff = AWSRetry.backoff(tries=5, delay=5, backoff=2.0)(self.connection.get_all_load_balancers)
         while True:
-            all_elbs = AWSRetry.backoff(tries=5, delay=5, backoff=2.0)(self.connection.get_all_load_balancers)(marker=token)
+            all_elbs = get_elb_with_backoff(marker=token)
             token = all_elbs.next_token
 
             if all_elbs:
@@ -244,17 +244,13 @@ def main():
         module.fail_json(msg='boto required for this module')
 
     try:
-
         region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-
         if not region:
             module.fail_json(msg="region must be specified")
 
         names = module.params['names']
-        elb_information = ElbInformation(module,
-                                         names,
-                                         region,
-                                         **aws_connect_params)
+        elb_information = ElbInformation(
+            module, names, region, **aws_connect_params)
 
         ec2_facts_result = dict(changed=False,
                                 elbs=elb_information.list_elbs())
