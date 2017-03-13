@@ -30,12 +30,12 @@ options:
   name:
     description:
       - The prefix of name of the Redshift cluster security group(s) you are searching for.
-      - This is a regular expression match with implicit C(^). Append C($) for a complete match.
+      - "This is a regular expression match with implicit '^'. Append '$' for a complete match."
     required: false
   tags:
     description:
     required: false
-      - A dictionary/hash of tags in the format C({ tag1_name: 'tag1_value', tag2_name: 'tag2_value' })
+      - "A dictionary/hash of tags in the format { tag1_name: 'tag1_value', tag2_name: 'tag2_value' }
         to match against the security group(s) you are searching for."
 extends_documentation_fragment:
     - aws
