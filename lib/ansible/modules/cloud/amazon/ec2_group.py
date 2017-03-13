@@ -430,7 +430,7 @@ def main():
         allgroups = ec2.get_all_security_groups()
     except boto.exception.EC2ResponseError as err:
         module.fail_json(msg="AWS rejected listing security groups - " + str(err),
-                         exception=traceback.format_exc() )
+                         exception=traceback.format_exc())
     for curGroup in allgroups:
         groups[curGroup.id] = curGroup
         if curGroup.name in groups:
@@ -478,7 +478,7 @@ def main():
                     group = ec2.create_security_group(name, description, vpc_id=vpc_id)
                 except boto.exception.EC2ResponseError as err:
                     module.fail_json(msg="AWS rejected security group creation - " + str(err),
-                                     exception=traceback.format_exc() )
+                                     exception=traceback.format_exc())
 
                 # When a group is created, an egress_rule ALLOW ALL
                 # to 0.0.0.0/0 is added automatically but it's not
@@ -626,7 +626,7 @@ def main():
                             cidr_ip=grant.cidr_ip)
                     except boto.exception.EC2ResponseError as err:
                         module.fail_json(msg="AWS rejected security group egress revocation - " + str(err),
-                         exception=traceback.format_exc() )
+                         exception=traceback.format_exc())
                 changed = True
 
     if group:
