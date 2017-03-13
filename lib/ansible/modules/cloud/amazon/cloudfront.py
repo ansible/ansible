@@ -160,13 +160,32 @@ class CloudFrontServiceManager:
 
     def create_distribution(self, config, tags):
         try:
+            config_json=json.loads(config)
             if tags is None:
-                func = partial(self.client.create_distribution, DistributionConfig=config)
+                result = self.client.create_distribution(DistributionConfig=config_json)
+                return result
             else:
-                distribution_config_with_tags = self.join_tags_to_config(config, tags)
-                func = partial(self.client.create_disribution_with_tags, 
+                tags_json=json.loads(tags)
+                distribution_config_with_tags = self.join_tags_to_config(config_json, tags_json)
+                func = partial(self.client.create_disribution_with_tags,
                         DistributionConfigWithTags=distribution_config_with_tags)
-            return self.paginated_response(func)
+            return result
+        except Exception as e:
+            self.module.fail_json(msg="Error creating distribution - " + str(e),
+                    exception=traceback.format_exc())
+
+    def create_streaming_distribution(self, config, tags):
+        try:
+            config_json=json.loads(config)
+            if tags is None:
+                result = self.client.create_streaming_distribution(StreamingDistributionConfig=config_json)
+                return result
+            else:
+                tags_json=json.loads(tags)
+                streaming_distribution_config_with_tags = self.join_tags_to_config(config_json, tags_json)
+                func = partial(self.client.create_streaming_disribution_with_tags,
+                        StreamingDistributionConfigWithTags=streaming_distribution_config_with_tags)
+            return result
         except Exception as e:
             self.module.fail_json(msg="Error creating distribution - " + str(e),
                     exception=traceback.format_exc())
@@ -237,7 +256,7 @@ def main():
         update_distribution=dict(required=False, default=False, type='bool'),
         update_streaming_distribution=dict(required=False, default=False, type='bool'),
         config=dict(required=False, default=None, type='json'),
-        tags=dict(required=False, default=None, type='json')
+        tags=dict(required=False, default=None, type='str')
     ))
 
     result = {}
