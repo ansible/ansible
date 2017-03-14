@@ -23,6 +23,7 @@ module: ec2_asg_lifecycle_hook
 short_description: Create, delete or update AWS ASG Lifecycle Hooks.
 description:
   - Can create, delete or update Lifecycle Hooks for AWS Autoscaling Groups.
+version_added: "2.3"
 author: "Igor (Tsigankov) Eyrich (@tsiganenok) <tsiganenok@gmail.com>"
 options:
   state:
@@ -97,6 +98,10 @@ EXAMPLES = '''
     state: absent
     autoscaling_group_name: example
     lifecycle_hook_name: example
+
+'''
+
+RETURN = '''
 
 '''
 
