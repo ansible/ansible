@@ -235,11 +235,15 @@ class AnsibleCloudStack(object):
             self.module.fail_json(msg="No VPCs available.")
 
         for v in vpcs['vpc']:
-            if vpc in [v['displaytext'], v['name'], v['id']]:
-                self.vpc = v
-                return self._get_by_key(key, self.vpc)
+            if vpc in [v['name'], v['displaytext'], v['id']]:
+                # Fail if the identifyer matches more than one VPC
+                if self.vpc:
+                    self.module.fail_json(msg="More than one VPC found with the provided identifyer '%s'" % vpc)
+                else:
+                    self.vpc = v
+        if self.vpc:
+            return self._get_by_key(key, self.vpc)
         self.module.fail_json(msg="VPC '%s' not found" % vpc)
-
 
     def is_vm_in_vpc(self, vm):
         for n in vm.get('nic'):

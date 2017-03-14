@@ -260,9 +260,12 @@ class AnsibleCloudStackVpc(AnsibleCloudStack):
         if vpcs:
             vpc_name = self.module.params.get('name')
             for v in vpcs['vpc']:
-                if vpc_name.lower() in [v['name'].lower(), v['id']]:
-                    self.vpc = v
-                    break
+                if vpc_name in [v['name'], v['displaytext'], v['id']]:
+                    # Fail if the identifyer matches more than one VPC
+                    if self.vpc:
+                        self.module.fail_json(msg="More than one VPC found with the provided identifyer '%s'" % vpc_name)
+                    else:
+                        self.vpc = v
         return self.vpc
 
     def restart_vpc(self):
