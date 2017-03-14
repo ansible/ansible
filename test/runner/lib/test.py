@@ -36,6 +36,7 @@ class TestConfig(EnvironmentConfig):
 
         self.lint = args.lint if 'lint' in args else False  # type: bool
         self.junit = args.junit if 'junit' in args else False  # type: bool
+        self.failure_ok = args.failure_ok if 'failure_ok' in args else False  # type: bool
 
 
 class TestResult(object):
