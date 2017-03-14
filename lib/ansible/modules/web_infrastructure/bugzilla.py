@@ -94,11 +94,11 @@ status:
   sample: "NEW"
 '''
 
+import bugzilla
+import sys
+
 from ansible.module_utils.basic import AnsibleModule
 
-import bugzilla
-import xmlrpclib
-import sys
 
 def bugzilla_status(bug):
     return bug.status
