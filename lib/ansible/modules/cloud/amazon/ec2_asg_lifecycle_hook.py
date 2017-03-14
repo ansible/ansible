@@ -136,7 +136,7 @@ def create_lifecycle_hook(connection, module):
         lch_params['NotificationMetadata'] = notification_meta_data
 
     if heartbeat_timeout:
-        lch_params['HeartbeatTimeout'] = int(heartbeat_timeout)
+        lch_params['HeartbeatTimeout'] = heartbeat_timeout
 
     if default_result:
         lch_params['DefaultResult'] = default_result
@@ -211,7 +211,7 @@ def main():
             role_arn=dict(type='str'),
             notification_target_arn=dict(type='str'),
             notification_meta_data=dict(type='str'),
-            heartbeat_timeout=dict(type='str'),
+            heartbeat_timeout=dict(type='int'),
             default_result=dict(default='ABANDON', choices=['ABANDON', 'CONTINUE']),
             state=dict(default='present', choices=['present', 'absent'])
         )
