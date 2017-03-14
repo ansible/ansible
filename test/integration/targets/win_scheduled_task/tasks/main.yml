@@ -3,52 +3,17 @@
 - name: Test in normal mode (only run on Win2012+)
   when: "'windows-2008' not in inventory_hostname"
   block:
-  - name: Add scheduled task
-    win_scheduled_task: &wst_present
-      name: Test
-      path: \
-      executable: dir.exe
-      arguments: C:\Windows\Temp\
-      frequency: once
-      time: 5pm
-      user: SYSTEM
-    register: add_scheduled_task
+  - include: tests.yml
 
-  - name: Check there was a change
+  - name: Check the various tasks in normal mode
     assert:
       that:
       - add_scheduled_task.changed == true
       - add_scheduled_task.exists == false
-
-  - name: Add scheduled task (again)
-    win_scheduled_task: *wst_present
-    register: add_scheduled_task_again
-
-  - name: Check there was no change
-    assert:
-      that:
       - add_scheduled_task_again.changed == false
       - add_scheduled_task_again.exists == true
-
-  - name: Remove scheduled task
-    win_scheduled_task: &wst_absent
-      name: Test
-      state: absent
-    register: remove_scheduled_task
-
-  - name: Check there was a change
-    assert:
-      that:
       - remove_scheduled_task.changed == true
       - remove_scheduled_task.exists == true
-
-  - name: Remove scheduled task (again)
-    win_scheduled_task: *wst_absent
-    register: remove_scheduled_task_again
-
-  - name: Check there was no change
-    assert:
-      that:
       - remove_scheduled_task_again.changed == false
       - remove_scheduled_task_again.exists == false
 
@@ -57,42 +22,16 @@
   check_mode: yes
   when: "'windows-2008' not in inventory_hostname"
   block:
-  - name: Add scheduled task
-    win_scheduled_task: *wst_present
-    register: add_scheduled_task
+  - include: tests.yml
 
-  - name: Check there was a change
+  - name: Check the various tests in check-mode
     assert:
       that:
       - add_scheduled_task.changed == true
       - add_scheduled_task.exists == false
-
-  - name: Add scheduled task (again)
-    win_scheduled_task: *wst_present
-    register: add_scheduled_task_again
-
-  - name: Check there was no change
-    assert:
-      that:
       - add_scheduled_task_again.changed == true
       - add_scheduled_task_again.exists == false
-
-  - name: Remove scheduled task
-    win_scheduled_task: *wst_absent
-    register: remove_scheduled_task
-
-  - name: Check there was a change
-    assert:
-      that:
       - remove_scheduled_task.changed == false
       - remove_scheduled_task.exists == false
-
-  - name: Remove scheduled task (again)
-    win_scheduled_task: *wst_absent
-    register: remove_scheduled_task_again
-
-  - name: Check there was no change
-    assert:
-      that:
       - remove_scheduled_task_again.changed == false
       - remove_scheduled_task_again.exists == false
