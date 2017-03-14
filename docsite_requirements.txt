@@ -1,2 +1,2 @@
-#pip packages requird to build docssite
+#pip packages required to build docssite
 sphinx
