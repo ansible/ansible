@@ -1,6 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# This file is part of Ansible
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -16,7 +18,7 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -191,10 +193,12 @@ cluster_version:
     type: string
     sample: "1.0"
 allow_version_upgrade:
-    description: A Boolean value that, if true , indicates that major version upgrades will be applied automatically to the cluster during the maintenance window.
+    description: >
+      A Boolean value that, if true, indicates that major version upgrades will be applied
+      automatically to the cluster during the maintenance window.
     returned: success
     type: boolean
-    sample: true
+    sample: true|false
 number_of_nodes:
     description:  The number of compute nodes in the cluster.
     returned: success
@@ -216,7 +220,9 @@ restore_status:
     type: dict
     sample: {}
 hsm_status:
-    description: A value that reports whether the Amazon Redshift cluster has finished applying any hardware security module (HSM) settings changes specified in a modify cluster command.
+    description: >
+      A value that reports whether the Amazon Redshift cluster has finished applying any hardware
+      security module (HSM) settings changes specified in a modify cluster command.
     returned: success
     type: dict
     sample: {}
