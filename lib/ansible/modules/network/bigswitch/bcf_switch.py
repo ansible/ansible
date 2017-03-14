@@ -72,14 +72,14 @@ options:
 
 EXAMPLES = '''
 - name: bcf leaf switch
-      bcf_switch:
-        name: Rack1Leaf1
-        fabric_role: leaf
-        leaf_group: R1
-        mac: 00:00:00:02:00:02
-        controller: '{{ inventory_hostname }}'
-        state: present
-        validate_certs: false
+  bcf_switch:
+    name: Rack1Leaf1
+    fabric_role: leaf
+    leaf_group: R1
+    mac: 00:00:00:02:00:02
+    controller: '{{ inventory_hostname }}'
+    state: present
+    validate_certs: false
 '''
 
 
@@ -131,7 +131,7 @@ def leaf_switch(module):
     config_present = False
     matching = [switch for switch in response.json if all((switch['name'] == name,
                                                            switch['fabric-role'] == fabric_role,
-                                                           switch.get('leaf-group', '') == leaf_group if leaf_group else True,
+                                                           switch['leaf-group'] == leaf_group if 'leaf-group' in switch else True,
                                                            switch['dpid'] == dpid))]
 
     if matching:
