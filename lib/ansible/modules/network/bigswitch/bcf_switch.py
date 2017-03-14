@@ -26,6 +26,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: bcf_switch
+author: "Ted (@tedelhourani)"
 short_description: Create and remove a bcf switch.
 description:
     - Create and remove a bcf switch.
@@ -129,13 +130,13 @@ def leaf_switch(module):
         module.fail_json(msg="failed to obtain existing switch config: {}".format(response.json['description']))
 
     config_present = False
-    matching = [switch for switch in response.json if all((switch['name'] == name,
-                                                           switch['fabric-role'] == fabric_role,
-                                                           switch['leaf-group'] == leaf_group if 'leaf-group' in switch else True,
-                                                           switch['dpid'] == dpid))]
-
-    if matching:
-        config_present = True
+    for switch in response.json:
+        if all((switch['name'] == name,
+                switch['fabric-role'] == fabric_role,
+                switch['dpid'] == dpid)):
+            config_present = switch.get('leaf-group', None) == leaf_group
+            if config_present:
+                break
 
     if state in ('present') and config_present:
         module.exit_json(changed=False)
