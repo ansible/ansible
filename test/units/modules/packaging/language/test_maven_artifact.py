@@ -44,7 +44,7 @@ class TestMavenDownloader(unittest.TestCase):
     def test_find_uri_for_artifact_release_latest(self, fetch_url_fn):
         module = self.AnsibleModuleMock()
         artifact = maven_artifact.Artifact("com.ansible", "test", "latest")
-        maven_metadata_xml_str = """<?xml version="1.0" encoding="UTF-8"?>
+        maven_metadata_xml_str = u"""<?xml version="1.0" encoding="UTF-8"?>
             <metadata>
               <groupId>com.ansible</groupId>
               <artifactId>test</artifactId>
@@ -69,7 +69,7 @@ class TestMavenDownloader(unittest.TestCase):
         module = self.AnsibleModuleMock()
         module.params["unique_snapshot"] = True
         artifact = maven_artifact.Artifact("com.ansible", "test", "1.0-SNAPSHOT")
-        maven_metadata_xml_str = """<?xml version="1.0" encoding="UTF-8"?>
+        maven_metadata_xml_str = u"""<?xml version="1.0" encoding="UTF-8"?>
             <metadata>
               <groupId>com.ansible</groupId>
               <artifactId>test</artifactId>

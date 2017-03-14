@@ -164,9 +164,12 @@ import os
 import hashlib
 import sys
 import posixpath
-import urlparse
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 try:
     import boto3
     HAS_BOTO = True
@@ -259,7 +262,7 @@ class MavenDownloader:
     def _find_latest_version_available(self, artifact):
         path = "/%s/maven-metadata.xml" % (artifact.path(False))
         xml = self._request(self.get_base(artifact) + path, "Failed to download maven-metadata.xml", lambda r: etree.parse(r))
-        v = xml.find("./versioning/versions/version")[-1]
+        v = xml.findall("./versioning/versions/version")[-1]
         return v.text
 
     def find_uri_for_artifact(self, artifact):
