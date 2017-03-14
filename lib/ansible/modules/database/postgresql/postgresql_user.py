@@ -59,18 +59,15 @@ options:
   db:
     description:
       - name of database where permissions will be granted
-    required: false
     default: null
   fail_on_user:
     description:
       - if C(yes), fail when user can't be removed. Otherwise just log and continue
-    required: false
     default: 'yes'
     choices: [ "yes", "no" ]
   port:
     description:
       - Database port to connect to.
-    required: false
     default: 5432
   login_user:
     description:
@@ -80,12 +77,10 @@ options:
   login_password:
     description:
       - Password used to authenticate with PostgreSQL
-    required: false
     default: null
   login_host:
     description:
       - Host running PostgreSQL.
-    required: false
     default: localhost
   login_unix_socket:
     description:
@@ -95,19 +90,16 @@ options:
   priv:
     description:
       - "PostgreSQL privileges string in the format: C(table:priv1,priv2)"
-    required: false
     default: null
   role_attr_flags:
     description:
       - "PostgreSQL role attributes string in the format: CREATEDB,CREATEROLE,SUPERUSER"
-    required: false
     default: ""
     choices: [ "[NO]SUPERUSER","[NO]CREATEROLE", "[NO]CREATEUSER", "[NO]CREATEDB",
                     "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION" ]
   state:
     description:
       - The user (role) state
-    required: false
     default: present
     choices: [ "present", "absent" ]
   encrypted:
@@ -120,7 +112,6 @@ options:
   expires:
     description:
       - sets the user's password expiration.
-    required: false
     default: null
     version_added: '1.4'
   no_password_changes:
@@ -136,7 +127,6 @@ options:
       - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
       - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
       - Default of C(prefer) matches libpq default.
-    required: false
     default: prefer
     choices: [disable, allow, prefer, require, verify-ca, verify-full]
     version_added: '2.3'
@@ -147,6 +137,11 @@ options:
     required: false
     default: null
     version_added: '2.3'
+  in_role:
+    description:
+      - Specified in which roles the current user is. This permits to use some roles as groups to share rights.
+      - C(in_role) should be a list of valid roles configured before this role.
+    version_added: '2.4'
 notes:
    - The default authentication assumes that you are either logging in as or
      sudo'ing to the postgres account on the host.
@@ -252,7 +247,7 @@ def user_exists(cursor, user):
     return cursor.rowcount > 0
 
 
-def user_add(cursor, user, password, role_attr_flags, encrypted, expires):
+def user_add(cursor, user, password, role_attr_flags, encrypted, expires, in_role):
     """Create a new database user (role)."""
     # Note: role_attr_flags escaped by parse_role_attrs and encrypted is a literal
     query_password_data = dict(password=password, expires=expires)
@@ -262,12 +257,65 @@ def user_add(cursor, user, password, role_attr_flags, encrypted, expires):
         query.append("PASSWORD %(password)s")
     if expires is not None:
         query.append("VALID UNTIL %(expires)s")
+    if in_role is not None:
+        query.append("IN ROLE %s" % ','.join(in_role))
+
     query.append(role_attr_flags)
     query = ' '.join(query)
     cursor.execute(query, query_password_data)
     return True
 
-def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expires, no_password_changes):
+
+def user_get_parent_roles(cursor, module, user, in_role):
+    in_role_changing = False
+    current_in_role = []
+    if in_role is not None:
+        for r in in_role:
+            role_check = "SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = %(rolename)s)"
+            cursor.execute(role_check, {"rolename": r})
+            role_exists = cursor.fetchone()
+            if role_exists['exists'] is False:
+                module.fail_json(msg="User %s cannot be included into role %s, it doesn't exists" % (user, r))
+
+        query_in_role = "SELECT rolname FROM pg_roles WHERE oid IN " \
+                        "(SELECT roleid FROM pg_auth_members LEFT JOIN pg_roles " \
+                        "ON member = pg_roles.oid WHERE pg_roles.rolname = %(rolename)s);"
+        cursor.execute(query_in_role, {"rolename": user})
+        current_in_role = [x['rolname'] for x in cursor.fetchall()]
+        if set(current_in_role) != set(in_role):
+            in_role_changing = True
+
+    return in_role_changing, current_in_role
+
+
+def role_should_change_attrs(current_role_attrs, role_attr_flags):
+    role_attr_flags_dict = {}
+    for r in role_attr_flags.split(' '):
+        if r.startswith('NO'):
+            role_attr_flags_dict[r.replace('NO', '', 1)] = False
+        else:
+            role_attr_flags_dict[r] = True
+
+    for role_attr_name, role_attr_value in role_attr_flags_dict.items():
+        if current_role_attrs[PRIV_TO_AUTHID_COLUMN[role_attr_name]] != role_attr_value:
+            return True
+
+    return False
+
+
+def role_attrs_has_changed(cursor, user, select, current_role_attrs):
+    changed = False
+    # Grab new role attributes.
+    cursor.execute(select, {"user": user})
+    new_role_attrs = cursor.fetchone()
+
+    # Detect any differences between current_ and new_role_attrs.
+    for i in range(len(current_role_attrs)):
+        if current_role_attrs[i] != new_role_attrs[i]:
+            changed = True
+    return changed
+
+def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expires, no_password_changes, in_role):
     """Change user password and/or attributes. Return True if changed, False otherwise."""
     changed = False
 
@@ -279,6 +327,8 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
             module.fail_json(msg="cannot change the role_attr_flags for PUBLIC user")
         else:
             return False
+
+    in_role_changing, current_in_role = user_get_parent_roles(cursor, module, user, in_role)
 
     # Handle passwords.
     if not no_password_changes and (password is not None or role_attr_flags != ''):
@@ -310,52 +360,38 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
 
         role_attr_flags_changing = False
         if role_attr_flags:
-            role_attr_flags_dict = {}
-            for r in role_attr_flags.split(' '):
-                if r.startswith('NO'):
-                    role_attr_flags_dict[r.replace('NO', '', 1)] = False
-                else:
-                    role_attr_flags_dict[r] = True
-
-            for role_attr_name, role_attr_value in role_attr_flags_dict.items():
-                if current_role_attrs[PRIV_TO_AUTHID_COLUMN[role_attr_name]] != role_attr_value:
-                    role_attr_flags_changing = True
+            role_attr_flags_changing = role_should_change_attrs(current_role_attrs, role_attr_flags)
 
         expires_changing = (expires is not None and expires == current_roles_attrs['rol_valid_until'])
 
-        if not pwchanging and not role_attr_flags_changing and not expires_changing:
+        if not pwchanging and not role_attr_flags_changing and not expires_changing and not in_role_changing:
             return False
 
-        alter = ['ALTER USER %(user)s' % {"user": pg_quote_identifier(user, 'role')}]
-        if pwchanging:
-            alter.append("WITH %(crypt)s" % {"crypt": encrypted})
-            alter.append("PASSWORD %(password)s")
-            alter.append(role_attr_flags)
-        elif role_attr_flags:
-            alter.append('WITH %s' % role_attr_flags)
-        if expires is not None:
-            alter.append("VALID UNTIL %(expires)s")
+        if pwchanging or role_attr_flags_changing or expires_changing:
+            alter = ['ALTER USER %(user)s' % {"user": pg_quote_identifier(user, 'role')}]
+            if pwchanging:
+                alter.append("WITH %(crypt)s" % {"crypt": encrypted})
+                alter.append("PASSWORD %(password)s")
+                alter.append(role_attr_flags)
+            elif role_attr_flags:
+                alter.append('WITH %s' % role_attr_flags)
+            if expires is not None:
+                alter.append("VALID UNTIL %(expires)s")
 
-        try:
-            cursor.execute(' '.join(alter), query_password_data)
-        except psycopg2.InternalError:
-            e = get_exception()
-            if e.pgcode == '25006':
-                # Handle errors due to read-only transactions indicated by pgcode 25006
-                # ERROR:  cannot execute ALTER ROLE in a read-only transaction
-                changed = False
-                module.fail_json(msg=e.pgerror)
-                return changed
-            else:
-                raise psycopg2.InternalError(e)
+            try:
+                cursor.execute(' '.join(alter), query_password_data)
+            except psycopg2.InternalError:
+                e = get_exception()
+                if e.pgcode == '25006':
+                    # Handle errors due to read-only transactions indicated by pgcode 25006
+                    # ERROR:  cannot execute ALTER ROLE in a read-only transaction
+                    changed = False
+                    module.fail_json(msg=e.pgerror)
+                    return changed
+                else:
+                    raise psycopg2.InternalError(e)
 
-        # Grab new role attributes.
-        cursor.execute(select, {"user": user})
-        new_role_attrs = cursor.fetchone()
-
-        # Detect any differences between current_ and new_role_attrs.
-        for i in range(len(current_role_attrs)):
-            if current_role_attrs[i] != new_role_attrs[i]:
+            if role_attrs_has_changed(cursor, user, select, current_role_attrs):
                 changed = True
 
     elif no_password_changes and role_attr_flags != '':
@@ -366,49 +402,46 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
         current_role_attrs = cursor.fetchone()
 
         role_attr_flags_changing = False
-
         if role_attr_flags:
-            role_attr_flags_dict = {}
-            for r in role_attr_flags.split(' '):
-                if r.startswith('NO'):
-                    role_attr_flags_dict[r.replace('NO', '', 1)] = False
-                else:
-                    role_attr_flags_dict[r] = True
+            role_attr_flags_changing = role_should_change_attrs(current_role_attrs, role_attr_flags)
 
-            for role_attr_name, role_attr_value in role_attr_flags_dict.items():
-                if current_role_attrs[PRIV_TO_AUTHID_COLUMN[role_attr_name]] != role_attr_value:
-                    role_attr_flags_changing = True
-
-        if not role_attr_flags_changing:
+        if not role_attr_flags_changing and not in_role_changing:
             return False
 
-        alter = ['ALTER USER %(user)s' % {"user": pg_quote_identifier(user, 'role')}]
-        if role_attr_flags:
-            alter.append('WITH %s' % role_attr_flags)
+        if role_attr_flags_changing:
+            alter = ['ALTER USER %(user)s' % {"user": pg_quote_identifier(user, 'role')}]
+            if role_attr_flags:
+                alter.append('WITH %s' % role_attr_flags)
 
-        try:
-            cursor.execute(' '.join(alter))
-        except psycopg2.InternalError:
-            e = get_exception()
-            if e.pgcode == '25006':
-                # Handle errors due to read-only transactions indicated by pgcode 25006
-                # ERROR:  cannot execute ALTER ROLE in a read-only transaction
-                changed = False
-                module.fail_json(msg=e.pgerror)
-                return changed
-            else:
-                raise psycopg2.InternalError(e)
+            try:
+                cursor.execute(' '.join(alter))
+            except psycopg2.InternalError:
+                e = get_exception()
+                if e.pgcode == '25006':
+                    # Handle errors due to read-only transactions indicated by pgcode 25006
+                    # ERROR:  cannot execute ALTER ROLE in a read-only transaction
+                    changed = False
+                    module.fail_json(msg=e.pgerror)
+                    return changed
+                else:
+                    raise psycopg2.InternalError(e)
 
-        # Grab new role attributes.
-        cursor.execute(select, {"user": user})
-        new_role_attrs = cursor.fetchone()
-
-        # Detect any differences between current_ and new_role_attrs.
-        for i in range(len(current_role_attrs)):
-            if current_role_attrs[i] != new_role_attrs[i]:
+            if role_attrs_has_changed(cursor, user, select, current_role_attrs):
                 changed = True
 
+    if in_role_changing:
+        for r in in_role:
+            cursor.execute("GRANT %(role)s TO %(user)s" % {"role": pg_quote_identifier(r, 'role'),
+                                                           "user": pg_quote_identifier(user, 'role')})
+
+        for r in current_in_role:
+            if r not in in_role:
+                cursor.execute("REVOKE %(role)s FROM %(user)s" % {"role": pg_quote_identifier(r, 'role'),
+                                                                  "user": pg_quote_identifier(user, 'role')})
+        changed = True
+
     return changed
+
 
 def user_delete(cursor, user):
     """Try to remove a user. Returns True if successful otherwise False"""
@@ -637,6 +670,7 @@ def parse_privs(privs, db):
 # Module execution.
 #
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -652,6 +686,7 @@ def main():
             port=dict(default='5432'),
             fail_on_user=dict(type='bool', default='yes'),
             role_attr_flags=dict(default=''),
+            in_role=dict(default=None, type='list'),
             encrypted=dict(type='bool', default='no'),
             no_password_changes=dict(type='bool', default='no'),
             expires=dict(default=None),
@@ -681,6 +716,7 @@ def main():
     else:
         encrypted = "UNENCRYPTED"
     expires = module.params["expires"]
+    in_role = module.params["in_role"]
     sslrootcert = module.params["ssl_rootcert"]
 
     if not postgresqldb_found:
@@ -730,13 +766,14 @@ def main():
     if state == "present":
         if user_exists(cursor, user):
             try:
-                changed = user_alter(cursor, module, user, password, role_attr_flags, encrypted, expires, no_password_changes)
+                changed = user_alter(cursor, module, user, password, role_attr_flags, encrypted, expires,
+                                     no_password_changes, in_role)
             except SQLParseError:
                 e = get_exception()
                 module.fail_json(msg=str(e))
         else:
             try:
-                changed = user_add(cursor, user, password, role_attr_flags, encrypted, expires)
+                changed = user_add(cursor, user, password, role_attr_flags, encrypted, expires, in_role)
             except SQLParseError:
                 e = get_exception()
                 module.fail_json(msg=str(e))
