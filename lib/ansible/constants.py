@@ -347,7 +347,7 @@ PARAMIKO_HOST_KEY_AUTO_ADD     = get_config(p, 'paramiko_connection', 'host_key_
 PARAMIKO_PROXY_COMMAND         = get_config(p, 'paramiko_connection', 'proxy_command', 'ANSIBLE_PARAMIKO_PROXY_COMMAND', None)
 PARAMIKO_LOOK_FOR_KEYS         = get_config(p, 'paramiko_connection', 'look_for_keys', 'ANSIBLE_PARAMIKO_LOOK_FOR_KEYS', True, value_type='boolean')
 PERSISTENT_CONNECT_TIMEOUT     = get_config(p, 'persistent_connection', 'connect_timeout', 'ANSIBLE_PERSISTENT_CONNECT_TIMEOUT', 30, value_type='integer')
-PERSISTENT_CONNECT_RETRIES     = get_config(p, 'persistent_connection', 'connect_retries', 'ANSIBLE_PERSISTENT_CONNECT_RETRIES', 10, value_type='integer')
+PERSISTENT_CONNECT_RETRIES     = get_config(p, 'persistent_connection', 'connect_retries', 'ANSIBLE_PERSISTENT_CONNECT_RETRIES', 30, value_type='integer')
 PERSISTENT_CONNECT_INTERVAL    = get_config(p, 'persistent_connection', 'connect_interval', 'ANSIBLE_PERSISTENT_CONNECT_INTERVAL', 1, value_type='integer')
 
 # obsolete -- will be formally removed

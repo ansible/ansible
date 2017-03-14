@@ -126,6 +126,9 @@ class Server():
         if not self.conn.connected:
             raise AnsibleConnectionFailure('unable to connect to remote host')
 
+        connection_time = datetime.datetime.now() - self._start_time
+        display.vvvv('connection established in %s' % connection_time, play_context.remote_addr)
+
         self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.socket.bind(path)
         self.socket.listen(1)
@@ -321,6 +324,8 @@ def main():
                 time.sleep(C.PERSISTENT_CONNECT_INTERVAL)
                 attempts += 1
                 if attempts > C.PERSISTENT_CONNECT_RETRIES:
+                    display.vvvv('number of connection attempts exceeded, unable to connect to control socket')
+                    display.vvvv('persistent_connect_interval=%s, persistent_connect_retries=%s' % (C.PERSISTENT_CONNECT_INTERVAL, C.PERSISTENT_CONNECT_RETRIES))
                     sys.stderr.write('failed to connect to control socket')
                     sys.exit(255)
 
