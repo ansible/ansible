@@ -57,7 +57,11 @@ def get_docstring(filename, verbose=False):
     doc = None
     plainexamples = None
     returndocs = None
-    metadata = None
+
+    # ensure metadata defaults
+    metadata = {'metadata_version': '1.0',
+                'status': ['preview'],
+                'supported_by': 'community'}
 
     try:
         # Thank you, Habbie, for this bit of code :-)
@@ -125,16 +129,14 @@ def get_docstring(filename, verbose=False):
                         returndocs = child.value.s[1:]
 
                     elif 'ANSIBLE_METADATA' == theid:
-                        metadata = child.value
-                        if type(metadata).__name__ == 'Dict':
-                            metadata = ast.literal_eval(child.value)
-                        else:
+                        metadata = ast.literal_eval(child.value)
+                        if not isinstance(metadata, MutableMapping):
                             # try yaml loading
-                            metadata = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
+                            metadata = AnsibleLoader(metadata, file_name=filename).get_single_data()
 
-                        if not isinstance(metadata, dict):
+                        if not isinstance(metadata, MutableMapping):
                             display.warning("Invalid metadata detected in %s, using defaults" % filename)
-                            metadata = {'status': ['preview'], 'supported_by': 'community', 'version': '1.0'}
+                            metadata = {'status': ['preview'], 'supported_by': 'community', 'metadata_version': '1.0'}
 
     except:
         display.error("unable to parse %s" % filename)
@@ -142,14 +144,4 @@ def get_docstring(filename, verbose=False):
             display.display("unable to parse %s" % filename)
             raise
 
-    if not metadata:
-        metadata = dict()
-
-    # ensure metadata defaults
-    # FUTURE: extract this into its own class for use by runtime metadata
-    metadata['version'] = metadata.get('version', '1.0')
-    metadata['status'] = metadata.get('status', ['preview'])
-    metadata['supported_by'] = metadata.get('supported_by', 'community')
-
     return doc, plainexamples, returndocs, metadata
-
