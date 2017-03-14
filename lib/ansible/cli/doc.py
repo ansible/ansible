@@ -134,6 +134,10 @@ class DocCLI(CLI):
                     doc['plainexamples']    = plainexamples
                     doc['returndocs']       = returndocs
                     doc['metadata']         = metadata
+                    if 'metadata_version' in doc['metadata']:
+                        del doc['metadata']['metadata_version']
+                    if 'version' in doc['metadata']:
+                        del doc['metadata']['metadata_version']
 
                     if self.options.show_snippet:
                         text += self.get_snippet_text(doc)

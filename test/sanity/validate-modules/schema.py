@@ -75,9 +75,8 @@ def metadata_schema(deprecated):
     return Schema(
         {
             Required('status'): [valid_status],
-            Required('version'): '1.0',
-            Required('supported_by'): Any('core', 'community', 'unmaintained',
-                                          'committer')
+            Required('metadata_version'): '1.0',
+            Required('supported_by'): Any('core', 'community', 'curated')
         }
     )
 

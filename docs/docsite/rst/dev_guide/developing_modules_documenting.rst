@@ -33,23 +33,28 @@ All modules must have the following sections defined in this order:
 ANSIBLE_METADATA Block
 ----------------------
 
-ANSIBLE_METADATA contains information about the module for use by other tools. At the moment, it informs other tools which type of maintainer the module has and to what degree users can rely on a module's behaviour remaining the same over time.
+``ANSIBLE_METADATA`` contains information about the module for use by other tools. At the moment, it informs other tools which type of maintainer the module has and to what degree users can rely on a module's behaviour remaining the same over time.
 
 For new modules, the following block can be simply added into your module
 
 .. code-block:: python
 
-   ANSIBLE_METADATA = {'status': ['preview'],
-                       'supported_by': 'community',
-                       'version': '1.0'}
-
-.. warning:: version field
-
-   This is the version of the ``ANSIBLE_METADATA`` schema, *not* the version of the module.
+   ANSIBLE_METADATA = {'metadata_version': '1.0',
+                       'status': ['preview'],
+                       'supported_by': 'community'}
 
 .. warning::
 
-   Promoting a module's ``status`` or ``supported_by`` status should only be done by members of the Ansible Core Team.
+   * ``metadata_version`` is the version of the ``ANSIBLE_METADATA`` schema, *not* the version of the module.
+   * Promoting a module's ``status`` or ``supported_by`` status should only be done by members of the Ansible Core Team.
+
+.. note:: Pre-released metdata version
+
+    During development of Ansible-2.3, modules had an initial version of the
+    metadata.  This version was modified slightly after release to fix some
+    points of confusion.  You may occassionally see PRs for modules where the
+    ANSIBLE_METADATA doesn't look quite right because of this.  Module
+    metadata should be fixed before checking it into the repository.
 
 Version 1.0 of the metadata
 +++++++++++++++++++++++++++
@@ -60,34 +65,31 @@ Structure
 .. code-block:: python
 
   ANSIBLE_METADATA = {
-      'version': '1.0',
-      'supported_by': 'core|community|unmaintained|committer',
-      'status': ['stableinterface|preview|deprecated|removed']
+      'metadata_version': '1.0',
+      'supported_by': 'community',
+      'status': ['preview', 'deprecated']
   }
 
 Fields
 ``````
 
-:version: An “X.Y” formatted string. X and Y are integers which
+:metadata_version: An “X.Y” formatted string. X and Y are integers which
    define the metadata format version. Modules shipped with Ansible are
    tied to an Ansible release, so we will only ship with a single version
    of the metadata. We’ll increment Y if we add fields or legal values
    to an existing field. We’ll increment X if we remove fields or values
    or change the type or meaning of a field.
 :supported_by: This field records who supports the module.
-   Default value is community. Values are:
+   Default value is ``community``. Values are:
 
    :core: Maintained by the Ansible core team. Core team will fix
       bugs, add new features, and review PRs.
    :community: This module is maintained by the community at large,
       which is responsible for fixing bugs, adding new features, and
       reviewing changes.
-   :unmaintained: This module currently needs a new community
-      contributor to help maintain it.
-   :committer: Committers to the Ansible repository are the
-      gatekeepers for this module. They will review PRs from the community
-      before merging but might not generate fixes and code for new features
-      on their own.
+   :curated: The Ansible Core Team is the gatekeeper for this module. They
+      will review PRs from the community before merging but might not generate
+      fixes and code for new features on their own.
 
 :status: This field records information about the module that is
    important to the end user. It’s a list of strings. The default value
