@@ -20,6 +20,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
+
 DOCUMENTATION = '''
 ---
 module: ping
@@ -39,6 +44,7 @@ author:
 EXAMPLES = '''
 # Test we can logon to 'webservers' and execute python with json lib.
 ansible webservers -m ping
+'''
 
 from ansible.module_utils.basic import AnsibleModule
 
