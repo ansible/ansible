@@ -191,11 +191,14 @@ class TestFailure(TestResult):
         """
         :type command: str
         :type test: str
-        :type python_version: str
-        :type messages: list[TestMessage]
-        :type summary: str
+        :type python_version: str | None
+        :type messages: list[TestMessage] | None
+        :type summary: str | None
         """
         super(TestFailure, self).__init__(command, test, python_version)
+
+        if messages:
+            messages = sorted(messages, key=lambda m: m.sort_key)
 
         self.messages = messages
         self.summary = summary
@@ -338,3 +341,10 @@ class TestMessage(object):
             msg = self.message
 
         return '%s:%s:%s: %s' % (self.path, self.line, self.column, msg)
+
+    @property
+    def sort_key(self):
+        """
+        :rtype: str
+        """
+        return '%s:%6d:%6d:%s:%s' % (self.path, self.line, self.column, self.code or '', self.message)
