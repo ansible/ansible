@@ -74,7 +74,7 @@ class ActionModule(ActionBase):
         """ Set instance variables based on the arguments that were passed
         """
         self.VALID_DIR_ARGUMENTS = [
-            'dir', 'depth', 'files_matching', 'ignore_files', 'extensions',
+            'dir', 'depth', 'files_matching', 'ignore_files', 'extensions', 'filter'
         ]
         self.VALID_FILE_ARGUMENTS = ['file', '_raw_params']
         self.GLOBAL_FILE_ARGUMENTS = ['name']
@@ -98,6 +98,7 @@ class ActionModule(ActionBase):
         self.files_matching = self._task.args.get('files_matching', None)
         self.ignore_files = self._task.args.get('ignore_files', None)
         self.valid_extensions = self._task.args.get('extensions', self.VALID_FILE_EXTENSIONS)
+        self.filter = self._task.args.get('filter', None)
         if isinstance(self.valid_extensions, string_types):
             self.valid_extensions = list(self.valid_extensions)
 
@@ -146,6 +147,19 @@ class ActionModule(ActionBase):
             except AnsibleError as e:
                 failed = True
                 err_msg = to_native(e)
+
+        if self.filter and not self.source_dir:
+            try:
+                key = self.filter
+                for item in self.filter.split("."):
+                    results = results[item]
+                    key = item
+                results = {key: results}
+            except TypeError as e:
+                err_msg = to_native(e)
+                raise AnsibleError(err_msg + "- The field `filter` must be a string")
+            except KeyError as e:
+                raise AnsibleError("The key `" + self.filter +"` doesn't exist")
 
         if self.return_results_as_name:
             scope = dict()

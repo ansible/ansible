@@ -63,6 +63,13 @@ options:
     description:
         - This module allows you to specify the 'file' option directly w/o any other options.
           There is no 'free-form' option, this is just an indicator, see example below.
+  filter:
+    version_added: "2.3"
+    description:
+        - Pick sub-dictionnary from a YAML/JSON, only variables in this sub-dictionnary part are interpolated
+        - When arg dir is defined, filter is skipped
+        - Character `.` is used for getting an element in a map
+    default: null
 '''
 
 EXAMPLES = """
@@ -114,4 +121,9 @@ EXAMPLES = """
     dir: 'vars'
     ignore_files: 'bastion.yml'
     extensions: ['yml']
+
+- name: Include only a sub-dictionnary
+  include_vars:
+    file: foo.yml
+    filter: bar
 """
