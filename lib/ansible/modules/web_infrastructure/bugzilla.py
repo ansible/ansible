@@ -98,7 +98,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 import bugzilla
 import xmlrpclib
-
+import sys
 
 def bugzilla_status(bug):
     return bug.status
@@ -132,8 +132,9 @@ def main():
         bzapi = bugzilla.Bugzilla(url, user, password)
         bug = bzapi.getbug(bug_id)
 
-    except xmlrpclib.Fault, err:
-        response = {err.faultCode:err.faultString}
+    except:
+        t, e = sys.exc_info()[:2]
+        response = {e.faultCode:e.faultString}
         module.fail_json(msg="FaultError", FaultError=response)
 
     else:
