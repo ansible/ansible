@@ -1,0 +1,3 @@
+---
+github_clone_url: git@github.com:/Miyurz/ansible_integration_test.git
+dest_dir: /tmp/ansible_test
