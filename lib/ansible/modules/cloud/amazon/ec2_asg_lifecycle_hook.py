@@ -187,17 +187,20 @@ def delete_lifecycle_hook(connection, module):
         AutoScalingGroupName=asg_name
     )
 
-    if all_hooks['LifecycleHooks']:
-        lch_params = {
-            'LifecycleHookName': lch_name,
-            'AutoScalingGroupName': asg_name
-        }
+    for hook in all_hooks['LifecycleHooks']:
+        if hook['LifecycleHookName'] == lch_name:
+            lch_params = {
+                'LifecycleHookName': lch_name,
+                'AutoScalingGroupName': asg_name
+            }
 
-        try:
-            connection.delete_lifecycle_hook( **lch_params )
-            changed = True
-        except Exception as e:
-            module.fail_json(msg="Failed to delete LifecycleHook %s" % str(e), exception=traceback.format_exc(e))
+            try:
+                connection.delete_lifecycle_hook( **lch_params )
+                changed = True
+            except Exception as e:
+                module.fail_json(msg="Failed to delete LifecycleHook %s" % str(e), exception=traceback.format_exc(e))
+        else:
+            pass
 
     return(changed)
 
