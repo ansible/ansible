@@ -10,6 +10,11 @@ from lib.util import (
     EnvironmentConfig,
 )
 
+from lib.metadata import (
+    Metadata,
+)
+
+
 
 class TestConfig(EnvironmentConfig):
     """Configuration common to all test commands."""
@@ -37,6 +42,9 @@ class TestConfig(EnvironmentConfig):
         self.lint = args.lint if 'lint' in args else False  # type: bool
         self.junit = args.junit if 'junit' in args else False  # type: bool
         self.failure_ok = args.failure_ok if 'failure_ok' in args else False  # type: bool
+
+        self.metadata = Metadata.from_file(args.metadata) if args.metadata else Metadata()
+        self.metadata_path = None
 
 
 class TestResult(object):
