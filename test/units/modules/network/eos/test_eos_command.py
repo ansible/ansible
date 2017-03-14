@@ -36,7 +36,7 @@ class TestEosCommandModule(TestEosModule):
     def tearDown(self):
         self.mock_run_commands.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, transport='cli'):
         def load_from_file(*args, **kwargs):
             module, commands = args
             output = list()
