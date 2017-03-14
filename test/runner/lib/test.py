@@ -267,7 +267,7 @@ class TestFailure(TestResult):
         if args.explain:
             return
 
-        with open(path, 'wb') as bot_fd:
+        with open(path, 'w') as bot_fd:
             json.dump(bot_data, bot_fd, indent=4, sort_keys=True)
             bot_fd.write('\n')
 
