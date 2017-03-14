@@ -42,7 +42,7 @@ options:
             - "Should the network be present or absent"
         choices: ['present', 'absent']
         default: present
-    datacenter:
+    data_center:
         description:
             - "Datacenter name where network reside."
     description:
@@ -80,7 +80,7 @@ EXAMPLES = '''
 
 # Create network
 - ovirt_networks:
-    datacenter: mydatacenter
+    data_center: mydatacenter
     name: mynetwork
     vlan_tag: 1
     vm_network: true
@@ -130,8 +130,8 @@ class NetworksModule(BaseModule):
             comment=self._module.params['comment'],
             description=self._module.params['description'],
             data_center=otypes.DataCenter(
-                name=self._module.params['datacenter'],
-            ) if self._module.params['datacenter'] else None,
+                name=self._module.params['data_center'],
+            ) if self._module.params['data_center'] else None,
             vlan=otypes.Vlan(
                 self._module.params['vlan_tag'],
             ) if self._module.params['vlan_tag'] else None,
@@ -201,7 +201,7 @@ def main():
             choices=['present', 'absent'],
             default='present',
         ),
-        datacenter=dict(default=None, required=True),
+        data_center=dict(default=None, required=True),
         name=dict(default=None, required=True),
         description=dict(default=None),
         comment=dict(default=None),
@@ -231,7 +231,7 @@ def main():
         network = networks_module.search_entity(
             search_params={
                 'name': module.params['name'],
-                'datacenter': module.params['datacenter'],
+                'datacenter': module.params['data_center'],
             },
         )
         if state == 'present':

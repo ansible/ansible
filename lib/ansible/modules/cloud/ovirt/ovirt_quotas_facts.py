@@ -36,7 +36,7 @@ notes:
     - "This module creates a new top-level C(ovirt_quotas) fact, which
        contains a list of quotas."
 options:
-    datacenter:
+    data_center:
         description:
             - "Name of the datacenter where quota resides."
         required: true
@@ -52,7 +52,7 @@ EXAMPLES = '''
 
 # Gather facts about quota named C<myquota> in Default datacenter:
 - ovirt_quotas_facts:
-    datacenter: Default
+    data_center: Default
     name: myquota
 - debug:
     var: ovirt_quotas
@@ -81,7 +81,7 @@ from ansible.module_utils.ovirt import (
 
 def main():
     argument_spec = ovirt_facts_full_argument_spec(
-        datacenter=dict(required=True),
+        data_center=dict(required=True),
         name=dict(default=None),
     )
     module = AnsibleModule(argument_spec)
@@ -91,7 +91,7 @@ def main():
         auth = module.params.pop('auth')
         connection = create_connection(auth)
         datacenters_service = connection.system_service().data_centers_service()
-        dc_name = module.params['datacenter']
+        dc_name = module.params['data_center']
         dc = search_by_name(datacenters_service, dc_name)
         if dc is None:
             raise Exception("Datacenter '%s' was not found." % dc_name)

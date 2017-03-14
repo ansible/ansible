@@ -233,7 +233,7 @@ def main():
         password=dict(default=None, no_log=True),
         tenant_name=dict(default=None, aliases=['tenant']),
         authentication_url=dict(default=None, aliases=['auth_url']),
-        data_center=dict(default=None, aliases=['data_center']),
+        data_center=dict(default=None),
         read_only=dict(default=None, type='bool'),
         network_type=dict(
             default='external',
