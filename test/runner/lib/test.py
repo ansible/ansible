@@ -36,6 +36,7 @@ class TestConfig(EnvironmentConfig):
 
         self.lint = args.lint if 'lint' in args else False  # type: bool
         self.junit = args.junit if 'junit' in args else False  # type: bool
+        self.failure_ok = args.failure_ok if 'failure_ok' in args else False  # type: bool
 
 
 class TestResult(object):
@@ -266,7 +267,7 @@ class TestFailure(TestResult):
         if args.explain:
             return
 
-        with open(path, 'wb') as bot_fd:
+        with open(path, 'w') as bot_fd:
             json.dump(bot_data, bot_fd, indent=4, sort_keys=True)
             bot_fd.write('\n')
 

@@ -17,17 +17,11 @@ ln -sf x86_64-linux-gnu-gcc-4.9 /usr/bin/x86_64-linux-gnu-gcc
 
 retry.py pip install tox --disable-pip-version-check
 
-errors=0
+ansible-test compile --failure-ok --color -v --junit --requirements
+ansible-test sanity  --failure-ok --color -v --junit --tox --skip-test ansible-doc --python 2.7
+ansible-test sanity  --failure-ok --color -v --junit --tox --test ansible-doc --coverage
 
-set +e
-
-ansible-test compile --color -v --junit --requirements || ((errors++))
-ansible-test sanity --color -v --junit --tox --skip-test ansible-doc --python 2.7 || ((errors++))
-ansible-test sanity --color -v --junit --tox --test ansible-doc --coverage || ((errors++))
-
-set -e
-
-if [ ${errors} -gt 0 ]; then
-    echo "${errors} of the above ansible-test command(s) failed."
+if find test/results/bot/ -mindepth 1 -name '.*' -prune -o -print -quit | grep -q .; then
+    echo "One or more of the above ansible-test commands recorded at least one test failure."
     exit 1
 fi

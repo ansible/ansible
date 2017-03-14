@@ -383,6 +383,11 @@ def add_lint(parser):
                         action='store_true',
                         help='write test failures to junit xml files')
 
+    parser.add_argument('--failure-ok',
+                        action='store_true',
+                        help='exit successfully on failed tests after saving results')
+
+
 
 def add_changes(parser, argparse):
     """
