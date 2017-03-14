@@ -100,9 +100,8 @@ EXAMPLES = '''
     tags:
       Name: dbserver
       Env: production
-  with_subelements:
-    - ec2_vol.results
-    - volumes
+  with_items:
+    - ec2_vol.volumes
 
 - name: Get EC2 facts
   action: ec2_facts
