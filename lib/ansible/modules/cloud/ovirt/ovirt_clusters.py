@@ -42,7 +42,7 @@ options:
             - "Should the cluster be present or absent"
         choices: ['present', 'absent']
         default: present
-    datacenter:
+    data_center:
         description:
             - "Datacenter name where cluster reside."
     description:
@@ -214,7 +214,7 @@ EXAMPLES = '''
 
 # Create cluster
 - ovirt_clusters:
-    datacenter: mydatacenter
+    data_center: mydatacenter
     name: mycluster
     cpu_type: Intel SandyBridge Family
     description: mycluster
@@ -222,7 +222,7 @@ EXAMPLES = '''
 
 # Create virt service cluster:
 - ovirt_clusters:
-    datacenter: mydatacenter
+    data_center: mydatacenter
     name: mycluster
     cpu_type: Intel Nehalem Family
     description: mycluster
@@ -424,8 +424,8 @@ class ClustersModule(BaseModule):
                 self.param('ksm') is not None
             ) else None,
             data_center=otypes.DataCenter(
-                name=self.param('datacenter'),
-            ) if self.param('datacenter') else None,
+                name=self.param('data_center'),
+            ) if self.param('data_center') else None,
             management_network=otypes.Network(
                 name=self.param('network'),
             ) if self.param('network') else None,
@@ -525,7 +525,7 @@ def main():
         serial_policy=dict(default=None, choices=['vm', 'host', 'custom']),
         serial_policy_value=dict(default=None),
         scheduling_policy=dict(default=None),
-        datacenter=dict(default=None),
+        data_center=dict(default=None),
         description=dict(default=None),
         comment=dict(default=None),
         network=dict(default=None),
