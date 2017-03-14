@@ -13,7 +13,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '1.0'}
@@ -24,11 +23,6 @@ module: ec2_asg_lifecycle_hook
 short_description: Create, delete or update AWS ASG Lifecycle Hooks.
 description:
   - Can create, delete or update Lifecycle Hooks for AWS Autoscaling Groups.
-notes:
-  - "Auto Scaling lifecycle hooks enable you to perform custom actions as Auto Scaling
-    launches or terminates instances. For example, you could install or configure software
-    on newly launched instances, or download log files from an instance before it terminates."
-version_added: "1.6"
 author: "Igor (Tsigankov) Eyrich (@tsiganenok) <tsiganenok@gmail.com>"
 options:
   state:
@@ -82,19 +76,27 @@ options:
 extends_documentation_fragment:
     - aws
     - ec2
-    - asg
-requires:
-    - "boto3 >= 1.4.4"
+requirements: [ boto3>=1.4.4 ]
+
 """
 
 EXAMPLES = '''
+# Create / Update lifecycle hook
 - ec2_asg_lifecycle_hook:
+    region: eu-central-1
     state: present
     autoscaling_group_name: example
     lifecycle_hook_name: example
     transition: autoscaling:EC2_INSTANCE_LAUNCHING
     heartbeat_timeout: 7000
     default_result: ABANDON
+
+# Delete lifecycle hook
+- ec2_asg_lifecycle_hook:
+    region: eu-central-1
+    state: absent
+    autoscaling_group_name: example
+    lifecycle_hook_name: example
 
 '''
 
