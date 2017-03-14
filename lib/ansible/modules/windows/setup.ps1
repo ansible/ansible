@@ -131,7 +131,7 @@ foreach ($item in Get-ChildItem Env:) {
 }
  
 Try {
-    $machine_id = $user.User.AccountDomainSid.Value -ErrorAction Stop
+    $machine_id = $user.User.AccountDomainSid.Value
 }
 Catch {
     $machine_id = ""
