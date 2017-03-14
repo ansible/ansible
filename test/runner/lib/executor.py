@@ -712,8 +712,13 @@ def command_compile(args):
             failed.append('compile --python %s' % version)
 
     if failed:
-        raise ApplicationError('The %d compile test(s) listed below (out of %d) failed. See error output above for details.\n%s' % (
-            len(failed), total, '\n'.join(failed)))
+        message = 'The %d compile test(s) listed below (out of %d) failed. See error output above for details.\n%s' % (
+            len(failed), total, '\n'.join(failed))
+
+        if args.failure_ok:
+            display.error(message)
+        else:
+            raise ApplicationError(message)
 
 
 def compile_version(args, python_version, include, exclude):
