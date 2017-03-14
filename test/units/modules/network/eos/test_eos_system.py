@@ -40,7 +40,7 @@ class TestEosSystemModule(TestEosModule):
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, transport='cli'):
         self.get_config.return_value = load_fixture('eos_system_config.cfg')
         self.load_config.return_value = dict(diff=None, session='session')
 

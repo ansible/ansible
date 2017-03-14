@@ -62,9 +62,9 @@ class AnsibleFailJson(Exception):
 class TestEosModule(unittest.TestCase):
 
     def execute_module(self, failed=False, changed=False, commands=None,
-            sort=True, defaults=False):
+            sort=True, defaults=False, transport='cli'):
 
-        self.load_fixtures(commands)
+        self.load_fixtures(commands, transport=transport)
 
         if failed:
             result = self.failed()
@@ -108,6 +108,6 @@ class TestEosModule(unittest.TestCase):
         self.assertEqual(result['changed'], changed, result)
         return result
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, transport='cli'):
         pass
 

@@ -106,9 +106,15 @@ def map_obj_to_commands(updates, module):
 
     elif state == 'present':
         if want['text'] and (want['text'] != have.get('text')):
-            commands.append('banner %s' % module.params['banner'])
-            commands.extend(want['text'].strip().split('\n'))
-            commands.append('EOF')
+            if module.params['transport'] == 'cli':
+                commands.append('banner %s' % module.params['banner'])
+                commands.extend(want['text'].strip().split('\n'))
+                commands.append('EOF')
+            else:
+                # For EAPI we need to construct a dict with cmd/input
+                # key/values for the banner
+                commands.append({'cmd': 'banner %s' % module.params['banner'],
+                                 'input': want['text'].strip('\n')})
 
     return commands
 
@@ -116,7 +122,12 @@ def map_config_to_obj(module):
     output = run_commands(module, ['show banner %s' % module.params['banner']])
     obj = {'banner': module.params['banner'], 'state': 'absent'}
     if output:
-        obj['text'] = output[0]
+        if module.params['transport'] == 'cli':
+            obj['text'] = output[0]
+        else:
+            # On EAPI we need to extract the banner text from dict key
+            # 'loginBanner'
+            obj['text'] = output[0]['loginBanner'].strip('\n')
         obj['state'] = 'present'
     return obj
 
