@@ -528,7 +528,10 @@ def main():
 
                 for interface in host._zapi.hostinterface.get({'output': 'extend', 'hostids': host_id}):
                     # remove values not used during hostinterface.add/update calls
-                    interface = {x:interface[x] for x in interface.keys() if x not in ['interfaceid', 'hostid', 'bulk']}
+                    for key in interface.keys():
+                        if key in ['interfaceid', 'hostid', 'bulk']:
+                            interface.pop(key, None)
+
                     for index in interface.keys():
                         if index in ['useip', 'main', 'type', 'port']:
                             interface[index] = int(interface[index])
