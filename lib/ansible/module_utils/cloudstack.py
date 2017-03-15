@@ -51,12 +51,12 @@ CS_HYPERVISORS = [
 
 def cs_argument_spec():
     return dict(
-        api_key = dict(default=None),
-        api_secret = dict(default=None, no_log=True),
-        api_url = dict(default=None),
-        api_http_method = dict(choices=['get', 'post'], default='get'),
-        api_timeout = dict(type='int', default=10),
-        api_region = dict(default='cloudstack'),
+        api_key = dict(default=os.environ.get('CLOUDSTACK_KEY')),
+        api_secret = dict(default=os.environ.get('CLOUDSTACK_SECRET'), no_log=True),
+        api_url = dict(default=os.environ.get('CLOUDSTACK_ENDPOINT')),
+        api_http_method = dict(choices=['get', 'post'], default=os.environ.get('CLOUDSTACK_METHOD') or 'get'),
+        api_timeout = dict(type='int', default=os.environ.get('CLOUDSTACK_TIMEOUT') or 10),
+        api_region = dict(default=os.environ.get('CLOUDSTACK_REGION') or 'cloudstack'),
     )
 
 def cs_required_together():
@@ -123,25 +123,31 @@ class AnsibleCloudStack(object):
         self.hypervisor = None
         self.capabilities = None
 
-
     def _connect(self):
-        api_key = self.module.params.get('api_key')
-        api_secret = self.module.params.get('api_secret')
-        api_url = self.module.params.get('api_url')
-        api_http_method = self.module.params.get('api_http_method')
-        api_timeout = self.module.params.get('api_timeout')
+        api_region = self.module.params.get('api_region') or os.environ.get('CLOUDSTACK_REGION')
+        try:
+            config = read_config(api_region)
+        except KeyError:
+            config = {}
 
-        if api_key and api_secret and api_url:
-            self.cs = CloudStack(
-                endpoint=api_url,
-                key=api_key,
-                secret=api_secret,
-                timeout=api_timeout,
-                method=api_http_method
-                )
-        else:
-            api_region = self.module.params.get('api_region', 'cloudstack')
-            self.cs = CloudStack(**read_config(api_region))
+        api_config = {
+            'endpoint': self.module.params.get('api_url') or config.get('endpoint'),
+            'key': self.module.params.get('api_key') or config.get('key'),
+            'secret': self.module.params.get('api_secret') or config.get('secret'),
+            'timeout': self.module.params.get('api_timeout') or config.get('timeout'),
+            'method': self.module.params.get('api_http_method') or config.get('method'),
+        }
+        self.result.update({
+            'api_region': api_region,
+            'api_url': api_config['endpoint'],
+            'api_key': api_config['key'],
+            'api_timeout': api_config['timeout'],
+            'api_http_method': api_config['method'],
+        })
+        if not all([api_config['endpoint'], api_config['key'], api_config['secret']]):
+            self.module.fail_json(msg="Missing api credentials: can not authenticate", result=self.result)
+        self.cs = CloudStack(**api_config)
+
 
 
     def get_or_fallback(self, key=None, fallback_key=None):
