@@ -96,6 +96,8 @@ class Group:
             # isn't already a group with the same name
             if self.name not in [g.name for g in group.parent_groups]:
                 group.parent_groups.append(self)
+                for h in group.get_hosts():
+                    h.populate_ancestors()
 
             self.clear_hosts_cache()
 
