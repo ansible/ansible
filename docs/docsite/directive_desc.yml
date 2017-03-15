@@ -1,0 +1,23 @@
+become: Boolean that controls if privilege escalation is used or not on Task execution.
+become_flags: A string of flag(s) to pass to the privilege escalation program when ``become`` is True.
+become_method: Which method of privilege escalation to use. i.e. sudo/su/etc.
+become_user: User that you 'become' after using privilege escalation, the remote/login user must have permissions to become this user.
+check_mode: A boolean that controls if a task is executed in 'check' mode
+connection: Allows you to change the connection plugin used for tasks to execute on the target.
+environment: A dictionary that gets converted into environment vars to be provided for the task upon execution.
+gather_facts: A boolean that controls if the play will automatically run the 'setup' task to gather facts for the hosts.
+hosts: A list of groups, hosts or host pattern that translates into a list of hosts that are the play's target.
+ignore_errors: Boolean that allows you to ignore task failures and continue with play. It does not affect connection errors.
+name: It's a name, works mostly for documentation, in the case of tasks/handlers it can be an identifier.
+remote_user: User used to log into the target via the connection plugin. AKA login user.
+no_log: Boolean that controls information disclosure.
+run_once: Boolean that will bypass the host loop, forcing the task to execute on the first host available and will also apply any facts to all active hosts.
+when: Conditional expression, determines if an iteration of a task is run or not.
+strategy: Allows you to choose the connection plugin to use for the play.
+tags: Tags applied to the task or included tasks, this allows selecting subsets of tasks from the command line.
+vars: Dictionary/map of variables
+always_run: DEPRECATED, forces a task to run even in check mode, use check_mode directive instead.
+delegate_to: Host to execute task instead of the target (inventory_hostname), connection vars from the delegated host will also be used for the task.
+delegate_facts: Boolean that allows you to apply facts to delegated host instead of inventory_hostname.
+changed_when: Conditional expression that overrides the task's normal 'changed' status.
+failed_when: Conditional expression that overrides the task's normal 'failed' status.

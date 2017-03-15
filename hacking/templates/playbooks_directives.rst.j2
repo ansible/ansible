@@ -14,7 +14,7 @@ Aliases for the directives are not reflected here, nor are mutable ones, for exa
 {{ name }}
 {{ '-' * name|length }}
 {% for attribute in oblist[name]|sort %}
-  * {{ attribute }}
+  - **{{ attribute }}:** {{ oblist[name][attribute] }}
 {% endfor %}
 
 {% endfor %}
