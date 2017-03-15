@@ -252,6 +252,7 @@ class VariableManager:
             # first we merge in vars from groups specified in the inventory (INI or script)
             all_vars = combine_vars(all_vars, host.get_group_vars())
 
+            # these are PLAY host/group vars, inventory adjacent ones have already been processed
             # next, we load any vars from group_vars files and then any vars from host_vars
             # files which may apply to this host or the groups it belongs to. We merge in the
             # special 'all' group_vars first, if they exist
