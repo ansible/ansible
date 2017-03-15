@@ -105,7 +105,7 @@ options:
     description: Include the full certificate chain in the destination file.
     required: false
     default: false
-    version_added: 2.3
+    version_added: 2.4
   remaining_days:
     description:
       - "The number of days the certificate must have left being valid.
