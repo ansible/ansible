@@ -505,7 +505,15 @@ class BaseModule(object):
         return after
 
 
-    def create(self, entity=None, result_state=None, fail_condition=lambda e: False, search_params=None, **kwargs):
+    def create(
+        self,
+        entity=None,
+        result_state=None,
+        fail_condition=lambda e: False,
+        search_params=None,
+        update_params=None,
+        **kwargs
+    ):
         """
         Method which is called when state of the entity is 'present'. If user
         don't provide `entity` parameter the entity is searched using
@@ -521,6 +529,7 @@ class BaseModule(object):
         :param result_state: State which should entity has in order to finish task.
         :param fail_condition: Function which checks incorrect state of entity, if it returns `True` Exception is raised.
         :param search_params: Dictionary of parameters to be used for search.
+        :param update_params: The params which should be passed to update method.
         :param kwargs: Additional parameters passed when creating entity.
         :return: Dictionary with values returned by Ansible module.
         """
@@ -535,7 +544,11 @@ class BaseModule(object):
             if not self.update_check(entity):
                 new_entity = self.build_entity()
                 if not self._module.check_mode:
-                    updated_entity = entity_service.update(new_entity)
+                    update_params = update_params or {}
+                    updated_entity = entity_service.update(
+                        new_entity,
+                        **update_params
+                    )
                     self.post_update(entity)
 
                 # Update diffs only if user specified --diff paramter,
