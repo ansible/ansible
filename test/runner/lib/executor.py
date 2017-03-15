@@ -94,7 +94,7 @@ SUPPORTED_PYTHON_VERSIONS = (
     '3.6',
 )
 
-COMPILE_PYTHON_VERSIONS = tuple(sorted(SUPPORTED_PYTHON_VERSIONS + ('2.4',)))
+COMPILE_PYTHON_VERSIONS = SUPPORTED_PYTHON_VERSIONS
 
 coverage_path = ''  # pylint: disable=locally-disabled, invalid-name
 
