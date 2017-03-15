@@ -1,12 +1,22 @@
 versions:
+- "2.4":
+    code_name: "Dancing Days"
+    releases:
+    - "0": TBD
+- "2.3":
+    code_name: "Ramble On"
+    releases:
+    - "0": TBD
 - "2.2":
     code_name: "The Battle of Evermore"
     releases:
+    - "2": "03-03-2017"
     - "1": "01-16-2017"
     - "0": "11-01-2016"
 - "2.1":
     code_name: "The Song Remains the Same"
     releases:
+    - "5": "03-03-2017"
     - "4": "01-16-2017"
     - "3": "11-04-2016"
     - "2": "09-29-2016"
