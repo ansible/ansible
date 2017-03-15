@@ -32,6 +32,7 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 $arguments = Get-AnsibleParam -obj $params -name "arguments" -type "str" -aliases "argument"
 $description = Get-AnsibleParam -obj $params -name "description" -type "str" -default "No description."
 $enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -default $true
+# TODO: We do not create the TaskPath if missing
 $path = Get-AnsibleParam -obj $params -name "path" -type "str" -default '\'
 
 # Required vars
@@ -44,7 +45,7 @@ $executable = Get-AnsibleParam -obj $params -name "executable" -type "str" -alia
 $frequency = Get-AnsibleParam -obj $params -name "frequency" -type "str" -validateset "once","daily","weekly" -failifempty $present
 $time = Get-AnsibleParam -obj $params -name "time" -type "str" -failifempty $present
 
-# TODO: Default user to current user
+# TODO: We should default to the current user
 $user = Get-AnsibleParam -obj $params -name "user" -type "str" -failifempty $present
 
 $weekly = $frequency -eq "weekly"
@@ -138,9 +139,8 @@ try {
         $result.msg = "Added new task $name"
     }
     elseif( ($state -eq "present") -and ($exists) ) {
-        $result.foobar = "($($task.Description) vs $description) -- ($($task.TaskName) vs $name) -- ($($task.TaskPath) vs $path) -- ($($task.Actions.Execute) vs $executable) -- ($taskState vs $enabled) -- ($($task.Principal.UserId) vs $user)"
         if ($task.Description -eq $description -and $task.TaskName -eq $name -and $task.TaskPath -eq $path -and $task.Actions.Execute -eq $executable -and $taskState -eq $enabled -and $task.Principal.UserId -eq $user) {
-            #No change in the task
+            # No change in the task
             $result.msg = "No change in task $name"
         }
         else {
