@@ -60,33 +60,47 @@ options:
     - Please note that trying to remove a non-existent license will throw an error.
     suboptions:
       base:
-        description: Cluster Base License
+        description:
+          - Cluster Base License
       nfs:
-        description: NFS License
+        description:
+          - NFS License
       cifs:
-        description: CIFS License
+        description:
+          - CIFS License
       iscsi:
-        description: iSCSI License
+        description:
+          - iSCSI License
       fcp:
-        description: FCP License
+        description:
+          - FCP License
       cdmi:
-        description: CDMI License
+        description:
+          - CDMI License
       snaprestore:
-        description: SnapRestore License
+        description:
+          - SnapRestore License
       snapmirror:
-        description: SnapMirror License
+        description:
+          - SnapMirror License
       flexclone:
-        description: FlexClone License
+        description:
+          - FlexClone License
       snapvault:
-        description: SnapVault License
+        description:
+          - SnapVault License
       snaplock:
-        description: SnapLock License
+        description:
+          - SnapLock License
       snapmanagersuite:
-        description: SnapManagerSuite License
+        description:
+          - SnapManagerSuite License
       snapprotectapps:
-        description: SnapProtectApp License
+        description:
+          - SnapProtectApp License
       v_storageattach:
-        description: Virtual Attached Storage License
+        description:
+          - Virtual Attached Storage License
 
 '''
 
