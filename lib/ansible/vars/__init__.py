@@ -403,8 +403,7 @@ class VariableManager:
         variables['ansible_playbook_python'] = sys.executable
 
         if host:
-            variables['group_names'] = sorted([group.name for group in host.get_groups() if group.name != 'all'])
-
+            # host already provides some magic vars via host.get_vars()
             if self._inventory:
                 variables['groups']  = self._inventory.get_group_dict()
 
