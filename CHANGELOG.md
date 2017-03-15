@@ -34,7 +34,7 @@ Ansible Changes By Release
 
 ###Deprecations:
 * Specifying --tags (or --skip-tags) multiple times on the command line
-  currently leads to the last one overridding all the previous ones. This behaviour is deprecated.
+  currently leads to the last one overriding all the previous ones. This behaviour is deprecated.
   In the future, if you specify --tags multiple times the tags will be merged together.
   From now on, using --tags multiple times on one command line will emit a deprecation warning.
   Setting the merge_multiple_cli_tags option to True in the ansible.cfg file will enable the new behaviour.
@@ -50,6 +50,30 @@ Ansible Changes By Release
   * cl_interface_policy
   * cl_license
   * cl_ports
+  * nxos_mtu, use nxos_system instead
+
+####New Callbacks:
+
+- dense: minimal stdout output with fallback to default when verbose
+
+####New: lookups
+
+- keyring: allows getting password from the 'controller' system's keyrings
+
+####New: cache
+
+- pickle (uses python's own serializer)
+- yaml
+
+####New: inventory scripts
+- oVirt/RHV
+
+####New: filters
+- combinations
+- permutations
+- zip
+- zip_longest
+
 
 ###Module Notes:
 - AWS lambda: previously ignored changes that only affected one parameter. Existing deployments may have outstanding changes that this bugfix will apply.
@@ -286,28 +310,6 @@ Ansible Changes By Release
 - zfs:
   * zfs_facts
   * zpool_facts
-
-####New Callbacks:
-
-- dense: minimal stdout output with fallback to default when verbose
-
-####New: lookups
-
-- keyring: allows getting password from the 'controller' system's keyrings
-
-####New: cache
-
-- pickle (uses python's own serializer)
-- yaml
-
-####New: inventory scripts
-- oVirt/RHV
-
-####New: filters
-- combinations
-- permutations
-- zip
-- zip_longest
 
 
 ## 2.2.1 "The Battle of Evermore" - 2017-01-16
