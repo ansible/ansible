@@ -226,6 +226,26 @@ class DataLoader():
             basedir = to_text(self._basedir, errors='surrogate_or_strict')
             return os.path.abspath(os.path.join(basedir, given))
 
+    def _is_role(self, path):
+        ''' imperfect role detection, roles are still valid w/o main.yml/yaml/etc '''
+
+        isit = False
+        b_path = to_bytes(path, errors='surrogate_or_strict')
+        b_upath = to_bytes(unfrackpath(path), errors='surrogate_or_strict')
+
+        for suffix in (b'.yml', b'.yaml', b''):
+            b_main = b'main%s' % (suffix)
+            b_tasked = b'tasks/%s' % (b_main)
+
+            if b_path.endswith(b'tasks') and os.path.exists(os.path.join(b_path, b_main)) \
+              or os.path.exists(os.path.join(b_upath, b_tasked)) \
+              or os.path.exists(os.path.join(os.path.dirname(b_path), b_tasked)):
+                isit = True
+                break
+
+        return isit
+
+
     def path_dwim_relative(self, path, dirname, source, is_role=False):
         '''
         find one file in either a role or playbook dir with or without
@@ -236,7 +256,6 @@ class DataLoader():
         '''
 
         search = []
-        isrole = False
 
         # I have full path, nothing else needs to be looked at
         if source.startswith('~') or source.startswith(os.path.sep):
@@ -246,11 +265,9 @@ class DataLoader():
             search.append(os.path.join(path, dirname, source))
             basedir = unfrackpath(path)
 
-            #FIXME: this role detection will not work with alternate/missing main.yml
-            # is it a role and if so make sure you get correct base path
-            if path.endswith('tasks') and os.path.exists(to_bytes(os.path.join(path,'main.yml'), errors='surrogate_or_strict')) \
-                    or os.path.exists(to_bytes(os.path.join(path,'tasks/main.yml'), errors='surrogate_or_strict')):
-                is_role = True
+            # not told if role, but detect if it is a role and if so make sure you get correct base path
+            if not is_role:
+                is_role = self._is_role(path)
 
             if is_role and path.endswith('tasks'):
                 basedir = unfrackpath(os.path.dirname(path))
@@ -261,7 +278,7 @@ class DataLoader():
             search.append(self.path_dwim(os.path.join(basedir, dirname, source)))
             self.set_basedir(cur_basedir)
 
-            if isrole and not source.endswith(dirname):
+            if is_role and not source.endswith(dirname):
                 # look in role's tasks dir w/o dirname
                 search.append(self.path_dwim(os.path.join(basedir, 'tasks', source)))
 
@@ -310,9 +327,7 @@ class DataLoader():
 
                 # FIXME: this detection fails with non main.yml roles
                 # if path is in role and 'tasks' not there already, add it into the search
-                if is_role or (b_upath.endswith(b'tasks') and os.path.exists(os.path.join(b_upath, b'main.yml')) \
-                        or os.path.exists(os.path.join(b_upath, b'tasks/main.yml')) \
-                        or os.path.exists(os.path.join(b_mydir, b'tasks/main.yml'))):
+                if is_role or self._is_role(path):
                     if b_mydir.endswith(b'tasks'):
                         search.append(os.path.join(os.path.dirname(b_mydir), b_dirname, b_source))
                         search.append(os.path.join(b_mydir, b_source))
