@@ -205,7 +205,7 @@ class ModuleValidator(Validator):
         'setup.ps1'
     ))
 
-    def __init__(self, path, analyze_arg_spec=False, base_branch=None):
+    def __init__(self, path, analyze_arg_spec=False, base_branch=None, git_cache=None):
         super(ModuleValidator, self).__init__()
 
         self.path = path
@@ -215,6 +215,7 @@ class ModuleValidator(Validator):
         self.analyze_arg_spec = analyze_arg_spec
 
         self.base_branch = base_branch
+        self.git_cache = git_cache or GitCache()
 
         self._python_module_override = False
 
@@ -272,15 +273,11 @@ class ModuleValidator(Validator):
 
     def _get_base_branch_module_path(self):
         """List all paths within lib/ansible/modules to try and match a moved module"""
-        command = ['git', 'ls-tree', '-r', '--name-only', self.base_branch, 'lib/ansible/modules/']
-        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
+        return self.git_cache.base_module_paths.get(self.object_name)
 
-        for path in stdout.splitlines():
-            if path.endswith('/%s' % self.object_name):
-                return path
-
-        return None
+    def _has_alias(self):
+        """Return true if the module has any aliases."""
+        return self.object_name in self.git_cache.head_aliased_modules
 
     def _get_base_file(self):
         # In case of module moves, look for the original location
@@ -300,6 +297,9 @@ class ModuleValidator(Validator):
         return t.name
 
     def _is_new_module(self):
+        if self._has_alias():
+            return False
+
         return not self.object_name.startswith('_') and bool(self.base_branch) and not bool(self.base_module)
 
     def _check_interpreter(self, powershell=False):
@@ -827,6 +827,9 @@ class ModuleValidator(Validator):
     def validate(self):
         super(ModuleValidator, self).validate()
 
+        if self.object_name.startswith('_') and os.path.islink(self.object_path):
+            return
+
         # Blacklists -- these files are not checked
         if not frozenset((self.basename,
                           self.name)).isdisjoint(self.BLACKLIST):
@@ -954,13 +957,15 @@ def main():
 
     reports = OrderedDict()
 
+    git_cache = GitCache(args.base_branch)
+
     for module in args.modules:
         if os.path.isfile(module):
             path = module
             if args.exclude and args.exclude.search(path):
                 sys.exit(0)
             with ModuleValidator(path, analyze_arg_spec=args.arg_spec,
-                                 base_branch=args.base_branch) as mv:
+                                 base_branch=args.base_branch, git_cache=git_cache) as mv:
                 mv.validate()
                 reports.update(mv.report())
 
@@ -983,7 +988,7 @@ def main():
                 if args.exclude and args.exclude.search(path):
                     continue
                 with ModuleValidator(path, analyze_arg_spec=args.arg_spec,
-                                     base_branch=args.base_branch) as mv:
+                                     base_branch=args.base_branch, git_cache=git_cache) as mv:
                     mv.validate()
                     reports.update(mv.report())
 
@@ -991,6 +996,34 @@ def main():
         sys.exit(Reporter.plain(reports, warnings=args.warnings, output=args.output))
     else:
         sys.exit(Reporter.json(reports, warnings=args.warnings, output=args.output))
+
+
+class GitCache(object):
+    def __init__(self, base_branch):
+        self.base_branch = base_branch
+
+        self.base_tree = self._git(['ls-tree', '-r', '--name-only', self.base_branch, 'lib/ansible/modules/'])
+        self.head_tree = self._git(['ls-tree', '-r', '--name-only', 'HEAD', 'lib/ansible/modules/'])
+
+        self.base_module_paths = dict((os.path.basename(p), p) for p in self.base_tree if os.path.splitext(p)[1] in ('.py', '.ps1'))
+
+        del self.base_module_paths['__init__.py']
+
+        self.head_aliased_modules = set()
+
+        for path in self.head_tree:
+            filename = os.path.basename(path)
+
+            if filename.startswith('_') and filename != '__init__.py':
+                if os.path.islink(path):
+                    self.head_aliased_modules.add(os.path.basename(os.path.realpath(path)))
+
+    @staticmethod
+    def _git(args):
+        cmd = ['git'] + args
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
+        return stdout.splitlines()
 
 
 if __name__ == '__main__':
