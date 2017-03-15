@@ -38,11 +38,9 @@ options:
     description:
       - Names of roles or features to install as a single feature or a comma-separated list of features
     required: true
-    default: null
   state:
     description:
       - State of the features or roles on the system
-    required: false
     choices:
       - present
       - absent
@@ -53,16 +51,12 @@ options:
     choices:
       - yes
       - no
-    default: null
-    required: false
   include_sub_features:
     description:
       - Adds all subfeatures of the specified feature
     choices:
       - yes
       - no
-    default: null
-    required: false
   include_management_tools:
     description:
       - Adds the corresponding management tools to the specified feature.
@@ -70,13 +64,10 @@ options:
     choices:
       - yes
       - no
-    default: null
-    required: false
   source:
     description:
       - Specify a source to install the feature from.
       - Not supported in Windows 2008. If present when using Windows 2008 this option will be ignored.
-    required: false
     choices: [ ' {driveletter}:\sources\sxs', ' {IP}\Share\sources\sxs' ]
     version_added: "2.1"
 author:
