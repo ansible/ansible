@@ -521,7 +521,7 @@ def main():
     try:
         disk = None
         state = module.params['state']
-        auth = module.params.pop('auth')
+        auth = module.params.get('auth')
         connection = create_connection(auth)
         disks_service = connection.system_service().disks_service()
         disks_module = DisksModule(
