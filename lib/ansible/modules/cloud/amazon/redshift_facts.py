@@ -27,7 +27,7 @@ author: "Jens Carl (@j-carl)"
 short_description: Gather facts about Redshift cluster(s)
 description:
   - Gather facts about Redshift cluster(s)
-version_added: "2.3"
+version_added: "2.4"
 options:
   cluster_identifier:
     description:
