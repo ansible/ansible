@@ -19,6 +19,7 @@
 - name: remove the dummy test services if it is left over from previous tests
   win_service:
     name: "{{item}}"
+    force_dependent_services: True
     state: absent
   with_items:
   - "{{test_win_service_name}}"
@@ -775,6 +776,7 @@
 - name: make sure all services are stopped, set to LocalSystem and set to auto start before next test
   win_service:
     name: "{{item}}"
+    force_dependent_services: True
     state: stopped
     start_mode: auto
     username: LocalSystem
@@ -817,13 +819,21 @@
     - "win_service_parent1_stat.depended_by == ['TestServiceDependency']"
     - "win_service_parent2_stat.depended_by == ['TestServiceDependency']"
 
-- name: remove the service
+- name: fail to remove service with dependencies
   win_service:
     name: "{{test_win_service_name}}"
     state: absent
+  register: win_service_removed_failed
+  failed_when: win_service_removed_failed.msg != "Cannot stop service 'Test Service New (TestService)' because it has dependent services. It can only be stopped if the Force flag is set."
+
+- name: remove the service while ignoring dependencies
+  win_service:
+    name: "{{test_win_service_name}}"
+    force_dependent_services: True
+    state: absent
   register: win_service_removed
 
-- name: check that removing the service succeeds with changes
+- name: check that removing the service while ignoring dependencies succeeds with changes
   assert:
     that:
     - "win_service_removed|changed"
@@ -839,6 +849,7 @@
 - name: make sure all services are removed in the end
   win_service:
     name: "{{item}}"
+    force_dependent_services: True
     state: absent
   with_items:
   - "{{test_win_service_name}}"
