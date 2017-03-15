@@ -132,8 +132,13 @@ domain:
   sample: example domain
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together,
+)
 
 
 class AnsibleCloudStackIPAddress(AnsibleCloudStack):
@@ -147,8 +152,6 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
     def get_ip_address(self, key=None):
         if self.ip_address:
             return self._get_by_key(key, self.ip_address)
-
-        ip_address = self.module.params.get('ip_address')
         args = {
             'ipaddress': self.module.params.get('ip_address'),
             'account': self.get_account(key='name'),
@@ -170,6 +173,7 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
             'projectid': self.get_project(key='id'),
             'networkid': self.get_network(key='id'),
             'zoneid': self.get_zone(key='id'),
+            'vpcid': self.get_vpc(key='id'),
         }
         ip_address = None
         if not self.module.check_mode:
@@ -203,15 +207,15 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        ip_address = dict(required=False),
-        state = dict(choices=['present', 'absent'], default='present'),
-        vpc = dict(default=None),
-        network = dict(default=None),
-        zone = dict(default=None),
-        domain = dict(default=None),
-        account = dict(default=None),
-        project = dict(default=None),
-        poll_async = dict(type='bool', default=True),
+        ip_address=dict(required=False),
+        state=dict(choices=['present', 'absent'], default='present'),
+        vpc=dict(),
+        network=dict(),
+        zone=dict(),
+        domain=dict(),
+        account=dict(),
+        project=dict(),
+        poll_async=dict(type='bool', default=True),
     ))
 
     module = AnsibleModule(
@@ -239,7 +243,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()
