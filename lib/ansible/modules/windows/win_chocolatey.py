@@ -38,20 +38,21 @@ description:
 options:
   name:
     description:
-      - Name of the package to be installed
+      - Name of the package to be installed.
     required: true
   state:
     description:
-      - State of the package on the system
+      - State of the package on the system.
     choices:
       - present
       - absent
       - latest
+      - reinstalled
     default: present
   force:
     description:
       - Forces install of the package (even if it already exists).
-      - Using C(force) will cause ansible to always report that a change was made
+      - Using C(force) will cause ansible to always report that a change was made.
     choices:
       - yes
       - no
@@ -70,10 +71,10 @@ options:
       - Ignored when C(state) is set to "absent".
   source:
     description:
-      - Specify source rather than using default chocolatey repository
+      - Specify source rather than using default chocolatey repository.
   install_args:
     description:
-      - Arguments to pass to the native installer
+      - Arguments to pass to the native installer.
     version_added: '2.1'
   params:
     description:
@@ -81,24 +82,25 @@ options:
     version_added: '2.1'
   allow_empty_checksums:
     description:
-      - Allow empty Checksums to be used
+      - Allow empty checksums to be used.
     default: false
     version_added: '2.2'
   ignore_checksums:
     description:
-      - Ignore Checksums
+      - Ignore checksums altogether.
     default: false
     version_added: '2.2'
   ignore_dependencies:
     description:
-      - Ignore dependencies, only install/upgrade the package itself
+      - Ignore dependencies, only install/upgrade the package itself.
     default: false
     version_added: '2.1'
-  execution_timeout:
+  timeout:
     description:
-      - Timeout to pass to the native installer
-    required: false
+      - The time to allow chocolatey to finish before timing out.
+    default: 2700
     version_added: '2.3'
+    aliases: [ execution_timeout ]
 author: "Trond Hindenes (@trondhindenes), Peter Mounce (@petemounce), Pepe Barbe (@elventear), Adam Keech (@smadam813)"
 '''
 
