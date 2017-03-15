@@ -36,55 +36,41 @@ extends_documentation_fragment: eos
 options:
   hostname:
     description:
-      - The C(hostname) argument will configure the device hostname
-        parameter on Arista EOS devices.  The C(hostname) value is an
-        ASCII string value.
-    required: false
-    default: null
+      - Configure the device hostname parameter. This option takes an ASCII string value.
   domain_name:
     description:
-      - The C(description) argument will configure the IP domain name
-        on the remote device to the provided value.  The C(domain_name)
-        argument should be in the dotted name form and will be
+      - Configure the IP domain name
+        on the remote device to the provided value. Value
+        should be in the dotted name form and will be
         appended to the C(hostname) to create a fully-qualified
-        domain name
-    required: false
-    default: null
-  domain_list:
+        domain name.
+  domain_search:
     description:
-      - The C(domain_list) provides the list of domain suffixes to
+      - Provides the list of domain suffixes to
         append to the hostname for the purpose of doing name resolution.
         This argument accepts a list of names and will be reconciled
         with the current active configuration on the running node.
-    required: false
-    default: null
   lookup_source:
     description:
-      - The C(lookup_source) argument provides one or more source
+      - Provides one or more source
         interfaces to use for performing DNS lookups.  The interface
         provided in C(lookup_source) can only exist in a single VRF.  This
         argument accepts either a list of interface names or a list of
         hashes that configure the interface name and VRF name.  See
         examples.
-    required: false
-    default: null
   name_servers:
     description:
-      - The C(name_serves) argument accepts a list of DNS name servers by
-        way of either FQDN or IP address to use to perform name resolution
-        lookups.  This argument accepts wither a list of DNS servers or
+      - List of DNS name servers by IP address to use to perform name resolution
+        lookups.  This argument accepts either a list of DNS servers or
         a list of hashes that configure the name server and VRF name.  See
         examples.
-    required: false
-    default: null
   state:
     description:
-      - The C(state) argument configures the state of the configuration
+      - State of the configuration
         values in the device's current active configuration.  When set
         to I(present), the values should be configured in the device active
         configuration and when set to I(absent) the values should not be
         in the device active configuration
-    required: false
     default: present
     choices: ['present', 'absent']
 """
@@ -93,7 +79,7 @@ EXAMPLES = """
 - name: configure hostname and domain-name
   eos_system:
     hostname: eos01
-    domain_name: eng.ansible.com
+    domain_name: test.example.com
 
 - name: remove configuration
   eos_system:
@@ -131,10 +117,10 @@ commands:
   type: list
   sample:
     - hostname eos01
-    - ip domain-name eng.ansible.com
+    - ip domain-name test.example.com
 session_name:
   description: The EOS config session name used to load the configuration
-  returned: when changed is True
+  returned: changed
   type: str
   sample: ansible_1479315771
 """
@@ -301,7 +287,7 @@ def main():
         hostname=dict(),
 
         domain_name=dict(),
-        domain_list=dict(type='list'),
+        domain_list=dict(type='list', aliases=['domain_search']),
 
         # { interface: <str>, vrf: <str> }
         lookup_source=dict(type='list'),

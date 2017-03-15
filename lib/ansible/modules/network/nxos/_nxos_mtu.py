@@ -16,23 +16,23 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
+ANSIBLE_METADATA = {'status': ['deprecated'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: nxos_mtu
 extends_documentation_fragment: nxos
 version_added: "2.2"
+deprecated: Deprecated in 2.2 use M(nxos_system)'s C(mtu) option.
 short_description: Manages MTU settings on Nexus switch.
 description:
     - Manages MTU settings on Nexus switch.
 author:
     - Jason Edelman (@jedelman8)
 notes:
-    - Either C(sysmtu) param is required or C(interface) AND C(mtu) params are req'd.
+    - Either C(sysmtu) param is required or (C(interface) AND C(mtu)) parameters are required.
     - C(state=absent) unconfigures a given MTU if that value is currently present.
 options:
     interface:

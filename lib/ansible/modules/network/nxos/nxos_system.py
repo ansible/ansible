@@ -36,54 +36,43 @@ description:
 options:
   hostname:
     description:
-      - The C(hostname) argument will configure the device hostname
-        parameter on Cisco NXOS devices.  The C(hostname) value is an
-        ASCII string value.
-    required: false
-    default: null
-  domain_lookup:
-    description:
-      - The C(domain_lookup) argument enables or disables the DNS
-        lookup feature in Cisco NXOS.  This argument accepts boolean
-        values.  When enabled, the system will try to resolve hostnames
-        using DNS and when disabled, hostnames will not be resolved.
-    required: false
-    default: null
-  domain_search:
-    description:
-      - The C(domain_search) argument configures a list of domain
-        name suffixes to search when performing DNS name resolution.
-        This argument accepts either a list of domain names or
-        a list of dicts that configure the domain name and VRF name.  See
-        examples.
-    required: false
-    default: null
+      - Configure the device hostname parameter. This option takes an ASCII string value.
   domain_name:
     description:
-      - The C(domain_name) argument configures the default domain
+      - Configures the default domain
         name suffix to be used when referencing this node by its
         FQDN.  This argument accepts either a list of domain names or
         a list of dicts that configure the domain name and VRF name.  See
         examples.
-    required: false
-    default: null
+  domain_lookup:
+    description:
+      - Enables or disables the DNS
+        lookup feature in Cisco NXOS.  This argument accepts boolean
+        values.  When enabled, the system will try to resolve hostnames
+        using DNS and when disabled, hostnames will not be resolved.
+  domain_search:
+    description:
+      - Configures a list of domain
+        name suffixes to search when performing DNS name resolution.
+        This argument accepts either a list of domain names or
+        a list of dicts that configure the domain name and VRF name.  See
+        examples.
   name_servers:
     description:
-      - The C(name_servers) argument accepts a list of DNS name servers by
-        way of either FQDN or IP address to use to perform name resolution
-        lookups.  This argument accepts wither a list of DNS servers or
+      - List of DNS name servers by IP address to use to perform name resolution
+        lookups.  This argument accepts either a list of DNS servers or
         a list of hashes that configure the name server and VRF name.  See
         examples.
-    required: false
-    default: null
+  system_mtu:
+    description:
+      - Specifies the mtu, must be an integer.
   state:
     description:
-      - The C(state) argument configures the state of the configuration
+      - State of the configuration
         values in the device's current active configuration.  When set
         to I(present), the values should be configured in the device active
         configuration and when set to I(absent) the values should not be
         in the device active configuration
-    required: false
     default: present
     choices: ['present', 'absent']
 """
@@ -92,7 +81,7 @@ EXAMPLES = """
 - name: configure hostname and domain-name
   nxos_system:
     hostname: nxos01
-    domain_name: eng.ansible.com
+    domain_name: test.example.com
 
 - name: remove configuration
   nxos_system:
@@ -122,7 +111,7 @@ commands:
   type: list
   sample:
     - hostname nxos01
-    - ip domain-name eng.ansible.com
+    - ip domain-name test.example.com
 """
 import re
 
