@@ -74,10 +74,12 @@ options:
         default: null
         suboptions:
             name:
-                description: Unique name for the rule.
+                description:
+                  - Unique name for the rule.
                 required: true
             description:
-                description: Short description of the rule's purpose.
+                description:
+                  - Short description of the rule's purpose.
             protocol:
                 description: Accepted traffic protocol.
                 choices:
@@ -86,28 +88,35 @@ options:
                   - "*"
                 default: "*"
             source_port_range:
-                description: Port or range of ports from which traffic originates.
+                description:
+                  - Port or range of ports from which traffic originates.
                 default: "*"
             destination_port_range:
-                description: Port or range of ports to which traffic is headed.
+                description:
+                  - Port or range of ports to which traffic is headed.
                 default: "*"
             source_address_prefix:
-                description: IP address or CIDR from which traffic originates.
+                description:
+                  - IP address or CIDR from which traffic originates.
                 default: "*"
             destination_address_prefix:
-                description: IP address or CIDR to which traffic is headed.
+                description:
+                  - IP address or CIDR to which traffic is headed.
                 default: "*"
             access:
-                description: Whether or not to allow the traffic flow.
+                description:
+                  - Whether or not to allow the traffic flow.
                 choices:
                   - Allow
                   - Deny
                 default: Allow
             priority:
-                description: Order in which to apply the rule. Must a unique integer between 100 and 4096 inclusive.
+                description:
+                  - Order in which to apply the rule. Must a unique integer between 100 and 4096 inclusive.
                 required: true
             direction:
-                description: Indicates the direction of the traffic flow.
+                description:
+                  - Indicates the direction of the traffic flow.
                 choices:
                   - Inbound
                   - Outbound

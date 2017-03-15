@@ -144,13 +144,17 @@ options:
     version_added: "2.1"
     suboptions:
       memory:
-        description: Set memory limit for build
+        description:
+          - Set memory limit for build.
       memswap:
-        description: Total memory (memory + swap), -1 to disable swap
+        description:
+          - Total memory (memory + swap), -1 to disable swap.
       cpushares:
-        description: CPU shares (relative weight)
+        description:
+          - CPU shares (relative weight).
       cpusetcpus:
-        description: CPUs in which to allow execution, e.g., "0-3", "0,1"
+        description:
+          - CPUs in which to allow execution, e.g., "0-3", "0,1".
   use_tls:
     description:
       - "DEPRECATED. Whether to use tls to connect to the docker server. Set to C(no) when TLS will not be used. Set to
