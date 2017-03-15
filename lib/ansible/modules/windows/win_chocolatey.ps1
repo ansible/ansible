@@ -24,7 +24,8 @@ $result = @{
     changed = $false
 }
 
-$params = Parse-Args $args
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $package = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
@@ -32,8 +33,8 @@ $upgrade = Get-AnsibleParam -obj $params -name "upgrade" -type "bool" -default $
 $version = Get-AnsibleParam -obj $params -name "version" -type "str"
 $source = Get-AnsibleParam -obj $params -name "source" -type "str"
 $showlog = Get-AnsibleParam -obj $params -name "showlog" -type "bool" -default $false
-$executiontimeout = Get-Attr -obj $params -name execution_timeout -default $null
-$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent","latest"
+$timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int" -default 2700 -aliases "execution_timeout"
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent","latest","reinstalled"
 $installargs = Get-AnsibleParam -obj $params -name "install_args" -type "str"
 $packageparams = Get-AnsibleParam -obj $params -name "params" -type "str"
 $allowemptychecksums = Get-AnsibleParam -obj $params -name "allow_empty_checksums" -type "bool" -default $false
@@ -143,7 +144,7 @@ Function Choco-Upgrade
         [Parameter(Mandatory=$false, Position=9)]
         [bool]$ignoredependencies,
         [Parameter(Mandatory=$false, Position=10)]
-        [string]$executiontimeout
+        [int]$timeout
     )
 
     if (-not (Choco-IsInstalled $package))
@@ -151,7 +152,12 @@ Function Choco-Upgrade
         throw "$package is not installed, you cannot upgrade"
     }
 
-    $cmd = "$executable upgrade -dv -y $package"
+    $cmd = "$executable upgrade -dv -y $package -timeout $timeout"
+
+    if ($check_mode)
+    {
+        $cmd += " -whatif"
+    }
 
     if ($version)
     {
@@ -191,11 +197,6 @@ Function Choco-Upgrade
     if ($ignoredependencies)
     {
         $cmd += " -ignoredependencies"
-    }
-
-    if ($executiontimeout)
-    {
-        $cmd += " --execution-timeout=$executiontimeout"
     }
 
     $output = invoke-expression $cmd
@@ -243,7 +244,7 @@ Function Choco-Install
         [Parameter(Mandatory=$false, Position=10)]
         [bool]$ignoredependencies,
         [Parameter(Mandatory=$false, Position=11)]
-        [string]$executiontimeout
+        [int]$timeout
     )
 
     if ((Choco-IsInstalled $package) -and -not $force)
@@ -253,7 +254,7 @@ Function Choco-Install
             Choco-Upgrade -package $package -version $version -source $source -force $force `
                 -installargs $installargs -packageparams $packageparams `
                 -allowemptychecksums $allowemptychecksums -ignorechecksums $ignorechecksums `
-                -ignoredependencies $ignoredependencies -executiontimeout $executiontimeout
+                -ignoredependencies $ignoredependencies -timeout $timeout
 
             return
         }
@@ -264,7 +265,12 @@ Function Choco-Install
         }
     }
 
-    $cmd = "$executable install -dv -y $package"
+    $cmd = "$executable install -dv -y $package -timeout $timeout"
+
+    if ($check_mode)
+    {
+        $cmd += " -whatif"
+    }
 
     if ($version)
     {
@@ -306,11 +312,6 @@ Function Choco-Install
         $cmd += " -ignoredependencies"
     }
 
-    if ($executiontimeout)
-    {
-        $cmd += " --execution-timeout=$executiontimeout"
-    }
-
     $results = invoke-expression $cmd
 
     $result.rc = $LastExitCode
@@ -336,7 +337,7 @@ Function Choco-Uninstall
         [Parameter(Mandatory=$false, Position=3)]
         [bool]$force,
         [Parameter(Mandatory=$false, Position=4)]
-        [string]$executiontimeout
+        [int]$timeout
 
     )
 
@@ -345,7 +346,12 @@ Function Choco-Uninstall
         return
     }
 
-    $cmd = "$executable uninstall -dv -y $package"
+    $cmd = "$executable uninstall -dv -y $package -timeout $timeout"
+
+    if ($check_mode)
+    {
+        $cmd += " -whatif"
+    }
 
     if ($version)
     {
@@ -360,11 +366,6 @@ Function Choco-Uninstall
     if ($packageparams)
     {
         $cmd += " -params '$packageparams'"
-    }
-
-    if ($executiontimeout)
-    {
-        $cmd += " --execution-timeout=$executiontimeout"
     }
 
     $results = invoke-expression $cmd
@@ -389,19 +390,27 @@ Try
         Choco-Install -package $package -version $version -source $source -force $force `
             -installargs $installargs -packageparams $packageparams `
             -allowemptychecksums $allowemptychecksums -ignorechecksums $ignorechecksums `
-            -ignoredependencies $ignoredependencies -executiontimeout $executiontimeout
+            -ignoredependencies $ignoredependencies -timeout $timeout
     }
     elseif ($state -eq "latest")
     {
         Choco-Upgrade -package $package -version $version -source $source -force $force `
             -installargs $installargs -packageparams $packageparams `
             -allowemptychecksums $allowemptychecksums -ignorechecksums $ignorechecksums `
-            -ignoredependencies $ignoredependencies
+            -ignoredependencies $ignoredependencies -timeout $timeout
     }
     elseif ($state -eq "absent")
     {
-        Choco-Uninstall -package $package -version $version -force $force `
-            -executiontimeout $executiontimeout
+        Choco-Uninstall -package $package -version $version -force $force -timeout $timeout
+    }
+    elseif ($state -eq "reinstalled")
+    {
+        Choco-Uninstall -package $package -version $version -force $force -timeout $timeout
+
+        Choco-Install -package $package -version $version -source $source -force $force `
+            -installargs $installargs -packageparams $packageparams `
+            -allowemptychecksums $allowemptychecksums -ignorechecksums $ignorechecksums `
+            -ignoredependencies $ignoredependencies -timeout $timeout
     }
 
     Exit-Json $result
