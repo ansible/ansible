@@ -105,8 +105,12 @@ RETURN = '''
 
 '''
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+# from ansible.module_utils.basic import *
+# from ansible.module_utils.ec2 import *
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import (boto3_conn,
+        ec2_argument_spec, get_aws_connection_info)
 
 try:
     import boto3
@@ -172,15 +176,18 @@ def create_lifecycle_hook(connection, module):
 
     return(changed)
 
-# stolen from: http://stackoverflow.com/questions/4527942/comparing-two-dictionaries-in-python
-# thank you Daniel
 def dict_compare(d1, d2):
     d1_keys = set(d1.keys())
     d2_keys = set(d2.keys())
     intersect_keys = d1_keys.intersection(d2_keys)
     added = d1_keys - d2_keys
     removed = d2_keys - d1_keys
-    modified = {o : (d1[o], d2[o]) for o in intersect_keys if d1[o] != d2[o]}
+    modified = False
+    for key in d1:
+        if d1[key] != d2[key]:
+            modified = True
+            break
+
     same = set(o for o in intersect_keys if d1[o] == d2[o])
     return added, removed, modified, same
 
