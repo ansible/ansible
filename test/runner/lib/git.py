@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function
 
 from lib.util import (
     CommonConfig,
+    SubprocessError,
     run_command,
 )
 
@@ -54,6 +55,18 @@ class Git(object):
         """
         cmd = ['merge-base', '--fork-point', branch]
         return self.run_git(cmd).strip()
+
+    def is_valid_ref(self, ref):
+        """
+        :type ref: str
+        :rtype: bool
+        """
+        cmd = ['show', ref]
+        try:
+            self.run_git(cmd)
+            return True
+        except SubprocessError:
+            return False
 
     def run_git_split(self, cmd, separator=None):
         """
