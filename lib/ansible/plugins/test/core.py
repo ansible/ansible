@@ -137,4 +137,7 @@ class TestModule(object):
             # version comparison
             'version_compare': version_compare,
 
+            # lists
+            'any': any,
+            'all': all,
         }
