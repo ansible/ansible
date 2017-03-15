@@ -41,6 +41,7 @@ from lib.util import (
     remove_tree,
     make_dirs,
     is_shippable,
+    is_binary_file,
 )
 
 from lib.test import (
@@ -80,6 +81,10 @@ from lib.test import (
     TestSuccess,
     TestFailure,
     TestSkipped,
+)
+
+from lib.metadata import (
+    Metadata,
 )
 
 SUPPORTED_PYTHON_VERSIONS = (
@@ -919,7 +924,7 @@ def detect_changes(args):
 
 def detect_changes_shippable(args):
     """Initialize change detection on Shippable.
-    :type args: CommonConfig
+    :type args: TestConfig
     :rtype: list[str]
     """
     git = Git(args)
@@ -933,6 +938,9 @@ def detect_changes_shippable(args):
         job_type = 'merge commit'
 
     display.info('Processing %s for branch %s commit %s' % (job_type, result.branch, result.commit))
+
+    if not args.metadata.changes:
+        args.metadata.populate_changes(result.diff)
 
     return result.paths
 
@@ -976,6 +984,19 @@ def detect_changes_local(args):
         names |= set(result.staged)
     if args.unstaged:
         names |= set(result.unstaged)
+
+    if not args.metadata.changes:
+        args.metadata.populate_changes(result.diff)
+
+        for path in result.untracked:
+            if is_binary_file(path):
+                args.metadata.changes[path] = ((0, 0),)
+                continue
+
+            with open(path, 'r') as source_fd:
+                line_count = len(source_fd.read().splitlines())
+
+            args.metadata.changes[path] = ((1, line_count),)
 
     return sorted(names)
 
