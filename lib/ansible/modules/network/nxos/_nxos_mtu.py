@@ -18,7 +18,7 @@
 
 ANSIBLE_METADATA = {'status': ['deprecated'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
