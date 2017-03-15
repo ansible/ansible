@@ -82,14 +82,12 @@ Fields
 :supported_by: This field records who supports the module.
    Default value is ``community``. Values are:
 
-   :core: Maintained by the Ansible core team. Core team will fix
-      bugs, add new features, and review PRs.
-   :community: This module is maintained by the community at large,
-      which is responsible for fixing bugs, adding new features, and
-      reviewing changes.
-   :curated: The Ansible Core Team is the gatekeeper for this module. They
-      will review PRs from the community before merging but might not generate
-      fixes and code for new features on their own.
+   :core:
+   :curated:
+   :community:
+   
+   For information on what the support level values entail, please see
+   :doc:`../modules_support.rst`
 
 :status: This field records information about the module that is
    important to the end user. It’s a list of strings. The default value
