@@ -1,0 +1,26 @@
+- name: Remove potentially leftover scheduled task
+  win_scheduled_task: &wst_absent
+    name: Test
+    state: absent
+
+- name: Add scheduled task
+  win_scheduled_task: &wst_present
+    name: Test
+    executable: dir.exe
+    arguments: C:\Windows\Temp\
+    frequency: once
+    time: 5pm
+    user: SYSTEM
+  register: add_scheduled_task
+
+- name: Add scheduled task (again)
+  win_scheduled_task: *wst_present
+  register: add_scheduled_task_again
+
+- name: Remove scheduled task
+  win_scheduled_task: *wst_absent
+  register: remove_scheduled_task
+
+- name: Remove scheduled task (again)
+  win_scheduled_task: *wst_absent
+  register: remove_scheduled_task_again
