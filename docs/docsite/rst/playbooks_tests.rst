@@ -83,6 +83,27 @@ To see if a list includes or is included by another list, you can use 'issubset'
 
 .. _path_tests:
 
+.. versionadded:: 2.4
+
+You can use `any` and `all` to check if any or all elements in a list are true or not::
+
+  vars:
+    mylist:
+        - 1
+        - 3 == 3
+        - True
+    myotherlist:
+        - False
+        - True
+  tasks:
+
+    - debug: msg="all are true!"
+      when: mylist is all
+
+    - debug: msg="at least one is true"
+      when: myotherlist|any
+
+
 Testing paths
 `````````````
 

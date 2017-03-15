@@ -1,7 +1,13 @@
 Ansible Changes By Release
 ==========================
 
-## 2.3 TBD - ACTIVE DEVELOPMENT
+## 2.4 "Dancing Days" - ACTIVE DEVELOPMENT
+
+#### New: Tests
+- any : true if any element is true
+- all: true if all elements are true
+
+## 2.3 "Ramble On" - RELEASE CANDIDATE
 
 ### Major Changes
 * Documented and renamed the previously released 'single var vaulting' feature, allowing user to use vault encryption for single variables in a normal YAML vars file.
