@@ -36,14 +36,10 @@ extends_documentation_fragment: vyos
 options:
   hostname:
     description:
-      - The new hostname to apply to the device.
-    required: false
-    default: null
+      - Configure the device hostname parameter. This option takes an ASCII string value.
   domain_name:
     description:
       - The new domain name to apply to the device.
-    required: false
-    default: null
   name_server:
     description:
       - A list of name servers to use with the device. Mutually exclusive with
@@ -54,12 +50,9 @@ options:
     description:
       - A list of domain names to search. Mutually exclusive with
         I(name_server)
-    required: false
-    default: null
   state:
     description:
       - Whether to apply (C(present)) or remove (C(absent)) the settings.
-    required: false
     default: present
     choices: ['present', 'absent']
 """
@@ -78,7 +71,7 @@ EXAMPLES = """
 - name: configure hostname and domain-name
   vyos_system:
     hostname: vyos01
-    domain_name: foo.example.com
+    domain_name: test.example.com
 
 - name: remove all configuration
   vyos_system:

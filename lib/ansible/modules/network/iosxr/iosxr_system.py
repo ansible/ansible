@@ -36,61 +36,46 @@ extends_documentation_fragment: iosxr
 options:
   hostname:
     description:
-      - The C(hostname) argument will configure the device hostname
-        parameter on Cisco IOS-XR devices.  The C(hostname) value is an
-        ASCII string value.
-    required: false
-    default: null
+      - Configure the device hostname parameter. This option takes an ASCII string value.
   domain_name:
     description:
-      - The C(description) argument will configure the IP domain name
-        on the remote device to the provided value.  The C(domain_name)
-        argument should be in the dotted name form and will be
+      - Configure the IP domain name
+        on the remote device to the provided value. Value
+        should be in the dotted name form and will be
         appended to the C(hostname) to create a fully-qualified
-        domain name
-    required: false
-    default: null
+        domain name.
   domain_search:
     description:
-      - The C(domain_list) provides the list of domain suffixes to
+      - Provides the list of domain suffixes to
         append to the hostname for the purpose of doing name resolution.
         This argument accepts a list of names and will be reconciled
         with the current active configuration on the running node.
-    required: false
-    default: null
   lookup_source:
     description:
       - The C(lookup_source) argument provides one or more source
         interfaces to use for performing DNS lookups.  The interface
         provided in C(lookup_source) must be a valid interface configured
         on the device.
-    required: false
-    default: null
   lookup_enabled:
     description:
-      - The C(lookup_enabled) argument provides administrative control
+      - Provides administrative control
         for enabling or disabling DNS lookups.  When this argument is
         set to True, lookups are performed and when it is set to False,
         lookups are not performed.
-    required: false
-    default: null
-    choices: ['true', 'false']
+    type: bool
   name_servers:
     description:
       - The C(name_serves) argument accepts a list of DNS name servers by
         way of either FQDN or IP address to use to perform name resolution
         lookups.  This argument accepts wither a list of DNS servers See
         examples.
-    required: false
-    default: null
   state:
     description:
-      - The C(state) argument configures the state of the configuration
+      - State of the configuration
         values in the device's current active configuration.  When set
         to I(present), the values should be configured in the device active
         configuration and when set to I(absent) the values should not be
         in the device active configuration
-    required: false
     default: present
     choices: ['present', 'absent']
 """
@@ -99,7 +84,7 @@ EXAMPLES = """
 - name: configure hostname and domain-name
   iosxr_system:
     hostname: iosxr01
-    domain_name: eng.ansible.com
+    domain_name: test.example.com
     domain-search:
       - ansible.com
       - redhat.com
@@ -125,7 +110,7 @@ commands:
   type: list
   sample:
     - hostname iosxr01
-    - ip domain-name eng.ansible.com
+    - ip domain-name test.example.com
 """
 import re
 
