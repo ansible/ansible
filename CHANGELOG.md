@@ -64,6 +64,30 @@ Ansible Changes By Release
 
 - pickle (uses python's own serializer)
 - yaml
+  * nxos_mtu will be deprecated in 2.3 and removed in 2.5, use nxos_system instead
+
+####New Callbacks:
+
+- dense: minimal stdout output with fallback to default when verbose
+
+####New: lookups
+
+- keyring: allows getting password from the 'controller' system's keyrings
+
+####New: cache
+
+- pickle (uses python's own serializer)
+- yaml
+
+####New: inventory scripts
+- oVirt/RHV
+
+####New: filters
+- combinations
+- permutations
+- zip
+- zip_longest
+
 
 #### New: inventory scripts
 - oVirt/RHV
