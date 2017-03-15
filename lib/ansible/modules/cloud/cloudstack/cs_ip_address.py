@@ -147,8 +147,6 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
     def get_ip_address(self, key=None):
         if self.ip_address:
             return self._get_by_key(key, self.ip_address)
-
-        ip_address = self.module.params.get('ip_address')
         args = {
             'ipaddress': self.module.params.get('ip_address'),
             'account': self.get_account(key='name'),
@@ -170,6 +168,7 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
             'projectid': self.get_project(key='id'),
             'networkid': self.get_network(key='id'),
             'zoneid': self.get_zone(key='id'),
+            'vpcid': self.get_vpc(key='id'),
         }
         ip_address = None
         if not self.module.check_mode:
