@@ -245,13 +245,6 @@ class AnsibleCloudStack(object):
             return self._get_by_key(key, self.vpc)
         self.module.fail_json(msg="VPC '%s' not found" % vpc)
 
-    def is_vm_in_vpc(self, vm):
-        for n in vm.get('nic'):
-            if n.get('isdefault', False):
-                return self.is_vpc_network(network_id=n['networkid'])
-        self.module.fail_json(msg="VM has no default nic")
-
-
     def is_vpc_network(self, network_id):
         """Returns True if network is in VPC."""
         # This is an efficient way to query a lot of networks at a time
@@ -383,23 +376,16 @@ class AnsibleCloudStack(object):
         if not vm:
             self.module.fail_json(msg="Virtual machine param 'vm' is required")
 
-        vpc_id = self.get_vpc(key='id')
-
         args = {
             'account': self.get_account(key='name'),
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
             'zoneid': self.get_zone(key='id'),
             'networkid': self.get_network(key='id'),
-            'vpcid': vpc_id,
         }
         vms = self.cs.listVirtualMachines(**args)
         if vms:
             for v in vms['virtualmachine']:
-                # Due the limitation of the API, there is no easy way (yet) to get only those VMs
-                # not belonging to a VPC.
-                if not vpc_id and self.is_vm_in_vpc(vm=v):
-                    continue
                 if vm.lower() in [ v['name'].lower(), v['displayname'].lower(), v['id'] ]:
                     self.vm = v
                     return self._get_by_key(key, self.vm)
