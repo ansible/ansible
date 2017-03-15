@@ -529,8 +529,7 @@ def main():
     ))
     required_together = cs_required_together()
     required_together.extend([
-        ['start_ip', 'netmask', 'gateway'],
-        ['start_ipv6', 'cidr_ipv6', 'gateway_ipv6'],
+        ['netmask', 'gateway'],
     ])
 
     module = AnsibleModule(
