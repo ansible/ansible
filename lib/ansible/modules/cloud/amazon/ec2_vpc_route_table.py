@@ -31,7 +31,8 @@ options:
     description:
       - "Look up route table by either tags or by route table ID. Non-unique tag lookup will fail.
         If no tags are specifed then no lookup for an existing route table is performed and a new
-        route table will be created. To change tags of a route table, you must look up by id."
+        route table will be created. To change tags of a route table or delete a route table,
+        you must look up by id."
     required: false
     default: tag
     choices: [ 'tag', 'id' ]
@@ -295,7 +296,7 @@ def get_route_table_by_tags(vpc_conn, vpc_id, tags):
         this_tags = get_resource_tags(vpc_conn, table.id)
         if tags_match(tags, this_tags):
             route_table = table
-            count +=1
+            count += 1
 
     if count > 1:
         raise RuntimeError("Tags provided do not identify a unique route table")
@@ -427,7 +428,7 @@ def ensure_subnet_associations(vpc_conn, vpc_id, route_table, subnets,
 
     if purge_subnets:
         to_delete = [a_id for a_id in current_association_ids
-                 if a_id not in new_association_ids]
+                     if a_id not in new_association_ids]
 
         for a_id in to_delete:
             changed = True
@@ -504,10 +505,10 @@ def get_route_table_info(route_table):
     for route in route_table.routes:
         routes.append(route.__dict__)
 
-    route_table_info = { 'id': route_table.id,
-                         'routes': routes,
-                         'tags': route_table.tags,
-                         'vpc_id': route_table.vpc_id }
+    route_table_info = {'id': route_table.id,
+                        'routes': routes,
+                        'tags': route_table.tags,
+                        'vpc_id': route_table.vpc_id}
 
     return route_table_info
 
@@ -619,16 +620,16 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            lookup = dict(default='tag', required=False, choices=['tag', 'id']),
-            propagating_vgw_ids = dict(default=None, required=False, type='list'),
+            lookup=dict(default='tag', required=False, choices=['tag', 'id']),
+            propagating_vgw_ids=dict(default=None, required=False, type='list'),
             purge_routes=dict(default=True, type='bool'),
             purge_subnets=dict(default=True, type='bool'),
-            route_table_id = dict(default=None, required=False),
-            routes = dict(default=[], required=False, type='list'),
-            state = dict(default='present', choices=['present', 'absent']),
-            subnets = dict(default=None, required=False, type='list'),
-            tags = dict(default=None, required=False, type='dict', aliases=['resource_tags']),
-            vpc_id = dict(default=None, required=True)
+            route_table_id=dict(default=None, required=False),
+            routes=dict(default=[], required=False, type='list'),
+            state=dict(default='present', choices=['present', 'absent']),
+            subnets=dict(default=None, required=False, type='list'),
+            tags=dict(default=None, required=False, type='dict', aliases=['resource_tags']),
+            vpc_id=dict(default=None, required=True)
         )
     )
 
