@@ -473,30 +473,21 @@ class Inventory(object):
         """
 
         results = []
-        hostnames = set()
 
         def __append_host_to_results(host):
-            if host.name not in hostnames:
-                hostnames.add(host.name)
-                results.append(host)
+            if host.name not in results:
+                if not host.implicit:
+                    results.append(host)
 
         groups = self.get_groups()
         for group in groups.values():
-            if pattern == 'all':
+            if self._match(group.name, pattern):
                 for host in group.get_hosts():
-                    if host.implicit:
-                        continue
                     __append_host_to_results(host)
             else:
-                if self._match(group.name, pattern) and group.name not in ('all', 'ungrouped'):
-                    for host in group.get_hosts():
-                        if host.implicit:
-                            continue
-                        __append_host_to_results(host)
-                else:
-                    matching_hosts = self._match_list(group.get_hosts(), 'name', pattern)
-                    for host in matching_hosts:
-                        __append_host_to_results(host)
+                matching_hosts = self._match_list(group.get_hosts(), 'name', pattern)
+                for host in matching_hosts:
+                    __append_host_to_results(host)
 
         if pattern in C.LOCALHOST and len(results) == 0:
             new_host = self._create_implicit_localhost(pattern)
