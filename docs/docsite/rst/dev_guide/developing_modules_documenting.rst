@@ -86,7 +86,7 @@ Fields
    :curated:
    :community:
    
-   For information on what the values support levels entail, please see
+   For information on what the support level values entail, please see
    :doc:`../modules_support.rst`
 
 :status: This field records information about the module that is
