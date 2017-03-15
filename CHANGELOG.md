@@ -3154,4 +3154,3 @@ in kickstarts
 ## 0.0.2 and 0.0.1
 
 * Initial stages of project
-
