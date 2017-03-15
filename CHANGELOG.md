@@ -3,7 +3,7 @@ Ansible Changes By Release
 
 ## 2.3 TBD - ACTIVE DEVELOPMENT
 
-###Major Changes:
+### Major Changes
 * Documented and renamed the previously released 'single var vaulting' feature, allowing user to use vault encryption for single variables in a normal YAML vars file.
 * Allow module_utils for custom modules to be placed in site-specific directories and shipped in roles
 * On platforms that support it, use more modern system polling API instead of select in the ssh connection plugin.
@@ -14,7 +14,7 @@ Ansible Changes By Release
 * Extended Windows module API with parameter-type support, helper functions. (i.e. Expand-Environment, Add-Warning, Add-DeprecatationWarning)
 * restructured how async works to allow it to apply to action plugins that choose to support it.
 
-###Minor Changes:
+### Minor Changes
 * The version and release facts for OpenBSD hosts were reversed.
   This has been changed so that version has the numeric portion and release has the name of the release.
 * removed 'package' from default squash actions as not all package managers support it and it creates errors when using loops,
@@ -32,9 +32,9 @@ Ansible Changes By Release
 * made any_errors_fatal inheritable from play to task and all other objects in between.
 * many small performance improvements in inventory and variable handling and in task execution.
 
-###Deprecations:
+### Deprecations
 * Specifying --tags (or --skip-tags) multiple times on the command line
-  currently leads to the last one overridding all the previous ones. This behaviour is deprecated.
+  currently leads to the last one overriding all the previous ones. This behaviour is deprecated.
   In the future, if you specify --tags multiple times the tags will be merged together.
   From now on, using --tags multiple times on one command line will emit a deprecation warning.
   Setting the merge_multiple_cli_tags option to True in the ansible.cfg file will enable the new behaviour.
@@ -50,8 +50,32 @@ Ansible Changes By Release
   * cl_interface_policy
   * cl_license
   * cl_ports
+  * nxos_mtu, use nxos_system instead
 
-###Module Notes:
+#### New: Callbacks
+
+- dense: minimal stdout output with fallback to default when verbose
+
+#### New: lookups
+
+- keyring: allows getting password from the 'controller' system's keyrings
+
+#### New: cache
+
+- pickle (uses python's own serializer)
+- yaml
+
+#### New: inventory scripts
+- oVirt/RHV
+
+#### New: filters
+- combinations
+- permutations
+- zip
+- zip_longest
+
+
+### Module Notes
 - AWS lambda: previously ignored changes that only affected one parameter. Existing deployments may have outstanding changes that this bugfix will apply.
 - oVirt/RHV: Added support for 4.1 features and the following:
   * data centers, clusters, hosts, storage domains and networks management.
@@ -60,7 +84,7 @@ Ansible Changes By Release
   * Improved virtual machines and disks management.
 - Mount: Some fixes so bind mounts are not mounted each time the playbook runs.
 
-###New Modules:
+### New Modules
 - a10_server_axapi3
 - amazon:
   * aws_kms
@@ -287,36 +311,14 @@ Ansible Changes By Release
   * zfs_facts
   * zpool_facts
 
-####New Callbacks:
-
-- dense: minimal stdout output with fallback to default when verbose
-
-####New: lookups
-
-- keyring: allows getting password from the 'controller' system's keyrings
-
-####New: cache
-
-- pickle (uses python's own serializer)
-- yaml
-
-####New: inventory scripts
-- oVirt/RHV
-
-####New: filters
-- combinations
-- permutations
-- zip
-- zip_longest
-
 
 ## 2.2.1 "The Battle of Evermore" - 2017-01-16
 
-### Major Changes:
+### Major Changes
 
 * Security fix for CVE-2016-9587 - An attacker with control over a client system being managed by Ansible and the ability to send facts back to the Ansible server could use this flaw to execute arbitrary code on the Ansible server as the user and group Ansible is running as.
 
-### Minor Changes:
+### Minor Changes
 
 * Fixes a bug where undefined variables in with_* loops would cause a task failure even if the when condition would cause the task to be skipped.
 * Fixed a bug related to roles where in certain situations a role may be run more than once despite not allowing duplicates.
@@ -342,7 +344,7 @@ Ansible Changes By Release
 
 ## 2.2 "The Battle of Evermore" - 2016-11-01
 
-###Major Changes:
+### Major Changes:
 
 * Added the `listen` feature for modules. This feature allows tasks to more easily notify multiple handlers, as well as making it easier for handlers from decoupled roles to be notified.
 * Major performance improvements.
@@ -379,7 +381,7 @@ Ansible Changes By Release
   * All functionality from *_template network modules have been combined into *_config module
   * Network *_command modules not longer allow configuration mode statements
 
-####New Modules:
+#### New Modules
 - apache2_mod_proxy
 - asa
   * asa_acl
@@ -607,10 +609,10 @@ Ansible Changes By Release
   * win_robocopy
   * win_shell
 
-####New Callbacks:
+#### New Callbacks
 * foreman
 
-###Minor Changes:
+### Minor Changes
 * now -vvv shows exact path from which 'currently executing module' was picked up from.
 * loop_control now has a label option to allow fine grained control what gets displayed per item
 * loop_control now has a pause option to allow pausing for N seconds between loop iterations of a task.
@@ -622,7 +624,7 @@ Ansible Changes By Release
 * ansible_play_hosts is a new magic variable to provide a list of hosts in scope for the current play. Unlike play_hosts it is not subject to the 'serial' keyword.
 * ansible_play_batch is a new magic variable meant to substitute the current play_hosts.
 
-###For custom front ends using the API:
+### For custom front ends using the API
 * ansible.parsing.vault:
   * VaultLib.is_encrypted() has been deprecated.  It will be removed in 2.4.
     Use ansible.parsing.vault.is_encrypted() instead
@@ -637,13 +639,13 @@ Ansible Changes By Release
     whenever it is written to but not read), run ``ansible-vault rekey
     [filename]`` to move to VaultAES256.
 
-###Removed Deprecated:
+### Removed Deprecated
 * ';' as host list separator.
 * with\_ 'bare variable' handling, now loop items must always be templated `{{ }}` or they will be considered as plain strings.
 * skipping task on 'missing attribute' in loop variable, now in a loop an undefined attribute will return an error instead of skipping the task.
 * skipping on undefined variables in loop, now loops will have to define a variable or use `|default` to avoid errors.
 
-###Deprecations
+### Deprecations
 Notice given that the following will be removed in Ansible 2.4:
 * Modules
   * eos_template
@@ -678,7 +680,7 @@ Notice given that the following will be removed in Ansible 2.4:
 
 ## 2.1.2 "The Song Remains the Same" - 2016-09-29
 
-###Minor Changes:
+### Minor Changes
 * Fixed a bug related to creation of retry files (#17456)
 * Fixed a bug in the way include params are used when an include task is dynamic (#17064)
 * Fixed a bug related to including blocks in an include task (#15963)
@@ -726,12 +728,12 @@ Module fixes:
 * Fixed a bug where the fetch module was not idempotent when retrieving the target of a symlink.
 * Many minor fixes for bugs in extras modules.
 
-###Deprecations:
+### Deprecations
 
 * Deprecated the use of `_fixup_perms`. Use `_fixup_perms2` instead.
   This change only impacts custom action plugins using `_fixup_perms`.
 
-###Incompatible Changes:
+### Incompatible Changes
 
 * Use of `_fixup_perms` with `recursive=True` (the default) is no longer supported.
   Custom action plugins using `_fixup_perms` will require changes unless they already use `recursive=False`.
@@ -766,7 +768,7 @@ Module fixes:
 * Improved winrm argument validation and feature sniffing (for upcoming pywinrm NTLM support).
 * Improved winrm error handling: basic parsing of stderr from CLIXML stream.
 
-####New Modules:
+#### New Modules
 - aws
   * ec2_vol_facts
   * ec2_vpc_dhcp_options
@@ -880,21 +882,21 @@ Module fixes:
 - yum_repository
 
 
-####New Strategies:
+#### New Strategies
 * debug
 
-####New Filters:
+#### New Filters
 * extract
 * ip4_hex
 * regex_search
 * regex_findall
 
-####New Callbacks:
+#### New Callbacks
 * actionable (only shows changed and failed)
 * slack
 * json
 
-####New Tests:
+#### New Tests
 * issubset
 * issuperset
 
