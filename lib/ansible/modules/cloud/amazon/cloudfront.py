@@ -160,32 +160,13 @@ class CloudFrontServiceManager:
 
     def create_distribution(self, config, tags):
         try:
-            config_json=json.loads(config)
             if tags is None:
-                result = self.client.create_distribution(DistributionConfig=config_json)
-                return result
+                func = partial(self.client.create_disribution, DistributionConfig=config)
             else:
-                tags_json=json.loads(tags)
-                distribution_config_with_tags = self.join_tags_to_config(config_json, tags_json)
+                distribution_config_with_tags = config.update(tags)
                 func = partial(self.client.create_disribution_with_tags,
                         DistributionConfigWithTags=distribution_config_with_tags)
-            return result
-        except Exception as e:
-            self.module.fail_json(msg="Error creating distribution - " + str(e),
-                    exception=traceback.format_exc())
-
-    def create_streaming_distribution(self, config, tags):
-        try:
-            config_json=json.loads(config)
-            if tags is None:
-                result = self.client.create_streaming_distribution(StreamingDistributionConfig=config_json)
-                return result
-            else:
-                tags_json=json.loads(tags)
-                streaming_distribution_config_with_tags = self.join_tags_to_config(config_json, tags_json)
-                func = partial(self.client.create_streaming_disribution_with_tags,
-                        StreamingDistributionConfigWithTags=streaming_distribution_config_with_tags)
-            return result
+            return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error creating distribution - " + str(e),
                     exception=traceback.format_exc())
@@ -195,17 +176,14 @@ class CloudFrontServiceManager:
             if tags is None:
                 func = partial(self.client.create_streaming_distribution, StreamingDistributionConfig=config)
             else:
-                streaming_distribution_config_with_tags = self.join_tags_to_config(config, tags)
+                streaming_distribution_config_with_tags = config.update(tags)
                 func = partial(self.client.create_streaming_disribution_with_tags, 
                         StreamingDistributionConfigWithTags=streaming_distribution_config_with_tags)
             return self.paginated_response(func)
         except Exception as e:
-            self.module.fail_json(msg="Error creating distribution - " + str(e),
+            self.module.fail_json(msg="Error creating streaming distribution - " + str(e),
                     exception=traceback.format_exc())
     
-    def join_tags_to_config(self, config, tags):
-        return config.update(tags)
-
     def paginated_response(self, func, result_key=""):
         '''
         Returns expanded response for paginated operations.
@@ -226,6 +204,9 @@ class CloudFrontServiceManager:
             args['NextToken'] = response.get('NextToken')
             loop = args['NextToken'] is not None
         return results
+
+def generate_datetime_string():
+    return datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -256,7 +237,25 @@ def main():
         update_distribution=dict(required=False, default=False, type='bool'),
         update_streaming_distribution=dict(required=False, default=False, type='bool'),
         config=dict(required=False, default=None, type='json'),
-        tags=dict(required=False, default=None, type='str')
+        tags=dict(required=False, default=None, type='str'),
+        aliases=dict(required=False, default=None, type='json')
+        default_root_object=dict(required=False, default=None, type='str'),
+        origins=dict(required=False, default=None, type='json'),
+        default_cache_behavior=dict(required=False, default=None, type='json')
+        cache_behaviors=dict(required=False, default=None, type='json'),
+        custom_error_responses=dict(required=False, default=None, type='json'),
+        comment=dict(required=False, default=None, type='str'),
+        logging=dict(required=False, default=None, type='json'),
+        price_class=dict(required=False, default=None, type='str'),
+        enabled=dict(required=False, default=False, type='bool'),
+        viewer_certificate=dict(required=False, default=None, type='json'),
+        restrictions=dict(required=False, default=None, type='json'),
+        web_acl=dict(required=False, default=None, type='str'),
+        http_version=dict(required=False, default=None, type='str'),
+        is_ipv6_enabled=dict(required=False, default=False, type='bool'),
+        s3_origin=dict(required=False, default=None, type='json'),
+        trusted_signers=dict(required=False, default=None, type='json'),
+        price_class=dict(required=False, default=None, type='str')
     ))
 
     result = {}
@@ -294,8 +293,84 @@ def main():
     distribution_id = module.params.get('distribution_id')
     invalidation_batch = module.params.get('invalidation_batch')
 
-    create_streaming_distribution_with_tags = module.params.get('create_streaming_distribution_with_tags')
-    streaming_distribution_with_tags_config = module.params.get('streaming_distribution_with_tags_config')
+    aliases = module.params.get('aliases')
+    default_root_object = module.params.get('default_root_object')
+    origins = module.params.get('origins')
+    default_cache_behavior = module.params.get('default_cache_behavior')
+    cache_behaviors = module.params.get('cache_behaviors')
+    custom_error_responses = module.params.get('custom_error_responses')
+    comment = module.params.get('comment')
+    logging = module.params.get('logging')
+    price_class = module.params.get('price_class')
+    enabled = module.params.get('enabled')
+    viewer_certificate = module.params.get('viewer_certificate')
+    restrictions = module.params.get('restrictions')
+    web_acl = module.params.get('web_acl')
+    http_version = module.params.get('http_version')
+    is_ipv6_enabled = module.params.get('is_ipv6_enabled')
+    s3_origin = module.params.get('s3_origin')
+    trusted_signers = module.params.get('trusted_signers')
+
+    # if no content exists, set all required defaults and add all to object
+    # if content exists, add all non-None to content
+
+    # set defaults for all required objects
+    if(create_distribution):
+        if(content is None):
+            content = {}
+            if(caller_reference is None):
+                caller_reference = generate_datetime_string()
+            if(origins is None):
+                origins = { "Quantity": 0, "Items": [] }
+            if(default_cache_behavior is None):
+                default_cache_behavior =
+                {
+                    "DefaultCacheBehavior": {
+                        "TrustedSigners": {
+                            "Enabled": False,
+                            "Quantity": 0
+                        },
+                        "TargetOriginId": "DefaultDistributionTarget",
+                        "Compress": False,
+                        "ViewerProtocolPolicy": "allow-all",
+                        "ForwardedValues": {
+                            "Headers": { "Quantity": 0 },
+                            "Cookies": { "Forward": "none" },
+                            "QueryStringCacheKeys": {"Quantity": 0 },
+                            "QueryString": True
+                        },
+                        "MaxTTL": 31536000,
+                        "SmoothStreaming": False,
+                        "LambdaFunctionAssociations": { "Quantity": 0 }
+                    }
+                }
+            if(comment is None):
+                comment = "distribution created by ansible. tatetime string: " + generate_datetime_string()
+        content = content.update({"CallerReference": caller_reference})
+        content = content.update({"Origins": origins})
+        content = content.update({"DefaultCacheBehavior": default_cache_behavior})
+        content = content.update({"Comment": comment})
+    elif(create_streaming_distribution):
+        if(content is None):
+            content = {}
+            if(caller_reference is None):
+                caller_reference = generate_datetime_string()
+            if(s3_origin is None):
+                s3_origin = {} # TODO:
+            if(comment is None):
+                comment = "streaming distribution created by ansible. datetime string: " + generate_datetime_string()
+            if(trusted_signers is None):
+                trusted_signers = {}
+        content = content.update({"CallerReference": caller_reference})
+        content = content.update({"S3Origin": s3_origin})
+        content = content.update({"Comment": s3_comment})
+    if(create_distribution or create_streaming_distribution):
+        if(aliases is not None):
+            content = content.update({"Aliases": aliases})
+        if(logging is not None):
+            content = content.update({"Logging": logging})
+        if(price_class is not None):
+            content = content.update({"PriceClass": price_class})
 
     if(create_origin_access_identity):
         result=service_mgr.create_origin_access_identity(caller_reference, comment)
