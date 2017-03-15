@@ -266,7 +266,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 output = result['stderr']
             else:
                 output = ('Authentication or permission failure.'
-                        ' In some cases, you may have been able to authenticate and did not have permissions on the remote directory.'
+                        ' In some cases, you may have been able to authenticate and did not have permissions on the target directory.'
                         ' Consider changing the remote temp path in ansible.cfg to a path rooted in "/tmp".'
                         ' Failed command was: %s, exited with result %d' % (cmd, result['rc']))
             if 'stdout' in result and result['stdout'] != u'':
