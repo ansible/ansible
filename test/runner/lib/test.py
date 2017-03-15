@@ -10,6 +10,50 @@ from lib.util import (
     EnvironmentConfig,
 )
 
+from lib.metadata import (
+    Metadata,
+)
+
+
+def calculate_best_confidence(choices, metadata):
+    """
+    :type choices: tuple[tuple[str, int]]
+    :type metadata: Metadata
+    :rtype: int
+    """
+    best_confidence = 0
+
+    for path, line in choices:
+        confidence = calculate_confidence(path, line, metadata)
+        best_confidence = max(confidence, best_confidence)
+
+    return best_confidence
+
+
+def calculate_confidence(path, line, metadata):
+    """
+    :type path: str
+    :type line: int
+    :type metadata: Metadata
+    :rtype: int
+    """
+    ranges = metadata.changes.get(path)
+
+    # no changes were made to the file
+    if not ranges:
+        return 0
+
+    # changes were made to the same file and line
+    if any(r[0] <= line <= r[1] in r for r in ranges):
+        return 100
+
+    # changes were made to the same file and the line number is unknown
+    if line == 0:
+        return 75
+
+    # changes were made to the same file and the line number is different
+    return 50
+
 
 class TestConfig(EnvironmentConfig):
     """Configuration common to all test commands."""
@@ -37,6 +81,9 @@ class TestConfig(EnvironmentConfig):
         self.lint = args.lint if 'lint' in args else False  # type: bool
         self.junit = args.junit if 'junit' in args else False  # type: bool
         self.failure_ok = args.failure_ok if 'failure_ok' in args else False  # type: bool
+
+        self.metadata = Metadata.from_file(args.metadata) if args.metadata else Metadata()
+        self.metadata_path = None
 
 
 class TestResult(object):
@@ -201,8 +248,17 @@ class TestFailure(TestResult):
         if messages:
             messages = sorted(messages, key=lambda m: m.sort_key)
 
-        self.messages = messages
+        self.messages = messages or []
         self.summary = summary
+
+    def write(self, args):
+        """
+        :type args: TestConfig
+        """
+        if args.metadata.changes:
+            self.populate_confidence(args.metadata)
+
+        super(TestFailure, self).write(args)
 
     def write_console(self):
         """Write results to console."""
@@ -217,7 +273,7 @@ class TestFailure(TestResult):
             display.error('Found %d %s issue(s)%s which need to be resolved:' % (len(self.messages), self.test or self.command, specifier))
 
             for message in self.messages:
-                display.error(message)
+                display.error(message.format(show_confidence=True))
 
     def write_lint(self):
         """Write lint results to stdout."""
@@ -253,7 +309,13 @@ class TestFailure(TestResult):
         message = self.format_title()
         output = self.format_block()
 
+        if self.messages:
+            verified = all((m.confidence or 0) >= 50 for m in self.messages)
+        else:
+            verified = False
+
         bot_data = dict(
+            verified=verified,
             results=[
                 dict(
                     message=message,
@@ -270,6 +332,14 @@ class TestFailure(TestResult):
         with open(path, 'w') as bot_fd:
             json.dump(bot_data, bot_fd, indent=4, sort_keys=True)
             bot_fd.write('\n')
+
+    def populate_confidence(self, metadata):
+        """
+        :type metadata: Metadata
+        """
+        for message in self.messages:
+            if message.confidence is None:
+                message.confidence = calculate_confidence(message.path, message.line, metadata)
 
     def format_command(self):
         """
@@ -319,7 +389,7 @@ class TestFailure(TestResult):
 
 class TestMessage(object):
     """Single test message for one file."""
-    def __init__(self, message, path, line=0, column=0, level='error', code=None):
+    def __init__(self, message, path, line=0, column=0, level='error', code=None, confidence=None):
         """
         :type message: str
         :type path: str
@@ -327,6 +397,7 @@ class TestMessage(object):
         :type column: int
         :type level: str
         :type code: str | None
+        :type confidence: int | None
         """
         self.path = path
         self.line = line
@@ -334,12 +405,23 @@ class TestMessage(object):
         self.level = level
         self.code = code
         self.message = message
+        self.confidence = confidence
 
     def __str__(self):
+        return self.format()
+
+    def format(self, show_confidence=False):
+        """
+        :type show_confidence: bool
+        :rtype: str
+        """
         if self.code:
             msg = '%s %s' % (self.code, self.message)
         else:
             msg = self.message
+
+        if show_confidence and self.confidence is not None:
+            msg += ' (%d%%)' % self.confidence
 
         return '%s:%s:%s: %s' % (self.path, self.line, self.column, msg)
 
