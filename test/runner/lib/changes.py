@@ -69,15 +69,18 @@ class ShippableChanges(object):
 
         if self.is_pr:
             self.paths = sorted(git.get_diff_names([self.branch]))
+            self.diff = git.get_diff([self.branch])
         else:
             merge_runs = self.get_merge_runs(self.project_id, self.branch)
             last_successful_commit = self.get_last_successful_commit(git, merge_runs)
 
             if last_successful_commit:
                 self.paths = sorted(git.get_diff_names([last_successful_commit, self.commit]))
+                self.diff = git.get_diff([last_successful_commit, self.commit])
             else:
                 # tracked files (including unchanged)
                 self.paths = sorted(git.get_file_names(['--cached']))
+                self.diff = None
 
     def get_merge_runs(self, project_id, branch):
         """
@@ -161,6 +164,8 @@ class LocalChanges(object):
         self.staged = sorted(git.get_diff_names(['--cached']))
         # tracked changes (including deletions) which are not staged
         self.unstaged = sorted(git.get_diff_names([]))
+        # diff of all tracked files from fork point to working copy
+        self.diff = git.get_diff([self.fork_point])
 
     @staticmethod
     def is_official_branch(name):
