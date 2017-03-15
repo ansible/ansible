@@ -9,7 +9,6 @@ retry.py add-apt-repository 'ppa:fkrull/deadsnakes'
 retry.py apt-get update -qq
 retry.py apt-get install -qq \
     shellcheck \
-    python2.4 \
     g++-4.9 \
     python3.6-dev \
 
