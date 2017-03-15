@@ -41,15 +41,11 @@ options:
         Arista EOS device.  The list entries can either be the username
         or a hash of username and properties.  This argument is mutually
         exclusive with the C(username) argument.
-    required: false
-    default: null
   username:
     description:
       - The username to be configured on the remote Arista EOS
         device.  This argument accepts a stringv value and is mutually
         exclusive with the C(users) argument.
-    required: false
-    default: null
   update_password:
     description:
       - Since passwords are encrypted in the device running config, this
@@ -57,7 +53,6 @@ options:
         set to C(always), the password will always be updated in the device
         and when set to C(on_create) the password will be updated only if
         the username is created.
-    required: false
     default: always
     choices: ['on_create', 'always']
   privilege:
@@ -65,47 +60,37 @@ options:
       - The C(privilege) argument configures the privilege level of the
         user when logged into the system.  This argument accepts integer
         values in the range of 1 to 15.
-    required: false
-    default: null
   role:
     description:
-      - The C(role) argument configures the role for the username in the
+      - Configures the role for the username in the
         device running configuration.  The argument accepts a string value
         defining the role name.  This argument does not check if the role
         has been configured on the device.
-    required: false
-    default: null
   sshkey:
     description:
-      - The C(sshkey) argument defines the SSH public key to configure
-        for the username.  This argument accepts a valid SSH key value.
-    required: false
-    default: null
+      - Specifies the SSH public key to configure
+        for the given username.  This argument accepts a valid SSH key value.
   nopassword:
     description:
-      - The C(nopassword) argument defines the username without assigning
+      - Defines the username without assigning
         a password.  This will allow the user to login to the system
-        without being authenticated by a password.  This argument accepts
-        boolean values.
-    required: false
-    default: null
-    choices: ['true', 'false']
+        without being authenticated by a password.
+    type: bool
   purge:
     description:
-      - The C(purge) argument instructs the module to consider the
+      - Instructs the module to consider the
         resource definition absolute.  It will remove any previously
         configured usernames on the device with the exception of the
         `admin` user which cannot be deleted per EOS constraints.
-    required: false
+    type: bool
     default: false
   state:
     description:
-      - The C(state) argument configures the state of the uername definition
+      - Configures the state of the username definition
         as it relates to the device operational configuration.  When set
         to I(present), the username(s) should be configured in the device active
         configuration and when set to I(absent) the username(s) should not be
         in the device active configuration
-    required: false
     default: present
     choices: ['present', 'absent']
 """
@@ -121,7 +106,7 @@ EXAMPLES = """
   eos_user:
     purge: yes
 
-- name: set multiple users to privilege level
+- name: set multiple users to privilege level 15
   users:
     - username: netop
     - username: netend
@@ -301,7 +286,7 @@ def main():
     """ main entry point for module execution
     """
     argument_spec = dict(
-        users=dict(type='list', no_log=True),
+        users=dict(type='list'),
         username=dict(),
 
         password=dict(no_log=True),

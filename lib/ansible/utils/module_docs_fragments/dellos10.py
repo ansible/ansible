@@ -24,49 +24,42 @@ class ModuleDocFragment(object):
     # Standard files documentation fragment
     DOCUMENTATION = """
 options:
-  host:
-    description:
-      - Specifies the DNS host name or address for connecting to the remote
-        device over the specified transport.  The value of host is used as
-        the destination address for the transport.
-    required: true
-  port:
-    description:
-      - Specifies the port to use when building the connection to the remote
-        device.
-    required: false
-    default: 22
-  username:
-    description:
-      - User to authenticate the SSH session to the remote device. If the
-        value is not specified in the task, the value of environment variable
-        C(ANSIBLE_NET_USERNAME) will be used instead.
-    required: false
-  password:
-    description:
-      - Password to authenticate the SSH session to the remote device. If the
-        value is not specified in the task, the value of environment variable
-        C(ANSIBLE_NET_PASSWORD) will be used instead.
-    required: false
-    default: null
-  ssh_keyfile:
-    description:
-      - Path to an ssh key used to authenticate the SSH session to the remote
-        device.  If the value is not specified in the task, the value of
-        environment variable C(ANSIBLE_NET_SSH_KEYFILE) will be used instead.
-    required: false
-  timeout:
-    description:
-      - Specifies idle timeout (in seconds) for the connection. Useful if the
-        console freezes before continuing. For example when saving
-        configurations.
-    required: false
-    default: 10
   provider:
     description:
-      - Convenience method that allows all I(dellos10) arguments to be passed as
-        a dict object.  All constraints (required, choices, etc) must be
-        met either by individual arguments or values in this dict.
-    required: false
+      - A dict object containing connection details.
     default: null
+    suboptions:
+      host:
+        description:
+          - Specifies the DNS host name or address for connecting to the remote
+            device over the specified transport.  The value of host is used as
+            the destination address for the transport.
+        required: true
+      port:
+        description:
+          - Specifies the port to use when building the connection to the remote
+            device.
+        default: 22
+      username:
+        description:
+          - User to authenticate the SSH session to the remote device. If the
+            value is not specified in the task, the value of environment variable
+            C(ANSIBLE_NET_USERNAME) will be used instead.
+      password:
+        description:
+          - Password to authenticate the SSH session to the remote device. If the
+            value is not specified in the task, the value of environment variable
+            C(ANSIBLE_NET_PASSWORD) will be used instead.
+        default: null
+      ssh_keyfile:
+        description:
+          - Path to an ssh key used to authenticate the SSH session to the remote
+            device.  If the value is not specified in the task, the value of
+            environment variable C(ANSIBLE_NET_SSH_KEYFILE) will be used instead.
+      timeout:
+        description:
+          - Specifies idle timeout (in seconds) for the connection. Useful if the
+            console freezes before continuing. For example when saving
+            configurations.
+        default: 10
 """
