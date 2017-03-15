@@ -19,7 +19,7 @@
 - name: remove the dummy test services if it is left over from previous tests
   win_service:
     name: "{{item}}"
-    ignore_dependencies: True
+    force_dependent_services: True
     state: absent
   with_items:
   - "{{test_win_service_name}}"
@@ -776,7 +776,7 @@
 - name: make sure all services are stopped, set to LocalSystem and set to auto start before next test
   win_service:
     name: "{{item}}"
-    ignore_dependencies: True
+    force_dependent_services: True
     state: stopped
     start_mode: auto
     username: LocalSystem
@@ -829,7 +829,7 @@
 - name: remove the service while ignoring dependencies
   win_service:
     name: "{{test_win_service_name}}"
-    ignore_dependencies: True
+    force_dependent_services: True
     state: absent
   register: win_service_removed
 
@@ -849,7 +849,7 @@
 - name: make sure all services are removed in the end
   win_service:
     name: "{{item}}"
-    ignore_dependencies: True
+    force_dependent_services: True
     state: absent
   with_items:
   - "{{test_win_service_name}}"

@@ -29,7 +29,7 @@ $dependency_action = Get-AnsibleParam -obj $params -name 'dependency_action' -ty
 $description = Get-AnsibleParam -obj $params -name 'description' -type 'str'
 $desktop_interact = Get-AnsibleParam -obj $params -name 'desktop_interact' -type 'bool' -default $false
 $display_name = Get-AnsibleParam -obj $params -name 'display_name' -type 'str'
-$ignore_dependencies = Get-AnsibleParam -obj $params -name 'ignore_dependencies' -type 'bool' -default $false
+$force_dependent_services = Get-AnsibleParam -obj $params -name 'force_dependent_services' -type 'bool' -default $false
 $name = Get-AnsibleParam -obj $params -name 'name' -type 'str' -failifempty $true
 $password = Get-AnsibleParam -obj $params -name 'password' -type 'str'
 $path = Get-AnsibleParam -obj $params -name 'path' -type 'path'
@@ -104,25 +104,25 @@ Function Get-WmiErrorMessage($return_value) {
     switch ($return_value) {
         1 { "Not Supported: The request is not supported" }
         2 { "Access Denied: The user did not have the necessary access" }
-        3 { "Dependent Servies Running: The service cannot be stopped because other services that are running are dependent on it" }
-        4 { "Invalid Service Control: Thre requested control code is not valid, or it is unacceptable to the service" }
-        5 { "The requested control code cannot be sent to the service because the state of the service is equal to 0, 1, or 2" }
-        6 { "Service Not Ative: The service has not been started" }
-        7 { "Service Request Timeout: The service did not response to the start request in a timely fashion" }
+        3 { "Dependent Services Running: The service cannot be stopped because other services that are running are dependent on it" }
+        4 { "Invalid Service Control: The requested control code is not valid, or it is unacceptable to the service" }
+        5 { "Service Cannot Accept Control: The requested control code cannot be sent to the service because the state of the service (Win32_BaseService.State property) is equal to 0, 1, or 2" }
+        6 { "Service Not Active: The service has not been started" }
+        7 { "Service Request Timeout: The service did not respond to the start request in a timely fashion" }
         8 { "Unknown Failure: Unknown failure when starting the service" }
-        9 { "Path Not Found: THe directory path to the service executable file was not found" }
+        9 { "Path Not Found: The directory path to the service executable file was not found" }
         10 { "Service Already Running: The service is already running" }
         11 { "Service Database Locked: The database to add a new service is locked" }
         12 { "Service Dependency Deleted: A dependency this service relies on has been removed from the system" }
         13 { "Service Dependency Failure: The service failed to find the service needed from a dependent service" }
-        14 { "Servoce Disabled: The service has been disbaled from the system" }
-        15 { "Service Logon Failed: The service does not have the correct authentication to run on this system" }
+        14 { "Service Disabled: The service has been disabled from the system" }
+        15 { "Service Logon Failed: The service does not have the correct authentication to run on the system" }
         16 { "Service Marked For Deletion: This service is being removed from the system" }
         17 { "Service No Thread: The service has no execution thread" }
-        18 { "Status Circular Dependecy: The service has circular dependencies when it starts" }
+        18 { "Status Circular Dependency: The service has circular dependencies when it starts" }
         19 { "Status Duplicate Name: A service is running under the same name" }
-        20 { "Status Invalid Name: The service name has invalide characters" }
-        21 { "Status Invalid Paramter: Invalid paramters have been passed to the service" }
+        20 { "Status Invalid Name: The service name has invalid characters" }
+        21 { "Status Invalid Parameter: Invalid parameters have been passed to the service" }
         22 { "Status Invalid Service Account: The account under which this service runs is either invalid or lacks the permissions to run the service" }
         23 { "Status Service Exists: The service exists in the database of services available from the system" }
         24 { "Service Already Paused: The service is currently paused in the system" }
@@ -288,7 +288,7 @@ Function Set-ServiceState($svc, $wmi_svc, $state) {
 
     if ($state -eq "stopped" -and $result.state -ne "stopped") {
         try {
-            Stop-Service -Name $svc.Name -Force:$ignore_dependencies -WhatIf:$check_mode
+            Stop-Service -Name $svc.Name -Force:$force_dependent_services -WhatIf:$check_mode
         } catch {
             Fail-Json $result $_.Exception.Message
         }
@@ -298,7 +298,7 @@ Function Set-ServiceState($svc, $wmi_svc, $state) {
 
     if ($state -eq "restarted") {
         try {
-            Restart-Service -Name $svc.Name -Force:$ignore_dependencies -WhatIf:$check_mode
+            Restart-Service -Name $svc.Name -Force:$force_dependent_services -WhatIf:$check_mode
         } catch {
             Fail-Json $result $_.Exception.Message
         }
@@ -308,7 +308,7 @@ Function Set-ServiceState($svc, $wmi_svc, $state) {
 
     if ($state -eq "absent") {
         try {
-            Stop-Service -Name $svc.Name -Force:$ignore_dependencies -WhatIf:$check_mode
+            Stop-Service -Name $svc.Name -Force:$force_dependent_services -WhatIf:$check_mode
         } catch {
             Fail-Json $result $_.Exception.Message
         }

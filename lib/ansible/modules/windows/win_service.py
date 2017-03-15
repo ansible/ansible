@@ -68,13 +68,12 @@ options:
     description:
       - The display name to set for the service.
     version_added: "2.3"
-  ignore_dependencies:
+  force_dependent_services:
     description:
-    - When stopping or restarting a service this will Force the service to stop
-      if it has services that are dependent on this.
-    - If C(state) is stopped, restarted or absent and there are services that
-      are dependent on the service you wish to modify, this needs to be set to
-      True for it to succeed.
+    - If True, stopping or restarting a service with dependent services will
+      force the dependent services to stop or restart also.
+    - If False, stopping or restarting a service with dependent services may
+      fail.
     default: False
     version_added: "2.3"
   name:
