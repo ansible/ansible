@@ -197,7 +197,7 @@ class TestGetConfig:
 
     def test_value_type_path(self, cfgparser, user, cfg_file):
         assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', '~/local', value_type='path', expand_relative_paths=False) \
-                == os.path.join(user['home'], 'local')
+                 == os.path.join(user['home'], 'local')
         assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', 'local', value_type='path', expand_relative_paths=False) == 'local'
         assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', 'local', value_type='path') == os.path.join(cfg_file, 'local')
 
