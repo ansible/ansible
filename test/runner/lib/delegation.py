@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function
 
 import os
 import sys
+import tempfile
 import time
 
 import lib.pytar
@@ -46,6 +47,27 @@ def delegate(args, exclude, require):
     :type args: EnvironmentConfig
     :type exclude: list[str]
     :type require: list[str]
+    :rtype: bool
+    """
+    if isinstance(args, TestConfig):
+        with tempfile.NamedTemporaryFile(prefix='metadata-', suffix='.json', dir=os.getcwd()) as metadata_fd:
+            args.metadata_path = os.path.basename(metadata_fd.name)
+            args.metadata.to_file(args.metadata_path)
+
+            try:
+                return delegate_command(args, exclude, require)
+            finally:
+                args.metadata_path = None
+    else:
+        return delegate_command(args, exclude, require)
+
+
+def delegate_command(args, exclude, require):
+    """
+    :type args: EnvironmentConfig
+    :type exclude: list[str]
+    :type require: list[str]
+    :rtype: bool
     """
     if args.tox:
         delegate_tox(args, exclude, require)
@@ -396,6 +418,7 @@ def filter_options(args, argv, options, exclude, require):
             '--ignore-unstaged': 0,
             '--changed-from': 1,
             '--changed-path': 1,
+            '--metadata': 1,
         })
     elif isinstance(args, SanityConfig):
         options.update({
@@ -427,3 +450,7 @@ def filter_options(args, argv, options, exclude, require):
     for target in require:
         yield '--require'
         yield target
+
+    if args.metadata_path:
+        yield '--metadata'
+        yield args.metadata_path

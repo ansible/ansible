@@ -163,6 +163,9 @@ def parse_args():
                       action='store_true',
                       help='analyze code coverage when running tests')
 
+    test.add_argument('--metadata',
+                      help=argparse.SUPPRESS)
+
     add_changes(test, argparse)
     add_environments(test)
 

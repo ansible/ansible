@@ -45,6 +45,7 @@ from lib.test import (
     TestFailure,
     TestSkipped,
     TestMessage,
+    calculate_best_confidence,
 )
 
 COMMAND = 'sanity'
@@ -364,6 +365,7 @@ def command_sanity_pep8(args, targets):
                 path=PEP8_LEGACY_PATH,
                 line=line,
                 column=1,
+                confidence=calculate_best_confidence(((PEP8_LEGACY_PATH, line), (path, 0)), args.metadata) if args.metadata.changes else None,
             ))
 
         if path in used_paths and path not in failed_result_paths:
@@ -374,6 +376,7 @@ def command_sanity_pep8(args, targets):
                 path=PEP8_LEGACY_PATH,
                 line=line,
                 column=1,
+                confidence=calculate_best_confidence(((PEP8_LEGACY_PATH, line), (path, 0)), args.metadata) if args.metadata.changes else None,
             ))
 
     line = 0
@@ -389,6 +392,7 @@ def command_sanity_pep8(args, targets):
                 path=PEP8_SKIP_PATH,
                 line=line,
                 column=1,
+                confidence=calculate_best_confidence(((PEP8_SKIP_PATH, line), (path, 0)), args.metadata) if args.metadata.changes else None,
             ))
 
     for result in results:
@@ -586,7 +590,7 @@ class SanityFailure(TestFailure):
 
 class SanityMessage(TestMessage):
     """Single sanity test message for one file."""
-    def __init__(self, message, path, line=0, column=0, level='error', code=None):
+    def __init__(self, message, path, line=0, column=0, level='error', code=None, confidence=None):
         """
         :type message: str
         :type path: str
@@ -594,8 +598,9 @@ class SanityMessage(TestMessage):
         :type column: int
         :type level: str
         :type code: str | None
+        :type confidence: int | None
         """
-        super(SanityMessage, self).__init__(message, path, line, column, level, code)
+        super(SanityMessage, self).__init__(message, path, line, column, level, code, confidence)
 
 
 class SanityTargets(object):

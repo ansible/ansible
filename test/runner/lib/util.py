@@ -165,10 +165,14 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
         raise
 
     if communicate:
-        stdout, stderr = process.communicate(data)
+        encoding = 'utf-8'
+        data_bytes = data.encode(encoding) if data else None
+        stdout_bytes, stderr_bytes = process.communicate(data_bytes)
+        stdout_text = stdout_bytes.decode(encoding) if stdout_bytes else u''
+        stderr_text = stderr_bytes.decode(encoding) if stderr_bytes else u''
     else:
         process.wait()
-        stdout, stderr = None, None
+        stdout_text, stderr_text = None, None
 
     status = process.returncode
     runtime = time.time() - start
@@ -176,9 +180,9 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
     display.info('Command exited with status %s after %s seconds.' % (status, runtime), verbosity=4)
 
     if status == 0:
-        return stdout, stderr
+        return stdout_text, stderr_text
 
-    raise SubprocessError(cmd, status, stdout, stderr, runtime)
+    raise SubprocessError(cmd, status, stdout_text, stderr_text, runtime)
 
 
 def common_environment():
@@ -264,6 +268,15 @@ def make_dirs(path):
     except OSError as ex:
         if ex.errno != errno.EEXIST:
             raise
+
+
+def is_binary_file(path):
+    """
+    :type path: str
+    :rtype: bool
+    """
+    with open(path, 'rb') as path_fd:
+        return b'\0' in path_fd.read(1024)
 
 
 class Display(object):
