@@ -102,17 +102,12 @@ stderr:
     type: string
 '''
 
-import re
-
 def _run_threaded(module):
     control_binary = _get_ctl_binary(module)
 
     result, stdout, stderr = module.run_command("%s -V" % control_binary)
 
-    if re.search(r'threaded:[ ]*yes', stdout):
-        return True
-    else:
-        return False
+    return 'threaded:[ ]*yes' in stdout
 
 def _get_ctl_binary(module):
     for command in ['apache2ctl', 'apachectl']:
@@ -146,20 +141,27 @@ def _module_is_enabled(module):
         else:
             module.fail_json(msg=error_msg)
 
-    """
-    Work around for php modules; php7.x are always listed as php7_module
-    """
-    php_module = re.search(r'^(php\d)\.', name)
-    if php_module:
-        name = php_module.group(1)
 
-    """
-    Workaround for shib2; module is listed as mod_shib
-    """
-    if re.search(r'shib2', name):
-        return bool(re.search(r' mod_shib', stdout))
+    # by convention if a module is loaded via name, it appears in apache2ctl -M as
+    # name_module
+    name = name + '_module'
 
-    return bool(re.search(r' ' + name + r'_module', stdout))
+    # replace module names, where the name used in a2enmod
+    # does not match the output of apach2ctl -M
+    workarounds = [
+        ('php7.', 'php7_module'),
+        ('php5.', 'php5_module'),
+        ('shib2', 'mod_shib'),
+        ('evasive', 'evasive20_module'),
+    ]
+
+    for a2enmod_spelling, module_name in workarounds:
+        if a2enmod_spelling in name:
+            name = module_name
+            break
+
+    searchstring = ' ' + name
+    return searchstring in stdout
 
 def _set_state(module, state):
     name = module.params['name']
@@ -221,6 +223,6 @@ def main():
         _set_state(module, module.params['state'])
 
 # import module snippets
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 if __name__ == '__main__':
     main()
