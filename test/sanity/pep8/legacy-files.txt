@@ -20,7 +20,6 @@ lib/ansible/modules/cloud/amazon/cloudformation_facts.py
 lib/ansible/modules/cloud/amazon/cloudtrail.py
 lib/ansible/modules/cloud/amazon/cloudwatchevent_rule.py
 lib/ansible/modules/cloud/amazon/dynamodb_table.py
-lib/ansible/modules/cloud/amazon/ec2.py
 lib/ansible/modules/cloud/amazon/ec2_ami.py
 lib/ansible/modules/cloud/amazon/ec2_ami_find.py
 lib/ansible/modules/cloud/amazon/ec2_asg.py
