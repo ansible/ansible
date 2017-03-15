@@ -4,6 +4,8 @@
 Network Debug and Troubleshooting Guide
 ***************************************
 
+.. contents:: Topics
+
 Introduction
 ============
 
@@ -28,7 +30,7 @@ This occurs when something happens that prevents a shell from opening on the rem
 
 For example:
 
-.. code-block::
+.. code-block:: yaml
 
   TASK [ios_system : configure name_servers] *****************************************************************************
   task path:
@@ -55,16 +57,17 @@ Once the task has failed, find the relevant log lines:
 
 For example, the following output:
 
-.. code-block::
+.. code-block:: yaml
 
   grep FIXME $ANSIBLE_LOG_PATH
   2017-03-10 15:32:06,173 p=19677 u=fred |  number of connection attempts exceeded, unable to connect to control socket
   2017-03-10 15:32:06,174 p=19677 u=fred |  persistent_connect_interval=1, persistent_connect_retries=10
   2017-03-10 15:32:06,222 p=19669 u=fred |  fatal: [veos01]: FAILED! => {
     "changed": false,
+
 Look for error message in this document, in this case the relevant lines are
 
-.. code-block::
+.. code-block:: yaml
 
   number of connection attempts exceeded, unable to connect to control socket
   persistent_connect_interval=1, persistent_connect_retries=10
@@ -80,7 +83,7 @@ This occurs when Ansible wasn't able to connect to the remote device and obtain 
 
 This information is available when ``ANSIBLE_LOG_PATH`` is set see (FIXMELINKTOSECTION):
 
-.. code-block::
+.. code-block:: yaml
 
   grep FIXME $ANSIBLE_LOG_PATH
   2017-03-10 15:32:06,173 p=19677 u=fred |  number of connection attempts exceeded, unable to connect to control socket
@@ -91,7 +94,7 @@ Suggestions to resolve:
 
 Do stuff For example:
 
-.. code-block::
+.. code-block:: yaml
 
 	Example stuff
 
@@ -103,7 +106,7 @@ This occurs when you attempt to run a task that requires privileged mode in a us
 
 For example:
 
-.. code-block::
+.. code-block:: yaml
 
 	TASK [ios_system : configure name_servers] *****************************************************************************
 	task path:
@@ -118,7 +121,7 @@ Suggestions to resolve:
 
 Add `authorize: yes` to the task. For example:
 
-.. code-block::
+.. code-block:: yaml
 
 	- name: configure hostname
 	  ios_system:
@@ -150,8 +153,8 @@ Inspecting Logs
 TBD
 
 
-Where To Get More Help
-======================
+Howtos
+======
 
 TBD
 
