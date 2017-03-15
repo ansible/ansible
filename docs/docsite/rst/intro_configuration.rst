@@ -768,7 +768,8 @@ always default to the current user if this is not defined::
 restrict_facts_namespace
 ========================
 
-.. versionadded:: 2.3
+.. versionadded:: 2.4
+
 This allows restricting facts in their own namespace (under ansible_facts) instead of pushing them into the main.
 False by default, can also be set via the environment variable `ANSIBLE_RESTRICT_FACTS`.Using `ansible_system` as an example.
 
