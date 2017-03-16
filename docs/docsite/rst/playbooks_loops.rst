@@ -112,8 +112,7 @@ And you want to print every user's name and phone number.  You can loop through 
       - name: Print phone records
         debug:
           msg: "User {{ item.key }} is {{ item.value.name }} ({{ item.value.telephone }})"
-        with_dict:
-          - "{{ users }}"
+        with_dict: "{{ users }}"
 
 .. _looping_over_fileglobs:
 
