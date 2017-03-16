@@ -37,7 +37,7 @@ options:
   instance_id:
     description:
       - Instance ID that you wish to attach ENI to. Since version 2.2, use the 'attached' parameter to attach or
-      detach an ENI. Prior to 2.2, to detach an ENI from an instance, use 'None'.
+        detach an ENI. Prior to 2.2, to detach an ENI from an instance, use 'None'.
     required: false
     default: null
   private_ip_address:
@@ -57,7 +57,7 @@ options:
   security_groups:
     description:
       - List of security groups associated with the interface. Only used when state=present. Since version 2.2, you
-      can specify security groups by ID or by name or a combination of both. Prior to 2.2, you can specify only by ID.
+        can specify security groups by ID or by name or a combination of both. Prior to 2.2, you can specify only by ID.
     required: false
     default: null
   state:
@@ -74,7 +74,7 @@ options:
   attached:
     description:
       - Specifies if network interface should be attached or detached from instance. If ommited, attachment status
-      won't change
+        won't change
     required: false
     default: yes
     version_added: 2.2
