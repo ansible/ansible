@@ -89,8 +89,8 @@ options:
         required: false
 
 notes:
-    - Note that without encrypted communications (sensitive) proxy configuration data 
-      may become available to parties having access to the Zabbix server trapper port 
+    - Note that without encrypted communications (sensitive) proxy configuration data
+      may become available to parties having access to the Zabbix server trapper port
       when using an active proxy.
 '''
 
