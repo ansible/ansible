@@ -920,6 +920,7 @@ class StrategyBase:
         return [TaskResult(target_host, task, result)]
 
     def get_hosts_left(self, iterator):
+        ''' returns list of available hosts for this iterator by filtering out unreachables '''
 
         hosts_left = []
         for host in self._inventory.get_hosts(iterator._play.hosts, order=iterator._play.order):
