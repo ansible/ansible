@@ -640,16 +640,16 @@ def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/'):
         repoq += ['-c', conf_file]
 
     if stuff == 'installed':
-        return [ pkg_to_dict(p) for p in sorted(is_installed(module, repoq, '-a', conf_file, qf=is_installed_qf, installroot=installroot)) if p.strip() ]
+        return [ pkg_to_dict(pkg) for pkg in sorted(is_installed(module, repoq, '-a', conf_file, qf=is_installed_qf, installroot=installroot)) if pkg.strip() ]
     elif stuff == 'updates':
-        return [ pkg_to_dict(p) for p in sorted(is_update(module, repoq, '-a', conf_file, qf=qf, installroot=installroot)) if p.strip() ]
+        return [ pkg_to_dict(pkg) for pkg in sorted(is_update(module, repoq, '-a', conf_file, qf=qf, installroot=installroot)) if pkg.strip() ]
     elif stuff == 'available':
-        return [ pkg_to_dict(p) for p in sorted(is_available(module, repoq, '-a', conf_file, qf=qf, installroot=installroot)) if p.strip() ]
+        return [ pkg_to_dict(pkg) for pkg in sorted(is_available(module, repoq, '-a', conf_file, qf=qf, installroot=installroot)) if pkg.strip() ]
     elif stuff == 'repos':
         return [ dict(repoid=name, state='enabled') for name in sorted(repolist(module, repoq)) if name.strip() ]
     else:
-        return [ pkg_to_dict(p) for p in sorted(is_installed(module,repoq, stuff, conf_file, qf=is_installed_qf, installroot=installroot)+
-                                                is_available(module, repoq, stuff, conf_file, qf=qf, installroot=installroot)) if p.strip()]
+        return [ pkg_to_dict(pkg) for pkg in sorted(is_installed(module,repoq, stuff, conf_file, qf=is_installed_qf, installroot=installroot)+
+                                                            is_available(module, repoq, stuff, conf_file, qf=qf, installroot=installroot)) if pkg.strip()]
 
 def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot='/'):
 
@@ -1170,16 +1170,37 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
 
 def main():
 
-    # state=installed name=pkgspec
-    # state=removed name=pkgspec
-    # state=latest name=pkgspec
-    #
-    # informational commands:
-    #   list=installed
-    #   list=updates
-    #   list=available
-    #   list=repos
-    #   list=pkgspec
+
+    # The coments bellow are legacy comments.
+    """
+     state=installed name=pkgspec
+     state=removed name=pkgspec
+     state=latest name=pkgspec
+
+      The problem with list option of yum module right now is non standard approach for an ansible module.
+      Current logic is that in case one of ['installed', 'updates', 'available', 'repos'] option will be
+      passed those are treated as options and different behaviour will occure. In case any other string
+      is passed that string is treated as pkgspec aka package name.
+
+      In theory this has to go away, we should introduce a new param name that will be e.g. list_packages.
+      that will be used as argument for list=package option or for list=repos option.
+
+      I can not alter this function under #21619 issue without the opinion of the rest. If it would be me
+      i would loose curent confusing behaviour.
+
+      related lines:
+        action for list yum module paramter
+        1238         results = dict(results=list_stuff(module, repoquerybin, params['conf_file'], params['list'], params['installroot']))
+        function definition
+        631 def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/'):
+
+     informational commands:
+       list=installed
+       list=updates
+       list=available
+       list=repos
+       list=pkgspec
+     """
 
 
     module = AnsibleModule(
@@ -1213,6 +1234,14 @@ def main():
         module.fail_json(msg='. '.join(error_msgs))
 
     params = module.params
+
+    if params['list']:
+        repoquerybin = module.get_bin_path('repoquery', required=False)
+        if not repoquerybin:
+            module.fail_json(msg="repoquery is required to use list= with this module. Please install the yum-utils package.")
+        results = dict(results=list_stuff(module, repoquerybin, params['conf_file'], params['list'], params['installroot']))
+        module.exit_json(**results)
+
     package_list = [ package.strip() for package in params['name']]
     exclude = params['exclude']
     state = params['state']
@@ -1222,12 +1251,6 @@ def main():
     skip_broken = params['skip_broken']
     conf_file = params['conf_file']
 
-    if params['list']:
-        repoquerybin = module.get_bin_path('repoquery', required=False)
-        if not repoquerybin:
-            module.fail_json(msg="repoquery is required to use list= with this module. Please install the yum-utils package.")
-        results = dict(results=list_stuff(module, repoquerybin, params['conf_file'], params['list'], params['installroot']))
-        module.exit_json(**results)
 
     """ If rhn-plugin is installed and no rhn-certificate is available on
     the system then users will see an error message using the yum API.
