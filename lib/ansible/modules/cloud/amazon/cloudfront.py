@@ -87,6 +87,7 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from functools import partial
 import json
 import traceback
+import datetime
 
 class CloudFrontServiceManager:
     """Handles CloudFront Services"""
@@ -161,7 +162,7 @@ class CloudFrontServiceManager:
     def create_distribution(self, config, tags):
         try:
             if tags is None:
-                func = partial(self.client.create_disribution, DistributionConfig=config)
+                func = partial(self.client.create_distribution, DistributionConfig=config)
             else:
                 distribution_config_with_tags = config.update(tags)
                 func = partial(self.client.create_disribution_with_tags,
@@ -238,13 +239,12 @@ def main():
         update_streaming_distribution=dict(required=False, default=False, type='bool'),
         config=dict(required=False, default=None, type='json'),
         tags=dict(required=False, default=None, type='str'),
-        aliases=dict(required=False, default=None, type='json')
+        aliases=dict(required=False, default=None, type='json'),
         default_root_object=dict(required=False, default=None, type='str'),
         origins=dict(required=False, default=None, type='json'),
-        default_cache_behavior=dict(required=False, default=None, type='json')
+        default_cache_behavior=dict(required=False, default=None, type='json'),
         cache_behaviors=dict(required=False, default=None, type='json'),
         custom_error_responses=dict(required=False, default=None, type='json'),
-        comment=dict(required=False, default=None, type='str'),
         logging=dict(required=False, default=None, type='json'),
         price_class=dict(required=False, default=None, type='str'),
         enabled=dict(required=False, default=False, type='bool'),
@@ -255,7 +255,7 @@ def main():
         is_ipv6_enabled=dict(required=False, default=False, type='bool'),
         s3_origin=dict(required=False, default=None, type='json'),
         trusted_signers=dict(required=False, default=None, type='json'),
-        price_class=dict(required=False, default=None, type='str')
+        default_cache_behavior_domain_name=dict(required=False, default=None, type='str')
     ))
 
     result = {}
@@ -310,68 +310,75 @@ def main():
     is_ipv6_enabled = module.params.get('is_ipv6_enabled')
     s3_origin = module.params.get('s3_origin')
     trusted_signers = module.params.get('trusted_signers')
+    default_cache_behavior_domain_name = module.params.get('default_cache_behavior_domain_name')
 
-    # if no content exists, set all required defaults and add all to object
-    # if content exists, add all non-None to content
+    default_datetime_string = generate_datetime_string()
 
+    # if no config exists, set all required defaults and add all to object
+    # if config exists, add all non-None to config
+    
+    # miniumum requirements for a distribution are a domain name and an id
     # set defaults for all required objects
+    print "create" + str(create_distribution)
     if(create_distribution):
-        if(content is None):
-            content = {}
+        if(config is None):
+            config = {}
             if(caller_reference is None):
-                caller_reference = generate_datetime_string()
+                config["CallerReference"] = default_datetime_string
             if(origins is None):
-                origins = { "Quantity": 0, "Items": [] }
+                config["Origins"] = { 
+                        "Quantity": 1,
+                        "Items": [ {
+                            "Id": default_datetime_string,
+                            "DomainName": default_cache_behavior_domain_name
+                        } ]
+                    }
             if(default_cache_behavior is None):
-                default_cache_behavior =
-                {
-                    "DefaultCacheBehavior": {
+                config["DefaultCacheBehavior"] = {
+                        "MinTTL": 0,
                         "TrustedSigners": {
                             "Enabled": False,
                             "Quantity": 0
                         },
-                        "TargetOriginId": "DefaultDistributionTarget",
+                        "TargetOriginId": default_datetime_string,
                         "Compress": False,
                         "ViewerProtocolPolicy": "allow-all",
                         "ForwardedValues": {
                             "Headers": { "Quantity": 0 },
                             "Cookies": { "Forward": "none" },
-                            "QueryStringCacheKeys": {"Quantity": 0 },
+                            "QueryStringCacheKeys": { "Quantity": 0 },
                             "QueryString": True
                         },
                         "MaxTTL": 31536000,
                         "SmoothStreaming": False,
                         "LambdaFunctionAssociations": { "Quantity": 0 }
                     }
-                }
             if(comment is None):
-                comment = "distribution created by ansible. tatetime string: " + generate_datetime_string()
-        content = content.update({"CallerReference": caller_reference})
-        content = content.update({"Origins": origins})
-        content = content.update({"DefaultCacheBehavior": default_cache_behavior})
-        content = content.update({"Comment": comment})
+                config["Comment"] = "distribution created by ansible. datetime string: " + default_datetime_string
     elif(create_streaming_distribution):
-        if(content is None):
-            content = {}
+        if(config is None):
+            config = {}
             if(caller_reference is None):
-                caller_reference = generate_datetime_string()
+                caller_reference =  default_datetime_string
             if(s3_origin is None):
                 s3_origin = {} # TODO:
             if(comment is None):
                 comment = "streaming distribution created by ansible. datetime string: " + generate_datetime_string()
             if(trusted_signers is None):
                 trusted_signers = {}
-        content = content.update({"CallerReference": caller_reference})
-        content = content.update({"S3Origin": s3_origin})
-        content = content.update({"Comment": s3_comment})
-    if(create_distribution or create_streaming_distribution):
-        if(aliases is not None):
-            content = content.update({"Aliases": aliases})
-        if(logging is not None):
-            content = content.update({"Logging": logging})
-        if(price_class is not None):
-            content = content.update({"PriceClass": price_class})
+        config["CallerReference"] = caller_reference
+        config["S3Origin"] = s3_origin
+        config["Comment"] = s3_comment
 
+    if(create_distribution or create_streaming_distribution):
+        config["Enabled"] = enabled
+        if(aliases is not None):
+            config["Aliases"] = aliases
+        if(logging is not None):
+            config["Logging"] = logging
+        if(price_class is not None):
+            config["PriceClass"] = price_class
+    
     if(create_origin_access_identity):
         result=service_mgr.create_origin_access_identity(caller_reference, comment)
     elif(delete_origin_access_identity):
@@ -385,8 +392,9 @@ def main():
     elif(create_distribution):
         result=service_mgr.create_distribution(config, tags)
     elif(create_streaming_distribution):
-        result=service_mgr.create_streaming_distribution(cofig, tags)
+        result=service_mgr.create_streaming_distribution(config, tags)
 
+    print "config: " + str(config)
     module.exit_json(changed=True, **camel_dict_to_snake_dict(result))
 
 if __name__ == '__main__':
