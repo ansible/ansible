@@ -217,6 +217,7 @@ class GceInventory(object):
             'gce_service_account_email_address': '',
             'gce_service_account_pem_file_path': '',
             'gce_project_id': '',
+            'gce_zone': '',
             'libcloud_secrets': '',
             'inventory_ip_type': '',
             'cache_path': '~/.ansible/tmp',
@@ -296,13 +297,15 @@ class GceInventory(object):
                 self.config.get('gce','gce_service_account_email_address'),
                 self.config.get('gce','gce_service_account_pem_file_path')
             ]
-            kwargs = {'project': self.config.get('gce', 'gce_project_id')}
+            kwargs = {'project': self.config.get('gce', 'gce_project_id'),
+                      'datacenter': self.config.get('gce', 'gce_zone')}
 
         # If the appropriate environment variables are set, they override
         # other configuration; process those into our args and kwargs.
         args[0] = os.environ.get('GCE_EMAIL', args[0])
         args[1] = os.environ.get('GCE_PEM_FILE_PATH', args[1])
         kwargs['project'] = os.environ.get('GCE_PROJECT', kwargs['project'])
+        kwargs['datacenter'] = os.environ.get('GCE_ZONE', kwargs['datacenter'])
 
         # Retrieve and return the GCE driver.
         gce = get_driver(Provider.GCE)(*args, **kwargs)
