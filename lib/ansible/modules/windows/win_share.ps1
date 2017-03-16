@@ -140,6 +140,8 @@ Try {
 
         $cachingMode = Get-Attr $params "caching_mode" "" -validateSet "BranchCache","Documents","Manual","None","Programs", "Unkown"
 
+        $cachingMode = Get-Attr $params "caching_mode" "" -validateSet "BranchCache","Documents","Manual","None","Programs", "Unkown"
+
         If (-Not (Test-Path -Path $path)) {
             Fail-Json $result "$path directory does not exist on the host"
         }
@@ -171,6 +173,10 @@ Try {
         If ($share.FolderEnumerationMode -ne $folderEnum) {
             Set-SmbShare -Force -Name $name -FolderEnumerationMode $folderEnum
             $result.changed = $true
+        }
+        if ($share.CachingMode -ne $cachingMode) {
+            Set-SmbShare -Force -Name $name -CachingMode $cachingMode
+            Set-Attr $result "changed" $true;
         }
         if ($share.CachingMode -ne $cachingMode) {
             Set-SmbShare -Force -Name $name -CachingMode $cachingMode
