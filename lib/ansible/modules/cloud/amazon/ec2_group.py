@@ -43,11 +43,14 @@ options:
     required: false
   rules:
     description:
-      - List of firewall inbound rules to enforce in this group (see example). If none are supplied, a default all-out rule is assumed. If an empty list is supplied, no inbound rules will be enabled. Rules list may include its own name in `group_name`. This allows idempotent loopback additions (e.g. allow group to acccess itself).
+      - List of firewall inbound rules to enforce in this group (see example). If none are supplied,
+        no inbound rules will be enabled. Rules list may include its own name in `group_name`.
+        This allows idempotent loopback additions (e.g. allow group to acccess itself).
     required: false
   rules_egress:
     description:
-      - List of firewall outbound rules to enforce in this group (see example). If none are supplied, a default all-out rule is assumed. If an empty list is supplied, no outbound rules will be enabled.
+      - List of firewall outbound rules to enforce in this group (see example). If none are supplied,
+        a default all-out rule is assumed. If an empty list is supplied, no outbound rules will be enabled.
     required: false
     version_added: "1.6"
   state:
@@ -146,10 +149,10 @@ def make_rule_key(prefix, rule, group_id, cidr_ip):
     """Creates a unique key for an individual group rule"""
     if isinstance(rule, dict):
         proto, from_port, to_port = [rule.get(x, None) for x in ('proto', 'from_port', 'to_port')]
-        #fix for 11177
+        # fix for 11177
         if proto not in ['icmp', 'tcp', 'udp'] and from_port == -1 and to_port == -1:
             from_port = 'none'
-            to_port   = 'none'
+            to_port = 'none'
 
     else:  # isinstance boto.ec2.securitygroup.IPPermissions
         proto, from_port, to_port = [getattr(rule, x, None) for x in ('ip_protocol', 'from_port', 'to_port')]
@@ -247,7 +250,7 @@ def main():
         vpc_id=dict(type='str'),
         rules=dict(type='list'),
         rules_egress=dict(type='list'),
-        state = dict(default='present', type='str', choices=['present', 'absent']),
+        state=dict(default='present', type='str', choices=['present', 'absent']),
         purge_rules=dict(default=True, required=False, type='bool'),
         purge_rules_egress=dict(default=True, required=False, type='bool'),
 
@@ -333,7 +336,7 @@ def main():
                 # reflected in the object returned by the AWS API
                 # call. We re-read the group for getting an updated object
                 # amazon sometimes takes a couple seconds to update the security group so wait till it exists
-                while len(ec2.get_all_security_groups(filters={ 'group_id': group.id, })) == 0:
+                while len(ec2.get_all_security_groups(filters={'group_id': group.id})) == 0:
                     time.sleep(0.1)
 
                 group = ec2.get_all_security_groups(group_ids=(group.id,))[0]
