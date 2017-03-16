@@ -398,9 +398,9 @@ class ImageManager(DockerBaseClass):
                 self.fail("Error getting image %s - %s" % (image_name, str(exc)))
 
             try:
-                image_tar = open(self.archive_path, 'w')
-                image_tar.write(image.data)
-                image_tar.close()
+                with open(self.archive_path, 'w') as fd:
+                    for chunk in image.stream(2048, decode_content=False):
+                        fd.write(chunk)
             except Exception as exc:
                 self.fail("Error writing image archive %s - %s" % (self.archive_path, str(exc)))
 
