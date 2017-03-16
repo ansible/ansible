@@ -7,6 +7,7 @@ Ansible Changes By Release
 
 * Added fact namespacing, from now on facts will be available under 'ansible_facts' namespace (i.e. `ansible_facts.ansible_os_distribution`), they will still also be added into the main namespace directly but now also having a configuration toggle to disable this. Eventually this will be on by default. This is done to avoid collisions and possible security issues as facts come from the remote targets and they might be compromised.
 * new 'order' play level keyword that allows the user to change the order in which Ansible processes hosts when dispatching tasks.
+* Users can now set group merge priority for groups of the same depth (parent child relationship), using the new `ansible_group_priority` variable, when values are the same or don't exist it will fallback to the previous 'sorting by name'.
 
 #### New: Tests
 - any : true if any element is true
