@@ -68,8 +68,8 @@ class ShippableChanges(object):
             raise ChangeDetectionNotSupported('Change detection is not supported for tags.')
 
         if self.is_pr:
-            self.paths = sorted(git.get_diff_names([self.branch]))
-            self.diff = git.get_diff([self.branch])
+            self.paths = sorted(git.get_diff_names(['origin/%s' % self.branch, '--']))
+            self.diff = git.get_diff(['origin/%s' % self.branch, '--'])
         else:
             merge_runs = self.get_merge_runs(self.project_id, self.branch)
             last_successful_commit = self.get_last_successful_commit(git, merge_runs)
