@@ -124,7 +124,10 @@ class Group:
 
     def set_variable(self, key, value):
 
-        self.vars[key] = value
+        if key == 'ansible_group_priority':
+            self.set_priority(int(value))
+        else:
+            self.vars[key] = value
 
     def clear_hosts_cache(self):
 

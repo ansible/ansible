@@ -85,10 +85,7 @@ class InventoryParser(object):
 
             if 'vars' in group_data:
                 for var in group_data['vars']:
-                    if var != 'ansible_group_priority':
-                        self.groups[group].set_variable(var, group_data['vars'][var])
-                    else:
-                        self.groups[group].set_priority(group_data['vars'][var])
+                    self.groups[group].set_variable(var, group_data['vars'][var])
 
             if 'children' in group_data:
                 for subgroup in group_data['children']:
