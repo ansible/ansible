@@ -330,7 +330,7 @@ ansible module.
 .. note::
     Ansible wraps the zipfile in the Python script for two reasons:
 
-    * for compatibility with Python-2.4 and Python-2.6 which have less
+    * for compatibility with Python-2.6 which has a less
       featureful versions of Python's ``-m`` command line switch.
     * so that pipelining will function properly.  Pipelining needs to pipe the
       Python module into the Python interpreter on the remote node.  Python
