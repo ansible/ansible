@@ -38,7 +38,7 @@ class CallbackModule(CallbackBase):
 
         self.handler = logging.handlers.SysLogHandler(
             address = (os.getenv('SYSLOG_SERVER','localhost'),
-                       os.getenv('SYSLOG_PORT',514)),
+                       int(os.getenv('SYSLOG_PORT',514))),
             facility= os.getenv('SYSLOG_FACILITY',logging.handlers.SysLogHandler.LOG_USER)
         )
         self.logger.addHandler(self.handler)
