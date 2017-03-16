@@ -155,6 +155,6 @@ class Host:
     def get_group_vars(self):
         results = {}
         groups = self.get_groups()
-        for group in sorted(groups, key=lambda g: (g.depth, g.name)):
+        for group in sorted(groups, key=lambda g: (g.depth, g.priority, g.name)):
             results = combine_vars(results, group.get_vars())
         return results

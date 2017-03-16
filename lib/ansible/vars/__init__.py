@@ -252,6 +252,7 @@ class VariableManager:
             # first we merge in vars from groups specified in the inventory (INI or script)
             all_vars = combine_vars(all_vars, host.get_group_vars())
 
+            # these are PLAY host/group vars, inventory adjacent ones have already been processed
             # next, we load any vars from group_vars files and then any vars from host_vars
             # files which may apply to this host or the groups it belongs to. We merge in the
             # special 'all' group_vars first, if they exist
@@ -260,7 +261,7 @@ class VariableManager:
                 for item in data:
                     all_vars = combine_vars(all_vars, item)
 
-            for group in sorted(host.get_groups(), key=lambda g: (g.depth, g.name)):
+            for group in sorted(host.get_groups(), key=lambda g: (g.depth, g.priority, g.name)):
                 if group.name in self._group_vars_files and group.name != 'all':
                     for data in self._group_vars_files[group.name]:
                         data = preprocess_vars(data)
