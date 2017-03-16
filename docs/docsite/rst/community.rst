@@ -180,7 +180,7 @@ please observe the following guidelines:
 
 - Code developed for Ansible needs to support Python2-2.6 or higher and Python3-3.5 or higher.
 - Use a 4-space indent, not  tabs.
-- We do not enforce 80 column lines; up to 140 columns are acceptable.
+- We do not enforce 80 column lines; up to 160 columns are acceptable.
 - We do not accept 'style only' pull requests unless the code is nearly unreadable.
 - We are "PEP8ish", but not strictly compliant.
 
