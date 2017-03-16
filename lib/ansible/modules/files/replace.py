@@ -60,7 +60,7 @@ options:
         matches. If not set, matches are removed entirely.
   after:
     required: false
-    version_added: "2.3"
+    version_added: "2.4"
     description:
       - If specified, the line after the replace/remove will start. Can be used
         in combination with C(before).
@@ -68,7 +68,7 @@ options:
         U(http://docs.python.org/2/library/re.html).
   before:
     required: false
-    version_added: "2.3"
+    version_added: "2.4"
     description:
       - If specified, the line before the replace/remove will occur. Can be used
         in combination with C(after).
@@ -104,7 +104,7 @@ EXAMPLES = r"""
     replace: '\1new.host.name\2'
     backup: yes
 
-# Replace after the expression till the end of the file
+# Replace after the expression till the end of the file (requires >=2.4)
 - replace:
     path: /etc/hosts
     regexp: '(\s+)old\.host\.name(\s+.*)?$'
@@ -112,7 +112,7 @@ EXAMPLES = r"""
     after: 'Start after line.*'
     backup: yes
 
-# Replace before the expression till the begin of the file
+# Replace before the expression till the begin of the file (requires >=2.4)
 - replace:
     path: /etc/hosts
     regexp: '(\s+)old\.host\.name(\s+.*)?$'
@@ -120,7 +120,7 @@ EXAMPLES = r"""
     before: 'Start before line.*'
     backup: yes
 
-# Replace between the expressions
+# Replace between the expressions (requires >=2.4)
 - replace:
     path: /etc/hosts
     regexp: '(\s+)old\.host\.name(\s+.*)?$'
