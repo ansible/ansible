@@ -26,12 +26,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: zabbix_host
-short_description: Zabbix host proxys creates/deletes
+module: zabbix_proxy
+short_description: Zabbix  proxys creates/deletes
 description:
    - Create host proxys if they do not exist.
    - Delete existing host proxys if they exist.
-version_added: "1.8"
+version_added: "2.4"
 author:
     - "Amine Ben Asker (@asker_amine)"
 requirements:
@@ -57,13 +57,13 @@ options:
             - Basic Auth login
         required: false
         default: None
-        version_added: "2.1"
+        version_added: "2.4"
     http_login_password:
         description:
             - Basic Auth password
         required: false
         default: None
-        version_added: "2.1"
+        version_added: "2.4"
     state:
         description:
             - Create or delete proxy.
@@ -120,8 +120,15 @@ EXAMPLES = '''
           useip: 1
           port: 10051
 
-
 '''
+
+RETURN = '''
+state:
+    description: Facts about the current state of the object.
+    returned: always
+    type: dict
+'''
+
 
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
@@ -260,5 +267,5 @@ def main():
         else:
             module.exit_json(changed=False)
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 main()
