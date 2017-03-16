@@ -171,6 +171,7 @@ Ansible Changes By Release
   * ipa_user
 - ipinfoio_facts
 - ios:
+  * ios_banner
   * ios_system
   * ios_vrf
 - iosxr_system
