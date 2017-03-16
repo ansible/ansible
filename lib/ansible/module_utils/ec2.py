@@ -85,7 +85,8 @@ class AWSRetry(CloudRetry):
         # https://github.com/boto/boto3/issues/876 (and linked PRs etc)
         retry_on = [
             'RequestLimitExceeded', 'Unavailable', 'ServiceUnavailable',
-            'InternalFailure', 'InternalError', 'TooManyRequestsException'
+            'InternalFailure', 'InternalError', 'TooManyRequestsException',
+            'Throttling'
         ]
 
         not_found = re.compile(r'^\w+.NotFound')
