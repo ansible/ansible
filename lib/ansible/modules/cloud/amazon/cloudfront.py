@@ -319,7 +319,6 @@ def main():
     
     # miniumum requirements for a distribution are a domain name and an id
     # set defaults for all required objects
-    print "create" + str(create_distribution)
     if(create_distribution):
         if(config is None):
             config = {}
@@ -330,7 +329,10 @@ def main():
                         "Quantity": 1,
                         "Items": [ {
                             "Id": default_datetime_string,
-                            "DomainName": default_cache_behavior_domain_name
+                            "DomainName": default_cache_behavior_domain_name,
+                            "S3OriginConfig": {
+                                    "OriginAccessIdentity": ""
+                                }
                         } ]
                     }
             if(default_cache_behavior is None):
@@ -394,7 +396,6 @@ def main():
     elif(create_streaming_distribution):
         result=service_mgr.create_streaming_distribution(config, tags)
 
-    print "config: " + str(config)
     module.exit_json(changed=True, **camel_dict_to_snake_dict(result))
 
 if __name__ == '__main__':
