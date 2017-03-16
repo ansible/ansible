@@ -91,7 +91,6 @@ class HashiVault:
                 if os.path.exists(token_filename):
                     with open(token_filename) as token_file:
                         self.token = token_file.read().strip()
-
             if self.token is None:
                 raise AnsibleError("No Vault Token specified")
 
