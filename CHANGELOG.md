@@ -3,6 +3,11 @@ Ansible Changes By Release
 
 ## 2.4 "Dancing Days" - ACTIVE DEVELOPMENT
 
+### Major Changes
+
+* Added fact namespacing, from now on facts will be available under 'ansible_facts' namespace (i.e. `ansible_facts.ansible_os_distribution`), they will still also be added into the main namespace directly but now also having a configuration toggle to disable this. Eventually this will be on by default. This is done to avoid collisions and possible security issues as facts come from the remote targets and they might be compromised.
+* new 'order' play level keyword that allows the user to change the order in which Ansible processes hosts when dispatching tasks.
+
 #### New: Tests
 - any : true if any element is true
 - all: true if all elements are true
