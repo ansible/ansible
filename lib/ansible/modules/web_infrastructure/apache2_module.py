@@ -143,10 +143,10 @@ def _module_is_enabled(module):
         else:
             module.fail_json(msg=error_msg)
 
-    searchstring = ' ' + replace_name(name)
+    searchstring = ' ' + create_apache_identifier(name)
     return searchstring in stdout
 
-def replace_name(name):
+def create_apache_identifier(name):
     """
     By convention if a module is loaded via name, it appears in apache2ctl -M as
     name_module.
