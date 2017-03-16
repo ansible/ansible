@@ -733,7 +733,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # actually execute
         res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data)
 
-        # parse the main result, also cleans up internal keys
+        # parse the main result
         data = self._parse_returned_data(res)
 
         #NOTE: INTERNAL KEYS ONLY ACCESSIBLE HERE
