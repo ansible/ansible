@@ -57,13 +57,13 @@ options:
             - Basic Auth login
         required: false
         default: None
-        version_added: "2.4"
+        version_added: "2.1"
     http_login_password:
         description:
             - Basic Auth password
         required: false
         default: None
-        version_added: "2.4"
+        version_added: "2.1"
     state:
         description:
             - Create or delete proxy.
@@ -88,10 +88,10 @@ options:
             -  List of hosts to be monitored by the proxy.
         required: false
 
-        
-
 notes:
-    - Note that without encrypted communications (sensitive) proxy configuration data may become available to parties having access to the Zabbix server trapper port when using an active proxy.
+    - Note that without encrypted communications (sensitive) proxy configuration data 
+      may become available to parties having access to the Zabbix server trapper port 
+      when using an active proxy.
 '''
 
 EXAMPLES = '''
@@ -111,7 +111,7 @@ EXAMPLES = '''
       login_user: Admin
       login_password: zabbix
       state: present
-      proxy_name: 
+      proxy_name:
           - ZBXPROXY01
       proxy_mode: passive
       proxy_interfaces:
@@ -128,7 +128,6 @@ state:
     returned: always
     type: dict
 '''
-
 
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
@@ -151,7 +150,7 @@ class Proxy(object):
 
         if proxy_mode == "active":
             query['status'] = 5
-        else: 
+        else:
             query['status'] = 6
             query['interface'] = proxy_interface
         return query
@@ -270,4 +269,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
