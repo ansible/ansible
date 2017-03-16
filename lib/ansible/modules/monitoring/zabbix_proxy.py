@@ -138,6 +138,7 @@ try:
 except ImportError:
     HAS_ZABBIX_API = False
 
+from ansible.module_utils.basic import AnsibleModule
 
 class Proxy(object):
     def __init__(self, module, zbx):
@@ -267,5 +268,6 @@ def main():
         else:
             module.exit_json(changed=False)
 
-from ansible.module_utils.basic import AnsibleModule
-main()
+if __name__ == '__main__':
+    main()
+
