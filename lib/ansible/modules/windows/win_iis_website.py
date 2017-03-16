@@ -115,6 +115,12 @@ EXAMPLES = r'''
     parameters: logfile.directory:c:\sites\logs
   register: website
 
+# Remove Default Web Site and the standard port 80 binding
+- name: Remove Default Web Site
+  win_iis_website:
+    name: "Default Web Site"
+    state: absent
+
 # Some commandline examples:
 
 # This return information about an existing host
