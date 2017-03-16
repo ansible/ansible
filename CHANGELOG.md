@@ -11,7 +11,7 @@ Ansible Changes By Release
 * Support for Python-2.4 and Python-2.5 on the managed system's side was
   dropped.  If you need to manage a system that ships with Python-2.4 or
   Python-2.5 you'll need to install Python-2.6 or better there or run
-  Ansible-2.3 and plan on upgrading the system before upgrading.
+  Ansible-2.3 until you can upgrade the system.
 
 #### New: Tests
 - any : true if any element is true
