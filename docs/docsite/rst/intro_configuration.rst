@@ -762,6 +762,27 @@ always default to the current user if this is not defined::
 
     remote_user = root
 
+
+.. _restrict_facts_namespace:
+
+restrict_facts_namespace
+========================
+
+.. versionadded:: 2.4
+
+This allows restricting facts in their own namespace (under ansible_facts) instead of pushing them into the main.
+False by default. Can also be set via the environment variable `ANSIBLE_RESTRICT_FACTS`. Using `ansible_system` as an example:
+
+When False::
+
+    - debug: var=ansible_system
+
+
+When True::
+
+    - debug: var=ansible_facts.ansible_system
+
+
 .. _retry_files_enabled:
 
 retry_files_enabled
