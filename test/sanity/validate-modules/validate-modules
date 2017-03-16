@@ -624,6 +624,7 @@ class ModuleValidator(Validator):
 
     def _validate_docs(self):
         doc_info = self._get_docs()
+        deprecated = False
         if not bool(doc_info['DOCUMENTATION']['value']):
             self.errors.append((301, 'No DOCUMENTATION provided'))
         else:
@@ -658,7 +659,6 @@ class ModuleValidator(Validator):
                          'with DOCUMENTATION.extends_documentation_fragment')
                     ))
 
-                deprecated = False
                 if self.object_name.startswith('_') and not os.path.islink(self.object_path):
                     deprecated = True
                     if 'deprecated' not in doc or not doc.get('deprecated'):
