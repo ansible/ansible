@@ -18,18 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-
-try:
-    import bugzilla
-
-    HAS_BUGZILLA = True
-except ImportError:
-    HAS_BUGZILLA = False
-
-
 ANSIBLE_METADATA = {
     'status': ['preview'],
     'supported_by': 'community',
@@ -42,7 +30,7 @@ module: bugzilla
 short_description: Perform various actions with bugzilla
 description:
   - Fetch status of particular bugzilla id from Bugzilla URL provided.
-version_added: '2.3'
+version_added: '2.4'
 author:
   - Bhavik Bhavsar (@bhavik)
 requirements:
@@ -103,6 +91,15 @@ status:
   type: string
   sample: NEW
 '''
+
+try:
+    import bugzilla
+    HAS_BUGZILLA = True
+except ImportError:
+    HAS_BUGZILLA = False
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 
 
 def bugzilla_status(bug):
