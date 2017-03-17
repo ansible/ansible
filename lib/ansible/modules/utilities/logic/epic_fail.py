@@ -63,6 +63,27 @@ options:
         - A dict of info to pass to fail_json, completely replacing any existing args.
     required: False
     version_added: "2.3"
+  output_list:
+    description:
+        - >
+        A list describing the intended output in order. Each dict has keys for 'where' and 'what'.
+        'where' is one of 'stdout', 'stderr', 'nobuf_stdout', 'nobuf_stderr'.
+        'what' is a string to be written to the output described by 'where'.
+        The where options are normal buffered stdout/stderr, and nobuf_stdout/nobuf_stderr for unbuffered
+        stdout/stderr. The later can be used to simulate intertwine stdout/stderr output from a module.
+        The output is written in the order of the output_list.
+    required: False
+    version_added: "2.4"
+  exception_type:
+      description:
+          - A name of a python exception to raise.
+    required: False
+    version_added: "2.4"
+  exception_args:
+      description:
+          - A list of args to pass to exception_type
+      required: False
+      version_added: "2.4"
 author:
     - "Adrian Likins <alikins@redhat.com>"
 '''
@@ -97,8 +118,11 @@ def main():
             return_data=dict(required=False, type='dict', default=None),
             return_data_updates=dict(required=False, type='dict', default={}),
             output_list=dict(required=False, type='list', default=[]),
+            exception_type=dict(required=False, type='str', default=None),
+            exception_args=dict(required=False, type='list', default=None),
             failure_mode=dict(required=False, type='str',
-                              choices=['exit_json', 'fail_json', 'sys_exit', 'no_output', 'hang', 'python_traceback', 'incomplete_json'])
+                              choices=['exit_json', 'fail_json', 'sys_exit', 'exception',
+                                       'no_output', 'hang', 'python_traceback', 'incomplete_json'])
         ),
         supports_check_mode=True
     )
@@ -110,6 +134,8 @@ def main():
     return_data_updates = module.params.get('return_data_updates', {})
     return_data = module.params.get('return_data', None)
     output_list = module.params.get('output_list', [])
+    exception_type = module.params.get('exception_type', None)
+    exception_args = module.params.get('exception_args', None)
 
     nobuf_stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
     nobuf_stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
@@ -133,7 +159,7 @@ def main():
     where_map = {'stdout': stdout_write,
                  'stderr': stderr_write,
                  'nobuf_stdout': nobuf_stdout_write,
-                 'nobug_stderr': nobuf_stderr_write}
+                 'nobuf_stderr': nobuf_stderr_write}
 
     # A list of data indicating what to output to where and in what order. Useful for
     # interleaving stdout/stderr
@@ -180,6 +206,20 @@ def main():
     if failure_mode == 'sys_exit':
         sys.exit(return_code or 14)
 
+    if failure_mode == 'exception':
+        if not exception_type:
+            module.fail_json(msg='Not very exceptional are we? If you want failure_mode=exception, you have to at least tell me the exception_type.')
+
+        # lookup exception_type in scope
+        exc = locals().get(exception_type, None) or globals().get(exception_type, None) or getattr(__builtins__, exception_type, None)
+        if not exc:
+            module.fail_json(msg='It is very exceptional of you to want to fail as %s, but that is not even a thing. Not a thing in locals, globals, or builtins. Next time maybe try an exception that exists.' % exception_type)
+        exc_args = exception_args or []
+        try:
+            exc_instance = exc(*exception_args)
+        except Exception as e:
+            module.fail_json(msg='There are rules man! Also, your argument is invalid. I tried to make an exception for you, but all it got me was: %s' % e)
+        raise exc_instance
     # TODO: implement other failure modes
 
     module.fail_json(msg='You haved failed at failing. End of epic_fail reached.')
