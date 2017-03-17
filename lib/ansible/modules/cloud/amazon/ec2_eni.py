@@ -23,21 +23,21 @@ DOCUMENTATION = '''
 module: ec2_eni
 short_description: Create and optionally attach an Elastic Network Interface (ENI) to an instance
 description:
-    - Create and optionally attach an Elastic Network Interface (ENI) to an instance. If an ENI ID or private_ip is \
-      provided, the existing ENI (if any) will be modified. The 'attached' parameter controls the attachment status \
+    - Create and optionally attach an Elastic Network Interface (ENI) to an instance. If an ENI ID or private_ip is
+      provided, the existing ENI (if any) will be modified. The 'attached' parameter controls the attachment status
       of the network interface.
 version_added: "2.0"
 author: "Rob White (@wimnat)"
 options:
   eni_id:
     description:
-      - The ID of the ENI
+      - The ID of the ENI (to modify); if null and state is present, a new eni will be created.
     required: false
     default: null
   instance_id:
     description:
-      - Instance ID that you wish to attach ENI to. Since version 2.2, use the 'attached' parameter to attach or \
-      detach an ENI. Prior to 2.2, to detach an ENI from an instance, use 'None'.
+      - Instance ID that you wish to attach ENI to. Since version 2.2, use the 'attached' parameter to attach or
+        detach an ENI. Prior to 2.2, to detach an ENI from an instance, use 'None'.
     required: false
     default: null
   private_ip_address:
@@ -56,8 +56,8 @@ options:
     default: null
   security_groups:
     description:
-      - List of security groups associated with the interface. Only used when state=present. Since version 2.2, you \
-      can specify security groups by ID or by name or a combination of both. Prior to 2.2, you can specify only by ID.
+      - List of security groups associated with the interface. Only used when state=present. Since version 2.2, you
+        can specify security groups by ID or by name or a combination of both. Prior to 2.2, you can specify only by ID.
     required: false
     default: null
   state:
@@ -73,27 +73,31 @@ options:
     default: 0
   attached:
     description:
-      - Specifies if network interface should be attached or detached from instance. If ommited, attachment status \
-      won't change
+      - Specifies if network interface should be attached or detached from instance. If ommited, attachment status
+        won't change
     required: false
     default: yes
     version_added: 2.2
   force_detach:
     description:
-      - Force detachment of the interface. This applies either when explicitly detaching the interface by setting instance_id to None or when deleting an interface with state=absent.
+      - Force detachment of the interface. This applies either when explicitly detaching the interface by setting instance_id
+        to None or when deleting an interface with state=absent.
     required: false
     default: no
   delete_on_termination:
     description:
-      - Delete the interface when the instance it is attached to is terminated. You can only specify this flag when the interface is being modified, not on creation.
+      - Delete the interface when the instance it is attached to is terminated. You can only specify this flag when the
+        interface is being modified, not on creation.
     required: false
   source_dest_check:
     description:
-      - By default, interfaces perform source/destination checks. NAT instances however need this check to be disabled. You can only specify this flag when the interface is being modified, not on creation.
+      - By default, interfaces perform source/destination checks. NAT instances however need this check to be disabled.
+        You can only specify this flag when the interface is being modified, not on creation.
     required: false
   secondary_private_ip_addresses:
     description:
-      - A list of IP addresses to assign as secondary IP addresses to the network interface. This option is mutually exclusive of secondary_private_ip_address_count
+      - A list of IP addresses to assign as secondary IP addresses to the network interface.
+        This option is mutually exclusive of secondary_private_ip_address_count
     required: false
     version_added: 2.2
   secondary_private_ip_address_count:
@@ -248,8 +252,8 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (AnsibleAWSError, connect_to_aws,
-        ec2_argument_spec, get_aws_connection_info,
-        get_ec2_security_group_ids_from_names)
+                                      ec2_argument_spec, get_aws_connection_info,
+                                      get_ec2_security_group_ids_from_names)
 
 
 def get_eni_info(interface):
@@ -257,7 +261,7 @@ def get_eni_info(interface):
     # Private addresses
     private_addresses = []
     for ip in interface.private_ip_addresses:
-        private_addresses.append({ 'private_ip_address': ip.private_ip_address, 'primary_address': ip.primary })
+        private_addresses.append({'private_ip_address': ip.private_ip_address, 'primary_address': ip.primary})
 
     interface_info = {'id': interface.id,
                       'subnet_id': interface.subnet_id,
@@ -387,18 +391,30 @@ def modify_eni(connection, vpc_id, module, eni):
         if secondary_private_ip_addresses is not None:
             secondary_addresses_to_remove = list(set(current_secondary_addresses) - set(secondary_private_ip_addresses))
             if secondary_addresses_to_remove:
-                connection.unassign_private_ip_addresses(network_interface_id=eni.id, private_ip_addresses=list(set(current_secondary_addresses) - set(secondary_private_ip_addresses)), dry_run=False)
-            connection.assign_private_ip_addresses(network_interface_id=eni.id, private_ip_addresses=secondary_private_ip_addresses, secondary_private_ip_address_count=None, allow_reassignment=False, dry_run=False)
+                connection.unassign_private_ip_addresses(network_interface_id=eni.id,
+                                                         private_ip_addresses=list(set(current_secondary_addresses) -
+                                                                                   set(secondary_private_ip_addresses)),
+                                                         dry_run=False)
+            connection.assign_private_ip_addresses(network_interface_id=eni.id,
+                                                   private_ip_addresses=secondary_private_ip_addresses,
+                                                   secondary_private_ip_address_count=None,
+                                                   allow_reassignment=False, dry_run=False)
         if secondary_private_ip_address_count is not None:
             current_secondary_address_count = len(current_secondary_addresses)
 
             if secondary_private_ip_address_count > current_secondary_address_count:
-                connection.assign_private_ip_addresses(network_interface_id=eni.id, private_ip_addresses=None, secondary_private_ip_address_count=(secondary_private_ip_address_count - current_secondary_address_count), allow_reassignment=False, dry_run=False)
+                connection.assign_private_ip_addresses(network_interface_id=eni.id,
+                                                       private_ip_addresses=None,
+                                                       secondary_private_ip_address_count=(secondary_private_ip_address_count -
+                                                                                           current_secondary_address_count),
+                                                       allow_reassignment=False, dry_run=False)
                 changed = True
             elif secondary_private_ip_address_count < current_secondary_address_count:
                 # How many of these addresses do we want to remove
                 secondary_addresses_to_remove_count = current_secondary_address_count - secondary_private_ip_address_count
-                connection.unassign_private_ip_addresses(network_interface_id=eni.id, private_ip_addresses=current_secondary_addresses[:secondary_addresses_to_remove_count], dry_run=False)
+                connection.unassign_private_ip_addresses(network_interface_id=eni.id,
+                                                         private_ip_addresses=current_secondary_addresses[:secondary_addresses_to_remove_count],
+                                                         dry_run=False)
 
         if attached is True:
             if eni.attachment and eni.attachment.instance_id != instance_id:
@@ -466,6 +482,9 @@ def find_eni(connection, module):
     private_ip_address = module.params.get('private_ip_address')
     instance_id = module.params.get('instance_id')
     device_index = module.params.get('device_index')
+
+    if not eni_id:
+        return None
 
     try:
         filters = {}
@@ -556,8 +575,6 @@ def main():
         module.fail_json(msg="region must be specified")
 
     state = module.params.get("state")
-    eni_id = module.params.get("eni_id")
-    private_ip_address = module.params.get('private_ip_address')
 
     if state == 'present':
         subnet_id = module.params.get("subnet_id")
