@@ -96,6 +96,7 @@ options:
       - Programs
       - Unknown
     required: no
+    default: "None"
 author: Hans-Joachim Kliemeck (@h0nIg), David Baumann (@daBONDi)
 '''
 
