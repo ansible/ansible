@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# (c) 2016, Tom Melendez <tom@supertom.com>
+# (c) 2016, Tom Melendez (@supertom) <tom@supertom.com>
 #
 # This file is part of Ansible
 #
@@ -18,8 +18,10 @@
 import os
 import sys
 
+import pytest
+
 from ansible.compat.tests import mock, unittest
-from ansible.module_utils.gcp import (_get_gcp_ansible_credentials, _get_gcp_environ_var,
+from ansible.module_utils.gcp import (_get_gcp_ansible_credentials, _get_gcp_credentials, _get_gcp_environ_var,
                                       _get_gcp_libcloud_credentials, _get_gcp_environment_credentials,
                                       _validate_credentials_file)
 
@@ -31,21 +33,32 @@ def fake_get_gcp_environ_var(var_name, default_value):
     else:
         return fake_env_data[var_name]
 
+# Fake AnsibleModule for use in tests
+class FakeModule(object):
+    class Params():
+        data = {}
+
+        def get(self, key, alt=None):
+            if key in self.data:
+                return self.data[key]
+            else:
+                return alt
+
+    def __init__(self, data={}):
+        self.params = FakeModule.Params()
+        self.params.data = data
+
+    def fail_json(self, **kwargs):
+        raise ValueError("fail_json")
+
 class GCPAuthTestCase(unittest.TestCase):
     """Tests to verify different Auth mechanisms."""
+
+    def setup_method(self, method):
+        global fake_env_data
+        fake_env_data = {'GCE_EMAIL': 'gce-email'}
+
     def test_get_gcp_ansible_credentials(self):
-        # create a fake (AnsibleModule) object to pass to the function
-        class FakeModule(object):
-            class Params():
-                data = {}
-                def get(self, key, alt=None):
-                    if key in self.data:
-                        return self.data[key]
-                    else:
-                        return alt
-            def __init__(self, data={}):
-                self.params = FakeModule.Params()
-                self.params.data = data
         input_data = {'service_account_email': 'mysa',
                       'credentials_file': 'path-to-file.json',
                       'project_id': 'my-cool-project'}
@@ -178,4 +191,24 @@ class GCPAuthTestCase(unittest.TestCase):
         fake_env_data = {'GOOGLE_CLOUD_PROJECT': 'my-project'}
         expected = tuple(['my-sa-email', '/path/to/creds.json', 'my-project'])
         actual = _get_gcp_environment_credentials('my-sa-email', '/path/to/creds.json', None)
+        self.assertEqual(expected, actual)
+
+    @mock.patch('ansible.module_utils.gcp._get_gcp_environ_var',
+                side_effect=fake_get_gcp_environ_var)
+    def test_get_gcp_credentials(self, mockobj):
+        global fake_env_data
+
+        fake_env_data = {}
+        module = FakeModule()
+        module.params.data = {}
+        # Nothing is set, calls fail_json
+        with pytest.raises(ValueError):
+            _get_gcp_credentials(module)
+
+        # project_id (only) is set from Ansible params.
+        module.params.data['project_id'] = 'my-project'
+        actual = _get_gcp_credentials(module, require_valid_json=True, check_libcloud=False)
+        expected = {'service_account_email': '',
+                    'project_id': 'my-project',
+                    'credentials_file': ''}
         self.assertEqual(expected, actual)
