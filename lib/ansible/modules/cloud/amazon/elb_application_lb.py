@@ -53,11 +53,13 @@ options:
     required: false
   name:
     description:
-      - The name of the load balancer. This name must be unique within your AWS account, can have a maximum of 32 characters, must contain only alphanumeric characters or hyphens, and must not begin or end with a hyphen.
+      - The name of the load balancer. This name must be unique within your AWS account, can have a maximum of 32 characters, must contain only alphanumeric \
+      characters or hyphens, and must not begin or end with a hyphen.
     required: true
   purge_tags:
     description:
-      - If yes, existing tags will be purged from the resource to match exactly what is defined by tags parameter. If the tag parameter is not set then tags will not be modified.
+      - If yes, existing tags will be purged from the resource to match exactly what is defined by tags parameter. If the tag parameter is not set then tags \
+      will not be modified.
     required: false
     default: yes
     choices: [ 'yes', 'no' ]
@@ -155,7 +157,7 @@ EXAMPLES = '''
           - CertificateArn: arn:aws:iam::12345678987:server-certificate/test.domain.com
         SslPolicy: ELBSecurityPolicy-2015-05
         Rules:
-          - Conditions: 
+          - Conditions:
             - Field: path-pattern
               Values:
                 - '/test'
@@ -248,7 +250,7 @@ def convert(data):
 
 
 def convert_tg_name_arn(connection, module, tg_name):
-        
+
     try:
         response = connection.describe_target_groups(Names=[tg_name])
     except ClientError as e:
@@ -260,7 +262,7 @@ def convert_tg_name_arn(connection, module, tg_name):
 
 
 def convert_tg_arn_name(connection, module, tg_arn):
-        
+
     try:
         response = connection.describe_target_groups(TargetGroupArns=[tg_arn])
     except ClientError as e:
@@ -341,10 +343,10 @@ def update_elb_attributes(connection, module, elb):
     params = dict()
 
     elb_attributes = connection.describe_load_balancer_attributes(LoadBalancerArn=elb['LoadBalancerArn'])
-    
+
     if module.params.get("attributes"):
         params['Attributes'] = module.params.get("attributes")
-        
+
         for new_attribute in params['Attributes']:
             for current_attribute in elb_attributes['Attributes']:
                 if new_attribute['Key'] == current_attribute['Key']:
@@ -357,7 +359,7 @@ def update_elb_attributes(connection, module, elb):
             connection.modify_load_balancer_attributes(LoadBalancerArn=elb['LoadBalancerArn'], Attributes=params['Attributes'])
         except (ClientError, NoCredentialsError) as e:
                 module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-    
+
     return attribute_changed
 
 
@@ -366,7 +368,7 @@ def create_or_update_elb_listeners(connection, module, elb):
 
     listener_changed = False
     listeners = module.params.get("listeners")
-    
+
     # create a copy of original list as we remove list elements for initial comparisons
     listeners_rules = deepcopy(listeners)
     listener_matches = False
@@ -375,7 +377,7 @@ def create_or_update_elb_listeners(connection, module, elb):
         current_listeners = connection.describe_listeners(LoadBalancerArn=elb['LoadBalancerArn'])['Listeners']
         # If there are no current listeners we can just create the new ones
         current_listeners_array=[]
-        
+
         if current_listeners:
             # the describe_listeners action returns keys as unicode so I've converted them to string for easier comparison
             for current_listener in current_listeners:
@@ -446,7 +448,7 @@ def create_or_update_elb_listeners(connection, module, elb):
                                 if rules['Priority'] != 'default':
                                     current_rules_s = convert(rules)
                                     current_rules_array.append(current_rules_s)
-                            
+
                             for curr_rule in current_rules_array:
                                 for action in curr_rule['Actions']:
                                     action['TargetGroupName'] = convert_tg_arn_name(connection, module, action['TargetGroupArn'])
@@ -489,11 +491,10 @@ def create_or_update_elb_listeners(connection, module, elb):
                                     rule['Priority'] = int(rule['Priority'])
                                     for action in rule['Actions']:
                                         action['TargetGroupArn'] = convert_tg_name_arn(connection, module, action['TargetGroupName'])
-                                        del action['TargetGroupName']  
+                                        del action['TargetGroupName']
                                     connection.create_rule(**rule)
 
         else:
-            module.exit_json(list=listeners)
             for listener in listeners:
                 listener['LoadBalancerArn'] = elb['LoadBalancerArn']
                 if 'Rules' in listener.keys():
@@ -603,7 +604,7 @@ def create_or_update_elb(connection, connection_ec2, module):
             new_load_balancer = True
         except (ClientError, NoCredentialsError) as e:
             module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
- 
+
         if module.params.get("wait"):
             status_achieved, new_elb = wait_for_status(connection, module, elb['LoadBalancerArn'], 'active')
 
@@ -628,7 +629,7 @@ def create_or_update_elb(connection, connection_ec2, module):
         if new_load_balancer:
             connection.delete_load_balancer(LoadBalancerArn=elb['LoadBalancerArn'])
         module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-    
+
     # Get the ELB again
     elb = get_elb(connection, module)
     # Get the tags of the ELB
