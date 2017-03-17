@@ -51,28 +51,34 @@ options:
     required: false
     description:
       - Tag name when creating a release
+    version_added: 2.4
   target:
     required: false
     description:
       - Target of release when creating a release
+    version_added: 2.4
   name:
     required: false
     description:
       - Name of release when creating a release
+    version_added: 2.4
   body:
     required: false
     description:
       - Description of the release when creating a release
+    version_added: 2.4
   draft:
     required: false
     description:
       - Sets if the release is a draft or not. (boolean)
     default: false
+    version_added: 2.4
   prerelease:
     required: false
     description:
       - Sets if the release is a prerelease or not. (boolean)
-    default: false
+    default: falseA
+    version_added: 2.4
 
 author:
     - "Adrian Moisey (@adrianmoisey)"
