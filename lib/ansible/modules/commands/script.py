@@ -55,6 +55,8 @@ notes:
 author:
     - Ansible Core Team
     - Michael DeHaan
+extends_documentation_fragment:
+    - decrypt
 """
 
 EXAMPLES = '''

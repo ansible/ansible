@@ -96,6 +96,7 @@ options:
 author: "Stephen Fromm (@sfromm)"
 extends_documentation_fragment:
     - files
+    - decrypt
 '''
 
 EXAMPLES = '''
