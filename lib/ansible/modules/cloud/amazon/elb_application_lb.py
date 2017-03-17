@@ -387,7 +387,7 @@ def create_or_update_elb_listeners(connection, module, elb):
 
             for curr_listener in current_listeners_array:
                 for default_action in curr_listener['DefaultActions']:
-                    default_action['TargetGroupName'] = convert_tg_arn_name(connection, module, default_action['TargetGroupArn'])             
+                    default_action['TargetGroupName'] = convert_tg_arn_name(connection, module, default_action['TargetGroupArn'])
                     del default_action['TargetGroupArn']
 
             listeners_to_add = []
@@ -501,7 +501,7 @@ def create_or_update_elb_listeners(connection, module, elb):
 
                 # handle default
                 for default_action in listener['DefaultActions']:
-                    default_action['TargetGroupArn'] = convert_tg_name_arn(connection, module, default_action['TargetGroupName'])  
+                    default_action['TargetGroupArn'] = convert_tg_name_arn(connection, module, default_action['TargetGroupName'])
                     del default_action['TargetGroupName']
 
                 connection.create_listener(**listener)
