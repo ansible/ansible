@@ -282,7 +282,7 @@ of arguments and don't use the ``key=value`` form.  This makes
 them work as simply as you would expect::
 
    tasks:
-     - name: disable selinux
+     - name: enable selinux
        command: /sbin/setenforce 1
 
 The **command** and **shell** module care about return codes, so if you have a command
