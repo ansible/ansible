@@ -54,6 +54,12 @@ Recap of different connection methods
 -------------------------------------
 This section demonstrates the different ways to write connect to network devices.
 
+The following examples are all equivalent.
+
+.. note: Which playbook style should I use
+
+   If you are starting Networking in Ansible 2.3 we recommend using FIXME name for 2.3 style FIXME. As that is the format that will be supported long term.
+
 Playbook with provider dict
 ```````````````````````````
 
@@ -79,10 +85,13 @@ Playbook with provider dict
          provider: "{{ cli }}"
 
 
-Note, that if you use this form in Ansible 2.3 you will get the following deprecation messages. This is a reminder that you need to move to the new (FIXME NEED A NAME) 2.3 Style, or use ``provider:`
-``[WARNING]: argument username has been deprecated and will be removed in a future version``
-``[WARNING]: argument host has been deprecated and will be removed in a future version``
-``[WARNING]: argument password has been deprecated and will be removed in a future version``
+Note, that if you use this form in Ansible 2.3 you will get the following deprecation messages. This is a reminder that you need to move to the new (FIXME NEED A NAME) 2.3 Style, or use ``provider:``.
+
+.. code-block:: yaml
+
+   [WARNING]: argument username has been deprecated and will be removed in a future version
+   [WARNING]: argument host has been deprecated and will be removed in a future version
+   [WARNING]: argument password has been deprecated and will be removed in a future version
 
 2.2 Playbook with provider
 ``````````````````````````
@@ -105,26 +114,35 @@ Note, that if you use this form in Ansible 2.3 you will get the following deprec
 
 **Version:** Ansible 2.3
 
+FIXME Detail how to use credentials
+
 .. code-block:: yaml
 
    - name: Gather facts
      - eos_facts:
          gather_subset: all
 
-# FIXME Add notes about eapi & nxos
+
+By default eos and nxos module use cli (ssh). If you wish to use the API then use the ``transport:`` option, for example:
+
+.. code-block:: yaml
+
+   - name: Gather facts
+     - eos_facts:
+         gather_subset: all
+         transport: eapi
 
 
-These all do the same thing
 
-These all work in 2.3
+Specifying Credentials
+======================
 
-Why the change to #3
+FIXME Detail each of the ways people can specify credentials, where possible this should link back to existing Ansible Documentation (which may need tidying up)
 
-When will #1 and #2 stop working
-
-If you are starting from fresh in 2.3 use #3
-
-
+* provider (and vars)
+* ssh keys
+* command line (``-u someuser -k``)
+* what else?
 
 
 Connection Errors
