@@ -29,48 +29,49 @@
 
 import os
 import time
-from ansible.module_utils.six import iteritems
-
 try:
     from cs import CloudStack, CloudStackException, read_config
-    has_lib_cs = True
+    HAS_LIB_CS = True
 except ImportError:
-    has_lib_cs = False
+    HAS_LIB_CS = False
 
 CS_HYPERVISORS = [
-    "KVM", "kvm",
-    "VMware", "vmware",
-    "BareMetal", "baremetal",
-    "XenServer", "xenserver",
-    "LXC", "lxc",
-    "HyperV", "hyperv",
-    "UCS", "ucs",
-    "OVM", "ovm",
-    "Simulator", "simulator",
-    ]
+    'KVM', 'kvm',
+    'VMware', 'vmware',
+    'BareMetal', 'baremetal',
+    'XenServer', 'xenserver',
+    'LXC', 'lxc',
+    'HyperV', 'hyperv',
+    'UCS', 'ucs',
+    'OVM', 'ovm',
+    'Simulator', 'simulator',
+]
+
 
 def cs_argument_spec():
     return dict(
-        api_key = dict(default=None),
-        api_secret = dict(default=None, no_log=True),
-        api_url = dict(default=None),
-        api_http_method = dict(choices=['get', 'post'], default='get'),
-        api_timeout = dict(type='int', default=10),
-        api_region = dict(default='cloudstack'),
+        api_key=dict(default=os.environ.get('CLOUDSTACK_KEY')),
+        api_secret=dict(default=os.environ.get('CLOUDSTACK_SECRET'), no_log=True),
+        api_url=dict(default=os.environ.get('CLOUDSTACK_ENDPOINT')),
+        api_http_method=dict(choices=['get', 'post'], default=os.environ.get('CLOUDSTACK_METHOD') or 'get'),
+        api_timeout=dict(type='int', default=os.environ.get('CLOUDSTACK_TIMEOUT') or 10),
+        api_region=dict(default=os.environ.get('CLOUDSTACK_REGION') or 'cloudstack'),
     )
 
+
 def cs_required_together():
-    return [['api_key', 'api_secret', 'api_url']]
+    return [['api_key', 'api_secret']]
+
 
 class AnsibleCloudStack(object):
 
     def __init__(self, module):
-        if not has_lib_cs:
+        if not HAS_LIB_CS:
             module.fail_json(msg="python library cs required: pip install cs")
 
         self.result = {
             'changed': False,
-            'diff' : {
+            'diff': {
                 'before': dict(),
                 'after': dict()
             }
@@ -79,17 +80,17 @@ class AnsibleCloudStack(object):
         # Common returns, will be merged with self.returns
         # search_for_key: replace_with_key
         self.common_returns = {
-            'id':           'id',
-            'name':         'name',
-            'created':      'created',
-            'zonename':     'zone',
-            'state':        'state',
-            'project':      'project',
-            'account':      'account',
-            'domain':       'domain',
-            'displaytext':  'display_text',
-            'displayname':  'display_name',
-            'description':  'description',
+            'id': 'id',
+            'name': 'name',
+            'created': 'created',
+            'zonename': 'zone',
+            'state': 'state',
+            'project': 'project',
+            'account': 'account',
+            'domain': 'domain',
+            'displaytext': 'display_text',
+            'displayname': 'display_name',
+            'description': 'description',
         }
 
         # Init returns dict for use in subclasses
@@ -123,38 +124,36 @@ class AnsibleCloudStack(object):
         self.hypervisor = None
         self.capabilities = None
 
-
     def _connect(self):
-        api_key = self.module.params.get('api_key')
-        api_secret = self.module.params.get('api_secret')
-        api_url = self.module.params.get('api_url')
-        api_http_method = self.module.params.get('api_http_method')
-        api_timeout = self.module.params.get('api_timeout')
+        api_region = self.module.params.get('api_region') or os.environ.get('CLOUDSTACK_REGION')
+        try:
+            config = read_config(api_region)
+        except KeyError:
+            config = {}
 
-        if api_key and api_secret and api_url:
-            self.cs = CloudStack(
-                endpoint=api_url,
-                key=api_key,
-                secret=api_secret,
-                timeout=api_timeout,
-                method=api_http_method
-                )
-        else:
-            api_region = self.module.params.get('api_region', 'cloudstack')
-            self.cs = CloudStack(**read_config(api_region))
-
+        api_config = {
+            'endpoint': self.module.params.get('api_url') or config.get('endpoint'),
+            'key': self.module.params.get('api_key') or config.get('key'),
+            'secret': self.module.params.get('api_secret') or config.get('secret'),
+            'timeout': self.module.params.get('api_timeout') or config.get('timeout'),
+            'method': self.module.params.get('api_http_method') or config.get('method'),
+        }
+        self.result.update({
+            'api_region': api_region,
+            'api_url': api_config['endpoint'],
+            'api_key': api_config['key'],
+            'api_timeout': api_config['timeout'],
+            'api_http_method': api_config['method'],
+        })
+        if not all([api_config['endpoint'], api_config['key'], api_config['secret']]):
+            self.module.fail_json(msg="Missing api credentials: can not authenticate", result=self.result)
+        self.cs = CloudStack(**api_config)
 
     def get_or_fallback(self, key=None, fallback_key=None):
         value = self.module.params.get(key)
         if not value:
             value = self.module.params.get(fallback_key)
         return value
-
-
-    # TODO: for backward compatibility only, remove if not used anymore
-    def _has_changed(self, want_dict, current_dict, only_keys=None):
-        return self.has_changed(want_dict=want_dict, current_dict=current_dict, only_keys=only_keys)
-
 
     def has_changed(self, want_dict, current_dict, only_keys=None):
         result = False
@@ -202,7 +201,6 @@ class AnsibleCloudStack(object):
                 result = True
         return result
 
-
     def _get_by_key(self, key=None, my_dict=None):
         if my_dict is None:
             my_dict = {}
@@ -211,7 +209,6 @@ class AnsibleCloudStack(object):
                 return my_dict[key]
             self.module.fail_json(msg="Something went wrong: %s not found" % key)
         return my_dict
-
 
     def get_vpc(self, key=None):
         """Return a VPC dictionary or the value of given key of."""
@@ -259,10 +256,9 @@ class AnsibleCloudStack(object):
             self._vpc_networks_ids = []
             if vpcs:
                 for vpc in vpcs['vpc']:
-                    for n in vpc.get('network',[]):
+                    for n in vpc.get('network', []):
                         self._vpc_networks_ids.append(n['id'])
         return network_id in self._vpc_networks_ids
-
 
     def get_network(self, key=None):
         """Return a network dictionary or the value of given key of."""
@@ -296,7 +292,6 @@ class AnsibleCloudStack(object):
                 return self._get_by_key(key, self.network)
         self.module.fail_json(msg="Network '%s' not found" % network)
 
-
     def get_project(self, key=None):
         if self.project:
             return self._get_by_key(key, self.project)
@@ -306,17 +301,17 @@ class AnsibleCloudStack(object):
             project = os.environ.get('CLOUDSTACK_PROJECT')
         if not project:
             return None
-        args = {}
-        args['account'] = self.get_account(key='name')
-        args['domainid'] = self.get_domain(key='id')
+        args = {
+            'account': self.get_account(key='name'),
+            'domainid': self.get_domain(key='id')
+        }
         projects = self.cs.listProjects(**args)
         if projects:
             for p in projects['project']:
-                if project.lower() in [ p['name'].lower(), p['id'] ]:
+                if project.lower() in [p['name'].lower(), p['id']]:
                     self.project = p
                     return self._get_by_key(key, self.project)
         self.module.fail_json(msg="project '%s' not found" % project)
-
 
     def get_ip_address(self, key=None):
         if self.ip_address:
@@ -341,7 +336,6 @@ class AnsibleCloudStack(object):
         self.ip_address = ip_addresses['publicipaddress'][0]
         return self._get_by_key(key, self.ip_address)
 
-
     def get_vm_guest_ip(self):
         vm_guest_ip = self.module.params.get('vm_guest_ip')
         default_nic = self.get_vm_default_nic()
@@ -354,7 +348,6 @@ class AnsibleCloudStack(object):
                 return vm_guest_ip
         self.module.fail_json(msg="Secondary IP '%s' not assigned to VM" % vm_guest_ip)
 
-
     def get_vm_default_nic(self):
         if self.vm_default_nic:
             return self.vm_default_nic
@@ -366,7 +359,6 @@ class AnsibleCloudStack(object):
                     self.vm_default_nic = n
                     return self.vm_default_nic
         self.module.fail_json(msg="No default IP address of VM '%s' found" % self.module.params.get('vm'))
-
 
     def get_vm(self, key=None):
         if self.vm:
@@ -386,11 +378,10 @@ class AnsibleCloudStack(object):
         vms = self.cs.listVirtualMachines(**args)
         if vms:
             for v in vms['virtualmachine']:
-                if vm.lower() in [ v['name'].lower(), v['displayname'].lower(), v['id'] ]:
+                if vm.lower() in [v['name'].lower(), v['displayname'].lower(), v['id']]:
                     self.vm = v
                     return self._get_by_key(key, self.vm)
         self.module.fail_json(msg="Virtual machine '%s' not found" % vm)
-
 
     def get_zone(self, key=None):
         if self.zone:
@@ -411,11 +402,10 @@ class AnsibleCloudStack(object):
 
         if zones:
             for z in zones['zone']:
-                if zone.lower() in [ z['name'].lower(), z['id'] ]:
+                if zone.lower() in [z['name'].lower(), z['id']]:
                     self.zone = z
                     return self._get_by_key(key, self.zone)
         self.module.fail_json(msg="zone '%s' not found" % zone)
-
 
     def get_os_type(self, key=None):
         if self.os_type:
@@ -428,11 +418,10 @@ class AnsibleCloudStack(object):
         os_types = self.cs.listOsTypes()
         if os_types:
             for o in os_types['ostype']:
-                if os_type in [ o['description'], o['id'] ]:
+                if os_type in [o['description'], o['id']]:
                     self.os_type = o
                     return self._get_by_key(key, self.os_type)
         self.module.fail_json(msg="OS type '%s' not found" % os_type)
-
 
     def get_hypervisor(self):
         if self.hypervisor:
@@ -452,7 +441,6 @@ class AnsibleCloudStack(object):
                 return self.hypervisor
         self.module.fail_json(msg="Hypervisor '%s' not found" % hypervisor)
 
-
     def get_account(self, key=None):
         if self.account:
             return self._get_by_key(key, self.account)
@@ -467,16 +455,16 @@ class AnsibleCloudStack(object):
         if not domain:
             self.module.fail_json(msg="Account must be specified with Domain")
 
-        args = {}
-        args['name'] = account
-        args['domainid'] = self.get_domain(key='id')
-        args['listall'] = True
+        args = {
+            'name': account,
+            'domainid': self.get_domain(key='id'),
+            'listall': True
+        }
         accounts = self.cs.listAccounts(**args)
         if accounts:
             self.account = accounts['account'][0]
             return self._get_by_key(key, self.account)
         self.module.fail_json(msg="Account '%s' not found" % account)
-
 
     def get_domain(self, key=None):
         if self.domain:
@@ -488,48 +476,45 @@ class AnsibleCloudStack(object):
         if not domain:
             return None
 
-        args = {}
-        args['listall'] = True
+        args = {
+            'listall': True,
+        }
         domains = self.cs.listDomains(**args)
         if domains:
             for d in domains['domain']:
-                if d['path'].lower() in [ domain.lower(), "root/" + domain.lower(), "root" + domain.lower() ]:
+                if d['path'].lower() in [domain.lower(), "root/" + domain.lower(), "root" + domain.lower()]:
                     self.domain = d
                     return self._get_by_key(key, self.domain)
         self.module.fail_json(msg="Domain '%s' not found" % domain)
 
-
     def get_tags(self, resource=None):
         existing_tags = []
-        for tag in resource.get('tags',[]):
+        for tag in resource.get('tags', []):
             existing_tags.append({'key': tag['key'], 'value': tag['value']})
         return existing_tags
-
 
     def _process_tags(self, resource, resource_type, tags, operation="create"):
         if tags:
             self.result['changed'] = True
             if not self.module.check_mode:
-                args = {}
-                args['resourceids']  = resource['id']
-                args['resourcetype'] = resource_type
-                args['tags']         = tags
+                args = {
+                    'resourceids': resource['id'],
+                    'resourcetype': resource_type,
+                    'tags': tags,
+                }
                 if operation == "create":
                     response = self.cs.createTags(**args)
                 else:
                     response = self.cs.deleteTags(**args)
                 self.poll_job(response)
 
-
     def _tags_that_should_exist_or_be_updated(self, resource, tags):
         existing_tags = self.get_tags(resource)
         return [tag for tag in tags if tag not in existing_tags]
 
-
     def _tags_that_should_not_exist(self, resource, tags):
         existing_tags = self.get_tags(resource)
         return [tag for tag in existing_tags if tag not in tags]
-
 
     def ensure_tags(self, resource, resource_type=None):
         if not resource_type or not resource:
@@ -543,19 +528,12 @@ class AnsibleCloudStack(object):
                 resource['tags'] = tags
         return resource
 
-
     def get_capabilities(self, key=None):
         if self.capabilities:
             return self._get_by_key(key, self.capabilities)
         capabilities = self.cs.listCapabilities()
         self.capabilities = capabilities['capability']
         return self._get_by_key(key, self.capabilities)
-
-
-    # TODO: for backward compatibility only, remove if not used anymore
-    def _poll_job(self, job=None, key=None):
-        return self.poll_job(job=job, key=key)
-
 
     def poll_job(self, job=None, key=None):
         if 'jobid' in job:
@@ -570,7 +548,6 @@ class AnsibleCloudStack(object):
                 time.sleep(2)
         return job
 
-
     def get_result(self, resource):
         if resource:
             returns = self.common_returns.copy()
@@ -584,12 +561,6 @@ class AnsibleCloudStack(object):
                 if search_key in resource:
                     self.result[return_key] = int(resource[search_key])
 
-            # Special handling for tags
             if 'tags' in resource:
-                self.result['tags'] = []
-                for tag in resource['tags']:
-                    result_tag          = {}
-                    result_tag['key']   = tag['key']
-                    result_tag['value'] = tag['value']
-                    self.result['tags'].append(result_tag)
+                self.result['tags'] = resource['tags']
         return self.result
