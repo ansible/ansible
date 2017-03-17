@@ -26,7 +26,7 @@ Although it's tempting to get straight into coding, there are a few things to be
 * Shared code can be placed into ``lib/ansible/module_utils/``
 * Shared documentation (for example describing common arguments) can be placed in ``lib/ansible/utils/module_docs_fragments/``.
 * With great power comes great responsiblity: Ansible module maintainers have a duty to help keep modules up to date. As with all successful community projects, module maintainers should keep a watchful eye for reported issues and contributions.
-* Although not required, unit and/or integration tests are strongly recomended. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see ``test/`` and the `Testing Working Group <https://github.com/ansible/community/blob/master/MEETINGS.md>`_.
+* Although not required, unit and/or integration tests are strongly recommended. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see ``test/`` and the `Testing Working Group <https://github.com/ansible/community/blob/master/MEETINGS.md>`_.
 
 Naming Convention
 `````````````````
@@ -91,7 +91,7 @@ And that's it.
 
 Before pushing your PR to GitHub it's a good idea to review the :doc:`developing_modules_checklist` again.
 
-After publishing your PR to https://github.com/ansible/ansible, a Shippable CI test should run within a few minutes. Check the results (at the end of the PR page) to ensure that it's passing (green). If it's not passing, inspect each of the results. Most of the errors should be self-explanatory and are often related to badly formatted documentation (see :doc:`../YAMLSyntax`) or code that isn't valid Python 2.4 & Python 2.6 (see :doc:`developing_modules_python3`). If you aren't sure what a Shippable test message means, copy it into the PR along with a comment and we will review.
+After publishing your PR to https://github.com/ansible/ansible, a Shippable CI test should run within a few minutes. Check the results (at the end of the PR page) to ensure that it's passing (green). If it's not passing, inspect each of the results. Most of the errors should be self-explanatory and are often related to badly formatted documentation (see :doc:`../YAMLSyntax`) or code that isn't valid Python 2.6  or valid Python 3.5 (see :doc:`developing_modules_python3`). If you aren't sure what a Shippable test message means, copy it into the PR along with a comment and we will review.
 
 If you need further advice, consider join the ``#ansible-devel`` IRC channel (see how in the "Where to get support").
 

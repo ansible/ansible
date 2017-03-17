@@ -112,7 +112,7 @@ While you can write ansible modules in any language, most ansible modules are wr
 are important core ones.
 
 By default Ansible assumes it can find a /usr/bin/python on your remote system that is a 2.X version of Python, specifically
-2.4 or higher.
+2.6 or higher.
 
 Setting of an inventory variable 'ansible_python_interpreter' on any host will allow Ansible to auto-replace the interpreter
 used when executing python modules.   Thus, you can point to any python you want on the system if /usr/bin/python on your
