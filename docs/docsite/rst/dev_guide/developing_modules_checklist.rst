@@ -22,7 +22,7 @@ Contributing Modules Checklist
 The following  checklist items are important guidelines for people who want to contribute to the development of modules to Ansible on GitHub. Please read the guidelines before you submit your PR/proposal.
 
 * The shebang must always be ``#!/usr/bin/python``.  This allows ``ansible_python_interpreter`` to work
-* Modules must be written to support Python 2.4. If this is not possible, required minimum python version and rationale should be explained in the requirements section in ``DOCUMENTATION``.  This minimum requirement will be advanced to Python-2.6 in Ansible-2.4.
+* Modules must be written to support Python 2.6. If this is not possible, required minimum Python version and rationale should be explained in the requirements section in ``DOCUMENTATION``.  In Ansible-2.3 the minimum requirement for modules was Python-2.4.
 * Modules must be written to use proper Python-3 syntax.  At some point in the future we'll come up with rules for running on Python-3 but we're not there yet.  See :doc:`developing_modules_python3` for help on how to do this.
 * Modules must have a metadata section.  For the vast majority of new modules,
   the metadata should look exactly like this:

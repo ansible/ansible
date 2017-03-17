@@ -60,7 +60,7 @@ The following topics will discuss how to develop and work with modules:
 :doc:`developing_modules_checklist`
      Checklist for contributing your module to Ansible.
 :doc:`developing_modules_python3`
-    Adding Python 3 support to modules (all new modules must be py2.4 and py3 compatible).
+    Adding Python 3 support to modules (all new modules must be Python-2.6 and Python-3.5 compatible).
 :doc:`developing_modules_in_groups`
     A guide for partners wanting to submit multiple modules.
 
