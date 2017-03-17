@@ -20,31 +20,27 @@ pieces but there are some special considerations for some of it as well.
 Minimum Version of Python-3.x and Python-2.x
 --------------------------------------------
 
-In controller side code, we support Python-3.5 or greater and Python-2.6 or
-greater.
-
-For modules (and by extension, module_utils) we support
-Python-3.5 and Python-2.4. Python-3.5 was chosen as a minimum because it is the earliest Python-3 version
-adopted as the default Python by a Long Term Support (LTS) Linux distribution (in this case, Ubuntu-16.04).  
+In both controller side and module code, we support Python-3.5 or greater and Python-2.6 or
+greater.  Python-3.5 was chosen as a minimum because it is the earliest Python-3 version
+adopted as the default Python by a Long Term Support (LTS) Linux distribution (in this case, Ubuntu-16.04).
 Previous LTS Linux distributions shipped with a Python-2 version which users can rely upon instead of the 
 Python-3 version.
 
-For Python-2, the default is for modules to run on Python-2.4.  This allows
-users with older distributions that are stuck on Python-2.4 to manage their
-machines.  Modules are allowed to drop support for Python-2.4 when one of
+For Python-2, the default is for modules to run on at least Python-2.6.  This allows
+users with older distributions that are stuck on Python-2.6 to manage their
+machines.  Modules are allowed to drop support for Python-2.6 when one of
 their dependent libraries requires a higher version of Python.  This is not an
 invitation to add unnecessary dependent libraries in order to force your
-module to be usable only with a newer version of Python.; instead it is an
+module to be usable only with a newer version of Python; instead it is an
 acknowledgment that some libraries (for instance, boto3 and docker-py) will
 only function with a newer version of Python.
 
-.. note:: Python-2.4 Support:
+.. note:: Python-2.4 Module-side Support:
 
-    The only long term supported distro that we know of with Python-2.4 support is
-    RHEL5 (and its rebuilds like CentOS5), which is supported until April of
-    2017.  For Ansible, that means Ansible-2.3 will be the last major release
-    that supports Python-2.4 for modules.  Ansible-2.4 will require
-    Python-2.6 or greater for modules.
+    Support for Python-2.4 and Python-2.5 was dropped in Ansible-2.4.  RHEL-5
+    (and its rebuilds like CentOS-5) were supported until April of 2017.
+    Ansible-2.3 was released in April of 2017 and was the last Ansible release
+    to support Python-2.4 on the module-side.
 
 -----------------------------------
 Porting Controller Code to Python 3
@@ -248,13 +244,10 @@ than text.
 Porting Modules to Python 3
 ---------------------------
 
-Ansible modules are not the usual Python-3 porting exercise.  There are two
-factors that make it harder to port them than most code:
-
-1. Many modules need to run on Python-2.4 in addition to Python-3.
-2. A lot of mocking has to go into unit testing a Python-3 module, so it's
-   harder to test that your porting has fixed everything or to to make sure that
-   later commits haven't regressed.
+Ansible modules are slightly harder to port than normal code from other
+projects. A lot of mocking has to go into unit testing an Ansible module so
+it's harder to test that your porting has fixed everything or to to make sure
+that later commits haven't regressed the Python-3 support.
 
 Module String Strategy
 ======================
@@ -266,80 +259,86 @@ mandating that all strings inside of modules are text and converting between
 text and bytes at the borders; instead, we're using a native string strategy
 for now.
 
+Native strings refer to the type that Python uses when you specify a bare
+string literal:
+
+.. code-block:: python
+
+    "This is a native string"
+
+In Python-2, these are byte strings.  In Python-3 these are text strings.  The
+module_utils shipped with Ansible attempts to accept native strings as input
+to its functions and emit native strings as their output.  Modules should be
+coded to expect bytes on Python-2 and text on Python-3.
+
 Tips, tricks, and idioms to adopt
 =================================
 
 Exceptions
 ----------
 
-In code which already needs Python-2.6+ (for instance, because a library it
-depends on only runs on Python >= 2.6) it is okay to port directly to the new
-exception-catching syntax::
+In order for code to function on Python-2.6+ and Python-3, use the
+new exception-catching syntax which uses the ``as`` keyword::
 
     try:
         a = 2/0
     except ValueError as e:
-        module.fail_json(msg="Tried to divide by zero!")
+        module.fail_json(msg="Tried to divide by zero: %s" % e)
 
-For modules which also run on Python-2.4, we have to use an uglier
-construction to make this work under both Python-2.4 and Python-3::
 
-    from ansible.module_utils.pycompat24 import get_exception
-    [...]
+.. note:: Old exception syntax
 
-    try:
-        a = 2/0
-    except ValueError:
-        e = get_exception()
-        module.fail_json(msg="Tried to divide by zero!")
+    Until Ansible-2.4, modules needed to be compatible with Python-2.4 as
+    well.  Python-2.4 did not understand the new exception-catching syntax so
+    we had to write a compatibility function that could work with both
+    Python-2 and Python-3.  You may still see this used in some modules::
+
+        from ansible.module_utils.pycompat24 import get_exception
+        [...]
+
+        try:
+            a = 2/0
+        except ValueError:
+            e = get_exception()
+            module.fail_json(msg="Tried to divide by zero: %s" % e)
+
+    Unless a change is going to be backported to Ansible-2.3, you should not
+    have to use this in new code.
 
 Octal numbers
 -------------
 
-In Python-2.4, octal literals are specified as ``0755``.  In Python-3, that is
-invalid and octals must be specified as ``0o755``.  To bridge this gap,
-modules should create their octals like this::
+In Python-2.6, octal literals could be specified as ``0755``.  In Python-3, that is
+invalid and octals must be specified as ``0o755``.
 
-    # Can't use 0755 on Python-3 and can't use 0o755 on Python-2.4
-    EXECUTABLE_PERMS = int('0755', 8)
+.. note:: Workaround from Python-2.4 era
+
+    Before Ansible-2.4, modules had to be compatible with Python-2.4.
+    Python-2.4 did not understand the new syntax for octal literals so we used
+    the following workaround to specify octal values::
+
+        # Can't use 0755 on Python-3 and can't use 0o755 on Python-2.4
+        EXECUTABLE_PERMS = int('0755', 8)
 
 Bundled six
 -----------
 
-The third-party python-six library exists to help projects create code that
-runs on both Python-2 and Python-3.  Ansible includes version 1.4.1 in
-module_utils so that other modules can use it without requiring that it is
-installed on the remote system.  To make use of it, import it like this::
+The third-party `python-six <https://pythonhosted.org/six/>`_ library exists
+to help projects create code that runs on both Python-2 and Python-3.  Ansible
+includes version 1.4.1 in module_utils so that other modules can use it
+without requiring that it is installed on the remote system.  To make use of
+it, import it like this::
 
     from ansible.module_utils import six
 
 .. note:: Why version 1.4.1?
 
-    six-1.4.1 is the last version of python-six to support Python-2.4.  As
-    long as Ansible modules need to run on Python-2.4 we won't be able to
-    update the bundled copy of six.
+    six-1.4.1 is the last version of python-six to support Python-2.4.  Until
+    Ansible-2.4, most Ansible modules were required to run on Python-2.4.  So
+    the bundled version of six could not be newer than 1.4.1.
 
-Compile Test
-------------
-
-We have travis compiling all modules with various versions of Python to check
-that the modules conform to the syntax at those versions.  When you've
-ported a module so that its syntax works with Python-3, we need to modify
-.travis.yml so that the module is included in the syntax check.  Here's the
-relevant section of .travis.yml::
-
-    env:
-      global:
-        - PY3_EXCLUDE_LIST="cloud/amazon/cloudformation.py
-          cloud/amazon/ec2_ami.py
-          [...]
-          utilities/logic/wait_for.py"
-
-The :envvar:`PY3_EXCLUDE_LIST` environment variable is a blacklist of modules
-which should not be tested (because we know that they are older modules which
-have not yet been ported to pass the Python-3 syntax checks.  To get another
-old module to compile with Python-3, remove the entry for it from the list.
-The goal is to have the LIST be empty.
+    Ansible-2.4 now targets Python-2.6 or greater for modules.  We'll be
+    updating the bundled six soon.
 
 -------------------------------------
 Porting module_utils code to Python 3
@@ -360,4 +359,3 @@ Functions which return strings **must** document whether they return text,
 byte, or native strings. Module-utils functions are therefore often very
 defensive in nature, converting from potential text or bytes at the
 beginning of a function and converting to the native string type at the end.
-
