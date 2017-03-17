@@ -7,7 +7,10 @@ RUN apt-get update && apt-get install -y \
     devscripts \
     make \
     pbuilder \
+    python-pip \
     python-setuptools
+
+RUN pip install Sphinx
 
 VOLUME /ansible
 WORKDIR /ansible
