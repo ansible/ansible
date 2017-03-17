@@ -155,6 +155,8 @@ def _get_gcp_credentials(module, require_valid_json=True, check_libcloud=False):
     Additionally, flags may be set to require valid json and check the libcloud
     version.
 
+    AnsibleModule.fail_json is called only if the project_id cannot be found.
+
     :param module: initialized Ansible module object
     :type module: `class AnsibleModule`
 
@@ -190,19 +192,27 @@ def _get_gcp_credentials(module, require_valid_json=True, check_libcloud=False):
 
     if credentials_file is None or project_id is None or service_account_email is None:
         if check_libcloud is True:
-            # TODO(supertom): this message is legacy and integration tests depend on it.
-            module.fail_json(msg='Missing GCE connection parameters in libcloud '
-                             'secrets file.')
-            return None
+            if project_id is None:
+                # TODO(supertom): this message is legacy and integration tests depend on it.
+                module.fail_json(msg='Missing GCE connection parameters in libcloud '
+                                 'secrets file.')
         else:
-            if credentials_file is None or project_id is None:
+            if project_id is None:
                 module.fail_json(msg=('GCP connection error: unable to determine project (%s) or '
                 'credentials file (%s)' % (project_id, credentials_file)))
+        # Set these fields to empty strings if they are None
+        # consumers of this will make the distinction between an empty string
+        # and None.
+        if credentials_file is None:
+            credentials_file = ''
+        if service_account_email is None:
+            service_account_email = ''
 
     # ensure the credentials file is found and is in the proper format.
-    _validate_credentials_file(module, credentials_file,
-                               require_valid_json=require_valid_json,
-                               check_libcloud=check_libcloud)
+    if credentials_file:
+        _validate_credentials_file(module, credentials_file,
+                                   require_valid_json=require_valid_json,
+                                   check_libcloud=check_libcloud)
 
     return {'service_account_email': service_account_email,
             'credentials_file': credentials_file,
@@ -279,6 +289,9 @@ def get_google_cloud_credentials(module, scopes=[]):
     """
     Get credentials object for use with Google Cloud client.
 
+    Attempts to obtain credentials by calling _get_gcp_credentials. If those are
+    not present will attempt to connect via Application Default Credentials.
+
     To connect via libcloud, don't use this function, use gcp_connect instead.  For
     Google Python API Client, see get_google_api_auth for how to connect.
 
@@ -314,8 +327,10 @@ def get_google_cloud_credentials(module, scopes=[]):
             if scopes:
                 credentials = credentials.with_scopes(scopes)
         else:
-            credentials = google.auth.default(
-                scopes=scopes)[0]
+            (credentials, project_id) = google.auth.default(
+                scopes=scopes)
+            if project_id is not None:
+                conn_params['project_id'] = project_id
 
         return (credentials, conn_params)
     except Exception as e:
