@@ -36,7 +36,7 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
-    def _assemble_from_fragments(self, src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False):
+    def _assemble_from_fragments(self, src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False, decrypt=True):
         ''' assemble a file from a directory of fragments '''
 
         tmpfd, temp_path = tempfile.mkstemp()
@@ -128,7 +128,7 @@ class ActionModule(ActionBase):
             _re = re.compile(regexp)
 
         # Does all work assembling the file
-        path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden)
+        path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden, decrypt)
 
         path_checksum = checksum_s(path)
         dest = self._remote_expand_user(dest)
