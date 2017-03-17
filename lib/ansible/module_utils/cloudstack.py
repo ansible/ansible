@@ -60,7 +60,7 @@ def cs_argument_spec():
 
 
 def cs_required_together():
-    return [['api_key', 'api_secret', 'api_url']]
+    return [['api_key', 'api_secret']]
 
 
 class AnsibleCloudStack(object):
