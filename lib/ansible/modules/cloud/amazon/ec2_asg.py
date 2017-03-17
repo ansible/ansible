@@ -141,15 +141,31 @@ options:
     default: Default
     choices: ['OldestInstance', 'NewestInstance', 'OldestLaunchConfiguration', 'ClosestToNextInstanceHour', 'Default']
     version_added: "2.0"
+  notifications:
+    description:
+      - A list of notification objects. Each notification is a dictionary.
+    suboptions:
+      topic:
+        description:
+          - A SNS topic ARN to send auto scaling notification to.
+        required: true
+      types:
+        description:
+          - A list of auto scaling events to trigger notifications on.
+        required: false
+        default: ['autoscaling:EC2_INSTANCE_LAUNCH', 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR', 'autoscaling:EC2_INSTANCE_TERMINATE', 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR']
+    required: false
+    default: []
+    version_added: "2.4"
   notification_topic:
     description:
-      - A SNS topic ARN to send auto scaling notifications to.
+      - This option has been deprecated in favor of C(notifications). A SNS topic ARN to send auto scaling notifications to.
     default: None
     required: false
     version_added: "2.2"
   notification_types:
     description:
-      - A list of auto scaling events to trigger notifications on.
+      - This option has been deprecated in favor of C(notifications). A list of auto scaling events to trigger notifications on.
     default: ['autoscaling:EC2_INSTANCE_LAUNCH', 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR', 'autoscaling:EC2_INSTANCE_TERMINATE', 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR']
     required: false
     version_added: "2.2"
@@ -447,6 +463,7 @@ def create_autoscaling_group(connection, module):
     as_groups = connection.get_all_groups(names=[group_name])
     wait_timeout = module.params.get('wait_timeout')
     termination_policies = module.params.get('termination_policies')
+    notifications = module.params.get('notifications')
     notification_topic = module.params.get('notification_topic')
     notification_types = module.params.get('notification_types')
 
@@ -501,6 +518,15 @@ def create_autoscaling_group(connection, module):
 
             if notification_topic:
                 ag.put_notification_configuration(notification_topic, notification_types)
+            else:
+                for notification in notifications:
+                    if 'topic' not in notification:
+                        module.fail_json(msg="You must specify a topic for each object specified in notifications.")
+                    elif 'types' not in notification:
+                        notification['types'] = ['autoscaling:EC2_INSTANCE_LAUNCH', 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR', 'autoscaling:EC2_INSTANCE_TERMINATE', 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR']
+
+                    ag.put_notification_configuration(notification['topic'], notification['types'])
+
 
             as_group = connection.get_all_groups(names=[group_name])[0]
             asg_properties = get_properties(as_group)
@@ -574,6 +600,17 @@ def create_autoscaling_group(connection, module):
                 as_group.put_notification_configuration(notification_topic, notification_types)
             except BotoServerError as e:
                 module.fail_json(msg="Failed to update Autoscaling Group notifications: %s" % str(e), exception=traceback.format_exc())
+        else:
+            try:
+                for notification in notifications:
+                    if 'topic' not in notification:
+                        module.fail_json(msg="You must specify a topic for each object specified in notifications.")
+                    elif 'types' not in notification:
+                        notification['types'] = ['autoscaling:EC2_INSTANCE_LAUNCH', 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR', 'autoscaling:EC2_INSTANCE_TERMINATE', 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR']
+
+                    as_group.put_notification_configuration(notification['topic'], notification['types'])
+            except BotoServerError as e:
+                module.fail_json(msg="Failed to update Autoscaling Group notifications: %s" % str(e), exception=traceback.format_exc())
 
         if wait_for_instances:
             wait_for_new_inst(module, connection, group_name, wait_timeout, desired_capacity, 'viable_instances')
@@ -588,11 +625,20 @@ def create_autoscaling_group(connection, module):
 
 def delete_autoscaling_group(connection, module):
     group_name = module.params.get('name')
+    notifications = module.params.get('notifications')
     notification_topic = module.params.get('notification_topic')
     wait_for_instances = module.params.get('wait_for_instances')
 
     if notification_topic:
         ag.delete_notification_configuration(notification_topic)
+    else:
+        for notification in notifications:
+            if 'topic' not in notification:
+                module.fail_json(msg="You must specify a topic for each object specified in notifications.")
+            elif 'types' not in notification:
+                notification['types'] = ['autoscaling:EC2_INSTANCE_LAUNCH', 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR', 'autoscaling:EC2_INSTANCE_TERMINATE', 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR']
+
+            ag.delete_notification_configuration(notification['topic'], notification['types'])
 
     groups = connection.get_all_groups(names=[group_name])
     if groups:
@@ -887,6 +933,7 @@ def main():
             default_cooldown=dict(type='int', default=300),
             wait_for_instances=dict(type='bool', default=True),
             termination_policies=dict(type='list', default='Default'),
+            notifications=dict(type='list', default=[]),
             notification_topic=dict(type='str', default=None),
             notification_types=dict(type='list', default=[
                 'autoscaling:EC2_INSTANCE_LAUNCH',
@@ -900,7 +947,10 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        mutually_exclusive = [['replace_all_instances', 'replace_instances']]
+        mutually_exclusive = [
+            ['replace_all_instances', 'replace_instances'],
+            ['notifications', 'notification_topic']
+        ]
     )
 
     if not HAS_BOTO:
@@ -917,6 +967,10 @@ def main():
     except boto.exception.NoAuthHandlerFound as e:
         module.fail_json(msg=str(e))
     changed = create_changed = replace_changed = False
+    warnings = []
+
+    if module.params.get('notification_topic') is not None:
+        warnings.append('The notification_topic and notification_types options have been deprecated in favor of notifications.')
 
     if state == 'present':
         create_changed, asg_properties=create_autoscaling_group(connection, module)
@@ -927,7 +981,7 @@ def main():
         replace_changed, asg_properties=replace(connection, module)
     if create_changed or replace_changed:
         changed = True
-    module.exit_json( changed = changed, **asg_properties )
+    module.exit_json( warnings = warnings, changed = changed, **asg_properties )
 
 if __name__ == '__main__':
     main()
