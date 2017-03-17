@@ -15,8 +15,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+                    'supported_by': 'community',
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -24,7 +24,7 @@ module: elb_application_lb
 short_description: Manage an Application load balancer
 description:
     - Manage an AWS Application Elastic Load Balancer. See U(https://aws.amazon.com/blogs/aws/new-aws-application-load-balancer/) for details.
-version_added: "2.3"
+version_added: "2.4"
 author: "Rob White (@wimnat)"
 options:
   access_logs_s3_bucket:
@@ -97,7 +97,7 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Create an ELB and attach a listener
-- name: elb_application_lb
+- elb_application_lb:
     name: myelb
     security_groups:
       - sg-12345678
@@ -116,7 +116,7 @@ EXAMPLES = '''
     state: present
 
 # Create an ELB and attach a listener and attributes
-- name: elb_application_lb
+- elb_application_lb:
     name: myelb
     security_groups:
       - sg-12345678
@@ -138,8 +138,7 @@ EXAMPLES = '''
     state: present
 
 # Create an ALB with listeners and rules
-- name: Create an ALB load balancer
-  elb_lb_application:
+- elb_lb_application:
     name: test-alb
     subnets:
       - subnet-12345678
@@ -353,7 +352,7 @@ def update_elb_attributes(connection, module, elb):
                     if new_attribute['Value'] != current_attribute['Value']:
                         update_required = True
 
-    if update_required: 
+    if update_required:
         attribute_changed = True
         try:
             connection.modify_load_balancer_attributes(LoadBalancerArn=elb['LoadBalancerArn'], Attributes=params['Attributes'])
