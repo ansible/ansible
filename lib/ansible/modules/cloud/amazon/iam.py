@@ -55,7 +55,8 @@ options:
     choices: [ "present", "absent", "update" ]
   path:
     description:
-      - When creating or updating, specify the desired path of the resource. If state is present, it will replace the current path to match what is passed in when they do not match.
+      - When creating or updating, specify the desired path of the resource. If state is present,
+        it will replace the current path to match what is passed in when they do not match.
     required: false
     default: "/"
   trust_policy:
@@ -101,7 +102,8 @@ options:
     description:
      - C(always) will update passwords if they differ.  C(on_create) will only set the password for newly created users.
 notes:
-  - 'Currently boto does not support the removal of Managed Policies, the module will error out if your user/group/role has managed policies when you try to do state=absent. They will need to be removed manually.'
+  - 'Currently boto does not support the removal of Managed Policies, the module will error out if your
+    user/group/role has managed policies when you try to do state=absent. They will need to be removed manually.'
 author:
     - "Jonathan I. Davila (@defionscode)"
     - "Paul Seiffert (@seiffert)"
@@ -701,7 +703,7 @@ def main():
             if name_change and new_name:
                 orig_name = name
                 name = new_name
-            if groups:
+            if isinstance(groups, list):
                 user_groups, groups_changed = set_users_groups(
                     module, iam, name, groups, been_updated, new_name)
                 if groups_changed == user_changed:

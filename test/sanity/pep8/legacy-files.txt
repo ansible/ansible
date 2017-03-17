@@ -47,7 +47,6 @@ lib/ansible/modules/cloud/amazon/ecs_service.py
 lib/ansible/modules/cloud/amazon/ecs_service_facts.py
 lib/ansible/modules/cloud/amazon/ecs_taskdefinition.py
 lib/ansible/modules/cloud/amazon/elasticache.py
-lib/ansible/modules/cloud/amazon/iam.py
 lib/ansible/modules/cloud/amazon/iam_cert.py
 lib/ansible/modules/cloud/amazon/iam_policy.py
 lib/ansible/modules/cloud/amazon/iam_role.py
