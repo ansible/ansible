@@ -50,7 +50,7 @@ options:
   tag:
     required: false
     description:
-      - Tag name when creating a release
+      - Tag name when creating a release. Required when using create_release.
     version_added: 2.4
   target:
     required: false
@@ -177,6 +177,10 @@ def main():
             module.exit_json(tag=None)
 
     if action == 'create_release':
+        release_exists = repository.release_from_tag(tag)
+        if release_exists:
+            module.fail_json(msg="Release already exists.")
+
         release = repository.create_release(
             tag, target, name, body, draft, prerelease)
         if release:
