@@ -181,13 +181,12 @@ DEFAULT_COW_WHITELIST = ['bud-frogs', 'bunny', 'cheese', 'daemon', 'default', 'd
 # sections in config file
 DEFAULTS='defaults'
 
+
 # FIXME: add deprecation warning when these get set
 #### DEPRECATED VARS ####
-# use more sanely named 'inventory'
-DEPRECATED_HOST_LIST  = get_config(p, DEFAULTS, 'hostfile', 'ANSIBLE_HOSTS', '/etc/ansible/hosts', value_type='path')
-# this is not used since 0.5 but people might still have in config
-DEFAULT_PATTERN           = get_config(p, DEFAULTS, 'pattern', None, None)
-# If --tags or --skip-tags is given multiple times on the CLI and this is
+#
+
+#### If --tags or --skip-tags is given multiple times on the CLI and this is
 # True, merge the lists of tags together.  If False, let the last argument
 # overwrite any previous ones.  Behaviour is overwrite through 2.2.  2.3
 # overwrites but prints deprecation.  2.4 the default is to merge.
@@ -196,7 +195,7 @@ MERGE_MULTIPLE_CLI_TAGS = get_config(p, DEFAULTS, 'merge_multiple_cli_tags', 'AN
 #### GENERALLY CONFIGURABLE THINGS ####
 DEFAULT_DEBUG             = get_config(p, DEFAULTS, 'debug',            'ANSIBLE_DEBUG',            False, value_type='boolean')
 DEFAULT_VERBOSITY         = get_config(p, DEFAULTS, 'verbosity',        'ANSIBLE_VERBOSITY',        0, value_type='integer')
-DEFAULT_HOST_LIST         = get_config(p, DEFAULTS,'inventory', 'ANSIBLE_INVENTORY', DEPRECATED_HOST_LIST, value_type='path')
+DEFAULT_HOST_LIST         = get_config(p, DEFAULTS,'inventory', 'ANSIBLE_INVENTORY', '/etc/ansible/hosts', value_type='path')
 DEFAULT_ROLES_PATH        = get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       '/etc/ansible/roles', value_type='pathlist', expand_relative_paths=True)
 DEFAULT_REMOTE_TMP        = get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '~/.ansible/tmp')
 DEFAULT_LOCAL_TMP         = get_config(p, DEFAULTS, 'local_tmp',        'ANSIBLE_LOCAL_TEMP',      '~/.ansible/tmp', value_type='tmppath')

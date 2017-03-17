@@ -13,6 +13,11 @@ Ansible Changes By Release
   Python-2.5 you'll need to install Python-2.6 or better there or run
   Ansible-2.3 until you can upgrade the system.
 
+### Minor Changes
+* removed previously deprecated config option 'hostfile' and env var 'ANSIBLE_HOSTS'
+* removed unused and deprecated config option 'pattern'
+
+
 #### New: Tests
 - any : true if any element is true
 - all: true if all elements are true
