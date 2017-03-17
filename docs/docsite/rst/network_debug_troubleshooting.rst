@@ -30,18 +30,34 @@ Persistent Connection had been enable for the following groups of modules:
 
 .. notes: Future support
 
-   The list of network platforms that support Persistent Connection will increase over time.OK
+   The list of network platforms that support Persistent Connection will increase over in each release.
 
 Playbook Structure from 2.1 to 2.3
 ==================================
 
-FIXME High level description of change
+Ansible 2.3 makes it easier to write playbooks by bringing the (FIXME some term about how layout playbooks and connections FIXME) inline with how Ansible is used to manage Linux and Windows systems. This means that you no longer need to define the connection details in every task (via ``host:`` or ``provider:``, instead you can utilize ssh keys and write shorted playbooks.
 
-Example playbooks
------------------
 
-2.2 Playbook with provider dict
-```````````````````````````````
+That said Ansible 2.3 maintains backwards with playbooks created in Ansible 2.2, so you are not forced to upgrade your playbooks when you upgrade to Ansible 2.3.
+
+Why is this changing
+--------------------
+
+In Ansible 2.FIXME specifying when writing network playbooks with credentials directly under the task, or under provider will no longer be supported. This is to make the network modules work in the same way as normal Linux and Windows modules. This has the following advantages
+
+* Easier to understand - same as the rest of Ansible
+* Simplified module code - fewer code paths doing similar things
+* FIXME add other reasons here
+
+
+Recap of different connection methods
+-------------------------------------
+This section demonstrates the different ways to write connect to network devices.
+
+Playbook with provider dict
+```````````````````````````
+
+**Version:** Ansible 2.2 - 2.3
 
 ``group_vars/eos.yml``
 
@@ -62,8 +78,16 @@ Example playbooks
          gather_subset: all
          provider: "{{ cli }}"
 
+
+Note, that if you use this form in Ansible 2.3 you will get the following deprecation messages. This is a reminder that you need to move to the new (FIXME NEED A NAME) 2.3 Style, or use ``provider:`
+``[WARNING]: argument username has been deprecated and will be removed in a future version``
+``[WARNING]: argument host has been deprecated and will be removed in a future version``
+``[WARNING]: argument password has been deprecated and will be removed in a future version``
+
 2.2 Playbook with provider
 ``````````````````````````
+
+**Version:** Ansible 2.2 - 2.3
 
 .. code-block:: yaml
 
@@ -78,6 +102,8 @@ Example playbooks
 
 2.3 Playbook
 ````````````
+
+**Version:** Ansible 2.3
 
 .. code-block:: yaml
 
@@ -117,16 +143,15 @@ This occurs when something happens that prevents a shell from opening on the rem
 For example:
 
 .. code-block:: yaml
-   :emphasize-lines: 6
 
-  TASK [ios_system : configure name_servers] *****************************************************************************
-  task path:
-  fatal: [ios-csr1000v]: FAILED! => {
-      "changed": false,
-      "failed": true,
-      "msg": "unable to open shell",
-      "rc": 255
-  }
+   TASK [ios_system : configure name_servers] *****************************************************************************
+   task path:
+   fatal: [ios-csr1000v]: FAILED! => {
+       "changed": false,
+       "failed": true,
+       "msg": "unable to open shell",
+       "rc": 255
+   }
 
 Suggestions to resolve:
 
@@ -187,6 +212,43 @@ Do stuff For example:
 
 	Example stuff
 
+"Authentication failed"
+-----------------------
+
+**Platforms:** Any
+
+Occurs if the credentials (username, passwords, or ssh keys) passed to ``ansible-connection`` (via ``ansible`` or ``ansible-playboo``) can not be used to connect to the remote device.
+
+
+
+For example:
+
+.. code-block:: yaml
+
+   <ios01> ESTABLISH CONNECTION FOR USER: cisco on PORT 22 TO ios01
+   <ios01> Authentication failed.
+
+
+Suggestions to resolve:
+
+If you are specifying credentials via ``password:`` (either directly or via ``provider:``) or the environment variable ``ANSIBLE_NET_PASSWORD`` it is possible that ``paramiko`` (the Python SSH library that Ansible uses) is using ssh keys, and therefore the credentials you are specifying could be ignored. To find out if this is the case disable "look for keys",
+
+This can be done via:
+
+.. code-block:: yaml
+
+   export ANSIBLE_PARAMIKO_LOOK_FOR_KEYS=False
+
+Or to make this a permanent change add the following to your ``ansible.cfg``
+
+.. code-block:: ini
+
+   [paramiko_connection]
+   look_for_keys = False
+
+
+
+
 
 Unable to enter configuration mode
 ----------------------------------
@@ -213,7 +275,6 @@ Suggestions to resolve:
 Add `authorize: yes` to the task. For example:
 
 .. code-block:: yaml
-   :emphasize-lines: 4
 
 	- name: configure hostname
 	  ios_system:
@@ -227,7 +288,6 @@ If the user requires a password to go into privileged mode, this can be specifie
 Add `authorize: yes` to the task. For example:
 
 .. code-block:: yaml
-   :emphasize-lines: 4,5
 
 	- name: configure hostname
 	  ios_system:
