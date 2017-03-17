@@ -66,7 +66,7 @@ function Remove-File($file, $checkmode) {
             Remove-Item -Path $file.FullName -Force -WhatIf:$checkmode
         }
     } catch [Exception] {
-        Fail-Json (New-Object psobject) "Failed to delete $($file.FullName): $($_.Exception.Message)"
+        Fail-Json $result "Failed to delete $($file.FullName): $($_.Exception.Message)"
     }
 }
 
@@ -116,7 +116,18 @@ if (Test-Path $path) {
     }
 
     if ($state -eq "directory") {
-        New-Item -Path $path -ItemType Directory -WhatIf:$check_mode | Out-Null
+        try {
+            New-Item -Path $path -ItemType Directory -WhatIf:$check_mode | Out-Null
+        } catch {
+            if ($_.CategoryInfo.Category -eq "ResourceExists") {
+                $fileinfo = Get-Item $_.CategoryInfo.TargetName
+                if ($state -eq "directory" -and -not $fileinfo.PsIsContainer) {
+                    Fail-Json $result "path $path is not a directory"
+                }
+            } else {
+                Fail-Json $result $_.Exception.Message
+            }
+        }
         $result.changed = $true
     } elseif ($state -eq "file") {
         Fail-Json $result "path $path will not be created"
