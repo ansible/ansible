@@ -14,7 +14,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
+'''
+DOCUMENTATION:
+    strategy: free
+    short_description: Executes tasks on each host independently
+    description:
+        - Task execution is as fast as possible per host in batch as defined by C(serial) (default all).
+          Ansible will not wait for other hosts to finish the current task before queuing the next task for a host that has finished.
+          Once a host is done with the play, it opens it's slot to a new host that was waiting to start.
+    version_added: "2.0"
+    author: Ansible Core Team
+'''
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
