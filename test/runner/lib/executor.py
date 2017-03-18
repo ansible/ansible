@@ -1136,9 +1136,12 @@ class SanityConfig(TestConfig):
             self.base_branch = args.base_branch  # str
         elif is_shippable():
             try:
-                self.base_branch = 'origin/%s' % os.environ['BASE_BRANCH']  # str
+                self.base_branch = os.environ['BASE_BRANCH']  # str
             except KeyError as ex:
                 raise MissingEnvironmentVariable(name=ex.args[0])
+
+            if self.base_branch:
+                self.base_branch = 'origin/%s' % self.base_branch
         else:
             self.base_branch = ''
 
