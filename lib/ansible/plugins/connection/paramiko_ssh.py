@@ -33,7 +33,7 @@ import traceback
 import fcntl
 import sys
 import re
-import cStringIO
+import io
 
 from termios import tcflush, TCIFLUSH
 from binascii import hexlify
@@ -507,7 +507,7 @@ class Connection(ConnectionBase):
             # throw or let pass?
             return None
 
-        cstring_file = cStringIO.StringIO(key_string)
+        cstring_file = io.StringIO(key_string)
         key_type = key_match.group('key_type')
 
         try:
