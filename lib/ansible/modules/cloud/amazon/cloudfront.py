@@ -256,7 +256,9 @@ def main():
         is_ipv6_enabled=dict(required=False, default=False, type='bool'),
         s3_origin=dict(required=False, default=None, type='json'),
         trusted_signers=dict(required=False, default=None, type='json'),
-        default_cache_behavior_domain_name=dict(required=False, default=None, type='str')
+        default_origin_domain_name=dict(required=False, default=None, type='str'),
+        default_origin_path=dict(required=False, default='', type='str'),
+        default_origin_access_identity=dict(required=False, default='', type='str')
     ))
 
     result = {}
@@ -311,7 +313,10 @@ def main():
     is_ipv6_enabled = module.params.get('is_ipv6_enabled')
     s3_origin = module.params.get('s3_origin')
     trusted_signers = module.params.get('trusted_signers')
-    default_cache_behavior_domain_name = module.params.get('default_cache_behavior_domain_name')
+
+    default_origin_domain_name = module.params.get('default_origin_domain_name')
+    default_origin_path = module.params.get('default_origin_path')
+    default_origin_access_identity = module.params.get('default_origin_access_identity')
 
     default_datetime_string = generate_datetime_string()
 
@@ -326,29 +331,41 @@ def main():
             if(caller_reference is None):
                 config["CallerReference"] = default_datetime_string
             if(origins is None):
-                config["Origins"] = { 
-                        "Quantity": 1,
-			"Items": [ {
-                                "CustomHeaders": {
-                                    "Quantity": 0
-                                },
-                                "CustomOriginConfig": {
-                                    "HTTPPort": 80,
-                                    "HTTPSPort": 443,
-                                    "OriginProtocolPolicy": "match-viewer",
-                                    "OriginSslProtocols": {
-                                        "Items": [
-                                            "SSLv3",
-                                            "TLSv1"
-                                        ],
-                                        "Quantity": 2
+                if(".s3.amazonaws.com" not in default_origin_domain_name):
+                    config["Origins"] = {
+                            "Quantity": 1,
+                                "Items": [ {
+                                    "CustomHeaders": { "Quantity": 0 },
+                                    "CustomOriginConfig": {
+                                        "HTTPPort": 80,
+                                        "HTTPSPort": 443,
+                                        "OriginProtocolPolicy": "match-viewer",
+                                        "OriginSslProtocols": {
+                                            "Items": [
+                                                "TLSv1",
+                                                "TLSv1.1",
+                                                "TLSv1.2"
+                                            ],
+                                            "Quantity": 3
+                                        }
+                                    },
+                                    "DomainName": default_origin_domain_name,
+                                    "Id": default_datetime_string,
+                                    "OriginPath": default_origin_path
+                            } ]
+                        }
+                else:
+                    config["Origins"] = {
+                            "Quantity": 1,
+                                "Items": [ {
+                                    "DomainName": default_origin_domain_name,
+                                    "Id": default_datetime_string,
+                                    "OriginPath": default_origin_path,
+                                    "S3OriginConfig": {
+                                        "OriginAccessIdentity": default_origin_access_identity
                                     }
-                                },
-                                "DomainName": default_cache_behavior_domain_name,
-                                "Id": default_datetime_string,
-                                "OriginPath": ""
-                        } ]
-                    }
+                                } ]
+                            }
             if(default_cache_behavior is None):
                 config["DefaultCacheBehavior"] = {
                         "MinTTL": 0,
