@@ -59,6 +59,7 @@ MAGIC_VARIABLE_MAPPING = dict(
     accelerate_port  = ('ansible_accelerate_port',),
     password         = ('ansible_ssh_pass', 'ansible_password'),
     private_key_file = ('ansible_ssh_private_key_file', 'ansible_private_key_file'),
+    private_key      = ('ansible_ssh_private_key',),
     pipelining       = ('ansible_ssh_pipelining', 'ansible_pipelining'),
     shell            = ('ansible_shell_type',),
     network_os       = ('ansible_network_os',),
@@ -144,6 +145,7 @@ RESET_VARS = (
     'ansible_ssh_port',
     'ansible_ssh_user',
     'ansible_ssh_private_key_file',
+    'ansible_ssh_private_key',
     'ansible_ssh_pipelining',
     'ansible_ssh_executable',
     'ansible_user',
@@ -165,6 +167,7 @@ class PlayContext(Base):
     _remote_addr      = FieldAttribute(isa='string')
     _password         = FieldAttribute(isa='string')
     _private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
+    _private_key      = FieldAttribute(isa='string')
     _timeout          = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
     _shell            = FieldAttribute(isa='string')
     _network_os       = FieldAttribute(isa='string')

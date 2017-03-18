@@ -33,6 +33,7 @@ import traceback
 import fcntl
 import sys
 import re
+import cStringIO
 
 from termios import tcflush, TCIFLUSH
 from binascii import hexlify
@@ -61,6 +62,8 @@ Are you sure you want to continue connecting (yes/no)?
 
 # SSH Options Regex
 SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
+
+KEY_LOOKUP_REGEX = re.compile(r'^-{5}BEGIN\s(?P<key_type>RSA|EC|DSA)\sPRIVATE\sKEY-{5}')
 
 # prevent paramiko warning noise -- see http://stackoverflow.com/questions/3920502/
 HAVE_PARAMIKO=False
@@ -231,8 +234,12 @@ class Connection(ConnectionBase):
 
         try:
             key_filename = None
+            pkey = None
             if self._play_context.private_key_file:
                 key_filename = os.path.expanduser(self._play_context.private_key_file)
+
+            if self._play_context.private_key:
+                pkey = self._get_paramiko_pkey()
 
             ssh.connect(
                 self._play_context.remote_addr,
@@ -240,6 +247,7 @@ class Connection(ConnectionBase):
                 allow_agent=allow_agent,
                 look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
                 key_filename=key_filename,
+                pkey=pkey,
                 password=self._play_context.password,
                 timeout=self._play_context.timeout,
                 port=port,
@@ -488,3 +496,30 @@ class Connection(ConnectionBase):
             fcntl.lockf(KEY_LOCK, fcntl.LOCK_UN)
 
         self.ssh.close()
+
+    def _get_paramiko_pkey(self):
+
+        pkey = None
+        key_string = self._play_context.private_key
+
+        key_match = KEY_LOOKUP_REGEX.search(key_string)
+        if key_match is None:
+            # throw or let pass?
+            return None
+
+        cstring_file = cStringIO.StringIO(key_string)
+        key_type = key_match.group('key_type')
+
+        try:
+            if key_type == 'RSA':
+                pkey = paramiko.RSAKey.from_private_key(cstring_file)
+            elif key_type == 'DSA':
+                pkey = paramiko.DSSKey.from_private_key(cstring_file)
+            elif key_type == 'EC':
+                pkey = paramiko.ECDSAKey.from_private_key(cstring_file)
+        except Exception as e:
+            raise e
+        finally:
+            cstring_file.close()
+
+        return pkey
