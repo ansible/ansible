@@ -76,7 +76,7 @@ EXAMPLES = '''
     image_list:
     - imageDigest: "{{imglist.image_sorted_by_version[-1].imageDigest}}"
     register: imgdesc
-  - name: get the first tag that isn't "latest"
+  - name: get the first tag that isn''t "latest"
     debug: msg="{{imgdesc.single_result.imageTags|reject("equalto", "latest")|first}}"
   - name: when was this image pushed?
     debug: msg="{{imgdesc.single_result.imagePushedAt}}"
