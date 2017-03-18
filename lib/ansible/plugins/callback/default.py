@@ -14,7 +14,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
+'''
+DOCUMENTATION:
+    callback: default
+    short_description: default Ansbile screen output
+    version_added: historical
+    description:
+        - This is the default output callback for ansible-playbook.
+'''
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type

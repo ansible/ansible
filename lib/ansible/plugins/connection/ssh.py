@@ -17,6 +17,84 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+'''
+DOCUMENTATION:
+    connection: ssh
+    short_description: connect via ssh client binary
+    description:
+        - This connection plugin allows ansible to communicate to the target machines via normal ssh command line.
+    author: ansible (@core)
+    version_added: historical
+    options:
+        _host:
+            description: Hostname/ip to connect to.
+            default: inventory_hostname
+            host_vars:              
+                 - ansible_host
+                 - ansible_ssh_host
+        _host_key_checking:
+            type: bool
+            description: Determines if ssh should check host keys
+            config:
+                - section: defaults
+                  key: 'host_key_checking'
+            env_vars:
+                - ANSIBLE_HOST_KEY_CHECKING
+        _password:
+            description: Authentication password for the C(remote_user). Can be supplied as CLI option.
+            host_vars:
+                - ansible_password
+                - ansible_ssh_pass
+        _ssh_args:
+            description: Arguments to pass to all ssh cli tools
+            default: '-C -o ControlMaster=auto -o ControlPersist=60s'
+            config:
+                - section: 'ssh_connection'
+                  key: 'ssh_args'
+            env_vars:
+                - ANSIBLE_SSH_ARGS
+        _ssh_common_args:
+            description: Common extra args for ssh CLI tools
+            host_vars:
+                - ansible_ssh_common_args
+        _scp_extra_args:
+            description: Extra exclusive to the 'scp' CLI
+            host_vars:
+                - ansible_scp_extra_args
+        _sftp_extra_args:
+            description: Extra exclusive to the 'sftp' CLI
+            host_vars:
+                - ansible_sftp_extra_args
+        _ssh_extra_args:
+            description: Extra exclusive to the 'ssh' CLI
+            host_vars:
+                - ansible_ssh_extra_args
+        port:
+            description: Remote port to connect to.
+            type: int
+            config:
+               - section: defaults
+                 key: remote_port
+                 default: 22
+            env_vars:
+               - ANSIBLE_REMOTE_PORT
+            host_vars:
+               - ansible_port
+               - ansible_ssh_port
+        remote_user:
+            description:
+                - User name with which to login to the remote server, normally set by the remote_user keyword.
+                - If no user is supplied, Ansible will let the ssh client binary choose the user as it normally
+            config:
+               - section: defaults
+                 key: remote_user
+            env_vars:
+               - ANSIBLE_REMOTE_USER
+            host_vars:
+               - ansible_user
+               - ansible_ssh_user
+'''
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 

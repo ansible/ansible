@@ -37,7 +37,7 @@ from six import iteritems
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes
-from ansible.utils import module_docs
+from ansible.utils import plugin_docs
 
 #####################################################################################
 # constants and paths
@@ -158,7 +158,7 @@ def list_modules(module_dir, depth=0):
             category = category[new_cat]
 
         module = os.path.splitext(os.path.basename(module_path))[0]
-        if module in module_docs.BLACKLIST_MODULES:
+        if module in plugin_docs.BLACKLIST['MODULE']:
             # Do not list blacklisted modules
             continue
         if module.startswith("_") and os.path.islink(module_path):
@@ -254,7 +254,7 @@ def process_module(module, options, env, template, outputname, module_map, alias
     print("rendering: %s" % module)
 
     # use ansible core library to parse out doc metadata YAML and plaintext examples
-    doc, examples, returndocs, metadata = module_docs.get_docstring(fname, verbose=options.verbose)
+    doc, examples, returndocs, metadata = plugin_docs.get_docstring(fname, verbose=options.verbose)
 
     # crash if module is missing documentation and not explicitly hidden from docs index
     if doc is None:

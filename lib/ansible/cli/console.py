@@ -46,7 +46,7 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
 from ansible.plugins import module_loader
-from ansible.utils import module_docs
+from ansible.utils import plugin_docs
 from ansible.utils.color import stringc
 from ansible.vars import VariableManager
 
@@ -356,7 +356,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         if module_name in self.modules:
             in_path = module_loader.find_plugin(module_name)
             if in_path:
-                oc, a, _, _ = module_docs.get_docstring(in_path)
+                oc, a, _, _ = plugin_docs.get_docstring(in_path)
                 if oc:
                     display.display(oc['short_description'])
                     display.display('Parameters:')
@@ -388,7 +388,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     def module_args(self, module_name):
         in_path = module_loader.find_plugin(module_name)
-        oc, a, _, _ = module_docs.get_docstring(in_path)
+        oc, a, _, _ = plugin_docs.get_docstring(in_path)
         return list(oc['options'].keys())
 
     def run(self):
