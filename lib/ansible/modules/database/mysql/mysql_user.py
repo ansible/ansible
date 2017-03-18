@@ -401,6 +401,10 @@ def user_delete(cursor, user, host, host_all, check_mode):
     if check_mode:
         return True
 
+    # when removing anonymous user '', then also remove from mysql.db
+    if user == '':
+        cursor.execute("DROP USER ''")
+
     if host_all:
         hostnames = user_get_hostnames(cursor, [user])
 
