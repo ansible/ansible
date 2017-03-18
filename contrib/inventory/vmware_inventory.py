@@ -27,8 +27,8 @@ import argparse
 import atexit
 import datetime
 import getpass
-import jinja2
 import os
+import re
 import six
 import ssl
 import sys
@@ -37,6 +37,7 @@ import uuid
 from collections import defaultdict
 from six.moves import configparser
 from time import time
+from jinja2 import Environment
 
 HAS_PYVMOMI = False
 try:
@@ -59,6 +60,15 @@ try:
     hasvcr = True
 except ImportError:
     pass
+
+
+def regex_match(s, pattern):
+    '''Custom filter for regex matching'''
+    reg = re.compile(pattern)
+    if reg.match(s):
+        return True
+    else:
+        return False
 
 
 class VMwareMissingHostException(Exception):
@@ -103,6 +113,10 @@ class VMWareInventory(object):
     }
 
     custom_fields = {}
+
+    # use jinja environments to allow for custom filters
+    env = Environment()
+    env.filters['regex_match'] = regex_match
 
     # translation table for attributes to fetch for known vim types
     if not HAS_PYVMOMI:
@@ -498,7 +512,7 @@ class VMWareInventory(object):
 
         mapping = {}
         for k, v in inventory['_meta']['hostvars'].items():
-            t = jinja2.Template(pattern)
+            t = self.env.from_string(pattern)
             newkey = None
             try:
                 newkey = t.render(v)
