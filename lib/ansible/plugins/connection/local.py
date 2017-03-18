@@ -15,6 +15,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+'''
+DOCUMENTATION:
+    connection: local
+    short_description: execute on controller
+    description:
+        - This connection plugin allows ansible to execute tasks on the Ansible 'controller' instead of on a remote host.
+    author: ansible (@core)
+    version_added: historical
+    notes:
+        - The remote user is ignored, the user with which the ansible CLI was executed is used instead.
+'''
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
