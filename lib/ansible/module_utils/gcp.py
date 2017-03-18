@@ -400,3 +400,16 @@ def check_min_pkg_version(pkg_name, minimum_version):
 def unexpected_error_msg(error):
     """Create an error string based on passed in error."""
     return 'Unexpected response: (%s). Detail: %s' % (str(error), traceback.format_exc())
+
+def get_valid_location(module, driver, location, location_type='zone'):
+    if location_type == 'zone':
+        l = driver.ex_get_zone(location)
+    else:
+        l = driver.ex_get_region(location)
+    if l is None:
+        link = 'https://cloud.google.com/compute/docs/regions-zones/regions-zones#available'
+        module.fail_json(msg=('%s %s is invalid. Please see the list of '
+                              'available %s at %s' % (
+                                  location_type, location, location_type, link)),
+                         changed=False)
+    return l
