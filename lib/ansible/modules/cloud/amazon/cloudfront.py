@@ -33,7 +33,8 @@ author: Willem van Ketwich (@wilvk)
 options:
   distribution_id:
       description:
-        - The id of the CloudFront distribution. Used with distribution, distribution_config, invalidation, streaming_distribution, streaming_distribution_config, list_invalidations.
+        - The id of the CloudFront distribution. Used with distribution, distribution_config,
+          invalidation, streaming_distribution, streaming_distribution_config, list_invalidations.
       required: false
 
 extends_documentation_fragment:
@@ -327,12 +328,25 @@ def main():
             if(origins is None):
                 config["Origins"] = { 
                         "Quantity": 1,
-                        "Items": [ {
-                            "Id": default_datetime_string,
-                            "DomainName": default_cache_behavior_domain_name,
-                            "S3OriginConfig": {
-                                    "OriginAccessIdentity": ""
-                                }
+			"Items": [ {
+                                "CustomHeaders": {
+                                    "Quantity": 0
+                                },
+                                "CustomOriginConfig": {
+                                    "HTTPPort": 80,
+                                    "HTTPSPort": 443,
+                                    "OriginProtocolPolicy": "match-viewer",
+                                    "OriginSslProtocols": {
+                                        "Items": [
+                                            "SSLv3",
+                                            "TLSv1"
+                                        ],
+                                        "Quantity": 2
+                                    }
+                                },
+                                "DomainName": default_cache_behavior_domain_name,
+                                "Id": default_datetime_string,
+                                "OriginPath": ""
                         } ]
                     }
             if(default_cache_behavior is None):
