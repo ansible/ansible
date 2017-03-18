@@ -37,7 +37,7 @@ from fnmatch import fnmatch
 
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
-from ansible.utils.module_docs import BLACKLIST_MODULES, get_docstring
+from ansible.utils.plugin_docs import BLACKLIST, get_docstring
 
 from module_args import get_argument_spec
 
@@ -197,7 +197,7 @@ class ModuleValidator(Validator):
                                  'shippable.yml',
                                  '.gitattributes', '.gitmodules', 'COPYING',
                                  '__init__.py', 'VERSION', 'test-docs.sh'))
-    BLACKLIST = BLACKLIST_FILES.union(BLACKLIST_MODULES)
+    BLACKLIST = BLACKLIST_FILES.union(BLACKLIST['MODULE'])
 
     PS_DOC_BLACKLIST = frozenset((
         'async_status.ps1',
