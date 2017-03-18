@@ -144,7 +144,7 @@ options:
     default: null
   zone:
     description:
-      - the GCE zone to use
+      - the GCE zone to use. The list of available zones is at U(https://cloud.google.com/compute/docs/regions-zones/regions-zones#available).
     required: true
     default: "us-central1-a"
   ip_forward:
@@ -367,13 +367,15 @@ def get_instance_info(inst):
     })
 
 
-def create_instances(module, gce, instance_names, number):
+def create_instances(module, gce, instance_names, number, lc_zone):
     """Creates new instances. Attributes other than instance_names are picked
     up from 'module'
 
     module : AnsibleModule object
     gce: authenticated GCE libcloud driver
     instance_names: python list of instance names to create
+    number: number of instances to create
+    lc_zone: GCEZone object
 
     Returns:
         A list of dictionaries with instance information
@@ -389,7 +391,6 @@ def create_instances(module, gce, instance_names, number):
     disks = module.params.get('disks')
     state = module.params.get('state')
     tags = module.params.get('tags')
-    zone = module.params.get('zone')
     ip_forward = module.params.get('ip_forward')
     external_ip = module.params.get('external_ip')
     disk_auto_delete = module.params.get('disk_auto_delete')
@@ -421,15 +422,14 @@ def create_instances(module, gce, instance_names, number):
     disk_modes = []
     for i, disk in enumerate(disks or []):
         if isinstance(disk, dict):
-            lc_disks.append(gce.ex_get_volume(disk['name']))
+            lc_disks.append(gce.ex_get_volume(disk['name'], lc_zone))
             disk_modes.append(disk['mode'])
         else:
-            lc_disks.append(gce.ex_get_volume(disk))
+            lc_disks.append(gce.ex_get_volume(disk, lc_zone))
             # boot disk is implicitly READ_WRITE
             disk_modes.append('READ_ONLY' if i > 0 else 'READ_WRITE')
     lc_network = gce.ex_get_network(network)
-    lc_machine_type = gce.ex_get_size(machine_type)
-    lc_zone = gce.ex_get_zone(zone)
+    lc_machine_type = gce.ex_get_size(machine_type, lc_zone)
 
     # Try to convert the user's metadata value into the format expected
     # by GCE.  First try to ensure user has proper quoting of a
@@ -562,14 +562,14 @@ def create_instances(module, gce, instance_names, number):
 
     return (changed, instance_json_data, instance_names)
 
-def change_instance_state(module, gce, instance_names, number, zone_name, state):
+def change_instance_state(module, gce, instance_names, number, zone, state):
     """Changes the state of a list of instances. For example,
     change from started to stopped, or started to absent.
 
     module: Ansible module object
     gce: authenticated GCE connection object
     instance_names: a list of instance names to terminate
-    zone_name: the zone where the instances reside prior to termination
+    zone: GCEZone object where the instances reside prior to termination
     state: 'state' parameter passed into module as argument
 
     Returns a dictionary of instance names that were changed.
@@ -589,7 +589,7 @@ def change_instance_state(module, gce, instance_names, number, zone_name, state)
     for name in node_names:
         inst = None
         try:
-            inst = gce.ex_get_node(name, zone_name)
+            inst = gce.ex_get_node(name, zone)
         except ResourceNotFoundError:
             state_instance_names.append(name)
         except Exception as e:
@@ -685,6 +685,7 @@ def main():
     if not zone:
         module.fail_json(msg='Must specify a "zone"', changed=False)
 
+    lc_zone = get_valid_location(module, gce, zone)
     if preemptible is not None and hasattr(libcloud, '__version__') and libcloud.__version__ < '0.20':
         module.fail_json(msg="Apache Libcloud 0.20.0+ is required to use 'preemptible' option",
                          changed=False)
@@ -697,7 +698,7 @@ def main():
     if state in ['absent', 'deleted', 'started', 'stopped', 'terminated']:
         json_output['state'] = state
         (changed, state_instance_names) = change_instance_state(
-            module, gce, inames, number, zone, state)
+            module, gce, inames, number, lc_zone, state)
 
         # based on what user specified, return the same variable, although
         # value could be different if an instance could not be destroyed
@@ -709,7 +710,7 @@ def main():
     elif state in ['active', 'present']:
         json_output['state'] = 'present'
         (changed, instance_data, instance_name_list) = create_instances(
-            module, gce, inames, number)
+            module, gce, inames, number, lc_zone)
         json_output['instance_data'] = instance_data
         if instance_names:
             json_output['instance_names'] = instance_name_list
@@ -746,5 +747,6 @@ class LazyDiskImage:
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.gce import *
+from ansible.module_utils.gcp import get_valid_location
 if __name__ == '__main__':
     main()
