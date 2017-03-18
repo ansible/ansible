@@ -14,6 +14,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+'''
+DOCUMENTATION:
+    cache: yaml
+    short_description: File backed, using Python's pickle.
+    description:
+        - File backed cache that uses Python's pickle serialization as a format, the files are per host.
+    version_added: "2.3"
+    author: Brian Coca (@bcoca)
+'''
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
