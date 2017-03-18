@@ -198,7 +198,7 @@
 - name: Assert we got an allow header
   assert:
     that:
-      - 'result.allow|default("") == "HEAD, OPTIONS, GET"'
+      - 'result.allow.split(", ")|sort == ["GET", "HEAD", "OPTIONS"]'
 
 # Ubuntu12.04 doesn't have python-urllib3, this makes handling required dependencies a pain across all variations
 # We'll use this to just skip 12.04 on those tests.  We should be sufficiently covered with other OSes and versions
