@@ -179,7 +179,8 @@ def main():
     if action == 'create_release':
         release_exists = repository.release_from_tag(tag)
         if release_exists:
-            module.fail_json(msg="Release already exists.")
+            module.exit_json(
+                skipped=True, msg="Release for tag %s already exists." % tag)
 
         release = repository.create_release(
             tag, target, name, body, draft, prerelease)
