@@ -227,7 +227,7 @@ class AnsibleCloudStackLBRuleMember(AnsibleCloudStack):
     def get_rule(self):
         args               = self._get_common_args()
         args['name']       = self.module.params.get('name')
-        args['zoneid']     = self.get_zone(key='id')
+        args['zoneid']     = self.get_zone(key='id') if self.module.params.get('zone') else None
         if self.module.params.get('ip_address'):
             args['publicipid'] = self.get_ip_address(key='id')
         rules = self.cs.listLoadBalancerRules(**args)
