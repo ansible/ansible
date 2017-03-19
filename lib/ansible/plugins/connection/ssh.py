@@ -28,6 +28,7 @@ import pty
 import socket
 import subprocess
 import time
+import tempfile
 
 from functools import wraps
 from ansible import constants as C
@@ -115,6 +116,7 @@ class Connection(ConnectionBase):
         self.user = self._play_context.remote_user
         self.control_path = C.ANSIBLE_SSH_CONTROL_PATH
         self.control_path_dir = C.ANSIBLE_SSH_CONTROL_PATH_DIR
+        self._temp_private_key_file = None
 
     # The connection is created by running ssh/scp/sftp from the exec_command,
     # put_file, and fetch_file methods, so we don't need to do any connection
@@ -259,9 +261,14 @@ class Connection(ConnectionBase):
             b_args = (b"-o", b"Port=" + to_bytes(self._play_context.port, nonstring='simplerepr', errors='surrogate_or_strict'))
             self._add_args(b_command, b_args, u"ANSIBLE_REMOTE_PORT/remote_port/ansible_port set")
 
-        key = self._play_context.private_key_file
-        if key:
-            b_args = (b"-o", b'IdentityFile="' + to_bytes(os.path.expanduser(key), errors='surrogate_or_strict') + b'"')
+        key_file = None
+        if self._play_context.private_key_file:
+            key_file = os.path.expanduser(self._play_context.private_key_file)
+        elif self._play_context.private_key:
+            key_file = self._create_temp_private_keyfile()
+
+        if key_file:
+            b_args = (b"-o", b'IdentityFile="' + to_bytes(key_file, errors='surrogate_or_strict') + b'"')
             self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set")
 
         if not self._play_context.password:
@@ -745,6 +752,33 @@ class Connection(ConnectionBase):
             raise AnsibleError("failed to transfer file to {0} {1}:\n{2}\n{3}"\
                     .format(to_native(in_path), to_native(out_path), to_native(stdout), to_native(stderr)))
 
+    def _create_temp_private_keyfile(self):
+
+        # Return the cached copy if it exists
+        if self._temp_private_key_file:
+            return self._temp_private_key_file
+
+        # Create a new temporary key file
+        fd, private_key_file = tempfile.mkstemp()
+        f = os.fdopen(fd, 'wb')
+        key_data = to_bytes(self._play_context.private_key)
+        try:
+            f.write(key_data)
+            self._temp_private_key_file = private_key_file
+            display.vvv("creating temporary private key file: " + private_key_file)
+        except Exception as err:
+            os.remove(private_key_file)
+            raise err
+        finally:
+            f.close()
+
+        return private_key_file
+
+    def _remove_temp_private_key_file(self):
+        display.vvv("removing temporary private key file: " + self._temp_private_key_file)
+        os.remove(self._temp_private_key_file)
+        self._temp_private_key_file = None
+
     #
     # Main public methods
     #
@@ -805,3 +839,5 @@ class Connection(ConnectionBase):
 
     def close(self):
         self._connected = False
+        if self._temp_private_key_file:
+            self._remove_temp_private_key_file()
