@@ -401,10 +401,17 @@ def main():
                 changed = True
                 if not force:
                     module.fail_json(dest=path, src=src, msg='Cannot link, different hard link exists at destination')
-        elif prev_state in ('file', 'directory'):
+        elif prev_state == 'file':
             changed = True
             if not force:
                 module.fail_json(dest=path, src=src, msg='Cannot link, %s exists at destination' % prev_state)
+        elif prev_state == 'directory':
+            changed = True
+            if os.path.exists(b_path):
+                if state == 'hard' and os.stat(b_path).st_ino == os.stat(b_src).st_ino:
+                    module.exit_json(path=path, changed=False)
+                elif not force:
+                    module.fail_json(dest=path, src=src, msg='Cannot link, different hard link exists at destination')
         else:
             module.fail_json(dest=path, src=src, msg='unexpected position reached')
 
@@ -415,8 +422,11 @@ def main():
                     [os.path.dirname(b_path), to_bytes(".%s.%s.tmp" % (os.getpid(), time.time()))]
                 )
                 try:
-                    if prev_state == 'directory' and (state == 'hard' or state == 'link'):
+                    if prev_state == 'directory' and state == 'link':
                         os.rmdir(b_path)
+                    elif prev_state == 'directory' and state == 'hard':
+                        if os.path.exists(b_path):
+                            os.remove(b_path)
                     if state == 'hard':
                         os.link(b_src, b_tmppath)
                     else:
