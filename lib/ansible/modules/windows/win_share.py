@@ -81,6 +81,7 @@ options:
       - Manual
       - None
       - Programs
+      - Unknown
     default: "Manual"
     version_added: "2.3"
 author: Hans-Joachim Kliemeck (@h0nIg), David Baumann (@daBONDi)
