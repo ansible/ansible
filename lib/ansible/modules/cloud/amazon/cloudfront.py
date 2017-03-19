@@ -90,6 +90,12 @@ import json
 import traceback
 import datetime
 
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+from botocore.signers import CloudFrontSigner
+
 class CloudFrontServiceManager:
     """Handles CloudFront Services"""
 
@@ -159,6 +165,25 @@ class CloudFrontServiceManager:
         except Exception as e:
             self.module.fail_json(msg="Error generating presigned url - " + str(e),
                     exception=traceback.format_exc())
+
+    def generate_signed_url_from_pem_private_key(self, distribution_id, private_key_string, url, expire_date):
+        try:
+            cloudfront_signer = CloudFrontSigner(key_id, rsa_signer)
+            signed_url = cloudfront_signer.generate_presigned_url(url, date_less_than=expire_date)
+            return {"presigned_url": signed_url }
+        except Exception as e:
+            self.module.fail_json(msg="Error generating signed url from pem private key - " + str(e),
+                    exception=traceback.format_exc())
+
+    def rsa_signer(message, private_key_string):
+            private_key = serialization.load_pem_private_key(
+                private_key_string,
+                password=None,
+                backend=default_backend()
+            )
+        signer = private_key.signer(padding.PKCS1v15(), hashes.SHA1())
+        signer.update(message)
+        return signer.finalize()
 
     def generate_s3_presigned_url(self, client_method, s3_bucket_name, s3_key_name, expires_in, http_method):
         try:
@@ -402,7 +427,11 @@ def main():
         trusted_signers_list=dict(required=False, default=None, type='list'),
         default_origin_domain_name=dict(required=False, default=None, type='str'),
         default_origin_path=dict(required=False, default='', type='str'),
-        default_origin_access_identity=dict(required=False, default='', type='str')
+        default_origin_access_identity=dict(required=False, default='', type='str'),
+        generate_signed_url_from_pem_private_key=dict(required=False, default=False, type='bool'),
+        signed_url_pem_private_key_string=dict(required=False, default=None, type='str'),
+        signed_url_url=dict(required=False, default=None, type='str'),
+        signed_url_expire_date=dict(required=False, default=None, type='str')
     ))
 
     result = {}
@@ -473,11 +502,15 @@ def main():
     default_origin_domain_name = module.params.get('default_origin_domain_name')
     default_origin_path = module.params.get('default_origin_path')
     default_origin_access_identity = module.params.get('default_origin_access_identity')
+    generate_signed_url_from_pem_private_key = module.params.get('generate_signed_url_from_pem_private_key')
+    signed_url_pem_private_key_string = module.params.get('signed_url_pem_private_key_string')
+    signed_url_url = module.params.get('signed_url_url')
+    signed_url_expire_date = module_params.get('signed_url_expire_date')
 
     if(sum([create_origin_access_identity, delete_origin_access_identity, update_origin_access_identity,
             generate_presigned_url, generate_s3_presigned_url, create_distribution, delete_distribution,
             update_distribution, create_streaming_distribution, delete_streaming_distribution,
-            update_streaming_distribution]) > 1):
+            update_streaming_distribution, generate_signed_url_from_pem_private_key]) > 1):
         module.fail_json(msg="Error: more than one cloudfront action has been specified (eg. create_distribution). Please select only one action.")
 
     valid_aliases = service_mgr.validate_aliases(aliases, alias_list)
@@ -575,7 +608,6 @@ def main():
             config["TrustedSigners"] = valid_trusted_signers
         if(valid_s3_origin is not None):
             config["S3Origin"] = valid_s3_origin
-
     if(create_distribution or create_streaming_distribution or update_distribution or update_streaming_distribution):
         config["Enabled"] = enabled
         if(valid_aliases is not None):
@@ -601,6 +633,9 @@ def main():
         result=service_mgr.generate_s3_presigned_url(client_method, s3_bucket_name, s3_key_name, expires_in, http_method)
     elif(generate_presigned_url):
         result=service_mgr.generate_presigned_url(client_method, s3_bucket_name, s3_key_name, expires_in, http_method)
+    elif(generate_signed_url_from_pem_private_key):
+        result=service_mgr.generate_signed_url_from_pem_private_key(distribution_id, signed_url_pem_private_key_string,
+                signed_url_url, signed_url_expire_date)
     elif(create_distribution):
         result=service_mgr.create_distribution(config, tags)
     elif(delete_distribution):
