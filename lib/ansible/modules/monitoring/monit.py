@@ -19,9 +19,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.1'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -29,7 +29,7 @@ module: monit
 short_description: Manage the state of a program monitored via Monit
 description:
      - Manage the state of a program monitored via I(Monit)
-version_added: "1.2"
+version_added: "1.3"
 options:
   name:
     description:
@@ -99,68 +99,67 @@ EXAMPLES = '''
     name: httpd
     state: started
 
-  - Deploy a specific version (5.21.0) of monit.
-    monit:
-      version: 5.21.0
-      path: /opt
-      state: deployed
+- name: Deploy a specific version (5.21.0) of monit.
+  monit:
+    version: 5.21.0
+    path: /opt
+    state: deployed
 
-  - Deploy monit from specified URL
-    monit:
-      url: https://mmonit.com/monit/dist/binary/5.21.0/monit-5.21.0-linux-x86.tar.gz
-      path: /opt
-      state: deployed
+- name: Deploy monit from specified URL
+  monit:
+    url: https://mmonit.com/monit/dist/binary/5.21.0/monit-5.21.0-linux-x86.tar.gz
+    path: /opt
+    state: deployed
 
-  - name: Start monit if not started
-    monit:
-      path: "/opt/monit/bin/monit"
-      config: "/etc/monitrc"
-      state: started
+- name: Start monit if not started
+  monit:
+    path: "/opt/monit/bin/monit"
+    config: "/etc/monitrc"
+    state: started
 
-  - name: Check service {{ ohai_machinename }} present
-    monit:
-      path: "/opt/monit/bin/monit"
-      config: "/etc/monitrc"
-      service: "{{ ohai_machinename }}"
-      state: "present"
+- name: Check service {{ ohai_machinename }} present
+  monit:
+    path: "/opt/monit/bin/monit"
+    config: "/etc/monitrc"
+    service: "{{ ohai_machinename }}"
+    state: "present"
 
-  - name: Start service apache
-    monit:
-      path: "/opt/monit/bin/monit"
-      config: "/etc/monitrc"
-      name: "apache"
-      state: "started"
+- name: Start service apache
+  monit:
+    path: "/opt/monit/bin/monit"
+    config: "/etc/monitrc"
+    name: "apache"
+    state: "started"
 
-  - name: Reload monit configuration
-    monit:
-      path: "/opt/monit/bin/monit"
-      config: "/etc/monitrc"
-      state: "reloaded"
+- name: Reload monit configuration
+  monit:
+    path: "/opt/monit/bin/monit"
+    config: "/etc/monitrc"
+    state: "reloaded"
 
-  - name: Stop Service apache
-    monit:
-      service: "apache"
-      state: "stopped"
+- name: Stop Service apache
+  monit:
+    service: "apache"
+    state: "stopped"
 
-  - name: Restart apache
-    monit:
-      service: "apache"
-      state: "restarted"
+- name: Restart apache
+  monit:
+    service: "apache"
+    state: "restarted"
 
-  - name: Unmonitor Service apache
-    monit:
-      name: "apache"
-      state: "unmonitored"
+- name: Unmonitor Service apache
+  monit:
+    name: "apache"
+    state: "unmonitored"
 
-  - name: Monitor Service apache
-    monit:
-      service: "apache"
-      state: "monitored"
+- name: Monitor Service apache
+  monit:
+    service: "apache"
+    state: "monitored"
 
-  - name: Stop monit
-    monit:
-      state: "stopped"
-
+- name: Stop monit
+  monit:
+    state: "stopped"
 '''
 
 import time
@@ -218,7 +217,7 @@ def main():
         line = out.split('\n')[0]
         rc, out, err = module.run_command('test -s {}/monit'.format(path))
         if rc == 0:
-             rc, out, err = module.run_command('rm -f {}/monit'.format(path), check_rc=True)
+            rc, out, err = module.run_command('rm -f {}/monit'.format(path), check_rc=True)
         rc, out, err = module.run_command("ln -s {}/{} {}/monit".format(path, line, path), check_rc=True)
         rc, out, err = module.run_command("rm -f {}".format(fileName))
 
@@ -271,7 +270,7 @@ def main():
 
         status(service_name)
         while service_status == '' or service_status[service_name]['status'].lower() == 'pending' \
-        or service_status[service_name]['status'].lower() == 'initializing':
+                or service_status[service_name]['status'].lower() == 'initializing':
             if time.time() >= timeout_time:
                 module.fail_json(
                     msg='waited too long for "pending", or "initiating" status to go away ({})'.format(
