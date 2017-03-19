@@ -89,7 +89,6 @@ from functools import partial
 import json
 import traceback
 import datetime
-
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import serialization
@@ -255,11 +254,51 @@ class CloudFrontServiceManager:
     def update_streaming_distribution(self, config, streaming_distribution_id, e_tag):
         try:
             func = partial(self.client.update_streaming_distribution, StreamingDistributionConfig=config,
-                    Id = distribution_id, IfMatch=e_tag)
+                    Id = streaming_distribution_id, IfMatch=e_tag)
             return self.paginated_response(func)
         except Exception as e:
             self.module.fail_json(msg="Error updating streaming distribution - " + str(e),
                     exception=traceback.format_exc())
+
+    def get_distribution_config(self, distribution_id):
+        try:
+            func = partial(self.client.get_distribution_config,Id=distribution_id)
+            return self.paginated_response(func)
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg="Error describing distribution configuration - " + str(e),
+                    exception=traceback.format_exec(e), **camel_dict_to_snake_dict(e.response))
+
+    def get_streaming_distribution_config(self, streaming_distribution_id):
+        try:
+            func = partial(self.client.get_streaming_distribution_config,Id=streaming_distribution_id)
+            return self.paginated_response(func)
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg="Error describing streaming distribution configuration - " + str(e),
+                    exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+
+    def get_etag_from_distribution_id(self, distribution_id, streaming):
+        distribution = {}
+        if not streaming:
+            distribution = self.get_distribution(distribution_id)
+        else:
+            distribution = self.get_streaming_distribution(distribution_id)
+        return distribution['ETag']
+
+    def get_distribution(self, distribution_id):
+        try:
+            func = partial(self.client.get_distribution,Id=distribution_id)
+            return self.paginated_response(func)
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg="Error describing distribution - " + str(e),
+                    exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+
+    def get_streaming_distribution(self, distribution_id):
+        try:
+            func = partial(self.client.get_streaming_distribution,Id=distribution_id)
+            return self.paginated_response(func)
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg="Error describing streaming distribution - " + str(e),
+                    exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     def paginated_response(self, func, result_key=""):
         '''
@@ -354,6 +393,28 @@ class CloudFrontServiceManager:
         viewer_certificate_minimum_protocol_version, viewer_certificate_certificate, viewer_certificate_certificate_source):
         #TODO:
         return None
+
+    def validate_update_parameters(self, update_distribution, update_streaming_distribution, distribution_id, 
+            streaming_distribution_id, config, e_tag):
+        if(update_distribution):
+            if(distribution_id is None):
+                module.fail_json(msg="Error: distribution_id must be specified for updating a distribution.")
+            if(config is None):
+                config = self.get_distribution_config(distribution_id)["DistributionConfig"]
+            if(e_tag is None):
+                e_tag = self.get_etag_from_distribution_id(distribution_id, False)
+        if(update_streaming_distribution):
+            if(streaming_distribution_id is None):
+                module.fail_json(msg="Error: streaming_distribution_id must be specified for updating a streaming distribution.")
+            if(config is None):
+                config = self.get_streaming_distribution_config(streaming_distribution_id)["StreamingDistributionConfig"]
+            if(e_tag is None):
+                e_tag = self.get_etag_from_distribution_id(streaming_distribution_id, True)
+        return config, e_tag
+
+# TODO: validate delete parameters
+#       more validation of update parameters - CallerReference and S3Origin and Origins
+#       validate required create parameters  
 
 def generate_datetime_string():
     return datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
@@ -513,7 +574,7 @@ def main():
     signed_url_expire_date = module.params.get('signed_url_expire_date')
 
     distribution = create_distribution or update_distribution
-    streaming_distribution = create_streaming_distribution or update_straming_distribution
+    streaming_distribution = create_streaming_distribution or update_streaming_distribution
 
     if(sum([create_origin_access_identity, delete_origin_access_identity, update_origin_access_identity,
             generate_presigned_url, generate_s3_presigned_url, create_distribution, delete_distribution,
@@ -531,7 +592,11 @@ def main():
         viewer_certificate_iam_certificate_id, viewer_certificate_acm_certificate_arn, viewer_certificate_ssl_support_method,
         viewer_certificate_minimum_protocol_version, viewer_certificate_certificate, viewer_certificate_certificate_source)
 
+    config, e_tag = service_mgr.validate_update_parameters(update_distribution, update_streaming_distribution,
+            distribution_id, streaming_distribution_id, config, e_tag)
+
     default_datetime_string = generate_datetime_string()
+
 
     if(distribution):
         if(config is None):
@@ -614,13 +679,14 @@ def main():
                 }
         else:
             config["TrustedSigners"] = valid_trusted_signers
-        if(valid_s3_origin is not None):
-            config["S3Origin"] = valid_s3_origin
-        else:
-            config["S3Origin"] = {
-                "DomainName": s3_origin_domain_name,
-                "OriginAccessIdentity": s3_origin_origin_access_identity
-            }
+        if(create_streaming_distribution):
+            if(valid_s3_origin is not None):
+                config["S3Origin"] = valid_s3_origin
+            else:
+                config["S3Origin"] = {
+                    "DomainName": s3_origin_domain_name,
+                    "OriginAccessIdentity": s3_origin_origin_access_identity
+                }
     if(distribution or streaming_distribution):
         config["Enabled"] = enabled
         if(valid_aliases is not None):
@@ -629,6 +695,7 @@ def main():
             config["Logging"] = valid_logging
         if(price_class is not None):
             config["PriceClass"] = price_class
+    if(create_distribution or create_streaming_distribution):
         if(caller_reference is not None):
             config["CallerReference"] = caller_reference
         else:
