@@ -149,7 +149,16 @@ class CloudFrontServiceManager:
             self.module.fail_json(msg="Error creating invalidation(s) - " + str(e),
                     exception=traceback.format_exc())
 
-    def generate_presigned_url(self, client_method, s3_bucket_name, s3_key_name, expires_in, http_method):
+    def generate_presigned_url(self, client_method, params, expires_in, http_method):
+        try:
+            func = partial(self.client.generate_presigned_url, ClientMethod = client_method,
+                    Params=params, ExpiresIn=expires_in, HttpMethod=http_method)
+            return self.paginated_response(func)
+        except Exception as e:
+            self.module.fail_json(msg="Error generating presigned url - " + str(e),
+                    exception=traceback.format_exc())
+
+    def generate_s3_presigned_url(self, client_method, s3_bucket_name, s3_key_name, expires_in, http_method):
         try:
             self.create_client('s3')
             params = { "Bucket": s3_bucket_name, "Key": s3_key_name }
@@ -157,7 +166,7 @@ class CloudFrontServiceManager:
                     ExpiresIn=expires_in, HttpMethod=http_method)
             return { "presigned_url": response }
         except Exception as e:
-            self.module.fail_json(msg="Error generating presigned url - " + str(e),
+            self.module.fail_json(msg="Error generating s3 presigned url - " + str(e),
                     exception=traceback.format_exc())
 
     def create_distribution(self, config, tags):
@@ -165,7 +174,9 @@ class CloudFrontServiceManager:
             if tags is None:
                 func = partial(self.client.create_distribution, DistributionConfig=config)
             else:
-                distribution_config_with_tags = config.update(tags)
+                distribution_config_with_tags = {}
+                distribution_config_with_tags["DistributionConfig"] = config
+                distribution_config_with_tags["Tags"] = tags
                 func = partial(self.client.create_disribution_with_tags,
                         DistributionConfigWithTags=distribution_config_with_tags)
             return self.paginated_response(func)
@@ -178,7 +189,8 @@ class CloudFrontServiceManager:
             if tags is None:
                 func = partial(self.client.create_streaming_distribution, StreamingDistributionConfig=config)
             else:
-                streaming_distribution_config_with_tags = config.update(tags)
+                streaming_distribution_config_with_tags["StreamingDistributionConfig"] = config
+                streaming_distribution_config_with_tags["Tags"] = tags
                 func = partial(self.client.create_streaming_disribution_with_tags, 
                         StreamingDistributionConfigWithTags=streaming_distribution_config_with_tags)
             return self.paginated_response(func)
@@ -207,6 +219,48 @@ class CloudFrontServiceManager:
             loop = args['NextToken'] is not None
         return results
 
+    def validate_aliases(self, aliases, alias_list):
+        if(aliases is not None and alias_list is not None):
+            self.module.fail_json(msg="Error: aliases and alias_list parameters are both defined. Please specify only one.")
+        if(aliases is not None):
+            return aliases
+        if(alias_list is not None):
+            return {
+                    "Quantity": len(alias_list),
+                    "Items": alias_list
+                    }
+        return None
+
+    def validate_logging(self, logging, enabled, include_cookies, s3_bucket_name, s3_bucket_prefix, streaming):
+        if(logging is not None and (s3_bucket_name is not None or s3_bucket_prefix is not None):
+            self.module.fail_json(msg="Error: the logging and logging_* parameters are both defined. Please specify either logging or all logging_ parameters."
+        if(include_cookies is not None and streaming):
+            self.module.fail_json(msg="Error: logging_include_cookies has been defined for a streaming distribution"
+        if(logging is not None):
+            return logging
+        if(s3_bucket_name is None):
+            return None
+        valid_logging = {
+            "Enabled": enabled,
+            "Bucket": s3_bucket_name,
+            "Prefix": s3_bucket_prefix
+            }
+        if(not streaming):
+            valid_logging["IncludeCookies"] = include_cookies
+        return valid_logging
+
+    def validate_origins(self, origins, origin_list):
+        if(origins is not None and origin_list is not None):
+            self.module.fail_json(msg="Error: the origins and origins_list parameters are both defined. Please specify only one.")
+        if(origins is not None):
+            return origins
+        if(origin_list is not None):
+            return {
+                "Quantity": len(origin_list),
+                "Items": origin_list
+                }
+        return None
+
 def generate_datetime_string():
     return datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
 
@@ -227,7 +281,7 @@ def main():
         e_tag=dict(required=False, default=None, type='str'),
         delete_distribution=dict(required=False, default=False, type='bool'),
         delete_streaming_distribution=dict(required=False, default=False, type='bool'),
-        generate_presigned_url=dict(required=False, default=False, type='bool'),
+        generate_s3_presigned_url=dict(required=False, default=False, type='bool'),
         client_method=dict(required=False, default=None, type='str'),
         s3_bucket_name=dict(required=False, default=None, type='str'),
         s3_key_name=dict(required=False, default=None, type='str'),
@@ -241,12 +295,18 @@ def main():
         config=dict(required=False, default=None, type='json'),
         tags=dict(required=False, default=None, type='str'),
         aliases=dict(required=False, default=None, type='json'),
+        aliases_list=dict(required=False, default=None, type='list'),
         default_root_object=dict(required=False, default=None, type='str'),
         origins=dict(required=False, default=None, type='json'),
+        origin_list=dict(required=False, default=None, type='list'),
         default_cache_behavior=dict(required=False, default=None, type='json'),
         cache_behaviors=dict(required=False, default=None, type='json'),
         custom_error_responses=dict(required=False, default=None, type='json'),
         logging=dict(required=False, default=None, type='json'),
+        logging_enabled=dict(required=False, default=False, type='bool'),
+        logging_include_cookies=dict(required=False, default=False, type='bool'),
+        logging_s3_bucket_name=dict(required=False, default=None, type='str'),
+        logging_s3_bucket_prefix=dict(required=False, default=None, type='str'),
         price_class=dict(required=False, default=None, type='str'),
         enabled=dict(required=False, default=False, type='bool'),
         viewer_certificate=dict(required=False, default=None, type='json'),
@@ -258,7 +318,7 @@ def main():
         trusted_signers=dict(required=False, default=None, type='json'),
         default_origin_domain_name=dict(required=False, default=None, type='str'),
         default_origin_path=dict(required=False, default='', type='str'),
-        default_origin_access_identity=dict(required=False, default='', type='str')
+        default_origin_access_identity=dict(required=False, default='', type='str'),
     ))
 
     result = {}
@@ -272,38 +332,38 @@ def main():
     create_origin_access_identity = module.params.get('create_origin_access_identity')
     caller_reference = module.params.get('caller_reference')
     comment = module.params.get('comment')
-
     delete_origin_access_identity = module.params.get('delete_origin_access_identity')
     origin_access_identity_id = module.params.get('origin_access_identity_id')
     e_tag = module.params.get('e_tag')
-
     update_origin_access_identity = module.params.get('update_origin_access_identity')
     origin_access_identity_id = module.params.get('origin_access_identity_id')
-
     generate_presigned_url = module.params.get('generate_presigned_url')
     client_method = module.params.get('client_method')
     s3_bucket_name = module.params.get('s3_bucket_name')
     s3_key_name = module.params.get('s3_key_name')
     expires_in = module.params.get('expires_in')
     http_method = module.params.get('http_method')
-
     create_distribution = module.params.get('create_distribution')
     create_streaming_distribution = module.params.get('create_streaming_distribution')
     config = module.params.get('config')
     tags = module.params.get('tags')
-
     create_invalidation = module.params.get('create_invalidation')
     distribution_id = module.params.get('distribution_id')
     invalidation_batch = module.params.get('invalidation_batch')
-
     aliases = module.params.get('aliases')
+    alias_list = module.params.get('alias_list')
     default_root_object = module.params.get('default_root_object')
     origins = module.params.get('origins')
+    origin_list = mdule.params.get('origin_list')
     default_cache_behavior = module.params.get('default_cache_behavior')
     cache_behaviors = module.params.get('cache_behaviors')
     custom_error_responses = module.params.get('custom_error_responses')
     comment = module.params.get('comment')
     logging = module.params.get('logging')
+    logging_enabled = module.params.get('logging_enabled')
+    logging_include_cookies = module.params.get('logging_enabled')
+    logging_s3_bucket_name = module.params.get('logging_s3_bucket_name')
+    logging_s3_bucket_prefix = module.params.get('logging_s3_bucket_prefix')
     price_class = module.params.get('price_class')
     enabled = module.params.get('enabled')
     viewer_certificate = module.params.get('viewer_certificate')
@@ -313,10 +373,14 @@ def main():
     is_ipv6_enabled = module.params.get('is_ipv6_enabled')
     s3_origin = module.params.get('s3_origin')
     trusted_signers = module.params.get('trusted_signers')
-
     default_origin_domain_name = module.params.get('default_origin_domain_name')
     default_origin_path = module.params.get('default_origin_path')
     default_origin_access_identity = module.params.get('default_origin_access_identity')
+
+    valid_aliases = service_mgr.validate_aliases(aliases, alias_list)
+    valid_logging = service.mgr_validate_logging(logging, logging_enabled, logging_include_cookies,
+            logging_s3_bucket_name, logging_s3_bucket_prefix, create_streaming_distribution)
+    valid_origins = service.mgr_validate_origins(origins, origin_list)
 
     default_datetime_string = generate_datetime_string()
 
@@ -330,7 +394,7 @@ def main():
             config = {}
             if(caller_reference is None):
                 config["CallerReference"] = default_datetime_string
-            if(origins is None):
+            if(valid_origins is None):
                 if(".s3.amazonaws.com" not in default_origin_domain_name):
                     config["Origins"] = {
                             "Quantity": 1,
@@ -387,28 +451,37 @@ def main():
                         "LambdaFunctionAssociations": { "Quantity": 0 }
                     }
             if(comment is None):
-                config["Comment"] = "distribution created by ansible. datetime string: " + default_datetime_string
+                config["Comment"] = "distribution created by ansible with datetime string: " + default_datetime_string
     elif(create_streaming_distribution):
         if(config is None):
             config = {}
             if(caller_reference is None):
                 caller_reference =  default_datetime_string
             if(s3_origin is None):
-                s3_origin = {} # TODO:
+                s3_origin = {
+                            "DomainName": default_origin_domain_name,
+                            "OriginAccessIdentity": default_origin_access_identity
+                        }
             if(comment is None):
-                comment = "streaming distribution created by ansible. datetime string: " + generate_datetime_string()
+                comment = "streaming distribution created by ansible with datetime string: " + generate_datetime_string()
             if(trusted_signers is None):
-                trusted_signers = {}
-        config["CallerReference"] = caller_reference
-        config["S3Origin"] = s3_origin
-        config["Comment"] = s3_comment
+                trusted_signers = {
+                            "Enabled": False,
+                            "Quantity": 0
+                        }
+        if(caller_reference is not None):
+            config["CallerReference"] = caller_reference
+        if(s3_origin is not None):
+            config["S3Origin"] = s3_origin
+        if(comment is not None):
+            config["Comment"] = comment
 
     if(create_distribution or create_streaming_distribution):
         config["Enabled"] = enabled
-        if(aliases is not None):
-            config["Aliases"] = aliases
-        if(logging is not None):
-            config["Logging"] = logging
+        if(valid_aliases is not None):
+            config["Aliases"] = valid_aliases
+        if(valid_logging is not None):
+            config["Logging"] = valid_logging
         if(price_class is not None):
             config["PriceClass"] = price_class
     
@@ -420,6 +493,8 @@ def main():
         result=service_mgr.update_origin_access_identity(caller_reference, comment, origin_access_identity_id, e_tag)
     elif(create_invalidation):
         result=service_mgr.create_invalidation(distribution_id, invalidation_batch)
+    elif(generate_s3_presigned_url):
+        result=service_mgr.generate_s3_presigned_url(client_method, s3_bucket_name, s3_key_name, expires_in, http_method)
     elif(generate_presigned_url):
         result=service_mgr.generate_presigned_url(client_method, s3_bucket_name, s3_key_name, expires_in, http_method)
     elif(create_distribution):
