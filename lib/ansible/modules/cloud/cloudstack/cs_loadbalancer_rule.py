@@ -253,7 +253,7 @@ class AnsibleCloudStackLBRule(AnsibleCloudStack):
             'account': self.get_account(key='name'),
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
-            'zoneid': self.get_zone(key='id'),
+            'zoneid': self.get_zone(key='id') if self.module.params.get('zone') else None,
             'publicipid': self.get_ip_address(key='id'),
             'name': self.module.params.get('name'),
         }
