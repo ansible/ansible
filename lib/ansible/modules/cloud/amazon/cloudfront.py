@@ -176,11 +176,11 @@ class CloudFrontServiceManager:
                     exception=traceback.format_exc())
 
     def rsa_signer(message, private_key_string):
-            private_key = serialization.load_pem_private_key(
-                private_key_string,
-                password=None,
-                backend=default_backend()
-            )
+        private_key = serialization.load_pem_private_key(
+            private_key_string,
+            password=None,
+            backend=default_backend()
+        )
         signer = private_key.signer(padding.PKCS1v15(), hashes.SHA1())
         signer.update(message)
         return signer.finalize()
@@ -295,10 +295,10 @@ class CloudFrontServiceManager:
         return None
 
     def validate_logging(self, logging, enabled, include_cookies, s3_bucket_name, s3_bucket_prefix, streaming):
-        if(logging is not None and (s3_bucket_name is not None or s3_bucket_prefix is not None):
-            self.module.fail_json(msg="Error: the logging and logging_* parameters are both defined. Please specify either logging or all logging_ parameters."
-        if(include_cookies is not None and streaming):
-            self.module.fail_json(msg="Error: logging_include_cookies has been defined for a streaming distribution"
+        if(logging is not None and (s3_bucket_name is not None or s3_bucket_prefix is not None)):
+            self.module.fail_json(msg="Error: the logging and logging_* parameters are both defined. Please specify either logging or all logging_ parameters.")
+        if(include_cookies and streaming):
+            self.module.fail_json(msg="Error: logging_include_cookies has been defined for a streaming distribution")
         if(logging is not None):
             return logging
         if(s3_bucket_name is None):
@@ -349,7 +349,7 @@ class CloudFrontServiceManager:
                 }
         return None
 
-    def validate_viewer_certificate(viewer_certificate, viewer_certificate_cloudfront_default_certificate,
+    def validate_viewer_certificate(self, viewer_certificate, viewer_certificate_cloudfront_default_certificate,
         viewer_certificate_iam_certificate_id, viewer_certificate_acm_certificate_arn, viewer_certificate_ssl_support_method,
         viewer_certificate_minimum_protocol_version, viewer_certificate_certificate, viewer_certificate_certificate_source):
         #TODO:
@@ -366,17 +366,19 @@ def main():
         caller_reference=dict(required=False, default=None, type='str'),
         comment=dict(required=False, default=None, type='str'),
         create_distribution=dict(required=False, default=False, type='bool'),
+        delete_distribution=dict(required=False, default=False, type='bool'),
+        update_distribution=dict(required=False, default=False, type='bool'),
         create_invalidation=dict(required=False, default=False, type='bool'),
         distribution_id=dict(required=False, default=None, type='str'),
         streaming_distribution_id=dict(required=False, default=None, type='str'),
         invalidation_batch=dict(required=False, default=None, type='str'),
         create_streaming_distribution=dict(required=False, default=False, type='bool'),
+        delete_streaming_distribution=dict(required=False, default=False, type='bool'),
+        update_streaming_distribution=dict(required=False, default=False, type='bool'),
         delete_origin_access_identity=dict(required=False, default=False, type='bool'),
         origin_access_identity_id=dict(required=False, default=None, type='str'),
         e_tag=dict(required=False, default=None, type='str'),
-        delete_distribution=dict(required=False, default=False, type='bool'),
-        delete_streaming_distribution=dict(required=False, default=False, type='bool'),
-        generate_presigned_url(dict(required=False, default=False, type='bool'),
+        generate_presigned_url=dict(required=False, default=False, type='bool'),
         generate_s3_presigned_url=dict(required=False, default=False, type='bool'),
         client_method=dict(required=False, default=None, type='str'),
         s3_bucket_name=dict(required=False, default=None, type='str'),
@@ -386,8 +388,6 @@ def main():
         tag_resource=dict(required=False, default=False, type='bool'),
         untag_resource=dict(required=False, default=False, type='bool'),
         update_origin_access_identity=dict(required=False, default=False, type='bool'),
-        update_distribution=dict(required=False, default=False, type='bool'),
-        update_streaming_distribution=dict(required=False, default=False, type='bool'),
         config=dict(required=False, default=None, type='json'),
         tags=dict(required=False, default=None, type='str'),
         aliases=dict(required=False, default=None, type='json'),
@@ -406,13 +406,13 @@ def main():
         price_class=dict(required=False, default=None, type='str'),
         enabled=dict(required=False, default=False, type='bool'),
         viewer_certificate=dict(required=False, default=None, type='json'),
-        viewer_certificate_cloudfront_default_certificate=dict(required=False, default=None, type='bool'),
+        viewer_certificate_cloudfront_default_certificate=dict(required=False, default=False, type='bool'),
         viewer_certificate_iam_certificate_id=dict(required=False, default=None, type='str'),
         viewer_certificate_acm_certificate_arn=dict(required=False, default=None, type='str'),
         viewer_certificate_ssl_support_method=dict(required=False, default=None, type='str'),
         viewer_certificate_minimum_protocol_version=dict(required=False, default=None, type='str'),
-        viewer_certificate_certificate=dict(required=False default-None, type='str'),
-        viewer_certificate_certificate_source=dict(required=False, default=None, type='str')
+        viewer_certificate_certificate=dict(required=False, default=None, type='str'),
+        viewer_certificate_certificate_source=dict(required=False, default=None, type='str'),
         restrictions=dict(required=False, default=None, type='json'),
         restrictions_restriction_type=dict(required=False, default=None, type='str'),
         restrictions_items=dict(required=False, default=None, type='list'),
@@ -435,6 +435,7 @@ def main():
     ))
 
     result = {}
+
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
     
     if not HAS_BOTO3:
@@ -452,13 +453,18 @@ def main():
     origin_access_identity_id = module.params.get('origin_access_identity_id')
     generate_presigned_url = module.params.get('generate_presigned_url')
     generate_s3_presigned_url = module.params.get('generate_s3_presigned_url')
+    generate_signed_url_from_pem_private_key = module.params.get('generate_signed_url_from_pem_private_key')
     client_method = module.params.get('client_method')
     s3_bucket_name = module.params.get('s3_bucket_name')
     s3_key_name = module.params.get('s3_key_name')
     expires_in = module.params.get('expires_in')
     http_method = module.params.get('http_method')
     create_distribution = module.params.get('create_distribution')
+    delete_distribution = module.params.get('delete_distribution')
+    update_distribution = module.params.get('update_distribution')
     create_streaming_distribution = module.params.get('create_streaming_distribution')
+    delete_streaming_distribution = module.params.get('delete_streaming_distribution')
+    update_streaming_distribution = module.params.get('update_streaming_distribution')
     config = module.params.get('config')
     tags = module.params.get('tags')
     create_invalidation = module.params.get('create_invalidation')
@@ -469,14 +475,14 @@ def main():
     alias_list = module.params.get('alias_list')
     default_root_object = module.params.get('default_root_object')
     origins = module.params.get('origins')
-    origin_list = mdule.params.get('origin_list')
+    origin_list = module.params.get('origin_list')
     default_cache_behavior = module.params.get('default_cache_behavior')
     cache_behaviors = module.params.get('cache_behaviors')
     custom_error_responses = module.params.get('custom_error_responses')
     comment = module.params.get('comment')
     logging = module.params.get('logging')
     logging_enabled = module.params.get('logging_enabled')
-    logging_include_cookies = module.params.get('logging_enabled')
+    logging_include_cookies = module.params.get('logging_include_cookies')
     logging_s3_bucket_name = module.params.get('logging_s3_bucket_name')
     logging_s3_bucket_prefix = module.params.get('logging_s3_bucket_prefix')
     price_class = module.params.get('price_class')
@@ -502,10 +508,12 @@ def main():
     default_origin_domain_name = module.params.get('default_origin_domain_name')
     default_origin_path = module.params.get('default_origin_path')
     default_origin_access_identity = module.params.get('default_origin_access_identity')
-    generate_signed_url_from_pem_private_key = module.params.get('generate_signed_url_from_pem_private_key')
     signed_url_pem_private_key_string = module.params.get('signed_url_pem_private_key_string')
     signed_url_url = module.params.get('signed_url_url')
-    signed_url_expire_date = module_params.get('signed_url_expire_date')
+    signed_url_expire_date = module.params.get('signed_url_expire_date')
+
+    distribution = create_distribution or update_distribution
+    streaming_distribution = create_streaming_distribution or update_straming_distribution
 
     if(sum([create_origin_access_identity, delete_origin_access_identity, update_origin_access_identity,
             generate_presigned_url, generate_s3_presigned_url, create_distribution, delete_distribution,
@@ -514,8 +522,8 @@ def main():
         module.fail_json(msg="Error: more than one cloudfront action has been specified (eg. create_distribution). Please select only one action.")
 
     valid_aliases = service_mgr.validate_aliases(aliases, alias_list)
-    valid_logging = service.mgr_validate_logging(logging, logging_enabled, logging_include_cookies,
-            logging_s3_bucket_name, logging_s3_bucket_prefix, create_streaming_distribution)
+    valid_logging = service_mgr.validate_logging(logging, logging_enabled, logging_include_cookies,
+            logging_s3_bucket_name, logging_s3_bucket_prefix, streaming_distribution)
     valid_origins = service_mgr.validate_origins(origins, origin_list)
     valid_trusted_signers = service_mgr.validate_trusted_signers(trusted_signers, trusted_signers_enabled, trusted_signers_list)
     valid_s3_origin = service_mgr.validate_s3_origin(s3_origin, s3_origin_domain_name, s3_origin_origin_access_identity)
@@ -525,7 +533,7 @@ def main():
 
     default_datetime_string = generate_datetime_string()
 
-    if(create_distribution or update_distribution):
+    if(distribution):
         if(config is None):
             config = {}
         if(valid_origins is None):
@@ -592,7 +600,7 @@ def main():
             config["Comment"] = "distribution created by ansible with datetime " + default_datetime_string
         else:
             config["Comment"] = comment
-    elif(create_streaming_distribution or update_streaming_distribution):
+    elif(streaming_distribution):
         if(config is None):
             config = {}
         if(comment is None):
@@ -608,7 +616,12 @@ def main():
             config["TrustedSigners"] = valid_trusted_signers
         if(valid_s3_origin is not None):
             config["S3Origin"] = valid_s3_origin
-    if(create_distribution or create_streaming_distribution or update_distribution or update_streaming_distribution):
+        else:
+            config["S3Origin"] = {
+                "DomainName": s3_origin_domain_name,
+                "OriginAccessIdentity": s3_origin_origin_access_identity
+            }
+    if(distribution or streaming_distribution):
         config["Enabled"] = enabled
         if(valid_aliases is not None):
             config["Aliases"] = valid_aliases
