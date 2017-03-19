@@ -41,6 +41,7 @@ options:
       - The name of the I(monit) program/process to manage. This is an alias of B(name).
     required: false
     default: null
+    version_added: "2.4"
   state:
     description:
       - The state of service
@@ -63,11 +64,13 @@ options:
         other B(state), it should point to the I(monit) binary e.g. "/opt/monit/bin/monit".
     required: false
     default: null
+    version_added: "2.4"
   config:
     description:
       - This may be used to specify the location of the configuration file.
     required: false
     default: null
+    version_added: "2.4"
   version:
     description:
       - This field may be used to specify the version of I(monit) to be deployed. This should be used
@@ -76,17 +79,20 @@ options:
         for the host and installs it.
     required: false
     default: null
+    version_added: "2.4"
   url:
     description:
       - This may be used to specify the URL for the monit tar ball to be downloaded.
     required: false
     default: null
+    version_added: "2.4"
   insecure:
     description:
       - This may be used to download the monit tar ball over HTTPS insecurely i.e., do not verify the SSL
         certificate of the server.
     required: false
     default: false
+    version_added: "2.4"
 requirements: [ ]
 author:
   - "Darryl Stoflet (@dstoflet)"
