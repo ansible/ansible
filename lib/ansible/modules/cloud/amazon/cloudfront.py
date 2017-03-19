@@ -132,8 +132,10 @@ class CloudFrontServiceManager:
     def update_origin_access_identity(self, caller_reference, comment, origin_access_identity_id, e_tag):
         try:
             func = partial(self.client.update_cloud_front_origin_access_identity,
-                    CloudFrontOriginAccessIdentityConfig =
-                    { 'CallerReference': caller_reference, 'Comment': comment },
+                    CloudFrontOriginAccessIdentityConfig = {
+                        "CallerReference": caller_reference,
+                        "Comment": comment
+                        },
                     Id=origin_access_identity_id, IfMatch=e_tag)
             return self.paginated_response(func)
         except Exception as e:
@@ -184,6 +186,24 @@ class CloudFrontServiceManager:
             self.module.fail_json(msg="Error creating distribution - " + str(e),
                     exception=traceback.format_exc())
 
+    def delete_distribution(self, distribution_id, e_tag):
+        try:
+            func = partial(self.client.delete_distribution, Id = distribution_id,
+                    IfMatch=e_tag)
+            return self.paginated_response(func)
+        except Exception as e:
+            self.module.fail_json(msg="Error deleting distribution - " + str(e),
+                    exception=traceback.format_exc())
+
+    def update_distribution(self, config, distribution_id, e_tag):
+        try:
+            func = partial(self.client.update_distribution, DistributionConfig=config,
+                    Id = distribution_id, IfMatch=e_tag)
+            return self.paginated_response(func)
+        except Exception as e:
+            self.module.fail_json(msg="Error updating distribution - " + str(e),
+                    exception=traceback.format_exc())
+
     def create_streaming_distribution(self, config, tags):
         try:
             if tags is None:
@@ -197,7 +217,25 @@ class CloudFrontServiceManager:
         except Exception as e:
             self.module.fail_json(msg="Error creating streaming distribution - " + str(e),
                     exception=traceback.format_exc())
+
+    def delete_streaming_distribution(self, streaming_distribution_id, e_tag):
+        try:
+            func = partial(self.client.delete_streaming_distribution, Id = distribution_id,
+                    IfMatch=e_tag)
+            return self.paginated_response(func)
+        except Exception as e:
+            self.module.fail_json(msg="Error deleting streaming distribution - " + str(e),
+                    exception=traceback.format_exc())
     
+    def update_streaming_distribution(self, config, streaming_distribution_id, e_tag):
+        try:
+            func = partial(self.client.update_streaming_distribution, StreamingDistributionConfig=config,
+                    Id = distribution_id, IfMatch=e_tag)
+            return self.paginated_response(func)
+        except Exception as e:
+            self.module.fail_json(msg="Error updating streaming distribution - " + str(e),
+                    exception=traceback.format_exc())
+
     def paginated_response(self, func, result_key=""):
         '''
         Returns expanded response for paginated operations.
@@ -261,6 +299,37 @@ class CloudFrontServiceManager:
                 }
         return None
 
+    def validate_trusted_signers(self, trusted_signers, enabled, trusted_signers_list):
+        if(trusted_signers is not None and trusted_signers_list is not None):
+            self.module.fail_json(msg="Error: the trusted_signers and trusted_signers_list are both defined. Please specify only one.")
+        if(trusted_signers is not None):
+            return trusted_signers
+        if(trusted_signers_list is not None):
+            return {
+                "Enabled": enabled,
+                "Quantity": len(trusted_signers_list),
+                "Items": trusted_signers_list
+                }
+        return None
+
+    def validate_s3_origin(self, s3_origin, s3_origin_domain_name, s3_origin_origin_access_identity):
+        if(s3_origin is not None and s3_origin_domain_name is not None):
+            self.module.fail_json(msg="Error: the s3_origin and s3_origin_domain_name parameters are both defined. Please specify only one.")
+        if(s3_origin is not None):
+            return s3_origin
+        if(s3_origin_domain_name is not None):
+            return {
+                "DomainName": s3_origin_domain_name,
+                "OriginAccessIdentity": s3_origin_origin_access_identity
+                }
+        return None
+
+    def validate_viewer_certificate(viewer_certificate, viewer_certificate_cloudfront_default_certificate,
+        viewer_certificate_iam_certificate_id, viewer_certificate_acm_certificate_arn, viewer_certificate_ssl_support_method,
+        viewer_certificate_minimum_protocol_version, viewer_certificate_certificate, viewer_certificate_certificate_source):
+        #TODO:
+        return None
+
 def generate_datetime_string():
     return datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
 
@@ -274,6 +343,7 @@ def main():
         create_distribution=dict(required=False, default=False, type='bool'),
         create_invalidation=dict(required=False, default=False, type='bool'),
         distribution_id=dict(required=False, default=None, type='str'),
+        streaming_distribution_id=dict(required=False, default=None, type='str'),
         invalidation_batch=dict(required=False, default=None, type='str'),
         create_streaming_distribution=dict(required=False, default=False, type='bool'),
         delete_origin_access_identity=dict(required=False, default=False, type='bool'),
@@ -281,6 +351,7 @@ def main():
         e_tag=dict(required=False, default=None, type='str'),
         delete_distribution=dict(required=False, default=False, type='bool'),
         delete_streaming_distribution=dict(required=False, default=False, type='bool'),
+        generate_presigned_url(dict(required=False, default=False, type='bool'),
         generate_s3_presigned_url=dict(required=False, default=False, type='bool'),
         client_method=dict(required=False, default=None, type='str'),
         s3_bucket_name=dict(required=False, default=None, type='str'),
@@ -296,7 +367,7 @@ def main():
         tags=dict(required=False, default=None, type='str'),
         aliases=dict(required=False, default=None, type='json'),
         aliases_list=dict(required=False, default=None, type='list'),
-        default_root_object=dict(required=False, default=None, type='str'),
+        default_root_object=dict(required=False, default='', type='str'),
         origins=dict(required=False, default=None, type='json'),
         origin_list=dict(required=False, default=None, type='list'),
         default_cache_behavior=dict(required=False, default=None, type='json'),
@@ -310,15 +381,28 @@ def main():
         price_class=dict(required=False, default=None, type='str'),
         enabled=dict(required=False, default=False, type='bool'),
         viewer_certificate=dict(required=False, default=None, type='json'),
+        viewer_certificate_cloudfront_default_certificate=dict(required=False, default=None, type='bool'),
+        viewer_certificate_iam_certificate_id=dict(required=False, default=None, type='str'),
+        viewer_certificate_acm_certificate_arn=dict(required=False, default=None, type='str'),
+        viewer_certificate_ssl_support_method=dict(required=False, default=None, type='str'),
+        viewer_certificate_minimum_protocol_version=dict(required=False, default=None, type='str'),
+        viewer_certificate_certificate=dict(required=False default-None, type='str'),
+        viewer_certificate_certificate_source=dict(required=False, default=None, type='str')
         restrictions=dict(required=False, default=None, type='json'),
+        restrictions_restriction_type=dict(required=False, default=None, type='str'),
+        restrictions_items=dict(required=False, default=None, type='list'),
         web_acl=dict(required=False, default=None, type='str'),
         http_version=dict(required=False, default=None, type='str'),
         is_ipv6_enabled=dict(required=False, default=False, type='bool'),
         s3_origin=dict(required=False, default=None, type='json'),
+        s3_origin_domain_name=dict(required=False, default=None, type='str'),
+        s3_origin_origin_access_identity=dict(required=False, default='', type='str'),
         trusted_signers=dict(required=False, default=None, type='json'),
+        trusted_signers_enabled=dict(required=False, default=False, type='bool'),
+        trusted_signers_list=dict(required=False, default=None, type='list'),
         default_origin_domain_name=dict(required=False, default=None, type='str'),
         default_origin_path=dict(required=False, default='', type='str'),
-        default_origin_access_identity=dict(required=False, default='', type='str'),
+        default_origin_access_identity=dict(required=False, default='', type='str')
     ))
 
     result = {}
@@ -338,6 +422,7 @@ def main():
     update_origin_access_identity = module.params.get('update_origin_access_identity')
     origin_access_identity_id = module.params.get('origin_access_identity_id')
     generate_presigned_url = module.params.get('generate_presigned_url')
+    generate_s3_presigned_url = module.params.get('generate_s3_presigned_url')
     client_method = module.params.get('client_method')
     s3_bucket_name = module.params.get('s3_bucket_name')
     s3_key_name = module.params.get('s3_key_name')
@@ -349,6 +434,7 @@ def main():
     tags = module.params.get('tags')
     create_invalidation = module.params.get('create_invalidation')
     distribution_id = module.params.get('distribution_id')
+    streaming_distribution_id = module.params.get('streaming_distribution_id')
     invalidation_batch = module.params.get('invalidation_batch')
     aliases = module.params.get('aliases')
     alias_list = module.params.get('alias_list')
@@ -367,116 +453,130 @@ def main():
     price_class = module.params.get('price_class')
     enabled = module.params.get('enabled')
     viewer_certificate = module.params.get('viewer_certificate')
+    viewer_certificate_cloudfront_default_certificate = module.params.get('viewer_certificate_cloudfront_default_certificate')
+    viewer_certificate_iam_certificate_id = module.params.get('viewer_certificate_iam_certificate_id')
+    viewer_certificate_acm_certificate_arn = module.params.get('viewer_certificate_acm_certificate_arn')
+    viewer_certificate_ssl_support_method = module.params.get('viewer_certificate_ssl_support_method')
+    viewer_certificate_minimum_protocol_version = module.params.get('viewer_certificate_minimum_protocol_version')
+    viewer_certificate_certificate = module.params.get('viewer_certificate_certificate')
+    viewer_certificate_certificate_source = module.params.get('viewer_certificate_certificate_source')
     restrictions = module.params.get('restrictions')
     web_acl = module.params.get('web_acl')
     http_version = module.params.get('http_version')
     is_ipv6_enabled = module.params.get('is_ipv6_enabled')
     s3_origin = module.params.get('s3_origin')
+    s3_origin_domain_name = module.params.get('s3_origin_domain_name')
+    s3_origin_origin_access_identity = module.params.get('s3_origin_origin_access_identity')
     trusted_signers = module.params.get('trusted_signers')
+    trusted_signers_enabled = module.params.get('trusted_signers_enabled')
+    trusted_signers_list = module.params.get('trusted_signers_list')
     default_origin_domain_name = module.params.get('default_origin_domain_name')
     default_origin_path = module.params.get('default_origin_path')
     default_origin_access_identity = module.params.get('default_origin_access_identity')
 
+    if(sum([create_origin_access_identity, delete_origin_access_identity, update_origin_access_identity,
+            generate_presigned_url, generate_s3_presigned_url, create_distribution, delete_distribution,
+            update_distribution, create_streaming_distribution, delete_streaming_distribution,
+            update_streaming_distribution]) > 1):
+        module.fail_json(msg="Error: more than one cloudfront action has been specified (eg. create_distribution). Please select only one action.")
+
     valid_aliases = service_mgr.validate_aliases(aliases, alias_list)
     valid_logging = service.mgr_validate_logging(logging, logging_enabled, logging_include_cookies,
             logging_s3_bucket_name, logging_s3_bucket_prefix, create_streaming_distribution)
-    valid_origins = service.mgr_validate_origins(origins, origin_list)
+    valid_origins = service_mgr.validate_origins(origins, origin_list)
+    valid_trusted_signers = service_mgr.validate_trusted_signers(trusted_signers, trusted_signers_enabled, trusted_signers_list)
+    valid_s3_origin = service_mgr.validate_s3_origin(s3_origin, s3_origin_domain_name, s3_origin_origin_access_identity)
+    valid_viewer_certificate = service_mgr.validate_viewer_certificate(viewer_certificate, viewer_certificate_cloudfront_default_certificate,
+        viewer_certificate_iam_certificate_id, viewer_certificate_acm_certificate_arn, viewer_certificate_ssl_support_method,
+        viewer_certificate_minimum_protocol_version, viewer_certificate_certificate, viewer_certificate_certificate_source)
 
     default_datetime_string = generate_datetime_string()
 
-    # if no config exists, set all required defaults and add all to object
-    # if config exists, add all non-None to config
-    
-    # miniumum requirements for a distribution are a domain name and an id
-    # set defaults for all required objects
-    if(create_distribution):
+    if(create_distribution or update_distribution):
         if(config is None):
             config = {}
-            if(caller_reference is None):
-                config["CallerReference"] = default_datetime_string
-            if(valid_origins is None):
-                if(".s3.amazonaws.com" not in default_origin_domain_name):
-                    config["Origins"] = {
-                            "Quantity": 1,
-                                "Items": [ {
-                                    "CustomHeaders": { "Quantity": 0 },
-                                    "CustomOriginConfig": {
-                                        "HTTPPort": 80,
-                                        "HTTPSPort": 443,
-                                        "OriginProtocolPolicy": "match-viewer",
-                                        "OriginSslProtocols": {
-                                            "Items": [
-                                                "TLSv1",
-                                                "TLSv1.1",
-                                                "TLSv1.2"
-                                            ],
-                                            "Quantity": 3
-                                        }
-                                    },
-                                    "DomainName": default_origin_domain_name,
-                                    "Id": default_datetime_string,
-                                    "OriginPath": default_origin_path
+        if(valid_origins is None):
+            if(".s3.amazonaws.com" not in default_origin_domain_name):
+                config["Origins"] = {
+                        "Quantity": 1,
+                            "Items": [ {
+                                "CustomHeaders": { "Quantity": 0 },
+                                "CustomOriginConfig": {
+                                    "HTTPPort": 80,
+                                    "HTTPSPort": 443,
+                                    "OriginProtocolPolicy": "match-viewer",
+                                    "OriginSslProtocols": {
+                                        "Items": [
+                                            "TLSv1",
+                                            "TLSv1.1",
+                                            "TLSv1.2"
+                                        ],
+                                        "Quantity": 3
+                                    }
+                                },
+                                "DomainName": default_origin_domain_name,
+                                "Id": default_datetime_string,
+                                "OriginPath": default_origin_path
+                        } ]
+                    }
+            else:
+                config["Origins"] = {
+                        "Quantity": 1,
+                            "Items": [ {
+                                "DomainName": default_origin_domain_name,
+                                "Id": default_datetime_string,
+                                "OriginPath": default_origin_path,
+                                "S3OriginConfig": {
+                                    "OriginAccessIdentity": default_origin_access_identity
+                                }
                             } ]
                         }
-                else:
-                    config["Origins"] = {
-                            "Quantity": 1,
-                                "Items": [ {
-                                    "DomainName": default_origin_domain_name,
-                                    "Id": default_datetime_string,
-                                    "OriginPath": default_origin_path,
-                                    "S3OriginConfig": {
-                                        "OriginAccessIdentity": default_origin_access_identity
-                                    }
-                                } ]
-                            }
-            if(default_cache_behavior is None):
-                config["DefaultCacheBehavior"] = {
-                        "MinTTL": 0,
-                        "TrustedSigners": {
-                            "Enabled": False,
-                            "Quantity": 0
-                        },
-                        "TargetOriginId": default_datetime_string,
-                        "Compress": False,
-                        "ViewerProtocolPolicy": "allow-all",
-                        "ForwardedValues": {
-                            "Headers": { "Quantity": 0 },
-                            "Cookies": { "Forward": "none" },
-                            "QueryStringCacheKeys": { "Quantity": 0 },
-                            "QueryString": True
-                        },
-                        "MaxTTL": 31536000,
-                        "SmoothStreaming": False,
-                        "LambdaFunctionAssociations": { "Quantity": 0 }
-                    }
-            if(comment is None):
-                config["Comment"] = "distribution created by ansible with datetime string: " + default_datetime_string
-    elif(create_streaming_distribution):
+        if(default_cache_behavior is None):
+            config["DefaultCacheBehavior"] = {
+                    "MinTTL": 0,
+                    "TrustedSigners": {
+                        "Enabled": False,
+                        "Quantity": 0
+                    },
+                    "TargetOriginId": default_datetime_string,
+                    "Compress": False,
+                    "ViewerProtocolPolicy": "allow-all",
+                    "ForwardedValues": {
+                        "Headers": { "Quantity": 0 },
+                        "Cookies": { "Forward": "none" },
+                        "QueryStringCacheKeys": { "Quantity": 0 },
+                        "QueryString": True
+                    },
+                    "MaxTTL": 31536000,
+                    "SmoothStreaming": False,
+                    "LambdaFunctionAssociations": { "Quantity": 0 }
+                }
+        config["DefaultRootObject"] = default_root_object
+        config["IsIPV6Enabled"] = is_ipv6_enabled
+        if(http_version is not None):
+            config["HttpVersion"] = http_version
+        if(comment is None):
+            config["Comment"] = "distribution created by ansible with datetime " + default_datetime_string
+        else:
+            config["Comment"] = comment
+    elif(create_streaming_distribution or update_streaming_distribution):
         if(config is None):
             config = {}
-            if(caller_reference is None):
-                caller_reference =  default_datetime_string
-            if(s3_origin is None):
-                s3_origin = {
-                            "DomainName": default_origin_domain_name,
-                            "OriginAccessIdentity": default_origin_access_identity
-                        }
-            if(comment is None):
-                comment = "streaming distribution created by ansible with datetime string: " + generate_datetime_string()
-            if(trusted_signers is None):
-                trusted_signers = {
-                            "Enabled": False,
-                            "Quantity": 0
-                        }
-        if(caller_reference is not None):
-            config["CallerReference"] = caller_reference
-        if(s3_origin is not None):
-            config["S3Origin"] = s3_origin
-        if(comment is not None):
+        if(comment is None):
+            config["Comment"] = "streaming distribution created by ansible with datetime " + default_datetime_string
+        else:
             config["Comment"] = comment
+        if(valid_trusted_signers is None):
+            config["TrustedSigners"] = {
+                    "Enabled": False,
+                    "Quantity": 0
+                }
+        else:
+            config["TrustedSigners"] = valid_trusted_signers
+        if(valid_s3_origin is not None):
+            config["S3Origin"] = valid_s3_origin
 
-    if(create_distribution or create_streaming_distribution):
+    if(create_distribution or create_streaming_distribution or update_distribution or update_streaming_distribution):
         config["Enabled"] = enabled
         if(valid_aliases is not None):
             config["Aliases"] = valid_aliases
@@ -484,7 +584,11 @@ def main():
             config["Logging"] = valid_logging
         if(price_class is not None):
             config["PriceClass"] = price_class
-    
+        if(caller_reference is not None):
+            config["CallerReference"] = caller_reference
+        else:
+            config["CallerReference"] = default_datetime_string
+
     if(create_origin_access_identity):
         result=service_mgr.create_origin_access_identity(caller_reference, comment)
     elif(delete_origin_access_identity):
@@ -499,8 +603,16 @@ def main():
         result=service_mgr.generate_presigned_url(client_method, s3_bucket_name, s3_key_name, expires_in, http_method)
     elif(create_distribution):
         result=service_mgr.create_distribution(config, tags)
+    elif(delete_distribution):
+        result=service_mgr.delete_distribution(distribution_id, e_tag)
+    elif(update_distribution):
+        result=service_mgr.update_distribution(config, distribution_id, e_tag)
     elif(create_streaming_distribution):
         result=service_mgr.create_streaming_distribution(config, tags)
+    elif(delete_streaming_distribution):
+        result=service_mgr.delete_streaming_distribution(streaming_distribution_id, e_tag)
+    elif(update_streaming_distribution):
+        result=service_mgr.update_streaming_distribution(config, streaming_distribution_id, e_tag)
 
     module.exit_json(changed=True, **camel_dict_to_snake_dict(result))
 
