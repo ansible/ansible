@@ -16,7 +16,7 @@
 import botocore
 import time
 
-from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict
+from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict
 
 
 def get_db_instance(conn, instancename):
@@ -54,36 +54,7 @@ class RDSDBInstance(object):
         self.data = self.get_data()
 
     def get_data(self):
-        d = {
-            'id': self.name,
-            'create_time': self.instance.get('InstanceCreateTime', ''),
-            'db_engine': self.instance['Engine'],
-            'db_name': self.instance.get('DBName'),
-            'status': self.status,
-            'availability_zone': self.instance.get('AvailabilityZone'),
-            'backup_retention': self.instance['BackupRetentionPeriod'],
-            'maintenance_window': self.instance['PreferredMaintenanceWindow'],
-            'multi_zone': self.instance['MultiAZ'],
-            'instance_type': self.instance['DBInstanceClass'],
-            'username': self.instance['MasterUsername'],
-            'replication_source': self.instance.get('ReadReplicaSourceDBInstanceIdentifier'),
-            'size': self.instance.get('AllocatedStorage'),
-            'storage_type': self.instance.get('StorageType')
-        }
-        if self.instance.get('Iops'):
-            d['iops'] = self.instance['Iops'],
-        if self.instance["VpcSecurityGroups"] is not None:
-            d['vpc_security_groups'] = ','.join(x['VpcSecurityGroupId'] for x in self.instance['VpcSecurityGroups'])
-        if self.instance.get("Endpoint"):
-            d['endpoint'] = self.instance["Endpoint"].get('Address', None)
-            d['port'] = self.instance["Endpoint"].get('Port', None)
-        else:
-            d['endpoint'] = None
-            d['port'] = None
-        if self.instance.get("Tags"):
-            d['tags'] = boto3_tag_list_to_ansible_dict(self.instance.get("Tags"))
-
-        return d
+        return camel_dict_to_snake_dict(self.instance)
 
     def diff(self, params):
         compare_keys = ['backup_retention', 'instance_type', 'iops',
