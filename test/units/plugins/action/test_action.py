@@ -591,6 +591,7 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
                          'stdout_lines': stdout.splitlines(),
                          'stderr': err}
         res = action_base._parse_returned_data(returned_data)
+        del res['_ansible_parsed'] # we always have _ansible_parsed
         self.assertEqual(len(res), 0)
         self.assertFalse(res)
 
