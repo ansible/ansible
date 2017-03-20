@@ -130,7 +130,7 @@
     enable: yes
     state: present
     localport: 80
-    remoteip: '192.168.0.1-192.168.0.5'
+    remoteip: 192.168.0.1-192.168.0.5
     action: allow
     direction: In
     protocol: TCP
@@ -142,7 +142,7 @@
     enable: yes
     state: present
     localport: 80
-    remoteip: '192.168.0.1-192.168.0.5'
+    remoteip: 192.168.0.1-192.168.0.5
     action: allow
     direction: In
     protocol: TCP
@@ -160,7 +160,7 @@
     enable: yes
     state: present
     localport: 80
-    remoteip: '192.168.0.0/24'
+    remoteip: 192.168.0.0/24
     action: allow
     direction: In
     protocol: TCP
@@ -172,7 +172,7 @@
     enable: yes
     state: present
     localport: 80
-    remoteip: '192.168.0.0/24'
+    remoteip: 192.168.0.0/24
     action: allow
     direction: In
     protocol: TCP
@@ -190,7 +190,7 @@
     enable: yes
     state: present
     localport: 80
-    remoteip: '192.168.0.1'
+    remoteip: 192.168.0.1
     action: allow
     direction: In
     protocol: TCP
@@ -202,7 +202,7 @@
     enable: yes
     state: present
     localport: 80
-    remoteip: '192.168.0.1'
+    remoteip: 192.168.0.1
     action: allow
     direction: In
     protocol: TCP
