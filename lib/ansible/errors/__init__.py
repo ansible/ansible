@@ -196,8 +196,3 @@ class AnsibleUndefinedVariable(AnsibleRuntimeError):
 class AnsibleFileNotFound(AnsibleRuntimeError):
     ''' a file missing failure '''
     pass
-
-class AnsibleModuleExit(Exception):
-    ''' local module exit '''
-    def __init__(self, result):
-        self.result = result
