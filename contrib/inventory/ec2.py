@@ -132,6 +132,7 @@ from boto import ec2
 from boto import rds
 from boto import elasticache
 from boto import route53
+from boto import sts
 import six
 
 from ansible.module_utils import ec2 as ec2_utils
@@ -421,6 +422,12 @@ class Ec2Inventory(object):
         else:
             self.replace_dash_in_groups = True
 
+        # IAM role to assume for connection
+        if config.has_option('ec2', 'iam_role'):
+            self.iam_role = config.get('ec2', 'iam_role')
+        else:
+            self.iam_role = None
+
         # Configure which groups should be created.
         group_by_options = [
             'group_by_instance_id',
@@ -547,6 +554,13 @@ class Ec2Inventory(object):
         if self.boto_profile:
             connect_args['profile_name'] = self.boto_profile
             self.boto_fix_security_token_in_profile(connect_args)
+
+        if self.iam_role:
+            sts_conn = sts.connect_to_region(region, **connect_args)
+            role = sts_conn.assume_role(self.iam_role, 'ansible_dynamic_inventory')
+            connect_args['aws_access_key_id'] = role.credentials.access_key
+            connect_args['aws_secret_access_key'] = role.credentials.secret_key
+            connect_args['security_token'] = role.credentials.session_token
 
         conn = module.connect_to_region(region, **connect_args)
         # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
