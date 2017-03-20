@@ -124,6 +124,15 @@ options:
             - "C(username) - CHAP Username to be used to access storage server. Used by iSCSI."
             - "C(password) - CHAP Password of the user to be used to access storage server. Used by iSCSI."
             - "C(storage_type) - Storage type either I(fcp) or I(iscsi)."
+    sparsify:
+        description:
+            - "I(True) if the disk should be sparsified."
+            - "Sparsification frees space in the disk image that is not used by
+               its filesystem. As a result, the image will occupy less space on
+               the storage."
+            - "Note that this parameter isn't idempotent, as it's not possible
+               to check if the disk should be or should not be sparsified."
+        version_added: "2.4"
 extends_documentation_fragment: ovirt
 '''
 
@@ -510,6 +519,7 @@ def main():
         download_image_path=dict(default=None),
         upload_image_path=dict(default=None, aliases=['image_path']),
         force=dict(default=False, type='bool'),
+        sparsify=dict(default=None, type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -558,6 +568,13 @@ def main():
             ):
                 downloaded = download_disk_image(connection, module)
                 ret['changed'] = ret['changed'] or downloaded
+
+            # Disk sparsify:
+            ret = disks_module.action(
+                action='sparsify',
+                action_condition=lambda d: module.params['sparsify'],
+                wait_condition=lambda d: d.status == otypes.DiskStatus.OK,
+            )
         elif state == 'absent':
             ret = disks_module.remove()
 
