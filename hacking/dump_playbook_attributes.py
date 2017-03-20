@@ -53,7 +53,12 @@ for aclass in class_list:
 
     # local_action is implicit with action
     if 'action' in oblist[name]:
-        oblist[name]['local_action'] = 'Same as action but also implies `delegate_to: localhost`'
+        oblist[name]['local_action'] = 'Same as action but also implies ``delegate_to: localhost``'
+
+    # remove unusable (used to be private?)
+    for nouse in ('loop', 'loop_args'):
+        if nouse in oblist[name]:
+            del oblist[name][nouse]
 
 env = Environment(loader=FileSystemLoader(options.template_dir), trim_blocks=True,)
 template = env.get_template(template_file)
