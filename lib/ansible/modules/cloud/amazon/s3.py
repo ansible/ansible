@@ -713,6 +713,8 @@ def main():
 def get_s3_connection(aws_connect_kwargs, location, rgw, s3_url):
     if s3_url and rgw:
         rgw = urlparse(s3_url)
+        # ensure none of the named arguments we will pass to boto.connect_s3 
+        # are already present in aws_connect_kwargs
         for kw in ['is_secure', 'host', 'port', 'calling_format']:
             try:
                 del aws_connect_kwargs[kw]
@@ -727,6 +729,8 @@ def get_s3_connection(aws_connect_kwargs, location, rgw, s3_url):
         )
     elif is_fakes3(s3_url):
         fakes3 = urlparse(s3_url)
+        # ensure none of the named arguments we will pass to S3Connection
+        # are already present in aws_connect_kwargs
         for kw in ['is_secure', 'host', 'port', 'calling_format']:
             try:
                 del aws_connect_kwargs[kw]
