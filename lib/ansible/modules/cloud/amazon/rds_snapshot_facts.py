@@ -16,12 +16,12 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: rds_snapshot_facts
-version_added: "2.3"
+version_added: "2.4"
 short_description: obtain facts about one or more RDS snapshots
 description:
   - obtain facts about one or more RDS snapshots
@@ -160,4 +160,5 @@ def main():
     snapshot_facts(module, conn)
 
 
-main()
+if __name__ == '__main__':
+    main()
