@@ -85,7 +85,7 @@ instances:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
-from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.rds import RDSDBInstance
 
 import traceback
@@ -121,15 +121,19 @@ def instance_facts(module, conn):
         if not marker:
             break
 
-    module.exit_json(changed=False, instances=[RDSDBInstance(instance).data for instance in results])
+    # Get tags for each response
+    for instance in results:
+        instance['tags'] = boto3_tag_list_to_ansible_dict(conn.list_tags_for_resource(ResourceName=instance['DBInstanceArn'])['TagList'])
+
+    module.exit_json(changed=False, db_instances=[RDSDBInstance(instance).data for instance in results])
 
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            name = dict(aliases=['instance_name']),
-            filters = dict(type='list', default=[])
+            name=dict(aliases=['instance_name']),
+            filters=dict(type='list', default=[])
         )
     )
 
@@ -150,5 +154,5 @@ def main():
 
     instance_facts(module, conn)
 
-
-main()
+if __name__ == '__main__':
+    main()
