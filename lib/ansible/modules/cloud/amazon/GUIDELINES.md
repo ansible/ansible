@@ -38,7 +38,7 @@ if boto_supports_profile_name_arg(ec2):
     params['instance_profile_name'] = instance_profile_name
 else:
     if instance_profile_name is not None:
-        module.fail_json(msg="instance_profile_name parameter requires boto version 2.5.0 or higher")
+        module.fail_json(msg="instance_profile_name parameter requires boto version 2.13.2 or higher")
 ```
 
 ## Using boto and boto3
