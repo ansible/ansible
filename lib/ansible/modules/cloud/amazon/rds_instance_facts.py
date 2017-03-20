@@ -16,12 +16,12 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: rds_instance_facts
-version_added: "2.3"
+version_added: "2.4"
 short_description: obtain facts about one or more RDS instances
 description:
   - obtain facts about one or more RDS instances
