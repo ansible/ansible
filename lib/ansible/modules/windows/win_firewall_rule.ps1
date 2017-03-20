@@ -71,7 +71,7 @@ function getFirewallRule ($fwsettings) {
                 ForEach($fwsetting in $fwsettings.GetEnumerator()) {
                     if ( $output.$($fwsetting.Key) -ne $fwsettings.$($fwsetting.Key)) {
 
-                        if (($fwsetting.Key -eq 'RemoteIP') -and ($output.$($fwsetting.Key) -eq ($fwsettings.$($fwsetting.Key)+'-'+$fwsettings.$($fwsetting.Key)))) {
+                        if (($fwsetting.Key -eq 'RemoteIP') -and (($output.$($fwsetting.Key) -eq ($fwsettings.$($fwsetting.Key)+'-'+$fwsettings.$($fwsetting.Key))) -or ($output.$($fwsetting.Key) -eq ($fwsettings.$($fwsetting.Key)+'/32')))) {
                             Continue
                         } elseif (($fwsetting.Key -eq 'DisplayName') -and ($output."Rule Name" -eq $fwsettings.$($fwsetting.Key))) {
                             Continue
