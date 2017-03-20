@@ -451,6 +451,7 @@ def filter_options(args, argv, options, exclude, require):
         yield '--require'
         yield target
 
-    if args.metadata_path:
-        yield '--metadata'
-        yield args.metadata_path
+    if isinstance(args, TestConfig):
+        if args.metadata_path:
+            yield '--metadata'
+            yield args.metadata_path
