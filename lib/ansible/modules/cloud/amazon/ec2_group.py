@@ -287,7 +287,7 @@ def main():
 
     try:
         security_groups = ec2.get_all_security_groups()
-    except BotoServerError, e:
+    except BotoServerError as e:
         module.fail_json(msg="Error in get_all_security_groups: %s" % e.message)
 
     for curGroup in security_groups:
@@ -309,7 +309,7 @@ def main():
             try:
                 if not module.check_mode:
                     group.delete()
-            except BotoServerError, e:
+            except BotoServerError as e:
                 module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e.message))
             else:
                 group = None
