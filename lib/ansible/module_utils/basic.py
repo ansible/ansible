@@ -1142,6 +1142,8 @@ class AnsibleModule(object):
             b_path = os.path.expanduser(os.path.expandvars(b_path))
         path = to_text(b_path, errors='surrogate_then_strict')
 
+        existing = self.get_file_attributes(b_path)
+
         if existing.get('attr_flags','') != attributes:
             attrcmd = self.get_bin_path('chattr')
             if attrcmd:
