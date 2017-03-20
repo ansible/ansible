@@ -155,7 +155,7 @@
   assert:
     that:
        - 'result.failed'
-       - '"EC2ResponseError: 401 Unauthorized" in result.msg'
+       - '"Error in get_all_security_groups: AWS was not able to validate the provided access credentials" in result.msg'
 
 # ============================================================
 - name: test credential parameters
@@ -172,7 +172,7 @@
   assert:
     that:
        - 'result.failed'
-       - '"EC2ResponseError: 401 Unauthorized" in result.msg'
+       - '"Error in get_all_security_groups: AWS was not able to validate the provided access credentials" in result.msg'
 
 # ============================================================
 - name: test state=absent

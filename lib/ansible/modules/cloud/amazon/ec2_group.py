@@ -140,6 +140,7 @@ EXAMPLES = '''
 try:
     import boto.ec2
     from boto.ec2.securitygroup import SecurityGroup
+    from boto.exception import BotoServerError
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -286,8 +287,8 @@ def main():
 
     try:
         security_groups = ec2.get_all_security_groups()
-    except Exception as e:
-        module.fail_json(msg=str(e))
+    except BotoServerError, e:
+        module.fail_json(msg="Error in get_all_security_groups: %s" % e.message)
 
     for curGroup in security_groups:
         groups[curGroup.id] = curGroup
@@ -308,8 +309,8 @@ def main():
             try:
                 if not module.check_mode:
                     group.delete()
-            except Exception as e:
-                module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e))
+            except BotoServerError, e:
+                module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e.message))
             else:
                 group = None
                 changed = True
