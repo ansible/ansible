@@ -16,134 +16,225 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- set_fact: output_file={{output_dir}}/foo.txt
+- set_fact:
+    output_file: '{{ output_dir }}/foo.txt'
 
 - name: prep with a basic copy
-  copy: src=foo.txt dest={{output_file}}
+  copy:
+    src: foo.txt
+    dest: '{{ output_file }}'
 
 - name: verify that we are checking a file and it is present
-  file: path={{output_file}} state=file
+  file:
+    path: '{{ output_file }}'
+    state: file
   register: file_result
 
 - name: verify that the file was marked as changed
   assert:
     that:
-      - "file_result.changed == false"
-      - "file_result.state == 'file'"
+      - file_result.changed == false
+      - file_result.state == 'file'
 
 - name: verify that we are checking an absent file
-  file: path={{output_dir}}/bar.txt state=absent
+  file:
+    path: '{{ output_dir }}/bar.txt'
+    state: absent
   register: file2_result
 
 - name: verify that the file was marked as changed
   assert:
     that:
-      - "file2_result.changed == false"
-      - "file2_result.state == 'absent'"
+      - file2_result.changed == false
+      - file2_result.state == 'absent'
 
 - name: verify we can touch a file
-  file: path={{output_dir}}/baz.txt state=touch
+  file:
+    path: '{{ output_dir }}/baz.txt'
+    state: touch
   register: file3_result
 
 - name: verify that the file was marked as changed
   assert:
     that:
-      - "file3_result.changed == true"
-      - "file3_result.state == 'file'"
-      - "file3_result.mode == '0644'"
+      - file3_result.changed == true
+      - file3_result.state == 'file'
+      - file3_result.mode == '0644'
 
 - name: change file mode
-  file: path={{output_dir}}/baz.txt mode=0600
+  file:
+    path: '{{ output_dir }}/baz.txt'
+    mode: 0600
   register: file4_result
 
 - name: verify that the file was marked as changed
   assert:
     that:
-      - "file4_result.changed == true"
-      - "file4_result.mode == '0600'"
+      - file4_result.changed == true
+      - file4_result.mode == '0600'
 
 - name: change ownership and group
-  file: path={{output_dir}}/baz.txt owner=1234 group=1234
+  file:
+    path: '{{ output_dir }}/baz.txt'
+    owner: 1234
+    group: 1234
+
+# NOTE: We test whether setting attributes works first
+- name: attempt to change attributes
+  file:
+    path: '{{ output_dir }}/baz.txt'
+    attributes: ai
+  ignore_errors: yes
+  register: test_attributes
+
+# NOTE:File attributes only work on Linux outside docker (AuFS)
+- name: test attributes capabilities
+  when: >
+    ansible_system == 'Linux'
+    and
+    ansible_virtualization_type != 'docker'
+    and
+    not test_attributes|failed
+  block:
+
+  - name: register file changes
+    stat:
+      path: '{{ output_dir }}/baz.txt'
+    register: baz_txt
+
+  - name: test file properties
+    assert:
+      that:
+      - baz_txt.stat.uid == 1234
+      - baz_txt.stat.gid == 1234
+      - baz_txt.stat.mode == '0600'
+      - baz_txt.stat.attr_flags == 'ia'
+      - baz_txt.stat.attributes == [ 'immutable', 'append' ]
+
+  - name: remove attributes
+    file:
+      path: '{{ output_dir }}/baz.txt'
+      attributes: ''
+
+  - name: register file changes
+    stat:
+      path: '{{ output_dir }}/baz.txt'
+    register: baz_txt
+
+  - name: test file properties
+    assert:
+      that:
+      - baz_txt.stat.uid == 1234
+      - baz_txt.stat.gid == 1234
+      - baz_txt.stat.mode == '0600'
+      - baz_txt.stat.attr_flags == ''
+      - baz_txt.stat.attributes == [ ]
 
 - name: setup a tmp-like directory for ownership test
-  file: path=/tmp/worldwritable mode=1777 state=directory
+  file:
+    path: /tmp/worldwritable
+    mode: 1777
+    state: directory
 
 - name: Ask to create a file without enough perms to change ownership
-  file: path=/tmp/worldwritable/baz.txt state=touch owner=root
+  file:
+    path: /tmp/worldwritable/baz.txt
+    state: touch
+    owner: root
   become: yes
   become_user: nobody
   register: chown_result
-  ignore_errors: True
+  ignore_errors: yes
 
 - name: Ask whether the new file exists
-  stat: path=/tmp/worldwritable/baz.txt
+  stat:
+    path: /tmp/worldwritable/baz.txt
   register: file_exists_result
 
 - name: Verify that the file doesn't exist on failure
   assert:
     that:
-      - "chown_result.failed == True"
-      - "file_exists_result.stat.exists == False"
+      - chown_result.failed == true
+      - file_exists_result.stat.exists == false
 
 - name: clean up
-  file: path=/tmp/worldwritable state=absent
+  file:
+    path: /tmp/worldwritablexi
+    state: absent
 
 - name: create soft link to file
-  file: src={{output_file}} dest={{output_dir}}/soft.txt state=link
+  file:
+    src: '{{ output_file}}'
+    dest: '{{output_dir}}/soft.txt'
+    state: link
   register: file5_result
 
 - name: verify that the file was marked as changed
   assert:
     that:
-      - "file5_result.changed == true"
+      - file5_result.changed == true
 
 - name: change soft link to relative
-  file: src={{output_file|basename}} dest={{output_dir}}/soft.txt state=link
+  file:
+    src: '{{ output_file|basename }}'
+    dest: '{{ output_dir }}/soft.txt'
+    state: link
   register: file5a_result
 
 - name: verify that the file was marked as changed
   assert:
     that:
-      - "file5a_result.changed == true"
-      - "file5a_result.diff.before.src == output_file|expanduser"
-      - "file5a_result.diff.after.src == output_file|basename"
+      - file5a_result.changed == true
+      - file5a_result.diff.before.src == output_file|expanduser
+      - file5a_result.diff.after.src == output_file|basename
 
 - name: soft link idempotency check
-  file: src={{output_file|basename}} dest={{output_dir}}/soft.txt state=link
+  file:
+    src: '{{ output_file|basename }}'
+    dest: '{{ output_dir }}/soft.txt'
+    state: link
   register: file5b_result
 
 - name: verify that the file was not marked as changed
   assert:
     that:
-      - "file5b_result.changed == false"
+      - file5b_result.changed == false
 
 - name: create hard link to file
-  file: src={{output_file}} dest={{output_dir}}/hard.txt state=hard
+  file:
+    src: '{{ output_file }}'
+    dest: '{{ output_dir }}/hard.txt'
+    state: hard
   register: file6_result
 
 - name: verify that the file was marked as changed
   assert:
     that:
-      - "file6_result.changed == true"
+      - file6_result.changed == true
 
 - name: touch a hard link
-  file: src={{output_file}} dest={{output_dir}}/hard.txt state=touch
+  file:
+    src: '{{ output_file }}'
+    dest: '{{ output_dir }}/hard.txt'
+    state: touch
   register: file6_touch_result
 
 - name: verify that the hard link was touched
   assert:
     that:
-      - "file6_touch_result.changed == true"
+      - file6_touch_result.changed == true
 
 - name: create a directory
-  file: path={{output_dir}}/foobar state=directory
+  file:
+    path: '{{ output_dir }}/foobar'
+    state: directory
   register: file7_result
 
 - name: verify that the file was marked as changed
   assert:
     that:
-      - "file7_result.changed == true"
-      - "file7_result.state == 'directory'"
+      - file7_result.changed == true
+      - file7_result.state == 'directory'
 
 - name: determine if selinux is installed
   shell: which getenforce || exit 0
@@ -153,110 +244,147 @@
   shell: getenforce
   register: selinux_enabled
   when: selinux_installed.stdout != ""
-  ignore_errors: true
+  ignore_errors: yes
 
 - name: decide to include or not include selinux tests
   include: selinux_tests.yml
   when: selinux_installed is defined and selinux_installed.stdout != "" and selinux_enabled.stdout != "Disabled"
 
 - name: remote directory foobar
-  file: path={{output_dir}}/foobar state=absent
+  file:
+    path: '{{ output_dir }}/foobar'
+    state: absent
 
 - name: remove file foo.txt
-  file: path={{output_dir}}/foo.txt state=absent
+  file:
+    path: '{{ output_dir }}/foo.txt'
+    state: absent
 
 - name: remove file bar.txt
-  file: path={{output_dir}}/foo.txt state=absent
+  file:
+    path: '{{ output_dir }}/foo.txt'
+    state: absent
 
 - name: remove file baz.txt
-  file: path={{output_dir}}/foo.txt state=absent
+  file:
+    path: '{{ output_dir }}/foo.txt'
+    state: absent
 
 - name: copy directory structure over
-  copy: src=foobar dest={{output_dir}}
+  copy:
+    src: foobar
+    dest: '{{ output_dir }}'
 
 - name: Change ownership of a directory with recurse=no(default)
-  file: path={{output_dir}}/foobar owner=1234
+  file:
+    path: '{{ output_dir }}/foobar'
+    owner: 1234
 
 - name: verify that the permission of the directory was set
-  file: path={{output_dir}}/foobar state=directory
+  file:
+    path: '{{ output_dir }}/foobar'
+    state: directory
   register: file8_result
 
 - name: assert that the directory has changed to have owner 1234
   assert:
     that:
-      - "file8_result.uid == 1234"
+      - file8_result.uid == 1234
 
 - name: verify that the permission of a file under the directory was not set
-  file: path={{output_dir}}/foobar/fileA state=file
+  file:
+    path: '{{ output_dir }}/foobar/fileA'
+    state: file
   register: file9_result
 
 - name: assert the file owner has not changed to 1234
   assert:
     that:
-      - "file9_result.uid != 1234"
+      - file9_result.uid != 1234
 
 - name: change the ownership of a directory with recurse=yes
-  file: path={{output_dir}}/foobar owner=1235 recurse=yes
+  file:
+    path: '{{ output_dir }}/foobar'
+    owner: 1235
+    recurse: yes
 
 - name: verify that the permission of the directory was set
-  file: path={{output_dir}}/foobar state=directory
+  file:
+    path: '{{ output_dir }}/foobar'
+    state: directory
   register: file10_result
 
 - name: assert that the directory has changed to have owner 1235
   assert:
     that:
-      - "file10_result.uid == 1235"
+      - file10_result.uid == 1235
 
 - name: verify that the permission of a file under the directory was not set
-  file: path={{output_dir}}/foobar/fileA state=file
+  file:
+    path: '{{ output_dir }}/foobar/fileA'
+    state: file
   register: file11_result
 
 - name: assert that the file has changed to have owner 1235
   assert:
     that:
-      - "file11_result.uid == 1235"
+      - file11_result.uid == 1235
 
 - name: fail to create soft link to non existent file
-  file: src=/noneexistent dest={{output_dir}}/soft2.txt state=link force=no
+  file:
+    src: /noneexistent
+    dest: '{{ output_dir }}/soft2.txt'
+    state: link
+    force: no
   register: file12_result
-  ignore_errors: true
+  ignore_errors: yes
 
 - name: verify that link was not created
   assert:
     that:
-      - "file12_result.failed == true"
+      - file12_result.failed == true
 
 - name: force creation soft link to non existent
-  file: src=/noneexistent dest={{output_dir}}/soft2.txt state=link force=yes
+  file:
+    src: /noneexistent
+    dest: '{{ output_dir }}/soft2.txt'
+    state: link
+    force: yes
   register: file13_result
 
 - name: verify that link was created
   assert:
     that:
-      - "file13_result.changed == true"
+      - file13_result.changed == true
 
 - name: remove directory foobar
-  file: path={{output_dir}}/foobar state=absent
+  file:
+    path: '{{ output_dir }}/foobar'
+    state: absent
   register: file14_result
 
 - name: verify that the directory was removed
   assert:
     that:
-      - 'file14_result.changed == true'
-      - 'file14_result.state == "absent"'
+      - file14_result.changed == true
+      - file14_result.state == 'absent'
 
 - name: create a test sub-directory
-  file: dest={{output_dir}}/sub1 state=directory
+  file:
+    path: '{{ output_dir }}/sub1'
+    state: directory
   register: file15_result
 
 - name: verify that the new directory was created
   assert:
     that:
-      - 'file15_result.changed == true'
-      - 'file15_result.state == "directory"'
+      - file15_result.changed == true
+      - file15_result.state == 'directory'
 
 - name: create test files in the sub-directory
-  file: dest={{output_dir}}/sub1/{{item}} state=touch
+  file:
+    path: '{{ output_dir }}/sub1/{{ item }}'
+    state: touch
   with_items:
   - file1
   - file2
@@ -266,60 +394,78 @@
 - name: verify the files were created
   assert:
     that:
-      - 'item.changed == true'
-      - 'item.state == "file"'
-  with_items: "{{file16_result.results}}"
+      - item.changed == true
+      - item.state == 'file'
+  with_items: "{{ file16_result.results }}"
 
 - name: try to force the sub-directory to a link
-  file: src={{output_dir}}/testing dest={{output_dir}}/sub1 state=link force=yes
+  file:
+    src: '{{ output_dir }}/testing'
+    dest: '{{ output_dir }}/sub1'
+    state: link
+    force: yes
   register: file17_result
-  ignore_errors: true
+  ignore_errors: yes
 
 - name: verify the directory was not replaced with a link
   assert:
     that:
-      - 'file17_result.failed == true'
-      - 'file17_result.state == "directory"'
+      - file17_result.failed == true
+      - file17_result.state == 'directory'
 
 - name: create soft link to directory using absolute path
-  file: src=/ dest={{output_dir}}/root state=link
+  file:
+    src: /
+    dest: '{{ output_dir }}/root'
+    state: link
   register: file18_result
 
 - name: verify that the result was marked as changed
   assert:
     that:
-      - "file18_result.changed == true"
+      - file18_result.changed == true
 
 - name: create another test sub-directory
-  file: dest={{output_dir}}/sub2 state=directory
+  file:
+    path: '{{ output_dir }}/sub2'
+    state: directory
   register: file19_result
 
 - name: verify that the new directory was created
   assert:
     that:
-      - 'file19_result.changed == true'
-      - 'file19_result.state == "directory"'
+      - file19_result.changed == true
+      - file19_result.state == 'directory'
 
 - name: create soft link to relative file
-  file: src=../sub1/file1 dest={{output_dir}}/sub2/link1 state=link
+  file:
+    src: ../sub1/file1
+    dest: '{{ output_dir }}/sub2/link1'
+    state: link
   register: file20_result
 
 - name: verify that the result was marked as changed
   assert:
     that:
-      - "file20_result.changed == true"
+      - file20_result.changed == true
 
 - name: create soft link to relative directory
-  file: src=sub1 dest={{output_dir}}/sub1-link state=link
+  file:
+    src: sub1
+    dest: '{{ output_dir }}/sub1-link'
+    state: link
   register: file21_result
 
 - name: verify that the result was marked as changed
   assert:
     that:
-      - "file21_result.changed == true"
+      - file21_result.changed == true
 
 - name: test file creation with symbolic mode
-  file: dest={{output_dir}}/test_symbolic state=touch mode=u=rwx,g=rwx,o=rwx
+  file:
+    path: '{{ output_dir }}/test_symbolic'
+    state: touch
+    mode: u=rwx,g=rwx,o=rwx
   register: result
 
 - name: assert file mode
@@ -328,7 +474,10 @@
     - result.mode == '0777'
 
 - name: modify symbolic mode for all
-  file: dest={{output_dir}}/test_symbolic state=touch mode=a=r
+  file:
+    path: '{{ output_dir }}/test_symbolic'
+    state: touch
+    mode: a=r
   register: result
 
 - name: assert file mode
@@ -337,7 +486,10 @@
     - result.mode == '0444'
 
 - name: modify symbolic mode for owner
-  file: dest={{output_dir}}/test_symbolic state=touch mode=u+w
+  file:
+    path: '{{ output_dir }}/test_symbolic'
+    state: touch
+    mode: u+w
   register: result
 
 - name: assert file mode
@@ -346,7 +498,10 @@
     - result.mode == '0644'
 
 - name: modify symbolic mode for group
-  file: dest={{output_dir}}/test_symbolic state=touch mode=g+w
+  file:
+    path: '{{ output_dir }}/test_symbolic'
+    state: touch
+    mode: g+w
   register: result
 
 - name: assert file mode
@@ -355,7 +510,10 @@
     - result.mode == '0664'
 
 - name: modify symbolic mode for world
-  file: dest={{output_dir}}/test_symbolic state=touch mode=o+w
+  file:
+    path: '{{ output_dir }}/test_symbolic'
+    state: touch
+    mode: o+w
   register: result
 
 - name: assert file mode
@@ -364,7 +522,10 @@
     - result.mode == '0666'
 
 - name: modify symbolic mode for owner
-  file: dest={{output_dir}}/test_symbolic state=touch mode=u+x
+  file:
+    path: '{{ output_dir }}/test_symbolic'
+    state: touch
+    mode: u+x
   register: result
 
 - name: assert file mode
@@ -373,7 +534,10 @@
     - result.mode == '0766'
 
 - name: modify symbolic mode for group
-  file: dest={{output_dir}}/test_symbolic state=touch mode=g+x
+  file:
+    path: '{{ output_dir }}/test_symbolic'
+    state: touch
+    mode: g+x
   register: result
 
 - name: assert file mode
@@ -382,7 +546,10 @@
     - result.mode == '0776'
 
 - name: modify symbolic mode for world
-  file: dest={{output_dir}}/test_symbolic state=touch mode=o+x
+  file:
+    path: '{{ output_dir }}/test_symbolic'
+    state: touch
+    mode: o+x
   register: result
 
 - name: assert file mode
@@ -391,7 +558,10 @@
     - result.mode == '0777'
 
 - name: remove symbolic mode for world
-  file: dest={{output_dir}}/test_symbolic state=touch mode=o-wx
+  file:
+    path: '{{ output_dir }}/test_symbolic'
+    state: touch
+    mode: o-wx
   register: result
 
 - name: assert file mode
@@ -400,7 +570,10 @@
     - result.mode == '0774'
 
 - name: remove symbolic mode for group
-  file: dest={{output_dir}}/test_symbolic state=touch mode=g-wx
+  file:
+    path: '{{ output_dir }}/test_symbolic'
+    state: touch
+    mode: g-wx
   register: result
 
 - name: assert file mode
@@ -409,7 +582,10 @@
     - result.mode == '0744'
 
 - name: remove symbolic mode for owner
-  file: dest={{output_dir}}/test_symbolic state=touch mode=u-wx
+  file:
+    path: '{{ output_dir }}/test_symbolic'
+    state: touch
+    mode: u-wx
   register: result
 
 - name: assert file mode
@@ -418,7 +594,10 @@
     - result.mode == '0444'
 
 - name: set sticky bit with symbolic mode
-  file: dest={{output_dir}}/test_symbolic state=touch mode=o+t
+  file:
+    path: '{{ output_dir }}/test_symbolic'
+    state: touch
+    mode: o+t
   register: result
 
 - name: assert file mode
@@ -427,7 +606,10 @@
     - result.mode == '01444'
 
 - name: remove sticky bit with symbolic mode
-  file: dest={{output_dir}}/test_symbolic state=touch mode=o-t
+  file:
+    path: '{{ output_dir }}/test_symbolic'
+    state: touch
+    mode: o-t
   register: result
 
 - name: assert file mode
@@ -436,7 +618,10 @@
     - result.mode == '0444'
 
 - name: add setgid with symbolic mode
-  file: dest={{output_dir}}/test_symbolic state=touch mode=g+s
+  file:
+    path: '{{ output_dir }}/test_symbolic'
+    state: touch
+    mode: g+s
   register: result
 
 - name: assert file mode
@@ -445,7 +630,10 @@
     - result.mode == '02444'
 
 - name: remove setgid with symbolic mode
-  file: dest={{output_dir}}/test_symbolic state=touch mode=g-s
+  file:
+    path: '{{ output_dir }}/test_symbolic'
+    state: touch
+    mode: g-s
   register: result
 
 - name: assert file mode
@@ -454,7 +642,10 @@
     - result.mode == '0444'
 
 - name: add setuid with symbolic mode
-  file: dest={{output_dir}}/test_symbolic state=touch mode=u+s
+  file:
+    path: '{{ output_dir }}/test_symbolic'
+    state: touch
+    mode: u+s
   register: result
 
 - name: assert file mode
@@ -463,7 +654,10 @@
     - result.mode == '04444'
 
 - name: remove setuid with symbolic mode
-  file: dest={{output_dir}}/test_symbolic state=touch mode=u-s
+  file:
+    path: '{{ output_dir }}/test_symbolic'
+    state: touch
+    mode: u-s
   register: result
 
 - name: assert file mode
@@ -475,13 +669,22 @@
 # symlink is modified, rather than the link itself
 
 - name: create a test file
-  copy: dest={{output_dir}}/test_follow content="this is a test file\n" mode=0666
+  copy:
+    content: this is a test file\n
+    dest: '{{ output_dir }}/test_follow'
+    mode: 0666
 
 - name: create a symlink to the test file
-  file: path={{output_dir}}/test_follow_link src="./test_follow" state=link
+  file:
+    src: test_follow
+    dest: '{{ output_dir }}/test_follow_link'
+    state: link
 
 - name: modify the permissions on the link using follow=yes
-  file: path={{output_dir}}/test_follow_link mode=0644 follow=yes
+  file:
+    path: '{{ output_dir }}/test_follow_link'
+    mode: 0644
+    follow: yes
   register: result
 
 - name: assert that the chmod worked
@@ -490,7 +693,8 @@
     - result.changed
 
 - name: stat the link target
-  stat: path={{output_dir}}/test_follow
+  stat:
+    path: '{{ output_dir }}/test_follow'
   register: result
 
 - name: assert that the link target was modified correctly
@@ -499,58 +703,95 @@
     - result.stat.mode == '0644'
 
 - name: attempt to modify the permissions of the link itself
-  file: path={{output_dir}}/test_follow_link src="./test_follow" state=link mode=0600 follow=no
+  file:
+    src: test_follow
+    dest: '{{ output_dir }}/test_follow_link'
+    state: link
+    mode: '0600'
+    follow: no
   register: result
 
 # Whether the link itself changed is platform dependent! (BSD vs Linux?)
 # Just check that the underlying file was not changed
 - name: stat the link target
-  stat: path={{output_dir}}/test_follow
+  stat:
+    path: '{{ output_dir }}/test_follow'
   register: result
 
 - name: assert that the link target was unmodified
   assert:
     that:
     - result.stat.mode == '0644'
-  ignore_errors: True
+  ignore_errors: yes
 
 # Follow + recursive tests
 - name: create a toplevel directory
-  file: path={{output_dir}}/test_follow_rec state=directory mode=0755
+  file:
+    path: '{{ output_dir }}/test_follow_rec'
+    state: directory
+    mode: 0755
 
 - name: create a file outside of the toplevel
-  file: path={{output_dir}}/test_follow_rec_target_file state=touch mode=0700
+  file:
+    path: '{{ output_dir }}/test_follow_rec_target_file'
+    state: touch
+    mode: 0700
 
 - name: create a directory outside of the toplevel
-  file: path={{output_dir}}/test_follow_rec_target_dir state=directory mode=0700
+  file:
+    path: '{{ output_dir }}/test_follow_rec_target_dir'
+    state: directory
+    mode: 0700
 
 - name: create a file inside of the link target directory
-  file: path={{output_dir}}/test_follow_rec_target_dir/foo state=touch mode=0700
+  file:
+    path: '{{ output_dir }}/test_follow_rec_target_dir/foo'
+    state: touch
+    mode: 0700
 
 - name: create a symlink to the file
-  file: path={{output_dir}}/test_follow_rec/test_link state=link src="../test_follow_rec_target_file"
+  file:
+    src: ../test_follow_rec_target_file
+    dest: '{{ output_dir }}/test_follow_rec/test_link'
+    state: link
 
 - name: create a symlink to the directory
-  file: path={{output_dir}}/test_follow_rec/test_link_dir state=link src="../test_follow_rec_target_dir"
+  file:
+    src: ../test_follow_rec_target_dir
+    dest: '{{ output_dir }}/test_follow_rec/test_link_dir'
+    state: link
 
 - name: try to change permissions without following symlinks
-  file: path={{output_dir}}/test_follow_rec follow=False mode="a-x" recurse=True
+  file:
+    path: '{{ output_dir }}/test_follow_rec'
+    follow: no
+    mode: a-x
+    recurse: yes
 
 - name: stat the link file target
-  stat: path={{output_dir}}/test_follow_rec_target_file
+  stat:
+    path: '{{ output_dir }}/test_follow_rec_target_file'
   register: file_result
 
 - name: stat the link dir target
-  stat: path={{output_dir}}/test_follow_rec_target_dir
+  stat:
+    path: '{{ output_dir }}/test_follow_rec_target_dir'
   register: dir_result
 
 - name: stat the file inside the link dir target
-  stat: path={{output_dir}}/test_follow_rec_target_dir/foo
+  stat:
+    path: '{{ output_dir }}/test_follow_rec_target_dir/foo'
   register: file_in_dir_result
 
-- debug: var=file_result.stat.mode
-- debug: var=dir_result.stat.mode
-- debug: var=file_in_dir_result.stat.mode
+- debug:
+    var: file_result.stat.mode
+
+- debug:
+    var: dir_result.stat.mode
+
+- debug:
+    var: file_in_dir_result.stat.mode
+
 - name: assert that the link targets were unmodified
   assert:
     that:
@@ -559,23 +800,36 @@
     - file_in_dir_result.stat.mode == '0700'
 
 - name: try to change permissions with following symlinks
-  file: path={{output_dir}}/test_follow_rec follow=True mode="a-x" recurse=True
+  file:
+    path: '{{ output_dir }}/test_follow_rec'
+    follow: yes
+    mode: a-x
+    recurse: yes
 
 - name: stat the link file target
-  stat: path={{output_dir}}/test_follow_rec_target_file
+  stat:
+    path: '{{ output_dir }}/test_follow_rec_target_file'
   register: file_result
 
 - name: stat the link dir target
-  stat: path={{output_dir}}/test_follow_rec_target_dir
+  stat:
+    path: '{{ output_dir }}/test_follow_rec_target_dir'
   register: dir_result
 
 - name: stat the file inside the link dir target
-  stat: path={{output_dir}}/test_follow_rec_target_dir/foo
+  stat:
+    path: '{{ output_dir }}/test_follow_rec_target_dir/foo'
   register: file_in_dir_result
 
-- debug: var=file_result.stat.mode
-- debug: var=dir_result.stat.mode
-- debug: var=file_in_dir_result.stat.mode
+- debug:
+    var: file_result.stat.mode
+
+- debug:
+    var: dir_result.stat.mode
+
+- debug:
+    var: file_in_dir_result.stat.mode
+
 - name: assert that the link targets were modified
   assert:
     that:

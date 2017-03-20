@@ -707,7 +707,7 @@ class AnsibleModule(object):
         except Exception:
             e = get_exception()
             # Use exceptions here because it isn't safe to call fail_json until no_log is processed
-            print('\n{"failed": true, "msg": "Module alias error: %s"}' % str(e))
+            print('\n{"failed": true, "msg": "Module alias error: %s"}' % to_native(e))
             sys.exit(1)
 
         # Save parameter values that should never be logged
@@ -894,7 +894,7 @@ class AnsibleModule(object):
             if e.errno == errno.ENOENT:
                 self.fail_json(path=path, msg='path %s does not exist' % path)
             else:
-                self.fail_json(path=path, msg='failed to retrieve selinux context')
+                self.fail_json(path=path, msg='failed to retrieve selinux context: %s' % to_native(e))
         if ret[0] == -1:
             return context
         # Limit split to 4 because the selevel, the last in the list,
@@ -982,9 +982,9 @@ class AnsibleModule(object):
                                          str(':'.join(new_context)))
             except OSError:
                 e = get_exception()
-                self.fail_json(path=path, msg='invalid selinux context: %s' % str(e), new_context=new_context, cur_context=cur_context, input_was=context)
+                self.fail_json(path=path, msg='invalid selinux context: %s' % to_native(e), new_context=new_context, cur_context=cur_context, input_was=context)
             if rc != 0:
-                self.fail_json(path=path, msg='set selinux context failed')
+                self.fail_json(path=path, msg='set selinux context failed: rc=%d' % rc)
             changed = True
         return changed
 
@@ -1018,7 +1018,8 @@ class AnsibleModule(object):
             try:
                 os.lchown(b_path, uid, -1)
             except OSError:
-                self.fail_json(path=path, msg='chown failed')
+                e = get_exception()
+                self.fail_json(path=path, msg='chown failed: %s' % to_native(e))
             changed = True
         return changed
 
@@ -1052,7 +1053,8 @@ class AnsibleModule(object):
             try:
                 os.lchown(b_path, -1, gid)
             except OSError:
-                self.fail_json(path=path, msg='chgrp failed')
+                e = get_exception()
+                self.fail_json(path=path, msg='chgrp failed: %s' % to_native(e))
             changed = True
         return changed
 
@@ -1076,7 +1078,7 @@ class AnsibleModule(object):
                     e = get_exception()
                     self.fail_json(path=path,
                                    msg="mode must be in octal or symbolic form",
-                                   details=str(e))
+                                   details=to_native(e))
 
                 if mode != stat.S_IMODE(mode):
                     # prevent mode from having extra info orbeing invalid long number
@@ -1123,7 +1125,7 @@ class AnsibleModule(object):
                     raise e
             except Exception:
                 e = get_exception()
-                self.fail_json(path=path, msg='chmod failed', details=str(e))
+                self.fail_json(path=path, msg='chmod failed: %s' % to_native(e), details=to_native(e))
 
             path_stat = os.lstat(b_path)
             new_mode = stat.S_IMODE(path_stat.st_mode)
@@ -1165,7 +1167,7 @@ class AnsibleModule(object):
                             raise Exception("Error while setting attributes: %s" % (out + err))
                     except:
                         e = get_exception()
-                        self.fail_json(path=path, msg='chattr failed', details=str(e))
+                        self.fail_json(path=path, msg='chattr failed: %s' % to_native(e), details=to_native(e))
         return changed
 
     def get_file_attributes(self, path):
@@ -1369,7 +1371,7 @@ class AnsibleModule(object):
             os.environ['LC_MESSAGES'] = 'C'
         except Exception:
             e = get_exception()
-            self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" % e)
+            self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" % to_native(e))
 
     def _handle_aliases(self):
         # this uses exceptions as it happens before we can safely call fail_json
@@ -1723,7 +1725,7 @@ class AnsibleModule(object):
                 self.params[k] = type_checker(value)
             except (TypeError, ValueError):
                 e = get_exception()
-                self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s: %s" % (k, type(value), wanted, e))
+                self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s: %s" % (k, type(value), wanted, to_native(e)))
 
     def _set_defaults(self, pre=True):
         for (k,v) in self.argument_spec.items():
@@ -2068,7 +2070,7 @@ class AnsibleModule(object):
                 shutil.copy2(fn, backupdest)
             except (shutil.Error, IOError):
                 e = get_exception()
-                self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
+                self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, to_native(e)))
 
         return backupdest
 
@@ -2078,7 +2080,7 @@ class AnsibleModule(object):
                 os.unlink(tmpfile)
             except OSError:
                 e = get_exception()
-                sys.stderr.write("could not cleanup %s: %s" % (tmpfile, e))
+                sys.stderr.write("could not cleanup %s: %s" % (tmpfile, to_native(e)))
 
     def atomic_move(self, src, dest, unsafe_writes=False):
         '''atomically move src to dest, copying attributes from dest, returns true on success
@@ -2127,7 +2129,7 @@ class AnsibleModule(object):
             if e.errno not in [errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY, errno.EBUSY]:
                 # only try workarounds for errno 18 (cross device), 1 (not permitted),  13 (permission denied)
                 # and 26 (text file busy) which happens on vagrant synced folders and other 'exotic' non posix file systems
-                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e), exception=traceback.format_exc())
+                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, to_native(e)), exception=traceback.format_exc())
             else:
                 b_dest_dir = os.path.dirname(b_dest)
                 # Use bytes here.  In the shippable CI, this fails with
@@ -2140,7 +2142,7 @@ class AnsibleModule(object):
                     tmp_dest_fd, tmp_dest_name = tempfile.mkstemp( prefix=native_prefix, dir=native_dest_dir, suffix=native_suffix)
                 except (OSError, IOError):
                     e = get_exception()
-                    self.fail_json(msg='The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), e))
+                    self.fail_json(msg='The destination directory (%s) is not writable by the current user. Error was: %s' % (os.path.dirname(dest), to_native(e)))
                 except TypeError:
                     # We expect that this is happening because python3.4.x and
                     # below can't handle byte strings in mkstemp().  Traceback
@@ -2181,10 +2183,10 @@ class AnsibleModule(object):
                             if unsafe_writes and e.errno == errno.EBUSY:
                                 self._unsafe_writes(b_tmp_dest_name, b_dest)
                             else:
-                                self.fail_json(msg='Unable to rename file: %s to %s: %s' % (src, dest, e), exception=traceback.format_exc())
+                                self.fail_json(msg='Unable to rename file: %s to %s: %s' % (src, dest, to_native(e)), exception=traceback.format_exc())
                     except (shutil.Error, OSError, IOError):
                         e = get_exception()
-                        self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, e), exception=traceback.format_exc())
+                        self.fail_json(msg='Failed to replace file: %s to %s: %s' % (src, dest, to_native(e)), exception=traceback.format_exc())
                 finally:
                     self.cleanup(b_tmp_dest_name)
 
@@ -2220,7 +2222,7 @@ class AnsibleModule(object):
                     in_src.close()
         except (shutil.Error, OSError, IOError):
             e = get_exception()
-            self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, e), exception=traceback.format_exc())
+            self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, to_native(e)), exception=traceback.format_exc())
 
 
     def _read_from_pipes(self, rpipes, rfds, file_descriptor):
@@ -2399,7 +2401,7 @@ class AnsibleModule(object):
                 os.chdir(cwd)
             except (OSError, IOError):
                 e = get_exception()
-                self.fail_json(rc=e.errno, msg="Could not open %s, %s" % (cwd, str(e)))
+                self.fail_json(rc=e.errno, msg="Could not open %s, %s" % (cwd, to_native(e)))
 
         old_umask = None
         if umask:
