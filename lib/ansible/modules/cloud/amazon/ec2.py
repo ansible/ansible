@@ -199,7 +199,7 @@ options:
   instance_profile_name:
     version_added: "1.3"
     description:
-      - Name of the IAM instance profile to use. Boto library must be 2.5.0+
+      - Name of the IAM instance profile to use. Boto library must be 2.13.2+
     required: false
     default: null
     aliases: []
