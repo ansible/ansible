@@ -85,6 +85,7 @@ from ansible.module_utils.ec2 import ec2_argument_spec
 from ansible.module_utils.ec2 import boto3_conn
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.modules.cloud.amazon.cloudfront_facts import CloudFrontFactsServiceManager 
 from functools import partial
 import json
 import traceback
@@ -98,8 +99,9 @@ from botocore.signers import CloudFrontSigner
 class CloudFrontServiceManager:
     """Handles CloudFront Services"""
 
-    def __init__(self, module):
+    def __init__(self, module, cloudfront_facts_mgr):
         self.module = module
+        self.cloudfront_facts_mgr = cloudfront_facts_mgr
         self.create_client('cloudfront')
 
     def create_client(self, resource):
@@ -260,46 +262,6 @@ class CloudFrontServiceManager:
             self.module.fail_json(msg="Error updating streaming distribution - " + str(e),
                     exception=traceback.format_exc())
 
-    def get_distribution_config(self, distribution_id):
-        try:
-            func = partial(self.client.get_distribution_config,Id=distribution_id)
-            return self.paginated_response(func)
-        except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error describing distribution configuration - " + str(e),
-                    exception=traceback.format_exec(e), **camel_dict_to_snake_dict(e.response))
-
-    def get_streaming_distribution_config(self, streaming_distribution_id):
-        try:
-            func = partial(self.client.get_streaming_distribution_config,Id=streaming_distribution_id)
-            return self.paginated_response(func)
-        except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error describing streaming distribution configuration - " + str(e),
-                    exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-
-    def get_etag_from_distribution_id(self, distribution_id, streaming):
-        distribution = {}
-        if not streaming:
-            distribution = self.get_distribution(distribution_id)
-        else:
-            distribution = self.get_streaming_distribution(distribution_id)
-        return distribution['ETag']
-
-    def get_distribution(self, distribution_id):
-        try:
-            func = partial(self.client.get_distribution,Id=distribution_id)
-            return self.paginated_response(func)
-        except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error describing distribution - " + str(e),
-                    exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-
-    def get_streaming_distribution(self, distribution_id):
-        try:
-            func = partial(self.client.get_streaming_distribution,Id=distribution_id)
-            return self.paginated_response(func)
-        except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error describing streaming distribution - " + str(e),
-                    exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-
     def paginated_response(self, func, result_key=""):
         '''
         Returns expanded response for paginated operations.
@@ -321,12 +283,14 @@ class CloudFrontServiceManager:
             loop = args['NextToken'] is not None
         return results
 
-    def validate_aliases(self, aliases, alias_list):
-        if(aliases is not None and alias_list is not None):
-            self.module.fail_json(msg="Error: aliases and alias_list parameters are both defined. Please specify only one.")
-        if(aliases is not None):
+    def validate_aliases(self, aliases, alias_list, alias):
+        if(sum(map(bool, [aliases, alias_list, alias])) > 1 ):
+            self.module.fail_json(msg="Error: more than one of aliases, alias_list and alias defined. Please specify only one.")
+        if(alias):
+            alias_list = [ alias ]
+        if(aliases):
             return aliases
-        if(alias_list is not None):
+        if(alias_list):
             return {
                     "Quantity": len(alias_list),
                     "Items": alias_list
@@ -394,23 +358,27 @@ class CloudFrontServiceManager:
         #TODO:
         return None
 
-    def validate_update_parameters(self, update_distribution, update_streaming_distribution, distribution_id, 
-            streaming_distribution_id, config, e_tag):
-        if(update_distribution):
-            if(distribution_id is None):
-                module.fail_json(msg="Error: distribution_id must be specified for updating a distribution.")
-            if(config is None):
-                config = self.get_distribution_config(distribution_id)["DistributionConfig"]
-            if(e_tag is None):
-                e_tag = self.get_etag_from_distribution_id(distribution_id, False)
-        if(update_streaming_distribution):
-            if(streaming_distribution_id is None):
-                module.fail_json(msg="Error: streaming_distribution_id must be specified for updating a streaming distribution.")
-            if(config is None):
-                config = self.get_streaming_distribution_config(streaming_distribution_id)["StreamingDistributionConfig"]
-            if(e_tag is None):
-                e_tag = self.get_etag_from_distribution_id(streaming_distribution_id, True)
-        return config, e_tag
+    def validate_update_distribution_parameters(self, alias, distribution_id, config, e_tag):
+        if(distribution_id is None and alias is None):
+            self.module.fail_json(msg="Error: distribution_id or alias must be specified for updating a distribution.")
+        if(distribution_id is None):
+            distribution_id = self.cloudfront_facts_mgr.get_distribution_id_from_domain_name(alias)
+        if(config is None):
+            config = self.cloudfront_facts_mgr.get_distribution_config(distribution_id)["DistributionConfig"]
+        if(e_tag is None):
+            e_tag = self.cloudfront_facts_mgr.get_etag_from_distribution_id(distribution_id, False)
+        return distribution_id, config, e_tag
+ 
+    def validate_update_streaming_distribution_parameters(self, alias, streaming_distribution_id, config, e_tag):
+        if(streaming_distribution_id is None and alias is None):
+            self.module.fail_json(msg="Error: streaming_distribution_id or alias must be specified for updating a streaming distribution.")
+        if(streaming_distribution_id is None):
+            streaming_distribution_id = self.cloudfront_facts_mgr.get_distribution_id_from_domain_name(alias)
+        if(config is None):
+            config = self.cloudfront_facts_mgr.get_streaming_distribution_config(streaming_distribution_id)["StreamingDistributionConfig"]
+        if(e_tag is None):
+            e_tag = self.cloudfront_facts_mgr.get_etag_from_distribution_id(streaming_distribution_id, True)
+        return distribution_id, config, e_tag
 
 # TODO: validate delete parameters
 #       more validation of update parameters - CallerReference and S3Origin and Origins
@@ -451,8 +419,9 @@ def main():
         update_origin_access_identity=dict(required=False, default=False, type='bool'),
         config=dict(required=False, default=None, type='json'),
         tags=dict(required=False, default=None, type='str'),
+        alias=dict(required=False, default=None, type='str'),
         aliases=dict(required=False, default=None, type='json'),
-        aliases_list=dict(required=False, default=None, type='list'),
+        alias_list=dict(required=False, default=None, type='list'),
         default_root_object=dict(required=False, default='', type='str'),
         origins=dict(required=False, default=None, type='json'),
         origin_list=dict(required=False, default=None, type='list'),
@@ -498,11 +467,12 @@ def main():
     result = {}
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
-    
+
     if not HAS_BOTO3:
         module.fail_json(msg='Error boto3 is required.')
-    
-    service_mgr = CloudFrontServiceManager(module)
+
+    cloudfront_facts_mgr = CloudFrontFactsServiceManager(module)
+    service_mgr = CloudFrontServiceManager(module, cloudfront_facts_mgr)
     
     create_origin_access_identity = module.params.get('create_origin_access_identity')
     caller_reference = module.params.get('caller_reference')
@@ -532,6 +502,7 @@ def main():
     distribution_id = module.params.get('distribution_id')
     streaming_distribution_id = module.params.get('streaming_distribution_id')
     invalidation_batch = module.params.get('invalidation_batch')
+    alias = module.params.get('alias')
     aliases = module.params.get('aliases')
     alias_list = module.params.get('alias_list')
     default_root_object = module.params.get('default_root_object')
@@ -582,7 +553,7 @@ def main():
             update_streaming_distribution, generate_signed_url_from_pem_private_key]) > 1):
         module.fail_json(msg="Error: more than one cloudfront action has been specified (eg. create_distribution). Please select only one action.")
 
-    valid_aliases = service_mgr.validate_aliases(aliases, alias_list)
+    valid_aliases = service_mgr.validate_aliases(aliases, alias_list, alias)
     valid_logging = service_mgr.validate_logging(logging, logging_enabled, logging_include_cookies,
             logging_s3_bucket_name, logging_s3_bucket_prefix, streaming_distribution)
     valid_origins = service_mgr.validate_origins(origins, origin_list)
@@ -592,13 +563,15 @@ def main():
         viewer_certificate_iam_certificate_id, viewer_certificate_acm_certificate_arn, viewer_certificate_ssl_support_method,
         viewer_certificate_minimum_protocol_version, viewer_certificate_certificate, viewer_certificate_certificate_source)
 
-    config, e_tag = service_mgr.validate_update_parameters(update_distribution, update_streaming_distribution,
-            distribution_id, streaming_distribution_id, config, e_tag)
+    if(update_distribution):
+        distribution_id, config, e_tag = service_mgr.validate_update_distribution_parameters(alias, distribution_id, config, e_tag)
+
+    if(update_streaming_distribution):
+        distribution_id, config, e_tag = service_mgr.validate_update_streaming_distribution_parameters(alias, streaming_distribution_id, config, e_tag)
 
     default_datetime_string = generate_datetime_string()
 
-
-    if(distribution):
+    if(create_distribution):
         if(config is None):
             config = {}
         if(valid_origins is None):
@@ -663,15 +636,11 @@ def main():
             config["HttpVersion"] = http_version
         if(comment is None):
             config["Comment"] = "distribution created by ansible with datetime " + default_datetime_string
-        else:
-            config["Comment"] = comment
-    elif(streaming_distribution):
+    elif(create_streaming_distribution):
         if(config is None):
             config = {}
         if(comment is None):
             config["Comment"] = "streaming distribution created by ansible with datetime " + default_datetime_string
-        else:
-            config["Comment"] = comment
         if(valid_trusted_signers is None):
             config["TrustedSigners"] = {
                     "Enabled": False,
@@ -695,6 +664,8 @@ def main():
             config["Logging"] = valid_logging
         if(price_class is not None):
             config["PriceClass"] = price_class
+        if(comment is not None):
+            config["Comment"] = comment
     if(create_distribution or create_streaming_distribution):
         if(caller_reference is not None):
             config["CallerReference"] = caller_reference
