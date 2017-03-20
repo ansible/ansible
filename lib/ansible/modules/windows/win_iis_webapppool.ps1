@@ -32,8 +32,9 @@ $state = Get-AnsibleParam -obj $params -name "state" -default "present" -validat
 # Attributes parameter - Pipe separated list of attributes where
 # keys and values are separated by comma (paramA:valyeA|paramB:valueB)
 $attributes = @{};
-If (Get-Member -InputObject $params -Name attributes) {
-  $params.attributes -split '\|' | foreach {
+$attrs = Get-AnsibleParam -obj $params -name "attributes" -type "string" -failifempty $false
+If ($attrs) {
+  $attrs -split '\|' | foreach {
     $key, $value = $_ -split "\:"
     $attributes.Add($key, $value)
   }
