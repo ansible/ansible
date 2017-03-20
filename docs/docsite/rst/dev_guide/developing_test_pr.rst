@@ -124,8 +124,13 @@ the pull request does not break current functionality:
    make tests
 
    # Integration Tests
-   cd test/integration
-   make
+   make -C test/integration
+
+   # Run specific integration test-target 'file' (as root)
+   sudo ./test/runner/ansible-test integration file -vv
+
+   # Run specific integration test-target 'file' (in docker)
+   ./test/runner/ansible-test integration file --docker
 
 .. note::
    Ansible does provide integration tests for cloud-based modules as well, however we do not recommend using them for some users
