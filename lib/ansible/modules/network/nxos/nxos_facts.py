@@ -292,11 +292,11 @@ class Interfaces(FactsBase):
 
         data = self.run('show ipv6 inteface', 'json')
         if data:
-            self.parse_ipv6_interfaces(out)
+            self.parse_ipv6_interfaces(data)
 
-        data = self.run('show lldp neighbors')
+        data = self.run('show lldp neighbors', 'json')
         if data:
-            self.facts['neighbors'] = self.populate_neighbors(out)
+            self.facts['neighbors'] = self.populate_neighbors(data)
 
     def populate_interfaces(self, data):
         interfaces = dict()
