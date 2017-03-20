@@ -38,9 +38,9 @@ function Get-IniFile {
             "^\[(?<Section>.*)\]"
             {
                         $ini.Add($curSectionName, $currentSection)
-                        
+
                         $curSectionName = $Matches['Section'].trim()
-                        $currentSection = New-Object System.Collections.Specialized.OrderedDictionary   
+                        $currentSection = New-Object System.Collections.Specialized.OrderedDictionary
             }
                 "(?<Key>.*)\=(?<Value>.*)"
                 {
@@ -57,7 +57,7 @@ function Get-IniFile {
                 }
         }
         if ($ini.Keys -notcontains $curSectionName) { $ini.Add($curSectionName, $currentSection) }
-        
+
         return $ini
 }
 
@@ -66,24 +66,24 @@ function Out-IniFile{
         [parameter(mandatory=$true, position=0, valuefrompipelinebypropertyname=$true, valuefrompipeline=$true)][System.Collections.Specialized.OrderedDictionary]$ini,
                 [parameter(mandatory=$false,position=1, valuefrompipelinebypropertyname=$true, valuefrompipeline=$false)][String]$FilePath
     )
-        
+
         $output = ""
         ForEach ($section in $ini.GetEnumerator())
         {
-                if ($section.Name -ne "default") 
-                { 
+                if ($section.Name -ne "default")
+                {
                         # insert a blank line after a section
                         $sep = @{$true="";$false="`r`n"}[[String]::IsNullOrWhiteSpace($output)]
-                        $output += "$sep[$($section.Name)]`r`n" 
+                        $output += "$sep[$($section.Name)]`r`n"
                 }
                 ForEach ($entry in $section.Value.GetEnumerator())
                 {
                         $sep = @{$true="";$false="="}[$entry.Name -eq ";"]
                         $output += "$($entry.Name)$sep$($entry.Value)`r`n"
                 }
-                
+
         }
-        
+
         $output = $output.TrimEnd("`r`n")
         if ([String]::IsNullOrEmpty($FilePath))
         {
@@ -119,11 +119,11 @@ Try {
 }
 Catch {
     If ($_.Exception.Message -like "*$category cannot be found*"){
-        $valid_categories = $ini.GETENUMERATOR() | % { $_.key + ',' } 
+        $valid_categories = $ini.GETENUMERATOR() | % { $_.key + ',' }
         Fail-Json $result "The category you specified, $category, is not valid. Valid categories for this system are $valid_categories."
     }
     ElseIf ($_.Exception.Message -like "*$key*"){
-        $valid_keys = $ini.$category.GETENUMERATOR() | % { $_.key + ',' } 
+        $valid_keys = $ini.$category.GETENUMERATOR() | % { $_.key + ',' }
         Fail-Json $result "The key you specified, $key, is not valid. Valid keys for the category '$category' are: $valid_keys."
     }
     Else {
@@ -140,7 +140,7 @@ If ($current_value -eq $value) {
 Else {
     $ini.$category.$key = $value
     $ini | Out-IniFile -FilePath "$home\updated_inf"
-    SecEdit.exe /configure /db "$home\temp_db.sdb" /cfg "$home\updated_inf" /quiet 
+    SecEdit.exe /configure /db "$home\temp_db.sdb" /cfg "$home\updated_inf" /quiet
     $result.changed = $true
     $result.msg = "Key updated"
     $result.category = $category
@@ -161,7 +161,7 @@ $updated_ini = Get-IniFile -FilePath $sepath
 Try {
     $updated_value = $updated_ini.$category.$key
     If ($updated_value -ne $value){
-        Fail-Json $result "The value you supplied '$value' was not accepted by SecEdit. Ensure it is a valid value and try again. The original value of '$current_value' has been kept in tact" 
+        Fail-Json $result "The value you supplied '$value' was not accepted by SecEdit. Ensure it is a valid value and try again. The original value of '$current_value' has been kept in tact"
     }
 }
 Catch [System.Management.Automation.PropertyNotFoundException] {
@@ -172,8 +172,8 @@ Catch [System.Management.Automation.PropertyNotFoundException] {
     }
 }
 
-rm $home\updated_inf 
-rm $home\temp_db.sdb 
+rm $home\updated_inf
+rm $home\temp_db.sdb
 rm $home\sec_edit_dump.inf
 
 Exit-Json $result
