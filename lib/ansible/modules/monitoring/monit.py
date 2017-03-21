@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Darryl Stoflet <stoflet@gmail.com>
@@ -29,7 +28,7 @@ module: monit
 short_description: Manage the state of a program monitored via Monit
 description:
      - Manage the state of a program monitored via I(Monit)
-version_added: "1.3"
+version_added: "1.2"
 options:
   name:
     description:
@@ -47,7 +46,7 @@ options:
       - The state of service
     required: true
     default: null
-    choices: [ "present", "started", "stopped", "restarted", "monitored", "unmonitored", "reloaded", "deployed" ]
+    choices: [ "present", "started", "stopped", "restarted", "monitored", "unmonitored", "reloaded" ]
   timeout:
     description:
       - If there are pending actions for the service monitored by monit, then Ansible will check
@@ -60,8 +59,6 @@ options:
     description:
       - This may be used to specify the location of the I(monit) binary if it is not available in PATH
         environment.
-        If B(state) is I(deployed), this would be a directory where I(monit) gets extracted. For all
-        other B(state), it should point to the I(monit) binary e.g. "/opt/monit/bin/monit".
     required: false
     default: null
     version_added: "2.4"
@@ -70,28 +67,6 @@ options:
       - This may be used to specify the location of the configuration file.
     required: false
     default: null
-    version_added: "2.4"
-  version:
-    description:
-      - This field may be used to specify the version of I(monit) to be deployed. This should be used
-        in conjuction with B(state) I(deployed). On specifying the I(version), this module automatically
-        tries to identify the platform and architecture of the target host and downloads the proper build
-        for the host and installs it.
-    required: false
-    default: null
-    version_added: "2.4"
-  url:
-    description:
-      - This may be used to specify the URL for the monit tar ball to be downloaded.
-    required: false
-    default: null
-    version_added: "2.4"
-  insecure:
-    description:
-      - This may be used to download the monit tar ball over HTTPS insecurely i.e., do not verify the SSL
-        certificate of the server.
-    required: false
-    default: false
     version_added: "2.4"
 requirements: [ ]
 author:
@@ -104,18 +79,6 @@ EXAMPLES = '''
 - monit:
     name: httpd
     state: started
-
-- name: Deploy a specific version (5.21.0) of monit.
-  monit:
-    version: 5.21.0
-    path: /opt
-    state: deployed
-
-- name: Deploy monit from specified URL
-  monit:
-    url: https://mmonit.com/monit/dist/binary/5.21.0/monit-5.21.0-linux-x86.tar.gz
-    path: /opt
-    state: deployed
 
 - name: Start monit if not started
   monit:
@@ -181,10 +144,7 @@ def main():
         path=dict(required=False),
         config=dict(required=False),
         timeout=dict(default=300, type='int'),
-        insecure=dict(default=False, type='bool'),
-        version=dict(required=False),
-        url=dict(required=False),
-        state=dict(required=True, choices=['present', 'started', 'restarted', 'stopped', 'monitored', 'unmonitored', 'reloaded', 'deployed'])
+        state=dict(required=True, choices=['present', 'started', 'restarted', 'stopped', 'monitored', 'unmonitored', 'reloaded'])
     )
 
     module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
@@ -201,31 +161,21 @@ def main():
 
     service_status = dict()
 
-    def fetch(url, insecure=False):
-        fileName = '/tmp/' + os.path.basename(url)
-        CURL = module.get_bin_path('curl')
-        if CURL is None:
-            CURL = module.get_bin_path('wget', True)
-            if insecure:
-                cmd = "{} --no-check-certificate -O {} {}".format(CURL, fileName, url)
+    def start():
+        """Start Monit"""
+        rc, out, err = module.run_command(MONIT)
+        flag = False
+        for i in range(0, module.params['timeout'], 10):
+            rc, out, err = module.run_command("{} -B summary".format(MONIT))
+            if rc == 0:
+                flag = True
+                break
             else:
-                cmd = "{} -O {} {}".format(CURL, fileName, url)
+                time.sleep(10)
+        if not flag:
+            module.fail_json(msg="Opertation timed out after {} seconds with \"{}\"".format(module.params['timeout'], err), name='monit')
         else:
-            if insecure:
-                cmd = "{} --insecure -o {} {}".format(CURL, fileName, url)
-            else:
-                cmd = "{} -o {} {}".format(CURL, fileName, url)
-        rc, out, err = module.run_command(cmd, check_rc=True)
-
-    def deploy(fileName, path):
-        TAR = module.get_bin_path('tar', True)
-        rc, out, err = module.run_command("{} zxvf {} -C {}".format(TAR, fileName, path), check_rc=True)
-        line = out.split('\n')[0]
-        rc, out, err = module.run_command('test -s {}/monit'.format(path))
-        if rc == 0:
-            rc, out, err = module.run_command('rm -f {}/monit'.format(path), check_rc=True)
-        rc, out, err = module.run_command("ln -s {}/{} {}/monit".format(path, line, path), check_rc=True)
-        rc, out, err = module.run_command("rm -f {}".format(fileName))
+            module.exit_json(changed=True, name='monit', state=state)
 
     def summary():
         """Return the status of the process in monit, or the empty string if not present."""
@@ -239,7 +189,7 @@ def main():
             else:
                 time.sleep(5)
         if not flag:
-            module.fail_json(msg=err, name='monit')
+            module.fail_json(msg="ERROR: {}".format(err), name='monit')
         for line in out.split('\n'):
             if re.search(r"^\s*Monit\s+", line) or re.search(r"^\s*Service Name\s*Status\s*Type", line):
                 continue
@@ -288,24 +238,6 @@ def main():
             time.sleep(sleep_time)
             status(service_name)
 
-    if state == 'deployed':
-        if module.check_mode:
-            module.exit_json(changed=True)
-        if module.params['url'] is None:
-            monit_dist = 'https://mmonit.com/monit/dist/binary/'
-            if module.params['version'] is None:
-                module.fail_json(msg='URL or Monit version to be deployed is needed')
-            fileName = 'monit-' + module.params['version'] + '-' + module.params['platform'] + '-' + module.params['arch'] + '.tar.gz'
-            url = monit_dist + '/' + module.params['version'] + '/' + fileName
-            module.params['url'] = url
-        else:
-            fileName = os.path.basename(module.params['url'])
-        fetch(module.params['url'], module.params['insecure'])
-        if module.params['path'] is None:
-            module.params['path'] = "/opt"
-        deploy('/tmp/' + fileName, module.params['path'])
-        module.exit_json(changed=True, name='monit', state=state)
-
     MONIT = module.params['path'] if module.params['path'] else module.get_bin_path('monit', True)
     if module.params['config']:
         MONIT += ' -c ' + module.params['config']
@@ -314,8 +246,7 @@ def main():
         if state == 'started':
             rc, out, err = module.run_command('{} summary'.format(MONIT))
             if rc > 0:
-                rc, out, err = module.run_command('{}'.format(MONIT), check_rc=True)
-                module.exit_json(changed=True, name='monit', state=state)
+                start()
             else:
                 module.exit_json(changed=False, name='monit', state=state)
         elif state == 'stopped':
