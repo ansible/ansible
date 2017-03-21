@@ -291,7 +291,7 @@ def main():
     }
 
     for requires in ('state', 'enabled', 'masked'):
-        if requires is not None and name is None:
+        if requires is not None and unit is None:
             module.fail_json(msg="name is also required when specifying %s" % requires)
 
     # Run daemon-reload first, if requested
