@@ -514,7 +514,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         3 = its a directory, not a file
         4 = stat module failed, likely due to not finding python
         '''
-        x = "0"  # unknown error has occured
+        x = "0"  # unknown error has occurred
         try:
             remote_stat = self._execute_remote_stat(path, all_vars, follow=follow)
             if remote_stat['exists'] and remote_stat['isdir']:
@@ -754,9 +754,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # pre-split stdout/stderr into lines if needed
         if 'stdout' in data and 'stdout_lines' not in data:
-            data['stdout_lines'] = data.get('stdout', u'').splitlines()
+            # if the value is 'False', a default won't catch it.
+            txt = data.get('stdout', None) or u''
+            data['stdout_lines'] = txt.splitlines()
         if 'stderr' in data and 'stderr_lines' not in data:
-            data['stderr_lines'] = data.get('stderr', u'').splitlines()
+            # if the value is 'False', a default won't catch it.
+            txt = data.get('stderr', None) or u''
+            data['stderr_lines'] = txt.splitlines()
 
         display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
