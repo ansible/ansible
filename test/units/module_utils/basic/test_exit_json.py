@@ -89,6 +89,30 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
         return_val = json.loads(self.fake_stream.getvalue())
         self.assertEquals(return_val, dict(changed=True, msg='success', invocation=empty_invocation))
 
+    def test_exit_json_stderr_lines(self):
+        with self.assertRaises(SystemExit) as ctx:
+            self.module.exit_json(msg='message', stderr="hello\nworld\n")
+        if isinstance(ctx.exception, int):
+            # Python2.6... why does sys.exit behave this way?
+            self.assertEquals(ctx.exception, 0)
+        else:
+            self.assertEquals(ctx.exception.code, 0)
+        return_val = json.loads(self.fake_stream.getvalue())
+        self.assertEquals(return_val, dict(msg="message", changed=False, stderr="hello\nworld\n",
+            stderr_lines=['hello','world'], invocation=empty_invocation))
+
+    def test_exit_json_stderr_false(self):
+        with self.assertRaises(SystemExit) as ctx:
+            self.module.exit_json(msg='message', stderr=False)
+        if isinstance(ctx.exception, int):
+            # Python2.6... why does sys.exit behave this way?
+            self.assertEquals(ctx.exception, 0)
+        else:
+            self.assertEquals(ctx.exception.code, 0)
+        return_val = json.loads(self.fake_stream.getvalue())
+        self.assertEquals(return_val, dict(msg="message", changed=False, invocation=empty_invocation,
+            stderr_lines=[], stderr=u''))
+
 class TestAnsibleModuleExitValuesRemoved(unittest.TestCase):
     OMIT = 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
     dataset = (
