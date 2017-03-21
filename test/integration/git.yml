@@ -1,8 +1,0 @@
----
-- hosts: localhost
-  connection: local
-  gather_facts: no
-  tags:
-    - git
-  roles:
-    - test_git_clone
