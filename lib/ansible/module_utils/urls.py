@@ -634,6 +634,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                             pass
 
         if not to_add:
+            os.remove(to_add_path)
             to_add_path = None
         return (tmp_path, to_add_path, paths_checked)
 
@@ -682,6 +683,11 @@ class SSLValidationHandler(urllib_request.BaseHandler):
 
         if not use_proxy:
             # ignore proxy settings for this host request
+            
+            if tmp_ca_cert_path:
+                os.remove(tmp_ca_cert_path)
+            if to_add_ca_cert_path:
+                os.remove(to_add_ca_cert_path)
             return req
 
         try:
