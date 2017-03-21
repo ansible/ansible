@@ -50,8 +50,8 @@ from ansible.playbook.play_context import PlayContext
 from ansible.plugins import connection_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible.errors import AnsibleConnectionFailure
+from ansible.utils.display import Display
 
-logger = logging.getLogger('ansible-connection')
 
 def do_fork():
     '''
@@ -110,10 +110,6 @@ def recv_data(s):
         data += d
     return data
 
-def log(msg, host, user=None):
-    msg = 'h=%s u=%s %s' % (host, user, msg)
-    logger.debug(msg)
-
 
 class Server():
 
@@ -121,13 +117,12 @@ class Server():
 
         self.path = path
         self.play_context = play_context
-        self.log = lambda x: log(x, play_context.remote_addr, play_context.remote_user)
 
-        self.log("starting new persistent socket with path %s" % path)
+        display.display("starting new persistent socket with path %s" % path, log_only=True)
 
         self._start_time = datetime.datetime.now()
 
-        self.log("using connection plugin %s" % self.play_context.connection)
+        display.display("using connection plugin %s" % self.play_context.connection, log_only=True)
 
         self.conn = connection_loader.get(play_context.connection, play_context, sys.stdin)
         self.conn._connect()
@@ -135,7 +130,7 @@ class Server():
             raise AnsibleConnectionFailure('unable to connect to remote host')
 
         connection_time = datetime.datetime.now() - self._start_time
-        self.log('connection established in %s' % connection_time)
+        display.display('connection established in %s' % connection_time, log_only=True)
 
         self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.socket.bind(path)
@@ -173,7 +168,7 @@ class Server():
                 signal.alarm(C.PERSISTENT_CONNECT_TIMEOUT)
                 try:
                     (s, addr) = self.socket.accept()
-                    self.log('incoming request accepted on persistent socket')
+                    display.display('incoming request accepted on persistent socket', log_only=True)
                     # clear the alarm
                     # FIXME: potential race condition here between the accept and
                     #        time to this call.
@@ -191,7 +186,7 @@ class Server():
                     rc = 255
                     try:
                         if data.startswith(b'EXEC: '):
-                            self.log("socket operation is EXEC")
+                            display.display("socket operation is EXEC", log_only=True)
                             cmd = data.split(b'EXEC: ')[1]
                             (rc, stdout, stderr) = self.conn.exec_command(cmd)
                         elif data.startswith(b'PUT: ') or data.startswith(b'FETCH: '):
@@ -199,16 +194,16 @@ class Server():
                             stdout = stderr = ''
                             try:
                                 if op == 'FETCH:':
-                                    self.log("socket operation is FETCH")
+                                    display.display("socket operation is FETCH", log_only=True)
                                     self.conn.fetch_file(src, dst)
                                 elif op == 'PUT:':
-                                    self.log("socket operation is PUT")
+                                    display.display("socket operation is PUT", log_only=True)
                                     self.conn.put_file(src, dst)
                                 rc = 0
                             except:
                                 pass
                         elif data.startswith(b'CONTEXT: '):
-                            self.log("socket operation is CONTEXT")
+                            display.display("socket operation is CONTEXT", log_only=True)
                             pc_data = data.split(b'CONTEXT: ')[1]
 
                             src = StringIO(pc_data)
@@ -221,7 +216,7 @@ class Server():
                             self.dispatch(self.conn, 'update_play_context', pc)
                             continue
                         else:
-                            self.log("socket operation is UNKNOWN")
+                            display.display("socket operation is UNKNOWN", log_only=True)
                             stdout = ''
                             stderr = 'Invalid action specified'
                     except:
@@ -230,20 +225,20 @@ class Server():
 
                     signal.alarm(0)
 
-                    self.log("socket operation completed with rc %s" % rc)
+                    display.display("socket operation completed with rc %s" % rc, log_only=True)
 
                     send_data(s, to_bytes(str(rc)))
                     send_data(s, to_bytes(stdout))
                     send_data(s, to_bytes(stderr))
                 s.close()
         except Exception as e:
-            self.log(traceback.foramt_exec())
+            display.display(traceback.foramt_exec(), log_only=True)
         finally:
             # when done, close the connection properly and cleanup
             # the socket file so it can be recreated
             end_time = datetime.datetime.now()
             delta = end_time - self._start_time
-            self.log('shutting down control socket, connection was active for %s secs' % delta)
+            display.display('shutting down control socket, connection was active for %s secs' % delta, log_only=True)
             try:
                 self.conn.close()
                 self.socket.close()
@@ -357,4 +352,5 @@ def main():
     sys.exit(rc)
 
 if __name__ == '__main__':
+    display = Display()
     main()

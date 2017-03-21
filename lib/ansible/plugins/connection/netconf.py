@@ -38,7 +38,12 @@ try:
 except ImportError:
     raise AnsibleError("ncclient is not installed")
 
-logger = logging.getLogger('ansible.netconf')
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 logging.getLogger('ncclient').setLevel(logging.INFO)
 
 class Connection(ConnectionBase):
@@ -51,7 +56,7 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
         self._network_os = self._play_context.network_os or 'default'
-        self.log('network_os is set to %s' % self._network_os)
+        display.display('network_os is set to %s' % self._network_os, log_only=True)
 
         self._manager = None
         self._connected = False
@@ -63,7 +68,7 @@ class Connection(ConnectionBase):
     def _connect(self):
         super(Connection, self)._connect()
 
-        self.log('ssh connection done, stating ncclient')
+        display.display('ssh connection done, stating ncclient', log_only=True)
 
         allow_agent = True
         if self._play_context.password is not None:
@@ -95,7 +100,7 @@ class Connection(ConnectionBase):
         if not self._manager.connected:
             return (1, '', 'not connected')
 
-        self.log('ncclient manager object created successfully')
+        display.display('ncclient manager object created successfully', log_only=True)
 
         self._connected = True
         return (0, self._manager.session_id, '')
