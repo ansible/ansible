@@ -16,16 +16,19 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {
+    'status': ['preview'],
+    'supported_by': 'community',
+    'version': '1.0'
+}
 
 DOCUMENTATION = '''
 ---
 module: redhat_repository
 short_description: Manage repositories with RHSM using the C(subscription-manager) command
 description:
-  - Manage repositories with the Red Hat Subscription Management entitlement platform using the C(subscription-manager) command
+  - Manage repositories with the Red Hat Subscription Management entitlement
+    platform using the C(subscription-manager) command
 author: "Jerome Fenal (@jfenal)"
 notes:
   - In order to be able to enable repositories, a system will
@@ -37,11 +40,12 @@ requirements:
 options:
   id:
     description:
-     - id of repositories to enable or disable.
-       When specifying multiple repos, separate them with a C(,).
-       To specify all repositories, use C(*).
-       In incremental mode, other repos won't be touched.
-       In idempotent mode (default), other repos would be disabled or enabled depending on their actual state.
+      - id of repositories to enable or disable.
+        When specifying multiple repos, separate them with a C(,).
+        To specify all repositories, use C(*).
+        In incremental mode, other repos won't be touched.
+        In idempotent mode (default), other repos would be disabled or enabled
+        depending on their actual state.
     required: False
     default: null
   list:
@@ -212,8 +216,6 @@ class RhsmRepositories(object):
 
             # An empty line implies the end of a output group, strip headers too
             if len(line) == 0 or re.match(r'^\s+.*', line) or re.match(r'^\+s.*', line):
-                continue
-
                 key = ''
                 value = ''
                 continue
@@ -225,7 +227,7 @@ class RhsmRepositories(object):
                 value = value.strip()
                 if key in ['RepoID']:
                     # Remember the name for later processing
-                    repos.append( RhsmRepository(self.module, _name=value) )
+                    repos.append(RhsmRepository(self.module, _name=value))
                     repos[-1].__setattr__(key, value)
                 elif key in ['Enabled']:
                     # Use a real boolean
@@ -257,59 +259,60 @@ class RhsmRepositories(object):
     def list_stuff(self, stuff):
         l={}
         for repo in self.filter(stuff):
-            id=repo.id
-            id=id.replace("-", "_")
+            id = repo.id
+            id = id.replace("-", "_")
             l[id] = dict(id=repo.id, name=repo.name, enabled=repo.is_enabled, url=repo.url)
         return l
 
     def enable_only(self, id):
-        changed=False
-        to_enable=[]
-        to_disable=[]
+        changed = False
+        to_enable = []
+        to_disable = []
 
         # no repo id => disable all
         if len(id) == 0:
             self.disable_all()
-            changed=True
-            return [ changed, dict(enabled=[], disabled='*') ]
+            changed = True
+            return [changed, dict(enabled=[], disabled='*')]
 
         # where are we now?
         current_repos=self.list_stuff('all')
 
-        notice("redhat_repository: enable_only: changed=" + str(current_repos))
+        notice("redhat_repository: enable_only: changed=%s" % str(current_repos))
         for r in current_repos.keys():
-            notice("redhat_repository: enable_only: **loop** id=" + str(id) + " r=" + str(r))
+            notice("redhat_repository: enable_only: **loop** id=%s r=%s" % (str(id), str(r)))
 
             if current_repos[r]['enabled'] and current_repos[r]['id'] not in id:
                 to_disable.append(current_repos[r]['id'])
-                changed=True
+                changed = True
 
             if not current_repos[r]['enabled'] and current_repos[r]['id'] in id:
                 to_enable.append(current_repos[r]['id'])
-                changed=True
+                changed = True
 
-        notice("redhat_repository: enable_only: changed=" + str(changed))
-        notice("redhat_repository: enable_only: to_enable=" + str(to_enable))
-        notice("redhat_repository: enable_only: to_disable=" + str(to_disable))
+        notice("redhat_repository: enable_only: changed=%s" % str(changed))
+        notice("redhat_repository: enable_only: to_enable=%s" % str(to_enable))
+        notice("redhat_repository: enable_only: to_disable=%s" % str(to_disable))
+
         if changed:
-            args="subscription-manager repos "
+            args = "subscription-manager repos "
             for n in to_disable:
                 args += " --disable=" + n
 
             for n in to_enable:
-                args+=" --enable=" + n
+                args += " --enable=" + n
 
-            notice("redhat_repository: enable_only repos args: " + str(args))
+            notice("redhat_repository: enable_only repos args: %s" % str(args))
             rc, stdout, stderr = self.module.run_command(args, check_rc=True)
 
-        return [ changed, dict(enabled=to_enable, disabled=to_disable) ]
+        return [changed, dict(enabled=to_enable, disabled=to_disable)]
 
     def enablerepo(self, id):
         if len(id) > 0:
-            args="subscription-manager repos "
+            args = "subscription-manager repos "
             for n in id:
-                args+=" --enable=" + n
-            notice("redhat_repository: enable repos args: " + str(args))
+                args += " --enable=" + n
+            notice("redhat_repository: enable repos args: %s" % str(args))
             rc, stdout, stderr = self.module.run_command(args, check_rc=True)
             return True
         else:
@@ -317,9 +320,10 @@ class RhsmRepositories(object):
 
     def disablerepo(self, id):
         if len(id) > 0:
-            args="subscription-manager repos "
+            args = "subscription-manager repos "
             for n in id:
                 args += " --disable=" + n
+            notice("redhat_repository: disable repos args: %s" % str(args))
             rc, stdout, stderr = self.module.run_command(args, check_rc=True)
             return True
         else:
@@ -360,14 +364,15 @@ def main():
 
     # setting the default here, because if done at the AnsibleModule declaration, it screws things up
     if p_mode is None:
-        p_mode='idempotent'
+        p_mode = 'idempotent'
 
-    notice( "redhat_repository: in main | list=" + str(p_list) + " | id=" + str(p_id) + " | state=" + str(p_state) + " | mode=" + str(p_mode) )
+    notice("redhat_repository: in main | list=%s | id=%s | state=%s | mode=%s" %
+        (str(p_list), str(p_id) , str(p_state), str(p_mode)))
 
     if p_list is not None:
         notice("redhat_repository: in main, list is not None")
-        if p_list in [ 'all', 'enabled', 'disabled' ]:
-            result=rhsmrepos.list_stuff(p_list)
+        if p_list in ['all', 'enabled', 'disabled']:
+            result = rhsmrepos.list_stuff(p_list)
             module.exit_json(changed=False, redhat_repositories=result)
         else:
             # we shouldn't reach this with Ansible.
@@ -375,26 +380,33 @@ def main():
 
     elif p_id is not None:
         notice("redhat_repository: in main, id is not None")
-        has_changed=False
-        changed_repos={}
+        has_changed = False
+        changed_repos = {}
 
         if p_mode == 'idempotent':
             if p_state == 'enabled':
-                ( has_changed, changed_repos ) = rhsmrepos.enable_only(p_id)
+                (has_changed, changed_repos) = rhsmrepos.enable_only(p_id)
             else:
                 module.exit_json(changed=False, error="Can't use state=disabled in idempotent mode")
 
         elif p_mode == 'incremental':
             if p_state == 'enabled':
-                has_changed=rhsmrepos.enablerepo(p_id)
+                has_changed = rhsmrepos.enablerepo(p_id)
                 changed_repos['enabled'] = p_id
             elif p_state == 'disabled':
-                has_changed=rhsmrepos.disablerepo(p_id)
+                has_changed = rhsmrepos.disablerepo(p_id)
                 changed_repos['disabled'] = p_id
 
         changed_repos.setdefault('enabled', [])
         changed_repos.setdefault('disabled', [])
-        module.exit_json(changed=has_changed, state=p_state, id=p_id, enabled=changed_repos['enabled'], disabled=changed_repos['disabled'])
+        module.exit_json(
+            changed=has_changed,
+            state=p_state,
+            id=p_id,
+            enabled=changed_repos['enabled'],
+            disabled=changed_repos['disabled']
+        )
+
 
 if __name__ == '__main__':
     main()
