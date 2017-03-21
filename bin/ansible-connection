@@ -290,10 +290,10 @@ def main():
             try:
                 server = Server(sf_path, pc)
             except AnsibleConnectionFailure as exc:
-                log(str(exc), pc.remote_addr, pc.remote_user)
+                display.display(str(exc), pc.remote_addr, pc.remote_user, log_only=True)
                 rc = 1
             except Exception as exc:
-                log(traceback.format_exc(), pc.remote_addr, pc.remote_user)
+                display.display(traceback.format_exc(), pc.remote_addr, pc.remote_user, log_only=True)
                 rc = 1
             fcntl.lockf(lock_fd, fcntl.LOCK_UN)
             os.close(lock_fd)
@@ -301,7 +301,7 @@ def main():
                 server.run()
             sys.exit(rc)
     else:
-        log('re-using existing socket connection', pc.remote_addr, pc.remote_user)
+        display.display('re-using existing socket connection', pc.remote_addr, pc.remote_user, log_only=True)
     fcntl.lockf(lock_fd, fcntl.LOCK_UN)
     os.close(lock_fd)
 
@@ -326,8 +326,8 @@ def main():
                 time.sleep(C.PERSISTENT_CONNECT_INTERVAL)
                 attempts += 1
                 if attempts > C.PERSISTENT_CONNECT_RETRIES:
-                    log('number of connection attempts exceeded, unable to connect to control socket', pc.remote_addr, pc.remote_user)
-                    log('persistent_connect_interval=%s, persistent_connect_retries=%s' % (C.PERSISTENT_CONNECT_INTERVAL, C.PERSISTENT_CONNECT_RETRIES), pc.remote_addr, pc.remote_user)
+                    display.display('number of connection attempts exceeded, unable to connect to control socket', pc.remote_addr, pc.remote_user, log_only=True)
+                    display.display('persistent_connect_interval=%s, persistent_connect_retries=%s' % (C.PERSISTENT_CONNECT_INTERVAL, C.PERSISTENT_CONNECT_RETRIES), pc.remote_addr, pc.remote_user, log_only=True)
                     sys.stderr.write('failed to connect to control socket')
                     sys.exit(255)
 
