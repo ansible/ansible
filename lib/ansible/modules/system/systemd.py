@@ -32,50 +32,42 @@ description:
     - Controls systemd services on remote hosts.
 options:
     name:
-        required: true
         description:
             - Name of the service. When using in a chroot environment you always need to specify the full name i.e. (crond.service).
+        required: true
         aliases: ['unit', 'service']
     state:
-        required: false
-        default: null
-        choices: [ 'started', 'stopped', 'restarted', 'reloaded' ]
         description:
             - C(started)/C(stopped) are idempotent actions that will not run commands unless necessary.
-              C(restarted) will always bounce the service. C(reloaded) will always reload.
+            - C(restarted) will always bounce the service.
+            - C(reloaded) will always reload.
+        choices: [ 'started', 'stopped', 'restarted', 'reloaded' ]
     enabled:
-        required: false
-        choices: [ "yes", "no" ]
-        default: null
         description:
             - Whether the service should start on boot. B(At least one of state and enabled are required.)
-    masked:
-        required: false
         choices: [ "yes", "no" ]
-        default: null
+    masked:
         description:
             - Whether the unit should be masked or not, a masked unit is impossible to start.
-    daemon_reload:
-        required: false
-        default: no
         choices: [ "yes", "no" ]
+    daemon_reload:
         description:
-            - run daemon-reload before doing any other operations, to make sure systemd has read any changes.
+            - Run daemon-reload before doing any other operations, to make sure systemd has read any changes.
+        choices: [ "yes", "no" ]
+        default: no
         aliases: ['daemon-reload']
     user:
-        required: false
-        default: no
-        choices: [ "yes", "no" ]
         description:
-            - run systemctl talking to the service manager of the calling user, rather than the service manager
+            - Run systemctl talking to the service manager of the calling user, rather than the service manager
               of the system.
-    no_block:
-        required: false
-        default: no
         choices: [ "yes", "no" ]
+        default: no
+    no_block:
         description:
             - Do not synchronously wait for the requested operation to finish.
-              Enqueued job will continue without Ansible blocking on its completion.
+            - Enqueued job will continue without Ansible blocking on its completion.
+        choices: [ "yes", "no" ]
+        default: no
         version_added: "2.3"
 notes:
     - One option other than name is required.
@@ -84,34 +76,42 @@ requirements:
 '''
 
 EXAMPLES = '''
-# Example action to start service httpd, if not running
-- systemd: state=started name=httpd
+- name: Start service httpd, if not running
+  systemd:
+    name: httpd
+    state: started
 
-# Example action to stop service cron on debian, if running
-- systemd: name=cron state=stopped
+- name: Stop service cron on debian, if running
+  systemd:
+    name: cron
+    state: stopped
 
-# Example action to restart service cron on centos, in all cases, also issue daemon-reload to pick up config changes
-- systemd:
-    state: restarted
+- name: Restart service cron, in all cases, also issue daemon-reload to pick up config changes
+  systemd:
     daemon_reload: yes
     name: crond
+    state: restarted
 
-# Example action to reload service httpd, in all cases
-- systemd:
+- name: Reload service httpd, in all cases
+  systemd:
     name: httpd
     state: reloaded
 
-# Example action to enable service httpd and ensure it is not masked
-- systemd:
+- name: Enable service httpd and ensure it is not masked
+  systemd:
     name: httpd
     enabled: yes
     masked: no
 
-# Example action to enable a timer for dnf-automatic
-- systemd:
+- name: Enable a timer for dnf-automatic
+  systemd:
     name: dnf-automatic.timer
     state: started
-    enabled: True
+    enabled: yes
+
+- name: Reload systemd daemon to pick up config changes
+  systemd:
+    daemon_reload: yes
 '''
 
 RETURN = '''
