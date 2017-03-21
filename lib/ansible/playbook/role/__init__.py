@@ -243,6 +243,14 @@ class Role(Base, Become, Conditional, Taggable):
     def _resolve_main(self, basepath, main=None):
         ''' flexibly handle variations in main filenames '''
 
+        # Try to expend variable for tasks from extra_vars
+        import re
+        tasks = re.findall('{{([^}}]*)', main)
+        if len(tasks) > 0:
+            main = tasks[0].strip()
+            if main in self._variable_manager.extra_vars:
+                main = self._variable_manager.extra_vars[main]
+
         post = False
         # allow override if set, otherwise use default
         if main is None:
@@ -486,4 +494,3 @@ class Role(Base, Become, Conditional, Taggable):
             parent.set_loader(loader)
         for dep in self.get_direct_dependencies():
             dep.set_loader(loader)
-
