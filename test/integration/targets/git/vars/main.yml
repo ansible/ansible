@@ -1,7 +1,5 @@
 ---
 
-source_dir:  "{{ output_dir }}/source"
-destination_dir: "{{output_dir }}/destination"
 msg: "https://github.com/ansible/ansible/pull/22502"
 checkout_dir: '{{ output_dir }}/git'
 repo_dir: '{{ output_dir }}/local_repos'

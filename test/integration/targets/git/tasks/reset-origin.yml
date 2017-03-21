@@ -1,30 +1,27 @@
 ---
-- hosts: localhost
-  connection: local
-  gather_facts: no
-  tasks:
-  - name: Clean up
-    file:
-      state: absent
-      path: "{{ item }}"
-    with_items:
-      - "{{ source_dir }}"
-      - "{{ destination_dir }}"
 
-  - name: Create a directory
-    file:
-      name:  "{{ source_dir }}"
-      state: directory
+- name: Clean up the directories
+  file:
+    state: absent
+    path: "{{ item }}"
+  with_items:
+    - "{{ repo_dir }}/origin"
+    - "{{ checkout_dir }}"
 
-  - name: Initialise the repo with a file named origin
-    shell: git init; echo "{{ msg }}" > origin; git add origin; git commit -m "{{ msg }}"
-    args:
-      chdir: "{{ source_dir }}"
+- name: Create a directory
+  file:
+    name: "{{ repo_dir }}/origin"
+    state: directory
 
-  - name: Clone a git repo with file named origin
-    git:
-      repo: "{{ source_dir }}"
-      dest: "{{ destination_dir }}"
-      remote: origin
-      update: no
-    register: status
+- name: Initialise the repo with a file named origin
+  shell: git init; echo "{{ msg }}" > origin; git add origin; git commit -m "{{ msg }}"
+  args:
+    chdir: "{{ repo_dir }}/origin"
+
+- name: Clone a git repo with file named origin
+  git:
+    repo: "{{ repo_dir }}/origin"
+    dest: "{{ checkout_dir }}"
+    remote: origin
+    update: no
+  register: status
