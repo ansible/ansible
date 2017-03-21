@@ -32,7 +32,12 @@ from ansible.plugins import terminal_loader
 from ansible.plugins.connection import ensure_connect
 from ansible.plugins.connection.paramiko_ssh import Connection as _Connection
 
-logger = logging.getLogger('ansible.network_cli')
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class Connection(_Connection):
     ''' CLI (shell) SSH connections on Paramiko '''
@@ -60,7 +65,7 @@ class Connection(_Connection):
     def update_play_context(self, play_context):
         """Updates the play context information for the connection"""
 
-        self.log('updating play_context for connection')
+        display.display('updating play_context for connection', log_only=True)
 
         if self._play_context.become is False and play_context.become is True:
             auth_pass = play_context.become_pass
@@ -75,7 +80,7 @@ class Connection(_Connection):
         """Connections to the device and sets the terminal type"""
         super(Connection, self)._connect()
 
-        self.log('ssh connection done, setting terminal')
+        display.display('ssh connection done, setting terminal', log_only=True)
 
         network_os = self._play_context.network_os
         if not network_os:
@@ -89,11 +94,11 @@ class Connection(_Connection):
             raise AnsibleConnectionFailure('network os %s is not supported' % network_os)
 
         self._connected = True
-        self.log('ssh connection has completed successfully')
+        display.display('ssh connection has completed successfully', log_only=True)
 
     @ensure_connect
     def open_shell(self):
-        self.log('attempting to open shell to device')
+        display.display('attempting to open shell to device', log_only=True)
         self._shell = self.ssh.invoke_shell()
         self._shell.settimeout(self._play_context.timeout)
 
@@ -106,18 +111,18 @@ class Connection(_Connection):
             auth_pass = self._play_context.become_pass
             self._terminal.on_authorize(passwd=auth_pass)
 
-        self.log('shell successfully opened')
+        display.display('shell successfully opened', log_only=True)
         return (0, 'ok', '')
 
     def close(self):
-        self.log('closing connection')
+        display.display('closing connection', log_only=True)
         self.close_shell()
         super(Connection, self).close()
         self._connected = False
 
     def close_shell(self):
         """Closes the vty shell if the device supports multiplexing"""
-        self.log('closing shell on device')
+        display.display('closing shell on device', log_only=True)
         if self._shell:
             self._terminal.on_close_shell()
 
@@ -161,7 +166,7 @@ class Connection(_Connection):
                 return
             return self.receive(obj)
         except (socket.timeout, AttributeError) as exc:
-            self.log(traceback.format_exc())
+            display.display(traceback.format_exc(), log_only=True)
             raise AnsibleConnectionFailure("timeout trying to send command: %s" % command.strip())
 
     def _strip(self, data):
@@ -213,7 +218,7 @@ class Connection(_Connection):
 
     def alarm_handler(self, signum, frame):
         """Alarm handler raised in case of command timeout """
-        self.log('closing shell due to sigalarm')
+        display.display('closing shell due to sigalarm', log_only=True)
         self.close_shell()
 
     def exec_command(self, cmd):
