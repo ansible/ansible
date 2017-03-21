@@ -196,10 +196,10 @@ class TestGetConfig:
         assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', None, value_type='none') is None
 
     def test_value_type_path(self, cfgparser, user, cfg_file):
-        assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', '~/local', value_type='path') == os.path.join(user['home'], 'local')
-        assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', 'local', value_type='path') == 'local'
-        assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', 'local', value_type='path', expand_relative_paths=True) \
-                == os.path.join(cfg_file, 'local')
+        assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', '~/local', value_type='path', expand_relative_paths=False) \
+                 == os.path.join(user['home'], 'local')
+        assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', 'local', value_type='path', expand_relative_paths=False) == 'local'
+        assert constants.get_config(cfgparser, 'defaults', 'unknown', 'ANSIBLE_TEST_VAR', 'local', value_type='path') == os.path.join(cfg_file, 'local')
 
 # Need to implement tests for these
 #    def test_value_type_pathlist(self, cfgparser):

@@ -55,7 +55,7 @@ def shell_expand(path, expand_relative_paths=False):
             path = os.path.abspath(path)
     return path
 
-def get_config(p, section, key, env_var, default, value_type=None, expand_relative_paths=False):
+def get_config(p, section, key, env_var, default, value_type=None, expand_relative_paths=True):
     ''' return a configuration variable with casting
 
     :arg p: A ConfigParser object to look for the configuration in
@@ -197,11 +197,11 @@ MERGE_MULTIPLE_CLI_TAGS = get_config(p, DEFAULTS, 'merge_multiple_cli_tags', 'AN
 DEFAULT_DEBUG             = get_config(p, DEFAULTS, 'debug',            'ANSIBLE_DEBUG',            False, value_type='boolean')
 DEFAULT_VERBOSITY         = get_config(p, DEFAULTS, 'verbosity',        'ANSIBLE_VERBOSITY',        0, value_type='integer')
 DEFAULT_HOST_LIST         = get_config(p, DEFAULTS,'inventory', 'ANSIBLE_INVENTORY', DEPRECATED_HOST_LIST, value_type='path')
-DEFAULT_ROLES_PATH        = get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       '/etc/ansible/roles', value_type='pathlist', expand_relative_paths=True)
+DEFAULT_ROLES_PATH        = get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       '/etc/ansible/roles', value_type='pathlist')
 DEFAULT_REMOTE_TMP        = get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '~/.ansible/tmp')
 DEFAULT_LOCAL_TMP         = get_config(p, DEFAULTS, 'local_tmp',        'ANSIBLE_LOCAL_TEMP',      '~/.ansible/tmp', value_type='tmppath')
 DEFAULT_MODULE_NAME       = get_config(p, DEFAULTS, 'module_name',      None,                       'command')
-DEFAULT_FACT_PATH         = get_config(p, DEFAULTS, 'fact_path',        'ANSIBLE_FACT_PATH', None, value_type='path')
+DEFAULT_FACT_PATH         = get_config(p, DEFAULTS, 'fact_path',        'ANSIBLE_FACT_PATH', None, value_type='path', expand_relative_paths=False)
 DEFAULT_FORKS             = get_config(p, DEFAULTS, 'forks',            'ANSIBLE_FORKS',            5, value_type='integer')
 DEFAULT_MODULE_ARGS       = get_config(p, DEFAULTS, 'module_args',      'ANSIBLE_MODULE_ARGS',      '')
 DEFAULT_MODULE_LANG       = get_config(p, DEFAULTS, 'module_lang',      'ANSIBLE_MODULE_LANG',      os.getenv('LANG', 'en_US.UTF-8'))
@@ -211,10 +211,10 @@ DEFAULT_TIMEOUT           = get_config(p, DEFAULTS, 'timeout',          'ANSIBLE
 DEFAULT_POLL_INTERVAL     = get_config(p, DEFAULTS, 'poll_interval',    'ANSIBLE_POLL_INTERVAL',    15, value_type='integer')
 DEFAULT_REMOTE_USER       = get_config(p, DEFAULTS, 'remote_user',      'ANSIBLE_REMOTE_USER',      None)
 DEFAULT_ASK_PASS          = get_config(p, DEFAULTS, 'ask_pass',  'ANSIBLE_ASK_PASS',    False, value_type='boolean')
-DEFAULT_PRIVATE_KEY_FILE  = get_config(p, DEFAULTS, 'private_key_file', 'ANSIBLE_PRIVATE_KEY_FILE', None, value_type='path')
+DEFAULT_PRIVATE_KEY_FILE  = get_config(p, DEFAULTS, 'private_key_file', 'ANSIBLE_PRIVATE_KEY_FILE', None, value_type='path', expand_relative_paths=False)
 DEFAULT_REMOTE_PORT       = get_config(p, DEFAULTS, 'remote_port',      'ANSIBLE_REMOTE_PORT',      None, value_type='integer')
 DEFAULT_ASK_VAULT_PASS    = get_config(p, DEFAULTS, 'ask_vault_pass',    'ANSIBLE_ASK_VAULT_PASS',    False, value_type='boolean')
-DEFAULT_VAULT_PASSWORD_FILE = get_config(p, DEFAULTS, 'vault_password_file', 'ANSIBLE_VAULT_PASSWORD_FILE', None, value_type='path')
+DEFAULT_VAULT_PASSWORD_FILE = get_config(p, DEFAULTS, 'vault_password_file', 'ANSIBLE_VAULT_PASSWORD_FILE', None, value_type='path', expand_relative_paths=False)
 DEFAULT_TRANSPORT         = get_config(p, DEFAULTS, 'transport',        'ANSIBLE_TRANSPORT',        'smart')
 DEFAULT_SCP_IF_SSH        = get_config(p, 'ssh_connection', 'scp_if_ssh',       'ANSIBLE_SCP_IF_SSH',       'smart')
 DEFAULT_SFTP_BATCH_MODE   = get_config(p, 'ssh_connection', 'sftp_batch_mode', 'ANSIBLE_SFTP_BATCH_MODE', True, value_type='boolean')
@@ -326,7 +326,7 @@ COMMAND_WARNINGS               = get_config(p, DEFAULTS, 'command_warnings', 'AN
 DEFAULT_LOAD_CALLBACK_PLUGINS  = get_config(p, DEFAULTS, 'bin_ansible_callbacks', 'ANSIBLE_LOAD_CALLBACK_PLUGINS', False, value_type='boolean')
 DEFAULT_CALLBACK_WHITELIST     = get_config(p, DEFAULTS, 'callback_whitelist', 'ANSIBLE_CALLBACK_WHITELIST', [], value_type='list')
 RETRY_FILES_ENABLED            = get_config(p, DEFAULTS, 'retry_files_enabled', 'ANSIBLE_RETRY_FILES_ENABLED', True, value_type='boolean')
-RETRY_FILES_SAVE_PATH          = get_config(p, DEFAULTS, 'retry_files_save_path', 'ANSIBLE_RETRY_FILES_SAVE_PATH', None, value_type='path')
+RETRY_FILES_SAVE_PATH          = get_config(p, DEFAULTS, 'retry_files_save_path', 'ANSIBLE_RETRY_FILES_SAVE_PATH', None, value_type='path', expand_relative_paths=False)
 DEFAULT_NULL_REPRESENTATION    = get_config(p, DEFAULTS, 'null_representation', 'ANSIBLE_NULL_REPRESENTATION', None, value_type='none')
 DISPLAY_ARGS_TO_STDOUT         = get_config(p, DEFAULTS, 'display_args_to_stdout', 'ANSIBLE_DISPLAY_ARGS_TO_STDOUT', False, value_type='boolean')
 MAX_FILE_SIZE_FOR_DIFF         = get_config(p, DEFAULTS, 'max_diff_size', 'ANSIBLE_MAX_DIFF_SIZE', 1024*1024, value_type='integer')
@@ -367,7 +367,7 @@ GALAXY_SERVER                  = get_config(p, 'galaxy', 'server', 'ANSIBLE_GALA
 GALAXY_IGNORE_CERTS            = get_config(p, 'galaxy', 'ignore_certs', 'ANSIBLE_GALAXY_IGNORE', False, value_type='boolean')
 # this can be configured to blacklist SCMS but cannot add new ones unless the code is also updated
 GALAXY_SCMS                    = get_config(p, 'galaxy', 'scms', 'ANSIBLE_GALAXY_SCMS', 'git, hg', value_type='list')
-GALAXY_ROLE_SKELETON = get_config(p, 'galaxy', 'role_skeleton', 'ANSIBLE_GALAXY_ROLE_SKELETON', None, value_type='path')
+GALAXY_ROLE_SKELETON = get_config(p, 'galaxy', 'role_skeleton', 'ANSIBLE_GALAXY_ROLE_SKELETON', None, value_type='path', expand_relative_paths=False)
 GALAXY_ROLE_SKELETON_IGNORE = get_config(p, 'galaxy', 'role_skeleton_ignore', 'ANSIBLE_GALAXY_ROLE_SKELETON_IGNORE', ['^.git$', '^.*/.git_keep$'], value_type='list')
 
 STRING_TYPE_FILTERS = get_config(p, 'jinja2', 'dont_type_filters', 'ANSIBLE_STRING_TYPE_FILTERS', ['string', 'to_json', 'to_nice_json', 'to_yaml', 'ppretty', 'json'], value_type='list' )
