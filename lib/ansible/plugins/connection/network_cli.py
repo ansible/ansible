@@ -24,6 +24,7 @@ import json
 import signal
 import datetime
 import traceback
+import logging
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.six.moves import StringIO
@@ -31,12 +32,7 @@ from ansible.plugins import terminal_loader
 from ansible.plugins.connection import ensure_connect
 from ansible.plugins.connection.paramiko_ssh import Connection as _Connection
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
+logger = logging.getLogger('ansible.network_cli')
 
 class Connection(_Connection):
     ''' CLI (shell) SSH connections on Paramiko '''
@@ -54,9 +50,17 @@ class Connection(_Connection):
         self._last_response = None
         self._history = list()
 
+        if play_context.verbosity > 3:
+            logging.getLogger('paramiko').setLevel(logging.DEBUG)
+
+    def log(self, msg):
+        msg = 'h=%s u=%s %s' % (self._play_context.remote_addr, self._play_context.remote_user, msg)
+        logger.debug(msg)
+
     def update_play_context(self, play_context):
         """Updates the play context information for the connection"""
-        display.vvvv('updating play_context for connection', self._play_context.remote_addr)
+
+        self.log('updating play_context for connection')
 
         if self._play_context.become is False and play_context.become is True:
             auth_pass = play_context.become_pass
@@ -71,7 +75,7 @@ class Connection(_Connection):
         """Connections to the device and sets the terminal type"""
         super(Connection, self)._connect()
 
-        display.vvvv('ssh connection done, setting terminal', self._play_context.remote_addr)
+        self.log('ssh connection done, setting terminal')
 
         network_os = self._play_context.network_os
         if not network_os:
@@ -85,11 +89,11 @@ class Connection(_Connection):
             raise AnsibleConnectionFailure('network os %s is not supported' % network_os)
 
         self._connected = True
-        display.vvvv('ssh connection has completed successfully', self._play_context.remote_addr)
+        self.log('ssh connection has completed successfully')
 
     @ensure_connect
     def open_shell(self):
-        display.vvvv('attempting to open shell to device', self._play_context.remote_addr)
+        self.log('attempting to open shell to device')
         self._shell = self.ssh.invoke_shell()
         self._shell.settimeout(self._play_context.timeout)
 
@@ -102,18 +106,18 @@ class Connection(_Connection):
             auth_pass = self._play_context.become_pass
             self._terminal.on_authorize(passwd=auth_pass)
 
-        display.vvvv('shell successfully opened', self._play_context.remote_addr)
+        self.log('shell successfully opened')
         return (0, 'ok', '')
 
     def close(self):
-        display.vvvv('closing connection', self._play_context.remote_addr)
+        self.log('closing connection')
         self.close_shell()
         super(Connection, self).close()
         self._connected = False
 
     def close_shell(self):
         """Closes the vty shell if the device supports multiplexing"""
-        display.vvvv('closing shell on device', self._play_context.remote_addr)
+        self.log('closing shell on device')
         if self._shell:
             self._terminal.on_close_shell()
 
@@ -157,7 +161,7 @@ class Connection(_Connection):
                 return
             return self.receive(obj)
         except (socket.timeout, AttributeError) as exc:
-            display.vvv(traceback.format_exc())
+            self.log(traceback.format_exc())
             raise AnsibleConnectionFailure("timeout trying to send command: %s" % command.strip())
 
     def _strip(self, data):
@@ -209,7 +213,7 @@ class Connection(_Connection):
 
     def alarm_handler(self, signum, frame):
         """Alarm handler raised in case of command timeout """
-        display.vvvv('closing shell due to sigalarm', self._play_context.remote_addr)
+        self.log('closing shell due to sigalarm')
         self.close_shell()
 
     def exec_command(self, cmd):
@@ -241,8 +245,6 @@ class Connection(_Connection):
             return self.open_shell()
         elif obj['command'] == 'prompt()':
             return (0, self._matched_prompt, '')
-        elif obj['command'] == 'history()':
-            return (0, self._history, '')
 
         try:
             if self._shell is None:
@@ -252,7 +254,6 @@ class Connection(_Connection):
 
         try:
             if not signal.getsignal(signal.SIGALRM):
-                display.debug('setting alarm handler in network_cli')
                 signal.signal(signal.SIGALRM, self.alarm_handler)
             signal.alarm(self._play_context.timeout)
             out = self.send(obj)

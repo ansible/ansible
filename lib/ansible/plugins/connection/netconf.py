@@ -23,6 +23,7 @@ import re
 import socket
 import json
 import signal
+import logging
 
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
@@ -37,11 +38,8 @@ try:
 except ImportError:
     raise AnsibleError("ncclient is not installed")
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+logger = logging.getLogger('ansible.netconf')
+logging.getLogger('ncclient').setLevel(logging.INFO)
 
 class Connection(ConnectionBase):
     ''' NetConf connections '''
@@ -53,13 +51,19 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
         self._network_os = self._play_context.network_os or 'default'
-        display.vvv('network_os is set to %s' % self._network_os, play_context.remote_addr)
+        self.log('network_os is set to %s' % self._network_os)
 
         self._manager = None
         self._connected = False
 
+    def log(self, msg):
+        msg = 'h=%s u=%s %s' % (self._play_context.remote_addr, self._play_context.remote_user, msg)
+        logger.debug(msg)
+
     def _connect(self):
         super(Connection, self)._connect()
+
+        self.log('ssh connection done, stating ncclient')
 
         allow_agent = True
         if self._play_context.password is not None:
@@ -68,6 +72,9 @@ class Connection(ConnectionBase):
         key_filename = None
         if self._play_context.private_key_file:
             key_filename = os.path.expanduser(self._play_context.private_key_file)
+
+        if not self._network_os:
+            raise AnsibleConnectionError('network_os must be set for netconf connections')
 
         try:
             self._manager = manager.connect(
@@ -87,6 +94,8 @@ class Connection(ConnectionBase):
 
         if not self._manager.connected:
             return (1, '', 'not connected')
+
+        self.log('ncclient manager object created successfully')
 
         self._connected = True
         return (0, self._manager.session_id, '')
