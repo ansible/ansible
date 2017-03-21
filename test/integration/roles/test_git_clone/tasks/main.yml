@@ -1,8 +1,0 @@
----
-- name: Clone a git repo with file named origin
-  git:
-    repo: "{{ github_clone_url }}"
-    dest: "{{ dest_dir }}"
-    remote: origin
-    update: no
-  register: status
