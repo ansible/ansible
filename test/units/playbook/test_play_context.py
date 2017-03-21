@@ -168,7 +168,8 @@ class TestPlayContext(unittest.TestCase):
         play_context.become_method = 'pbrun'
         exe="/bin/bash"
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable=exe)
-        self.assertEqual(cmd, """%s %s -u %s %s -c 'echo %s; %s'""" % (pbrun_exe, pbrun_flags, play_context.become_user, exe, play_context.success_key, default_cmd))
+        self.assertEqual(cmd, """%s %s -u %s %s -c 'echo %s; %s'""" % (pbrun_exe, pbrun_flags, play_context.become_user, exe,
+                                                                       play_context.success_key, default_cmd))
 
         play_context.become_method = 'pfexec'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
