@@ -526,6 +526,7 @@ def create_autoscaling_group(connection, module):
             suspend_processes(ag, module)
 
             if metrics_collection:
+                log.debug('Enabling metrics collection')
                 connection.enable_metrics_collection(
                     group_name,
                     metrics_granularity,
@@ -577,25 +578,28 @@ def create_autoscaling_group(connection, module):
             metrics_members = []
 
         enabled_metrics = getattr(as_group, 'enabled_metrics')
-        desired_metrics = [
-            EnabledMetric(m, metrics_granularity) for m in metrics_members
-        ]
+        enabled_metrics_members = [getattr(m, 'metric') for m in enabled_metrics]
 
-        if set(desired_metrics) != set(enabled_metrics):
-            changed = True
+        if set(metrics_members) != set(enabled_metrics_members):
+            if metrics_collection is not None:
+                changed = True
 
-            if metrics_collection:
-                connection.enable_metrics_collection(
-                    group_name,
-                    metrics_granularity,
-                    metrics_members
-                )
+                if metrics_collection:
+                    log.debug('Updating metrics collection')
+                    log.debug('Enabled metrics: %s' % enabled_metrics_members)
+                    log.debug('Desired metrics: %s' % metrics_members)
+                    connection.enable_metrics_collection(
+                        group_name,
+                        metrics_granularity,
+                        metrics_members
+                    )
 
-            else:
-                connection.disable_metrics_collection(
-                    group_name,
-                    metrics_members
-                )
+                else:
+                    log.debug('Disabling metrics collection')
+                    connection.disable_metrics_collection(
+                        group_name,
+                        metrics_members
+                    )
 
 
         if len(set_tags) > 0:
@@ -957,7 +961,7 @@ def main():
                 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'
             ]),
             suspend_processes=dict(type='list', default=[]),
-            metrics_collection=dict(type='bool', default=False),
+            metrics_collection=dict(type='bool'),
             metrics_granularity=dict(type='str', default='1Minute'),
             metrics_members=dict(type='list', default=[
                 'GroupMinSize',
