@@ -204,8 +204,14 @@ state:
   sample: "Add"
 '''
 
-# import cloudstack common
-from ansible.module_utils.cloudstack import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.cloudstack import (
+    AnsibleCloudStack,
+    CloudStackException,
+    cs_argument_spec,
+    cs_required_together,
+)
+
 
 class AnsibleCloudStackLBRuleMember(AnsibleCloudStack):
 
@@ -223,20 +229,21 @@ class AnsibleCloudStackLBRuleMember(AnsibleCloudStack):
             'privateport': 'private_port',
         }
 
-
     def get_rule(self):
-        args               = self._get_common_args()
-        args['name']       = self.module.params.get('name')
-        args['zoneid']     = self.get_zone(key='id') if self.module.params.get('zone') else None
+        args = self._get_common_args()
+        args.update({
+            'name': self.module.params.get('name'),
+            'zoneid': self.get_zone(key='id') if self.module.params.get('zone') else None,
+        })
         if self.module.params.get('ip_address'):
             args['publicipid'] = self.get_ip_address(key='id')
+
         rules = self.cs.listLoadBalancerRules(**args)
         if rules:
             if len(rules['loadbalancerrule']) > 1:
                 self.module.fail_json(msg="More than one rule having name %s. Please pass 'ip_address' as well." % args['name'])
             return rules['loadbalancerrule'][0]
         return None
-
 
     def _get_common_args(self):
         return {
@@ -245,13 +252,11 @@ class AnsibleCloudStackLBRuleMember(AnsibleCloudStack):
             'projectid': self.get_project(key='id'),
         }
 
-
     def _get_members_of_rule(self, rule):
         res = self.cs.listLoadBalancerRuleInstances(id=rule['id'])
         if 'errortext' in res:
             self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
         return res.get('loadbalancerruleinstance', [])
-
 
     def _ensure_members(self, operation):
         if operation not in ['add', 'remove']:
@@ -267,7 +272,7 @@ class AnsibleCloudStackLBRuleMember(AnsibleCloudStack):
 
         wanted_names = self.module.params.get('vms')
 
-        if operation =='add':
+        if operation == 'add':
             cs_func = self.cs.assignToLoadBalancerRule
             to_change = set(wanted_names) - set(existing.keys())
         else:
@@ -293,8 +298,8 @@ class AnsibleCloudStackLBRuleMember(AnsibleCloudStack):
 
         if to_change_ids and not self.module.check_mode:
             res = cs_func(
-                id = rule['id'],
-                virtualmachineids = to_change_ids,
+                id=rule['id'],
+                virtualmachineids=to_change_ids,
             )
             if 'errortext' in res:
                 self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
@@ -304,14 +309,11 @@ class AnsibleCloudStackLBRuleMember(AnsibleCloudStack):
                 rule = self.get_rule()
         return rule
 
-
     def add_members(self):
         return self._ensure_members('add')
 
-
     def remove_members(self):
         return self._ensure_members('remove')
-
 
     def get_result(self, rule):
         super(AnsibleCloudStackLBRuleMember, self).get_result(rule)
@@ -325,15 +327,15 @@ class AnsibleCloudStackLBRuleMember(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        name = dict(required=True),
-        ip_address = dict(default=None, aliases=['public_ip']),
-        vms = dict(required=True, aliases=['vm'], type='list'),
-        state = dict(choices=['present', 'absent'], default='present'),
-        zone = dict(default=None),
-        domain = dict(default=None),
-        project = dict(default=None),
-        account = dict(default=None),
-        poll_async = dict(type='bool', default=True),
+        name=dict(required=True),
+        ip_address=dict(aliases=['public_ip']),
+        vms=dict(required=True, aliases=['vm'], type='list'),
+        state=dict(choices=['present', 'absent'], default='present'),
+        zone=dict(),
+        domain=dict(),
+        project=dict(),
+        account=dict(),
+        poll_async=dict(type='bool', default=True),
     ))
 
     module = AnsibleModule(
@@ -358,7 +360,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()
