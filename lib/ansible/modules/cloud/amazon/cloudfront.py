@@ -298,11 +298,11 @@ class CloudFrontServiceManager:
         return None
 
     def validate_logging(self, logging, enabled, include_cookies, s3_bucket_name, s3_bucket_prefix, streaming):
-        if(logging is not None and (s3_bucket_name is not None or s3_bucket_prefix is not None)):
+        if(logging and (s3_bucket_name or s3_bucket_prefix)):
             self.module.fail_json(msg="Error: the logging and logging_* parameters are both defined. Please specify either logging or all logging_ parameters.")
         if(include_cookies and streaming):
             self.module.fail_json(msg="Error: logging_include_cookies has been defined for a streaming distribution")
-        if(logging is not None):
+        if(logging):
             return logging
         if(s3_bucket_name is None):
             return None
@@ -316,11 +316,11 @@ class CloudFrontServiceManager:
         return valid_logging
 
     def validate_origins(self, origins, origin_list):
-        if(origins is not None and origin_list is not None):
+        if(origins and origin_list):
             self.module.fail_json(msg="Error: the origins and origins_list parameters are both defined. Please specify only one.")
-        if(origins is not None):
+        if(origins):
             return origins
-        if(origin_list is not None):
+        if(origin_list):
             return {
                 "Quantity": len(origin_list),
                 "Items": origin_list
@@ -328,11 +328,11 @@ class CloudFrontServiceManager:
         return None
 
     def validate_trusted_signers(self, trusted_signers, enabled, trusted_signers_list):
-        if(trusted_signers is not None and trusted_signers_list is not None):
+        if(trusted_signers and trusted_signers_list):
             self.module.fail_json(msg="Error: the trusted_signers and trusted_signers_list are both defined. Please specify only one.")
-        if(trusted_signers is not None):
+        if(trusted_signers):
             return trusted_signers
-        if(trusted_signers_list is not None):
+        if(trusted_signers_list):
             return {
                 "Enabled": enabled,
                 "Quantity": len(trusted_signers_list),
@@ -341,11 +341,11 @@ class CloudFrontServiceManager:
         return None
 
     def validate_s3_origin(self, s3_origin, s3_origin_domain_name, s3_origin_origin_access_identity):
-        if(s3_origin is not None and s3_origin_domain_name is not None):
+        if(s3_origin and s3_origin_domain_name):
             self.module.fail_json(msg="Error: the s3_origin and s3_origin_domain_name parameters are both defined. Please specify only one.")
-        if(s3_origin is not None):
+        if(s3_origin):
             return s3_origin
-        if(s3_origin_domain_name is not None):
+        if(s3_origin_domain_namee):
             return {
                 "DomainName": s3_origin_domain_name,
                 "OriginAccessIdentity": s3_origin_origin_access_identity
@@ -632,7 +632,7 @@ def main():
                 }
         config["DefaultRootObject"] = default_root_object
         config["IsIPV6Enabled"] = is_ipv6_enabled
-        if(http_version is not None):
+        if(http_version):
             config["HttpVersion"] = http_version
         if(comment is None):
             config["Comment"] = "distribution created by ansible with datetime " + default_datetime_string
@@ -649,7 +649,7 @@ def main():
         else:
             config["TrustedSigners"] = valid_trusted_signers
         if(create_streaming_distribution):
-            if(valid_s3_origin is not None):
+            if(valid_s3_origin):
                 config["S3Origin"] = valid_s3_origin
             else:
                 config["S3Origin"] = {
@@ -658,16 +658,16 @@ def main():
                 }
     if(distribution or streaming_distribution):
         config["Enabled"] = enabled
-        if(valid_aliases is not None):
+        if(valid_aliases):
             config["Aliases"] = valid_aliases
-        if(valid_logging is not None):
+        if(valid_logging):
             config["Logging"] = valid_logging
-        if(price_class is not None):
+        if(price_class):
             config["PriceClass"] = price_class
-        if(comment is not None):
+        if(comment):
             config["Comment"] = comment
     if(create_distribution or create_streaming_distribution):
-        if(caller_reference is not None):
+        if(caller_reference):
             config["CallerReference"] = caller_reference
         else:
             config["CallerReference"] = default_datetime_string
