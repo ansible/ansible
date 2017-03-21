@@ -2449,6 +2449,7 @@ class LinuxNetwork(Network):
     platform = 'Linux'
     INTERFACE_TYPE = {
         '1': 'ether',
+        '32': 'infiniband',
         '512': 'ppp',
         '772': 'loopback',
         '65534': 'tunnel',
