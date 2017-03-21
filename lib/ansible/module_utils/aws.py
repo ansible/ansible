@@ -25,8 +25,10 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# boto3-only AWS modules.
-from ansible.module_utils.cloud import CloudRetry
+# boto3-only AWS modules live here.
+
+# don't duplicate code; bring this in from the old ec2.py util.
+from ansible.module_utils.ec2 import AWSRetry,AnsibleAWSError
 
 try:
     import boto3
@@ -34,31 +36,6 @@ try:
     HAS_BOTO3 = True
 except:
     HAS_BOTO3 = False
-
-class AnsibleAWSError(Exception):
-    pass
-
-class AWSRetry(CloudRetry):
-    base_class = botocore.exceptions.ClientError
-
-    @staticmethod
-    def status_code_from_exception(error):
-        return error.response['Error']['Code']
-
-    @staticmethod
-    def found(response_code):
-        # This list of failures is based on this API Reference
-        # http://docs.aws.amazon.com/AWSEC2/latest/APIReference/errors-overview.html
-        retry_on = [
-            'RequestLimitExceeded', 'Unavailable', 'ServiceUnavailable',
-            'InternalFailure', 'InternalError'
-        ]
-
-        not_found = re.compile(r'^\w+.NotFound')
-        if response_code in retry_on or not_found.search(response_code):
-            return True
-        else:
-            return False
 
 def boto_exception(err):
     '''generic error message handler'''
