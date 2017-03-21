@@ -24,7 +24,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: redhat_repository
+module: redhat_repositories
 short_description: Manage repositories with RHSM using the C(subscription-manager) command
 description:
   - Manage repositories with the Red Hat Subscription Management entitlement
@@ -34,7 +34,7 @@ notes:
   - In order to be able to enable repositories, a system will
     need first to be subscribed to RHSM. Use the
     C(redhat_subscription) Ansible module for that matter.
-version_added: "2.3"
+version_added: "2.4"
 requirements:
   - subscription-manager
 options:
