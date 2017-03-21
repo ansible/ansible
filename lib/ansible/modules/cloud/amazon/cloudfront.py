@@ -246,7 +246,7 @@ class CloudFrontServiceManager:
 
     def delete_streaming_distribution(self, streaming_distribution_id, e_tag):
         try:
-            func = partial(self.client.delete_streaming_distribution, Id = distribution_id,
+            func = partial(self.client.delete_streaming_distribution, Id = streaming_distribution_id,
                     IfMatch=e_tag)
             return self.paginated_response(func)
         except Exception as e:
@@ -358,9 +358,9 @@ class CloudFrontServiceManager:
         #TODO:
         return None
 
-    def validate_update_distribution_parameters(self, alias, distribution_id, config, e_tag):
+    def validate_update_or_delete_distribution_parameters(self, alias, distribution_id, config, e_tag):
         if(distribution_id is None and alias is None):
-            self.module.fail_json(msg="Error: distribution_id or alias must be specified for updating a distribution.")
+            self.module.fail_json(msg="Error: distribution_id or alias must be specified for updating or deleting a distribution.")
         if(distribution_id is None):
             distribution_id = self.cloudfront_facts_mgr.get_distribution_id_from_domain_name(alias)
         if(config is None):
@@ -369,16 +369,16 @@ class CloudFrontServiceManager:
             e_tag = self.cloudfront_facts_mgr.get_etag_from_distribution_id(distribution_id, False)
         return distribution_id, config, e_tag
  
-    def validate_update_streaming_distribution_parameters(self, alias, streaming_distribution_id, config, e_tag):
+    def validate_update_or_delete_streaming_distribution_parameters(self, alias, streaming_distribution_id, config, e_tag):
         if(streaming_distribution_id is None and alias is None):
-            self.module.fail_json(msg="Error: streaming_distribution_id or alias must be specified for updating a streaming distribution.")
+            self.module.fail_json(msg="Error: streaming_distribution_id or alias must be specified for updating or deleting a streaming distribution.")
         if(streaming_distribution_id is None):
             streaming_distribution_id = self.cloudfront_facts_mgr.get_distribution_id_from_domain_name(alias)
         if(config is None):
             config = self.cloudfront_facts_mgr.get_streaming_distribution_config(streaming_distribution_id)["StreamingDistributionConfig"]
         if(e_tag is None):
             e_tag = self.cloudfront_facts_mgr.get_etag_from_distribution_id(streaming_distribution_id, True)
-        return distribution_id, config, e_tag
+        return streaming_distribution_id, config, e_tag
 
 # TODO: validate delete parameters
 #       more validation of update parameters - CallerReference and S3Origin and Origins
@@ -563,11 +563,11 @@ def main():
         viewer_certificate_iam_certificate_id, viewer_certificate_acm_certificate_arn, viewer_certificate_ssl_support_method,
         viewer_certificate_minimum_protocol_version, viewer_certificate_certificate, viewer_certificate_certificate_source)
 
-    if(update_distribution):
-        distribution_id, config, e_tag = service_mgr.validate_update_distribution_parameters(alias, distribution_id, config, e_tag)
+    if(update_distribution or delete_distribution):
+        distribution_id, config, e_tag = service_mgr.validate_update_or_delete_distribution_parameters(alias, distribution_id, config, e_tag)
 
-    if(update_streaming_distribution):
-        distribution_id, config, e_tag = service_mgr.validate_update_streaming_distribution_parameters(alias, streaming_distribution_id, config, e_tag)
+    if(update_streaming_distribution or delete_streaming_distribution):
+        streaming_istribution_id, config, e_tag = service_mgr.validate_update_or_delete_streaming_distribution_parameters(alias, streaming_distribution_id, config, e_tag)
 
     default_datetime_string = generate_datetime_string()
 
