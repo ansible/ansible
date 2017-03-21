@@ -120,7 +120,6 @@ function getFirewallRule ($fwsettings) {
                         } else {
                             $diff=$true;
                             $difference+=@($fwsettings.$($fwsetting.Key));
-                            #$difference+=@("output:$rule.$fwsetting,fwsetting:$fwsettings.$fwsetting");
                         };
                     };
                 };
