@@ -163,14 +163,13 @@ options:
     description:
       - Enable group metrics collection for the auto scaling group.
     required: False
-    default: False
-    version_added: "2.3"
+    version_added: "2.4"
   metrics_granularity:
     description:
       - The granularity to associate with the metrics to collect. The only valid value is 1Minute.
     required: False
     default: "1Minute"
-    version_added: "2.3"
+    version_added: "2.4"
   metrics_members:
     description:
       - Group metrics to collect when collection is enabled.
@@ -184,7 +183,7 @@ options:
       - GroupStandbyInstances
       - GroupTerminatingInstances
       - GroupTotalInstances
-    version_added: "2.3"
+    version_added: "2.4"
 extends_documentation_fragment:
     - aws
     - ec2
