@@ -2546,6 +2546,8 @@ class LinuxNetwork(Network):
                     path = os.path.join(path, 'bonding', 'all_slaves_active')
                     if os.path.exists(path):
                         interfaces[device]['all_slaves_active'] = get_file_content(path) == '1'
+            if os.path.exists(os.path.join(path, 'bonding_slave')):
+                interfaces[device]['perm_macaddress'] = get_file_content(os.path.join(path, 'bonding_slave', 'perm_hwaddr'), default='')
             if os.path.exists(os.path.join(path,'device')):
                 interfaces[device]['pciid'] = os.path.basename(os.readlink(os.path.join(path,'device')))
             if os.path.exists(os.path.join(path, 'speed')):
