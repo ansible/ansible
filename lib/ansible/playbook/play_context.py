@@ -535,7 +535,7 @@ class PlayContext(Base):
             elif self.become_method == 'pbrun':
 
                 prompt='Password:'
-                becomecmd = '%s -b %s -u %s %s' % (exe, flags, self.become_user, '%s -c %s' % (executable, success_cmd))
+                becomecmd = '%s %s -u %s %s' % (exe, flags, self.become_user, '%s -c %s' % (executable, success_cmd))
 
 
             elif self.become_method == 'ksu':
