@@ -1463,14 +1463,14 @@ class LinuxHardware(Hardware):
                 d[key] = get_file_content(sysdir + "/device/" + key)
 
             sg_inq = self.module.get_bin_path('sg_inq')
-            device = "/dev/%s" % (block)
-            try:
+
+            if sg_inq:
+                device = "/dev/%s" % (block)
                 rc, drivedata, err = self.module.run_command([sg_inq, device])
-            except:
-                return
-            serial = re.search("Unit serial number:\s+(\w+)", drivedata)
-            if serial:
-                d['serial'] = serial.group(1)
+                if rc == 0:
+                    serial = re.search("Unit serial number:\s+(\w+)", drivedata)
+                    if serial:
+                        d['serial'] = serial.group(1)
 
             for key in ['vendor', 'model']:
                 d[key] = get_file_content(sysdir + "/device/" + key)
