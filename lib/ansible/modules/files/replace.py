@@ -52,6 +52,10 @@ options:
         U(http://docs.python.org/2/library/re.html).
         Uses multiline mode, which means C(^) and C($) match the beginning
         and end respectively of I(each line) of the file.
+      - Note that, as of ansible 2, short form tasks should have any escape
+        sequences backslash-escaped in order to prevent them being parsed
+        as string literal escapes. See the examples.
+
   replace:
     required: false
     description:
@@ -141,6 +145,15 @@ EXAMPLES = r"""
     regexp: '^(NameVirtualHost|Listen)\s+80\s*$'
     replace: '\1 127.0.0.1:8080'
     validate: '/usr/sbin/apache2ctl -f %s -t'
+
+- name: short form task (in ansible 2+) necessitates backslash-escaped sequences
+  replace: dest=/etc/hosts regexp='\\b(localhost)(\\d*)\\b' replace='\\1\\2.localdomain\\2 \\1\\2'
+
+- name: long form task does not
+  replace:
+    dest: /etc/hosts
+    regexp: '\b(localhost)(\d*)\b'
+    replace: '\1\2.localdomain\2 \1\2'
 """
 
 import os
