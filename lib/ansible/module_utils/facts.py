@@ -1462,10 +1462,10 @@ class LinuxHardware(Hardware):
             for key in ['vendor', 'model', 'sas_address', 'sas_device_handle']:
                 d[key] = get_file_content(sysdir + "/device/" + key)
 
-            sg_inq = module.get_bin_path('sg_inq') 
+            sg_inq = self.module.get_bin_path('sg_inq')
             device = "/dev/%s" % (block)
             try:
-                rc, drivedata, err = module.run_command([sg_inq, device])
+                rc, drivedata, err = self.module.run_command([sg_inq, device])
             except:
                 return
             serial = re.search("Unit serial number:\s+(\w+)", drivedata)
