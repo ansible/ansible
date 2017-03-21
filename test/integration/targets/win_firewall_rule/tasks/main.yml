@@ -154,7 +154,7 @@
     - add_firewall_rule_with_range_remoteip_again.failed == false
     - add_firewall_rule_with_range_remoteip_again.changed == false
 
-- name: Add firewall rule when remoteip is subnet
+- name: Add firewall rule when remoteip in CIDR notation
   win_firewall_rule:
     name: http
     enable: yes
@@ -166,7 +166,7 @@
     protocol: TCP
     force: yes
 
-- name: Add same firewall rule when remoteip is subnet (again)
+- name: Add same firewall rule when remoteip in CIDR notation (again)
   win_firewall_rule:
     name: http
     enable: yes
@@ -176,13 +176,43 @@
     action: allow
     direction: In
     protocol: TCP
-  register: add_firewall_rule_with_subnet_remoteip_again
+  register: add_firewall_rule_with_cidr_remoteip_again
 
-- name: Check that creating same firewall rule when remoteip is subnet succeeds without a change
+- name: Check that creating same firewall rule succeeds without a change when remoteip in CIDR notation
   assert:
     that:
-    - add_firewall_rule_with_subnet_remoteip_again.failed == false
-    - add_firewall_rule_with_subnet_remoteip_again.changed == false
+    - add_firewall_rule_with_cidr_remoteip_again.failed == false
+    - add_firewall_rule_with_cidr_remoteip_again.changed == false
+
+- name: Add firewall rule when remoteip contains a netmask
+  win_firewall_rule:
+    name: http
+    enable: yes
+    state: present
+    localport: 80
+    remoteip: 192.168.0.0/255.255.255.0
+    action: allow
+    direction: In
+    protocol: TCP
+    force: yes
+
+- name: Add same firewall rule when remoteip contains a netmask (again)
+  win_firewall_rule:
+    name: http
+    enable: yes
+    state: present
+    localport: 80
+    remoteip: 192.168.0.0/255.255.255.0
+    action: allow
+    direction: In
+    protocol: TCP
+  register: add_firewall_rule_remoteip_contains_netmask_again
+
+- name: Check that creating same firewall rule succeeds without a change when remoteip contains a netmask
+  assert:
+    that:
+    - add_firewall_rule_remoteip_contains_netmask_again.failed == false
+    - add_firewall_rule_remoteip_contains_netmask_again.changed == false
 
 - name: Add firewall rule when remoteip is IPv4
   win_firewall_rule:
