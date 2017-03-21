@@ -1435,6 +1435,20 @@ class LinuxHardware(Hardware):
         except OSError:
             return
 
+        devs_wwn = {}
+        try:
+            devs_by_id = os.listdir("/dev/disk/by-id")
+        except OSError:
+            pass
+        else:
+            for link_name in devs_by_id:
+                if link_name.startswith("wwn-"):
+                    try:
+                        wwn_link = os.readlink(os.path.join("/dev/disk/by-id", link_name))
+                    except OSError:
+                        continue
+                    devs_wwn[os.path.basename(wwn_link)] = link_name[4:]
+
         for block in block_devs:
             virtual = 1
             sysfs_no_links = 0
@@ -1466,6 +1480,9 @@ class LinuxHardware(Hardware):
                               ('support_discard','/queue/discard_granularity'),
                               ]:
                 d[key] = get_file_content(sysdir + test)
+
+            if diskname in devs_wwn:
+                d['wwn'] = devs_wwn[diskname]
 
             d['partitions'] = {}
             for folder in os.listdir(sysdir):
