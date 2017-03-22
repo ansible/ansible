@@ -42,6 +42,11 @@ options:
     description:
       - What message you wish to send.
     required: true
+  msg_format:
+    description:
+      - Message format.
+    default: plain
+    choices: [ "plain", "markdown", "html" ]
   token:
     description:
       - Token identifying your telegram bot.
@@ -69,9 +74,20 @@ msg:
   returned: success
   type: string
   sample: "Ansible task finished"
+telegram_error:
+  description: Error message gotten from Telegram API
+  returned: failure
+  type: string
+  sample: "Bad Request: message text is empty"
 """
 
-import urllib
+try:
+    from urllib import quote
+except ImportError:
+    from urllib.parse import quote
+
+import json
+
 
 def main():
 
@@ -79,15 +95,20 @@ def main():
         argument_spec = dict(
             token = dict(type='str',required=True,no_log=True),
             chat_id = dict(type='str',required=True,no_log=True),
+            msg_format = dict(type='str', required=False, default='plain',
+                              choices=['plain', 'markdown', 'html']),
             msg = dict(type='str',required=True)),
         supports_check_mode=True
     )
 
-    token = urllib.quote(module.params.get('token'))
-    chat_id = urllib.quote(module.params.get('chat_id'))
-    msg = urllib.quote(module.params.get('msg'))
+    token = quote(module.params.get('token'))
+    chat_id = quote(module.params.get('chat_id'))
+    msg_format = quote(module.params.get('msg_format'))
+    msg = quote(module.params.get('msg'))
 
     url = 'https://api.telegram.org/' + token + '/sendMessage?text=' + msg + '&chat_id=' + chat_id
+    if msg_format in ('markdown', 'html'):
+        url += '&parse_mode=' + msg_format
 
     if module.check_mode:
         module.exit_json(changed=False)
@@ -96,7 +117,9 @@ def main():
     if info['status'] == 200:
         module.exit_json(changed=True)
     else:
-        module.fail_json(msg="failed to send message, return status=%s" % str(info['status']))
+        body = json.loads(info['body'])
+        module.fail_json(msg="failed to send message, return status=%s" % str(info['status']), 
+                         telegram_error=body['description'])
 
 
 # import module snippets
