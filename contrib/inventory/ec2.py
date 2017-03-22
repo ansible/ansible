@@ -250,11 +250,11 @@ class Ec2Inventory(object):
         # Regions
         self.regions = []
         configRegions = config.get('ec2', 'regions')
-        configRegions_exclude = config.get('ec2', 'regions_exclude')
         if (configRegions == 'all'):
             if self.eucalyptus_host:
                 self.regions.append(boto.connect_euca(host=self.eucalyptus_host).region.name, **self.credentials)
             else:
+                configRegions_exclude = config.get('ec2', 'regions_exclude')
                 for regionInfo in ec2.regions():
                     if regionInfo.name not in configRegions_exclude:
                         self.regions.append(regionInfo.name)
