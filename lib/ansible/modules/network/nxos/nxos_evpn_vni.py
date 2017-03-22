@@ -317,9 +317,8 @@ def main():
         if commands:
             if (existing.get('route_distinguisher') and
                     proposed.get('route_distinguisher')):
-                if (existing['route_distinguisher'] != proposed[
-                    'route_distinguisher'] and
-                    proposed['route_distinguisher'] != 'default'):
+                if (existing['route_distinguisher'] != proposed['route_distinguisher'] and
+                        proposed['route_distinguisher'] != 'default'):
                     WARNINGS.append('EVPN RD {0} was automatically removed. '
                                          'It is highly recommended to use a task '
                                          '(with default as value) to explicitly '
