@@ -82,8 +82,10 @@ commands:
     - string
 """
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import exec_command
 from ansible.module_utils.ios import load_config, run_commands
 from ansible.module_utils.ios import ios_argument_spec, check_args
+import re
 
 def map_obj_to_commands(updates, module):
     commands = list()
@@ -104,10 +106,17 @@ def map_obj_to_commands(updates, module):
     return commands
 
 def map_config_to_obj(module):
-    output = run_commands(module, ['show banner %s' % module.params['banner']])
+    rc, out, err = exec_command(module, 'show banner %s' % module.params['banner'])
+    if rc == 0:
+        output = out
+    else:
+        rc, out, err = exec_command(module,
+                                    'show running-config | begin banner %s'
+                                    % module.params['banner'])
+        output = re.search('\^C(.*)\^C', out, re.S).group(1).strip()
     obj = {'banner': module.params['banner'], 'state': 'absent'}
     if output:
-        obj['text'] = output[0]
+        obj['text'] = output
         obj['state'] = 'present'
     return obj
 
