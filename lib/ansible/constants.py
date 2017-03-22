@@ -330,9 +330,8 @@ DEFAULT_STRATEGY_PLUGIN_PATH   = get_config(p, DEFAULTS, 'strategy_plugins', 'AN
                                             '~/.ansible/plugins/strategy:/usr/share/ansible/plugins/strategy', value_type='pathlist')
 
 NETWORK_GROUP_MODULES          = get_config(p, DEFAULTS, 'network_group_modules','NETWORK_GROUP_MODULES', ['eos', 'nxos', 'ios', 'iosxr', 'junos',
-                                                                                                           'vyos', 'sros'],
+                                                                                                           'vyos', 'sros', 'dellos9', 'dellos10'],
                                             value_type='list')
-
 DEFAULT_STRATEGY               = get_config(p, DEFAULTS, 'strategy',           'ANSIBLE_STRATEGY', 'linear')
 DEFAULT_STDOUT_CALLBACK        = get_config(p, DEFAULTS, 'stdout_callback',    'ANSIBLE_STDOUT_CALLBACK', 'default')
 # cache

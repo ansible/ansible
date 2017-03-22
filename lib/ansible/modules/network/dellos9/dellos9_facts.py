@@ -19,42 +19,41 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
-
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'core',
+                    'version': '1.0'}
 
 DOCUMENTATION = """
 ---
 module: dellos9_facts
 version_added: "2.2"
 author: "Dhivya P (@dhivyap)"
-short_description: Collect facts from remote devices running Dell EMC Networking OS9
+short_description: Collect facts from remote devices running Dell OS9
 description:
   - Collects a base set of device facts from a remote device that
-    is running OS9.  This module prepends all of the
+    is running Dell OS9.  This module prepends all of the
     base network fact keys with C(ansible_net_<fact>).  The facts
-    module always collects  a base set of facts from the device
+    module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.
 extends_documentation_fragment: dellos9
 options:
   gather_subset:
     description:
-      - When supplied, this argument restricts the facts collected
+      - When supplied, this argument will restrict the facts collected
         to a given subset.  Possible values for this argument include
-        all, hardware, config, and interfaces.  You can specify a list of
-        values to include a larger subset.  You can also use values
-        with an initial M(!) to specify that a specific subset should
+        all, hardware, config, and interfaces.  Can specify a list of
+        values to include a larger subset.  Values can also be used
+        with an initial C(M(!)) to specify that a specific subset should
         not be collected.
     required: false
     default: '!config'
 notes:
-  - This module requires OS9 version 9.10.0.1P13 or above.
+  - This module requires Dell OS9 version 9.10.0.1P13 or above.
 
-  - This module requires an increase of the SSH connection rate limit.
+  - This module requires to increase the ssh connection rate limit.
     Use the following command I(ip ssh connection-rate-limit 60)
-    to configure the same. This can be also be done with the M(dellos9_config) module.
+    to configure the same. This can be done via M(dellos9_config) module
+    as well.
 """
 
 EXAMPLES = """
@@ -75,104 +74,115 @@ EXAMPLES = """
 
 RETURN = """
 ansible_net_gather_subset:
-  description: The list of fact subsets collected from the device.
-  returned: Always.
+  description: The list of fact subsets collected from the device
+  returned: always
   type: list
 
 # default
 ansible_net_model:
-  description: The model name returned from the device.
-  returned: Always.
+  description: The model name returned from the device
+  returned: always
   type: str
 ansible_net_serialnum:
-  description: The serial number of the remote device.
-  returned: Always.
+  description: The serial number of the remote device
+  returned: always
   type: str
 ansible_net_version:
-  description: The operating system version running on the remote device.
-  returned: Always.
+  description: The operating system version running on the remote device
+  returned: always
   type: str
 ansible_net_hostname:
-  description: The configured hostname of the device.
-  returned: Always.
+  description: The configured hostname of the device
+  returned: always
   type: string
 ansible_net_image:
-  description: The image file the device is running.
-  returned: Always.
+  description: The image file the device is running
+  returned: always
   type: string
 
 # hardware
 ansible_net_filesystems:
-  description: All file system names available on the device.
-  returned: When hardware is configured.
+  description: All file system names available on the device
+  returned: when hardware is configured
   type: list
 ansible_net_memfree_mb:
-  description: The available free memory on the remote device in MB.
-  returned: When hardware is configured.
+  description: The available free memory on the remote device in Mb
+  returned: when hardware is configured
   type: int
 ansible_net_memtotal_mb:
-  description: The total memory on the remote device in MB.
-  returned: When hardware is configured.
+  description: The total memory on the remote device in Mb
+  returned: when hardware is configured
   type: int
 
 # config
 ansible_net_config:
-  description: The current active config from the device.
-  returned: When config is configured.
+  description: The current active config from the device
+  returned: when config is configured
   type: str
 
 # interfaces
 ansible_net_all_ipv4_addresses:
-  description: All IPv4 addresses configured on the device.
-  returned: When interfaces is configured.
+  description: All IPv4 addresses configured on the device
+  returned: when interfaces is configured
   type: list
 ansible_net_all_ipv6_addresses:
-  description: All IPv6 addresses configured on the device.
-  returned: When interfaces is configured.
+  description: All IPv6 addresses configured on the device
+  returned: when interfaces is configured
   type: list
 ansible_net_interfaces:
-  description: A hash of all interfaces running on the system.
-  returned: When interfaces is configured.
+  description: A hash of all interfaces running on the system
+  returned: when interfaces is configured
   type: dict
 ansible_net_neighbors:
   description: The list of LLDP neighbors from the remote device
-  returned: When interfaces is configured.
+  returned: when interfaces is configured
   type: dict
 """
 import re
 import itertools
 
-from ansible.module_utils.netcli import CommandRunner
-from ansible.module_utils.network import NetworkModule
-import ansible.module_utils.dellos9
+from ansible.module_utils.dellos9 import run_commands
+from ansible.module_utils.dellos9 import dellos9_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.six.moves import zip
 
 
 class FactsBase(object):
 
-    def __init__(self, runner):
-        self.runner = runner
-        self.facts = dict()
+    COMMANDS = list()
 
-        self.commands()
+    def __init__(self, module):
+        self.module = module
+        self.facts = dict()
+        self.responses = None
+
+    def populate(self):
+        self.responses = run_commands(self.module, self.COMMANDS, check_rc=False)
+
+    def run(self, cmd):
+        return run_commands(self.module, cmd, check_rc=False)
 
 
 class Default(FactsBase):
 
-    def commands(self):
-        self.runner.add_command('show version')
-        self.runner.add_command('show inventory')
-        self.runner.add_command('show running-config | grep hostname')
+    COMMANDS = [
+        'show version',
+        'show inventory',
+        'show running-config | grep hostname'
+    ]
 
     def populate(self):
-        data = self.runner.get_command('show version')
+        super(Default, self).populate()
+        data = self.responses[0]
         self.facts['version'] = self.parse_version(data)
         self.facts['model'] = self.parse_model(data)
         self.facts['image'] = self.parse_image(data)
 
-        data = self.runner.get_command('show inventory')
+        data = self.responses[1]
         self.facts['serialnum'] = self.parse_serialnum(data)
 
-        data = self.runner.get_command('show running-config | grep hostname')
+        data = self.responses[2]
         self.facts['hostname'] = self.parse_hostname(data)
 
     def parse_version(self, data):
@@ -206,15 +216,17 @@ class Default(FactsBase):
 
 class Hardware(FactsBase):
 
-    def commands(self):
-        self.runner.add_command('show file-systems')
-        self.runner.add_command('show memory | except Processor')
+    COMMANDS = [
+        'show file-systems',
+        'show memory | except Processor'
+    ]
 
     def populate(self):
-        data = self.runner.get_command('show file-systems')
+        super(Hardware, self).populate()
+        data = self.responses[0]
         self.facts['filesystems'] = self.parse_filesystems(data)
 
-        data = self.runner.get_command('show memory | except Processor')
+        data = self.responses[1]
         match = re.findall('\s(\d+)\s', data)
         if match:
             self.facts['memtotal_mb'] = int(match[0]) / 1024
@@ -226,25 +238,28 @@ class Hardware(FactsBase):
 
 class Config(FactsBase):
 
-    def commands(self):
-        self.runner.add_command('show running-config')
+    COMMANDS = ['show running-config']
 
     def populate(self):
-        self.facts['config'] = self.runner.get_command('show running-config')
+        super(Config, self).populate()
+        self.facts['config'] = self.responses[0]
 
 
 class Interfaces(FactsBase):
 
-    def commands(self):
-        self.runner.add_command('show interfaces')
-        self.runner.add_command('show ipv6 interface')
-        self.runner.add_command('show lldp neighbors detail')
+    COMMANDS = [
+        'show interfaces',
+        'show ipv6 interface',
+        'show lldp neighbors detail',
+        'show inventory'
+    ]
 
     def populate(self):
+        super(Interfaces, self).populate()
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        data = self.runner.get_command('show interfaces')
+        data = self.responses[0]
         interfaces = self.parse_interfaces(data)
 
         for key in interfaces.keys():
@@ -261,14 +276,14 @@ class Interfaces(FactsBase):
 
         self.facts['interfaces'] = self.populate_interfaces(interfaces)
 
-        data = self.runner.get_command('show ipv6 interface')
+        data = self.responses[1]
         if len(data) > 0:
             data = self.parse_ipv6_interfaces(data)
             self.populate_ipv6_interfaces(data)
 
-        data = self.runner.get_command('show inventory')
+        data = self.responses[3]
         if 'LLDP' in self.get_protocol_list(data):
-            neighbors = self.runner.get_command('show lldp neighbors detail')
+            neighbors = self.responses[2]
             self.facts['neighbors'] = self.parse_neighbors(neighbors)
 
     def get_protocol_list(self, data):
@@ -499,11 +514,16 @@ VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
 
 def main():
-    spec = dict(
+    """main entry point for module execution
+    """
+    argument_spec = dict(
         gather_subset=dict(default=['!config'], type='list')
     )
 
-    module = NetworkModule(argument_spec=spec, supports_check_mode=True)
+    argument_spec.update(dellos9_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     gather_subset = module.params['gather_subset']
 
@@ -541,28 +561,23 @@ def main():
     facts = dict()
     facts['gather_subset'] = list(runable_subsets)
 
-    runner = CommandRunner(module)
-
     instances = list()
     for key in runable_subsets:
-        runs = FACT_SUBSETS[key](runner)
-        instances.append(runs)
+        instances.append(FACT_SUBSETS[key](module))
 
-    runner.run()
-
-    try:
-        for inst in instances:
-            inst.populate()
-            facts.update(inst.facts)
-    except Exception:
-        module.exit_json(out=module.from_json(runner.items))
+    for inst in instances:
+        inst.populate()
+        facts.update(inst.facts)
 
     ansible_facts = dict()
-    for key, value in facts.items():
+    for key, value in iteritems(facts):
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 
-    module.exit_json(ansible_facts=ansible_facts)
+    warnings = list()
+    check_args(module, warnings)
+
+    module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
 
 if __name__ == '__main__':
