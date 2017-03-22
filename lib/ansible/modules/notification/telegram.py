@@ -47,6 +47,7 @@ options:
       - Message format.
     default: plain
     choices: [ "plain", "markdown", "html" ]
+    version_added: "2.4"
   token:
     description:
       - Token identifying your telegram bot.
@@ -92,12 +93,12 @@ import json
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            token = dict(type='str',required=True,no_log=True),
-            chat_id = dict(type='str',required=True,no_log=True),
-            msg_format = dict(type='str', required=False, default='plain',
-                              choices=['plain', 'markdown', 'html']),
-            msg = dict(type='str',required=True)),
+        argument_spec=dict(
+            token=dict(type='str', required=True, no_log=True),
+            chat_id=dict(type='str', required=True, no_log=True),
+            msg_format=dict(type='str', required=False, default='plain',
+                            choices=['plain', 'markdown', 'html']),
+            msg=dict(type='str', required=True)),
         supports_check_mode=True
     )
 
@@ -106,7 +107,8 @@ def main():
     msg_format = quote(module.params.get('msg_format'))
     msg = quote(module.params.get('msg'))
 
-    url = 'https://api.telegram.org/' + token + '/sendMessage?text=' + msg + '&chat_id=' + chat_id
+    url = 'https://api.telegram.org/' + token + \
+        '/sendMessage?text=' + msg + '&chat_id=' + chat_id
     if msg_format in ('markdown', 'html'):
         url += '&parse_mode=' + msg_format
 
@@ -118,7 +120,7 @@ def main():
         module.exit_json(changed=True)
     else:
         body = json.loads(info['body'])
-        module.fail_json(msg="failed to send message, return status=%s" % str(info['status']), 
+        module.fail_json(msg="failed to send message, return status=%s" % str(info['status']),
                          telegram_error=body['description'])
 
 
