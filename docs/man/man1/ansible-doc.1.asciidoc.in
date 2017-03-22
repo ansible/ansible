@@ -7,19 +7,19 @@ ansible-doc(1)
 
 NAME
 ----
-ansible-doc - show documentation on Ansible modules
+ansible-doc - show documentation on Ansible plugins
 
 
 SYNOPSIS
 --------
-ansible-doc [-M module_path] [-l] [-s] [module...]
+ansible-doc [-M plugin_path] [-l] [-s] [-t <type>] [plugin...]
 
 
 DESCRIPTION
 -----------
 
 *ansible-doc* displays information on modules installed in Ansible
-libraries. It displays a terse listing of modules and their short
+libraries. It displays a terse listing of plugins and their short
 descriptions, provides a printout of their DOCUMENTATION strings,
 and it can create a short "snippet" which can be pasted into a
 playbook.
@@ -28,32 +28,38 @@ playbook.
 OPTIONS
 -------
 
-*-M* 'DIRECTORY', *--module-path=*'DIRECTORY'::
+*-M* 'DIRECTORY', *--plugin-path=*'DIRECTORY'::
 
-the 'DIRECTORY' search path to load modules from. The default is
-'/usr/share/ansible'. This can also be set with the ANSIBLE_LIBRARY
-environment variable.
+The 'DIRECTORY' search path to load plugins from.
+If not specified Ansbile uses it's normal search path and configuration.
 
 *-s*, *--snippet=*::
 
-Produce a snippet which can be copied into a playbook for modification, like
-a kind of task template.
+Produce a snippet which can be copied into a playbook for modification, like a kind of task template.
 
 *-l*, *--list=*::
 
-Produce a terse listing of modules and a short description of each.
+Produce a terse listing of plugins and a short description of each.
 
+*-t*, *--type=*::
+
+Specify the type of plugin to target, default is 'module'.
+Other choices are 'cache', 'callback', 'connection', 'lookup' and 'strategy'.
 
 ENVIRONMENT
 -----------
 
-ANSIBLE_LIBRARY -- Override the default ansible module library path
+ANSIBLE_CONFIG				-- Configuration file to use
+ANSIBLE_LIBRARY 			-- Override the default ansible module library path
+ANSIBLE_CACHE_PLUGINS 		-- Override the default ansible cache plugin path
+ANSIBLE_CALLBACK_PLUGINS 	-- Override the default ansible callback plugin path
+ANSIBLE_CONNECTION_PLUGINS 	-- Override the default ansible connection plugin path
+ANSIBLE_LOOKUP_PLUGINS 		-- Override the default ansible lookup plugin path
+ANSIBLE_STRATEGY_PLUGINS 	-- Override the default ansible strategy plugin path
 
 
 FILES
 -----
-
-/usr/share/ansible/ -- Default module library
 
 /etc/ansible/ansible.cfg -- Config file, used if present
 
@@ -64,8 +70,7 @@ FILES
 AUTHOR
 ------
 
-ansible-doc was originally written by Jan-Piet Mens. See the AUTHORS file
-for a complete list of contributors.
+ansible-doc was originally written by Jan-Piet Mens. See the AUTHORS file for a complete list of contributors.
 
 
 COPYRIGHT
