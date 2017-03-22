@@ -569,7 +569,7 @@ things gets stored in a temporary file until ansible exits and cleans up after
 itself.  The default location is a subdirectory of the user's home directory.
 If you'd like to change that, you can do so by altering this setting::
 
-    local_tmp = $HOME/.ansible/tmp
+    local_tmp = ~/.ansible/tmp
 
 Ansible will then choose a random directory name inside this location.
 
@@ -1105,7 +1105,7 @@ This is the base directory of the ControlPath sockets.
 It is the ``%(directory)s`` part of the ``control_path`` option.
 This defaults to::
 
-    control_path_dir=$HOME/.ansible/cp
+    control_path_dir=~/.ansible/cp
 
 .. _scp_if_ssh:
 
