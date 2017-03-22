@@ -55,7 +55,8 @@ class VaultCLI(CLI):
 
         self.parser = CLI.base_parser(
             vault_opts=True,
-            usage = "usage: %%prog [%s] [--help] [options] vaultfile.yml" % "|".join(self.VALID_ACTIONS),
+            usage = "usage: %%prog [%s] [options] [vaultfile.yml]" % "|".join(self.VALID_ACTIONS),
+            desc = "encryption/decryption utility for Ansbile data files",
             epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
 

@@ -46,7 +46,7 @@ except ImportError:
 ########################################################
 
 class AdHocCLI(CLI):
-    ''' code behind ansible ad-hoc cli'''
+    ''' Ad-hoc Ansible allows you to define and run a single task 'playbook' against a set of hosts '''
 
     def parse(self):
         ''' create an options parser for bin/ansible '''
@@ -63,6 +63,8 @@ class AdHocCLI(CLI):
             vault_opts=True,
             fork_opts=True,
             module_opts=True,
+            desc="Define and run a single task 'playbook' against a set of hosts",
+            epilog="Some modules do not make sense in Ad-Hoc (include, meta, etc)",
         )
 
         # options unique to ansible ad-hoc
@@ -92,7 +94,7 @@ class AdHocCLI(CLI):
         )
 
     def run(self):
-        ''' use Runner lib to do SSH things '''
+        ''' create and execute the single task playbook '''
 
         super(AdHocCLI, self).run()
 
