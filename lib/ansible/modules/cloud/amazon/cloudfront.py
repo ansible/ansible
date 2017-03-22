@@ -283,14 +283,12 @@ class CloudFrontServiceManager:
             loop = args['NextToken'] is not None
         return results
 
-    def validate_aliases(self, aliases, alias_list, alias):
-        if(sum(map(bool, [aliases, alias_list, alias])) > 1 ):
-            self.module.fail_json(msg="Error: more than one of aliases, alias_list and alias defined. Please specify only one.")
-        if(alias):
-            alias_list = [ alias ]
-        if(aliases):
-            return aliases
-        if(alias_list):
+    def validate_aliases(self, aliases, alias):
+        if sum(map(bool, [aliases, alias])) > 1:
+            self.module.fail_json(msg="Error: both aliases and alias are defined. Please specify only one.")
+        if alias:
+            aliases = [ alias ]
+        if aliases:
             return {
                     "Quantity": len(alias_list),
                     "Items": alias_list
@@ -298,85 +296,74 @@ class CloudFrontServiceManager:
         return None
 
     def validate_logging(self, logging, enabled, include_cookies, s3_bucket_name, s3_bucket_prefix, streaming):
-        if(logging and (s3_bucket_name or s3_bucket_prefix)):
+        if logging and (s3_bucket_name or s3_bucket_prefix):
             self.module.fail_json(msg="Error: the logging and logging_* parameters are both defined. Please specify either logging or all logging_ parameters.")
-        if(include_cookies and streaming):
+        if include_cookies and streaming:
             self.module.fail_json(msg="Error: logging_include_cookies has been defined for a streaming distribution")
-        if(logging):
+        if logging:
             return logging
-        if(s3_bucket_name is None):
+        if s3_bucket_name is None:
             return None
         valid_logging = {
             "Enabled": enabled,
             "Bucket": s3_bucket_name,
             "Prefix": s3_bucket_prefix
             }
-        if(not streaming):
+        if not streaming:
             valid_logging["IncludeCookies"] = include_cookies
         return valid_logging
 
-    def validate_origins(self, origins, origin_list):
-        if(origins and origin_list):
-            self.module.fail_json(msg="Error: the origins and origins_list parameters are both defined. Please specify only one.")
-        if(origins):
-            return origins
-        if(origin_list):
+    def validate_origins(self, origins):
+        return None
+
+    def validate_trusted_signers(self, trusted_signers):
+        if trusted_signers:
+            if 'enabled' not in trusted_signers:
+                trusted_signers["enabled"] = true
+            if 'items' not in trusted_signers:
+                trusted_signers["items"] = []
             return {
-                "Quantity": len(origin_list),
-                "Items": origin_list
+                "Enabled": trusted_signers["enabled"],
+                "Quantity": len(trusted_signers["items"]),
+                "Items": trusted_signers["items"]
                 }
         return None
 
-    def validate_trusted_signers(self, trusted_signers, enabled, trusted_signers_list):
-        if(trusted_signers and trusted_signers_list):
-            self.module.fail_json(msg="Error: the trusted_signers and trusted_signers_list are both defined. Please specify only one.")
-        if(trusted_signers):
-            return trusted_signers
-        if(trusted_signers_list):
+    def validate_s3_origin(self, s3_origin):
+        if s3_origin:
+            if 'domain_name' not in s3_origin:
+                self.module.fail_json("domain_name must be specified for s3_origin")
+            if 'origin_access_identity' not in s3_origin:
+                self.module.fail_json("origin_access_identity must be specified for s3_origin")
             return {
-                "Enabled": enabled,
-                "Quantity": len(trusted_signers_list),
-                "Items": trusted_signers_list
+                "DomainName": s3_origin["domain_name"],
+                "OriginAccessIdentity": s3_origin["origin_access_identity"]
                 }
         return None
 
-    def validate_s3_origin(self, s3_origin, s3_origin_domain_name, s3_origin_origin_access_identity):
-        if(s3_origin and s3_origin_domain_name):
-            self.module.fail_json(msg="Error: the s3_origin and s3_origin_domain_name parameters are both defined. Please specify only one.")
-        if(s3_origin):
-            return s3_origin
-        if(s3_origin_domain_namee):
-            return {
-                "DomainName": s3_origin_domain_name,
-                "OriginAccessIdentity": s3_origin_origin_access_identity
-                }
-        return None
-
-    def validate_viewer_certificate(self, viewer_certificate, viewer_certificate_cloudfront_default_certificate,
-        viewer_certificate_iam_certificate_id, viewer_certificate_acm_certificate_arn, viewer_certificate_ssl_support_method,
-        viewer_certificate_minimum_protocol_version, viewer_certificate_certificate, viewer_certificate_certificate_source):
+    def validate_viewer_certificate(self, viewer_certificate):
         #TODO:
         return None
 
     def validate_update_or_delete_distribution_parameters(self, alias, distribution_id, config, e_tag):
-        if(distribution_id is None and alias is None):
+        if distribution_id is None and alias is None:
             self.module.fail_json(msg="Error: distribution_id or alias must be specified for updating or deleting a distribution.")
-        if(distribution_id is None):
+        if distribution_id is None:
             distribution_id = self.cloudfront_facts_mgr.get_distribution_id_from_domain_name(alias)
-        if(config is None):
+        if config is None:
             config = self.cloudfront_facts_mgr.get_distribution_config(distribution_id)["DistributionConfig"]
-        if(e_tag is None):
+        if e_tag is None:
             e_tag = self.cloudfront_facts_mgr.get_etag_from_distribution_id(distribution_id, False)
         return distribution_id, config, e_tag
  
     def validate_update_or_delete_streaming_distribution_parameters(self, alias, streaming_distribution_id, config, e_tag):
-        if(streaming_distribution_id is None and alias is None):
+        if streaming_distribution_id is None and alias is None:
             self.module.fail_json(msg="Error: streaming_distribution_id or alias must be specified for updating or deleting a streaming distribution.")
-        if(streaming_distribution_id is None):
+        if streaming_distribution_id is None:
             streaming_distribution_id = self.cloudfront_facts_mgr.get_distribution_id_from_domain_name(alias)
-        if(config is None):
+        if config is None:
             config = self.cloudfront_facts_mgr.get_streaming_distribution_config(streaming_distribution_id)["StreamingDistributionConfig"]
-        if(e_tag is None):
+        if e_tag is None:
             e_tag = self.cloudfront_facts_mgr.get_etag_from_distribution_id(streaming_distribution_id, True)
         return streaming_distribution_id, config, e_tag
 
@@ -420,29 +407,20 @@ def main():
         config=dict(required=False, default=None, type='json'),
         tags=dict(required=False, default=None, type='str'),
         alias=dict(required=False, default=None, type='str'),
-        aliases=dict(required=False, default=None, type='json'),
-        alias_list=dict(required=False, default=None, type='list'),
+        aliases=dict(required=False, default=None, type='list'),
         default_root_object=dict(required=False, default='', type='str'),
-        origins=dict(required=False, default=None, type='json'),
-        origin_list=dict(required=False, default=None, type='list'),
-        default_cache_behavior=dict(required=False, default=None, type='json'),
-        cache_behaviors=dict(required=False, default=None, type='json'),
-        custom_error_responses=dict(required=False, default=None, type='json'),
-        logging=dict(required=False, default=None, type='json'),
+        origins=dict(required=False, default=None, type='list'),
+        default_cache_behavior=dict(required=False, default=None, type='dict'),
+        cache_behaviors=dict(required=False, default=None, type='list'),
+        custom_error_responses=dict(required=False, default=None, type='list'),
+        logging=dict(required=False, default=None, type='dict'),
         logging_enabled=dict(required=False, default=False, type='bool'),
         logging_include_cookies=dict(required=False, default=False, type='bool'),
         logging_s3_bucket_name=dict(required=False, default=None, type='str'),
         logging_s3_bucket_prefix=dict(required=False, default=None, type='str'),
         price_class=dict(required=False, default=None, type='str'),
         enabled=dict(required=False, default=False, type='bool'),
-        viewer_certificate=dict(required=False, default=None, type='json'),
-        viewer_certificate_cloudfront_default_certificate=dict(required=False, default=False, type='bool'),
-        viewer_certificate_iam_certificate_id=dict(required=False, default=None, type='str'),
-        viewer_certificate_acm_certificate_arn=dict(required=False, default=None, type='str'),
-        viewer_certificate_ssl_support_method=dict(required=False, default=None, type='str'),
-        viewer_certificate_minimum_protocol_version=dict(required=False, default=None, type='str'),
-        viewer_certificate_certificate=dict(required=False, default=None, type='str'),
-        viewer_certificate_certificate_source=dict(required=False, default=None, type='str'),
+        viewer_certificate=dict(required=False, default=None, type='dict'),
         restrictions=dict(required=False, default=None, type='json'),
         restrictions_restriction_type=dict(required=False, default=None, type='str'),
         restrictions_items=dict(required=False, default=None, type='list'),
@@ -450,11 +428,7 @@ def main():
         http_version=dict(required=False, default=None, type='str'),
         is_ipv6_enabled=dict(required=False, default=False, type='bool'),
         s3_origin=dict(required=False, default=None, type='json'),
-        s3_origin_domain_name=dict(required=False, default=None, type='str'),
-        s3_origin_origin_access_identity=dict(required=False, default='', type='str'),
-        trusted_signers=dict(required=False, default=None, type='json'),
-        trusted_signers_enabled=dict(required=False, default=False, type='bool'),
-        trusted_signers_list=dict(required=False, default=None, type='list'),
+        trusted_signers=dict(required=False, default=None, type='list'),
         default_origin_domain_name=dict(required=False, default=None, type='str'),
         default_origin_path=dict(required=False, default='', type='str'),
         default_origin_access_identity=dict(required=False, default='', type='str'),
@@ -469,7 +443,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
     if not HAS_BOTO3:
-        module.fail_json(msg='Error boto3 is required.')
+        module.fail_json(msg='boto3 is required')
 
     cloudfront_facts_mgr = CloudFrontFactsServiceManager(module)
     service_mgr = CloudFrontServiceManager(module, cloudfront_facts_mgr)
@@ -507,7 +481,6 @@ def main():
     alias_list = module.params.get('alias_list')
     default_root_object = module.params.get('default_root_object')
     origins = module.params.get('origins')
-    origin_list = module.params.get('origin_list')
     default_cache_behavior = module.params.get('default_cache_behavior')
     cache_behaviors = module.params.get('cache_behaviors')
     custom_error_responses = module.params.get('custom_error_responses')
@@ -520,23 +493,12 @@ def main():
     price_class = module.params.get('price_class')
     enabled = module.params.get('enabled')
     viewer_certificate = module.params.get('viewer_certificate')
-    viewer_certificate_cloudfront_default_certificate = module.params.get('viewer_certificate_cloudfront_default_certificate')
-    viewer_certificate_iam_certificate_id = module.params.get('viewer_certificate_iam_certificate_id')
-    viewer_certificate_acm_certificate_arn = module.params.get('viewer_certificate_acm_certificate_arn')
-    viewer_certificate_ssl_support_method = module.params.get('viewer_certificate_ssl_support_method')
-    viewer_certificate_minimum_protocol_version = module.params.get('viewer_certificate_minimum_protocol_version')
-    viewer_certificate_certificate = module.params.get('viewer_certificate_certificate')
-    viewer_certificate_certificate_source = module.params.get('viewer_certificate_certificate_source')
     restrictions = module.params.get('restrictions')
     web_acl = module.params.get('web_acl')
     http_version = module.params.get('http_version')
     is_ipv6_enabled = module.params.get('is_ipv6_enabled')
     s3_origin = module.params.get('s3_origin')
-    s3_origin_domain_name = module.params.get('s3_origin_domain_name')
-    s3_origin_origin_access_identity = module.params.get('s3_origin_origin_access_identity')
     trusted_signers = module.params.get('trusted_signers')
-    trusted_signers_enabled = module.params.get('trusted_signers_enabled')
-    trusted_signers_list = module.params.get('trusted_signers_list')
     default_origin_domain_name = module.params.get('default_origin_domain_name')
     default_origin_path = module.params.get('default_origin_path')
     default_origin_access_identity = module.params.get('default_origin_access_identity')
@@ -547,27 +509,27 @@ def main():
     distribution = create_distribution or update_distribution
     streaming_distribution = create_streaming_distribution or update_streaming_distribution
 
-    if(sum([create_origin_access_identity, delete_origin_access_identity, update_origin_access_identity,
+    if sum(map(bool, [create_origin_access_identity, delete_origin_access_identity, update_origin_access_identity,
             generate_presigned_url, generate_s3_presigned_url, create_distribution, delete_distribution,
             update_distribution, create_streaming_distribution, delete_streaming_distribution,
-            update_streaming_distribution, generate_signed_url_from_pem_private_key]) > 1):
-        module.fail_json(msg="Error: more than one cloudfront action has been specified (eg. create_distribution). Please select only one action.")
+            update_streaming_distribution, generate_signed_url_from_pem_private_key])) > 1:
+        module.fail_json(msg="more than one cloudfront action has been specified. please select only one action.")
 
-    valid_aliases = service_mgr.validate_aliases(aliases, alias_list, alias)
+    valid_aliases = service_mgr.validate_aliases(aliases, alias)
     valid_logging = service_mgr.validate_logging(logging, logging_enabled, logging_include_cookies,
             logging_s3_bucket_name, logging_s3_bucket_prefix, streaming_distribution)
-    valid_origins = service_mgr.validate_origins(origins, origin_list)
-    valid_trusted_signers = service_mgr.validate_trusted_signers(trusted_signers, trusted_signers_enabled, trusted_signers_list)
-    valid_s3_origin = service_mgr.validate_s3_origin(s3_origin, s3_origin_domain_name, s3_origin_origin_access_identity)
-    valid_viewer_certificate = service_mgr.validate_viewer_certificate(viewer_certificate, viewer_certificate_cloudfront_default_certificate,
-        viewer_certificate_iam_certificate_id, viewer_certificate_acm_certificate_arn, viewer_certificate_ssl_support_method,
-        viewer_certificate_minimum_protocol_version, viewer_certificate_certificate, viewer_certificate_certificate_source)
+    valid_origins = service_mgr.validate_origins(origins)
+    valid_trusted_signers = service_mgr.validate_trusted_signers(trusted_signers)
+    valid_s3_origin = service_mgr.validate_s3_origin(s3_origin)
+    valid_viewer_certificate = service_mgr.validate_viewer_certificate(viewer_certificate)
 
     if(update_distribution or delete_distribution):
-        distribution_id, config, e_tag = service_mgr.validate_update_or_delete_distribution_parameters(alias, distribution_id, config, e_tag)
+        distribution_id, config, e_tag = service_mgr.validate_update_or_delete_distribution_parameters(alias,
+                distribution_id, config, e_tag)
 
     if(update_streaming_distribution or delete_streaming_distribution):
-        streaming_istribution_id, config, e_tag = service_mgr.validate_update_or_delete_streaming_distribution_parameters(alias, streaming_distribution_id, config, e_tag)
+        streaming_distribution_id, config, e_tag = service_mgr.validate_update_or_delete_streaming_distribution_parameters(alias,
+                streaming_distribution_id, config, e_tag)
 
     default_datetime_string = generate_datetime_string()
 
