@@ -274,6 +274,20 @@ class ActionModule(ActionBase):
                 localhost_shell = os.path.basename(C.DEFAULT_EXECUTABLE)
             self._play_context.shell = localhost_shell
 
+            # Unike port, there can be only one executable
+            localhost_executable = None
+            for host in C.LOCALHOST:
+                localhost_vars = task_vars['hostvars'].get(host, {})
+                for executable_var in MAGIC_VARIABLE_MAPPING['executable']:
+                    localhost_executable = localhost_vars.get(executable_var, None)
+                    if localhost_executable:
+                        break
+                if localhost_executable:
+                    break
+            else:
+                localhost_executable = C.DEFAULT_EXECUTABLE
+            self._play_context.executable = localhost_executable
+
             new_connection = connection_loader.get('local', self._play_context, new_stdin)
             self._connection = new_connection
             self._override_module_replaced_vars(task_vars)
