@@ -29,7 +29,7 @@ DOCUMENTATION:
         _host:
             description: Hostname/ip to connect to.
             default: inventory_hostname
-            host_vars:              
+            host_vars:
                  - ansible_host
                  - ansible_ssh_host
         _host_key_checking:
