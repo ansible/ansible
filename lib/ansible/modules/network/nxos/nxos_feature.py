@@ -116,7 +116,7 @@ def get_available_features(feature, module):
                 available_features[feature] = state
             else:
                 if (available_features[feature] == 'disabled' and
-                    state == 'enabled'):
+                        state == 'enabled'):
                     available_features[feature] = state
 
     return available_features

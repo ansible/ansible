@@ -193,7 +193,7 @@ def update_roles(user_facts, cursor, user,
         cursor.execute("alter user {0} default role {1}".format(user, ','.join(required)))
 
 def check(user_facts, user, profile, resource_pool,
-    locked, password, expired, ldap, roles):
+          locked, password, expired, ldap, roles):
     user_key = user.lower()
     if user_key not in user_facts:
         return False
@@ -205,16 +205,16 @@ def check(user_facts, user, profile, resource_pool,
         return False
     if password and password != user_facts[user_key]['password']:
         return False
-    if expired is not None and expired != (user_facts[user_key]['expired'] == 'True') or \
-       ldap is not None and ldap != (user_facts[user_key]['expired'] == 'True'):
+    if (expired is not None and expired != (user_facts[user_key]['expired'] == 'True') or
+           ldap is not None and ldap != (user_facts[user_key]['expired'] == 'True')):
         return False
-    if roles and (cmp(sorted(roles), sorted(user_facts[user_key]['roles'])) != 0 or \
-        cmp(sorted(roles), sorted(user_facts[user_key]['default_roles'])) != 0):
+    if (roles and (cmp(sorted(roles), sorted(user_facts[user_key]['roles'])) != 0 or
+            cmp(sorted(roles), sorted(user_facts[user_key]['default_roles'])) != 0)):
         return False
     return True
 
 def present(user_facts, cursor, user, profile, resource_pool,
-    locked, password, expired, ldap, roles):
+            locked, password, expired, ldap, roles):
     user_key = user.lower()
     if user_key not in user_facts:
         query_fragments = ["create user {0}".format(user)]
@@ -275,8 +275,8 @@ def present(user_facts, cursor, user, profile, resource_pool,
             changed = True
         if changed:
             cursor.execute(' '.join(query_fragments))
-        if roles and (cmp(sorted(roles), sorted(user_facts[user_key]['roles'])) != 0 or \
-            cmp(sorted(roles), sorted(user_facts[user_key]['default_roles'])) != 0):
+        if (roles and (cmp(sorted(roles), sorted(user_facts[user_key]['roles'])) != 0 or
+                cmp(sorted(roles), sorted(user_facts[user_key]['default_roles'])) != 0)):
             update_roles(user_facts, cursor, user,
                 user_facts[user_key]['roles'], user_facts[user_key]['default_roles'], roles)
             changed = True

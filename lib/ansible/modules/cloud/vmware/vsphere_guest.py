@@ -1005,8 +1005,9 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
             # Make sure the new disk size is higher than the current value
             dev = dev_list[disk_num]
             if disksize < int(dev.capacityInKB):
-              vsphere_client.disconnect()
-              module.fail_json(msg="Error in '%s' definition. New size needs to be higher than the current value (%s GB)." % (disk, int(dev.capacityInKB) / 1024 / 1024))
+                vsphere_client.disconnect()
+                module.fail_json(msg="Error in '%s' definition. New size needs to be higher than the current value (%s GB)." %
+                                     (disk, int(dev.capacityInKB) / 1024 / 1024))
 
             # Set the new disk size
             elif disksize > int(dev.capacityInKB):

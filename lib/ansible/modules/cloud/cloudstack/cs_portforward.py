@@ -275,8 +275,8 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
 
             if portforwarding_rules and 'portforwardingrule' in portforwarding_rules:
                 for rule in portforwarding_rules['portforwardingrule']:
-                    if protocol == rule['protocol'] \
-                        and public_port == int(rule['publicport']):
+                    if (protocol == rule['protocol'] and
+                            public_port == int(rule['publicport'])):
                         self.portforwarding_rule = rule
                         break
         return self.portforwarding_rule

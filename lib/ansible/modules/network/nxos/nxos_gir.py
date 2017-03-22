@@ -222,11 +222,11 @@ def get_commands(module, state, mode):
     elif module.params['system_mode_maintenance_timeout']:
         timeout = get_maintenance_timeout(module)
         if (state == 'present' and
-            timeout != module.params['system_mode_maintenance_timeout']):
+                timeout != module.params['system_mode_maintenance_timeout']):
             commands.append('system mode maintenance timeout {0}'.format(
                             module.params['system_mode_maintenance_timeout']))
         elif (state == 'absent' and
-              timeout == module.params['system_mode_maintenance_timeout']):
+                timeout == module.params['system_mode_maintenance_timeout']):
             commands.append('no system mode maintenance timeout {0}'.format(
                             module.params['system_mode_maintenance_timeout']))
 
@@ -236,9 +236,7 @@ def get_commands(module, state, mode):
     elif module.params['system_mode_maintenance_on_reload_reset_reason']:
         reset_reasons = get_reset_reasons(module)
         if (state == 'present' and
-            module.params[
-                'system_mode_maintenance_on_reload_reset_reason'].lower() not
-            in reset_reasons.lower()):
+                module.params['system_mode_maintenance_on_reload_reset_reason'].lower() not in reset_reasons.lower()):
             commands.append('system mode maintenance on-reload '
                             'reset-reason {0}'.format(
                                 module.params[

@@ -220,7 +220,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
               not wrap_async,                            # async does not support pipelining
               self._play_context.become_method != 'su',  # su does not work with pipelining,
               # FIXME: we might need to make become_method exclusion a configurable list
-            ]:
+        ]:
             if not condition:
                 return False
 

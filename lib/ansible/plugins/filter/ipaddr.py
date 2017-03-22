@@ -178,9 +178,9 @@ def _private_query(v, value):
 
 def _public_query(v, value):
     v_ip = netaddr.IPAddress(str(v.ip))
-    if v_ip.is_unicast() and not v_ip.is_private() and \
-        not v_ip.is_loopback() and not v_ip.is_netmask() and \
-        not v_ip.is_hostmask():
+    if (v_ip.is_unicast() and not v_ip.is_private() and
+            not v_ip.is_loopback() and not v_ip.is_netmask() and
+            not v_ip.is_hostmask()):
         return value
 
 def _revdns_query(v):

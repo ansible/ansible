@@ -622,8 +622,7 @@ class NetAppESeriesStoragePool(object):
 
     @property
     def reserved_drive_count_differs(self):
-        if int(self.pool_detail['volumeGroupData']['diskPoolData'][
-            'reconstructionReservedDriveCount']) != self.reserve_drive_count:
+        if int(self.pool_detail['volumeGroupData']['diskPoolData']['reconstructionReservedDriveCount']) != self.reserve_drive_count:
             return True
         return False
 

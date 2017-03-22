@@ -140,118 +140,118 @@ import os
 import time
 
 try:
-  from proxmoxer import ProxmoxAPI
-  HAS_PROXMOXER = True
+    from proxmoxer import ProxmoxAPI
+    HAS_PROXMOXER = True
 except ImportError:
-  HAS_PROXMOXER = False
+    HAS_PROXMOXER = False
 
 def get_template(proxmox, node, storage, content_type, template):
-  return [ True for tmpl in proxmox.nodes(node).storage(storage).content.get()
-          if tmpl['volid'] == '%s:%s/%s' % (storage, content_type, template) ]
+    return [ True for tmpl in proxmox.nodes(node).storage(storage).content.get()
+            if tmpl['volid'] == '%s:%s/%s' % (storage, content_type, template) ]
 
 def upload_template(module, proxmox, api_host, node, storage, content_type, realpath, timeout):
-  taskid = proxmox.nodes(node).storage(storage).upload.post(content=content_type, filename=open(realpath))
-  while timeout:
-    task_status = proxmox.nodes(api_host.split('.')[0]).tasks(taskid).status.get()
-    if task_status['status'] == 'stopped' and task_status['exitstatus'] == 'OK':
-      return True
-    timeout = timeout - 1
-    if timeout == 0:
-      module.fail_json(msg='Reached timeout while waiting for uploading template. Last line in task before timeout: %s'
-                       % proxmox.node(node).tasks(taskid).log.get()[:1])
+    taskid = proxmox.nodes(node).storage(storage).upload.post(content=content_type, filename=open(realpath))
+    while timeout:
+        task_status = proxmox.nodes(api_host.split('.')[0]).tasks(taskid).status.get()
+        if task_status['status'] == 'stopped' and task_status['exitstatus'] == 'OK':
+            return True
+        timeout = timeout - 1
+        if timeout == 0:
+            module.fail_json(msg='Reached timeout while waiting for uploading template. Last line in task before timeout: %s'
+                             % proxmox.node(node).tasks(taskid).log.get()[:1])
 
-    time.sleep(1)
-  return False
+        time.sleep(1)
+    return False
 
 def delete_template(module, proxmox, node, storage, content_type, template, timeout):
-  volid = '%s:%s/%s' % (storage, content_type, template)
-  proxmox.nodes(node).storage(storage).content.delete(volid)
-  while timeout:
-    if not get_template(proxmox, node, storage, content_type, template):
-      return True
-    timeout = timeout - 1
-    if timeout == 0:
-      module.fail_json(msg='Reached timeout while waiting for deleting template.')
+    volid = '%s:%s/%s' % (storage, content_type, template)
+    proxmox.nodes(node).storage(storage).content.delete(volid)
+    while timeout:
+        if not get_template(proxmox, node, storage, content_type, template):
+            return True
+        timeout = timeout - 1
+        if timeout == 0:
+            module.fail_json(msg='Reached timeout while waiting for deleting template.')
 
-    time.sleep(1)
-  return False
+        time.sleep(1)
+    return False
 
 def main():
-  module = AnsibleModule(
-      argument_spec = dict(
-          api_host = dict(required=True),
-          api_user = dict(required=True),
-          api_password = dict(no_log=True),
-          validate_certs = dict(type='bool', default='no'),
-          node = dict(),
-          src = dict(),
-          template = dict(),
-          content_type = dict(default='vztmpl', choices=['vztmpl','iso']),
-          storage = dict(default='local'),
-          timeout = dict(type='int', default=30),
-          force = dict(type='bool', default='no'),
-          state = dict(default='present', choices=['present', 'absent']),
-          )
-  )
+    module = AnsibleModule(
+        argument_spec = dict(
+            api_host = dict(required=True),
+            api_user = dict(required=True),
+            api_password = dict(no_log=True),
+            validate_certs = dict(type='bool', default='no'),
+            node = dict(),
+            src = dict(),
+            template = dict(),
+            content_type = dict(default='vztmpl', choices=['vztmpl','iso']),
+            storage = dict(default='local'),
+            timeout = dict(type='int', default=30),
+            force = dict(type='bool', default='no'),
+            state = dict(default='present', choices=['present', 'absent']),
+            )
+    )
 
-  if not HAS_PROXMOXER:
-    module.fail_json(msg='proxmoxer required for this module')
+    if not HAS_PROXMOXER:
+        module.fail_json(msg='proxmoxer required for this module')
 
-  state = module.params['state']
-  api_user = module.params['api_user']
-  api_host = module.params['api_host']
-  api_password = module.params['api_password']
-  validate_certs = module.params['validate_certs']
-  node = module.params['node']
-  storage = module.params['storage']
-  timeout = module.params['timeout']
+    state = module.params['state']
+    api_user = module.params['api_user']
+    api_host = module.params['api_host']
+    api_password = module.params['api_password']
+    validate_certs = module.params['validate_certs']
+    node = module.params['node']
+    storage = module.params['storage']
+    timeout = module.params['timeout']
 
-  # If password not set get it from PROXMOX_PASSWORD env
-  if not api_password:
+    # If password not set get it from PROXMOX_PASSWORD env
+    if not api_password:
+        try:
+            api_password = os.environ['PROXMOX_PASSWORD']
+        except KeyError as e:
+            module.fail_json(msg='You should set api_password param or use PROXMOX_PASSWORD environment variable')
+
     try:
-      api_password = os.environ['PROXMOX_PASSWORD']
-    except KeyError as e:
-      module.fail_json(msg='You should set api_password param or use PROXMOX_PASSWORD environment variable')
-
-  try:
-    proxmox = ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=validate_certs)
-  except Exception as e:
-    module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
-
-  if state == 'present':
-    try:
-      content_type = module.params['content_type']
-      src = module.params['src']
-
-      from ansible import utils
-      realpath = utils.path_dwim(None, src)
-      template = os.path.basename(realpath)
-      if get_template(proxmox, node, storage, content_type, template) and not module.params['force']:
-        module.exit_json(changed=False, msg='template with volid=%s:%s/%s is already exists' % (storage, content_type, template))
-      elif not src:
-        module.fail_json(msg='src param to uploading template file is mandatory')
-      elif not (os.path.exists(realpath) and os.path.isfile(realpath)):
-        module.fail_json(msg='template file on path %s not exists' % realpath)
-
-      if upload_template(module, proxmox, api_host, node, storage, content_type, realpath, timeout):
-        module.exit_json(changed=True, msg='template with volid=%s:%s/%s uploaded' % (storage, content_type, template))
+        proxmox = ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=validate_certs)
     except Exception as e:
-      module.fail_json(msg="uploading of template %s failed with exception: %s" % ( template, e ))
+        module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
 
-  elif state == 'absent':
-    try:
-      content_type = module.params['content_type']
-      template = module.params['template']
+    if state == 'present':
+        try:
+            content_type = module.params['content_type']
+            src = module.params['src']
 
-      if not template:
-        module.fail_json(msg='template param is mandatory')
-      elif not get_template(proxmox, node, storage, content_type, template):
-        module.exit_json(changed=False, msg='template with volid=%s:%s/%s is already deleted' % (storage, content_type, template))
+            from ansible import utils
+            realpath = utils.path_dwim(None, src)
+            template = os.path.basename(realpath)
+            if get_template(proxmox, node, storage, content_type, template) and not module.params['force']:
+                module.exit_json(changed=False, msg='template with volid=%s:%s/%s is already exists' % (storage, content_type, template))
+            elif not src:
+                module.fail_json(msg='src param to uploading template file is mandatory')
+            elif not (os.path.exists(realpath) and os.path.isfile(realpath)):
+                module.fail_json(msg='template file on path %s not exists' % realpath)
 
-      if delete_template(module, proxmox, node, storage, content_type, template, timeout):
-        module.exit_json(changed=True, msg='template with volid=%s:%s/%s deleted' % (storage, content_type, template))
-    except Exception as e:
-      module.fail_json(msg="deleting of template %s failed with exception: %s" % ( template, e ))
+            if upload_template(module, proxmox, api_host, node, storage, content_type, realpath, timeout):
+                module.exit_json(changed=True, msg='template with volid=%s:%s/%s uploaded' % (storage, content_type, template))
+        except Exception as e:
+            module.fail_json(msg="uploading of template %s failed with exception: %s" % ( template, e ))
+
+    elif state == 'absent':
+        try:
+            content_type = module.params['content_type']
+            template = module.params['template']
+
+            if not template:
+                module.fail_json(msg='template param is mandatory')
+            elif not get_template(proxmox, node, storage, content_type, template):
+                module.exit_json(changed=False, msg='template with volid=%s:%s/%s is already deleted' % (storage, content_type, template))
+
+            if delete_template(module, proxmox, node, storage, content_type, template, timeout):
+                module.exit_json(changed=True, msg='template with volid=%s:%s/%s deleted' % (storage, content_type, template))
+        except Exception as e:
+            module.fail_json(msg="deleting of template %s failed with exception: %s" % ( template, e ))
 
 # import module snippets
 from ansible.module_utils.basic import *

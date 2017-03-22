@@ -42,7 +42,7 @@ if _system_six:
          not hasattr(_system_six, 'byte2int') or
          not hasattr(_system_six, 'add_metaclass') or
          not hasattr(_system_six.moves, 'urllib')
-        ):
+    ):
 
         _system_six = False
 

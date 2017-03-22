@@ -276,8 +276,8 @@ class SnsTopicManager(object):
             for sub in self.subscriptions_existing:
                 sub_key = (sub['Protocol'], sub['Endpoint'])
                 subscriptions_existing_list.append(sub_key)
-                if self.purge_subscriptions and sub_key not in desired_subscriptions and \
-                    sub['SubscriptionArn'] not in ('PendingConfirmation', 'Deleted'):
+                if (self.purge_subscriptions and sub_key not in desired_subscriptions and
+                        sub['SubscriptionArn'] not in ('PendingConfirmation', 'Deleted')):
                     self.changed = True
                     self.subscriptions_deleted.append(sub_key)
                     if not self.check_mode:
