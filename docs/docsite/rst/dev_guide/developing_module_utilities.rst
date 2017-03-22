@@ -41,7 +41,7 @@ The following is a list of module_utils files and a general description. The mod
 - redhat.py - Functions for modules that manage Red Hat Network registration and subscriptions
 - service.py - Contains utilities to enable modules to work with Linux services (placeholder, not in use).
 - shell.py - Functions to allow modules to create shells and work with shell commands
-- six.py - Module utils for working with the Six python 2 and 3 compatibility library
+- six/__init__.py - Bundled copy of the `Six Python library <https://pythonhosted.org/six/>`_ to aid in writing code compatible with both Python 2 and Python 3.
 - splitter.py - String splitting and manipulation utilities for working with Jinja2 templates
 - urls.py - Utilities for working with http and https requests
 - vca.py - Contains utilities for modules that work with VMware vCloud Air

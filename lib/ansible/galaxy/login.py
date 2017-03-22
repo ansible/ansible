@@ -25,10 +25,9 @@ __metaclass__ = type
 import getpass
 import json
 
-from ansible.compat.six.moves.urllib.parse import quote as urlquote, urlparse
-from ansible.compat.six.moves.urllib.error import HTTPError
-
 from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlparse
+from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.urls import open_url
 from ansible.utils.color import stringc
 
@@ -37,6 +36,7 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 class GalaxyLogin(object):
     ''' Class to handle authenticating user with Galaxy API prior to performing CUD operations '''

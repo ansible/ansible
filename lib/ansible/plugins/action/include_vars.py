@@ -22,9 +22,10 @@ from os import path, walk
 import re
 
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.action import ActionBase
-from ansible.compat.six import string_types
+
 
 class ActionModule(ActionBase):
 

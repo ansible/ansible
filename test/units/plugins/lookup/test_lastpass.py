@@ -19,14 +19,15 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests import unittest
-
-from ansible.plugins.lookup.lastpass import LookupModule, LPass, LPassException
-from ansible.errors import AnsibleError
 from argparse import ArgumentParser
-import six
 
+from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
+
+from ansible.errors import AnsibleError
+from ansible.module_utils import six
+from ansible.plugins.lookup.lastpass import LookupModule, LPass, LPassException
+
 
 MOCK_ENTRIES = [{'username': 'user',
                  'name': 'Mock Entry',
