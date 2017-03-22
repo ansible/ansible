@@ -747,7 +747,7 @@ Ansible works by transferring modules to your remote machines, running them, and
 cases, you may not wish to use the default location and would like to change the path.  You can do so by altering this
 setting::
 
-    remote_tmp = $HOME/.ansible/tmp
+    remote_tmp = ~/.ansible/tmp
 
 The default is to use a subdirectory of the user's home directory.  Ansible will then choose a random directory name
 inside this location.
