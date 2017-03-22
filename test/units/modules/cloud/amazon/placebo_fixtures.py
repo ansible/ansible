@@ -1,4 +1,6 @@
 import os
+import time
+import mock
 import pytest
 
 boto3 = pytest.importorskip("boto3")
@@ -158,7 +160,6 @@ def scratch_vpc():
             CidrBlock='10.0.1.0/24',
         )
     )
-    import time
     time.sleep(3)
 
     yield {
@@ -185,3 +186,18 @@ def scratch_vpc():
         if 'not found' in e.message:
             return
         raise
+
+@pytest.fixture(scope='module')
+def maybe_sleep():
+    """If placebo is reading saved sessions, make sleep always take 0 seconds.
+
+    AWS modules often perform polling or retries, but when using recorded
+    sessions there's no reason to wait. We can still exercise retry and other
+    code paths without waiting for wall-clock time to pass."""
+    if not os.getenv('PLACEBO_RECORD'):
+        p = mock.patch('time.sleep', return_value=None)
+        p.start()
+        yield
+        p.stop()
+    else:
+        yield
