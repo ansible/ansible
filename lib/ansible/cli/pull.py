@@ -66,6 +66,7 @@ class PullCLI(CLI):
             inventory_opts=True,
             module_opts=True,
             runas_prompt_opts=True,
+            desc="pulls playbooks from a VCS repo and executes them for the local host",
         )
 
         # options unique to pull

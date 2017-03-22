@@ -90,7 +90,6 @@ class InvalidOptsParser(SortedOptParser):
         except optparse.BadOptionError:
             pass
 
-
 class CLI(with_metaclass(ABCMeta, object)):
     ''' code behind bin/ansible* programs '''
 
@@ -284,15 +283,11 @@ class CLI(with_metaclass(ABCMeta, object)):
 
     @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False, module_opts=False,
-                    async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False,
-                    runas_prompt_opts=False):
+            async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False, runas_prompt_opts=False, desc=None):
         ''' create an options parser for most ansible scripts '''
 
-        # TODO: implement epilog parsing
-        #       OptionParser.format_epilog = lambda self, formatter: self.epilog
-
         # base opts
-        parser = SortedOptParser(usage, version=CLI.version("%prog"))
+        parser = SortedOptParser(usage, version=CLI.version("%prog"), description=desc, epilog=epilog)
         parser.add_option('-v','--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
             help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
 
@@ -669,3 +664,52 @@ class CLI(with_metaclass(ABCMeta, object)):
             if os.pathsep in data:
                 data = data.split(os.pathsep)[0]
         return data
+
+    def _opt_doc_list(self, action=None):
+        ''' generate options docs '''
+
+        if action:
+            self.args.append(action)
+            self.set_action()
+
+        results = []
+        for opt in self.parser.option_list:
+            res = {
+                'desc': opt.help,
+                'options': opt._short_opts + opt._long_opts
+            }
+            if opt.action == 'store':
+                res['arg'] = opt.dest.upper()
+            results.append(res)
+
+        return results
+
+    def opts_docs(self, args=None):
+        ''' generate doc structure from options '''
+
+        # cli name
+        name = os.path.basename(sys.argv[0])
+        if '-' in name:
+            name = name.split('-')[1]
+        else:
+            name =  'adhoc'
+
+        # cli info
+        docs = {
+            'cli': name,
+            'usage': self.parser.usage,
+            'short_desc': self.parser.description
+        }
+
+        if self.VALID_ACTIONS:
+            myopts =  []
+            for action in self.VALID_ACTIONS:
+                newopts = self._opt_doc_list(action)
+                for nopt in newopts:
+                    if nopt not in myopts:
+                        myopts.append(nopt)
+            docs['options'] = myopts
+        else:
+            docs['options'] = self._opt_doc_list()
+
+        return docs
