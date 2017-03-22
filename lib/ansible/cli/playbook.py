@@ -50,7 +50,7 @@ class PlaybookCLI(CLI):
 
         # create parser for CLI options
         parser = CLI.base_parser(
-            usage = "%prog playbook.yml",
+            usage = "%prog [options] playbook.yml [playbook2 ...]",
             connect_opts=True,
             meta_opts=True,
             runas_opts=True,
@@ -61,6 +61,7 @@ class PlaybookCLI(CLI):
             vault_opts=True,
             fork_opts=True,
             module_opts=True,
+            desc="Runs Ansible playbooks, executing the defined tasks on the targeted hosts.",
         )
 
         # ansible playbook specific opts
