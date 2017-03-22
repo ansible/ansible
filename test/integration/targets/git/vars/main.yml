@@ -1,6 +1,5 @@
 ---
 
-msg: "https://github.com/ansible/ansible/pull/22502"
 checkout_dir: '{{ output_dir }}/git'
 repo_dir: '{{ output_dir }}/local_repos'
 repo_format1: 'https://github.com/jimi-c/test_role'

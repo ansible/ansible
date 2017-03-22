@@ -13,8 +13,8 @@
     name: "{{ repo_dir }}/origin"
     state: directory
 
-- name: Initialise the repo with a file named origin
-  shell: git init; echo "{{ msg }}" > origin; git add origin; git commit -m "{{ msg }}"
+- name: Initialise the repo with a file named origin,see github.com/ansible/ansible/pull/22502
+  shell: git init; echo "PR 22502" > origin; git add origin; git commit -m "PR 22502"
   args:
     chdir: "{{ repo_dir }}/origin"
 
