@@ -249,9 +249,9 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         if runas_opts:
             # Check for privilege escalation conflicts
-            if (op.su or op.su_user) and (op.sudo or op.sudo_user) or \
-                (op.su or op.su_user) and (op.become or op.become_user) or \
-                (op.sudo or op.sudo_user) and (op.become or op.become_user):
+            if ((op.su or op.su_user) and (op.sudo or op.sudo_user) or
+                    (op.su or op.su_user) and (op.become or op.become_user) or
+                    (op.sudo or op.sudo_user) and (op.become or op.become_user)):
 
                 self.parser.error("Sudo arguments ('--sudo', '--sudo-user', and '--ask-sudo-pass') "
                                   "and su arguments ('-su', '--su-user', and '--ask-su-pass') "

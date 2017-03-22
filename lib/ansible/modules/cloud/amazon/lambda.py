@@ -367,8 +367,8 @@ def main():
         else:
             # No VPC configuration is desired, assure VPC config is empty when present in current config
             if ('VpcConfig' in current_config and
-                'VpcId' in current_config['VpcConfig'] and
-                current_config['VpcConfig']['VpcId'] != ''):
+                    'VpcId' in current_config['VpcConfig'] and
+                    current_config['VpcConfig']['VpcId'] != ''):
                 func_kwargs.update({'VpcConfig':{'SubnetIds': [], 'SecurityGroupIds': []}})
 
         # Upload new configuration if configuration has changed

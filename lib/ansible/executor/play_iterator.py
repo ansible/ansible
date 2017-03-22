@@ -99,11 +99,9 @@ class HostState:
         if not isinstance(other, HostState):
             return False
 
-        for attr in (
-            '_blocks', 'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task',
-            'run_state', 'fail_state', 'pending_setup', 'cur_dep_chain',
-            'tasks_child_state', 'rescue_child_state', 'always_child_state'
-            ):
+        for attr in ('_blocks', 'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task',
+                     'run_state', 'fail_state', 'pending_setup', 'cur_dep_chain',
+                     'tasks_child_state', 'rescue_child_state', 'always_child_state'):
             if getattr(self, attr) != getattr(other, attr):
                 return False
 
