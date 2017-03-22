@@ -103,7 +103,6 @@ class InventoryParser(object):
             self.lineno += 1
 
             line = line.strip()
-
             # Skip empty lines and comments
             if not line or line[0] in self._COMMENT_MARKERS:
                 continue
@@ -156,6 +155,9 @@ class InventoryParser(object):
                 for h in hosts:
                     self.groups[groupname].add_host(h)
 
+                #FIXME: needed to save hosts to group, find out why
+                self.groups[groupname].get_hosts()
+
             # [groupname:vars] contains variable definitions that must be
             # applied to the current group.
             elif state == 'vars':
@@ -199,7 +201,7 @@ class InventoryParser(object):
         # 'all' at the time it was created.
 
         for group in self.groups.values():
-            if group.depth == 0 and group.name not in ('all', 'ungrouped'):
+            if group.depth == 0 and group.name != 'all':
                 self.groups['all'].add_child_group(group)
 
     def _parse_group_name(self, line):
