@@ -36,7 +36,7 @@ class DictDataLoader(DataLoader):
         self._file_mapping = file_mapping
         self._build_known_directories()
 
-    def load_from_file(self, path):
+    def load_from_file(self, path, unsafe=False):
         if path in self._file_mapping:
             return self.load(self._file_mapping[path], path)
         return None
@@ -96,3 +96,5 @@ class DictDataLoader(DataLoader):
         self._file_mapping = dict()
         self._known_directories = []
 
+    def get_basedir(self):
+        return os.getcwd()

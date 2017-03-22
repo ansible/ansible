@@ -18,6 +18,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.errors import AnsibleError
+from ansible.utils.vars import combine_vars
 
 class Group:
     ''' a group of ansible hosts '''
@@ -30,6 +31,7 @@ class Group:
         self.name = name
         self.hosts = []
         self.vars = {}
+        self._file_data = {}
         self.child_groups = []
         self.parent_groups = []
         self._hosts_cache = None
@@ -40,6 +42,9 @@ class Group:
         #    raise Exception("group name is required")
 
     def __repr__(self):
+        return self.get_name()
+
+    def __str__(self):
         return self.get_name()
 
     def __getstate__(self):
@@ -129,6 +134,12 @@ class Group:
         else:
             self.vars[key] = value
 
+    def load_data(self, data):
+
+        self._file_data = combine_vars(self._file_data, data)
+        if 'ansible_group_priority' in self._file_data:
+            self.set_priority(int(self._file_data.pop('ansible_group_priority')))
+
     def clear_hosts_cache(self):
 
         self._hosts_cache = None
@@ -162,8 +173,17 @@ class Group:
                 hosts.append(mine)
         return hosts
 
-    def get_vars(self):
-        return self.vars.copy()
+    def get_vars(self, include_file_data=True):
+        ret = {}
+        if include_file_data:
+            ret = combine_vars(self.vars, self._file_data)
+        else:
+            ret = self.vars.copy()
+        return ret
+
+    def get_file_vars(self):
+        ''' this is here due to precedence compatiblity '''
+        return self._file_data.copy()
 
     def _get_ancestors(self):
 

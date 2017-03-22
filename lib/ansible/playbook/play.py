@@ -31,7 +31,7 @@ from ansible.playbook.block import Block
 from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
-from ansible.vars import preprocess_vars
+from ansible.vars.manager import preprocess_vars
 
 try:
     from __main__ import display

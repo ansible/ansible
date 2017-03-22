@@ -6,8 +6,8 @@ botocore = pytest.importorskip("botocore")
 
 from collections import namedtuple
 from ansible.parsing.dataloader import DataLoader
-from ansible.vars import VariableManager
-from ansible.inventory import Inventory
+from ansible.vars.manager import VariableManager
+from ansible.inventory.manager import InventoryManager
 from ansible.playbook.play import Play
 from ansible.executor.task_queue_manager import TaskQueueManager
 
@@ -24,8 +24,8 @@ Options = (
     )
 )
 # initialize needed objects
-variable_manager = VariableManager()
 loader = DataLoader()
+variable_manager = VariableManager(loader=loader)
 options = (
     Options(
         connection='local',
@@ -41,7 +41,7 @@ passwords = dict(vault_pass='')
 aws_region = 'us-west-2'
 
 # create inventory and pass to var manager
-inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list='localhost')
+inventory = InventoryManager(loader=loader)
 variable_manager.set_inventory(inventory)
 
 def run(play):

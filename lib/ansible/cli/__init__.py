@@ -35,9 +35,13 @@ import ansible
 from ansible.release import __version__
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils.six import with_metaclass
+from ansible.inventory.manager import InventoryManager
+from ansible.module_utils.six import with_metaclass, string_types
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.parsing.dataloader import DataLoader
 from ansible.utils.path import unfrackpath
+from ansible.utils.vars import load_extra_vars, load_options_vars
+from ansible.vars.manager import VariableManager
 
 try:
     from __main__ import display
@@ -48,8 +52,6 @@ except ImportError:
 
 class SortedOptParser(optparse.OptionParser):
     '''Optparser which sorts the options by opt before outputting --help'''
-
-    #FIXME: epilog parsing: OptionParser.format_epilog = lambda self, formatter: self.epilog
 
     def format_help(self, formatter=None, epilog=None):
         self.option_list.sort(key=operator.methodcaller('get_opt_string'))
@@ -294,9 +296,8 @@ class CLI(with_metaclass(ABCMeta, object)):
             help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
 
         if inventory_opts:
-            parser.add_option('-i', '--inventory-file', dest='inventory',
-                help="specify inventory host path (default=%s) or comma separated host list." % C.DEFAULT_HOST_LIST,
-                default=C.DEFAULT_HOST_LIST, action="callback", callback=CLI.expand_tilde, type=str)
+            parser.add_option('-i', '--inventory', '--inventory-file', dest='inventory', action="append",
+                help="specify inventory host path (default=[%s]) or comma separated host list. --inventory-file is deprecated" % C.DEFAULT_HOST_LIST)
             parser.add_option('--list-hosts', dest='listhosts', action='store_true',
                 help='outputs a list of matching hosts; does not execute anything else')
             parser.add_option('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset',
@@ -318,12 +319,12 @@ class CLI(with_metaclass(ABCMeta, object)):
             parser.add_option('--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
                 help='ask for vault password')
             parser.add_option('--vault-password-file', default=C.DEFAULT_VAULT_PASSWORD_FILE, dest='vault_password_file',
-                help="vault password file", action="callback", callback=CLI.expand_tilde, type=str)
+                help="vault password file", action="callback", callback=CLI.expand_tilde, type='string')
             parser.add_option('--new-vault-password-file', dest='new_vault_password_file',
-                help="new vault password file for rekey", action="callback", callback=CLI.expand_tilde, type=str)
+                help="new vault password file for rekey", action="callback", callback=CLI.expand_tilde, type='string')
             parser.add_option('--output', default=None, dest='output_file',
                 help='output file name for encrypt or decrypt; use - for stdout',
-                action="callback", callback=CLI.expand_tilde, type=str)
+                action="callback", callback=CLI.expand_tilde, type='string')
 
         if subset_opts:
             parser.add_option('-t', '--tags', dest='tags', default=[], action='append',
@@ -342,8 +343,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             connect_group.add_option('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
                 help='ask for connection password')
             connect_group.add_option('--private-key','--key-file', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
-                help='use this file to authenticate the connection',
-                action="callback", callback=CLI.unfrack_path, type=str)
+                help='use this file to authenticate the connection', action="callback", callback=CLI.unfrack_path, type='string')
             connect_group.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',
                 help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
             connect_group.add_option('-c', '--connection', dest='connection', default=C.DEFAULT_TRANSPORT,
@@ -439,7 +439,10 @@ class CLI(with_metaclass(ABCMeta, object)):
                 # If some additional transformations are needed for the
                 # arguments and options, do it here.
         """
+
         self.options, self.args = self.parser.parse_args(self.args[1:])
+
+        # process tags
         if hasattr(self.options, 'tags') and not self.options.tags:
             # optparse defaults does not do what's expected
             self.options.tags = ['all']
@@ -457,6 +460,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                     tags.add(tag.strip())
             self.options.tags = list(tags)
 
+        # process skip_tags
         if hasattr(self.options, 'skip_tags') and self.options.skip_tags:
             if not C.MERGE_MULTIPLE_CLI_TAGS:
                 if len(self.options.skip_tags) > 1:
@@ -470,6 +474,23 @@ class CLI(with_metaclass(ABCMeta, object)):
                 for tag in tag_set.split(u','):
                     skip_tags.add(tag.strip())
             self.options.skip_tags = list(skip_tags)
+
+        # process inventory options
+        if hasattr(self.options, 'inventory'):
+
+            if self.options.inventory:
+
+                # should always be list
+                if isinstance(self.options.inventory, string_types):
+                    self.options.inventory = [self.options.inventory]
+
+                # expand tilde for each option
+                self.options.inventory = [os.path.expanduser(opt) if ',' not in opt else opt for opt in self.options.inventory]
+
+            else:
+                # set default if it exists
+                if os.path.exists(C.DEFAULT_HOST_LIST):
+                    self.options.inventory = [ C.DEFAULT_HOST_LIST ]
 
     @staticmethod
     def version(prog):
@@ -654,18 +675,33 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         return vault_pass
 
-    def get_opt(self, k, defval=""):
-        """
-        Returns an option from an Optparse values instance.
-        """
-        try:
-            data = getattr(self.options, k)
-        except:
-            return defval
-        # FIXME: Can this be removed if cli and/or constants ensures it's a
-        # list?
-        if k == "roles_path":
-            if os.pathsep in data:
-                data = data.split(os.pathsep)[0]
-        return data
+    @staticmethod
+    def _play_prereqs(options):
+
+        # all needs loader
+        loader = DataLoader()
+
+        # vault
+        b_vault_pass = None
+        if options.vault_password_file:
+            # read vault_pass from a file
+            b_vault_pass = CLI.read_vault_password_file(options.vault_password_file, loader=loader)
+        elif options.ask_vault_pass:
+            b_vault_pass = CLI.ask_vault_passwords()
+
+        if b_vault_pass is not None:
+            loader.set_vault_password(b_vault_pass)
+
+        # create the inventory, and filter it based on the subset specified (if any)
+        inventory = InventoryManager(loader=loader, sources=options.inventory)
+
+        # create the variable manager, which will be shared throughout
+        # the code, ensuring a consistent view of global variables
+        variable_manager = VariableManager(loader=loader, inventory=inventory)
+
+        # load vars from cli options
+        variable_manager.extra_vars = load_extra_vars(loader=loader, options=options)
+        variable_manager.options_vars = load_options_vars(options, CLI.version_info(gitinfo=False))
+
+        return loader, inventory, variable_manager
 

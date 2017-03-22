@@ -28,7 +28,7 @@ from copy import deepcopy
 from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.utils.color import stringc
-from ansible.vars import strip_internal_keys
+from ansible.vars.manager import strip_internal_keys
 
 try:
     from __main__ import display as global_display

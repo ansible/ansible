@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.plugins.lookup import LookupBase
-from ansible.inventory import Inventory
+from ansible.inventory.manager import split_host_pattern, order_patterns
 
 class LookupModule(LookupBase):
 
@@ -42,7 +42,7 @@ class LookupModule(LookupBase):
         host_list = []
 
         for term in terms:
-            patterns = Inventory.order_patterns(Inventory.split_host_pattern(term))
+            patterns = order_patterns(split_host_pattern(term))
 
             for p in patterns:
                 that = self.get_hosts(variables, p)

@@ -30,7 +30,6 @@ import yaml
 from distutils.version import LooseVersion
 from shutil import rmtree
 
-import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement

@@ -25,6 +25,7 @@ import json
 import tempfile
 from yaml import YAMLError
 
+from ansible import constants as C
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
 from ansible.module_utils.basic import is_executable
@@ -104,14 +105,14 @@ class DataLoader:
 
         return new_data
 
-    def load_from_file(self, file_name):
+    def load_from_file(self, file_name, cache=True, unsafe=False):
         ''' Loads data from a file, which can contain either JSON or YAML.  '''
 
         file_name = self.path_dwim(file_name)
 
         # if the file has already been read in and cached, we'll
         # return those results to avoid more file/vault operations
-        if file_name in self._FILE_CACHE:
+        if cache and file_name in self._FILE_CACHE:
             parsed_data = self._FILE_CACHE[file_name]
         else:
             # read the file contents and load the data structure from them
@@ -123,8 +124,11 @@ class DataLoader:
             # cache the file contents for next time
             self._FILE_CACHE[file_name] = parsed_data
 
-        # return a deep copy here, so the cache is not affected
-        return copy.deepcopy(parsed_data)
+        if unsafe:
+            return parsed_data
+        else:
+            # return a deep copy here, so the cache is not affected
+            return copy.deepcopy(parsed_data)
 
     def path_exists(self, path):
         path = self.path_dwim(path)
@@ -433,3 +437,33 @@ class DataLoader:
                 self.cleanup_tmp_file(f)
             except:
                 pass  # TODO: this should at least warn
+
+    def load_vars_files(self, entities, path, cache=True, unsafe=False):
+        ''' cycle over entities and load vars files if they exist '''
+
+        for entity in entities:
+            display.debug("Examining %s for %s" % (path, entity))
+            files = self._find_vars_files(path, entity)
+            for varfile in files:
+                display.debug("\tloading vars from %s" % (varfile))
+                entities[entity].load_data(self.load_from_file(varfile, cache=cache, unsafe=unsafe))
+
+    def _find_vars_files(self, path, entity):
+        """ Find {group,host}_vars files """
+
+        b_path = to_bytes(os.path.join(path, entity))
+        found = []
+        for ext in C.YAML_FILENAME_EXTENSIONS:
+            full_path = b_path + to_bytes(ext)
+            if os.path.exists(full_path):
+                display.debug("\tfound %s" % to_text(full_path))
+                if os.path.isdir(full_path):
+                    # matched dir name, so use all files included recursively
+                    for spath in os.listdir(full_path):
+                        if os.path.isdir(spath):
+                            found.extend(self._find_vars_files(spath, entity))
+                        else:
+                            found.append(spath)
+                else:
+                    found.append(full_path)
+        return found

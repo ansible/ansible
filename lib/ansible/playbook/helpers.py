@@ -123,7 +123,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     loader=loader
                 )
 
-                all_vars = variable_manager.get_vars(loader=loader, play=play, task=t)
+                all_vars = variable_manager.get_vars(play=play, task=t)
                 templar = Templar(loader=loader, variables=all_vars)
 
                 # check to see if this include is dynamic or static:
@@ -285,7 +285,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 else:
                     display.debug('Determine if include_role is static')
                     # Check to see if this include is dynamic or static:
-                    all_vars = variable_manager.get_vars(loader=loader, play=play, task=ir)
+                    all_vars = variable_manager.get_vars(play=play, task=ir)
                     templar = Templar(loader=loader, variables=all_vars)
                     needs_templating = False
                     for param in ir.args:

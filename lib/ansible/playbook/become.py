@@ -20,8 +20,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.errors import AnsibleParserError
+from ansible.playbook.attribute import FieldAttribute
 
 try:
     from __main__ import display

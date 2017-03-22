@@ -46,6 +46,12 @@ class Host:
     def __hash__(self):
         return hash(self.name)
 
+    def __str__(self):
+        return self.get_name()
+
+    def __repr__(self):
+        return self.get_name()
+
     def serialize(self):
         groups = []
         for group in self.groups:
@@ -80,6 +86,7 @@ class Host:
 
         self.name = name
         self.vars = {}
+        self._file_data = {}
         self.groups = []
 
         self.address = name
@@ -92,9 +99,6 @@ class Host:
         if gen_uuid:
             self._uuid = get_unique_id()
         self.implicit = False
-
-    def __repr__(self):
-        return self.get_name()
 
     def get_name(self):
         return self.name
@@ -136,25 +140,43 @@ class Host:
                     else:
                         self.remove_group(oldg)
 
+
     def set_variable(self, key, value):
 
         self.vars[key]=value
 
+    def load_data(self, data):
+
+        self._file_data = combine_vars(self._file_data, data)
+
     def get_groups(self):
         return self.groups
 
-    def get_vars(self):
+    def get_group_vars(self, include_all=True):
 
-        results = {}
-        results = combine_vars(results, self.vars)
-        results['inventory_hostname'] = self.name
-        results['inventory_hostname_short'] = self.name.split('.')[0]
-        results['group_names'] = sorted([ g.name for g in self.get_groups() if g.name != 'all'])
-        return results
-
-    def get_group_vars(self):
         results = {}
         groups = self.get_groups()
         for group in sorted(groups, key=lambda g: (g.depth, g.priority, g.name)):
-            results = combine_vars(results, group.get_vars())
+            if include_all or group.name != 'all':
+                results = combine_vars(results, group.get_vars())
+
         return results
+
+    def get_host_vars(self):
+        results = {}
+        results['inventory_hostname'] = self.name
+        results['inventory_hostname_short'] = self.name.split('.')[0]
+        results['group_names'] = sorted([ g.name for g in self.get_groups() if g.name != 'all'])
+
+        return combine_vars(self.vars, results)
+
+    def get_vars(self, include_file_data=True):
+
+        ret = combine_vars(self.get_group_vars(include_all=True), self.get_host_vars())
+        if include_file_data:
+            ret = combine_vars(ret, self._file_data)
+
+        return ret
+
+    def get_file_vars(self):
+        return self._file_data
