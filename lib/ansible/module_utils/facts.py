@@ -2498,8 +2498,8 @@ class LinuxNetwork(Network):
         )
         interface = dict(v4 = {}, v6 = {})
         for v in 'v4', 'v6':
-            if v == 'v6' and self.facts['os_family'] == 'RedHat' \
-                and self.facts['distribution_version'].startswith('4.'):
+            if (v == 'v6' and self.facts['os_family'] == 'RedHat' and
+                    self.facts['distribution_version'].startswith('4.')):
                 continue
             if v == 'v6' and not socket.has_ipv6:
                 continue

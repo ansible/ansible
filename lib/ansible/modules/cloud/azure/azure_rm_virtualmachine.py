@@ -847,13 +847,13 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     self.create_or_update_vm(vm_resource)
 
                 # Make sure we leave the machine in requested power state
-                if powerstate_change == 'poweron' and \
-                    self.results['ansible_facts']['azure_vm']['powerstate'] != 'running':
+                if (powerstate_change == 'poweron' and
+                        self.results['ansible_facts']['azure_vm']['powerstate'] != 'running'):
                     # Attempt to power on the machine
                     self.power_on_vm()
 
-                elif powerstate_change == 'poweroff' and \
-                    self.results['ansible_facts']['azure_vm']['powerstate'] == 'running':
+                elif (powerstate_change == 'poweroff' and
+                        self.results['ansible_facts']['azure_vm']['powerstate'] == 'running'):
                     # Attempt to power off the machine
                     self.power_off_vm()
 

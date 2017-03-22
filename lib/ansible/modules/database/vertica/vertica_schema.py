@@ -216,8 +216,8 @@ def present(schema_facts, cursor, schema, usage_roles, create_roles, owner):
                 "Changing schema owner is not supported. "
                 "Current owner: {0}."
                 ).format(schema_facts[schema_key]['owner']))
-        if cmp(sorted(usage_roles), sorted(schema_facts[schema_key]['usage_roles'])) != 0 or \
-            cmp(sorted(create_roles), sorted(schema_facts[schema_key]['create_roles'])) != 0:
+        if (cmp(sorted(usage_roles), sorted(schema_facts[schema_key]['usage_roles'])) != 0 or
+                cmp(sorted(create_roles), sorted(schema_facts[schema_key]['create_roles'])) != 0):
             update_roles(schema_facts, cursor, schema,
                 schema_facts[schema_key]['usage_roles'], usage_roles,
                 schema_facts[schema_key]['create_roles'], create_roles)

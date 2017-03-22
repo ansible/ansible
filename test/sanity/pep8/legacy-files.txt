@@ -1,7 +1,6 @@
 lib/ansible/cli/__init__.py
 lib/ansible/cli/galaxy.py
 lib/ansible/cli/playbook.py
-lib/ansible/compat/six/__init__.py
 lib/ansible/constants.py
 lib/ansible/errors/__init__.py
 lib/ansible/executor/play_iterator.py
@@ -59,7 +58,6 @@ lib/ansible/modules/cloud/amazon/s3.py
 lib/ansible/modules/cloud/amazon/s3_lifecycle.py
 lib/ansible/modules/cloud/amazon/s3_sync.py
 lib/ansible/modules/cloud/amazon/s3_website.py
-lib/ansible/modules/cloud/amazon/sns_topic.py
 lib/ansible/modules/cloud/amazon/sts_assume_role.py
 lib/ansible/modules/cloud/amazon/sts_session_token.py
 lib/ansible/modules/cloud/azure/azure.py
@@ -73,18 +71,14 @@ lib/ansible/modules/cloud/cloudscale/cloudscale_server.py
 lib/ansible/modules/cloud/cloudstack/cs_host.py
 lib/ansible/modules/cloud/cloudstack/cs_instance.py
 lib/ansible/modules/cloud/cloudstack/cs_iso.py
-lib/ansible/modules/cloud/cloudstack/cs_portforward.py
 lib/ansible/modules/cloud/digital_ocean/digital_ocean.py
 lib/ansible/modules/cloud/google/gc_storage.py
 lib/ansible/modules/cloud/google/gce_tag.py
 lib/ansible/modules/cloud/google/gcpubsub.py
 lib/ansible/modules/cloud/misc/ovirt.py
-lib/ansible/modules/cloud/misc/proxmox.py
 lib/ansible/modules/cloud/misc/proxmox_kvm.py
-lib/ansible/modules/cloud/misc/proxmox_template.py
 lib/ansible/modules/cloud/misc/serverless.py
 lib/ansible/modules/cloud/openstack/_nova_compute.py
-lib/ansible/modules/cloud/openstack/os_nova_host_aggregate.py
 lib/ansible/modules/cloud/packet/packet_device.py
 lib/ansible/modules/cloud/packet/packet_sshkey.py
 lib/ansible/modules/cloud/profitbricks/profitbricks.py
@@ -111,8 +105,6 @@ lib/ansible/modules/database/postgresql/postgresql_ext.py
 lib/ansible/modules/database/postgresql/postgresql_privs.py
 lib/ansible/modules/database/postgresql/postgresql_schema.py
 lib/ansible/modules/database/postgresql/postgresql_user.py
-lib/ansible/modules/database/vertica/vertica_schema.py
-lib/ansible/modules/database/vertica/vertica_user.py
 lib/ansible/modules/files/acl.py
 lib/ansible/modules/files/archive.py
 lib/ansible/modules/files/copy.py
@@ -139,16 +131,6 @@ lib/ansible/modules/network/f5/bigip_pool_member.py
 lib/ansible/modules/network/f5/bigip_virtual_server.py
 lib/ansible/modules/network/haproxy.py
 lib/ansible/modules/network/nmcli.py
-lib/ansible/modules/network/nxos/nxos_bgp.py
-lib/ansible/modules/network/nxos/nxos_bgp_af.py
-lib/ansible/modules/network/nxos/nxos_bgp_neighbor.py
-lib/ansible/modules/network/nxos/nxos_bgp_neighbor_af.py
-lib/ansible/modules/network/nxos/nxos_evpn_vni.py
-lib/ansible/modules/network/nxos/nxos_feature.py
-lib/ansible/modules/network/nxos/nxos_gir.py
-lib/ansible/modules/network/nxos/nxos_interface_ospf.py
-lib/ansible/modules/network/nxos/nxos_snapshot.py
-lib/ansible/modules/network/nxos/nxos_vlan.py
 lib/ansible/modules/network/panos/panos_nat_policy.py
 lib/ansible/modules/network/snmp_facts.py
 lib/ansible/modules/notification/hall.py
@@ -210,7 +192,6 @@ lib/ansible/modules/windows/win_uri.py
 lib/ansible/modules/windows/win_webpicmd.py
 lib/ansible/parsing/mod_args.py
 lib/ansible/playbook/attribute.py
-lib/ansible/playbook/block.py
 lib/ansible/playbook/role/__init__.py
 lib/ansible/playbook/role/metadata.py
 lib/ansible/plugins/action/set_fact.py
@@ -223,7 +204,6 @@ lib/ansible/plugins/connection/accelerate.py
 lib/ansible/plugins/connection/paramiko_ssh.py
 lib/ansible/plugins/connection/ssh.py
 lib/ansible/plugins/connection/winrm.py
-lib/ansible/plugins/filter/ipaddr.py
 lib/ansible/plugins/lookup/first_found.py
 lib/ansible/plugins/shell/fish.py
 lib/ansible/plugins/shell/sh.py

@@ -677,7 +677,7 @@ def await_resource(conn, resource, status, module):
         # Some RDS resources take much longer than others to be ready. Check
         # less aggressively for slow ones to avoid throttling.
         if time.time() > start_time + 90:
-          check_interval = 20
+            check_interval = 20
     return resource
 
 

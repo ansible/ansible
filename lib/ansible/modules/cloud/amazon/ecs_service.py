@@ -300,7 +300,7 @@ class EcsServiceManager:
         return self.jsonize(response['service'])
 
     def update_service(self, service_name, cluster_name, task_definition,
-        load_balancers, desired_count, client_token, role, deployment_configuration):
+                       load_balancers, desired_count, client_token, role, deployment_configuration):
         response = self.ecs.update_service(
             cluster=cluster_name,
             service=service_name,
