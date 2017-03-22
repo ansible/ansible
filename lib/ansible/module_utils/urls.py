@@ -683,7 +683,6 @@ class SSLValidationHandler(urllib_request.BaseHandler):
 
         if not use_proxy:
             # ignore proxy settings for this host request
-            
             if tmp_ca_cert_path:
                 os.remove(tmp_ca_cert_path)
             if to_add_ca_cert_path:
