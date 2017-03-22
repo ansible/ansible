@@ -433,9 +433,10 @@ def main():
         try:
             if update_password != 'always':
                 uinfo = user_find(client, user, db_name)
-                password = None
-                if uinfo and not check_if_roles_changed(uinfo, roles, db_name):
-                    module.exit_json(changed=False, user=user)
+                if uinfo:
+                    password = None
+                    if not check_if_roles_changed(uinfo, roles, db_name):
+                        module.exit_json(changed=False, user=user)
 
             if module.check_mode:
                 module.exit_json(changed=True, user=user)
