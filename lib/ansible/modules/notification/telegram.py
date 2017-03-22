@@ -63,7 +63,7 @@ EXAMPLES = """
 
 - name: send a message to chat in playbook
   telegram:
-    token: 'bot9999999:XXXXXXXXXXXXXXXXXXXXXXX'
+    token: '9999999:XXXXXXXXXXXXXXXXXXXXXXX'
     chat_id: 000000
     msg: Ansible task finished
 """
@@ -107,7 +107,7 @@ def main():
     msg_format = quote(module.params.get('msg_format'))
     msg = quote(module.params.get('msg'))
 
-    url = 'https://api.telegram.org/' + token + \
+    url = 'https://api.telegram.org/bot' + token + \
         '/sendMessage?text=' + msg + '&chat_id=' + chat_id
     if msg_format in ('markdown', 'html'):
         url += '&parse_mode=' + msg_format
