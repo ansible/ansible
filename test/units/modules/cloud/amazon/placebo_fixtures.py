@@ -50,7 +50,7 @@ def placeboify(request, monkeypatch):
     namespace `placebo_recordings/{testfile name}/{test function name}` to
     distinguish them.
     """
-    session = boto3.Session()
+    session = boto3.Session(region_name='us-west-2')
 
     recordings_path = os.path.join(
         request.fspath.dirname,
@@ -73,7 +73,7 @@ def placeboify(request, monkeypatch):
     else:
         pill.playback()
 
-    def boto3_middleman_connection(module, conn_type, resource, region, **kwargs):
+    def boto3_middleman_connection(module, conn_type, resource, region='us-west-2', **kwargs):
         if conn_type != 'client':
             #TODO support resource-based connections
             raise ValueError('Mocker only supports client, not %s' % conn_type)
