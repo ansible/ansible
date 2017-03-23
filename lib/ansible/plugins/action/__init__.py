@@ -213,13 +213,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # any of these require a true
         for condition in [
-              self._connection.has_pipelining,
-              self._play_context.pipelining,
-              module_style == "new",                     # old style modules do not support pipelining
-              not C.DEFAULT_KEEP_REMOTE_FILES,           # user wants remote files
-              not wrap_async,                            # async does not support pipelining
-              self._play_context.become_method != 'su',  # su does not work with pipelining,
-              # FIXME: we might need to make become_method exclusion a configurable list
+            self._connection.has_pipelining,
+            self._play_context.pipelining,
+            module_style == "new",                     # old style modules do not support pipelining
+            not C.DEFAULT_KEEP_REMOTE_FILES,           # user wants remote files
+            not wrap_async,                            # async does not support pipelining
+            self._play_context.become_method != 'su',  # su does not work with pipelining,
+            # FIXME: we might need to make become_method exclusion a configurable list
         ]:
             if not condition:
                 return False
