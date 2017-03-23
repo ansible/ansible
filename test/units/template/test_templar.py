@@ -23,10 +23,10 @@ from jinja2.runtime import Context
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch
-from ansible.compat.six import string_types
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
+from ansible.module_utils.six import string_types
 from ansible.template import Templar, AnsibleContext, AnsibleEnvironment
 from ansible.vars.unsafe_proxy import AnsibleUnsafe, wrap_var
 #from ansible.unsafe_proxy import AnsibleUnsafe, wrap_var

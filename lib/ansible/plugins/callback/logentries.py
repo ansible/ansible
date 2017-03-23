@@ -61,7 +61,6 @@ import random
 import time
 import codecs
 import uuid
-from ansible.compat.six.moves import configparser
 
 try:
     import certifi
@@ -75,6 +74,7 @@ try:
 except ImportError:
     HAS_FLATDICT = False
 
+from ansible.module_utils.six.moves import configparser
 from ansible.plugins.callback import CallbackBase
 
 

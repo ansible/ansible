@@ -24,11 +24,10 @@ import sys
 import time
 import traceback
 
-from ansible.compat.six import iteritems, string_types, binary_type
-
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure
 from ansible.executor.task_result import TaskResult
+from ansible.module_utils.six import iteritems, string_types, binary_type
 from ansible.module_utils._text import to_text
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
@@ -43,6 +42,7 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 __all__ = ['TaskExecutor']
 

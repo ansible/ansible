@@ -3,8 +3,7 @@
 urllib_users=$(find . -name '*.py' -exec grep -H urlopen '{}' '+' | grep -v \
     -e '^[^:]*/.tox/' \
     -e '^\./lib/ansible/module_utils/urls.py:' \
-    -e '^\./lib/ansible/module_utils/six.py:' \
-    -e '^\./lib/ansible/compat/six/_six.py:' \
+    -e '^\./lib/ansible/module_utils/six/_six.py:' \
     -e '^[^:]*:#'
 )
 

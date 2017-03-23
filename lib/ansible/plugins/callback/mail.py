@@ -24,7 +24,7 @@ import os
 import smtplib
 import json
 
-from ansible.compat.six import string_types
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.callback import CallbackBase
 

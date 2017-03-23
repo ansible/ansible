@@ -109,12 +109,12 @@ import time
 
 from functools import wraps
 from ansible import constants as C
-from ansible.compat import selectors
-from ansible.compat.six import PY3, text_type, binary_type
-from ansible.compat.six.moves import shlex_quote
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils.basic import BOOLEANS
+from ansible.compat import selectors
+from ansible.module_utils.six import PY3, text_type, binary_type
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.utils.path import unfrackpath, makedirs_safe
@@ -126,6 +126,7 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 SSHPASS_AVAILABLE = None
 

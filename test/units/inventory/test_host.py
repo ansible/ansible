@@ -18,11 +18,11 @@
 # for __setstate__/__getstate__ tests
 import pickle
 
-from ansible.compat.six import string_types
 from ansible.compat.tests import unittest
 
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
+from ansible.module_utils.six import string_types
 
 
 class TestHost(unittest.TestCase):

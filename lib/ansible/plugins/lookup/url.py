@@ -18,8 +18,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-from ansible.compat.six.moves.urllib.error import HTTPError, URLError
 from ansible.errors import AnsibleError
+from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError
 from ansible.plugins.lookup import LookupBase

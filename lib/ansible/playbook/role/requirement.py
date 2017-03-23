@@ -19,15 +19,15 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import string_types
-
 import os
 import shutil
 import subprocess
 import tempfile
 
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types
 from ansible.playbook.role.definition import RoleDefinition
+
 
 __all__ = ['RoleRequirement']
 

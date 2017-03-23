@@ -17,11 +17,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import string_types
+from ansible.constants import mk_boolean as boolean
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.constants import mk_boolean as boolean
+
 
 FLAGS = ('skip_missing',)
 

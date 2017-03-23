@@ -3,10 +3,10 @@ import sys
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
-from ansible.compat.six.moves import builtins
 
-from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import builtins
+from ansible.module_utils._text import to_native
 from units.mock.procenv import swap_stdin_and_argv
 
 

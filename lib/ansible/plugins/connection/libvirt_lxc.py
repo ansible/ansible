@@ -27,8 +27,8 @@ import subprocess
 import traceback
 
 from ansible import constants as C
-from ansible.compat.six.moves import shlex_quote
 from ansible.errors import AnsibleError
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 

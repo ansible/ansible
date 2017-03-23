@@ -10,8 +10,8 @@ WHITELIST='(lib/ansible/modules/cloud/digital_ocean/digital_ocean.py)'
 
 SIX_USERS=$(find "$BASEDIR" -name '*.py' -exec grep -wH six '{}' '+' \
     | grep import \
-    | grep -v ansible.compat \
     | grep -v ansible.module_utils.six \
+    | grep -v 'ansible.module_utils import six' \
     | egrep -v "^$WHITELIST:"
 )
 

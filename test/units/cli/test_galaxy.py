@@ -25,9 +25,9 @@ import tarfile
 import tempfile
 import yaml
 
-from ansible.compat.six import PY3
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import call, patch
+from ansible.module_utils.six import PY3
 
 import ansible
 from ansible.errors import AnsibleError, AnsibleOptionsError

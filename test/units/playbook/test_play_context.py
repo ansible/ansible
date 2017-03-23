@@ -25,9 +25,9 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible import constants as C
-from ansible.compat.six.moves import shlex_quote
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.playbook.play_context import PlayContext
 
 from units.mock.loader import DictDataLoader

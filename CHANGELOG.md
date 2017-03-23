@@ -16,6 +16,7 @@ Ansible Changes By Release
 ### Minor Changes
 * removed previously deprecated config option 'hostfile' and env var 'ANSIBLE_HOSTS'
 * removed unused and deprecated config option 'pattern'
+* Updated the copy of six bundled for modules to use from 1.4.1 to 1.10.0
 
 
 #### New: Tests

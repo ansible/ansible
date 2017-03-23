@@ -24,19 +24,18 @@ import sys
 
 from collections import defaultdict, MutableMapping
 
-from ansible.compat.six import iteritems
-from jinja2.exceptions import UndefinedError
-
 try:
     from hashlib import sha1
 except ImportError:
     from sha import sha as sha1
 
+from jinja2.exceptions import UndefinedError
+
 from ansible import constants as C
 from ansible.cli import CLI
-from ansible.compat.six import string_types, text_type
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
 from ansible.inventory.host import Host
+from ansible.module_utils.six import iteritems, string_types, text_type
 from ansible.plugins import lookup_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
@@ -51,13 +50,16 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-VARIABLE_CACHE = dict()
-HOSTVARS_CACHE = dict()
+
+VARIABLE_CACHE = {}
+HOSTVARS_CACHE = {}
+
 
 class AnsibleInventoryVarsData(dict):
     def __init__(self, *args, **kwargs):
         super(AnsibleInventoryVarsData, self).__init__(*args, **kwargs)
         self.path = None
+
 
 def preprocess_vars(a):
     '''
