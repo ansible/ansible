@@ -192,3 +192,19 @@
     that:
       - "test_script_bool_result.stdout_lines[0] == 'System.Boolean'"
       - "test_script_bool_result.stdout_lines[1] == 'True'"
+
+- name: run test script that takes environment variable
+  script: test_script_with_env.ps1
+  environment:
+    testVar: "Woohoo! We can pass environment variable to the script!"
+  register: test_script_env_result
+
+- name: check that the script ran and the environment variable was passed
+  assert:
+    that:
+      - "test_script_env_result.rc == 0"
+      - "test_script_env_result.stdout"
+      - "'Woohoo' in test_script_env_result.stdout"
+      - "not test_script_env_result.stderr"
+      - "not test_script_env_result|failed"
+      - "test_script_env_result|changed"

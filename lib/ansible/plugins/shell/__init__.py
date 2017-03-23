@@ -173,6 +173,8 @@ class ShellBase(object):
 
         return cmd
 
-    def wrap_for_exec(self, cmd):
+    def wrap_for_exec(self, cmd, env_string):
         """wrap script execution with any necessary decoration (eg '&' for quoted powershell script paths)"""
-        return cmd
+        if not env_string:
+            return cmd
+        return '%s %s' % (env_string, cmd)
