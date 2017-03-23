@@ -19,16 +19,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import re
-import socket
-import json
-import signal
 import logging
 
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.plugins.connection import ConnectionBase, ensure_connect
-from ansible.module_utils.six.moves import StringIO
 
 try:
     from ncclient import manager
@@ -45,6 +40,7 @@ except ImportError:
     display = Display()
 
 logging.getLogger('ncclient').setLevel(logging.INFO)
+
 
 class Connection(ConnectionBase):
     ''' NetConf connections '''
@@ -136,4 +132,3 @@ class Connection(ConnectionBase):
     def fetch_file(self, in_path, out_path):
         """Fetch a file from remote to local"""
         pass
-
