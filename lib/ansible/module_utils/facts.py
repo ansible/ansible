@@ -36,6 +36,7 @@ from ansible.module_utils.basic import get_all_subclasses
 from ansible.module_utils.six import PY3, iteritems
 from ansible.module_utils.six.moves import configparser, StringIO, reduce
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils import introspection
 
 try:
     import selinux
@@ -608,25 +609,11 @@ class Facts(object):
         return size_total, size_available
 
     def get_python_facts(self):
-        self.facts['python'] = {
-            'version': {
-                'major': sys.version_info[0],
-                'minor': sys.version_info[1],
-                'micro': sys.version_info[2],
-                'releaselevel': sys.version_info[3],
-                'serial': sys.version_info[4]
-            },
-            'version_info': list(sys.version_info),
-            'executable': sys.executable,
-            'has_sslcontext': HAS_SSLCONTEXT
-        }
-        try:
-            self.facts['python']['type'] = sys.subversion[0]
-        except AttributeError:
-            try:
-                self.facts['python']['type'] = sys.implementation.name
-            except AttributeError:
-                self.facts['python']['type'] = None
+
+        python_info = introspection.python_info()
+        python_info['has_sslcontext'] = HAS_SSLCONTEXT
+
+        self.facts['python'] = python_info
 
 
 class Distribution(object):

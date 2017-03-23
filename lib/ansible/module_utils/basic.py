@@ -167,7 +167,15 @@ from ansible.module_utils.six import (PY2, PY3, b, binary_type, integer_types,
 from ansible.module_utils.six.moves import map, reduce
 from ansible.module_utils._text import to_native, to_bytes, to_text
 
+HAS_INTROSPECTION = False
+try:
+    from ansible.module_utils import introspection
+    HAS_INTROSPECTION = True
+except ImportError:
+    HAS_INTROSPECTION = False
+
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
+
 
 _NUMBERTYPES = tuple(list(integer_types) + [float])
 
@@ -678,6 +686,10 @@ class AnsibleModule(object):
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
         self.check_mode = False
+        # Should we include module introspection info
+        self.introspect = False
+        # If true, only return the introspection info and dont change any state
+        self.introspect_only = False
         self.no_log = no_log
         self.cleanup_files = []
         self._debug = False
@@ -690,8 +702,15 @@ class AnsibleModule(object):
         self._warnings = []
         self._deprecations = []
 
+        # Keep track of what defaults/fallbacks we used
+        self._used_defaults = {}
+        self._used_fallbacks = {}
+
         self.aliases = {}
-        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility', '_ansible_socket']
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility', '_ansible_socket', '_ansible_module_introspect', '_ansible_module_introspect_only']
+        self._public_legal_inputs = []
+        self._legal_aliases = []
+
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -785,6 +804,21 @@ class AnsibleModule(object):
             self.log('[DEPRECATION WARNING] %s %s' % (msg, version))
         else:
             raise TypeError("deprecate requires a string not a %s" % type(msg))
+
+
+    def _introspect(self):
+        data = {}
+
+        if not HAS_INTROSPECTION:
+            return data
+
+        module_info = introspection.module_info(module=self)
+        module_info['module_path'] = get_module_path()
+        data['module'] = module_info
+
+        data['module_invocation'] = introspection.module_invocation()
+
+        return data
 
     def load_file_common_arguments(self, params):
         '''
@@ -1376,6 +1410,7 @@ class AnsibleModule(object):
         aliases_results = {} #alias:canon
         for (k,v) in self.argument_spec.items():
             self._legal_inputs.append(k)
+            self._public_legal_inputs.append(k)
             aliases = v.get('aliases', None)
             default = v.get('default', None)
             required = v.get('required', False)
@@ -1388,6 +1423,7 @@ class AnsibleModule(object):
                 raise Exception('internal error: aliases must be a list or tuple')
             for alias in aliases:
                 self._legal_inputs.append(alias)
+                self._public_legal_inputs.append(alias)
                 aliases_results[alias] = k
                 if alias in self.params:
                     self.params[k] = self.params[alias]
@@ -1431,6 +1467,10 @@ class AnsibleModule(object):
 
             elif check_invalid_arguments and k not in self._legal_inputs:
                 unsupported_parameters.add(k)
+            elif k == '_ansible_module_introspect':
+                self.introspect = v
+            elif k == '_ansible_module_introspect_only':
+                self.introspect_only = v
 
             #clean up internal params:
             if k.startswith('_ansible_'):
@@ -1732,10 +1772,12 @@ class AnsibleModule(object):
                 # this prevents setting defaults on required items
                 if default is not None and k not in self.params:
                     self.params[k] = default
+                    self._used_defaults[k] = default
             else:
                 # make sure things without a default still get set None
                 if k not in self.params:
                     self.params[k] = default
+                    self._used_defaults[k] = default
 
     def _set_fallbacks(self):
         for k,v in self.argument_spec.items():
@@ -1750,6 +1792,9 @@ class AnsibleModule(object):
                     else:
                         fallback_args = item
                 try:
+                    self._used_fallbacks[k] = {'fallback': fallback,
+                                               'fallback_args': fallback_args,
+                                               'fallback_kwargs': fallback_kwargs}
                     self.params[k] = fallback_strategy(*fallback_args, **fallback_kwargs)
                 except AnsibleFallbackNotFound:
                     continue
@@ -1978,6 +2023,8 @@ class AnsibleModule(object):
 
         if not 'changed' in kwargs:
             kwargs['changed'] = False
+        if self.introspect:
+            kwargs['introspect'] = self._introspect()
 
         self.do_cleanup_files()
         self._return_formatted(kwargs)
@@ -1988,7 +2035,11 @@ class AnsibleModule(object):
 
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
-
+        if 'invocation' not in kwargs:
+            kwargs['invocation'] = {'module_args': self.params}
+        if self.introspect:
+            kwargs['introspect'] = self._introspect()
+        kwargs = remove_values(kwargs, self.no_log_values)
         self.do_cleanup_files()
         self._return_formatted(kwargs)
         sys.exit(1)
