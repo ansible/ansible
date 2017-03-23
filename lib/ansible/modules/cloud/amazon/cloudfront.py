@@ -337,7 +337,7 @@ class CloudFrontServiceManager:
                     if origin["origin_ssl_protocols"] is not None and origin["origin_ssl_protocols"]["items"] is None:
                         self.module.fail_json(msg="list of origin_ssl_protocols must be defined")
             origins["quantity"] = quantity
-            return **snake_dict_to_camel_dict(origins)
+            return snake_dict_to_camel_dict(origins)
         return None:
 
     def validate_trusted_signers(self, trusted_signers):
