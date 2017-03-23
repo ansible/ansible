@@ -879,6 +879,7 @@ lib/ansible/playbook/taggable.py
 lib/ansible/playbook/task.py
 lib/ansible/playbook/task_include.py
 lib/ansible/plugins/__init__.py
+lib/ansible/plugins/action/__init__.py
 lib/ansible/plugins/action/asa_config.py
 lib/ansible/plugins/action/asa_template.py
 lib/ansible/plugins/action/assemble.py
