@@ -624,12 +624,16 @@ def repolist(module, repoq, qf="%{repoid}"):
         ret = set([ p for p in out.split('\n') if p.strip() ])
     return ret
 
-def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/'):
+def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/', disablerepo='', enablerepo=''):
 
     qf = "%{name}|%{epoch}|%{version}|%{release}|%{arch}|%{repoid}"
     # is_installed goes through rpm instead of repoquery so it needs a slightly different format
     is_installed_qf = "%{name}|%{epoch}|%{version}|%{release}|%{arch}|installed\n"
     repoq = [repoquerybin, '--show-duplicates', '--plugins', '--quiet']
+    if disablerepo:
+        repoq.extend(['--disablerepo', disablerepo])
+    if enablerepo:
+        repoq.extend(['--enablerepo', enablerepo])
     if installroot != '/':
         repoq.extend(['--installroot', installroot])
     if conf_file and os.path.exists(conf_file):
@@ -1216,7 +1220,9 @@ def main():
         repoquerybin = ensure_yum_utils(module)
         if not repoquerybin:
             module.fail_json(msg="repoquery is required to use list= with this module. Please install the yum-utils package.")
-        results = dict(results=list_stuff(module, repoquerybin, params['conf_file'], params['list'], params['installroot']))
+        results = {'results': list_stuff(module, repoquerybin, params['conf_file'],
+                                         params['list'], params['installroot'],
+                                         params['disablerepo'], params['enablerepo'])}
 
     else:
         # If rhn-plugin is installed and no rhn-certificate is available on
