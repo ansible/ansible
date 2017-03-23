@@ -30,7 +30,8 @@ module: packet_device
 short_description: create, destroy, start, stop, and reboot a Packet Host machine.
 
 description:
-    - create, destroy, update, start, stop, and reboot a Packet Host machine. When the machine is created it can optionally wait for it to have an IP address before returning. This module has a dependency on packet >= 1.0.
+    - create, destroy, update, start, stop, and reboot a Packet Host machine. When the machine is created it can optionally wait for it to have an
+      IP address before returning. This module has a dependency on packet >= 1.0.
     - API is documented at U(https://www.packet.net/help/api/#page:devices,header:devices-devices-post).
 
 version_added: 2.3
@@ -157,7 +158,7 @@ EXAMPLES = '''
       user_data: |
         #cloud-config
         ssh_authorized_keys:
-          - ssh-dss AAAAB3NzaC1kc3MAAACBAIfNT5S0ncP4BBJBYNhNPxFF9lqVhfPeu6SM1LoCocxqDc1AT3zFRi8hjIf6TLZ2AA4FYbcAWxLMhiBxZRVldT9GdBXile78kAK5z3bKTwq152DCqpxwwbaTIggLFhsU8wrfBsPWnDuAxZ0h7mmrCjoLIE3CNLDA/NmV3iB8xMThAAAAFQCStcesSgR1adPORzBxTr7hug92LwAAAIBOProm3Gk+HWedLyE8IfofLaOeRnbBRHAOL4z0SexKkVOnQ/LGN/uDIIPGGBDYTvXgKZT+jbHeulRJ2jKgfSpGKN4JxFQ8uzVH492jEiiUJtT72Ss1dCV4PmyERVIw+f54itihV3z/t25dWgowhb0int8iC/OY3cGodlmYb3wdcQAAAIBuLbB45djZXzUkOTzzcRDIRfhaxo5WipbtEM2B1fuBt2gyrvksPpH/LK6xTjdIIb0CxPu4OCxwJG0aOz5kJoRnOWIXQGhH7VowrJhsqhIc8gN9ErbO5ea8b1L76MNcAotmBDeTUiPw01IJ8MdDxfmcsCslJKgoRKSmQpCwXQtN2g== tomk@hp2
+          - {{ lookup('file', 'my_packet_sshkey') }}
         coreos:
           etcd:
             discovery: https://discovery.etcd.io/6a28e078895c5ec737174db2419bb2f3
@@ -207,7 +208,7 @@ devices:
     type: array
     sample: '[{"hostname": "my-server.com", "id": "server-id", "public-ipv4": "147.229.15.12", "private-ipv4": "10.0.15.12", "public-ipv6": ""2604:1380:2:5200::3"}]'
     returned: always
-'''
+'''  # NOQA
 
 
 import os

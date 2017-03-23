@@ -44,7 +44,8 @@ options:
   s3_bucket_prefix:
     description:
       - bucket to place CloudTrail in.
-      - this bucket should exist and have the proper policy. See U(http://docs.aws.amazon.com/awscloudtrail/latest/userguide/aggregating_logs_regions_bucket_policy.html)
+      - this bucket should exist and have the proper policy.
+        See U(http://docs.aws.amazon.com/awscloudtrail/latest/userguide/aggregating_logs_regions_bucket_policy.html)
       - required when state=enabled.
     required: false
   s3_key_prefix:
@@ -215,12 +216,14 @@ def main():
               results['view'].get('S3KeyPrefix', '')      != s3_key_prefix or \
               results['view']['IncludeGlobalServiceEvents'] != include_global_events:
                 if not module.check_mode:
-                    results['update'] = cf_man.update(name=ct_name, s3_bucket_name=s3_bucket_name, s3_key_prefix=s3_key_prefix, include_global_service_events=include_global_events)
+                    results['update'] = cf_man.update(name=ct_name, s3_bucket_name=s3_bucket_name, s3_key_prefix=s3_key_prefix,
+                                                      include_global_service_events=include_global_events)
                 results['changed'] = True
         else:
             if not module.check_mode:
                 # doesn't exist. create it.
-                results['enable'] = cf_man.enable(name=ct_name, s3_bucket_name=s3_bucket_name, s3_key_prefix=s3_key_prefix, include_global_service_events=include_global_events)
+                results['enable'] = cf_man.enable(name=ct_name, s3_bucket_name=s3_bucket_name, s3_key_prefix=s3_key_prefix,
+                                                  include_global_service_events=include_global_events)
             results['changed'] = True
 
         # given cloudtrail should exist now. Enable the logging.

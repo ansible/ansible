@@ -46,7 +46,9 @@ options:
     required: true
   picture:
     description:
-      - "The full URL to the image you wish to use for the Icon of the message. Defaults to U(http://cdn2.hubspot.net/hub/330046/file-769078210-png/Official_Logos/ansible_logo_black_square_small.png?t=1421076128627)"
+      - >
+        The full URL to the image you wish to use for the Icon of the message. Defaults to
+        U(http://cdn2.hubspot.net/hub/330046/file-769078210-png/Official_Logos/ansible_logo_black_square_small.png?t=1421076128627)
     required: false
 """
 
@@ -62,7 +64,7 @@ EXAMPLES = """
   hall:
     room_token: <hall room integration token>
     title: Server Creation
-    msg: 'Created EC2 instance {{ item.id }} of type {{ item.instance_type }}.\\nInstance can be reached at {{ item.public_ip }} in the {{ item.region }} region.'
+    msg: 'Created instance {{ item.id }} of type {{ item.instance_type }}.\\nInstance can be reached at {{ item.public_ip }} in the {{ item.region }} region.'
   delegate_to: loclahost
   when: ec2.instances|length > 0
   with_items: '{{ ec2.instances }}'
@@ -81,11 +83,12 @@ def send_request_to_hall(module, room_token, payload):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            room_token  = dict(type='str', required=True),
-            msg     = dict(type='str', required=True),
-            title       = dict(type='str', required=True),
-            picture     = dict(type='str', default='http://cdn2.hubspot.net/hub/330046/file-769078210-png/Official_Logos/ansible_logo_black_square_small.png?t=1421076128627'),
+        argument_spec=dict(
+            room_token=dict(type='str', required=True),
+            msg=dict(type='str', required=True),
+            title=dict(type='str', required=True),
+            picture=dict(type='str',
+                         default='http://cdn2.hubspot.net/hub/330046/file-769078210-png/Official_Logos/ansible_logo_black_square_small.png?t=1421076128627'),
         )
     )
 

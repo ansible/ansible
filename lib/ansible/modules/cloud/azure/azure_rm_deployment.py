@@ -233,7 +233,9 @@ EXAMPLES = '''
             - "14.04.2-LTS"
             - "15.04"
           metadata:
-            description: "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.5-LTS, 14.04.2-LTS, 15.04."
+            description: >
+                         The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version.
+                         Allowed values: 12.04.5-LTS, 14.04.2-LTS, 15.04."
       variables:
         location: "West US"
         imagePublisher: "Canonical"
@@ -320,7 +322,9 @@ EXAMPLES = '''
               osDisk:
                 name: "osdisk"
                 vhd:
-                  uri: "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+                  uri: >
+                       [concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',
+                       variables('OSDiskName'),'.vhd')]
                 caching: "ReadWrite"
                 createOption: "FromImage"
             networkProfile:

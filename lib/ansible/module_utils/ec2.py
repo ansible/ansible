@@ -95,7 +95,8 @@ def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None
     try:
         return _boto3_conn(conn_type=conn_type, resource=resource, region=region, endpoint=endpoint, **params)
     except ValueError:
-        module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type parameter in the boto3_conn function call')
+        module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type '
+                             'parameter in the boto3_conn function call')
 
 def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **params):
     profile = params.pop('profile_name', None)
@@ -257,7 +258,8 @@ def connect_to_aws(aws_module, region, **params):
     conn = aws_module.connect_to_region(region, **params)
     if not conn:
         if region not in [aws_module_region.name for aws_module_region in aws_module.regions()]:
-            raise AnsibleAWSError("Region %s does not seem to be available for aws module %s. If the region definitely exists, you may need to upgrade boto or extend with endpoints_path" % (region, aws_module.__name__))
+            raise AnsibleAWSError("Region %s does not seem to be available for aws module %s. If the region definitely exists, you may need to upgrade "
+                                  "boto or extend with endpoints_path" % (region, aws_module.__name__))
         else:
             raise AnsibleAWSError("Unknown problem connecting to region %s for aws module %s." % (region, aws_module.__name__))
     if params.get('profile_name'):

@@ -44,7 +44,18 @@ options:
     force:
         description:
             - opkg --force parameter used
-        choices: ["", "depends", "maintainer", "reinstall", "overwrite", "downgrade", "space", "postinstall", "remove", "checksum", "removal-of-dependent-packages"]
+        choices:
+            - ""
+            - "depends"
+            - "maintainer"
+            - "reinstall"
+            - "overwrite"
+            - "downgrade"
+            - "space"
+            - "postinstall"
+            - "remove"
+            - "checksum"
+            - "removal-of-dependent-packages"
         required: false
         default: absent
         version_added: "2.0"
@@ -161,11 +172,12 @@ def install_packages(module, opkg_path, packages):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(aliases=["pkg"], required=True),
-            state = dict(default="present", choices=["present", "installed", "absent", "removed"]),
-            force = dict(default="", choices=["", "depends", "maintainer", "reinstall", "overwrite", "downgrade", "space", "postinstall", "remove", "checksum", "removal-of-dependent-packages"]),
-            update_cache = dict(default="no", aliases=["update-cache"], type='bool')
+        argument_spec=dict(
+            name=dict(aliases=["pkg"], required=True),
+            state=dict(default="present", choices=["present", "installed", "absent", "removed"]),
+            force=dict(default="", choices=["", "depends", "maintainer", "reinstall", "overwrite", "downgrade", "space", "postinstall", "remove",
+                                            "checksum", "removal-of-dependent-packages"]),
+            update_cache=dict(default="no", aliases=["update-cache"], type='bool')
         )
     )
 

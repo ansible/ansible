@@ -284,7 +284,8 @@ class CLI(with_metaclass(ABCMeta, object)):
 
     @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False, module_opts=False,
-            async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False, runas_prompt_opts=False):
+                    async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False,
+                    runas_prompt_opts=False):
         ''' create an options parser for most ansible scripts '''
 
         # TODO: implement epilog parsing
@@ -448,7 +449,9 @@ class CLI(with_metaclass(ABCMeta, object)):
         if hasattr(self.options, 'tags') and self.options.tags:
             if not C.MERGE_MULTIPLE_CLI_TAGS:
                 if len(self.options.tags) > 1:
-                    display.deprecated('Specifying --tags multiple times on the command line currently uses the last specified value. In 2.4, values will be merged instead.  Set merge_multiple_cli_tags=True in ansible.cfg to get this behavior now.', version=2.5, removed=False)
+                    display.deprecated('Specifying --tags multiple times on the command line currently uses the last specified value. '
+                                       'In 2.4, values will be merged instead.  Set merge_multiple_cli_tags=True in ansible.cfg to get this behavior now.',
+                                       version=2.5, removed=False)
                     self.options.tags = [self.options.tags[-1]]
 
             tags = set()
@@ -460,7 +463,9 @@ class CLI(with_metaclass(ABCMeta, object)):
         if hasattr(self.options, 'skip_tags') and self.options.skip_tags:
             if not C.MERGE_MULTIPLE_CLI_TAGS:
                 if len(self.options.skip_tags) > 1:
-                    display.deprecated('Specifying --skip-tags multiple times on the command line currently uses the last specified value. In 2.4, values will be merged instead.  Set merge_multiple_cli_tags=True in ansible.cfg to get this behavior now.', version=2.5, removed=False)
+                    display.deprecated('Specifying --skip-tags multiple times on the command line currently uses the last specified value. '
+                                       'In 2.4, values will be merged instead.  Set merge_multiple_cli_tags=True in ansible.cfg to get this behavior now.',
+                                       version=2.5, removed=False)
                     self.options.skip_tags = [self.options.skip_tags[-1]]
 
             skip_tags = set()
@@ -634,7 +639,8 @@ class CLI(with_metaclass(ABCMeta, object)):
                 # STDERR not captured to make it easier for users to prompt for input in their scripts
                 p = subprocess.Popen(this_path, stdout=subprocess.PIPE)
             except OSError as e:
-                raise AnsibleError("Problem running vault password script %s (%s). If this is not a script, remove the executable bit from the file." % (' '.join(this_path), e))
+                raise AnsibleError("Problem running vault password script %s (%s). If this is not a script, "
+                                   "remove the executable bit from the file." % (' '.join(this_path), e))
             stdout, stderr = p.communicate()
             if p.returncode != 0:
                 raise AnsibleError("Vault password script %s returned non-zero (%s): %s" % (this_path, p.returncode, p.stderr))

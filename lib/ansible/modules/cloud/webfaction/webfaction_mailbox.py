@@ -35,7 +35,10 @@ description:
 author: Quentin Stafford-Fraser (@quentinsf)
 version_added: "2.0"
 notes:
-    - "You can run playbooks that use this on a local machine, or on a Webfaction host, or elsewhere, since the scripts use the remote webfaction API - the location is not important. However, running them on multiple hosts I(simultaneously) is best avoided. If you don't specify I(localhost) as your host, you may want to add C(serial: 1) to the plays."
+    - >
+      You can run playbooks that use this on a local machine, or on a Webfaction host, or elsewhere, since the scripts use the remote webfaction API.
+      The location is not important. However, running them on multiple hosts I(simultaneously) is best avoided. If you don't specify I(localhost) as
+      your host, you may want to add C(serial: 1) to the plays.
     - See `the webfaction API <http://docs.webfaction.com/xmlrpc-api/>`_ for more info.
 options:
 

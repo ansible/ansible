@@ -283,7 +283,8 @@ def main():
                 if not g in statement_label:
                     module.fail_json(msg='{} is an unknown grant type.'.format(g))
 
-        ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'], mode=mode, dry_run=module.check_mode, clean_invalid_entries=module.params['clean_invalid_entries'])
+        ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'], mode=mode, dry_run=module.check_mode,
+                       clean_invalid_entries=module.params['clean_invalid_entries'])
         result.update(ret)
 
     except Exception as err:

@@ -70,7 +70,8 @@ options:
       - The path to the private key of the certificate in PEM encoded format.
   dup_ok:
     description:
-      - By default the module will not upload a certificate that is already uploaded into AWS. If set to True, it will upload the certificate as long as the name is unique.
+      - By default the module will not upload a certificate that is already uploaded into AWS. If set to True, it will upload the certificate as
+        long as the name is unique.
     required: false
     default: False
     aliases: []

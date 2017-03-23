@@ -393,7 +393,8 @@ def parse_service(module):
         )
     elif module.params.get('service_name') and not module.params.get('service_port'):
 
-        module.fail_json( msg="service_name supplied but no service_port, a port is required to configure a service. Did you configure the 'port' argument meaning 'service_port'?")
+        module.fail_json(msg="service_name supplied but no service_port, a port is required to configure a service. Did you configure "
+                             "the 'port' argument meaning 'service_port'?")
 
 
 class ConsulService():

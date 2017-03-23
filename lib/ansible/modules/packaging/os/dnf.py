@@ -35,7 +35,9 @@ description:
 options:
   name:
     description:
-      - "Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: dnf -y update. You can also pass a url or a local path to a rpm file."
+      - >
+        Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: dnf -y update.
+        You can also pass a url or a local path to a rpm file.
     required: true
     default: null
     aliases: []

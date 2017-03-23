@@ -24,7 +24,8 @@ DOCUMENTATION = '''
 module: s3
 short_description: manage objects in S3.
 description:
-    - This module allows the user to manage S3 buckets and the objects within them. Includes support for creating and deleting both objects and buckets, retrieving objects as files or strings and generating download links. This module has a dependency on python-boto.
+    - This module allows the user to manage S3 buckets and the objects within them. Includes support for creating and deleting both objects and buckets,
+      retrieving objects as files or strings and generating download links. This module has a dependency on python-boto.
 version_added: "1.1"
 options:
   aws_access_key:
@@ -89,7 +90,8 @@ options:
     version_added: "1.6"
   mode:
     description:
-      - Switches the module behaviour between put (upload), get (download), geturl (return download url, Ansible 1.3+), getstr (download object as string (1.3+)), list (list keys, Ansible 2.0+), create (bucket), delete (bucket), and delobj (delete object, Ansible 2.0+).
+      - Switches the module behaviour between put (upload), get (download), geturl (return download url, Ansible 1.3+),
+        getstr (download object as string (1.3+)), list (list keys, Ansible 2.0+), create (bucket), delete (bucket), and delobj (delete object, Ansible 2.0+).
     required: true
     choices: ['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list']
   object:
@@ -99,7 +101,9 @@ options:
     default: null
   permission:
     description:
-      - This option lets the user set the canned permissions on the object/bucket that are created. The permissions that can be set are 'private', 'public-read', 'public-read-write', 'authenticated-read'. Multiple permissions can be specified as a list.
+      - This option lets the user set the canned permissions on the object/bucket that are created.
+        The permissions that can be set are 'private', 'public-read', 'public-read-write', 'authenticated-read'. Multiple permissions can be
+        specified as a list.
     required: false
     default: private
     version_added: "2.0"
@@ -118,13 +122,17 @@ options:
     version_added: "2.0"
   overwrite:
     description:
-      - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations. Boolean or one of [always, never, different], true is equal to 'always' and false is equal to 'never', new in 2.0
+      - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
+        Boolean or one of [always, never, different], true is equal to 'always' and false is equal to 'never', new in 2.0
     required: false
     default: 'always'
     version_added: "1.2"
   region:
     description:
-     - "AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked, followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the S3 Location: US Standard.  Prior to ansible 1.8 this parameter could be specified but had no effect."
+     - >
+       AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked,
+       followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the
+       S3 Location: US Standard.  Prior to ansible 1.8 this parameter could be specified but had no effect.
     required: false
     default: null
     version_added: "1.8"
@@ -153,7 +161,9 @@ options:
     version_added: "1.3"
   ignore_nonexistent_bucket:
     description:
-      - "Overrides initial bucket lookups in case bucket or iam policies are restrictive. Example: a user may have the GetObject permission but no other permissions. In this case using the option mode: get will fail without specifying ignore_nonexistent_bucket: True."
+      - >
+        Overrides initial bucket lookups in case bucket or iam policies are restrictive. Example: a user may have the GetObject permission but no other
+        permissions. In this case using the option mode: get will fail without specifying ignore_nonexistent_bucket: True.
     default: false
     aliases: []
     version_added: "2.3"

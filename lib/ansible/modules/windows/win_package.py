@@ -34,7 +34,10 @@ author: Trond Hindenes
 short_description: Installs/Uninstalls an installable package, either from local file system or url
 description:
      - Installs or uninstalls a package.
-     - 'Optionally uses a product_id to check if the package needs installing. You can find product ids for installed programs in the windows registry either in C(HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall) or for 32 bit programs C(HKLM:Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall)'
+     - >
+       Optionally uses a product_id to check if the package needs installing. You can find product ids for installed programs in the windows registry
+       either in C(HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall) or for 32 bit programs
+       C(HKLM:Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall)
 options:
   path:
     description:
@@ -48,7 +51,9 @@ options:
   product_id:
     description:
       - Product id of the installed package (used for checking if already installed)
-      - You can find product ids for installed programs in the windows registry either in C(HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall) or for 32 bit programs C(HKLM:Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall)'
+      - >
+        You can find product ids for installed programs in the windows registry either in C(HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall)
+        or for 32 bit programs C(HKLM:Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall)
     required: true
     aliases: [productid]
   arguments:
@@ -67,12 +72,14 @@ options:
     aliases: [ensure]
   user_name:
     description:
-      - Username of an account with access to the package if it's located on a file share. Only needed if the winrm user doesn't have access to the package. Also specify user_password for this to function properly.
+      - Username of an account with access to the package if it's located on a file share. Only needed if the winrm user doesn't have access to the package.
+        Also specify user_password for this to function properly.
     default: null
     required: false
   user_password:
     description:
-      - Password of an account with access to the package if it's located on a file share. Only needed if the winrm user doesn't have access to the package. Also specify user_name for this to function properly.
+      - Password of an account with access to the package if it's located on a file share. Only needed if the winrm user doesn't have access to the package.
+        Also specify user_name for this to function properly.
     default: null
     required: false
   expected_return_code:

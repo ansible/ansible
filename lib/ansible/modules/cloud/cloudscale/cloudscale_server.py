@@ -31,12 +31,15 @@ description:
   - Create, start, stop and delete servers on the cloudscale.ch IaaS service.
   - All operations are performed using the cloudscale.ch public API v1.
   - "For details consult the full API documentation: U(https://www.cloudscale.ch/en/api/v1)."
-  - An valid API token is required for all operations. You can create as many tokens as you like using the cloudscale.ch control panel at U(https://control.cloudscale.ch).
+  - An valid API token is required for all operations. You can create as many tokens as you like using the cloudscale.ch control panel at
+    U(https://control.cloudscale.ch).
 notes:
   - Instead of the api_token parameter the CLOUDSCALE_API_TOKEN environment variable can be used.
   - To create a new server at least the C(name), C(ssh_key), C(image) and C(flavor) options are required.
   - If more than one server with the name given by the C(name) option exists, execution is aborted.
-  - Once a server is created all parameters except C(state) are read-only. You can't change the name, flavor or any other property. This is a limitation of the cloudscale.ch API. The module will silently ignore differences between the configured parameters and the running server if a server with the correct name or UUID exists. Only state changes will be applied.
+  - Once a server is created all parameters except C(state) are read-only. You can't change the name, flavor or any other property. This is a limitation
+    of the cloudscale.ch API. The module will silently ignore differences between the configured parameters and the running server if a server with the
+    correct name or UUID exists. Only state changes will be applied.
 version_added: 2.3
 author: "Gaudenz Steinlin <gaudenz.steinlin@cloudscale.ch>"
 options:

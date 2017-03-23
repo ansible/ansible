@@ -71,7 +71,9 @@ options:
   resource_tags:
     description:
       - 'A dictionary array of resource tags of the form C({ tag1: value1, tag2: value2 }).
-      - Tags in this list are used in conjunction with CIDR block to uniquely identify a VPC in lieu of vpc_id. Therefore, if CIDR/Tag combination does not exist, a new VPC will be created.  VPC tags not on this list will be ignored. Prior to 1.7, specifying a resource tag was optional.'
+      - Tags in this list are used in conjunction with CIDR block to uniquely identify a VPC in lieu of vpc_id. Therefore,
+        if CIDR/Tag combination does not exist, a new VPC will be created.  VPC tags not on this list will be ignored. Prior to 1.7,
+        specifying a resource tag was optional.'
     required: true
     version_added: "1.6"
   internet_gateway:
@@ -82,7 +84,15 @@ options:
     choices: [ "yes", "no" ]
   route_tables:
     description:
-      - 'A dictionary array of route tables to add of the form: C({ subnets: [172.22.2.0/24, 172.22.3.0/24,], routes: [{ dest: 0.0.0.0/0, gw: igw},], resource_tags: ... }). Where the subnets list is those subnets the route table should be associated with, and the routes list is a list of routes to be in the table.  The special keyword for the gw of igw specifies that you should the route should go through the internet gateway attached to the VPC. gw also accepts instance-ids, interface-ids, and vpc-peering-connection-ids in addition igw. resource_tags is optional and uses dictionary form: C({ "Name": "public", ... }). This module is currently unable to affect the "main" route table due to some limitations in boto, so you must explicitly define the associated subnets or they will be attached to the main table implicitly. As of 1.8, if the route_tables parameter is not specified, no existing routes will be modified.'
+      - >
+        A dictionary array of route tables to add of the form:
+        C({ subnets: [172.22.2.0/24, 172.22.3.0/24,], routes: [{ dest: 0.0.0.0/0, gw: igw},], resource_tags: ... }). Where the subnets list is
+        those subnets the route table should be associated with, and the routes list is a list of routes to be in the table.  The special keyword
+        for the gw of igw specifies that you should the route should go through the internet gateway attached to the VPC. gw also accepts instance-ids,
+        interface-ids, and vpc-peering-connection-ids in addition igw. resource_tags is optional and uses dictionary form: C({ "Name": "public", ... }).
+        This module is currently unable to affect the "main" route table due to some limitations in boto, so you must explicitly define the associated
+        subnets or they will be attached to the main table implicitly. As of 1.8, if the route_tables parameter is not specified, no existing routes
+        will be modified.
     required: false
     default: null
   wait:

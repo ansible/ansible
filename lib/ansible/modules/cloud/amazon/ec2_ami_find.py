@@ -32,7 +32,8 @@ description:
   - Results can be sorted and sliced
 author: "Tom Bamford (@tombamford)"
 notes:
-  - This module is not backwards compatible with the previous version of the ec2_search_ami module which worked only for Ubuntu AMIs listed on cloud-images.ubuntu.com.
+  - This module is not backwards compatible with the previous version of the ec2_search_ami module which worked only for Ubuntu AMIs listed on
+    cloud-images.ubuntu.com.
   - See the example below for a suggestion of how to search by distro/release.
 options:
   region:
@@ -45,7 +46,9 @@ options:
       - Search AMIs owned by the specified owner
       - Can specify an AWS account ID, or one of the special IDs 'self', 'amazon' or 'aws-marketplace'
       - If not specified, all EC2 AMIs in the specified region will be searched.
-      - You can include wildcards in many of the search options. An asterisk (*) matches zero or more characters, and a question mark (?) matches exactly one character. You can escape special characters using a backslash (\) before the character. For example, a value of \*amazon\?\\ searches for the literal string *amazon?\.
+      - You can include wildcards in many of the search options. An asterisk (*) matches zero or more characters, and a question mark (?) matches exactly one
+        character. You can escape special characters using a backslash (\) before the character. For example, a value of \*amazon\?\\ searches for the
+        literal string *amazon?\.
     required: false
     default: null
   ami_id:
@@ -94,8 +97,24 @@ options:
     description:
       - Optional attribute which with to sort the results.
       - If specifying 'tag', the 'tag_name' parameter is required.
-      - Starting at version 2.1, additional sort choices of architecture, block_device_mapping, creationDate, hypervisor, is_public, location, owner_id, platform, root_device_name, root_device_type, state, and virtualization_type are supported.
-    choices: ['name', 'description', 'tag', 'architecture', 'block_device_mapping', 'creationDate', 'hypervisor', 'is_public', 'location', 'owner_id', 'platform', 'root_device_name', 'root_device_type', 'state', 'virtualization_type']
+      - Starting at version 2.1, additional sort choices of architecture, block_device_mapping, creationDate, hypervisor, is_public, location, owner_id,
+        platform, root_device_name, root_device_type, state, and virtualization_type are supported.
+    choices:
+        - 'name'
+        - 'description'
+        - 'tag'
+        - 'architecture'
+        - 'block_device_mapping'
+        - 'creationDate'
+        - 'hypervisor'
+        - 'is_public'
+        - 'location'
+        - 'owner_id'
+        - 'platform'
+        - 'root_device_name'
+        - 'root_device_type'
+        - 'state'
+        - 'virtualization_type'
     default: null
     required: false
   sort_tag:
@@ -316,7 +335,8 @@ def main():
         platform = dict(required=False),
         product_code = dict(required=False),
         sort = dict(required=False, default=None,
-                choices=['name', 'description', 'tag', 'architecture', 'block_device_mapping', 'creationDate', 'hypervisor', 'is_public', 'location', 'owner_id', 'platform', 'root_device_name', 'root_device_type', 'state', 'virtualization_type']),
+                    choices=['name', 'description', 'tag', 'architecture', 'block_device_mapping', 'creationDate', 'hypervisor', 'is_public', 'location',
+                             'owner_id', 'platform', 'root_device_name', 'root_device_type', 'state', 'virtualization_type']),
         sort_tag = dict(required=False),
         sort_order = dict(required=False, default='ascending',
                 choices=['ascending', 'descending']),

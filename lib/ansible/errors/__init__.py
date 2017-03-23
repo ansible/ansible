@@ -123,7 +123,11 @@ class AnsibleError(Exception):
                     elif ":{{" in stripped_line and "}}" in stripped_line:
                         error_message += YAML_COMMON_DICT_ERROR
                     # check for common unquoted colon mistakes
-                    elif len(target_line) and len(target_line) > 1 and len(target_line) > col_number and target_line[col_number] == ":" and target_line.count(':') > 1:
+                    elif (len(target_line) and
+                            len(target_line) > 1 and
+                            len(target_line) > col_number and
+                            target_line[col_number] == ":" and
+                            target_line.count(':') > 1):
                         error_message += YAML_COMMON_UNQUOTED_COLON_ERROR
                     # otherwise, check for some common quoting mistakes
                     else:
@@ -138,7 +142,11 @@ class AnsibleError(Exception):
                             elif middle.startswith('"') and not middle.endswith('"'):
                                 match = True
 
-                            if len(middle) > 0 and middle[0] in [ '"', "'" ] and middle[-1] in [ '"', "'" ] and target_line.count("'") > 2 or target_line.count('"') > 2:
+                            if (len(middle) > 0 and
+                                    middle[0] in [ '"', "'" ] and
+                                    middle[-1] in [ '"', "'" ] and
+                                    target_line.count("'") > 2 or
+                                    target_line.count('"') > 2):
                                 unbalanced = True
 
                             if match:

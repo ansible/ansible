@@ -36,7 +36,8 @@ options:
     aliases: []
   instance_pattern:
     description:
-      - The pattern of GCE instance names to match for adding/removing tags.  Full-Python regex is supported. See U(https://docs.python.org/2/library/re.html) for details.
+      - The pattern of GCE instance names to match for adding/removing tags.  Full-Python regex is supported.
+        See U(https://docs.python.org/2/library/re.html) for details.
         If instance_name is not specified, this field is required.
     required: false
     default: null

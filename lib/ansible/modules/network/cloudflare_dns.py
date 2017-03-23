@@ -36,7 +36,8 @@ description:
 options:
   account_api_token:
     description:
-      - "Account API token. You can obtain your API key from the bottom of the Cloudflare 'My Account' page, found here: U(https://www.cloudflare.com/a/account)"
+      - >
+        Account API token. You can obtain your API key from the bottom of the Cloudflare 'My Account' page, found here: U(https://www.cloudflare.com/a/account)
     required: true
   account_email:
     description:

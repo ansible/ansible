@@ -61,7 +61,8 @@ options:
     required: false
   tags:
     description:
-      - The tags you want attached to the VPC. This is independent of the name value, note if you pass a 'Name' key it would override the Name of the VPC if it's different.
+      - The tags you want attached to the VPC. This is independent of the name value, note if you pass a 'Name' key it would override the Name of
+        the VPC if it's different.
     default: None
     required: false
     aliases: [ 'resource_tags' ]
@@ -73,7 +74,8 @@ options:
     choices: [ 'present', 'absent' ]
   multi_ok:
     description:
-      - By default the module will not create another VPC if there is another VPC with the same name and CIDR block. Specify this as true if you want duplicate VPCs created.
+      - By default the module will not create another VPC if there is another VPC with the same name and CIDR block. Specify this as true if you want
+        duplicate VPCs created.
     default: false
     required: false
 

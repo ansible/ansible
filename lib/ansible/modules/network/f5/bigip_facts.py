@@ -1640,7 +1640,9 @@ def main():
     if validate_certs:
         import ssl
         if not hasattr(ssl, 'SSLContext'):
-            module.fail_json(msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task')
+            module.fail_json(
+                msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task'
+            )
 
     if fact_filter:
         regex = fnmatch.translate(fact_filter)

@@ -75,7 +75,9 @@ options:
             - If the screen(s) already been added, the screen(s) name won't be updated.
             - When creating or updating screen(s), C(screen_name), C(host_group) are required.
             - When deleting screen(s), the C(screen_name) is required.
-            - 'The available states are: C(present) (default) and C(absent). If the screen(s) already exists, and the state is not C(absent), the screen(s) will just be updated as needed.'
+            - >
+              The available states are: C(present) (default) and C(absent). If the screen(s) already exists, and the state is not C(absent), the screen(s)
+              will just be updated as needed.
         required: true
 notes:
     - Too many concurrent updates to the same screen may cause Zabbix to return errors, see examples for a workaround if needed.
@@ -423,7 +425,8 @@ def main():
                         changed_screens.append(screen_name)
 
     if created_screens and changed_screens:
-        module.exit_json(changed=True, result="Successfully created screen(s): %s, and updated screen(s): %s" % (",".join(created_screens), ",".join(changed_screens)))
+        module.exit_json(changed=True, result="Successfully created screen(s): %s, and updated screen(s): %s" % (",".join(created_screens),
+                                                                                                                 ",".join(changed_screens)))
     elif created_screens:
         module.exit_json(changed=True, result="Successfully created screen(s): %s" % ",".join(created_screens))
     elif changed_screens:

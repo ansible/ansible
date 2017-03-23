@@ -264,7 +264,9 @@ def main():
             # - in case ports are missing from the ones specified by the user
             # - in case ports are missing from those on the device
             # - in case we are change the status of a server
-            if port_needs_update(defined_ports, slb_server_ports) or port_needs_update(slb_server_ports, defined_ports) or status_needs_update(current_status, axapi_enabled_disabled(slb_server_status)):
+            if (port_needs_update(defined_ports, slb_server_ports) or
+                    port_needs_update(slb_server_ports, defined_ports) or
+                    status_needs_update(current_status, axapi_enabled_disabled(slb_server_status))):
                 result = axapi_call(module, session_url + '&method=slb.server.update', json.dumps(json_post))
                 if axapi_failure(result):
                     module.fail_json(msg="failed to update the server: %s" % result['response']['err']['msg'])

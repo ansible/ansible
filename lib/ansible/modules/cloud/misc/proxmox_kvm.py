@@ -762,7 +762,10 @@ def get_vminfo(module, proxmox, node, vmid, **kwargs):
             k = vm[k]
             k = re.search('=(.*?),', k).group(1)
             mac[interface] = k
-        if re.match(r'virtio[0-9]', k) is not None or re.match(r'ide[0-9]', k) is not None or re.match(r'scsi[0-9]', k) is not None or re.match(r'sata[0-9]', k) is not None:
+        if (re.match(r'virtio[0-9]', k) is not None or
+                re.match(r'ide[0-9]', k) is not None or
+                re.match(r'scsi[0-9]', k) is not None or
+                re.match(r'sata[0-9]', k) is not None):
             device = k
             k = vm[k]
             k = re.search('(.*?),', k).group(1)

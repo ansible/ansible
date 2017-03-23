@@ -24,7 +24,8 @@ DOCUMENTATION = '''
 module: ec2_tag
 short_description: create and remove tag(s) to ec2 resources.
 description:
-    - Creates, removes and lists tags from any EC2 resource.  The resource is referenced by its resource id (e.g. an instance being i-XXXXXXX). It is designed to be used with complex args (tags), see the examples.  This module has a dependency on python-boto.
+    - Creates, removes and lists tags from any EC2 resource.  The resource is referenced by its resource id (e.g. an instance being i-XXXXXXX).
+      It is designed to be used with complex args (tags), see the examples.  This module has a dependency on python-boto.
 version_added: "1.3"
 options:
   resource:

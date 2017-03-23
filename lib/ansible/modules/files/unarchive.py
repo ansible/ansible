@@ -33,12 +33,15 @@ version_added: 1.4
 short_description: Unpacks an archive after (optionally) copying it from the local machine.
 extends_documentation_fragment: files
 description:
-     - The C(unarchive) module unpacks an archive. By default, it will copy the source file from the local system to the target before unpacking - set remote_src=yes to unpack an archive which already exists on the target..
+     - The C(unarchive) module unpacks an archive. By default, it will copy the source file from the local system to the target before unpacking.
+       Set remote_src=yes to unpack an archive which already exists on the target.
 options:
   src:
     description:
-      - If remote_src=no (default), local path to archive file to copy to the target server; can be absolute or relative. If remote_src=yes, path on the target server to existing archive file to unpack.
-      - If remote_src=yes and src contains ://, the remote machine will download the file from the url first. (version_added 2.0). This is only for simple cases, for full download support look at the M(get_url) module.
+      - If remote_src=no (default), local path to archive file to copy to the target server; can be absolute or relative. If remote_src=yes, path on the
+        target server to existing archive file to unpack.
+      - If remote_src=yes and src contains ://, the remote machine will download the file from the url first. (version_added 2.0). This is only for
+        simple cases, for full download support look at the M(get_url) module.
     required: true
     default: null
   dest:

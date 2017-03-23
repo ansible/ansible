@@ -200,7 +200,7 @@ azure_securitygroups:
         "type": "Microsoft.Network/networkSecurityGroups"
     }]
 
-'''
+'''  # NOQA
 
 
 from ansible.module_utils.basic import *

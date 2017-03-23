@@ -130,7 +130,7 @@ state:
           description: Success or failure of the provisioning event.
           type: str
           example: "Succeeded"
-'''
+'''  # NOQA
 
 
 from ansible.module_utils.basic import *

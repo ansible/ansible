@@ -38,7 +38,9 @@ options:
     required: true
   expiration_date:
     description:
-      - "Indicates the lifetime of the objects that are subject to the rule by the date they will expire. The value must be ISO-8601 format, the time must be midnight and a GMT timezone must be specified."
+      - >
+        Indicates the lifetime of the objects that are subject to the rule by the date they will expire. The value must be ISO-8601 format, the time must
+        be midnight and a GMT timezone must be specified.
     required: false
     default: null
   expiration_days:
@@ -77,7 +79,10 @@ options:
     choices: [ 'glacier', 'standard_ia']
   transition_date:
     description:
-      - "Indicates the lifetime of the objects that are subject to the rule by the date they will transition to a different storage class. The value must be ISO-8601 format, the time must be midnight and a GMT timezone must be specified. If transition_days is not specified, this parameter is required."
+      - >
+        Indicates the lifetime of the objects that are subject to the rule by the date they will transition to a different storage class.
+        The value must be ISO-8601 format, the time must be midnight and a GMT timezone must be specified. If transition_days is not specified,
+        this parameter is required."
     required: false
     default: null
   transition_days:
@@ -110,7 +115,8 @@ EXAMPLES = '''
     status: enabled
     state: present
 
-# Configure a lifecycle rule to transition all items with a prefix of /logs/ to glacier on 31 Dec 2020 and then delete on 31 Dec 2030. Note that midnight GMT must be specified.
+# Configure a lifecycle rule to transition all items with a prefix of /logs/ to glacier on 31 Dec 2020 and then delete on 31 Dec 2030.
+# Note that midnight GMT must be specified.
 # Be sure to quote your date strings
 - s3_lifecycle:
     name: mybucket
@@ -295,7 +301,9 @@ def compare_rule(rule_a, rule_b):
     if rule2_expiration is None:
         rule2_expiration = Expiration()
 
-    if (rule1.__dict__ == rule2.__dict__) and (rule1_expiration.__dict__ == rule2_expiration.__dict__) and (rule1_transition.__dict__ == rule2_transition.__dict__):
+    if (rule1.__dict__ == rule2.__dict__ and
+            rule1_expiration.__dict__ == rule2_expiration.__dict__ and
+            rule1_transition.__dict__ == rule2_transition.__dict__):
         return True
     else:
         return False

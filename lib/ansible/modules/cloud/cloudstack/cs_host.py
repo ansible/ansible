@@ -307,7 +307,8 @@ state:
   type: string
   sample: Up
 suitable_for_migration:
-  description: Whether this host is suitable (has enough capacity and satisfies all conditions like hosttags, max guests VM limit, etc) to migrate a VM to it or not.
+  description: Whether this host is suitable (has enough capacity and satisfies all conditions like hosttags, max guests VM limit, etc) to migrate a VM
+               to it or not.
   returned: success
   type: string
   sample: true

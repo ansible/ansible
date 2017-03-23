@@ -47,7 +47,10 @@ options:
         aliases: ['pkg', 'package', 'formula']
     path:
         description:
-            - "':' separated list of paths to search for 'brew' executable. Since A package (I(formula) in homebrew parlance) location is prefixed relative to the actual path of I(brew) command, providing an alternative I(brew) path enables managing different set of packages in an alternative location in the system."
+            - >
+              ':' separated list of paths to search for 'brew' executable. Since A package (I(formula) in homebrew parlance) location is prefixed
+              relative to the actual path of I(brew) command, providing an alternative I(brew) path enables managing different set of packages in an
+              alternative location in the system.
         required: false
         default: '/usr/local/bin'
     state:

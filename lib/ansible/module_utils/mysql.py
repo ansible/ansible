@@ -35,7 +35,8 @@ try:
 except ImportError:
     mysqldb_found = False
 
-def mysql_connect(module, login_user=None, login_password=None, config_file='', ssl_cert=None, ssl_key=None, ssl_ca=None, db=None, cursor_class=None, connect_timeout=30):
+def mysql_connect(module, login_user=None, login_password=None, config_file='', ssl_cert=None, ssl_key=None, ssl_ca=None, db=None, cursor_class=None,
+                  connect_timeout=30):
     config = {}
 
     if ssl_ca is not None or ssl_key is not None or ssl_cert is not None:

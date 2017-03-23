@@ -260,7 +260,8 @@ class Connection(ConnectionBase):
             stdin_push_failed = False
             command_id = self.protocol.run_command(self.shell_id, to_bytes(command), map(to_bytes, args), console_mode_stdin=(stdin_iterator is None))
 
-            # TODO: try/except around this, so we can get/return the command result on a broken pipe or other failure (probably more useful than the 500 that comes from this)
+            # TODO: try/except around this, so we can get/return the command result on a broken pipe or other failure (probably more useful than the 500 that
+            # comes from this)
             try:
                 if stdin_iterator:
                     for (data, is_last) in stdin_iterator:

@@ -82,7 +82,9 @@ options:
         description:
             - "Set the guest ID (Debian, RHEL, Windows...)"
             - "This field is required when creating a VM"
-            - "Valid values are referenced here: https://www.vmware.com/support/developer/converter-sdk/conv55_apireference/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html"
+            - >
+              Valid values are referenced here:
+              https://www.vmware.com/support/developer/converter-sdk/conv55_apireference/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html
         version_added: "2.3"
    disk:
         description:
@@ -675,7 +677,9 @@ class PyVmomiHelper(object):
                 # VDS switch
                 pg_obj = get_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_devices[key]['name'])
 
-                if nic.device.backing and ( nic.device.backing.port.portgroupKey != pg_obj.key or nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid ):
+                if (nic.device.backing and
+                        (nic.device.backing.port.portgroupKey != pg_obj.key or
+                         nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid)):
                     nic_change_detected = True
 
                 dvs_port_connection = vim.dvs.PortConnection()
@@ -792,7 +796,8 @@ class PyVmomiHelper(object):
 
             if 'joindomain' in self.params['customization']:
                 if 'domainadmin' not in self.params['customization'] or 'domainadminpassword' not in self.params['customization']:
-                    self.module.fail_json(msg="'domainadmin' and 'domainadminpassword' entries are mandatory in 'customization' section to use joindomain feature")
+                    self.module.fail_json(msg="'domainadmin' and 'domainadminpassword' entries are mandatory in 'customization' section to use "
+                                              "joindomain feature")
 
                 ident.identification.domainAdmin = str(self.params['customization'].get('domainadmin'))
                 ident.identification.joinDomain = str(self.params['customization'].get('joindomain'))

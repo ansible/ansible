@@ -319,7 +319,9 @@ def main():
     if module.params['validate_certs']:
         import ssl
         if not hasattr(ssl, 'SSLContext'):
-            module.fail_json(msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task')
+            module.fail_json(
+                msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task'
+            )
 
     server = module.params['server']
     server_port = module.params['server_port']

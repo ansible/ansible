@@ -43,7 +43,8 @@ options:
   state:
     description:
       - State of the service on the system
-      - Note that NSSM actions like "pause", "continue", "rotate" do not fit the declarative style of ansible, so these should be implemented via the ansible command module
+      - Note that NSSM actions like "pause", "continue", "rotate" do not fit the declarative style of ansible, so these should be implemented via the
+        ansible command module
     choices:
       - present
       - started
@@ -57,7 +58,9 @@ options:
       - "Specify this whenever the service may need to be installed (state: present, started, stopped, restarted)"
       - "Note that the application name must look like the following, if the directory includes spaces:"
       - 'nssm install service "c:\\Program Files\\app.exe\\" "C:\\Path with spaces\\"'
-      - "See commit 0b386fc1984ab74ee59b7bed14b7e8f57212c22b in the nssm.git project for more info: U(https://git.nssm.cc/?p=nssm.git;a=commit;h=0b386fc1984ab74ee59b7bed14b7e8f57212c22b)"
+      - >
+        See commit 0b386fc1984ab74ee59b7bed14b7e8f57212c22b in the nssm.git project for more info:
+        U(https://git.nssm.cc/?p=nssm.git;a=commit;h=0b386fc1984ab74ee59b7bed14b7e8f57212c22b)
   stdout_file:
     description:
       - Path to receive output
@@ -84,7 +87,8 @@ options:
       - Password to be used for service startup
   start_mode:
     description:
-      - If C(auto) is selected, the service will start at bootup. C(manual) means that the service will start only when another service needs it. C(disabled) means that the service will stay off, regardless if it is needed or not.
+      - If C(auto) is selected, the service will start at bootup. C(manual) means that the service will start only when another service needs it.
+        C(disabled) means that the service will stay off, regardless if it is needed or not.
     default: auto
     choices:
       - auto

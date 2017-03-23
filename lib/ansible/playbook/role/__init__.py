@@ -162,7 +162,8 @@ class Role(Base, Become, Conditional, Taggable):
             return r
 
         except RuntimeError:
-            raise AnsibleError("A recursion loop was detected with the roles specified. Make sure child roles do not have dependencies on parent roles", obj=role_include._ds)
+            raise AnsibleError("A recursion loop was detected with the roles specified. Make sure child roles do not have dependencies on parent roles",
+                               obj=role_include._ds)
 
     def _load_role_data(self, role_include, parent_role=None):
         self._role_name        = role_include.role
@@ -213,7 +214,8 @@ class Role(Base, Become, Conditional, Taggable):
         handler_data = self._load_role_yaml('handlers')
         if handler_data:
             try:
-                self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader, variable_manager=self._variable_manager)
+                self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader,
+                                                           variable_manager=self._variable_manager)
             except AssertionError:
                 raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name , obj=handler_data)
 

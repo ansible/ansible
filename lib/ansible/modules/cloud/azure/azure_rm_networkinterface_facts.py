@@ -120,7 +120,7 @@ azure_networkinterfaces:
         "tags": {},
         "type": "Microsoft.Network/networkInterfaces"
     }]
-'''
+'''  # NOQA
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.azure_rm_common import *
