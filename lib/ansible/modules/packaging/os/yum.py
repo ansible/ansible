@@ -256,12 +256,14 @@ rpmbin = None
 
 
 def yum_base(conf_file=None, installroot='/'):
+    """ initiate yum.YumBase() primary structure and base class of yum. It houses the
+    objects and methods needed to perform most things in yum.
+    """
 
     my = yum.YumBase()
     my.preconf.debuglevel=0
     my.preconf.errorlevel=0
     my.preconf.plugins = True
-    #my.preconf.releasever = '/'
     if installroot != '/':
         # do not setup installroot by default, because of error
         # CRITICAL:yum.cli:Config Error: Error accessing file for config file:////etc/yum.conf
@@ -280,32 +282,34 @@ def yum_base(conf_file=None, installroot='/'):
 
     return my
 
-def ensure_yum_utils(module):
-
-    repoquerybin = module.get_bin_path('repoquery', required=False)
-
-    if module.params['install_repoquery'] and not repoquerybin and not module.check_mode:
-        yum_path = module.get_bin_path('yum')
-        if yum_path:
-            rc, so, se = module.run_command('%s -y install yum-utils' % yum_path)
-        repoquerybin = module.get_bin_path('repoquery', required=False)
-
-    return repoquerybin
-
 def fetch_rpm_from_url(spec, module=None):
-    # download package so that we can query it
+    """ download rpm package
+
+    Args:
+        spec ():
+        module (): AnsibleModule class instance
+
+
+
+    Returns:
+
+    ---------
+    string: Path to the downloaded RPM file."""
+
     tempdir = tempfile.mkdtemp()
     package = os.path.join(tempdir, str(spec.rsplit('/', 1)[1]))
     try:
-        rsp, info = fetch_url(module, spec)
-        if not rsp:
+        response, info = fetch_url(module, spec)
+
+        if not response:
             module.fail_json(msg="Failure downloading %s, %s" % (spec, info['msg']))
-        f = open(package, 'w')
-        data = rsp.read(BUFSIZE)
-        while data:
-            f.write(data)
-            data = rsp.read(BUFSIZE)
-        f.close()
+
+        with open(package, 'w') as file:
+            data = response.read(BUFSIZE)
+            while data:
+                file.write(data)
+                data = response.read(BUFSIZE)
+
     except Exception:
         e = get_exception()
         shutil.rmtree(tempdir)
@@ -636,16 +640,16 @@ def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/'):
         repoq += ['-c', conf_file]
 
     if stuff == 'installed':
-        return [ pkg_to_dict(p) for p in sorted(is_installed(module, repoq, '-a', conf_file, qf=is_installed_qf, installroot=installroot)) if p.strip() ]
+        return [ pkg_to_dict(pkg) for pkg in sorted(is_installed(module, repoq, '-a', conf_file, qf=is_installed_qf, installroot=installroot)) if pkg.strip() ]
     elif stuff == 'updates':
-        return [ pkg_to_dict(p) for p in sorted(is_update(module, repoq, '-a', conf_file, qf=qf, installroot=installroot)) if p.strip() ]
+        return [ pkg_to_dict(pkg) for pkg in sorted(is_update(module, repoq, '-a', conf_file, qf=qf, installroot=installroot)) if pkg.strip() ]
     elif stuff == 'available':
-        return [ pkg_to_dict(p) for p in sorted(is_available(module, repoq, '-a', conf_file, qf=qf, installroot=installroot)) if p.strip() ]
+        return [ pkg_to_dict(pkg) for pkg in sorted(is_available(module, repoq, '-a', conf_file, qf=qf, installroot=installroot)) if pkg.strip() ]
     elif stuff == 'repos':
         return [ dict(repoid=name, state='enabled') for name in sorted(repolist(module, repoq)) if name.strip() ]
     else:
-        return [ pkg_to_dict(p) for p in sorted(is_installed(module,repoq, stuff, conf_file, qf=is_installed_qf, installroot=installroot)+
-                                                is_available(module, repoq, stuff, conf_file, qf=qf, installroot=installroot)) if p.strip()]
+        return [ pkg_to_dict(pkg) for pkg in sorted(is_installed(module,repoq, stuff, conf_file, qf=is_installed_qf, installroot=installroot)+
+                                                            is_available(module, repoq, stuff, conf_file, qf=qf, installroot=installroot)) if pkg.strip()]
 
 def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos, installroot='/'):
 
@@ -1166,16 +1170,37 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
 
 def main():
 
-    # state=installed name=pkgspec
-    # state=removed name=pkgspec
-    # state=latest name=pkgspec
-    #
-    # informational commands:
-    #   list=installed
-    #   list=updates
-    #   list=available
-    #   list=repos
-    #   list=pkgspec
+
+    # The coments bellow are legacy comments.
+    """
+     state=installed name=pkgspec
+     state=removed name=pkgspec
+     state=latest name=pkgspec
+
+      The problem with list option of yum module right now is non standard approach for an ansible module.
+      Current logic is that in case one of ['installed', 'updates', 'available', 'repos'] option will be
+      passed those are treated as options and different behaviour will occure. In case any other string
+      is passed that string is treated as pkgspec aka package name.
+
+      In theory this has to go away, we should introduce a new param name that will be e.g. list_packages.
+      that will be used as argument for list=package option or for list=repos option.
+
+      I can not alter this function under #21619 issue without the opinion of the rest. If it would be me
+      i would loose curent confusing behaviour.
+
+      related lines:
+        action for list yum module paramter
+        1238         results = dict(results=list_stuff(module, repoquerybin, params['conf_file'], params['list'], params['installroot']))
+        function definition
+        631 def list_stuff(module, repoquerybin, conf_file, stuff, installroot='/'):
+
+     informational commands:
+       list=installed
+       list=updates
+       list=available
+       list=repos
+       list=pkgspec
+     """
 
 
     module = AnsibleModule(
@@ -1193,8 +1218,6 @@ def main():
             update_cache=dict(required=False, default="no", aliases=['expire-cache'], type='bool'),
             validate_certs=dict(required=False, default="yes", type='bool'),
             installroot=dict(required=False, default="/", type='str'),
-            # this should not be needed, but exists as a failsafe
-            install_repoquery=dict(required=False, default="yes", type='bool'),
         ),
         required_one_of = [['name','list']],
         mutually_exclusive = [['name','list']],
@@ -1213,46 +1236,47 @@ def main():
     params = module.params
 
     if params['list']:
-        repoquerybin = ensure_yum_utils(module)
+        repoquerybin = module.get_bin_path('repoquery', required=False)
         if not repoquerybin:
             module.fail_json(msg="repoquery is required to use list= with this module. Please install the yum-utils package.")
         results = dict(results=list_stuff(module, repoquerybin, params['conf_file'], params['list'], params['installroot']))
+        module.exit_json(**results)
 
+    package_list = [ package.strip() for package in params['name']]
+    exclude = params['exclude']
+    state = params['state']
+    enablerepo = params.get('enablerepo', '')
+    disablerepo = params.get('disablerepo', '')
+    disable_gpg_check = params['disable_gpg_check']
+    skip_broken = params['skip_broken']
+    conf_file = params['conf_file']
+
+
+    """ If rhn-plugin is installed and no rhn-certificate is available on
+    the system then users will see an error message using the yum API.
+    Use repoquery in those cases. """
+
+    my = yum_base(params['conf_file'], params['installroot'])
+    my.conf # A sideeffect of accessing conf is that the configuration is loaded and plugins are discovered, this is used to veryif if rhnplugin is in enabled
+    repoquery = None
+    try:
+        yum_plugins = my.plugins._plugins
+    except AttributeError:
+        pass
     else:
-        # If rhn-plugin is installed and no rhn-certificate is available on
-        # the system then users will see an error message using the yum API.
-        # Use repoquery in those cases.
+        if 'rhnplugin' in yum_plugins:
+            repoquerybin = module.get_bin_path('repoquery', required=False)
+            if repoquerybin:
+                repoquery = [repoquerybin, '--show-duplicates', '--plugins', '--quiet']
+                if params['installroot'] != '/':
+                    repoquery.extend(['--installroot', params['installroot']])
 
-        my = yum_base(params['conf_file'], params['installroot'])
-        # A sideeffect of accessing conf is that the configuration is
-        # loaded and plugins are discovered
-        my.conf
-        repoquery = None
-        try:
-            yum_plugins = my.plugins._plugins
-        except AttributeError:
-            pass
-        else:
-            if 'rhnplugin' in yum_plugins:
-                repoquerybin = ensure_yum_utils(module)
-                if repoquerybin:
-                    repoquery = [repoquerybin, '--show-duplicates', '--plugins', '--quiet']
-                    if params['installroot'] != '/':
-                        repoquery.extend(['--installroot', params['installroot']])
-
-        pkg = [ p.strip() for p in params['name']]
-        exclude = params['exclude']
-        state = params['state']
-        enablerepo = params.get('enablerepo', '')
-        disablerepo = params.get('disablerepo', '')
-        disable_gpg_check = params['disable_gpg_check']
-        skip_broken = params['skip_broken']
-        results = ensure(module, state, pkg, params['conf_file'], enablerepo,
-                     disablerepo, disable_gpg_check, exclude, repoquery, skip_broken,
-                     params['installroot'])
-        if repoquery:
-            results['msg'] = '%s %s' % (results.get('msg',''),
-                    'Warning: Due to potential bad behaviour with rhnplugin and certificates, used slower repoquery calls instead of Yum API.')
+    results = ensure(module, state, package_list, conf_file, enablerepo,
+                 disablerepo, disable_gpg_check, exclude, repoquery, skip_broken,
+                 params['installroot'])
+    if repoquery:
+        results['msg'] = '%s %s' % (results.get('msg',''),
+                'Warning: Due to potential bad behaviour with rhnplugin and certificates, used slower repoquery calls instead of Yum API.')
 
     module.exit_json(**results)
 
