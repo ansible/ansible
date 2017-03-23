@@ -72,6 +72,13 @@ options:
     required: false
     default: false
     version_added: "2.2"
+  wait_connections:
+    description:
+      - Wait until the server reports no current connections when `state=disabled` or drop them after time defined by retries times
+        with interval seconds of sleep
+    required: false
+    default: false
+    version_added: "2.4"
   wait:
     description:
       - Wait until the server reports a status of 'UP' when `state=enabled`, or
@@ -134,6 +141,18 @@ EXAMPLES = '''
     host: '{{ inventory_hostname }}'
     backend: www
     socket: /var/run/haproxy.sock
+    shutdown_sessions: true
+
+# disable backend server in 'www' backend pool and wait until active connections gone. Retry 10 times with intervals
+# of 5 seconds to retrieve open sessions and then drop it
+- haproxy:
+    state: disabled
+    host: '{{ inventory_hostname }}'
+    backend: www
+    socket: /var/run/haproxy.sock
+    wait_connections: true
+    wait_retries: 10
+    wait_interval: 5
     shutdown_sessions: true
 
 # disable server without backend pool name (apply to all available backend pool) but fail when the backend host is not found
@@ -211,6 +230,7 @@ class HAProxy(object):
         self.socket = self.module.params['socket']
         self.shutdown_sessions = self.module.params['shutdown_sessions']
         self.fail_on_not_found = self.module.params['fail_on_not_found']
+        self.wait_connections = self.module.params['wait_connections']
         self.wait = self.module.params['wait']
         self.wait_retries = self.module.params['wait_retries']
         self.wait_interval = self.module.params['wait_interval']
@@ -276,6 +296,8 @@ class HAProxy(object):
             if (self.fail_on_not_found or self.wait) and state is None:
                 self.module.fail_json(msg="The specified backend '%s/%s' was not found!" % (backend, svname))
 
+            if self.wait_connections:
+                self.wait_close_connections(backend, svname, '0')
             self.execute(Template(cmd).substitute(pxname = backend, svname = svname))
             if self.wait:
                 self.wait_until_status(backend, svname, wait_for_status)
@@ -290,7 +312,7 @@ class HAProxy(object):
         r = csv.DictReader(data.splitlines())
         state = tuple(
             map(
-                lambda d: {'status': d['status'], 'weight': d['weight']},
+                lambda d: {'status': d['status'], 'weight': d['weight'], 'scur': d['scur']},
                 filter(lambda d: (pxname is None or d['pxname'] == pxname) and d['svname'] == svname, r)
             )
         )
@@ -314,6 +336,23 @@ class HAProxy(object):
                 time.sleep(self.wait_interval)
 
         self.module.fail_json(msg="server %s/%s not status '%s' after %d retries. Aborting." % (pxname, svname, status, self.wait_retries))
+
+
+    def wait_close_connections(self, pxname, svname, connections):
+        """
+        Wait for active current connections to be alive for a time defined by RETRIES times
+        with INTERVAL seconds of sleep. If the service has not reached
+        the expected status in that time, the module will fail. If the service was
+        not found, the module will fail.
+        """
+        for i in range(1, self.wait_retries):
+            state = self.get_state_for(pxname, svname)
+            if state[0]['scur'] == connections:
+                return True
+            else:
+                time.sleep(self.wait_interval)
+
+        self.module.fail_json(msg="unable to find server %s/%s" % (pxname, svname, connections, self.wait_retries))
 
 
     def enabled(self, host, backend, weight):
@@ -381,6 +420,7 @@ def main():
             socket = dict(required=False, default=DEFAULT_SOCKET_LOCATION),
             shutdown_sessions=dict(required=False, default=False, type='bool'),
             fail_on_not_found=dict(required=False, default=False, type='bool'),
+            wait_connections=dict(required=False, default=False, type='bool'),
             wait=dict(required=False, default=False, type='bool'),
             wait_retries=dict(required=False, default=WAIT_RETRIES, type='int'),
             wait_interval=dict(required=False, default=WAIT_INTERVAL, type='int'),
