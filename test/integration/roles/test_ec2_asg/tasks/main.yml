@@ -7,13 +7,40 @@
 
 # ============================================================
 # create and kill an ASG
+
+- name: create a security group with the vpc created in the ec2_setup
+  ec2_group:
+    name: "{{ resource_prefix }}-sg"
+    description: a security group for ansible tests
+    vpc_id: "{{ testing_vpc.vpc.id }}"
+    region: "{{ ec2_region }}"
+    rules:
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: 0.0.0.0/0
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        cidr_ip: 0.0.0.0/0
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+  register: sg
+
 - name: ensure launch config exists
   ec2_lc:
     name: "{{ resource_prefix }}-lc"
     ec2_access_key: "{{ ec2_access_key }}"
     ec2_secret_key: "{{ ec2_secret_key }}"
     region: "{{ ec2_region }}"
-    image_id: ami-964a0efe
+    assign_public_ip: true
+    image_id: ami-e5ad85f2 # base fedora 25 HVM us-east-1 ami
+    user_data: |
+      #!/bin/bash
+      dnf install -y httpd
+      echo "Hello from Ansible" > /var/www/html/index.html
+      systemctl start httpd
+    security_groups: "{{ sg.group_id }}"
     instance_type: t2.micro
 
 - name: launch asg and wait for instances to be deemed healthy (no ELB)
@@ -22,6 +49,7 @@
     ec2_access_key: "{{ ec2_access_key }}"
     ec2_secret_key: "{{ ec2_secret_key }}"
     launch_config_name: "{{ resource_prefix }}-lc"
+    vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
     desired_capacity: 1
     min_size: 1
     max_size: 1
@@ -52,6 +80,7 @@
     ec2_access_key: "{{ ec2_access_key }}"
     ec2_secret_key: "{{ ec2_secret_key }}"
     launch_config_name: "{{ resource_prefix }}-lc"
+    vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
     desired_capacity: 1
     min_size: 1
     max_size: 1
@@ -80,9 +109,9 @@
     state: present
     ec2_access_key: "{{ ec2_access_key }}"
     ec2_secret_key: "{{ ec2_secret_key }}"
-    zones:
-      - "{{ ec2_region }}b"
-      - "{{ ec2_region }}c"
+    security_group_ids:
+      - "{{ sg.group_id }}"
+    subnets: "{{ testing_subnet.subnet.id }}"
     connection_draining_timeout: 60
     listeners:
       - protocol: http
@@ -91,20 +120,17 @@
     health_check:
         ping_protocol: http
         ping_port: 80
-        ping_path: "/"
+        ping_path: "/index.html"
         response_timeout: 5
-        interval: 30
-        unhealthy_threshold: 3
-        healthy_threshold: 3
+        interval: 10
+        unhealthy_threshold: 4
+        healthy_threshold: 2
   register: load_balancer
 
 
 - name: launch asg and wait for instances to be deemed healthy (ELB)
   ec2_asg:
     name: "{{ resource_prefix }}-asg"
-    availability_zones:
-      - "{{ ec2_region }}b"
-      - "{{ ec2_region }}c"
     ec2_access_key: "{{ ec2_access_key }}"
     ec2_secret_key: "{{ ec2_secret_key }}"
     launch_config_name: "{{ resource_prefix }}-lc"
@@ -112,11 +138,12 @@
     desired_capacity: 1
     min_size: 1
     max_size: 1
-    health_check_period: 120
+    health_check_period: 300
+    vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
     load_balancers: "{{ resource_prefix }}-lb"
     region: "{{ ec2_region }}"
     wait_for_instances: yes
-    wait_timeout: 1200
+    wait_timeout: 600
     state: present
   register: output
 
@@ -130,9 +157,6 @@
 - name: add 2 more instances wait for instances to be deemed healthy (ELB)
   ec2_asg:
     name: "{{ resource_prefix }}-asg"
-    availability_zones:
-      - "{{ ec2_region }}b"
-      - "{{ ec2_region }}c"
     ec2_access_key: "{{ ec2_access_key }}"
     ec2_secret_key: "{{ ec2_secret_key }}"
     launch_config_name: "{{ resource_prefix }}-lc"
@@ -140,11 +164,12 @@
     desired_capacity: 3
     min_size: 3
     max_size: 5
-    health_check_period: 120
-    load_balancers: ec2-asg-int-test
+    health_check_period: 600
+    vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
+    load_balancers: "{{ resource_prefix }}-lb"
     region: "{{ ec2_region }}"
     wait_for_instances: yes
-    wait_timeout: 600
+    wait_timeout: 1200
     state: present
   register: output
 
@@ -160,7 +185,14 @@
     ec2_access_key: "{{ ec2_access_key }}"
     ec2_secret_key: "{{ ec2_secret_key }}"
     region: "{{ ec2_region }}"
-    image_id: ami-2a4a0e42
+    image_id: ami-b63769a1  # base Red Hat Enterprise Linux 7.3 HVM us-east-1 ami
+    user_data: |
+      #!/bin/bash
+      yum install -y httpd
+      echo "Hello from Ansible" > /var/www/html/index.html
+      systemctl start httpd
+    security_groups: "{{ sg.group_id }}"
+    assign_public_ip: true
     instance_type: t2.micro
 
 
@@ -169,9 +201,6 @@
 - name: perform rolling update to new AMI
   ec2_asg:
     name: "{{ resource_prefix }}-asg"
-    availability_zones:
-      - "{{ ec2_region }}b"
-      - "{{ ec2_region }}c"
     ec2_access_key: "{{ ec2_access_key }}"
     ec2_secret_key: "{{ ec2_secret_key }}"
     launch_config_name: "{{ resource_prefix }}-lc-2"
@@ -179,12 +208,13 @@
     desired_capacity: 3
     min_size: 3
     max_size: 5
-    health_check_period: 120
-    load_balancers: ec2-asg-int-test
+    health_check_period: 900
+    load_balancers: "{{ resource_prefix }}-lb"
     region: "{{ ec2_region }}"
+    vpc_zone_identifier: "{{ testing_subnet.subnet.id }}"
     wait_for_instances: yes
     replace_all_instances: yes
-    wait_timeout: 600
+    wait_timeout: 1800
     state: present
   register: output
 
@@ -192,13 +222,12 @@
 - assert:
     that:
       - "item.value.launch_config_name == '{{ resource_prefix }}-lc-2'"
-  with_dict: output.instance_facts
+  with_dict: "{{ output.instance_facts }}"
 
 # assert they are all healthy
 - assert:
     that:
       - "output.viable_instances >= 3"
-
 
 - name: kill asg
   ec2_asg:
@@ -208,3 +237,19 @@
     region: "{{ ec2_region }}"
     state: absent
   async: 300
+
+- name: remove first launch config
+  ec2_lc:
+    name: "{{ resource_prefix }}-lc"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    region: "{{ ec2_region }}"
+    state: absent
+
+- name: remove second launch config
+  ec2_lc:
+    name: "{{ resource_prefix }}-lc-2"
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+    region: "{{ ec2_region }}"
+    state: absent
