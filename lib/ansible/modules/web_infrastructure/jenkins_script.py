@@ -65,6 +65,15 @@ options:
       - The password to connect to the jenkins server with.
     required: false
     default: null
+  csrf_protection_enabled:
+    description:
+      - If CSRF protection is enabled on the jenkins server.
+        If set to C(yes), a CSRF protection token will be obtained and
+        sent as an HTTP request header when executing the script.
+        See U(https://wiki.jenkins-ci.org/display/JENKINS/CSRF+Protection) and
+        U(https://wiki.jenkins-ci.org/display/JENKINS/Remote+access+API#RemoteaccessAPI-CSRFProtection)
+    required: false
+    default: False
   args:
     description:
       - A dict of key-value pairs used in formatting the script.
@@ -106,6 +115,14 @@ EXAMPLES = '''
     password: admin
     url: https://localhost
     validate_certs: no
+
+- name: Obtaining a CSRF token
+  jenkins_script:
+    script: "println(Jenkins.instance.pluginManager.plugins)"
+    user: admin
+    password: admin
+    url: https://localhost
+    csrf_protection_enabled: yes
 '''
 
 RETURN = '''
@@ -134,6 +151,7 @@ def main():
             validate_certs = dict(required=False, type="bool", default=True),
             user   = dict(required=False, no_log=True, type="str",default=None),
             password   = dict(required=False, no_log=True, type="str",default=None),
+            csrf_protection_enabled = dict(required=False, type="bool", default=False),
             args   = dict(required=False, type="dict", default=None)
         )
     )
@@ -153,10 +171,26 @@ def main():
     else:
         script_contents = module.params['script']
 
+    if module.params['csrf_protection_enabled']:
+        crumb_path = '/crumbIssuer/api/json'
+
+        resp, info = fetch_url(module,
+                               module.params['url'] + crumb_path,
+                               method="GET")
+
+        if info["status"] != 200:
+            module.fail_json(
+                msg="Error getting crumb: HTTP error " + str(info["status"]) + " " + info["msg"])
+
+        result = module.from_json(resp.read())
+        crumb  = dict([ (result['crumbRequestField'], result['crumb']) ])
+    else:
+        crumb = None
 
     resp, info = fetch_url(module,
                            module.params['url'] + "/scriptText",
                            data=urlencode({'script': script_contents}),
+                           headers=crumb,
                            method="POST")
 
     if info["status"] != 200:
