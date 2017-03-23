@@ -57,10 +57,6 @@ class Connection(ConnectionBase):
         self._manager = None
         self._connected = False
 
-    def log(self, msg):
-        msg = 'h=%s u=%s %s' % (self._play_context.remote_addr, self._play_context.remote_user, msg)
-        logger.debug(msg)
-
     def _connect(self):
         super(Connection, self)._connect()
 
