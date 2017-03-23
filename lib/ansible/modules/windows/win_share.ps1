@@ -138,7 +138,7 @@ Try {
         $permissionFull = Get-AnsibleParam -obj $params -name "full" -type "str" -default "" | NormalizeAccounts
         $permissionDeny = Get-AnsibleParam -obj $params -name "deny" -type "str" -default "" | NormalizeAccounts
 
-        $cachingMode = Get-AnsibleParam -obj $params -name "caching_mode" -type "str" -default "None" -validateSet "BranchCache","Documents","Manual","None","Programs", "Unkown"
+        $cachingMode = Get-AnsibleParam -obj $params -name "caching_mode" -type "str" -default "Manual" -validateSet "BranchCache","Documents","Manual","None","Programs","Unknown"
 
         If (-Not (Test-Path -Path $path)) {
             Fail-Json $result "$path directory does not exist on the host"
@@ -252,7 +252,7 @@ Try {
     }
 }
 Catch {
-    Fail-Json $result "an error occurred when attempting to create share $name"
+    Fail-Json $result "an error occurred when attempting to create share $($name): $($_.Exception.Message)"
 }
 
 Exit-Json $result
