@@ -75,7 +75,7 @@ class Connection(ConnectionBase):
             key_filename = os.path.expanduser(self._play_context.private_key_file)
 
         if not self._network_os:
-            raise AnsibleConnectionError('network_os must be set for netconf connections')
+            raise AnsibleConnectionFailure('network_os must be set for netconf connections')
 
         try:
             self._manager = manager.connect(
