@@ -121,6 +121,11 @@ Force overwriting an existing role.
 The path in which the skeleton role will be created.The default is the current 
 working directory.
 
+*-t* 'TEMPLATE_PATH', *--template-path=*'TEMPLATE_PATH'::
+
+The path to the directory containing templates for new role generation. Must
+have two subdirectories: container_enabled and default.
+
 *--offline*::
 
 Don't query the galaxy API when creating roles

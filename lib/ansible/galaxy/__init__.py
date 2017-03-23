@@ -47,9 +47,11 @@ class Galaxy(object):
         self.roles =  {}
 
         # load data path for resource usage
+        template_path = getattr(self.options, 'template_path', [])
         this_dir, this_filename = os.path.split(__file__)
+        data_path =  template_path if template_path else os.path.join(this_dir, 'data')
         type_path = 'container_enabled' if getattr(self.options, 'container_enabled', False) else 'default'
-        self.DATA_PATH = os.path.join(this_dir, 'data', type_path)
+        self.DATA_PATH = os.path.join(data_path, type_path)
 
     @property
     def default_role_skeleton_path(self):
