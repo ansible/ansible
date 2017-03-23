@@ -240,8 +240,8 @@ def run(module, result):
 
             result['commands'] = commands
 
-        diff = load_config(module, commands, not check_mode,
-                           replace_config, comment)
+        diff = load_config(module, commands, result['warnings'],
+                           not check_mode, replace_config, comment)
         if diff:
             result['diff'] = dict(prepared=diff)
             result['changed'] = True
