@@ -38,7 +38,7 @@ options:
   key_passphrase:
     version_added: "2.0"
     description:
-      - The passphrase for the instance key pair. The key must use DES or 3DES encryption for this module to decrypt it. You can use openssl to convert your password protected keys if they do not use DES or 3DES. ex) openssl rsa -in current_key -out new_key -des3.
+      - The passphrase for the instance key pair. The key must use AES, DES or 3DES encryption for this module to decrypt it. You can use openssl to convert your password protected keys if they do not use AES, DES or 3DES. ex) openssl rsa -in current_key -out new_key -des3.
     required: false
     default: null
   wait:
@@ -93,9 +93,10 @@ tasks:
 '''
 
 from base64 import b64decode
-from Crypto.Cipher import PKCS1_v1_5
-from Crypto.PublicKey import RSA
 import datetime
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
 
 try:
     import boto.ec2
@@ -151,15 +152,19 @@ def main():
     else:
         try:
             with f:
-                key = RSA.importKey(f.read(), key_passphrase)
+                key = serialization.load_pem_private_key(
+                    f.read(),
+                    password=key_passphrase,
+                    backend=default_backend()
+                )
         except (ValueError, IndexError, TypeError) as e:
             module.fail_json(msg = "unable to parse key file")
 
-    cipher = PKCS1_v1_5.new(key)
-    sentinel = 'password decryption failed!!!'
-
     try:
-        decrypted = cipher.decrypt(decoded, sentinel)
+        decrypted = key.decrypt(
+            decoded,
+            padding.PKCS1v15()
+        )
     except ValueError as e:
         decrypted = None
 
