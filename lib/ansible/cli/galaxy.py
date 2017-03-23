@@ -50,6 +50,7 @@ except ImportError:
 
 
 class GalaxyCLI(CLI):
+    '''command to manage Ansible roles in shared repostories, the default of which is Ansible Galaxy *https://galaxy.ansible.com*.'''
 
     SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
     VALID_ACTIONS = ("delete", "import", "info", "init", "install", "list", "login", "remove", "search", "setup")
@@ -59,20 +60,10 @@ class GalaxyCLI(CLI):
         self.galaxy = None
         super(GalaxyCLI, self).__init__(args)
 
-    def parse(self):
-        ''' create an options parser for bin/ansible '''
+    def set_action(self):
 
-        self.parser = CLI.base_parser(
-            usage = "usage: %%prog [%s] [--help] [options] ..." % "|".join(self.VALID_ACTIONS),
-            epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
-        )
+        super(GalaxyCLI, self).set_action()
 
-        self.set_action()
-
-        # common
-        self.parser.add_option('-s', '--server', dest='api_server', default=C.GALAXY_SERVER, help='The API server destination')
-        self.parser.add_option('-c', '--ignore-certs', action='store_true', dest='ignore_certs', default=C.GALAXY_IGNORE_CERTS,
-                               help='Ignore SSL certificate validation errors.')
 
         # specific to actions
         if self.action == "delete":
@@ -135,6 +126,20 @@ class GalaxyCLI(CLI):
         if self.action in ("init","install"):
             self.parser.add_option('-f', '--force', dest='force', action='store_true', default=False, help='Force overwriting an existing role')
 
+    def parse(self):
+        ''' create an options parser for bin/ansible '''
+
+        self.parser = CLI.base_parser(
+            usage = "usage: %%prog [%s] [--help] [options] ..." % "|".join(self.VALID_ACTIONS),
+            epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
+        )
+
+        # common
+        self.parser.add_option('-s', '--server', dest='api_server', default=C.GALAXY_SERVER, help='The API server destination')
+        self.parser.add_option('-c', '--ignore-certs', action='store_true', dest='ignore_certs', default=C.GALAXY_IGNORE_CERTS,
+                               help='Ignore SSL certificate validation errors.')
+        self.set_action()
+
         super(GalaxyCLI, self).parse()
 
         display.verbosity = self.options.verbosity
@@ -182,8 +187,7 @@ class GalaxyCLI(CLI):
 
     def execute_init(self):
         """
-        Executes the init action, which creates the skeleton framework
-        of a role that complies with the galaxy metadata format.
+        creates the skeleton framework of a role that complies with the galaxy metadata format.
         """
 
         init_path  = self.get_opt('init_path', './')
@@ -255,9 +259,7 @@ class GalaxyCLI(CLI):
 
     def execute_info(self):
         """
-        Executes the info action. This action prints out detailed
-        information about an installed role as well as info available
-        from the galaxy API.
+        prints out detailed information about an installed role as well as info available from the galaxy API.
         """
 
         if len(self.args) == 0:
@@ -304,10 +306,8 @@ class GalaxyCLI(CLI):
 
     def execute_install(self):
         """
-        Executes the installation action. The args list contains the
-        roles to be installed, unless -f was specified. The list of roles
-        can be a name (which will be downloaded via the galaxy API and github),
-        or it can be a local .tar.gz file.
+        uses the args list of roles to be installed, unless -f was specified. The list of roles
+        can be a name (which will be downloaded via the galaxy API and github), or it can be a local .tar.gz file.
         """
 
         role_file  = self.get_opt("role_file", None)
@@ -432,8 +432,7 @@ class GalaxyCLI(CLI):
 
     def execute_remove(self):
         """
-        Executes the remove action. The args list contains the list
-        of roles to be removed. This list can contain more than one role.
+        removes the list of roles passed as arguments from the local system.
         """
 
         if len(self.args) == 0:
@@ -453,10 +452,7 @@ class GalaxyCLI(CLI):
 
     def execute_list(self):
         """
-        Executes the list action. The args list can contain zero
-        or one role. If one is specified, only that role will be
-        shown, otherwise all roles in the specified directory will
-        be shown.
+        lists the roles installed on the local system or matches a single role passed as an argument.
         """
 
         if len(self.args) > 1:
@@ -500,6 +496,7 @@ class GalaxyCLI(CLI):
         return 0
 
     def execute_search(self):
+        ''' searches for roles on the Ansible Galaxy server'''
         page_size = 1000
         search = None
 
@@ -544,7 +541,7 @@ class GalaxyCLI(CLI):
 
     def execute_login(self):
         """
-        Verify user's identify via Github and retrieve an auth token from Galaxy.
+        verify user's identify via Github and retrieve an auth token from Ansible Galaxy.
         """
         # Authenticate with github and retrieve a token
         if self.options.token is None:
@@ -567,9 +564,7 @@ class GalaxyCLI(CLI):
         return 0
 
     def execute_import(self):
-        """
-        Import a role into Galaxy
-        """
+        """ used to import a role into Ansible Galaxy """
 
         colors = {
             'INFO':    'normal',
@@ -625,9 +620,7 @@ class GalaxyCLI(CLI):
         return 0
 
     def execute_setup(self):
-        """
-        Setup an integration from Github or Travis
-        """
+        """ Setup an integration from Github or Travis for Ansible Galaxy roles"""
 
         if self.options.setup_list:
             # List existing integration secrets
@@ -664,9 +657,7 @@ class GalaxyCLI(CLI):
         return 0
 
     def execute_delete(self):
-        """
-        Delete a role from galaxy.ansible.com
-        """
+        """ Delete a role from Ansible Galaxy. """
 
         if len(self.args) < 2:
             raise AnsibleError("Missing one or more arguments. Expected: github_user github_repo")

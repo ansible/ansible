@@ -21,7 +21,8 @@ OS = $(shell uname -s)
 # Manpages are currently built with asciidoc -- would like to move to markdown
 # This doesn't evaluate until it's called. The -D argument is the
 # directory of the target file ($@), kinda like `dirname`.
-MANPAGES := docs/man/man1/ansible.1 docs/man/man1/ansible-playbook.1 docs/man/man1/ansible-pull.1 docs/man/man1/ansible-doc.1 docs/man/man1/ansible-galaxy.1
+
+MANPAGES := ./docs/man/man1/ansible*.1
 ifneq ($(shell which a2x 2>/dev/null),)
 ASCII2MAN = a2x -L -D $(dir $@) -d manpage -f manpage $<
 ASCII2HTMLMAN = a2x -L -D docs/html/man/ -d manpage -f xhtml
@@ -160,7 +161,7 @@ clean:
 	find ./docs/man -type f -name "*.xml" -delete
 	find ./docs/man -type f -name "*.asciidoc" -delete
 	find ./docs/man/man3 -type f -name "*.3" -delete
-	find ./docs/man/man1 -type f -name "*.1" -delete
+	rm -f ./docs/man/man1/*
 	@echo "Cleaning up output from test runs"
 	rm -rf test/test_data
 	@echo "Cleaning up RPM building stuff"
@@ -191,7 +192,7 @@ sdist: clean docs
 sdist_upload: clean docs
 	$(PYTHON) setup.py sdist upload 2>&1 |tee upload.log
 
-rpmcommon: $(MANPAGES) sdist
+rpmcommon: docs sdist
 	@mkdir -p rpm-build
 	@cp dist/*.gz rpm-build/
 	@sed -e 's#^Version:.*#Version: $(VERSION)#' -e 's#^Release:.*#Release: $(RPMRELEASE)%{?dist}#' $(RPMSPEC) >rpm-build/$(NAME).spec
@@ -301,6 +302,10 @@ deb-src-upload: deb-src
 webdocs:
 	(cd docs/docsite/; CPUS=$(CPUS) make docs)
 
-docs: $(MANPAGES)
+docs: lib/ansible/cli/*.py
+	mkdir -p ./docs/man/man1/
+	PYTHONPATH=./lib ./docs/bin/generate_man.py
+	make $(MANPAGES)
 
 alldocs: docs webdocs
+

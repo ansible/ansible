@@ -19,12 +19,8 @@ rpm-build
 # Mac OS X stuff...
 .DS_Store
 # manpage build stuff...
-docs/man/man1/ansible.1
-docs/man/man1/ansible-doc.1
-docs/man/man1/ansible-galaxy.1
-docs/man/man1/ansible-playbook.1
-docs/man/man1/ansible-pull.1
-docs/man/man1/ansible-vault.1
+docs/man/man1/ansible*.1
+docs/man/man1/ansible*.1.asciidoc.in
 docs/man/man3/*
 # Sublime stuff
 *.sublime-project
@@ -32,6 +28,7 @@ docs/man/man3/*
 # docsite stuff...
 docs/docsite/rst/modules_by_category.rst
 docs/docsite/rst/playbooks_directives.rst
+docs/docsite/rst/playbook_keywords.rst
 docs/docsite/rst/list_of_*.rst
 docs/docsite/rst/*_module.rst
 docs/docsite/*.html

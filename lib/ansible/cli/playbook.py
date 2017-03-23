@@ -44,7 +44,9 @@ except ImportError:
 #---------------------------------------------------------------------------------------------------
 
 class PlaybookCLI(CLI):
-    ''' code behind ansible playbook cli'''
+    ''' the tool to run *Ansible playbooks*, which are a configuration and multinode deployment system.
+        See the project home page (https://docs.ansible.com) for more information. '''
+
 
     def parse(self):
 
