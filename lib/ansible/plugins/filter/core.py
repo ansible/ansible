@@ -459,6 +459,14 @@ def do_groupby(environment, value, attribute):
     return [tuple(t) for t in _do_groupby(environment, value, attribute)]
 
 
+def b64encode(string):
+    return to_text(base64.b64encode(to_bytes(string, errors='surrogate_then_strict')))
+
+
+def b64decode(string):
+    return to_text(base64.b64decode(to_bytes(string, errors='surrogate_then_strict')))
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -468,8 +476,8 @@ class FilterModule(object):
             'groupby': do_groupby,
 
             # base 64
-            'b64decode': partial(unicode_wrap, base64.b64decode),
-            'b64encode': partial(unicode_wrap, base64.b64encode),
+            'b64decode': b64decode,
+            'b64encode': b64encode,
 
             # uuid
             'to_uuid': to_uuid,
