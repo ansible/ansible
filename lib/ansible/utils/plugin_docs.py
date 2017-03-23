@@ -37,8 +37,8 @@ except ImportError:
 
 # modules that are ok that they do not have documentation strings
 BLACKLIST = {
-    'MODULE': frozenset(( 'async_wrapper',)),
-    'CACHE': frozenset(( 'base',)),
+    'MODULE': frozenset(('async_wrapper',)),
+    'CACHE': frozenset(('base',)),
 }
 
 
@@ -47,7 +47,7 @@ def add_fragments(doc, filename):
     fragments = doc.get('extends_documentation_fragment', [])
 
     if isinstance(fragments, string_types):
-        fragments = [ fragments ]
+        fragments = [fragments]
 
     # Allow the module to specify a var other than DOCUMENTATION
     # to pull the fragment from, using dot notation as a separator
@@ -127,7 +127,7 @@ def get_docstring(filename, verbose=False):
         except Exception as e:
             display.debug('failed docstring parsing: %s' % str(e))
 
-        if not 'docs' in data or not data['docs']:
+        if 'docs' not in data or not data['docs']:
             display.debug('Fallback to vars parsing')
             for child in M.body:
                 if isinstance(child, ast.Assign):
