@@ -80,7 +80,8 @@ options:
      version_added: "1.8"
    image_exclude:
      description:
-        - Text to use to filter image names, for the case, such as HP, where there are multiple image names matching the common identifying portions. image_exclude is a negative match filter - it is text that may not exist in the image name. Defaults to "(deprecated)"
+        - Text to use to filter image names, for the case, such as HP, where there are multiple image names matching the common identifying
+          portions. image_exclude is a negative match filter - it is text that may not exist in the image name. Defaults to "(deprecated)"
      version_added: "1.8"
    flavor_id:
      description:
@@ -95,7 +96,8 @@ options:
      version_added: "1.8"
    flavor_include:
      description:
-        - Text to use to filter flavor names, for the case, such as Rackspace, where there are multiple flavors that have the same ram count. flavor_include is a positive match filter - it must exist in the flavor name.
+        - Text to use to filter flavor names, for the case, such as Rackspace, where there are multiple flavors that have the same ram count.
+          flavor_include is a positive match filter - it must exist in the flavor name.
      version_added: "1.8"
    key_name:
      description:
@@ -459,7 +461,7 @@ def _create_server(module, nova):
                 public = openstack_find_nova_addresses(getattr(server, 'addresses'), 'floating', 'public')
 
                 # now exit with info
-                module.exit_json(changed = True, id = server.id, private_ip=''.join(private), public_ip=''.join(public), status = server.status, info = server._info)
+                module.exit_json(changed=True, id=server.id, private_ip=''.join(private), public_ip=''.join(public), status=server.status, info=server._info)
 
             if server.status == 'ERROR':
                 module.fail_json(msg = "Error in creating the server, please check logs")

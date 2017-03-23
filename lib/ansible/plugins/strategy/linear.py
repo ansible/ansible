@@ -96,7 +96,10 @@ class StrategyModule(StrategyBase):
                 num_rescue += 1
             elif s.run_state == PlayIterator.ITERATING_ALWAYS:
                 num_always += 1
-        display.debug("done counting tasks in each state of execution:\n\tnum_setups: %s\n\tnum_tasks: %s\n\tnum_rescue: %s\n\tnum_always: %s" % (num_setups, num_tasks, num_rescue, num_always))
+        display.debug("done counting tasks in each state of execution:\n\tnum_setups: %s\n\tnum_tasks: %s\n\tnum_rescue: %s\n\tnum_always: %s" % (num_setups,
+                                                                                                                                                  num_tasks,
+                                                                                                                                                  num_rescue,
+                                                                                                                                                  num_always))
 
         def _advance_selected_hosts(hosts, cur_block, cur_state):
             '''

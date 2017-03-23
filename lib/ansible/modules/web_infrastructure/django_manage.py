@@ -29,14 +29,17 @@ DOCUMENTATION = '''
 module: django_manage
 short_description: Manages a Django application.
 description:
-     - Manages a Django application using the I(manage.py) application frontend to I(django-admin). With the I(virtualenv) parameter, all management commands will be executed by the given I(virtualenv) installation.
+    - Manages a Django application using the I(manage.py) application frontend to I(django-admin). With the I(virtualenv) parameter, all
+      management commands will be executed by the given I(virtualenv) installation.
 version_added: "1.1"
 options:
   command:
     choices: [ 'cleanup', 'collectstatic', 'flush', 'loaddata', 'migrate', 'runfcgi', 'syncdb', 'test', 'validate', ]
     description:
-      - The name of the Django management command to run. Built in commands are cleanup, collectstatic, flush, loaddata, migrate, runfcgi, syncdb, test, and validate.
-      - Other commands can be entered, but will fail if they're unknown to Django.  Other commands that may prompt for user input should be run with the I(--noinput) flag.
+      - The name of the Django management command to run. Built in commands are cleanup, collectstatic, flush, loaddata, migrate, runfcgi, syncdb,
+        test, and validate.
+      - Other commands can be entered, but will fail if they're unknown to Django.  Other commands that may prompt for user input should be run
+        with the I(--noinput) flag.
     required: true
   app_path:
     description:
@@ -92,12 +95,13 @@ options:
     required: false
     version_added: "1.3"
 notes:
-   - I(virtualenv) (U(http://www.virtualenv.org)) must be installed on the remote host if the virtualenv parameter is specified.
-   - This module will create a virtualenv if the virtualenv parameter is specified and a virtualenv does not already exist at the given location.
-   - This module assumes English error messages for the 'createcachetable' command to detect table existence, unfortunately.
-   - To be able to use the migrate command with django versions < 1.7, you must have south installed and added as an app in your settings.
-   - To be able to use the collectstatic command, you must have enabled staticfiles in your settings.
-   - As of ansible 2.x, your I(manage.py) application must be executable (rwxr-xr-x), and must have a valid I(shebang), i.e. "#!/usr/bin/env python", for invoking the appropriate Python interpreter.
+  - I(virtualenv) (U(http://www.virtualenv.org)) must be installed on the remote host if the virtualenv parameter is specified.
+  - This module will create a virtualenv if the virtualenv parameter is specified and a virtualenv does not already exist at the given location.
+  - This module assumes English error messages for the 'createcachetable' command to detect table existence, unfortunately.
+  - To be able to use the migrate command with django versions < 1.7, you must have south installed and added as an app in your settings.
+  - To be able to use the collectstatic command, you must have enabled staticfiles in your settings.
+  - As of ansible 2.x, your I(manage.py) application must be executable (rwxr-xr-x), and must have a valid I(shebang), i.e. "#!/usr/bin/env python",
+    for invoking the appropriate Python interpreter.
 requirements: [ "virtualenv", "django" ]
 author: "Scott Anderson (@tastychutney)"
 '''

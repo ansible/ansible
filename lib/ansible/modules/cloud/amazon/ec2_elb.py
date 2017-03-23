@@ -69,7 +69,8 @@ options:
     version_added: "1.5"
   wait_timeout:
     description:
-      - Number of seconds to wait for an instance to change state. If 0 then this module may return an error if a transient error occurs. If non-zero then any transient errors are ignored until the timeout is reached. Ignored when wait=no.
+      - Number of seconds to wait for an instance to change state. If 0 then this module may return an error if a transient error occurs.
+        If non-zero then any transient errors are ignored until the timeout is reached. Ignored when wait=no.
     required: false
     default: 0
     version_added: "1.6"

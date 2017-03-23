@@ -367,7 +367,8 @@ def main():
             if remove_key(module, short_key_id, keyring):
                 keys = all_keys(module, keyring, short_format)
                 if fingerprint in keys:
-                    module.fail_json(msg="apt-key del did not return an error but the key was not removed (check that the id is correct and *not* a subkey)", id=key_id)
+                    module.fail_json(msg="apt-key del did not return an error but the key was not removed (check that the id is correct and *not* a subkey)",
+                                     id=key_id)
                 changed = True
             else:
                 # FIXME: module.fail_json or exit-json immediately at point of failure

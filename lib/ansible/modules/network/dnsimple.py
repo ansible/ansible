@@ -29,7 +29,9 @@ description:
 options:
   account_email:
     description:
-      - "Account email. If omitted, the env variables DNSIMPLE_EMAIL and DNSIMPLE_API_TOKEN will be looked for. If those aren't found, a C(.dnsimple) file will be looked for, see: U(https://github.com/mikemaccana/dnsimple-python#getting-started)"
+      - >
+        Account email. If omitted, the env variables DNSIMPLE_EMAIL and DNSIMPLE_API_TOKEN will be looked for.
+        If those aren't found, a C(.dnsimple) file will be looked for, see: U(https://github.com/mikemaccana/dnsimple-python#getting-started)
     required: false
     default: null
 
@@ -41,7 +43,8 @@ options:
 
   domain:
     description:
-      - Domain to work with. Can be the domain name (e.g. "mydomain.com") or the numeric ID of the domain in DNSimple. If omitted, a list of domains will be returned.
+      - Domain to work with. Can be the domain name (e.g. "mydomain.com") or the numeric ID of the domain in DNSimple. If omitted, a list of domains
+        will be returned.
       - If domain is present but the domain doesn't exist, it will be created.
     required: false
     default: null
@@ -175,18 +178,19 @@ except ImportError:
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            account_email     = dict(required=False),
-            account_api_token = dict(required=False, no_log=True),
-            domain            = dict(required=False),
-            record            = dict(required=False),
-            record_ids        = dict(required=False, type='list'),
-            type              = dict(required=False, choices=['A', 'ALIAS', 'CNAME', 'MX', 'SPF', 'URL', 'TXT', 'NS', 'SRV', 'NAPTR', 'PTR', 'AAAA', 'SSHFP', 'HINFO', 'POOL']),
-            ttl               = dict(required=False, default=3600, type='int'),
-            value             = dict(required=False),
-            priority          = dict(required=False, type='int'),
-            state             = dict(required=False, choices=['present', 'absent']),
-            solo              = dict(required=False, type='bool'),
+        argument_spec=dict(
+            account_email=dict(required=False),
+            account_api_token=dict(required=False, no_log=True),
+            domain=dict(required=False),
+            record=dict(required=False),
+            record_ids=dict(required=False, type='list'),
+            type=dict(required=False, choices=['A', 'ALIAS', 'CNAME', 'MX', 'SPF', 'URL', 'TXT', 'NS', 'SRV', 'NAPTR', 'PTR', 'AAAA', 'SSHFP', 'HINFO',
+                                               'POOL']),
+            ttl=dict(required=False, default=3600, type='int'),
+            value=dict(required=False),
+            priority=dict(required=False, type='int'),
+            state=dict(required=False, choices=['present', 'absent']),
+            solo=dict(required=False, type='bool'),
         ),
         required_together = (
             ['record', 'value']

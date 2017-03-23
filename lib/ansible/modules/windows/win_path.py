@@ -40,11 +40,13 @@ options:
   elements:
     description:
       - A single path element, or a list of path elements (ie, directories) to add or remove.
-      - When multiple elements are included in the list (and C(state) is C(present)), the elements are guaranteed to appear in the same relative order in the resultant path value.
+      - When multiple elements are included in the list (and C(state) is C(present)), the elements are guaranteed to appear in the same relative order
+        in the resultant path value.
       - Variable expansions (eg, C(%VARNAME%)) are allowed, and are stored unexpanded in the target path element.
       - Any existing path elements not mentioned in C(elements) are always preserved in their current order.
       - New path elements are appended to the path, and existing path elements may be moved closer to the end to satisfy the requested ordering.
-      - Paths are compared in a case-insensitive fashion, and trailing backslashes are ignored for comparison purposes. However, note that trailing backslashes in YAML require quotes.
+      - Paths are compared in a case-insensitive fashion, and trailing backslashes are ignored for comparison purposes. However, note that trailing
+        backslashes in YAML require quotes.
     required: true
   state:
     description:

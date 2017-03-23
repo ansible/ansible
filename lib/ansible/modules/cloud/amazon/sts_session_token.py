@@ -30,7 +30,9 @@ author: Victor Costan (@pwnall)
 options:
   duration_seconds:
     description:
-      - The duration, in seconds, of the session token. See http://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html#API_GetSessionToken_RequestParameters for acceptable and default values.
+      - The duration, in seconds, of the session token.
+        See http://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html#API_GetSessionToken_RequestParameters
+        for acceptable and default values.
     required: false
     default: null
   mfa_serial_number:

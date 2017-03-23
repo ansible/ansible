@@ -24,7 +24,8 @@ DOCUMENTATION = '''
 module: profitbricks
 short_description: Create, destroy, start, stop, and reboot a ProfitBricks virtual machine.
 description:
-     - Create, destroy, update, start, stop, and reboot a ProfitBricks virtual machine. When the virtual machine is created it can optionally wait for it to be 'running' before returning. This module has a dependency on profitbricks >= 1.0.0
+     - Create, destroy, update, start, stop, and reboot a ProfitBricks virtual machine. When the virtual machine is created it can optionally wait
+       for it to be 'running' before returning. This module has a dependency on profitbricks >= 1.0.0
 version_added: "2.0"
 options:
   auto_increment:

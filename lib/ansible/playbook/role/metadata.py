@@ -88,7 +88,8 @@ class RoleMetadata(Base):
             current_role_path = os.path.dirname(self._owner._role_path)
 
         try:
-            return load_list_of_roles(roles, play=self._owner._play, current_role_path=current_role_path, variable_manager=self._variable_manager, loader=self._loader)
+            return load_list_of_roles(roles, play=self._owner._play, current_role_path=current_role_path, variable_manager=self._variable_manager,
+                                      loader=self._loader)
         except AssertionError:
             raise AnsibleParserError("A malformed list of role dependencies was encountered.", obj=self._ds)
 

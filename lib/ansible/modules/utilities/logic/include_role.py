@@ -54,7 +54,9 @@ options:
 notes:
     - Handlers are made available to the whole play.
     - simple dependencies seem to work fine.
-    - As with C(include) this task can be static or dynamic, If static it implies that it won't need templating nor loops nor conditionals and will show included tasks in the --list options. Ansible will try to autodetect what is needed, but you can set `static` to `yes` or `no` at task level to control this.
+    - As with C(include) this task can be static or dynamic, If static it implies that it won't need templating nor loops nor conditionals and will
+      show included tasks in the --list options. Ansible will try to autodetect what is needed, but you can set `static` to `yes` or `no` at task
+      level to control this.
 '''
 
 EXAMPLES = """

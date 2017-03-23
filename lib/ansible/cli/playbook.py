@@ -149,7 +149,8 @@ class PlaybookCLI(CLI):
             self._flush_cache(inventory, variable_manager)
 
         # create the playbook executor, which manages running the plays via a task queue manager
-        pbex = PlaybookExecutor(playbooks=self.args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=self.options, passwords=passwords)
+        pbex = PlaybookExecutor(playbooks=self.args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=self.options,
+                                passwords=passwords)
 
         results = pbex.run()
 

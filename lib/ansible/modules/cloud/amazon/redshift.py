@@ -129,7 +129,8 @@ options:
     default: null
   wait:
     description:
-      - When command=create, modify or restore then wait for the database to enter the 'available' state. When command=delete wait for the database to be terminated.
+      - When command=create, modify or restore then wait for the database to enter the 'available' state. When command=delete wait for the database to be
+        terminated.
     default: "no"
     choices: [ "yes", "no" ]
   wait_timeout:
@@ -413,7 +414,8 @@ def main():
     argument_spec.update(dict(
         command                             = dict(choices=['create', 'facts', 'delete', 'modify'], required=True),
         identifier                          = dict(required=True),
-        node_type                           = dict(choices=['ds1.xlarge', 'ds1.8xlarge', 'ds2.xlarge', 'ds2.8xlarge', 'dc1.large', 'dc1.8xlarge', 'dw1.xlarge', 'dw1.8xlarge', 'dw2.large', 'dw2.8xlarge'], required=False),
+        node_type                           = dict(choices=['ds1.xlarge', 'ds1.8xlarge', 'ds2.xlarge', 'ds2.8xlarge', 'dc1.large', 'dc1.8xlarge',
+                                                            'dw1.xlarge', 'dw1.8xlarge', 'dw2.large', 'dw2.8xlarge'], required=False),
         username                            = dict(required=False),
         password                            = dict(no_log=True, required=False),
         db_name                             = dict(require=False),

@@ -383,7 +383,9 @@ def main():
         else:
             for _state in states:
                 if _state not in ['present', 'absent', 'enabled', 'disabled', 'drained', 'hot_standby', 'ignore_errors']:
-                    module.fail_json(msg="State can only take values amongst 'present', 'absent', 'enabled', 'disabled', 'drained', 'hot_standby', 'ignore_errors'.")
+                    module.fail_json(
+                        msg="State can only take values amongst 'present', 'absent', 'enabled', 'disabled', 'drained', 'hot_standby', 'ignore_errors'."
+                    )
     else:
         states = ['None']
 

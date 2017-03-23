@@ -46,7 +46,8 @@ options:
     required: false
   policy_json:
     description:
-      - A properly json formatted policy as string (mutually exclusive with C(policy_document), see https://github.com/ansible/ansible/issues/7005#issuecomment-42894813 on how to use it properly)
+      - A properly json formatted policy as string (mutually exclusive with C(policy_document),
+        see https://github.com/ansible/ansible/issues/7005#issuecomment-42894813 on how to use it properly)
     required: false
   state:
     description:
@@ -56,7 +57,8 @@ options:
     choices: [ "present", "absent"]
   skip_duplicates:
     description:
-      - By default the module looks for any policies that match the document you pass in, if there is a match it will not make a new policy object with the same rules. You can override this by specifying false which would allow for two policy objects with different names but same rules.
+      - By default the module looks for any policies that match the document you pass in, if there is a match it will not make a new policy object with
+        the same rules. You can override this by specifying false which would allow for two policy objects with different names but same rules.
     required: false
     default: "/"
 

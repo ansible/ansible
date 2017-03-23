@@ -31,7 +31,8 @@ description:
 version_added: '2.2'
 author: Kevin Hulquest (@hulquest)
 notes:
-  - Only I(full_threshold) is supported for update operations. If the snapshot volume already exists and the threshold matches, then an C(ok) status will be returned, no other changes can be made to a pre-existing snapshot volume.
+  - Only I(full_threshold) is supported for update operations. If the snapshot volume already exists and the threshold matches, then an C(ok) status
+    will be returned, no other changes can be made to a pre-existing snapshot volume.
 options:
     api_username:
         required: true

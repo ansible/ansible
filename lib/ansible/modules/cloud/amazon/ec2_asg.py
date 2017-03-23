@@ -82,7 +82,8 @@ options:
     default: 1
   replace_instances:
     description:
-      - List of instance_ids belonging to the named ASG that you would like to terminate and be replaced with instances matching the current launch configuration.
+      - List of instance_ids belonging to the named ASG that you would like to terminate and be replaced with instances matching the current launch
+        configuration.
     required: false
     version_added: "1.8"
     default: None
@@ -129,14 +130,16 @@ options:
     version_added: "1.8"
   wait_for_instances:
     description:
-      - Wait for the ASG instances to be in a ready state before exiting.  If instances are behind an ELB, it will wait until the ELB determines all instances have a lifecycle_state of  "InService" and  a health_status of "Healthy".
+      - Wait for the ASG instances to be in a ready state before exiting.  If instances are behind an ELB, it will wait until the ELB determines all
+        instances have a lifecycle_state of  "InService" and  a health_status of "Healthy".
     version_added: "1.9"
     default: yes
     required: False
   termination_policies:
     description:
         - An ordered list of criteria used for selecting instances to be removed from the Auto Scaling group when reducing capacity.
-        - For 'Default', when used to create a new autoscaling group, the "Default"i value is used. When used to change an existent autoscaling group, the current termination policies are maintained.
+        - For 'Default', when used to create a new autoscaling group, the "Default"i value is used. When used to change an existent autoscaling group, the
+          current termination policies are maintained.
     required: false
     default: Default
     choices: ['OldestInstance', 'NewestInstance', 'OldestLaunchConfiguration', 'ClosestToNextInstanceHour', 'Default']
@@ -150,7 +153,11 @@ options:
   notification_types:
     description:
       - A list of auto scaling events to trigger notifications on.
-    default: ['autoscaling:EC2_INSTANCE_LAUNCH', 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR', 'autoscaling:EC2_INSTANCE_TERMINATE', 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR']
+    default:
+        - 'autoscaling:EC2_INSTANCE_LAUNCH'
+        - 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR'
+        - 'autoscaling:EC2_INSTANCE_TERMINATE'
+        - 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'
     required: false
     version_added: "2.2"
   suspend_processes:

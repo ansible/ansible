@@ -201,12 +201,14 @@ def main():
                 ( 'x-max-length' not in response['arguments'] and module.params['max_length'] is None )
             ) and
             (
-                ( 'x-dead-letter-exchange' in response['arguments'] and response['arguments']['x-dead-letter-exchange'] == module.params['dead_letter_exchange'] ) or
-                ( 'x-dead-letter-exchange' not in response['arguments'] and module.params['dead_letter_exchange'] is None )
+                ('x-dead-letter-exchange' in response['arguments'] and
+                 response['arguments']['x-dead-letter-exchange'] == module.params['dead_letter_exchange']) or
+                ('x-dead-letter-exchange' not in response['arguments'] and module.params['dead_letter_exchange'] is None)
             ) and
             (
-                ( 'x-dead-letter-routing-key' in response['arguments'] and response['arguments']['x-dead-letter-routing-key'] == module.params['dead_letter_routing_key'] ) or
-                ( 'x-dead-letter-routing-key' not in response['arguments'] and module.params['dead_letter_routing_key'] is None )
+                ('x-dead-letter-routing-key' in response['arguments'] and
+                 response['arguments']['x-dead-letter-routing-key'] == module.params['dead_letter_routing_key']) or
+                ('x-dead-letter-routing-key' not in response['arguments'] and module.params['dead_letter_routing_key'] is None)
             )
         ):
             module.fail_json(

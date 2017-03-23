@@ -468,7 +468,8 @@ class StrategyBase:
 
                                 # and if none were found, then we raise an error
                                 if not found:
-                                    msg = "The requested handler '%s' was not found in either the main handlers list nor in the listening handlers list" % handler_name
+                                    msg = ("The requested handler '%s' was not found in either the main handlers list nor in the listening "
+                                           "handlers list" % handler_name)
                                     if C.ERROR_ON_MISSING_HANDLER:
                                         raise AnsibleError(msg)
                                     else:
@@ -693,8 +694,9 @@ class StrategyBase:
                 tags = tags.split(',')
             if len(tags) > 0:
                 if len(included_file._task.tags) > 0:
-                    raise AnsibleParserError("Include tasks should not specify tags in more than one way (both via args and directly on the task). Mixing tag specify styles is prohibited for whole import hierarchy, not only for single import statement",
-                            obj=included_file._task._ds)
+                    raise AnsibleParserError("Include tasks should not specify tags in more than one way (both via args and directly on the task). "
+                                             "Mixing tag specify styles is prohibited for whole import hierarchy, not only for single import statement",
+                                             obj=included_file._task._ds)
                 display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option")
                 included_file._task.tags = tags
 

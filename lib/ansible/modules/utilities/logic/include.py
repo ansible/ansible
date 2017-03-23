@@ -32,7 +32,8 @@ options:
     description:
         - This module allows you to specify the name of the file directly w/o any other options.
 notes:
-    - This is really not a module, though it appears as such, this is a feature of the Ansible Engine, as such it cannot be overridden the same way a module can.
+    - This is really not a module, though it appears as such, this is a feature of the Ansible Engine, as such it cannot be overridden the same way a
+      module can.
 '''
 
 EXAMPLES = """

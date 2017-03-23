@@ -150,7 +150,8 @@ options:
     default: null
   root_disk_size:
     description:
-      - Root disk size in GByte required if deploying instance with KVM hypervisor and want resize the root disk size at startup (need CloudStack >= 4.4, cloud-initramfs-growroot installed and enabled in the template)
+      - Root disk size in GByte required if deploying instance with KVM hypervisor and want resize the root disk size at startup
+        (need CloudStack >= 4.4, cloud-initramfs-growroot installed and enabled in the template)
     required: false
     default: null
   security_groups:
@@ -984,7 +985,8 @@ def main():
         memory = dict(default=None, type='int'),
         template = dict(default=None),
         iso = dict(default=None),
-        template_filter = dict(default="executable", aliases=['iso_filter'], choices=['featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable', 'community']),
+        template_filter = dict(default="executable", aliases=['iso_filter'], choices=['featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable',
+                                                                                      'community']),
         networks = dict(type='list', aliases=[ 'network' ], default=None),
         ip_to_networks = dict(type='list', aliases=['ip_to_network'], default=None),
         ip_address = dict(defaul=None),

@@ -192,7 +192,8 @@ def package_present(names, pkg_spec, module):
                         flavors = pkg_spec[name]['flavor'].replace('-', ' ')
                         install_cmd = "cd %s && make clean=depends && FLAVOR=\"%s\" make install && make clean=depends" % (port_dir, flavors)
                     elif pkg_spec[name]['subpackage']:
-                        install_cmd = "cd %s && make clean=depends && SUBPACKAGE=\"%s\" make install && make clean=depends" % (port_dir, pkg_spec[name]['subpackage'])
+                        install_cmd = "cd %s && make clean=depends && SUBPACKAGE=\"%s\" make install && make clean=depends" % (port_dir,
+                                                                                                                               pkg_spec[name]['subpackage'])
                     else:
                         install_cmd = "cd %s && make install && make clean=depends" % (port_dir)
                 else:

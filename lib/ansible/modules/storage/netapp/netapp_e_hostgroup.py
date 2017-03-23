@@ -93,7 +93,8 @@ clusterRef:
     type: string
     sample: "3233343536373839303132333100000000000000"
 confirmLUNMappingCreation:
-    description: If true, indicates that creation of LUN-to-volume mappings should require careful confirmation from the end-user, since such a mapping will alter the volume access rights of other clusters, in addition to this one.
+    description: If true, indicates that creation of LUN-to-volume mappings should require careful confirmation from the end-user, since such a mapping
+                 will alter the volume access rights of other clusters, in addition to this one.
     returned: always
     type: boolean
     sample: false
@@ -108,7 +109,8 @@ id:
     type: string
     sample: "3233343536373839303132333100000000000000"
 isSAControlled:
-    description:  If true, indicates that I/O accesses from this cluster are subject to the storage array's default LUN-to-volume mappings. If false, indicates that I/O accesses from the cluster are subject to cluster-specific LUN-to-volume mappings.
+    description: If true, indicates that I/O accesses from this cluster are subject to the storage array's default LUN-to-volume mappings. If false,
+                 indicates that I/O accesses from the cluster are subject to cluster-specific LUN-to-volume mappings.
     returned: always except when state is absent
     type: boolean
     sample: false

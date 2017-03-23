@@ -117,7 +117,7 @@ targets:
     returned: success
     type: list
     sample: "[{ 'arn': 'arn:aws:lambda:us-east-1:123456789012:function:MyFunction', 'id': 'MyTargetId' }]"
-'''
+'''  # NOQA
 
 
 class CloudWatchEventRule(object):
