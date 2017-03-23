@@ -56,7 +56,7 @@ def placeboify(request, monkeypatch):
         request.fspath.dirname,
         'placebo_recordings',
         request.fspath.basename.replace('.py', ''),
-        request.function.func_name
+        request.function.__name__
         # remove the test_ prefix from the function & file name
     ).replace('test_', '')
 
