@@ -16,9 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'status': ['preview'],
+    'supported_by': 'community',
+}
 
 
 DOCUMENTATION = '''
@@ -28,85 +30,75 @@ extends_documentation_fragment: nxos
 version_added: "2.1"
 short_description: Manages VLAN resources and attributes.
 description:
-    - Manages VLAN configurations on NX-OS switches.
+  - Manages VLAN configurations on NX-OS switches.
 author: Jason Edelman (@jedelman8)
 options:
-    vlan_id:
-        description:
-            - Single VLAN ID.
-        required: false
-        default: null
-    vlan_range:
-        description:
-            - Range of VLANs such as 2-10 or 2,5,10-15, etc.
-        required: false
-        default: null
-    name:
-        description:
-            - Name of VLAN.
-        required: false
-        default: null
-    vlan_state:
-        description:
-            - Manage the vlan operational state of the VLAN
-              (equivalent to state {active | suspend} command.
-        required: false
-        default: active
-        choices: ['active','suspend']
-    admin_state:
-        description:
-            - Manage the VLAN administrative state of the VLAN equivalent
-              to shut/no shut in VLAN config mode.
-        required: false
-        default: up
-        choices: ['up','down']
-    mapped_vni:
-        description:
-            - The Virtual Network Identifier (VNI) ID that is mapped to the
-              VLAN. Valid values are integer and keyword 'default'.
-        required: false
-        default: null
-        version_added: "2.2"
-    state:
-        description:
-            - Manage the state of the resource.
-        required: false
-        default: present
-        choices: ['present','absent']
+  vlan_id:
+    description:
+      - Single VLAN ID.
+    required: false
+    default: null
+  vlan_range:
+    description:
+      - Range of VLANs such as 2-10 or 2,5,10-15, etc.
+    required: false
+    default: null
+  name:
+    description:
+      - Name of VLAN.
+    required: false
+    default: null
+  vlan_state:
+    description:
+      - Manage the vlan operational state of the VLAN
+        (equivalent to state {active | suspend} command.
+    required: false
+    default: active
+    choices: ['active','suspend']
+  admin_state:
+    description:
+      - Manage the VLAN administrative state of the VLAN equivalent
+        to shut/no shut in VLAN config mode.
+    required: false
+    default: up
+    choices: ['up','down']
+  mapped_vni:
+    description:
+      - The Virtual Network Identifier (VNI) ID that is mapped to the
+        VLAN. Valid values are integer and keyword 'default'.
+    required: false
+    default: null
+    version_added: "2.2"
+  state:
+    description:
+      - Manage the state of the resource.
+    required: false
+    default: present
+    choices: ['present','absent']
 
 '''
 EXAMPLES = '''
 - name: Ensure a range of VLANs are not present on the switch
   nxos_vlan:
     vlan_range: "2-10,20,50,55-60,100-150"
-    host: 68.170.147.165
-    username: cisco
-    password: cisco
     state: absent
     transport: nxapi
 
 - name: Ensure VLAN 50 exists with the name WEB and is in the shutdown state
   nxos_vlan:
     vlan_id: 50
-    host: 68.170.147.165
     admin_state: down
     name: WEB
     transport: nxapi
-    username: cisco
-    password: cisco
 
 - name: Ensure VLAN is NOT on the device
   nxos_vlan:
     vlan_id: 50
-    host: 68.170.147.165
     state: absent
     transport: nxapi
-    username: cisco
-    password: cisco
 '''
 
 RETURN = '''
-
 proposed_vlans_list:
     description: list of VLANs being proposed
     returned: when debug enabled
@@ -338,6 +330,8 @@ def main():
         state=dict(choices=['present', 'absent'], default='present',
                        required=False),
         admin_state=dict(choices=['up', 'down'], required=False),
+
+        # Deprecated in Ansible 2.4
         include_defaults=dict(default=False),
         config=dict(),
         save=dict(type='bool', default=False)
@@ -345,17 +339,10 @@ def main():
 
     argument_spec.update(nxos_argument_spec)
 
-
-    argument_spec.update(nxos_argument_spec)
-
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=[['vlan_range', 'name'],
                                                ['vlan_id', 'vlan_range']],
                            supports_check_mode=True)
-
-    warnings = list()
-    check_args(module, warnings)
-
 
     warnings = list()
     check_args(module, warnings)
@@ -453,4 +440,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
