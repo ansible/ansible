@@ -107,7 +107,7 @@ options:
     version_added: "1.7"
   scheme:
     description:
-      - The scheme to use when creating the ELB. For a private VPC-visible ELB use 'internal'.
+      - The scheme to use when creating the ELB. For a private VPC-visible ELB use 'internal'. If you choose to update your scheme with a different value the ELB will be destroyed and recreated. To update scheme you must use the option wait: yes.
     required: false
     default: 'internet-facing'
     version_added: "1.7"
@@ -487,10 +487,16 @@ class ElbManager(object):
             # Zones and listeners will be added at creation
             self._create_elb()
         else:
-            self._set_zones()
-            self._set_security_groups()
-            self._set_elb_listeners()
-            self._set_subnets()
+            new_scheme = self._get_scheme()
+            if new_scheme:
+                # the only way to change the scheme is by recreating the resource
+                self.ensure_gone()
+                self._create_elb()
+            else:
+                self._set_zones()
+                self._set_security_groups()
+                self._set_elb_listeners()
+                self._set_subnets()
         self._set_health_check()
         # boto has introduced support for some ELB attributes in
         # different versions, so we check first before trying to
@@ -870,6 +876,15 @@ class ElbManager(object):
                 self._attach_subnets(subnets_to_attach)
             if subnets_to_detach:
                 self._detach_subnets(subnets_to_detach)
+
+    def _get_scheme(self):
+        """Determine if the current scheme is different than the scheme of the ELB"""
+        if self.scheme and self.scheme != "":
+            if self.elb.scheme != self.scheme:
+                if not self.wait:
+                    module.fail_json(msg="Unable to modify scheme without using the wait option")
+                return True
+        return False
 
     def _set_zones(self):
         """Determine which zones need to be enabled or disabled on the ELB"""
