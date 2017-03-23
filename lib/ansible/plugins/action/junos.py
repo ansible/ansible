@@ -57,6 +57,8 @@ class ActionModule(_ActionModule):
         pc = copy.deepcopy(self._play_context)
         pc.network_os = 'junos'
 
+        pc.remote_addr = provider['host'] or self._play_context.remote_addr
+
         if self._task.action == 'junos_netconf':
             pc.connection = 'network_cli'
             pc.port = provider['port'] or self._play_context.port or 22
