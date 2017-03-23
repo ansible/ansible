@@ -71,6 +71,7 @@ def _find_module(name, path=None):
         fh, path, descr = _imp.find_module(part, path)
     return fh, path, descr
 
+
 def _get_bundled_six_source():
     # Special import loader (zipimport for instance)
     found = False
