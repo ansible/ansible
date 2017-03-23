@@ -27,6 +27,9 @@ Here is a most basic example::
         - name: "favcolor"
           prompt: "what is your favorite color?"
 
+.. note::
+   Prompts for "vars_prompt" variables will be skipped for any variable that is already defined on the command line. See :ref:`_passing_variables_on_the_command_line` in the /Variables/ chapter.
+
 If you have a variable that changes infrequently, it might make sense to
 provide a default value that can be overridden.  This can be accomplished using
 the default argument::
