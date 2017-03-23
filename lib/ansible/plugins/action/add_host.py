@@ -20,11 +20,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import string_types
-
+from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
 from ansible.parsing.utils.addresses import parse_address
-from ansible.errors import AnsibleError
 
 try:
     from __main__ import display

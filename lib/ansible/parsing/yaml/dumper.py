@@ -20,8 +20,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import yaml
-from ansible.compat.six import PY3
 
+from ansible.module_utils.six import PY3
 from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.vars.hostvars import HostVars

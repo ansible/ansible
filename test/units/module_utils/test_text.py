@@ -20,8 +20,8 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
-from ansible.compat.six import PY3
 from ansible.compat.tests import unittest
+from ansible.module_utils.six import PY3
 from units.mock.generator import add_method
 
 

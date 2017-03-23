@@ -21,8 +21,8 @@ __metaclass__ = type
 
 from ansible.compat.tests import unittest
 
-from ansible.compat.six import string_types
 from ansible.errors import AnsibleParserError
+from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
 from ansible.playbook import base

@@ -17,9 +17,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.module_utils.six import text_type
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.plugins.shell.sh import ShellModule as ShModule
-from ansible.compat.six import text_type
-from ansible.compat.six.moves import shlex_quote
 
 
 class ShellModule(ShModule):

@@ -19,12 +19,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import PY3
-
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, mock_open
 from ansible.errors import AnsibleParserError
 from ansible.errors import yaml_strings
+from ansible.module_utils.six import PY3
 
 from ansible.parsing.dataloader import DataLoader
 

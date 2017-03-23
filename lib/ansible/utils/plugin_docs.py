@@ -25,7 +25,7 @@ import yaml
 
 from collections import MutableMapping, MutableSet, MutableSequence
 
-from ansible.compat.six import string_types
+from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.plugins import fragment_loader
 
@@ -34,6 +34,7 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 # modules that are ok that they do not have documentation strings
 BLACKLIST = {

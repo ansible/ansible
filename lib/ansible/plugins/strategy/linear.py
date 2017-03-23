@@ -31,17 +31,16 @@ DOCUMENTATION:
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import iteritems
-
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
+from ansible.module_utils.six import iteritems
+from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task import Task
 from ansible.plugins import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
-from ansible.module_utils._text import to_text
 
 
 try:

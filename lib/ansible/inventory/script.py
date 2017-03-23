@@ -24,13 +24,12 @@ import subprocess
 import sys
 from collections import Mapping
 
-from ansible.compat.six import iteritems
-
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.module_utils.basic import json_dict_bytes_to_unicode
+from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native, to_text
 
 

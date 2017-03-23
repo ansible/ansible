@@ -27,11 +27,13 @@ import collections
 import os
 import time
 
+from ansible.module_utils.six.moves import reduce
 from ansible.plugins.callback import CallbackBase
-from ansible.compat.six.moves import reduce
+
 
 # define start time
 t0 = tn = time.time()
+
 
 def secondsToStr(t):
     # http://bytes.com/topic/python/answers/635958-handy-short-cut-formatting-elapsed-time-floating-point-seconds

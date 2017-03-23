@@ -21,8 +21,8 @@ __metaclass__ = type
 
 import os
 
-from ansible.compat.six import iteritems, string_types
 from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping, AnsibleUnicode

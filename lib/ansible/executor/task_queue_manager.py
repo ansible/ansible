@@ -24,10 +24,10 @@ import os
 import tempfile
 
 from ansible import constants as C
-from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
@@ -43,6 +43,7 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 __all__ = ['TaskQueueManager']
 

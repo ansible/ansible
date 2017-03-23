@@ -21,9 +21,8 @@ __metaclass__ = type
 
 import os
 
-from ansible.compat.six import iteritems, string_types
-
 from ansible.errors import AnsibleParserError, AnsibleError
+from ansible.module_utils.six import iteritems, string_types
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.helpers import load_list_of_roles

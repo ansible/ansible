@@ -27,14 +27,15 @@ from multiprocessing import Lock
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
-from ansible.compat.six.moves import queue as Queue
-from ansible.compat.six import iteritems, string_types
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.executor import action_write_locks
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
+from ansible.module_utils.six.moves import queue as Queue
+from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils._text import to_text
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task_include import TaskInclude
@@ -42,7 +43,6 @@ from ansible.playbook.role_include import IncludeRole
 from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
 from ansible.vars import combine_vars, strip_internal_keys
-from ansible.module_utils._text import to_text
 
 
 try:

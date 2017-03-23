@@ -21,8 +21,8 @@ __metaclass__ = type
 
 import os
 
-from ansible.compat.six import iteritems
 from ansible.errors import AnsibleParserError, AnsibleError
+from ansible.module_utils.six import iteritems
 from ansible.parsing.splitter import split_args, parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import FieldAttribute
@@ -30,6 +30,7 @@ from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.template import Templar
+
 
 class PlaybookInclude(Base, Conditional, Taggable):
 

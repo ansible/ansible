@@ -33,8 +33,8 @@ import re
 from distutils.version import LooseVersion
 
 import ansible.constants as C
-from ansible.compat.six.moves import shlex_quote
 from ansible.errors import AnsibleError, AnsibleFileNotFound
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 

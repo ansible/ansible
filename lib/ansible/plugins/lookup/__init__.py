@@ -21,7 +21,7 @@ __metaclass__ = type
 
 from abc import ABCMeta, abstractmethod
 
-from ansible.compat.six import with_metaclass
+from ansible.module_utils.six import with_metaclass
 
 try:
     from __main__ import display

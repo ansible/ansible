@@ -21,9 +21,10 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.six import string_types
+from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
 from ansible.plugins.action.net_template import ActionModule as NetActionModule
+
 
 class ActionModule(NetActionModule, ActionBase):
 

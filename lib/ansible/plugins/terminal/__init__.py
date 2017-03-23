@@ -23,8 +23,8 @@ import re
 
 from abc import ABCMeta, abstractmethod
 
-from ansible.compat.six import with_metaclass
 from ansible.errors import AnsibleConnectionFailure
+from ansible.module_utils.six import with_metaclass
 
 
 class TerminalBase(with_metaclass(ABCMeta, object)):

@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import yaml
 
-from ansible.compat.six import text_type
+from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_bytes
 
 

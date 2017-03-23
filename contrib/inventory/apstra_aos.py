@@ -53,19 +53,19 @@ import os
 import argparse
 import re
 
-from ansible.compat.six.moves import configparser
-
-try:
-    from apstra.aosom.session import Session
-
-    HAS_AOS_PYEZ = True
-except ImportError:
-    HAS_AOS_PYEZ = False
-
 try:
     import json
 except ImportError:
     import simplejson as json
+
+try:
+    from apstra.aosom.session import Session
+    HAS_AOS_PYEZ = True
+except ImportError:
+    HAS_AOS_PYEZ = False
+
+from ansible.module_utils.six.moves import configparser
+
 
 """
 ##

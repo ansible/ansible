@@ -19,12 +19,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import iteritems, string_types
-
 import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base

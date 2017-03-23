@@ -21,10 +21,10 @@ from io import StringIO
 import os
 import re
 
-from ansible.compat.six.moves import configparser
 from ansible.errors import AnsibleError
-from ansible.plugins.lookup import LookupBase
+from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.plugins.lookup import LookupBase
 
 
 def _parse_params(term):

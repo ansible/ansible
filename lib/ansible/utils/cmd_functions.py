@@ -24,8 +24,9 @@ import shlex
 import subprocess
 import select
 
-from ansible.compat.six import PY2, PY3
+from ansible.module_utils.six import PY2, PY3
 from ansible.module_utils._text import to_bytes
+
 
 def run_cmd(cmd, live=False, readsize=10):
 

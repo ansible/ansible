@@ -19,10 +19,11 @@ __metaclass__ = type
 
 from re import compile as re_compile, IGNORECASE
 
-from ansible.compat.six.moves import xrange
 from ansible.errors import AnsibleError
+from ansible.module_utils.six.moves import xrange
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
+
 
 # shortcut format
 NUM = "(0?x?[0-9a-f]+)"
