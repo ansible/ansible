@@ -40,7 +40,10 @@ except ImportError:
 
 
 class DocCLI(CLI):
-    """ Doc command line class """
+    ''' displays information on modules installed in Ansible libraries.
+        It displays a terse listing of plugins and their short descriptions,
+        provides a printout of their DOCUMENTATION strings,
+        and it can create a short "snippet" which can be pasted into a playbook.  '''
 
     def __init__(self, args):
 

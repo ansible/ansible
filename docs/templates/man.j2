@@ -1,6 +1,7 @@
-ansible{% if cli != 'adhoc' %}-{{cli}}{% endif %}(1)
-==================
-:doctype:manpage
+{% set name = ('ansible' if cli == 'adhoc' else 'ansible-%s' % cli) -%}
+{{name}}(1)
+{{ '=' *  ((name|length|int) + 3) }}
+:doctype:      manpage
 :man source:   Ansible
 :man version:  %VERSION%
 :man manual:   System administration commands
@@ -12,12 +13,12 @@ ansible{% if cli != 'adhoc' %}-{{cli}}{% endif %} - {{short_desc|default('')}}
 
 SYNOPSIS
 --------
-{{ usage }}
+{{ usage|replace('%prog', name) }}
 
 
 DESCRIPTION
 -----------
-{{ long_desc }}
+*{{name}}* {{ long_desc|default('', True)|wordwrap }}
 
 
 {% if arguments %}
@@ -25,13 +26,24 @@ ARGUMENTS
 ---------
 
 {% for arg in arguments %}
-{{ arg['name'] }}
+{{ arg }}
 
-{{ arg['desc'] }}
+{{ (arguments[arg]|default(' '))|wordwrap }}
 
 {% endfor %}
 {% endif %}
 
+{% if actions %}
+ACTIONS
+-------
+
+{% for action in actions %}
+{{ action }}
+
+{{ (actions[action]|default(' '))|wordwrap}}
+
+{% endfor %}
+{% endif %}
 OPTIONS
 -------
 
@@ -41,7 +53,7 @@ OPTIONS
 {{ option['desc'] }}
 {% endfor %}
 
-{% if inv_opts %}
+{% if inventory %}
 INVENTORY
 ---------
 
@@ -55,11 +67,11 @@ ENVIRONMENT
 
 The following environment variables may be specified.
 
-{% if inv_opts %}
+{% if inventory %}
 ANSIBLE_INVENTORY  -- Override the default ansible inventory file
 
 {% endif %}
-{% if run_opts %}
+{% if library %}
 ANSIBLE_LIBRARY -- Override the default ansible module library path
 
 {% endif %}
@@ -71,7 +83,7 @@ Many more are available for most options in ansible.cfg
 FILES
 -----
 
-{% if inv_opts %}
+{% if inventory %}
 /etc/ansible/hosts -- Default inventory file
 
 {% endif %}
@@ -90,7 +102,7 @@ See the AUTHORS file for a complete list of contributors.
 COPYRIGHT
 ---------
 
-Copyright © 2017 Red Hat, Inc.
+Copyright © 2017 Red Hat, Inc | Ansible.
 Ansible is released under the terms of the GPLv3 License.
 
 
@@ -100,5 +112,6 @@ SEE ALSO
  {% for other in cli_list|sort %}{% if other != cli %}*ansible{% if other != 'adhoc' %}-{{other}}{% endif %}*(1){% if not loop.last %}, {% endif %}{% endif %}{% endfor %}
 
 Extensive documentation is available in the documentation site:
-<http://docs.ansible.com>. IRC and mailing list info can be found
-in file CONTRIBUTING.md, available in: <https://github.com/ansible/ansible>
+<http://docs.ansible.com>.
+IRC and mailing list info can be found in file CONTRIBUTING.md,
+available in: <https://github.com/ansible/ansible>

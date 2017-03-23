@@ -58,8 +58,13 @@ except ImportError:
 
 
 class ConsoleCLI(CLI, cmd.Cmd):
+    ''' a REPL that allows for running ad-hoc tasks against a chosen inventory (based on dominis' ansible-shell).'''
 
     modules = []
+    ARGUMENTS = {
+                'host-pattern': 'A name of a group in the inventory, a shell-like glob '
+                                'selecting hosts in inventory or any combination of the two separated by commas.',
+    }
 
     def __init__(self, args):
 
