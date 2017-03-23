@@ -72,6 +72,7 @@ options:
         sent as an HTTP request header when executing the script.
         See U(https://wiki.jenkins-ci.org/display/JENKINS/CSRF+Protection) and
         U(https://wiki.jenkins-ci.org/display/JENKINS/Remote+access+API#RemoteaccessAPI-CSRFProtection)
+    version_added: 2.4
     required: false
     default: False
   args:
