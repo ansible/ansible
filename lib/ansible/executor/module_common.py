@@ -406,7 +406,11 @@ class ModuleDepFinder(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node):
-        if node.module.startswith('ansible.module_utils'):
+        # Specialcase: six is a special case because of its
+        # import logic
+        if node.names[0].name == '_six':
+            self.submodules.add(('_six',))
+        elif node.module.startswith('ansible.module_utils'):
             where_from = node.module[self.IMPORT_PREFIX_SIZE:]
             if where_from:
                 # from ansible.module_utils.MODULE1[.MODULEn] import IDENTIFIER [as asname]
@@ -484,6 +488,12 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
             module_info = imp.find_module('six', module_utils_paths)
             py_module_name = ('six',)
             idx = 0
+        elif py_module_name[0] == '_six':
+            # Special case the python six library because it messes up the
+            # import process in an incompatible way
+            module_info = imp.find_module('_six', [os.path.join(p, 'six') for p in module_utils_paths])
+            py_module_name = ('six', '_six')
+            idx = 0
         else:
             # Check whether either the last or the second to last identifier is
             # a module name
@@ -499,7 +509,7 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
 
         # Could not find the module.  Construct a helpful error message.
         if module_info is None:
-            msg = ['Could not find imported module support code for %s.  Looked for' % name]
+            msg = ['Could not find imported module support code for %s.  Looked for' % (name,)]
             if idx == 2:
                 msg.append('either %s.py or %s.py' % (py_module_name[-1], py_module_name[-2]))
             else:

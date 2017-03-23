@@ -29,8 +29,8 @@ from ansible.compat.tests.mock import patch, MagicMock, PropertyMock
 
 from ansible import constants as C
 from ansible.compat.selectors import SelectorKey, EVENT_READ
-from ansible.compat.six.moves import shlex_quote
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ssh
 from ansible.module_utils._text import to_bytes

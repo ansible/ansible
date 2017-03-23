@@ -57,8 +57,6 @@ lib/ansible/cli/pull.py
 lib/ansible/cli/vault.py
 lib/ansible/compat/__init__.py
 lib/ansible/compat/selectors/__init__.py
-lib/ansible/compat/six/__init__.py
-lib/ansible/compat/six/_six.py
 lib/ansible/compat/tests/__init__.py
 lib/ansible/constants.py
 lib/ansible/errors/__init__.py
@@ -135,7 +133,7 @@ lib/ansible/module_utils/pycompat24.py
 lib/ansible/module_utils/redhat.py
 lib/ansible/module_utils/service.py
 lib/ansible/module_utils/shell.py
-lib/ansible/module_utils/six.py
+lib/ansible/module_utils/six/_six.py
 lib/ansible/module_utils/splitter.py
 lib/ansible/module_utils/sros.py
 lib/ansible/module_utils/univention_umc.py
@@ -887,12 +885,9 @@ lib/ansible/plugins/action/copy.py
 lib/ansible/plugins/action/dellos10_config.py
 lib/ansible/plugins/action/dellos6_config.py
 lib/ansible/plugins/action/dellos9_config.py
-lib/ansible/plugins/action/eos.py
 lib/ansible/plugins/action/eos_template.py
 lib/ansible/plugins/action/fetch.py
 lib/ansible/plugins/action/group_by.py
-lib/ansible/plugins/action/include_vars.py
-lib/ansible/plugins/action/ios.py
 lib/ansible/plugins/action/ios_template.py
 lib/ansible/plugins/action/iosxr_template.py
 lib/ansible/plugins/action/junos.py
@@ -908,13 +903,11 @@ lib/ansible/plugins/action/patch.py
 lib/ansible/plugins/action/pause.py
 lib/ansible/plugins/action/script.py
 lib/ansible/plugins/action/service.py
-lib/ansible/plugins/action/set_fact.py
 lib/ansible/plugins/action/set_stats.py
 lib/ansible/plugins/action/sros_config.py
 lib/ansible/plugins/action/synchronize.py
 lib/ansible/plugins/action/template.py
 lib/ansible/plugins/action/unarchive.py
-lib/ansible/plugins/action/vyos.py
 lib/ansible/plugins/cache/__init__.py
 lib/ansible/plugins/cache/base.py
 lib/ansible/plugins/cache/jsonfile.py
@@ -1056,7 +1049,6 @@ test/units/executor/test_task_result.py
 test/units/inventory/test_inventory.py
 test/units/mock/generator.py
 test/units/mock/loader.py
-test/units/mock/yaml_helper.py
 test/units/module_utils/basic/test__log_invocation.py
 test/units/module_utils/basic/test_deprecate_warn.py
 test/units/module_utils/basic/test_exit_json.py
