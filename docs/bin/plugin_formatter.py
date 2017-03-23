@@ -213,7 +213,7 @@ def jinja2_environment(template_dir, typ):
         env.filters['html_ify'] = html_ify
         env.filters['fmt'] = rst_fmt
         env.filters['xline'] = rst_xline
-        template = env.get_template('rst.j2')
+        template = env.get_template('plugin.rst.j2')
         outputname = "%s_module.rst"
     else:
         raise Exception("unknown module format type: %s" % typ)

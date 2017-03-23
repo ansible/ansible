@@ -10,7 +10,7 @@ from ansible.playbook.block import Block
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
 
-template_file = 'playbooks_directives.rst.j2'
+template_file = 'playbooks_keywords.rst.j2'
 oblist = {}
 clist = []
 class_list = [ Play, Role, Block, Task ]
@@ -20,7 +20,7 @@ p = optparse.OptionParser(
     usage='usage: %prog [options]',
     description='Generate module documentation from metadata',
 )
-p.add_option("-T", "--template-dir", action="store", dest="template_dir", default="hacking/templates", help="directory containing Jinja2 templates")
+p.add_option("-T", "--template-dir", action="store", dest="template_dir", default="../templates", help="directory containing Jinja2 templates")
 p.add_option("-o", "--output-dir", action="store", dest="output_dir", default='/tmp/', help="Output directory for rst files")
 p.add_option("-d", "--docs-source", action="store", dest="docs", default=None, help="Source for attribute docs")
 
