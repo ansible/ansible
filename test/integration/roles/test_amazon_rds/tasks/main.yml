@@ -92,6 +92,7 @@
       EC2_ACCESS_KEY: '{{ec2_access_key}}'
       EC2_SECRET_KEY: '{{ec2_secret_key}}'
     register: result
+    when: 'xfail is defined and xfail == True'
 
   - name: assert the test rds instance was modified correctly
     tags: test_amazon_rds
@@ -99,6 +100,7 @@
       that:
         - 'result.changed == False'
         - '"failed" not in result'
+    when: 'xfail is defined and xfail == True'
 
 # idempotency test 1 - try modify RDS but actually do nothing
 
