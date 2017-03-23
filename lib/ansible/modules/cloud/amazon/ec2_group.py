@@ -626,7 +626,7 @@ def main():
                             cidr_ip=grant.cidr_ip)
                     except boto.exception.EC2ResponseError as err:
                         module.fail_json(msg="AWS rejected security group egress revocation - " + str(err),
-                         exception=traceback.format_exc())
+                                         exception=traceback.format_exc())
                 changed = True
 
     if group:
