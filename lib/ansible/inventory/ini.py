@@ -327,17 +327,16 @@ class InventoryParser(object):
         Attempt to transform the string value from an ini file into a basic python object
         (int, dict, list, unicode string, etc).
         '''
-        if "#" not in v:
-            try:
-                v = ast.literal_eval(v)
-            # Using explicit exceptions.
-            # Likely a string that literal_eval does not like. We wil then just set it.
-            except ValueError:
-                # For some reason this was thought to be malformed.
-                pass
-            except SyntaxError:
-                # Is this a hash with an equals at the end?
-                pass
+        try:
+            v = ast.literal_eval(v)
+        # Using explicit exceptions.
+        # Likely a string that literal_eval does not like. We wil then just set it.
+        except ValueError:
+            # For some reason this was thought to be malformed.
+            pass
+        except SyntaxError:
+            # Is this a hash with an equals at the end?
+            pass
         return to_text(v, nonstring='passthru', errors='surrogate_or_strict')
 
     def get_host_variables(self, host):
