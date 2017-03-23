@@ -130,19 +130,22 @@ class PathMapper(object):
         :type path: str
         :rtype: list[str]
         """
-        name, ext = os.path.splitext(os.path.split(path)[1])
+        ext = os.path.splitext(os.path.split(path)[1])[1]
 
         if path.startswith('lib/ansible/module_utils/'):
             if ext == '.py':
-                return self.get_python_module_utils_usage(name)
+                return self.get_python_module_utils_usage(path)
 
         return []
 
-    def get_python_module_utils_usage(self, name):
+    def get_python_module_utils_usage(self, path):
         """
-        :type name: str
+        :type path: str
         :rtype: list[str]
         """
+        if path == 'lib/ansible/module_utils/__init__.py':
+            return []
+
         if not self.python_module_utils_imports:
             display.info('Analyzing python module_utils imports...')
             before = time.time()
@@ -150,7 +153,12 @@ class PathMapper(object):
             after = time.time()
             display.info('Processed %d python module_utils in %d second(s).' % (len(self.python_module_utils_imports), after - before))
 
-        return sorted(self.python_module_utils_imports.get(name, set()))
+        name = os.path.splitext(path)[0].replace('/', '.')[4:]
+
+        if name.endswith('.__init__'):
+            name = name[:-9]
+
+        return sorted(self.python_module_utils_imports[name])
 
     def classify(self, path):
         """
