@@ -26,7 +26,7 @@ import yaml
 
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.plugins.cache.base import BaseFileCacheModule
+from ansible.plugins.cache import BaseFileCacheModule
 
 class CacheModule(BaseFileCacheModule):
     """
