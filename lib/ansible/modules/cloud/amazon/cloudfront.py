@@ -327,7 +327,7 @@ class CloudFrontServiceManager:
                     if custom_headers_quantity > 0:
                         for custom_header in custom_headers:
                             if custom_header["header_name"] is None or custom_header["header_value"] is None:
-                                self.module.fail_json(msg="both header name and header value must be specified")
+                                self.module.fail_json(msg="both custom_headers.header_name and custom_headers.header_value must be specified")
                 if ".s3.awsamazon.com" in origin["domain_name"]:
                     if origin["s3_origin_config"] is None or origin["s3_origin_config"]["origin_access_identity"] is None:
                         origin["s3_origin_config"]["origin_access_identity"] = ""
@@ -336,7 +336,8 @@ class CloudFrontServiceManager:
                         self.module.fail_json(msg="http_port, https_port and origin_protocol_policy must be defined")
                     if origin["origin_ssl_protocols"] is not None and origin["origin_ssl_protocols"]["items"] is None:
                         self.module.fail_json(msg="list of origin_ssl_protocols must be defined")
-            return origins
+            origins["quantity"] = quantity
+            return **snake_dict_to_camel_dict(origins)
         return None:
 
     def validate_trusted_signers(self, trusted_signers):
