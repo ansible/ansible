@@ -46,7 +46,9 @@ except ImportError:
 ########################################################
 
 class AdHocCLI(CLI):
-    ''' Ad-hoc Ansible allows you to define and run a single task 'playbook' against a set of hosts '''
+    ''' is an extra-simple tool/framework/API for doing 'remote things'.
+        this command allows you to define and run a single task 'playbook' against a set of hosts
+    '''
 
     def parse(self):
         ''' create an options parser for bin/ansible '''

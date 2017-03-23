@@ -36,7 +36,17 @@ except ImportError:
 
 
 class VaultCLI(CLI):
-    """ Vault command line class """
+    ''' can encrypt any structured data file used by Ansible.
+    This can include *group_vars/* or *host_vars/* inventory variables,
+    variables loaded by *include_vars* or *vars_files*, or variable files
+    passed on the ansible-playbook command line with *-e @file.yml* or *-e @file.json*.
+    Role variables and defaults are also included!
+
+    Because Ansible tasks, handlers, and so on are also data, these can also be encrypted with vault.
+    If you'd like to not betray what variables you are even using, you can go as far to keep an individual task file entirely encrypted.
+
+    The password used with vault currently must be the same for all files you wish to use together at the same time.
+    '''
 
     VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "encrypt_string", "rekey", "view")
 
@@ -51,16 +61,9 @@ class VaultCLI(CLI):
         self.encrypt_string_read_stdin = False
         super(VaultCLI, self).__init__(args)
 
-    def parse(self):
+    def set_action(self):
 
-        self.parser = CLI.base_parser(
-            vault_opts=True,
-            usage = "usage: %%prog [%s] [options] [vaultfile.yml]" % "|".join(self.VALID_ACTIONS),
-            desc = "encryption/decryption utility for Ansbile data files",
-            epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
-        )
-
-        self.set_action()
+        super(VaultCLI, self).set_action()
 
         # options specific to self.actions
         if self.action == "create":
@@ -87,6 +90,17 @@ class VaultCLI(CLI):
             self.parser.set_usage("usage: %prog encrypt-string [--prompt] [options] string_to_encrypt")
         elif self.action == "rekey":
             self.parser.set_usage("usage: %prog rekey [options] file_name")
+
+    def parse(self):
+
+        self.parser = CLI.base_parser(
+            vault_opts=True,
+            usage = "usage: %%prog [%s] [options] [vaultfile.yml]" % "|".join(self.VALID_ACTIONS),
+            desc = "encryption/decryption utility for Ansbile data files",
+            epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
+        )
+
+        self.set_action()
 
         super(VaultCLI, self).parse()
 
@@ -162,6 +176,7 @@ class VaultCLI(CLI):
         os.umask(old_umask)
 
     def execute_encrypt(self):
+        ''' encrypt the supplied file using the provided vault secret '''
 
         if len(self.args) == 0 and sys.stdin.isatty():
             display.display("Reading plaintext input from stdin", stderr=True)
@@ -191,6 +206,7 @@ class VaultCLI(CLI):
         return yaml_ciphertext
 
     def execute_encrypt_string(self):
+        ''' encrypt the supplied string using the provided vault secret '''
         b_plaintext = None
 
         # Holds tuples (the_text, the_source_of_the_string, the variable name if its provided).
@@ -314,6 +330,7 @@ class VaultCLI(CLI):
         return output
 
     def execute_decrypt(self):
+        ''' decrypt the supplied file using the provided vault secret '''
 
         if len(self.args) == 0 and sys.stdin.isatty():
             display.display("Reading ciphertext input from stdin", stderr=True)
@@ -325,6 +342,7 @@ class VaultCLI(CLI):
             display.display("Decryption successful", stderr=True)
 
     def execute_create(self):
+        ''' create and open a file in an editor that will be encryped with the provided vault secret when closed'''
 
         if len(self.args) > 1:
             raise AnsibleOptionsError("ansible-vault create can take only one filename argument")
@@ -332,10 +350,12 @@ class VaultCLI(CLI):
         self.editor.create_file(self.args[0])
 
     def execute_edit(self):
+        ''' open and decrypt an existing vaulted file in an editor, that will be encryped again when closed'''
         for f in self.args:
             self.editor.edit_file(f)
 
     def execute_view(self):
+        ''' open, decrypt and view an existing vaulted file using a pager using the supplied vault secret '''
 
         for f in self.args:
             # Note: vault should return byte strings because it could encrypt
@@ -346,6 +366,7 @@ class VaultCLI(CLI):
             self.pager(to_text(self.editor.plaintext(f)))
 
     def execute_rekey(self):
+        ''' re-encrypt a vaulted file with a new secret, the previous secret is required '''
         for f in self.args:
             if not (os.path.isfile(f)):
                 raise AnsibleError(f + " does not exist")
