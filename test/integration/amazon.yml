@@ -1,6 +1,7 @@
 - hosts: amazon
   gather_facts: true
   roles:
+    - { role: test_s3, tags: test_s3 }
     - { role: test_ec2_key, tags: test_ec2_key }
     - { role: test_ec2_group, tags: test_ec2_group }
     #- { role: test_ec2_vpc, tags: test_ec2_vpc }
