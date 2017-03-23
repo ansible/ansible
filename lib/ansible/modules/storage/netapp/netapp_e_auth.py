@@ -27,7 +27,8 @@ DOCUMENTATION = '''
 module: netapp_e_auth
 short_description: Sets or updates the password for a storage array.
 description:
-     - Sets or updates the password for a storage array.  When the password is updated on the storage array, it must be updated on the SANtricity Web Services proxy. Note, all storage arrays do not have a Monitor or RO role.
+    - Sets or updates the password for a storage array.  When the password is updated on the storage array, it must be updated on the SANtricity Web
+      Services proxy. Note, all storage arrays do not have a Monitor or RO role.
 version_added: "2.2"
 author: Kevin Hulquest (@hulquest)
 options:
@@ -38,7 +39,8 @@ options:
         - Should https certificates be validated?
     name:
       description:
-        - The name of the storage array. Note that if more than one storage array with this name is detected, the task will fail and you'll have to use the ID instead.
+        - The name of the storage array. Note that if more than one storage array with this name is detected, the task will fail and you'll have to use
+          the ID instead.
       required: False
     ssid:
       description:

@@ -59,7 +59,8 @@ options:
         required: True
     host_type_index:
         description:
-            - The index that maps to host type you wish to create. It is recommended to use the M(netapp_e_facts) module to gather this information. Alternatively you can use the WSP portal to retrieve the information.
+            - The index that maps to host type you wish to create. It is recommended to use the M(netapp_e_facts) module to gather this information.
+              Alternatively you can use the WSP portal to retrieve the information.
         required: True
     ports:
         description:
@@ -288,7 +289,9 @@ class Host(object):
                         needs_update = True
                     else:
                         self.module.fail_json(
-                            msg="The port you specified:\n%s\n is associated with a different host. Specify force_port as True or try a different port spec" % arg_port)
+                            msg="The port you specified:\n%s\n is associated with a different host. Specify force_port as True or try a different "
+                                "port spec" % arg_port
+                        )
 
         return needs_update
 

@@ -69,7 +69,8 @@ options:
         required: false
     role:
         description:
-          - The name or full Amazon Resource Name (ARN) of the IAM role that allows your Amazon ECS container agent to make calls to your load balancer on your behalf. This parameter is only required if you are using a load balancer with your service.
+          - The name or full Amazon Resource Name (ARN) of the IAM role that allows your Amazon ECS container agent to make calls to your load balancer
+            on your behalf. This parameter is only required if you are using a load balancer with your service.
         required: false
     delay:
         description:
@@ -164,7 +165,9 @@ service:
             returned: always
             type: int
         serviceArn:
-            description: The Amazon Resource Name (ARN) that identifies the service. The ARN contains the arn:aws:ecs namespace, followed by the region of the service, the AWS account ID of the service owner, the service namespace, and then the service name. For example, arn:aws:ecs:region :012345678910 :service/my-service .
+            description: The Amazon Resource Name (ARN) that identifies the service. The ARN contains the arn:aws:ecs namespace, followed by the region
+                         of the service, the AWS account ID of the service owner, the service namespace, and then the service name. For example,
+                         arn:aws:ecs:region :012345678910 :service/my-service .
             returned: always
             type: string
         serviceName:

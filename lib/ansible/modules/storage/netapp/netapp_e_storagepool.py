@@ -487,7 +487,8 @@ class NetAppESeriesStoragePool(object):
         # # TODO: this arg appears to be ignored, uncomment if it isn't
         # #if self.criteria_disk_min_size_gb:
         # #    drives_req['driveCapacityMin'] = self.criteria_disk_min_size_gb * 1024
-        # (rc,drives_resp) = request(self.api_url + "/storage-systems/%s/drives" % (self.ssid), data=json.dumps(drives_req), headers=self.post_headers, method='POST', url_username=self.api_usr, url_password=self.api_pwd, validate_certs=self.validate_certs)
+        # (rc,drives_resp) = request(self.api_url + "/storage-systems/%s/drives" % (self.ssid), data=json.dumps(drives_req), headers=self.post_headers,
+        #                            method='POST', url_username=self.api_usr, url_password=self.api_pwd, validate_certs=self.validate_certs)
         #
         # if rc == 204:
         #     self.module.fail_json(msg='Cannot find disks to match requested criteria for storage pool')

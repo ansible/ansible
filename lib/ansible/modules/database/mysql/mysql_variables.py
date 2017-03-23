@@ -165,7 +165,8 @@ def main():
     except Exception:
         e = get_exception()
         if os.path.exists(config_file):
-            module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. Exception message: %s" % (config_file, e))
+            module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
+                                 "Exception message: %s" % (config_file, e))
         else:
             module.fail_json(msg="unable to find %s. Exception message: %s" % (config_file, e))
 

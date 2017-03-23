@@ -31,7 +31,8 @@ version_added: 2.3
 short_description: Creates a compressed archive of one or more files or trees.
 extends_documentation_fragment: files
 description:
-     - Packs an archive. It is the opposite of M(unarchive). By default, it assumes the compression source exists on the target. It will not copy the source file from the local system to the target before archiving. Source files can be deleted after archival by specifying I(remove=True).
+    - Packs an archive. It is the opposite of M(unarchive). By default, it assumes the compression source exists on the target. It will not copy the
+      source file from the local system to the target before archiving. Source files can be deleted after archival by specifying I(remove=True).
 options:
   path:
     description:
@@ -44,7 +45,8 @@ options:
     default: 'gz'
   dest:
     description:
-      - The file name of the destination archive. This is required when C(path) refers to multiple files by either specifying a glob, a directory or multiple paths in a list.
+      - The file name of the destination archive. This is required when C(path) refers to multiple files by either specifying a glob, a directory or
+        multiple paths in a list.
     required: false
     default: null
   remove:

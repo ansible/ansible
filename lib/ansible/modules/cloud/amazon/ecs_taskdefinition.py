@@ -59,7 +59,8 @@ options:
         version_added: 2.3
     task_role_arn:
         description:
-            - The Amazon Resource Name (ARN) of the IAM role that containers in this task can assume. All containers in this task are granted the permissions that are specified in this role.
+            - The Amazon Resource Name (ARN) of the IAM role that containers in this task can assume. All containers in this task are granted
+              the permissions that are specified in this role.
         required: false
         version_added: 2.3
     volumes:
@@ -88,7 +89,10 @@ EXAMPLES = '''
         hostPort: 80
     - name: busybox
       command:
-        - /bin/sh -c "while true; do echo '<html><head><title>Amazon ECS Sample App</title></head><body><div><h1>Amazon ECS Sample App</h1><h2>Congratulations!</h2><p>Your application is now running on a container in Amazon ECS.</p>' > top; /bin/date > date ; echo '</div></body></html>' > bottom; cat top date bottom > /usr/local/apache2/htdocs/index.html ; sleep 1; done"
+        - >
+          /bin/sh -c "while true; do echo '<html><head><title>Amazon ECS Sample App</title></head><body><div><h1>Amazon ECS Sample App</h1><h2>Congratulations!
+          </h2><p>Your application is now running on a container in Amazon ECS.</p>' > top; /bin/date > date ; echo '</div></body></html>' > bottom;
+          cat top date bottom > /usr/local/apache2/htdocs/index.html ; sleep 1; done"
       cpu: 10
       entryPoint:
       - sh
@@ -199,7 +203,12 @@ class EcsTaskManager:
             pass
 
         # Return the full descriptions of the task definitions, sorted ascending by revision
-        return list(sorted([self.ecs.describe_task_definition(taskDefinition=arn)['taskDefinition'] for arn in data['taskDefinitionArns']], key=lambda td: td['revision']))
+        return list(
+            sorted(
+                [self.ecs.describe_task_definition(taskDefinition=arn)['taskDefinition'] for arn in data['taskDefinitionArns']],
+                key=lambda td: td['revision']
+            )
+        )
 
     def deregister_task(self, taskArn):
         response = self.ecs.deregister_task_definition(taskDefinition=taskArn)
@@ -256,7 +265,8 @@ def main():
                 if not existing_definitions_in_family and revision != 1:
                     module.fail_json(msg="You have specified a revision of %d but a created revision would be 1" % revision)
                 elif existing_definitions_in_family and existing_definitions_in_family[-1]['revision'] + 1 != revision:
-                    module.fail_json(msg="You have specified a revision of %d but a created revision would be %d" % (revision, existing_definitions_in_family[-1]['revision'] + 1))
+                    module.fail_json(msg="You have specified a revision of %d but a created revision would be %d" %
+                                         (revision, existing_definitions_in_family[-1]['revision'] + 1))
         else:
             existing = None
 

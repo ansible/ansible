@@ -73,7 +73,34 @@ options:
         description:
           - The threshold's unit of measurement
         required: false
-        choices: ['Seconds','Microseconds','Milliseconds','Bytes','Kilobytes','Megabytes','Gigabytes','Terabytes','Bits','Kilobits','Megabits','Gigabits','Terabits','Percent','Count','Bytes/Second','Kilobytes/Second','Megabytes/Second','Gigabytes/Second','Terabytes/Second','Bits/Second','Kilobits/Second','Megabits/Second','Gigabits/Second','Terabits/Second','Count/Second','None']
+        choices:
+            - 'Seconds'
+            - 'Microseconds'
+            - 'Milliseconds'
+            - 'Bytes'
+            - 'Kilobytes'
+            - 'Megabytes'
+            - 'Gigabytes'
+            - 'Terabytes'
+            - 'Bits'
+            - 'Kilobits'
+            - 'Megabits'
+            - 'Gigabits'
+            - 'Terabits'
+            - 'Percent'
+            - 'Count'
+            - 'Bytes/Second'
+            - 'Kilobytes/Second'
+            - 'Megabytes/Second'
+            - 'Gigabytes/Second'
+            - 'Terabytes/Second'
+            - 'Bits/Second'
+            - 'Kilobits/Second'
+            - 'Megabits/Second'
+            - 'Gigabits/Second'
+            - 'Terabits/Second'
+            - 'Count/Second'
+            - 'None'
     description:
         description:
           - A longer description of the alarm
@@ -254,7 +281,10 @@ def main():
             comparison=dict(type='str', choices=['<=', '<', '>', '>=']),
             threshold=dict(type='float'),
             period=dict(type='int'),
-            unit=dict(type='str', choices=['Seconds', 'Microseconds', 'Milliseconds', 'Bytes', 'Kilobytes', 'Megabytes', 'Gigabytes', 'Terabytes', 'Bits', 'Kilobits', 'Megabits', 'Gigabits', 'Terabits', 'Percent', 'Count', 'Bytes/Second', 'Kilobytes/Second', 'Megabytes/Second', 'Gigabytes/Second', 'Terabytes/Second', 'Bits/Second', 'Kilobits/Second', 'Megabits/Second', 'Gigabits/Second', 'Terabits/Second', 'Count/Second', 'None']),
+            unit=dict(type='str', choices=['Seconds', 'Microseconds', 'Milliseconds', 'Bytes', 'Kilobytes', 'Megabytes', 'Gigabytes', 'Terabytes',
+                                           'Bits', 'Kilobits', 'Megabits', 'Gigabits', 'Terabits', 'Percent', 'Count', 'Bytes/Second', 'Kilobytes/Second',
+                                           'Megabytes/Second', 'Gigabytes/Second', 'Terabytes/Second', 'Bits/Second', 'Kilobits/Second', 'Megabits/Second',
+                                           'Gigabits/Second', 'Terabits/Second', 'Count/Second', 'None']),
             evaluation_periods=dict(type='int'),
             description=dict(type='str'),
             dimensions=dict(type='dict', default={}),

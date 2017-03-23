@@ -25,7 +25,9 @@ module: rds
 version_added: "1.3"
 short_description: create, delete, or modify an Amazon rds instance
 description:
-     - Creates, deletes, or modifies rds instances.  When creating an instance it can be either a new instance or a read-only replica of an existing instance. This module has a dependency on python-boto >= 2.5. The 'promote' command requires boto >= 2.18.0. Certain features such as tags rely on boto.rds2 (boto >= 2.26.0)
+     - Creates, deletes, or modifies rds instances.  When creating an instance it can be either a new instance or a read-only replica of an existing
+       instance. This module has a dependency on python-boto >= 2.5. The 'promote' command requires boto >= 2.18.0. Certain features such as tags rely
+       on boto.rds2 (boto >= 2.26.0)
 options:
   command:
     description:
@@ -48,7 +50,7 @@ options:
       - mariadb was added in version 2.2
     required: false
     default: null
-    choices: [ 'mariadb', 'MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres', 'aurora']
+    choices: ['mariadb', 'MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres', 'aurora']
   size:
     description:
       - Size in gigabytes of the initial storage for the DB instance. Used only when command=create or command=modify.
@@ -56,7 +58,8 @@ options:
     default: null
   instance_type:
     description:
-      - The instance type of the database.  Must be specified when command=create. Optional when command=replicate, command=modify or command=restore. If not specified then the replica inherits the same instance type as the source instance.
+      - The instance type of the database.  Must be specified when command=create. Optional when command=replicate, command=modify or command=restore.
+        If not specified then the replica inherits the same instance type as the source instance.
     required: false
     default: null
   username:
@@ -81,12 +84,13 @@ options:
     default: null
   engine_version:
     description:
-      - Version number of the database engine to use. Used only when command=create. If not specified then the current Amazon RDS default engine version is used.
+      - Version number of the database engine to use. Used only when command=create. If not specified then the current Amazon RDS default engine version is used
     required: false
     default: null
   parameter_group:
     description:
-      - Name of the DB parameter group to associate with this instance.  If omitted then the RDS default DBParameterGroup will be used. Used only when command=create or command=modify.
+      - Name of the DB parameter group to associate with this instance.  If omitted then the RDS default DBParameterGroup will be used. Used only
+        when command=create or command=modify.
     required: false
     default: null
   license_model:
@@ -97,7 +101,8 @@ options:
     choices:  [ 'license-included', 'bring-your-own-license', 'general-public-license', 'postgresql-license' ]
   multi_zone:
     description:
-      - Specifies if this is a Multi-availability-zone deployment. Can not be used in conjunction with zone parameter. Used only when command=create or command=modify.
+      - Specifies if this is a Multi-availability-zone deployment. Can not be used in conjunction with zone parameter. Used only when command=create or
+        command=modify.
     choices: [ "yes", "no" ]
     required: false
     default: null
@@ -136,7 +141,9 @@ options:
     default: null
   maint_window:
     description:
-      - "Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi.  (Example: Mon:22:00-Mon:23:15) If not specified then a random maintenance window is assigned. Used only when command=create or command=modify."
+      - >
+        Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi.  (Example: Mon:22:00-Mon:23:15) If not specified then a random maintenance window is
+        assigned. Used only when command=create or command=modify.
     required: false
     default: null
   backup_window:
@@ -146,7 +153,9 @@ options:
     default: null
   backup_retention:
     description:
-      - "Number of days backups are retained.  Set to 0 to disable backups.  Default is 1 day.  Valid range: 0-35. Used only when command=create or command=modify."
+      - >
+        Number of days backups are retained.  Set to 0 to disable backups.  Default is 1 day.  Valid range: 0-35. Used only when command=create or
+        command=modify.
     required: false
     default: null
   zone:
@@ -162,7 +171,8 @@ options:
     default: null
   snapshot:
     description:
-      - Name of snapshot to take. When command=delete, if no snapshot name is provided then no snapshot is taken. If used with command=delete with no instance_name, the snapshot is deleted. Used with command=facts, command=delete or command=snapshot.
+      - Name of snapshot to take. When command=delete, if no snapshot name is provided then no snapshot is taken. If used with command=delete with
+        no instance_name, the snapshot is deleted. Used with command=facts, command=delete or command=snapshot.
     required: false
     default: null
   aws_secret_key:
@@ -178,7 +188,8 @@ options:
     aliases: [ 'ec2_access_key', 'access_key' ]
   wait:
     description:
-      - When command=create, replicate, modify or restore then wait for the database to enter the 'available' state.  When command=delete wait for the database to be terminated.
+      - When command=create, replicate, modify or restore then wait for the database to enter the 'available' state.  When command=delete wait for
+        the database to be terminated.
     required: false
     default: "no"
     choices: [ "yes", "no" ]
@@ -188,7 +199,8 @@ options:
     default: 300
   apply_immediately:
     description:
-      - Used only when command=modify.  If enabled, the modifications will be applied as soon as possible rather than waiting for the next preferred maintenance window.
+      - Used only when command=modify.  If enabled, the modifications will be applied as soon as possible rather than waiting for the next
+        preferred maintenance window.
     default: no
     choices: [ "yes", "no" ]
   force_failover:
@@ -445,7 +457,9 @@ class RDS2Connection:
 
     def get_db_instance(self, instancename):
         try:
-            dbinstances = self.connection.describe_db_instances(db_instance_identifier=instancename)['DescribeDBInstancesResponse']['DescribeDBInstancesResult']['DBInstances']
+            dbinstances = self.connection.describe_db_instances(
+                db_instance_identifier=instancename
+            )['DescribeDBInstancesResponse']['DescribeDBInstancesResult']['DBInstances']
             result =  RDS2DBInstance(dbinstances[0])
             return result
         except boto.rds2.exceptions.DBInstanceNotFound as e:
@@ -455,7 +469,10 @@ class RDS2Connection:
 
     def get_db_snapshot(self, snapshotid):
         try:
-            snapshots = self.connection.describe_db_snapshots(db_snapshot_identifier=snapshotid, snapshot_type='manual')['DescribeDBSnapshotsResponse']['DescribeDBSnapshotsResult']['DBSnapshots']
+            snapshots = self.connection.describe_db_snapshots(
+                db_snapshot_identifier=snapshotid,
+                snapshot_type='manual'
+            )['DescribeDBSnapshotsResponse']['DescribeDBSnapshotsResult']['DBSnapshots']
             result = RDS2Snapshot(snapshots[0])
             return result
         except boto.rds2.exceptions.DBSnapshotNotFound as e:
@@ -472,7 +489,11 @@ class RDS2Connection:
 
     def create_db_instance_read_replica(self, instance_name, source_instance, **params):
         try:
-            result = self.connection.create_db_instance_read_replica(instance_name, source_instance, **params)['CreateDBInstanceReadReplicaResponse']['CreateDBInstanceReadReplicaResult']['DBInstance']
+            result = self.connection.create_db_instance_read_replica(
+                instance_name,
+                source_instance,
+                **params
+            )['CreateDBInstanceReadReplicaResponse']['CreateDBInstanceReadReplicaResult']['DBInstance']
             return RDS2DBInstance(result)
         except boto.exception.BotoServerError as e:
             raise RDSException(e)
@@ -507,7 +528,11 @@ class RDS2Connection:
 
     def restore_db_instance_from_db_snapshot(self, instance_name, snapshot, instance_type, **params):
         try:
-            result = self.connection.restore_db_instance_from_db_snapshot(instance_name, snapshot, **params)['RestoreDBInstanceFromDBSnapshotResponse']['RestoreDBInstanceFromDBSnapshotResult']['DBInstance']
+            result = self.connection.restore_db_instance_from_db_snapshot(
+                instance_name,
+                snapshot,
+                **params
+            )['RestoreDBInstanceFromDBSnapshotResponse']['RestoreDBInstanceFromDBSnapshotResult']['DBInstance']
             return RDS2DBInstance(result)
         except boto.exception.BotoServerError as e:
             raise RDSException(e)
@@ -1046,7 +1071,8 @@ def main():
         command           = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote', 'snapshot', 'reboot', 'restore'], required=True),
         instance_name     = dict(required=False),
         source_instance   = dict(required=False),
-        db_engine         = dict(choices=['mariadb', 'MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres', 'aurora'], required=False),
+        db_engine         = dict(choices=['mariadb', 'MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex',
+                                          'sqlserver-web', 'postgres', 'aurora'], required=False),
         size              = dict(required=False),
         instance_type     = dict(aliases=['type'], required=False),
         username          = dict(required=False),

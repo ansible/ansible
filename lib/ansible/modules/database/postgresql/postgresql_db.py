@@ -56,7 +56,8 @@ options:
     default: null
   lc_ctype:
     description:
-      - Character classification (LC_CTYPE) to use in the database (e.g. lower, upper, ...) Must match LC_CTYPE of template database unless C(template0) is used as template.
+      - Character classification (LC_CTYPE) to use in the database (e.g. lower, upper, ...) Must match LC_CTYPE of template database unless C(template0)
+        is used as template.
     required: false
     default: null
   state:
@@ -276,7 +277,8 @@ def main():
     except TypeError:
         e = get_exception()
         if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert. Exception: {0}'.format(e), exception=traceback.format_exc())
+            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert. Exception: {0}'.format(e),
+                             exception=traceback.format_exc())
         module.fail_json(msg="unable to connect to database: %s" % e, exception=traceback.format_exc())
 
     except Exception:

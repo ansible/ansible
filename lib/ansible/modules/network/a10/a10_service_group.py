@@ -65,7 +65,18 @@ options:
     required: false
     default: round-robin
     aliases: ['method']
-    choices: ['round-robin', 'weighted-rr', 'least-connection', 'weighted-least-connection', 'service-least-connection', 'service-weighted-least-connection', 'fastest-response', 'least-request', 'round-robin-strict', 'src-ip-only-hash', 'src-ip-hash']
+    choices:
+        - 'round-robin'
+        - 'weighted-rr'
+        - 'least-connection'
+        - 'weighted-least-connection'
+        - 'service-least-connection'
+        - 'service-weighted-least-connection'
+        - 'fastest-response'
+        - 'least-request'
+        - 'round-robin-strict'
+        - 'src-ip-only-hash'
+        - 'src-ip-hash'
   servers:
     description:
       - A list of servers to add to the service group. Each list item should be a

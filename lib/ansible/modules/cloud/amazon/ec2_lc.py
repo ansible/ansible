@@ -58,11 +58,14 @@ options:
     required: false
   security_groups:
     description:
-      - A list of security groups to apply to the instances. For VPC instances, specify security group IDs. For EC2-Classic, specify either security group names or IDs.
+      - A list of security groups to apply to the instances. For VPC instances, specify security group IDs. For EC2-Classic, specify either security
+        group names or IDs.
     required: false
   volumes:
     description:
-      - a list of volume dicts, each containing device name and optionally ephemeral id or snapshot id. Size and type (and number of iops for io device type) must be specified for a new volume or a root volume, and may be passed for a snapshot volume. For any volume, a volume size less than 1 will be interpreted as a request not to create the volume.
+      - a list of volume dicts, each containing device name and optionally ephemeral id or snapshot id.
+        Size and type (and number of iops for io device type) must be specified for a new volume or a root volume, and may be passed for a snapshot volume.
+        For any volume, a volume size less than 1 will be interpreted as a request not to create the volume.
     required: false
   user_data:
     description:
@@ -87,7 +90,8 @@ options:
     default: false
   assign_public_ip:
     description:
-      - Used for Auto Scaling groups that launch instances into an Amazon Virtual Private Cloud. Specifies whether to assign a public IP address to each instance launched in a Amazon VPC.
+      - Used for Auto Scaling groups that launch instances into an Amazon Virtual Private Cloud. Specifies whether to assign a public IP
+        address to each instance launched in a Amazon VPC.
     required: false
     version_added: "1.8"
   ramdisk_id:

@@ -112,11 +112,13 @@ stack_description:
     returned: always
     type: dict
 stack_outputs:
-    description: Dictionary of stack outputs keyed by the value of each output 'OutputKey' parameter and corresponding value of each output 'OutputValue' parameter
+    description: Dictionary of stack outputs keyed by the value of each output 'OutputKey' parameter and corresponding value of each
+                 output 'OutputValue' parameter
     returned: always
     type: dict
 stack_parameters:
-    description: Dictionary of stack parameters keyed by the value of each parameter 'ParameterKey' parameter and corresponding value of each parameter 'ParameterValue' parameter
+    description: Dictionary of stack parameters keyed by the value of each parameter 'ParameterKey' parameter and corresponding value of
+                 each parameter 'ParameterValue' parameter
     returned: always
     type: dict
 stack_events:
@@ -136,7 +138,8 @@ stack_resource_list:
     returned: only if all_facts or stack_resourses is true
     type: list of resources
 stack_resources:
-    description: Dictionary of stack resources keyed by the value of each resource 'LogicalResourceId' parameter and corresponding value of each resource 'PhysicalResourceId' parameter
+    description: Dictionary of stack resources keyed by the value of each resource 'LogicalResourceId' parameter and corresponding value of each
+                 resource 'PhysicalResourceId' parameter
     returned: only if all_facts or stack_resourses is true
     type: dict
 '''

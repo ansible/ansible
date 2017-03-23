@@ -482,7 +482,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             get_checksum=checksum,
             checksum_algo='sha1',
         )
-        mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars, tmp=tmp, delete_remote_tmp=(tmp is None), wrap_async=False)
+        mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars, tmp=tmp, delete_remote_tmp=(tmp is None),
+                                      wrap_async=False)
 
         if mystat.get('failed'):
             msg = mystat.get('module_stderr')
@@ -674,7 +675,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         if wrap_async:
             # configure, upload, and chmod the async_wrapper module
-            (async_module_style, shebang, async_module_data, async_module_path) = self._configure_module(module_name='async_wrapper', module_args=dict(), task_vars=task_vars)
+            (async_module_style, shebang, async_module_data, async_module_path) = self._configure_module(module_name='async_wrapper', module_args=dict(),
+                                                                                                         task_vars=task_vars)
             async_module_remote_filename = self._connection._shell.get_remote_filename(async_module_path)
             remote_async_module_path = self._connection._shell.join_path(tmp, async_module_remote_filename)
             self._transfer_data(remote_async_module_path, async_module_data)

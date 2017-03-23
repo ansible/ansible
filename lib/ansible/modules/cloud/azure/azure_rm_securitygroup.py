@@ -334,7 +334,7 @@ state:
         },
         "type": "Microsoft.Network/networkSecurityGroups"
     }
-'''
+'''  # NOQA
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.azure_rm_common import *

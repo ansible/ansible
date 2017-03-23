@@ -62,7 +62,8 @@ class ActionModule(ActionBase):
 
                 if not isidentifier(k):
                     result['failed'] = True
-                    result['msg'] = "The variable name '%s' is not valid. Variables must start with a letter or underscore character, and contain only letters, numbers and underscores." % k
+                    result['msg'] = ("The variable name '%s' is not valid. Variables must start with a letter or underscore character, and contain only "
+                                     "letters, numbers and underscores." % k)
                     return result
 
                 stats['data'][k] = self._templar.template(v)

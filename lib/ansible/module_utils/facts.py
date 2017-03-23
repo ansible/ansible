@@ -677,8 +677,8 @@ class Distribution(object):
         SLC = 'RedHat', Ascendos = 'RedHat', CloudLinux = 'RedHat', PSBM = 'RedHat',
         OracleLinux = 'RedHat', OVS = 'RedHat', OEL = 'RedHat', Amazon = 'RedHat',
         XenServer = 'RedHat', Ubuntu = 'Debian', Debian = 'Debian', Raspbian = 'Debian', Slackware = 'Slackware', SLES = 'Suse',
-        SLED = 'Suse', openSUSE = 'Suse', openSUSE_Tumbleweed = 'Suse', SuSE = 'Suse', SLES_SAP = 'Suse', SUSE_LINUX = 'Suse', Gentoo = 'Gentoo', Funtoo = 'Gentoo',
-        Archlinux = 'Archlinux', Manjaro = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake', Altlinux = 'Altlinux', SMGL = 'SMGL',
+        SLED = 'Suse', openSUSE = 'Suse', openSUSE_Tumbleweed = 'Suse', SuSE = 'Suse', SLES_SAP = 'Suse', SUSE_LINUX = 'Suse', Gentoo = 'Gentoo',
+        Funtoo = 'Gentoo', Archlinux = 'Archlinux', Manjaro = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake', Altlinux = 'Altlinux', SMGL = 'SMGL',
         Solaris = 'Solaris', Nexenta = 'Solaris', OmniOS = 'Solaris', OpenIndiana = 'Solaris',
         SmartOS = 'Solaris', AIX = 'AIX', Alpine = 'Alpine', MacOSX = 'Darwin',
         FreeBSD = 'FreeBSD', HPUX = 'HP-UX', openSUSE_Leap = 'Suse', Neon = 'Debian'
@@ -1658,7 +1658,15 @@ class SunOSHardware(Hardware):
             for line in fstab.splitlines():
                 fields = line.split('\t')
                 size_total, size_available = self._get_mount_size_facts(fields[1])
-                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'time': fields[4], 'size_total': size_total, 'size_available': size_available})
+                self.facts['mounts'].append({
+                    'mount': fields[1],
+                    'device': fields[0],
+                    'fstype' : fields[2],
+                    'options': fields[3],
+                    'time': fields[4],
+                    'size_total': size_total,
+                    'size_available': size_available
+                })
 
     def get_dmi_facts(self):
         uname_path = self.module.get_bin_path("prtdiag")
@@ -1785,7 +1793,14 @@ class OpenBSDHardware(Hardware):
                 if fields[1] == 'none' or fields[3] == 'xx':
                     continue
                 size_total, size_available = self._get_mount_size_facts(fields[1])
-                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'size_total': size_total, 'size_available': size_available})
+                self.facts['mounts'].append({
+                    'mount': fields[1],
+                    'device': fields[0],
+                    'fstype' : fields[2],
+                    'options': fields[3],
+                    'size_total': size_total,
+                    'size_available': size_available
+                })
 
 
     def get_memory_facts(self):
@@ -1926,7 +1941,14 @@ class FreeBSDHardware(Hardware):
                     continue
                 fields = re.sub(r'\s+',' ',line).split()
                 size_total, size_available = self._get_mount_size_facts(fields[1])
-                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'size_total': size_total, 'size_available': size_available})
+                self.facts['mounts'].append({
+                    'mount': fields[1],
+                    'device': fields[0],
+                    'fstype': fields[2],
+                    'options': fields[3],
+                    'size_total': size_total,
+                    'size_available': size_available
+                })
 
     def get_device_facts(self):
         sysdir = '/dev'
@@ -2057,7 +2079,14 @@ class NetBSDHardware(Hardware):
                     continue
                 fields = re.sub(r'\s+',' ',line).split()
                 size_total, size_available = self._get_mount_size_facts(fields[1])
-                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'size_total': size_total, 'size_available': size_available})
+                self.facts['mounts'].append({
+                    'mount': fields[1],
+                    'device': fields[0],
+                    'fstype' : fields[2],
+                    'options': fields[3],
+                    'size_total': size_total,
+                    'size_available': size_available
+                })
 
     def get_dmi_facts(self):
         # We don't use dmidecode(1) here because:
@@ -2316,7 +2345,8 @@ class HPUX(Hardware):
                 #For systems where memory details aren't sent to syslog or the log has rotated, use parsed
                 #adb output. Unfortunately /dev/kmem doesn't have world-read, so this only works as root.
                 if os.access("/dev/kmem", os.R_OK):
-                    rc, out, err = self.module.run_command("echo 'phys_mem_pages/D' | adb -k /stand/vmunix /dev/kmem | tail -1 | awk '{print $2}'", use_unsafe_shell=True)
+                    rc, out, err = self.module.run_command("echo 'phys_mem_pages/D' | adb -k /stand/vmunix /dev/kmem | tail -1 | awk '{print $2}'",
+                                                           use_unsafe_shell=True)
                     if not err:
                         data = out
                         self.facts['memtotal_mb'] = int(data) / 256

@@ -55,7 +55,8 @@ options:
     default: no
     choices: [ 'yes', 'no' ]
     description:
-      - if the target is a directory, setting this to yes will make it the default acl for entities created inside the directory. It causes an error if path is a file.
+      - if the target is a directory, setting this to yes will make it the default acl for entities created inside the directory. It causes an error if
+        path is a file.
 
   entity:
     version_added: "1.5"
@@ -82,7 +83,9 @@ options:
     required: false
     default: null
     description:
-      - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  The qualifier may be empty for some types, but the type and perms are always required. '-' can be used as placeholder when you do not care about permissions. This is now superseded by entity, type and permissions fields.
+      - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  The qualifier may be empty for
+        some types, but the type and perms are always required. '-' can be used as placeholder when you do not care about permissions. This is now
+        superseded by entity, type and permissions fields.
 
   recursive:
     version_added: "2.0"
