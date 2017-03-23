@@ -24,7 +24,7 @@ try:
 except ImportError:
     import pickle
 
-from ansible.plugins.cache.base import BaseFileCacheModule
+from ansible.plugins.cache import BaseFileCacheModule
 
 class CacheModule(BaseFileCacheModule):
     """

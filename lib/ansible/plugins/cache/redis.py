@@ -23,7 +23,7 @@ import json
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.plugins.cache.base import BaseCacheModule
+from ansible.plugins.cache import BaseCacheModule
 
 try:
     from redis import StrictRedis
