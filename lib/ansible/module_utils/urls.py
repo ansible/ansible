@@ -1009,8 +1009,16 @@ def fetch_url(module, url, data=None, headers=None, method=None,
             body = e.read()
         except AttributeError:
             body = ''
-        info.update(dict(msg=str(e), body=body, **e.info()))
-        info['status'] = e.code
+
+        # Try to add exception info to the output but don't fail if we can't
+        exc_info = e.info()
+        try:
+            info.update(dict(**e.info()))
+        except:
+            pass
+
+        info.update({'msg': str(e), 'body': body, 'status': e.code})
+
     except urllib_error.URLError:
         e = get_exception()
         code = int(getattr(e, 'code', -1))
