@@ -130,7 +130,7 @@ class PathMapper(object):
         :type path: str
         :rtype: list[str]
         """
-        name, ext = os.path.splitext(os.path.split(path)[1])
+        ext = os.path.splitext(os.path.split(path)[1])[1]
 
         if path.startswith('lib/ansible/module_utils/'):
             if ext == '.py':
