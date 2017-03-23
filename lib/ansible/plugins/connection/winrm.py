@@ -37,12 +37,11 @@ try:
 except ImportError:
     pass
 
-from ansible.compat.six import string_types
-from ansible.compat.six.moves.urllib.parse import urlunsplit
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
+from ansible.module_utils.six import string_types
+from ansible.module_utils.six.moves.urllib.parse import urlunsplit
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import exec_wrapper, become_wrapper, leaf_exec
 from ansible.utils.hashing import secure_hash
@@ -52,14 +51,12 @@ try:
     import winrm
     from winrm import Response
     from winrm.protocol import Protocol
-except ImportError:
-    e = get_exception()
+except ImportError as e:
     raise AnsibleError("winrm or requests is not installed: %s" % str(e))
 
 try:
     import xmltodict
-except ImportError:
-    e = get_exception()
+except ImportError as e:
     raise AnsibleError("xmltodict is not installed: %s" % str(e))
 
 try:

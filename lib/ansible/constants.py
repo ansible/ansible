@@ -23,9 +23,9 @@ import os
 import tempfile
 from string import ascii_letters, digits
 
-from ansible.compat.six import string_types
-from ansible.compat.six.moves import configparser
 from ansible.errors import AnsibleOptionsError
+from ansible.module_utils.six import string_types
+from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_text
 from ansible.parsing.quoting import unquote
 from ansible.utils.path import makedirs_safe

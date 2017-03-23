@@ -19,21 +19,21 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import sys
 import base64
+import crypt
+import glob
+import hashlib
 import itertools
 import json
-import os.path
 import ntpath
-import glob
+import os.path
 import re
-import crypt
-import hashlib
 import string
+import sys
+import uuid
+from datetime import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle
-from datetime import datetime
-import uuid
 
 import yaml
 from jinja2.filters import environmentfilter, do_groupby as _do_groupby
@@ -45,9 +45,8 @@ except:
     HAS_PASSLIB = False
 
 from ansible import errors
-from ansible.compat.six import iteritems, string_types, integer_types
-from ansible.compat.six.moves import reduce
-from ansible.compat.six.moves import shlex_quote
+from ansible.module_utils.six import iteritems, string_types, integer_types
+from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.hashing import md5s, checksum_s
@@ -57,6 +56,7 @@ from ansible.vars.hostvars import HostVars
 
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
+
 
 class AnsibleJSONEncoder(json.JSONEncoder):
     '''

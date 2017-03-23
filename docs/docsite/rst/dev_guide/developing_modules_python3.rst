@@ -325,20 +325,16 @@ Bundled six
 
 The third-party `python-six <https://pythonhosted.org/six/>`_ library exists
 to help projects create code that runs on both Python-2 and Python-3.  Ansible
-includes version 1.4.1 in module_utils so that other modules can use it
+includes a version of the library in module_utils so that other modules can use it
 without requiring that it is installed on the remote system.  To make use of
 it, import it like this::
 
     from ansible.module_utils import six
 
-.. note:: Why version 1.4.1?
+.. note:: Ansible can also use a system copy of six
 
-    six-1.4.1 is the last version of python-six to support Python-2.4.  Until
-    Ansible-2.4, most Ansible modules were required to run on Python-2.4.  So
-    the bundled version of six could not be newer than 1.4.1.
-
-    Ansible-2.4 now targets Python-2.6 or greater for modules.  We'll be
-    updating the bundled six soon.
+    Ansible will use a system copy of six if the system copy is a later
+    version than the one Ansible bundles.
 
 -------------------------------------
 Porting module_utils code to Python 3

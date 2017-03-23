@@ -21,10 +21,11 @@ __metaclass__ = type
 
 import itertools
 
-from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
+
 
 class Taggable:
 

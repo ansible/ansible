@@ -23,10 +23,9 @@ import pwd
 import time
 
 from ansible import constants as C
-from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
 
@@ -45,8 +44,8 @@ class ActionModule(ActionBase):
                 dest = os.path.join(dest, base)
                 dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False, tmp=tmp)
 
-        except AnsibleError:
-            return dict(failed=True, msg=to_native(get_exception()))
+        except AnsibleError as e:
+            return dict(failed=True, msg=to_native(e))
 
         return dest_stat['checksum']
 
@@ -72,9 +71,9 @@ class ActionModule(ActionBase):
         else:
             try:
                 source = self._find_needle('templates', source)
-            except AnsibleError:
+            except AnsibleError as e:
                 result['failed'] = True
-                result['msg'] = to_native(get_exception())
+                result['msg'] = to_native(e)
 
         if 'failed' in result:
             return result

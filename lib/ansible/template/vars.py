@@ -19,8 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import iteritems
 from jinja2.utils import missing
+
+from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
 

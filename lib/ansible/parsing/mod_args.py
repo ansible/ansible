@@ -19,13 +19,14 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import iteritems, string_types
 
 from ansible.errors import AnsibleParserError,AnsibleError
+from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_text
 from ansible.plugins import module_loader
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.template import Templar
+
 
 # For filtering out modules correctly below
 RAW_PARAM_MODULES = ([
@@ -42,6 +43,7 @@ RAW_PARAM_MODULES = ([
     'raw',
     'meta',
 ])
+
 
 class ModuleArgsParser:
 
