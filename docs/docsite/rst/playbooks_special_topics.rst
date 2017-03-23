@@ -21,4 +21,4 @@ and adopt these only if they seem relevant or useful to your environment.
    playbooks_tags
    playbooks_vault
    playbooks_startnstep
-   playbooks_directives
+   playbooks_keywords
