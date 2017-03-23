@@ -191,7 +191,8 @@ class ActionModule(ActionBase):
         # else only works with delegate_to
         if delegate_to is None and self._connection.transport not in ('ssh', 'paramiko', 'local', 'docker'):
             result['failed'] = True
-            result['msg'] = "synchronize uses rsync to function. rsync needs to connect to the remote host via ssh, docker client or a direct filesystem copy. This remote host is being accessed via %s instead so it cannot work." % self._connection.transport
+            result['msg'] = ("synchronize uses rsync to function. rsync needs to connect to the remote host via ssh, docker client or a direct filesystem "
+                             "copy. This remote host is being accessed via %s instead so it cannot work." % self._connection.transport)
             return result
 
         use_ssh_args = _tmp_args.pop('use_ssh_args', None)
@@ -382,5 +383,6 @@ class ActionModule(ActionBase):
             # Emit a warning about using python3 because synchronize is
             # somewhat unique in running on localhost
             result['exception'] = result['msg']
-            result['msg'] = 'SyntaxError parsing module.  Perhaps invoking "python" on your local (or delegate_to) machine invokes python3.  You can set ansible_python_interpreter for localhost (or the delegate_to machine) to the location of python2 to fix this'
+            result['msg'] = ('SyntaxError parsing module.  Perhaps invoking "python" on your local (or delegate_to) machine invokes python3. '
+                             'You can set ansible_python_interpreter for localhost (or the delegate_to machine) to the location of python2 to fix this')
         return result

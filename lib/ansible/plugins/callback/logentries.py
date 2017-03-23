@@ -254,7 +254,8 @@ class CallbackModule(CallbackBase):
             self.token = os.getenv('LOGENTRIES_ANSIBLE_TOKEN')
             if self.token is None:
                 self.disabled = True
-                self._display.warning('Logentries token could not be loaded. The logentries token can be provided using the `LOGENTRIES_TOKEN` environment variable')
+                self._display.warning('Logentries token could not be loaded. The logentries token can be provided using the `LOGENTRIES_TOKEN` environment '
+                                      'variable')
 
             self.flatten = os.getenv('LOGENTRIES_FLATTEN')
             if self.flatten is None:

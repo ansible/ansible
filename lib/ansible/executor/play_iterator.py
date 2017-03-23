@@ -80,20 +80,21 @@ class HostState:
                         ret.append(states[i])
                 return "|".join(ret)
 
-        return "HOST STATE: block=%d, task=%d, rescue=%d, always=%d, run_state=%s, fail_state=%s, pending_setup=%s, tasks child state? (%s), rescue child state? (%s), always child state? (%s), did rescue? %s, did start at task? %s" % (
-            self.cur_block,
-            self.cur_regular_task,
-            self.cur_rescue_task,
-            self.cur_always_task,
-            _run_state_to_string(self.run_state),
-            _failed_state_to_string(self.fail_state),
-            self.pending_setup,
-            self.tasks_child_state,
-            self.rescue_child_state,
-            self.always_child_state,
-            self.did_rescue,
-            self.did_start_at_task,
-        )
+        return ("HOST STATE: block=%d, task=%d, rescue=%d, always=%d, run_state=%s, fail_state=%s, pending_setup=%s, tasks child state? (%s), "
+                "rescue child state? (%s), always child state? (%s), did rescue? %s, did start at task? %s" % (
+                    self.cur_block,
+                    self.cur_regular_task,
+                    self.cur_rescue_task,
+                    self.cur_always_task,
+                    _run_state_to_string(self.run_state),
+                    _failed_state_to_string(self.fail_state),
+                    self.pending_setup,
+                    self.tasks_child_state,
+                    self.rescue_child_state,
+                    self.always_child_state,
+                    self.did_rescue,
+                    self.did_start_at_task,
+                ))
 
     def __eq__(self, other):
         if not isinstance(other, HostState):

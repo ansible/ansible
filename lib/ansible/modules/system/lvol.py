@@ -419,7 +419,10 @@ def main():
                 if (size_free > 0) and (('+' not in size) or (size_free >= (size_requested - this_lv['size']))):
                     tool = module.get_bin_path("lvextend", required=True)
                 else:
-                    module.fail_json(msg="Logical Volume %s could not be extended. Not enough free space left (%s%s required / %s%s available)" % (this_lv['name'], (size_requested -  this_lv['size']), unit, size_free, unit))
+                    module.fail_json(
+                        msg="Logical Volume %s could not be extended. Not enough free space left (%s%s required / %s%s available)" %
+                            (this_lv['name'], (size_requested -  this_lv['size']), unit, size_free, unit)
+                    )
             elif shrink and this_lv['size'] > size_requested + this_vg['ext_size']:  # more than an extent too large
                 if size_requested == 0:
                     module.fail_json(msg="Sorry, no shrinking of %s to 0 permitted." % (this_lv['name']))

@@ -63,7 +63,8 @@ class InventoryScript:
         try:
             self.data = to_text(stdout, errors="strict")
         except Exception as e:
-            raise AnsibleError("inventory data from {0} contained characters that cannot be interpreted as UTF-8: {1}".format(to_native(self.filename), to_native(e)))
+            raise AnsibleError("inventory data from {0} contained characters that cannot be interpreted as UTF-8: {1}".format(to_native(self.filename),
+                               to_native(e)))
 
         # see comment about _meta below
         self.host_vars_from_top = None
@@ -82,7 +83,8 @@ class InventoryScript:
 
         if not isinstance(self.raw, Mapping):
             sys.stderr.write(to_native(err) + "\n")
-            raise AnsibleError("failed to parse executable inventory script results from {0}: data needs to be formatted as a json dict".format(to_native(self.filename)))
+            raise AnsibleError("failed to parse executable inventory script results from {0}: data needs to be formatted "
+                               "as a json dict".format(to_native(self.filename)))
 
         group = None
         for (group_name, data) in self.raw.items():

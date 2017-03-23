@@ -48,7 +48,8 @@ options:
     default: null
   is_ready:
     description:
-      - This flag is used for searching existing ISOs. If set to C(true), it will only list ISO ready for deployment e.g. successfully downloaded and installed. Recommended to set it to C(false).
+      - This flag is used for searching existing ISOs. If set to C(true), it will only list ISO ready for deployment e.g.
+        successfully downloaded and installed. Recommended to set it to C(false).
     required: false
     default: false
     aliases: []

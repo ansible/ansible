@@ -246,7 +246,7 @@ status:
             "WatchdogTimestampMonotonic": "0",
             "WatchdogUSec": "0",
         }
-'''
+'''  # NOQA
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.service import sysv_exists, sysv_is_enabled, fail_if_missing

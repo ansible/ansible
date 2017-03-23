@@ -50,7 +50,9 @@ options:
   data:
     description:
       - Value of the registry entry C(name) in C(path).
-      - Binary data should be expressed a yaml byte array or as comma separated hex values.  An easy way to generate this is to run C(regedit.exe) and use the I(Export) option to save the registry values to a file.  In the exported file binary values will look like C(hex:be,ef,be,ef).  The C(hex:) prefix is optional.
+      - Binary data should be expressed a yaml byte array or as comma separated hex values.  An easy way to generate this is to run C(regedit.exe) and
+        use the I(Export) option to save the registry values to a file.  In the exported file binary values will look like C(hex:be,ef,be,ef).
+        The C(hex:) prefix is optional.
   type:
     description:
       - Registry value data type.
@@ -71,7 +73,8 @@ options:
       - absent
     default: present
 notes:
-- Check-mode C(-C/--check) and diff output (-D/--diff) are supported, so that you can test every change against the active configuration before applying changes.
+- Check-mode C(-C/--check) and diff output (-D/--diff) are supported, so that you can test every change against the active configuration before
+  applying changes.
 - Beware that some registry hives (HKEY_USERS in particular) do not allow to create new registry paths.
 author: "Adam Keech (@smadam813), Josh Ludwig (@joshludwig)"
 '''

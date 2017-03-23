@@ -41,11 +41,13 @@ options:
     choices: [ 'present', 'absent' ]
   runtime:
     description:
-      - The runtime environment for the Lambda function you are uploading. Required when creating a function. Use parameters as described in boto3 docs. Current example runtime environments are nodejs, nodejs4.3, java8 or python2.7
+      - The runtime environment for the Lambda function you are uploading. Required when creating a function. Use parameters as described in boto3 docs.
+        Current example runtime environments are nodejs, nodejs4.3, java8 or python2.7
     required: true
   role:
     description:
-      - The Amazon Resource Name (ARN) of the IAM role that Lambda assumes when it executes your function to access any other Amazon Web Services (AWS) resources. You may use the bare ARN if the role belongs to the same AWS account.
+      - The Amazon Resource Name (ARN) of the IAM role that Lambda assumes when it executes your function to access any other Amazon Web Services (AWS)
+        resources. You may use the bare ARN if the role belongs to the same AWS account.
     default: null
   handler:
     description:
@@ -89,7 +91,8 @@ options:
     default: 128
   vpc_subnet_ids:
     description:
-      - List of subnet IDs to run Lambda function in. Use this option if you need to access resources in your VPC. Leave empty if you don't want to run the function in a VPC.
+      - List of subnet IDs to run Lambda function in. Use this option if you need to access resources in your VPC. Leave empty if you don't want to run
+        the function in a VPC.
     required: false
     default: None
   vpc_security_group_ids:

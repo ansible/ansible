@@ -71,7 +71,8 @@ options:
     required: false
   autocommit:
     description:
-      - Automatically commit the change only if the import succeed. Sometimes it is necessary to use autocommit=true, since some content can't be changed within a transaction.
+      - Automatically commit the change only if the import succeed. Sometimes it is necessary to use autocommit=true, since some content can't be changed
+        within a transaction.
     required: false
     default: false
     choices: [ "false", "true" ]
@@ -198,7 +199,8 @@ def main():
             errno, errstr = e.args
             module.fail_json(msg="ERROR: %s %s" % (errno, errstr))
         else:
-            module.fail_json(msg="unable to connect, check login_user and login_password are correct, or alternatively check your @sysconfdir@/freetds.conf / ${HOME}/.freetds.conf")
+            module.fail_json(msg="unable to connect, check login_user and login_password are correct, or alternatively check your "
+                                 "@sysconfdir@/freetds.conf / ${HOME}/.freetds.conf")
 
     conn.autocommit(True)
     changed = False

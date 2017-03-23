@@ -35,7 +35,9 @@ options:
     required: false
   tags:
     description:
-      - "A dictionary/hash of tags in the format { tag1_name: 'tag1_value', tag2_name: 'tag2_value' } to match against the auto scaling group(s) you are searching for."
+      - >
+        A dictionary/hash of tags in the format { tag1_name: 'tag1_value', tag2_name: 'tag2_value' } to match against the auto scaling
+        group(s) you are searching for.
     required: false
 extends_documentation_fragment:
     - aws
@@ -232,7 +234,10 @@ def find_asgs(conn, module, name=None, tags=None):
         List
         [
             {
-                "auto_scaling_group_arn": "arn:aws:autoscaling:us-west-2:275977225706:autoScalingGroup:58abc686-9783-4528-b338-3ad6f1cbbbaf:autoScalingGroupName/public-webapp-production",
+                "auto_scaling_group_arn": (
+                    "arn:aws:autoscaling:us-west-2:275977225706:autoScalingGroup:58abc686-9783-4528-b338-3ad6f1cbbbaf:"
+                    "autoScalingGroupName/public-webapp-production"
+                ),
                 "auto_scaling_group_name": "public-webapp-production",
                 "availability_zones": ["us-west-2c", "us-west-2b", "us-west-2a"],
                 "created_time": "2016-02-02T23:28:42.481000+00:00",

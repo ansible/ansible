@@ -27,7 +27,10 @@ module: synchronize
 version_added: "1.4"
 short_description: A wrapper around rsync to make common tasks in your playbooks quick and easy.
 description:
-    - C(synchronize) is a wrapper around rsync to make common tasks in your playbooks quick and easy. It is run and originates on the local host where Ansible is being run. Of course, you could just use the C(command) action to call rsync yourself, but you also have to add a fair number of boilerplate options and host facts. C(synchronize) is not intended to provide access to the full power of rsync, but does make the most common invocations easier to implement. You `still` may need to call rsync directly via C(command) or C(shell) depending on your use case.
+    - C(synchronize) is a wrapper around rsync to make common tasks in your playbooks quick and easy. It is run and originates on the local host where
+      Ansible is being run. Of course, you could just use the C(command) action to call rsync yourself, but you also have to add a fair number of
+      boilerplate options and host facts. C(synchronize) is not intended to provide access to the full power of rsync, but does make the most common
+      invocations easier to implement. You `still` may need to call rsync directly via C(command) or C(shell) depending on your use case.
 options:
   src:
     description:
@@ -44,7 +47,8 @@ options:
     version_added: "1.5"
   mode:
     description:
-      - Specify the direction of the synchronization. In push mode the localhost or delegate is the source; In pull mode the remote host in context is the source.
+      - Specify the direction of the synchronization. In push mode the localhost or delegate is the source; In pull mode the remote host in context
+        is the source.
     required: false
     choices: [ 'push', 'pull' ]
     default: 'push'
@@ -56,7 +60,8 @@ options:
     required: false
   checksum:
     description:
-      - Skip based on checksum, rather than mod-time & size; Note that that "archive" option is still enabled by default - the "checksum" option will not disable it.
+      - Skip based on checksum, rather than mod-time & size; Note that that "archive" option is still enabled by default - the "checksum" option will
+        not disable it.
     choices: [ 'yes', 'no' ]
     default: 'no'
     required: false
@@ -171,13 +176,20 @@ options:
     version_added: "2.0"
 notes:
    - rsync must be installed on both the local and remote host.
-   - For the C(synchronize) module, the "local host" is the host `the synchronize task originates on`, and the "destination host" is the host `synchronize is connecting to`.
-   - The "local host" can be changed to a different host by using `delegate_to`.  This enables copying between two remote hosts or entirely on one remote machine.
-   - "The user and permissions for the synchronize `src` are those of the user running the Ansible task on the local host (or the remote_user for a delegate_to host when delegate_to is used)."
+   - For the C(synchronize) module, the "local host" is the host `the synchronize task originates on`, and the "destination host" is the host
+     `synchronize is connecting to`.
+   - The "local host" can be changed to a different host by using `delegate_to`.  This enables copying between two remote hosts or entirely on one
+     remote machine.
+   - >
+     The user and permissions for the synchronize `src` are those of the user running the Ansible task on the local host (or the remote_user for a
+     delegate_to host when delegate_to is used).
    - The user and permissions for the synchronize `dest` are those of the `remote_user` on the destination host or the `become_user` if `become=yes` is active.
    - In 2.0.0.0 a bug in the synchronize module made become occur on the "local host".  This was fixed in 2.0.1.
-   - Currently, synchronize is limited to elevating permissions via passwordless sudo.  This is because rsync itself is connecting to the remote machine and rsync doesn't give us a way to pass sudo credentials in.
-   - Currently there are only a few connection types which support synchronize (ssh, paramiko, local, and docker) because a sync strategy has been determined for those connection types.  Note that the connection for these must not need a password as rsync itself is making the connection and rsync does not provide us a way to pass a password to the connection.
+   - Currently, synchronize is limited to elevating permissions via passwordless sudo.  This is because rsync itself is connecting to the remote machine
+     and rsync doesn't give us a way to pass sudo credentials in.
+   - Currently there are only a few connection types which support synchronize (ssh, paramiko, local, and docker) because a sync strategy has been
+     determined for those connection types.  Note that the connection for these must not need a password as rsync itself is making the connection and
+     rsync does not provide us a way to pass a password to the connection.
    - Expect that dest=~/x will be ~<remote_user>/x even if using sudo.
    - Inspect the verbose output to validate the destination user/host/path
      are what was expected.
@@ -185,7 +197,8 @@ notes:
      C(.rsync-filter) files to the source directory.
    - rsync daemon must be up and running with correct permission when using
      rsync protocol in source or destination path.
-   - The C(synchronize) module forces `--delay-updates` to avoid leaving a destination in a broken in-between state if the underlying rsync process encounters an error. Those synchronizing large numbers of files that are willing to trade safety for performance should call rsync directly.
+   - The C(synchronize) module forces `--delay-updates` to avoid leaving a destination in a broken in-between state if the underlying rsync process
+     encounters an error. Those synchronizing large numbers of files that are willing to trade safety for performance should call rsync directly.
 
 author: "Timothy Appnel (@tima)"
 '''
