@@ -38,14 +38,14 @@ contrib/inventory/windows_azure.py
 contrib/inventory/zabbix.py
 contrib/inventory/zone.py
 docs/api/conf.py
+docs/bin/dump_keywords.py
+docs/bin/plugin_formatter.py
 docs/docsite/conf.py
 docs/docsite/rst/conf.py
 examples/scripts/uptime.py
 hacking/cherrypick.py
-hacking/dump_playbook_attributes.py
 hacking/get_library.py
 hacking/metadata-tool.py
-hacking/module_formatter.py
 hacking/tests/gen_distribution_version_testcase.py
 lib/ansible/cli/__init__.py
 lib/ansible/cli/adhoc.py
