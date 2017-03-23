@@ -107,7 +107,9 @@ options:
     version_added: "1.7"
   scheme:
     description:
-      - The scheme to use when creating the ELB. For a private VPC-visible ELB use 'internal'. If you choose to update your scheme with a different value the ELB will be destroyed and recreated. To update scheme you must use the option wait: yes.
+      - The scheme to use when creating the ELB. For a private VPC-visible ELB use 'internal'.
+        If you choose to update your scheme with a different value the ELB will be destroyed and
+        recreated. To update scheme you must use the option wait: yes.
     required: false
     default: 'internet-facing'
     version_added: "1.7"
