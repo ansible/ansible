@@ -142,7 +142,7 @@ else:
 ### Exception Handling
 
 You should wrap any boto call in a try block. If an exception is thrown, it is up to you decide how to handle it
-but usually calling fail_json with the error message will suffice.
+but usually calling fail_json with the error or helpful message and traceback will suffice.
 
 #### boto
 
@@ -162,7 +162,8 @@ except ImportError:
 try:
     result = connection.aws_call()
 except BotoServerError, e:
-    module.fail_json(msg=e.message)
+    module.fail_json(msg="helpful message here", exception=traceback.format_exc(),
+                     **camel_dict_to_snake_dict(e.message))
 ```
 
 #### boto3
@@ -186,7 +187,8 @@ except ImportError:
 try:
     result = connection.aws_call()
 except ClientError, e:
-    module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+    module.fail_json(msg=e.message, exception=traceback.format_ex(),
+                     **camel_dict_to_snake_dict(e.response))
 ```
 
 If you need to perform an action based on the error boto3 returned, use the error code.
@@ -199,7 +201,8 @@ except ClientError, e:
     if e.response['Error']['Code'] == 'NoSuchEntity':
         return None
     else:
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg=e.message, exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
 ```
 
 ### Returning Values
