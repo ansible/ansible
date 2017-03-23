@@ -27,20 +27,21 @@ DOCUMENTATION:
         _raw:
             description:
                 - the list of keys to lookup on the etcd server
-            type: string
+            type: list
+            element_type: string
             required: True
         _etcd_url:
             description:
                 - Environment variable with the url for the etcd server
             default: 'http://127.0.0.1:4001'
             env_vars:
-                - ANSIBLE_ETCD_URL
+                - name: ANSIBLE_ETCD_URL
         _etcd_version:
             description:
                 - Environment variable with the etcd protocol version
             default: 'v1'
             env_vars:
-                - ANSIBLE_ETCD_VERSION
+                - name: ANSIBLE_ETCD_VERSION
 EXAMPLES:
     - name: "a value from a locally running etcd"
       debug: msg={{ lookup('etcd', 'foo') }}
