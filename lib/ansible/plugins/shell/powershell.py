@@ -111,6 +111,11 @@ Function Run($payload) {
     # redefine Write-Host to dump to output instead of failing- lots of scripts use it
     $ps.AddStatement().AddScript("Function Write-Host(`$msg){ Write-Output `$msg }") | Out-Null
 
+    ForEach ($env_kv in $payload.environment.GetEnumerator()) {
+        $escaped_env_set = "`$env:{0} = '{1}'" -f $env_kv.Key,$env_kv.Value.Replace("'","''")
+        $ps.AddStatement().AddScript($escaped_env_set) | Out-Null
+    }
+
     # dynamically create/load modules
     ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
         $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
@@ -132,6 +137,7 @@ Function Run($payload) {
         If(-not $exit_code) {
             $exit_code = 1
         }
+        # need to use this instead of Exit keyword to prevent runspace from crashing with dynamic modules
         $host.SetShouldExit($exit_code)
     }
 }
@@ -967,9 +973,8 @@ class ShellModule(object):
         return to_text(value, errors='surrogate_or_strict')
 
     def env_prefix(self, **kwargs):
-        env = self.env.copy()
-        env.update(kwargs)
-        return ';'.join(["$env:%s='%s'" % (self.assert_safe_env_key(k), self.safe_env_value(k,v)) for k,v in env.items()])
+        # powershell/winrm env handling is handled in the exec wrapper
+        return ""
 
     def join_path(self, *args):
         parts = []
