@@ -143,6 +143,8 @@ attached_policies:
     ]
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn, sort_json_policy_dict
 import json
 
 try:
@@ -155,10 +157,7 @@ except ImportError:
 
 def compare_assume_role_policy_doc(current_policy_doc, new_policy_doc):
 
-    # Get proper JSON strings for both docs
-    current_policy_doc = json.dumps(current_policy_doc)
-
-    if current_policy_doc == new_policy_doc:
+    if sort_json_policy_dict(current_policy_doc) == sort_json_policy_dict(json.loads(new_policy_doc)):
         return True
     else:
         return False
@@ -190,7 +189,7 @@ def create_or_update_role(connection, module):
     changed = False
 
     # Get role
-    role = get_role(connection, params['RoleName'], module)
+    role = get_role(connection, module, params['RoleName'])
 
     # If role is None, create it
     if role is None:
@@ -209,7 +208,7 @@ def create_or_update_role(connection, module):
                 module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
     # Check attached managed policies
-    current_attached_policies = get_attached_policy_list(connection, params['RoleName'])
+    current_attached_policies = get_attached_policy_list(connection, module, params['RoleName'])
     if not compare_attached_role_policies(current_attached_policies, managed_policies):
         # If managed_policies has a single empty element we want to remove all attached policies
         if len(managed_policies) == 1 and managed_policies[0] == "":
@@ -258,9 +257,9 @@ def create_or_update_role(connection, module):
         connection.add_role_to_instance_profile(InstanceProfileName=params['RoleName'], RoleName=params['RoleName'])
 
     # Get the role again
-    role = get_role(connection, params['RoleName'], module)
+    role = get_role(connection, module, params['RoleName'])
 
-    role['attached_policies'] = get_attached_policy_list(connection, params['RoleName'])
+    role['attached_policies'] = get_attached_policy_list(connection, module, params['RoleName'])
     module.exit_json(changed=changed, iam_role=camel_dict_to_snake_dict(role))
 
 
@@ -269,7 +268,7 @@ def destroy_role(connection, module):
     params = dict()
     params['RoleName'] = module.params.get('name')
 
-    if get_role(connection, params['RoleName'], module):
+    if get_role(connection, module, params['RoleName']):
 
         # We need to remove any instance profiles from the role before we delete it
         try:
@@ -286,7 +285,7 @@ def destroy_role(connection, module):
 
         # Now remove any attached policies otherwise deletion fails
         try:
-            for policy in get_attached_policy_list(connection, params['RoleName']):
+            for policy in get_attached_policy_list(connection, module, params['RoleName']):
                 connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy['PolicyArn'])
         except (ClientError, ParamValidationError) as e:
             module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
@@ -301,7 +300,7 @@ def destroy_role(connection, module):
     module.exit_json(changed=True)
 
 
-def get_role(connection, name, module):
+def get_role(connection, module, name):
 
     params = dict()
     params['RoleName'] = name
@@ -315,7 +314,7 @@ def get_role(connection, name, module):
             module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
 
 
-def get_attached_policy_list(connection, name):
+def get_attached_policy_list(connection, module, name):
 
     try:
         return connection.list_attached_role_policies(RoleName=name)['AttachedPolicies']
@@ -358,9 +357,6 @@ def main():
         create_or_update_role(connection, module)
     else:
         destroy_role(connection, module)
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
