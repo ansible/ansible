@@ -60,22 +60,27 @@ namespace Ansible.Shell
 }
 "@
 
-$parsed_args = Parse-Args $args $false
+$params = Parse-Args $args -supports_check_mode $false
 
-$raw_command_line = $(Get-AnsibleParam $parsed_args "_raw_params" -failifempty $true).Trim()
-$chdir = Get-AnsibleParam $parsed_args "chdir" -type "path"
-$executable = Get-AnsibleParam $parsed_args "executable" -type "path"
-$creates = Get-AnsibleParam $parsed_args "creates" -type "path"
-$removes = Get-AnsibleParam $parsed_args "removes" -type "path"
+$raw_command_line = Get-AnsibleParam -obj $params -name "_raw_params" -type "str" -failifempty $true
+$chdir = Get-AnsibleParam -obj $params -name "chdir" -type "path"
+$executable = Get-AnsibleParam -obj $params -name "executable" -type "path"
+$creates = Get-AnsibleParam -obj $params -name "creates" -type "path"
+$removes = Get-AnsibleParam -obj $params -name "removes" -type "path"
 
-$result = @{changed=$true; warnings=@(); cmd=$raw_command_line}
+$raw_command_line = $raw_command_line.Trim()
+
+$result = @{
+    changed = $true
+    cmd = $raw_command_line
+}
 
 If($creates -and $(Test-Path $creates)) {
-    Exit-Json @{cmd=$raw_command_line; msg="skipped, since $creates exists"; changed=$false; skipped=$true; rc=0}
+    Exit-Json @{msg="skipped, since $creates exists";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }
 
 If($removes -and -not $(Test-Path $removes)) {
-    Exit-Json @{cmd=$raw_command_line; msg="skipped, since $removes does not exist"; changed=$false; skipped=$true; rc=0}
+    Exit-Json @{msg="skipped, since $removes does not exist";cmd=$raw_command_line;changed=$false;skipped=$true;rc=0}
 }
 
 Add-Type -TypeDefinition $helper_def
@@ -117,7 +122,7 @@ Catch [System.ComponentModel.Win32Exception] {
     # fail nicely for "normal" error conditions
     # FUTURE: this probably won't work on Nano Server
     $excep = $_
-    Exit-Json @{failed=$true;changed=$false;cmd=$raw_command_line;rc=$excep.Exception.NativeErrorCode;msg=$excep.Exception.Message}
+    Exit-Json @{msg = $excep.Exception.Message; cmd = $raw_command_line; changed = $false; rc = $excep.Exception.NativeErrorCode}
 }
 
 $stdout = $stderr = [string] $null
