@@ -831,12 +831,13 @@ def modify_module(module_name, module_path, module_args, task_vars=dict(), modul
 
     return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))
 
-def build_windows_module_payload(module_name, module_path, b_module_data, module_args, task_vars, task, play_context):
+def build_windows_module_payload(module_name, module_path, b_module_data, module_args, task_vars, task, play_context, environment):
     exec_manifest = dict(
         module_entry=base64.b64encode(b_module_data),
         powershell_modules=dict(),
         module_args=module_args,
-        actions=['exec']
+        actions=['exec'],
+        environment=environment
     )
 
     exec_manifest['exec'] = base64.b64encode(to_bytes(leaf_exec))
