@@ -115,3 +115,13 @@
     that:
       - "not raw_with_items_result|failed"
       - "raw_with_items_result.results|length == 32"
+
+- name: test raw with job to ensure that preamble-free InputEncoding is working
+  raw: Start-Job { echo yo } | Receive-Job -Wait
+  register: raw_job_result
+
+- name: check raw with job result
+  assert:
+    that:
+    - raw_job_result | succeeded
+    - raw_job_result.stdout_lines[0] == 'yo'
