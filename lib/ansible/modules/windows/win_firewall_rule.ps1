@@ -20,6 +20,49 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
+function convertToNetmask($maskLength) {
+    [IPAddress] $ip = 0;
+    $ip.Address = ([UInt32]::MaxValue) -shl (32 - $maskLength) -shr (32 - $maskLength)
+    return $ip.IPAddressToString
+}
+
+function preprocessAndCompare($key, $outputValue, $fwsettingValue) {
+    if ($key -eq 'RemoteIP') {
+        if ($outputValue -eq $fwsettingValue) {
+            return $true
+        }
+
+        if ($outputValue -eq $fwsettingValue+'-'+$fwsettingValue) {
+            return $true
+        }
+
+        if (($outputValue -eq $fwsettingValue+'/32') -or ($outputValue -eq $fwsettingValue+'/255.255.255.255')) {
+            return $true
+        }
+
+        if ($outputValue -match '^([\d\.]+)\/(\d+)$') {
+            $netmask = convertToNetmask($Matches[2])
+            if ($fwsettingValue -eq $Matches[1]+"/"+$netmask) {
+                return $true
+            }
+        }
+
+        if ($fwsettingValue -match '^([\d\.]+)\/(\d+)$') {
+            $netmask = convertToNetmask($Matches[2])
+            if ($outputValue -eq $Matches[1]+"/"+$netmask) {
+                return $true
+            }
+        }
+    }
+    elseif ($key -eq 'Profiles') {
+        if (($fwsettingValue -eq "any") -and ($outputValue -eq "Domain,Private,Public")) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
 function getFirewallRule ($fwsettings) {
     try {
 
@@ -69,12 +112,11 @@ function getFirewallRule ($fwsettings) {
                 };
             } else {
                 ForEach($fwsetting in $fwsettings.GetEnumerator()) {
-                    if ( $output.$($fwsetting.Key) -ne $fwsettings.$($fwsetting.Key)) {
-
-                        if (($fwsetting.Key -eq 'RemoteIP') -and ($output.$($fwsetting.Key) -eq ($fwsettings.$($fwsetting.Key)+'-'+$fwsettings.$($fwsetting.Key)))) {
-                            $donothing=$false
+                    if ($output.$($fwsetting.Key) -ne $fwsettings.$($fwsetting.Key)) {
+                        if ((preprocessAndCompare -key $fwsetting.Key -outputValue $output.$($fwsetting.Key) -fwsettingValue $fwsettings.$($fwsetting.Key))) {
+                            Continue
                         } elseif (($fwsetting.Key -eq 'DisplayName') -and ($output."Rule Name" -eq $fwsettings.$($fwsetting.Key))) {
-                            $donothing=$false
+                            Continue
                         } else {
                             $diff=$true;
                             $difference+=@($fwsettings.$($fwsetting.Key));
