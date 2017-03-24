@@ -15,6 +15,8 @@ porting:
 
 Much of the knowledge of porting code will be usable on all three of these
 pieces but there are some special considerations for some of it as well.
+Information that is generally applicable to all three places is located in the
+controller-side section.
 
 --------------------------------------------
 Minimum Version of Python-3.x and Python-2.x
@@ -240,6 +242,39 @@ We do not prefix the text strings instead because we only operate
 on byte strings at the borders, so there are fewer variables that need bytes
 than text.
 
+Bundled six
+-----------
+
+The third-party `python-six <https://pythonhosted.org/six/>`_ library exists
+to help projects create code that runs on both Python-2 and Python-3.  Ansible
+includes a version of the library in module_utils so that other modules can use it
+without requiring that it is installed on the remote system.  To make use of
+it, import it like this::
+
+    from ansible.module_utils import six
+
+.. note:: Ansible can also use a system copy of six
+
+    Ansible will use a system copy of six if the system copy is a later
+    version than the one Ansible bundles.
+
+Exceptions
+----------
+
+In order for code to function on Python-2.6+ and Python-3, use the
+new exception-catching syntax which uses the ``as`` keyword::
+
+    try:
+        a = 2/0
+    except ValueError as e:
+        module.fail_json(msg="Tried to divide by zero: %s" % e)
+
+Octal numbers
+-------------
+
+In Python-2.6, octal literals could be specified as ``0755``.  In Python-3, that is
+invalid and octals must be specified as ``0o755``.
+
 ---------------------------
 Porting Modules to Python 3
 ---------------------------
@@ -274,67 +309,42 @@ coded to expect bytes on Python-2 and text on Python-3.
 Tips, tricks, and idioms to adopt
 =================================
 
-Exceptions
-----------
+Old Exception Syntax
+--------------------
 
-In order for code to function on Python-2.6+ and Python-3, use the
-new exception-catching syntax which uses the ``as`` keyword::
+Until Ansible-2.4, modules needed to be compatible with Python-2.4 as
+well.  Python-2.4 did not understand the new exception-catching syntax so
+we had to write a compatibility function that could work with both
+Python-2 and Python-3.  You may still see this used in some modules:
+
+.. code-block:: python
+
+    from ansible.module_utils.pycompat24 import get_exception
+    [...]
 
     try:
         a = 2/0
-    except ValueError as e:
+    except ValueError:
+        e = get_exception()
         module.fail_json(msg="Tried to divide by zero: %s" % e)
 
+Unless a change is going to be backported to Ansible-2.3, you should not
+have to use this in new code.
 
-.. note:: Old exception syntax
+Python 2.4 octal workaround
+---------------------------
 
-    Until Ansible-2.4, modules needed to be compatible with Python-2.4 as
-    well.  Python-2.4 did not understand the new exception-catching syntax so
-    we had to write a compatibility function that could work with both
-    Python-2 and Python-3.  You may still see this used in some modules::
+Before Ansible-2.4, modules had to be compatible with Python-2.4.
+Python-2.4 did not understand the new syntax for octal literals so we used
+the following workaround to specify octal values:
 
-        from ansible.module_utils.pycompat24 import get_exception
-        [...]
+.. code-block:: python
 
-        try:
-            a = 2/0
-        except ValueError:
-            e = get_exception()
-            module.fail_json(msg="Tried to divide by zero: %s" % e)
+    # Can't use 0755 on Python-3 and can't use 0o755 on Python-2.4
+    EXECUTABLE_PERMS = int('0755', 8)
 
-    Unless a change is going to be backported to Ansible-2.3, you should not
-    have to use this in new code.
-
-Octal numbers
--------------
-
-In Python-2.6, octal literals could be specified as ``0755``.  In Python-3, that is
-invalid and octals must be specified as ``0o755``.
-
-.. note:: Workaround from Python-2.4 era
-
-    Before Ansible-2.4, modules had to be compatible with Python-2.4.
-    Python-2.4 did not understand the new syntax for octal literals so we used
-    the following workaround to specify octal values::
-
-        # Can't use 0755 on Python-3 and can't use 0o755 on Python-2.4
-        EXECUTABLE_PERMS = int('0755', 8)
-
-Bundled six
------------
-
-The third-party `python-six <https://pythonhosted.org/six/>`_ library exists
-to help projects create code that runs on both Python-2 and Python-3.  Ansible
-includes a version of the library in module_utils so that other modules can use it
-without requiring that it is installed on the remote system.  To make use of
-it, import it like this::
-
-    from ansible.module_utils import six
-
-.. note:: Ansible can also use a system copy of six
-
-    Ansible will use a system copy of six if the system copy is a later
-    version than the one Ansible bundles.
+Unless a change is going to be backported to Ansible-2.3, you should not
+have to use this in new code.
 
 -------------------------------------
 Porting module_utils code to Python 3
