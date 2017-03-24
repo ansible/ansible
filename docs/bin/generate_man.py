@@ -6,6 +6,7 @@ import sys
 
 from jinja2 import Environment, FileSystemLoader
 
+
 def get_options(optlist):
     ''' get actual options '''
 
@@ -21,6 +22,7 @@ def get_options(optlist):
 
     return opts
 
+
 def opt_doc_list(cli):
     ''' iterate over options lists '''
 
@@ -32,6 +34,7 @@ def opt_doc_list(cli):
 
     return results
 
+
 def opts_docs(cli, name):
     ''' generate doc structure from options '''
 
@@ -39,7 +42,7 @@ def opts_docs(cli, name):
     if '-' in name:
         name = name.split('-')[1]
     else:
-        name =  'adhoc'
+        name = 'adhoc'
 
     # cli info
     docs = {
@@ -83,7 +86,7 @@ if __name__ == '__main__':
         libname = os.path.splitext(binary)[0]
         print("Found CLI %s" % libname)
 
-        if libname ==  'adhoc':
+        if libname == 'adhoc':
             myclass = 'AdHocCLI'
             output[libname] = 'ansible.1.asciidoc.in'
         else:
