@@ -16,57 +16,108 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: fill in a basic template
-#  win_template: src=foo.j2 dest={{win_output_dir}}/foo.templated mode=0644
-  win_template: src=foo.j2 dest={{win_output_dir}}/foo.templated
-  register: template_result
-
-- assert:
-    that:
-        - "'changed' in template_result"
-#        - "'dest' in template_result"
-#        - "'group' in template_result"
-#        - "'gid' in template_result"
-#        - "'checksum' in template_result"
-#        - "'owner' in template_result"
-#        - "'size' in template_result"
-#        - "'src' in template_result"
-#        - "'state' in template_result"
-#        - "'uid' in template_result"
-
-- name: verify that the file was marked as changed
-  assert:
-    that:
-      - "template_result.changed == true"
-
-- name: fill in a basic template again
+# DOS TEMPLATE
+- name: fill in a basic template (DOS)
   win_template:
     src: foo.j2
-    dest: "{{win_output_dir}}/foo.templated"
+    dest: '{{ win_output_dir }}/foo.dos.templated'
+  register: template_result
+
+- name: verify that the file was marked as changed (DOS)
+  assert:
+    that:
+      - 'template_result|changed'
+
+- name: fill in a basic template again (DOS)
+  win_template:
+    src: foo.j2
+    dest: '{{ win_output_dir }}/foo.dos.templated'
   register: template_result2
 
-- name: verify that the template was not changed
+- name: verify that the template was not changed (DOS)
   assert:
     that:
-      - "not template_result2|changed"
+      - 'not template_result2|changed'
 
-# VERIFY CONTENTS
+# VERIFY DOS CONTENTS
+- name: copy known good into place (DOS)
+  win_copy:
+    src: foo.dos.txt
+    dest: '{{ win_output_dir }}\\foo.dos.txt'
 
-- name: copy known good into place
-  win_copy: src=foo.txt dest={{win_output_dir}}\\foo.txt
-
-- name: compare templated file to known good
-  raw: fc.exe {{win_output_dir}}\\foo.templated {{win_output_dir}}\\foo.txt
+- name: compare templated file to known good (DOS)
+  raw: fc.exe {{ win_output_dir }}\\foo.dos.templated {{ win_output_dir }}\\foo.dos.txt
   register: diff_result
 
-- debug: var=diff_result
+- debug:
+    var: diff_result
 
-- name: verify templated file matches known good
+- name: verify templated file matches known good (DOS)
   assert:
     that:
-#        - 'diff_result.stdout == ""'
-        - 'diff_result.stdout_lines[1] == "FC: no differences encountered"'
+        - '"FC: no differences encountered" in diff_result.stdout'
         - "diff_result.rc == 0"
+
+# UNIX TEMPLATE
+- name: fill in a basic template (Unix)
+  win_template:
+    src: foo.j2
+    dest: '{{ win_output_dir }}/foo.unix.templated'
+    newline_sequence: '\n'
+  register: template_result
+
+- name: verify that the file was marked as changed (Unix)
+  assert:
+    that:
+      - 'template_result|changed'
+
+- name: fill in a basic template again (Unix)
+  win_template:
+    src: foo.j2
+    dest: '{{ win_output_dir }}/foo.unix.templated'
+    newline_sequence: '\n'
+  register: template_result2
+
+- name: verify that the template was not changed (Unix)
+  assert:
+    that:
+      - 'not template_result2|changed'
+
+# VERIFY UNIX CONTENTS
+- name: copy known good into place (Unix)
+  win_copy:
+    src: foo.unix.txt
+    dest: '{{ win_output_dir }}\\foo.unix.txt'
+
+- name: compare templated file to known good (Unix)
+  raw: fc.exe {{ win_output_dir }}\\foo.unix.templated {{ win_output_dir }}\\foo.unix.txt
+  register: diff_result
+
+- debug:
+    var: diff_result
+
+- name: verify templated file matches known good (Unix)
+  assert:
+    that:
+        - '"FC: no differences encountered" in diff_result.stdout'
+
+# VERIFY DOS CONTENTS
+- name: copy known good into place (DOS)
+  win_copy:
+    src: foo.dos.txt
+    dest: '{{ win_output_dir }}\\foo.dos.txt'
+
+- name: compare templated file to known good (DOS)
+  raw: fc.exe {{ win_output_dir }}\\foo.dos.templated {{ win_output_dir }}\\foo.dos.txt
+  register: diff_result
+
+- debug:
+    var: diff_result
+
+- name: verify templated file matches known good (DOS)
+  assert:
+    that:
+        - '"FC: no differences encountered" in diff_result.stdout'
 
 # VERIFY MODE
 # can't set file mode on windows so commenting this test out
