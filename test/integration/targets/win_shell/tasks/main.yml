@@ -17,8 +17,10 @@
     - shellout.stdout == "hello from Ansible\r\n"
     - shellout.stdout_lines == ["hello from Ansible"]
 
-- name: execute a powershell cmdlet with multi-line output
-  win_shell: Write-Output "hello from Ansible"; Write-Output "another line"; Write-Output "yet another line"
+- name: execute a powershell cmdlet with multi-line output that uses environment with embedded quotes
+  win_shell: Write-Output "hello from Ansible"; Write-Output "another line"; Write-Output "yet another line"; Write-Output "envvar was $env:taskvar"
+  environment:
+    taskvar: "o'doyle rules"
   register: shellout
 
 - name: validate result
@@ -26,15 +28,15 @@
     that:
     - shellout|success
     - shellout|changed
-    - shellout.cmd == 'Write-Output "hello from Ansible"; Write-Output "another line"; Write-Output "yet another line"'
+    - shellout.cmd == 'Write-Output "hello from Ansible"; Write-Output "another line"; Write-Output "yet another line"; Write-Output "envvar was $env:taskvar"'
     - shellout.delta is match('^\d:(\d){2}:(\d){2}.(\d){6}$')
     - shellout.end is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
     - shellout.rc == 0
     - shellout.start is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
     # assertion disabled since it does not pass on Windows Server 2016
     # - shellout.stderr == ""
-    - shellout.stdout == "hello from Ansible\r\nanother line\r\nyet another line\r\n"
-    - shellout.stdout_lines == ["hello from Ansible","another line", "yet another line"]
+    - shellout.stdout == "hello from Ansible\r\nanother line\r\nyet another line\r\nenvvar was o'doyle rules\r\n"
+    - shellout.stdout_lines == ["hello from Ansible","another line", "yet another line", "envvar was o'doyle rules"]
 
 - name: execute something nonexistent
   win_shell: bogus_command1234
