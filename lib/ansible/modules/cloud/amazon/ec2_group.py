@@ -147,6 +147,7 @@ except ImportError:
 
 import traceback
 
+
 def make_rule_key(prefix, rule, group_id, cidr_ip):
     """Creates a unique key for an individual group rule"""
     if isinstance(rule, dict):
