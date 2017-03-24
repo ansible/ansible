@@ -923,7 +923,6 @@ class TaskParameters(DockerBaseClass):
         '''
 
         host_config_params=dict(
-            auto_remove='auto_remove',
             port_bindings='published_ports',
             publish_all_ports='publish_all_ports',
             links='links',
@@ -949,6 +948,11 @@ class TaskParameters(DockerBaseClass):
             devices='devices',
             pid_mode='pid_mode'
         )
+
+        if HAS_DOCKER_PY_2:
+            # auto_remove is only supported in docker>=2
+            host_config_params['auto_remove'] = 'auto_remove'
+
         params = dict()
         for key, value in host_config_params.items():
             if getattr(self, value, None) is not None:
@@ -2034,6 +2038,9 @@ def main():
         required_if=required_if,
         supports_check_mode=True
     )
+
+    if not HAS_DOCKER_PY_2 and client.module.params.get('auto_remove'):
+        client.module.fail_json(msg='"auto_remove" is not compatible with docker-py, and requires the docker python module')
 
     cm = ContainerManager(client)
     client.module.exit_json(**cm.results)
