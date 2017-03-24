@@ -101,8 +101,6 @@ class ActionModule(ActionBase):
             base = os.path.basename(source)
             dest = os.path.join(dest, base)
 
-        b_source = to_bytes(source)
-
         # Get vault decrypted tmp file
         try:
             tmp_source = self._loader.get_real_file(source)
