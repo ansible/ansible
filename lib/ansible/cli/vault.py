@@ -42,8 +42,8 @@ class VaultCLI(CLI):
     passed on the ansible-playbook command line with *-e @file.yml* or *-e @file.json*.
     Role variables and defaults are also included!
 
-    Because Ansible tasks, handlers, and so on are also data, these can also be encrypted with vault.
-    If you'd like to not betray what variables you are even using, you can go as far to keep an individual task file entirely encrypted.
+    Because Ansible tasks, handlers, and other objects are data, these can also be encrypted with vault.
+    If you'd like to not expose what variables you are using, you can keep an individual task file entirely encrypted.
 
     The password used with vault currently must be the same for all files you wish to use together at the same time.
     '''
