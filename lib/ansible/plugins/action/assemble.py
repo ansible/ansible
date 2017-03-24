@@ -36,7 +36,7 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
-    def _assemble_from_fragments(self, src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False):
+    def _assemble_from_fragments(self, src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False, decrypt=True):
         ''' assemble a file from a directory of fragments '''
 
         tmpfd, temp_path = tempfile.mkstemp()
@@ -51,7 +51,7 @@ class ActionModule(ActionBase):
             if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
                 continue
 
-            fragment_content = open(self._loader.get_real_file(fragment), 'rb').read()
+            fragment_content = open(self._loader.get_real_file(fragment, decrypt=decrypt), 'rb').read()
 
             # always put a newline between fragments if the previous fragment didn't end with a newline.
             if add_newline:
@@ -97,6 +97,7 @@ class ActionModule(ActionBase):
         regexp     = self._task.args.get('regexp', None)
         follow     = self._task.args.get('follow', False)
         ignore_hidden = self._task.args.get('ignore_hidden', False)
+        decrypt    = self._task.args.get('decrypt', True)
 
         if src is None or dest is None:
             result['failed'] = True
@@ -127,7 +128,7 @@ class ActionModule(ActionBase):
             _re = re.compile(regexp)
 
         # Does all work assembling the file
-        path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden)
+        path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden, decrypt)
 
         path_checksum = checksum_s(path)
         dest = self._remote_expand_user(dest)
@@ -139,7 +140,7 @@ class ActionModule(ActionBase):
         new_module_args = self._task.args.copy()
 
         # clean assemble specific options
-        for opt in ['remote_src', 'regexp', 'delimiter', 'ignore_hidden']:
+        for opt in ['remote_src', 'regexp', 'delimiter', 'ignore_hidden', 'decrypt']:
             if opt in new_module_args:
                 del new_module_args[opt]
 

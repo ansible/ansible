@@ -98,6 +98,7 @@ options:
 extends_documentation_fragment:
     - files
     - validate
+    - decrypt
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"
