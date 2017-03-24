@@ -165,6 +165,16 @@
     - shellout.stdout_lines == ["line1 ", "line2"]
     - shellout.stderr == ""
 
+- name: test with job to ensure that preamble-free InputEncoding is working
+  win_shell: Start-Job { echo yo } | Receive-Job -Wait
+  register: shellout
+
+- name: check job result
+  assert:
+    that:
+    - shellout | succeeded
+    - shellout.stdout_lines[0] == 'yo'
+
 - name: interleave large writes between stdout/stderr (check for buffer consumption deadlock)
   win_shell: $ba = New-Object byte[] 4096; (New-Object System.Random 32).NextBytes($ba); $text = [Convert]::ToBase64String($ba); Write-Output startout; Write-Error starterror; Write-Error $text; Write-Output $text; Write-Error $text; Write-Output $text; Write-Error $text; Write-Output $text; Write-Output doneout Write-Error doneerror
   register: shellout
