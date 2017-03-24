@@ -310,6 +310,20 @@ EXAMPLES = '''
       - "--no-motd"
       - "--exclude=.git"
 '''
+
+
+import os
+
+# Python3 compat. six.moves.shlex_quote will be available once we're free to
+# upgrade beyond six-1.4 module-side.
+try:
+    from shlex import quote as shlex_quote
+except ImportError:
+    from pipes import quote as shlex_quote
+
+from ansible.module_utils.basic import AnsibleModule
+
+
 client_addr = None
 
 
@@ -351,7 +365,7 @@ def main():
             dirs  = dict(default='no', type='bool'),
             recursive = dict(type='bool'),
             links = dict(type='bool'),
-            copy_links = dict(type='bool'),
+            copy_links = dict(default='no', type='bool'),
             perms = dict(type='bool'),
             times = dict(type='bool'),
             owner = dict(type='bool'),
@@ -369,13 +383,13 @@ def main():
 
     if module.params['_substitute_controller']:
         try:
-            source = '"' + substitute_controller(module.params['src']) + '"'
-            dest = '"' + substitute_controller(module.params['dest']) + '"'
+            source = substitute_controller(module.params['src'])
+            dest = substitute_controller(module.params['dest'])
         except ValueError:
             module.fail_json(msg='Could not determine controller hostname for rsync to send to')
     else:
-        source = '"' + module.params['src'] + '"'
-        dest = '"' + module.params['dest'] + '"'
+        source = module.params['src']
+        dest = module.params['dest']
     dest_port = module.params['dest_port']
     delete = module.params['delete']
     private_key = module.params['private_key']
@@ -403,90 +417,81 @@ def main():
     if '/' not in rsync:
         rsync = module.get_bin_path(rsync, required=True)
 
-    ssh = module.get_bin_path('ssh', required=True)
-
-    cmd = '%s --delay-updates -F' % rsync
+    cmd = [rsync, '--delay-updates', '-F']
     if compress:
-        cmd = cmd + ' --compress'
+        cmd.append('--compress')
     if rsync_timeout:
-        cmd = cmd + ' --timeout=%s' % rsync_timeout
+        cmd.append('--timeout=%s' % rsync_timeout)
     if module.check_mode:
-        cmd = cmd + ' --dry-run'
+        cmd.append('--dry-run')
     if delete:
-        cmd = cmd + ' --delete-after'
+        cmd.append('--delete-after')
     if existing_only:
-        cmd = cmd + ' --existing'
+        cmd.append('--existing')
     if checksum:
-        cmd = cmd + ' --checksum'
+        cmd.append('--checksum')
+    if copy_links:
+        cmd.append('--copy-links')
     if archive:
-        cmd = cmd + ' --archive'
+        cmd.append('--archive')
         if recursive is False:
-            cmd = cmd + ' --no-recursive'
+            cmd.append('--no-recursive')
         if links is False:
-            cmd = cmd + ' --no-links'
-        if copy_links is True:
-            cmd = cmd + ' --copy-links'
+            cmd.append('--no-links')
         if perms is False:
-            cmd = cmd + ' --no-perms'
+            cmd.append('--no-perms')
         if times is False:
-            cmd = cmd + ' --no-times'
+            cmd.append('--no-times')
         if owner is False:
-            cmd = cmd + ' --no-owner'
+            cmd.append('--no-owner')
         if group is False:
-            cmd = cmd + ' --no-group'
+            cmd.append('--no-group')
     else:
         if recursive is True:
-            cmd = cmd + ' --recursive'
+            cmd.append('--recursive')
         if links is True:
-            cmd = cmd + ' --links'
-        if copy_links is True:
-            cmd = cmd + ' --copy-links'
+            cmd.append('--links')
         if perms is True:
-            cmd = cmd + ' --perms'
+            cmd.append('--perms')
         if times is True:
-            cmd = cmd + ' --times'
+            cmd.append('--times')
         if owner is True:
-            cmd = cmd + ' --owner'
+            cmd.append('--owner')
         if group is True:
-            cmd = cmd + ' --group'
+            cmd.append('--group')
     if dirs:
-        cmd = cmd + ' --dirs'
-    if private_key is None:
-        private_key = ''
-    else:
-        private_key = '-i "%s"' % private_key
+        cmd.append('--dirs')
 
-    ssh_opts = '-S none'
-
-    if not verify_host:
-        ssh_opts = '%s -o StrictHostKeyChecking=no' % ssh_opts
-
-    if ssh_args:
-        ssh_opts = '%s %s' % (ssh_opts, ssh_args)
-
-    if source.startswith('"rsync://') and dest.startswith('"rsync://'):
+    if source.startswith('rsync://') and dest.startswith('rsync://'):
         module.fail_json(msg='either src or dest must be a localhost', rc=1)
 
-    if not source.startswith('"rsync://') and not dest.startswith('"rsync://'):
+    if not source.startswith('rsync://') and not dest.startswith('rsync://'):
+        ssh_cmd = [module.get_bin_path('ssh', required=True), '-S', 'none']
+        if private_key is not None:
+            ssh_cmd.extend(['-i', private_key])
         # If the user specified a port value
         # Note:  The action plugin takes care of setting this to a port from
         # inventory if the user didn't specify an explicit dest_port
         if dest_port is not None:
-            cmd += " --rsh 'ssh %s %s -o Port=%s'" % (private_key, ssh_opts, dest_port)
-        else:
-            cmd += " --rsh 'ssh %s %s'" % (private_key, ssh_opts)
+            ssh_cmd.extend(['-o', 'Port=%s' % dest_port])
+        if not verify_host:
+            ssh_cmd.extend(['-o', 'StrictHostKeyChecking=no'])
+        if ssh_args:
+            ssh_cmd.append(ssh_args)
+        ssh_cmd_str = ' '.join(shlex_quote(arg) for arg in ssh_cmd)
+        cmd.append('--rsh=%s' % ssh_cmd_str)
 
     if rsync_path:
-        cmd = cmd + " --rsync-path=%s" % (rsync_path)
+        cmd.append('--rsync-path=%s' % rsync_path)
 
     if rsync_opts:
-        cmd = cmd + " " +  " ".join(rsync_opts)
+        cmd.extend(rsync_opts)
 
     if partial:
-        cmd = cmd + " --partial"
+        cmd.append('--partial')
 
     changed_marker = '<<CHANGED>>'
-    cmd = cmd + " --out-format='" + changed_marker + "%i %n%L'"
+    cmd.append('--out-format=' + changed_marker + '%i %n%L')
 
     # expand the paths
     if '@' not in source:
@@ -494,15 +499,16 @@ def main():
     if '@' not in dest:
         dest = os.path.expanduser(dest)
 
-    cmd = ' '.join([cmd, source, dest])
-    cmdstr = cmd
+    cmd.append(source)
+    cmd.append(dest)
+    cmdstr = ' '.join(cmd)
     (rc, out, err) = module.run_command(cmd)
     if rc:
         return module.fail_json(msg=err, rc=rc, cmd=cmdstr)
     else:
         changed = changed_marker in out
-        out_clean=out.replace(changed_marker,'')
-        out_lines=out_clean.split('\n')
+        out_clean = out.replace(changed_marker, '')
+        out_lines = out_clean.split('\n')
         while '' in out_lines:
             out_lines.remove('')
         if module._diff:
@@ -514,8 +520,6 @@ def main():
             return module.exit_json(changed=changed, msg=out_clean,
                                     rc=rc, cmd=cmdstr, stdout_lines=out_lines)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
