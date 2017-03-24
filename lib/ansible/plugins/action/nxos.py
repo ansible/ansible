@@ -57,6 +57,7 @@ class ActionModule(_ActionModule):
             pc = copy.deepcopy(self._play_context)
             pc.connection = 'network_cli'
             pc.network_os = 'nxos'
+            pc.remote_addr = provider['host'] or self._play_context.remote_addr
             pc.port = provider['port'] or self._play_context.port or 22
             pc.remote_user = provider['username'] or self._play_context.connection_user
             pc.password = provider['password'] or self._play_context.password
@@ -115,7 +116,10 @@ class ActionModule(_ActionModule):
         # make sure a transport value is set in args
         self._task.args['transport'] = transport
 
-        return super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(tmp, task_vars)
+        del result['invocation']['module_args']['provider']
+
+        return result
 
     def _get_socket_path(self, play_context):
         ssh = connection_loader.get('ssh', class_only=True)
