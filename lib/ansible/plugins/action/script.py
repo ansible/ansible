@@ -69,7 +69,7 @@ class ActionModule(ActionBase):
         args   = ' '.join(parts[1:])
 
         try:
-            source = self._loader.get_real_file(self._find_needle('files', source))
+            source = self._loader.get_real_file(self._find_needle('files', source), decrypt=self._task.args.get('decrypt', True))
         except AnsibleError as e:
             return dict(failed=True, msg=to_native(e))
 

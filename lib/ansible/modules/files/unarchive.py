@@ -31,7 +31,7 @@ DOCUMENTATION = '''
 module: unarchive
 version_added: 1.4
 short_description: Unpacks an archive after (optionally) copying it from the local machine.
-extends_documentation_fragment: files
+extends_documentation_fragment: [files, decrypt]
 description:
      - The C(unarchive) module unpacks an archive. By default, it will copy the source file from the local system to the target before unpacking.
        Set remote_src=yes to unpack an archive which already exists on the target.
