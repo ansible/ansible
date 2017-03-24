@@ -35,6 +35,11 @@ description:
 version_added: "2.1"
 
 options:
+  auto_remove:
+    description:
+      - enable auto-removal of the container on daemon side when the container's process exits
+    default: false
+    version_added: "2.4"
   blkio_weight:
     description:
       - Block IO (relative weight), between 10 and 1000.
@@ -688,6 +693,7 @@ class TaskParameters(DockerBaseClass):
         super(TaskParameters, self).__init__()
         self.client = client
 
+        self.auto_remove = None
         self.blkio_weight = None
         self.capabilities = None
         self.cleanup = None
@@ -917,6 +923,7 @@ class TaskParameters(DockerBaseClass):
         '''
 
         host_config_params=dict(
+            auto_remove='auto_remove',
             port_bindings='published_ports',
             publish_all_ports='publish_all_ports',
             links='links',
@@ -1228,6 +1235,7 @@ class Container(DockerBaseClass):
 
         # Map parameters to container inspect results
         config_mapping = dict(
+            auto_remove=host_config.get('AutoRemove'),
             image=config.get('Image'),
             expected_cmd=config.get('Cmd'),
             hostname=config.get('Hostname'),
@@ -1945,6 +1953,7 @@ class ContainerManager(DockerBaseClass):
 
 def main():
     argument_spec = dict(
+        auto_remove=dict(type='bool', default=False),
         blkio_weight=dict(type='int'),
         capabilities=dict(type='list'),
         cleanup=dict(type='bool', default=False),
