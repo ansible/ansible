@@ -2040,7 +2040,7 @@ def main():
     )
 
     if not HAS_DOCKER_PY_2 and client.module.params.get('auto_remove'):
-        client.module.fail_json(msg='"auto_remove" is not compatible with docker-py, and requires the docker python module')
+        client.module.fail_json(msg="'auto_remove' is not compatible with docker-py, and requires the docker python module")
 
     cm = ContainerManager(client)
     client.module.exit_json(**cm.results)
