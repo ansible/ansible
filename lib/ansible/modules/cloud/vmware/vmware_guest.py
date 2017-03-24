@@ -190,6 +190,7 @@ EXAMPLES = '''
         mac: 'aa:bb:dd:aa:00:14'
       template: template_el7
       wait_for_ip_address: yes
+    delegate_to: localhost
     register: deploy
 
 # Clone a VM from Template and customize
@@ -222,6 +223,7 @@ EXAMPLES = '''
         password: new_vm_password
         runonce:
         - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\Enable-WinRM.ps1 -ForceNewSSLCert
+    delegate_to: localhost
 
 # Create a VM template
   - name: create a VM template
@@ -246,6 +248,7 @@ EXAMPLES = '''
         num_cpus: 1
         scsi: lsilogic
       wait_for_ip_address: yes
+    delegate_to: localhost
     register: deploy
 
 # Rename a VM (requires the VM's uuid)
@@ -256,6 +259,7 @@ EXAMPLES = '''
       uuid: 421e4592-c069-924d-ce20-7e7533fab926
       name: new_name
       state: present
+    delegate_to: localhost
 
 # Remove a VM by uuid
   - vmware_guest:
@@ -264,6 +268,7 @@ EXAMPLES = '''
       password: vmware
       uuid: 421e4592-c069-924d-ce20-7e7533fab926
       state: absent
+    delegate_to: localhost
 '''
 
 RETURN = """
