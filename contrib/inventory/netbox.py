@@ -259,17 +259,25 @@ class NetboxAsInventory(object):
                 "custom": host_data.get("custom_fields")
             }
 
+            # Get host vars based on selected vars. (that should come from
+            # script's config file)
             for category in host_vars:
                 key_name = self.key_map[category]
                 data_dict = categories_source[category]
 
-                for key, value in host_vars[category].items():
-                    var_name = key
-                    var_value = get_value_by_path(data_dict, value + "." + key_name, ignore_key_error=True)
+                for var_name, var_data in host_vars[category].items():
+                    # This is because "custom_fields" has more than 1 type.
+                    # Values inside "custom_fields" could be a key:value or a dict.
+                    if isinstance(data_dict.get(var_data), dict):
+                        var_value = get_value_by_path(data_dict, var_data + "." + key_name, ignore_key_error=True)
+                    else:
+                        var_value = data_dict.get(var_data)
+
                     if var_value:
                         # Remove CIDR from IP address.
-                        if host_vars.get("ip") and value in host_vars["ip"].values():
+                        if host_vars.get("ip") and var_data in host_vars["ip"].values():
                             var_value = var_value.split("/")[0]
+                        # Add var to host dict.
                         host_vars_dict.update({var_name: var_value})
         return host_vars_dict
 
