@@ -20,7 +20,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'supported_by': 'core'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: template
 version_added: historical
@@ -51,27 +51,55 @@ options:
     description:
       - Create a backup file including the timestamp information so you can get
         the original file back if you somehow clobbered it incorrectly.
-    required: false
     choices: [ "yes", "no" ]
     default: "no"
+  newline_sequence:
+    description:
+      - Specify the newline sequence to use for templating files.
+    choices: [ '\n', '\r', '\r\n' ]
+    default: '\n'
+    version_added: '2.3'
+  block_start_string:
+    description:
+      - The string marking the beginning of a block.
+    default: '{%'
+    version_added: '2.3'
+  block_end_string:
+    description:
+      - The string marking the end of a block.
+    default: '%}'
+    version_added: '2.3'
+  variable_start_string:
+    description:
+      - The string marking the beginning of a print statement.
+    default: '{{'
+    version_added: '2.3'
+  variable_end_string:
+    description:
+      - The string marking the end of a print statement.
+    default: '}}'
+    version_added: '2.3'
+  trim_blocks:
+    description:
+      - If this is set to True the first newline after a block is removed (block, not variable tag!).
+    default: "no"
+    version_added: '2.3'
   force:
     description:
       - the default is C(yes), which will replace the remote file when contents
         are different than the source.  If C(no), the file will only be transferred
         if the destination does not exist.
-    required: false
     choices: [ "yes", "no" ]
     default: "yes"
 notes:
+  - For Windows you can use M(win_template) which uses '\r\n' as C(newline_sequence).
   - Including a string that uses a date in the template will result in the template being marked 'changed' each time
   - "Since Ansible version 0.9, templates are loaded with C(trim_blocks=True)."
   - "Also, you can override jinja2 settings by adding a special header to template file.
-    i.e. C(#jinja2:variable_start_string:'[%' , variable_end_string:'%]', trim_blocks: False)
+    i.e. C(#jinja2:variable_start_string:'[%', variable_end_string:'%]', trim_blocks: False)
     which changes the variable interpolation markers to  [% var %] instead of  {{ var }}.
     This is the best way to prevent evaluation of things that look like, but should not be Jinja2.
     raw/endraw in Jinja2 will not work as you expect because templates in Ansible are recursively evaluated."
-
-
 author:
     - Ansible Core Team
     - Michael DeHaan
@@ -80,7 +108,7 @@ extends_documentation_fragment:
     - validate
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Example from Ansible Playbooks
 - template:
     src: /mytemplates/foo.j2
@@ -96,6 +124,12 @@ EXAMPLES = '''
     owner: bin
     group: wheel
     mode: "u=rw,g=r,o=r"
+
+# Create a DOS-style text file from a template
+- template:
+    src: config.ini.j2
+    dest: /share/windows/config.ini
+    newline_sequence: '\r\n'
 
 # Copy a new "sudoers" file into place, after passing validation with visudo
 - template:

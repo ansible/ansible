@@ -37,12 +37,11 @@ try:
 except ImportError:
     pass
 
-from ansible.compat.six import string_types
-from ansible.compat.six.moves.urllib.parse import urlunsplit
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
+from ansible.module_utils.six import string_types
+from ansible.module_utils.six.moves.urllib.parse import urlunsplit
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.pycompat24 import get_exception
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import exec_wrapper, become_wrapper, leaf_exec
 from ansible.utils.hashing import secure_hash
@@ -52,14 +51,12 @@ try:
     import winrm
     from winrm import Response
     from winrm.protocol import Protocol
-except ImportError:
-    e = get_exception()
+except ImportError as e:
     raise AnsibleError("winrm or requests is not installed: %s" % str(e))
 
 try:
     import xmltodict
-except ImportError:
-    e = get_exception()
+except ImportError as e:
     raise AnsibleError("xmltodict is not installed: %s" % str(e))
 
 try:
@@ -308,12 +305,13 @@ class Connection(ConnectionBase):
         self.shell_id = None
         self._connect()
 
-    def _create_raw_wrapper_payload(self, cmd):
+    def _create_raw_wrapper_payload(self, cmd, environment=dict()):
         payload = {
             'module_entry': base64.b64encode(to_bytes(cmd)),
             'powershell_modules': {},
             'actions': ['exec'],
-            'exec': base64.b64encode(to_bytes(leaf_exec))
+            'exec': base64.b64encode(to_bytes(leaf_exec)),
+            'environment': environment
         }
 
         return json.dumps(payload)

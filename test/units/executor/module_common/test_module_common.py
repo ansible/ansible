@@ -22,9 +22,9 @@ __metaclass__ = type
 import pytest
 
 import ansible.errors
-from ansible.compat.six import PY2
 
 from ansible.executor import module_common as amc
+from ansible.module_utils.six import PY2
 
 
 class TestStripComments(object):

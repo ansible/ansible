@@ -309,13 +309,14 @@ class Interfaces(FactsBase):
 
     def populate_ipv6_interfaces(self, data):
         for key, value in data.items():
-            self.facts['interfaces'][key]['ipv6'] = list()
-            addresses = re.findall(r'\s+(.+), subnet', value, re.M)
-            subnets = re.findall(r', subnet is (\S+)', value, re.M)
-            for addr, subnet in itertools.izip(addresses, subnets):
-                ipv6 = dict(address=addr.strip(), subnet=subnet.strip())
-                self.add_ip_address(addr.strip(), 'ipv6')
-                self.facts['interfaces'][key]['ipv6'].append(ipv6)
+            if key in self.facts['interfaces']:
+                self.facts['interfaces'][key]['ipv6'] = list()
+                addresses = re.findall(r'\s+(.+), subnet', value, re.M)
+                subnets = re.findall(r', subnet is (\S+)', value, re.M)
+                for addr, subnet in itertools.izip(addresses, subnets):
+                    ipv6 = dict(address=addr.strip(), subnet=subnet.strip())
+                    self.add_ip_address(addr.strip(), 'ipv6')
+                    self.facts['interfaces'][key]['ipv6'].append(ipv6)
 
     def add_ip_address(self, address, family):
         if family == 'ipv4':

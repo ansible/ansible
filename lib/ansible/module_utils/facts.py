@@ -1476,6 +1476,19 @@ class LinuxHardware(Hardware):
             for key in ['vendor', 'model', 'sas_address', 'sas_device_handle']:
                 d[key] = get_file_content(sysdir + "/device/" + key)
 
+            sg_inq = self.module.get_bin_path('sg_inq')
+
+            if sg_inq:
+                device = "/dev/%s" % (block)
+                rc, drivedata, err = self.module.run_command([sg_inq, device])
+                if rc == 0:
+                    serial = re.search("Unit serial number:\s+(\w+)", drivedata)
+                    if serial:
+                        d['serial'] = serial.group(1)
+
+            for key in ['vendor', 'model']:
+                d[key] = get_file_content(sysdir + "/device/" + key)
+
             for key,test in [ ('removable','/removable'), \
                               ('support_discard','/queue/discard_granularity'),
                               ]:
@@ -1540,6 +1553,17 @@ class LinuxHardware(Hardware):
             uptime_seconds_string = uptime_file_content.split(' ')[0]
             self.facts['uptime_seconds'] = int(float(uptime_seconds_string))
 
+    def _find_mapper_device_name(self, dm_device):
+        dm_prefix = '/dev/dm-'
+        mapper_device = dm_device
+        if dm_device.startswith(dm_prefix):
+            dmsetup_cmd = self.module.get_bin_path('dmsetup', True)
+            mapper_prefix = '/dev/mapper/'
+            rc, dm_name, err = self.module.run_command("%s info -C --noheadings -o name %s" % (dmsetup_cmd, dm_device))
+            if rc == 0:
+                mapper_device = mapper_prefix + dm_name.rstrip()
+        return mapper_device
+
     def get_lvm_facts(self):
         """ Get LVM Facts if running as root and lvm utils are available """
 
@@ -1568,7 +1592,20 @@ class LinuxHardware(Hardware):
                     items = lv_line.split()
                     lvs[items[0]] = {'size_g': items[3], 'vg': items[1]}
 
-            self.facts['lvm'] = {'lvs': lvs, 'vgs': vgs}
+
+            pvs_path = self.module.get_bin_path('pvs')
+            #pvs fields: PV VG #Fmt #Attr PSize PFree
+            pvs = {}
+            if pvs_path:
+                rc, pv_lines, err = self.module.run_command( '%s %s' % (pvs_path, lvm_util_options))
+                for pv_line in pv_lines.splitlines():
+                    items = pv_line.split()
+                    pvs[self._find_mapper_device_name(items[0])] = {
+                        'size_g': items[4],
+                        'free_g': items[5],
+                        'vg': items[1]}
+
+            self.facts['lvm'] = {'lvs': lvs, 'vgs': vgs, 'pvs': pvs}
 
 
 class SunOSHardware(Hardware):
@@ -2708,7 +2745,7 @@ class LinuxNetwork(Network):
             parse_ip_output(primary_data)
             parse_ip_output(secondary_data, secondary=True)
 
-            interfaces[device]['features'] = self.get_ethtool_data(device)
+            interfaces[device].update(self.get_ethtool_data(device))
 
         # replace : by _ in interface name since they are hard to use in template
         new_interfaces = {}
@@ -2721,12 +2758,13 @@ class LinuxNetwork(Network):
 
     def get_ethtool_data(self, device):
 
-        features = {}
+        data = {}
         ethtool_path = self.module.get_bin_path("ethtool")
         if ethtool_path:
             args = [ethtool_path, '-k', device]
             rc, stdout, stderr = self.module.run_command(args, errors='surrogate_then_replace')
             if rc == 0:
+                features = {}
                 for line in stdout.strip().splitlines():
                     if not line or line.endswith(":"):
                         continue
@@ -2734,7 +2772,18 @@ class LinuxNetwork(Network):
                     if not value:
                         continue
                     features[key.strip().replace('-','_')] = value.strip()
-        return features
+                data['features'] = features
+
+            args = [ethtool_path, '-T', device]
+            rc, stdout, stderr = self.module.run_command(args, errors='surrogate_then_replace')
+            if rc == 0:
+                data['timestamping'] = [m.lower() for m in re.findall('SOF_TIMESTAMPING_(\w+)', stdout)]
+                data['hw_timestamp_filters'] = [m.lower() for m in re.findall('HWTSTAMP_FILTER_(\w+)', stdout)]
+                m = re.search('PTP Hardware Clock: (\d+)', stdout)
+                if m:
+                    data['phc_index'] = int(m.groups()[0])
+
+        return data
 
 
 class GenericBsdIfconfigNetwork(Network):

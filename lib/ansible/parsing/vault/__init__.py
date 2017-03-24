@@ -62,9 +62,9 @@ try:
 except ImportError:
     HAS_AES = False
 
-from ansible.compat.six import PY3, binary_type
-from ansible.compat.six.moves import zip
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import PY3, binary_type
+from ansible.module_utils.six.moves import zip
 from ansible.module_utils._text import to_bytes, to_text
 
 try:

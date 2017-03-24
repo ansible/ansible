@@ -30,12 +30,12 @@ import time
 from abc import ABCMeta, abstractmethod
 
 from ansible import constants as C
-from ansible.compat.six import binary_type, string_types, text_type, iteritems, with_metaclass
-from ansible.compat.six.moves import shlex_quote
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.executor.module_common import modify_module, build_windows_module_payload
-from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.json_utils import _filter_non_json_lines
+from ansible.module_utils.six import binary_type, string_types, text_type, iteritems, with_metaclass
+from ansible.module_utils.six.moves import shlex_quote
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
 from ansible.release import __version__
@@ -162,14 +162,16 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # FUTURE: we'll have to get fancier about this to support powershell over SSH on Windows...
         if self._connection.transport == "winrm":
             # WinRM always pipelines, so we need to build up a fancier module payload...
+            final_environment = dict()
+            self._compute_environment_string(final_environment)
             module_data = build_windows_module_payload(module_name=module_name, module_path=module_path,
                                                    b_module_data=module_data, module_args=module_args,
                                                    task_vars=task_vars, task=self._task,
-                                                   play_context=self._play_context)
+                                                   play_context=self._play_context, environment=final_environment)
 
         return (module_style, module_shebang, module_data, module_path)
 
-    def _compute_environment_string(self):
+    def _compute_environment_string(self, raw_environment_out=dict()):
         '''
         Builds the environment string to be used when executing the remote task.
         '''
@@ -195,6 +197,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 final_environment.update(temp_environment)
 
         final_environment = self._templar.template(final_environment)
+
+        if isinstance(raw_environment_out, dict):
+            raw_environment_out.clear()
+            raw_environment_out.update(final_environment)
+
         return self._connection._shell.env_prefix(**final_environment)
 
     def _early_needs_tmp_path(self):

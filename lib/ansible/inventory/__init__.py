@@ -26,14 +26,13 @@ import sys
 import re
 import itertools
 
-from ansible.compat.six import string_types, iteritems
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-
 from ansible.inventory.dir import InventoryDirectory, get_file_parser
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
+from ansible.module_utils.six import string_types, iteritems
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins import vars_loader

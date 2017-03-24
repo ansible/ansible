@@ -22,12 +22,12 @@ __metaclass__ = type
 
 from io import StringIO
 
-from six import text_type, binary_type
 from collections import Sequence, Set, Mapping
 
 from ansible.compat.tests import unittest
 
 from ansible import errors
+from ansible.module_utils.six import text_type, binary_type
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing import vault
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
