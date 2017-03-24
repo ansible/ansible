@@ -17,7 +17,22 @@ Ansible Changes By Release
 * removed previously deprecated config option 'hostfile' and env var 'ANSIBLE_HOSTS'
 * removed unused and deprecated config option 'pattern'
 * Updated the copy of six bundled for modules to use from 1.4.1 to 1.10.0
+* Fixed a cornercase with ini inventory vars.  Previously, if an inventory var
+  was a quoted string with hash marks ("#") in it then the parsed string
+  included the quotes.  Now the string will not be quoted.  Previously, if the
+  quoting ended before the string finished and then the hash mark appeared, the
+  hash mark was included as part of the string.  Now it is treated as
+  a trailing comment::
 
+    # Before:
+    var1="string#comment"   ===>  var1: "\"string#comment\""
+    var1="string" #comment  ===>  var1: "\"string\" #comment"
+    # After:
+    var1="string#comment"   ===>  var1: "string#comment"
+    var1="string" #comment  ===>  var1: "string"
+
+  The new behaviour mirrors how the variables would appear if there was no hash
+  mark in the string.
 
 #### New: Tests
 - any : true if any element is true
