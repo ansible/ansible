@@ -1553,6 +1553,17 @@ class LinuxHardware(Hardware):
             uptime_seconds_string = uptime_file_content.split(' ')[0]
             self.facts['uptime_seconds'] = int(float(uptime_seconds_string))
 
+    def _find_mapper_device_name(self, dm_device):
+        dm_prefix = '/dev/dm-'
+        mapper_device = dm_device
+        if dm_device.startswith(dm_prefix):
+            dmsetup_cmd = self.module.get_bin_path('dmsetup', True)
+            mapper_prefix = '/dev/mapper/'
+            rc, dm_name, err = self.module.run_command("%s info -C --noheadings -o name %s" % (dmsetup_cmd, dm_device))
+            if rc == 0:
+                mapper_device = mapper_prefix + dm_name.rstrip()
+        return mapper_device
+
     def get_lvm_facts(self):
         """ Get LVM Facts if running as root and lvm utils are available """
 
@@ -1581,7 +1592,20 @@ class LinuxHardware(Hardware):
                     items = lv_line.split()
                     lvs[items[0]] = {'size_g': items[3], 'vg': items[1]}
 
-            self.facts['lvm'] = {'lvs': lvs, 'vgs': vgs}
+
+            pvs_path = self.module.get_bin_path('pvs')
+            #pvs fields: PV VG #Fmt #Attr PSize PFree
+            pvs = {}
+            if pvs_path:
+                rc, pv_lines, err = self.module.run_command( '%s %s' % (pvs_path, lvm_util_options))
+                for pv_line in pv_lines.splitlines():
+                    items = pv_line.split()
+                    pvs[self._find_mapper_device_name(items[0])] = {
+                        'size_g': items[4],
+                        'free_g': items[5],
+                        'vg': items[1]}
+
+            self.facts['lvm'] = {'lvs': lvs, 'vgs': vgs, 'pvs': pvs}
 
 
 class SunOSHardware(Hardware):
