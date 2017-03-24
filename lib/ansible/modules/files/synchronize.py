@@ -298,8 +298,14 @@ EXAMPLES = '''
 '''
 
 
-import os.path
-import pipes
+import os
+
+# Python3 compat. six.moves.shlex_quote will be available once we're free to
+# upgrade beyond six-1.4 module-side.
+try:
+    from shlex import quote as shlex_quote
+except ImportError:
+    from pipes import quote as shlex_quote
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -458,7 +464,7 @@ def main():
             ssh_cmd.extend(['-o', 'StrictHostKeyChecking=no'])
         if ssh_args:
             ssh_cmd.append(ssh_args)
-        ssh_cmd_str = ' '.join(pipes.quote(arg) for arg in ssh_cmd)
+        ssh_cmd_str = ' '.join(shlex_quote(arg) for arg in ssh_cmd)
         cmd.append('--rsh=%s' % ssh_cmd_str)
 
     if rsync_path:
