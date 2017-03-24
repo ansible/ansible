@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import copy
-from six.moves import configparser, StringIO
+from ansible.module_utils.six.moves import configparser, StringIO
 
 
 def from_ini(o):
