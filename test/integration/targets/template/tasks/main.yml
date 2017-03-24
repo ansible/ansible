@@ -62,14 +62,14 @@
   copy: src=foo.txt dest={{output_dir}}/foo.txt
 
 - name: compare templated file to known good
-  shell: diff -w {{output_dir}}/foo.templated {{output_dir}}/foo.txt
+  shell: diff -uw {{output_dir}}/foo.templated {{output_dir}}/foo.txt
   register: diff_result
 
 - name: verify templated file matches known good
-  assert:  
-    that: 
-        - 'diff_result.stdout == ""' 
-        - "diff_result.rc == 0" 
+  assert:
+    that:
+        - 'diff_result.stdout == ""'
+        - "diff_result.rc == 0"
 
 # VERIFY MODE
 
@@ -251,3 +251,121 @@
   assert:
     that:
     - "template_result|changed"
+
+- name: change var for the template
+  set_fact:
+    templated_var: "templated_var_loaded"
+
+# UNIX TEMPLATE
+- name: fill in a basic template (Unix)
+  template:
+    src: foo2.j2
+    dest: '{{ output_dir }}/foo.unix.templated'
+  register: template_result
+
+- name: verify that the file was marked as changed (Unix)
+  assert:
+    that:
+      - 'template_result|changed'
+
+- name: fill in a basic template again (Unix)
+  template:
+    src: foo2.j2
+    dest: '{{ output_dir }}/foo.unix.templated'
+  register: template_result2
+
+- name: verify that the template was not changed (Unix)
+  assert:
+    that:
+      - 'not template_result2|changed'
+
+# VERIFY UNIX CONTENTS
+- name: copy known good into place (Unix)
+  copy:
+    src: foo.unix.txt
+    dest: '{{ output_dir }}/foo.unix.txt'
+
+- name: Dump templated file (Unix)
+  command: hexdump -C {{ output_dir }}/foo.unix.templated
+
+- name: Dump expected file (Unix)
+  command: hexdump -C {{ output_dir }}/foo.unix.txt
+
+- name: compare templated file to known good (Unix)
+  command: diff -u {{ output_dir }}/foo.unix.templated {{ output_dir }}/foo.unix.txt
+  register: diff_result
+
+- name: verify templated file matches known good (Unix)
+  assert:
+    that:
+        - 'diff_result.stdout == ""'
+        - "diff_result.rc == 0"
+
+# DOS TEMPLATE
+- name: fill in a basic template (DOS)
+  template:
+    src: foo2.j2
+    dest: '{{ output_dir }}/foo.dos.templated'
+    newline_sequence: '\r\n'
+  register: template_result
+
+- name: verify that the file was marked as changed (DOS)
+  assert:
+    that:
+      - 'template_result|changed'
+
+- name: fill in a basic template again (DOS)
+  template:
+    src: foo2.j2
+    dest: '{{ output_dir }}/foo.dos.templated'
+    newline_sequence: '\r\n'
+  register: template_result2
+
+- name: verify that the template was not changed (DOS)
+  assert:
+    that:
+      - 'not template_result2|changed'
+
+# VERIFY DOS CONTENTS
+- name: copy known good into place (DOS)
+  copy:
+    src: foo.dos.txt
+    dest: '{{ output_dir }}/foo.dos.txt'
+
+- name: Dump templated file (DOS)
+  command: hexdump -C {{ output_dir }}/foo.dos.templated
+
+- name: Dump expected file (DOS)
+  command: hexdump -C {{ output_dir }}/foo.dos.txt
+
+- name: compare templated file to known good (DOS)
+  command: diff -u {{ output_dir }}/foo.dos.templated {{ output_dir }}/foo.dos.txt
+  register: diff_result
+
+- name: verify templated file matches known good (DOS)
+  assert:
+    that:
+        - 'diff_result.stdout == ""'
+        - "diff_result.rc == 0"
+
+# VERIFY DOS CONTENTS
+- name: copy known good into place (Unix)
+  copy:
+    src: foo.unix.txt
+    dest: '{{ output_dir }}/foo.unix.txt'
+
+- name: Dump templated file (Unix)
+  command: hexdump -C {{ output_dir }}/foo.unix.templated
+
+- name: Dump expected file (Unix)
+  command: hexdump -C {{ output_dir }}/foo.unix.txt
+
+- name: compare templated file to known good (Unix)
+  command: diff -u {{ output_dir }}/foo.unix.templated {{ output_dir }}/foo.unix.txt
+  register: diff_result
+
+- name: verify templated file matches known good (Unix)
+  assert:
+    that:
+        - 'diff_result.stdout == ""'
+        - "diff_result.rc == 0"

@@ -223,12 +223,13 @@ class Templar:
 
         self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (self.environment.variable_start_string, self.environment.variable_end_string))
 
-        self.block_start    = self.environment.block_start_string
-        self.block_end      = self.environment.block_end_string
-        self.variable_start = self.environment.variable_start_string
-        self.variable_end   = self.environment.variable_end_string
-        self._clean_regex   = re.compile(r'(?:%s|%s|%s|%s)' % (self.variable_start, self.block_start, self.block_end, self.variable_end))
-        self._no_type_regex = re.compile(r'.*\|\s*(?:%s)\s*(?:%s)?$' % ('|'.join(C.STRING_TYPE_FILTERS), self.variable_end))
+        self._clean_regex   = re.compile(r'(?:%s|%s|%s|%s)' % (
+            self.environment.variable_start_string,
+            self.environment.block_start_string,
+            self.environment.block_end_string,
+            self.environment.variable_end_string
+        ))
+        self._no_type_regex = re.compile(r'.*\|\s*(?:%s)\s*(?:%s)?$' % ('|'.join(C.STRING_TYPE_FILTERS), self.environment.variable_end_string))
 
     def _get_filters(self):
         '''
@@ -294,17 +295,17 @@ class Templar:
                 token = mo.group(0)
                 token_start = mo.start(0)
 
-                if token[0] == self.variable_start[0]:
-                    if token == self.block_start:
+                if token[0] == self.environment.variable_start_string[0]:
+                    if token == self.environment.block_start_string:
                         block_openings.append(token_start)
-                    elif token == self.variable_start:
+                    elif token == self.environment.variable_start_string:
                         print_openings.append(token_start)
 
-                elif token[1] == self.variable_end[1]:
+                elif token[1] == self.environment.variable_end_string[1]:
                     prev_idx = None
-                    if token == self.block_end and block_openings:
+                    if token == self.environment.block_end_string and block_openings:
                         prev_idx = block_openings.pop()
-                    elif token == self.variable_end and print_openings:
+                    elif token == self.environment.variable_end_string and print_openings:
                         prev_idx = print_openings.pop()
 
                     if prev_idx is not None:
@@ -622,7 +623,7 @@ class Templar:
                 # newline here if preserve_newlines is False.
                 res_newlines = _count_newlines_from_end(res)
                 if data_newlines > res_newlines:
-                    res += '\n' * (data_newlines - res_newlines)
+                    res += self.environment.newline_sequence * (data_newlines - res_newlines)
             return res
         except (UndefinedError, AnsibleUndefinedVariable) as e:
             if fail_on_undefined:
