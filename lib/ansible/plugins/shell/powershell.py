@@ -124,6 +124,9 @@ Function Run($payload) {
         $ps.AddCommand("Out-Null") | Out-Null
     }
 
+    # force input encoding to preamble-free UTF8 so PS sub-processes (eg, Start-Job) don't blow up
+    $ps.AddStatement().AddScript("[Console]::InputEncoding = New-Object Text.UTF8Encoding `$false") | Out-Null
+
     $ps.AddStatement().AddScript($entrypoint) | Out-Null
 
     $output = $ps.Invoke()
