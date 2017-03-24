@@ -1476,6 +1476,19 @@ class LinuxHardware(Hardware):
             for key in ['vendor', 'model', 'sas_address', 'sas_device_handle']:
                 d[key] = get_file_content(sysdir + "/device/" + key)
 
+            sg_inq = self.module.get_bin_path('sg_inq')
+
+            if sg_inq:
+                device = "/dev/%s" % (block)
+                rc, drivedata, err = self.module.run_command([sg_inq, device])
+                if rc == 0:
+                    serial = re.search("Unit serial number:\s+(\w+)", drivedata)
+                    if serial:
+                        d['serial'] = serial.group(1)
+
+            for key in ['vendor', 'model']:
+                d[key] = get_file_content(sysdir + "/device/" + key)
+
             for key,test in [ ('removable','/removable'), \
                               ('support_discard','/queue/discard_granularity'),
                               ]:
