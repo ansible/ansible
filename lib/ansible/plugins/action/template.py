@@ -101,10 +101,20 @@ class ActionModule(ActionBase):
             base = os.path.basename(source)
             dest = os.path.join(dest, base)
 
-        # template the source data locally & get ready to transfer
         b_source = to_bytes(source)
+
+        # Get vault decrypted tmp file
         try:
-            with open(b_source, 'r') as f:
+            tmp_source = self._loader.get_real_file(b_source)
+        except AnsibleFileNotFound as e:
+            result['failed'] = True
+            result['msg'] = "could not find src=%s, %s" % (b_source, e)
+            self._remove_tmp_path(tmp)
+            return result
+
+        # template the source data locally & get ready to transfer
+        try:
+            with open(tmp_source, 'r') as f:
                 template_data = to_text(f.read())
 
             # set jinja2 internal search path for includes
@@ -144,6 +154,8 @@ class ActionModule(ActionBase):
             result['failed'] = True
             result['msg'] = type(e).__name__ + ": " + str(e)
             return result
+        finally:
+            self._loader.cleanup_tmp_file(tmp_source)
 
         if not tmp:
             tmp = self._make_tmp_path()
