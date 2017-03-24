@@ -105,10 +105,10 @@ class ActionModule(ActionBase):
 
         # Get vault decrypted tmp file
         try:
-            tmp_source = self._loader.get_real_file(b_source)
+            tmp_source = self._loader.get_real_file(source)
         except AnsibleFileNotFound as e:
             result['failed'] = True
-            result['msg'] = "could not find src=%s, %s" % (b_source, e)
+            result['msg'] = "could not find src=%s, %s" % (source, e)
             self._remove_tmp_path(tmp)
             return result
 
