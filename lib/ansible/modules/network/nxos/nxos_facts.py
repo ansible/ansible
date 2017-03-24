@@ -203,7 +203,7 @@ class FactsBase(object):
         try:
             return resp[0]
         except IndexError:
-            self.warnings.append('command %s returned to data, facts will not be populated' % command_string)
+            self.warnings.append('command %s failed, facts will not be populated' % command_string)
             return None
 
     def transform_dict(self, data, keymap):
@@ -290,7 +290,7 @@ class Interfaces(FactsBase):
         if data:
             self.facts['interfaces'] = self.populate_interfaces(data)
 
-        data = self.run('show ipv6 inteface', 'json')
+        data = self.run('show ipv6 interface', 'json')
         if data:
             self.parse_ipv6_interfaces(data)
 
@@ -315,6 +315,11 @@ class Interfaces(FactsBase):
         return interfaces
 
     def populate_neighbors(self, data):
+        # if there are no neighbors the show command returns
+        # ERROR: No neighbour information
+        if data.startswith('ERROR'):
+            return dict()
+
         data = data['TABLE_nbor']['ROW_nbor']
         if isinstance(data, dict):
             data = [data]
