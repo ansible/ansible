@@ -21,10 +21,12 @@ __metaclass__ = type
 from os import path, walk
 import re
 
+from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.action import ActionBase
+from ansible.utils.vars import merge_hash
 
 
 class ActionModule(ActionBase):
@@ -78,11 +80,12 @@ class ActionModule(ActionBase):
             'dir', 'depth', 'files_matching', 'ignore_files', 'extensions',
         ]
         self.VALID_FILE_ARGUMENTS = ['file', '_raw_params']
+        self.VALID_OPTION_ARGUMENTS = ['override']
         self.GLOBAL_FILE_ARGUMENTS = ['name']
 
         self.VALID_ARGUMENTS = (
             self.VALID_DIR_ARGUMENTS + self.VALID_FILE_ARGUMENTS +
-            self.GLOBAL_FILE_ARGUMENTS
+            self.VALID_OPTION_ARGUMENTS + self.GLOBAL_FILE_ARGUMENTS
         )
         for arg in self._task.args:
             if arg not in self.VALID_ARGUMENTS:
@@ -105,6 +108,8 @@ class ActionModule(ActionBase):
         # validate
         if not isinstance(self.valid_extensions, list):
             raise AnsibleError('Invalid type for "extensions" option, it must be a list')
+
+        self.override = self._task.args.get('override', True)
 
         self._mutually_exclusive()
 
@@ -152,6 +157,16 @@ class ActionModule(ActionBase):
             scope = dict()
             scope[self.return_results_as_name] = results
             results = scope
+
+        if not self.override:
+            if C.DEFAULT_HASH_BEHAVIOR == 'replace':
+                filtered = dict()
+                for (k, v) in results.items():
+                    if k not in task_vars:
+                        filtered[k] = v
+                results = filtered
+            else:
+                results = merge_hash(results, task_vars)
 
         result = super(ActionModule, self).run(tmp, task_vars)
 

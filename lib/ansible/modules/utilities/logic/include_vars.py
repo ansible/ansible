@@ -65,6 +65,12 @@ options:
     description:
         - This module allows you to specify the 'file' option directly w/o any other options.
           There is no 'free-form' option, this is just an indicator, see example below.
+  override:
+    version_added: "2.4"
+    description:
+      - Load the variables, overriding existing values. If false, will ignore any variables that are already set.
+    default: True
+    required: False
 '''
 
 EXAMPLES = """
