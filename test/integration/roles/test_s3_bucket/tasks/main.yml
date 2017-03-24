@@ -78,7 +78,7 @@
   s3_bucket:
     name: "{{ bucket.stdout }}-3"
     state: present
-    policy: {"Version": "2012-10-17","Statement": [{"Sid": " Deny all actions","Principal": "*","Effect": "Deny","Action": "s3:*","Resource": "arn:aws:s3:::{{ bucket.stdout }}-3/*"}]}
+    policy: {"Version": "2012-10-17", "Statement": [{"Sid": " Deny all actions", "Principal": "*", "Effect": "Deny", "Action": "s3:*", "Resource": "arn:aws:s3:::{{ bucket.stdout }}-3/*"}]}
     #policy: roles/test_s3_bucket/files/policy-deny.json
     region: "{{ ec2_region }}"
     aws_access_key: "{{ ec2_access_key }}"
@@ -112,7 +112,7 @@
   s3_bucket:
     name: "{{ bucket.stdout }}-3"
     state: present
-    policy: {"Version": "2012-10-17","Statement": [{"Sid": " Allow all actions","Principal": "*","Effect": "Allow","Action": "s3:*","Resource": "arn:aws:s3:::{{ bucket.stdout }}-3/*"}]}
+    policy: {"Version": "2012-10-17", "Statement": [{"Sid": " Allow all actions", "Principal": "*", "Effect": "Allow", "Action": "s3:*", "Resource": "arn:aws:s3:::{{ bucket.stdout }}-3/*"}]}
     region: "{{ ec2_region }}"
     aws_access_key: "{{ ec2_access_key }}"
     aws_secret_key: "{{ ec2_secret_key }}"
