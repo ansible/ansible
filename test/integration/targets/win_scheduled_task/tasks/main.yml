@@ -1,46 +1,21 @@
 # NOTE: The win_scheduled_task module only works on Win2012+
 
 - name: Test Windows capabilities
-  raw: Get-Command New-ScheduledTask -ErrorAction SilentlyContinue; $?
+  raw: Get-Command New-ScheduledTask -ErrorAction SilentlyContinue; return $?
   failed_when: no
   register: new_scheduledtask
 
-- name: Set boolean for capability
-  set_fact:
-    has_new_scheduledtask: '{{ new_scheduledtask.rc == 0 }}'
-
-- name: Test in normal mode
-  when: has_new_scheduledtask
+- name: Only run tests when Windows is capable
+  when: new_scheduledtask.rc == 0
   block:
-  - include: tests.yml
 
-  - name: Check the various tasks in normal mode
-    assert:
-      that:
-      - add_scheduled_task.changed == true
-      - add_scheduled_task.exists == false
-      - add_scheduled_task_again.changed == false
-      - add_scheduled_task_again.exists == true
-      - remove_scheduled_task.changed == true
-      - remove_scheduled_task.exists == true
-      - remove_scheduled_task_again.changed == false
-      - remove_scheduled_task_again.exists == false
+  - name: Test in normal mode
+    include: tests.yml
+    vars:
+      in_check_mode: no
 
-
-- name: Test in check-mode
-  check_mode: yes
-  when: has_new_scheduledtask
-  block:
-  - include: tests.yml
-
-  - name: Check the various tests in check-mode
-    assert:
-      that:
-      - add_scheduled_task.changed == true
-      - add_scheduled_task.exists == false
-      - add_scheduled_task_again.changed == true
-      - add_scheduled_task_again.exists == false
-      - remove_scheduled_task.changed == false
-      - remove_scheduled_task.exists == false
-      - remove_scheduled_task_again.changed == false
-      - remove_scheduled_task_again.exists == false
+  - name: Test in check-mode
+    include: tests.yml
+    vars:
+      in_check_mode: yes
+    check_mode: yes
