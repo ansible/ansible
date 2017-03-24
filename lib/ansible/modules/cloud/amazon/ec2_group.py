@@ -145,6 +145,7 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+import traceback
 
 def make_rule_key(prefix, rule, group_id, cidr_ip):
     """Creates a unique key for an individual group rule"""
@@ -288,7 +289,7 @@ def main():
     try:
         security_groups = ec2.get_all_security_groups()
     except BotoServerError as e:
-        module.fail_json(msg="Error in get_all_security_groups: %s" % e.message)
+        module.fail_json(msg="Error in get_all_security_groups: %s" % e.message, exception=traceback.format_exc())
 
     for curGroup in security_groups:
         groups[curGroup.id] = curGroup
@@ -310,7 +311,7 @@ def main():
                 if not module.check_mode:
                     group.delete()
             except BotoServerError as e:
-                module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e.message))
+                module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e.message), exception=traceback.format_exc())
             else:
                 group = None
                 changed = True
