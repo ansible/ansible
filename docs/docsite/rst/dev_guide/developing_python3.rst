@@ -188,7 +188,7 @@ subprocess library and byte strings should be expected back from it.
 
 One of the main places in Ansible's controller code that we interact with
 other programs is the connection plugins' ``exec_command`` methods.  These
-methods transform any text strings they receive in the command (and arugments
+methods transform any text strings they receive in the command (and arguments
 to the command) to execute into bytes and return stdout and stderr as byte strings 
 Higher level functions (like action plugins' ``_low_level_execute_command``)
 transform the output into text strings.
