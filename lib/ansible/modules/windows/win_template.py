@@ -48,16 +48,57 @@ options:
     description:
       - Location to render the template to on the remote machine.
     required: true
+  newline_sequence:
+    description:
+      - Specify the newline sequence to use for templating files.
+    choices: [ '\n', '\r', '\r\n' ]
+    default: '\r\n'
+    version_added: '2.3'
+  block_start_string:
+    description:
+      - The string marking the beginning of a block.
+    default: '{%'
+    version_added: '2.3'
+  block_end_string:
+    description:
+      - The string marking the end of a block.
+    default: '%}'
+    version_added: '2.3'
+  variable_start_string:
+    description:
+      - The string marking the beginning of a print statement.
+    default: '{{'
+    version_added: '2.3'
+  variable_end_string:
+    description:
+      - The string marking the end of a print statement.
+    default: '}}'
+    version_added: '2.3'
+  trim_blocks:
+    description:
+      - If this is set to True the first newline after a block is removed (block, not variable tag!).
+    default: "no"
+    version_added: '2.3'
+  force:
+    description:
+      - the default is C(yes), which will replace the remote file when contents
+        are different than the source.  If C(no), the file will only be transferred
+        if the destination does not exist.
+    choices: [ "yes", "no" ]
+    default: "yes"
+    version_added: '2.3'
 notes:
-  - "templates are loaded with C(trim_blocks=True)."
-  - By default, windows line endings are not created in the generated file.
-  - "In order to ensure windows line endings are in the generated file, add the following header
-    as the first line of your template: ``#jinja2: newline_sequence:'\\r\\n'`` and ensure each line
-    of the template ends with \\\\r\\\\n"
+  - For other platforms you can use M(template) which uses '\n' as C(newline_sequence).
+  - Templates are loaded with C(trim_blocks=True).
   - Beware fetching files from windows machines when creating templates
     because certain tools, such as Powershell ISE,  and regedit's export facility
     add a Byte Order Mark as the first character of the file, which can cause tracebacks.
-  - Use "od -cx" to examine your templates for Byte Order Marks.
+  - To find Byte Order Marks in files, use C(Format-Hex <file> -Count 16) on Windows, and use C(od -a -t x1 -N 16 <file>) on Linux.
+  - "Also, you can override jinja2 settings by adding a special header to template file.
+    i.e. C(#jinja2:variable_start_string:'[%', variable_end_string:'%]', trim_blocks: False)
+    which changes the variable interpolation markers to  [% var %] instead of  {{ var }}.
+    This is the best way to prevent evaluation of things that look like, but should not be Jinja2.
+    raw/endraw in Jinja2 will not work as you expect because templates in Ansible are recursively evaluated."
 author: "Jon Hawkesworth (@jhawkesworth)"
 '''
 
@@ -66,4 +107,10 @@ EXAMPLES = r'''
   win_template:
     src: /mytemplates/file.conf.j2
     dest: C:\temp\file.conf
+
+- name: Create a Unix-style file from a Jinja2 template
+  win_template:
+    src: unix/config.conf.j2
+    dest: C:\share\unix\config.conf
+    newline_sequence: '\n'
 '''

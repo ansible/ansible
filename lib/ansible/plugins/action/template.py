@@ -34,6 +34,7 @@ boolean = C.mk_boolean
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
+    DEFAULT_NEWLINE_SEQUENCE = "\n"
 
     def get_checksum(self, dest, all_vars, try_directory=False, source=None, tmp=None):
         try:
@@ -61,6 +62,19 @@ class ActionModule(ActionBase):
         dest   = self._task.args.get('dest', None)
         force  = boolean(self._task.args.get('force', True))
         state  = self._task.args.get('state', None)
+        newline_sequence = self._task.args.get('newline_sequence', self.DEFAULT_NEWLINE_SEQUENCE)
+        variable_start_string = self._task.args.get('variable_start_string', None)
+        variable_end_string = self._task.args.get('variable_end_string', None)
+        block_start_string = self._task.args.get('block_start_string', None)
+        block_end_string = self._task.args.get('block_end_string', None)
+        trim_blocks = self._task.args.get('trim_blocks', None)
+
+        wrong_sequences = ["\\n", "\\r", "\\r\\n"]
+        allowed_sequences = ["\n", "\r", "\r\n"]
+
+        # We need to convert unescaped sequences to proper escaped sequences for Jinja2
+        if newline_sequence in wrong_sequences:
+            newline_sequence = allowed_sequences[wrong_sequences.index(newline_sequence)]
 
         if state is not None:
             result['failed'] = True
@@ -68,6 +82,9 @@ class ActionModule(ActionBase):
         elif source is None or dest is None:
             result['failed'] = True
             result['msg'] = "src and dest are required"
+        elif newline_sequence not in allowed_sequences:
+            result['failed'] = True
+            result['msg'] = "newline_sequence needs to be one of: \n, \r or \r\n"
         else:
             try:
                 source = self._find_needle('templates', source)
@@ -117,7 +134,6 @@ class ActionModule(ActionBase):
                 time.localtime(os.path.getmtime(b_source))
             )
 
-
             searchpath = []
             # set jinja2 internal search path for includes
             if 'ansible_search_path' in task_vars:
@@ -135,6 +151,17 @@ class ActionModule(ActionBase):
             searchpath = newsearchpath
 
             self._templar.environment.loader.searchpath = searchpath
+            self._templar.environment.newline_sequence = newline_sequence
+            if block_start_string is not None:
+                self._templar.environment.block_start_string = block_start_string
+            if block_end_string is not None:
+                self._templar.environment.block_end_string = block_end_string
+            if variable_start_string is not None:
+                self._templar.environment.variable_start_string = variable_start_string
+            if variable_end_string is not None:
+                self._templar.environment.variable_end_string = variable_end_string
+            if trim_blocks is not None:
+                self._templar.environment.trim_blocks = bool(trim_blocks)
 
             old_vars = self._templar._available_variables
             self._templar.set_available_variables(temp_vars)
@@ -157,6 +184,14 @@ class ActionModule(ActionBase):
 
         diff = {}
         new_module_args = self._task.args.copy()
+
+        # remove newline_sequence from standard arguments
+        new_module_args.pop('newline_sequence', None)
+        new_module_args.pop('block_start_string', None)
+        new_module_args.pop('block_end_string', None)
+        new_module_args.pop('variable_start_string', None)
+        new_module_args.pop('variable_end_string', None)
+        new_module_args.pop('trim_blocks', None)
 
         if (remote_checksum == '1') or (force and local_checksum != remote_checksum):
 
