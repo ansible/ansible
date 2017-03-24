@@ -275,6 +275,55 @@ Octal numbers
 In Python-2.6, octal literals could be specified as ``0755``.  In Python-3, that is
 invalid and octals must be specified as ``0o755``.
 
+String formatting
+-----------------
+
+Python-2.6 has less featureful .format()
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Starting in Python-2.6, strings gained a method called ``format()`` to put
+strings together.  However, one commonly used
+feature of ``format()`` wasn't added until Python-2.7 so you need to remember
+not to use it in Ansible code:
+
+.. code-block:: python
+
+    # Does not work in Python-2.6!
+    new_string = "Dear {}, Welcome to {}".format(username, location)
+
+    # Use this instead
+    new_string = "Dear {0}, Welcome to {1}".format(username, location)
+
+Both of the format strings above map positional arguments to the ``format()``
+method into the string.  However, the first version doesn't work in
+Python-2.6.  Always remember to put numbers into the placeholders and things
+will work fine.
+
+.. seealso::
+    Python documentation on `format strings <https://docs.python.org/2/library/string.html#formatstrings>`_
+
+
+Use percent format with byte strings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In Python-3.x, byte strings do not have a ``format()`` method.  However, it
+does have support for the older, percent-formatting.
+
+.. code-block:: python
+
+    b_command_line = b'ansible-playbook --become-user %s -K %s' % (user, playbook_file)
+
+.. note:: Percent formatting added in Python-3.5
+
+    Percent formatting of byte strings was added back into Python3 in 3.5.
+    This isn't a problem for us because Python-3.5 is our minimum version.
+    However, if you happen to be testing Ansible code with Python-3.4 or
+    earlier, you will find that the byte string formatting here won't work.
+    Upgrade to Python-3.5 to test.
+
+.. seealso::
+    Python documentation on `percent formatting <https://docs.python.org/2/library/stdtypes.html#string-formatting>`_
+
 ---------------------------
 Porting Modules to Python 3
 ---------------------------
