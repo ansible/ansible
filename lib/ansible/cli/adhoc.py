@@ -174,6 +174,8 @@ class AdHocCLI(CLI):
             cb = self.callback
         elif self.options.one_line:
             cb = 'oneline'
+        elif self.options.raw:
+            cb = 'json'
         else:
             cb = 'minimal'
 
@@ -198,6 +200,7 @@ class AdHocCLI(CLI):
             )
 
             result = self._tqm.run(play)
+            self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
         finally:
             if self._tqm:
                 self._tqm.cleanup()
