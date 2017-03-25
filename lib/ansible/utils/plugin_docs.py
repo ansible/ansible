@@ -113,7 +113,7 @@ def get_docstring(filename, verbose=False):
         'DOCUMENTATION': 'doc',
         'EXAMPLES': 'plainexamples',
         'RETURN': 'returndocs',
-        'METADATA': 'metadata'
+        'ANSIBLE_METADATA': 'metadata'
     }
 
     try:
@@ -142,10 +142,10 @@ def get_docstring(filename, verbose=False):
 
                         if theid in string_to_vars:
                             varkey = string_to_vars[theid]
-                            if isinstance(child.value, MutableMapping):
-                                data[varkey] = child.value
+                            if isinstance(child.value, ast.Dict):
+                                data[varkey] = ast.literal_eval(child.value)
                             else:
-                                if theid in ['DOCUMENTATION', 'METADATA']:
+                                if theid in ['DOCUMENTATION', 'ANSIBLE_METADATA']:
                                     # string should be yaml
                                     data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
                                 else:
