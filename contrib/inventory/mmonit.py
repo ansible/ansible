@@ -55,13 +55,13 @@ except ImportError:
     print("Error: SQLAlchemy is needed. Try something like: pip install sqlalchemy")
     exit(1)
 
-class mMonitInventory(object):
 
+class mMonitInventory(object):
     def read_settings(self):
         config = configparser.SafeConfigParser()
         config.read(os.path.dirname(os.path.realpath(__file__)) + '/mmonit.ini')
         self.server = 'localhost'
-        self.port = 3306
+        self.port = '3306'
         self.user = 'mmonit'
         self.passwd = 'mmonit'
         self.db = 'mmonit'
@@ -131,7 +131,7 @@ class mMonitInventory(object):
             self.result[hostgroup['name']] = {'hosts': []}
             for id in hostgroup['hosts']:
                 self.result[hostgroup['name']]['hosts'].append(host_list[id])
-    
+
     def mysql_get_hosts(self):
         engine = create_engine(self.db_uri)
         connection = engine.connect()
@@ -155,9 +155,8 @@ class mMonitInventory(object):
             self.result[hostgroup_alias] = {}
             hosts = connection.execute(select_hostgroup_hosts, hostgroup_id=hostgroup_id)
             self.result[hostgroup_alias]['hosts'] = [host['display_name'] for host in hosts]
-                                       
+
     def __init__(self):
-#        self.defaultgroup = 'group_all'
         self.ndo_database_uri = None
         self.options = None
 
