@@ -63,7 +63,7 @@ def do_fork():
         if pid > 0:
             return pid
 
-        os.chdir("/")
+        #os.chdir("/")
         os.setsid()
         os.umask(0)
 
@@ -119,6 +119,7 @@ class Server():
         self.play_context = play_context
 
         display.display("starting new persistent socket with path %s" % path, log_only=True)
+        display.display('current working directory is %s' % os.getcwd(), log_only=True)
 
         self._start_time = datetime.datetime.now()
 
