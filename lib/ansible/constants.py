@@ -329,7 +329,8 @@ DEFAULT_TEST_PLUGIN_PATH       = get_config(p, DEFAULTS, 'test_plugins', 'ANSIBL
 DEFAULT_STRATEGY_PLUGIN_PATH   = get_config(p, DEFAULTS, 'strategy_plugins', 'ANSIBLE_STRATEGY_PLUGINS',
                                             '~/.ansible/plugins/strategy:/usr/share/ansible/plugins/strategy', value_type='pathlist')
 
-NETWORK_GROUP_MODULES          = get_config(p, DEFAULTS, 'network_group_modules','NETWORK_GROUP_MODULES', ['eos', 'nxos', 'ios', 'iosxr', 'junos', 'vyos'],
+NETWORK_GROUP_MODULES          = get_config(p, DEFAULTS, 'network_group_modules','NETWORK_GROUP_MODULES', ['eos', 'nxos', 'ios', 'iosxr', 'junos',
+                                                                                                           'vyos', 'sros'],
                                             value_type='list')
 
 DEFAULT_STRATEGY               = get_config(p, DEFAULTS, 'strategy',           'ANSIBLE_STRATEGY', 'linear')
