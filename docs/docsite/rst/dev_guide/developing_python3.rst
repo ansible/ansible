@@ -110,7 +110,9 @@ Reading and writing to files
 
 In Python-2, reading from files yields bytes.  In Python-3, it can yield text.
 To make code that's portable to both we don't make use of Python-3's ability
-to yield text but instead do the conversion explicitly ourselves. For example::
+to yield text but instead do the conversion explicitly ourselves. For example:
+
+.. code-block:: python
 
     from ansible.module_utils._text import to_text
 
@@ -127,7 +129,9 @@ to yield text but instead do the conversion explicitly ourselves. For example::
     point, if there is demand for other encodings we may change that, but for
     now it is safe to assume that bytes are UTF-8.
 
-Writing to files is the opposite process::
+Writing to files is the opposite process:
+
+.. code-block:: python
 
     from ansible.module_utils._text import to_bytes
 
@@ -147,7 +151,9 @@ functions, the text string will be converted to a byte string inside of the
 function and a traceback will occur if non-ASCII characters are present.  In
 Python-3, a traceback will only occur if the text string can't be decoded in
 the current locale, but it's still good to be explicit and have code which
-works on both versions::
+works on both versions:
+
+.. code-block:: python
 
     import os.path
 
@@ -162,7 +168,9 @@ works on both versions::
 
 When you are only manipulating a filename as a string without talking to the
 filesystem (or a C library which talks to the filesystem) you can often get
-away without converting to bytes::
+away without converting to bytes:
+
+.. code-block:: python
 
     import os.path
 
@@ -202,7 +210,9 @@ Forwards Compatibility Boilerplate
 ----------------------------------
 
 Use the following boilerplate code at the top of all controller-side modules
-to make certain constructs act the same way on Python-2 and Python-3::
+to make certain constructs act the same way on Python-2 and Python-3:
+
+.. code-block:: python
 
     # Make coding more python3-ish
     from __future__ import (absolute_import, division, print_function)
@@ -231,7 +241,9 @@ Prefix byte strings with "b\_"
 
 Since mixing text and bytes types leads to tracebacks we want to be clear
 about what variables hold text and what variables hold bytes.  We do this by
-prefixing any variable holding bytes with ``b_``.  For instance::
+prefixing any variable holding bytes with ``b_``.  For instance:
+
+.. code-block:: python
 
     filename = u'/var/tmp/café.txt'
     b_filename = to_bytes(filename)
@@ -249,7 +261,9 @@ The third-party `python-six <https://pythonhosted.org/six/>`_ library exists
 to help projects create code that runs on both Python-2 and Python-3.  Ansible
 includes a version of the library in module_utils so that other modules can use it
 without requiring that it is installed on the remote system.  To make use of
-it, import it like this::
+it, import it like this:
+
+.. code-block:: python
 
     from ansible.module_utils import six
 
@@ -262,7 +276,9 @@ Exceptions
 ----------
 
 In order for code to function on Python-2.6+ and Python-3, use the
-new exception-catching syntax which uses the ``as`` keyword::
+new exception-catching syntax which uses the ``as`` keyword:
+
+.. code-block:: python
 
     try:
         a = 2/0
