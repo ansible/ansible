@@ -34,7 +34,7 @@ class TerminalModule(TerminalBase):
     ]
 
     terminal_stderr_re = [
-        re.compile(r"^\r\nError:"),
+        re.compile(r"Error:"),
     ]
 
     def on_open_shell(self):

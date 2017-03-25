@@ -16,9 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = """
@@ -107,9 +109,11 @@ updates:
   type: list
   sample: ['...', '...']
 """
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.sros import NetworkModule, NetworkError
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.sros import load_config, get_config
+from ansible.module_utils.sros import sros_argument_spec, check_args
 from ansible.module_utils.netcfg import NetworkConfig, dumps
+
 
 def invoke(name, *args, **kwargs):
     func = globals().get(name)
@@ -136,7 +140,7 @@ def present(module, commands):
             invoke(setter, module, commands)
 
 def absent(module, commands):
-    config = module.config.get_config()
+    config = get_config(module)
     if 'rollback-location' in config:
         commands.append('configure system rollback no rollback-location')
     if 'rescue-location' in config:
@@ -166,27 +170,9 @@ def set_rescue_location(module, commands):
     value = module.params['rescue_location']
     commands.append('configure system rollback rescue-location "%s"' % value)
 
-def get_config(module):
-    contents = module.config.get_config()
-    return NetworkConfig(device_os='sros', contents=contents)
-
-def load_config(module, commands, result):
-    candidate = NetworkConfig(device_os='sros', contents='\n'.join(commands))
-    config = get_config(module)
-    configobjs = candidate.difference(config)
-
-    if configobjs:
-        commands = dumps(configobjs, 'lines')
-        commands = sanitize_config(commands.split('\n'))
-
-        result['updates'] = commands
-
-        # send the configuration commands to the device and merge
-        # them with the current running config
-        if not module.check_mode:
-            module.config(commands)
-
-        result['changed'] = True
+def get_device_config(module):
+    contents = get_config(module)
+    return NetworkConfig(indent=4, contents=contents)
 
 def main():
     """ main entry point for module execution
@@ -202,8 +188,9 @@ def main():
         state=dict(default='present', choices=['present', 'absent'])
     )
 
-    module = NetworkModule(argument_spec=argument_spec,
-                           connect_on_load=False,
+    argument_spec.update(sros_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
     state = module.params['state']
@@ -213,11 +200,24 @@ def main():
     commands = list()
     invoke(state, module, commands)
 
-    try:
-        load_config(module, commands, result)
-    except NetworkError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), **exc.kwargs)
+    candidate = NetworkConfig(indent=4, contents='\n'.join(commands))
+    config = get_device_config(module)
+    configobjs = candidate.difference(config)
+
+    if configobjs:
+        #commands = dumps(configobjs, 'lines')
+        commands = dumps(configobjs, 'commands')
+        commands = sanitize_config(commands.split('\n'))
+
+        result['updates'] = commands
+        result['commands'] = commands
+
+        # send the configuration commands to the device and merge
+        # them with the current running config
+        if not module.check_mode:
+            load_config(module, commands)
+
+        result['changed'] = True
 
     module.exit_json(**result)
 
