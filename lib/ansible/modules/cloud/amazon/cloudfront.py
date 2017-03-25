@@ -341,19 +341,29 @@ class CloudFrontServiceManager:
                         origin["s3_origin_config"] = {}
                         origin["s3_origin_config"]["origin_access_identity"] = ""
                 if origin.get("custom_origin_config") is None:
-			origin["custom_origin_config"] = {
-		        		"origin_protocol_policy": "match-viewer",
-					"h_t_t_p_port": 80,
-               				"origin_ssl_protocols": {
-                  				"items": [
-                     					"TLSv1",
-                     					"TLSv1.1",
-                     					"TLSv1.2"
-                  				],
-                  				"quantity": 3
-               					},
-               				"h_t_t_p_s_port": 443
-            			}
+		    origin["custom_origin_config"] = {}
+                custom_origin_config = origin["custom_origin_config"]
+		if custom_origin_config.get("origin_protocol_policy") is None:
+		    custom_origin_config["origin_protocol_policy"] = "match-viewer"
+		if custom_origin_config.get("http_port") is None:
+		    custom_origin_config["h_t_t_p_port"] = 80
+                else: 
+		    custom_origin_config["h_t_t_p_port"] = origin["custom_origin_config"]["http_port"]
+		    custom_origin_config.pop("http_port", None)
+		if custom_origin_config.get("https_port") is None:
+		    custom_origin_config["h_t_t_p_s_port"] = 443
+                else:
+		    custom_origin_config["h_t_t_p_s_port"] = custom_origin_config["https_port"]
+		    custom_origin_config.pop("https_port", None)
+                if custom_origin_config.get("origin_ssl_protocols") is None:
+		    custom_origin_config["origin_ssl_protocols"] = {
+                            "items": [
+                                "TLSv1",
+                                "TLSv1.1",
+                                "TLSv1.2"
+                            ],
+                            "quantity": 3
+                        }
             valid_origins["items"] = origins
             valid_origins["quantity"] = quantity
             return snake_dict_to_pascal_dict(valid_origins)
