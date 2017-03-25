@@ -72,10 +72,10 @@ def do_fork():
             if pid > 0:
                 sys.exit(0)
 
-            if C.DEFAULT_LOG_PATH != '':
+            try:
                 out_file = file(C.DEFAULT_LOG_PATH, 'a+')
                 err_file = file(C.DEFAULT_LOG_PATH, 'a+', 0)
-            else:
+            except IOError:
                 out_file = file('/dev/null', 'a+')
                 err_file = file('/dev/null', 'a+', 0)
 
