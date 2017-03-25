@@ -117,7 +117,11 @@ class ActionModule(_ActionModule):
         self._task.args['transport'] = transport
 
         result = super(ActionModule, self).run(tmp, task_vars)
-        del result['invocation']['module_args']['provider']
+
+        try:
+            del result['invocation']['module_args']['provider']
+        except KeyError:
+            pass
 
         return result
 
