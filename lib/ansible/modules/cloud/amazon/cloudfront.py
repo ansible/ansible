@@ -199,7 +199,6 @@ class CloudFrontServiceManager:
 
     def create_distribution(self, config, tags):
         try:
-            print "config: " + str(config)
             if tags is None:
                 func = partial(self.client.create_distribution, DistributionConfig=config)
             else:
@@ -314,9 +313,13 @@ class CloudFrontServiceManager:
 
     def validate_origins(self, origins, streaming):
         valid_origins = {}
+        if origins is None:
+            return None
         quantity = len(origins)
         if quantity > 0:
             for origin in origins:
+                if origin.get("origin_path") is None:
+                    origin["origin_path"] = ""
                 if origin.get("domain_name") is None:
                     self.module.fail_json(msg="origins[].domain_name must be specified for an origin as a minimum")
                 if origin.get("id") is None:
@@ -329,20 +332,38 @@ class CloudFrontServiceManager:
                     if custom_headers_quantity > 0:
                         for custom_header in origin["custom_headers"]:
                             if custom_header.get("header_name") is None or custom_header.get("header_value") is None:
-                                self.module.fail_json(msg="both custom_headers.header_name and custom_headers.header_value must be specified")
+                                self.module.fail_json(msg="both origins[].custom_headers.header_name and origins[].custom_headers.header_value must be specified")
                     origin["quantity"] = custom_headers_quantity
+                else:
+                    origin["custom_headers"] = { "Quantity": 0 }
                 if ".s3.awsamazon.com" in origin.get("domain_name"):
                     if origin.get("s3_origin_config") is None or origin.get("s3_origin_config").get("origin_access_identity") is None:
                         origin["s3_origin_config"] = {}
                         origin["s3_origin_config"]["origin_access_identity"] = ""
-                if origin.get("custom_origin_config"):
-                    if(origin["custom_origin_config"].get("http_port") is None or origin["custom_origin_config"].get("https_port") is None 
-                            or origin["custom_origin_config"].get("origin_protocol_policy") is None):
-                        self.module.fail_json(msg="http_port, https_port and origin_protocol_policy must all be specified")
-            valid_origins["Items"] = origins
-            valid_origins["Quantity"] = quantity
+                if origin.get("custom_origin_config") is None:
+			origin["custom_origin_config"] = {
+		        		"origin_protocol_policy": "match-viewer",
+					"h_t_t_p_port": 80,
+               				"origin_ssl_protocols": {
+                  				"items": [
+                     					"TLSv1",
+                     					"TLSv1.1",
+                     					"TLSv1.2"
+                  				],
+                  				"quantity": 3
+               					},
+               				"h_t_t_p_s_port": 443
+            			}
+            valid_origins["items"] = origins
+            valid_origins["quantity"] = quantity
             return snake_dict_to_pascal_dict(valid_origins)
         return None
+
+    def validate_custom_origin_configs(self, custom_origin_configs):
+        if origin.get("custom_origin_config"):
+            if(origin["custom_origin_config"].get("http_port") is None or origin["custom_origin_config"].get("https_port") is None 
+                     or origin["custom_origin_config"].get("origin_protocol_policy") is None):
+                self.module.fail_json(msg="http_port, https_port and origin_protocol_policy must all be specified")
 
     def validate_trusted_signers(self, trusted_signers):
         if trusted_signers:
@@ -396,10 +417,21 @@ class CloudFrontServiceManager:
         return streaming_distribution_id, config, e_tag
 
     def generate_datetime_string(self):
-        return datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+        return datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")
+
+    def get_first_origin_id_for_default_cache_behavior(self, valid_origins, default_id):
+        if valid_origins is None:
+            return default_id
+        param_id = valid_origins["Items"][0].get("Id")
+        if param_id is None:
+            return default_id
+        return param_id
+
+# TODO: validate delete parameters
+#       more validation of update parameters - CallerReference and S3Origin and Origins
+#       validate required create parameters  
 
 def snake_dict_to_pascal_dict(snake_dict):
-
     def pascalize(complex_type):
         if complex_type is None:
             return
@@ -413,16 +445,10 @@ def snake_dict_to_pascal_dict(snake_dict):
         else:
             return complex_type
         return new_type
-
     def pascal(words):
         return words.capitalize().split('_')[0] + ''.join(x.capitalize() or '_' for x in words.split('_')[1:])
 
     return pascalize(snake_dict)
-
-# TODO: validate delete parameters
-#       more validation of update parameters - CallerReference and S3Origin and Origins
-#       validate required create parameters  
-
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -561,7 +587,6 @@ def main():
     valid_logging = service_mgr.validate_logging(logging, streaming_distribution)
     valid_origins = service_mgr.validate_origins(origins, streaming_distribution)
 
-    print "valid_origins: " + str(valid_origins)
     # DefaultCacheBehavior
     # CacheBehaviors
     # CustomErrorResponses
@@ -592,7 +617,7 @@ def main():
             config = {}
         if valid_origins is None:
             if default_origin_domain_name is None:
-                module.fail_json(msg="both origins and default_origin_domain_name. please specify one.")
+                module.fail_json(msg="both origins and default_origin_domain_name have been specified. please specify only one.")
             if ".s3.amazonaws.com" not in default_origin_domain_name:
                 config["Origins"] = {
                         "Quantity": 1,
@@ -635,7 +660,7 @@ def main():
                         "Enabled": False,
                         "Quantity": 0
                     },
-                    "TargetOriginId": default_datetime_string,
+                    "TargetOriginId": service_mgr.get_first_origin_id_for_default_cache_behavior(valid_origins, default_datetime_string),
                     "Compress": False,
                     "ViewerProtocolPolicy": "allow-all",
                     "ForwardedValues": {
