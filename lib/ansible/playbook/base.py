@@ -34,6 +34,7 @@ from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
 from ansible.constants import mk_boolean as boolean
 from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
+from ansible.template import Templar
 
 try:
     from __main__ import display
@@ -464,6 +465,9 @@ class Base(with_metaclass(BaseMeta, object)):
         try:
             if isinstance(ds, dict):
                 _validate_variable_keys(ds)
+                template = Templar(loader=self._loader, variables=ds)
+                if template.templatable(ds):
+                    ds = template.template(ds)
                 return ds
             elif isinstance(ds, list):
                 all_vars = dict()
