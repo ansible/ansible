@@ -199,6 +199,7 @@ class CloudFrontServiceManager:
 
     def create_distribution(self, config, tags):
         try:
+            print "config: " + str(config)
             if tags is None:
                 func = partial(self.client.create_distribution, DistributionConfig=config)
             else:
@@ -290,8 +291,8 @@ class CloudFrontServiceManager:
             aliases = [ alias ]
         if aliases:
             return {
-                    "Quantity": len(alias_list),
-                    "Items": alias_list
+                    "Quantity": len(aliases),
+                    "Items": aliases
                     }
         return None
 
@@ -300,7 +301,7 @@ class CloudFrontServiceManager:
             return None
         if logging and not streaming and (logging["enabled"] is None or logging["include_cookies"] is None or logging["bucket"] is None or logging["prefix"]):
             self.module.fail_json(msg="the logging a parameters enabled, include_cookies, bucket and prefix must be specified")
-        if logging and streaming and (logging["enabled"] is None logging["bucket"] is None or logging["prefix"]):
+        if logging and streaming and (logging["enabled"] is None or logging["bucket"] is None or logging["prefix"]):
             self.module.fail_json(msg="the logging a parameters enabled, bucket and prefix must be specified")
         valid_logging = {
             "Enabled": logging["enabled"],
@@ -311,39 +312,42 @@ class CloudFrontServiceManager:
             valid_logging["IncludeCookies"] = logging["include_cookies"]
         return valid_logging
 
-    def validate_origins(self, origins):
+    def validate_origins(self, origins, streaming):
+        valid_origins = {}
         quantity = len(origins)
         if quantity > 0:
             for origin in origins:
-                if origin["domain_name"] is None:
-                    self.module.fail_msg(msg="domain_name must be specified for an origin as a minimum")
-                if origin["id"] is None:
+                if origin.get("domain_name") is None:
+                    self.module.fail_json(msg="origins[].domain_name must be specified for an origin as a minimum")
+                if origin.get("id") is None:
                     origin["id"] = self.generate_datetime_string()
-                if origin["custom_headers"] and streaming:
-                    self.module.fail_json(msg="custom headers have been specified for a streaming distribution. " +
+                if origin.get("custom_headers") and streaming:
+                    self.module.fail_json(msg="custom_headers has been specified for a streaming distribution. " +
                             "custom headers are for web distributions only")
-                if origin["custom_headers"]:
-                    custom_headers_quantity = len(origin["custom_headers"])
+                if origin.get("custom_headers"):
+                    custom_headers_quantity = len(origin.get("custom_headers"))
                     if custom_headers_quantity > 0:
-                        for custom_header in custom_headers:
-                            if custom_header["header_name"] is None or custom_header["header_value"] is None:
+                        for custom_header in origin["custom_headers"]:
+                            if custom_header.get("header_name") is None or custom_header.get("header_value") is None:
                                 self.module.fail_json(msg="both custom_headers.header_name and custom_headers.header_value must be specified")
-                if ".s3.awsamazon.com" in origin["domain_name"]:
-                    if origin["s3_origin_config"] is None or origin["s3_origin_config"]["origin_access_identity"] is None:
+                    origin["quantity"] = custom_headers_quantity
+                if ".s3.awsamazon.com" in origin.get("domain_name"):
+                    if origin.get("s3_origin_config") is None or origin.get("s3_origin_config").get("origin_access_identity") is None:
+                        origin["s3_origin_config"] = {}
                         origin["s3_origin_config"]["origin_access_identity"] = ""
-                if origin["custom_origin_config"]:
-                    if origin["http_port"] is None or origin["https_port"] is None or origin["origin_protocol_policy"] is None:
-                        self.module.fail_json(msg="http_port, https_port and origin_protocol_policy must be defined")
-                    if origin["origin_ssl_protocols"] is not None and origin["origin_ssl_protocols"]["items"] is None:
-                        self.module.fail_json(msg="list of origin_ssl_protocols must be defined")
-            origins["quantity"] = quantity
-            return snake_dict_to_camel_dict(origins)
-        return None:
+                if origin.get("custom_origin_config"):
+                    if(origin["custom_origin_config"].get("http_port") is None or origin["custom_origin_config"].get("https_port") is None 
+                            or origin["custom_origin_config"].get("origin_protocol_policy") is None):
+                        self.module.fail_json(msg="http_port, https_port and origin_protocol_policy must all be specified")
+            valid_origins["Items"] = origins
+            valid_origins["Quantity"] = quantity
+            return snake_dict_to_pascal_dict(valid_origins)
+        return None
 
     def validate_trusted_signers(self, trusted_signers):
         if trusted_signers:
             if 'enabled' not in trusted_signers:
-                trusted_signers["enabled"] = true
+                trusted_signers["enabled"] = True
             if 'items' not in trusted_signers:
                 trusted_signers["items"] = []
             return {
@@ -391,8 +395,29 @@ class CloudFrontServiceManager:
             e_tag = self.cloudfront_facts_mgr.get_etag_from_distribution_id(streaming_distribution_id, True)
         return streaming_distribution_id, config, e_tag
 
-    def generate_datetime_string():
+    def generate_datetime_string(self):
         return datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+
+def snake_dict_to_pascal_dict(snake_dict):
+
+    def pascalize(complex_type):
+        if complex_type is None:
+            return
+        new_type = type(complex_type)()
+        if isinstance(complex_type, dict):
+            for key in complex_type:
+                new_type[pascal(key)] = pascalize(complex_type[key])
+        elif isinstance(complex_type, list):
+            for i in range(len(complex_type)):
+                new_type.append(pascalize(complex_type[i]))
+        else:
+            return complex_type
+        return new_type
+
+    def pascal(words):
+        return words.capitalize().split('_')[0] + ''.join(x.capitalize() or '_' for x in words.split('_')[1:])
+
+    return pascalize(snake_dict)
 
 # TODO: validate delete parameters
 #       more validation of update parameters - CallerReference and S3Origin and Origins
@@ -533,8 +558,21 @@ def main():
         module.fail_json(msg="more than one cloudfront action has been specified. please select only one action.")
 
     valid_aliases = service_mgr.validate_aliases(aliases, alias)
-    valid_logging = service_mgr.validate_logging(logging)
-    valid_origins = service_mgr.validate_origins(origins)
+    valid_logging = service_mgr.validate_logging(logging, streaming_distribution)
+    valid_origins = service_mgr.validate_origins(origins, streaming_distribution)
+
+    print "valid_origins: " + str(valid_origins)
+    # DefaultCacheBehavior
+    # CacheBehaviors
+    # CustomErrorResponses
+    # Restrictions
+    #  Add/remove:
+    #    origin
+    #    cachebehavior
+    #    restriction
+    #    alias
+    #    trusted signer
+    #    custom error response
     valid_trusted_signers = service_mgr.validate_trusted_signers(trusted_signers)
     valid_s3_origin = service_mgr.validate_s3_origin(s3_origin)
     valid_viewer_certificate = service_mgr.validate_viewer_certificate(viewer_certificate)
@@ -553,6 +591,8 @@ def main():
         if config is None:
             config = {}
         if valid_origins is None:
+            if default_origin_domain_name is None:
+                module.fail_json(msg="both origins and default_origin_domain_name. please specify one.")
             if ".s3.amazonaws.com" not in default_origin_domain_name:
                 config["Origins"] = {
                         "Quantity": 1,
@@ -636,6 +676,8 @@ def main():
                 }
     if distribution or streaming_distribution:
         config["Enabled"] = enabled
+        if valid_origins:
+            config["Origins"] = valid_origins
         if valid_aliases:
             config["Aliases"] = valid_aliases
         if valid_logging:
