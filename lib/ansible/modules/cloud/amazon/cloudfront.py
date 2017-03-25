@@ -311,15 +311,17 @@ class CloudFrontServiceManager:
             valid_logging["IncludeCookies"] = logging["include_cookies"]
         return valid_logging
 
-    def validate_origins(self, origins, streaming):
+    def validate_origins(self, origins, default_origin_domain_name, default_origin_access_identity, default_origin_path, streaming):
         valid_origins = {}
         if origins is None:
-            return None
+            origins = []
         quantity = len(origins)
+        if quantity == 0 and default_origin_domain_name is None:
+            self.module.fail_json(msg="origins and default_origin_domain_name have not been specified. please at one.")
         if quantity > 0:
             for origin in origins:
                 if origin.get("origin_path") is None:
-                    origin["origin_path"] = ""
+                    origin["origin_path"] = default_origin_path
                 if origin.get("domain_name") is None:
                     self.module.fail_json(msg="origins[].domain_name must be specified for an origin as a minimum")
                 if origin.get("id") is None:
@@ -339,31 +341,33 @@ class CloudFrontServiceManager:
                 if ".s3.awsamazon.com" in origin.get("domain_name"):
                     if origin.get("s3_origin_config") is None or origin.get("s3_origin_config").get("origin_access_identity") is None:
                         origin["s3_origin_config"] = {}
-                        origin["s3_origin_config"]["origin_access_identity"] = ""
-                if origin.get("custom_origin_config") is None:
-		    origin["custom_origin_config"] = {}
-                custom_origin_config = origin["custom_origin_config"]
-		if custom_origin_config.get("origin_protocol_policy") is None:
-		    custom_origin_config["origin_protocol_policy"] = "match-viewer"
-		if custom_origin_config.get("http_port") is None:
-		    custom_origin_config["h_t_t_p_port"] = 80
-                else: 
-		    custom_origin_config["h_t_t_p_port"] = origin["custom_origin_config"]["http_port"]
-		    custom_origin_config.pop("http_port", None)
-		if custom_origin_config.get("https_port") is None:
-		    custom_origin_config["h_t_t_p_s_port"] = 443
+                        origin["s3_origin_config"]["origin_access_identity"] = default_origin_access_identity
                 else:
-		    custom_origin_config["h_t_t_p_s_port"] = custom_origin_config["https_port"]
-		    custom_origin_config.pop("https_port", None)
-                if custom_origin_config.get("origin_ssl_protocols") is None:
-		    custom_origin_config["origin_ssl_protocols"] = {
-                            "items": [
-                                "TLSv1",
-                                "TLSv1.1",
-                                "TLSv1.2"
-                            ],
-                            "quantity": 3
-                        }
+                    if origin.get("custom_origin_config") is None:
+		        origin["custom_origin_config"] = {}
+                    custom_origin_config = origin["custom_origin_config"]
+		    if custom_origin_config.get("origin_protocol_policy") is None:
+		        custom_origin_config["origin_protocol_policy"] = "match-viewer"
+        		if custom_origin_config.get("http_port") is None:
+        		    custom_origin_config["h_t_t_p_port"] = 80
+                    else: 
+		        custom_origin_config["h_t_t_p_port"] = origin["custom_origin_config"]["http_port"]
+		        custom_origin_config.pop("http_port", None)
+		    if custom_origin_config.get("https_port") is None:
+		        custom_origin_config["h_t_t_p_s_port"] = 443
+                    else:
+		        custom_origin_config["h_t_t_p_s_port"] = custom_origin_config["https_port"]
+		        custom_origin_config.pop("https_port", None)
+                    if custom_origin_config.get("origin_ssl_protocols") is None:
+		        custom_origin_config["origin_ssl_protocols"] = {
+                                "items": [
+                                    "TLSv1",
+                                    "TLSv1.1",
+                                    "TLSv1.2"
+                                ],
+                                "quantity": 3
+                            }
+                    
             valid_origins["items"] = origins
             valid_origins["quantity"] = quantity
             return snake_dict_to_pascal_dict(valid_origins)
@@ -595,7 +599,8 @@ def main():
 
     valid_aliases = service_mgr.validate_aliases(aliases, alias)
     valid_logging = service_mgr.validate_logging(logging, streaming_distribution)
-    valid_origins = service_mgr.validate_origins(origins, streaming_distribution)
+    valid_origins = service_mgr.validate_origins(origins, default_origin_domain_name, default_origin_access_identity,
+            default_origin_path, streaming_distribution)
 
     # DefaultCacheBehavior
     # CacheBehaviors
@@ -625,44 +630,6 @@ def main():
     if create_distribution:
         if config is None:
             config = {}
-        if valid_origins is None:
-            if default_origin_domain_name is None:
-                module.fail_json(msg="both origins and default_origin_domain_name have been specified. please specify only one.")
-            if ".s3.amazonaws.com" not in default_origin_domain_name:
-                config["Origins"] = {
-                        "Quantity": 1,
-                            "Items": [ {
-                                "CustomHeaders": { "Quantity": 0 },
-                                "CustomOriginConfig": {
-                                    "HTTPPort": 80,
-                                    "HTTPSPort": 443,
-                                    "OriginProtocolPolicy": "match-viewer",
-                                    "OriginSslProtocols": {
-                                        "Items": [
-                                            "TLSv1",
-                                            "TLSv1.1",
-                                            "TLSv1.2"
-                                        ],
-                                        "Quantity": 3
-                                    }
-                                },
-                                "DomainName": default_origin_domain_name,
-                                "Id": default_datetime_string,
-                                "OriginPath": default_origin_path
-                        } ]
-                    }
-            else:
-                config["Origins"] = {
-                        "Quantity": 1,
-                            "Items": [ {
-                                "DomainName": default_origin_domain_name,
-                                "Id": default_datetime_string,
-                                "OriginPath": default_origin_path,
-                                "S3OriginConfig": {
-                                    "OriginAccessIdentity": default_origin_access_identity
-                                }
-                            } ]
-                        }
         if default_cache_behavior is None:
             config["DefaultCacheBehavior"] = {
                     "MinTTL": 0,
