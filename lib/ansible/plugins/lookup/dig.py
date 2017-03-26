@@ -22,11 +22,12 @@ from ansible.plugins.lookup import LookupBase
 import socket
 
 try:
+    import dns.exception
+    import dns.name
     import dns.resolver
     import dns.reversename
     from dns.rdatatype import (A, AAAA, CNAME, DLV, DNAME, DNSKEY, DS, HINFO, LOC,
             MX, NAPTR, NS, NSEC3PARAM, PTR, RP, SOA, SPF, SRV, SSHFP, TLSA, TXT)
-    import dns.exception
     HAVE_DNS = True
 except ImportError:
     HAVE_DNS = False
@@ -70,7 +71,7 @@ def make_rdata_dict(rdata):
         for f in fields:
             val     = rdata.__getattribute__(f)
 
-            if type(val) == dns.name.Name:
+            if isinstance(val, dns.name.Name):
                 val = dns.name.Name.to_text(val)
 
             if rdata.rdtype == DLV and f == 'digest':

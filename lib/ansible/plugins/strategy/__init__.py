@@ -53,6 +53,9 @@ except ImportError:
 
 __all__ = ['StrategyBase']
 
+class StrategySentinel:
+    pass
+
 # TODO: this should probably be in the plugins/__init__.py, with
 #       a smarter mechanism to set all of the attributes based on
 #       the loaders created there
@@ -70,12 +73,12 @@ class SharedPluginLoaderObj:
         self.module_loader = module_loader
 
 
-_sentinel = object()
+_sentinel = StrategySentinel()
 def results_thread_main(strategy):
     while True:
         try:
             result = strategy._final_q.get()
-            if type(result) == object:
+            if isinstance(result, StrategySentinel):
                 break
             else:
                 strategy._results_lock.acquire()
