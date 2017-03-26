@@ -579,7 +579,7 @@ class VariableManager:
             # order the filesystem lists them.
             names.sort()
 
-            # do not parse hidden files or dirs, e.g. .svn/
+            # do not parse hidden files or dirs, e.g. .svn/ or vi/emacs backup files e.g. localhost.yml~
             paths = [os.path.join(path, name) for name in names if not name.startswith('.') and not name.endswith('~')]
             for p in paths:
                 results = self._load_inventory_file(path=p, loader=loader)
