@@ -140,9 +140,12 @@ EXAMPLES = '''
 try:
     import boto.ec2
     from boto.ec2.securitygroup import SecurityGroup
+    from boto.exception import BotoServerError
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+import traceback
 
 
 def make_rule_key(prefix, rule, group_id, cidr_ip):
@@ -283,7 +286,13 @@ def main():
     # find the group if present
     group = None
     groups = {}
-    for curGroup in ec2.get_all_security_groups():
+
+    try:
+        security_groups = ec2.get_all_security_groups()
+    except BotoServerError as e:
+        module.fail_json(msg="Error in get_all_security_groups: %s" % e.message, exception=traceback.format_exc())
+
+    for curGroup in security_groups:
         groups[curGroup.id] = curGroup
         if curGroup.name in groups:
             # Prioritise groups from the current VPC
@@ -298,36 +307,29 @@ def main():
     # Ensure requested group is absent
     if state == 'absent':
         if group:
-            '''found a match, delete it'''
+            # found a match, delete it
             try:
                 if not module.check_mode:
                     group.delete()
-            except Exception as e:
-                module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e))
+            except BotoServerError as e:
+                module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e.message), exception=traceback.format_exc())
             else:
                 group = None
                 changed = True
         else:
-            '''no match found, no changes required'''
+            # no match found, no changes required
+            pass
 
     # Ensure requested group is present
     elif state == 'present':
         if group:
-            '''existing group found'''
-            # check the group parameters are correct
-            group_in_use = False
-            rs = ec2.get_all_instances()
-            for r in rs:
-                for i in r.instances:
-                    group_in_use |= reduce(lambda x, y: x | (y.name == 'public-ssh'), i.groups, False)
-
+            # existing group
             if group.description != description:
-                if group_in_use:
-                    module.fail_json(msg="Group description does not match, but it is in use so cannot be changed.")
+                module.fail_json(msg="Group description does not match existing group. ec2_group does not support this case.")
 
         # if the group doesn't exist, create it now
         else:
-            '''no match found, create it'''
+            # no match found, create it
             if not module.check_mode:
                 group = ec2.create_security_group(name, description, vpc_id=vpc_id)
 
