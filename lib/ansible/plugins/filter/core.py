@@ -31,6 +31,7 @@ import re
 import string
 import sys
 import uuid
+from collections import MutableMapping, MutableSequence
 from datetime import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle
@@ -108,14 +109,13 @@ def to_nice_json(a, indent=4, *args, **kw):
 
 def to_bool(a):
     ''' return a bool for the arg '''
-    if a is None or type(a) == bool:
+    if a is None or isinstance(a, bool):
         return a
     if isinstance(a, string_types):
         a = a.lower()
-    if a in ['yes', 'on', '1', 'true', 1]:
+    if a in ('yes', 'on', '1', 'true', 1):
         return True
-    else:
-        return False
+    return False
 
 def to_datetime(string, format="%Y-%d-%m %H:%M:%S"):
     return datetime.strptime(string, format)
@@ -402,10 +402,10 @@ def extract(item, container, morekeys=None):
 def failed(*a, **kw):
     ''' Test if task result yields failed '''
     item = a[0]
-    if type(item) != dict:
+    if not isinstance(item, MutableMapping):
         raise errors.AnsibleFilterError("|failed expects a dictionary")
-    rc = item.get('rc',0)
-    failed = item.get('failed',False)
+    rc = item.get('rc', 0)
+    failed = item.get('failed', False)
     if rc != 0 or failed:
         return True
     else:
@@ -418,13 +418,13 @@ def success(*a, **kw):
 def changed(*a, **kw):
     ''' Test if task result yields changed '''
     item = a[0]
-    if type(item) != dict:
+    if not isinstance(item, MutableMapping):
         raise errors.AnsibleFilterError("|changed expects a dictionary")
     if not 'changed' in item:
         changed = False
         if ('results' in item    # some modules return a 'results' key
-                and type(item['results']) == list
-                and type(item['results'][0]) == dict):
+                and isinstance(item['results'], MutableSequence)
+                and isinstance(item['results'][0], MutableMapping)):
             for result in item['results']:
                 changed = changed or result.get('changed', False)
     else:
@@ -434,7 +434,7 @@ def changed(*a, **kw):
 def skipped(*a, **kw):
     ''' Test if task result yields skipped '''
     item = a[0]
-    if type(item) != dict:
+    if not isinstance(item, MutableMapping):
         raise errors.AnsibleFilterError("|skipped expects a dictionary")
     skipped = item.get('skipped', False)
     return skipped

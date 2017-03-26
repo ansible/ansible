@@ -19,6 +19,7 @@ __metaclass__ = type
 
 import codecs
 import csv
+from collections import MutableSequence
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
@@ -102,7 +103,7 @@ class LookupModule(LookupBase):
             lookupfile = self.find_file_in_search_path(variables, 'files', paramvals['file'])
             var = self.read_csv(lookupfile, key, paramvals['delimiter'], paramvals['encoding'], paramvals['default'], paramvals['col'])
             if var is not None:
-                if type(var) is list:
+                if isinstance(var, MutableSequence):
                     for v in var:
                         ret.append(v)
                 else:
