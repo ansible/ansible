@@ -17,9 +17,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from io import StringIO
 import os
 import re
+from collections import MutableSequence
+from io import StringIO
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.six.moves import configparser
@@ -110,7 +111,7 @@ class LookupModule(LookupBase):
             else:
                 var = self.read_ini(path, key, paramvals['section'], paramvals['default'], paramvals['re'])
             if var is not None:
-                if type(var) is list:
+                if isinstance(var, MutableSequence):
                     for v in var:
                         ret.append(v)
                 else:

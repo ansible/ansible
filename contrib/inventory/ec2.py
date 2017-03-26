@@ -1378,7 +1378,7 @@ class Ec2Inventory(object):
             elif key == 'ec2__previous_state':
                 instance_vars['ec2_previous_state'] = instance.previous_state or ''
                 instance_vars['ec2_previous_state_code'] = instance.previous_state_code
-            elif type(value) in [int, bool]:
+            elif isinstance(value, (int, bool)):
                 instance_vars[key] = value
             elif isinstance(value, six.string_types):
                 instance_vars[key] = value.strip()
@@ -1483,7 +1483,7 @@ class Ec2Inventory(object):
 
             # Target: Everything
             # Preserve booleans and integers
-            elif type(value) in [int, bool]:
+            elif isinstance(value, (int, bool)):
                 host_info[key] = value
 
             # Target: Everything

@@ -22,6 +22,7 @@ __metaclass__ = type
 import os
 import time
 import json
+from collections import MutableMapping
 
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.callback import CallbackBase
@@ -54,7 +55,7 @@ class CallbackModule(CallbackBase):
             os.makedirs("/var/log/ansible/hosts")
 
     def log(self, host, category, data):
-        if type(data) == dict:
+        if isinstance(data, MutableMapping):
             if '_ansible_verbose_override' in data:
                 # avoid logging extraneous data
                 data = 'omitted'
