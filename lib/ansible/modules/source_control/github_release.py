@@ -77,7 +77,7 @@ options:
     required: false
     description:
       - Sets if the release is a prerelease or not. (boolean)
-    default: falseA
+    default: false
     version_added: 2.4
 
 author:
