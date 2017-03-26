@@ -1,0 +1,196 @@
+  - name: Given that I have created an RDS with the old rds module
+    tags: test_amazon_rds
+    local_action:
+      module: rds
+      region: "{{ ec2_region }}"
+      command: create
+      instance_name: "{{ resource_prefix }}-rds"
+      db_engine: postgres
+      size: 10
+      instance_type: "db.t2.micro"
+      username: "{{ rds_master_db_user }}"
+      password: "{{ rds_db_master_password }}"
+      publicly_accessible: no
+      wait: yes
+      wait_timeout: 1200 # 600 doesn't cut it!!
+    register: rds_result
+
+  - name: When I run the new module with unchanged parameters
+    tags: test_amazon_rds
+    local_action:
+      module: rds_instance
+      region: "{{ ec2_region }}"
+      state: present
+      instance_name: "{{ resource_prefix }}-rds"
+      db_engine: postgres
+      size: 10
+      instance_type: "db.t2.micro"
+      username: "{{ rds_master_db_user }}"
+      password: "{{ rds_db_master_password }}"
+      publicly_accessible: no
+      wait: yes
+      wait_timeout: 1200 # 600 doesn't cut it!!
+    register: rds_instance_result
+
+  - name: Then the RDS should not be changed
+    tags: test_amazon_rds
+    assert:
+      that:
+        - 'rds_result.changed'
+        - 'rds_instance_result.changed == False'
+        - '"failed" not in rds_result'
+        - '"failed" not in rds_instance_result'
+#ETC..  
+
+
+  # note; we probably inherit the RDS from the previous test
+  # which will be faster.
+  - name: Given that I have created an RDS with the old rds module
+    tags: test_amazon_rds
+    local_action:
+      module: rds
+      region: "{{ ec2_region }}"
+      command: create
+      instance_name: "{{ resource_prefix }}-rds"
+      db_engine: postgres
+      size: 10
+      instance_type: "db.t2.micro"
+      username: "{{ rds_master_db_user }}"
+      password: "{{ rds_db_master_password }}"
+      publicly_accessible: no
+      wait: yes
+      wait_timeout: 1200 # 600 doesn't cut it!!
+    register: rds_result
+
+
+  - name: When I run the new module with SSD configuration
+    tags: test_amazon_rds
+    local_action:
+      module: rds_instance
+      region: "{{ ec2_region }}"
+      state: present
+      storage_type: gp2
+      instance_name: "{{ resource_prefix }}-rds"
+      db_engine: postgres
+      size: 10
+      instance_type: "db.t2.micro"
+      username: "{{ rds_master_db_user }}"
+      password: "{{ rds_db_master_password }}"
+      publicly_accessible: no
+      wait: yes
+      wait_timeout: 1200 # 600 doesn't cut it!!
+    register: result
+
+  - name: Then the RDS should have SSD disks
+    assert:
+      that:
+        - 'result.instance[0].storage_type == "gp2"'
+
+#We should probably delete the RDS at this point
+
+  - name: Given that I have created an RDS with the new rds_instance module
+    tags: test_amazon_rds
+    local_action:
+      module: rds_instance
+      region: "{{ ec2_region }}"
+      state: present
+      storage_type: gp2
+      instance_name: "{{ resource_prefix }}-rds"
+      db_engine: postgres
+      size: 10
+      instance_type: "db.t2.micro"
+      username: "{{ rds_master_db_user }}"
+      password: "{{ rds_db_master_password }}"
+      publicly_accessible: no
+      wait: yes
+      wait_timeout: 1200 # 600 doesn't cut it!!
+    register: result
+
+  - name: When I run the old module with matching parameters
+    tags: test_amazon_rds
+    local_action:
+      module: rds
+      region: "{{ ec2_region }}"
+      command: create
+      instance_name: "{{ resource_prefix }}-rds"
+      db_engine: postgres
+      size: 10
+      instance_type: "db.t2.micro"
+      username: "{{ rds_master_db_user }}"
+      password: "{{ rds_db_master_password }}"
+      publicly_accessible: no
+      wait: yes
+      wait_timeout: 1200 # 600 doesn't cut it!!
+    register: rds_result
+
+  - name: And I check the configuration with the new rds_instance module
+    tags: test_amazon_rds
+    local_action:
+      module: rds_instance
+      region: "{{ ec2_region }}"
+      state: present
+      storage_type: gp2
+      instance_name: "{{ resource_prefix }}-rds"
+      db_engine: postgres
+      size: 10
+      instance_type: "db.t2.micro"
+      username: "{{ rds_master_db_user }}"
+      password: "{{ rds_db_master_password }}"
+      publicly_accessible: no
+      wait: yes
+      wait_timeout: 1200 # 600 doesn't cut it!!
+    register: result
+
+  - name: Then the RDS should not be changed
+    tags: test_amazon_rds
+    assert:
+      that:
+        - 'result.changed == False'
+        - '"failed" not in result'
+        - 'result.instance[0].storage_type == "gp2"'
+
+  - name: Given that I have an RDS with SSD disks
+    tags: test_amazon_rds
+    local_action:
+      module: rds_instance
+      region: "{{ ec2_region }}"
+      state: present
+      storage_type: gp2
+      instance_name: "{{ resource_prefix }}-rds"
+      db_engine: postgres
+      size: 10
+      instance_type: "db.t2.micro"
+      username: "{{ rds_master_db_user }}"
+      password: "{{ rds_db_master_password }}"
+      publicly_accessible: no
+      wait: yes
+      wait_timeout: 1200 # 600 doesn't cut it!!
+    register: result
+
+#Currently covered by previous test - but check that if changing
+#  - name: When I run the old module with matching parameters except SSD
+#  - name: Then the RDS should not be changed
+#  - name: And the RDS should have SSD disks
+
+#@future?
+  # - name: Given that I create an RDS which has parameters unsupported by the old module
+  # - name: Then that module should have a default tag warning that it is new
+  # - name: And the old rds module should refuse to update RDS
+  # - name: Given that I have an RDS instance
+
+# see https://github.com/ansible/ansible/issues/20395 which should be updated
+# when this test is implemented.
+
+  # - name: When I attempt to modify that instance adding new tags
+  # tasks:
+  #   rds:
+  #     command: modify
+  #     instance_name: "{{ item.name }}"
+  #     tags:
+  #       dept: "{{ item.dept }}"
+  #       app_name: "{{ item.app_name }}"
+  #       project_name: "{{ item.project_name }}"
+  #       owner_email: "{{ item.owner_email }}"
+
+  # - name: Then those tags should be added to the RDS instance.
+  
