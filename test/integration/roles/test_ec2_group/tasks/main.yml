@@ -74,7 +74,7 @@
   assert:
     that:
        - 'result.failed'
-       - 'result.msg.startswith("value of region must be one of:")'
+       - 'result.msg.startswith("Region asdf querty 1234 does not seem to be available for aws module boto.ec2. If the region definitely exists, you may need to upgrade boto or extend with endpoints_path")'
 
 # ============================================================
 - name: test valid region parameter
@@ -155,7 +155,7 @@
   assert:
     that:
        - 'result.failed'
-       - '"EC2ResponseError: 401 Unauthorized" in result.msg'
+       - '"Error in get_all_security_groups: AWS was not able to validate the provided access credentials" in result.msg'
 
 # ============================================================
 - name: test credential parameters
@@ -172,7 +172,7 @@
   assert:
     that:
        - 'result.failed'
-       - '"EC2ResponseError: 401 Unauthorized" in result.msg'
+       - '"Error in get_all_security_groups: AWS was not able to validate the provided access credentials" in result.msg'
 
 # ============================================================
 - name: test state=absent
@@ -206,6 +206,24 @@
     that:
        - 'result.changed'
        - 'result.group_id.startswith("sg-")'
+
+# ============================================================
+- name: test state=present different description raises error
+  ec2_group:
+    name='{{ec2_group_name}}'
+    description='{{ec2_group_description}}CHANGED'
+    ec2_region='{{ec2_region}}'
+    ec2_access_key='{{ec2_access_key}}'
+    ec2_secret_key='{{ec2_secret_key}}'
+    state=present
+  ignore_errors: true
+  register: result
+
+- name: assert matching group with non-matching description raises error
+  assert:
+    that:
+       - 'result.failed'
+       - '"Group description does not match existing group. ec2_group does not support this case." in result.msg'
 
 # ============================================================
 - name: test state=present (expected changed=false)
