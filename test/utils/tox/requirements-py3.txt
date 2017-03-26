@@ -13,3 +13,4 @@ python3-memcached
 python-systemd
 botocore
 boto3
+pytest

@@ -13,4 +13,3 @@
   # name goes through templating correctly
     - name: 'Task: {{ a_list | to_json }}'
       debug: msg='{{ a_list | to_json }}'
-

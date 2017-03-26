@@ -19,9 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import string_types
+from ansible import constants as C
 
 from ansible.errors import AnsibleParserError
+from ansible.module_utils.six import string_types
 
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
@@ -55,7 +56,7 @@ class Play(Base, Taggable, Become):
     """
 
     # =================================================================================
-    # Connection-Related Attributes
+    _name                = FieldAttribute(isa='string', default='', always_post_validate=True)
 
     # TODO: generalize connection
     _accelerate          = FieldAttribute(isa='bool', default=False, always_post_validate=True)
@@ -63,11 +64,11 @@ class Play(Base, Taggable, Become):
     _accelerate_port     = FieldAttribute(isa='int', default=5099, always_post_validate=True)
 
     # Connection
+    _fact_path           = FieldAttribute(isa='string', default=None)
     _gather_facts        = FieldAttribute(isa='bool', default=None, always_post_validate=True)
     _gather_subset       = FieldAttribute(isa='barelist', default=None, always_post_validate=True)
     _gather_timeout      = FieldAttribute(isa='int', default=None, always_post_validate=True)
     _hosts               = FieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True)
-    _name                = FieldAttribute(isa='string', default='', always_post_validate=True)
 
     # Variable Attributes
     _vars_files          = FieldAttribute(isa='list', default=[], priority=99)
@@ -84,18 +85,20 @@ class Play(Base, Taggable, Become):
     _tasks               = FieldAttribute(isa='list', default=[])
 
     # Flag/Setting Attributes
-    _any_errors_fatal    = FieldAttribute(isa='bool', default=False, always_post_validate=True)
     _force_handlers      = FieldAttribute(isa='bool', always_post_validate=True)
     _max_fail_percentage = FieldAttribute(isa='percent', always_post_validate=True)
     _serial              = FieldAttribute(isa='list', default=[], always_post_validate=True)
-    _strategy            = FieldAttribute(isa='string', default='linear', always_post_validate=True)
+    _strategy            = FieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
+    _order               = FieldAttribute(isa='string', always_post_validate=True)
 
     # =================================================================================
 
     def __init__(self):
         super(Play, self).__init__()
 
+        self._included_conditional = None
         self._included_path = None
+        self._removed_hosts = []
         self.ROLE_CACHE = {}
 
     def __repr__(self):
@@ -202,7 +205,7 @@ class Play(Base, Taggable, Become):
         for prompt_data in new_ds:
             if 'name' not in prompt_data:
                 display.deprecated("Using the 'short form' for vars_prompt has been deprecated")
-                for vname, prompt in prompt_data.iteritems():
+                for vname, prompt in prompt_data.items():
                     vars_prompts.append(dict(
                         name      = vname,
                         prompt    = prompt,
@@ -327,5 +330,6 @@ class Play(Base, Taggable, Become):
     def copy(self):
         new_me = super(Play, self).copy()
         new_me.ROLE_CACHE = self.ROLE_CACHE.copy()
+        new_me._included_conditional = self._included_conditional
         new_me._included_path = self._included_path
         return new_me

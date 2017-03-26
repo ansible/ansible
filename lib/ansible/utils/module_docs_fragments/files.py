@@ -25,7 +25,9 @@ options:
     required: false
     default: null
     description:
-      - Mode the file or directory should be. For those used to I(/usr/bin/chmod) remember that modes are actually octal numbers (like 0644). Leaving off the leading zero will likely have unexpected results. As of version 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
+      - Mode the file or directory should be. For those used to I(/usr/bin/chmod) remember that modes are actually octal numbers (like 0644).
+        Leaving off the leading zero will likely have unexpected results.
+        As of version 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
   owner:
     required: false
     default: null
@@ -70,4 +72,12 @@ options:
     required: false
     default: false
     version_added: "2.2"
+  attributes:
+    description:
+      - Attributes the file or directory should have. To get supported flags look at the man page for I(chattr) on the target system.
+        This string should contain the attributes in the same order as the one displayed by I(lsattr).
+    required: false
+    default: None
+    aliases: ['attr']
+    version_added: "2.3"
 """

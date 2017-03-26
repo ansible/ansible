@@ -23,18 +23,17 @@
   shell: gem list | egrep '^gist '
   register: uninstall
   failed_when: "uninstall.rc != 1"
- 
+
 - name: install a gem
   gem: name=gist state=present
   register: gem_result
 
 - name: verify module output properties
-  assert: 
-    that: 
+  assert:
+    that:
         - "'name' in gem_result"
-        - "'changed' in gem_result" 
-        - "'state' in gem_result" 
+        - "'changed' in gem_result"
+        - "'state' in gem_result"
 
 - name: verify gist is installed
-  shell: gem list | egrep '^gist ' 
-     
+  shell: gem list | egrep '^gist '

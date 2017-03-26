@@ -27,7 +27,13 @@ UNAME := $(shell uname | tr '[:upper:]' '[:lower:]')
 
 all: other non_destructive destructive
 
-other: test_test_infra parsing test_var_blending test_var_precedence unicode test_templating_settings environment test_as includes blocks pull_run pull_no_127 pull_limit_inventory check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts test_binary_modules_posix test_hosts_field test_lookup_properties args
+other: ansible test_test_infra parsing test_var_blending test_var_precedence unicode test_templating_settings \
+	environment test_as includes blocks pull_run pull_no_127 pull_limit_inventory check_mode test_hash test_handlers \
+	test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts test_binary_modules_posix \
+	test_hosts_field test_lookup_properties args test_jinja2_groupby test_callback_retry_task_name
+
+ansible:
+	(cd targets/ansible && ./runme.sh $(TEST_FLAGS))
 
 test_test_infra:
 	(cd targets/test_infra && ./runme.sh $(TEST_FLAGS))
@@ -63,8 +69,11 @@ test_gathering_facts:
 environment:
 	(cd targets/environment && ./runme.sh $(TEST_FLAGS))
 
+test_jinja2_groupby:
+	(cd targets/filters && ./runme.sh $(TEST_FLAGS))
+
 non_destructive: setup
-	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook non_destructive.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook non_destructive.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 # Tests which can be run when running as root and a local SSH daemon is available.
 test_root_ssh: test_connection_local test_connection_chroot test_connection_ssh test_connection_paramiko_ssh test_delegate_to
@@ -135,7 +144,7 @@ test_connection_winrm:
 	(cd targets/connection_winrm && ./runme.sh $(TEST_FLAGS))
 
 destructive: setup
-	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook destructive.yml -i $(INVENTORY) -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook destructive.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 check_mode:
 	(cd targets/check_mode && ./runme.sh $(TEST_FLAGS))
@@ -171,13 +180,13 @@ ci_win3: test_win_group3 test_connection_winrm
 test_winrm: test_win_group1 test_win_group2 test_win_group3
 
 test_win_group1:
-	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook test_win_group1.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook test_win_group1.yml -i inventory.winrm -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 test_win_group2:
-	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook test_win_group2.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook test_win_group2.yml -i inventory.winrm -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 test_win_group3:
-	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook test_win_group3.yml -i inventory.winrm -e outputdir=$(TEST_DIR) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook test_win_group3.yml -i inventory.winrm -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 test_tags:
 	(cd targets/tags && ./runme.sh $(TEST_FLAGS))
@@ -253,6 +262,11 @@ cloudflare: $(CREDENTIALS_FILE)
 	RC=$$? ; \
 	exit $$RC;
 
+cloudscale:
+	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook cloudscale.yml -i $(INVENTORY) -e @$(VARS_FILE) -e "resource_prefix=$(CLOUD_RESOURCE_PREFIX)" -v $(TEST_FLAGS) ; \
+	RC=$$? ; \
+	exit $$RC;
+
 $(CONSUL_RUNNING):
 
 consul:
@@ -269,7 +283,7 @@ test_galaxy_spec: setup
 	mytmpdir=$(MYTMPDIR) ; \
 	ansible-galaxy install -r galaxy_rolesfile -p $$mytmpdir/roles -vvvv ; \
     cp galaxy_playbook.yml $$mytmpdir ; \
-    ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook.yml -e outputdir=$(TEST_DIR) -v $(TEST_FLAGS) ; \
+    ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook.yml -e @$(VARS_FILE) -v $(TEST_FLAGS) ; \
     RC=$$? ; \
     rm -rf $$mytmpdir ; \
     exit $$RC
@@ -278,7 +292,7 @@ test_galaxy_yaml: setup
 	mytmpdir=$(MYTMPDIR) ; \
 	ansible-galaxy install -r galaxy_roles.yml -p $$mytmpdir/roles -vvvv; \
     cp galaxy_playbook.yml $$mytmpdir ; \
-    ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook.yml -e outputdir=$(TEST_DIR) -v $(TEST_FLAGS) ; \
+    ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook.yml -e @$(VARS_FILE) -v $(TEST_FLAGS) ; \
     RC=$$? ; \
     rm -rf $$mytmpdir ; \
     exit $$RC
@@ -315,3 +329,6 @@ test_lookup_properties:
 
 args:
 	(cd targets/args && ./runme.sh $(TEST_FLAGS))
+
+test_callback_retry_task_name:
+	(cd targets/callback_retry_task_name && ./runme.sh $(TEST_FLAGS))

@@ -1,0 +1,41 @@
+---
+- debug: msg="START netconf/single.yaml"
+
+# Ensure that when we change the hostname to `localhost` we cause a change
+- name: setup
+  junos_config:
+    lines:
+      - set system host-name {{ inventory_hostname_short }}
+    provider: "{{ netconf }}"
+
+- name: configure single command
+  junos_config:
+    lines:
+      - set system host-name localhost
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'+  host-name localhost;' in result.diff.prepared"
+
+- name: check single command idempotent
+  junos_config:
+    lines:
+      - set system host-name localhost
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  junos_config:
+    lines:
+      - set system host-name {{ inventory_hostname_short }}
+    provider: "{{ netconf }}"
+
+
+- debug: msg="END netconf/single.yaml"

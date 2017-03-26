@@ -2,4 +2,3 @@
   shell: echo hi {{ chdir }}
   failed_when: False
   tags: scenario3
-

@@ -37,11 +37,10 @@ import re
 from termios import tcflush, TCIFLUSH
 from binascii import hexlify
 
-from ansible.compat.six import iteritems
-
 from ansible import constants as C
-from ansible.compat.six.moves import input
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.six.moves import input
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import makedirs_safe
 from ansible.module_utils._text import to_bytes
@@ -89,7 +88,10 @@ class MyAddPolicy(object):
 
     def missing_host_key(self, client, hostname, key):
 
-        if C.HOST_KEY_CHECKING:
+        if all((C.HOST_KEY_CHECKING, not C.PARAMIKO_HOST_KEY_AUTO_ADD)):
+
+            if C.USE_PERSISTENT_CONNECTIONS:
+                raise AnsibleConnectionFailure('rejected %s host key for host %s: %s' % (key.get_name(), hostname, hexlify(key.get_fingerprint())))
 
             self.connection.connection_lock()
 
@@ -130,6 +132,14 @@ class Connection(ConnectionBase):
 
     transport = 'paramiko'
 
+    def transport_test(self, connect_timeout):
+        ''' Test the transport mechanism, if available '''
+        host = self._play_context.remote_addr
+        port = int(self._play_context.port or 22)
+        display.vvv("attempting transport test to %s:%s" % (host, port))
+        sock = socket.create_connection((host, port), connect_timeout)
+        sock.close()
+
     def _cache_key(self):
         return "%s__%s__" % (self._play_context.remote_addr, self._play_context.remote_user)
 
@@ -145,9 +155,9 @@ class Connection(ConnectionBase):
         proxy_command = None
         # Parse ansible_ssh_common_args, specifically looking for ProxyCommand
         ssh_args = [
-            getattr(self._play_context, 'ssh_extra_args', ''),
-            getattr(self._play_context, 'ssh_common_args', ''),
-            getattr(self._play_context, 'ssh_args', ''),
+            getattr(self._play_context, 'ssh_extra_args', '') or '',
+            getattr(self._play_context, 'ssh_common_args', '') or '',
+            getattr(self._play_context, 'ssh_args', '') or '',
         ]
         if ssh_args is not None:
             args = self._split_ssh_args(' '.join(ssh_args))
@@ -193,7 +203,8 @@ class Connection(ConnectionBase):
             raise AnsibleError("paramiko is not installed")
 
         port = self._play_context.port or 22
-        display.vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr), host=self._play_context.remote_addr)
+        display.vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr),
+                    host=self._play_context.remote_addr)
 
         ssh = paramiko.SSHClient()
 
@@ -227,7 +238,7 @@ class Connection(ConnectionBase):
                 self._play_context.remote_addr,
                 username=self._play_context.remote_user,
                 allow_agent=allow_agent,
-                look_for_keys=True,
+                look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
                 key_filename=key_filename,
                 password=self._play_context.password,
                 timeout=self._play_context.timeout,
@@ -418,8 +429,9 @@ class Connection(ConnectionBase):
         SSH_CONNECTION_CACHE.pop(cache_key, None)
         SFTP_CONNECTION_CACHE.pop(cache_key, None)
 
-        if self.sftp is not None:
-            self.sftp.close()
+        if hasattr(self, 'sftp'):
+            if self.sftp is not None:
+                self.sftp.close()
 
         if C.HOST_KEY_CHECKING and C.PARAMIKO_RECORD_HOST_KEYS and self._any_keys_added():
 

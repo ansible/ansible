@@ -1,0 +1,6 @@
+---
+test_image_data1:
+  - {protocol: "sftp", serverip: "10.241.106.118", imgtype: "os", serverusername: "root", serverpassword: "root123"}
+
+test_image_data2:
+  - {protocol: "tftp", serverip: "10.241.106.118", imgtype: "os"}

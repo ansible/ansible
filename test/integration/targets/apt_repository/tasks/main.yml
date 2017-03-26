@@ -18,4 +18,3 @@
 
 - include: 'apt.yml'
   when: ansible_distribution in ('Ubuntu')
-

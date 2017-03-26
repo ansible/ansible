@@ -161,4 +161,3 @@
   assert:
     that:
       - "not q_check_mode.changed"
-

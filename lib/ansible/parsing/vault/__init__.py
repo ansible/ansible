@@ -62,9 +62,9 @@ try:
 except ImportError:
     HAS_AES = False
 
-from ansible.compat.six import PY3, binary_type
-from ansible.compat.six.moves import zip
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import PY3, binary_type
+from ansible.module_utils.six.moves import zip
 from ansible.module_utils._text import to_bytes, to_text
 
 try:
@@ -147,25 +147,16 @@ def is_encrypted_file(file_obj, start_pos=0, count=-1):
     current_position = file_obj.tell()
     try:
         file_obj.seek(start_pos)
-        vaulttext = file_obj.read(count)
-        try:
-            b_vaulttext = to_bytes(to_text(vaulttext, encoding='ascii', errors='strict'), encoding='ascii', errors='strict')
-        except (UnicodeError, TypeError):
-            # At present, vault files contain only ascii characters.  The encoding is utf-8
-            # without BOM (for future expansion).  If the header does not
-            # decode as ascii then we know we do not have proper vault
-            # encrypted data.
-            return False
+        return is_encrypted(file_obj.read(count))
+
     finally:
         file_obj.seek(current_position)
-
-    return is_encrypted(b_vaulttext)
 
 
 class VaultLib:
 
-    def __init__(self, password):
-        self.b_password = to_bytes(password, errors='strict', encoding='utf-8')
+    def __init__(self, b_password):
+        self.b_password = to_bytes(b_password, errors='strict', encoding='utf-8')
         self.cipher_name = None
         self.b_version = b'1.1'
 
@@ -210,10 +201,9 @@ class VaultLib:
             self.cipher_name = u"AES256"
 
         try:
-            Cipher = CIPHER_MAPPING[self.cipher_name]
+            this_cipher = CIPHER_MAPPING[self.cipher_name]()
         except KeyError:
             raise AnsibleError(u"{0} cipher could not be found".format(self.cipher_name))
-        this_cipher = Cipher()
 
         # encrypt data
         b_ciphertext = this_cipher.encrypt(b_plaintext, self.b_password)
@@ -247,11 +237,8 @@ class VaultLib:
         b_vaulttext = self._split_header(b_vaulttext)
 
         # create the cipher object
-        cipher_class_name = u'Vault{0}'.format(self.cipher_name)
-
-        if cipher_class_name in globals() and self.cipher_name in CIPHER_WHITELIST:
-            Cipher = globals()[cipher_class_name]
-            this_cipher = Cipher()
+        if self.cipher_name in CIPHER_WHITELIST:
+            this_cipher = CIPHER_MAPPING[self.cipher_name]()
         else:
             raise AnsibleError("{0} cipher could not be found".format(self.cipher_name))
 
@@ -311,8 +298,8 @@ class VaultLib:
 
 class VaultEditor:
 
-    def __init__(self, password):
-        self.vault = VaultLib(password)
+    def __init__(self, b_password):
+        self.vault = VaultLib(b_password)
 
     # TODO: mv shred file stuff to it's own class
     def _shred_file_custom(self, tmp_path):
@@ -369,7 +356,7 @@ class VaultEditor:
         try:
             r = call(['shred', tmp_path])
         except (OSError, ValueError):
-            # shred is not available on this system, or some other error occured.
+            # shred is not available on this system, or some other error occurred.
             # ValueError caught because OS X El Capitan is raising an
             # exception big enough to hit a limit in python2-2.7.11 and below.
             # Symptom is ValueError: insecure pickle when shred is not
@@ -398,21 +385,28 @@ class VaultEditor:
             self._shred_file(tmp_path)
             raise
 
-        tmpdata = self.read_data(tmp_path)
+        b_tmpdata = self.read_data(tmp_path)
 
         # Do nothing if the content has not changed
-        if existing_data == tmpdata and not force_save:
+        if existing_data == b_tmpdata and not force_save:
             self._shred_file(tmp_path)
             return
 
         # encrypt new data and write out to tmp
         # An existing vaultfile will always be UTF-8,
         # so decode to unicode here
-        enc_data = self.vault.encrypt(tmpdata.decode())
-        self.write_data(enc_data, tmp_path)
+        b_ciphertext = self.vault.encrypt(b_tmpdata)
+        self.write_data(b_ciphertext, tmp_path)
 
         # shuffle tmp file into place
         self.shuffle_files(tmp_path, filename)
+
+    def encrypt_bytes(self, b_plaintext):
+        check_prereqs()
+
+        b_ciphertext = self.vault.encrypt(b_plaintext)
+
+        return b_ciphertext
 
     def encrypt_file(self, filename, output_file=None):
 
@@ -420,15 +414,23 @@ class VaultEditor:
 
         # A file to be encrypted into a vaultfile could be any encoding
         # so treat the contents as a byte string.
-        plaintext = self.read_data(filename)
-        ciphertext = self.vault.encrypt(plaintext)
-        self.write_data(ciphertext, output_file or filename)
+
+        # follow the symlink
+        filename = os.path.realpath(filename)
+
+        b_plaintext = self.read_data(filename)
+        b_ciphertext = self.vault.encrypt(b_plaintext)
+        self.write_data(b_ciphertext, output_file or filename)
 
     def decrypt_file(self, filename, output_file=None):
 
         check_prereqs()
 
+        # follow the symlink
+        filename = os.path.realpath(filename)
+
         ciphertext = self.read_data(filename)
+
         try:
             plaintext = self.vault.decrypt(ciphertext)
         except AnsibleError as e:
@@ -451,7 +453,11 @@ class VaultEditor:
 
         check_prereqs()
 
+        # follow the symlink
+        filename = os.path.realpath(filename)
+
         ciphertext = self.read_data(filename)
+
         try:
             plaintext = self.vault.decrypt(ciphertext)
         except AnsibleError as e:
@@ -475,18 +481,26 @@ class VaultEditor:
 
         return plaintext
 
-    def rekey_file(self, filename, new_password):
+    def rekey_file(self, filename, b_new_password):
 
         check_prereqs()
 
+        # follow the symlink
+        filename = os.path.realpath(filename)
+
         prev = os.stat(filename)
         ciphertext = self.read_data(filename)
+
         try:
             plaintext = self.vault.decrypt(ciphertext)
         except AnsibleError as e:
             raise AnsibleError("%s for %s" % (to_bytes(e),to_bytes(filename)))
 
-        new_vault = VaultLib(new_password)
+        # This is more or less an assert, see #18247
+        if b_new_password is None:
+            raise AnsibleError('The value for the new_password to rekey %s with is not valid' % filename)
+
+        new_vault = VaultLib(b_new_password)
         new_ciphertext = new_vault.encrypt(plaintext)
 
         self.write_data(new_ciphertext, filename)

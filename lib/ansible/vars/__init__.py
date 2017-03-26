@@ -20,28 +20,29 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import sys
 
 from collections import defaultdict, MutableMapping
-
-from ansible.compat.six import iteritems
-from jinja2.exceptions import UndefinedError
 
 try:
     from hashlib import sha1
 except ImportError:
     from sha import sha as sha1
 
+from jinja2.exceptions import UndefinedError
+
 from ansible import constants as C
 from ansible.cli import CLI
-from ansible.compat.six import string_types, text_type
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
 from ansible.inventory.host import Host
+from ansible.module_utils.six import iteritems, string_types, text_type
 from ansible.plugins import lookup_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
 from ansible.vars.unsafe_proxy import wrap_var
+from ansible.module_utils._text import to_native
 
 try:
     from __main__ import display
@@ -49,13 +50,16 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-VARIABLE_CACHE = dict()
-HOSTVARS_CACHE = dict()
+
+VARIABLE_CACHE = {}
+HOSTVARS_CACHE = {}
+
 
 class AnsibleInventoryVarsData(dict):
     def __init__(self, *args, **kwargs):
         super(AnsibleInventoryVarsData, self).__init__(*args, **kwargs)
         self.path = None
+
 
 def preprocess_vars(a):
     '''
@@ -90,11 +94,11 @@ def strip_internal_keys(dirty):
             clean[k] = strip_internal_keys(dirty[k])
     return clean
 
+
 class VariableManager:
 
     def __init__(self):
 
-        self._fact_cache = FactCache()
         self._nonpersistent_fact_cache = defaultdict(dict)
         self._vars_cache = defaultdict(dict)
         self._extra_vars = defaultdict(dict)
@@ -104,6 +108,14 @@ class VariableManager:
         self._hostvars = None
         self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
         self._options_vars = defaultdict(dict)
+
+        # bad cache plugin is not fatal error
+        try:
+            self._fact_cache = FactCache()
+        except AnsibleError as e:
+            display.warning(to_native(e))
+            # fallback to a dict as in memory cache
+            self._fact_cache = {}
 
     def __getstate__(self):
         data = dict(
@@ -239,20 +251,19 @@ class VariableManager:
             all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()))
 
         if host:
-            # next, if a host is specified, we load any vars from group_vars
-            # files and then any vars from host_vars files which may apply to
-            # this host or the groups it belongs to
+            # first we merge in vars from groups specified in the inventory (INI or script)
+            all_vars = combine_vars(all_vars, host.get_group_vars())
 
-            # we merge in the special 'all' group_vars first, if they exist
+            # these are PLAY host/group vars, inventory adjacent ones have already been processed
+            # next, we load any vars from group_vars files and then any vars from host_vars
+            # files which may apply to this host or the groups it belongs to. We merge in the
+            # special 'all' group_vars first, if they exist
             if 'all' in self._group_vars_files:
                 data = preprocess_vars(self._group_vars_files['all'])
                 for item in data:
                     all_vars = combine_vars(all_vars, item)
 
-            # we merge in vars from groups specified in the inventory (INI or script)
-            all_vars = combine_vars(all_vars, host.get_group_vars())
-
-            for group in sorted(host.get_groups(), key=lambda g: g.depth):
+            for group in sorted(host.get_groups(), key=lambda g: (g.depth, g.priority, g.name)):
                 if group.name in self._group_vars_files and group.name != 'all':
                     for data in self._group_vars_files[group.name]:
                         data = preprocess_vars(data)
@@ -273,7 +284,22 @@ class VariableManager:
             # finally, the facts caches for this host, if it exists
             try:
                 host_facts = wrap_var(self._fact_cache.get(host.name, dict()))
-                all_vars = combine_vars(all_vars, host_facts)
+                if not C.NAMESPACE_FACTS:
+                    # allow facts to polute main namespace
+                    all_vars = combine_vars(all_vars, host_facts)
+                # always return namespaced facts
+                all_vars = combine_vars(all_vars, {'ansible_facts': host_facts})
+
+                # push local to top namespace, ensure we always have, even if empty
+                if 'ansible_local' in all_vars['ansible_facts']:
+                    all_vars.update({'ansible_local': all_vars['ansible_facts']['ansible_local']})
+                else:
+                    all_vars.update({'ansible_local': {}})
+
+                # remove possible extra ansible_local from ansible_facts namespace
+                if 'ansible_local' in all_vars['ansible_facts']:
+                    del all_vars['ansible_facts']['ansible_local']
+
             except KeyError:
                 pass
 
@@ -292,7 +318,7 @@ class VariableManager:
                 # the with_first_found mechanism.
                 vars_file_list = vars_file_item
                 if not isinstance(vars_file_list, list):
-                     vars_file_list = [ vars_file_list ]
+                    vars_file_list = [ vars_file_list ]
 
                 # now we iterate through the (potential) files, and break out
                 # as soon as we read one from the list. If none are found, we
@@ -306,16 +332,20 @@ class VariableManager:
                                 for item in data:
                                     all_vars = combine_vars(all_vars, item)
                             break
-                        except AnsibleFileNotFound as e:
+                        except AnsibleFileNotFound:
                             # we continue on loader failures
                             continue
-                        except AnsibleParserError as e:
+                        except AnsibleParserError:
                             raise
                     else:
-                        raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
+                        # if include_delegate_to is set to False, we ignore the missing
+                        # vars file here because we're working on a delegated host
+                        if include_delegate_to:
+                            raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
                 except (UndefinedError, AnsibleUndefinedVariable):
                     if host is not None and self._fact_cache.get(host.name, dict()).get('module_setup') and task is not None:
-                        raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'" % vars_file_item, obj=vars_file_item)
+                        raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'" % vars_file_item,
+                                                       obj=vars_file_item)
                     else:
                         # we do not have a full context here, and the missing variable could be
                         # because of that, so just show a warning and continue
@@ -359,10 +389,11 @@ class VariableManager:
         # special case for the 'environment' magic variable, as someone
         # may have set it as a variable and we don't want to stomp on it
         if task:
-            if  'environment' not in all_vars:
+            if 'environment' not in all_vars:
                 all_vars['environment'] = task.environment
             else:
-                display.warning("The variable 'environment' appears to be used already, which is also used internally for environment variables set on the task/block/play. You should use a different variable name to avoid conflicts with this internal variable")
+                display.warning("The variable 'environment' appears to be used already, which is also used internally for environment variables set on the "
+                                "task/block/play. You should use a different variable name to avoid conflicts with this internal variable")
 
         # if we have a task and we're delegating to another host, figure out the
         # variables for that host now so we don't have to rely on hostvars later
@@ -389,10 +420,10 @@ class VariableManager:
 
         variables = dict()
         variables['playbook_dir'] = loader.get_basedir()
+        variables['ansible_playbook_python'] = sys.executable
 
         if host:
-            variables['group_names'] = sorted([group.name for group in host.get_groups() if group.name != 'all'])
-
+            # host already provides some magic vars via host.get_vars()
             if self._inventory:
                 variables['groups']  = self._inventory.get_group_dict()
 
@@ -410,12 +441,13 @@ class VariableManager:
             variables['inventory_file'] = self._inventory.src()
             if play:
                 # add the list of hosts in the play, as adjusted for limit/filters
-                # DEPRECATED: play_hosts should be deprecated in favor of ansible_play_hosts,
-                #             however this would take work in the templating engine, so for now
-                #             we'll add both so we can give users something transitional to use
-                variables['play_hosts'] = [x.name for x in self._inventory.get_hosts()]
-                variables['ansible_play_batch'] = [x.name for x in self._inventory.get_hosts()]
-                variables['ansible_play_hosts'] = [x.name for x in self._inventory.get_hosts(pattern=play.hosts or 'all', ignore_restrictions=True)]
+                variables['ansible_play_hosts_all'] = [x.name for x in self._inventory.get_hosts(pattern=play.hosts or 'all', ignore_restrictions=True)]
+                variables['ansible_play_hosts'] = [x for x in variables['ansible_play_hosts_all'] if x not in play._removed_hosts]
+                variables['ansible_play_batch'] = [x.name for x in self._inventory.get_hosts() if x.name not in play._removed_hosts]
+
+                #DEPRECATED: play_hosts should be deprecated in favor of ansible_play_batch,
+                #  however this would take work in the templating engine, so for now we'll add both
+                variables['play_hosts'] = variables['ansible_play_batch']
 
         # the 'omit' value alows params to be left out if the variable they are based on is undefined
         variables['omit'] = self._omit_token
@@ -442,7 +474,7 @@ class VariableManager:
                 try:
                     loop_terms = listify_lookup_plugin_terms(terms=task.loop_args, templar=templar, loader=loader, fail_on_undefined=True, convert_bare=False)
                     items = lookup_loader.get(task.loop, loader=loader, templar=templar).run(terms=loop_terms, variables=vars_copy)
-                except AnsibleUndefinedVariable as e:
+                except AnsibleUndefinedVariable:
                     # This task will be skipped later due to this, so we just setup
                     # a dummy array for the later code so it doesn't fail
                     items = [None]
@@ -569,8 +601,13 @@ class VariableManager:
 
         rval = AnsibleInventoryVarsData()
         rval.path = path
+
         if data is not None:
-            rval.update(data)
+            if not isinstance(data, dict):
+                raise AnsibleError("Problem parsing file '%s': line %d, column %d" % data.ansible_pos)
+            else:
+                rval.update(data)
+
         return rval
 
     def add_host_vars_file(self, path, loader):

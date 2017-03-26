@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2016, Hiroaki Nakamura <hnakamur@gmail.com>
@@ -120,6 +119,8 @@ class LXDClient(object):
             resp_type = resp_json.get('type', None)
             if resp_type == 'error':
                 if ok_error_codes is not None and resp_json['error_code'] in ok_error_codes:
+                    return resp_json
+                if resp_json['error'] == "Certificate already in trust store":
                     return resp_json
                 self._raise_err_from_json(resp_json)
             return resp_json

@@ -5,4 +5,6 @@
     - { role: test_gce_pd, tags: test_gce_pd }
     - { role: test_gce_mig, tags: test_gce_mig }
     - { role: test_gcdns, tags: test_gcdns }
-    # TODO: tests for gce_lb, gce_net, gc_storage
+    - { role: test_gce_tag, tags: test_gce_tag }
+    - { role: test_gce_net, tags: test_gce_net }
+    # TODO: tests for gce_lb, gc_storage

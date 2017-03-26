@@ -105,8 +105,6 @@ import platform
 import tempfile
 import base64
 
-from ansible.module_utils.basic import get_distribution, get_exception
-
 try:
     import httplib
 except ImportError:
@@ -115,7 +113,9 @@ except ImportError:
 
 import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
+from ansible.module_utils.basic import get_distribution, get_exception
 from ansible.module_utils.six import b
+from ansible.module_utils._text import to_bytes, to_native, to_text
 
 try:
     # python3
@@ -181,6 +181,8 @@ if not HAS_SSLCONTEXT and HAS_SSL:
                 pass
         del libssl
 
+
+LOADED_VERIFY_LOCATIONS = set()
 
 HAS_MATCH_HOSTNAME = True
 try:
@@ -307,7 +309,7 @@ if not HAS_MATCH_HOSTNAME:
 # ca cert, regardless of validity, for Python on Mac OS to use the
 # keychain functionality in OpenSSL for validating SSL certificates.
 # See: http://mercurial.selenic.com/wiki/CACertificates#Mac_OS_X_10.6_and_higher
-DUMMY_CA_CERT = """-----BEGIN CERTIFICATE-----
+b_DUMMY_CA_CERT = b("""-----BEGIN CERTIFICATE-----
 MIICvDCCAiWgAwIBAgIJAO8E12S7/qEpMA0GCSqGSIb3DQEBBQUAMEkxCzAJBgNV
 BAYTAlVTMRcwFQYDVQQIEw5Ob3J0aCBDYXJvbGluYTEPMA0GA1UEBxMGRHVyaGFt
 MRAwDgYDVQQKEwdBbnNpYmxlMB4XDTE0MDMxODIyMDAyMloXDTI0MDMxNTIyMDAy
@@ -324,7 +326,7 @@ MUB80IR6knq9K/tY+hvPsZer6eFMzO3JGkRFBh2kn6JdMDnhYGX7AXVHGflrwNQH
 qFy+aenWXsC0ZvrikFxbQnX8GVtDADtVznxOi7XzFw7JOxdsVrpXgSN0eh0aMzvV
 zKPZsZ2miVGclicJHzm5q080b1p/sZtuKIEZk6vZqEg=
 -----END CERTIFICATE-----
-"""
+""")
 
 #
 # Exceptions
@@ -510,9 +512,15 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
                 newheaders = dict((k,v) for k,v in req.headers.items()
                                   if k.lower() not in ("content-length", "content-type")
                                  )
+                try:
+                    # Python 2-3.3
+                    origin_req_host = req.get_origin_req_host()
+                except AttributeError:
+                    # Python 3.4+
+                    origin_req_host = req.origin_req_host
                 return urllib_request.Request(newurl,
                                headers=newheaders,
-                               origin_req_host=req.get_origin_req_host(),
+                               origin_req_host=origin_req_host,
                                unverifiable=True)
             else:
                 raise urllib_error.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
@@ -520,7 +528,7 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
     return RedirectHandler
 
 
-def build_ssl_validation_error(hostname, port, paths):
+def build_ssl_validation_error(hostname, port, paths, exc=None):
     '''Inteligently build out the SSLValidationError based on what support
     you have installed
     '''
@@ -542,7 +550,10 @@ def build_ssl_validation_error(hostname, port, paths):
     msg.append('You can use validate_certs=False if you do'
                ' not need to confirm the servers identity but this is'
                ' unsafe and not recommended.'
-               ' Paths checked for this platform: %s')
+               ' Paths checked for this platform: %s.')
+
+    if exc:
+        msg.append('The exception msg was: %s.' % to_native(exc))
 
     raise SSLValidationError(' '.join(msg) % (hostname, port, ", ".join(paths)))
 
@@ -568,21 +579,21 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         ca_certs = []
         paths_checked = []
 
-        system = platform.system()
+        system = to_text(platform.system(), errors='surrogate_or_strict')
         # build a list of paths to check for .crt/.pem files
         # based on the platform type
         paths_checked.append('/etc/ssl/certs')
-        if system == 'Linux':
+        if system == u'Linux':
             paths_checked.append('/etc/pki/ca-trust/extracted/pem')
             paths_checked.append('/etc/pki/tls/certs')
             paths_checked.append('/usr/share/ca-certificates/cacert.org')
-        elif system == 'FreeBSD':
+        elif system == u'FreeBSD':
             paths_checked.append('/usr/local/share/certs')
-        elif system == 'OpenBSD':
+        elif system == u'OpenBSD':
             paths_checked.append('/etc/ssl')
-        elif system == 'NetBSD':
+        elif system == u'NetBSD':
             ca_certs.append('/etc/openssl/certs')
-        elif system == 'SunOS':
+        elif system == u'SunOS':
             paths_checked.append('/opt/local/etc/openssl/certs')
 
         # fall back to a user-deployed cert in a standard
@@ -590,10 +601,12 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         paths_checked.append('/etc/ansible')
 
         tmp_fd, tmp_path = tempfile.mkstemp()
+        to_add_fd, to_add_path = tempfile.mkstemp()
+        to_add = False
 
         # Write the dummy ca cert if we are running on Mac OS X
-        if system == 'Darwin':
-            os.write(tmp_fd, DUMMY_CA_CERT)
+        if system == u'Darwin':
+            os.write(tmp_fd, b_DUMMY_CA_CERT)
             # Default Homebrew path for OpenSSL certs
             paths_checked.append('/usr/local/etc/openssl')
 
@@ -608,13 +621,21 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                     if os.path.isfile(full_path) and os.path.splitext(f)[1] in ('.crt','.pem'):
                         try:
                             cert_file = open(full_path, 'rb')
-                            os.write(tmp_fd, cert_file.read())
-                            os.write(tmp_fd, b('\n'))
+                            cert = cert_file.read()
                             cert_file.close()
+                            os.write(tmp_fd, cert)
+                            os.write(tmp_fd, b('\n'))
+                            if full_path not in LOADED_VERIFY_LOCATIONS:
+                                to_add = True
+                                os.write(to_add_fd, cert)
+                                os.write(to_add_fd, b('\n'))
+                                LOADED_VERIFY_LOCATIONS.add(full_path)
                         except (OSError, IOError):
                             pass
 
-        return (tmp_path, paths_checked)
+        if not to_add:
+            to_add_path = None
+        return (tmp_path, to_add_path, paths_checked)
 
     def validate_proxy_response(self, response, valid_codes=[200]):
         '''
@@ -643,17 +664,18 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                     return False
         return True
 
-    def _make_context(self, tmp_ca_cert_path):
+    def _make_context(self, to_add_ca_cert_path):
         context = create_default_context()
-        context.load_verify_locations(tmp_ca_cert_path)
+        if to_add_ca_cert_path:
+            context.load_verify_locations(to_add_ca_cert_path)
         return context
 
     def http_request(self, req):
-        tmp_ca_cert_path, paths_checked = self.get_ca_certs()
+        tmp_ca_cert_path, to_add_ca_cert_path, paths_checked = self.get_ca_certs()
         https_proxy = os.environ.get('https_proxy')
         context = None
         if HAS_SSLCONTEXT:
-            context = self._make_context(tmp_ca_cert_path)
+            context = self._make_context(to_add_ca_cert_path)
 
         # Detect if 'no_proxy' environment variable is set and if our URL is included
         use_proxy = self.detect_no_proxy(req.get_full_url())
@@ -672,9 +694,14 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                     s.sendall(self.CONNECT_COMMAND % (self.hostname, self.port))
                     if proxy_parts.get('username'):
                         credentials = "%s:%s" % (proxy_parts.get('username',''), proxy_parts.get('password',''))
-                        s.sendall('Proxy-Authorization: Basic %s\r\n' % credentials.encode('base64').strip())
-                    s.sendall('\r\n')
-                    connect_result = s.recv(4096)
+                        s.sendall(b('Proxy-Authorization: Basic %s\r\n') % base64.b64encode(to_bytes(credentials, errors='surrogate_or_strict')).strip())
+                    s.sendall(b('\r\n'))
+                    connect_result = b("")
+                    while connect_result.find(b("\r\n\r\n")) <= 0:
+                        connect_result += s.recv(4096)
+                        # 128 kilobytes of headers should be enough for everyone.
+                        if len(connect_result) > 131072:
+                            raise ProxyError('Proxy sent too verbose headers. Only 128KiB allowed.')
                     self.validate_proxy_response(connect_result)
                     if context:
                         ssl_s = context.wrap_socket(s, server_hostname=self.hostname)
@@ -697,20 +724,25 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             # close the ssl connection
             #ssl_s.unwrap()
             s.close()
-        except (ssl.SSLError, socket.error):
+        except (ssl.SSLError, CertificateError):
             e = get_exception()
-            # fail if we tried all of the certs but none worked
-            if 'connection refused' in str(e).lower():
-                raise ConnectionError('Failed to connect to %s:%s.' % (self.hostname, self.port))
-            else:
-                build_ssl_validation_error(self.hostname, self.port, paths_checked)
-        except CertificateError:
-            build_ssl_validation_error(self.hostname, self.port, paths_checked)
+            build_ssl_validation_error(self.hostname, self.port, paths_checked, e)
+        except socket.error:
+            e = get_exception()
+            raise ConnectionError('Failed to connect to %s at port %s: %s' % (self.hostname, self.port, to_native(e)))
 
         try:
             # cleanup the temp file created, don't worry
             # if it fails for some reason
             os.remove(tmp_ca_cert_path)
+        except:
+            pass
+
+        try:
+            # cleanup the temp file created, don't worry
+            # if it fails for some reason
+            if to_add_ca_cert_path:
+                os.remove(to_add_ca_cert_path)
         except:
             pass
 
@@ -793,9 +825,11 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
             # use this username/password combination for  urls
             # for which `theurl` is a super-url
             authhandler = urllib_request.HTTPBasicAuthHandler(passman)
+            digest_authhandler = urllib_request.HTTPDigestAuthHandler(passman)
 
             # create the AuthHandler
             handlers.append(authhandler)
+            handlers.append(digest_authhandler)
 
         elif username and force_basic_auth:
             headers["Authorization"] = basic_auth_header(username, password)
@@ -836,6 +870,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     opener = urllib_request.build_opener(*handlers)
     urllib_request.install_opener(opener)
 
+    data = to_bytes(data, nonstring='passthru')
     if method:
         if method.upper() not in ('OPTIONS','GET','HEAD','POST','PUT','DELETE','TRACE','CONNECT','PATCH'):
             raise ConnectionError('invalid HTTP request method; %s' % method.upper())
@@ -848,13 +883,14 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     if http_agent:
         request.add_header('User-agent', http_agent)
 
-    # if we're ok with getting a 304, set the timestamp in the
-    # header, otherwise make sure we don't get a cached copy
-    if last_mod_time and not force:
+    # Cache control
+    # Either we directly force a cache refresh
+    if force:
+        request.add_header('cache-control', 'no-cache')
+    # or we do it if the original is more recent than our copy
+    elif last_mod_time:
         tstamp = last_mod_time.strftime('%a, %d %b %Y %H:%M:%S +0000')
         request.add_header('If-Modified-Since', tstamp)
-    else:
-        request.add_header('cache-control', 'no-cache')
 
     # user defined headers now, which may override things we've set above
     if headers:
@@ -878,7 +914,10 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
 
 def basic_auth_header(username, password):
-    return "Basic %s" % base64.b64encode("%s:%s" % (username, password))
+    """Takes a username and password and returns a byte string suitable for
+    using as value of an Authorization header to do basic auth.
+    """
+    return b("Basic %s") % base64.b64encode(to_bytes("%s:%s" % (username, password), errors='surrogate_or_strict'))
 
 
 def url_argument_spec():
@@ -893,7 +932,7 @@ def url_argument_spec():
         use_proxy=dict(default='yes', type='bool'),
         validate_certs=dict(default='yes', type='bool'),
         url_username=dict(required=False),
-        url_password=dict(required=False),
+        url_password=dict(required=False, no_log=True),
         force_basic_auth=dict(required=False, type='bool', default='no'),
 
     )
@@ -970,8 +1009,16 @@ def fetch_url(module, url, data=None, headers=None, method=None,
             body = e.read()
         except AttributeError:
             body = ''
-        info.update(dict(msg=str(e), body=body, **e.info()))
-        info['status'] = e.code
+
+        # Try to add exception info to the output but don't fail if we can't
+        exc_info = e.info()
+        try:
+            info.update(dict(**e.info()))
+        except:
+            pass
+
+        info.update({'msg': str(e), 'body': body, 'status': e.code})
+
     except urllib_error.URLError:
         e = get_exception()
         code = int(getattr(e, 'code', -1))

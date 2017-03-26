@@ -38,6 +38,8 @@ class InventoryParser(object):
     Takes an INI-format inventory file and builds a list of groups and subgroups
     with their associated hosts and variable settings.
     """
+    _COMMENT_MARKERS = frozenset((u';', u'#'))
+    b_COMMENT_MARKERS = frozenset((b';', b'#'))
 
     def __init__(self, loader, groups, filename=C.DEFAULT_HOST_LIST):
         self.filename = filename
@@ -51,18 +53,28 @@ class InventoryParser(object):
 
         # Read in the hosts, groups, and variables defined in the
         # inventory file.
+        if loader:
+            (b_data, private) = loader._get_file_contents(filename)
+        else:
+            with open(filename, 'rb') as fh:
+                b_data = fh.read()
 
-        with open(filename, 'rb') as fh:
-            data = fh.read()
-            try:
-                # Faster to do to_text once on a long string than many
-                # times on smaller strings
-                data = to_text(data, errors='surrogate_or_strict')
-                data = [line for line in data.splitlines() if not (line.startswith(u';') or line.startswith(u'#'))]
-            except UnicodeError:
-                # Skip comment lines here to avoid potential undecodable
-                # errors in comments: https://github.com/ansible/ansible/issues/17593
-                data = [to_text(line, errors='surrogate_or_strict') for line in data.splitlines() if not (line.startswith(b';') or line.startswith(b'#'))]
+        try:
+            # Faster to do to_text once on a long string than many
+            # times on smaller strings
+            data = to_text(b_data, errors='surrogate_or_strict').splitlines()
+        except UnicodeError:
+            # Handle non-utf8 in comment lines: https://github.com/ansible/ansible/issues/17593
+            data = []
+            for line in b_data.splitlines():
+                if line and line[0] in self.b_COMMENT_MARKERS:
+                    # Replace is okay for comment lines
+                    #data.append(to_text(line, errors='surrogate_then_replace'))
+                    # Currently we only need these lines for accurate lineno in errors
+                    data.append(u'')
+                else:
+                    # Non-comment lines still have to be valid uf-8
+                    data.append(to_text(line, errors='surrogate_or_strict'))
 
         self._parse(data)
 
@@ -91,9 +103,8 @@ class InventoryParser(object):
             self.lineno += 1
 
             line = line.strip()
-
-            # Skip empty lines
-            if not line:
+            # Skip empty lines and comments
+            if not line or line[0] in self._COMMENT_MARKERS:
                 continue
 
             # Is this a [section] header? That tells us what group we're parsing
@@ -144,14 +155,14 @@ class InventoryParser(object):
                 for h in hosts:
                     self.groups[groupname].add_host(h)
 
+                #FIXME: needed to save hosts to group, find out why
+                self.groups[groupname].get_hosts()
+
             # [groupname:vars] contains variable definitions that must be
             # applied to the current group.
             elif state == 'vars':
                 (k, v) = self._parse_variable_definition(line)
-                if k != 'ansible_group_priority':
-                    self.groups[groupname].set_variable(k, v)
-                else:
-                    self.groups[groupname].set_priority(v)
+                self.groups[groupname].set_variable(k, v)
 
             # [groupname:children] contains subgroup names that must be
             # added as children of the current group. The subgroup names
@@ -190,7 +201,7 @@ class InventoryParser(object):
         # 'all' at the time it was created.
 
         for group in self.groups.values():
-            if group.depth == 0 and group.name not in ('all', 'ungrouped'):
+            if group.depth == 0 and group.name != 'all':
                 self.groups['all'].add_child_group(group)
 
     def _parse_group_name(self, line):
@@ -316,17 +327,16 @@ class InventoryParser(object):
         Attempt to transform the string value from an ini file into a basic python object
         (int, dict, list, unicode string, etc).
         '''
-        if "#" not in v:
-            try:
-                v = ast.literal_eval(v)
-            # Using explicit exceptions.
-            # Likely a string that literal_eval does not like. We wil then just set it.
-            except ValueError:
-                # For some reason this was thought to be malformed.
-                pass
-            except SyntaxError:
-                # Is this a hash with an equals at the end?
-                pass
+        try:
+            v = ast.literal_eval(v)
+        # Using explicit exceptions.
+        # Likely a string that literal_eval does not like. We wil then just set it.
+        except ValueError:
+            # For some reason this was thought to be malformed.
+            pass
+        except SyntaxError:
+            # Is this a hash with an equals at the end?
+            pass
         return to_text(v, nonstring='passthru', errors='surrogate_or_strict')
 
     def get_host_variables(self, host):

@@ -1,4 +1,3 @@
-
 - name: register basic session with consul
   consul_session:
     name: session1

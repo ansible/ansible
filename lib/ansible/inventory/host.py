@@ -19,10 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import uuid
-
 from ansible.inventory.group import Group
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import combine_vars, get_unique_id
 
 __all__ = ['Host']
 
@@ -92,7 +90,7 @@ class Host:
         self._gathered_facts = False
         self._uuid = None
         if gen_uuid:
-            self._uuid = uuid.uuid4()
+            self._uuid = get_unique_id()
         self.implicit = False
 
     def __repr__(self):
@@ -108,23 +106,42 @@ class Host:
     def set_gathered_facts(self, gathered):
         self._gathered_facts = gathered
 
+    def populate_ancestors(self):
+
+        # populate ancestors
+        for group in self.groups:
+            self.add_group(group)
+
     def add_group(self, group):
 
-        self.groups.append(group)
+        # populate ancestors
+        for oldg in group.get_ancestors():
+            if oldg not in self.groups:
+                self.add_group(oldg)
+
+        if group not in self.groups:
+            self.groups.append(group)
+
+    def remove_group(self, group):
+
+        if group in self.groups:
+            self.groups.remove(group)
+
+            # remove exclusive ancestors, xcept all!
+            for oldg in group.get_ancestors():
+                if oldg.name != 'all':
+                    for childg in self.groups:
+                        if oldg in childg.get_ancestors():
+                            break
+                    else:
+                        self.remove_group(oldg)
 
     def set_variable(self, key, value):
 
         self.vars[key]=value
 
     def get_groups(self):
-
-        groups = {}
-        for g in self.groups:
-            groups[g.name] = g
-            ancestors = g.get_ancestors()
-            for a in ancestors:
-                groups[a.name] = a
-        return groups.values()
+        return self.groups
 
     def get_vars(self):
 
@@ -138,6 +155,6 @@ class Host:
     def get_group_vars(self):
         results = {}
         groups = self.get_groups()
-        for group in sorted(groups, key=lambda g: g.depth):
+        for group in sorted(groups, key=lambda g: (g.depth, g.priority, g.name)):
             results = combine_vars(results, group.get_vars())
         return results

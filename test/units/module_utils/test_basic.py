@@ -29,9 +29,9 @@ from io import BytesIO, StringIO
 
 from units.mock.procenv import ModuleTestCase, swap_stdin_and_argv
 
-from ansible.compat.six.moves import builtins
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, mock_open, Mock, call
+from ansible.module_utils.six.moves import builtins
 
 realimport = builtins.__import__
 
@@ -176,10 +176,10 @@ class TestModuleUtilsBasic(ModuleTestCase):
                         return ("Bar", "2", "Two")
                     else:
                         return ("", "", "")
-                
+
                 with patch('platform.linux_distribution', side_effect=_dist):
                     self.assertEqual(get_distribution(), "Bar")
-                
+
             with patch('platform.linux_distribution', side_effect=Exception("boo")):
                 with patch('platform.dist', return_value=("bar", "2", "Two")):
                     self.assertEqual(get_distribution(), "Bar")
@@ -311,6 +311,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"foo":"hello", "bar": "bad", "bam": "bad"}))
 
         with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
             self.assertRaises(
                 SystemExit,
                 basic.AnsibleModule,
@@ -327,6 +328,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={"bam": "bad"}))
 
         with swap_stdin_and_argv(stdin_data=args):
+            basic._ANSIBLE_ARGS = None
             self.assertRaises(
                 SystemExit,
                 basic.AnsibleModule,
@@ -422,6 +424,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
         final_params.update(dict(
             path = '/path/to/real_file',
             secontext=['unconfined_u', 'object_r', 'default_t', 's0'],
+            attributes=None,
         ))
 
         # with the proper params specified, the returned dictionary should represent
@@ -579,12 +582,11 @@ class TestModuleUtilsBasic(ModuleTestCase):
 
     def test_module_utils_basic_ansible_module_is_special_selinux_path(self):
         from ansible.module_utils import basic
-        basic._ANSIBLE_ARGS = None
 
         args = json.dumps(dict(ANSIBLE_MODULE_ARGS={'_ansible_selinux_special_fs': "nfs,nfsd,foos"}))
 
         with swap_stdin_and_argv(stdin_data=args):
-
+            basic._ANSIBLE_ARGS = None
             am = basic.AnsibleModule(
                 argument_spec = dict(),
             )
@@ -698,7 +700,7 @@ class TestModuleUtilsBasic(ModuleTestCase):
                 self.assertRaises(SystemExit, am.set_context_if_different, '/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], True)
 
             am.is_special_selinux_path = MagicMock(return_value=(True, ['sp_u', 'sp_r', 'sp_t', 's0']))
-            
+
             with patch('selinux.lsetfilecon', return_value=0) as m:
                 self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
                 m.assert_called_with('/path/to/file', 'sp_u:sp_r:sp_t:s0')
@@ -799,23 +801,22 @@ class TestModuleUtilsBasic(ModuleTestCase):
     @patch('os.path.exists')
     @patch('os.close')
     def test_module_utils_basic_ansible_module_atomic_move(
-        self,
-        _os_close,
-        _os_path_exists,
-        _os_stat,
-        _os_chmod,
-        _os_chown,
-        _os_getlogin,
-        _os_environ,
-        _os_getuid,
-        _pwd_getpwuid,
-        _os_rename,
-        _shutil_copy2,
-        _shutil_move,
-        _shutil_copyfileobj,
-        _os_umask,
-        _tempfile_mkstemp,
-        ):
+            self,
+            _os_close,
+            _os_path_exists,
+            _os_stat,
+            _os_chmod,
+            _os_chown,
+            _os_getlogin,
+            _os_environ,
+            _os_getuid,
+            _pwd_getpwuid,
+            _os_rename,
+            _shutil_copy2,
+            _shutil_move,
+            _shutil_copyfileobj,
+            _os_umask,
+            _tempfile_mkstemp):
 
         from ansible.module_utils import basic
         basic._ANSIBLE_ARGS = None

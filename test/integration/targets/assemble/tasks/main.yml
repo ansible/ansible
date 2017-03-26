@@ -90,4 +90,3 @@
     that:
     - "result.state == 'file'"
     - "result.checksum == '505359f48c65b3904127cf62b912991d4da7ed6d'"
-

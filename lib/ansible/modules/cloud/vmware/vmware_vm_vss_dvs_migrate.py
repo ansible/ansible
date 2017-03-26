@@ -1,0 +1,163 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2015, Joseph Callen <jcallen () csc.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+
+DOCUMENTATION = '''
+---
+module: vmware_vm_vss_dvs_migrate
+short_description: Migrates a virtual machine from a standard vswitch to distributed
+description:
+    - Migrates a virtual machine from a standard vswitch to distributed
+version_added: 2.0
+author: "Joseph Callen (@jcpowermac)"
+notes:
+    - Tested on vSphere 5.5
+requirements:
+    - "python >= 2.6"
+    - PyVmomi
+options:
+    vm_name:
+        description:
+            - Name of the virtual machine to migrate to a dvSwitch
+        required: True
+    dvportgroup_name:
+        description:
+            - Name of the portgroup to migrate to the virtual machine to
+        required: True
+extends_documentation_fragment: vmware.documentation
+'''
+
+EXAMPLES = '''
+- name: Migrate VCSA to vDS
+  local_action:
+    module: vmware_vm_vss_dvs_migrate
+    hostname: vcenter_ip_or_hostname
+    username: vcenter_username
+    password: vcenter_password
+    vm_name: virtual_machine_name
+    dvportgroup_name: distributed_portgroup_name
+'''
+
+try:
+    from pyVmomi import vim, vmodl
+    HAS_PYVMOMI = True
+except ImportError:
+    HAS_PYVMOMI = False
+
+
+class VMwareVmVssDvsMigrate(object):
+    def __init__(self, module):
+        self.module = module
+        self.content = connect_to_api(module)
+        self.vm = None
+        self.vm_name = module.params['vm_name']
+        self.dvportgroup_name = module.params['dvportgroup_name']
+
+    def process_state(self):
+        vm_nic_states = {
+            'absent': self.migrate_network_adapter_vds,
+            'present': self.state_exit_unchanged,
+        }
+
+        vm_nic_states[self.check_vm_network_state()]()
+
+    def find_dvspg_by_name(self):
+        vmware_distributed_port_group = get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
+        for dvspg in vmware_distributed_port_group:
+            if dvspg.name == self.dvportgroup_name:
+                return dvspg
+        return None
+
+    def find_vm_by_name(self):
+        virtual_machines = get_all_objs(self.content, [vim.VirtualMachine])
+        for vm in virtual_machines:
+            if vm.name == self.vm_name:
+                return vm
+        return None
+
+    def migrate_network_adapter_vds(self):
+        vm_configspec = vim.vm.ConfigSpec()
+        nic = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
+        port = vim.dvs.PortConnection()
+        devicespec = vim.vm.device.VirtualDeviceSpec()
+
+        pg = self.find_dvspg_by_name()
+
+        if pg is None:
+            self.module.fail_json(msg="The standard portgroup was not found")
+
+        dvswitch = pg.config.distributedVirtualSwitch
+        port.switchUuid = dvswitch.uuid
+        port.portgroupKey = pg.key
+        nic.port = port
+
+        for device in self.vm.config.hardware.device:
+            if isinstance(device, vim.vm.device.VirtualEthernetCard):
+                devicespec.device = device
+                devicespec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
+                devicespec.device.backing = nic
+                vm_configspec.deviceChange.append(devicespec)
+
+        task = self.vm.ReconfigVM_Task(vm_configspec)
+        changed, result = wait_for_task(task)
+        self.module.exit_json(changed=changed, result=result)
+
+    def state_exit_unchanged(self):
+        self.module.exit_json(changed=False)
+
+    def check_vm_network_state(self):
+        try:
+            self.vm = self.find_vm_by_name()
+
+            if self.vm is None:
+                self.module.fail_json(msg="A virtual machine with name %s does not exist" % self.vm_name)
+            for device in self.vm.config.hardware.device:
+                if isinstance(device, vim.vm.device.VirtualEthernetCard):
+                    if isinstance(device.backing, vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo):
+                        return 'present'
+            return 'absent'
+        except vmodl.RuntimeFault as runtime_fault:
+            self.module.fail_json(msg=runtime_fault.msg)
+        except vmodl.MethodFault as method_fault:
+            self.module.fail_json(msg=method_fault.msg)
+
+
+def main():
+
+    argument_spec = vmware_argument_spec()
+    argument_spec.update(dict(vm_name=dict(required=True, type='str'),
+                              dvportgroup_name=dict(required=True, type='str')))
+
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
+    if not HAS_PYVMOMI:
+        module.fail_json(msg='pyvmomi is required for this module')
+
+    vmware_vmnic_migrate = VMwareVmVssDvsMigrate(module)
+    vmware_vmnic_migrate.process_state()
+
+from ansible.module_utils.vmware import *
+from ansible.module_utils.basic import *
+
+if __name__ == '__main__':
+    main()

@@ -24,10 +24,10 @@ import os
 import tempfile
 
 from ansible import constants as C
-from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
@@ -36,12 +36,14 @@ from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
 from ansible.vars.hostvars import HostVars
+from ansible.vars.reserved import warn_if_reserved
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 __all__ = ['TaskQueueManager']
 
@@ -138,8 +140,8 @@ class TaskQueueManager:
 
         # then initialize it with the given handler list
         for handler in handler_list:
-            if handler not in self._notified_handlers:
-                self._notified_handlers[handler] = []
+            if handler._uuid not in self._notified_handlers:
+                self._notified_handlers[handler._uuid] = []
             if handler.listen:
                 listeners = handler.listen
                 if not isinstance(listeners, list):
@@ -147,7 +149,7 @@ class TaskQueueManager:
                 for listener in listeners:
                     if listener not in self._listening_handlers:
                         self._listening_handlers[listener] = []
-                    self._listening_handlers[listener].append(handler.get_name())
+                    self._listening_handlers[listener].append(handler._uuid)
 
     def load_callbacks(self):
         '''
@@ -209,6 +211,7 @@ class TaskQueueManager:
             self.load_callbacks()
 
         all_vars = self._variable_manager.get_vars(loader=self._loader, play=play)
+        warn_if_reserved(all_vars)
         templar = Templar(loader=self._loader, variables=all_vars)
 
         new_play = play.copy()
@@ -222,7 +225,7 @@ class TaskQueueManager:
         )
 
         # Fork # of forks, # of hosts or serial, whichever is lowest
-        num_hosts = len(self._inventory.get_hosts(new_play.hosts))
+        num_hosts = len(self._inventory.get_hosts(new_play.hosts, ignore_restrictions=True))
 
         max_serial = 0
         if new_play.serial:
@@ -353,17 +356,20 @@ class TaskQueueManager:
 
             for method in methods:
                 try:
-                    # temporary hack, required due to a change in the callback API, so
-                    # we don't break backwards compatibility with callbacks which were
-                    # designed to use the original API
+                    # Previously, the `v2_playbook_on_start` callback API did not accept
+                    # any arguments. In recent versions of the v2 callback API, the play-
+                    # book that started execution is given. In order to support both of
+                    # these method signatures, we need to use this `inspect` hack to send
+                    # no arguments to the methods that don't accept them. This way, we can
+                    # not break backwards compatibility until that API is deprecated.
                     # FIXME: target for removal and revert to the original code here after a year (2017-01-14)
                     if method_name == 'v2_playbook_on_start':
                         import inspect
-                        (f_args, f_varargs, f_keywords, f_defaults) = inspect.getargspec(method)
-                        if 'playbook' in f_args:
-                            method(*args, **kwargs)
-                        else:
+                        argspec = inspect.getargspec(method)
+                        if argspec.args == ['self']:
                             method()
+                        else:
+                            method(*args, **kwargs)
                     else:
                         method(*args, **kwargs)
                 except Exception as e:

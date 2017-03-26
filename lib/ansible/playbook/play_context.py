@@ -22,19 +22,21 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import pipes
 import pwd
 import random
 import re
 import string
 
-from ansible.compat.six import iteritems, string_types
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
-from ansible.utils.boolean import boolean
+
+
+boolean = C.mk_boolean
 
 __all__ = ['PlayContext']
 
@@ -50,39 +52,41 @@ except ImportError:
 # in variable names.
 
 MAGIC_VARIABLE_MAPPING = dict(
-   connection       = ('ansible_connection',),
-   remote_addr      = ('ansible_ssh_host', 'ansible_host'),
-   remote_user      = ('ansible_ssh_user', 'ansible_user'),
-   port             = ('ansible_ssh_port', 'ansible_port'),
-   ssh_executable   = ('ansible_ssh_executable',),
-   accelerate_port  = ('ansible_accelerate_port',),
-   password         = ('ansible_ssh_pass', 'ansible_password'),
-   private_key_file = ('ansible_ssh_private_key_file', 'ansible_private_key_file'),
-   pipelining       = ('ansible_ssh_pipelining', 'ansible_pipelining'),
-   shell            = ('ansible_shell_type',),
-   become           = ('ansible_become',),
-   become_method    = ('ansible_become_method',),
-   become_user      = ('ansible_become_user',),
-   become_pass      = ('ansible_become_password','ansible_become_pass'),
-   become_exe       = ('ansible_become_exe',),
-   become_flags     = ('ansible_become_flags',),
-   ssh_common_args  = ('ansible_ssh_common_args',),
-   docker_extra_args= ('ansible_docker_extra_args',),
-   sftp_extra_args  = ('ansible_sftp_extra_args',),
-   scp_extra_args   = ('ansible_scp_extra_args',),
-   ssh_extra_args   = ('ansible_ssh_extra_args',),
-   sudo             = ('ansible_sudo',),
-   sudo_user        = ('ansible_sudo_user',),
-   sudo_pass        = ('ansible_sudo_password', 'ansible_sudo_pass'),
-   sudo_exe         = ('ansible_sudo_exe',),
-   sudo_flags       = ('ansible_sudo_flags',),
-   su               = ('ansible_su',),
-   su_user          = ('ansible_su_user',),
-   su_pass          = ('ansible_su_password', 'ansible_su_pass'),
-   su_exe           = ('ansible_su_exe',),
-   su_flags         = ('ansible_su_flags',),
-   executable       = ('ansible_shell_executable',),
-   module_compression = ('ansible_module_compression',),
+    connection       = ('ansible_connection',),
+    remote_addr      = ('ansible_ssh_host', 'ansible_host'),
+    remote_user      = ('ansible_ssh_user', 'ansible_user'),
+    port             = ('ansible_ssh_port', 'ansible_port'),
+    ssh_executable   = ('ansible_ssh_executable',),
+    accelerate_port  = ('ansible_accelerate_port',),
+    password         = ('ansible_ssh_pass', 'ansible_password'),
+    private_key_file = ('ansible_ssh_private_key_file', 'ansible_private_key_file'),
+    pipelining       = ('ansible_ssh_pipelining', 'ansible_pipelining'),
+    shell            = ('ansible_shell_type',),
+    network_os       = ('ansible_network_os',),
+    become           = ('ansible_become',),
+    become_method    = ('ansible_become_method',),
+    become_user      = ('ansible_become_user',),
+    become_pass      = ('ansible_become_password','ansible_become_pass'),
+    become_exe       = ('ansible_become_exe',),
+    become_flags     = ('ansible_become_flags',),
+    ssh_common_args  = ('ansible_ssh_common_args',),
+    docker_extra_args= ('ansible_docker_extra_args',),
+    sftp_extra_args  = ('ansible_sftp_extra_args',),
+    scp_extra_args   = ('ansible_scp_extra_args',),
+    ssh_extra_args   = ('ansible_ssh_extra_args',),
+    ssh_transfer_method = ('ansible_ssh_transfer_method',),
+    sudo             = ('ansible_sudo',),
+    sudo_user        = ('ansible_sudo_user',),
+    sudo_pass        = ('ansible_sudo_password', 'ansible_sudo_pass'),
+    sudo_exe         = ('ansible_sudo_exe',),
+    sudo_flags       = ('ansible_sudo_flags',),
+    su               = ('ansible_su',),
+    su_user          = ('ansible_su_user',),
+    su_pass          = ('ansible_su_password', 'ansible_su_pass'),
+    su_exe           = ('ansible_su_exe',),
+    su_flags         = ('ansible_su_flags',),
+    executable       = ('ansible_shell_executable',),
+    module_compression = ('ansible_module_compression',),
 )
 
 b_SU_PROMPT_LOCALIZATIONS = [
@@ -117,6 +121,7 @@ b_SU_PROMPT_LOCALIZATIONS = [
     to_bytes('හස්පදය'),
     to_bytes('密码'),
     to_bytes('密碼'),
+    to_bytes('口令'),
 ]
 
 TASK_ATTRIBUTE_OVERRIDES = (
@@ -163,12 +168,15 @@ class PlayContext(Base):
     _private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
     _timeout          = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
     _shell            = FieldAttribute(isa='string')
+    _network_os       = FieldAttribute(isa='string')
+    _connection_user  = FieldAttribute(isa='string')
     _ssh_args         = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_ARGS)
     _ssh_common_args  = FieldAttribute(isa='string')
     _sftp_extra_args  = FieldAttribute(isa='string')
     _scp_extra_args   = FieldAttribute(isa='string')
     _ssh_extra_args   = FieldAttribute(isa='string')
     _ssh_executable   = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_EXECUTABLE)
+    _ssh_transfer_method = FieldAttribute(isa='string', default=C.DEFAULT_SSH_TRANSFER_METHOD)
     _connection_lockfd= FieldAttribute(isa='int')
     _pipelining       = FieldAttribute(isa='bool', default=C.ANSIBLE_SSH_PIPELINING)
     _accelerate       = FieldAttribute(isa='bool', default=False)
@@ -202,7 +210,12 @@ class PlayContext(Base):
     _force_handlers   = FieldAttribute(isa='bool', default=False)
     _start_at_task    = FieldAttribute(isa='string')
     _step             = FieldAttribute(isa='bool', default=False)
-    _diff             = FieldAttribute(isa='bool', default=False)
+    _diff             = FieldAttribute(isa='bool', default=C.DIFF_ALWAYS)
+
+    # Fact gathering settings
+    _gather_subset    = FieldAttribute(isa='string', default=C.DEFAULT_GATHER_SUBSET)
+    _gather_timeout   = FieldAttribute(isa='string', default=C.DEFAULT_GATHER_TIMEOUT)
+    _fact_path        = FieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
 
     def __init__(self, play=None, options=None, passwords=None, connection_lockfd=None):
 
@@ -384,9 +397,9 @@ class PlayContext(Base):
         # become legacy updates -- from commandline
         if not new_info.become_pass:
             if new_info.become_method == 'sudo' and new_info.sudo_pass:
-               setattr(new_info, 'become_pass', new_info.sudo_pass)
+                setattr(new_info, 'become_pass', new_info.sudo_pass)
             elif new_info.become_method == 'su' and new_info.su_pass:
-               setattr(new_info, 'become_pass', new_info.su_pass)
+                setattr(new_info, 'become_pass', new_info.su_pass)
 
         # become legacy updates -- from inventory file (inventory overrides
         # commandline)
@@ -431,6 +444,7 @@ class PlayContext(Base):
         # additionally, we need to do this check after final connection has been
         # correctly set above ...
         if new_info.connection == 'local':
+            new_info.connection_user = new_info.remote_user
             new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
 
         # set no_log to default if it was not previouslly set
@@ -466,7 +480,7 @@ class PlayContext(Base):
             becomecmd   = None
             randbits    = ''.join(random.choice(string.ascii_lowercase) for x in range(32))
             success_key = 'BECOME-SUCCESS-%s' % randbits
-            success_cmd = pipes.quote('echo %s; %s' % (success_key, cmd))
+            success_cmd = shlex_quote('echo %s; %s' % (success_key, cmd))
 
             if executable:
                 command = '%s -c %s' % (executable, success_cmd)
@@ -495,7 +509,7 @@ class PlayContext(Base):
                 # done for older versions of sudo that do not support the option.
                 #
                 # Passing a quoted compound command to sudo (or sudo -s)
-                # directly doesn't work, so we shellquote it with pipes.quote()
+                # directly doesn't work, so we shellquote it with shlex_quote()
                 # and pass the quoted string to the user's shell.
 
                 # force quick error if password is required but not supplied, should prevent sudo hangs.
@@ -510,11 +524,14 @@ class PlayContext(Base):
 
                 # passing code ref to examine prompt as simple string comparisson isn't good enough with su
                 def detect_su_prompt(b_data):
-                    b_SU_PROMPT_LOCALIZATIONS_RE = re.compile(b"|".join([b'(\w+\'s )?' + x + b' ?: ?' for x in b_SU_PROMPT_LOCALIZATIONS]), flags=re.IGNORECASE)
+                    b_password_string = b"|".join([b'(\w+\'s )?' + x for x in b_SU_PROMPT_LOCALIZATIONS])
+                    # Colon or unicode fullwidth colon
+                    b_password_string = b_password_string + to_bytes(u' ?(:|：) ?')
+                    b_SU_PROMPT_LOCALIZATIONS_RE = re.compile(b_password_string, flags=re.IGNORECASE)
                     return bool(b_SU_PROMPT_LOCALIZATIONS_RE.match(b_data))
                 prompt = detect_su_prompt
 
-                becomecmd = '%s %s %s -c %s' % (exe, flags, self.become_user, pipes.quote(command))
+                becomecmd = '%s %s %s -c %s' % (exe, flags, self.become_user, shlex_quote(command))
 
             elif self.become_method == 'pbrun':
 
@@ -534,10 +551,8 @@ class PlayContext(Base):
                 becomecmd = '%s %s "%s"' % (exe, flags, success_cmd)
 
             elif self.become_method == 'runas':
-                raise AnsibleError("'runas' is not yet implemented")
-                #FIXME: figure out prompt
-                # this is not for use with winrm plugin but if they ever get ssh native on windoez
-                becomecmd = '%s %s /user:%s "%s"' % (exe, flags, self.become_user, success_cmd)
+                # become is handled inside the WinRM connection plugin
+                becomecmd = cmd
 
             elif self.become_method == 'doas':
 
@@ -550,7 +565,7 @@ class PlayContext(Base):
                 if self.become_user:
                     flags += ' -u %s ' % self.become_user
 
-                #FIXME: make shell independant
+                #FIXME: make shell independent
                 becomecmd = '%s %s echo %s && %s %s env ANSIBLE=true %s' % (exe, flags, success_key, exe, flags, cmd)
 
             elif self.become_method == 'dzdo':
@@ -558,7 +573,7 @@ class PlayContext(Base):
                 exe = self.become_exe or 'dzdo'
                 if self.become_pass:
                     prompt = '[dzdo via ansible, key=%s] password: ' % randbits
-                    becomecmd = '%s -p %s -u %s %s' % (exe, pipes.quote(prompt), self.become_user, command)
+                    becomecmd = '%s -p %s -u %s %s' % (exe, shlex_quote(prompt), self.become_user, command)
                 else:
                     becomecmd = '%s -u %s %s' % (exe, self.become_user, command)
 
@@ -581,6 +596,10 @@ class PlayContext(Base):
         for prop, var_list in MAGIC_VARIABLE_MAPPING.items():
             try:
                 if 'become' in prop:
+                    continue
+
+                # perserves the user var for local connections
+                if self.connection == 'local' and 'remote_user' in prop:
                     continue
 
                 var_val = getattr(self, prop)

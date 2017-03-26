@@ -19,8 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
 import difflib
+import json
+import sys
 import warnings
 from copy import deepcopy
 
@@ -72,18 +73,6 @@ class CallbackBase:
     ''' helper for callbacks, so they don't all have to include deepcopy '''
     _copy_result = deepcopy
 
-    def _copy_result_exclude(self, result, exclude):
-        values = []
-        for e in exclude:
-            values.append(getattr(result, e))
-            setattr(result, e, None)
-
-        result_copy = deepcopy(result)
-        for i,e in enumerate(exclude):
-            setattr(result, e, values[i])
-
-        return result_copy
-
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
         if result.get('_ansible_no_log', False):
             return json.dumps(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"))
@@ -110,9 +99,29 @@ class CallbackBase:
 
     def _handle_warnings(self, res):
         ''' display warnings, if enabled and any exist in the result '''
-        if C.COMMAND_WARNINGS and 'warnings' in res and res['warnings']:
-            for warning in res['warnings']:
-                self._display.warning(warning)
+        if C.COMMAND_WARNINGS:
+            if 'warnings' in res and res['warnings']:
+                for warning in res['warnings']:
+                    self._display.warning(warning)
+                del res['warnings']
+            if 'deprecations' in res and res['deprecations']:
+                for warning in res['deprecations']:
+                    self._display.deprecated(**warning)
+                del res['deprecations']
+
+    def _handle_exception(self, result):
+
+        if 'exception' in result:
+            msg = "An exception occurred during task execution. "
+            if self._display.verbosity < 3:
+                # extract just the actual error message from the exception text
+                error = result['exception'].strip().split('\n')[-1]
+                msg += "To see the full traceback, use -vvv. The error was: %s" % error
+            else:
+                msg = "The full traceback is:\n" + result['exception']
+                del result['exception']
+
+            self._display.display(msg, color=C.COLOR_ERROR)
 
     def _get_diff(self, difflist):
 
@@ -136,7 +145,7 @@ class CallbackBase:
                         # format complex structures into 'files'
                         for x in ['before', 'after']:
                             if isinstance(diff[x], dict):
-                                diff[x] = json.dumps(diff[x], sort_keys=True, indent=4)
+                                diff[x] = json.dumps(diff[x], sort_keys=True, indent=4, separators=(',', ': ')) + '\n'
                         if 'before_header' in diff:
                             before_header = "before: %s" % diff['before_header']
                         else:
@@ -145,15 +154,29 @@ class CallbackBase:
                             after_header = "after: %s" % diff['after_header']
                         else:
                             after_header = 'after'
-                        differ = difflib.unified_diff(to_text(diff['before']).splitlines(True),
-                                                      to_text(diff['after']).splitlines(True),
+                        before_lines = to_text(diff['before']).splitlines(True)
+                        after_lines = to_text(diff['after']).splitlines(True)
+                        if before_lines and not before_lines[-1].endswith('\n'):
+                            before_lines[-1] += '\n\\ No newline at end of file\n'
+                        if after_lines and not after_lines[-1].endswith('\n'):
+                            after_lines[-1] += '\n\\ No newline at end of file\n'
+                        differ = difflib.unified_diff(before_lines,
+                                                      after_lines,
                                                       fromfile=before_header,
                                                       tofile=after_header,
                                                       fromfiledate='',
                                                       tofiledate='',
                                                       n=C.DIFF_CONTEXT)
+                        difflines = list(differ)
+                        if len(difflines) >= 3 and sys.version_info[:2] == (2, 6):
+                            # difflib in Python 2.6 adds trailing spaces after
+                            # filenames in the -- before/++ after headers.
+                            difflines[0] = difflines[0].replace(' \n', '\n')
+                            difflines[1] = difflines[1].replace(' \n', '\n')
+                            # it also treats empty files differently
+                            difflines[2] = difflines[2].replace('-1,0', '-0,0').replace('+1,0', '+0,0')
                         has_diff = False
-                        for line in differ:
+                        for line in difflines:
                             has_diff = True
                             if line.startswith('+'):
                                 line = stringc(line, C.COLOR_DIFF_ADD)
@@ -185,10 +208,9 @@ class CallbackBase:
         del result._result['results']
 
     def _clean_results(self, result, task_name):
-        if 'changed' in result and task_name in ['debug']:
-            del result['changed']
         if 'invocation' in result and task_name in ['debug']:
             del result['invocation']
+
 
     def set_play_context(self, play_context):
         pass

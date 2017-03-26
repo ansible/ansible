@@ -19,11 +19,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import iteritems
-
+import collections
 import os
 
 from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.module_utils.six import iteritems, binary_type, text_type
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
@@ -41,25 +41,54 @@ __all__ = ['Role', 'hash_params']
 #       the role due to the fact that it would require the use of self
 #       in a static method. This is also used in the base class for
 #       strategies (ansible/plugins/strategy/__init__.py)
+
 def hash_params(params):
-    if not isinstance(params, dict):
-        if isinstance(params, list):
-            return frozenset(params)
+    """
+    Construct a data structure of parameters that is hashable.
+
+    This requires changing any mutable data structures into immutable ones.
+    We chose a frozenset because role parameters have to be unique.
+
+    .. warning::  this does not handle unhashable scalars.  Two things
+        mitigate that limitation:
+
+        1) There shouldn't be any unhashable scalars specified in the yaml
+        2) Our only choice would be to return an error anyway.
+    """
+    # Any container is unhashable if it contains unhashable items (for
+    # instance, tuple() is a Hashable subclass but if it contains a dict, it
+    # cannot be hashed)
+    if isinstance(params, collections.Container) and not isinstance(params, (text_type, binary_type)):
+        if isinstance(params, collections.Mapping):
+            try:
+                # Optimistically hope the contents are all hashable
+                new_params = frozenset(params.items())
+            except TypeError:
+                new_params = set()
+                for k, v in params.items():
+                    # Hash each entry individually
+                    new_params.update((k, hash_params(v)))
+                new_params = frozenset(new_params)
+
+        elif isinstance(params, (collections.Set, collections.Sequence)):
+            try:
+                # Optimistically hope the contents are all hashable
+                new_params = frozenset(params)
+            except TypeError:
+                new_params = set()
+                for v in params:
+                    # Hash each entry individually
+                    new_params.update(hash_params(v))
+                new_params = frozenset(new_params)
         else:
-            return params
-    else:
-        s = set()
-        for k,v in iteritems(params):
-            if isinstance(v, dict):
-                s.update((k, hash_params(v)))
-            elif isinstance(v, list):
-                things = []
-                for item in v:
-                    things.append(hash_params(item))
-                s.update((k, tuple(things)))
-            else:
-                s.update((k, v))
-        return frozenset(s)
+            # This is just a guess.
+            new_params = frozenset(params)
+        return new_params
+
+    # Note: We do not handle unhashable scalars but our only choice would be
+    # to raise an error there anyway.
+    return frozenset((params,))
+
 
 class Role(Base, Become, Conditional, Taggable):
 
@@ -133,7 +162,8 @@ class Role(Base, Become, Conditional, Taggable):
             return r
 
         except RuntimeError:
-            raise AnsibleError("A recursion loop was detected with the roles specified. Make sure child roles do not have dependencies on parent roles", obj=role_include._ds)
+            raise AnsibleError("A recursion loop was detected with the roles specified. Make sure child roles do not have dependencies on parent roles",
+                               obj=role_include._ds)
 
     def _load_role_data(self, role_include, parent_role=None):
         self._role_name        = role_include.role
@@ -184,7 +214,8 @@ class Role(Base, Become, Conditional, Taggable):
         handler_data = self._load_role_yaml('handlers')
         if handler_data:
             try:
-                self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader, variable_manager=self._variable_manager)
+                self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader,
+                                                           variable_manager=self._variable_manager)
             except AssertionError:
                 raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name , obj=handler_data)
 
@@ -379,12 +410,14 @@ class Role(Base, Become, Conditional, Taggable):
             dep_blocks = dep.compile(play=play, dep_chain=new_dep_chain)
             block_list.extend(dep_blocks)
 
-        for task_block in self._task_blocks:
+        for idx, task_block in enumerate(self._task_blocks):
             new_task_block = task_block.copy(exclude_parent=True)
             if task_block._parent:
                 new_task_block._parent = task_block._parent.copy()
             new_task_block._dep_chain = new_dep_chain
             new_task_block._play = play
+            if idx == len(self._task_blocks) - 1:
+                new_task_block._eor = True
             block_list.append(new_task_block)
 
         return block_list

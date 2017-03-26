@@ -46,7 +46,9 @@ except ImportError:
 ########################################################
 
 class AdHocCLI(CLI):
-    ''' code behind ansible ad-hoc cli'''
+    ''' is an extra-simple tool/framework/API for doing 'remote things'.
+        this command allows you to define and run a single task 'playbook' against a set of hosts
+    '''
 
     def parse(self):
         ''' create an options parser for bin/ansible '''
@@ -63,6 +65,8 @@ class AdHocCLI(CLI):
             vault_opts=True,
             fork_opts=True,
             module_opts=True,
+            desc="Define and run a single task 'playbook' against a set of hosts",
+            epilog="Some modules do not make sense in Ad-Hoc (include, meta, etc)",
         )
 
         # options unique to ansible ad-hoc
@@ -77,7 +81,7 @@ class AdHocCLI(CLI):
         if len(self.args) < 1:
             raise AnsibleOptionsError("Missing target hosts")
         elif len(self.args) > 1:
-            raise AnsibleOptionsError("Extranous options or arguments")
+            raise AnsibleOptionsError("Extraneous options or arguments")
 
         display.verbosity = self.options.verbosity
         self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
@@ -92,7 +96,7 @@ class AdHocCLI(CLI):
         )
 
     def run(self):
-        ''' use Runner lib to do SSH things '''
+        ''' create and execute the single task playbook '''
 
         super(AdHocCLI, self).run()
 
@@ -105,7 +109,7 @@ class AdHocCLI(CLI):
 
         sshpass    = None
         becomepass = None
-        vault_pass = None
+        b_vault_pass = None
 
         self.normalize_become_options()
         (sshpass, becomepass) = self.ask_passwords()
@@ -115,11 +119,11 @@ class AdHocCLI(CLI):
 
         if self.options.vault_password_file:
             # read vault_pass from a file
-            vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
-            loader.set_vault_password(vault_pass)
+            b_vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
+            loader.set_vault_password(b_vault_pass)
         elif self.options.ask_vault_pass:
-            vault_pass = self.ask_vault_passwords()[0]
-            loader.set_vault_password(vault_pass)
+            b_vault_pass = self.ask_vault_passwords()
+            loader.set_vault_password(b_vault_pass)
 
         variable_manager = VariableManager()
         variable_manager.extra_vars = load_extra_vars(loader=loader, options=self.options)
@@ -187,15 +191,15 @@ class AdHocCLI(CLI):
         self._tqm = None
         try:
             self._tqm = TaskQueueManager(
-                    inventory=inventory,
-                    variable_manager=variable_manager,
-                    loader=loader,
-                    options=self.options,
-                    passwords=passwords,
-                    stdout_callback=cb,
-                    run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
-                    run_tree=run_tree,
-                )
+                inventory=inventory,
+                variable_manager=variable_manager,
+                loader=loader,
+                options=self.options,
+                passwords=passwords,
+                stdout_callback=cb,
+                run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
+                run_tree=run_tree,
+            )
 
             result = self._tqm.run(play)
         finally:

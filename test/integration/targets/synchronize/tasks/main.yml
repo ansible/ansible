@@ -187,4 +187,3 @@
         - "'msg' in sync_result"
         - "sync_result.msg.startswith('>f+')"
         - "sync_result.msg.endswith('+ foo.txt\n')"
-

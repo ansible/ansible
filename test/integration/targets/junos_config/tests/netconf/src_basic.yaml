@@ -1,0 +1,31 @@
+---
+- debug: msg="START netconf/src_basic.yaml"
+
+- name: setup
+  junos_config:
+    lines:
+      - set system host-name {{ inventory_hostname_short }}
+      - delete interfaces lo0
+    provider: "{{ netconf }}"
+
+- name: configure device with config
+  junos_config:
+    src: basic/config.j2
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: check device with config
+  junos_config:
+    src: basic/config.j2
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- debug: msg="END netconf/src_basic.yaml"

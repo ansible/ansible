@@ -1,0 +1,19 @@
+---
+- hosts: nxos
+  gather_facts: no
+  connection: local
+
+  vars:
+    limit_to: "*"
+    debug: false
+
+  roles:
+    - { role: nxos_command, when: "limit_to in ['*', 'nxos_command']" }
+    - { role: nxos_config, when: "limit_to in ['*', 'nxos_config']" }
+    - { role: nxos_facts, when: "limit_to in ['*', 'nxos_facts']" }
+    - { role: nxos_template, when: "limit_to in ['*', 'nxos_template']" }
+    - { role: nxos_nxapi, when: "limit_to in ['*', 'nxos_nxapi']" }
+    - { role: nxos_evpn_global, when: "limit_to in ['*', 'nxos_evpn_global']" }
+    - { role: nxos_feature, when: "limit_to in ['*', 'nxos_feature']" }
+    - { role: nxos_mtu, when: "limit_to in ['*', 'nxos_mtu']" }
+    - { role: nxos_system, when: "limit_to in ['*', 'nxos_system']" }

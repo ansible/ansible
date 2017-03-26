@@ -19,25 +19,24 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import sys
 import base64
+import crypt
+import glob
+import hashlib
 import itertools
 import json
-import os.path
 import ntpath
-import pipes
-import glob
+import os.path
 import re
-import crypt
-import hashlib
 import string
-from functools import partial
-from random import SystemRandom, shuffle
-from datetime import datetime
+import sys
 import uuid
+from datetime import datetime
+from functools import partial
+from random import Random, SystemRandom, shuffle
 
 import yaml
-from jinja2.filters import environmentfilter
+from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
 try:
     import passlib.hash
@@ -46,9 +45,9 @@ except:
     HAS_PASSLIB = False
 
 from ansible import errors
-from ansible.compat.six import iteritems, string_types
-from ansible.compat.six.moves import reduce
-from ansible.module_utils._text import to_text
+from ansible.module_utils.six import iteritems, string_types, integer_types
+from ansible.module_utils.six.moves import reduce, shlex_quote
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
@@ -57,6 +56,7 @@ from ansible.vars.hostvars import HostVars
 
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
+
 
 class AnsibleJSONEncoder(json.JSONEncoder):
     '''
@@ -123,7 +123,7 @@ def to_datetime(string, format="%Y-%d-%m %H:%M:%S"):
 
 def quote(a):
     ''' return its argument quoted for shell usage '''
-    return pipes.quote(a)
+    return shlex_quote(a)
 
 def fileglob(pathname):
     ''' return list of matched regular files for glob '''
@@ -199,9 +199,12 @@ def from_yaml(data):
     return data
 
 @environmentfilter
-def rand(environment, end, start=None, step=None):
-    r = SystemRandom()
-    if isinstance(end, (int, long)):
+def rand(environment, end, start=None, step=None, seed=None):
+    if seed is None:
+        r = SystemRandom()
+    else:
+        r = Random(seed)
+    if isinstance(end, integer_types):
         if not start:
             start = 0
         if not step:
@@ -214,10 +217,14 @@ def rand(environment, end, start=None, step=None):
     else:
         raise errors.AnsibleFilterError('random can only be used on sequences and integers')
 
-def randomize_list(mylist):
+def randomize_list(mylist, seed=None):
     try:
         mylist = list(mylist)
-        shuffle(mylist)
+        if seed:
+            r = Random(seed)
+            r.shuffle(mylist)
+        else:
+            shuffle(mylist)
     except:
         pass
     return mylist
@@ -229,7 +236,7 @@ def get_hash(data, hashtype='sha1'):
     except:
         return None
 
-    h.update(data)
+    h.update(to_bytes(data, errors='surrogate_then_strict'))
     return h.hexdigest()
 
 def get_encrypted_password(password, hashtype='sha512', salt=None):
@@ -258,7 +265,7 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
             encrypted = crypt.crypt(password, saltstring)
         else:
             if hashtype == 'blowfish':
-                cls = passlib.hash.bcrypt;
+                cls = passlib.hash.bcrypt
             else:
                 cls = getattr(passlib.hash, '%s_crypt' % hashtype)
 
@@ -431,14 +438,46 @@ def skipped(*a, **kw):
     skipped = item.get('skipped', False)
     return skipped
 
+
+@environmentfilter
+def do_groupby(environment, value, attribute):
+    """Overridden groupby filter for jinja2, to address an issue with
+    jinja2>=2.9.0,<2.9.5 where a namedtuple was returned which
+    has repr that prevents ansible.template.safe_eval.safe_eval from being
+    able to parse and eval the data.
+
+    jinja2<2.9.0,>=2.9.5 is not affected, as <2.9.0 uses a tuple, and
+    >=2.9.5 uses a standard tuple repr on the namedtuple.
+
+    The adaptation here, is to run the jinja2 `do_groupby` function, and
+    cast all of the namedtuples to a regular tuple.
+
+    See https://github.com/ansible/ansible/issues/20098
+
+    We may be able to remove this in the future.
+    """
+    return [tuple(t) for t in _do_groupby(environment, value, attribute)]
+
+
+def b64encode(string):
+    return to_text(base64.b64encode(to_bytes(string, errors='surrogate_then_strict')))
+
+
+def b64decode(string):
+    return to_text(base64.b64decode(to_bytes(string, errors='surrogate_then_strict')))
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
     def filters(self):
         return {
+            # jinja2 overrides
+            'groupby': do_groupby,
+
             # base 64
-            'b64decode': partial(unicode_wrap, base64.b64decode),
-            'b64encode': partial(unicode_wrap, base64.b64encode),
+            'b64decode': b64decode,
+            'b64encode': b64encode,
 
             # uuid
             'to_uuid': to_uuid,
@@ -525,4 +564,7 @@ class FilterModule(object):
             # skip testing
             'skipped' : skipped,
             'skip'    : skipped,
+
+            # debug
+            'type_debug': lambda o: o.__class__.__name__,
         }

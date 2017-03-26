@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from yaml.constructor import Constructor, ConstructorError
+from yaml.constructor import SafeConstructor, ConstructorError
 from yaml.nodes import MappingNode
 
 from ansible.module_utils._text import to_bytes
@@ -35,13 +35,13 @@ except ImportError:
     display = Display()
 
 
-class AnsibleConstructor(Constructor):
-    def __init__(self, file_name=None, vault_password=None):
-        self._vault_password = vault_password
+class AnsibleConstructor(SafeConstructor):
+    def __init__(self, file_name=None, b_vault_password=None):
+        self._b_vault_password = b_vault_password
         self._ansible_file_name = file_name
         super(AnsibleConstructor, self).__init__()
         self._vaults = {}
-        self._vaults['default'] = VaultLib(password=self._vault_password)
+        self._vaults['default'] = VaultLib(b_password=self._b_vault_password)
 
     def construct_yaml_map(self, node):
         data = AnsibleMapping()
@@ -98,7 +98,7 @@ class AnsibleConstructor(Constructor):
         value = self.construct_scalar(node)
         ciphertext_data = to_bytes(value)
 
-        if self._vault_password is None:
+        if self._b_vault_password is None:
             raise ConstructorError(None, None,
                     "found vault but no vault password provided", node.start_mark)
 
@@ -157,5 +157,6 @@ AnsibleConstructor.add_constructor(
     AnsibleConstructor.construct_yaml_unsafe)
 
 AnsibleConstructor.add_constructor(
-    u'!vault-encrypted',
+    u'!vault',
     AnsibleConstructor.construct_vault_encrypted_unicode)
+AnsibleConstructor.add_constructor( u'!vault-encrypted', AnsibleConstructor.construct_vault_encrypted_unicode)

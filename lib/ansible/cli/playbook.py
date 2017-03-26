@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
@@ -46,13 +44,15 @@ except ImportError:
 #---------------------------------------------------------------------------------------------------
 
 class PlaybookCLI(CLI):
-    ''' code behind ansible playbook cli'''
+    ''' the tool to run *Ansible playbooks*, which are a configuration and multinode deployment system.
+        See the project home page (https://docs.ansible.com) for more information. '''
+
 
     def parse(self):
 
         # create parser for CLI options
         parser = CLI.base_parser(
-            usage = "%prog playbook.yml",
+            usage = "%prog [options] playbook.yml [playbook2 ...]",
             connect_opts=True,
             meta_opts=True,
             runas_opts=True,
@@ -63,6 +63,7 @@ class PlaybookCLI(CLI):
             vault_opts=True,
             fork_opts=True,
             module_opts=True,
+            desc="Runs Ansible playbooks, executing the defined tasks on the targeted hosts.",
         )
 
         # ansible playbook specific opts
@@ -92,8 +93,16 @@ class PlaybookCLI(CLI):
         # Manage passwords
         sshpass    = None
         becomepass    = None
-        vault_pass = None
+        b_vault_pass = None
         passwords = {}
+
+        # initial error check, to make sure all specified playbooks are accessible
+        # before we start running anything through the playbook executor
+        for playbook in self.args:
+            if not os.path.exists(playbook):
+                raise AnsibleError("the playbook: %s could not be found" % playbook)
+            if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
+                raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
         # don't deal with privilege escalation or passwords when we don't need to
         if not self.options.listhosts and not self.options.listtasks and not self.options.listtags and not self.options.syntax:
@@ -105,19 +114,11 @@ class PlaybookCLI(CLI):
 
         if self.options.vault_password_file:
             # read vault_pass from a file
-            vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
-            loader.set_vault_password(vault_pass)
+            b_vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
+            loader.set_vault_password(b_vault_pass)
         elif self.options.ask_vault_pass:
-            vault_pass = self.ask_vault_passwords()[0]
-            loader.set_vault_password(vault_pass)
-
-        # initial error check, to make sure all specified playbooks are accessible
-        # before we start running anything through the playbook executor
-        for playbook in self.args:
-            if not os.path.exists(playbook):
-                raise AnsibleError("the playbook: %s could not be found" % playbook)
-            if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
-                raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
+            b_vault_pass = self.ask_vault_passwords()
+            loader.set_vault_password(b_vault_pass)
 
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables
@@ -148,11 +149,11 @@ class PlaybookCLI(CLI):
 
         # flush fact cache if requested
         if self.options.flush_cache:
-            for host in inventory.list_hosts():
-                variable_manager.clear_facts(host)
+            self._flush_cache(inventory, variable_manager)
 
         # create the playbook executor, which manages running the plays via a task queue manager
-        pbex = PlaybookExecutor(playbooks=self.args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=self.options, passwords=passwords)
+        pbex = PlaybookExecutor(playbooks=self.args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=self.options,
+                                passwords=passwords)
 
         results = pbex.run()
 
@@ -161,6 +162,12 @@ class PlaybookCLI(CLI):
 
                 display.display('\nplaybook: %s' % p['playbook'])
                 for idx, play in enumerate(p['plays']):
+                    if play._included_path is not None:
+                        loader.set_basedir(play._included_path)
+                    else:
+                        pb_dir = os.path.realpath(os.path.dirname(p['playbook']))
+                        loader.set_basedir(pb_dir)
+
                     msg = "\n  play #%d (%s): %s" % (idx + 1, ','.join(play.hosts), play.name)
                     mytags = set(play.tags)
                     msg += '\tTAGS: [%s]' % (','.join(mytags))
@@ -218,3 +225,8 @@ class PlaybookCLI(CLI):
             return 0
         else:
             return results
+
+    def _flush_cache(self, inventory, variable_manager):
+        for host in inventory.list_hosts():
+            hostname = host.get_name()
+            variable_manager.clear_facts(hostname)

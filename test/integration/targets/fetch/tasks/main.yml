@@ -94,4 +94,3 @@
   assert:
     that:
       'diff.stdout == ""'
-

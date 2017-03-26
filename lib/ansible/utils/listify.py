@@ -21,12 +21,13 @@ __metaclass__ = type
 
 from collections import Iterable
 
-from ansible.compat.six import string_types
-
+from ansible.module_utils.six import string_types
 from ansible.template import Templar
 from ansible.template.safe_eval import safe_eval
 
+
 __all__ = ['listify_lookup_plugin_terms']
+
 
 def listify_lookup_plugin_terms(terms, templar, loader, fail_on_undefined=True, convert_bare=False):
 

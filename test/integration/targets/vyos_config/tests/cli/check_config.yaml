@@ -1,0 +1,29 @@
+---
+- debug: msg="START cli/config_check.yaml"
+
+- name: setup
+  vyos_config:
+    lines: set interfaces loopback lo description test
+    provider: "{{ cli }}"
+
+- name: configure config_check config command
+  vyos_config:
+    lines: delete interfaces loopback lo
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: check config_check config command idempontent
+  vyos_config:
+    lines: delete interfaces loopback lo
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- debug: msg="END cli/config_check.yaml"

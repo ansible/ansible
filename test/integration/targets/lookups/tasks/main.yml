@@ -22,13 +22,13 @@
   copy: dest={{output_dir}}/foo.txt mode=0644 content="bar"
 
 - name: load the file as a fact
-  set_fact: 
+  set_fact:
     foo: "{{ lookup('file', output_dir + '/foo.txt' ) }}"
 
 - debug: var=foo
 
-- name: verify file lookup 
-  assert: 
+- name: verify file lookup
+  assert:
     that:
         - "foo == 'bar'"
 
@@ -43,7 +43,7 @@
   - "{{output_dir}}/lookup"
 
 - name: create a password file
-  set_fact: 
+  set_fact:
     newpass: "{{ lookup('password', output_dir + '/lookup/password length=8') }}"
 
 - name: stat the password file directory
@@ -134,6 +134,18 @@
     that:
         - "newpass == newpass2"
 
+- name: verify that we can generate a 1st password without writing it
+  set_fact:
+    newpass: "{{ lookup('password', '/dev/null') }}"
+
+- name: verify that we can generate a 2nd password without writing it
+  set_fact:
+    newpass2: "{{ lookup('password', '/dev/null') }}"
+
+- name: verify lookup password behavior with /dev/null
+  assert:
+    that:
+        - "newpass != newpass2"
 
 # ENV LOOKUP
 
@@ -143,7 +155,7 @@
 
 - name: get first environment var value
   shell: echo {{ '$' + known_var_name.stdout }}
-  register: known_var_value 
+  register: known_var_value
 
 - name: use env lookup to get known var
   set_fact:
@@ -268,3 +280,14 @@
         - product.results[6]['item'] == ["C", "1"]
         - product.results[7]['item'] == ["C", "2"]
         - product.results[8]['item'] == ["C", "3"]
+
+# Template lookups
+
+# ref #18526
+- name: Test that we have a proper jinja search path in template lookup
+  set_fact:
+    hello_world: "{{ lookup('template', 'hello.txt') }}"
+
+- assert:
+    that:
+      - "hello_world|trim == 'Hello world!'"

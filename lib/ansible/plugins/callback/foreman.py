@@ -45,7 +45,7 @@ class CallbackModule(CallbackBase):
     FOREMAN_SSL_CERT: X509 certificate to authenticate to Foreman if
       https is used
     FOREMAN_SSL_KEY: the corresponding private key
-    FOREMAN_SSL_VERIFY: wether to verify the Foreman certificate
+    FOREMAN_SSL_VERIFY: whether to verify the Foreman certificate
       It can be set to '1' to verify SSL certificates using the
       installed CAs or to a path pointing to a CA bundle. Set to '0'
       to disable certificate checking.
@@ -63,8 +63,8 @@ class CallbackModule(CallbackBase):
                                   "/etc/foreman/client_key.pem"))
     FOREMAN_SSL_VERIFY = os.getenv('FOREMAN_SSL_VERIFY', "1")
     FOREMAN_HEADERS = {
-      "Content-Type": "application/json",
-      "Accept": "application/json"
+        "Content-Type": "application/json",
+        "Accept": "application/json"
     }
     TIME_FORMAT = "%Y-%m-%d %H:%M:%S %f"
 
@@ -155,7 +155,7 @@ class CallbackModule(CallbackBase):
                     "status": status,
                     "logs": log,
                     }
-                 }
+                }
             # To be changed to /api/v2/config_reports in 1.11.  Maybe we
             # could make a GET request to get the Foreman version & do
             # this automatically.

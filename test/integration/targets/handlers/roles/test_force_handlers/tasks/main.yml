@@ -21,6 +21,6 @@
 - name: EXPECTED FAILURE fail task for C
   fail: msg="Fail C"
   when: inventory_hostname == 'C'
-  
+
 - name: echo after A and C have failed
   command: echo CALLED_TASK_{{ inventory_hostname }}

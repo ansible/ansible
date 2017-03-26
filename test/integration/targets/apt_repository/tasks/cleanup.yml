@@ -15,4 +15,3 @@
 - name: remove ppa key
   apt_key: id={{test_ppa_key}} state=absent
   ignore_errors: true
-

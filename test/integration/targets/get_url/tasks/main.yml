@@ -37,15 +37,15 @@
     geturl_dstfile: "{{ output_dir | expanduser }}/aurlfile_copy.txt"
 
 - name: Create source file
-  copy: 
-    dest: "{{ geturl_srcfile }}" 
-    content: "foobar" 
+  copy:
+    dest: "{{ geturl_srcfile }}"
+    content: "foobar"
 
 - name: test file fetch
   get_url:
     url: "{{ 'file://' + geturl_srcfile }}"
-    dest: "{{ geturl_dstfile }}"  
-  register: result  
+    dest: "{{ geturl_dstfile }}"
+  register: result
 
 - name: assert success and change
   assert:
@@ -56,8 +56,8 @@
 - name: test nonexisting file fetch
   get_url:
     url: "{{ 'file://' + geturl_srcfile + 'NOFILE' }}"
-    dest: "{{ geturl_dstfile + 'NOFILE' }}"  
-  register: result  
+    dest: "{{ geturl_dstfile + 'NOFILE' }}"
+  register: result
   ignore_errors: True
 
 - name: assert success and change

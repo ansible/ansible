@@ -20,4 +20,3 @@
   shell: /bin/false
   register: failed
   ignore_errors: True
-

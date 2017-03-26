@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''
 (Epdb) pprint(DeepDiff(self.final_task_vars, out_task_vars), indent=2)
 { 'dic_item_added': set([u"root['ansible_python_interpreter']"]),
@@ -29,10 +27,10 @@ from ansible.plugins.action.synchronize import ActionModule
 '''
 import copy
 safe_vars = {}
-for k,v in task_vars.iteritems():
+for k,v in task_vars.items():
     if k not in ['vars', 'hostvars']:
         safe_vars[k] = copy.deepcopy(v)
-    else:    
+    else:
         sdata = str(v)
         newv = eval(sdata)
         safe_vars[k] = newv
@@ -46,7 +44,7 @@ with open('task_vars.json', 'wb') as f:
 
 
 class TaskMock(object):
-    args = {'src': u'/tmp/deleteme', 
+    args = {'src': u'/tmp/deleteme',
             'dest': '/tmp/deleteme',
             'rsync_path': 'rsync'}
     async = None
@@ -82,7 +80,7 @@ class ModuleLoaderMock(object):
         pass
 
 class SharedLoaderMock(object):
-    module_loader = ModuleLoaderMock()    
+    module_loader = ModuleLoaderMock()
 
 class SynchronizeTester(object):
 
@@ -99,11 +97,12 @@ class SynchronizeTester(object):
     execute_called = False
 
 
-    def _execute_module(self, module_name, task_vars=None):
+    def _execute_module(self, module_name, module_args=None, task_vars=None):
         self.execute_called = True
+        self.final_module_args = module_args
         self.final_task_vars = task_vars
         return {}
-    
+
     def runtest(self, fixturepath='fixtures/synchronize/basic'):
 
         metapath = os.path.join(fixturepath, 'meta.yaml')
@@ -138,19 +137,19 @@ class SynchronizeTester(object):
                     self.task.args[k] = v
 
         # load inital task vars
-        invarspath = os.path.join(fixturepath, 
+        invarspath = os.path.join(fixturepath,
                 test_meta.get('fixtures', {}).get('taskvars_in', 'taskvars_in.json'))
         with open(invarspath, 'rb') as f:
             fdata = f.read()
-        fdata = fdata.decode("utf-8")    
+        fdata = fdata.decode("utf-8")
         in_task_vars = json.loads(fdata)
 
         # load expected final task vars
-        outvarspath = os.path.join(fixturepath, 
+        outvarspath = os.path.join(fixturepath,
                 test_meta.get('fixtures', {}).get('taskvars_out', 'taskvars_out.json'))
         with open(outvarspath, 'rb') as f:
             fdata = f.read()
-        fdata = fdata.decode("utf-8")    
+        fdata = fdata.decode("utf-8")
         out_task_vars = json.loads(fdata)
 
         # fixup the connection
@@ -163,7 +162,7 @@ class SynchronizeTester(object):
                 in_task_vars['hostvars'][k] = v
 
         # initalize and run the module
-        SAM = ActionModule(self.task, self.connection, self._play_context, 
+        SAM = ActionModule(self.task, self.connection, self._play_context,
                            self.loader, self.templar, self.shared_loader_obj)
         SAM._execute_module = self._execute_module
         result = SAM.run(task_vars=in_task_vars)
@@ -242,7 +241,3 @@ class TestSynchronizeAction(unittest.TestCase):
         # delegate to other remote host with su enabled
         x = SynchronizeTester()
         x.runtest(fixturepath=os.path.join(self.fixturedir,'delegate_remote_su'))
-
-
-if __name__ == "__main__":
-    SynchronizeTester().runtest()

@@ -20,10 +20,10 @@ __metaclass__ = type
 import os
 import base64
 
+from ansible.constants import mk_boolean as boolean
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.action import ActionBase
-from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum, checksum_s, md5, secure_hash
 from ansible.utils.path import makedirs_safe
 
@@ -121,31 +121,23 @@ class ActionModule(ActionBase):
         if remote_checksum in ('0', '1', '2', '3', '4'):
             # these don't fail because you may want to transfer a log file that
             # possibly MAY exist but keep going to fetch other log files
+            result['changed'] = False
+            result['file'] = source
             if remote_checksum == '0':
                 result['msg'] = "unable to calculate the checksum of the remote file"
-                result['file'] = source
-                result['changed'] = False
             elif remote_checksum == '1':
                 if fail_on_missing:
                     result['failed'] = True
+                    del result['changed']
                     result['msg'] = "the remote file does not exist"
-                    result['file'] = source
                 else:
                     result['msg'] = "the remote file does not exist, not transferring, ignored"
-                    result['file'] = source
-                    result['changed'] = False
             elif remote_checksum == '2':
                 result['msg'] = "no read permission on remote file, not transferring, ignored"
-                result['file'] = source
-                result['changed'] = False
             elif remote_checksum == '3':
                 result['msg'] = "remote file is a directory, fetch cannot work on directories"
-                result['file'] = source
-                result['changed'] = False
             elif remote_checksum == '4':
                 result['msg'] = "python isn't present on the system.  Unable to compute checksum"
-                result['file'] = source
-                result['changed'] = False
             return result
 
         # calculate checksum for the local file

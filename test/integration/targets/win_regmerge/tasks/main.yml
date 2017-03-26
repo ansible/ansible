@@ -31,7 +31,7 @@
      - settings3.reg
 
 # test 1 -  basic test of changed behaviour
-# merge in REG_SZ 
+# merge in REG_SZ
 - name: test 1 merge in a setting
   win_regmerge:
      path: "{{win_output_dir}}\\settings1.reg"
@@ -47,7 +47,7 @@
      path: "{{win_output_dir}}\\settings1.reg"
   register: merge12_result
 
-# without a compare to key, should allways report changed
+# without a compare to key, should always report changed
 - assert:
     that:
       - "merge12_result.changed == true"

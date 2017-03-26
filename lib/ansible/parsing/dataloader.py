@@ -22,16 +22,15 @@ __metaclass__ = type
 import copy
 import os
 import json
-import subprocess
 import tempfile
 from yaml import YAMLError
 
-from ansible.compat.six import text_type, string_types
-from ansible.errors import AnsibleFileNotFound, AnsibleParserError, AnsibleError
+from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
 from ansible.module_utils.basic import is_executable
+from ansible.module_utils.six import text_type, string_types
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.parsing.vault import VaultLib, is_encrypted, is_encrypted_file
+from ansible.parsing.vault import VaultLib, b_HEADER, is_encrypted, is_encrypted_file
 from ansible.parsing.quoting import unquote
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleUnicode
@@ -44,7 +43,7 @@ except ImportError:
     display = Display()
 
 
-class DataLoader():
+class DataLoader:
 
     '''
     The DataLoader class is used to load and parse YAML or JSON content,
@@ -71,9 +70,9 @@ class DataLoader():
         # initialize the vault stuff with an empty password
         self.set_vault_password(None)
 
-    def set_vault_password(self, vault_password):
-        self._vault_password = vault_password
-        self._vault = VaultLib(password=vault_password)
+    def set_vault_password(self, b_vault_password):
+        self._b_vault_password = b_vault_password
+        self._vault = VaultLib(b_password=b_vault_password)
 
     def load(self, data, file_name='<string>', show_content=True):
         '''
@@ -116,7 +115,9 @@ class DataLoader():
             parsed_data = self._FILE_CACHE[file_name]
         else:
             # read the file contents and load the data structure from them
-            (file_data, show_content) = self._get_file_contents(file_name)
+            (b_file_data, show_content) = self._get_file_contents(file_name)
+
+            file_data = to_text(b_file_data, errors='surrogate_or_strict')
             parsed_data = self.load(data=file_data, file_name=file_name, show_content=show_content)
 
             # cache the file contents for next time
@@ -149,7 +150,7 @@ class DataLoader():
     def _safe_load(self, stream, file_name=None):
         ''' Implements yaml.safe_load(), except using our custom loader class. '''
 
-        loader = AnsibleLoader(stream, file_name, self._vault_password)
+        loader = AnsibleLoader(stream, file_name, self._b_vault_password)
         try:
             return loader.get_single_data()
         finally:
@@ -178,7 +179,6 @@ class DataLoader():
                     data = self._vault.decrypt(data, filename=b_file_name)
                     show_content = False
 
-            data = to_text(data, errors='surrogate_or_strict')
             return (data, show_content)
 
         except (IOError, OSError) as e:
@@ -226,7 +226,27 @@ class DataLoader():
             basedir = to_text(self._basedir, errors='surrogate_or_strict')
             return os.path.abspath(os.path.join(basedir, given))
 
-    def path_dwim_relative(self, path, dirname, source):
+    def _is_role(self, path):
+        ''' imperfect role detection, roles are still valid w/o main.yml/yaml/etc '''
+
+        isit = False
+        b_path = to_bytes(path, errors='surrogate_or_strict')
+        b_upath = to_bytes(unfrackpath(path), errors='surrogate_or_strict')
+
+        for suffix in (b'.yml', b'.yaml', b''):
+            b_main = b'main%s' % (suffix)
+            b_tasked = b'tasks/%s' % (b_main)
+
+            if b_path.endswith(b'tasks') and os.path.exists(os.path.join(b_path, b_main)) \
+              or os.path.exists(os.path.join(b_upath, b_tasked)) \
+              or os.path.exists(os.path.join(os.path.dirname(b_path), b_tasked)):
+                isit = True
+                break
+
+        return isit
+
+
+    def path_dwim_relative(self, path, dirname, source, is_role=False):
         '''
         find one file in either a role or playbook dir with or without
         explicitly named dirname subdirs
@@ -236,7 +256,6 @@ class DataLoader():
         '''
 
         search = []
-        isrole = False
 
         # I have full path, nothing else needs to be looked at
         if source.startswith('~') or source.startswith(os.path.sep):
@@ -246,12 +265,12 @@ class DataLoader():
             search.append(os.path.join(path, dirname, source))
             basedir = unfrackpath(path)
 
-            # is it a role and if so make sure you get correct base path
-            if path.endswith('tasks') and os.path.exists(to_bytes(os.path.join(path,'main.yml'), errors='surrogate_or_strict')) \
-                    or os.path.exists(to_bytes(os.path.join(path,'tasks/main.yml'), errors='surrogate_or_strict')):
-                isrole = True
-                if path.endswith('tasks'):
-                    basedir = unfrackpath(os.path.dirname(path))
+            # not told if role, but detect if it is a role and if so make sure you get correct base path
+            if not is_role:
+                is_role = self._is_role(path)
+
+            if is_role and path.endswith('tasks'):
+                basedir = unfrackpath(os.path.dirname(path))
 
             cur_basedir = self._basedir
             self.set_basedir(basedir)
@@ -259,7 +278,7 @@ class DataLoader():
             search.append(self.path_dwim(os.path.join(basedir, dirname, source)))
             self.set_basedir(cur_basedir)
 
-            if isrole and not source.endswith(dirname):
+            if is_role and not source.endswith(dirname):
                 # look in role's tasks dir w/o dirname
                 search.append(self.path_dwim(os.path.join(basedir, 'tasks', source)))
 
@@ -276,7 +295,7 @@ class DataLoader():
 
         return candidate
 
-    def path_dwim_relative_stack(self, paths, dirname, source):
+    def path_dwim_relative_stack(self, paths, dirname, source, is_role=False):
         '''
         find one file in first path in stack taking roles into account and adding play basedir as fallback
 
@@ -300,32 +319,34 @@ class DataLoader():
                 result = test_path
         else:
             search = []
+            display.debug(u'evaluation_path:\n\t%s' % '\n\t'.join(paths))
             for path in paths:
                 upath = unfrackpath(path)
                 b_upath = to_bytes(upath, errors='surrogate_or_strict')
                 b_mydir = os.path.dirname(b_upath)
 
+                # FIXME: this detection fails with non main.yml roles
                 # if path is in role and 'tasks' not there already, add it into the search
-                if b_upath.endswith(b'tasks') and os.path.exists(os.path.join(b_upath, b'main.yml')) \
-                        or os.path.exists(os.path.join(b_upath, b'tasks/main.yml')) \
-                        or os.path.exists(os.path.join(b_mydir, b'tasks/main.yml')):
+                if is_role or self._is_role(path):
                     if b_mydir.endswith(b'tasks'):
                         search.append(os.path.join(os.path.dirname(b_mydir), b_dirname, b_source))
                         search.append(os.path.join(b_mydir, b_source))
                     else:
                         # don't add dirname if user already is using it in source
-                        if b_source.split(b'/')[0] == b_dirname:
-                            search.append(os.path.join(b_upath, b_source))
-                        else:
+                        if b_source.split(b'/')[0] != b_dirname:
                             search.append(os.path.join(b_upath, b_dirname, b_source))
-                        search.append(os.path.join(b_upath, b'tasks', b_source))
+                        search.append(os.path.join(b_upath, b_source))
+
                 elif b_dirname not in b_source.split(b'/'):
                     # don't add dirname if user already is using it in source
-                    search.append(os.path.join(b_upath, b_dirname, b_source))
+                    if b_source.split(b'/')[0] != dirname:
+                        search.append(os.path.join(b_upath, b_dirname, b_source))
                     search.append(os.path.join(b_upath, b_source))
 
             # always append basedir as last resort
-            search.append(os.path.join(to_bytes(self.get_basedir()), b_dirname, b_source))
+            # don't add dirname if user already is using it in source
+            if b_source.split(b'/')[0] != dirname:
+                search.append(os.path.join(to_bytes(self.get_basedir()), b_dirname, b_source))
             search.append(os.path.join(to_bytes(self.get_basedir()), b_source))
 
             display.debug(u'search_path:\n\t%s' % to_text(b'\n\t'.join(search)))
@@ -336,33 +357,6 @@ class DataLoader():
                     break
 
         return result
-
-    def read_vault_password_file(self, vault_password_file):
-        """
-        Read a vault password from a file or if executable, execute the script and
-        retrieve password from STDOUT
-        """
-
-        this_path = os.path.realpath(to_bytes(os.path.expanduser(vault_password_file), errors='surrogate_or_strict'))
-        if not os.path.exists(to_bytes(this_path, errors='surrogate_or_strict')):
-            raise AnsibleFileNotFound("The vault password file %s was not found" % this_path)
-
-        if self.is_executable(this_path):
-            try:
-                # STDERR not captured to make it easier for users to prompt for input in their scripts
-                p = subprocess.Popen(this_path, stdout=subprocess.PIPE)
-            except OSError as e:
-                raise AnsibleError("Problem running vault password script %s (%s)."
-                        " If this is not a script, remove the executable bit from the file." % (' '.join(this_path), to_native(e)))
-            stdout, stderr = p.communicate()
-            self.set_vault_password(stdout.strip('\r\n'))
-        else:
-            try:
-                f = open(this_path, "rb")
-                self.set_vault_password(f.read().strip())
-                f.close()
-            except (OSError, IOError) as e:
-                raise AnsibleError("Could not read vault password file %s: %s" % (this_path, e))
 
     def _create_content_tempfile(self, content):
         ''' Create a tempfile containing defined content '''
@@ -378,7 +372,7 @@ class DataLoader():
             f.close()
         return content_tempfile
 
-    def get_real_file(self, file_path):
+    def get_real_file(self, file_path, decrypt=True):
         """
         If the file is vault encrypted return a path to a temporary decrypted file
         If the file is not encrypted then the path is returned
@@ -393,24 +387,28 @@ class DataLoader():
             raise AnsibleFileNotFound("the file_name '%s' does not exist, or is not readable" % to_native(file_path))
 
         if not self._vault:
-            self._vault = VaultLib(password="")
+            self._vault = VaultLib(b_password="")
 
         real_path = self.path_dwim(file_path)
 
         try:
-            with open(to_bytes(real_path), 'rb') as f:
-                if is_encrypted_file(f):
-                    # if the file is encrypted and no password was specified,
-                    # the decrypt call would throw an error, but we check first
-                    # since the decrypt function doesn't know the file name
-                    data = f.read()
-                    if not self._vault_password:
-                        raise AnsibleParserError("A vault password must be specified to decrypt %s" % file_path)
+            if decrypt:
+                with open(to_bytes(real_path), 'rb') as f:
+                    # Limit how much of the file is read since we do not know
+                    # whether this is a vault file and therefore it could be very
+                    # large.
+                    if is_encrypted_file(f, count=len(b_HEADER)):
+                        # if the file is encrypted and no password was specified,
+                        # the decrypt call would throw an error, but we check first
+                        # since the decrypt function doesn't know the file name
+                        data = f.read()
+                        if not self._b_vault_password:
+                            raise AnsibleParserError("A vault password must be specified to decrypt %s" % file_path)
 
-                    data = self._vault.decrypt(data, filename=real_path)
-                    # Make a temp file
-                    real_path = self._create_content_tempfile(data)
-                    self._tempfiles.add(real_path)
+                        data = self._vault.decrypt(data, filename=real_path)
+                        # Make a temp file
+                        real_path = self._create_content_tempfile(data)
+                        self._tempfiles.add(real_path)
 
             return real_path
 

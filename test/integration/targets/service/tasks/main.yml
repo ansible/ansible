@@ -6,7 +6,6 @@
   assert:
     that:
     - "install_result.dest == '/usr/sbin/ansible_test_service'"
-    - "install_result.checksum == '4e0164ceb9a5aeab76b38483ffd27fe791baa9f4'"
     - "install_result.state == 'file'"
     - "install_result.mode == '0755'"
 

@@ -16,7 +16,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os,sys,re,socket
+import os
+
 HAS_XMPP = True
 try:
     import xmpp
@@ -24,9 +25,8 @@ except ImportError:
     HAS_XMPP = False
 
 from ansible.plugins.callback import CallbackBase
-from ansible import utils
-from ansible.module_utils import basic
-from ansible.utils.unicode import to_unicode, to_bytes
+
+
 class CallbackModule(CallbackBase):
 
     CALLBACK_VERSION = 2.0
@@ -39,8 +39,9 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).__init__(display=display)
 
         if not HAS_XMPP:
-            print ("The required python xmpp library (xmpppy) is not installed"
-             "pip install git+https://github.com/ArchipelProject/xmpppy")
+            self._display.warning("The required python xmpp library (xmpppy) is not installed."
+                " pip install git+https://github.com/ArchipelProject/xmpppy")
+            self.disabled = True
 
         self.serv = os.getenv('JABBER_SERV')
         self.j_user = os.getenv('JABBER_USER')
@@ -65,7 +66,7 @@ class CallbackModule(CallbackBase):
     def v2_runner_on_ok(self, result):
         self._clean_results(result._result, result._task.action)
         self.debug = self._dump_results(result._result)
-        
+
     def v2_playbook_on_task_start(self, task, is_conditional):
         self.task = task
 
@@ -73,7 +74,6 @@ class CallbackModule(CallbackBase):
         """Display Playbook and play start messages"""
         self.play = play
         name = play.name
-        playbook = play.name
         self.send_msg("Ansible starting play: %s" % (name))
 
     def playbook_on_stats(self, stats):

@@ -20,16 +20,36 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
+import random
+import uuid
+
 from json import dumps
 from collections import MutableMapping
 
-from ansible.compat.six import iteritems, string_types
+from ansible.module_utils.six import iteritems, string_types
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.parsing.splitter import parse_kv
 from ansible.module_utils._text import to_native, to_text
 
+
+_MAXSIZE   = 2**32
+cur_id     = 0
+node_mac   = ("%012x" % uuid.getnode())[:12]
+random_int = ("%08x" % random.randint(0, _MAXSIZE))[:8]
+
+
+def get_unique_id():
+    global cur_id
+    cur_id += 1
+    return "-".join([
+        node_mac[0:8],
+        node_mac[8:12],
+        random_int[0:4],
+        random_int[4:8],
+        ("%012x" % cur_id)[:12],
+    ])
 
 def _validate_mutable_mappings(a, b):
     """
@@ -101,6 +121,7 @@ def merge_hash(a, b):
 def load_extra_vars(loader, options):
     extra_vars = {}
     for extra_vars_opt in options.extra_vars:
+        data = None
         extra_vars_opt = to_text(extra_vars_opt, errors='surrogate_or_strict')
         if extra_vars_opt.startswith(u"@"):
             # Argument is a YAML file (JSON is a subset of YAML)
@@ -111,7 +132,12 @@ def load_extra_vars(loader, options):
         else:
             # Arguments as Key-value
             data = parse_kv(extra_vars_opt)
-        extra_vars = combine_vars(extra_vars, data)
+
+        if isinstance(data, MutableMapping):
+            extra_vars = combine_vars(extra_vars, data)
+        else:
+            raise AnsibleOptionsError("Invalid extra vars data supplied. '%s' could not be made into a dictionary" % extra_vars_opt)
+
     return extra_vars
 
 

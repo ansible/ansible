@@ -23,4 +23,3 @@
   assert:
     that:
     - "restart_systemd_result.rc == 0"
-

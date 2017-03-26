@@ -27,7 +27,6 @@ __metaclass__ = type
 import distutils.spawn
 import os
 import os.path
-import pipes
 import subprocess
 import re
 
@@ -35,6 +34,7 @@ from distutils.version import LooseVersion
 
 import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 
@@ -228,7 +228,7 @@ class Connection(ConnectionBase):
             raise AnsibleFileNotFound(
                 "file or module does not exist: %s" % in_path)
 
-        out_path = pipes.quote(out_path)
+        out_path = shlex_quote(out_path)
         # Older docker doesn't have native support for copying files into
         # running containers, so we use docker exec to implement this
         # Although docker version 1.8 and later provide support, the

@@ -24,15 +24,17 @@ import time
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
-from ansible.utils.boolean import boolean
 
+boolean = C.mk_boolean
 
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
+    DEFAULT_NEWLINE_SEQUENCE = "\n"
 
     def get_checksum(self, dest, all_vars, try_directory=False, source=None, tmp=None):
         try:
@@ -43,13 +45,14 @@ class ActionModule(ActionBase):
                 dest = os.path.join(dest, base)
                 dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False, tmp=tmp)
 
-        except Exception as e:
-            return dict(failed=True, msg=to_bytes(e))
+        except AnsibleError as e:
+            return dict(failed=True, msg=to_native(e))
 
         return dest_stat['checksum']
 
     def run(self, tmp=None, task_vars=None):
         ''' handler for template operations '''
+
         if task_vars is None:
             task_vars = dict()
 
@@ -59,6 +62,19 @@ class ActionModule(ActionBase):
         dest   = self._task.args.get('dest', None)
         force  = boolean(self._task.args.get('force', True))
         state  = self._task.args.get('state', None)
+        newline_sequence = self._task.args.get('newline_sequence', self.DEFAULT_NEWLINE_SEQUENCE)
+        variable_start_string = self._task.args.get('variable_start_string', None)
+        variable_end_string = self._task.args.get('variable_end_string', None)
+        block_start_string = self._task.args.get('block_start_string', None)
+        block_end_string = self._task.args.get('block_end_string', None)
+        trim_blocks = self._task.args.get('trim_blocks', None)
+
+        wrong_sequences = ["\\n", "\\r", "\\r\\n"]
+        allowed_sequences = ["\n", "\r", "\r\n"]
+
+        # We need to convert unescaped sequences to proper escaped sequences for Jinja2
+        if newline_sequence in wrong_sequences:
+            newline_sequence = allowed_sequences[wrong_sequences.index(newline_sequence)]
 
         if state is not None:
             result['failed'] = True
@@ -66,6 +82,9 @@ class ActionModule(ActionBase):
         elif source is None or dest is None:
             result['failed'] = True
             result['msg'] = "src and dest are required"
+        elif newline_sequence not in allowed_sequences:
+            result['failed'] = True
+            result['msg'] = "newline_sequence needs to be one of: \n, \r or \r\n"
         else:
             try:
                 source = self._find_needle('templates', source)
@@ -115,29 +134,46 @@ class ActionModule(ActionBase):
                 time.localtime(os.path.getmtime(b_source))
             )
 
-            # Create a new searchpath list to assign to the templar environment's file
-            # loader, so that it knows about the other paths to find template files
-            searchpath = [self._loader._basedir, os.path.dirname(source)]
-            if self._task._role is not None:
-                if C.DEFAULT_ROLES_PATH:
-                    searchpath[:0] = C.DEFAULT_ROLES_PATH
-                searchpath.insert(1, self._task._role._role_path)
+            searchpath = []
+            # set jinja2 internal search path for includes
+            if 'ansible_search_path' in task_vars:
+                searchpath = task_vars['ansible_search_path']
+                # our search paths aren't actually the proper ones for jinja includes.
+
+            searchpath.extend([self._loader._basedir, os.path.dirname(source)])
+
+            # We want to search into the 'templates' subdir of each search path in
+            # addition to our original search paths.
+            newsearchpath = []
+            for p in searchpath:
+                newsearchpath.append(os.path.join(p, 'templates'))
+                newsearchpath.append(p)
+            searchpath = newsearchpath
 
             self._templar.environment.loader.searchpath = searchpath
+            self._templar.environment.newline_sequence = newline_sequence
+            if block_start_string is not None:
+                self._templar.environment.block_start_string = block_start_string
+            if block_end_string is not None:
+                self._templar.environment.block_end_string = block_end_string
+            if variable_start_string is not None:
+                self._templar.environment.variable_start_string = variable_start_string
+            if variable_end_string is not None:
+                self._templar.environment.variable_end_string = variable_end_string
+            if trim_blocks is not None:
+                self._templar.environment.trim_blocks = bool(trim_blocks)
 
             old_vars = self._templar._available_variables
             self._templar.set_available_variables(temp_vars)
-            resultant = self._templar.template(template_data, preserve_trailing_newlines=True, escape_backslashes=False, convert_data=False)
+            resultant = self._templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False)
             self._templar.set_available_variables(old_vars)
         except Exception as e:
             result['failed'] = True
             result['msg'] = type(e).__name__ + ": " + str(e)
             return result
 
-        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
         if not tmp:
-            tmp = self._make_tmp_path(remote_user)
-            self._cleanup_remote_tmp = True
+            tmp = self._make_tmp_path()
 
         local_checksum = checksum_s(resultant)
         remote_checksum = self.get_checksum(dest, task_vars, not directory_prepended, source=source, tmp=tmp)
@@ -148,6 +184,14 @@ class ActionModule(ActionBase):
 
         diff = {}
         new_module_args = self._task.args.copy()
+
+        # remove newline_sequence from standard arguments
+        new_module_args.pop('newline_sequence', None)
+        new_module_args.pop('block_start_string', None)
+        new_module_args.pop('block_end_string', None)
+        new_module_args.pop('variable_start_string', None)
+        new_module_args.pop('variable_end_string', None)
+        new_module_args.pop('trim_blocks', None)
 
         if (remote_checksum == '1') or (force and local_checksum != remote_checksum):
 
@@ -160,16 +204,16 @@ class ActionModule(ActionBase):
                 xfered = self._transfer_data(self._connection._shell.join_path(tmp, 'source'), resultant)
 
                 # fix file permissions when the copy is done as a different user
-                self._fixup_perms2((tmp, xfered), remote_user)
+                self._fixup_perms2((tmp, xfered))
 
                 # run the copy module
                 new_module_args.update(
-                   dict(
-                       src=xfered,
-                       dest=dest,
-                       original_basename=os.path.basename(source),
-                       follow=True,
-                   ),
+                    dict(
+                        src=xfered,
+                        dest=dest,
+                        original_basename=os.path.basename(source),
+                        follow=True,
+                        ),
                 )
                 result.update(self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
 

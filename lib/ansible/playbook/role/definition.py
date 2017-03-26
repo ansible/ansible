@@ -19,12 +19,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import iteritems, string_types
-
 import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
@@ -33,6 +32,12 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.template import Templar
 from ansible.utils.path import unfrackpath
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 
 __all__ = ['RoleDefinition']
@@ -43,6 +48,9 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
     _role = FieldAttribute(isa='string')
 
     def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None):
+
+        super(RoleDefinition, self).__init__()
+
         self._play             = play
         self._variable_manager = variable_manager
         self._loader           = loader
@@ -50,7 +58,6 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         self._role_path    = None
         self._role_basedir = role_basedir
         self._role_params  = dict()
-        super(RoleDefinition, self).__init__()
 
     #def __repr__(self):
     #    return 'ROLEDEF: ' + self._attributes.get('role', '<no name set>')
@@ -197,6 +204,11 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
             #        or make this list more automatic in some way so we don't have to
             #        remember to update it manually.
             if key not in base_attribute_names or key in ('connection', 'port', 'remote_user'):
+                if key in ('connection', 'port', 'remote_user'):
+                    display.deprecated("Using '%s' as a role param has been deprecated. " % key + \
+                                       "In the future, these values should be entered in the `vars:` " + \
+                                       "section for roles, but for now we'll store it as both a param and an attribute.")
+                    role_def[key] = value
                 # this key does not match a field attribute, so it must be a role param
                 role_params[key] = value
             else:

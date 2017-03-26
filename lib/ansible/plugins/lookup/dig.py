@@ -39,29 +39,29 @@ def make_rdata_dict(rdata):
         Note: adding support for RRSIG is hard work. :)
     '''
     supported_types = {
-            A           : ['address'],
-            AAAA        : ['address'],
-            CNAME       : ['target'],
-            DNAME       : ['target'],
-            DLV         : ['algorithm', 'digest_type', 'key_tag', 'digest'],
-            DNSKEY      : ['flags', 'algorithm', 'protocol', 'key'],
-            DS          : ['algorithm', 'digest_type', 'key_tag', 'digest'],
-            HINFO       : ['cpu', 'os'],
-            LOC         : ['latitude', 'longitude', 'altitude', 'size', 'horizontal_precision', 'vertical_precision'],
-            MX          : ['preference', 'exchange'],
-            NAPTR       : ['order', 'preference', 'flags', 'service', 'regexp', 'replacement'],
-            NS          : ['target'],
-            NSEC3PARAM  : ['algorithm', 'flags', 'iterations', 'salt'],
-            PTR         : ['target'],
-            RP          : ['mbox', 'txt'],
-            # RRSIG       : ['algorithm', 'labels', 'original_ttl', 'expiration', 'inception', 'signature'],
-            SOA         : ['mname', 'rname', 'serial', 'refresh', 'retry', 'expire', 'minimum'],
-            SPF         : ['strings'],
-            SRV         : ['priority', 'weight', 'port', 'target'],
-            SSHFP       : ['algorithm', 'fp_type', 'fingerprint'],
-            TLSA        : ['usage', 'selector', 'mtype', 'cert'],
-            TXT         : ['strings'],
-        }
+        A           : ['address'],
+        AAAA        : ['address'],
+        CNAME       : ['target'],
+        DNAME       : ['target'],
+        DLV         : ['algorithm', 'digest_type', 'key_tag', 'digest'],
+        DNSKEY      : ['flags', 'algorithm', 'protocol', 'key'],
+        DS          : ['algorithm', 'digest_type', 'key_tag', 'digest'],
+        HINFO       : ['cpu', 'os'],
+        LOC         : ['latitude', 'longitude', 'altitude', 'size', 'horizontal_precision', 'vertical_precision'],
+        MX          : ['preference', 'exchange'],
+        NAPTR       : ['order', 'preference', 'flags', 'service', 'regexp', 'replacement'],
+        NS          : ['target'],
+        NSEC3PARAM  : ['algorithm', 'flags', 'iterations', 'salt'],
+        PTR         : ['target'],
+        RP          : ['mbox', 'txt'],
+        # RRSIG       : ['algorithm', 'labels', 'original_ttl', 'expiration', 'inception', 'signature'],
+        SOA         : ['mname', 'rname', 'serial', 'refresh', 'retry', 'expire', 'minimum'],
+        SPF         : ['strings'],
+        SRV         : ['priority', 'weight', 'port', 'target'],
+        SSHFP       : ['algorithm', 'fp_type', 'fingerprint'],
+        TLSA        : ['usage', 'selector', 'mtype', 'cert'],
+        TXT         : ['strings'],
+    }
 
     rd = {}
 
@@ -115,7 +115,7 @@ class LookupModule(LookupBase):
             ... flat=0                                      # returns a dict; default is 1 == string
         '''
 
-        if HAVE_DNS == False:
+        if HAVE_DNS is False:
             raise AnsibleError("Can't LOOKUP(dig): module dns.resolver is not installed")
 
         # Create Resolver object so that we can set NS if necessary

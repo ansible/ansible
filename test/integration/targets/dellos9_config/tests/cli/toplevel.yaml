@@ -1,0 +1,37 @@
+---
+- debug: msg="START cli/toplevel.yaml"
+
+- name: setup
+  dellos9_config:
+    lines: ['hostname {{ inventory_hostname_short }}']
+    provider: "{{ cli }}"
+    match: none
+
+- name: configure top level command
+  dellos9_config:
+    lines: ['hostname foo']
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'hostname foo' in result.updates"
+
+- name: configure top level command idempotent check
+  dellos9_config:
+    lines: ['hostname foo']
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  dellos9_config:
+    lines: ['hostname {{ inventory_hostname_short }}']
+    provider: "{{ cli }}"
+    match: none
+
+- debug: msg="END cli/toplevel.yaml"

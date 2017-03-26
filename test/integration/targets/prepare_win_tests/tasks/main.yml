@@ -27,4 +27,3 @@
   win_file: name={{win_output_dir}} state=directory
   tags:
     - prepare
-

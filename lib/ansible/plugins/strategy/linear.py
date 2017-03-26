@@ -14,22 +14,33 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
+'''
+DOCUMENTATION:
+    strategy: linear
+    short_description: Executes tasks in a linear fashion
+    description:
+        - Task execution is in lockstep per host batch as defined by C(serial) (default all).
+          Up to the fork limit of hosts will execute each task at the same time and then
+          the next series of hosts until the batch is done, before going on to the next task.
+    version_added: "2.0"
+    notes:
+     - This was the default Ansible behaviour before 'strategy plugins' were introduces in 2.0.
+    author: Ansible Core Team
+'''
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import iteritems
-
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
+from ansible.module_utils.six import iteritems
+from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task import Task
 from ansible.plugins import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
-from ansible.module_utils._text import to_text
 
 
 try:
@@ -96,7 +107,10 @@ class StrategyModule(StrategyBase):
                 num_rescue += 1
             elif s.run_state == PlayIterator.ITERATING_ALWAYS:
                 num_always += 1
-        display.debug("done counting tasks in each state of execution:\n\tnum_setups: %s\n\tnum_tasks: %s\n\tnum_rescue: %s\n\tnum_always: %s" % (num_setups, num_tasks, num_rescue, num_always))
+        display.debug("done counting tasks in each state of execution:\n\tnum_setups: %s\n\tnum_tasks: %s\n\tnum_rescue: %s\n\tnum_always: %s" % (num_setups,
+                                                                                                                                                  num_tasks,
+                                                                                                                                                  num_rescue,
+                                                                                                                                                  num_always))
 
         def _advance_selected_hosts(hosts, cur_block, cur_state):
             '''
@@ -167,7 +181,7 @@ class StrategyModule(StrategyBase):
 
             try:
                 display.debug("getting the remaining hosts for this loop")
-                hosts_left = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
+                hosts_left = self.get_hosts_left(iterator)
                 display.debug("done getting the remaining hosts for this loop")
 
                 # queue up this task for each host in the inventory
@@ -218,7 +232,7 @@ class StrategyModule(StrategyBase):
                     if task.action == 'meta':
                         # for the linear strategy, we run meta tasks just once and for
                         # all hosts currently being iterated over rather than one host
-                        results.extend(self._execute_meta(task, play_context, iterator))
+                        results.extend(self._execute_meta(task, play_context, iterator, host))
                         if task.args.get('_raw_params', None) != 'noop':
                             run_once = True
                     else:
@@ -287,7 +301,7 @@ class StrategyModule(StrategyBase):
                             loop_var = 'item'
                             if hr._task.loop_control:
                                 loop_var = hr._task.loop_control.loop_var or 'item'
-                            include_results = hr._result['results']
+                            include_results = hr._result.get('results', [])
                         else:
                             include_results = [ hr._result ]
 

@@ -3,13 +3,13 @@
 - name: ensure zypper ref works
   command: zypper -n ref
 
-- name: Delete
+- name: Delete test repo
   zypper_repository:
     name: test
     state: absent
   register: zypper_result
 
-- name: Add repo
+- name: Add test repo
   zypper_repository:
     name: test
     state: present
@@ -23,7 +23,7 @@
     that:
       - "zypper_result.changed"
 
-- name: Add repo again
+- name: Add same repo again
   zypper_repository:
     name: test
     state: present
@@ -138,6 +138,17 @@
   zypper_repository:
     repo: http://download.opensuse.org/repositories/devel:/languages:/python/openSUSE_Leap_42.1/
     state: absent
+
+- name: ensure zypper ref still works
+  command: zypper -n ref
+
+- name: "Test adding a repo with custom GPG key"
+  zypper_repository:
+    name: "Apache_Modules"
+    repo: "http://download.opensuse.org/repositories/Apache:/Modules/openSUSE_Tumbleweed/"
+    priority: 100
+    auto_import_keys: true
+    state: "present"
 
 - name: ensure zypper ref still works
   command: zypper -n ref

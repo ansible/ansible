@@ -1,6 +1,0 @@
-- debug: msg="this is the include, a=={{a}}"
-  tags:
-  - included
-#- debug: msg="this is the second debug in the include"
-- debug: msg="this is the third debug in the include, and a is still {{a}}"
-

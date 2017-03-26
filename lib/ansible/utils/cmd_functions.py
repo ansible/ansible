@@ -24,8 +24,9 @@ import shlex
 import subprocess
 import select
 
-from ansible.compat.six import PY2, PY3
+from ansible.module_utils.six import PY2, PY3
 from ansible.module_utils._text import to_bytes
+
 
 def run_cmd(cmd, live=False, readsize=10):
 
@@ -75,7 +76,7 @@ def run_cmd(cmd, live=False, readsize=10):
         if (not rpipes or not rfd) and p.poll() is not None:
             break
         # Calling wait while there are still pipes to read can cause a lock
-        elif not rpipes and p.poll() == None:
+        elif not rpipes and p.poll() is None:
             p.wait()
 
     return p.returncode, stdout, stderr
