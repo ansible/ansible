@@ -16,9 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -57,13 +57,13 @@ options:
             - Route tag for IPv4 ot IPv6 Address in integer format.
         required: false
         default: 0
-        version_added: "2.3"
+        version_added: "2.4"
     allow_secondary:
         description:
             - Allow to configure IPv4 secondary addresses on interface.
         required: false
         default: false
-        version_added: "2.3"
+        version_added: "2.4"
     state:
         description:
             - Specify desired state of the resource.
@@ -147,184 +147,18 @@ changed:
     sample: true
 '''
 
-# COMMON CODE FOR MIGRATION
 import re
 
 try:
     import ipaddress
+
     HAS_IPADDRESS = True
 except ImportError:
     HAS_IPADDRESS = False
 
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
-from ansible.module_utils.shell import ShellError
-
-try:
-    from ansible.module_utils.nxos import get_module
-except ImportError:
-    from ansible.module_utils.nxos import NetworkModule
-
-
-def to_list(val):
-    if isinstance(val, (list, tuple)):
-        return list(val)
-    elif val is not None:
-        return [val]
-    else:
-        return list()
-
-
-class CustomNetworkConfig(NetworkConfig):
-    def expand_section(self, configobj, S=None):
-        if S is None:
-            S = list()
-        S.append(configobj)
-        for child in configobj.children:
-            if child in S:
-                continue
-            self.expand_section(child, S)
-        return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
-
-    def to_block(self, section):
-        return '\n'.join([item.raw for item in section])
-
-    def get_section(self, path):
-        try:
-            section = self.get_section_objects(path)
-            return self.to_block(section)
-        except ValueError:
-            return list()
-
-    def get_section_objects(self, path):
-        if not isinstance(path, list):
-            path = [path]
-        obj = self.get_object(path)
-        if not obj:
-            raise ValueError('path does not exist in config')
-        return self.expand_section(obj)
-
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
-
-        ancestors = list()
-        offset = 0
-        obj = None
-
-        # global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
-
-        else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
-
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
-
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
-
-
-def get_network_module(**kwargs):
-    try:
-        return get_module(**kwargs)
-    except NameError:
-        return NetworkModule(**kwargs)
-
-
-def get_config(module, include_defaults=False):
-    config = module.params['config']
-    if not config:
-        try:
-            config = module.get_config()
-        except AttributeError:
-            defaults = module.params['include_defaults']
-            config = module.config.get_config(include_defaults=defaults)
-    return CustomNetworkConfig(indent=2, contents=config)
-
-
-def load_config(module, candidate):
-    config = get_config(module)
-
-    commands = candidate.difference(config)
-    commands = [str(c).strip() for c in commands]
-
-    save_config = module.params['save']
-
-    result = dict(changed=False)
-
-    if commands:
-        if not module.check_mode:
-            try:
-                module.configure(commands)
-            except AttributeError:
-                module.config(commands)
-
-            if save_config:
-                try:
-                    module.config.save_config()
-                except AttributeError:
-                    module.execute(['copy running-config startup-config'])
-
-        result['changed'] = True
-        result['updates'] = commands
-
-    return result
-
-
-# END OF COMMON CODE
-
-def execute_config_command(commands, module):
-    try:
-        module.configure(commands)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending CLI commands',
-                         error=str(clie), commands=commands)
-    except AttributeError:
-        try:
-            commands.insert(0, 'configure')
-            module.cli.add_commands(commands, output='config')
-            module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending CLI commands',
-                             error=str(clie), commands=commands)
+from ansible.module_utils.nxos import load_config, run_commands
+from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
 
 
 def find_same_addr(existing, addr, mask, full=False, **kwargs):
@@ -341,25 +175,15 @@ def find_same_addr(existing, addr, mask, full=False, **kwargs):
     return False
 
 
-def execute_show(cmds, module, command_type='cli_show'):
-    command_type_map = {
-        'cli_show': 'json',
-        'cli_show_ascii': 'text'
-    }
+def execute_show_command(command, module):
+    cmd = {}
+    cmd['answer'] = None
+    cmd['command'] = command
+    cmd['output'] = 'text'
+    cmd['prompt'] = None
 
-    try:
-        command_type = command_type_map.get(command_type)
-        module.cli.add_commands(cmds, output=command_type, raw=True)
-        response = module.cli.run_commands()
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(cmds),
-                         error=str(clie))
-    return response
+    body = run_commands(module, [cmd])
 
-
-def execute_show_command(command, module, command_type='cli_show'):
-    body = execute_show([command], module, command_type=command_type)
     return body
 
 
@@ -384,7 +208,7 @@ def is_default(interface, module):
     command = 'show run interface {0}'.format(interface)
 
     try:
-        body = execute_show_command(command, module, command_type='cli_show_ascii')[0]
+        body = execute_show_command(command, module)[0]
         if 'invalid' in body.lower():
             return 'DNE'
         else:
@@ -393,7 +217,7 @@ def is_default(interface, module):
                 return True
             else:
                 return False
-    except (KeyError):
+    except KeyError:
         return 'DNE'
 
 
@@ -402,7 +226,7 @@ def get_interface_mode(interface, intf_type, module):
     mode = 'unknown'
 
     if intf_type in ['ethernet', 'portchannel']:
-        body = execute_show_command(command, module, command_type='cli_show_ascii')[0]
+        body = execute_show_command(command, module)[0]
         if len(body) > 0:
             if 'Switchport: Disabled' in body:
                 mode = 'layer3'
@@ -418,7 +242,7 @@ def send_show_command(interface_name, version, module):
         command = 'show ip interface {0}'.format(interface_name)
     elif version == 'v6':
         command = 'show ipv6 interface {0}'.format(interface_name)
-    body = execute_show_command(command, module, command_type='cli_show_ascii')
+    body = execute_show_command(command, module)
     return body
 
 
@@ -478,10 +302,9 @@ def parse_unstructured_data(body, interface_name, version, module):
                     interface['prefixes'].append(prefix)
 
     try:
-        vrf_regex = '.*VRF\s+"(?P<vrf>\S+?)".*'
+        vrf_regex = '.+?VRF\s+(?P<vrf>\S+?)\s'
         match_vrf = re.match(vrf_regex, body, re.DOTALL)
-        group_vrf = match_vrf.groupdict()
-        vrf = group_vrf["vrf"]
+        vrf = match_vrf.groupdict()['vrf']
     except AttributeError:
         vrf = None
 
@@ -500,8 +323,7 @@ def get_ip_interface(interface_name, version, module):
 
 
 def get_remove_ip_config_commands(interface, addr, mask, existing, version):
-    commands = []
-    commands.append('interface {0}'.format(interface))
+    commands = ['interface {0}'.format(interface)]
     if version == 'v4':
         # We can't just remove primary address if secondary address exists
         for address in existing['addresses']:
@@ -509,10 +331,17 @@ def get_remove_ip_config_commands(interface, addr, mask, existing, version):
                 if address['secondary']:
                     commands.append('no ip address {0}/{1} secondary'.format(addr, mask))
                 elif len(existing['addresses']) > 1:
+                    new_primary = False
                     for address in existing['addresses']:
                         if address['addr'] != addr:
                             commands.append('no ip address {0}/{1} secondary'.format(address['addr'], address['mask']))
-                            command = 'ip address {0}/{1}'.format(address['addr'], address['mask'])
+
+                            if not new_primary:
+                                command = 'ip address {0}/{1}'.format(address['addr'], address['mask'])
+                                new_primary = True
+                            else:
+                                command = 'ip address {0}/{1} secondary'.format(address['addr'], address['mask'])
+
                             if 'tag' in address and address['tag'] != 0:
                                 command += " tag " + str(address['tag'])
                             commands.append(command)
@@ -531,23 +360,39 @@ def get_config_ip_commands(delta, interface, existing, version):
 
     if version == 'v4':
         command = 'ip address {addr}/{mask}'.format(**delta)
-        if len(existing['addresses']) > 0 and delta['allow_secondary']:
-            for address in existing['addresses']:
-                if delta['addr'] == address['addr'] and address['secondary'] is False:
-                    break
+        if len(existing['addresses']) > 0:
+            if delta['allow_secondary']:
+                for address in existing['addresses']:
+                    if delta['addr'] == address['addr'] and address['secondary'] is False and delta['tag'] != 0:
+                        break
+                else:
+                    command += ' secondary'
             else:
-                command += ' secondary'
+                # Remove all existed addresses if 'allow_secondary' isn't specified
+                for address in existing['addresses']:
+                    if address['secondary']:
+                        commands.insert(0, 'no ip address {addr}/{mask} secondary'.format(**address))
+                    else:
+                        commands.append('no ip address {addr}/{mask}'.format(**address))
     else:
+        if not delta['allow_secondary']:
+            # Remove all existed addresses if 'allow_secondary' isn't specified
+            for address in existing['addresses']:
+                commands.insert(0, 'no ipv6 address {addr}/{mask}'.format(**address))
+
         command = 'ipv6 address {addr}/{mask}'.format(**delta)
 
     if int(delta['tag']) > 0:
         command += ' tag {tag}'.format(**delta)
     elif int(delta['tag']) == 0:
-        # Case when we need to remove tag. Just enter command like 'ip address ...' not enough
+        # Case when we need to remove tag from an address. Just enter command like
+        # 'ip address ...' (without 'tag') not enough
         commands += get_remove_ip_config_commands(interface, delta['addr'], delta['mask'], existing, version)
 
     commands.append(command)
-    commands.insert(0, 'interface {0}'.format(interface))
+
+    if commands[0] != 'interface {0}'.format(interface):
+        commands.insert(0, 'interface {0}'.format(interface))
 
     return commands
 
@@ -595,7 +440,7 @@ def validate_params(addr, interface, mask, tag, allow_secondary, version, state,
 
     if tag is not None:
         try:
-            if tag < 0 and tag > 4294967295:
+            if 0 > tag > 4294967295:
                 raise ValueError
         except ValueError:
             module.fail_json(msg="Warning! 'tag' must be an integer between"
@@ -626,11 +471,17 @@ def main():
         config=dict(),
         save=dict(type='bool', default=False)
     )
-    module = get_network_module(argument_spec=argument_spec,
-                                supports_check_mode=True)
+
+    argument_spec.update(nxos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     if not HAS_IPADDRESS:
         module.fail_json(msg="ipaddress is required for this module. Run 'pip install ipaddress' for install.")
+
+    warnings = list()
+    check_args(module, warnings)
 
     addr = module.params['addr']
     version = module.params['version']
@@ -670,7 +521,7 @@ def main():
         if module.check_mode:
             module.exit_json(changed=True, commands=cmds)
         else:
-            execute_config_command(cmds, module)
+            load_config(module, cmds)
             changed = True
             end_state = get_ip_interface(interface, version, module)
             if 'configure' in cmds:
@@ -682,6 +533,7 @@ def main():
     results['end_state'] = end_state
     results['updates'] = cmds
     results['changed'] = changed
+    results['warnings'] = warnings
 
     module.exit_json(**results)
 
