@@ -24,12 +24,12 @@ Ansible Changes By Release
   hash mark was included as part of the string.  Now it is treated as
   a trailing comment::
 
-    # Before:
-    var1="string#comment"   ===>  var1: "\"string#comment\""
-    var1="string" #comment  ===>  var1: "\"string\" #comment"
-    # After:
-    var1="string#comment"   ===>  var1: "string#comment"
-    var1="string" #comment  ===>  var1: "string"
+      # Before:
+      var1="string#comment"   ===>  var1: "\"string#comment\""
+      var1="string" #comment  ===>  var1: "\"string\" #comment"
+      # After:
+      var1="string#comment"   ===>  var1: "string#comment"
+      var1="string" #comment  ===>  var1: "string"
 
   The new behaviour mirrors how the variables would appear if there was no hash
   mark in the string.
@@ -705,7 +705,7 @@ Notice given that the following will be removed in Ansible 2.4:
 * Security fix for CVE-2016-8628 - Command injection by compromised server via fact variables. In some situations, facts returned by modules could overwrite connection-based facts or some other special variables, leading to injected commands running on the Ansible controller as the user running Ansible (or via escalated permissions).
 * Security fix for CVE-2016-8614 - apt_key module not properly validating keys in some situations.
 
-###Minor Changes:
+### Minor Changes:
 * The subversion module from core now marks its password parameter as no_log so
   the password is obscured when logging.
 * The postgresql_lang and postgresql_ext modules from extras now mark
@@ -781,7 +781,7 @@ Module fixes:
 
 ## 2.1 "The Song Remains the Same"
 
-###Major Changes:
+### Major Changes:
 
 * Official support for the networking modules, originally available in 2.0 as a tech preview.
 * Refactored and expanded support for Docker with new modules and many improvements to existing modules, as well as a new Kubernetes module.
@@ -939,12 +939,12 @@ Module fixes:
 * issubset
 * issuperset
 
-####New Inventory scripts:
+#### New Inventory scripts:
 * brook
 * rackhd
 * azure_rm
 
-###Minor Changes:
+### Minor Changes:
 
 * Added support for pipelining mode to more connection plugins, which helps prevent
   module data from being written to disk.
@@ -959,7 +959,7 @@ Module fixes:
   10-first-callback.py and 20-second-callback.py.
 * Added (alpha) Centirfy's dzdo as another become meethod (privilege escalation)
 
-###Deprecations:
+### Deprecations:
 
 * Deprecated the use of "bare" variables in loops (ie. `with_items: foo`, where `foo` is a variable).
   The full jinja2 variable syntax of `{{foo}}` should always be used instead. This warning will be removed
@@ -1054,7 +1054,7 @@ Module fixes:
 
 ## 2.0 "Over the Hills and Far Away" - Jan 12, 2016
 
-###Major Changes:
+### Major Changes:
 
 * Releases are now named after Led Zeppelin songs, 1.9 will be the last Van Halen named release.
 * The new block/rescue/always directives allow for making task blocks and exception-like semantics
@@ -1085,7 +1085,7 @@ Module fixes:
 * Backslashes used when specifying parameters in jinja2 expressions in YAML dicts sometimes needed to be escaped twice.
   This has been fixed so that escaping once works. Here's an example of how playbooks need to be modified:
 
-    ```
+    ```yaml
     # Syntax in 1.9.x
     - debug:
         msg: "{{ 'test1_junk 1\\\\3' | regex_replace('(.*)_junk (.*)', '\\\\1 \\\\2') }}"
@@ -1103,7 +1103,7 @@ format the trailing newlines were kept. In v2, both methods of specifying the
 string will keep the trailing newlines. If you relied on the trailing
 newline being stripped you can change your playbook like this:
 
-    ```
+    ```yaml
     # Syntax in 1.9.2
     vars:
       message: >
@@ -1130,7 +1130,7 @@ variable syntax ('{{var_name}}') - bare variable names there are no longer accep
 In fact, even specifying args with variables has been deprecated, and will not be
 allowed in future versions:
 
-    ```
+    ```yaml
     ---
     - hosts: localhost
       connection: local
@@ -1145,13 +1145,13 @@ allowed in future versions:
           with_items: my_dirs
     ```
 
-###Plugins
+### Plugins
 
 * Rewritten dnf module that should be faster and less prone to encountering bugs in cornercases
 * WinRM connection plugin passes all vars named `ansible_winrm_*` to the underlying pywinrm client. This allows, for instance, `ansible_winrm_server_cert_validation=ignore` to be used with newer versions of pywinrm to disable certificate validation on Python 2.7.9+.
 * WinRM connection plugin put_file is significantly faster and no longer has file size limitations.
 
-####Deprecated Modules (new ones in parens):
+#### Deprecated Modules (new ones in parens):
 
 * ec2_ami_search (ec2_ami_find)
 * quantum_network (os_network)
@@ -1162,7 +1162,7 @@ allowed in future versions:
 * quantum_router_gateway (os_router)
 * quantum_router_interface (os_router)
 
-####New Modules:
+#### New Modules:
 
 - amazon
   * ec2_ami_copy
@@ -1378,7 +1378,7 @@ allowed in future versions:
   * zabbix_screen
 - znode
 
-####New Inventory scripts:
+#### New Inventory scripts:
 
 * cloudstack
 * fleetctl
@@ -1389,27 +1389,27 @@ allowed in future versions:
 * rudder
 * serf
 
-####New Lookups:
+#### New Lookups:
 
 * credstash
 * hashi_vault
 * ini
 * shelvefile
 
-####New Filters:
+#### New Filters:
 
 * combine
 
-####New Connection:
+#### New Connection:
 
 * docker: for talking to docker containers on the ansible controller machine without using ssh.
 
-####New Callbacks:
+#### New Callbacks:
 
 * logentries: plugin to send play data to logentries service
 * skippy: same as default but does not display skip messages
 
-###Minor changes:
+### Minor changes:
 
 * Many more tests. The new API makes things more testable and we took advantage of it.
 * big_ip modules now support turning off ssl certificate validation (use only for self-signed certificates).
