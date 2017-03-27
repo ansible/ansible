@@ -1,6 +1,8 @@
 #
 # Copyright 2015 Peter Sprygada <psprygada@ansible.com>
 #
+# Copyright (c) 2017 Dell Inc.
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
