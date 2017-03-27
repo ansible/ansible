@@ -103,7 +103,6 @@ message:
 import urllib
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, ConnectionError
-
 class Pushsafer(object):
     ''' Instantiates a pushsafer object, use it to send notifications '''
     base_uri = 'https://www.pushsafer.com'
