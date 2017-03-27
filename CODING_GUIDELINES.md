@@ -277,7 +277,7 @@ To test if something is a string, consider that it may be unicode.
     if type(x) == str:
 
     # yes
-    from ansible.compat.six import string_types
+    from ansible.module_utils.six import string_types
     if isinstance(x, string_types):
 
 Cleverness
