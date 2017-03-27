@@ -35,7 +35,7 @@ description:
     - Provides functionality similar to the "docker login" command.
     - Authenticate with a docker registry and add the credentials to your local Docker config file. Adding the
       credentials to the config files allows future connections to the registry using tools such as Ansible's Docker
-      modules, the Docker CLI and docker-py without needing to provide credentials.
+      modules, the Docker CLI and docker library without needing to provide credentials.
     - Running in check mode will perform the authentication without updating the config file.
 options:
   registry_url:
@@ -91,7 +91,7 @@ extends_documentation_fragment:
     - docker
 requirements:
     - "python >= 2.6"
-    - "docker-py >= 1.7.0"
+    - "docker >= 1.7.0"
     - "Docker API >= 1.20"
     - 'Only to be able to logout (state=absent): the docker command line utility'
 author:

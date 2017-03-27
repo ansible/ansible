@@ -107,7 +107,7 @@ author:
 
 requirements:
     - "python >= 2.6"
-    - "docker-py >= 1.7.0"
+    - "docker >= 1.7.0"
     - "The docker server >= 1.9.0"
 '''
 
@@ -170,7 +170,7 @@ try:
     else:
         from docker.utils.types import Ulimit
 except:
-    # missing docker-py handled in ansible.module_utils.docker
+    # missing docker handled in ansible.module_utils.docker
     pass
 
 

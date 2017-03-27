@@ -46,7 +46,7 @@ extends_documentation_fragment:
 
 requirements:
   - "python >= 2.6"
-  - "docker-py >= 1.7.0"
+  - "docker >= 1.7.0"
   - "Docker API >= 1.20"
 
 author:
@@ -167,7 +167,7 @@ try:
     from docker import auth
     from docker import utils
 except ImportError:
-    # missing docker-py handled in docker_common
+    # missing docker handled in docker_common
     pass
 
 class ImageManager(DockerBaseClass):
