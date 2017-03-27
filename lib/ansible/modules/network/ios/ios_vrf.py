@@ -40,53 +40,41 @@ options:
         IOS device.  Ths list entries can either be the VRF name or a hash
         of VRF definitions and attributes.  This argument is mutually
         exclusive with the C(name) argument.
-    required: false
-    default: null
   name:
     description:
       - The name of the VRF definition to be managed on the remote IOS
         device.  The VRF definition name is an ASCII string name used
         to uniquely identify the VRF.  This argument is mutually exclusive
         with the C(vrfs) argument
-    required: false
-    default: null
   description:
     description:
       - Provides a short description of the VRF definition in the
         current active configuration.  The VRF definition value accepts
-        alphanumberic characters used to provide additional information
+        alphanumeric characters used to provide additional information
         about the VRF.
-    required: false
-    default: null
   rd:
     description:
-      - The router-distigusher value uniquely identifies the VRF to
+      - The router-distinguisher value uniquely identifies the VRF to
         routing processes on the remote IOS system.  The RD value takes
-        the form of A:B where A and B are both numeric values.
-    required: false
-    default: null
+        the form of C(A:B) where C(A) and C(B) are both numeric values.
   interfaces:
     description:
-      - The C(interfaces) argument identifies the set of interfaces that
+      - Identifies the set of interfaces that
         should be configured in the VRF.  Interfaces must be routed
         interfaces in order to be placed into a VRF.
-    required: false
-    default: null
   purge:
     description:
-      - The C(purge) argument instructs the module to consider the
+      - Instructs the module to consider the
         VRF definition absolute.  It will remove any previously configured
         VRFs on the device.
-    required: false
     default: false
   state:
     description:
-      - The C(state) argument configures the state of the VRF definition
+      - Configures the state of the VRF definition
         as it relates to the device operational configuration.  When set
         to I(present), the VRF should be configured in the device active
         configuration and when set to I(absent) the VRF should not be
         in the device active configuration
-    required: false
     default: present
     choices: ['present', 'absent']
 """
@@ -156,7 +144,7 @@ def add_command_to_vrf(name, cmd, commands):
 
 def map_obj_to_commands(updates, module):
     commands = list()
-    state = module.params['state']
+    state = module.params['state'] # FIXME NOT USED
 
     for update in updates:
         want, have = update
@@ -345,7 +333,7 @@ def main():
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)
 
-    commands = map_obj_to_commands(update_objects(want,have), module)
+    commands = map_obj_to_commands(update_objects(want, have), module)
 
     if module.params['purge']:
         want_vrfs = [x['name'] for x in want]
