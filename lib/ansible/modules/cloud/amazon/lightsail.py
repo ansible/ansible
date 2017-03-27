@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -25,7 +25,7 @@ module: lightsail
 short_description: Create or delete a virtual machine instance in AWS Lightsail
 description:
      - Creates or instances in AWS Lightsail and optionally wait for it to be 'running'.
-version_added: "2.3"
+version_added: "2.4"
 author: "Nick Ball (@nickball)"
 options:
   state:
@@ -109,7 +109,7 @@ EXAMPLES = '''
 
 '''
 
-RETURNS = '''
+RETURN = '''
 changed:
   description: if a snapshot has been modified/created
   returned: always
@@ -122,44 +122,44 @@ instance:
   type: dict
   sample:
     arn: "arn:aws:lightsail:us-east-1:448830907657:Instance/1fef0175-d6c8-480e-84fa-214f969cda87"
-    blueprint_id: “ubuntu_16_04”
-    blueprint_name: “Ubuntu”
-    bundle_id: “nano_1_0”
-    created_at: “2017-03-27T08:38:59.714000-04:00”
+    blueprint_id: "ubuntu_16_04"
+    blueprint_name: "Ubuntu"
+    bundle_id: "nano_1_0"
+    created_at: "2017-03-27T08:38:59.714000-04:00"
     hardware:
       cpu_count: 1
       ram_size_in_gb: 0.5
     is_static_ip: false
     location:
-      availability_zone: “us-east-1a”
-      region_name: “us-east-1”
-    name: “my_instance”
+      availability_zone: "us-east-1a"
+      region_name: "us-east-1"
+    name: "my_instance"
     networking:
       monthly_transfer:
         gb_per_month_allocated: 1024
       ports:
-        - access_direction: “inbound”
-          access_from: “Anywhere (0.0.0.0/0)”
-          access_type: “public”
-          common_name: “”
+        - access_direction: "inbound"
+          access_from: "Anywhere (0.0.0.0/0)"
+          access_type: "public"
+          common_name: ""
           from_port: 80
           protocol: tcp
           to_port: 80
-        - access_direction: “inbound”
-          access_from: “Anywhere (0.0.0.0/0)”
-          access_type: “public”
-          common_name: “”
+        - access_direction: "inbound"
+          access_from: "Anywhere (0.0.0.0/0)"
+          access_type: "public"
+          common_name: ""
           from_port: 22
           protocol: tcp
           to_port: 22
-    private_ip_address: “172.26.8.14”
-    public_ip_address: “34.207.152.202”
-    resource_type: “Instance”
-    ssh_key_name: “keypair"
+    private_ip_address: "172.26.8.14"
+    public_ip_address: "34.207.152.202"
+    resource_type: "Instance"
+    ssh_key_name: "keypair"
     state:
       code: 16
       name: running
-    support_code: "588307843083/i-0997c97831ee21e33",
+    support_code: "588307843083/i-0997c97831ee21e33"
     username: "ubuntu"
 '''
 
@@ -225,7 +225,7 @@ def create_instance(module, client, instance_name):
                 bundleId=bundle_id,
                 userData=user_data,
                 keyPairName=key_pair_name,
-                )
+            )
             resp = resp['operations'][0]
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg='Unable to create instance {0}, error: {1}'.format(instance_name, e))
