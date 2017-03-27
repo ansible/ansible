@@ -113,7 +113,7 @@ class Inventory(object):
         self.parser = None
 
         # Always create the 'all' and 'ungrouped' groups, even if host_list is
-        # empty: in this case we will subsequently an the implicit 'localhost' to it.
+        # empty: in this case we will subsequently add the implicit 'localhost' to it.
 
         ungrouped = Group('ungrouped')
         all = Group('all')
