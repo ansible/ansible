@@ -109,6 +109,60 @@ EXAMPLES = '''
 
 '''
 
+RETURNS = '''
+changed:
+  description: if a snapshot has been modified/created
+  returned: always
+  type: bool
+  sample:
+    changed: true
+instance:
+  description: instance data
+  returned: always
+  type: dict
+  sample:
+    arn: "arn:aws:lightsail:us-east-1:448830907657:Instance/1fef0175-d6c8-480e-84fa-214f969cda87"
+    blueprint_id: “ubuntu_16_04”
+    blueprint_name: “Ubuntu”
+    bundle_id: “nano_1_0”
+    created_at: “2017-03-27T08:38:59.714000-04:00”
+    hardware:
+      cpu_count: 1
+      ram_size_in_gb: 0.5
+    is_static_ip: false
+    location:
+      availability_zone: “us-east-1a”
+      region_name: “us-east-1”
+    name: “my_instance”
+    networking:
+      monthly_transfer:
+        gb_per_month_allocated: 1024
+      ports:
+        - access_direction: “inbound”
+          access_from: “Anywhere (0.0.0.0/0)”
+          access_type: “public”
+          common_name: “”
+          from_port: 80
+          protocol: tcp
+          to_port: 80
+        - access_direction: “inbound”
+          access_from: “Anywhere (0.0.0.0/0)”
+          access_type: “public”
+          common_name: “”
+          from_port: 22
+          protocol: tcp
+          to_port: 22
+    private_ip_address: “172.26.8.14”
+    public_ip_address: “34.207.152.202”
+    resource_type: “Instance”
+    ssh_key_name: “keypair"
+    state:
+      code: 16
+      name: running
+    support_code: "588307843083/i-0997c97831ee21e33",
+    username: "ubuntu"
+'''
+
 import os
 import time
 import traceback
@@ -146,7 +200,7 @@ def create_instance(module, client, instance_name):
     # Check if instance already exists
     inst = None
     try:
-        inst = find_instance_info(client, instance_name)
+        inst = _find_instance_info(client, instance_name)
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] != 'NotFoundException':
             module.fail_json(msg='Error finding instance {0}, error: {1}'.format(instance_name, e))
@@ -176,7 +230,7 @@ def create_instance(module, client, instance_name):
             module.fail_json(msg='Unable to create instance {0}, error: {1}'.format(instance_name, e))
         changed = True
 
-    inst = find_instance_info(client, instance_name)
+    inst = _find_instance_info(client, instance_name)
 
     return (changed, inst)
 
@@ -205,7 +259,7 @@ def delete_instance(module, client, instance_name):
 
     inst = None
     try:
-        inst = find_instance_info(client, instance_name)
+        inst = _find_instance_info(client, instance_name)
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] != 'NotFoundException':
             module.fail_json(msg='Error finding instance {0}, error: {1}'.format(instance_name, e))
@@ -215,8 +269,13 @@ def delete_instance(module, client, instance_name):
         while wait_max > time.time() and inst is not None and inst['state']['name'] in ('pending', 'stopping'):
             try:
                 time.sleep(5)
-                inst = find_instance_info(client, instance_name)
+                inst = _find_instance_info(client, instance_name)
             except botocore.exceptions.ClientError as e:
+                if e.response['ResponseMetadata']['HTTPStatusCode'] == "403":
+                    module.fail_json(msg="Failed to delete instance {0}. Check that you have permissions to perform the operation.".format(instance_name),
+                                     exception=traceback.format_exc())
+                elif e.response['Error']['Code'] == "RequestExpired":
+                    module.fail_json(msg="RequestExpired: Failed to delete instance {0}.".format(instance_name), exception=traceback.format_exc())
                 # sleep and retry
                 time.sleep(10)
 
@@ -259,7 +318,7 @@ def restart_instance(module, client, instance_name):
 
     inst = None
     try:
-        inst = find_instance_info(client, instance_name)
+        inst = _find_instance_info(client, instance_name)
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] != 'NotFoundException':
             module.fail_json(msg='Error finding instance {0}, error: {1}'.format(instance_name, e))
@@ -269,8 +328,13 @@ def restart_instance(module, client, instance_name):
         while wait_max > time.time() and inst is not None and inst['state']['name'] in ('pending', 'stopping'):
             try:
                 time.sleep(5)
-                inst = find_instance_info(client, instance_name)
+                inst = _find_instance_info(client, instance_name)
             except botocore.exceptions.ClientError as e:
+                if e.response['ResponseMetadata']['HTTPStatusCode'] == "403":
+                    module.fail_json(msg="Failed to restart instance {0}. Check that you have permissions to perform the operation.".format(instance_name),
+                                     exception=traceback.format_exc())
+                elif e.response['Error']['Code'] == "RequestExpired":
+                    module.fail_json(msg="RequestExpired: Failed to restart instance {0}.".format(instance_name), exception=traceback.format_exc())
                 time.sleep(3)
 
     # send reboot
@@ -308,7 +372,7 @@ def startstop_instance(module, client, instance_name, state):
 
     inst = None
     try:
-        inst = find_instance_info(client, instance_name)
+        inst = _find_instance_info(client, instance_name)
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] != 'NotFoundException':
             module.fail_json(msg='Error finding instance {0}, error: {1}'.format(instance_name, e))
@@ -318,8 +382,13 @@ def startstop_instance(module, client, instance_name, state):
         while wait_max > time.time() and inst is not None and inst['state']['name'] in ('pending', 'stopping'):
             try:
                 time.sleep(5)
-                inst = find_instance_info(client, instance_name)
+                inst = _find_instance_info(client, instance_name)
             except botocore.exceptions.ClientError as e:
+                if e.response['ResponseMetadata']['HTTPStatusCode'] == "403":
+                    module.fail_json(msg="Failed to start/stop instance {0}. Check that you have permissions to perform the operation".format(instance_name),
+                                     exception=traceback.format_exc())
+                elif e.response['Error']['Code'] == "RequestExpired":
+                    module.fail_json(msg="RequestExpired: Failed to start/stop instance {0}.".format(instance_name), exception=traceback.format_exc())
                 time.sleep(1)
 
     # Try state change
@@ -333,7 +402,7 @@ def startstop_instance(module, client, instance_name, state):
             module.fail_json(msg='Unable to change state for instance {0}, error: {1}'.format(instance_name, e))
         changed = True
         # Grab current instance info
-        inst = find_instance_info(client, instance_name)
+        inst = _find_instance_info(client, instance_name)
 
     return (changed, inst)
 
@@ -347,24 +416,25 @@ def core(module):
         client = boto3_conn(module, conn_type='client', resource='lightsail',
                             region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
-        module.fail_json(msg=str(e))
+        module.fail_json('Failed while connecting to the lightsail service: %s' % e, exception=traceback.format_exc())
 
     changed = False
     state = module.params['state']
     name = module.params['name']
 
     if state == 'absent':
-        (changed, instance_dict) = delete_instance(module, client, name)
+        changed, instance_dict = delete_instance(module, client, name)
     elif state in ('running', 'stopped'):
-        (changed, instance_dict) = startstop_instance(module, client, name, state)
+        changed, instance_dict = startstop_instance(module, client, name, state)
     elif state == 'restarted':
-        (changed, instance_dict) = restart_instance(module, client, name)
+        changed, instance_dict = restart_instance(module, client, name)
     elif state == 'present':
-        (changed, instance_dict) = create_instance(module, client, name)
+        changed, instance_dict = create_instance(module, client, name)
 
-    module.exit_json(changed=changed, instance=instance_dict)
+    module.exit_json(changed=changed, instance=camel_dict_to_snake_dict(instance_dict))
 
-def find_instance_info(client, instance_name):
+def _find_instance_info(client, instance_name):
+    ''' handle exceptions where this function is called '''
     inst = None
     try:
         inst = client.get_instance(instanceName=instance_name)
@@ -388,11 +458,11 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec)
 
-    if not HAS_BOTOCORE:
-        module.fail_json(msg='Python module "botocore" is missing, please install it')
-
     if not HAS_BOTO3:
         module.fail_json(msg='Python module "boto3" is missing, please install it')
+
+    if not HAS_BOTOCORE:
+        module.fail_json(msg='Python module "botocore" is missing, please install it')
 
     try:
         core(module)
