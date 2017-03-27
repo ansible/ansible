@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -175,12 +175,13 @@ except ImportError:
 
 try:
     import boto3
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
-
+    # will be caught by imported HAS_BOTO3
+    pass
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3, camel_dict_to_snake_dict
+
 
 def create_instance(module, client, instance_name):
     """
@@ -233,6 +234,7 @@ def create_instance(module, client, instance_name):
     inst = _find_instance_info(client, instance_name)
 
     return (changed, inst)
+
 
 def delete_instance(module, client, instance_name):
     """
@@ -294,6 +296,7 @@ def delete_instance(module, client, instance_name):
 
     return (changed, inst)
 
+
 def restart_instance(module, client, instance_name):
     """
     Reboot an existing instance
@@ -347,6 +350,7 @@ def restart_instance(module, client, instance_name):
         changed = True
 
     return (changed, inst)
+
 
 def startstop_instance(module, client, instance_name, state):
     """
@@ -406,6 +410,7 @@ def startstop_instance(module, client, instance_name, state):
 
     return (changed, inst)
 
+
 def core(module):
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     if not region:
@@ -433,6 +438,7 @@ def core(module):
 
     module.exit_json(changed=changed, instance=camel_dict_to_snake_dict(instance_dict))
 
+
 def _find_instance_info(client, instance_name):
     ''' handle exceptions where this function is called '''
     inst = None
@@ -441,6 +447,7 @@ def _find_instance_info(client, instance_name):
     except botocore.exceptions.ClientError as e:
         raise
     return inst['instance']
+
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -469,7 +476,5 @@ def main():
     except (botocore.exceptions.ClientError, Exception) as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
-
-main()
+if __name__ == '__main__':
+    main()
