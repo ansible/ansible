@@ -280,9 +280,9 @@ Looping over Integer Sequences
 ``with_sequence`` generates a sequence of items. You
 can specify a start, end, and an optional step value.
 
-Arguments should be specified as key=value pairs string.  If supplied, the 'format' is a printf style string.
+Arguments should be specified as key=value pairs strings.  If supplied, the 'format' is a printf-style format string.
 
-Simple/shortcut form of arguments string is also accepted: ``[start-]end[/stride][:format]``.
+A simple shortcut form of the arguments string is also accepted: ``[start-]end[/stride][:format]``.
 
 Numerical values can be specified in decimal, hexadecimal (0x3f8) or octal (0600).
 Negative numbers are not supported.  This works as follows::
