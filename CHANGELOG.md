@@ -34,6 +34,9 @@ Ansible Changes By Release
   The new behaviour mirrors how the variables would appear if there was no hash
   mark in the string.
 
+####New Inventory scripts:
+- lxd
+
 #### New: Tests
 - any : true if any element is true
 - all: true if all elements are true
