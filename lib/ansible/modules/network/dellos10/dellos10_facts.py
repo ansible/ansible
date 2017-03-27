@@ -2,7 +2,7 @@
 #
 # (c) 2015 Peter Sprygada, <psprygada@ansible.com>
 #
-# Copyright (c) 2016 Dell Inc.
+# Copyright (c) 2017 Dell Inc.
 #
 # This file is part of Ansible
 #
@@ -134,47 +134,57 @@ ansible_net_neighbors:
 
 import re
 
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcli import CommandRunner
-from ansible.module_utils.network import NetworkModule
-import ansible.module_utils.dellos10
+from ansible.module_utils.dellos10 import run_commands
+from ansible.module_utils.dellos10 import dellos10_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.six.moves import zip
 
 try:
     from lxml import etree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
 
+
 class FactsBase(object):
 
-    def __init__(self, runner):
-        self.runner = runner
-        self.facts = dict()
+    COMMANDS = list()
 
-        self.commands()
+    def __init__(self, module):
+        self.module = module
+        self.facts = dict()
+        self.responses = None
+
+    def populate(self):
+        self.responses = run_commands(self.module, self.COMMANDS, check_rc=False)
+
+    def run(self, cmd):
+        return run_commands(self.module, cmd, check_rc=False)
 
 
 class Default(FactsBase):
 
-    def commands(self):
-        self.runner.add_command('show version | display-xml')
-        self.runner.add_command('show system | display-xml')
-        self.runner.add_command('show running-configuration | grep hostname')
+    COMMANDS = [
+        'show version | display-xml',
+        'show system | display-xml',
+        'show running-configuration | grep hostname'
+    ]
 
     def populate(self):
-
-        data = self.runner.get_command('show version | display-xml')
+        super(Default, self).populate()
+        data = self.responses[0]
         xml_data = ET.fromstring(data)
 
         self.facts['name'] = self.parse_name(xml_data)
         self.facts['version'] = self.parse_version(xml_data)
 
-        data = self.runner.get_command('show system | display-xml')
+        data = self.responses[1]
         xml_data = ET.fromstring(data)
 
         self.facts['servicetag'] = self.parse_serialnum(xml_data)
         self.facts['model'] = self.parse_model(xml_data)
 
-        data = self.runner.get_command('show running-configuration | grep hostname')
+        data = self.responses[2]
         self.facts['hostname'] = self.parse_hostname(data)
 
     def parse_name(self, data):
@@ -213,18 +223,21 @@ class Default(FactsBase):
 
 class Hardware(FactsBase):
 
-    def commands(self):
-        self.runner.add_command('show processes memory | grep Total')
+    COMMANDS = [
+        'show version | display-xml',
+        'show processes memory | grep Total'
+    ]
 
     def populate(self):
 
-        data = self.runner.get_command('show version | display-xml')
+        super(Hardware, self).populate()
+        data = self.responses[0]
+
         xml_data = ET.fromstring(data)
 
         self.facts['cpu_arch'] = self.parse_cpu_arch(xml_data)
 
-        data = self.runner.get_command('show processes memory | grep Total')
-
+        data = self.responses[1]
         match = self.parse_memory(data)
         if match:
             self.facts['memtotal_mb'] = int(match[0]) / 1024
@@ -243,24 +256,25 @@ class Hardware(FactsBase):
 
 class Config(FactsBase):
 
-    def commands(self):
-        self.runner.add_command('show running-config')
+    COMMANDS = ['show running-config']
 
     def populate(self):
-        config = self.runner.get_command('show running-config')
-        self.facts['config'] = config
+        super(Config, self).populate()
+        self.facts['config'] = self.responses[0]
 
 
 class Interfaces(FactsBase):
 
-    def commands(self):
-        self.runner.add_command('show interface | display-xml')
+    COMMANDS = [
+        'show interface | display-xml',
+    ]
 
     def populate(self):
+        super(Interfaces, self).populate()
         self.facts['all_ipv4_addresses'] = list()
         self.facts['all_ipv6_addresses'] = list()
 
-        data = self.runner.get_command('show interface | display-xml')
+        data = self.responses[0]
 
         xml_data = ET.fromstring(data)
 
@@ -294,21 +308,23 @@ class Interfaces(FactsBase):
 
         for interface in interfaces.findall('./data/ports/ports-state/port'):
             name = self.parse_item(interface, 'name')
-            fanout = self.parse_item(interface, 'fanout-state')
+            # media-type name interface name format phy-eth 1/1/1
             mediatype = self.parse_item(interface, 'media-type')
 
             typ, sname = name.split('-eth')
-
-            if fanout == "BREAKOUT_1x1":
-                name = "ethernet" + sname
+            name = "ethernet" + sname
+            try:
                 intf = int_facts[name]
                 intf['mediatype'] = mediatype
-            else:
-                # TODO: Loop for the exact subport
+            except:
+                # fanout
                 for subport in xrange(1, 5):
                     name = "ethernet" + sname + ":" + str(subport)
-                    intf = int_facts[name]
-                    intf['mediatype'] = mediatype
+                    try:
+                        intf = int_facts[name]
+                        intf['mediatype'] = mediatype
+                    except:
+                        pass
 
         return int_facts
 
@@ -329,7 +345,7 @@ class Interfaces(FactsBase):
         ipv4 = interface.find('ipv4')
         ip_address = ""
         if ipv4 is not None:
-            prim_ipaddr  = ipv4.find('./address/primary-addr')
+            prim_ipaddr = ipv4.find('./address/primary-addr')
             if prim_ipaddr is not None:
                 ip_address = prim_ipaddr.text
                 self.add_ip_address(ip_address, 'ipv4')
@@ -340,7 +356,7 @@ class Interfaces(FactsBase):
         ipv4 = interface.find('ipv4')
         ip_address = ""
         if ipv4 is not None:
-            sec_ipaddr  = ipv4.find('./address/secondary-addr')
+            sec_ipaddr = ipv4.find('./address/secondary-addr')
             if sec_ipaddr is not None:
                 ip_address = sec_ipaddr.text
                 self.add_ip_address(ip_address, 'ipv4')
@@ -351,7 +367,7 @@ class Interfaces(FactsBase):
         ipv6 = interface.find('ipv6')
         ip_address = ""
         if ipv6 is not None:
-            ipv6_addr  = ipv6.find('./address/ipv6-address')
+            ipv6_addr = ipv6.find('./address/ipv6-address')
             if ipv6_addr is not None:
                 ip_address = ipv6_addr.text
                 self.add_ip_address(ip_address, 'ipv6')
@@ -384,11 +400,16 @@ VALID_SUBSETS = frozenset(FACT_SUBSETS.keys())
 
 
 def main():
-    spec = dict(
+    """main entry point for module execution
+    """
+    argument_spec = dict(
         gather_subset=dict(default=['!config'], type='list')
     )
 
-    module = NetworkModule(argument_spec=spec, supports_check_mode=True)
+    argument_spec.update(dellos10_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     gather_subset = module.params['gather_subset']
 
@@ -426,28 +447,23 @@ def main():
     facts = dict()
     facts['gather_subset'] = list(runable_subsets)
 
-    runner = CommandRunner(module)
-
     instances = list()
     for key in runable_subsets:
-        runs = FACT_SUBSETS[key](runner)
-        instances.append(runs)
+        instances.append(FACT_SUBSETS[key](module))
 
-    runner.run()
-
-    try:
-        for inst in instances:
-            inst.populate()
-            facts.update(inst.facts)
-    except Exception:
-        module.exit_json(out=module.from_json(runner.items))
+    for inst in instances:
+        inst.populate()
+        facts.update(inst.facts)
 
     ansible_facts = dict()
-    for key, value in facts.items():
+    for key, value in iteritems(facts):
         key = 'ansible_net_%s' % key
         ansible_facts[key] = value
 
-    module.exit_json(ansible_facts=ansible_facts)
+    warnings = list()
+    check_args(module, warnings)
+
+    module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
 
 if __name__ == '__main__':
