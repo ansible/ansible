@@ -372,13 +372,14 @@ class VaultEditor:
     def _edit_file_helper(self, filename, existing_data=None, force_save=False):
 
         # Create a tempfile
-        _, tmp_path = tempfile.mkstemp()
+        fd, tmp_path = tempfile.mkstemp()
+        os.close(fd)
 
-        if existing_data:
-            self.write_data(existing_data, tmp_path, shred=False)
-
-        # drop the user into an editor on the tmp file
         try:
+            if existing_data:
+                self.write_data(existing_data, tmp_path, shred=False)
+
+            # drop the user into an editor on the tmp file
             call(self._editor_shell_command(tmp_path))
         except:
             # whatever happens, destroy the decrypted file
