@@ -83,9 +83,26 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
+RETURN = """
+status_code:
+  description:
+    - The Response Code returned by the Pushsafer.com API.
+    - Full Responsde Code explanations can be found at U(https://www.pushsafer.com/en/pushsapi).
+  returned: always
+  type: int
+  sample: 200
+message:
+    description:
+      - The Response Message returned by the Pushsafer.com API.
+      - Full Responsde Code explanations can be found at U(https://www.pushsafer.com/en/pushsapi).
+    returned: always
+    type: string
+    sample: OK
+"""
+
 import urllib
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url, ConnectionError
 
 class Pushsafer(object):
     ''' Instantiates a pushsafer object, use it to send notifications '''
