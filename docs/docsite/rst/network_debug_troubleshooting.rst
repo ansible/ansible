@@ -348,7 +348,15 @@ Clearing Out Persistent Connections
 
 **Platforms:** Any
 
-TBD
+Persistent connection sockets are stored in ``~/.ansible/pc`` in Ansible 2.3
+for all network devices.  When an Ansible playbook runs the persistent socket
+connection displayed when specifying verbose output.
+
+``<switch> socket_path: /home/operations/.ansible/pc/f64ddfa760``
+
+To clear out a persistent connection before it times out (default is 30 seconds
+of inactivity), simple delete the socket file.
+
 
 Inspecting Logs
 ---------------
