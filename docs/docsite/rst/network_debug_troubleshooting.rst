@@ -137,12 +137,47 @@ By default eos and nxos module use cli (ssh). If you wish to use the API then us
 Specifying Credentials
 ======================
 
-FIXME Detail each of the ways people can specify credentials, where possible this should link back to existing Ansible Documentation (which may need tidying up)
+In Ansible versions 2.0 to 2.2, network modules support providing connection credentials as top-level arguments in the module. The forthcoming release of Ansible 2.3 introduces a new connection framework that is more tightly integrated into Ansible. 
 
-* provider (and vars)
-* ssh keys
-* command line (``-u someuser -k``)
-* what else?
+With this new connection framework, we have decided to immediately deprecate the use of top level arguments for passing credentials into network modules.  This applies to all top level credentials arguments except provider. Top-level arguments that have been deprecated (including ‘username’, ‘host’, and ‘password’) will still function, but Ansible will display a warning saying that those arguments have been deprecated and will be removed in a future release.
+
+Since the new connection framework in Ansible 2.3 is now completely integrated as an Ansible plugin, you can now pass credential information from the command line in Ansible just as you can for non-network modules. 
+
+For example, the old method::
+
+ ios_command:
+   commands: show version
+   host: "{{ inventory_hostname }}"
+   username: cisco
+   password: cisco
+
+...can now be written as::
+
+ ---
+ - hosts: ios_routers
+   connection: local
+   
+   tasks:
+     - name: run show version
+       ios_command:
+       commands: show version
+
+
+Note that the new task entry does not include any credential information anywhere.  In order to execute the new playbook, the credentials are now taken from the Ansible command line::
+
+ $ ansible-playbook demo.yaml -u cisco -k
+ SSH password: 
+ 
+ PLAY [ios01] ***************************************************************  
+ 
+ TASK [ios_command] *********************************************************
+ ok: [ios01]
+ 
+ PLAY RECAP *****************************************************************
+ ios01                      : ok=1    changed=0    unreachable=0    failed=0
+
+ 
+This removes the requirement to encode any credentials into the Playbook, further simplifying the Playbook.
 
 
 Connection Errors
