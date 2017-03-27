@@ -100,19 +100,10 @@ class Pushsafer(object):
         url = '%s/api' % (self.base_uri)
 
         # parse config
-        options = dict(k=self.privatekey,
-            d=device,
-            i=icon,
-            s=sound,
-            v=vibration,
-            u=url,
-            ut=urltitle,
-            l=time2live,
-            m=msg,
-            t=title)
+        options = dict(k=self.privatekey, d=device,i=icon, s=sound, v=vibration, u=url, ut=urltitle, l=time2live, m=msg, t=title)
         data = urllib.urlencode(options)
 
-        headers = {"Content-type":"application/x-www-form-urlencoded"}
+        headers = {"Content-type": "application/x-www-form-urlencoded"}
         r, info = fetch_url(self.module, url, method='POST', data=data, headers=headers)
         if info['status'] != 200:
             raise Exception(info)
@@ -139,7 +130,8 @@ def main():
 
     msg_object = Pushsafer(module, module.params['private_key'])
     try:
-        response = msg_object.run(module.params['device'], module.params['icon'], module.params['sound'], module.params['vibration'], module.params['url'], module.params['urltitle'], module.params['msg'], module.params['title'])
+        response = msg_object.run(module.params['device'], module.params['icon'], module.params['sound'], module.params['vibration'],
+                                  module.params['url'], module.params['urltitle'], module.params['msg'], module.params['title'])
     except:
         module.fail_json(msg='Unable to send msg via pushsafer')
 
