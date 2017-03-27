@@ -115,10 +115,6 @@ class ActionModule(_ActionModule):
 
             self._task.args['provider'] = provider
 
-        if self._play_context.become_method == 'enable':
-            self._play_context.become = False
-            self._play_context.become_method = None
-
         return super(ActionModule, self).run(tmp, task_vars)
 
     def _get_socket_path(self, play_context):
