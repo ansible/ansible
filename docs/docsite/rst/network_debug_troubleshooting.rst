@@ -321,7 +321,25 @@ Got connection X, expected local
 
 **Platforms:** Any
 
-FIXME: Add both error messages
+Network modules require the connection to be set to ``local``.  Any other
+connection setting will cause the playbook to fail.  Ansible will now detect
+this condition and return an error message.
+
+.. code-block:: yaml
+
+    fatal: [nxos01]: FAILED! => {
+        "changed": false,
+        "failed": true,
+        "msg": "invalid connection specified, expected connection=local, got ssh"
+    }
+
+
+To fix this issue set the connection value to ``local`` using one of the
+following ways.
+
+* Set the play to use ``connection: local``
+* Set the task to use ``connection: local``
+* Run ansible-playbook using the ``-c local`` setting
 
 
 
