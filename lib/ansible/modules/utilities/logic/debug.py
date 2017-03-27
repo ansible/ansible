@@ -79,5 +79,5 @@ EXAMPLES = '''
 - debug:
     msg:
       - "Provisioning based on YOUR_KEY which is: '{{ lookup('env', 'YOUR_KEY') }}"
-      - "It appears you can't do filters though - this '{{ lookup('env', 'YOUR_KEY')|default('all') }}' renders as ''"
+      - "These servers were built using the password of '{{ password_used }}'. Please retain this for later use."
 '''
