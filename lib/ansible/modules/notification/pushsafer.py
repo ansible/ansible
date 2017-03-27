@@ -101,18 +101,18 @@ class Pushsafer(object):
 
         # parse config
         options = dict(k=self.privatekey,
-                d=device,
-				i=icon,
-				s=sound,
-				v=vibration,
-				u=url,
-				ut=urltitle,
-				l=time2live,
-                m=msg,
-				t=title)
+            d=device,
+            i=icon,
+            s=sound,
+            v=vibration,
+            u=url,
+            ut=urltitle,
+            l=time2live,
+            m=msg,
+            t=title)
         data = urllib.urlencode(options)
 
-        headers = { "Content-type": "application/x-www-form-urlencoded"}
+        headers = {"Content-type":"application/x-www-form-urlencoded"}
         r, info = fetch_url(self.module, url, method='POST', data=data, headers=headers)
         if info['status'] != 200:
             raise Exception(info)
@@ -125,15 +125,15 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             msg=dict(required=True),
-			title=dict(required=False),
+            title=dict(required=False),
             private_key=dict(required=True, no_log=True),
-			device=dict(required=False, default=''),
+            device=dict(required=False, default=''),
             icon=dict(required=False, default='1'),
-			sound=dict(required=False, default=''),
-			vibration=dict(required=False, default='0', choices=['0','1','2','3']),
-			url=dict(required=False, default=''),
-			urltitle=dict(required=False, default=''),
-			time2live=dict(required=False, default=''),
+            sound=dict(required=False, default=''),
+            vibration=dict(required=False, default='0', choices=['0', '1', '2', '3']),
+            url=dict(required=False, default=''),
+            urltitle=dict(required=False, default=''),
+            time2live=dict(required=False, default=''),
         ),
     )
 
