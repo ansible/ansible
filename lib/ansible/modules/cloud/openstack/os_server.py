@@ -373,7 +373,7 @@ EXAMPLES = '''
         volumes:
         - photos
         - music
-        
+
 # Creates a new instance with provisioning userdata using Cloud-Init
 - name: launch a compute instance
   hosts: localhost
