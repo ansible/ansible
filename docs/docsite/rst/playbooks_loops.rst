@@ -278,9 +278,9 @@ Looping over Integer Sequences
 ``````````````````````````````
 
 ``with_sequence`` generates a sequence of items. You
-can specify a start, end, and an optional step value.
+can specify a start value, an end value, an optional "stride" value that specifies the number of steps to increment the sequence, and an optional printf-style format string.
 
-Arguments should be specified as key=value pairs strings.  If supplied, the 'format' is a printf-style format string.
+Arguments should be specified as key=value pair strings.
 
 A simple shortcut form of the arguments string is also accepted: ``[start-]end[/stride][:format]``.
 
