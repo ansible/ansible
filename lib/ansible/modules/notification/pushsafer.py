@@ -28,7 +28,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: pushsafer
-version_added: "2.3"
+version_added: "2.4"
 short_description: Send notifications via U(https://www.pushsafer.com)
 description:
    - Send notifications via pushsafer, to subscriber list of devices, and email
@@ -84,7 +84,8 @@ EXAMPLES = '''
 '''
 
 import urllib
-
+from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 
 class Pushsafer(object):
     ''' Instantiates a pushsafer object, use it to send notifications '''
@@ -100,7 +101,7 @@ class Pushsafer(object):
         url = '%s/api' % (self.base_uri)
 
         # parse config
-        options = dict(k=self.privatekey, d=device,i=icon, s=sound, v=vibration, u=url, ut=urltitle, l=time2live, m=msg, t=title)
+        options = dict(k=self.privatekey, d=device, i=icon, s=sound, v=vibration, u=url, ut=urltitle, l=time2live, m=msg, t=title)
         data = urllib.urlencode(options)
 
         headers = {"Content-type": "application/x-www-form-urlencoded"}
@@ -137,8 +138,5 @@ def main():
 
     module.exit_json(msg='message sent successfully: %s' % response, changed=False)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 if __name__ == '__main__':
     main()
