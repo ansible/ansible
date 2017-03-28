@@ -16,12 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.compat.tests import unittest
-from ansible.module_utils import known_hosts
-
 import json
+import os.path
+
 import ansible.module_utils.basic
-from ansible.compat.tests.mock import Mock
+from ansible.compat.tests import unittest
+from ansible.compat.tests.mock import Mock, patch
+from ansible.module_utils import known_hosts
 from units.mock.procenv import swap_stdin_and_argv
 
 
@@ -91,15 +92,21 @@ class TestAnsibleModuleKnownHosts(unittest.TestCase):
             ansible.module_utils.basic._ANSIBLE_ARGS = None
             self.module = ansible.module_utils.basic.AnsibleModule(argument_spec=dict())
 
-            run_command = Mock()
-            run_command.return_value = (0, "Needs output, otherwise thinks ssh-keyscan timed out'", "")
-            self.module.run_command = run_command
-
             get_bin_path = Mock()
             get_bin_path.return_value = keyscan_cmd = "/custom/path/ssh-keyscan"
             self.module.get_bin_path = get_bin_path
 
-            for u in self.urls:
-                if self.urls[u]['is_ssh_url']:
-                    known_hosts.add_host_key(self.module, self.urls[u]['get_fqdn'], port=self.urls[u]['port'])
-                    run_command.assert_called_with(keyscan_cmd + self.urls[u]['add_host_key_cmd'])
+            run_command = Mock()
+            run_command.return_value = (0, "Needs output, otherwise thinks ssh-keyscan timed out'", "")
+            self.module.run_command = run_command
+
+            append_to_file = Mock()
+            append_to_file.return_value = (None,)
+            self.module.append_to_file = append_to_file
+
+            with patch('os.path.isdir', return_value=True):
+                with patch('os.path.exists', return_value=True):
+                    for u in self.urls:
+                        if self.urls[u]['is_ssh_url']:
+                            known_hosts.add_host_key(self.module, self.urls[u]['get_fqdn'], port=self.urls[u]['port'])
+                            run_command.assert_called_with(keyscan_cmd + self.urls[u]['add_host_key_cmd'])
