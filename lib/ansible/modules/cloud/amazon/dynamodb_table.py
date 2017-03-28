@@ -31,6 +31,7 @@ description:
 author: Alan Loi (@loia)
 requirements:
   - "boto >= 2.37.0"
+  - "boto3 >= 1.4.4 (for tagging)"
 options:
   state:
     description:
@@ -84,6 +85,18 @@ options:
     required: false
     default: []
     version_added: "2.1"
+  tags:
+    version_added: "2.3"
+    description:
+      - a hash/dictionary of tags to add to the new instance or for starting/stopping instance by tag; '{"key":"value"}' and '{"key":"value","key":"value"}'
+    required: false
+    default: null
+  wait_for_active_timeout:
+    version_added: "2.3"
+    description:
+      - how long before wait gives up, in seconds. only used when tags is set
+    required: false
+    default: 60
 extends_documentation_fragment:
     - aws
     - ec2
@@ -100,6 +113,8 @@ EXAMPLES = '''
     range_key_type: NUMBER
     read_capacity: 2
     write_capacity: 2
+    tags:
+      tag_name: tag_value
 
 # Update capacity on existing dynamo table
 - dynamodb_table:
@@ -138,6 +153,7 @@ table_status:
     sample: ACTIVE
 '''
 
+import time
 import traceback
 
 try:
@@ -159,6 +175,13 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+try:
+    import botocore
+    from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_conn
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import AnsibleAWSError, connect_to_aws, ec2_argument_spec, get_aws_connection_info
 
@@ -169,7 +192,7 @@ INDEX_OPTIONS = INDEX_REQUIRED_OPTIONS + ['hash_key_type', 'range_key_name', 'ra
 INDEX_TYPE_OPTIONS = ['all', 'global_all', 'global_include', 'global_keys_only', 'include', 'keys_only']
 
 
-def create_or_update_dynamo_table(connection, module):
+def create_or_update_dynamo_table(connection, module, boto3_dynamodb=None, boto3_sts=None):
     table_name = module.params.get('name')
     hash_key_name = module.params.get('hash_key_name')
     hash_key_type = module.params.get('hash_key_type')
@@ -178,6 +201,9 @@ def create_or_update_dynamo_table(connection, module):
     read_capacity = module.params.get('read_capacity')
     write_capacity = module.params.get('write_capacity')
     all_indexes = module.params.get('indexes')
+    region = module.params.get('region')
+    tags = module.params.get('tags')
+    wait_for_active_timeout = module.params.get('wait_for_active_timeout')
 
     for index in all_indexes:
         validate_index(index, module)
@@ -192,7 +218,7 @@ def create_or_update_dynamo_table(connection, module):
     indexes, global_indexes = get_indexes(all_indexes)
 
     result = dict(
-        region=module.params.get('region'),
+        region=region,
         table_name=table_name,
         hash_key_name=hash_key_name,
         hash_key_type=hash_key_type,
@@ -217,11 +243,31 @@ def create_or_update_dynamo_table(connection, module):
         if not module.check_mode:
             result['table_status'] = table.describe()['Table']['TableStatus']
 
+        if tags:
+            # only tables which are active can be tagged
+            wait_until_table_active(module, table, wait_for_active_timeout)
+            account_id = get_account_id(boto3_sts)
+            boto3_dynamodb.tag_resource(ResourceArn='arn:aws:dynamodb:' + region + ':' + account_id + ':table/' + table_name, Tags=ansible_dict_to_boto3_tag_list(tags))
+            result['tags'] = tags
+
     except BotoServerError:
         result['msg'] = 'Failed to create/update dynamo table due to error: ' + traceback.format_exc()
         module.fail_json(**result)
     else:
         module.exit_json(**result)
+
+
+def get_account_id(boto3_sts):
+    return boto3_sts.get_caller_identity()["Account"]
+
+
+def wait_until_table_active(module, table, wait_timeout):
+    max_wait_time = time.time() + wait_timeout
+    while (max_wait_time > time.time()) and (table.describe()['Table']['TableStatus'] != 'ACTIVE'):
+        time.sleep(5)
+    if max_wait_time <= time.time():
+        # waiting took too long
+        module.fail_json(msg="timed out waiting for table to exist")
 
 
 def delete_dynamo_table(connection, module):
@@ -398,6 +444,8 @@ def main():
         read_capacity=dict(default=1, type='int'),
         write_capacity=dict(default=1, type='int'),
         indexes=dict(default=[], type='list'),
+        tags = dict(type='dict'),
+        wait_for_active_timeout = dict(default=60, type='int'),
     ))
 
     module = AnsibleModule(
@@ -406,6 +454,9 @@ def main():
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
+
+    if not HAS_BOTO3 and module.params.get('tags'):
+        module.fail_json(msg='boto3 required when using tags for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
     if not region:
@@ -416,9 +467,22 @@ def main():
     except (NoAuthHandlerFound, AnsibleAWSError) as e:
         module.fail_json(msg=str(e))
 
+    if module.params.get('tags'):
+        try:
+            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+            boto3_dynamodb = boto3_conn(module, conn_type='client', resource='dynamodb', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+            if not hasattr(boto3_dynamodb, 'tag_resource'):
+                module.fail_json(msg='boto3 connection does not have tag_resource(), likely due to using an old version')
+            boto3_sts = boto3_conn(module, conn_type='client', resource='sts', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        except botocore.exceptions.NoCredentialsError as e:
+            module.fail_json(msg='cannot connect to AWS', exception=traceback.format_exc(e))
+    else:
+        boto3_dynamodb = None
+        boto3_sts = None
+
     state = module.params.get('state')
     if state == 'present':
-        create_or_update_dynamo_table(connection, module)
+        create_or_update_dynamo_table(connection, module, boto3_dynamodb, boto3_sts)
     elif state == 'absent':
         delete_dynamo_table(connection, module)
 
