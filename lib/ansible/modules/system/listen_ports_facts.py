@@ -194,6 +194,7 @@ import platform
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 
+
 def netStatParse(raw):
     results = list()
     for line in iter(raw.splitlines()):
@@ -227,6 +228,7 @@ def netStatParse(raw):
                 raise EnvironmentError('Could not get process information for the listening ports.')
     return results
 
+
 def applyWhitelist(portspids, whitelist=list()):
     processes = list()
     for p in portspids:
@@ -236,12 +238,13 @@ def applyWhitelist(portspids, whitelist=list()):
                 processes.append(process)
     return processes
 
+
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            whitelist_tcp = dict(required=False, type='list', default=list()),
-            whitelist_udp = dict(required=False, type='list', default=list())
+        argument_spec=dict(
+            whitelist_tcp=dict(required=False, type='list', default=list()),
+            whitelist_udp=dict(required=False, type='list', default=list())
         ),
         supports_check_mode=True
     )
