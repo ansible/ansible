@@ -72,6 +72,7 @@ options:
             - use SSL when accessing RabbitMQ host
         required: false
         default: false
+        version_added: "2.4"
     vhost:
         description:
             - rabbitMQ virtual host
