@@ -114,8 +114,8 @@ options:
         required: false
         default: null
         version_added: "2.3"
-    delay_evaluation:
-        description: ["The delay evaluation in seconds before a monitor can change status."]
+    evaluation_delay:
+        description: ["The evaluation delay in seconds before a monitor can change status."]
         required: false
         default: null
         version_added: "2.4"
@@ -188,7 +188,7 @@ def main():
             locked=dict(required=False, default=False, type='bool'),
             require_full_window=dict(required=False, default=None, type='bool'),
             id=dict(required=False),
-            delay_evaluation=dict(required=False, default=None, type='int')
+            evaluation_delay=dict(required=False, default=None, type='int')
         )
     )
 
@@ -284,7 +284,7 @@ def install_monitor(module):
         "notify_audit": module.boolean(module.params['notify_audit']),
         "locked": module.boolean(module.params['locked']),
         "require_full_window" : module.params['require_full_window'],
-        "delay_evaluation" : module.params['delay_evaluation']
+        "evaluation_delay" : module.params['evaluation_delay']
     }
 
     if module.params['type'] == "service check":
