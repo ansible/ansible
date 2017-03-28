@@ -204,24 +204,31 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.gce import gce_connect
 from ansible.module_utils.gcp import check_params
 
+
 def _validate_params(params):
     """
     Validate backend_service params.
 
+    This function calls _validate_backend_params to verify
+    the backend-specific parameters.
+
     :param params: Ansible dictionary containing configuration.
     :type  params: ``dict``
 
-    :return: Tuple containing a boolean and a string.  True if
-             valid, False otherwise, plus str for message.
-    :rtype: ``(``bool``, ``str``)``
+    :return: True or raises ValueError
+    :rtype: ``bool`` or `class:ValueError`
     """
     fields = [
         {'name': 'timeout', 'type': int, 'min': 1, 'max': 86400},
     ]
-    (valid, msg) = _validate_backend_params(params['backends'])
-    if not valid:
-        return (False, msg)
+    try:
+        check_params(params, fields)
+        _validate_backend_params(params['backends'])
+    except:
+        raise
+
     return (True, '')
+
 
 def _validate_backend_params(backends):
     """
@@ -230,9 +237,8 @@ def _validate_backend_params(backends):
     :param backends: Ansible dictionary containing backends configuration (only).
     :type  backends: ``dict``
 
-    :return: Tuple containing a boolean and a string.  True if backend
-             is valid, False otherwise, plus str for message.
-    :rtype: ``(``bool``, ``str``)``
+    :return: True or raises ValueError
+    :rtype: ``bool`` or `class:ValueError`
     """
     fields = [
         {'name': 'balancing_mode', 'type': str, 'values': ['UTILIZATION', 'RATE', 'CONNECTION']},
@@ -243,19 +249,21 @@ def _validate_backend_params(backends):
     ]
 
     if not backends:
-        return (False, 'backends should be a list.')
+        raise ValueError('backends should be a list.')
 
     for backend in backends:
-        (valid, msg) = check_params(backend, fields)
-        if not valid:
-            return (False, msg)
+        try:
+            check_params(backend, fields)
+        except:
+            raise
+
         if 'max_rate' in backend and 'max_rate_per_instance' in backend:
-            return (False, 'Both maxRate or maxRatePerInstance cannot be set.')
+            raise ValueError('Both maxRate or maxRatePerInstance cannot be set.')
 
     return (True, '')
 
 
-def get_bes(gce, name):
+def get_backend_service(gce, name):
     """
     Get a Backend Service from GCE.
 
@@ -275,13 +283,16 @@ def get_bes(gce, name):
     except ResourceNotFoundError:
         return None
 
+
 def get_healthcheck(gce, name):
     return gce.ex_get_healthcheck(name)
+
 
 def get_instancegroup(gce, name, zone=None):
     return gce.ex_get_instancegroup(name=name, zone=zone)
 
-def create_bes(gce, params):
+
+def create_backend_service(gce, params):
     """
     Create a new Backend Service.
 
@@ -291,8 +302,8 @@ def create_bes(gce, params):
     :param params: Dictionary of parameters needed by the module.
     :type params:  ``dict``
 
-    :return: Tuple with changed stats and TODO(supertom): something here.
-    :rtype: tuple in the format of (bool, list)
+    :return: Tuple with changed stats
+    :rtype: tuple in the format of (bool, bool)
     """
     from copy import deepcopy
 
@@ -304,7 +315,7 @@ def create_bes(gce, params):
     backends = []
     for backend in params['backends']:
         ig = get_instancegroup(gce, backend['instance_group'],
-                                      backend.get('zone', None))
+                               backend.get('zone', None))
         kwargs = deepcopy(backend)
         kwargs['instance_group'] = ig
         backends.append(gce.ex_create_backend(
@@ -321,7 +332,8 @@ def create_bes(gce, params):
 
     return (changed, return_data)
 
-def delete_bes(bes):
+
+def delete_backend_service(bes):
     """
     Delete a Backend Service. The Instance Groups are NOT destroyed.
     """
@@ -331,6 +343,7 @@ def delete_bes(bes):
         changed = True
         return_data = True
     return (changed, return_data)
+
 
 def main():
     module = AnsibleModule(argument_spec=dict(
@@ -372,13 +385,14 @@ def main():
     params['protocol'] = module.params.get('protocol', None)
     params['timeout'] = module.params.get('timeout', None)
 
-    (valid_params, params_msg) = _validate_backend_params(params)
-    if not valid_params:
-        module.fail_json(msg=params_msg, changed=False)
+    try:
+        _validate_params(params)
+    except Exception as e:
+        module.fail_json(msg=e.message, changed=False)
 
     changed = False
     json_output = {'state': params['state']}
-    bes = get_bes(gce, params['backend_service_name'])
+    bes = get_backend_service(gce, params['backend_service_name'])
 
     if not bes:
         if params['state'] == 'absent':
@@ -389,11 +403,11 @@ def main():
                 (params['backend_service_name']))
         else:
             # Create
-            (changed, json_output['backend_service_created']) = create_bes(gce,
-                                                                     params)
+            (changed, json_output['backend_service_created']) = create_backend_service(gce,
+                                                                                       params)
     elif params['state'] == 'absent':
         # Delete
-        (changed, json_output['backend_service_deleted']) = delete_bes(bes)
+        (changed, json_output['backend_service_deleted']) = delete_backend_service(bes)
     else:
         # TODO(supertom): Add update support when it is available in libcloud.
         changed = False

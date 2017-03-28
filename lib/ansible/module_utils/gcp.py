@@ -428,30 +428,29 @@ def check_params(params, field_list):
                        [{'name': str, 'required': True/False', 'type': cls}]
     :type field_list: ``list`` of ``dict``
 
-    :return True, exits otherwise
-    :rtype: ``bool``
+    :return True or raises ValueError
+    :rtype: ``bool`` or `class:ValueError`
     """
     for d in field_list:
         if not d['name'] in params:
             if 'required' in d and d['required'] is True:
-                return (False, "%s is required and must be of type: %s" %
-                        (d['name'], str(d['type'])))
+                raise ValueError(("%s is required and must be of type: %s" %
+                        (d['name'], str(d['type']))))
         else:
             if not isinstance(params[d['name']], d['type']):
-                return (False,
-                        "%s must be of type: %s" % (d['name'], str(d['type'])))
+                raise ValueError(("%s must be of type: %s" % (
+                    d['name'], str(d['type']))))
             if 'values' in d:
                 if params[d['name']] not in d['values']:
-                    return (False,
-                        "%s must be one of: %s" % (d['name'], ','.join(d['values'])))
-            if d['type'] == 'int':
+                    raise ValueError(("%s must be one of: %s" % (
+                        d['name'], ','.join(d['values']))))
+            if isinstance(params[d['name']], int):
                 if 'min' in d:
                     if params[d['name']] < d['min']:
-                        return (False,
-                        "%s must be greater than or equal to: %s" % (d['name'], d['min']))
+                        raise ValueError(("%s must be greater than or equal to: %s" % (
+                            d['name'], d['min'])))
                 if 'max' in d:
                     if params[d['name']] > d['max']:
-                        return (False,
-                        "%s must be less than or equal to: %s" % (d['name'], d['max']))
-
-    return (True, '')
+                        raise ValueError("%s must be less than or equal to: %s" % (
+                            d['name'], d['max']))
+    return True
