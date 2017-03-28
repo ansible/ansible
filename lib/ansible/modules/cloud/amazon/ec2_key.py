@@ -117,6 +117,7 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+from ansible.module_utils._text import to_bytes
 import random
 import string
 
@@ -226,7 +227,7 @@ def main():
             if not module.check_mode:
                 if key_material:
                     '''We are providing the key, need to import'''
-                    key = ec2.import_key_pair(name, key_material)
+                    key = ec2.import_key_pair(name, to_bytes(key_material))
                 else:
                     '''
                     No material provided, let AWS handle the key creation and
