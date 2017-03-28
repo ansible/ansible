@@ -175,7 +175,7 @@ Target: Aug/Mid-September 2017
 
     - Declarative intent modules
     - OpenVSwitch
-    - code refactor and unit tests
+    - 
 
 - **Contributor Quality of Life**
 
