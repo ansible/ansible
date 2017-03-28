@@ -20,7 +20,7 @@ Target: Aug/Mid-September 2017
 
 - **Ansible-Config**
   - New yaml format for config
-  - Extend the ability of the current config system by adding creating an ansible-config command and add the following:
+  - Extend the ability of the current config system by adding an ansible-config command and add the following:
 
     - Dump existing config settings
 
@@ -33,7 +33,7 @@ Target: Aug/Mid-September 2017
 
 - **Inventory Overhaul**
 
-  - Current inventory is overtly complex, non modular and mostly still a legacy from inception.
+  - Current inventory is overly complex, non modular and mostly still a legacy from inception.
   - We also want to add a common set of features to most inventory sources but are hampered by the current code base.
   - Proposal found in ansible/proposals issue `#41 <https://github.com/ansible/proposals/issues/41>`_.
 
@@ -178,7 +178,7 @@ Target: Aug/Mid-September 2017
 
 - **Contributor Quality of Life**
 
-  - All Core and Curated modules will require and have unit testing.
+  - All Core and Curated modules will work towards having unit testing.
   - More bot improvements!
   - Test Infrastructure changes
 
