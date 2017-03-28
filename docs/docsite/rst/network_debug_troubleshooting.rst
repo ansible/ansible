@@ -438,10 +438,28 @@ Connecting via A Proxy Host
 
 **Platforms:** Any
 
-FIXME Peter is working on some content for this section
+The new connection framework in Ansible 2.3 no longer supports the use of the
+``delegate_to`` directive.  In order to use a bastion or intermediate jump host
+to connect to network devices, network modules now support the use of
+``ProxyCommand``.  
 
-http://docs.ansible.com/ansible/faq.html#how-do-i-configure-a-jump-host-to-access-servers-that-i-have-no-direct-access-to
+To use ``ProxyCommand`` configure the proxy settings in the Ansible inventory
+file to specify the proxy host.
 
+.. code-block:: ini
+
+    [nxos]
+    nxos01
+    nxos02
+
+    [nxos:vars]
+    ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion01"'
+
+
+With the configuration above, simply build and run the playbook as normal with
+no additional changes necessary.  The network module will now connect to the
+network device by first connecting to the host specified in
+``ansible_ssh_common_args`` which is ``bastion01`` in the above example.  
 
 .. warning: ``delegate_to``
 
