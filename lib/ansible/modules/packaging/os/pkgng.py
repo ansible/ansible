@@ -72,14 +72,19 @@ options:
         description:
             - For pkgng versions 1.5 and later, pkg will install all packages
               within the specified root directory.
-            - Can not be used together with I(chroot) option.
+            - Can not be used together with I(chroot) or I(jail) options.
         required: false
     chroot:
         version_added: "2.1"
         description:
             - Pkg will chroot in the specified environment.
-            - Can not be used together with I(rootdir) option.
+            - Can not be used together with I(rootdir) or I(jail) options.
         required: false
+    jail:
+        version_added: "2.4"
+        description:
+            - Pkg will execute in the given jail name or id.
+            - Can not be used together with I(chroot) or I(rootdir) options.
     autoremove:
         version_added: "2.2"
         description:
@@ -314,9 +319,10 @@ def main():
             pkgsite         = dict(default="", required=False),
             rootdir         = dict(default="", required=False, type='path'),
             chroot          = dict(default="", required=False, type='path'),
+            jail            = dict(default="", required=False, type='str'),
             autoremove      = dict(default=False, type='bool')),
         supports_check_mode = True,
-        mutually_exclusive  =[["rootdir", "chroot"]])
+        mutually_exclusive  =[["rootdir", "chroot", "jail"]])
 
     pkgng_path = module.get_bin_path('pkg', True)
 
@@ -337,6 +343,9 @@ def main():
 
     if p["chroot"] != "":
         dir_arg = '--chroot %s' % (p["chroot"])
+
+    if p["jail"] != "":
+        dir_arg = '--jail %s' % (p["jail"])
 
     if p["state"] == "present":
         _changed, _msg = install_packages(module, pkgng_path, pkgs, p["cached"], p["pkgsite"], dir_arg)
