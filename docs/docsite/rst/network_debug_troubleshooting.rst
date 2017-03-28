@@ -141,28 +141,32 @@ Specifying Credentials
 
 In Ansible versions 2.0 to 2.2, network modules support providing connection credentials as top-level arguments in the module. The forthcoming release of Ansible 2.3 introduces a new connection framework that is more tightly integrated into Ansible.
 
-With this new connection framework, we have decided to immediately deprecate the use of top level arguments for passing credentials into network modules.  This applies to all top level credentials arguments except provider. Top-level arguments that have been deprecated (including ‘username’, ‘host’, and ‘password’) will still function, but Ansible will display a warning saying that those arguments have been deprecated and will be removed in a future release.
+With this new connection framework, we have decided to immediately deprecate the use of top level arguments for passing credentials into network modules.  This applies to all top-level credentials arguments except ``provider``. Platforms that support privilege, such as eos and ios, top-level options ``auth_pass`` and ``authorize`` are still supported. Top-level arguments that have been deprecated (including ``username``, ``host``, and ``password``) will still function, but Ansible will display a warning saying that those arguments have been deprecated and will be removed in a future release.
 
 Since the new connection framework in Ansible 2.3 is now completely integrated as an Ansible plugin, you can now pass credential information from the command line in Ansible just as you can for non-network modules.
 
-For example, the old method::
+For example, the old method
 
- ios_command:
-   commands: show version
-   host: "{{ inventory_hostname }}"
-   username: cisco
-   password: cisco
+.. code-block:: yaml
 
-...can now be written as::
+   - ios_command:
+       commands: show version
+       host: "{{ inventory_hostname }}"
+       username: cisco
+       password: cisco
 
- ---
- - hosts: ios_routers
-   connection: local
-  
-   tasks:
-     - name: run show version
-       ios_command:
-       commands: show version
+...in Ansible 2.3 can now be written as:
+
+.. code-block:: yaml
+
+    ---
+    - hosts: ios_routers
+      connection: local
+     
+      tasks:
+        - name: run show version
+          ios_command:
+        commands: show version
 
 
 Note that the new task entry does not include any credential information anywhere.  In order to execute the new playbook, the credentials are now taken from the Ansible command line::
