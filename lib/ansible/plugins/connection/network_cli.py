@@ -58,10 +58,6 @@ class Connection(_Connection):
         if play_context.verbosity > 3:
             logging.getLogger('paramiko').setLevel(logging.DEBUG)
 
-    def log(self, msg):
-        msg = 'h=%s u=%s %s' % (self._play_context.remote_addr, self._play_context.remote_user, msg)
-        logger.debug(msg)
-
     def update_play_context(self, play_context):
         """Updates the play context information for the connection"""
 
