@@ -1743,10 +1743,10 @@ class AnsibleModule(object):
                 e = get_exception()
                 self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s: %s" % (k, type(value), wanted, e))
 
-            # deal with subspecs
+            # deal with sub options to create sub spec
             spec = None
             if wanted == 'dict' or (wanted == 'list' and v.get('elements', '') == 'dict'):
-                spec = v.get('spec', None)
+                spec = v.get('options', None)
                 if spec:
                     self._check_required_arguments(spec, param[k])
                     self._check_argument_types(spec, param[k])
