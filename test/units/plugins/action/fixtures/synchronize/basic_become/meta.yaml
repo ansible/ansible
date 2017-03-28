@@ -25,7 +25,7 @@ asserts:
     - "self.execute_called"
     - "self.final_module_args['_local_rsync_path'] == 'rsync'"
     # this is a crucial aspect of this scenario ...
-    - "self.final_module_args['rsync_path'] == '\"sudo rsync\"'"
+    - "self.final_module_args['rsync_path'] == 'sudo rsync'"
     - "self.final_module_args['src'] == '/tmp/deleteme'"
     - "self.final_module_args['dest'] == 'root@el6host:/tmp/deleteme'"
     - "self.task.become == True"
