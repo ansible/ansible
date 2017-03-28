@@ -124,7 +124,7 @@ options:
             -  Pull the latest subscription data from the server
         required: False
         default: False
-        version_added: "2.3"
+        version_added: "2.4"
 '''
 
 EXAMPLES = '''
@@ -454,6 +454,7 @@ class Rhsm(RegistrationBase):
     def refresh(self):
         args = [SUBMAN_CMD, 'refresh']
         rc, stderr, stdout = self.module.run_command(args, check_rc=True)
+
 
 class RhsmPool(object):
     '''
