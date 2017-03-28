@@ -441,7 +441,10 @@ def replicate_db_instance(module, conn):
 
 def delete_db_instance(module, conn):
     required_vars = ['instance_name']
-    valid_vars = ['snapshot', 'skip_final_snapshot']
+
+    #we have to accept but ignore variables which have defaults
+    valid_vars = ['snapshot', 'skip_final_snapshot', 'storage_type']
+
     params = validate_parameters(required_vars, valid_vars, module)
     instance_name = module.params.get('instance_name')
     snapshot = module.params.get('snapshot')
@@ -539,12 +542,19 @@ def modify_db_instance(module, conn):
     # create_db_instance which takes Port
     params['DBPortNumber'] = params.pop('Port')
     # modify_db_instance does not accept tags
-    tags = params.pop('Tags')
+    try:
+        tags = params.pop('Tags')
+    except KeyError:
+        tags = {}
+
     # modify_db_instance does not cope with DBSubnetGroup not moving VPC!
     if existing_instance.instance['DBSubnetGroup']['DBSubnetGroupName'] == params.get('DBSubnetGroupName'):
         del(params['DBSubnetGroupName'])
     if not force_password_update:
-        del(params['MasterUserPassword'])
+        try:
+            del(params['MasterUserPassword'])
+        except KeyError:
+            pass
 
     try:
         response = conn.modify_db_instance(**params)
@@ -678,7 +688,7 @@ def validate_parameters(required_vars, valid_vars, module):
             if k in valid_vars or k in required_vars:
                 params[v] = module.params[k]
             else:
-                module.fail_json(msg="Parameter %s is not valid" % k)
+                raise Exception("Parameter %s is not valid" % k)
 
     # needed for checking that all variables are actually in the map
     for item in set(required_vars) | set(valid_vars):
