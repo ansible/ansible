@@ -247,7 +247,14 @@ def create_or_update_dynamo_table(connection, module, boto3_dynamodb=None, boto3
             # only tables which are active can be tagged
             wait_until_table_active(module, table, wait_for_active_timeout)
             account_id = get_account_id(boto3_sts)
-            boto3_dynamodb.tag_resource(ResourceArn='arn:aws:dynamodb:' + region + ':' + account_id + ':table/' + table_name, Tags=ansible_dict_to_boto3_tag_list(tags))
+            boto3_dynamodb.tag_resource(
+                ResourceArn='arn:aws:dynamodb:' +
+                region +
+                ':' +
+                account_id +
+                ':table/' +
+                table_name,
+                Tags=ansible_dict_to_boto3_tag_list(tags))
             result['tags'] = tags
 
     except BotoServerError:
