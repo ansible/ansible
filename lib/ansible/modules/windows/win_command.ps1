@@ -117,9 +117,8 @@ $exec_args = $null
 # FUTURE: no longer necessary once we switch to raw Win32 CreateProcess
 $parsed_command_line = [Ansible.Command.NativeUtil]::ParseCommandLine($raw_command_line);
 $exec_application = $parsed_command_line[0]
-If($parsed_command_line.Length -gt 1) {
-    # lop the application off, then rejoin the args as a single string
-    $exec_args = $parsed_command_line[1..$($parsed_command_line.Length-1)] -join " "
+If ($parsed_command_line.Length -gt 1) {
+    $exec_args = $parsed_command_line[1..$($parsed_command_line.Length-1)]
 }
 
 $proc = New-Object System.Diagnostics.Process
