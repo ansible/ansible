@@ -884,7 +884,7 @@ class LinuxService(Service):
                 return (rc, out, err)
 
         #
-        # telinit (Source Mage GNU/Linux)
+        # simpleinit-msb (Source Mage GNU/Linux)
         #
         if self.enable_cmd.endswith("telinit"):
             (rc, out, err) = self.execute_command("%s list" % self.enable_cmd)
