@@ -29,3 +29,4 @@
 - include: checkout-new-tag.yml
 - include: tag-verification.yml
 - include: localmods.yml
+- include: reset-origin.yml
