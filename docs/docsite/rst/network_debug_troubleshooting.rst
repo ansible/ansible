@@ -353,8 +353,8 @@ Add `authorize: yes` to the task. For example:
 
 
 
-Got connection X, expected local
---------------------------------
+invalid connection specified, expected connection=local, got ssh
+----------------------------------------------------------------
 
 **Platforms:** Any
 
