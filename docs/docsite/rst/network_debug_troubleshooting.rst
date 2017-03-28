@@ -19,6 +19,8 @@ As of version 2.3, Ansible includes support for `persistent connections`. Persis
 
 Persistent Connection had been enable for the following groups of modules:
 
+ * dellos9
+ * dellos10
  * eos
  * ios
  * iosxr
@@ -422,6 +424,7 @@ Connecting via A Proxy Host
 
 **Platforms:** Any
 
+FIXME Peter is working on some content for this section
 
 http://docs.ansible.com/ansible/faq.html#how-do-i-configure-a-jump-host-to-access-servers-that-i-have-no-direct-access-to
 
