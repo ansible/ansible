@@ -246,8 +246,8 @@ Look for error message in this document, in this case the relevant lines are
    The final Ansible 2.3 will include improved logging which will make it easier to identify connection lines in the log
 
 
-number of connection attempts exceeded, unable to connect to control socket
-----------------------------------------------------------------------------
+"number of connection attempts exceeded, unable to connect to control socket"
+-----------------------------------------------------------------------------
 
 **Platforms:** Any
 
@@ -309,8 +309,8 @@ Or to make this a permanent change add the following to your ``ansible.cfg``
 
 
 
-Unable to enter configuration mode
-----------------------------------
+"Unable to enter configuration mode"
+------------------------------------
 
 **Platforms:** eos and ios
 
@@ -357,8 +357,8 @@ Add `authorize: yes` to the task. For example:
 
 
 
-invalid connection specified, expected connection=local, got ssh
-----------------------------------------------------------------
+"invalid connection specified, expected connection=local, got ssh"
+------------------------------------------------------------------
 
 **Platforms:** Any
 
@@ -404,7 +404,17 @@ Inspecting Logs
 
 **Platforms:** Any
 
-TBD
+Ansible can be run with high log verbosity by doing:
+
+:code:`export ANSIBLE_LOG_PATH=/tmp/ansible.log`
+
+:code:`ANISBLE_DEBUG=True ansible-playbook -vvvvv  ...`
+
+The log file can be inspected by doing:
+
+:code:`less $ANSIBLE_LOG_PATH`
+
+The log lines generally follow ``using connection plugin network_cli`` in the file, though it's possible some details
 
 
 Howtos
