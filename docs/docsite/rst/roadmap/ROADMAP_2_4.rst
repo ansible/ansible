@@ -7,6 +7,7 @@ Target: Aug/Mid-September 2017
 
 - **Administrivia and Process**
   - Starting with 2.4, all items that are deprecated will be removed in 4 major releases unless otherwise stated.
+
     - For example: A module that is deprecated in 2.4 will be removed in 2.8
 
 - **Python 2.4 and 2.5 support discontinuation**
@@ -14,8 +15,8 @@ Target: Aug/Mid-September 2017
 
 - **Python 3 and beyond**
   - Ansible Core Engine and Core modules will be tested on Python 3
-  - Communicate with Linux distros to provide Ansible running on Python3
-  - Check for Py3 tests on core modules and create any missing
+  - Communicate with Linux distros to provide Ansible running on Python 3
+  - Check for Python 3 tests on core modules and create any missing
 
 - **Ansible-Config**
   - New yaml format for config
@@ -38,10 +39,10 @@ Target: Aug/Mid-September 2017
 
 - **Facts Refreshening**
 
-  - Configurable list of ‘fact modules’ for gather_facts
+  - Configurable list of ‘fact modules’ for ``gather_facts``
   - Fact gathering policy finer grained
-  - Make setup.py/facts more pluggable
-  - Improve testing of setup.py/facts.py
+  - Make ``setup.py``/``facts`` more pluggable
+  - Improve testing of ``setup.py``/``facts.py``
   - Namespacing fact variables (via a config option) implemented in ansible/ansible PR `#18445 <https://github.com/ansible/ansible/pull/18445>`_.
   - Proposal found in ansible/proposals issue `#17 <https://github.com/ansible/proposals/issues/17>`_.
 
@@ -52,9 +53,9 @@ Target: Aug/Mid-September 2017
 
     - Load the loaders via an initialization function(), not when importing
       the module. (stretch goal, doesn't impact the CLI)
-    - Separate duties of PluginLoader from PluginFinder.  Most plugins need
+    - Separate duties of ``PluginLoader`` from ``PluginFinder``.  Most plugins need
       both but Modules and Module_utils only need a PluginFinder
-    - Write different PluginFinder subclasses for Module_utils and perhaps
+    - Write different ``PluginFinder`` subclasses for module_utils and perhaps
       Modules.  Most Plugin types have a flattened namespace and are single
       python files.  Modules include code that is not written in python.
       Module_utils are vastly different from the other Plugins as they
@@ -67,8 +68,8 @@ Target: Aug/Mid-September 2017
 
 - **Static Loop Keyword**
 
-  - Deprecate (not on standard deprecation cycle) `with_` in favor of `loop:`
-  - This `loop:` will take only a list
+  - Deprecate (not on standard deprecation cycle) ``with_`` in favor of ``loop:``
+  - This ``loop:`` will take only a list
   - Remove complexity from loops, lookups are still available to users
   - Less confusing having a static directive vs a one that is dynamic depending on plugins loaded.
 
@@ -167,15 +168,14 @@ Target: Aug/Mid-September 2017
 
 - **Network Roadmap**
 
-  - Removal of *_template modules
+  - Removal of ``*_template`` modules
   - Session Tracing
   - Refactor ansible-connection to cli
   - Module Work
 
     - Declarative intent modules
     - OpenVSwitch
-
-      - code refactor and unit tests
+    - code refactor and unit tests
 
 - **Contributor Quality of Life**
 
@@ -186,7 +186,7 @@ Target: Aug/Mid-September 2017
     - Shippable + Bot Integration
 
       - Provide verified test results to the bot from Shippable so the bot can comment on PRs with CI failures.
-      - Enable the bot to mark PRs with `ci_verified` if all CI failures are verified.
+      - Enable the bot to mark PRs with ``ci_verified`` if all CI failures are verified.
 
     - Windows Server 2016 Integration Tests
 
