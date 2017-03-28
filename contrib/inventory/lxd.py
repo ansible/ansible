@@ -23,7 +23,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from subprocess import Popen,PIPE
+from subprocess import Popen, PIPE
 import distutils.spawn
 import sys
 import json
