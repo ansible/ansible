@@ -127,6 +127,35 @@ TESTSETS = [
             }
         },
     {
+        "name": "Virtuozzo 7.3",
+        "platform.dist": [
+            "redhat",
+            "7.3",
+            ""
+            ],
+        "input": {
+            "/etc/redhat-release": "Virtuozzo Linux release 7.3\n",
+            "/etc/os-release": ("NAME=\"Virtuozzo\"\n"
+                                "VERSION=\"7.0.3\"\n"
+                                "ID=\"virtuozzo\"\n"
+                                "ID_LIKE=\"rhel fedora\"\n"
+                                "VERSION_ID=\"7\"\n"
+                                "PRETTY_NAME=\"Virtuozzo release 7.0.3\"\n"
+                                "ANSI_COLOR=\"0;31\"\n"
+                                "CPE_NAME=\"cpe:/o:virtuozzoproject:vz:7\"\n"
+                                "HOME_URL=\"http://www.virtuozzo.com\"\n"
+                                "BUG_REPORT_URL=\"https://bugs.openvz.org/\"\n"),
+            "/etc/system-release": "Virtuozzo release 7.0.3 (640)\n"
+            },
+        "result": {
+            "distribution_release": "NA",
+            "distribution": "Virtuozzo",
+            "distribution_major_version": "7",
+            "os_family": "RedHat",
+            "distribution_version": "7.3"
+            }
+        },
+    {
         "name" : "openSUSE Leap 42.1",
         "input": {
             "/etc/os-release":
