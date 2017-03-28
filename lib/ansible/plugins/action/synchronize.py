@@ -382,7 +382,7 @@ class ActionModule(ActionBase):
         if self._remote_transport in [ 'docker' ]:
             # Replicate what we do in the module argumentspec handling for lists
             if not isinstance(_tmp_args.get('rsync_opts'), MutableSequence):
-                tmp_rsync_opts = _tmp_args.get('rsync_opts', '')
+                tmp_rsync_opts = _tmp_args.get('rsync_opts', [])
                 if isinstance(tmp_rsync_opts, string_types):
                     tmp_rsync_opts = tmp_rsync_opts.split(',')
                 elif isinstance(tmp_rsync_opts, (int, float)):
