@@ -331,7 +331,7 @@ For example:
 
 Suggestions to resolve:
 
-Add `authorize: yes` to the task. For example:
+Add ``authorize: yes`` to the task. For example:
 
 .. code-block:: yaml
 
