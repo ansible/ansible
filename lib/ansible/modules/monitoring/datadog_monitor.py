@@ -118,7 +118,7 @@ options:
         description: ["The delay evaluation in seconds before a monitor can change status."]
         required: false
         default: null
-        version_added: "2.3"
+        version_added: "2.4"
 '''
 
 EXAMPLES = '''
