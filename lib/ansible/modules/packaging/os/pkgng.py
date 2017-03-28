@@ -81,7 +81,7 @@ options:
             - Can not be used together with I(rootdir) or I(jail) options.
         required: false
     jail:
-        version_added: "?"
+        version_added: "2.4"
         description:
             - Pkg will execute in the given jail name or id.
             - Can not be used together with I(chroot) or I(rootdir) options.
