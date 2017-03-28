@@ -102,7 +102,13 @@ class CloudFrontServiceManager:
     def __init__(self, module, cloudfront_facts_mgr):
         self.module = module
         self.cloudfront_facts_mgr = cloudfront_facts_mgr
+        self.set_defaults
         self.create_client('cloudfront')
+
+    def set_defaults(self):
+        self.__default_http_port = 80
+        self.__default_https_port = 443
+        self.__default_origin_ssl_protocols = [ "SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2" ]
 
     def create_client(self, resource):
         try:
@@ -311,13 +317,13 @@ class CloudFrontServiceManager:
             valid_logging["IncludeCookies"] = logging["include_cookies"]
         return valid_logging
 
-    def validate_origins(self, origins, default_origin_domain_name, default_origin_access_identity, default_origin_path, streaming):
+    def validate_origins(self, origins, default_origin_domain_name, default_origin_access_identity, default_origin_path, streaming, create_distribution):
         valid_origins = {}
         if origins is None:
             origins = []
         quantity = len(origins)
-        if quantity == 0 and default_origin_domain_name is None:
-            self.module.fail_json(msg="origins and default_origin_domain_name have not been specified. please at one.")
+        if quantity == 0 and default_origin_domain_name is None and create_distribution:
+            self.module.fail_json(msg="origins and default_origin_domain_name have not been specified. please specify at least one.")
         if quantity > 0:
             for origin in origins:
                 if origin.get("origin_path") is None:
@@ -326,6 +332,8 @@ class CloudFrontServiceManager:
                     self.module.fail_json(msg="origins[].domain_name must be specified for an origin as a minimum")
                 if origin.get("id") is None:
                     origin["id"] = self.generate_datetime_string()
+                else:
+                    origin["id"] = str(origin["id"])
                 if origin.get("custom_headers") and streaming:
                     self.module.fail_json(msg="custom_headers has been specified for a streaming distribution. " +
                             "custom headers are for web distributions only")
@@ -335,7 +343,8 @@ class CloudFrontServiceManager:
                         for custom_header in origin["custom_headers"]:
                             if custom_header.get("header_name") is None or custom_header.get("header_value") is None:
                                 self.module.fail_json(msg="both origins[].custom_headers.header_name and origins[].custom_headers.header_value must be specified")
-                    origin["quantity"] = custom_headers_quantity
+                        temp_custom_headers = origin.get("custom_headers")
+                        origin["custom_headers"] = { "items": temp_custom_headers, "quantity": custom_headers_quantity }
                 else:
                     origin["custom_headers"] = { "Quantity": 0 }
                 if ".s3.awsamazon.com" in origin.get("domain_name"):
@@ -349,25 +358,20 @@ class CloudFrontServiceManager:
 		    if custom_origin_config.get("origin_protocol_policy") is None:
 		        custom_origin_config["origin_protocol_policy"] = "match-viewer"
         		if custom_origin_config.get("http_port") is None:
-        		    custom_origin_config["h_t_t_p_port"] = 80
+        		    custom_origin_config["h_t_t_p_port"] = self.__default_http_port
                     else: 
 		        custom_origin_config["h_t_t_p_port"] = origin["custom_origin_config"]["http_port"]
 		        custom_origin_config.pop("http_port", None)
 		    if custom_origin_config.get("https_port") is None:
-		        custom_origin_config["h_t_t_p_s_port"] = 443
+		        custom_origin_config["h_t_t_p_s_port"] = self.__default_https_port
                     else:
 		        custom_origin_config["h_t_t_p_s_port"] = custom_origin_config["https_port"]
 		        custom_origin_config.pop("https_port", None)
                     if custom_origin_config.get("origin_ssl_protocols") is None:
-		        custom_origin_config["origin_ssl_protocols"] = {
-                                "items": [
-                                    "TLSv1",
-                                    "TLSv1.1",
-                                    "TLSv1.2"
-                                ],
-                                "quantity": 3
-                            }
-                    
+		        temp_origin_ssl_protocols = self.__default_origin_ssl_protocols
+                    temp_origin_ssl_protocols = custom_origin_config["origin_ssl_protocols"]
+                    origin_ssl_protocols_quantity = len(temp_origin_ssl_protocols)
+                    custom_origin_config["origin_ssl_protocols"] = { "items": temp_origin_ssl_protocols, "quantity": origin_ssl_protocols_quantity }
             valid_origins["items"] = origins
             valid_origins["quantity"] = quantity
             return snake_dict_to_pascal_dict(valid_origins)
@@ -463,6 +467,38 @@ def snake_dict_to_pascal_dict(snake_dict):
         return words.capitalize().split('_')[0] + ''.join(x.capitalize() or '_' for x in words.split('_')[1:])
 
     return pascalize(snake_dict)
+
+def pascal_dict_to_snake_dict(pascal_dict):
+
+    def pascal_to_snake(name):
+        import re
+        first_cap_re = re.compile('(.)([A-Z][a-z]+)')
+        all_cap_re = re.compile('([a-z0-9])([A-Z])')
+        s1 = first_cap_re.sub(r'\1_\2', name)
+        return all_cap_re.sub(r'\1_\2', s1).lower()
+    
+    def value_is_list(pascal_list):
+        checked_list = []
+        for item in pascal_list:
+            if isinstance(item, dict):
+                checked_list.append(pascal_dict_to_snake_dict(item))
+            elif isinstance(item, list):
+                checked_list.append(value_is_list(item))
+            else:
+                checked_list.append(item)
+        return checked_list
+
+    snake_dict = {}
+    
+    for k, v in pascal_dict.items():
+        if isinstance(v, dict):
+            snake_dict[pascal_to_snake(k)] = pascal_dict_to_snake_dict(v)
+        elif isinstance(v, list):
+            snake_dict[pascal_to_snake(k)] = value_is_list(v)
+        else:
+            snake_dict[pascal_to_snake(k)] = v
+
+    return snake_dict
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -597,10 +633,19 @@ def main():
             update_streaming_distribution, generate_signed_url_from_pem_private_key])) > 1:
         module.fail_json(msg="more than one cloudfront action has been specified. please select only one action.")
 
+    if update_distribution or delete_distribution:
+        distribution_id, config, e_tag = service_mgr.validate_update_or_delete_distribution_parameters(alias,
+                distribution_id, config, e_tag)
+
+    if update_streaming_distribution or delete_streaming_distribution:
+        streaming_distribution_id, config, e_tag = service_mgr.validate_update_or_delete_streaming_distribution_parameters(alias,
+                streaming_distribution_id, config, e_tag)
+
     valid_aliases = service_mgr.validate_aliases(aliases, alias)
     valid_logging = service_mgr.validate_logging(logging, streaming_distribution)
+
     valid_origins = service_mgr.validate_origins(origins, default_origin_domain_name, default_origin_access_identity,
-            default_origin_path, streaming_distribution)
+            default_origin_path, streaming_distribution, create_distribution)
 
     # DefaultCacheBehavior
     # CacheBehaviors
@@ -617,13 +662,6 @@ def main():
     valid_s3_origin = service_mgr.validate_s3_origin(s3_origin)
     valid_viewer_certificate = service_mgr.validate_viewer_certificate(viewer_certificate)
 
-    if update_distribution or delete_distribution:
-        distribution_id, config, e_tag = service_mgr.validate_update_or_delete_distribution_parameters(alias,
-                distribution_id, config, e_tag)
-
-    if update_streaming_distribution or delete_streaming_distribution:
-        streaming_distribution_id, config, e_tag = service_mgr.validate_update_or_delete_streaming_distribution_parameters(alias,
-                streaming_distribution_id, config, e_tag)
 
     default_datetime_string = service_mgr.generate_datetime_string()
 
