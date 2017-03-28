@@ -623,7 +623,9 @@ class Map(object):
 
     def _get_icon_ids(self):
         icons_list = self._zapi.image.get({})
-        icon_ids = {icon['name']: icon['imageid'] for icon in icons_list}
+        icon_ids = {}
+        for icon in icons_list:
+            icon_ids[icon['name']] = icon['imageid']
         return icon_ids
 
     def _get_icon_size(self, icon_id):
