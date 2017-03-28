@@ -167,7 +167,7 @@ EXAMPLES = """
     device: /dev/sdb
     number: 1
     state: present
-    part_end: 1gib
+    part_end: 1GiB
 
 # Create a new primary partition for LVM
 - parted:
@@ -175,7 +175,7 @@ EXAMPLES = """
     number: 2
     flags: [ lvm ]
     state: present
-    part_start: 1gib
+    part_start: 1GiB
 
 # Read device information (always use unit when probing)
 - parted: device=/dev/sdb unit=MiB
@@ -299,11 +299,12 @@ def parse_partition_info(parted_output, unit):
         if unit != 'chs':
             size   = parse_unit(part_params[3])[0]
             fstype = part_params[4]
-            flags  = part_params[5]
+            flags  = part_params[6]
+
         else:
             size   = ""
             fstype = part_params[3]
-            flags  = part_params[4]
+            flags  = part_params[5]
 
         parts.append({
             'num':    int(part_params[0]),
@@ -406,7 +407,7 @@ def get_device_info(device, unit):
     Fetches information about a disk and its partitions and it returns a
     dictionary.
     """
-    global module
+    global module, parted_exec
 
     # If parted complains about missing labels, it means there are no partitions.
     # In this case only, use a custom function to fetch information and emulate
@@ -415,7 +416,7 @@ def get_device_info(device, unit):
     if label_needed:
         return get_unlabeled_device_info(device, unit)
 
-    command = "parted -s -m %s -- unit '%s' print" % (device, unit)
+    command = "%s -s -m %s -- unit '%s' print" % (parted_exec, device, unit)
     rc, out, err = module.run_command(command)
     if rc != 0 and 'unrecognised disk label' not in err:
         module.fail_json(msg=(
@@ -433,13 +434,15 @@ def check_parted_label(device):
     to 3.1 don't return data when there is no label. For more information see:
     http://upstream.rosalinux.ru/changelogs/libparted/3.1/changelog.html
     """
+    global parted_exec
+
     # Check the version
     parted_major, parted_minor, _ = parted_version()
     if (parted_major == 3 and parted_minor >= 1) or parted_major > 3:
         return False
 
     # Older parted versions return a message in the stdout and RC > 0.
-    rc, out, err = module.run_command("parted -s -m %s print" % device)
+    rc, out, err = module.run_command("%s -s -m %s print" % (parted_exec, device))
     if rc != 0 and 'unrecognised disk label' in out.lower():
         return True
 
@@ -450,9 +453,9 @@ def parted_version():
     """
     Returns the major and minor version of parted installed on the system.
     """
-    global module
+    global module, parted_exec
 
-    rc, out, err = module.run_command("parted --version")
+    rc, out, err = module.run_command("%s --version" % parted_exec)
     if rc != 0:
         module.fail_json(
             msg="Failed to get parted version.", rc=rc, out=out, err=err
@@ -480,10 +483,10 @@ def parted(script, device, align):
     """
     Runs a parted script.
     """
-    global module
+    global module, parted_exec
 
     if script and not module.check_mode:
-        command = "parted -s -m -a %s %s -- %s" % (align, device, script)
+        command = "%s -s -m -a %s %s -- %s" % (parted_exec, align, device, script)
         rc, out, err = module.run_command(command)
 
         if rc != 0:
@@ -527,7 +530,7 @@ def check_size_format(size_str):
 
 
 def main():
-    global module, units_si, units_iec
+    global module, units_si, units_iec, parted_exec
 
     changed = False
     output_script = ""
@@ -595,6 +598,9 @@ def main():
     name        = module.params['name']
     state       = module.params['state']
     flags       = module.params['flags']
+
+    # Parted executable
+    parted_exec = module.get_bin_path('parted', True)
 
     # Conditioning
     if number and number < 0:
