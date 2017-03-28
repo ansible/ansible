@@ -432,9 +432,9 @@ class Map(object):
 
     def _get_urls(self, data):
         urls = []
-        for url_raw in [remove_quotes(value) for key,value in data.items() if key.startswith("zbx_url")]:
+        for url_raw in [remove_quotes(value) for key, value in data.items() if key.startswith("zbx_url")]:
             try:
-                name,url = url_raw.split(':', 1)
+                name, url = url_raw.split(':', 1)
             except Exception as e:
                 self._module.fail_json(msg="Failed to parse zbx_url='%s': %s" % (url_raw, e))
             urls.append({
@@ -445,9 +445,9 @@ class Map(object):
 
     def _get_triggers(self, data):
         triggers = []
-        for trigger_raw in [remove_quotes(value) for key,value in data.items() if key.startswith("zbx_trigger")]:
+        for trigger_raw in [remove_quotes(value) for key, value in data.items() if key.startswith("zbx_trigger")]:
             try:
-                host,trigger = trigger_raw.split(':', 1)
+                host, trigger = trigger_raw.split(':', 1)
             except Exception as e:
                 self._module.fail_json(msg="Failed to parse zbx_trigger='%s': %s" % (trigger_raw, e))
             triggerid = self._get_trigger_id(host, trigger)
@@ -568,7 +568,7 @@ class Map(object):
             link['selementid1'] = id_mapping[link['selementid1']]
             link['selementid2'] = id_mapping[link['selementid2']]
             if link['selementid2'] < link['selementid1']:
-                link['selementid1'],link['selementid2'] = link['selementid2'],link['selementid1']
+                link['selementid1'], link['selementid2'] = link['selementid2'], link['selementid1']
 
     def _is_links_equal(self, generated_links, exist_links):
         if len(generated_links) != len(exist_links):
