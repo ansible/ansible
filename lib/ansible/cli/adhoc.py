@@ -103,10 +103,6 @@ class AdHocCLI(CLI):
         # only thing left should be host pattern
         pattern = to_text(self.args[0], errors='surrogate_or_strict')
 
-        # ignore connection password cause we are local
-        if self.options.connection == "local":
-            self.options.ask_pass = False
-
         sshpass    = None
         becomepass = None
         b_vault_pass = None
