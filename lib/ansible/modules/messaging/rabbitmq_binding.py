@@ -67,6 +67,11 @@ options:
             - rabbitMQ management api port
         required: false
         default: 15672
+    login_with_ssl:
+        description:
+            - use SSL when accessing RabbitMQ host
+        required: false
+        default: false
     vhost:
         description:
             - rabbitMQ virtual host
@@ -126,6 +131,7 @@ def main():
             login_password = dict(default='guest', type='str', no_log=True),
             login_host = dict(default='localhost', type='str'),
             login_port = dict(default='15672', type='str'),
+            login_with_ssl = dict(default=False, type='bool'),
             vhost = dict(default='/', type='str'),
             destination = dict(required=True, aliases=[ "dst", "dest"], type='str'),
             destination_type = dict(required=True, aliases=[ "type", "dest_type"], choices=[ "queue", "exchange" ],type='str'),
@@ -145,7 +151,8 @@ def main():
     else:
         props = urllib.quote(module.params['routing_key'],'')
 
-    url = "http://%s:%s/api/bindings/%s/e/%s/%s/%s/%s" % (
+    url = "%s://%s:%s/api/bindings/%s/e/%s/%s/%s/%s" % (
+        'https' if module.params['login_with_ssl'] else 'http',
         module.params['login_host'],
         module.params['login_port'],
         urllib.quote(module.params['vhost'],''),
