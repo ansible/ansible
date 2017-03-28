@@ -60,12 +60,16 @@ class RDSDBInstance(object):
                         'maintenance_window', 'multi_zone',
                         'replication_source',
                         'size', 'storage_type', 'tags', 'zone']
+        leave_if_null = ['maintenance_window', 'backup_retention']
         before = dict()
         after = dict()
         for k in compare_keys:
-            if self.params.get(k) != params.get(k):
-                before[k] = self.params.get(k)
-                after[k] = params.get(k)
+            if self.data.get(k) != params.get(k):
+                if params.get(k) == None and k in leave_if_null:
+                    pass
+                else:
+                    before[k] = self.data.get(k)
+                    after[k] = params.get(k)
         port = self.data.get('port')
         if port != params.get('port'):
             before['port'] = port
