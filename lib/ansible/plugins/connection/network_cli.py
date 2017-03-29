@@ -26,6 +26,7 @@ import datetime
 import traceback
 import logging
 
+from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.six.moves import StringIO
 from ansible.plugins import terminal_loader
@@ -74,6 +75,10 @@ class Connection(_Connection):
 
     def _connect(self):
         """Connections to the device and sets the terminal type"""
+
+        if self._play_context.password and not self._play_context.private_key_file:
+            C.PARAMIKO_LOOK_FOR_KEYS = False
+
         super(Connection, self)._connect()
 
         display.display('ssh connection done, setting terminal', log_only=True)
