@@ -58,7 +58,10 @@ def get_defaults_flag(module):
         if line:
             commands.add(line.strip().split()[0])
 
-    return 'all' if 'all' in commands else 'full'
+    if 'all' in commands:
+        return 'all'
+    else:
+        return 'full'
 
 def get_config(module, flags=[]):
     cmd = 'show running-config '
