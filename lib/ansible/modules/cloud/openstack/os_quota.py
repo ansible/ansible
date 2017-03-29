@@ -309,10 +309,18 @@ def _get_compute_quotas(cloud, project):
 
 def _get_quotas(cloud, project):
 
+    get_quota_map = {
+        'volume':  _get_volume_quotas,
+        'network': _get_network_quotas,
+        'compute': _get_compute_quotas,
+    }
+
     quota = {}
-    quota['volume'] = _get_volume_quotas(cloud, project)
-    quota['network'] = _get_network_quotas(cloud, project)
-    quota['compute'] = _get_compute_quotas(cloud, project)
+    for q, fn in get_quota_map:
+        try:
+            quota[q] = fn(cloud, project)
+        except:
+            pass
 
     for quota_type in quota.keys():
         quota[quota_type] = _scrub_results(quota[quota_type])
@@ -433,6 +441,9 @@ def main():
 
         #Get current quota values
         project_quota_output = _get_quotas(cloud, cloud_params['name'])
+        if not project_quota_output:
+            module.fail_json(msg='Could not obtain any current quota information')
+
         changes_required = False
 
         if module.params['state'] == "absent":
