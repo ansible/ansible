@@ -34,6 +34,10 @@ Persistent Connection had been enable for the following groups of modules:
 
    The list of network platforms that support Persistent Connection will increase over in each release.
 
+.. notes: Persistent Connections is for `cli` (ssh), not for API transports.
+
+   The Persistent Connection work added in Ansible 2.3 only applies to `cli transport`. It doesn't apply to APIs such as eos's eapi, nor nxos's nxapi. From Ansible 2.3 using CLI should be faster in most cases than using the API transport. Using CLI also allows you be benefit from using SSH Keys.
+
 Playbook Structure from 2.1 to 2.3
 ==================================
 
@@ -185,11 +189,42 @@ Note that the new task entry does not include any credential information anywher
 
 This removes the requirement to encode any credentials into the Playbook, further simplifying the Playbook.
 
+Anisble Network Roadmap
+=======================
+
+To best understand the changes that have gone into Ansible 2.3 it's useful to understand where we've come from and where we are heading.
+
+Ansible 2.3
+-----------
+
+ * Introduction of Persistent Connections
+ * Deprecation notice of using top-level arguments
+
+
+Ansible 2.4
+------------
+become
+
+Ansible future
+--------------
+Which release will provider go away
 
 Connection Errors
 =================
 
 This section covers troubleshooting connection errors.
+
+Errors generally fall into one of the following categories
+
+:Authentication issues:
+  Which fall into
+  * Not correctly specifying credentials
+  * Remote device (network switch/router) not falling back to other other authentication methods
+:Timeout issues:
+  Can occur when trying to pull a large amount of data
+
+Details about how to test
+forks/limits/drop to a single ad-hoc command
 
 
 "Unable to open shell" error
@@ -512,7 +547,7 @@ Connecting via A Proxy Host
 The new connection framework in Ansible 2.3 no longer supports the use of the
 ``delegate_to`` directive.  In order to use a bastion or intermediate jump host
 to connect to network devices, network modules now support the use of
-``ProxyCommand``.  
+``ProxyCommand``.
 
 To use ``ProxyCommand`` configure the proxy settings in the Ansible inventory
 file to specify the proxy host.
@@ -530,11 +565,19 @@ file to specify the proxy host.
 With the configuration above, simply build and run the playbook as normal with
 no additional changes necessary.  The network module will now connect to the
 network device by first connecting to the host specified in
-``ansible_ssh_common_args`` which is ``bastion01`` in the above example.  
+``ansible_ssh_common_args`` which is ``bastion01`` in the above example.
 
 .. warning: ``delegate_to``
 
    Note that in Ansible 2.3 ``delegate_to`` is not supported for Network modules.
+
+
+.. notes: Using ``ProxyCommand`` with passwords via variables
+
+   It is a feature that SSH doesn't support providing passwords via environment variables.
+   This is done to prevent secrets from leaking out, for example in ``ps`` output.
+
+   We recommend using SSH Keys, and if needed and ssh-agent, where ever possible.
 
 Clearing Out Persistent Connections
 -----------------------------------
