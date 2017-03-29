@@ -8,9 +8,6 @@ include lib/ansible/module_utils/powershell.ps1
 recursive-include lib/ansible/modules *
 recursive-include lib/ansible/galaxy/data *
 recursive-include docs *
-include hacking/module_formatter.py
-include hacking/dump_playbook_attributes.py
-recursive-include hacking/templates *
 recursive-include packaging *
 recursive-include test *
 include Makefile
