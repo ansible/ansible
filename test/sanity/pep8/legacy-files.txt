@@ -512,8 +512,6 @@ lib/ansible/modules/network/cumulus/_cl_img_install.py
 lib/ansible/modules/network/cumulus/_cl_license.py
 lib/ansible/modules/network/cumulus/_cl_ports.py
 lib/ansible/modules/network/cumulus/nclu.py
-lib/ansible/modules/network/dellos6/dellos6_command.py
-lib/ansible/modules/network/dellos6/dellos6_facts.py
 lib/ansible/modules/network/dnsimple.py
 lib/ansible/modules/network/dnsmadeeasy.py
 lib/ansible/modules/network/eos/_eos_template.py
