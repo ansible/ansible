@@ -185,7 +185,6 @@ class Inventory(object):
                 if length == 0 or (length == 1 and all in mygroups):
                     ungrouped.add_host(host)
 
-
     def _match(self, str, pattern_str):
         try:
             if pattern_str.startswith('~'):
