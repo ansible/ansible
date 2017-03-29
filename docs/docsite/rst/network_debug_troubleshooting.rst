@@ -216,7 +216,7 @@ This section covers troubleshooting connection errors.
 
 Errors generally fall into one of the following categories
 
-:Authentication issues: Which fall into:
+:Authentication issues:
   * Not correctly specifying credentials
   * Remote device (network switch/router) not falling back to other other authentication methods
 :Timeout issues:
