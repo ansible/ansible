@@ -75,8 +75,8 @@ EXAMPLES=r'''
   - win_domain_controller:
       dns_domain_name: ansible.vagrant
       domain_admin_user: testguy@ansible.vagrant
-      domain_admin_pass: password123!
-      safe_mode_pass: password123!
+      domain_admin_password: password123!
+      safe_mode_password: password123!
       state: domain_controller
       log_path: c:\ansible_win_domain_controller.txt
 
@@ -91,8 +91,8 @@ EXAMPLES=r'''
   tasks:
   - win_domain_controller:
       domain_admin_user: testguy@ansible.vagrant
-      domain_admin_pass: password123!
-      local_admin_pass: password123!
+      domain_admin_password: password123!
+      local_admin_password: password123!
       state: member_server
       log_path: c:\ansible_win_domain_controller.txt
 
