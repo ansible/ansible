@@ -24,9 +24,9 @@ module: gcp_backend_service
 version_added: "2.4"
 short_description: Create or Destroy a Backend Service.
 description:
-    - Create, or Destroy a Backend Service.  See
+    - Create or Destroy a Backend Service.  See
       U(https://cloud.google.com/compute/docs/load-balancing/http/backend-service) for an overview.
-      Full install/configuration instructions for the gce* modules can
+      Full install/configuration instructions for the Google Cloud modules can
       be found in the comments of ansible/test/gce_tests.py.
 requirements:
   - "python >= 2.6"
