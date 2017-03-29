@@ -81,6 +81,14 @@ Else {
 
     Try {
         $webRequest = [System.Net.HttpWebRequest]::Create($url)
+        if ($proxy_url) {
+          $proxy_server = New-Object System.Net.WebProxy($proxy_url, $true)
+          if ($proxy_username -and $proxy_password) {
+            $proxy_credential = New-Object System.Net.NetworkCredential($proxy_username, $proxy_password)
+            $proxy_server.Credentials = $proxy_credential
+          }
+          $webRequest.Proxy = $proxy_server
+        }
 
         if($username -and $password){
             $webRequest.Credentials = New-Object System.Net.NetworkCredential($username, $password)
