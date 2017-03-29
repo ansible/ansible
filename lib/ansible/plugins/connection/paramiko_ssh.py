@@ -302,7 +302,7 @@ class Connection(ConnectionBase):
                     chunk = chan.recv(bufsize)
                     display.debug("chunk is: %s" % chunk)
                     if not chunk:
-                        if 'unknown user' in become_output:
+                        if b'unknown user' in become_output:
                             raise AnsibleError( 'user %s does not exist' % self._play_context.become_user)
                         else:
                             break
