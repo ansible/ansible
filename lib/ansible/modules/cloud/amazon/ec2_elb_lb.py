@@ -404,7 +404,7 @@ except ImportError:
 
 import time
 import random
-
+import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, connect_to_aws, AnsibleAWSError
 from ansible.module_utils.ec2 import get_aws_connection_info
