@@ -99,7 +99,6 @@ lib/ansible/module_utils/cloudengine.py
 lib/ansible/module_utils/connection.py
 lib/ansible/module_utils/database.py
 lib/ansible/module_utils/dellos10.py
-lib/ansible/module_utils/dellos6.py
 lib/ansible/module_utils/dellos9.py
 lib/ansible/module_utils/docker_common.py
 lib/ansible/module_utils/ec2.py
@@ -876,7 +875,6 @@ lib/ansible/plugins/action/asa_config.py
 lib/ansible/plugins/action/asa_template.py
 lib/ansible/plugins/action/assemble.py
 lib/ansible/plugins/action/copy.py
-lib/ansible/plugins/action/dellos6_config.py
 lib/ansible/plugins/action/eos_template.py
 lib/ansible/plugins/action/fetch.py
 lib/ansible/plugins/action/group_by.py
