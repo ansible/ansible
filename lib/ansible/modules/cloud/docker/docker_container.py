@@ -1288,10 +1288,19 @@ class Container(DockerBaseClass):
                         set_a = set(getattr(self.parameters, key))
                         set_b = set(value)
                         match = (set_a <= set_b)
+                elif isinstance(getattr(self.parameters, key), list) and not len(getattr(self.parameters, key)) \
+                        and value is None:
+                    # an empty list and None are ==
+                    continue
                 elif isinstance(getattr(self.parameters, key), dict) and isinstance(value, dict):
                     # compare two dicts
                     self.log("comparing two dicts: %s" % key)
                     match = self._compare_dicts(getattr(self.parameters, key), value)
+
+                elif isinstance(getattr(self.parameters, key), dict) and \
+                        not len(list(getattr(self.parameters, key).keys())) and value is None:
+                    # an empty dict and None are ==
+                    continue
                 else:
                     # primitive compare
                     self.log("primitive compare: %s" % key)
@@ -1689,7 +1698,7 @@ class ContainerManager(DockerBaseClass):
     def present(self, state):
         container = self._get_container(self.parameters.name)
         image = self._get_image()
-
+        self.log(image, pretty_print=True)
         if not container.exists:
             # New container
             self.log('No container found')
