@@ -118,7 +118,13 @@ class Server():
         self.path = path
         self.play_context = play_context
 
-        display.display("starting new persistent socket with path %s" % path, log_only=True)
+        display.display(
+            'creating new control socket for host %s:%s as user %s' %
+            (play_context.remote_addr, play_context.port, play_context.remote_user),
+            log_only=True
+        )
+
+        display.display('control socket path is %s' % path, log_only=True)
         display.display('current working directory is %s' % os.getcwd(), log_only=True)
 
         self._start_time = datetime.datetime.now()
@@ -128,10 +134,10 @@ class Server():
         self.conn = connection_loader.get(play_context.connection, play_context, sys.stdin)
         self.conn._connect()
         if not self.conn.connected:
-            raise AnsibleConnectionFailure('unable to connect to remote host')
+            raise AnsibleConnectionFailure('unable to connect to remote host %s' % self._play_context.remote_addr)
 
         connection_time = datetime.datetime.now() - self._start_time
-        display.display('connection established in %s' % connection_time, log_only=True)
+        display.display('connection established to %s in %s' % (play_context.remote_addr, connection_time), log_only=True)
 
         self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.socket.bind(path)
@@ -233,7 +239,7 @@ class Server():
                     send_data(s, to_bytes(stderr))
                 s.close()
         except Exception as e:
-            display.display(traceback.foramt_exec(), log_only=True)
+            display.display(traceback.format_exec(), log_only=True)
         finally:
             # when done, close the connection properly and cleanup
             # the socket file so it can be recreated
@@ -291,10 +297,12 @@ def main():
             try:
                 server = Server(sf_path, pc)
             except AnsibleConnectionFailure as exc:
-                display.display(str(exc), pc.remote_addr, pc.remote_user, log_only=True)
+                display.display('connecting to host %s returned an error' % pc.remote_addr, log_only=True)
+                display.display(str(exc), log_only=True)
                 rc = 1
             except Exception as exc:
-                display.display(traceback.format_exc(), pc.remote_addr, pc.remote_user, log_only=True)
+                display.display('failed to create control socket for host %s' % pc.remote_addr, log_only=True)
+                display.display(traceback.format_exc(), log_only=True)
                 rc = 1
             fcntl.lockf(lock_fd, fcntl.LOCK_UN)
             os.close(lock_fd)
@@ -302,7 +310,7 @@ def main():
                 server.run()
             sys.exit(rc)
     else:
-        display.display('re-using existing socket connection', pc.remote_addr, pc.remote_user, log_only=True)
+        display.display('re-using existing socket for %s@%s:%s' % (pc.remote_user, pc.remote_addr, pc.port), log_only=True)
     fcntl.lockf(lock_fd, fcntl.LOCK_UN)
     os.close(lock_fd)
 
