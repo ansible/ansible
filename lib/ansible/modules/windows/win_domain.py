@@ -54,7 +54,7 @@ reboot_required:
 
 EXAMPLES=r'''
 # ensure the named domain is reachable from the target host; if not, create the domain in a new forest residing on the target host
-- win_domain_controller:
+- win_domain:
     dns_domain_name: ansible.vagrant
     safe_mode_password: password123!
 
