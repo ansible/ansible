@@ -146,7 +146,7 @@ def main():
         commands = [c.strip() for c in str(candidate).split('\n')]
 
     if commands:
-        load_config(module, commands, not module.check_mode)
+        load_config(module, commands, result['warnings'], not module.check_mode)
         result['changed'] = not module.check_mode
 
     result['updates'] = commands

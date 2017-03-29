@@ -85,7 +85,7 @@ def run_commands(module, commands, check_rc=True):
         responses.append(out)
     return responses
 
-def load_config(module, commands, commit=False, replace=False, comment=None):
+def load_config(module, commands, warnings, commit=False, replace=False, comment=None):
 
     rc, out, err = exec_command(module, 'configure terminal')
     if rc != 0:
@@ -106,6 +106,13 @@ def load_config(module, commands, commit=False, replace=False, comment=None):
         module.fail_json(msg=err, commands=commands, rc=rc)
 
     rc, diff, err = exec_command(module, 'show commit changes diff')
+    if rc != 0:
+        # If we failed, maybe we are in an old version so
+        # we run show configuration instead
+        rc, diff, err = exec_command(module, 'show configuration')
+        if module._diff:
+            warnings.append('device platform does not support config diff')
+
     if commit:
         cmd = 'commit'
         if comment:
