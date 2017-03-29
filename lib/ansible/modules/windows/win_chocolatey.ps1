@@ -247,7 +247,7 @@ Function Choco-Install
         [int]$timeout
     )
 
-    if ((Choco-IsInstalled $package) -and -not $force)
+    if (Choco-IsInstalled $package)
     {
         if ($upgrade)
         {
@@ -258,8 +258,7 @@ Function Choco-Install
 
             return
         }
-
-        if (-not $force)
+        elseif (-not $force)
         {
             return
         }
@@ -385,16 +384,9 @@ Try
 {
     Chocolatey-Install-Upgrade
 
-    if ($state -eq "present")
+    if ($state -eq "present" -or $state -eq "latest")
     {
         Choco-Install -package $package -version $version -source $source -force $force `
-            -installargs $installargs -packageparams $packageparams `
-            -allowemptychecksums $allowemptychecksums -ignorechecksums $ignorechecksums `
-            -ignoredependencies $ignoredependencies -timeout $timeout
-    }
-    elseif ($state -eq "latest")
-    {
-        Choco-Upgrade -package $package -version $version -source $source -force $force `
             -installargs $installargs -packageparams $packageparams `
             -allowemptychecksums $allowemptychecksums -ignorechecksums $ignorechecksums `
             -ignoredependencies $ignoredependencies -timeout $timeout
