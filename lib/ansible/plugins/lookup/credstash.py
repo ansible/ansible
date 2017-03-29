@@ -41,8 +41,14 @@ class LookupModule(LookupBase):
                 version = kwargs.pop('version', '')
                 region = kwargs.pop('region', None)
                 table = kwargs.pop('table', 'credential-store')
+                profile_name = kwargs.pop('profile_name', None)
+                aws_access_key_id = kwargs.pop('aws_access_key_id', None)
+                aws_secret_access_key = kwargs.pop('aws_secret_access_key', None)
+                aws_session_token = kwargs.pop('aws_session_token', None)
+                kwargs_pass = {'profile_name': profile_name, 'aws_access_key_id': aws_access_key_id,
+                               'aws_secret_access_key': aws_secret_access_key, 'aws_session_token': aws_session_token}
                 val = credstash.getSecret(term, version, region, table,
-                                          context=kwargs)
+                                          context=kwargs, **kwargs_pass)
             except credstash.ItemNotFound:
                 raise AnsibleError('Key {0} not found'.format(term))
             except Exception as e:
