@@ -209,6 +209,11 @@ EXAMPLES = '''
     name: bottle
     state: forcereinstall
 
+# Install (Bottle), using the latest pre-release version
+- pip:
+    name: bottle
+    state: prerelease
+
 # Install (Bottle) while ensuring the umask is 0022 (to ensure other users can use it)
 - pip:
     name: bottle
@@ -386,6 +391,7 @@ def main():
         absent='uninstall -y',
         latest='install -U',
         forcereinstall='install -U --force-reinstall',
+        prerelease='install -U --pre'
     )
 
     module = AnsibleModule(
