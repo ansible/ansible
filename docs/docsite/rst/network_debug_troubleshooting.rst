@@ -230,12 +230,12 @@ Errors generally fall into one of the following categories:
   * Not correctly specifying credentials
   * Remote device (network switch/router) not falling back to other other authentication methods
   * SSH key issues
-  * Use of ``delgate_to``, use ``ProxyCommand`` instead.
+  * Use of ``delgate_to``, use ``ProxyCommand`` instead
 :Timeout issues:
   * Can occur when trying to pull a large amount of data
   * May actually be masking a authentication issue
 :Playbook issues:
-  * Use of ``delgate_to``, use ``ProxyCommand`` instead.
+  * Use of ``delgate_to``, instead of ``ProxyCommand``
   * Not using ``connection: local``
 
 
@@ -285,8 +285,8 @@ Reference back to `how to read logfile`
 
 
 
-"Unable to open shell" error
-----------------------------
+Error: "Unable to open shell"
+-----------------------------
 
 **Platforms:** Any
 
@@ -339,8 +339,8 @@ Look for error message in this document, in this case the relevant lines are
    The final Ansible 2.3 will include improved logging which will make it easier to identify connection lines in the log
 
 
-"number of connection attempts exceeded, unable to connect to control socket"
------------------------------------------------------------------------------
+Error: "number of connection attempts exceeded, unable to connect to control socket"
+------------------------------------------------------------------------------------
 
 **Platforms:** Any
 
@@ -364,8 +364,8 @@ Do stuff For example:
 
 	Example stuff
 
-"Authentication failed"
------------------------
+Error: "Authentication failed"
+------------------------------
 
 **Platforms:** Any
 
@@ -402,8 +402,8 @@ Or to make this a permanent change add the following to your ``ansible.cfg``
 
 
 
-"Unable to enter configuration mode"
-------------------------------------
+Error: "Unable to enter configuration mode"
+-------------------------------------------
 
 **Platforms:** eos and ios
 
@@ -450,8 +450,8 @@ Add `authorize: yes` to the task. For example:
 
 
 
-"invalid connection specified, expected connection=local, got ssh"
-------------------------------------------------------------------
+Error: "invalid connection specified, expected connection=local, got ssh"
+-------------------------------------------------------------------------
 
 **Platforms:** Any
 
@@ -475,7 +475,7 @@ following ways.
 * Set the task to use ``connection: local``
 * Run ansible-playbook using the ``-c local`` setting
 
-timeouts
+Timeouts
 --------
 
 TDB Detail when to use the ``timeout:`` option
