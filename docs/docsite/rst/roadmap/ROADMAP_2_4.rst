@@ -11,14 +11,17 @@ Target: Aug/Mid-September 2017
     - For example: A module that is deprecated in 2.4 will be removed in 2.8
 
 - **Python 2.4 and 2.5 support discontinuation**
+
   - Ansible will not support Python 2.4 nor 2.5 on the target hosts anymore. Going forward, Python 2.6+ will be required on targets, as already is the case on the controller.
 
 - **Python 3 and beyond**
+
   - Ansible Core Engine and Core modules will be tested on Python 3
   - Communicate with Linux distros to provide Ansible running on Python 3
   - Check for Python 3 tests on core modules and create any missing
 
 - **Ansible-Config**
+
   - New yaml format for config
   - Extend the ability of the current config system by adding an ansible-config command and add the following:
 
