@@ -507,7 +507,7 @@ It used to be called hostfile in Ansible before 1.9
 inventory_ignore_extensions
 ===========================
 
-Coma-separated list of file extension patterns to ignore when Ansible inventory
+Comma-separated list of file extension patterns to ignore when Ansible inventory
 is a directory with multiple sources (static and dynamic)::
 
     inventory_ignore_extensions = ~, .orig, .bak, .ini, .cfg, .retry, .pyc, .pyo
