@@ -18,12 +18,13 @@ with open('requirements.txt') as requirements_file:
                 "That indicates this copy of the source code is incomplete.")
         sys.exit(2)
 
-if not os.path.islink(os.path.join(os.getcwd(), 'bin', 'ansible-playbook')):
-    # GitHub creates .zip files automatically, but these .zip files do not
-    # support symlinks. For Ansible to work, everything in bin that's _not_
-    # bin/ansible needs to be a symlink to bin/ansible - otherwise the CLI
-    # script will simply believe it is running bin/ansible and fail, with an
-    # unhelpful error message.
+# Python's zipfile does not properly resolve symlinks in the zipfile. When
+# installing from zipfile, this can cause malformed versions of the CLI scripts.
+path_to_test = os.path.join(os.getcwd(), 'bin', 'ansible-playbook')
+# If pulling from VCS and not something run through sdist, it will be a symlink
+path_to_test = os.path.realpath(path_to_test)
+starts_with_shebang = open(path_to_test, 'r').read(2) == '#!'
+if not starts_with_shebang:
     print("It appears that you are installing Ansible from a .zip file. "
           "Because Python's zipfile library does not properly handle symbolic "
           "links in a .zip file, pip and setuptools cannot install Ansible "
