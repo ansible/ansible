@@ -67,6 +67,7 @@ options:
       manage blocks."
       - "User\'s account will be used if value not set or empty."
     required: false
+    version_added: '2.4'
   application:
     description:
       - "Name of target PubNub application for which blocks configuration on
