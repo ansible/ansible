@@ -198,7 +198,7 @@ Or you can use SSH keys..
 
 FIXME Add details here
 
-Anisble Network Roadmap
+Ansible Network Roadmap
 =======================
 
 To best understand the changes that have gone into Ansible 2.3 it's useful to understand where we've come from and where we are heading.
@@ -212,7 +212,8 @@ Ansible 2.3
 
 Ansible 2.4
 ------------
-become
+
+TBD Details of ``become`` to replace ``auth_pass`` and ``authorize``
 
 Ansible future
 --------------
@@ -233,6 +234,10 @@ Errors generally fall into one of the following categories:
 :Timeout issues:
   * Can occur when trying to pull a large amount of data
   * May actually be masking a authentication issue
+:Playbook issues:
+  * Use of ``delgate_to``, use ``ProxyCommand`` instead.
+  * Not using ``connection: local``
+
 
 
 Enabling Networking logging and how to read the logfile
@@ -470,7 +475,10 @@ following ways.
 * Set the task to use ``connection: local``
 * Run ansible-playbook using the ``-c local`` setting
 
+timeouts
+--------
 
+TDB Detail when to use the ``timeout:`` option
 
 Clearing Out Persistent Connections
 -----------------------------------
