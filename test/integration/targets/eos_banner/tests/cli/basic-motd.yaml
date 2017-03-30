@@ -5,6 +5,7 @@
     banner: motd
     state: absent
     authorize: yes
+    provider: "{{ cli }}"
 
 - name: Set motd
   eos_banner:
