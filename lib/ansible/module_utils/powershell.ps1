@@ -216,6 +216,15 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
     } elseif ($value -ne $null -and $type -eq "float") {
         # Convert float types to real Powershell floats
         $value = $value -as [float]
+    } elseif ($value -ne $null -and $type -eq "list") {
+        if ($value -is [array]) {
+            # Nothing to do
+        } elseif ($value -is [string]) {
+            # Convert string type to real Powershell array
+            $value = $value -split ","
+        } else {
+            Fail-Json -obj $resultobj -message "Parameter $name is not a Yaml list."
+        }
     }
 
     return $value
