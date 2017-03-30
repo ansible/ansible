@@ -166,29 +166,4 @@ For details on how how to pass in authentication details, see `Specifying Creden
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-The rest of this file needs review
-
-
-
-Connecting to Networking Devices
-================================================
-
-
-.. _networking_module_conditionals:
-
-
+# FIXME TOC & link to other pages
