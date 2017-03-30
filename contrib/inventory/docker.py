@@ -356,6 +356,7 @@ import json
 import argparse
 import re
 import yaml
+from distutils.version import LooseVersion
 
 from collections import defaultdict
 # Manipulation of the path is needed because the docker-py
@@ -371,7 +372,12 @@ HAS_DOCKER_PY = True
 HAS_DOCKER_ERROR = False
 
 try:
-    from docker import Client
+    from docker import __version__ as docker_version
+    if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
+        from docker import APIClient as Client
+    else:
+        from docker import Client
+
     from docker.errors import APIError, TLSParameterError
     from docker.tls import TLSConfig
     from docker.constants import DEFAULT_TIMEOUT_SECONDS, DEFAULT_DOCKER_API_VERSION
