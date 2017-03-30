@@ -216,6 +216,9 @@ class AnsibleCloudStackVmSnapshot(AnsibleCloudStack):
                 if res and poll_async:
                     snapshot = self.poll_job(res, 'vmsnapshot')
 
+        if snapshot:
+            snapshot = self.ensure_tags(resource=snapshot, resource_type='Snapshot')
+
         return snapshot
 
 
@@ -268,6 +271,7 @@ def main():
         account = dict(default=None),
         project = dict(default=None),
         poll_async = dict(type='bool', default=True),
+        tags=dict(type='list', aliases=['tag'], default=None),
     ))
 
     required_together = cs_required_together()

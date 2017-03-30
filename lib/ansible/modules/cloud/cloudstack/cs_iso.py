@@ -255,6 +255,11 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
                 if 'errortext' in res:
                     self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
                 iso = res['iso'][0]
+
+        if iso:
+            iso = self.ensure_tags(resource=iso, resource_type='ISO')
+            self.iso=iso
+
         return iso
 
 
@@ -325,6 +330,7 @@ def main():
         is_dynamically_scalable = dict(type='bool', default=False),
         state = dict(choices=['present', 'absent'], default='present'),
         poll_async = dict(type='bool', default=True),
+        tags=dict(type='list', aliases=['tag'], default=None),
     ))
 
     module = AnsibleModule(

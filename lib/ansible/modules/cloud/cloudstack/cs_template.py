@@ -482,6 +482,9 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
                     template = self.poll_job(template, 'template')
+        if template:
+            template = self.ensure_tags(resource=template, resource_type='Template')
+
         return template
 
 
@@ -630,6 +633,7 @@ def main():
         account = dict(default=None),
         project = dict(default=None),
         poll_async = dict(type='bool', default=True),
+        tags=dict(type='list', aliases=['tag'], default=None),
     ))
 
     module = AnsibleModule(

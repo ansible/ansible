@@ -288,6 +288,11 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
             portforwarding_rule = self.update_portforwarding_rule(portforwarding_rule)
         else:
             portforwarding_rule = self.create_portforwarding_rule()
+
+        if portforwarding_rule:
+            portforwarding_rule = self.ensure_tags(resource=portforwarding_rule, resource_type='PortForwardingRule')
+            self.portforwarding_rule=portforwarding_rule
+
         return portforwarding_rule
 
 
@@ -395,6 +400,7 @@ def main():
         account = dict(default=None),
         project = dict(default=None),
         poll_async = dict(type='bool', default=True),
+        tags=dict(type='list', aliases=['tag'], default=None),
     ))
 
     module = AnsibleModule(
