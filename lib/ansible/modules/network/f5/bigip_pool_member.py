@@ -330,6 +330,23 @@ def set_ratio(api, pool, address, port, ratio):
         ratios=[[ratio]]
     )
 
+def get_priority(api, pool, address, port):
+    members = [{'address': address, 'port': port}]
+    result = api.LocalLB.Pool.get_member_priority(
+        pool_names=[pool],
+        members=[members]
+    )[0][0]
+    return result
+
+
+def set_priority(api, pool, address, port, priority):
+    members = [{'address': address, 'port': port}]
+    api.LocalLB.Pool.set_member_priority(
+        pool_names=[pool],
+        members=[members],
+        priorities=[[priority]]
+    )
+
 
 def set_member_session_enabled_state(api, pool, address, port, session_state):
     members = [{'address': address, 'port': port}]
@@ -384,7 +401,8 @@ def main():
         description=dict(type='str'),
         rate_limit=dict(type='int'),
         ratio=dict(type='int'),
-        preserve_node=dict(type='bool', default=False)
+        preserve_node=dict(type='bool', default=False),
+        priority=dict(type='int')
     )
     argument_spec.update(meta_args)
 
@@ -415,6 +433,7 @@ def main():
     description = module.params['description']
     rate_limit = module.params['rate_limit']
     ratio = module.params['ratio']
+    priority = module.params['priority']
     host = module.params['host']
     address = fq_name(partition, host)
     port = module.params['port']
@@ -460,6 +479,8 @@ def main():
                         set_member_session_enabled_state(api, pool, address, port, session_state)
                     if monitor_state is not None:
                         set_member_monitor_state(api, pool, address, port, monitor_state)
+                    if priority is not None:
+                        set_priority(api, pool, address, port, priority)
                 result = {'changed': True}
             else:
                 # pool member exists -- potentially modify attributes
@@ -499,6 +520,10 @@ def main():
                         if not module.check_mode:
                             set_member_monitor_state(api, pool, address, port, monitor_state)
                         result = {'changed': True}
+                if priority is not None and priority != get_priority(api, pool, address, port):
+                    if not module.check_mode:
+                        set_priority(api, pool, address, port, priority)
+                    result = {'changed': True}
 
     except Exception as e:
         module.fail_json(msg="received exception: %s" % e)
