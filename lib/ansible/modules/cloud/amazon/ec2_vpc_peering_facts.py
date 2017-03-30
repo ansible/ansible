@@ -112,7 +112,8 @@ def main():
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec,)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     # Validate Requirements
     if not HAS_BOTO3:
@@ -127,7 +128,7 @@ def main():
             if not module.params['region']:
                 module.fail_json(msg="Error - no region provided")
         else:
-            module.fail_json(msg="Can't retrieve connection information - "+str(e))
+            module.fail_json(msg="Can't retrieve connection information - " + str(e))
 
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
