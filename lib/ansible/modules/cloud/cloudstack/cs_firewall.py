@@ -348,7 +348,7 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
 
         if firewall_rule:
             firewall_rule = self.ensure_tags(resource=firewall_rule, resource_type='Firewallrule')
-            self.firewall_rule=firewall_rule
+            self.firewall_rule = firewall_rule
 
         return firewall_rule
 
