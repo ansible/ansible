@@ -24,11 +24,13 @@ if not os.path.islink(os.path.join(os.getcwd(), 'bin', 'ansible-playbook')):
     # bin/ansible needs to be a symlink to bin/ansible - otherwise the CLI
     # script will simply believe it is running bin/ansible and fail, with an
     # unhelpful error message.
-    print("It appears that you are installing Ansible from an archive that "
-          "does not support symbolic links, usually a .zip file downloaded "
-          "from GitHub. This renders your copy of Ansible unusable.\n\n")
-    print("Please re-acquire Ansible from PyPI or from the git repository, "
-          "and try again.")
+    print("It appears that you are installing Ansible from a .zip file. "
+          "Because Python's zipfile library does not properly handle symbolic "
+          "links in a .zip file, pip and setuptools cannot install Ansible "
+          "like this.\n\n")
+    print("Please either unzip the .zip file yourself and try again with the "
+          "uncompressed version, or install Ansible with pip or setuptools "
+          "using the versions on PyPI or directly from the git repository.\n")
     sys.exit(3)
 
 setup(
