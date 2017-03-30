@@ -11,16 +11,13 @@ Introduction
 
 TDB
 
-How-Tos
-=======
-
 Connection Methods
-------------------
+==================
 
 TBD Overview of the different methods and why SSH is recommended.
 
 Specifying Credentials
-======================
+----------------------
 
 In Ansible versions 2.0 to 2.2, network modules support providing connection credentials as top-level arguments in the module. The forthcoming release of Ansible 2.3 introduces a new connection framework that is more tightly integrated into Ansible.
 
@@ -71,7 +68,7 @@ Connecting using SSH Keys
 TBD: This is the recomended way, ``ssh_keyfile``
 
 Connecting using Command line arguments
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 TBD ``-u user -k``
 
@@ -89,8 +86,8 @@ TBD
          username: cisco
          password: mypassword
 
-Accessing over API
-^^^^^^^^^^^^^^^^^^
+Accessing over API (eapi, nxapi)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Platforms:** eos and nxapi
 
@@ -98,8 +95,9 @@ TDB, Include details regarding ``use_ssl``
 
 
 
-FIXME REVIEW AND MOVE THE FOLLOWING BITS FIXME 
+FIXME REVIEW AND MOVE THE FOLLOWING BITS FIXME
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 All core networking modules implement a *provider* argument, which is a collection of arguments used to define the characteristics of how to connect to the device.  This section will assist in understanding how the provider argument is used.
 
 
@@ -311,7 +309,7 @@ resulting output is shown below.
 
 
 Connecting via A Proxy Host
----------------------------
+===========================
 
 **Platforms:** Any
 
@@ -352,7 +350,7 @@ network device by first connecting to the host specified in
 
 
 Entering Configuration Mode
-----------------------------
+===========================
 
 **Platforms:** eos and ios
 
@@ -397,8 +395,64 @@ Add `authorize: yes` to the task. For example:
               auth_pass: "{{ mypasswordvar }}"
 	  register: result
 
-Where To Get More Help
-======================
 
-TBD
+Conditionals in Networking Modules
+====================================
+
+Ansible allows you to use conditionals to control the flow of your playbooks. Ansible networking command modules use the following unique conditional statements.
+
+* eq - Equal
+* neq - Not equal
+* gt - Greater than
+* ge - Greater than or equal
+* lt - Less than
+* le - Less than or equal
+* contains - Object contains specified item
+
+
+Conditional statements evalute the results from the commands that are
+executed remotely on the device.  Once the task executes the command
+set, the waitfor argument can be used to evalute the results before
+returning control to the Ansible playbook.
+
+For example::
+
+    ---
+    - name: wait for interface to be admin enabled
+      eos_command:
+          commands:
+              - show interface Ethernet4 | json
+          waitfor:
+              - "result[0].interfaces.Ethernet4.interfaceStatus eq connected"
+
+In the above example task, the command :code:`show interface Ethernet4 | json`
+is executed on the remote device and the results are evaluated.  If
+the path
+:code:`(result[0].interfaces.Ethernet4.interfaceStatus)` is not equal to
+"connected", then the command is retried.  This process continues
+until either the condition is satisfied or the number of retries has
+expired (by default, this is 10 retries at 1 second intervals).
+
+The commands module can also evaluate more than one set of command
+results in an interface.  For instance::
+
+    ---
+    - name: wait for interfaces to be admin enabled
+      eos_command:
+          commands:
+              - show interface Ethernet4 | json
+              - show interface Ethernet5 | json
+          waitfor:
+              - "result[0].interfaces.Ethernet4.interfaceStatus eq connected"
+              - "result[1].interfaces.Ethernet4.interfaceStatus eq connected"
+
+In the above example, two commands are executed on the
+remote device, and the results are evaluated.  By specifying the result
+index value (0 or 1), the correct result output is checked against the
+conditional.
+
+The waitfor argument must always start with result and then the
+command index in [], where 0 is the first command in the commands list,
+1 is the second command, 2 is the third and so on.
+
 
