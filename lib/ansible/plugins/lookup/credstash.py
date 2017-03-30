@@ -43,10 +43,10 @@ class LookupModule(LookupBase):
                 version = kwargs.pop('version', '')
                 region = kwargs.pop('region', None)
                 table = kwargs.pop('table', 'credential-store')
-                profile_name = os.getenv('AWS_PROFILE', kwargs.pop('profile_name', None))
-                aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID', kwargs.pop('aws_access_key_id', None))
-                aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY', kwargs.pop('aws_secret_access_key', None))
-                aws_session_token = os.getenv('AWS_SESSION_TOKEN', kwargs.pop('aws_session_token', None))
+                profile_name = kwargs.pop('profile_name', os.getenv('AWS_PROFILE', None))
+                aws_access_key_id = kwargs.pop('aws_access_key_id', os.getenv('AWS_ACCESS_KEY_ID', None))
+                aws_secret_access_key = kwargs.pop('aws_secret_access_key', os.getenv('AWS_SECRET_ACCESS_KEY', None))
+                aws_session_token = kwargs.pop('aws_session_token', os.getenv('AWS_SESSION_TOKEN', None))
                 kwargs_pass = {'profile_name': profile_name, 'aws_access_key_id': aws_access_key_id,
                                'aws_secret_access_key': aws_secret_access_key, 'aws_session_token': aws_session_token}
                 val = credstash.getSecret(term, version, region, table,
