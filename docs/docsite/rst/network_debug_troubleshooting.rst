@@ -9,11 +9,9 @@ Network Debug and Troubleshooting Guide
 Introduction
 ============
 
+Starting with Ansible version 2.1, you can now use the familiar Ansible models of playbook authoring and module development to manage heterogenous networking devices. Ansible supports a growing number of network devices using both CLI over SSH and API (when available) transports.
+
 This section discusses how to debug and troubleshoot network modules in Ansible 2.3.
-
-FIXME Better description needed
-FIXME Some of this should maybe moved to network_into?
-
 
 Persistent Connections
 ======================
@@ -37,28 +35,29 @@ Persistent Connection had been enable for the following groups of modules:
 
 .. notes: Future support
 
-   The list of network platforms that support Persistent Connection will increase over in each release.
+   The list of network platforms that support Persistent Connection will grow with each release.
 
 .. notes: Persistent Connections is for `cli` (ssh), not for API transports.
 
-   The Persistent Connection work added in Ansible 2.3 only applies to `cli transport`. It doesn't apply to APIs such as eos's eapi, nor nxos's nxapi. From Ansible 2.3 using CLI should be faster in most cases than using the API transport. Using CLI also allows you be benefit from using SSH Keys.
+   The Persistent Connection work added in Ansible 2.3 only applies to `cli transport`. It doesn't apply to APIs such as eos's eapi, or nxos's nxapi. Starting with Ansible 2.3, using CLI should be faster in most cases than using the API transport. Using CLI also allows you be benefit from using SSH Keys.
 
 Playbook Structure from 2.1 to 2.3
 ==================================
 
-Ansible 2.3 makes it easier to write playbooks by bringing the (FIXME some term about how layout playbooks and connections FIXME) inline with how Ansible is used to manage Linux and Windows systems. This means that you no longer need to define the connection details in every task (via ``host:`` or ``provider:``, instead you can utilize ssh keys and write shorted playbooks.
+Ansible 2.3 makes it easier to write playbooks by simplifying how connections are handled. This means that you no longer need to define the connection details in every task (via ``host:`` or ``provider:``); instead you can utilize ssh keys and write shortened playbooks.
 
 
-That said Ansible 2.3 maintains backwards with playbooks created in Ansible 2.2, so you are not forced to upgrade your playbooks when you upgrade to Ansible 2.3.
+Ansible 2.3 maintains backwards with playbooks created in Ansible 2.2, so you are not forced to upgrade your playbooks when you upgrade to Ansible 2.3.
 
 Why is this changing
 --------------------
 
-In Ansible 2.FIXME specifying when writing network playbooks with credentials directly under the task, or under provider will no longer be supported. This is to make the network modules work in the same way as normal Linux and Windows modules. This has the following advantages
+As of Ansible 2.FIXME specifying credentials directly under the task or under provider will no longer be supported in network modules. This is to make the network modules work in the same way as normal Linux and Windows modules. This has the following advantages:
 
-* Easier to understand - same as the rest of Ansible
-* Simplified module code - fewer code paths doing similar things
-* FIXME add other reasons here
+* Easier to understand
+* Consistent with the rest of Ansible
+* Simplified module code
+* Fewer code paths doing similar things
 
 
 Recap of different connection methods
@@ -97,7 +96,7 @@ Playbook with provider dict
          provider: "{{ cli }}"
 
 
-Note, that if you use this form in Ansible 2.3 you will get the following deprecation messages. This is a reminder that you need to move to the new (FIXME NEED A NAME) 2.3 Style, or use ``provider:``.
+Note, that if you use this form in Ansible 2.3 you will get the following deprecation messages. This is a reminder that you need to move to the new 2.3 connection framework, or use ``provider:``.
 
 .. code-block:: yaml
 
@@ -134,7 +133,7 @@ Note, that if you use this form in Ansible 2.3 you will get the following deprec
          gather_subset: all
 
 
-By default eos and nxos module use cli (ssh). If you wish to use the API then use the ``transport:`` option, for example:
+By default eos and nxos module use cli (ssh). If you wish to use the API, use the ``transport:`` option. For example:
 
 .. code-block:: yaml
 
@@ -143,7 +142,7 @@ By default eos and nxos module use cli (ssh). If you wish to use the API then us
          gather_subset: all
          transport: eapi
 
-For details on how how to pass in authentication details see `Specifying Credentials`.
+For details on how how to pass in authentication details, see `Specifying Credentials`.
 
 
 Specifying Credentials
@@ -202,7 +201,7 @@ FIXME Add details here
 Ansible Network Roadmap
 =======================
 
-To best understand the changes that have gone into Ansible 2.3 it's useful to understand where we've come from and where we are heading.
+To understand the changes that have gone into Ansible 2.3, it's useful to understand where we've come from and where we are heading.
 
 Ansible 2.3
 -----------
@@ -406,7 +405,7 @@ For example:
 
 Suggestions to resolve:
 
-If you are specifying credentials via ``password:`` (either directly or via ``provider:``) or the environment variable ``ANSIBLE_NET_PASSWORD`` it is possible that ``paramiko`` (the Python SSH library that Ansible uses) is using ssh keys, and therefore the credentials you are specifying could be ignored. To find out if this is the case disable "look for keys",
+If you are specifying credentials via ``password:`` (either directly or via ``provider:``) or the environment variable ``ANSIBLE_NET_PASSWORD`` it is possible that ``paramiko`` (the Python SSH library that Ansible uses) is using ssh keys, and therefore the credentials you are specifying could be ignored. To find out if this is the case, disable "look for keys".
 
 This can be done via:
 
@@ -414,7 +413,7 @@ This can be done via:
 
    export ANSIBLE_PARAMIKO_LOOK_FOR_KEYS=False
 
-Or to make this a permanent change add the following to your ``ansible.cfg``
+To make this a permanent change, add the following to your ``ansible.cfg``
 
 .. code-block:: ini
 
@@ -457,7 +456,7 @@ Add ``authorize: yes`` to the task. For example:
 	    authorize: yes
 	  register: result
 
-If the user requires a password to go into privileged mode, this can be specified with ``auth_pass``, or if that isn't set the environment variable ``ANSIBLE_NET_AUTHORIZE`` will be used instead.
+If the user requires a password to go into privileged mode, this can be specified with ``auth_pass``; if ``auth_pass`` isn't set the environment variable ``ANSIBLE_NET_AUTHORIZE`` will be used instead.
 
 
 Add `authorize: yes` to the task. For example:
@@ -519,8 +518,8 @@ of inactivity), simple delete the socket file.
 
 
 
-Howtos
-======
+How-Tos
+=======
 
 TBD Wonder if this should move into the another file? Going forward we want to build up a set of docs on best practive and howtos and example playbooks
 
