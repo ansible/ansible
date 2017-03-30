@@ -38,7 +38,7 @@ description:
 options:
   free_form:
     description:
-      - the win_command module takes a free form command to run.  There is no parameter actually named 'free form'.
+      - the C(win_command) module takes a free form command to run.  There is no parameter actually named 'free form'.
         See the examples!
     required: true
   creates:
