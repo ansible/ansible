@@ -256,7 +256,8 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
                 saltsize = 8
             else:
                 saltsize = 16
-            salt = ''.join([r.choice(string.ascii_letters + string.digits) for _ in range(saltsize)])
+            saltcharset = string.ascii_letters + string.digits + '/.'
+            salt = ''.join([r.choice(saltcharset) for _ in range(saltsize)])
 
         if not HAS_PASSLIB:
             if sys.platform.startswith('darwin'):
