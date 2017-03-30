@@ -130,9 +130,9 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             command=dict(required=True),
-            chdir=dict(),
-            creates=dict(),
-            removes=dict(),
+            chdir=dict(type='path'),
+            creates=dict(type='path'),
+            removes=dict(type='path'),
             responses=dict(type='dict', required=True),
             timeout=dict(type='int', default=30),
             echo=dict(type='bool', default=False),
@@ -163,18 +163,17 @@ def main():
         module.fail_json(rc=256, msg="no command given")
 
     if chdir:
-        chdir = os.path.abspath(os.path.expanduser(chdir))
+        chdir = os.path.abspath(chdir)
         os.chdir(chdir)
 
     if creates:
         # do not run the command if the line contains creates=filename
         # and the filename already exists.  This allows idempotence
         # of command executions.
-        v = os.path.expanduser(creates)
-        if os.path.exists(v):
+        if os.path.exists(creates):
             module.exit_json(
                 cmd=args,
-                stdout="skipped, since %s exists" % v,
+                stdout="skipped, since %s exists" % creates,
                 changed=False,
                 rc=0
             )
@@ -183,11 +182,10 @@ def main():
         # do not run the command if the line contains removes=filename
         # and the filename does not exist.  This allows idempotence
         # of command executions.
-        v = os.path.expanduser(removes)
-        if not os.path.exists(v):
+        if not os.path.exists(removes):
             module.exit_json(
                 cmd=args,
-                stdout="skipped, since %s does not exist" % v,
+                stdout="skipped, since %s does not exist" % removes,
                 changed=False,
                 rc=0
             )
