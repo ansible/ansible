@@ -413,3 +413,44 @@ def get_valid_location(module, driver, location, location_type='zone'):
                                   location_type, location, location_type, link)),
                          changed=False)
     return l
+
+def check_params(params, field_list):
+    """
+    Helper to validate params.
+
+    Use this in function definitions if they require specific fields
+    to be present.
+
+    :param params: structure that contains the fields
+    :type params: ``dict``
+
+    :param field_list: list of dict representing the fields
+                       [{'name': str, 'required': True/False', 'type': cls}]
+    :type field_list: ``list`` of ``dict``
+
+    :return True or raises ValueError
+    :rtype: ``bool`` or `class:ValueError`
+    """
+    for d in field_list:
+        if not d['name'] in params:
+            if 'required' in d and d['required'] is True:
+                raise ValueError(("%s is required and must be of type: %s" %
+                        (d['name'], str(d['type']))))
+        else:
+            if not isinstance(params[d['name']], d['type']):
+                raise ValueError(("%s must be of type: %s" % (
+                    d['name'], str(d['type']))))
+            if 'values' in d:
+                if params[d['name']] not in d['values']:
+                    raise ValueError(("%s must be one of: %s" % (
+                        d['name'], ','.join(d['values']))))
+            if isinstance(params[d['name']], int):
+                if 'min' in d:
+                    if params[d['name']] < d['min']:
+                        raise ValueError(("%s must be greater than or equal to: %s" % (
+                            d['name'], d['min'])))
+                if 'max' in d:
+                    if params[d['name']] > d['max']:
+                        raise ValueError("%s must be less than or equal to: %s" % (
+                            d['name'], d['max']))
+    return True
