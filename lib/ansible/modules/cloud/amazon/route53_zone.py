@@ -89,7 +89,7 @@ EXAMPLES = '''
     var: zone_out
 '''
 
-RETURN='''
+RETURN = '''
 comment:
     description: optional hosted zone comment
     returned: when hosted zone exists
@@ -125,9 +125,7 @@ zone_id:
 try:
     import boto
     import boto.ec2
-    from boto import route53
     from boto.route53 import Route53Connection
-    from boto.route53.zone import Zone
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -180,7 +178,7 @@ def main():
             if isinstance(zone_details['VPCs'], dict):
                 if zone_details['VPCs']['VPC']['VPCId'] == vpc_id:
                     zones[r53zone['Name']] = zone_id
-            else: # Forward compatibility for when boto fixes that bug
+            else:  # Forward compatibility for when boto fixes that bug
                 if vpc_id in [v['VPCId'] for v in zone_details['VPCs']]:
                     zones[r53zone['Name']] = zone_id
         else:
