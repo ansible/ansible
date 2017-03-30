@@ -23,6 +23,7 @@ As of version 2.3, Ansible includes support for `persistent connections`. Persis
 
 Persistent Connection had been enable for the following groups of modules:
 
+ * dellos6
  * dellos9
  * dellos10
  * eos
@@ -245,10 +246,41 @@ Enabling Networking logging and how to read the logfile
 
 **Platforms:** Any
 
-TBD
+Ansible 2.3 feature improved logging to help diagnose and troubleshoot issues regarding Ansible Networking modules.
 
- * How to enable logging
- * Use of PID, search for relevant lines
+As the logging is very verbose it is disabled by default, it an be enable via the ``ANSIBLE_LOG_PATH`` and ``ANISBLE_DEBUG`` options::
+
+   # Specify the location for the log file
+   export ANSIBLE_LOG_PATH=/tmp/ansible.log
+
+   # Run with 4*v for connection level verbosity
+   ANSIBLE_DEBUG=True ansible-playbook -vvvv ...
+
+After ansible has finished running you can inspect the log file:
+
+.. code::
+
+  2017-03-30 13:19:52,740 p=28990 u=fred |  creating new control socket for host veos01:None as user admin
+  2017-03-30 13:19:52,741 p=28990 u=fred |  control socket path is /home/fred/.ansible/pc/ca5960d27a
+  2017-03-30 13:19:52,741 p=28990 u=fred |  current working directory is /home/fred/ansible/test/integration
+  2017-03-30 13:19:52,741 p=28990 u=fred |  using connection plugin network_cli
+  ...
+  2017-03-30 13:20:14,771 paramiko.transport userauth is OK
+  2017-03-30 13:20:15,283 paramiko.transport Authentication (keyboard-interactive) successful!
+  2017-03-30 13:20:15,302 p=28990 u=fred |  ssh connection done, setting terminal
+  2017-03-30 13:20:15,321 p=28990 u=fred |  ssh connection has completed successfully
+  2017-03-30 13:20:15,322 p=28990 u=fred |  connection established to veos01 in 0:00:22.580626
+
+
+From the log notice:
+
+* ``p=28990`` Is the PID (Process ID) of the ``ansible-connection`` process
+* ``u=fred`` Is the user `running` ansible, not the remote-user you are attempting to connect as
+* ``control socket path is`` location on disk where the persistent connection socket is created
+* 
+
+* How to enable logging
+* Use of PID, search for relevant lines
 
 
 Ansible can be run with high log verbosity by doing:
