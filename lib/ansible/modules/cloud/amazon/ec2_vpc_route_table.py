@@ -590,6 +590,7 @@ def ensure_route_table_present(connection, module):
     if not tags_valid and tags is not None:
         result = ensure_tags(connection, route_table.id, tags,
                              add_only=True, check_mode=module.check_mode)
+        route_table.tags = result['tags']
         changed = changed or result['changed']
 
     if subnets:
