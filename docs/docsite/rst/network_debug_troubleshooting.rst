@@ -251,7 +251,7 @@ Ansible 2.3 feature improved logging to help diagnose and troubleshoot issues re
 As the logging is very verbose it is disabled by default, it an be enable via the ``ANSIBLE_LOG_PATH`` and ``ANISBLE_DEBUG`` options::
 
    # Specify the location for the log file
-   export ANSIBLE_LOG_PATH=/tmp/ansible.log
+   export ANSIBLE_LOG_PATH=~/ansible.log
 
    # Run with 4*v for connection level verbosity
    ANSIBLE_DEBUG=True ansible-playbook -vvvv ...
@@ -285,7 +285,7 @@ From the log notice:
 
 Ansible can be run with high log verbosity by doing:
 
-:code:`export ANSIBLE_LOG_PATH=/tmp/ansible.log`
+:code:`export ANSIBLE_LOG_PATH=~/ansible.log`
 
 :code:`ANISBLE_DEBUG=True ansible-playbook -vvvvv  ...`
 
@@ -341,7 +341,7 @@ Suggestions to resolve:
 
 Rerun ansible extra logging. For example:
 
-:code:`export ANSIBLE_LOG_PATH=/tmp/ansible.log`
+:code:`export ANSIBLE_LOG_PATH=~/ansible.log`
 
 :code:`ANISBLE_DEBUG=True ansible-playbook -vvvvv  ...`
 
