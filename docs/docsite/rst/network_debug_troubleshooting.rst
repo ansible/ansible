@@ -260,7 +260,7 @@ After ansible has finished running you can inspect the log file:
 
 .. code::
 
-  2017-03-30 13:19:52,740 p=28990 u=fred |  creating new control socket for host veos01:None as user admin
+  2017-03-30 13:19:52,740 p=28990 u=fred |  creating new control socket for host veos01:22 as user admin
   2017-03-30 13:19:52,741 p=28990 u=fred |  control socket path is /home/fred/.ansible/pc/ca5960d27a
   2017-03-30 13:19:52,741 p=28990 u=fred |  current working directory is /home/fred/ansible/test/integration
   2017-03-30 13:19:52,741 p=28990 u=fred |  using connection plugin network_cli
@@ -276,24 +276,15 @@ From the log notice:
 
 * ``p=28990`` Is the PID (Process ID) of the ``ansible-connection`` process
 * ``u=fred`` Is the user `running` ansible, not the remote-user you are attempting to connect as
+* ``creating new control socket for host veos01:22 as user admin``
 * ``control socket path is`` location on disk where the persistent connection socket is created
-* 
+* ``using connection plugin network_cli`` Informs you that persistent connection is being used
+* ``connection established to veos01 in 0:00:22.580626`` Time taken to obtain a shell on the remote device
 
-* How to enable logging
-* Use of PID, search for relevant lines
+If the log file has a lot of information in you can look up the `pid` and grep for that, for example::
 
+  grep "p=28990" $ANSIBLE_LOG_PATH
 
-Ansible can be run with high log verbosity by doing:
-
-:code:`export ANSIBLE_LOG_PATH=~/ansible.log`
-
-:code:`ANISBLE_DEBUG=True ansible-playbook -vvvvv  ...`
-
-The log file can be inspected by doing:
-
-:code:`less $ANSIBLE_LOG_PATH`
-
-The log lines generally follow ``using connection plugin network_cli`` in the file, though it's possible some details
 
 
 Isolating the error
