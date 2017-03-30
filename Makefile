@@ -22,7 +22,7 @@ OS = $(shell uname -s)
 # This doesn't evaluate until it's called. The -D argument is the
 # directory of the target file ($@), kinda like `dirname`.
 
-MANPAGES := ./docs/man/man1/ansible*.1
+MANPAGES ?= $(patsubst %.asciidoc.in,%,$(wildcard ./docs/man/man1/ansible*.1.asciidoc.in))
 ifneq ($(shell which a2x 2>/dev/null),)
 ASCII2MAN = a2x -L -D $(dir $@) -d manpage -f manpage $<
 ASCII2HTMLMAN = a2x -L -D docs/html/man/ -d manpage -f xhtml
@@ -302,9 +302,11 @@ deb-src-upload: deb-src
 webdocs:
 	(cd docs/docsite/; CPUS=$(CPUS) make docs)
 
-docs: lib/ansible/cli/*.py
+generate_asciidoc: lib/ansible/cli/*.py
 	mkdir -p ./docs/man/man1/
 	PYTHONPATH=./lib ./docs/bin/generate_man.py
+
+docs: generate_asciidoc
 	make $(MANPAGES)
 
 alldocs: docs webdocs
