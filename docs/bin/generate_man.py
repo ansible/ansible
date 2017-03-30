@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
 import os
-import io
 import sys
 
 from jinja2 import Environment, FileSystemLoader
+
+from ansible.module_utils._text import to_bytes
 
 
 def get_options(optlist):
@@ -124,6 +125,6 @@ if __name__ == '__main__':
 
         manpage = template.render(tvars)
         filename = '../man/man1/%s' % output[libname]
-        with io.open(filename, 'w') as f:
-            f.write(manpage)
+        with open(filename, 'wb') as f:
+            f.write(to_bytes(manpage))
             print("Wrote man docs to %s" % filename)
