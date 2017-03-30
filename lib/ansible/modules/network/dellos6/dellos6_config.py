@@ -194,9 +194,12 @@ saved:
   sample: True
 
 """
-from ansible.module_utils.netcfg import dumps
-from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.dellos6 import get_config, get_sublevel_config, Dellos6NetworkConfig
+from ansible.module_utils.dellos6 import dellos6_argument_spec, check_args
+from ansible.module_utils.dellos6 import load_config, run_commands
+from ansible.module_utils.dellos6 import WARNING_PROMPTS_RE
 
 
 def get_candidate(module):
@@ -223,16 +226,18 @@ def main():
         match=dict(default='line',
                    choices=['line', 'strict', 'exact', 'none']),
         replace=dict(default='line', choices=['line', 'block']),
+
         update=dict(choices=['merge', 'check'], default='merge'),
         save=dict(type='bool', default=False),
         config=dict(),
         backup=dict(type='bool', default=False)
     )
 
+    argument_spec.update(dellos6_argument_spec)
+
     mutually_exclusive = [('lines', 'src')]
 
-    module = NetworkModule(argument_spec=argument_spec,
-                           connect_on_load=False,
+    module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
@@ -240,21 +245,26 @@ def main():
 
     match = module.params['match']
     replace = module.params['replace']
-    result = dict(changed=False, saved=False)
-    candidate = get_candidate(module)
 
+    warnings = list()
+    check_args(module, warnings)
+    result = dict(changed=False, saved=False, warnings=warnings)
+
+    candidate = get_candidate(module)
     if match != 'none':
         config = get_config(module)
+        config = Dellos6NetworkConfig(contents=config, indent=0)
         if parents:
             config = get_sublevel_config(config, module)
         configobjs = candidate.difference(config, match=match, replace=replace)
+
     else:
         configobjs = candidate.items
-
     if module.params['backup']:
-        result['__backup__'] = module.cli('show running-config')[0]
+        result['__backup__'] = get_config(module)
 
     commands = list()
+
     if configobjs:
         commands = dumps(configobjs, 'commands')
         commands = commands.split('\n')
@@ -266,17 +276,16 @@ def main():
             commands.extend(module.params['after'])
 
         if not module.check_mode and module.params['update'] == 'merge':
-            response = module.config.load_config(commands)
-            result['responses'] = response
+            load_config(module, commands)
 
             if module.params['save']:
-                module.config.save_config()
+                cmd = {'command': 'copy runing-config startup-config', 'prompt': WARNING_PROMPTS_RE, 'answer': 'yes'}
+                run_commands(module, [cmd])
                 result['saved'] = True
 
         result['changed'] = True
 
     result['updates'] = commands
-
     module.exit_json(**result)
 
 if __name__ == '__main__':
