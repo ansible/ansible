@@ -243,10 +243,7 @@ class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
             volumes = self.cs.listVolumes(**args)
             if volumes:
                 for vol in volumes['volume']:
-                   volume_details.append(dict(
-                        name=vol['name'],
-                        size=vol['size'],
-                        type=vol['type']))
+                    volume_details.append({'size': vol['size'], 'type': vol['type'], 'name': vol['name']})
         return volume_details
 
     def run(self):
