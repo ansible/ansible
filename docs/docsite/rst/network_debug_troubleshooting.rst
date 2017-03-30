@@ -11,6 +11,10 @@ Introduction
 
 This section discusses how to debug and troubleshoot network modules in Ansible 2.3.
 
+FIXME Better description needed
+FIXME Some of this should maybe moved to network_into?
+
+
 Persistent Connections
 ======================
 Before diving into the technical detail of how to troubleshoot it can be useful to understand how Ansible communicates with the remote network device.
@@ -62,9 +66,10 @@ This section demonstrates the different ways to write connect to network devices
 
 The following examples are all equivalent.
 
-.. note: Which playbook style should I use
+.. note: Which playbook style should I use?
 
    If you are starting Networking in Ansible 2.3 we recommend using FIXME name for 2.3 style FIXME. As that is the format that will be supported long term.
+   Where ever possible we suggest using `cli` with SSH keys.
 
 Playbook with provider dict
 ```````````````````````````
@@ -120,7 +125,6 @@ Note, that if you use this form in Ansible 2.3 you will get the following deprec
 
 **Version:** Ansible 2.3
 
-FIXME Detail how to use credentials
 
 .. code-block:: yaml
 
@@ -138,6 +142,7 @@ By default eos and nxos module use cli (ssh). If you wish to use the API then us
          gather_subset: all
          transport: eapi
 
+For details on how how to pass in authentication details see `Specifying Credentials`.
 
 
 Specifying Credentials
@@ -189,6 +194,10 @@ Note that the new task entry does not include any credential information anywher
 
 This removes the requirement to encode any credentials into the Playbook, further simplifying the Playbook.
 
+Or you can use SSH keys..
+
+FIXME Add details here
+
 Anisble Network Roadmap
 =======================
 
@@ -209,21 +218,66 @@ Ansible future
 --------------
 Which release will provider go away
 
-Connection Errors
-=================
+Troubleshooting Network Modules
+===============================
 
-This section covers troubleshooting connection errors.
+This section covers troubleshooting issues with Network Modules.
 
-Errors generally fall into one of the following categories
+Errors generally fall into one of the following categories:
 
 :Authentication issues:
   * Not correctly specifying credentials
   * Remote device (network switch/router) not falling back to other other authentication methods
+  * SSH key issues
+  * Use of ``delgate_to``, use ``ProxyCommand`` instead.
 :Timeout issues:
-  Can occur when trying to pull a large amount of data
+  * Can occur when trying to pull a large amount of data
+  * May actually be masking a authentication issue
 
-Details about how to test
-forks/limits/drop to a single ad-hoc command
+
+Enabling Networking logging and how to read the logfile
+-------------------------------------------------------
+
+**Platforms:** Any
+
+TBD
+
+ * How to enable logging
+ * Use of PID, search for relevant lines
+
+
+Ansible can be run with high log verbosity by doing:
+
+:code:`export ANSIBLE_LOG_PATH=/tmp/ansible.log`
+
+:code:`ANISBLE_DEBUG=True ansible-playbook -vvvvv  ...`
+
+The log file can be inspected by doing:
+
+:code:`less $ANSIBLE_LOG_PATH`
+
+The log lines generally follow ``using connection plugin network_cli`` in the file, though it's possible some details
+
+
+Isolating the error
+-------------------
+
+**Platforms:** Any
+
+TBD Troubleshooting best practice - Single machine, use ad-hoc, etc
+
+Use of ``--limit`` and ad-hoc
+
+
+When combined with logging...
+
+FIXME
+* Set ANSIBLE_LOG_PATH
+* Delete socket
+* ad-hoc
+
+Reference back to `how to read logfile`
+
 
 
 "Unable to open shell" error
@@ -433,28 +487,11 @@ To clear out a persistent connection before it times out (default is 30 seconds
 of inactivity), simple delete the socket file.
 
 
-Inspecting Logs
----------------
-
-**Platforms:** Any
-
-Ansible can be run with high log verbosity by doing:
-
-:code:`export ANSIBLE_LOG_PATH=/tmp/ansible.log`
-
-:code:`ANISBLE_DEBUG=True ansible-playbook -vvvvv  ...`
-
-The log file can be inspected by doing:
-
-:code:`less $ANSIBLE_LOG_PATH`
-
-The log lines generally follow ``using connection plugin network_cli`` in the file, though it's possible some details
-
 
 Howtos
 ======
 
-TBD
+TBD Wonder if this should move into the another file? Going forward we want to build up a set of docs on best practive and howtos and example playbooks
 
 
 
@@ -580,11 +617,6 @@ network device by first connecting to the host specified in
 
 Clearing Out Persistent Connections
 -----------------------------------
-
-TBD
-
-Inspecting Logs
----------------
 
 TBD
 
