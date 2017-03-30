@@ -91,9 +91,10 @@ options:
     description:
       - The state of module
       - The 'forcereinstall' option is only available in Ansible 2.1 and above.
+      - The 'prerelease' option is only available in Ansible 2.4 and above.
     required: false
     default: present
-    choices: [ "present", "absent", "latest", "forcereinstall" ]
+    choices: [ "present", "absent", "latest", "forcereinstall", "prerelease" ]
   extra_args:
     description:
       - Extra arguments passed to pip.
