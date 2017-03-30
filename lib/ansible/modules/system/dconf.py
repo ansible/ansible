@@ -32,6 +32,9 @@ description:
     is implemented as a wrapper around dconf tool. Please see the dconf(1) man
     page for more details.
 notes:
+  - This module depends on two binaries being present on destination system -
+    C(dconf) and C(dbus-launch). Depending on distribution you are using, you
+    may need to install additional packages to have these available.
   - Keep in mind that the C(dconf) CLI tool, which this module wraps around,
     utilises an unusual syntax for the values (GVariant). For example, if you
     wanted to provide a string value, the correct syntax would be
@@ -162,8 +165,9 @@ class DconfPreference(object):
         elif self.check_mode:
             return True
 
-        # Set-up command to run.
-        command = ["dconf", "write", key, value]
+        # Set-up command to run. Since DBus is needed for write operation, wrap
+        # dconf command dbus-launch.
+        command = ["dbus-launch", "dconf", "write", key, value]
 
         # Run the command and fetch standard return code, stdout, and stderr.
         rc, out, err = self.module.run_command(command)
