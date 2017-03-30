@@ -116,14 +116,16 @@ def main():
 
     if rc == 0:
         # Alternatives already exist for this link group
-        # Parse the output to determine the current path of the symlink and
-        # available alternatives
+        # Parse the output to determine the current path of the symlink,
+        # available alternatives and the mode
         current_path_regex = re.compile(r'^\s*link currently points to (.*)$',
                                         re.MULTILINE)
         alternative_regex = re.compile(r'^(\/.*)\s-\spriority', re.MULTILINE)
 
         current_path = current_path_regex.search(display_output).group(1)
         all_alternatives = alternative_regex.findall(display_output)
+
+        auto_mode = is_auto(name, display_output)
 
         if not link:
             # Read the current symlink target from `update-alternatives --query`
@@ -140,7 +142,7 @@ def main():
                         link = line.split()[1]
                         break
 
-    if current_path != path:
+    if auto_mode or current_path != path:
         if module.check_mode:
             module.exit_json(changed=True, current_path=current_path)
         try:
@@ -166,6 +168,27 @@ def main():
             module.fail_json(msg=str(dir(cpe)))
     else:
         module.exit_json(changed=False)
+
+def is_auto(name, alternatives_output):
+    debian_regex = re.compile(r'^' + re.escape(name) + ' - (.*) mode')
+    matched = debian_regex.search(alternatives_output)
+
+    if matched is not None:
+        if matched.group(1) == 'auto':
+            return True
+        else:
+            return False
+
+    rhel_regex = re.compile(r'^' + re.escape(name) + ' - status is (.*)\.')
+    matched = rhel_regex.search(alternatives_output)
+
+    if matched is not None:
+        if matched.group(1) == 'auto':
+            return True
+        else:
+            return False
+
+    raise Exception('No regular expression matched the alternatives output')
 
 if __name__ == '__main__':
     main()
