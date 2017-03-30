@@ -76,68 +76,11 @@ As of Ansible 2.FIXME specifying credentials directly under the task or under pr
 * Fewer code paths doing similar things
 
 
-Recap of different connection methods
--------------------------------------
-This section demonstrates the different ways to write connect to network devices.
+What a network playbook looks like
+-----------------------------------
 
-The following examples are all equivalent.
+FIXME Give a real world example here that shows off the power, include full command line
 
-.. note: Which playbook style should I use?
-
-   If you are starting Networking in Ansible 2.3 we recommend using FIXME name for 2.3 style FIXME. As that is the format that will be supported long term.
-   Where ever possible we suggest using `cli` with SSH keys.
-
-Playbook with provider dict
-```````````````````````````
-
-**Version:** Ansible 2.2 - 2.3
-
-``group_vars/eos.yml``
-
-.. code-block:: yaml
-
-   ---
-   cli:
-     host: "{{ ansible_host }}"
-     username: "{{ eos_cli_user | default('admin') }}"
-     password: "{{ eos_cli_pass | default('admin') }}"
-     transport: cli
-
-
-.. code-block:: yaml
-
-   - name: Gather facts
-     - eos_facts:
-         gather_subset: all
-         provider: "{{ cli }}"
-
-
-Note, that if you use this form in Ansible 2.3 you will get the following deprecation messages. This is a reminder that you need to move to the new 2.3 connection framework, or use ``provider:``.
-
-.. code-block:: yaml
-
-   [WARNING]: argument username has been deprecated and will be removed in a future version
-   [WARNING]: argument host has been deprecated and will be removed in a future version
-   [WARNING]: argument password has been deprecated and will be removed in a future version
-
-2.2 Playbook with provider
-``````````````````````````
-
-**Version:** Ansible 2.2 - 2.3
-
-.. code-block:: yaml
-
-   - name: Gather facts
-     - eos_facts:
-         gather_subset: all
-         provider:
-           username: myuser
-           password: "{{ networkpassword }}"
-           transport: cli
-           host: "{{ ansible_host }}"
-
-2.3 Playbook
-````````````
 
 **Version:** Ansible 2.3
 
@@ -149,16 +92,8 @@ Note, that if you use this form in Ansible 2.3 you will get the following deprec
          gather_subset: all
 
 
-By default eos and nxos module use cli (ssh). If you wish to use the API, use the ``transport:`` option. For example:
-
-.. code-block:: yaml
-
-   - name: Gather facts
-     - eos_facts:
-         gather_subset: all
-         transport: eapi
-
 For details on how how to pass in authentication details, see `Specifying Credentials`.
+See how-tos
 
 
 

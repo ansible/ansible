@@ -19,6 +19,13 @@ TBD Overview of the different methods and why SSH is recommended.
 Specifying Credentials
 ----------------------
 
+.. note: Which playbook style should I use?
+
+   If you are starting Networking in Ansible 2.3 we recommend using FIXME name for 2.3 style FIXME. As that is the format that will be supported long term.
+   Where ever possible we suggest using `cli` with SSH keys.
+
+
+
 In Ansible versions 2.0 to 2.2, network modules support providing connection credentials as top-level arguments in the module. The forthcoming release of Ansible 2.3 introduces a new connection framework that is more tightly integrated into Ansible.
 
 With this new connection framework, we have decided to immediately deprecate the use of top level arguments for passing credentials into network modules.  This applies to all top-level credentials arguments except ``provider``. Platforms that support privilege, such as eos and ios, top-level options ``auth_pass`` and ``authorize`` are still supported. Top-level arguments that have been deprecated (including ``username``, ``host``, and ``password``) will still function, but Ansible will display a warning saying that those arguments have been deprecated and will be removed in a future release.
@@ -68,30 +75,59 @@ Connecting using SSH Keys
 TBD: This is the recomended way, ``ssh_keyfile``
 
 Connecting using Command line arguments
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 TBD ``-u user -k``
+
+Top-level arguments
+^^^^^^^^^^^^^^^^^^^
+
+
+FIXME Example
+
+
+.. code-block:: yaml
+
+   [WARNING]: argument username has been deprecated and will be removed in a future version
+   [WARNING]: argument host has been deprecated and will be removed in a future version
+   [WARNING]: argument password has been deprecated and will be removed in a future version
+
+
+.. note: Don't use this
+
+   We suggest you move away from this form and use ``provider:`` (LINK) or better yet SSH keys are your earliest convenience. Support for this method will be removed in FIXME x.y
 
 Provider Arguments
 ^^^^^^^^^^^^^^^^^^
 
 TBD
 
+**Version:** Ansible 2.2 - 2.3
+
 .. code-block:: yaml
 
-   - ios_command:
-       commands: show version
-       provider:
-         host: "{{ inventory_hostname }}"
-         username: cisco
-         password: mypassword
+   - name: Gather facts
+     - eos_facts:
+         gather_subset: all
+         provider:
+           username: myuser
+           password: "{{ networkpassword }}"
+           transport: cli
+           host: "{{ ansible_host }}"
+
 
 Accessing over API (eapi, nxapi)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Platforms:** eos and nxapi
 
 TDB, Include details regarding ``use_ssl``
+
+.. code-block:: yaml
+
+   - name: Gather facts
+     - eos_facts:
+         transport: eapi
 
 
 
