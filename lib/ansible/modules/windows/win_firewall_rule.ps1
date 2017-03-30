@@ -54,11 +54,6 @@ function preprocessAndCompare($key, $outputValue, $fwsettingValue) {
             }
         }
     }
-    elseif ($key -eq 'Profiles') {
-        if (($fwsettingValue -eq "any") -and ($outputValue -eq "Domain,Private,Public")) {
-            return $true
-        }
-    }
 
     return $false
 }
@@ -94,10 +89,10 @@ function getFirewallRule ($fwsettings) {
         $msg=@();
         if ($($output|measure).count -gt 0) {
             $exists=$true;
-            $msg += @("The rule '" + $fwsettings.'Rule Name' + "' exists.");
+            $msg += @("The rule '$($fwsettings.'Rule Name')' exists.");
             if ($($output|measure).count -gt 1) {
                 $multi=$true
-                $msg += @("The rule '" + $fwsettings.'Rule Name' + "' has multiple entries.");
+                $msg += @("The rule '$($fwsettings.'Rule Name')' has multiple entries.");
                 ForEach($rule in $output.GetEnumerator()) {
                     ForEach($fwsetting in $fwsettings.GetEnumerator()) {
                         if ( $rule.$fwsetting -ne $fwsettings.$fwsetting) {
@@ -119,7 +114,7 @@ function getFirewallRule ($fwsettings) {
                             Continue
                         } else {
                             $diff=$true;
-                            $difference+=@($fwsettings.$($fwsetting.Key));
+                            $difference+=@("$($fwsetting.Key): $($output.$($fwsetting.Key)) vs $($fwsettings.$($fwsetting.Key))");
                         };
                     };
                 };
@@ -242,27 +237,27 @@ $msg=@();
 $fwsettings=@{}
 
 # Variabelise the arguments
-$params=Parse-Args $args;
+$params = Parse-Args $args
 
 $name = Get-AnsibleParam -obj $params -name "name" -failifempty $true
-$direction = Get-AnsibleParam -obj $params -name "direction" -failifempty $true -validateSet "in","out"
-$action = Get-AnsibleParam -obj $params -name "action" -failifempty $true -validateSet "allow","block","bypass"
-$program = Get-AnsibleParam -obj $params -name "program"
-$service = Get-AnsibleParam -obj $params -name "service" -default "any"
-$description = Get-AnsibleParam -obj $params -name "description"
-$enable = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "enable" -default "true")
-$winprofile = Get-AnsibleParam -obj $params -name "profile" -default "any"
-$localip = Get-AnsibleParam -obj $params -name "localip" -default "any"
-$remoteip = Get-AnsibleParam -obj $params -name "remoteip" -default "any"
-$localport = Get-AnsibleParam -obj $params -name "localport" -default "any"
-$remoteport = Get-AnsibleParam -obj $params -name "remoteport" -default "any"
-$protocol = Get-AnsibleParam -obj $params -name "protocol" -default "any"
+$direction = Get-AnsibleParam -obj $params -name "direction" -type "str" -failifempty $true -validateset "in","out"
+$action = Get-AnsibleParam -obj $params -name "action" -type "str" -failifempty $true -validateset "allow","block","bypass"
+$program = Get-AnsibleParam -obj $params -name "program" -type "str"
+$service = Get-AnsibleParam -obj $params -name "service" -type "str" -default "any"
+$description = Get-AnsibleParam -obj $params -name "description" -type "str"
+$enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -default $true -aliases "enable"
+$profiles = Get-AnsibleParam -obj $params -name "profiles" -type "str" -default "any" -aliases "profile"
+$localip = Get-AnsibleParam -obj $params -name "localip" -type "str" -default "any"
+$remoteip = Get-AnsibleParam -obj $params -name "remoteip" -type "str" -default "any"
+$localport = Get-AnsibleParam -obj $params -name "localport" -type "str" -default "any"
+$remoteport = Get-AnsibleParam -obj $params -name "remoteport" -type "str" -default "any"
+$protocol = Get-AnsibleParam -obj $params -name "protocol" -type "str" -default "any"
 
-$state = Get-AnsibleParam -obj $params -name "state" -failifempty $true -validateSet "present","absent"
-$force = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "force" -default "false")
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
+$force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
 
 # Check the arguments
-If ($enable -eq $true) {
+If ($enabled -eq $true) {
     $fwsettings.Add("Enabled", "yes");
 } Else {
     $fwsettings.Add("Enabled", "no");
@@ -291,7 +286,12 @@ $fwsettings.Add("LocalPort", $localport);
 $fwsettings.Add("RemotePort", $remoteport);
 $fwsettings.Add("Service", $service);
 $fwsettings.Add("Protocol", $protocol);
-$fwsettings.Add("Profiles", $winprofile)
+
+If ($profiles -eq "any") {
+    $fwsettings.Add("Profiles", "Domain,Private,Public")
+} Else {
+    $fwsettings.Add("Profiles", $profiles)
+}
 
 $output=@()
 $capture=getFirewallRule ($fwsettings);
