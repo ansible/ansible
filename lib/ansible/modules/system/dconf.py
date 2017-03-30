@@ -200,8 +200,9 @@ class DconfPreference(object):
         elif self.check_mode:
             return True
 
-        # Set-up command to run.
-        command = ["dconf", "reset", key]
+        # Set-up command to run. Since DBus is needed for reset operation, wrap
+        # dconf command dbus-launch.
+        command = ["dbus-launch", "dconf", "reset", key]
 
         # Run the command and fetch standard return code, stdout, and stderr.
         rc, out, err = self.module.run_command(command)
