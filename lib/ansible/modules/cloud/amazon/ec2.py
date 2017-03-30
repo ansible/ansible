@@ -1227,12 +1227,15 @@ def create_instances(module, ec2, vpc, override_count=None):
                 # Now we have to do the intermediate waiting
                 if wait:
                     instids = await_spot_requests(module, ec2, res, count)
+                else:
+                    instids = []
         except boto.exception.BotoServerError as e:
             module.fail_json(msg="Instance creation failed => %s: %s" % (e.error_code, e.error_message))
 
         # wait here until the instances are up
         num_running = 0
         wait_timeout = time.time() + wait_timeout
+        res_list = ()
         while wait_timeout > time.time() and num_running < len(instids):
             try:
                 res_list = ec2.get_all_instances(instids)
@@ -1275,7 +1278,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                 inst.modify_attribute('disableApiTermination', True)
 
         # Leave this as late as possible to try and avoid InvalidInstanceID.NotFound
-        if instance_tags:
+        if instance_tags and instids:
             try:
                 ec2.create_tags(instids, instance_tags)
             except boto.exception.EC2ResponseError as e:
