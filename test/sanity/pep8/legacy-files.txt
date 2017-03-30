@@ -99,7 +99,6 @@ lib/ansible/module_utils/cloudengine.py
 lib/ansible/module_utils/connection.py
 lib/ansible/module_utils/database.py
 lib/ansible/module_utils/dellos10.py
-lib/ansible/module_utils/dellos6.py
 lib/ansible/module_utils/dellos9.py
 lib/ansible/module_utils/docker_common.py
 lib/ansible/module_utils/ec2.py
@@ -512,8 +511,6 @@ lib/ansible/modules/network/cumulus/_cl_img_install.py
 lib/ansible/modules/network/cumulus/_cl_license.py
 lib/ansible/modules/network/cumulus/_cl_ports.py
 lib/ansible/modules/network/cumulus/nclu.py
-lib/ansible/modules/network/dellos6/dellos6_command.py
-lib/ansible/modules/network/dellos6/dellos6_facts.py
 lib/ansible/modules/network/dnsimple.py
 lib/ansible/modules/network/dnsmadeeasy.py
 lib/ansible/modules/network/eos/_eos_template.py
@@ -878,7 +875,6 @@ lib/ansible/plugins/action/asa_config.py
 lib/ansible/plugins/action/asa_template.py
 lib/ansible/plugins/action/assemble.py
 lib/ansible/plugins/action/copy.py
-lib/ansible/plugins/action/dellos6_config.py
 lib/ansible/plugins/action/eos_template.py
 lib/ansible/plugins/action/fetch.py
 lib/ansible/plugins/action/group_by.py
