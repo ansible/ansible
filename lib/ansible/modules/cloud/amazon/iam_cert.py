@@ -13,9 +13,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -69,7 +70,8 @@ options:
       - The path to the private key of the certificate in PEM encoded format.
   dup_ok:
     description:
-      - By default the module will not upload a certificate that is already uploaded into AWS. If set to True, it will upload the certificate as long as the name is unique.
+      - By default the module will not upload a certificate that is already uploaded into AWS. If set to True, it will upload the certificate as
+        long as the name is unique.
     required: false
     default: False
     aliases: []
@@ -129,9 +131,9 @@ def boto_exception(err):
 
 def cert_meta(iam, name):
     opath       = iam.get_server_certificate(name).get_server_certificate_result.\
-                                                 server_certificate.\
-                                                 server_certificate_metadata.\
-                                                 path
+        server_certificate.\
+        server_certificate_metadata.\
+        path
     ocert       = iam.get_server_certificate(name).get_server_certificate_result.\
                                                  server_certificate.\
                                                  certificate_body

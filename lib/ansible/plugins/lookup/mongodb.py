@@ -23,7 +23,7 @@ import datetime
 __metaclass__ = type
 
 try:
-    from pymongo  import ASCENDING, DESCENDING
+    from pymongo import ASCENDING, DESCENDING
     from pymongo.errors import ConnectionFailure
     from pymongo import MongoClient
 except ImportError:
@@ -39,6 +39,7 @@ else:
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+
 
 class LookupModule(LookupBase):
 
@@ -78,7 +79,7 @@ class LookupModule(LookupBase):
         elif isinstance(result, dict):
             new_dict = {}
             for key in result.keys():
-                value = reslut[key] # python2 and 3 compatible....
+                value = result[key] # python2 and 3 compatible....
                 new_dict[key] = self.convert_mongo_result_to_valid_json(value)
             return new_dict
         elif isinstance(result, datetime.datetime):
@@ -160,7 +161,7 @@ class LookupModule(LookupBase):
                     ret.append(result)
 
             except ConnectionFailure as e:
-                 raise AnsibleError('unable to connect to database: %s' % str(e))
+                raise AnsibleError('unable to connect to database: %s' % str(e))
 
 
 

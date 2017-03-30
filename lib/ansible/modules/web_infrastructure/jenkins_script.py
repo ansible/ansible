@@ -20,6 +20,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+
 DOCUMENTATION = '''
 ---
 author: James Hogarth
@@ -27,7 +32,7 @@ module: jenkins_script
 short_description: Executes a groovy script in the jenkins instance
 version_added: '2.3'
 description:
-    - The M(jenkins_script) module takes a script plus a dict of values
+    - The C(jenkins_script) module takes a script plus a dict of values
       to use within the script and returns the result of the script being run.
 
 options:
@@ -58,7 +63,7 @@ options:
   password:
     description:
       - The password to connect to the jenkins server with.
-    require: false
+    required: false
     default: null
   args:
     description:

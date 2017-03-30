@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -208,9 +209,9 @@ def main():
     rc,raw_fs,err = module.run_command("%s -c /dev/null -o value -s TYPE %s" % (cmd, dev))
     fs = raw_fs.strip()
 
-    if fs == fstype and resizefs == False and not force:
+    if fs == fstype and resizefs is False and not force:
         module.exit_json(changed=False)
-    elif fs == fstype and resizefs == True:
+    elif fs == fstype and resizefs is True:
         # Get dev and fs size and compare
         devsize_in_bytes = _get_dev_size(dev, module)
         fssize_in_bytes = _get_fs_size(fssize_cmd, dev, module)

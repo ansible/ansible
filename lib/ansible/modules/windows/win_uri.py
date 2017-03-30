@@ -21,11 +21,12 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-DOCUMENTATION = """
+
+DOCUMENTATION = r'''
 ---
 module: win_uri
 version_added: "2.1"
@@ -36,6 +37,7 @@ options:
   url:
     description:
       - HTTP or HTTPS URL in the form of (http|https)://host.domain:port/path
+    required: True
   method:
     description:
       - The HTTP Method of the request or response.
@@ -61,21 +63,22 @@ options:
     version_added: "2.3"
     description:
       - Output the response body to a file.
-    default: None
   headers:
     description:
       - 'Key Value pairs for headers. Example "Host: www.somesite.com"'
   use_basic_parsing:
     description:
-      - This module relies upon 'Invoke-WebRequest', which by default uses the Internet Explorer Engine to parse a webpage. There's an edge-case where if a user hasn't run IE before, this will fail. The only advantage to using the Internet Explorer praser is that you can traverse the DOM in a powershell script. That isn't useful for Ansible, so by default we toggle 'UseBasicParsing'. However, you can toggle that off here.
+      - This module relies upon 'Invoke-WebRequest', which by default uses the Internet Explorer Engine to parse a webpage. There's an edge-case where if a
+        user hasn't run IE before, this will fail. The only advantage to using the Internet Explorer praser is that you can traverse the DOM in a
+        powershell script. That isn't useful for Ansible, so by default we toggle 'UseBasicParsing'. However, you can toggle that off here.
     choices:
       - True
       - False
     default: True
 author: Corwin Brown (@blakfeld)
-"""
+'''
 
-EXAMPLES = """
+EXAMPLES = r'''
 - name: Perform a GET and Store Output
   win_uri:
     url: http://example.com/endpoint
@@ -84,39 +87,39 @@ EXAMPLES = """
 # Set a HOST header to hit an internal webserver:
 - name: Hit a Specific Host on the Server
   win_uri:
-    url: http://example.com
+    url: http://example.com/
     method: GET
     headers:
       host: www.somesite.com
 
 - name: Perform a HEAD on an Endpoint
   win_uri:
-    url: http://www.example.com
+    url: http://www.example.com/
     method: HEAD
 
 - name: POST a Body to an Endpoint
   win_uri:
-    url: http://www.somesite.com
+    url: http://www.somesite.com/
     method: POST
     body: "{ 'some': 'json' }"
-"""
+'''
 
-RETURN = """
+RETURN = r'''
 url:
   description: The Target URL
   returned: always
   type: string
-  sample: "https://www.ansible.com"
+  sample: https://www.ansible.com
 method:
   description: The HTTP method used.
   returned: always
   type: string
-  sample: "GET"
+  sample: GET
 content_type:
   description: The "content-type" header used.
   returned: always
   type: string
-  sample: "application/json"
+  sample: application/json
 use_basic_parsing:
   description: The state of the "use_basic_parsing" flag.
   returned: always
@@ -137,12 +140,12 @@ status_description:
   description: A summery of the status.
   returned: success
   type: string
-  stample: "OK"
+  sample: OK
 raw_content:
   description: The raw content of the HTTP response.
   returned: success
   type: string
-  sample: 'HTTP/1.1 200 OK\nX-XSS-Protection: 1; mode=block\nX-Frame-Options: SAMEORIGIN\nAlternate-Protocol: 443:quic,p=1\nAlt-Svc: quic="www.google.com:443"; ma=2592000; v="30,29,28,27,26,25",quic=":443"; ma=2...'
+  sample: 'HTTP/1.1 200 OK\nX-XSS-Protection: 1; mode=block\nAlternate-Protocol: 443:quic,p=1\nAlt-Svc: quic="www.google.com:443";'
 headers:
   description: The Headers of the response.
   returned: success
@@ -153,4 +156,4 @@ raw_content_length:
   returned: success
   type: int
   sample: 54447
-"""
+'''

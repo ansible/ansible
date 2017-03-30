@@ -16,21 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.module_utils.basic import *
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    from OpenSSL import crypto
-except ImportError:
-    pyopenssl_found = False
-else:
-    pyopenssl_found = True
-
-
-import os
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -103,8 +92,22 @@ filename:
     sample: /etc/ssl/public/ansible.com.pem
 '''
 
+from ansible.module_utils.basic import *
+
+try:
+    from OpenSSL import crypto
+except ImportError:
+    pyopenssl_found = False
+else:
+    pyopenssl_found = True
+
+
+import os
+
+
 class PublicKeyError(Exception):
     pass
+
 
 class PublicKey(object):
 
@@ -123,11 +126,11 @@ class PublicKey(object):
 
         if not os.path.exists(self.path) or self.force:
             try:
-                 privatekey_content = open(self.privatekey_path, 'r').read()
-                 privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM, privatekey_content)
-                 publickey_file = open(self.path, 'w')
-                 publickey_file.write(crypto.dump_publickey(crypto.FILETYPE_PEM, privatekey))
-                 publickey_file.close()
+                privatekey_content = open(self.privatekey_path, 'r').read()
+                privatekey = crypto.load_privatekey(crypto.FILETYPE_PEM, privatekey_content)
+                publickey_file = open(self.path, 'w')
+                publickey_file.write(crypto.dump_publickey(crypto.FILETYPE_PEM, privatekey))
+                publickey_file.close()
             except (IOError, OSError):
                 e = get_exception()
                 raise PublicKeyError(e)
@@ -163,7 +166,7 @@ class PublicKey(object):
         }
 
         return result
-        
+
 
 def main():
 

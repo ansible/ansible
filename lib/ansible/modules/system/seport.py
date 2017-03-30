@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -266,26 +267,26 @@ def semanage_port_del(module, ports, proto, setype, do_reload, sestore=''):
 def main():
     module = AnsibleModule(
         argument_spec={
-                'ports': {
-                    'required': True,
+            'ports': {
+                'required': True,
                 },
-                'proto': {
-                    'required': True,
-                    'choices': ['tcp', 'udp'],
+            'proto': {
+                'required': True,
+                'choices': ['tcp', 'udp'],
                 },
-                'setype': {
-                    'required': True,
+            'setype': {
+                'required': True,
                 },
-                'state': {
-                    'required': True,
-                    'choices': ['present', 'absent'],
+            'state': {
+                'required': True,
+                'choices': ['present', 'absent'],
                 },
-                'reload': {
-                    'required': False,
-                    'type': 'bool',
-                    'default': 'yes',
+            'reload': {
+                'required': False,
+                'type': 'bool',
+                'default': 'yes',
                 },
-            },
+        },
         supports_check_mode=True
     )
     if not HAVE_SELINUX:

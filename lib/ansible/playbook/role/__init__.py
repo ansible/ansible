@@ -22,8 +22,8 @@ __metaclass__ = type
 import collections
 import os
 
-from ansible.compat.six import iteritems, binary_type, text_type
 from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.module_utils.six import iteritems, binary_type, text_type
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
@@ -162,7 +162,8 @@ class Role(Base, Become, Conditional, Taggable):
             return r
 
         except RuntimeError:
-            raise AnsibleError("A recursion loop was detected with the roles specified. Make sure child roles do not have dependencies on parent roles", obj=role_include._ds)
+            raise AnsibleError("A recursion loop was detected with the roles specified. Make sure child roles do not have dependencies on parent roles",
+                               obj=role_include._ds)
 
     def _load_role_data(self, role_include, parent_role=None):
         self._role_name        = role_include.role
@@ -213,7 +214,8 @@ class Role(Base, Become, Conditional, Taggable):
         handler_data = self._load_role_yaml('handlers')
         if handler_data:
             try:
-                self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader, variable_manager=self._variable_manager)
+                self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader,
+                                                           variable_manager=self._variable_manager)
             except AssertionError:
                 raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name , obj=handler_data)
 
@@ -408,12 +410,14 @@ class Role(Base, Become, Conditional, Taggable):
             dep_blocks = dep.compile(play=play, dep_chain=new_dep_chain)
             block_list.extend(dep_blocks)
 
-        for task_block in self._task_blocks:
+        for idx, task_block in enumerate(self._task_blocks):
             new_task_block = task_block.copy(exclude_parent=True)
             if task_block._parent:
                 new_task_block._parent = task_block._parent.copy()
             new_task_block._dep_chain = new_dep_chain
             new_task_block._play = play
+            if idx == len(self._task_blocks) - 1:
+                new_task_block._eor = True
             block_list.append(new_task_block)
 
         return block_list

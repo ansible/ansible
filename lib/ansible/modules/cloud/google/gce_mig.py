@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -293,7 +294,7 @@ except ImportError:
 
 
 def _check_params(params, field_list):
-    """ 
+    """
     Helper to validate params.
 
     Use this in function definitions if they require specific fields
@@ -323,7 +324,7 @@ def _check_params(params, field_list):
 
 
 def _validate_autoscaling_params(params):
-    """ 
+    """
     Validate that the minimum configuration is present for autoscaling.
 
     :param params: Ansible dictionary containing autoscaling configuration
@@ -331,7 +332,7 @@ def _validate_autoscaling_params(params):
                    key 'autoscaling'.
     :type  params: ``dict``
 
-    :return: Tuple containing a boolean and a string.  True if autoscaler 
+    :return: Tuple containing a boolean and a string.  True if autoscaler
              is valid, False otherwise, plus str for message.
     :rtype: ``(``bool``, ``str``)``
     """
@@ -372,7 +373,7 @@ def _validate_autoscaling_params(params):
 
 
 def _validate_named_port_params(params):
-    """ 
+    """
     Validate the named ports parameters
 
     :param params: Ansible dictionary containing named_ports configuration
@@ -404,7 +405,7 @@ def _validate_named_port_params(params):
 
 
 def _get_instance_list(mig, field='name', filter_list=['NONE']):
-    """ 
+    """
     Helper to grab field from instances response.
 
     :param mig: Managed Instance Group Object from libcloud.
@@ -427,10 +428,10 @@ def _get_instance_list(mig, field='name', filter_list=['NONE']):
 
 
 def _gen_gce_as_policy(as_params):
-    """ 
+    """
     Take Autoscaler params and generate GCE-compatible policy.
 
-    :param as_params: Dictionary in Ansible-playbook format 
+    :param as_params: Dictionary in Ansible-playbook format
                       containing policy arguments.
     :type as_params: ``dict``
 
@@ -721,8 +722,8 @@ def main():
         named_ports=dict(type='list', default=None),
         service_account_email=dict(),
         service_account_permissions=dict(type='list'),
-        pem_file=dict(),
-        credentials_file=dict(),
+        pem_file=dict(type='path'),
+        credentials_file=dict(type='path'),
         project_id=dict(), ), )
 
     if not HAS_PYTHON26:
@@ -829,7 +830,7 @@ def main():
             if not autoscaler:
                 module.fail_json(msg='Unable to fetch autoscaler %s to delete \
                 in zone: %s' % (params['autoscaling']['name'], params['zone']),
-                                 changed=False)
+                    changed=False)
 
             changed = delete_autoscaler(autoscaler)
             json_output['deleted_autoscaler'] = changed

@@ -19,41 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import os
-import time
-import traceback
-import ssl
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-from httplib import HTTPSConnection
-
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
-
-
-try:
-    import ovirtsdk4.types as otypes
-except ImportError:
-    pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    check_params,
-    create_connection,
-    convert_to_bytes,
-    equal,
-    follow_link,
-    ovirt_full_argument_spec,
-    search_by_name,
-    wait,
-)
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -82,7 +51,15 @@ options:
             - "Should the Virtual Machine disk be present/absent/attached/detached."
         choices: ['present', 'absent', 'attached', 'detached']
         default: 'present'
-    image_path:
+    download_image_path:
+        description:
+            - "Path on a file system where disk should be downloaded."
+            - "Note that you must have an valid oVirt engine CA in your system trust store
+               or you must provide it in C(ca_file) parameter."
+            - "Note that the disk is not downloaded when the file already exists,
+               but you can forcibly download the disk when using C(force) I (true)."
+        version_added: "2.3"
+    upload_image_path:
         description:
             - "Path to disk image, which should be uploaded."
             - "Note that currently we support only compability version 0.10 of the qcow disk."
@@ -119,7 +96,9 @@ options:
             - "C(**IMPORTANT**)"
             - "There is no reliable way to achieve idempotency, so every time
                you specify this parameter the disks are copied, so please handle
-               your playbook accordingly to not copy the disks all the time."
+               your playbook accordingly to not copy the disks all the time. This
+               is valid only for VM and floating disks, template disks works
+               as expected."
         version_added: "2.3"
     force:
         description:
@@ -145,6 +124,15 @@ options:
             - "C(username) - CHAP Username to be used to access storage server. Used by iSCSI."
             - "C(password) - CHAP Password of the user to be used to access storage server. Used by iSCSI."
             - "C(storage_type) - Storage type either I(fcp) or I(iscsi)."
+    sparsify:
+        description:
+            - "I(True) if the disk should be sparsified."
+            - "Sparsification frees space in the disk image that is not used by
+               its filesystem. As a result, the image will occupy less space on
+               the storage."
+            - "Note that this parameter isn't idempotent, as it's not possible
+               to check if the disk should be or should not be sparsified."
+        version_added: "2.4"
 extends_documentation_fragment: ovirt
 '''
 
@@ -189,6 +177,12 @@ EXAMPLES = '''
     format: cow
     image_path: /path/to/mydisk.qcow2
     storage_domain: data
+
+# Download disk to local file system:
+# Since Ansible 2.3
+- ovirt_disks:
+    id: 7de90f31-222c-436c-a1ca-7e655bd5b60c
+    download_image_path: /home/user/mydisk.qcow2
 '''
 
 
@@ -210,6 +204,39 @@ disk_attachment:
     returned: "On success if disk is found and C(vm_id) or C(vm_name) was passed and VM was found."
 '''
 
+import os
+import time
+import traceback
+import ssl
+
+from httplib import HTTPSConnection
+
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
+
+
+try:
+    import ovirtsdk4.types as otypes
+except ImportError:
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    check_params,
+    create_connection,
+    convert_to_bytes,
+    equal,
+    follow_link,
+    get_id_by_name,
+    ovirt_full_argument_spec,
+    search_by_name,
+    wait,
+)
+
 
 def _search_by_lun(disks_service, lun_id):
     """
@@ -223,14 +250,14 @@ def _search_by_lun(disks_service, lun_id):
     return res[0] if res else None
 
 
-def upload_disk_image(connection, module):
-    size = os.path.getsize(module.params['image_path'])
+def transfer(connection, module, direction, transfer_func):
     transfers_service = connection.system_service().image_transfers_service()
     transfer = transfers_service.add(
         otypes.ImageTransfer(
             image=otypes.Image(
                 id=module.params['id'],
-            )
+            ),
+            direction=direction,
         )
     )
     transfer_service = transfers_service.image_transfer_service(transfer.id)
@@ -242,11 +269,6 @@ def upload_disk_image(connection, module):
             time.sleep(module.params['poll_interval'])
             transfer = transfer_service.get()
 
-        # Set needed headers for uploading:
-        upload_headers = {
-            'Authorization': transfer.signed_ticket,
-        }
-
         proxy_url = urlparse(transfer.proxy_url)
         context = ssl.create_default_context()
         auth = module.params['auth']
@@ -254,7 +276,7 @@ def upload_disk_image(connection, module):
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
         elif auth.get('ca_file'):
-            context.load_verify_locations(cafile='ca.pem')
+            context.load_verify_locations(cafile=auth.get('ca_file'))
 
         proxy_connection = HTTPSConnection(
             proxy_url.hostname,
@@ -262,22 +284,13 @@ def upload_disk_image(connection, module):
             context=context,
         )
 
-        with open(module.params['image_path'], "rb") as disk:
-            chunk_size = 1024 * 1024 * 8
-            pos = 0
-            while pos < size:
-                transfer_service.extend()
-                upload_headers['Content-Range'] = "bytes %d-%d/%d" % (pos, min(pos + chunk_size, size) - 1, size)
-                proxy_connection.request(
-                    'PUT',
-                    proxy_url.path,
-                    disk.read(chunk_size),
-                    headers=upload_headers,
-                )
-                r = proxy_connection.getresponse()
-                if r.status >= 400:
-                    raise Exception("Failed to upload disk image.")
-                pos += chunk_size
+        transfer_func(
+            transfer_service,
+            proxy_connection,
+            proxy_url,
+            transfer.signed_ticket
+        )
+        return True
     finally:
         transfer_service.finalize()
         while transfer.phase in [
@@ -304,14 +317,78 @@ def upload_disk_image(connection, module):
                 timeout=module.params['timeout'],
             )
 
-    return True
+
+def download_disk_image(connection, module):
+    def _transfer(transfer_service, proxy_connection, proxy_url, transfer_ticket):
+        disks_service = connection.system_service().disks_service()
+        disk = disks_service.disk_service(module.params['id']).get()
+        size = disk.provisioned_size
+        transfer_headers = {
+            'Authorization': transfer_ticket,
+        }
+        with open(module.params['download_image_path'], "wb") as mydisk:
+            pos = 0
+            MiB_per_request = 8
+            chunk_size = 1024 * 1024 * MiB_per_request
+            while pos < size:
+                transfer_service.extend()
+                transfer_headers['Range'] = 'bytes=%d-%d' % (pos, min(size, pos + chunk_size) - 1)
+                proxy_connection.request(
+                    'GET',
+                    proxy_url.path,
+                    headers=transfer_headers,
+                )
+                r = proxy_connection.getresponse()
+                if r.status >= 300:
+                    raise Exception("Error: %s" % r.read())
+
+                mydisk.write(r.read())
+                pos += chunk_size
+    return transfer(
+        connection,
+        module,
+        otypes.ImageTransferDirection.DOWNLOAD,
+        transfer_func=_transfer,
+    )
+
+
+def upload_disk_image(connection, module):
+    def _transfer(transfer_service, proxy_connection, proxy_url, transfer_ticket):
+        path = module.params['upload_image_path']
+        transfer_headers = {
+            'Authorization': transfer_ticket,
+        }
+        with open(path, "rb") as disk:
+            pos = 0
+            MiB_per_request = 8
+            size = os.path.getsize(path)
+            chunk_size = 1024 * 1024 * MiB_per_request
+            while pos < size:
+                transfer_service.extend()
+                transfer_headers['Content-Range'] = "bytes %d-%d/%d" % (pos, min(pos + chunk_size, size) - 1, size)
+                proxy_connection.request(
+                    'PUT',
+                    proxy_url.path,
+                    disk.read(chunk_size),
+                    headers=transfer_headers,
+                )
+                r = proxy_connection.getresponse()
+                if r.status >= 400:
+                    raise Exception("Failed to upload disk image.")
+                pos += chunk_size
+    return transfer(
+        connection,
+        module,
+        otypes.ImageTransferDirection.UPLOAD,
+        transfer_func=_transfer,
+    )
 
 
 class DisksModule(BaseModule):
 
     def build_entity(self):
         logical_unit = self._module.params.get('logical_unit')
-        return otypes.Disk(
+        disk = otypes.Disk(
             id=self._module.params.get('id'),
             name=self._module.params.get('name'),
             description=self._module.params.get('description'),
@@ -344,6 +421,12 @@ class DisksModule(BaseModule):
                 ],
             ) if logical_unit else None,
         )
+        if hasattr(disk, 'initial_size'):
+            disk.initial_size = convert_to_bytes(
+                self._module.params.get('size')
+            )
+
+        return disk
 
     def update_storage_domains(self, disk_id):
         changed = False
@@ -357,14 +440,14 @@ class DisksModule(BaseModule):
 
         # Initiate move:
         if self._module.params['storage_domain']:
-            new_disk_storage = search_by_name(sds_service, self._module.params['storage_domain'])
+            new_disk_storage_id = get_id_by_name(sds_service, self._module.params['storage_domain'])
             changed = self.action(
                 action='move',
                 entity=disk,
-                action_condition=lambda d: new_disk_storage.id != d.storage_domains[0].id,
+                action_condition=lambda d: new_disk_storage_id != d.storage_domains[0].id,
                 wait_condition=lambda d: d.status == otypes.DiskStatus.OK,
                 storage_domain=otypes.StorageDomain(
-                    id=new_disk_storage.id,
+                    id=new_disk_storage_id,
                 ),
                 post_action=lambda _: time.sleep(self._module.params['poll_interval']),
             )['changed']
@@ -375,6 +458,9 @@ class DisksModule(BaseModule):
                 changed = changed or self.action(
                     action='copy',
                     entity=disk,
+                    action_condition=(
+                        lambda disk: new_disk_storage.id not in [sd.id for sd in disk.storage_domains]
+                    ),
                     wait_condition=lambda disk: disk.status == otypes.DiskStatus.OK,
                     storage_domain=otypes.StorageDomain(
                         id=new_disk_storage.id,
@@ -430,8 +516,10 @@ def main():
         bootable=dict(default=None, type='bool'),
         shareable=dict(default=None, type='bool'),
         logical_unit=dict(default=None, type='dict'),
-        image_path=dict(default=None),
+        download_image_path=dict(default=None),
+        upload_image_path=dict(default=None, aliases=['image_path']),
         force=dict(default=False, type='bool'),
+        sparsify=dict(default=None, type='bool'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -443,7 +531,8 @@ def main():
     try:
         disk = None
         state = module.params['state']
-        connection = create_connection(module.params.get('auth'))
+        auth = module.params.get('auth')
+        connection = create_connection(auth)
         disks_service = connection.system_service().disks_service()
         disks_module = DisksModule(
             connection=connection,
@@ -469,9 +558,23 @@ def main():
             module.params['id'] = ret['id'] if disk is None else disk.id
 
             # Upload disk image in case it's new disk or force parameter is passed:
-            if module.params['image_path'] and (is_new_disk or module.params['force']):
+            if module.params['upload_image_path'] and (is_new_disk or module.params['force']):
                 uploaded = upload_disk_image(connection, module)
                 ret['changed'] = ret['changed'] or uploaded
+            # Download disk image in case it's file don't exist or force parameter is passed:
+            if (
+                module.params['download_image_path']
+                and (not os.path.isfile(module.params['download_image_path']) or module.params['force'])
+            ):
+                downloaded = download_disk_image(connection, module)
+                ret['changed'] = ret['changed'] or downloaded
+
+            # Disk sparsify:
+            ret = disks_module.action(
+                action='sparsify',
+                action_condition=lambda d: module.params['sparsify'],
+                wait_condition=lambda d: d.status == otypes.DiskStatus.OK,
+            )
         elif state == 'absent':
             ret = disks_module.remove()
 
@@ -513,7 +616,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":

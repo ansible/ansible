@@ -21,27 +21,27 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-DOCUMENTATION = '''
+
+DOCUMENTATION = r'''
 ---
 module: win_feature
 version_added: "1.7"
 short_description: Installs and uninstalls Windows Features on Windows Server
 description:
-     - Installs or uninstalls Windows Roles or Features on Windows Server. This module uses the Add/Remove-WindowsFeature Cmdlets, which is not available on client os machines.
+     - Installs or uninstalls Windows Roles or Features on Windows Server. This module uses the Add/Remove-WindowsFeature Cmdlets on Windows 2008
+       and Install/Uninstall-WindowsFeature Cmdlets on Windows 2012, which are not available on client os machines.
 options:
   name:
     description:
       - Names of roles or features to install as a single feature or a comma-separated list of features
     required: true
-    default: null
   state:
     description:
       - State of the features or roles on the system
-    required: false
     choices:
       - present
       - absent
@@ -52,28 +52,23 @@ options:
     choices:
       - yes
       - no
-    default: null
-    required: false
   include_sub_features:
     description:
       - Adds all subfeatures of the specified feature
     choices:
       - yes
       - no
-    default: null
-    required: false
   include_management_tools:
     description:
-      - Adds the corresponding management tools to the specified feature
+      - Adds the corresponding management tools to the specified feature.
+      - Not supported in Windows 2008. If present when using Windows 2008 this option will be ignored.
     choices:
       - yes
       - no
-    default: null
-    required: false
   source:
     description:
-      - Specify a source to install the feature from
-    required: false
+      - Specify a source to install the feature from.
+      - Not supported in Windows 2008. If present when using Windows 2008 this option will be ignored.
     choices: [ ' {driveletter}:\sources\sxs', ' {IP}\Share\sources\sxs' ]
     version_added: "2.1"
 author:

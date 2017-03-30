@@ -15,9 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -34,19 +35,22 @@ options:
     required: true
   description:
     description:
-      - Description of the security group.
-    required: true
+      - Description of the security group. Required when C(state) is C(present).
+    required: false
   vpc_id:
     description:
       - ID of the VPC to create the group in.
     required: false
   rules:
     description:
-      - List of firewall inbound rules to enforce in this group (see example). If none are supplied, a default all-out rule is assumed. If an empty list is supplied, no inbound rules will be enabled. Rules list may include its own name in `group_name`. This allows idempotent loopback additions (e.g. allow group to acccess itself).
+      - List of firewall inbound rules to enforce in this group (see example). If none are supplied,
+        no inbound rules will be enabled. Rules list may include its own name in `group_name`.
+        This allows idempotent loopback additions (e.g. allow group to acccess itself).
     required: false
   rules_egress:
     description:
-      - List of firewall outbound rules to enforce in this group (see example). If none are supplied, a default all-out rule is assumed. If an empty list is supplied, no outbound rules will be enabled.
+      - List of firewall outbound rules to enforce in this group (see example). If none are supplied,
+        a default all-out rule is assumed. If an empty list is supplied, no outbound rules will be enabled.
     required: false
     version_added: "1.6"
   state:
@@ -136,19 +140,22 @@ EXAMPLES = '''
 try:
     import boto.ec2
     from boto.ec2.securitygroup import SecurityGroup
+    from boto.exception import BotoServerError
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+import traceback
 
 
 def make_rule_key(prefix, rule, group_id, cidr_ip):
     """Creates a unique key for an individual group rule"""
     if isinstance(rule, dict):
         proto, from_port, to_port = [rule.get(x, None) for x in ('proto', 'from_port', 'to_port')]
-        #fix for 11177
+        # fix for 11177
         if proto not in ['icmp', 'tcp', 'udp'] and from_port == -1 and to_port == -1:
             from_port = 'none'
-            to_port   = 'none'
+            to_port = 'none'
 
     else:  # isinstance boto.ec2.securitygroup.IPPermissions
         proto, from_port, to_port = [getattr(rule, x, None) for x in ('ip_protocol', 'from_port', 'to_port')]
@@ -241,16 +248,16 @@ def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            name=dict(type='str', required=True),
-            description=dict(type='str', required=True),
-            vpc_id=dict(type='str'),
-            rules=dict(type='list'),
-            rules_egress=dict(type='list'),
-            state = dict(default='present', type='str', choices=['present', 'absent']),
-            purge_rules=dict(default=True, required=False, type='bool'),
-            purge_rules_egress=dict(default=True, required=False, type='bool'),
+        name=dict(type='str', required=True),
+        description=dict(type='str', required=False),
+        vpc_id=dict(type='str'),
+        rules=dict(type='list'),
+        rules_egress=dict(type='list'),
+        state=dict(default='present', type='str', choices=['present', 'absent']),
+        purge_rules=dict(default=True, required=False, type='bool'),
+        purge_rules_egress=dict(default=True, required=False, type='bool'),
 
-        )
+    )
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -269,6 +276,9 @@ def main():
     purge_rules = module.params['purge_rules']
     purge_rules_egress = module.params['purge_rules_egress']
 
+    if state == 'present' and not description:
+        module.fail_json(msg='Must provide description when state is present.')
+
     changed = False
 
     ec2 = ec2_connect(module)
@@ -276,7 +286,13 @@ def main():
     # find the group if present
     group = None
     groups = {}
-    for curGroup in ec2.get_all_security_groups():
+
+    try:
+        security_groups = ec2.get_all_security_groups()
+    except BotoServerError as e:
+        module.fail_json(msg="Error in get_all_security_groups: %s" % e.message, exception=traceback.format_exc())
+
+    for curGroup in security_groups:
         groups[curGroup.id] = curGroup
         if curGroup.name in groups:
             # Prioritise groups from the current VPC
@@ -291,36 +307,29 @@ def main():
     # Ensure requested group is absent
     if state == 'absent':
         if group:
-            '''found a match, delete it'''
+            # found a match, delete it
             try:
                 if not module.check_mode:
                     group.delete()
-            except Exception as e:
-                module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e))
+            except BotoServerError as e:
+                module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e.message), exception=traceback.format_exc())
             else:
                 group = None
                 changed = True
         else:
-            '''no match found, no changes required'''
+            # no match found, no changes required
+            pass
 
     # Ensure requested group is present
     elif state == 'present':
         if group:
-            '''existing group found'''
-            # check the group parameters are correct
-            group_in_use = False
-            rs = ec2.get_all_instances()
-            for r in rs:
-                for i in r.instances:
-                    group_in_use |= reduce(lambda x, y: x | (y.name == 'public-ssh'), i.groups, False)
-
+            # existing group
             if group.description != description:
-                if group_in_use:
-                    module.fail_json(msg="Group description does not match, but it is in use so cannot be changed.")
+                module.fail_json(msg="Group description does not match existing group. ec2_group does not support this case.")
 
         # if the group doesn't exist, create it now
         else:
-            '''no match found, create it'''
+            # no match found, create it
             if not module.check_mode:
                 group = ec2.create_security_group(name, description, vpc_id=vpc_id)
 
@@ -329,7 +338,7 @@ def main():
                 # reflected in the object returned by the AWS API
                 # call. We re-read the group for getting an updated object
                 # amazon sometimes takes a couple seconds to update the security group so wait till it exists
-                while len(ec2.get_all_security_groups(filters={ 'group_id': group.id, })) == 0:
+                while len(ec2.get_all_security_groups(filters={'group_id': group.id})) == 0:
                     time.sleep(0.1)
 
                 group = ec2.get_all_security_groups(group_ids=(group.id,))[0]
@@ -427,12 +436,12 @@ def main():
 
                         if not module.check_mode:
                             ec2.authorize_security_group_egress(
-                                    group_id=group.id,
-                                    ip_protocol=rule['proto'],
-                                    from_port=rule['from_port'],
-                                    to_port=rule['to_port'],
-                                    src_group_id=grantGroup,
-                                    cidr_ip=thisip)
+                                group_id=group.id,
+                                ip_protocol=rule['proto'],
+                                from_port=rule['from_port'],
+                                to_port=rule['to_port'],
+                                src_group_id=grantGroup,
+                                cidr_ip=thisip)
                         changed = True
         elif vpc_id:
             # when using a vpc, but no egress rules are specified,
@@ -462,12 +471,12 @@ def main():
                     grantGroup = groups[grant.group_id].id
                 if not module.check_mode:
                     ec2.revoke_security_group_egress(
-                            group_id=group.id,
-                            ip_protocol=rule.ip_protocol,
-                            from_port=rule.from_port,
-                            to_port=rule.to_port,
-                            src_group_id=grantGroup,
-                            cidr_ip=grant.cidr_ip)
+                        group_id=group.id,
+                        ip_protocol=rule.ip_protocol,
+                        from_port=rule.from_port,
+                        to_port=rule.to_port,
+                        src_group_id=grantGroup,
+                        cidr_ip=grant.cidr_ip)
                 changed = True
 
     if group:

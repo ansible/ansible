@@ -18,12 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import shutil
-from os import path
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -93,7 +91,8 @@ EXAMPLES = '''
     state: absent
 '''
 
-USERAGENT = 'ansible-httpget'
+import shutil
+from os import path
 
 try:
     from layman.api import LaymanAPI
@@ -102,8 +101,11 @@ try:
 except ImportError:
     HAS_LAYMAN_API = False
 
+USERAGENT = 'ansible-httpget'
 
-class ModuleError(Exception): pass
+
+class ModuleError(Exception):
+    pass
 
 
 def init_layman(config=None):
@@ -157,8 +159,8 @@ def install_overlay(module, name, list_url=None):
     layman = init_layman(layman_conf)
 
     if layman.is_installed(name):
-        return False    
-    
+        return False
+
     if module.check_mode:
         mymsg = 'Would add layman repo \'' + name + '\''
         module.exit_json(changed=True, msg=mymsg)
@@ -195,13 +197,14 @@ def uninstall_overlay(module, name):
 
     if not layman.is_installed(name):
         return False
-    
+
     if module.check_mode:
         mymsg = 'Would remove layman repo \'' + name + '\''
         module.exit_json(changed=True, msg=mymsg)
 
     layman.delete_repos(name)
-    if layman.get_errors(): raise ModuleError(layman.get_errors())
+    if layman.get_errors():
+        raise ModuleError(layman.get_errors())
 
     return True
 

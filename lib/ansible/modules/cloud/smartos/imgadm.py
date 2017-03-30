@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Jasper Lievisse Adriaanse <j@jasper.la>
+# (c) 2016, 2017 Jasper Lievisse Adriaanse <j@jasper.la>
 #
 # This file is part of Ansible
 #
@@ -19,9 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -36,33 +37,33 @@ options:
         required: false
         choices: [ yes, no ]
         description:
-        - Force a given operation (where supported by imgadm(1M)).
+          - Force a given operation (where supported by imgadm(1M)).
     pool:
         required: false
         default: zones
         description:
-        - zpool to import to or delete images from.
+          - zpool to import to or delete images from.
     source:
         required: false
         description:
-        - URI for the image source.
+          - URI for the image source.
     state:
         required: true
         choices: [ present, absent, deleted, imported, updated, vacuumed ]
         description:
-        - State the object operated on should be in. C(imported) is an alias for
-          for C(present) and C(deleted) for C(absent). When set to C(vacuumed)
-          and C(uuid) to C(*), it will remove all unused images.
+          - State the object operated on should be in. C(imported) is an alias for
+            for C(present) and C(deleted) for C(absent). When set to C(vacuumed)
+            and C(uuid) to C(*), it will remove all unused images.
     type:
         required: false
         choices: [ imgapi, docker, dsapi ]
         default: imgapi
         description:
-        - Type for image sources.
+          - Type for image sources.
     uuid:
         required: false
         description:
-        - Image UUID. Can either be a full UUID or C(*) for all images.
+          - Image UUID. Can either be a full UUID or C(*) for all images.
 requirements:
     - python >= 2.6
 '''
@@ -105,136 +106,172 @@ EXAMPLES = '''
     state: absent
 '''
 
+RETURN = '''
+source:
+    description: Source that is managed.
+    returned: When not managing an image.
+    type: string
+    sample: https://datasets.project-fifo.net
+uuid:
+    description: UUID for an image operated on.
+    returned: When not managing an image source.
+    type: string
+    sample: 70e3ae72-96b6-11e6-9056-9737fd4d0764
+state:
+    description: State of the target, after execution.
+    returned: success
+    type: string
+    sample: 'present'
+'''
+
+from ansible.module_utils.basic import AnsibleModule
 import re
 
 # Shortcut for the imgadm(1M) command. While imgadm(1M) supports a
 # -E option to return any errors in JSON, the generated JSON does not play well
 # with the JSON parsers of Python. The returned message contains '\n' as part of
 # the stacktrace, which breaks the parsers.
-IMGADM = 'imgadm'
 
-# Helper method to massage stderr
-def errmsg(stderr):
-    match = re.match('^imgadm .*?: error \(\w+\): (.*): .*', stderr)
-    if match:
-        return match.groups()[0]
-    else:
-        return 'Unexpected failure'
 
-def update_images(module):
-    uuid = module.params['uuid']
-    cmd = IMGADM + ' update'
+class Imgadm(object):
+    def __init__(self, module):
+        self.module = module
+        self.params = module.params
+        self.cmd = module.get_bin_path('imgadm', required=True)
+        self.changed = False
+        self.uuid = module.params['uuid']
 
-    if uuid != '*':
-        cmd = '{0} {1}'.format(cmd, uuid)
+        # Since there are a number of (natural) aliases, prevent having to look
+        # them up everytime we operate on `state`.
+        if self.params['state'] in ['present', 'imported', 'updated']:
+            self.present = True
+        else:
+            self.present = False
 
-    (rc, stdout, stderr) = module.run_command(cmd)
+        # Perform basic UUID validation upfront.
+        if self.uuid and self.uuid != '*':
+            if not re.match('^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$', self.uuid, re.IGNORECASE):
+                module.fail_json(msg='Provided value for uuid option is not a valid UUID.')
 
-    # There is no feedback from imgadm(1M) to determine if anything
-    # was actually changed. So treat this as an 'always-changes' operation.
-    # Note that 'imgadm -v' produces unparseable JSON...
-    return rc, stdout, errmsg(stderr), True
+    # Helper method to massage stderr
+    def errmsg(self, stderr):
+        match = re.match('^imgadm .*?: error \(\w+\): (.*): .*', stderr)
+        if match:
+            return match.groups()[0]
+        else:
+            return 'Unexpected failure'
 
-def manage_sources(module, present):
-    force = module.params['force']
-    source = module.params['source']
-    imgtype = module.params['type']
+    def update_images(self):
+        if self.uuid == '*':
+            cmd = '{0} update'.format(self.cmd)
+        else:
+            cmd = '{0} update {1}'.format(self.cmd, self.uuid)
 
-    cmd = IMGADM + ' sources'
+        (rc, stdout, stderr) = self.module.run_command(cmd)
 
-    if force:
-        cmd += ' -f'
+        if rc != 0:
+            self.module.fail_json(msg='Failed to update images: {0}'.format(self.errmsg(stderr)))
 
-    if present:
-        cmd = '{0} -a {1} -t {2}'.format(cmd, source, imgtype)
-        (rc, stdout, stderr) = module.run_command(cmd)
+        # There is no feedback from imgadm(1M) to determine if anything
+        # was actually changed. So treat this as an 'always-changes' operation.
+        # Note that 'imgadm -v' produces unparseable JSON...
+        self.changed = True
 
-        # Check the various responses.
-        # Note that trying to add a source with the wrong type is handled
-        # above as it results in a non-zero status.
-        changed = True
+    def manage_sources(self):
+        force = self.params['force']
+        source = self.params['source']
+        imgtype = self.params['type']
 
-        regex = 'Already have "{0}" image source "{1}", no change'.format(imgtype, source)
-        if re.match(regex, stdout):
-            changed = False
+        cmd = '{0} sources'.format(self.cmd)
 
-        regex = 'Added "%s" image source "%s"' % (imgtype, source)
-        if re.match(regex, stdout):
-            changed = True
+        if force:
+            cmd += ' -f'
 
-        # Fallthrough, assume changes
-        return (rc, stdout, errmsg(stderr), changed)
-    else:
-        # Type is ignored by imgadm(1M) here
-        cmd += ' -d %s' % (source)
-        (rc, stdout, stderr) = module.run_command(cmd)
+        if self.present:
+            cmd = '{0} -a {1} -t {2}'.format(cmd, source, imgtype)
+            (rc, stdout, stderr) = self.module.run_command(cmd)
 
-        changed = True
+            if rc != 0:
+                self.module.fail_json(msg='Failed to add source: {0}'.format(self.errmsg(stderr)))
 
-        regex = 'Do not have image source "%s", no change' % (source)
-        if re.match(regex, stdout):
-            changed = False
+            # Check the various responses.
+            # Note that trying to add a source with the wrong type is handled
+            # above as it results in a non-zero status.
 
-        regex = 'Deleted ".*" image source "%s"' % (source)
-        if re.match(regex, stdout):
-            changed = True
+            regex = 'Already have "{0}" image source "{1}", no change'.format(imgtype, source)
+            if re.match(regex, stdout):
+                self.changed = False
 
-        return (rc, stdout, errmsg(stderr), changed)
+            regex = 'Added "%s" image source "%s"' % (imgtype, source)
+            if re.match(regex, stdout):
+                self.changed = True
+        else:
+            # Type is ignored by imgadm(1M) here
+            cmd += ' -d %s' % (source)
+            (rc, stdout, stderr) = self.module.run_command(cmd)
 
-def manage_images(module, present):
-    uuid = module.params['uuid']
-    pool = module.params['pool']
-    state = module.params['state']
+            if rc != 0:
+                self.module.fail_json(msg='Failed to remove source: {0}'.format(self.errmsg(stderr)))
 
-    if state == 'vacuumed':
-        # Unconditionally pass '--force', otherwise we're prompted with 'y/N'
-        cmd = '{0} vacuum -f'.format(IMGADM)
+            regex = 'Do not have image source "%s", no change' % (source)
+            if re.match(regex, stdout):
+                self.changed = False
 
-        (rc, stdout, stderr) = module.run_command(cmd)
+            regex = 'Deleted ".*" image source "%s"' % (source)
+            if re.match(regex, stdout):
+                self.changed = True
 
-        if rc == 0:
-            if stdout == '':
-                changed = False
+    def manage_images(self):
+        pool = self.params['pool']
+        state = self.params['state']
+
+        if state == 'vacuumed':
+            # Unconditionally pass '--force', otherwise we're prompted with 'y/N'
+            cmd = '{0} vacuum -f'.format(self.cmd)
+
+            (rc, stdout, stderr) = self.module.run_command(cmd)
+
+            if rc != 0:
+                self.module.fail_json(msg='Failed to vacuum images: {0}'.format(self.errmsg(stderr)))
             else:
-                changed = True
+                if stdout == '':
+                    self.changed = False
+                else:
+                    self.changed = True
+        if self.present:
+            cmd = '{0} import -P {1} -q {2}'.format(self.cmd, pool, self.uuid)
 
-        return (rc, stdout, errmsg(stderr), changed)
+            (rc, stdout, stderr) = self.module.run_command(cmd)
 
-    if present:
-        cmd = '{0} import -P {1} -q {2}'.format(IMGADM, pool, uuid)
+            if rc != 0:
+                self.module.fail_json(msg='Failed to import image: {0}'.format(self.errmsg(stderr)))
 
-        changed = False
-        (rc, stdout, stderr) = module.run_command(cmd)
+            regex = 'Image {0} \(.*\) is already installed, skipping'.format(self.uuid)
+            if re.match(regex, stdout):
+                self.changed = False
 
-        regex = 'Image {0} \(.*\) is already installed, skipping'.format(uuid)
-        if re.match(regex, stdout):
-            changed = False
+            regex = '.*ActiveImageNotFound.*'
+            if re.match(regex, stderr):
+                self.changed = False
 
-        regex = '.*ActiveImageNotFound.*'
-        if re.match(regex, stderr):
-            changed = False
+            regex = 'Imported image {0}.*'.format(self.uuid)
+            if re.match(regex, stdout.splitlines()[-1]):
+                self.changed = True
+        else:
+            cmd = '{0} delete -P {1} {2}'.format(self.cmd, pool, self.uuid)
 
-        regex = 'Imported image {0}'.format(uuid)
-        if re.match(regex, stdout):
-            changed = True
-    else:
-        cmd = '{0} delete -P {1} {2}'.format(IMGADM, pool, uuid)
+            (rc, stdout, stderr) = self.module.run_command(cmd)
 
-        changed = False
-        (rc, stdout, stderr) = module.run_command(cmd)
+            regex = '.*ImageNotInstalled.*'
+            if re.match(regex, stderr):
+                # Even if the 'rc' was non-zero (3), we handled the situation
+                # in order to determine if there was a change.
+                self.changed = False
 
-        regex = '.*ImageNotInstalled.*'
-        if re.match(regex, stderr):
-            # Even if the 'rc' was non-zero (3), we handled the situation
-            # in order to determine if there was a change, so set rc to success.
-            rc = 0
-            changed = False
+            regex = 'Deleted image {0}'.format(self.uuid)
+            if re.match(regex, stdout):
+                self.changed = True
 
-        regex = 'Deleted image {0}'.format(uuid)
-        if re.match(regex, stdout):
-            changed = True
-
-    return (rc, stdout, errmsg(stderr), changed)
 
 def main():
     module = AnsibleModule(
@@ -251,54 +288,32 @@ def main():
         supports_check_mode=False,
     )
 
+    imgadm = Imgadm(module)
+
     uuid = module.params['uuid']
     source = module.params['source']
     state = module.params['state']
 
-    # Since there are a number of (natural) aliases, prevent having to look
-    # them up everytime we operate on `state`.
-    if state in ['present', 'imported', 'updated']:
-        present = True
-    else:
-        present = False
-
-    stderr = stdout = ''
-    rc = 0
-    result = { 'state': state }
-    changed = False
-
-    # Perform basic UUID validation upfront.
-    if uuid and uuid != '*':
-        if not re.match('^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$', uuid, re.IGNORECASE):
-            module.fail_json(msg='Provided value for uuid option is not a valid UUID.')
+    result = {'state': state}
 
     # Either manage sources or images.
-    if module.params['source']:
-        (rc, stdout, stderr, changed) = manage_sources(module, present)
+    if source:
         result['source'] = source
+        imgadm.manage_sources()
     else:
         result['uuid'] = uuid
 
         if state == 'updated':
-            (rc, stdout, stderr, changed) = update_images(module)
+            imgadm.update_images()
         else:
             # Make sure operate on a single image for the following actions
             if (uuid == '*') and (state != 'vacuumed'):
                 module.fail_json(msg='Can only specify uuid as "*" when updating image(s)')
+            imgadm.manage_images()
 
-            (rc, stdout, stderr, changed) = manage_images(module, present)
-
-    if rc != 0:
-        if stderr:
-            module.fail_json(msg=stderr)
-        else:
-            module.fail_json(msg=stdout)
-
-    result['changed'] = changed
-
+    result['changed'] = imgadm.changed
     module.exit_json(**result)
 
-from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

@@ -21,13 +21,14 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
-module: pkgutil 
+module: pkgutil
 short_description: Manage CSW-Packages on Solaris
 description:
     - Manages CSW packages (SVR4 format) on Solaris 10 and 11.
@@ -112,7 +113,7 @@ def package_install(module, state, name, site, update_catalog):
     if site is not None:
         cmd += [ '-t', site ]
     if state == 'latest':
-        cmd += [ '-f' ] 
+        cmd += [ '-f' ]
     cmd.append(name)
     (rc, out, err) = run_command(module, cmd)
     return (rc, out, err)
@@ -186,7 +187,7 @@ def main():
         else:
             if not package_latest(module, name, site):
                 if module.check_mode:
-                    module.exit_json(changed=True) 
+                    module.exit_json(changed=True)
                 (rc, out, err) = package_upgrade(module, name, site, update_catalog)
                 if len(out) > 75:
                     out = out[:75] + '...'

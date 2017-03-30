@@ -62,13 +62,10 @@ I'd Like To Report A Bug
 
 Ansible practices responsible disclosure - if this is a security related bug, email `security@ansible.com <mailto:security@ansible.com>`_ instead of filing a ticket or posting to the Google Group and you will receive a prompt response.
 
-Bugs related to the core language should be reported to `github.com/ansible/ansible <https://github.com/ansible/ansible>`_ after
+Ansible bugs should be reported to `github.com/ansible/ansible <https://github.com/ansible/ansible>`_ after
 signing up for a free GitHub account.  Before reporting a bug, please use the bug/issue search
 to see if the issue has already been reported.
-
-MODULE related bugs however should go to `ansible-modules-core <https://github.com/ansible/ansible-modules-core>`_ or `ansible-modules-extras <https://github.com/ansible/ansible-modules-extras>`_ based on the classification of the module.  This is listed on the bottom of the docs page for any module.
-
-When filing a bug, please use the `issue template <https://github.com/ansible/ansible/raw/devel/.github/ISSUE_TEMPLATE.md>`_ to provide all relevant information, regardless of what repo you are filing a ticket against.
+This is listed on the bottom of the docs page for any module.
 
 Knowing your ansible version and the exact commands you are running, and what you expect, saves time and helps us help everyone with their issues
 more quickly.
@@ -80,7 +77,7 @@ To be respectful of reviewers' time and allow us to help everyone efficiently, p
 provide minimal well-reduced and well-commented examples versus sharing your entire production
 playbook.  Include playbook snippets and output where possible.  
 
-When sharing YAML in playbooks, formatting can be preserved by using `code blocks <https://help.github.com/articles/github-flavored-markdown#fenced-code-blocks>`_.
+When sharing YAML in playbooks, formatting can be preserved by using `code blocks <https://help.github.com/articles/creating-and-highlighting-code-blocks/>`_.
 
 For multiple-file content, we encourage use of gist.github.com.  Online pastebin content can expire, so it's nice to have things around for a longer term if they
 are referenced in a ticket.
@@ -105,7 +102,7 @@ documenting a new feature, submit a GitHub pull request to  the code that
 lives in the ``docsite/rst`` subdirectory of the project for most pages, and there is an "Edit on GitHub"
 link up on those.
 
-Module documentation is generated from a DOCUMENTATION structure embedded in the source code of each module, which is in either the ansible-modules-core or ansible-modules-extra repos on GitHub, depending on the module.  Information about this is always listed on the bottom of the web documentation for each module.
+Module documentation is generated from a DOCUMENTATION structure embedded in the source code of each module, which is in `/lib/ansible/modules/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules/>`_.
 
 Aside from modules, the main docs are in restructured text
 format.  
@@ -132,10 +129,7 @@ Modules are some of the easiest places to get started.
 Contributing Code (Features or Bugfixes)
 ----------------------------------------
 
-The Ansible project keeps its source on GitHub at `github.com/ansible/ansible <https://github.com/ansible/ansible>`_ for
-the core application, and two sub repos `github.com/ansible/ansible-modules-core <https://github.com/ansible/ansible-modules-core>`_
-and `ansible/ansible-modules-extras <https://github.com/ansible/ansible-modules-extras>`_ for module related items.
-If you need to know if a module is in 'core' or 'extras', consult the web documentation page for that module.
+The Ansible project keeps its source on GitHub at `github.com/ansible/ansible <https://github.com/ansible/ansible>`_.
 
 The project takes contributions through `github pull requests <https://help.github.com/articles/using-pull-requests>`_.
 
@@ -160,7 +154,7 @@ In order to keep the history clean and better audit incoming code, we will requi
 contain merge commits.  Use ``git pull --rebase`` (rather than ``git pull``) and ``git rebase`` (rather than ``git merge``). Also be sure to use topic
 branches to keep your additions on different branches, such that they won't pick up stray commits later.
 
-If you make a mistake you do not need to close your PR, create a clean branch locally and then push to GitHub
+If you make a mistake you do not need to close your PR. Instead, create a clean branch locally and then push to GitHub
 with ``--force`` to overwrite the existing branch (permissible in this case as no one else should be using that
 branch as reference). Code comments won't be lost, they just won't be attached to the existing branch.
 
@@ -180,11 +174,15 @@ Contributions can be for new features like modules, or to fix bugs you or others
 are interested in writing new modules to be included in the core Ansible distribution, please refer
 to the `module development documentation <http://docs.ansible.com/developing_modules.html>`_.
 
-Ansible's aesthetic encourages simple, readable code and consistent, conservatively extending,
-backwards-compatible improvements.  Code developed for Ansible needs to support Python 2.6+,
-while code in modules must run under Python 2.4 or higher.  Please also use a 4-space indent
-and no tabs, we do not enforce 80 column lines, we are fine with 120-140. We do not take 'style only'
-requests unless the code is nearly unreadable, we are "PEP8ish", but not strictly compliant.
+Ansible's aesthetic encourages simple, readable code and consistent,
+conservatively extending, backwards-compatible improvements. When contributing code to Ansible, 
+please observe the following guidelines:
+
+- Code developed for Ansible needs to support Python2-2.6 or higher and Python3-3.5 or higher.
+- Use a 4-space indent, not  tabs.
+- We do not enforce 80 column lines; up to 160 columns are acceptable.
+- We do not accept 'style only' pull requests unless the code is nearly unreadable.
+- We are "PEP8ish", but not strictly compliant.
 
 You can also contribute by testing and revising other requests, especially if it is one you are interested
 in using. Please keep your comments clear and to the point, courteous and constructive, tickets are not a
@@ -252,9 +250,9 @@ Releases are also given code names based on Van Halen songs, that no one really 
 Tower Support Questions
 -----------------------
 
-Ansible `Tower <http://ansible.com/tower>`_ is a UI, Server, and REST endpoint for Ansible, produced by Ansible, Inc.
+Ansible `Tower <https://ansible.com/tower>`_ is a UI, Server, and REST endpoint for Ansible, produced by Ansible, Inc.
 
-If you have a question about Tower, visit `support.ansible.com <https://support.ansible.com/>`_ rather than using the IRC
+If you have a question about Tower, visit `Red Hat support <https://access.redhat.com/products/ansible-tower-red-hat/>`_ rather than using the IRC
 channel or the general project mailing list.
 
 IRC Channel

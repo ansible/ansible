@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -33,36 +34,11 @@ options:
       - name of the database to add or remove
     required: true
     default: null
-  login_user:
-    description:
-      - The username used to authenticate with
-    required: false
-    default: null
-  login_password:
-    description:
-      - The password used to authenticate with
-    required: false
-    default: null
-  login_host:
-    description:
-      - Host running the database
-    required: false
-    default: localhost
-  login_unix_socket:
-    description:
-      - Path to a Unix domain socket for local connections
-    required: false
-    default: null
   owner:
     description:
       - Name of the role to set as owner of the database
     required: false
     default: null
-  port:
-    description:
-      - Database port to connect to.
-    required: false
-    default: 5432
   template:
     description:
       - Template used to create the database
@@ -80,7 +56,8 @@ options:
     default: null
   lc_ctype:
     description:
-      - Character classification (LC_CTYPE) to use in the database (e.g. lower, upper, ...) Must match LC_CTYPE of template database unless C(template0) is used as template.
+      - Character classification (LC_CTYPE) to use in the database (e.g. lower, upper, ...) Must match LC_CTYPE of template database unless C(template0)
+        is used as template.
     required: false
     default: null
   state:
@@ -89,12 +66,9 @@ options:
     required: false
     default: present
     choices: [ "present", "absent" ]
-notes:
-   - The default authentication assumes that you are either logging in as or sudo'ing to the C(postgres) account on the host.
-   - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
-     the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and C(python-psycopg2) packages on the remote host before using this module.
-requirements: [ psycopg2 ]
 author: "Ansible Core Team"
+extends_documentation_fragment:
+- postgres
 '''
 
 EXAMPLES = '''
@@ -113,14 +87,22 @@ EXAMPLES = '''
     template: template0
 '''
 
+HAS_PSYCOPG2 = False
 try:
     import psycopg2
     import psycopg2.extras
 except ImportError:
-    postgresqldb_found = False
+    pass
 else:
-    postgresqldb_found = True
+    HAS_PSYCOPG2 = True
 from ansible.module_utils.six import iteritems
+
+import traceback
+
+import ansible.module_utils.postgres as pgutils
+from ansible.module_utils.database import SQLParseError, pg_quote_identifier
+from ansible.module_utils.basic import get_exception, AnsibleModule
+
 
 class NotSupportedError(Exception):
     pass
@@ -186,7 +168,7 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
     else:
         db_info = get_db_info(cursor, db)
         if (encoding and
-            get_encoding_id(cursor, encoding) != db_info['encoding_id']):
+                get_encoding_id(cursor, encoding) != db_info['encoding_id']):
             raise NotSupportedError(
                 'Changing database encoding is not supported. '
                 'Current encoding: %s' % db_info['encoding']
@@ -208,11 +190,11 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
 
 def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
     if not db_exists(cursor, db):
-       return False
+        return False
     else:
         db_info = get_db_info(cursor, db)
         if (encoding and
-            get_encoding_id(cursor, encoding) != db_info['encoding_id']):
+                get_encoding_id(cursor, encoding) != db_info['encoding_id']):
             return False
         elif lc_collate and lc_collate != db_info['lc_collate']:
             return False
@@ -228,25 +210,24 @@ def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
 #
 
 def main():
+    argument_spec = pgutils.postgres_common_argument_spec()
+    argument_spec.update(dict(
+        db=dict(required=True, aliases=['name']),
+        owner=dict(default=""),
+        template=dict(default=""),
+        encoding=dict(default=""),
+        lc_collate=dict(default=""),
+        lc_ctype=dict(default=""),
+        state=dict(default="present", choices=["absent", "present"]),
+    ))
+
+
     module = AnsibleModule(
-        argument_spec=dict(
-            login_user=dict(default="postgres"),
-            login_password=dict(default=""),
-            login_host=dict(default=""),
-            login_unix_socket=dict(default=""),
-            port=dict(default="5432"),
-            db=dict(required=True, aliases=['name']),
-            owner=dict(default=""),
-            template=dict(default=""),
-            encoding=dict(default=""),
-            lc_collate=dict(default=""),
-            lc_ctype=dict(default=""),
-            state=dict(default="present", choices=["absent", "present"]),
-        ),
+        argument_spec=argument_spec,
         supports_check_mode = True
     )
 
-    if not postgresqldb_found:
+    if not HAS_PSYCOPG2:
         module.fail_json(msg="the python psycopg2 module is required")
 
     db = module.params["db"]
@@ -257,6 +238,7 @@ def main():
     lc_collate = module.params["lc_collate"]
     lc_ctype = module.params["lc_ctype"]
     state = module.params["state"]
+    sslrootcert = module.params["ssl_rootcert"]
     changed = False
 
     # To use defaults values, keyword arguments must be absent, so
@@ -266,10 +248,12 @@ def main():
         "login_host":"host",
         "login_user":"user",
         "login_password":"password",
-        "port":"port"
+        "port":"port",
+        "ssl_mode":"sslmode",
+        "ssl_rootcert":"sslrootcert"
     }
     kw = dict( (params_map[k], v) for (k, v) in iteritems(module.params)
-              if k in params_map and v != '' )
+              if k in params_map and v != '' and v is not None)
 
     # If a login_unix_socket is specified, incorporate it here.
     is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
@@ -277,27 +261,36 @@ def main():
         kw["host"] = module.params["login_unix_socket"]
 
     try:
+        pgutils.ensure_libs(sslrootcert=module.params.get('ssl_rootcert'))
         db_connection = psycopg2.connect(database="postgres", **kw)
         # Enable autocommit so we can create databases
         if psycopg2.__version__ >= '2.4.2':
             db_connection.autocommit = True
         else:
-            db_connection.set_isolation_level(psycopg2
-                                              .extensions
-                                              .ISOLATION_LEVEL_AUTOCOMMIT)
-        cursor = db_connection.cursor(
-                cursor_factory=psycopg2.extras.DictCursor)
+            db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    except pgutils.LibraryError:
+        e = get_exception()
+        module.fail_json(msg="unable to connect to database: {0}".format(str(e)), exception=traceback.format_exc())
+
+    except TypeError:
+        e = get_exception()
+        if 'sslrootcert' in e.args[0]:
+            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert. Exception: {0}'.format(e),
+                             exception=traceback.format_exc())
+        module.fail_json(msg="unable to connect to database: %s" % e, exception=traceback.format_exc())
+
     except Exception:
         e = get_exception()
-        module.fail_json(msg="unable to connect to database: %s" % e)
+        module.fail_json(msg="unable to connect to database: %s" % e, exception=traceback.format_exc())
 
     try:
         if module.check_mode:
             if state == "absent":
                 changed = db_exists(cursor, db)
             elif state == "present":
-                changed = not db_matches(cursor, db, owner, template, encoding,
-                                         lc_collate, lc_ctype)
+                changed = not db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype)
             module.exit_json(changed=changed, db=db)
 
         if state == "absent":
@@ -309,8 +302,7 @@ def main():
 
         elif state == "present":
             try:
-                changed = db_create(cursor, db, owner, template, encoding,
-                                lc_collate, lc_ctype)
+                changed = db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype)
             except SQLParseError:
                 e = get_exception()
                 module.fail_json(msg=str(e))
@@ -318,7 +310,7 @@ def main():
         e = get_exception()
         module.fail_json(msg=str(e))
     except SystemExit:
-        # Avoid catching this on Python 2.4 
+        # Avoid catching this on Python 2.4
         raise
     except Exception:
         e = get_exception()
@@ -326,8 +318,5 @@ def main():
 
     module.exit_json(changed=changed, db=db)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.database import *
 if __name__ == '__main__':
     main()

@@ -19,28 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import traceback
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import ovirtsdk4.types as otypes
-except ImportError:
-    pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    check_params,
-    create_connection,
-    equal,
-    ovirt_full_argument_spec,
-    search_by_name,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -60,7 +42,7 @@ options:
             - "Should the network be present or absent"
         choices: ['present', 'absent']
         default: present
-    datacenter:
+    data_center:
         description:
             - "Datacenter name where network reside."
     description:
@@ -98,7 +80,7 @@ EXAMPLES = '''
 
 # Create network
 - ovirt_networks:
-    datacenter: mydatacenter
+    data_center: mydatacenter
     name: mynetwork
     vlan_tag: 1
     vm_network: true
@@ -121,6 +103,24 @@ network:
     returned: "On success if network is found."
 '''
 
+import traceback
+
+try:
+    import ovirtsdk4.types as otypes
+except ImportError:
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    check_params,
+    create_connection,
+    equal,
+    ovirt_full_argument_spec,
+    search_by_name,
+)
+
 
 class NetworksModule(BaseModule):
 
@@ -130,8 +130,8 @@ class NetworksModule(BaseModule):
             comment=self._module.params['comment'],
             description=self._module.params['description'],
             data_center=otypes.DataCenter(
-                name=self._module.params['datacenter'],
-            ) if self._module.params['datacenter'] else None,
+                name=self._module.params['data_center'],
+            ) if self._module.params['data_center'] else None,
             vlan=otypes.Vlan(
                 self._module.params['vlan_tag'],
             ) if self._module.params['vlan_tag'] else None,
@@ -201,7 +201,7 @@ def main():
             choices=['present', 'absent'],
             default='present',
         ),
-        datacenter=dict(default=None, required=True),
+        data_center=dict(default=None, required=True),
         name=dict(default=None, required=True),
         description=dict(default=None),
         comment=dict(default=None),
@@ -218,7 +218,8 @@ def main():
     check_params(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         clusters_service = connection.system_service().clusters_service()
         networks_service = connection.system_service().networks_service()
         networks_module = NetworksModule(
@@ -230,7 +231,7 @@ def main():
         network = networks_module.search_entity(
             search_params={
                 'name': module.params['name'],
-                'datacenter': module.params['datacenter'],
+                'datacenter': module.params['data_center'],
             },
         )
         if state == 'present':
@@ -262,7 +263,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":

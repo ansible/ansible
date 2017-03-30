@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -32,10 +33,9 @@ version_added: "1.4"
 short_description: Manage hostname
 requirements: [ hostname ]
 description:
-    - Set system's hostname.
-    - Currently implemented on Debian, Ubuntu, Fedora, RedHat, openSUSE, Linaro, ScientificLinux, Arch, CentOS, AMI, Alpine Linux.
-    - Any distribution that uses systemd as their init system.
-    - Note, this module does *NOT* modify /etc/hosts. You need to modify it yourself using other modules like template or replace.
+    - Set system's hostname, supports most OSs/Distributions, including those using systemd.
+    - Note, this module does *NOT* modify C(/etc/hosts). You need to modify it yourself using other modules like template or replace.
+    - Windows, HP-UX and AIX are not currently supported
 options:
     name:
         required: true

@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION='''
 ---
@@ -119,12 +120,12 @@ def core(module):
 
 def main():
     module = AnsibleModule(
-                argument_spec = dict(
-                    name    = dict(default=None, required=True),
-                    state   = dict(default='latest', choices=['present', 'absent', 'latest']),
-                    started = dict(default='yes', type='bool'),
-                ),
-            )
+        argument_spec = dict(
+            name    = dict(default=None, required=True),
+            state   = dict(default='latest', choices=['present', 'absent', 'latest']),
+            started = dict(default='yes', type='bool'),
+            ),
+        )
 
     # Verify that the platform supports atomic command
     rc, out, err = module.run_command('atomic -v', check_rc=False)

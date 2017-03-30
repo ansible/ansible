@@ -17,9 +17,10 @@
 
 # Based on Jimmy Tang's implementation
 
-ANSIBLE_METADATA = {'status': ['deprecated'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -332,19 +333,19 @@ def main():
 
     argument_spec = openstack_argument_spec()
     argument_spec.update(dict(
-            tenant_description=dict(required=False),
-            email=dict(required=False),
-            user=dict(required=False),
-            tenant=dict(required=False),
-            password=dict(required=False),
-            role=dict(required=False),
-            state=dict(default='present', choices=['present', 'absent']),
-            endpoint=dict(required=False,
+        tenant_description=dict(required=False),
+        email=dict(required=False),
+        user=dict(required=False),
+        tenant=dict(required=False),
+        password=dict(required=False),
+        role=dict(required=False),
+        state=dict(default='present', choices=['present', 'absent']),
+        endpoint=dict(required=False,
                           default="http://127.0.0.1:35357/v2.0"),
-            token=dict(required=False),
-            login_user=dict(required=False),
-            login_password=dict(required=False),
-            login_tenant_name=dict(required=False)
+        token=dict(required=False),
+        login_user=dict(required=False),
+        login_password=dict(required=False, no_log=True),
+        login_tenant_name=dict(required=False)
     ))
     # keystone operations themselves take an endpoint, not a keystone auth_url
     del(argument_spec['auth_url'])

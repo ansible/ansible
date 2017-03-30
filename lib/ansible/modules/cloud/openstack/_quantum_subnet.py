@@ -16,23 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    try:
-        from neutronclient.neutron import client
-    except ImportError:
-        from quantumclient.quantum import client
-    from keystoneclient.v2_0 import client as ksclient
-    HAVE_DEPS = True
-except ImportError:
-    HAVE_DEPS = False
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['deprecated'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: quantum_subnet
+author: "Benno Joy (@bennojoy)"
 deprecated: Deprecated in 2.0. Use M(os_subnet) instead.
 version_added: "1.2"
 short_description: Add/remove subnet from a network
@@ -139,9 +131,20 @@ EXAMPLES = '''
     cidr: 192.168.0.0/24
 '''
 
+try:
+    try:
+        from neutronclient.neutron import client
+    except ImportError:
+        from quantumclient.quantum import client
+    from keystoneclient.v2_0 import client as ksclient
+    HAVE_DEPS = True
+except ImportError:
+    HAVE_DEPS = False
+
 _os_keystone   = None
 _os_tenant_id  = None
 _os_network_id = None
+
 
 def _get_ksclient(module, kwargs):
     try:
@@ -168,8 +171,8 @@ def _get_neutron_client(module, kwargs):
     token     = _ksclient.auth_token
     endpoint  = _get_endpoint(module, _ksclient)
     kwargs = {
-            'token':        token,
-            'endpoint_url': endpoint
+        'token':        token,
+        'endpoint_url': endpoint
     }
     try:
         neutron = client.Client('2.0', **kwargs)
@@ -199,9 +202,9 @@ def _get_net_id(neutron, module):
     try:
         networks = neutron.list_networks(**kwargs)
     except Exception as e:
-        module.fail_json("Error in listing neutron networks: %s" % e.message)
+        module.fail_json(msg="Error in listing neutron networks: %s" % e.message)
     if not networks['networks']:
-            return None
+        return None
     return networks['networks'][0]['id']
 
 
@@ -227,14 +230,14 @@ def _get_subnet_id(module, neutron):
 def _create_subnet(module, neutron):
     neutron.format = 'json'
     subnet = {
-            'name':            module.params['name'],
-            'ip_version':      module.params['ip_version'],
-            'enable_dhcp':     module.params['enable_dhcp'],
-            'tenant_id':       _os_tenant_id,
-            'gateway_ip':      module.params['gateway_ip'],
-            'dns_nameservers': module.params['dns_nameservers'],
-            'network_id':      _os_network_id,
-            'cidr':            module.params['cidr'],
+        'name':            module.params['name'],
+        'ip_version':      module.params['ip_version'],
+        'enable_dhcp':     module.params['enable_dhcp'],
+        'tenant_id':       _os_tenant_id,
+        'gateway_ip':      module.params['gateway_ip'],
+        'dns_nameservers': module.params['dns_nameservers'],
+        'network_id':      _os_network_id,
+        'cidr':            module.params['cidr'],
     }
     if module.params['allocation_pool_start'] and module.params['allocation_pool_end']:
         allocation_pools = [
@@ -269,17 +272,17 @@ def main():
 
     argument_spec = openstack_argument_spec()
     argument_spec.update(dict(
-            name                    = dict(required=True),
-            network_name            = dict(required=True),
-            cidr                    = dict(required=True),
-            tenant_name             = dict(default=None),
-            state                   = dict(default='present', choices=['absent', 'present']),
-            ip_version              = dict(default='4', choices=['4', '6']),
-            enable_dhcp             = dict(default='true', type='bool'),
-            gateway_ip              = dict(default=None),
-            dns_nameservers         = dict(default=None),
-            allocation_pool_start   = dict(default=None),
-            allocation_pool_end     = dict(default=None),
+        name                    = dict(required=True),
+        network_name            = dict(required=True),
+        cidr                    = dict(required=True),
+        tenant_name             = dict(default=None),
+        state                   = dict(default='present', choices=['absent', 'present']),
+        ip_version              = dict(default='4', choices=['4', '6']),
+        enable_dhcp             = dict(default='true', type='bool'),
+        gateway_ip              = dict(default=None),
+        dns_nameservers         = dict(default=None),
+        allocation_pool_start   = dict(default=None),
+        allocation_pool_end     = dict(default=None),
     ))
     module = AnsibleModule(argument_spec=argument_spec)
     if not HAVE_DEPS:

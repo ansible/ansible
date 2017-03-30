@@ -21,20 +21,19 @@ __metaclass__ = type
 
 import itertools
 import operator
-import uuid
 
 from copy import copy as shallowcopy
 from functools import partial
 
 from jinja2.exceptions import UndefinedError
 
-from ansible.compat.six import iteritems, string_types, with_metaclass
+from ansible.module_utils.six import iteritems, string_types, with_metaclass
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable
 from ansible.module_utils._text import to_text
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
 from ansible.constants import mk_boolean as boolean
-from ansible.utils.vars import combine_vars, isidentifier
+from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
 
 try:
     from __main__ import display
@@ -164,6 +163,7 @@ class Base(with_metaclass(BaseMeta, object)):
     _run_once            = FieldAttribute(isa='bool')
     _ignore_errors       = FieldAttribute(isa='bool')
     _check_mode          = FieldAttribute(isa='bool')
+    _any_errors_fatal     = FieldAttribute(isa='bool', default=False, always_post_validate=True)
 
     # param names which have been deprecated/removed
     DEPRECATED_ATTRIBUTES = [
@@ -184,7 +184,7 @@ class Base(with_metaclass(BaseMeta, object)):
         self._finalized = False
 
         # every object gets a random uuid:
-        self._uuid = uuid.uuid4()
+        self._uuid = get_unique_id()
 
         # we create a copy of the attributes here due to the fact that
         # it was intialized as a class param in the meta class, so we
@@ -501,6 +501,15 @@ class Base(with_metaclass(BaseMeta, object)):
 
         return [i for i,_ in itertools.groupby(combined) if i is not None]
 
+    def dump_attrs(self):
+        '''
+        Dumps all attributes to a dictionary
+        '''
+        attrs = dict()
+        for name in self._valid_attrs.keys():
+            attrs[name] = getattr(self, name)
+        return attrs
+
     def serialize(self):
         '''
         Serializes the object derived from the base object into
@@ -510,10 +519,7 @@ class Base(with_metaclass(BaseMeta, object)):
         as field attributes.
         '''
 
-        repr = dict()
-
-        for name in self._valid_attrs.keys():
-            repr[name] = getattr(self, name)
+        repr = self.dump_attrs()
 
         # serialize the uuid field
         repr['uuid'] = self._uuid

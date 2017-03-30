@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -29,14 +30,14 @@ module: ohai
 short_description: Returns inventory data from I(Ohai)
 description:
      - Similar to the M(facter) module, this runs the I(Ohai) discovery program
-       (U(http://wiki.opscode.com/display/chef/Ohai)) on the remote host and 
+       (U(http://wiki.opscode.com/display/chef/Ohai)) on the remote host and
        returns JSON inventory data.
        I(Ohai) data is a bit more verbose and nested than I(facter).
 version_added: "0.6"
 options: {}
 notes: []
 requirements: [ "ohai" ]
-author: 
+author:
     - "Ansible Core Team"
     - "Michael DeHaan (@mpdehaan)"
 '''

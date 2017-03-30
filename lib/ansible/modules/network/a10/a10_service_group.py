@@ -22,9 +22,10 @@ You should have received a copy of the GNU General Public License
 along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -64,7 +65,18 @@ options:
     required: false
     default: round-robin
     aliases: ['method']
-    choices: ['round-robin', 'weighted-rr', 'least-connection', 'weighted-least-connection', 'service-least-connection', 'service-weighted-least-connection', 'fastest-response', 'least-request', 'round-robin-strict', 'src-ip-only-hash', 'src-ip-hash']
+    choices:
+        - 'round-robin'
+        - 'weighted-rr'
+        - 'least-connection'
+        - 'weighted-least-connection'
+        - 'service-least-connection'
+        - 'service-weighted-least-connection'
+        - 'fastest-response'
+        - 'least-request'
+        - 'round-robin-strict'
+        - 'src-ip-only-hash'
+        - 'src-ip-hash'
   servers:
     description:
       - A list of servers to add to the service group. Each list item should be a
@@ -88,7 +100,7 @@ RETURN = '''
 
 EXAMPLES = '''
 # Create a new service-group
-- a10_service_group: 
+- a10_service_group:
     host: a10.mydomain.com
     username: myadmin
     password: mypassword

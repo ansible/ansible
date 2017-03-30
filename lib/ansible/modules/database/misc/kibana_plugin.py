@@ -1,31 +1,28 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-"""
-Ansible module to manage elasticsearch shield role
-(c) 2016, Thierno IB. BARRY @barryib
-Sponsored by Polyconseil http://polyconseil.fr.
+# Ansible module to manage elasticsearch shield role
+# (c) 2016, Thierno IB. BARRY @barryib
+# Sponsored by Polyconseil http://polyconseil.fr.
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-This file is part of Ansible
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-Ansible is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Ansible is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
-import os
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -49,7 +46,7 @@ options:
     url:
         description:
             - Set exact URL to download the plugin from.
-              For local file, prefix its absolute path with file:// 
+              For local file, prefix its absolute path with file://
         required: False
         default: None
     timeout:
@@ -130,6 +127,8 @@ state:
     type: string
 '''
 
+import os
+
 PACKAGE_STATE_MAP = dict(
     present="--install",
     absent="--remove"
@@ -181,7 +180,7 @@ def install_plugin(module, plugin_bin, plugin_name, url, timeout):
     if rc != 0:
         reason = parse_error(out)
         module.fail_json(msg=reason)
-    
+
     return True, cmd, out, err
 
 def remove_plugin(module, plugin_bin, plugin_name):
@@ -191,12 +190,12 @@ def remove_plugin(module, plugin_bin, plugin_name):
 
     if module.check_mode:
         return True, cmd, "check mode", ""
-        
+
     rc, out, err = module.run_command(cmd)
     if rc != 0:
         reason = parse_error(out)
         module.fail_json(msg=reason)
-    
+
     return True, cmd, out, err
 
 def main():

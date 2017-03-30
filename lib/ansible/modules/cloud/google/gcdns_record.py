@@ -23,9 +23,10 @@
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -144,7 +145,7 @@ notes:
     - See also M(gcdns_zone).
     - This modules's underlying library does not support in-place updates for
       DNS resource records. Instead, resource records are quickly deleted and
-      recreated. 
+      recreated.
     - SOA records are technically supported, but their functionality is limited
       to verifying that a zone's existing SOA record matches a pre-determined
       value. The SOA record cannot be updated.

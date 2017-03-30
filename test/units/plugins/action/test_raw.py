@@ -32,8 +32,8 @@ class TestCopyResultExclude(unittest.TestCase):
     def tearDown(self):
         pass
 
-    # The current behavior of the raw aciton in regards to executable is currently in question; 
-    # the test_raw_executable_is_not_empty_string verifies the current behavior (whether it is desireed or not. 
+    # The current behavior of the raw aciton in regards to executable is currently in question;
+    # the test_raw_executable_is_not_empty_string verifies the current behavior (whether it is desireed or not.
     # Please refer to the following for context:
     # Issue: https://github.com/ansible/ansible/issues/16054
     # PR: https://github.com/ansible/ansible/pull/16085

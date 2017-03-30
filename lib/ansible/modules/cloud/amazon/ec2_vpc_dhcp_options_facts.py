@@ -13,9 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -29,7 +30,8 @@ author: "Nick Aslanidis (@naslanidis)"
 options:
   filters:
     description:
-      - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRouteTables.html) for possible filters.
+      - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
+        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRouteTables.html) for possible filters.
     required: false
     default: null
   DhcpOptionsIds:
@@ -131,7 +133,7 @@ def list_dhcp_options(client, module):
 
     snaked_dhcp_options_array = []
     for dhcp_option in all_dhcp_options_array:
-         snaked_dhcp_options_array.append(camel_dict_to_snake_dict(dhcp_option))
+        snaked_dhcp_options_array.append(camel_dict_to_snake_dict(dhcp_option))
 
     module.exit_json(dhcp_options=snaked_dhcp_options_array)
 
@@ -148,7 +150,7 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec)
 
-     # Validate Requirements
+    # Validate Requirements
     if not HAS_BOTO3:
         module.fail_json(msg='json and botocore/boto3 is required.')
 

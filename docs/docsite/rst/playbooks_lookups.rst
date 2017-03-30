@@ -1,10 +1,9 @@
-Using Lookups
-=============
+Lookups
+-------
 
-Lookup plugins allow access of data in Ansible from outside sources.  These plugins are evaluated on the Ansible control
+Lookup plugins allow access of data in Ansible from outside sources. Like all templating, these plugins are evaluated on the Ansible control
 machine, and can include reading the filesystem but also contacting external datastores and services.
-These values are then made available using the standard templating system
-in Ansible, and are typically used to load variables or templates with information from those systems.
+These values are then made available using the standard templating system in Ansible, and are typically used to load variables or templates with information from those systems.
 
 .. note:: This is considered an advanced feature, and many users will probably not rely on these features.
 
@@ -53,6 +52,9 @@ a file at a given filepath.
 If the file exists previously, it will retrieve its contents, behaving just like with_file. Usage of variables like "{{ inventory_hostname }}" in the filepath can be used to set
 up random passwords per host (which simplifies password management in 'host_vars' variables).
 
+A special case is using ``/dev/null`` as a path. The password lookup will generate a new random password each time, but will not write it to ``/dev/null``. This can be used when you need a password
+without storing it on the controller.
+
 Generated passwords contain a random mix of upper and lowercase ASCII letters, the
 numbers 0-9 and punctuation (". , : - _"). The default length of a generated password is 20 characters.
 This length can be changed by passing an extra parameter::
@@ -99,6 +101,48 @@ Starting in version 1.4, password accepts a "chars" parameter to allow defining 
         # (...)
 
 To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double quotes are not supported.
+
+.. _passwordstore_lookup:
+
+The Passwordstore Lookup
+````````````````````````
+.. versionadded:: 2.3
+
+The ``passwordstore`` lookup enables Ansible to retrieve, create or update passwords from
+the passwordstore.org ``pass`` utility. It also retrieves YAML style keys stored as multilines
+in the passwordfile.
+
+Examples
+--------
+Basic lookup. Fails if example/test doesn't exist::
+
+    password="{{ lookup('passwordstore', 'example/test')}}`
+
+Create pass with random 16 character password. If password exists just give the password::
+
+    password="{{ lookup('passwordstore', 'example/test create=true')}}`
+
+Different size password::
+
+    password="{{ lookup('passwordstore', 'example/test create=true length=42')}}`
+
+Create password and overwrite the password if it exists. As a bonus, this module includes the old password inside the pass file::
+
+    password="{{ lookup('passwordstore', 'example/test create=true overwrite=true')}}`
+
+Return the value for user in the KV pair user: username::
+
+    password="{{ lookup('passwordstore', 'example/test subkey=user')}}`
+
+Return the entire password file content::
+
+    password="{{ lookup('passwordstore', 'example/test returnall=true')}}`
+
+The location of the password-store directory can be specified in the following ways:
+  - Default is ~/.password-store
+  - Can be overruled by PASSWORD_STORE_DIR environment variable
+  - Can be overruled by 'passwordstore: path/to/.password-store' ansible setting
+  - Can be overrules by 'directory=path' argument in the lookup call
 
 .. _csvfile_lookup:
 
@@ -218,7 +262,7 @@ The Credstash Lookup
 ````````````````````
 .. versionadded:: 2.0
 
-Credstash is a small utility for managing secrets using AWS's KMS and DynamoDB: https://github.com/LuminalOSS/credstash
+Credstash is a small utility for managing secrets using AWS's KMS and DynamoDB: https://github.com/fugue/credstash
 
 First, you need to store your secrets with credstash:
 
@@ -529,6 +573,10 @@ Here are some examples::
                 - "{{list1}}"
                 - "{{list2}}"
                 - [1,2,3,4,5,6]
+
+         - name: Added in 2.3 allows using the system's keyring
+           debug: msg={{lookup('keyring','myservice myuser')}}
+
 
 As an alternative, you can also assign lookup plugins to variables or use them elsewhere.
 These macros are evaluated each time they are used in a task (or template)::

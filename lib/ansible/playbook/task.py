@@ -21,8 +21,8 @@ __metaclass__ = type
 
 import os
 
-from ansible.compat.six import iteritems, string_types
 from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping, AnsibleUnicode
@@ -68,7 +68,6 @@ class Task(Base, Conditional, Taggable, Become):
     _args                 = FieldAttribute(isa='dict', default=dict())
     _action               = FieldAttribute(isa='string')
 
-    _any_errors_fatal     = FieldAttribute(isa='bool')
     _async                = FieldAttribute(isa='int', default=0)
     _changed_when         = FieldAttribute(isa='list', default=[])
     _delay                = FieldAttribute(isa='int', default=5)
@@ -80,7 +79,7 @@ class Task(Base, Conditional, Taggable, Become):
     _loop_control         = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
     _name                 = FieldAttribute(isa='string', default='')
     _notify               = FieldAttribute(isa='list')
-    _poll                 = FieldAttribute(isa='int')
+    _poll                 = FieldAttribute(isa='int', default=10)
     _register             = FieldAttribute(isa='string')
     _retries              = FieldAttribute(isa='int')
     _until                = FieldAttribute(isa='list', default=[])

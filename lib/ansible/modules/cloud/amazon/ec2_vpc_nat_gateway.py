@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -209,12 +210,8 @@ nat_gateway_addresses:
   ]
 '''
 
-try:
-    import botocore
-    import boto3
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
 
 import datetime
 import random
@@ -222,6 +219,13 @@ import re
 import time
 
 from dateutil.tz import tzutc
+
+try:
+    import botocore
+    import boto3
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
 
 DRY_RUN_GATEWAYS = [
     {
@@ -387,7 +391,7 @@ def get_nat_gateways(client, subnet_id=None, nat_gateway_id=None,
             err_msg = '{0} Retrieving gateways'.format(DRY_RUN_MSGS)
 
     except botocore.exceptions.ClientError as e:
-            err_msg = str(e)
+        err_msg = str(e)
 
     return gateways_retrieved, err_msg, existing_gateways
 
@@ -592,7 +596,7 @@ def get_eip_allocation_id_by_address(client, eip_address, check_mode=False):
             )
 
     except botocore.exceptions.ClientError as e:
-            err_msg = str(e)
+        err_msg = str(e)
 
     return allocation_id, err_msg
 
@@ -662,11 +666,15 @@ def release_address(client, allocation_id, check_mode=False):
         return True, ''
 
     ip_released = False
-    params = {
-        'AllocationId': allocation_id,
-    }
     try:
-        client.release_address(**params)
+        client.describe_addresses(AllocationIds=[allocation_id])
+    except botocore.exceptions.ClientError as e:
+        # IP address likely already released
+        # Happens with gateway in 'deleted' state that
+        # still lists associations
+        return True, str(e)
+    try:
+        client.release_address(AllocationId=allocation_id)
         ip_released = True
     except botocore.exceptions.ClientError as e:
         err_msg = str(e)
@@ -996,17 +1004,18 @@ def remove(client, nat_gateway_id, wait=False, wait_timeout=0,
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-        subnet_id=dict(type='str'),
-        eip_address=dict(type='str'),
-        allocation_id=dict(type='str'),
-        if_exist_do_not_create=dict(type='bool', default=False),
-        state=dict(default='present', choices=['present', 'absent']),
-        wait=dict(type='bool', default=False),
-        wait_timeout=dict(type='int', default=320, required=False),
-        release_eip=dict(type='bool', default=False),
-        nat_gateway_id=dict(type='str'),
-        client_token=dict(type='str'),
+    argument_spec.update(
+        dict(
+            subnet_id=dict(type='str'),
+            eip_address=dict(type='str'),
+            allocation_id=dict(type='str'),
+            if_exist_do_not_create=dict(type='bool', default=False),
+            state=dict(default='present', choices=['present', 'absent']),
+            wait=dict(type='bool', default=False),
+            wait_timeout=dict(type='int', default=320, required=False),
+            release_eip=dict(type='bool', default=False),
+            nat_gateway_id=dict(type='str'),
+            client_token=dict(type='str'),
         )
     )
     module = AnsibleModule(
@@ -1081,9 +1090,6 @@ def main():
             msg=err_msg, success=success, changed=changed, **results
         )
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

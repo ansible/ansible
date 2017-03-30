@@ -17,14 +17,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
 module: netapp_e_amg_sync
-short_description: Conduct synchronization actions on asynchronous member groups.
+short_description: Conduct synchronization actions on asynchronous mirror groups.
 description:
     - Allows for the initialization, suspension and resumption of an asynchronous mirror group's synchronization for NetApp E-series storage arrays.
 version_added: '2.2'
@@ -42,8 +43,6 @@ options:
         required: true
         description:
         - The url to the SANtricity WebServices Proxy or embedded REST API.
-        example:
-        - https://prod-1.wahoo.acme.com/devmgr/v2
     validate_certs:
         required: false
         default: true
@@ -59,7 +58,8 @@ options:
     state:
         description:
             - The synchronization action you'd like to take.
-            - If C(running) then it will begin syncing if there is no active sync or will resume a suspended sync. If there is already a sync in progress, it will return with an OK status.
+            - If C(running) then it will begin syncing if there is no active sync or will resume a suspended sync. If there is already a sync in
+              progress, it will return with an OK status.
             - If C(suspended) it will suspend any ongoing sync action, but return OK if there is no active sync or if the sync is already suspended
         choices:
             - running
@@ -68,8 +68,10 @@ options:
     delete_recovery_point:
         description:
             - Indicates whether the failures point can be deleted on the secondary if necessary to achieve the synchronization.
-            - If true, and if the amount of unsynchronized data exceeds the CoW repository capacity on the secondary for any member volume, the last failures point will be deleted and synchronization will continue.
-            - If false, the synchronization will be suspended if the amount of unsynchronized data exceeds the CoW Repository capacity on the secondary and the failures point will be preserved.
+            - If true, and if the amount of unsynchronized data exceeds the CoW repository capacity on the secondary for any member volume, the last
+              failures point will be deleted and synchronization will continue.
+            - If false, the synchronization will be suspended if the amount of unsynchronized data exceeds the CoW Repository capacity on the secondary
+              and the failures point will be preserved.
             - "NOTE: This only has impact for newly launched syncs."
         choices:
             - yes

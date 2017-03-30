@@ -19,9 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -39,7 +40,7 @@ options:
   pvs:
     description:
     - List of comma-separated devices to use as physical devices in this volume group. Required when creating or resizing volume group.
-    - The module will take care of running pvcreate if needed. 
+    - The module will take care of running pvcreate if needed.
     required: false
   pesize:
     description:
@@ -102,13 +103,13 @@ def parse_vgs(data):
     return vgs
 
 def find_mapper_device_name(module, dm_device):
-        dmsetup_cmd = module.get_bin_path('dmsetup', True)
-        mapper_prefix = '/dev/mapper/'
-        rc, dm_name, err = module.run_command("%s info -C --noheadings -o name %s" % (dmsetup_cmd, dm_device))
-        if rc != 0:
-            module.fail_json(msg="Failed executing dmsetup command.", rc=rc, err=err)
-        mapper_device = mapper_prefix + dm_name.rstrip()
-        return mapper_device
+    dmsetup_cmd = module.get_bin_path('dmsetup', True)
+    mapper_prefix = '/dev/mapper/'
+    rc, dm_name, err = module.run_command("%s info -C --noheadings -o name %s" % (dmsetup_cmd, dm_device))
+    if rc != 0:
+        module.fail_json(msg="Failed executing dmsetup command.", rc=rc, err=err)
+    mapper_device = mapper_prefix + dm_name.rstrip()
+    return mapper_device
 
 def parse_pvs(module, data):
     pvs = []

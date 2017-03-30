@@ -78,7 +78,8 @@ def find_executable(executable, cwd=None, path=None, required=True):
     return match
 
 
-def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=False, stdin=None, stdout=None):
+def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=False, stdin=None, stdout=None,
+                cmd_verbosity=1):
     """
     :type args: CommonConfig
     :type cmd: collections.Iterable[str]
@@ -89,13 +90,16 @@ def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=
     :type always: bool
     :type stdin: file | None
     :type stdout: file | None
+    :type cmd_verbosity: int
     :rtype: str | None, str | None
     """
     explain = args.explain and not always
-    return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout)
+    return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout,
+                       cmd_verbosity=cmd_verbosity)
 
 
-def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False, stdin=None, stdout=None):
+def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False, stdin=None, stdout=None,
+                cmd_verbosity=1):
     """
     :type cmd: collections.Iterable[str]
     :type capture: bool
@@ -105,6 +109,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
     :type explain: bool
     :type stdin: file | None
     :type stdout: file | None
+    :type cmd_verbosity: int
     :rtype: str | None, str | None
     """
     if not cwd:
@@ -117,7 +122,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
 
     escaped_cmd = ' '.join(pipes.quote(c) for c in cmd)
 
-    display.info('Run command: %s' % escaped_cmd, verbosity=1)
+    display.info('Run command: %s' % escaped_cmd, verbosity=cmd_verbosity)
     display.info('Working directory: %s' % cwd, verbosity=2)
 
     program = find_executable(cmd[0], cwd=cwd, path=env['PATH'], required='warning')
@@ -160,10 +165,14 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
         raise
 
     if communicate:
-        stdout, stderr = process.communicate(data)
+        encoding = 'utf-8'
+        data_bytes = data.encode(encoding) if data else None
+        stdout_bytes, stderr_bytes = process.communicate(data_bytes)
+        stdout_text = stdout_bytes.decode(encoding) if stdout_bytes else u''
+        stderr_text = stderr_bytes.decode(encoding) if stderr_bytes else u''
     else:
         process.wait()
-        stdout, stderr = None, None
+        stdout_text, stderr_text = None, None
 
     status = process.returncode
     runtime = time.time() - start
@@ -171,9 +180,9 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
     display.info('Command exited with status %s after %s seconds.' % (status, runtime), verbosity=4)
 
     if status == 0:
-        return stdout, stderr
+        return stdout_text, stderr_text
 
-    raise SubprocessError(cmd, status, stdout, stderr, runtime)
+    raise SubprocessError(cmd, status, stdout_text, stderr_text, runtime)
 
 
 def common_environment():
@@ -222,7 +231,7 @@ def deepest_path(path_a, path_b):
     """Return the deepest of two paths, or None if the paths are unrelated.
     :type path_a: str
     :type path_b: str
-    :return: str | None
+    :rtype: str | None
     """
     if path_a == '.':
         path_a = ''
@@ -261,6 +270,15 @@ def make_dirs(path):
             raise
 
 
+def is_binary_file(path):
+    """
+    :type path: str
+    :rtype: bool
+    """
+    with open(path, 'rb') as path_fd:
+        return b'\0' in path_fd.read(1024)
+
+
 class Display(object):
     """Manages color console output."""
     clear = '\033[0m'
@@ -282,6 +300,8 @@ class Display(object):
         self.verbosity = 0
         self.color = True
         self.warnings = []
+        self.warnings_unique = set()
+        self.info_stderr = False
 
     def __warning(self, message):
         """
@@ -299,10 +319,17 @@ class Display(object):
         for warning in self.warnings:
             self.__warning(warning)
 
-    def warning(self, message):
+    def warning(self, message, unique=False):
         """
         :type message: str
+        :type unique: bool
         """
+        if unique:
+            if message in self.warnings_unique:
+                return
+
+            self.warnings_unique.add(message)
+
         self.__warning(message)
         self.warnings.append(message)
 
@@ -325,7 +352,7 @@ class Display(object):
         """
         if self.verbosity >= verbosity:
             color = self.verbosity_colors.get(verbosity, self.yellow)
-            self.print_message(message, color=color)
+            self.print_message(message, color=color, fd=sys.stderr if self.info_stderr else sys.stdout)
 
     def print_message(self, message, color=None, fd=sys.stdout):  # pylint: disable=locally-disabled, invalid-name
         """
@@ -411,6 +438,61 @@ class CommonConfig(object):
         self.color = args.color  # type: bool
         self.explain = args.explain  # type: bool
         self.verbosity = args.verbosity  # type: int
+        self.debug = args.debug  # type: bool
+
+
+class EnvironmentConfig(CommonConfig):
+    """Configuration common to all commands which execute in an environment."""
+    def __init__(self, args, command):
+        """
+        :type args: any
+        """
+        super(EnvironmentConfig, self).__init__(args)
+
+        self.command = command
+
+        self.local = args.local is True
+
+        if args.tox is True or args.tox is False or args.tox is None:
+            self.tox = args.tox is True
+            self.tox_args = 0
+            self.python = args.python if 'python' in args else None  # type: str
+        else:
+            self.tox = True
+            self.tox_args = 1
+            self.python = args.tox  # type: str
+
+        self.docker = docker_qualify_image(args.docker)  # type: str
+        self.remote = args.remote  # type: str
+
+        self.docker_privileged = args.docker_privileged if 'docker_privileged' in args else False  # type: bool
+        self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else '')  # type: str
+        self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
+
+        self.tox_sitepackages = args.tox_sitepackages  # type: bool
+
+        self.remote_stage = args.remote_stage  # type: str
+        self.remote_aws_region = args.remote_aws_region  # type: str
+
+        self.requirements = args.requirements  # type: bool
+
+        self.python_version = self.python or '.'.join(str(i) for i in sys.version_info[:2])
+
+        self.delegate = self.tox or self.docker or self.remote
+
+        if self.delegate:
+            self.requirements = True
+
+
+def docker_qualify_image(name):
+    """
+    :type name: str
+    :rtype: str
+    """
+    if not name or any((c in name) for c in ('/', ':')):
+        return name
+
+    return 'ansible/ansible:%s' % name
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name

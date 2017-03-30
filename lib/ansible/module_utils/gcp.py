@@ -39,22 +39,23 @@ try:
 except ImportError:
     HAS_LIBCLOUD_BASE = False
 
+# google-auth
+try:
+    import google.auth
+    from google.oauth2 import service_account
+    HAS_GOOGLE_AUTH = True
+except ImportError as e:
+    HAS_GOOGLE_AUTH = False
+
 # google-python-api
 try:
+    import google_auth_httplib2
     from httplib2 import Http
-    from oauth2client.service_account import ServiceAccountCredentials
     from googleapiclient.http import set_user_agent
     HAS_GOOGLE_API_LIB = True
 except ImportError:
     HAS_GOOGLE_API_LIB = False
 
-# google-cloud-python
-try:
-    import google.cloud.core as _GOOGLE_CLOUD_CORE_CHECK__
-    from httplib2 import Http
-    HAS_GOOGLE_CLOUD_CORE = True
-except ImportError:
-    HAS_GOOGLE_CLOUD_CORE = False
 
 # Ansible Display object for warnings
 try:
@@ -76,7 +77,7 @@ def _get_gcp_ansible_credentials(module):
 def _get_gcp_environ_var(var_name, default_value):
     """Wrapper around os.environ.get call."""
     return os.environ.get(
-            var_name, default_value)
+        var_name, default_value)
 
 def _get_gcp_environment_credentials(service_account_email, credentials_file, project_id):
     """Helper to look in environment variables for credentials."""
@@ -154,6 +155,8 @@ def _get_gcp_credentials(module, require_valid_json=True, check_libcloud=False):
     Additionally, flags may be set to require valid json and check the libcloud
     version.
 
+    AnsibleModule.fail_json is called only if the project_id cannot be found.
+
     :param module: initialized Ansible module object
     :type module: `class AnsibleModule`
 
@@ -189,26 +192,34 @@ def _get_gcp_credentials(module, require_valid_json=True, check_libcloud=False):
 
     if credentials_file is None or project_id is None or service_account_email is None:
         if check_libcloud is True:
-            # TODO(supertom): this message is legacy and integration tests depend on it.
-            module.fail_json(msg='Missing GCE connection parameters in libcloud '
-                             'secrets file.')
-            return None
+            if project_id is None:
+                # TODO(supertom): this message is legacy and integration tests depend on it.
+                module.fail_json(msg='Missing GCE connection parameters in libcloud '
+                                 'secrets file.')
         else:
-            if credentials_file is None or project_id is None:
-                module.fail_json(msg=('GCP connection error: enable to determine project (%s) or'
+            if project_id is None:
+                module.fail_json(msg=('GCP connection error: unable to determine project (%s) or '
                 'credentials file (%s)' % (project_id, credentials_file)))
+        # Set these fields to empty strings if they are None
+        # consumers of this will make the distinction between an empty string
+        # and None.
+        if credentials_file is None:
+            credentials_file = ''
+        if service_account_email is None:
+            service_account_email = ''
 
     # ensure the credentials file is found and is in the proper format.
-    _validate_credentials_file(module, credentials_file,
-                               require_valid_json=require_valid_json,
-                               check_libcloud=check_libcloud)
+    if credentials_file:
+        _validate_credentials_file(module, credentials_file,
+                                   require_valid_json=require_valid_json,
+                                   check_libcloud=check_libcloud)
 
     return {'service_account_email': service_account_email,
             'credentials_file': credentials_file,
             'project_id': project_id}
 
 def _validate_credentials_file(module, credentials_file, require_valid_json=True, check_libcloud=False):
-    """ 
+    """
     Check for valid credentials file.
 
     Optionally check for JSON format and if libcloud supports JSON.
@@ -240,11 +251,11 @@ def _validate_credentials_file(module, credentials_file, require_valid_json=True
                                      'Upgrade to libcloud>=0.17.0.')
             return True
     except IOError as e:
-        module.fail_json(msg='GCP Credentials File %s not found.', changed=False)
+        module.fail_json(msg='GCP Credentials File %s not found.' % credentials_file, changed=False)
         return False
     except ValueError as e:
         if require_valid_json:
-            module.fail_json(msg='GCP Credentials File %s invalid.  Must be valid JSON.', changed=False)
+            module.fail_json(msg='GCP Credentials File %s invalid.  Must be valid JSON.' % credentials_file, changed=False)
         else:
             display.deprecated(msg=("Non-JSON credentials file provided. This format is deprecated. "
                                     " Please generate a new JSON key from the Google Cloud console"),
@@ -275,8 +286,11 @@ def gcp_connect(module, provider, get_driver, user_agent_product, user_agent_ver
 
 
 def get_google_cloud_credentials(module, scopes=[]):
-    """ 
+    """
     Get credentials object for use with Google Cloud client.
+
+    Attempts to obtain credentials by calling _get_gcp_credentials. If those are
+    not present will attempt to connect via Application Default Credentials.
 
     To connect via libcloud, don't use this function, use gcp_connect instead.  For
     Google Python API Client, see get_google_api_auth for how to connect.
@@ -296,20 +310,29 @@ def get_google_cloud_credentials(module, scopes=[]):
     :param scopes: list of scopes
     :type module: ``list`` of URIs
 
-    :returns: A tuple containing (google authorized) credentials object and 
+    :returns: A tuple containing (google authorized) credentials object and
               params dict {'service_account_email': '...', 'credentials_file': '...', 'project_id': ...}
     :rtype: ``tuple``
     """
-    creds = _get_gcp_credentials(module,
+    if not HAS_GOOGLE_AUTH:
+        module.fail_json(msg='Please install google-auth.')
+
+    conn_params = _get_gcp_credentials(module,
                                  require_valid_json=True,
                                  check_libcloud=False)
     try:
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(
-            creds['credentials_file'],
-            scopes=scopes
-        )
+        if conn_params['credentials_file']:
+            credentials = service_account.Credentials.from_service_account_file(
+                conn_params['credentials_file'])
+            if scopes:
+                credentials = credentials.with_scopes(scopes)
+        else:
+            (credentials, project_id) = google.auth.default(
+                scopes=scopes)
+            if project_id is not None:
+                conn_params['project_id'] = project_id
 
-        return (credentials, creds)
+        return (credentials, conn_params)
     except Exception as e:
         module.fail_json(msg=unexpected_error_msg(e), changed=False)
         return (None, None)
@@ -318,10 +341,10 @@ def get_google_api_auth(module, scopes=[], user_agent_product='ansible-python-ap
     """
     Authentication for use with google-python-api-client.
 
-    Function calls _get_gcp_credentials, which attempts to assemble the credentials from various locations.
-    Next it attempts to authenticate with Google.
+    Function calls get_google_cloud_credentials, which attempts to assemble the credentials
+    from various locations.  Next it attempts to authenticate with Google.
 
-    This function returns an httplib2 object that can be provided to the Google Python API client.
+    This function returns an httplib2 (compatible) object that can be provided to the Google Python API client.
 
     For libcloud, don't use this function, use gcp_connect instead.  For Google Cloud, See
     get_google_cloud_credentials for how to connect.
@@ -330,7 +353,7 @@ def get_google_api_auth(module, scopes=[], user_agent_product='ansible-python-ap
     U(https://cloud.google.com/apis/docs/client-libraries-explained#google_api_client_libraries)
 
     Google API example:
-      http_auth, conn_params = gcp_api_auth(module, scopes, user_agent_product, user_agent_version)
+      http_auth, conn_params = get_google_api_auth(module, scopes, user_agent_product, user_agent_version)
       service = build('myservice', 'v1', http=http_auth)
       ...
 
@@ -356,15 +379,37 @@ def get_google_api_auth(module, scopes=[], user_agent_product='ansible-python-ap
     if not scopes:
         scopes = ['https://www.googleapis.com/auth/cloud-platform']
     try:
-        (credentials, conn_params) = get_google_credentials(module, scopes,
-                                                            require_valid_json=True, check_libcloud=False)
+        (credentials, conn_params) = get_google_cloud_credentials(module, scopes)
         http = set_user_agent(Http(), '%s-%s' % (user_agent_product, user_agent_version))
-        http_auth = credentials.authorize(http)
+        http_auth = google_auth_httplib2.AuthorizedHttp(credentials, http=http)
+
         return (http_auth, conn_params)
     except Exception as e:
         module.fail_json(msg=unexpected_error_msg(e), changed=False)
         return (None, None)
 
+def check_min_pkg_version(pkg_name, minimum_version):
+    """Minimum required version is >= installed version."""
+    from pkg_resources import get_distribution
+    try:
+        installed_version = get_distribution(pkg_name).version
+        return LooseVersion(installed_version) >= minimum_version
+    except Exception as e:
+        return False
+
 def unexpected_error_msg(error):
     """Create an error string based on passed in error."""
-    return 'Unexpected response: (%s). Detail: %s' % (str(error), traceback.format_exc(error))
+    return 'Unexpected response: (%s). Detail: %s' % (str(error), traceback.format_exc())
+
+def get_valid_location(module, driver, location, location_type='zone'):
+    if location_type == 'zone':
+        l = driver.ex_get_zone(location)
+    else:
+        l = driver.ex_get_region(location)
+    if l is None:
+        link = 'https://cloud.google.com/compute/docs/regions-zones/regions-zones#available'
+        module.fail_json(msg=('%s %s is invalid. Please see the list of '
+                              'available %s at %s' % (
+                                  location_type, location, location_type, link)),
+                         changed=False)
+    return l

@@ -21,9 +21,10 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -45,7 +46,7 @@ options:
       - State of the package atom
     required: false
     default: "present"
-    choices: [ "present", "installed", "emerged", "absent", "removed", "unmerged" ]
+    choices: [ "present", "installed", "emerged", "absent", "removed", "unmerged", "latest" ]
 
   update:
     description:
@@ -165,7 +166,6 @@ options:
       - Specifies the number of packages to build simultaneously.
     required: false
     default: None
-    type: int
     version_added: 2.3
 
   loadavg:
@@ -174,7 +174,6 @@ options:
       - other builds running and the load average is at least LOAD
     required: false
     default: None
-    type: float
     version_added: 2.3
 
 requirements: [ gentoolkit ]
@@ -196,7 +195,7 @@ EXAMPLES = '''
     package: foo
     state: absent
 
-# Update package foo to the "best" version
+# Update package foo to the "latest" version ( os specific alternative to latest )
 - portage:
     package: foo
     update: yes
@@ -298,7 +297,7 @@ def sync_repositories(module, webrsync=False):
 def emerge_packages(module, packages):
     p = module.params
 
-    if not (p['update'] or p['noreplace']):
+    if not (p['update'] or p['noreplace'] or p['state']=='latest'):
         for package in packages:
             if not query_package(module, package, 'emerge'):
                 break
@@ -327,6 +326,9 @@ def emerge_packages(module, packages):
     for flag, arg in emerge_flags.items():
         if p[flag]:
             args.append(arg)
+
+    if p['state'] and p['state']=='latest':
+        args.append("--update")
 
     if p['usepkg'] and p['usepkgonly']:
         module.fail_json(msg='Use only one of usepkg, usepkgonly')
@@ -449,7 +451,7 @@ def run_emerge(module, packages, *args):
     return cmd, module.run_command(cmd)
 
 
-portage_present_states = ['present', 'emerged', 'installed']
+portage_present_states = ['present', 'emerged', 'installed', 'latest']
 portage_absent_states = ['absent', 'unmerged', 'removed']
 
 

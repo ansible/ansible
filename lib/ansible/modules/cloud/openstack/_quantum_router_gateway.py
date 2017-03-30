@@ -16,19 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    try:
-        from neutronclient.neutron import client
-    except ImportError:
-        from quantumclient.quantum import client
-    from keystoneclient.v2_0 import client as ksclient
-    HAVE_DEPS = True
-except ImportError:
-    HAVE_DEPS = False
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['deprecated'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -97,7 +88,19 @@ EXAMPLES = '''
     network_name: external_network
 '''
 
+try:
+    try:
+        from neutronclient.neutron import client
+    except ImportError:
+        from quantumclient.quantum import client
+    from keystoneclient.v2_0 import client as ksclient
+    HAVE_DEPS = True
+except ImportError:
+    HAVE_DEPS = False
+
 _os_keystone = None
+
+
 def _get_ksclient(module, kwargs):
     try:
         kclient = ksclient.Client(username=kwargs.get('login_username'),
@@ -123,8 +126,8 @@ def _get_neutron_client(module, kwargs):
     token = _ksclient.auth_token
     endpoint = _get_endpoint(module, _ksclient)
     kwargs = {
-            'token': token,
-            'endpoint_url': endpoint
+        'token': token,
+        'endpoint_url': endpoint
     }
     try:
         neutron = client.Client('2.0', **kwargs)
@@ -134,14 +137,14 @@ def _get_neutron_client(module, kwargs):
 
 def _get_router_id(module, neutron):
     kwargs = {
-            'name': module.params['router_name'],
+        'name': module.params['router_name'],
     }
     try:
         routers = neutron.list_routers(**kwargs)
     except Exception as e:
         module.fail_json(msg = "Error in getting the router list: %s " % e.message)
     if not routers['routers']:
-            return None
+        return None
     return routers['routers'][0]['id']
 
 def _get_net_id(neutron, module):
@@ -152,7 +155,7 @@ def _get_net_id(neutron, module):
     try:
         networks = neutron.list_networks(**kwargs)
     except Exception as e:
-        module.fail_json("Error in listing neutron networks: %s" % e.message)
+        module.fail_json(msg="Error in listing neutron networks: %s" % e.message)
     if not networks['networks']:
         return None
     return networks['networks'][0]['id']
@@ -180,7 +183,7 @@ def _add_gateway_router(neutron, module, router_id, network_id):
         module.fail_json(msg = "Error in adding gateway to router: %s" % e.message)
     return True
 
-def  _remove_gateway_router(neutron, module, router_id):
+def _remove_gateway_router(neutron, module, router_id):
     try:
         neutron.remove_gateway_router(router_id)
     except Exception as e:
@@ -191,9 +194,9 @@ def main():
 
     argument_spec = openstack_argument_spec()
     argument_spec.update(dict(
-            router_name        = dict(required=True),
-            network_name       = dict(required=True),
-            state              = dict(default='present', choices=['absent', 'present']),
+        router_name        = dict(required=True),
+        network_name       = dict(required=True),
+        state              = dict(default='present', choices=['absent', 'present']),
     ))
     module = AnsibleModule(argument_spec=argument_spec)
     if not HAVE_DEPS:

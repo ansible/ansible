@@ -18,7 +18,7 @@ This script generates an Ansible hosts file with these host groups:
 
 ABQ_xxx: Defines a hosts itself by Abiquo VM name label
 all: Contains all hosts defined in Abiquo user's enterprise
-virtualdatecenter: Creates a host group for each virtualdatacenter containing all hosts defined on it 
+virtualdatecenter: Creates a host group for each virtualdatacenter containing all hosts defined on it
 virtualappliance: Creates a host group for each virtualappliance containing all hosts defined on it
 imagetemplate: Creates a host group for each image template containing all hosts using it
 
@@ -55,7 +55,7 @@ from ansible.module_utils.urls import open_url
 
 def api_get(link, config):
     try:
-        if link == None:
+        if link is None:
             url = config.get('api','uri') + config.get('api','login_path')
             headers = {"Accept": config.get('api','login_type')}
         else:
@@ -110,7 +110,7 @@ def cache_available(config):
 
     return False
 
-def generate_inv_from_api(enterprise_entity,config):    
+def generate_inv_from_api(enterprise_entity,config):
     try:
         inventory['all'] = {}
         inventory['all']['children'] = []
@@ -122,33 +122,37 @@ def generate_inv_from_api(enterprise_entity,config):
         vms_entity = next(link for link in (enterprise['links']) if (link['rel']=='virtualmachines'))
         vms = api_get(vms_entity,config)
         for vmcollection in vms['collection']:
-            vm_vapp = next(link for link in (vmcollection['links']) if (link['rel']=='virtualappliance'))['title'].replace('[','').replace(']','').replace(' ','_')
-            vm_vdc = next(link for link in (vmcollection['links']) if (link['rel']=='virtualdatacenter'))['title'].replace('[','').replace(']','').replace(' ','_')
-            vm_template = next(link for link in (vmcollection['links']) if (link['rel']=='virtualmachinetemplate'))['title'].replace('[','').replace(']','').replace(' ','_')
+            for link in vmcollection['links']:
+                if link['rel'] == 'virtualappliance':
+                    vm_vapp = link['title'].replace('[','').replace(']','').replace(' ','_')
+                elif link['rel'] == 'virtualdatacenter':
+                    vm_vdc = link['title'].replace('[','').replace(']','').replace(' ','_')
+                elif link['rel'] == 'virtualmachinetemplate':
+                    vm_template = link['title'].replace('[','').replace(']','').replace(' ','_')
 
             # From abiquo.ini: Only adding to inventory VMs with public IP
-            if (config.getboolean('defaults', 'public_ip_only')) == True:
+            if config.getboolean('defaults', 'public_ip_only') is True:
                 for link in vmcollection['links']:
                     if (link['type']=='application/vnd.abiquo.publicip+json' and link['rel']=='ip'):
-                      vm_nic = link['title']
-                      break
+                        vm_nic = link['title']
+                        break
                     else:
-                      vm_nic = None
+                        vm_nic = None
             # Otherwise, assigning defined network interface IP address
             else:
                 for link in vmcollection['links']:
-                    if (link['rel']==config.get('defaults', 'default_net_interface')):
-                      vm_nic = link['title']
-                      break
+                    if link['rel'] == config.get('defaults', 'default_net_interface'):
+                        vm_nic = link['title']
+                        break
                     else:
-                      vm_nic = None
-            
+                        vm_nic = None
+
             vm_state = True
             # From abiquo.ini: Only adding to inventory VMs deployed
-            if ((config.getboolean('defaults', 'deployed_only') == True) and (vmcollection['state'] == 'NOT_ALLOCATED')):
+            if config.getboolean('defaults', 'deployed_only') is True and vmcollection['state'] == 'NOT_ALLOCATED':
                 vm_state = False
 
-            if not vm_nic == None and vm_state:
+            if vm_nic is not None and vm_state:
                 if vm_vapp not in inventory:
                     inventory[vm_vapp] = {}
                     inventory[vm_vapp]['children'] = []
@@ -161,11 +165,11 @@ def generate_inv_from_api(enterprise_entity,config):
                     inventory[vm_template] = {}
                     inventory[vm_template]['children'] = []
                     inventory[vm_template]['hosts'] = []
-                if config.getboolean('defaults', 'get_metadata') == True:
+                if config.getboolean('defaults', 'get_metadata') is True:
                     meta_entity = next(link for link in (vmcollection['links']) if (link['rel']=='metadata'))
                     try:
                         metadata = api_get(meta_entity,config)
-                        if (config.getfloat("api","version") >= 3.0):                           
+                        if (config.getfloat("api","version") >= 3.0):
                             vm_metadata = metadata['metadata']
                         else:
                             vm_metadata = metadata['metadata']['metadata']

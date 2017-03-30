@@ -16,19 +16,20 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: nxos_bgp_neighbor_af
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages BGP address-family's neighbors configuration.
 description:
     - Manages BGP address-family's neighbors configurations on NX-OS switches.
 author: Gabriele Gerbino (@GGabriele)
-extends_documentation_fragment: nxos
 notes:
     - C(state=absent) removes the whole BGP address-family's
       neighbor configuration.
@@ -260,8 +261,8 @@ options:
         choices: ['present','absent']
 '''
 EXAMPLES = '''
-configure RR client
-- nxos_bgp_neighbor_af:
+- name: configure RR client
+  nxos_bgp_neighbor_af:
     asn: 65535
     neighbor: '3.3.3.3'
     afi: ipv4
@@ -322,156 +323,11 @@ changed:
 '''
 
 
-# COMMON CODE FOR MIGRATION
 import re
-
-import ansible.module_utils.nxos
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
-from ansible.module_utils.network import NetworkModule
-from ansible.module_utils.shell import ShellError
-
-
-def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
-
-
-class CustomNetworkConfig(NetworkConfig):
-
-    def expand_section(self, configobj, S=None):
-        if S is None:
-            S = list()
-        S.append(configobj)
-        for child in configobj.children:
-            if child in S:
-                continue
-            self.expand_section(child, S)
-        return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
-
-    def to_block(self, section):
-        return '\n'.join([item.raw for item in section])
-
-    def get_section(self, path):
-        try:
-            section = self.get_section_objects(path)
-            return self.to_block(section)
-        except ValueError:
-            return list()
-
-    def get_section_objects(self, path):
-        if not isinstance(path, list):
-            path = [path]
-        obj = self.get_object(path)
-        if not obj:
-            raise ValueError('path does not exist in config')
-        return self.expand_section(obj)
-
-
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
-
-        ancestors = list()
-        offset = 0
-        obj = None
-
-        ## global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
-
-        else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
-
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
-
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
-
-
-def get_network_module(**kwargs):
-    try:
-        return get_module(**kwargs)
-    except NameError:
-        return NetworkModule(**kwargs)
-
-def get_config(module, include_defaults=False):
-    config = module.params['config']
-    if not config:
-        try:
-            config = module.get_config()
-        except AttributeError:
-            defaults = module.params['include_defaults']
-            config = module.config.get_config(include_defaults=defaults)
-    return CustomNetworkConfig(indent=2, contents=config)
-
-def load_config(module, candidate):
-    config = get_config(module)
-
-    commands = candidate.difference(config)
-    commands = [str(c).strip() for c in commands]
-
-    save_config = module.params['save']
-
-    result = dict(changed=False)
-
-    if commands:
-        if not module.check_mode:
-            try:
-                module.configure(commands)
-            except AttributeError:
-                module.config(commands)
-
-            if save_config:
-                try:
-                    module.config.save_config()
-                except AttributeError:
-                    module.execute(['copy running-config startup-config'])
-
-        result['changed'] = True
-        result['updates'] = commands
-
-    return result
-# END OF COMMON CODE
+from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netcfg import CustomNetworkConfig
 
 WARNINGS = []
 BOOL_PARAMS = [
@@ -559,7 +415,7 @@ def get_custom_value(arg, config, module):
     value = ''
 
     if (arg.startswith('filter_list') or arg.startswith('prefix_list') or
-        arg.startswith('route_map')):
+            arg.startswith('route_map')):
         value = in_out_param(arg, splitted_config, module)
     elif arg == 'send_community':
         for line in splitted_config:
@@ -684,7 +540,7 @@ def get_existing(module, args):
 
         parents.append('neighbor {0}'.format(module.params['neighbor']))
         parents.append('address-family {0} {1}'.format(
-                            module.params['afi'], module.params['safi']))
+            module.params['afi'], module.params['safi']))
         config = netcfg.get_section(parents)
 
         if config:
@@ -722,7 +578,7 @@ def apply_key_map(key_map, table):
 
 def get_address_family_command(key, value, module):
     command = "address-family {0} {1}".format(
-                    module.params['afi'], module.params['safi'])
+        module.params['afi'], module.params['safi'])
     return command
 
 
@@ -746,13 +602,13 @@ def get_capability_additional_paths_send_command(key, value, module):
 
 def get_advertise_map_exist_command(key, value, module):
     command = 'advertise-map {0} exist-map {1}'.format(
-                                                value[0], value[1])
+        value[0], value[1])
     return command
 
 
 def get_advertise_map_non_exist_command(key, value, module):
     command = 'advertise-map {0} non-exist-map {1}'.format(
-                                                value[0], value[1])
+        value[0], value[1])
     return command
 
 
@@ -846,7 +702,7 @@ def get_default_command(key, value, existing_commands):
                 command = 'no route-map {0} out'.format(existing_value)
             elif key.startswith('maximum-prefix'):
                 command = 'no maximum-prefix {0}'.format(
-                                    existing_commands.get('maximum-prefix'))
+                    existing_commands.get('maximum-prefix'))
             elif key == 'allowas-in max':
                 command = ['no allowas-in {0}'.format(existing_value)]
                 command.append('allowas-in')
@@ -936,11 +792,11 @@ def state_present(module, existing, proposed, candidate):
             candidate.add(commands, parents=parents)
         elif len(commands) > 1:
             af_command = 'address-family {0} {1}'.format(
-                                module.params['afi'], module.params['safi'])
+                module.params['afi'], module.params['safi'])
             if af_command in commands:
                 commands.remove(af_command)
                 parents.append('address-family {0} {1}'.format(
-                                module.params['afi'], module.params['safi']))
+                    module.params['afi'], module.params['safi']))
                 candidate.add(commands, parents=parents)
 
 
@@ -952,68 +808,75 @@ def state_absent(module, existing, proposed, candidate):
 
     parents.append('neighbor {0}'.format(module.params['neighbor']))
     commands.append('no address-family {0} {1}'.format(
-                        module.params['afi'], module.params['safi']))
+        module.params['afi'], module.params['safi']))
     candidate.add(commands, parents=parents)
 
 
 def main():
     argument_spec = dict(
-            asn=dict(required=True, type='str'),
-            vrf=dict(required=False, type='str', default='default'),
-            neighbor=dict(required=True, type='str'),
-            afi=dict(required=True, type='str'),
-            safi=dict(required=True, type='str'),
-            additional_paths_receive=dict(required=False, type='str',
+        asn=dict(required=True, type='str'),
+        vrf=dict(required=False, type='str', default='default'),
+        neighbor=dict(required=True, type='str'),
+        afi=dict(required=True, type='str'),
+        safi=dict(required=True, type='str'),
+        additional_paths_receive=dict(required=False, type='str',
                                 choices=['enable', 'disable', 'inherit']),
-            additional_paths_send=dict(required=False, type='str',
+        additional_paths_send=dict(required=False, type='str',
                                 choices=['enable', 'disable', 'inherit']),
-            advertise_map_exist=dict(required=False, type='list'),
-            advertise_map_non_exist=dict(required=False, type='list'),
-            allowas_in=dict(required=False, type='bool'),
-            allowas_in_max=dict(required=False, type='str'),
-            as_override=dict(required=False, type='bool'),
-            default_originate=dict(required=False, type='bool'),
-            default_originate_route_map=dict(required=False, type='str'),
-            filter_list_in=dict(required=False, type='str'),
-            filter_list_out=dict(required=False, type='str'),
-            max_prefix_limit=dict(required=False, type='str'),
-            max_prefix_interval=dict(required=False, type='str'),
-            max_prefix_threshold=dict(required=False, type='str'),
-            max_prefix_warning=dict(required=False, type='bool'),
-            next_hop_self=dict(required=False, type='bool'),
-            next_hop_third_party=dict(required=False, type='bool'),
-            prefix_list_in=dict(required=False, type='str'),
-            prefix_list_out=dict(required=False, type='str'),
-            route_map_in=dict(required=False, type='str'),
-            route_map_out=dict(required=False, type='str'),
-            route_reflector_client=dict(required=False, type='bool'),
-            send_community=dict(required=False, choices=['none',
+        advertise_map_exist=dict(required=False, type='list'),
+        advertise_map_non_exist=dict(required=False, type='list'),
+        allowas_in=dict(required=False, type='bool'),
+        allowas_in_max=dict(required=False, type='str'),
+        as_override=dict(required=False, type='bool'),
+        default_originate=dict(required=False, type='bool'),
+        default_originate_route_map=dict(required=False, type='str'),
+        filter_list_in=dict(required=False, type='str'),
+        filter_list_out=dict(required=False, type='str'),
+        max_prefix_limit=dict(required=False, type='str'),
+        max_prefix_interval=dict(required=False, type='str'),
+        max_prefix_threshold=dict(required=False, type='str'),
+        max_prefix_warning=dict(required=False, type='bool'),
+        next_hop_self=dict(required=False, type='bool'),
+        next_hop_third_party=dict(required=False, type='bool'),
+        prefix_list_in=dict(required=False, type='str'),
+        prefix_list_out=dict(required=False, type='str'),
+        route_map_in=dict(required=False, type='str'),
+        route_map_out=dict(required=False, type='str'),
+        route_reflector_client=dict(required=False, type='bool'),
+        send_community=dict(required=False, choices=['none',
                                                          'both',
                                                          'extended',
                                                          'standard',
                                                          'default']),
-            soft_reconfiguration_in=dict(required=False, type='str',
+        soft_reconfiguration_in=dict(required=False, type='str',
                                 choices=['enable', 'always', 'inherit']),
-            soo=dict(required=False, type='str'),
-            suppress_inactive=dict(required=False, type='bool'),
-            unsuppress_map=dict(required=False, type='str'),
-            weight=dict(required=False, type='str'),
-            state=dict(choices=['present', 'absent'], default='present',
+        soo=dict(required=False, type='str'),
+        suppress_inactive=dict(required=False, type='bool'),
+        unsuppress_map=dict(required=False, type='str'),
+        weight=dict(required=False, type='str'),
+        state=dict(choices=['present', 'absent'], default='present',
                        required=False),
-            include_defaults=dict(default=True),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        include_defaults=dict(default=True),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
-    module = get_network_module(argument_spec=argument_spec,
+
+    argument_spec.update(nxos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
                                 mutually_exclusive=[['advertise_map_exist',
                                              'advertise_map_non_exist']],
                                 supports_check_mode=True)
 
+    warnings = list()
+    check_args(module, warnings)
+
+
     state = module.params['state']
     if ((module.params['max_prefix_interval'] or
-        module.params['max_prefix_warning'] or
-        module.params['max_prefix_threshold']) and
-        not module.params['max_prefix_limit']):
+            module.params['max_prefix_warning'] or
+            module.params['max_prefix_threshold']) and
+            not module.params['max_prefix_limit']):
         module.fail_json(msg='max_prefix_limit is required when using '
                              'max_prefix_warning, max_prefix_limit or '
                              'max_prefix_threshold.')
@@ -1021,45 +884,45 @@ def main():
         module.fail_json(msg='SOO is only allowed in non-default VRF')
 
     args =  [
-            'afi',
-            'asn',
-            'neighbor',
-            'additional_paths_receive',
-            'additional_paths_send',
-            'advertise_map_exist',
-            'advertise_map_non_exist',
-            'allowas_in',
-            'allowas_in_max',
-            'as_override',
-            'default_originate',
-            'default_originate_route_map',
-            'filter_list_in',
-            'filter_list_out',
-            'max_prefix_limit',
-            'max_prefix_interval',
-            'max_prefix_threshold',
-            'max_prefix_warning',
-            'next_hop_self',
-            'next_hop_third_party',
-            'prefix_list_in',
-            'prefix_list_out',
-            'route_map_in',
-            'route_map_out',
-            'soft_reconfiguration_in',
-            'soo',
-            'suppress_inactive',
-            'unsuppress_map',
-            'weight',
-            'route_reflector_client',
-            'safi',
-            'send_community',
-            'vrf'
-        ]
+        'afi',
+        'asn',
+        'neighbor',
+        'additional_paths_receive',
+        'additional_paths_send',
+        'advertise_map_exist',
+        'advertise_map_non_exist',
+        'allowas_in',
+        'allowas_in_max',
+        'as_override',
+        'default_originate',
+        'default_originate_route_map',
+        'filter_list_in',
+        'filter_list_out',
+        'max_prefix_limit',
+        'max_prefix_interval',
+        'max_prefix_threshold',
+        'max_prefix_warning',
+        'next_hop_self',
+        'next_hop_third_party',
+        'prefix_list_in',
+        'prefix_list_out',
+        'route_map_in',
+        'route_map_out',
+        'soft_reconfiguration_in',
+        'soo',
+        'suppress_inactive',
+        'unsuppress_map',
+        'weight',
+        'route_reflector_client',
+        'safi',
+        'send_community',
+        'vrf'
+    ]
 
     existing = invoke('get_existing', module, args)
     if existing.get('asn'):
         if (existing.get('asn') != module.params['asn'] and
-            state == 'present'):
+                state == 'present'):
             module.fail_json(msg='Another BGP ASN already exists.',
                              proposed_asn=module.params['asn'],
                              existing_asn=existing.get('asn'))
@@ -1105,7 +968,6 @@ def main():
     else:
         result['updates'] = []
 
-    result['connected'] = module.connected
     if module._verbosity > 0:
         end_state = invoke('get_existing', module, args)
         result['end_state'] = end_state
@@ -1120,3 +982,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

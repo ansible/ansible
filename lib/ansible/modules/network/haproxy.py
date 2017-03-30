@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -186,7 +187,7 @@ WAIT_INTERVAL=5
 
 ######################################################################
 class TimeoutException(Exception):
-  pass
+    pass
 
 class HAProxy(object):
     """
@@ -287,7 +288,12 @@ class HAProxy(object):
         """
         data = self.execute('show stat', 200, False).lstrip('# ')
         r = csv.DictReader(data.splitlines())
-        state = tuple(map(lambda d: { 'status': d['status'], 'weight': d['weight'] }, filter(lambda d: (pxname is None or d['pxname'] == pxname) and d['svname'] == svname, r)))
+        state = tuple(
+            map(
+                lambda d: {'status': d['status'], 'weight': d['weight']},
+                filter(lambda d: (pxname is None or d['pxname'] == pxname) and d['svname'] == svname, r)
+            )
+        )
         return state or None
 
 
@@ -295,7 +301,7 @@ class HAProxy(object):
         """
         Wait for a service to reach the specified status. Try RETRIES times
         with INTERVAL seconds of sleep in between. If the service has not reached
-        the expected status in that time, the module will fail. If the service was 
+        the expected status in that time, the module will fail. If the service was
         not found, the module will fail.
         """
         for i in range(1, self.wait_retries):
@@ -356,8 +362,8 @@ class HAProxy(object):
 
         # Report change status
         if state_before != state_after:
-           self.command_results['changed'] = True
-           self.module.exit_json(**self.command_results)
+            self.command_results['changed'] = True
+            self.module.exit_json(**self.command_results)
         else:
             self.command_results['changed'] = False
             self.module.exit_json(**self.command_results)

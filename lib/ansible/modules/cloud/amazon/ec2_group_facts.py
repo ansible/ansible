@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -102,7 +103,7 @@ try:
     from botocore.exceptions import ClientError
     HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = Falsentry
+    HAS_BOTO3 = False
 
 import traceback
 
@@ -145,7 +146,7 @@ def main():
             Filters=ansible_dict_to_boto3_filter_list(sanitized_filters)
         )
     except ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(e))
+        module.fail_json(msg=e.message, exception=traceback.format_exc())
 
     # Turn the boto3 result in to ansible_friendly_snaked_names
     snaked_security_groups = []

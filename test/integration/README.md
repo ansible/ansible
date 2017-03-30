@@ -7,10 +7,13 @@ Tests for playbooks, by playbooks.
 
 Some tests may require credentials.  Credentials may be specified with `credentials.yml`.
 
-Tests should be run as root.
+Some tests may require root.
 
 Quick Start
 ===========
+
+It is highly recommended that you install and activate the `argcomplete` python package.
+It provides tab completion in `bash` for the `ansible-test` test runner.
 
 To get started quickly using Docker containers for testing,
 see [Tests in Docker containers](#tests-in-docker-containers).
@@ -36,13 +39,13 @@ Non-destructive Tests
 These tests will modify files in subdirectories, but will not do things that install or remove packages or things
 outside of those test subdirectories.  They will also not reconfigure or bounce system services.
 
-Run as follows:
+Run as follows for all POSIX platform tests executed by our CI system:
 
-    make non_destructive
+    test/runner/ansible-test integration -v posix/ci/
 
-You can select specific tests with the --tags parameter.
+You can select specific tests as well, such as for individual modules:
 
-    TEST_FLAGS="--tags test_vars_blending" make
+    test/runner/ansible-test integration -v ping
 
 Destructive Tests
 =================
@@ -50,7 +53,7 @@ Destructive Tests
 These tests are allowed to install and remove some trivial packages.  You will likely want to devote these
 to a virtual environment.  They won't reformat your filesystem, however :)
 
-    make destructive
+    test/runner/ansible-test integration -v destructive/
 
 Cloud Tests
 ===========
@@ -96,8 +99,9 @@ Define Windows inventory:
     cp inventory.winrm.template inventory.winrm
     ${EDITOR:-vi} inventory.winrm
 
-Run the tests:
-    make test_winrm
+Run the Windows tests executed by our CI system:
+
+    test/runner/ansible-test windows-integration -v windows/ci/
 
 Tests in Docker containers
 ==========================
@@ -105,26 +109,22 @@ Tests in Docker containers
 If you have a Linux system with Docker installed, running integration tests using the same Docker containers used by
 the Ansible continuous integration (CI) system is recommended.
 
-> Using Docker Engine to run Docker on a non-Linux host is not recommended. Some tests, such as those that manage
-> services or use local SSH connections are known to fail in such an environment. For best results, install Docker on a
-> full Linux distribution such as Ubuntu, running on real hardware or in a virtual machine.
+> Using Docker Engine to run Docker on a non-Linux host is not recommended.
+> Some tests may fail, depending on the image used for testing.
+> Using the `--docker-privileged` option may resolve the issue.
 
 ## Running Integration Tests
 
-To run all integration test targets with the default settings in a Centos 7 container, run `make integration` from the repository root.
+To run all CI integration test targets for POSIX platforms in a Ubuntu 16.04 container:
+
+    test/runner/ansible-test integration -v posix/ci/ --docker
 
 You can also run specific tests or select a different Linux distribution.
-For example, to run the test `test_ping` from the non_destructive target on a Ubuntu 14.04 container:
+For example, to run tests for the `ping` module on a Ubuntu 14.04 container:
 
-- go to the repository root
-- and execute `make integration IMAGE=ansible/ansible:ubuntu1404 TARGET=non_destructive TEST_FLAGS='--tags test_ping'`
+    test/runner/ansible-test integration -v ping --docker ubuntu1404
 
 ## Container Images
-
-Use the prefix `ansible/ansible:` with the image names below.
-
-> Running `make integration` will automatically download the container image you have specified, if it is not already 
-> available. However, you will be responsible for keeping the container images up-to-date using `docker pull`.
 
 ### Python 2
 
@@ -136,24 +136,15 @@ Most container images are for testing with Python 2:
   - fedora25
   - opensuse42.1
   - opensuse42.2
-  - ubuntu1204 (requires `PRIVILEGED=true`)
-  - ubuntu1404 (requires `PRIVILEGED=true`)
+  - ubuntu1204
+  - ubuntu1404
   - ubuntu1604
 
 ### Python 3
 
-To test with Python 3 you must set `PYTHON3=1` and use the following images:
+To test with Python 3 use the following images:
 
   - ubuntu1604py3
-
-## Additional Options
-
-There are additional environment variables that can be used. A few of the more useful ones:
-
-  - `KEEP_CONTAINERS=onfailure` - Containers will be preserved if tests fail.
-  - `KEEP_CONTAINERS=1` - Containers will always be preserved.
-  - `SHARE_SOURCE=1` - Changes to source from the host or container will be shared between host and container.
-                       _**CAUTION:** Files created by the container will be owned by root on the host._
 
 Network Tests
 =============

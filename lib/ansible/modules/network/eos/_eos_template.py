@@ -15,9 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -26,14 +27,14 @@ version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
 short_description: Manage Arista EOS device configurations
 description:
-  - Manages network device configurations over SSH or eAPI.  This module
+  - Manages network device configurations over SSH or eos_local.  This module
     allows implementers to work with the device running-config.  It
     provides a way to push a set of commands onto a network device
     by evaluating the current running-config and only pushing configuration
     commands that are not already configured.  The config source can
     be a set of commands or a template.
-deprecated: Deprecated in 2.2. Use eos_config instead
 extends_documentation_fragment: eos
+deprecated: Deprecated in 2.2. Use M(eos_config) instead
 options:
   src:
     description:
@@ -74,7 +75,7 @@ options:
       - This argument will cause the provided configuration to be replaced
         on the destination node.   The use of the replace argument will
         always cause the task to set changed to true and will implies
-        C(force=true).  This argument is only valid with C(transport=eapi).
+        C(force=true).  This argument is only valid with C(transport=eos_local).
     required: false
     default: false
     choices: ['yes', 'no']
@@ -122,16 +123,28 @@ responses:
 """
 import re
 
-import ansible.module_utils.eos
-
-from ansible.module_utils.network import NetworkModule
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.eos import load_config, get_config
+from ansible.module_utils.eos import eos_argument_spec
+from ansible.module_utils.eos import check_args as eos_check_args
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 
-def get_config(module):
+def check_args(module, warnings):
+    eos_check_args(module, warnings)
+
+    transport = module.params['transport']
+    provider_transport = (module.params['provider'] or {}).get('transport')
+
+    if module.params['replace'] and 'eapi' in (transport, provider_transport):
+        module.fail_json(msg='config replace is only supported over cli')
+
+def get_current_config(module):
     config = module.params.get('config')
-    defaults = module.params['include_defaults']
     if not config and not module.params['force']:
-        config = module.config.get_config(include_defaults=defaults)
+        flags = []
+        if module.params['include_defaults']:
+            flags.append('all')
+        config = get_config(module, flags)
     return config
 
 def filter_exit(commands):
@@ -171,47 +184,48 @@ def main():
         config=dict()
     )
 
+    argument_spec.update(eos_argument_spec)
+
     mutually_exclusive = [('config', 'backup'), ('config', 'force')]
 
-    module = NetworkModule(argument_spec=argument_spec,
+    module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
-    replace = module.params['replace']
+    warnings = list()
+    check_args(module, warnings)
 
-    commands = list()
-    running = None
+    result = {'changed': False}
+    if warnings:
+        result['warnings'] = warnings
 
-    result = dict(changed=False)
+    src = module.params['src']
+    candidate = NetworkConfig(contents=src, indent=3)
 
-    candidate = NetworkConfig(contents=module.params['src'], indent=3)
+    if module.params['backup']:
+        result['__backup__'] = get_config(module)
 
-    if replace:
-        if module.params['transport'] == 'cli':
-            module.fail_json(msg='config replace is only supported over eapi')
-        commands = str(candidate).split('\n')
+    if not module.params['force']:
+        contents = get_current_config(module)
+        configobj = NetworkConfig(contents=contents, indent=3)
+        commands = candidate.difference(configobj)
+        commands = dumps(commands, 'commands').split('\n')
+        commands = [str(c).strip() for c in commands if c]
     else:
-        contents = get_config(module)
-        if contents:
-            running = NetworkConfig(contents=contents, indent=3)
-            result['_backup'] = contents
+        commands = [c.strip() for c in str(candidate).split('\n')]
 
-        if not module.params['force']:
-            commands = candidate.difference((running or list()))
-            commands = dumps(commands, 'commands').split('\n')
-            commands = [str(c) for c in commands if c]
-        else:
-            commands = str(candidate).split('\n')
+    #commands = str(candidate).split('\n')
 
-    commands = filter_exit(commands)
     if commands:
-        if not module.check_mode:
-            response = module.config.load_config(commands, replace=replace,
-                                                 commit=True)
-            result['responses'] = response
+        commands = filter_exit(commands)
+        commit = not module.check_mode
+        replace = module.params['replace'] or False
+        load_config(module, commands, commit=commit, replace=replace)
         result['changed'] = True
 
+    result['commands'] = commands
     result['updates'] = commands
+
     module.exit_json(**result)
 
 if __name__ == '__main__':

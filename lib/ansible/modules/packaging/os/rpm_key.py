@@ -19,9 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -200,13 +201,13 @@ class RpmKey:
 
 def main():
     module = AnsibleModule(
-            argument_spec = dict(
-                state=dict(default='present', choices=['present', 'absent'], type='str'),
-                key=dict(required=True, type='str'),
-                validate_certs=dict(default='yes', type='bool'),
-                ),
-            supports_check_mode=True
-            )
+        argument_spec = dict(
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            key=dict(required=True, type='str'),
+            validate_certs=dict(default='yes', type='bool'),
+            ),
+        supports_check_mode=True
+        )
 
     RpmKey(module)
 

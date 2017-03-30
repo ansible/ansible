@@ -19,28 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-try:
-    import ovirtsdk4.types as otypes
-except ImportError:
-    pass
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    get_link_name,
-    ovirt_full_argument_spec,
-    search_by_name,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -127,6 +109,24 @@ nic:
     returned: On success if network interface is found.
 '''
 
+try:
+    import ovirtsdk4.types as otypes
+except ImportError:
+    pass
+
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    get_link_name,
+    ovirt_full_argument_spec,
+    search_by_name,
+)
+
 
 class VmNicsModule(BaseModule):
 
@@ -186,7 +186,8 @@ def main():
     try:
         # Locate the service that manages the virtual machines and use it to
         # search for the NIC:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         vms_service = connection.system_service().vms_service()
 
         # Locate the VM, where we will manage NICs:
@@ -211,7 +212,18 @@ def main():
             dcs_service = connection.system_service().data_centers_service()
             dc = dcs_service.list(search='Clusters.name=%s' % cluster_name)[0]
             networks_service = dcs_service.service(dc.id).networks_service()
-            network = search_by_name(networks_service, module.params['network'])
+            network = next(
+                (n for n in networks_service.list()
+                if n.name == module.params['network']),
+                None
+            )
+            if network is None:
+                raise Exception(
+                    "Network '%s' was not found in datacenter '%s'." % (
+                        module.params['network'],
+                        dc.name
+                    )
+                )
             for vnic in connection.system_service().vnic_profiles_service().list():
                 if vnic.name == profile and vnic.network.id == network.id:
                     vmnics_module.vnic_id = vnic.id
@@ -241,7 +253,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 if __name__ == "__main__":
     main()

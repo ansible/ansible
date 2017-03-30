@@ -16,24 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    try:
-        from neutronclient.neutron import client
-    except ImportError:
-        from quantumclient.quantum import client
-    from keystoneclient.v2_0 import client as ksclient
-    HAVE_DEPS = True
-except ImportError:
-    HAVE_DEPS = False
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['deprecated'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: quantum_network
 version_added: "1.4"
+author: "Benno Joy (@bennojoy)"
 deprecated: Deprecated in 2.0. Use M(os_network) instead.
 short_description: Creates/Removes networks from OpenStack
 description:
@@ -139,8 +131,19 @@ EXAMPLES = '''
     login_tenant_name: admin
 '''
 
+try:
+    try:
+        from neutronclient.neutron import client
+    except ImportError:
+        from quantumclient.quantum import client
+    from keystoneclient.v2_0 import client as ksclient
+    HAVE_DEPS = True
+except ImportError:
+    HAVE_DEPS = False
+
 _os_keystone = None
 _os_tenant_id = None
+
 
 def _get_ksclient(module, kwargs):
     try:
@@ -167,8 +170,8 @@ def _get_neutron_client(module, kwargs):
     token = _ksclient.auth_token
     endpoint = _get_endpoint(module, _ksclient)
     kwargs = {
-            'token': token,
-            'endpoint_url': endpoint
+        'token': token,
+        'endpoint_url': endpoint
     }
     try:
         neutron = client.Client('2.0', **kwargs)
@@ -192,8 +195,8 @@ def _set_tenant_id(module):
 
 def _get_net_id(neutron, module):
     kwargs = {
-            'tenant_id': _os_tenant_id,
-            'name': module.params['name'],
+        'tenant_id': _os_tenant_id,
+        'name': module.params['name'],
     }
     try:
         networks = neutron.list_networks(**kwargs)
@@ -251,15 +254,15 @@ def main():
 
     argument_spec = openstack_argument_spec()
     argument_spec.update(dict(
-            name                            = dict(required=True),
-            tenant_name                     = dict(default=None),
-            provider_network_type           = dict(default=None, choices=['local', 'vlan', 'flat', 'gre']),
-            provider_physical_network       = dict(default=None),
-            provider_segmentation_id        = dict(default=None),
-            router_external                 = dict(default=False, type='bool'),
-            shared                          = dict(default=False, type='bool'),
-            admin_state_up                  = dict(default=True, type='bool'),
-            state                           = dict(default='present', choices=['absent', 'present'])
+        name                            = dict(required=True),
+        tenant_name                     = dict(default=None),
+        provider_network_type           = dict(default=None, choices=['local', 'vlan', 'flat', 'gre']),
+        provider_physical_network       = dict(default=None),
+        provider_segmentation_id        = dict(default=None),
+        router_external                 = dict(default=False, type='bool'),
+        shared                          = dict(default=False, type='bool'),
+        admin_state_up                  = dict(default=True, type='bool'),
+        state                           = dict(default='present', choices=['absent', 'present'])
     ))
     module = AnsibleModule(argument_spec=argument_spec)
 
@@ -267,12 +270,12 @@ def main():
         module.fail_json(msg='python-keystoneclient and either python-neutronclient or python-quantumclient are required')
 
     if module.params['provider_network_type'] in ['vlan' , 'flat']:
-            if not module.params['provider_physical_network']:
-                module.fail_json(msg = " for vlan and flat networks, variable provider_physical_network should be set.")
+        if not module.params['provider_physical_network']:
+            module.fail_json(msg = " for vlan and flat networks, variable provider_physical_network should be set.")
 
-    if module.params['provider_network_type']  in ['vlan', 'gre']:
-            if not module.params['provider_segmentation_id']:
-                module.fail_json(msg = " for vlan & gre networks, variable provider_segmentation_id should be set.")
+    if module.params['provider_network_type'] in ['vlan', 'gre']:
+        if not module.params['provider_segmentation_id']:
+            module.fail_json(msg = " for vlan & gre networks, variable provider_segmentation_id should be set.")
 
     neutron = _get_neutron_client(module, module.params)
 

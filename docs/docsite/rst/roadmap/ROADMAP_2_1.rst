@@ -16,7 +16,7 @@ Target: April
          - Finish cleaning up tests and support for post-beta release
          - Strict mode cleanup (one module in core)
          - Domain user/group management
-         - Finish win_host and win_rm in the domain/workgroup modules. 
+         - Finish win_host and win_rm in the domain/workgroup modules.
               - Close 2 existing PRs (These were deemed insufficient)
          - Replicate python module API in PS/C# (deprecate hodgepodge of stuff from module_utils/powershell.ps1)
 
@@ -51,19 +51,19 @@ Target: April
 - Upgrade other cloud modules or work with community maintainers to upgrade.  (In order)
      - AWS (Community maintainers)
      - Openstack (Community maintainers)
-     - Google (Google/Community) 
+     - Google (Google/Community)
      - Digital Ocean (Community)
-- Ansiballz (renamed from Ziploader): 
-     - Write code to create the zipfile that gets passed across the wire to be run on the remote python  
+- Ansiballz (renamed from Ziploader):
+     - Write code to create the zipfile that gets passed across the wire to be run on the remote python
      - Port most of the functionality in module\_utils to be usage in ansiballz instead
-     - Port a few essential modules to use ansiballz instead of module-replacer as proof of concept  
+     - Port a few essential modules to use ansiballz instead of module-replacer as proof of concept
      - New modules will be able to use ansiballz.  Old modules will need to be ported in future releases (Some modules will not need porting but others will)
      - Better testing of modules, caching of modules clientside(Have not yet arrived at an architecture for this that we like), better code sharing between ansible/ansible and modules
      - ansiballz is a helpful building block for: python3 porting(high priority), better code sharing between modules(medium priority)
      - ansiballz is a good idea before: enabling users to have custom module_utils directories
 - Expand module diff support (already in progress in devel)
-     - Framework done. Need to add to modules, test etc. 
-     - Coordinate with community to update their modules 
+     - Framework done. Need to add to modules, test etc.
+     - Coordinate with community to update their modules
 - Things being kicking down the road that we said we’d do
      - NOT remerging core with ansible/ansible this release cycle
 - Community stuff

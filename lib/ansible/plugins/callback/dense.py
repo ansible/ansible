@@ -167,9 +167,9 @@ class CallbackModule_dense(CallbackModule_default):
 
             # Attributes to remove from results for more density
             self.removed_attributes = (
-#                'changed',
+                #                'changed',
                 'delta',
-#                'diff',
+                #                'diff',
                 'end',
                 'failed',
                 'failed_when_result',

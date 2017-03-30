@@ -28,8 +28,9 @@
 import re
 
 from ansible.module_utils.six.moves import zip
+from ansible.module_utils.network_common import to_list
 
-DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/']
+DEFAULT_COMMENT_TOKENS = ['#', '!', '/*', '*/', 'echo']
 
 
 class ConfigLine(object):
@@ -108,8 +109,6 @@ def _obj_to_block(objects, visited=None):
 def dumps(objects, output='block', comments=False):
     if output == 'block':
         items = _obj_to_block(objects)
-    #elif output == 'block':
-    #    items = _obj_to_raw(objects)
     elif output == 'commands':
         items = _obj_to_text(objects)
     else:
@@ -226,7 +225,7 @@ class NetworkConfig(object):
 
     def get_block_config(self, path):
         block = self.get_block(path)
-        return dumps(block, 'config')
+        return dumps(block, 'block')
 
     def _expand_block(self, configobj, S=None):
         if S is None:
@@ -249,9 +248,9 @@ class NetworkConfig(object):
         updates = list()
         for index, line in enumerate(self.items):
             try:
-                if line != other[index]:
+                if str(line).strip() != str(other[index]).strip():
                     updates.append(line)
-            except IndexError:
+            except (AttributeError, IndexError):
                 updates.append(line)
         return updates
 
@@ -361,5 +360,93 @@ class NetworkConfig(object):
                     item._parents = ancestors
                     ancestors[-1]._children.append(item)
                     self.items.append(item)
+
+
+class CustomNetworkConfig(NetworkConfig):
+
+    def expand_section(self, configobj, S=None):
+        if S is None:
+            S = list()
+        S.append(configobj)
+        for child in configobj.children:
+            if child in S:
+                continue
+            self.expand_section(child, S)
+        return S
+
+    def get_object(self, path):
+        for item in self.items:
+            if item.text == path[-1]:
+                parents = [p.text for p in item.parents]
+                if parents == path[:-1]:
+                    return item
+
+    def to_block(self, section):
+        return '\n'.join([item.raw for item in section])
+
+    def get_section(self, path):
+        try:
+            section = self.get_section_objects(path)
+            return self.to_block(section)
+        except ValueError:
+            return list()
+
+    def get_section_objects(self, path):
+        if not isinstance(path, list):
+            path = [path]
+        obj = self.get_object(path)
+        if not obj:
+            raise ValueError('path does not exist in config')
+        return self.expand_section(obj)
+
+
+    def add(self, lines, parents=None):
+        """Adds one or lines of configuration
+        """
+
+        ancestors = list()
+        offset = 0
+        obj = None
+
+        ## global config command
+        if not parents:
+            for line in to_list(lines):
+                item = ConfigLine(line)
+                item.raw = line
+                if item not in self.items:
+                    self.items.append(item)
+
+        else:
+            for index, p in enumerate(parents):
+                try:
+                    i = index + 1
+                    obj = self.get_section_objects(parents[:i])[0]
+                    ancestors.append(obj)
+
+                except ValueError:
+                    # add parent to config
+                    offset = index * self.indent
+                    obj = ConfigLine(p)
+                    obj.raw = p.rjust(len(p) + offset)
+                    if ancestors:
+                        obj.parents = list(ancestors)
+                        ancestors[-1].children.append(obj)
+                    self.items.append(obj)
+                    ancestors.append(obj)
+
+            # add child objects
+            for line in to_list(lines):
+                # check if child already exists
+                for child in ancestors[-1].children:
+                    if child.text == line:
+                        break
+                else:
+                    offset = len(parents) * self.indent
+                    item = ConfigLine(line)
+                    item.raw = line.rjust(len(line) + offset)
+                    item.parents = ancestors
+                    ancestors[-1].children.append(item)
+                    self.items.append(item)
+
 
 

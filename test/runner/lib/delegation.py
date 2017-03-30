@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function
 
 import os
 import sys
+import tempfile
 import time
 
 import lib.pytar
@@ -11,12 +12,15 @@ import lib.thread
 
 from lib.executor import (
     SUPPORTED_PYTHON_VERSIONS,
-    EnvironmentConfig,
     IntegrationConfig,
     SubprocessError,
     ShellConfig,
-    TestConfig,
+    SanityConfig,
     create_shell_command,
+)
+
+from lib.test import (
+    TestConfig,
 )
 
 from lib.core_ci import (
@@ -29,6 +33,7 @@ from lib.manage_ci import (
 
 from lib.util import (
     ApplicationError,
+    EnvironmentConfig,
     run_command,
     common_environment,
     display,
@@ -42,6 +47,27 @@ def delegate(args, exclude, require):
     :type args: EnvironmentConfig
     :type exclude: list[str]
     :type require: list[str]
+    :rtype: bool
+    """
+    if isinstance(args, TestConfig):
+        with tempfile.NamedTemporaryFile(prefix='metadata-', suffix='.json', dir=os.getcwd()) as metadata_fd:
+            args.metadata_path = os.path.basename(metadata_fd.name)
+            args.metadata.to_file(args.metadata_path)
+
+            try:
+                return delegate_command(args, exclude, require)
+            finally:
+                args.metadata_path = None
+    else:
+        return delegate_command(args, exclude, require)
+
+
+def delegate_command(args, exclude, require):
+    """
+    :type args: EnvironmentConfig
+    :type exclude: list[str]
+    :type require: list[str]
+    :rtype: bool
     """
     if args.tox:
         delegate_tox(args, exclude, require)
@@ -245,7 +271,15 @@ def docker_run(args, image, options):
     if not options:
         options = []
 
-    return docker_command(args, ['run'] + options + [image], capture=True)
+    for _ in range(1, 3):
+        try:
+            return docker_command(args, ['run'] + options + [image], capture=True)
+        except SubprocessError as ex:
+            display.error(ex)
+            display.warning('Failed to run docker image "%s". Waiting a few seconds before trying again.' % image)
+            time.sleep(3)
+
+    raise ApplicationError('Failed to run docker image "%s".' % image)
 
 
 def docker_rm(args, container_id):
@@ -341,7 +375,7 @@ def generate_command(args, path, options, exclude, require):
     :type options: dict[str, int]
     :type exclude: list[str]
     :type require: list[str]
-    :return: list[str]
+    :rtype: list[str]
     """
     options['--color'] = 1
 
@@ -354,6 +388,9 @@ def generate_command(args, path, options, exclude, require):
 
     if isinstance(args, ShellConfig):
         cmd = create_shell_command(cmd)
+    elif isinstance(args, SanityConfig):
+        if args.base_branch:
+            cmd += ['--base-branch', args.base_branch]
 
     return cmd
 
@@ -381,6 +418,11 @@ def filter_options(args, argv, options, exclude, require):
             '--ignore-unstaged': 0,
             '--changed-from': 1,
             '--changed-path': 1,
+            '--metadata': 1,
+        })
+    elif isinstance(args, SanityConfig):
+        options.update({
+            '--base-branch': 1,
         })
 
     remaining = 0
@@ -408,3 +450,8 @@ def filter_options(args, argv, options, exclude, require):
     for target in require:
         yield '--require'
         yield target
+
+    if isinstance(args, TestConfig):
+        if args.metadata_path:
+            yield '--metadata'
+            yield args.metadata_path

@@ -28,15 +28,15 @@ import time
 import yaml
 import re
 import getpass
-import signal
 import subprocess
 from abc import ABCMeta, abstractmethod
 
 from ansible.release import __version__
 from ansible import constants as C
-from ansible.compat.six import with_metaclass
 from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.module_utils.six import with_metaclass
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.utils.path import unfrackpath
 
 try:
     from __main__ import display
@@ -90,11 +90,10 @@ class InvalidOptsParser(SortedOptParser):
         except optparse.BadOptionError:
             pass
 
-
 class CLI(with_metaclass(ABCMeta, object)):
     ''' code behind bin/ansible* programs '''
 
-    VALID_ACTIONS = ['No Actions']
+    VALID_ACTIONS = []
 
     _ITALIC = re.compile(r"I\(([^)]+)\)")
     _BOLD   = re.compile(r"B\(([^)]+)\)")
@@ -103,8 +102,10 @@ class CLI(with_metaclass(ABCMeta, object)):
     _CONST  = re.compile(r"C\(([^)]+)\)")
 
     PAGER   = 'less'
-    LESS_OPTS = 'FRSX'  # -F (quit-if-one-screen) -R (allow raw ansi control chars)
-                        # -S (chop long lines) -X (disable termcap init and de-init)
+
+    # -F (quit-if-one-screen) -R (allow raw ansi control chars)
+    # -S (chop long lines) -X (disable termcap init and de-init)
+    LESS_OPTS = 'FRSX'
 
     def __init__(self, args, callback=None):
         """
@@ -173,7 +174,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # enforce no newline chars at the end of passwords
         if vault_pass:
-            vault_pass = to_text(vault_pass, errors='surrogate_or_strict', nonstring='simplerepr').strip()
+            vault_pass = to_bytes(vault_pass, errors='surrogate_or_strict', nonstring='simplerepr').strip()
 
         return vault_pass
 
@@ -189,7 +190,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             pass
 
         if new_vault_pass:
-            new_vault_pass = to_text(new_vault_pass, errors='surrogate_or_strict', nonstring='simplerepr').strip()
+            new_vault_pass = to_bytes(new_vault_pass, errors='surrogate_or_strict', nonstring='simplerepr').strip()
 
         return new_vault_pass
 
@@ -247,9 +248,9 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         if runas_opts:
             # Check for privilege escalation conflicts
-            if (op.su or op.su_user) and (op.sudo or op.sudo_user) or \
-                (op.su or op.su_user) and (op.become or op.become_user) or \
-                (op.sudo or op.sudo_user) and (op.become or op.become_user):
+            if ((op.su or op.su_user) and (op.sudo or op.sudo_user) or
+                    (op.su or op.su_user) and (op.become or op.become_user) or
+                    (op.sudo or op.sudo_user) and (op.become or op.become_user)):
 
                 self.parser.error("Sudo arguments ('--sudo', '--sudo-user', and '--ask-sudo-pass') "
                                   "and su arguments ('-su', '--su-user', and '--ask-su-pass') "
@@ -265,6 +266,10 @@ class CLI(with_metaclass(ABCMeta, object)):
         setattr(parser.values, option.dest, os.path.expanduser(value))
 
     @staticmethod
+    def unfrack_path(option, opt, value, parser):
+        setattr(parser.values, option.dest, unfrackpath(value))
+
+    @staticmethod
     def expand_paths(option, opt, value, parser):
         """optparse action callback to convert a PATH style string arg to a list of path strings.
 
@@ -278,15 +283,13 @@ class CLI(with_metaclass(ABCMeta, object)):
 
     @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False, module_opts=False,
-            async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False, runas_prompt_opts=False):
+            async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False,
+            runas_prompt_opts=False, desc=None):
         ''' create an options parser for most ansible scripts '''
 
-        # TODO: implement epilog parsing
-        #       OptionParser.format_epilog = lambda self, formatter: self.epilog
-
         # base opts
-        parser = SortedOptParser(usage, version=CLI.version("%prog"))
-        parser.add_option('-v','--verbose', dest='verbosity', default=0, action="count",
+        parser = SortedOptParser(usage, version=CLI.version("%prog"), description=desc, epilog=epilog)
+        parser.add_option('-v','--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
             help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
 
         if inventory_opts:
@@ -300,7 +303,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         if module_opts:
             parser.add_option('-M', '--module-path', dest='module_path', default=None,
-                help="specify path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH,
+                help="prepend path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH,
                 action="callback", callback=CLI.expand_tilde, type=str)
         if runtask_opts:
             parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
@@ -338,7 +341,8 @@ class CLI(with_metaclass(ABCMeta, object)):
             connect_group.add_option('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
                 help='ask for connection password')
             connect_group.add_option('--private-key','--key-file', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
-                help='use this file to authenticate the connection')
+                help='use this file to authenticate the connection',
+                action="callback", callback=CLI.unfrack_path, type=str)
             connect_group.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',
                 help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
             connect_group.add_option('-c', '--connection', dest='connection', default=C.DEFAULT_TRANSPORT,
@@ -441,7 +445,9 @@ class CLI(with_metaclass(ABCMeta, object)):
         if hasattr(self.options, 'tags') and self.options.tags:
             if not C.MERGE_MULTIPLE_CLI_TAGS:
                 if len(self.options.tags) > 1:
-                    display.deprecated('Specifying --tags multiple times on the command line currently uses the last specified value. In 2.4, values will be merged instead.  Set merge_multiple_cli_tags=True in ansible.cfg to get this behavior now.', version=2.5, removed=False)
+                    display.deprecated('Specifying --tags multiple times on the command line currently uses the last specified value. '
+                                       'In 2.4, values will be merged instead.  Set merge_multiple_cli_tags=True in ansible.cfg to get this behavior now.',
+                                       version=2.5, removed=False)
                     self.options.tags = [self.options.tags[-1]]
 
             tags = set()
@@ -453,7 +459,9 @@ class CLI(with_metaclass(ABCMeta, object)):
         if hasattr(self.options, 'skip_tags') and self.options.skip_tags:
             if not C.MERGE_MULTIPLE_CLI_TAGS:
                 if len(self.options.skip_tags) > 1:
-                    display.deprecated('Specifying --skip-tags multiple times on the command line currently uses the last specified value. In 2.4, values will be merged instead.  Set merge_multiple_cli_tags=True in ansible.cfg to get this behavior now.', version=2.5, removed=False)
+                    display.deprecated('Specifying --skip-tags multiple times on the command line currently uses the last specified value. '
+                                       'In 2.4, values will be merged instead.  Set merge_multiple_cli_tags=True in ansible.cfg to get this behavior now.',
+                                       version=2.5, removed=False)
                     self.options.skip_tags = [self.options.skip_tags[-1]]
 
             skip_tags = set()
@@ -475,6 +483,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         else:
             cpath = C.DEFAULT_MODULE_PATH
         result = result + "\n  configured module search path = %s" % cpath
+        result = result + "\n  python version = %s" % ''.join(sys.version.splitlines())
         return result
 
     @staticmethod
@@ -626,7 +635,8 @@ class CLI(with_metaclass(ABCMeta, object)):
                 # STDERR not captured to make it easier for users to prompt for input in their scripts
                 p = subprocess.Popen(this_path, stdout=subprocess.PIPE)
             except OSError as e:
-                raise AnsibleError("Problem running vault password script %s (%s). If this is not a script, remove the executable bit from the file." % (' '.join(this_path), e))
+                raise AnsibleError("Problem running vault password script %s (%s). If this is not a script, "
+                                   "remove the executable bit from the file." % (' '.join(this_path), e))
             stdout, stderr = p.communicate()
             if p.returncode != 0:
                 raise AnsibleError("Vault password script %s returned non-zero (%s): %s" % (this_path, p.returncode, p.stderr))
@@ -639,7 +649,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             except (OSError, IOError) as e:
                 raise AnsibleError("Could not read vault password file %s: %s" % (this_path, e))
 
-        return to_text(vault_pass, errors='surrogate_or_strict')
+        return vault_pass
 
     def get_opt(self, k, defval=""):
         """
@@ -655,3 +665,4 @@ class CLI(with_metaclass(ABCMeta, object)):
             if os.pathsep in data:
                 data = data.split(os.pathsep)[0]
         return data
+

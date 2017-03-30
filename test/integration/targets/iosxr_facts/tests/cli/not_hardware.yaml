@@ -4,7 +4,6 @@
 
 - name: test not hardware
   iosxr_facts:
-    provider: "{{ cli }}"
     gather_subset:
       - "!hardware"
   register: result

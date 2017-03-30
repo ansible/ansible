@@ -5,6 +5,7 @@
 # to the complete work.
 #
 # Copyright (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# Copyright (c) 2017 Red Hat Inc.
 #
 # Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
@@ -25,8 +26,28 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.network_common import to_list, ComplexList
+from ansible.module_utils.connection import exec_command
 
 _DEVICE_CONFIGS = {}
+
+iosxr_argument_spec = {
+    'host': dict(),
+    'port': dict(type='int'),
+    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
+    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
+    'timeout': dict(type='int'),
+    'provider': dict(type='dict', no_log=True)
+}
+
+def check_args(module, warnings):
+    provider = module.params['provider'] or {}
+    for key in iosxr_argument_spec:
+        if key != 'provider' and module.params[key]:
+            warnings.append('argument %s has been deprecated and will be '
+                    'removed in a future version' % key)
 
 def get_config(module, flags=[]):
     cmd = 'show running-config '
@@ -36,50 +57,69 @@ def get_config(module, flags=[]):
     try:
         return _DEVICE_CONFIGS[cmd]
     except KeyError:
-        rc, out, err = module.exec_command(cmd)
+        rc, out, err = exec_command(module, cmd)
         if rc != 0:
             module.fail_json(msg='unable to retrieve current config', stderr=err)
         cfg = str(out).strip()
         _DEVICE_CONFIGS[cmd] = cfg
         return cfg
 
-def run_commands(module, commands, check_rc=True):
-    assert isinstance(commands, list), 'commands must be a list'
-    responses = list()
 
-    for cmd in commands:
-        rc, out, err = module.exec_command(cmd)
+def to_commands(module, commands):
+    spec = {
+        'command': dict(key=True),
+        'prompt': dict(),
+        'answer': dict()
+    }
+    transform = ComplexList(spec, module)
+    return transform(commands)
+
+
+def run_commands(module, commands, check_rc=True):
+    responses = list()
+    commands = to_commands(module, to_list(commands))
+    for cmd in to_list(commands):
+        rc, out, err = exec_command(module, cmd)
         if check_rc and rc != 0:
             module.fail_json(msg=err, rc=rc)
         responses.append(out)
     return responses
 
-def load_config(module, commands, commit=False, replace=False):
-    assert isinstance(commands, list), 'commands must be a list'
+def load_config(module, commands, warnings, commit=False, replace=False, comment=None):
 
-    rc, out, err = module.exec_command('configure terminal')
+    rc, out, err = exec_command(module, 'configure terminal')
     if rc != 0:
         module.fail_json(msg='unable to enter configuration mode', err=err)
 
     failed = False
-    for command in commands:
+    for command in to_list(commands):
         if command == 'end':
-            pass
+            continue
 
-        rc, out, err = module.exec_command(command)
+        rc, out, err = exec_command(module, command)
         if rc != 0:
             failed = True
             break
 
     if failed:
-        module.exec_command('abort')
+        exec_command(module, 'abort')
         module.fail_json(msg=err, commands=commands, rc=rc)
 
-    rc, diff, err = module.exec_command('show commit changes diff')
+    rc, diff, err = exec_command(module, 'show commit changes diff')
+    if rc != 0:
+        # If we failed, maybe we are in an old version so
+        # we run show configuration instead
+        rc, diff, err = exec_command(module, 'show configuration')
+        if module._diff:
+            warnings.append('device platform does not support config diff')
+
     if commit:
         cmd = 'commit'
+        if comment:
+            cmd += ' comment {0}'.format(comment)
     else:
         cmd = 'abort'
-    module.exec_command(cmd)
+        diff = None
+    exec_command(module, cmd)
 
-    return {'diff': diff}
+    return diff

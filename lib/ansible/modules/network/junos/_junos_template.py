@@ -16,9 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['deprecated'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
+
 
 
 DOCUMENTATION = """
@@ -99,18 +100,22 @@ EXAMPLES = """
     comment: update system config
 
 - name: replace config hierarchy
+  junos_template:
     src: config.j2
     action: replace
 
 - name: overwrite the config
+  junos_template:
     src: config.j2
     action: overwrite
 """
-import ansible.module_utils.junos
 
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.network import NetworkModule, NetworkError
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.junos import check_args, junos_argument_spec
+from ansible.module_utils.junos import get_configuration, load_config
+from ansible.module_utils.six import text_type
 
+USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_template'
 
 def main():
@@ -120,27 +125,24 @@ def main():
         confirm=dict(default=0, type='int'),
         comment=dict(default=DEFAULT_COMMENT),
         action=dict(default='merge', choices=['merge', 'overwrite', 'replace']),
-        config_format=dict(choices=['text', 'set', 'xml']),
+        config_format=dict(choices=['text', 'set', 'xml'], default='text'),
         backup=dict(default=False, type='bool'),
-        transport=dict(default='netconf', choices=['netconf'])
     )
 
-    module = NetworkModule(argument_spec=argument_spec,
+    argument_spec.update(junos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
+
+    result = {'changed': False, 'warnings': warnings}
 
     comment = module.params['comment']
     confirm = module.params['confirm']
     commit = not module.check_mode
-
-    replace = False
-    overwrite = False
-
     action = module.params['action']
-    if action == 'overwrite':
-        overwrite = True
-    elif action == 'replace':
-        replace = True
-
     src = module.params['src']
     fmt = module.params['config_format']
 
@@ -148,21 +150,20 @@ def main():
         module.fail_json(msg="overwrite cannot be used when format is "
             "set per junos-pyez documentation")
 
-    results = dict(changed=False)
-    results['_backup'] = unicode(module.config.get_config()).strip()
+    if module.params['backup']:
+        reply = get_configuration(module, format='set')
+        match = reply.find('.//configuration-set')
+        if match is None:
+            module.fail_json(msg='unable to retrieve device configuration')
+        result['__backup__'] = str(match.text).strip()
 
-    try:
-        diff = module.config.load_config(src, commit=commit, replace=replace,
-                confirm=confirm, comment=comment, config_format=fmt)
+    diff = load_config(module, src, action=action, commit=commit, format=fmt)
+    if diff:
+        result['changed'] = True
+        if module._diff:
+            result['diff'] = {'prepared': diff}
 
-        if diff:
-            results['changed'] = True
-            results['diff'] = dict(prepared=diff)
-    except NetworkError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc), **exc.kwargs)
-
-    module.exit_json(**results)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':

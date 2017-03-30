@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = """
 ---
@@ -57,16 +58,24 @@ options:
     required: false
   security_groups:
     description:
-      - A list of security groups to apply to the instances. For VPC instances, specify security group IDs. For EC2-Classic, specify either security group names or IDs.
+      - A list of security groups to apply to the instances. For VPC instances, specify security group IDs. For EC2-Classic, specify either security
+        group names or IDs.
     required: false
   volumes:
     description:
-      - a list of volume dicts, each containing device name and optionally ephemeral id or snapshot id. Size and type (and number of iops for io device type) must be specified for a new volume or a root volume, and may be passed for a snapshot volume. For any volume, a volume size less than 1 will be interpreted as a request not to create the volume.
+      - a list of volume dicts, each containing device name and optionally ephemeral id or snapshot id.
+        Size and type (and number of iops for io device type) must be specified for a new volume or a root volume, and may be passed for a snapshot volume.
+        For any volume, a volume size less than 1 will be interpreted as a request not to create the volume.
     required: false
   user_data:
     description:
-      - opaque blob of data which is made available to the ec2 instance
+      - opaque blob of data which is made available to the ec2 instance. Mutually exclusive with I(user_data_path).
     required: false
+  user_data_path:
+    description:
+      - Path to the file that contains userdata for the ec2 instances. Mutually exclusive with I(user_data).
+    required: false
+    version_added: "2.3"
   kernel_id:
     description:
       - Kernel id for the EC2 instance
@@ -81,7 +90,8 @@ options:
     default: false
   assign_public_ip:
     description:
-      - Used for Auto Scaling groups that launch instances into an Amazon Virtual Private Cloud. Specifies whether to assign a public IP address to each instance launched in a Amazon VPC.
+      - Used for Auto Scaling groups that launch instances into an Amazon Virtual Private Cloud. Specifies whether to assign a public IP
+        address to each instance launched in a Amazon VPC.
     required: false
     version_added: "1.8"
   ramdisk_id:
@@ -113,7 +123,7 @@ options:
 extends_documentation_fragment:
     - aws
     - ec2
-requires: 
+requirements:
     - "boto >= 2.39.0"
 """
 
@@ -134,6 +144,7 @@ EXAMPLES = '''
       ephemeral: ephemeral0
 
 '''
+import traceback
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
@@ -175,6 +186,7 @@ def create_launch_config(connection, module):
     key_name = module.params.get('key_name')
     security_groups = module.params['security_groups']
     user_data = module.params.get('user_data')
+    user_data_path = module.params.get('user_data_path')
     volumes = module.params['volumes']
     instance_type = module.params.get('instance_type')
     spot_price = module.params.get('spot_price')
@@ -187,6 +199,13 @@ def create_launch_config(connection, module):
     classic_link_vpc_id = module.params.get('classic_link_vpc_id')
     classic_link_vpc_security_groups = module.params.get('classic_link_vpc_security_groups')
     bdm = BlockDeviceMapping()
+
+    if user_data_path:
+        try:
+            with open(user_data_path, 'r') as user_data_file:
+                user_data = user_data_file.read()
+        except IOError as e:
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
 
     if volumes:
         for volume in volumes:
@@ -229,7 +248,7 @@ def create_launch_config(connection, module):
     result = dict(
                  ((a[0], a[1]) for a in vars(launch_configs[0]).items()
                   if a[0] not in ('connection', 'created_time', 'instance_monitoring', 'block_device_mappings'))
-                 )
+        )
     result['created_time'] = str(launch_configs[0].created_time)
     # Looking at boto's launchconfig.py, it looks like this could be a boolean
     # value or an object with an enabled attribute.  The enabled attribute
@@ -250,6 +269,8 @@ def create_launch_config(connection, module):
             if bdm.ebs is not None:
                 result['block_device_mappings'][-1]['ebs'] = dict(snapshot_id=bdm.ebs.snapshot_id, volume_size=bdm.ebs.volume_size)
 
+    if user_data_path:
+        result['user_data'] = "hidden" # Otherwise, we dump binary to the user's terminal
 
     module.exit_json(changed=changed, name=result['name'], created_time=result['created_time'],
                      image_id=result['image_id'], arn=result['launch_configuration_arn'],
@@ -277,6 +298,7 @@ def main():
             key_name=dict(type='str'),
             security_groups=dict(type='list'),
             user_data=dict(type='str'),
+            user_data_path=dict(type='path'),
             kernel_id=dict(type='str'),
             volumes=dict(type='list'),
             instance_type=dict(type='str'),
@@ -293,7 +315,10 @@ def main():
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        mutually_exclusive = [['user_data', 'user_data_path']]
+    )
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')

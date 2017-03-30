@@ -8,9 +8,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -31,7 +32,8 @@ options:
     description:
         - This module allows you to specify the name of the file directly w/o any other options.
 notes:
-    - This is really not a module, though it appears as such, this is a feature of the Ansible Engine, as such it cannot be overridden the same way a module can.
+    - This is really not a module, though it appears as such, this is a feature of the Ansible Engine, as such it cannot be overridden the same way a
+      module can.
 '''
 
 EXAMPLES = """

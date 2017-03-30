@@ -15,9 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -103,10 +104,12 @@ sudocmdgroup:
   type: dict
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.ipa import IPAClient
 
-class SudoCmdGroupIPAClient(IPAClient):
 
+class SudoCmdGroupIPAClient(IPAClient):
     def __init__(self, module, host, port, protocol):
         super(SudoCmdGroupIPAClient, self).__init__(module, host, port, protocol)
 
@@ -142,35 +145,8 @@ def get_sudocmdgroup_dict(description=None):
     return data
 
 
-def modify_if_diff(module, name, ipa_list, module_list, add_method, remove_method):
-    changed = False
-    diff = list(set(ipa_list) - set(module_list))
-    if len(diff) > 0:
-        changed = True
-        if not module.check_mode:
-            remove_method(name=name, item=diff)
-
-    diff = list(set(module_list) - set(ipa_list))
-    if len(diff) > 0:
-        changed = True
-        if not module.check_mode:
-            add_method(name=name, item=diff)
-    return changed
-
-
-def get_sudocmdgroup_diff(ipa_sudocmdgroup, module_sudocmdgroup):
-    data = []
-    for key in module_sudocmdgroup.keys():
-        module_value = module_sudocmdgroup.get(key, None)
-        ipa_value = ipa_sudocmdgroup.get(key, None)
-        if isinstance(ipa_value, list) and not isinstance(module_value, list):
-            module_value = [module_value]
-        if isinstance(ipa_value, list) and isinstance(module_value, list):
-            ipa_value = sorted(ipa_value)
-            module_value = sorted(module_value)
-        if ipa_value != module_value:
-            data.append(key)
-    return data
+def get_sudocmdgroup_diff(client, ipa_sudocmdgroup, module_sudocmdgroup):
+    return client.get_diff(ipa_data=ipa_sudocmdgroup, module_data=module_sudocmdgroup)
 
 
 def ensure(module, client):
@@ -188,7 +164,7 @@ def ensure(module, client):
             if not module.check_mode:
                 ipa_sudocmdgroup = client.sudocmdgroup_add(name=name, item=module_sudocmdgroup)
         else:
-            diff = get_sudocmdgroup_diff(ipa_sudocmdgroup, module_sudocmdgroup)
+            diff = get_sudocmdgroup_diff(client, ipa_sudocmdgroup, module_sudocmdgroup)
             if len(diff) > 0:
                 changed = True
                 if not module.check_mode:
@@ -198,9 +174,9 @@ def ensure(module, client):
                     client.sudocmdgroup_mod(name=name, item=data)
 
         if sudocmd is not None:
-            changed = modify_if_diff(module, name, ipa_sudocmdgroup.get('member_sudocmd', []), sudocmd,
-                                     client.sudocmdgroup_add_member_sudocmd,
-                                     client.sudocmdgroup_remove_member_sudocmd)
+            changed = client.modify_if_diff(name, ipa_sudocmdgroup.get('member_sudocmd', []), sudocmd,
+                                            client.sudocmdgroup_add_member_sudocmd,
+                                            client.sudocmdgroup_remove_member_sudocmd)
     else:
         if ipa_sudocmdgroup:
             changed = True
@@ -241,9 +217,6 @@ def main():
         e = get_exception()
         module.fail_json(msg=str(e))
 
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()

@@ -6,12 +6,10 @@
     commands:
       - no interface Loopback999
     match: none
-    provider: "{{ cli }}"
 
 - name: configure device with config
   iosxr_template:
     src: basic/config.j2
-    provider: "{{ cli }}"
     force: yes
   register: result
 
@@ -23,7 +21,6 @@
 - name: check device with config
   iosxr_template:
     src: basic/config.j2
-    provider: "{{ cli }}"
     force: yes
   register: result
 
@@ -37,6 +34,5 @@
     commands:
       - no interface Loopback999
     match: none
-    provider: "{{ cli }}"
 
 - debug: msg="END cli/force.yaml"

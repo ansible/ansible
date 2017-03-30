@@ -19,17 +19,18 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
 
-DOCUMENTATION = '''
+
+DOCUMENTATION = r'''
 ---
 module: win_shell
 short_description: Execute shell commands on target hosts.
 version_added: 2.2
 description:
-     - The M(win_shell) module takes the command name followed by a list of space-delimited arguments.
+     - The C(win_shell) module takes the command name followed by a list of space-delimited arguments.
        It is similar to the M(win_command) module, but runs
        the command via a shell (defaults to PowerShell) on the target host.
 options:
@@ -49,33 +50,34 @@ options:
       - set the specified path as the current working directory before executing a command
   executable:
     description:
-      - change the shell used to execute the command (eg, C(cmd)). The target shell must accept a C(/c) parameter followed by the raw command line to be executed.
+      - change the shell used to execute the command (eg, C(cmd)). The target shell must accept a C(/c) parameter followed by the raw command line to be
+        executed.
 notes:
    -  If you want to run an executable securely and predictably, it may be
       better to use the M(win_command) module instead. Best practices when writing
-      playbooks will follow the trend of using M(win_command) unless M(win_shell) is
+      playbooks will follow the trend of using M(win_command) unless C(win_shell) is
       explicitly required. When running ad-hoc commands, use your best judgement.
-   -  WinRM will not return from a command execution until all child processes created have exited. Thus, it is not possible to use win_shell to spawn long-running child or background processes.
-      Consider creating a Windows service for managing background processes.
-author: 
+   -  WinRM will not return from a command execution until all child processes created have exited. Thus, it is not possible to use win_shell to spawn
+      long-running child or background processes. Consider creating a Windows service for managing background processes.
+author:
     - Matt Davis
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Execute a command in the remote shell; stdout goes to the specified
 # file on the remote.
-- win_shell: C:\\somescript.ps1 >> c:\\somelog.txt
+- win_shell: C:\somescript.ps1 >> c:\somelog.txt
 
 # Change the working directory to somedir/ before executing the command.
-- win_shell: C:\\somescript.ps1 >> c:\\somelog.txt chdir=c:\\somedir
+- win_shell: C:\somescript.ps1 >> c:\somelog.txt chdir=c:\somedir
 
 # You can also use the 'args' form to provide the options. This command
 # will change the working directory to somedir/ and will only run when
 # somedir/somelog.txt doesn't exist.
-- win_shell: C:\\somescript.ps1 >> c:\\somelog.txt
+- win_shell: C:\somescript.ps1 >> c:\somelog.txt
   args:
-    chdir: c:\\somedir
-    creates: c:\\somelog.txt
+    chdir: c:\somedir
+    creates: c:\somelog.txt
 
 # Run a command under a non-Powershell interpreter (cmd in this case)
 - win_shell: echo %HOMEDIR%
@@ -84,7 +86,7 @@ EXAMPLES = '''
   register: homedir_out
 '''
 
-RETURN = '''
+RETURN = r'''
 msg:
     description: changed
     returned: always

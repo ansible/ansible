@@ -21,9 +21,10 @@
 # - move create/update code out of main
 # - unit tests
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -32,7 +33,8 @@ short_description: Create or delete an AWS CloudFormation stack
 description:
      - Launches or updates an AWS CloudFormation stack and waits for it complete.
 notes:
-     - As of version 2.3, migrated to boto3 to enable new features. To match existing behavior, YAML parsing is done in the module, not given to AWS as YAML. This will change (in fact, it may change before 2.3 is out).
+     - As of version 2.3, migrated to boto3 to enable new features. To match existing behavior, YAML parsing is done in the module, not given to AWS as YAML.
+       This will change (in fact, it may change before 2.3 is out).
 version_added: "1.1"
 options:
   stack_name:
@@ -58,8 +60,10 @@ options:
   template:
     description:
       - The local path of the cloudformation template.
-      - This must be the full path to the file, relative to the working directory. If using roles this may look like "roles/cloudformation/files/cloudformation-example.json".
-      - If 'state' is 'present' and the stack does not exist yet, either 'template' or 'template_url' must be specified (but not both). If 'state' is present, the stack does exist, and neither 'template' nor 'template_url' are specified, the previous template will be reused.
+      - This must be the full path to the file, relative to the working directory. If using roles this may look
+        like "roles/cloudformation/files/cloudformation-example.json".
+      - If 'state' is 'present' and the stack does not exist yet, either 'template' or 'template_url' must be specified (but not both). If 'state' is
+        present, the stack does exist, and neither 'template' nor 'template_url' are specified, the previous template will be reused.
     required: false
     default: null
   notification_arns:
@@ -70,7 +74,8 @@ options:
     version_added: "2.0"
   stack_policy:
     description:
-      - the path of the cloudformation stack policy. A policy cannot be removed once placed, but it can be modified. (for instance, [allow all updates](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/protect-stack-resources.html#d0e9051)
+      - the path of the cloudformation stack policy. A policy cannot be removed once placed, but it can be modified.
+        (for instance, [allow all updates](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/protect-stack-resources.html#d0e9051)
     required: false
     default: null
     version_added: "1.9"
@@ -82,20 +87,24 @@ options:
     version_added: "1.4"
   template_url:
     description:
-      - Location of file containing the template body. The URL must point to a template (max size 307,200 bytes) located in an S3 bucket in the same region as the stack.
-      - If 'state' is 'present' and the stack does not exist yet, either 'template' or 'template_url' must be specified (but not both). If 'state' is present, the stack does exist, and neither 'template' nor 'template_url' are specified, the previous template will be reused.
+      - Location of file containing the template body. The URL must point to a template (max size 307,200 bytes) located in an S3 bucket in the same region
+        as the stack.
+      - If 'state' is 'present' and the stack does not exist yet, either 'template' or 'template_url' must be specified (but not both). If 'state' is
+        present, the stack does exist, and neither 'template' nor 'template_url' are specified, the previous template will be reused.
     required: false
     version_added: "2.0"
   template_format:
     description:
-    - (deprecated) For local templates, allows specification of json or yaml format. Templates are now passed raw to CloudFormation regardless of format. This parameter is ignored since Ansible 2.3.
+    - (deprecated) For local templates, allows specification of json or yaml format. Templates are now passed raw to CloudFormation regardless of format.
+      This parameter is ignored since Ansible 2.3.
     default: json
     choices: [ json, yaml ]
     required: false
     version_added: "2.0"
   role_arn:
     description:
-    - The role that AWS CloudFormation assumes to create the stack. See the AWS CloudFormation Service Role docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-servicerole.html)
+    - The role that AWS CloudFormation assumes to create the stack. See the AWS CloudFormation Service Role
+      docs U(http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-servicerole.html)
     required: false
     default: null
     version_added: "2.3"
@@ -104,7 +113,7 @@ author: "James S. Martin (@jsmartin)"
 extends_documentation_fragment:
 - aws
 - ec2
-requires: [ botocore>=1.4.57 ]
+requirements: [ botocore>=1.4.57 ]
 '''
 
 EXAMPLES = '''
@@ -211,7 +220,7 @@ stack_outputs:
   description: A key:value dictionary of all the stack outputs currently defined. If there are no stack outputs, it is an empty dictionary.
   returned: always
   sample: {"MySg": "AnsibleModuleTestYAML-CFTestSg-C8UVS567B6NS"}
-'''
+'''  # NOQA
 
 import json
 import time
@@ -390,18 +399,18 @@ def get_stack_facts(cfn, stack_name):
 def main():
     argument_spec = ansible.module_utils.ec2.ec2_argument_spec()
     argument_spec.update(dict(
-            stack_name=dict(required=True),
-            template_parameters=dict(required=False, type='dict', default={}),
-            state=dict(default='present', choices=['present', 'absent']),
-            template=dict(default=None, required=False, type='path'),
-            notification_arns=dict(default=None, required=False),
-            stack_policy=dict(default=None, required=False),
-            disable_rollback=dict(default=False, type='bool'),
-            template_url=dict(default=None, required=False),
-            template_format=dict(default=None, choices=['json', 'yaml'], required=False),
-            role_arn=dict(default=None, required=False),
-            tags=dict(default=None, type='dict')
-        )
+        stack_name=dict(required=True),
+        template_parameters=dict(required=False, type='dict', default={}),
+        state=dict(default='present', choices=['present', 'absent']),
+        template=dict(default=None, required=False, type='path'),
+        notification_arns=dict(default=None, required=False),
+        stack_policy=dict(default=None, required=False),
+        disable_rollback=dict(default=False, type='bool'),
+        template_url=dict(default=None, required=False),
+        template_format=dict(default=None, choices=['json', 'yaml'], required=False),
+        role_arn=dict(default=None, required=False),
+        tags=dict(default=None, type='dict')
+    )
     )
 
     module = AnsibleModule(
@@ -413,7 +422,7 @@ def main():
 
     # collect the parameters that are passed to boto3. Keeps us from having so many scalars floating around.
     stack_params = {
-      'Capabilities': ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
+        'Capabilities': ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
     }
     state = module.params['state']
     stack_params['StackName'] = module.params['stack_name']

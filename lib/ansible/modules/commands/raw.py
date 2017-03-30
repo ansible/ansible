@@ -15,9 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -44,7 +45,7 @@ description:
        all core modules require it. Another is speaking to any devices such as
        routers that do not have any Python installed. In any other case, using
        the M(shell) or M(command) module is much more appropriate. Arguments
-       given to M(raw) are run directly through the configured remote shell.
+       given to C(raw) are run directly through the configured remote shell.
        Standard output, error output and return code are returned when
        available. There is no change handler support for this module.
      - This module does not require python on the remote system, much like
@@ -76,5 +77,5 @@ EXAMPLES = '''
     executable: /bin/bash
 
 - name: safely use templated variables. Always use quote filter to avoid injection issues.
-  raw: {{package_mgr|quote}} {{pkg_flags|quote}} install {{python_simplejson|quote}}
+  raw: "{{package_mgr|quote}} {{pkg_flags|quote}} install {{python_simplejson|quote}}"
 '''

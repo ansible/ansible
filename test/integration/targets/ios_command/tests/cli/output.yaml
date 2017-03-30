@@ -3,8 +3,8 @@
 
 - name: get output for single command
   ios_command:
-    commands: ['show version']
-    provider: "{{ cli }}"
+    commands:
+      - show version
   register: result
 
 - assert:
@@ -17,7 +17,6 @@
     commands:
       - show version
       - show interfaces
-    provider: "{{ cli }}"
   register: result
 
 - assert:

@@ -21,9 +21,10 @@ You should have received a copy of the GNU General Public License
 along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -179,7 +180,7 @@ def main():
             nsc_host = dict(required=True),
             nsc_protocol = dict(default='https'),
             user = dict(required=True),
-            password = dict(required=True),
+            password = dict(required=True, no_log=True),
             action = dict(default='enable', choices=['enable','disable']),
             name = dict(default=socket.gethostname()),
             type = dict(default='server', choices=['service', 'server']),

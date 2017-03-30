@@ -17,6 +17,8 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
+import os
+
 # for testing
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import Mock, patch
@@ -405,48 +407,9 @@ MTAB_ENTRIES = \
 
 BIND_MOUNTS = ['/not/a/real/bind_mount']
 
-FINDMNT_OUTPUT = u"""
-/sys                            sysfs                                sysfs           rw,nosuid,nodev,noexec,relatime,seclabel
-/proc                           proc                                 proc            rw,nosuid,nodev,noexec,relatime
-/dev                            devtmpfs                             devtmpfs        rw,nosuid,seclabel,size=8044400k,nr_inodes=2011100,mode=755
-/sys/kernel/security            securityfs                           securityfs      rw,nosuid,nodev,noexec,relatime
-/dev/shm                        tmpfs                                tmpfs           rw,nosuid,nodev,seclabel
-/dev/pts                        devpts                               devpts          rw,nosuid,noexec,relatime,seclabel,gid=5,mode=620,ptmxmode=000
-/run                            tmpfs                                tmpfs           rw,nosuid,nodev,seclabel,mode=755
-/sys/fs/cgroup                  tmpfs                                tmpfs           ro,nosuid,nodev,noexec,seclabel,mode=755
-/sys/fs/cgroup/systemd          cgroup                               cgroup          rw,nosuid,nodev,noexec,relatime,xattr,release_agent=/usr/lib/systemd/systemd-cgroups-agent,name=systemd
-/sys/fs/pstore                  pstore                               pstore          rw,nosuid,nodev,noexec,relatime,seclabel
-/sys/fs/cgroup/devices          cgroup                               cgroup          rw,nosuid,nodev,noexec,relatime,devices
-/sys/fs/cgroup/freezer          cgroup                               cgroup          rw,nosuid,nodev,noexec,relatime,freezer
-/sys/fs/cgroup/memory           cgroup                               cgroup          rw,nosuid,nodev,noexec,relatime,memory
-/sys/fs/cgroup/pids             cgroup                               cgroup          rw,nosuid,nodev,noexec,relatime,pids
-/sys/fs/cgroup/blkio            cgroup                               cgroup          rw,nosuid,nodev,noexec,relatime,blkio
-/sys/fs/cgroup/cpuset           cgroup                               cgroup          rw,nosuid,nodev,noexec,relatime,cpuset
-/sys/fs/cgroup/cpu,cpuacct      cgroup                               cgroup          rw,nosuid,nodev,noexec,relatime,cpu,cpuacct
-/sys/fs/cgroup/hugetlb          cgroup                               cgroup          rw,nosuid,nodev,noexec,relatime,hugetlb
-/sys/fs/cgroup/perf_event       cgroup                               cgroup          rw,nosuid,nodev,noexec,relatime,perf_event
-/sys/fs/cgroup/net_cls,net_prio cgroup                               cgroup          rw,nosuid,nodev,noexec,relatime,net_cls,net_prio
-/sys/kernel/config              configfs                             configfs        rw,relatime
-/                               /dev/mapper/fedora_dhcp129--186-root ext4            rw,relatime,seclabel,data=ordered
-/sys/fs/selinux                 selinuxfs                            selinuxfs       rw,relatime
-/proc/sys/fs/binfmt_misc        systemd-1                            autofs          rw,relatime,fd=24,pgrp=1,timeout=0,minproto=5,maxproto=5,direct
-/sys/kernel/debug               debugfs                              debugfs         rw,relatime,seclabel
-/dev/hugepages                  hugetlbfs                            hugetlbfs       rw,relatime,seclabel
-/tmp                            tmpfs                                tmpfs           rw,seclabel
-/dev/mqueue                     mqueue                               mqueue          rw,relatime,seclabel
-/var/lib/machines               /dev/loop0                           btrfs           rw,relatime,seclabel,space_cache,subvolid=5,subvol=/
-/boot                           /dev/sda1                            ext4            rw,relatime,seclabel,data=ordered
-/home                           /dev/mapper/fedora_dhcp129--186-home ext4            rw,relatime,seclabel,data=ordered
-/run/user/1000                  tmpfs                                tmpfs           rw,nosuid,nodev,relatime,seclabel,size=1611044k,mode=700,uid=1000,gid=1000
-/run/user/1000/gvfs             gvfsd-fuse                           fuse.gvfsd-fuse rw,nosuid,nodev,relatime,user_id=1000,group_id=1000
-/sys/fs/fuse/connections        fusectl                              fusectl         rw,relatime
-/not/a/real/bind_mount          /dev/sdz4[/some/other/path]     ext4    rw,relatime,seclabel,data=ordered
-/home/adrian/sshfs-grimlock                grimlock.g.a:                         fuse.sshfs     rw,nosuid,nodev,relatime,user_id=1000,group_id=1000
-/home/adrian/sshfs-grimlock-single-quote   grimlock.g.a:test_path/path_with'single_quotes
-                                                                                 fuse.sshfs     rw,nosuid,nodev,relatime,user_id=1000,group_id=1000
-/home/adrian/sshfs-grimlock-single-quote-2 grimlock.g.a:path_with'single_quotes  fuse.sshfs     rw,nosuid,nodev,relatime,user_id=1000,group_id=1000
-/home/adrian/fotos                         grimlock.g.a:/mnt/data/foto's         fuse.sshfs     rw,nosuid,nodev,relatime,user_id=1000,group_id=1000
-"""
+with open(os.path.join(os.path.dirname(__file__), 'fixtures/findmount_output.txt')) as f:
+    FINDMNT_OUTPUT = f.read()
+
 
 class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
 
@@ -489,7 +452,7 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         self.assertIsInstance(mtab_entries[0], list)
         self.assertEqual(len(mtab_entries), 38)
 
-    @patch('ansible.module_utils.facts.LinuxHardware._run_findmnt', return_value=(0, FINDMNT_OUTPUT,''))
+    @patch('ansible.module_utils.facts.LinuxHardware._run_findmnt', return_value=(0, FINDMNT_OUTPUT, ''))
     def test_find_bind_mounts(self, mock_run_findmnt):
         module = Mock()
         lh = facts.LinuxHardware(module=module, load_on_init=False)
@@ -500,7 +463,7 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         self.assertEqual(len(bind_mounts), 1)
         self.assertIn('/not/a/real/bind_mount', bind_mounts)
 
-    @patch('ansible.module_utils.facts.LinuxHardware._run_findmnt', return_value=(37, '',''))
+    @patch('ansible.module_utils.facts.LinuxHardware._run_findmnt', return_value=(37, '', ''))
     def test_find_bind_mounts_non_zero(self, mock_run_findmnt):
         module = Mock()
         lh = facts.LinuxHardware(module=module, load_on_init=False)

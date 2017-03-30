@@ -18,28 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import binascii
-import datetime
-import math
-import re
-import select
-import socket
-import sys
-import time
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
 
-from ansible.module_utils._text import to_native
-
-HAS_PSUTIL = False
-try:
-    import psutil
-    HAS_PSUTIL = True
-    # just because we can import it on Linux doesn't mean we will use it
-except ImportError:
-    pass
-
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -94,7 +76,8 @@ options:
     description:
       - either C(present), C(started), or C(stopped), C(absent), or C(drained)
       - When checking a port C(started) will ensure the port is open, C(stopped) will check that it is closed, C(drained) will check for active connections
-      - When checking for a file or a search string C(present) or C(started) will ensure that the file or string is present before continuing, C(absent) will check that file is absent or removed
+      - When checking for a file or a search string C(present) or C(started) will ensure that the file or string is present before continuing,
+        C(absent) will check that file is absent or removed
     choices: [ "present", "started", "stopped", "absent", "drained" ]
     required: False
     default: "started"
@@ -175,6 +158,26 @@ EXAMPLES = '''
 # and don't start checking for 10 seconds
 - local_action: wait_for port=22 host="{{ ansible_ssh_host | default(inventory_hostname) }}" search_regex=OpenSSH delay=10
 '''
+
+import binascii
+import datetime
+import math
+import re
+import select
+import socket
+import sys
+import time
+
+from ansible.module_utils._text import to_native
+
+HAS_PSUTIL = False
+try:
+    import psutil
+    HAS_PSUTIL = True
+    # just because we can import it on Linux doesn't mean we will use it
+except ImportError:
+    pass
+
 
 class TCPConnectionInfo(object):
     """
@@ -292,7 +295,8 @@ class LinuxTCPConnectionInfo(TCPConnectionInfo):
                 tcp_connection = tcp_connection.strip().split()
                 if tcp_connection[self.local_address_field] == 'local_address':
                     continue
-                if tcp_connection[self.connection_state_field] not in [ get_connection_state_id(_connection_state) for _connection_state in self.module.params['active_connection_states'] ]:
+                if (tcp_connection[self.connection_state_field] not in
+                        [get_connection_state_id(_connection_state) for _connection_state in self.module.params['active_connection_states']]):
                     continue
                 (local_ip, local_port) = tcp_connection[self.local_address_field].split(':')
                 if self.port != local_port:
@@ -382,12 +386,12 @@ def _timedelta_total_seconds(timedelta):
 
 def get_connection_state_id(state):
     connection_state_id = {
-       'ESTABLISHED': '01',
-       'SYN_SENT': '02',
-       'SYN_RECV': '03',
-       'FIN_WAIT1': '04',
-       'FIN_WAIT2': '05',
-       'TIME_WAIT': '06',
+        'ESTABLISHED': '01',
+        'SYN_SENT': '02',
+        'SYN_RECV': '03',
+        'FIN_WAIT1': '04',
+        'FIN_WAIT2': '05',
+        'TIME_WAIT': '06',
     }
     return connection_state_id[state]
 
@@ -433,7 +437,7 @@ def main():
     if params['exclude_hosts'] is not None and state != 'drained':
         module.fail_json(msg="exclude_hosts should only be with state=drained")
     for _connection_state in params['active_connection_states']:
-        try: 
+        try:
             get_connection_state_id(_connection_state)
         except:
             module.fail_json(msg="unknown active_connection_state ("+_connection_state+") defined")

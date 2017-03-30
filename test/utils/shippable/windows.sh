@@ -26,7 +26,8 @@ if [ -s /tmp/windows.txt ]; then
         --windows 2008-SP2 \
         --windows 2008-R2_SP1 \
         --windows 2012-RTM \
-        --windows 2012-R2_RTM
+        --windows 2012-R2_RTM \
+
 else
     echo "No changes requiring integration tests specific to Windows were detected."
     echo "Running Windows integration tests for a single version only."

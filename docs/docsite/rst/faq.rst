@@ -112,7 +112,7 @@ While you can write ansible modules in any language, most ansible modules are wr
 are important core ones.
 
 By default Ansible assumes it can find a /usr/bin/python on your remote system that is a 2.X version of Python, specifically
-2.4 or higher.
+2.6 or higher.
 
 Setting of an inventory variable 'ansible_python_interpreter' on any host will allow Ansible to auto-replace the interpreter
 used when executing python modules.   Thus, you can point to any python you want on the system if /usr/bin/python on your
@@ -150,7 +150,7 @@ How do I disable cowsay?
 ++++++++++++++++++++++++
 
 If cowsay is installed, Ansible takes it upon itself to make your day happier when running playbooks.  If you decide
-that you would like to work in a professional cow-free environment, you can either uninstall cowsay, or set an environment variable::
+that you would like to work in a professional cow-free environment, you can either uninstall cowsay, or set an environment variable:
 
 .. code-block:: shell-session
 
@@ -299,7 +299,7 @@ Once the library is ready, SHA512 password values can then be generated as follo
 
 .. code-block:: shell-session
 
-    python -c "from passlib.hash import sha512_crypt; import getpass; print sha512_crypt.encrypt(getpass.getpass())"
+    python -c "from passlib.hash import sha512_crypt; import getpass; print sha512_crypt.using(rounds=5000).hash(getpass.getpass())"
 
 Use the integrated :ref:`hash_filters` to generate a hashed version of a password.
 You shouldn't put plaintext passwords in your playbook or host_vars; instead, use :doc:`playbooks_vault` to encrypt sensitive data.
@@ -309,9 +309,9 @@ You shouldn't put plaintext passwords in your playbook or host_vars; instead, us
 Can I get training on Ansible?
 ++++++++++++++++++++++++++++++
 
-Yes!  See our `services page <http://www.ansible.com/consulting>`_ for information on our services and training offerings. Email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
+Yes!  See our `services page <https://www.ansible.com/consulting>`_ for information on our services and training offerings. Email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
 
-We also offer free web-based training classes on a regular basis. See our `webinar page <http://www.ansible.com/webinars-training>`_ for more info on upcoming webinars.
+We also offer free web-based training classes on a regular basis. See our `webinar page <https://www.ansible.com/webinars-training>`_ for more info on upcoming webinars.
 
 .. _web_interface:
 

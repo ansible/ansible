@@ -115,7 +115,7 @@ import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
 from ansible.module_utils.basic import get_distribution, get_exception
 from ansible.module_utils.six import b
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 
 try:
     # python3
@@ -579,21 +579,21 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         ca_certs = []
         paths_checked = []
 
-        system = platform.system()
+        system = to_text(platform.system(), errors='surrogate_or_strict')
         # build a list of paths to check for .crt/.pem files
         # based on the platform type
         paths_checked.append('/etc/ssl/certs')
-        if system == 'Linux':
+        if system == u'Linux':
             paths_checked.append('/etc/pki/ca-trust/extracted/pem')
             paths_checked.append('/etc/pki/tls/certs')
             paths_checked.append('/usr/share/ca-certificates/cacert.org')
-        elif system == 'FreeBSD':
+        elif system == u'FreeBSD':
             paths_checked.append('/usr/local/share/certs')
-        elif system == 'OpenBSD':
+        elif system == u'OpenBSD':
             paths_checked.append('/etc/ssl')
-        elif system == 'NetBSD':
+        elif system == u'NetBSD':
             ca_certs.append('/etc/openssl/certs')
-        elif system == 'SunOS':
+        elif system == u'SunOS':
             paths_checked.append('/opt/local/etc/openssl/certs')
 
         # fall back to a user-deployed cert in a standard
@@ -605,7 +605,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         to_add = False
 
         # Write the dummy ca cert if we are running on Mac OS X
-        if system == 'Darwin':
+        if system == u'Darwin':
             os.write(tmp_fd, b_DUMMY_CA_CERT)
             # Default Homebrew path for OpenSSL certs
             paths_checked.append('/usr/local/etc/openssl')
@@ -932,7 +932,7 @@ def url_argument_spec():
         use_proxy=dict(default='yes', type='bool'),
         validate_certs=dict(default='yes', type='bool'),
         url_username=dict(required=False),
-        url_password=dict(required=False),
+        url_password=dict(required=False, no_log=True),
         force_basic_auth=dict(required=False, type='bool', default='no'),
 
     )
@@ -1009,8 +1009,16 @@ def fetch_url(module, url, data=None, headers=None, method=None,
             body = e.read()
         except AttributeError:
             body = ''
-        info.update(dict(msg=str(e), body=body, **e.info()))
-        info['status'] = e.code
+
+        # Try to add exception info to the output but don't fail if we can't
+        exc_info = e.info()
+        try:
+            info.update(dict(**e.info()))
+        except:
+            pass
+
+        info.update({'msg': str(e), 'body': body, 'status': e.code})
+
     except urllib_error.URLError:
         e = get_exception()
         code = int(getattr(e, 'code', -1))

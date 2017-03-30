@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -51,7 +52,8 @@ options:
         description:
             - Assert the state of the virtual machine.
             - State 'present' will check that the machine exists with the requested configuration. If the configuration
-              of the existing machine does not match, the machine will be updated. Use options started, allocated and restarted to change the machine's power state.
+              of the existing machine does not match, the machine will be updated. Use options started, allocated and restarted to change the machine's power
+              state.
             - State 'absent' will remove the virtual machine.
         default: present
         required: false
@@ -436,7 +438,7 @@ azure_vm:
         },
         "type": "Microsoft.Compute/virtualMachines"
     }
-'''
+'''  # NOQA
 
 import random
 
@@ -487,7 +489,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             short_hostname=dict(type='str'),
             vm_size=dict(type='str', choices=[], default='Standard_D1'),
             admin_username=dict(type='str'),
-            admin_password=dict(type='str', ),
+            admin_password=dict(type='str', no_log=True),
             ssh_password_enabled=dict(type='bool', default=True),
             ssh_public_keys=dict(type='list'),
             image=dict(type='dict'),
@@ -605,7 +607,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     self.log("Using image version {0}".format(self.image['version']))
 
             if not self.storage_blob_name:
-                    self.storage_blob_name = self.name + '.vhd'
+                self.storage_blob_name = self.name + '.vhd'
 
             if self.storage_account_name:
                 self.get_storage_account(self.storage_account_name)
@@ -846,13 +848,13 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     self.create_or_update_vm(vm_resource)
 
                 # Make sure we leave the machine in requested power state
-                if powerstate_change == 'poweron' and \
-                    self.results['ansible_facts']['azure_vm']['powerstate'] != 'running':
+                if (powerstate_change == 'poweron' and
+                        self.results['ansible_facts']['azure_vm']['powerstate'] != 'running'):
                     # Attempt to power on the machine
                     self.power_on_vm()
 
-                elif powerstate_change == 'poweroff' and \
-                    self.results['ansible_facts']['azure_vm']['powerstate'] == 'running':
+                elif (powerstate_change == 'poweroff' and
+                        self.results['ansible_facts']['azure_vm']['powerstate'] == 'running'):
                     # Attempt to power off the machine
                     self.power_off_vm()
 
@@ -918,7 +920,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     interface_dict['properties'] = nic_dict['properties']
 
         # Expand public IPs to include config properties
-        for interface in  result['properties']['networkProfile']['networkInterfaces']:
+        for interface in result['properties']['networkProfile']['networkInterfaces']:
             for config in interface['properties']['ipConfigurations']:
                 if config['properties'].get('publicIPAddress'):
                     pipid_dict = azure_id_to_dict(config['properties']['publicIPAddress']['id'])

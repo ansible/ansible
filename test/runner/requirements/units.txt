@@ -1,3 +1,4 @@
+boto
 boto3
 jinja2
 mock
@@ -5,6 +6,8 @@ nose
 passlib
 pycrypto
 pytest
+pytest-mock
+pytest-xdist
 python-memcached
 pyyaml
 redis

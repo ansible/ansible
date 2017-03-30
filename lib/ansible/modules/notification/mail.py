@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -285,7 +286,7 @@ def main():
                     e = get_exception()
                     module.fail_json(rc=1, msg='Unable to start an encrypted session to %s:%s: %s' % (host, port, e))
             else:
-                    module.fail_json(rc=1, msg='Unable to Connect to %s:%s: %s' % (host, port, e))
+                module.fail_json(rc=1, msg='Unable to Connect to %s:%s: %s' % (host, port, e))
 
 
     if (secure == 'always'):

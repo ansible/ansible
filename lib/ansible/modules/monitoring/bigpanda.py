@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -33,7 +34,7 @@ options:
     description:
       - "The name of the component being deployed. Ex: billing"
     required: true
-    alias: name
+    aliases: ['name']
   version:
     description:
       - The deployment version.
@@ -52,7 +53,7 @@ options:
       - Name of affected host name. Can be a list.
     required: false
     default: machine's hostname
-    alias: host
+    aliases: ['host']
   env:
     description:
       - The environment name, typically 'production', 'staging', etc.
@@ -88,7 +89,7 @@ EXAMPLES = '''
     version: '1.3'
     token: '{{ bigpanda_token }}'
     state: started
-...
+
 - bigpanda:
     component: myapp
     version: '1.3'
@@ -104,7 +105,7 @@ EXAMPLES = '''
     state: started
   delegate_to: localhost
   register: deployment
-...
+
 - bigpanda:
     component: '{{ deployment.component }}'
     version: '{{ deployment.version }}'

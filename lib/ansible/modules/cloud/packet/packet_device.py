@@ -18,6 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+
 DOCUMENTATION = '''
 ---
 module: packet_device
@@ -25,7 +30,8 @@ module: packet_device
 short_description: create, destroy, start, stop, and reboot a Packet Host machine.
 
 description:
-    - create, destroy, update, start, stop, and reboot a Packet Host machine. When the machine is created it can optionally wait for it to have an IP address before returning. This module has a dependency on packet >= 1.0.
+    - create, destroy, update, start, stop, and reboot a Packet Host machine. When the machine is created it can optionally wait for it to have an
+      IP address before returning. This module has a dependency on packet >= 1.0.
     - API is documented at U(https://www.packet.net/help/api/#page:devices,header:devices-devices-post).
 
 version_added: 2.3
@@ -43,7 +49,7 @@ options:
 
   count_offset:
     description:
-      - From which number to start the count. 
+      - From which number to start the count.
 
   device_ids:
     description:
@@ -59,9 +65,9 @@ options:
 
   hostnames:
     description:
-      - A hostname of a device, or a list of hostnames. 
+      - A hostname of a device, or a list of hostnames.
       - If given string or one-item list, you can use the C("%d") Python string format to expand numbers from count.
-      - If only one hostname, it might be expanded to list if count>1. 
+      - If only one hostname, it might be expanded to list if count>1.
     aliases: [name]
 
   lock:
@@ -127,7 +133,7 @@ EXAMPLES = '''
       plan: baremetal_0
       facility: sjc1
 
-- name: create 3 ubuntu devices called server-01, server-02 and server-03  
+- name: create 3 ubuntu devices called server-01, server-02 and server-03
   hosts: localhost
   tasks:
   - packet_device:
@@ -152,7 +158,7 @@ EXAMPLES = '''
       user_data: |
         #cloud-config
         ssh_authorized_keys:
-          - ssh-dss AAAAB3NzaC1kc3MAAACBAIfNT5S0ncP4BBJBYNhNPxFF9lqVhfPeu6SM1LoCocxqDc1AT3zFRi8hjIf6TLZ2AA4FYbcAWxLMhiBxZRVldT9GdBXile78kAK5z3bKTwq152DCqpxwwbaTIggLFhsU8wrfBsPWnDuAxZ0h7mmrCjoLIE3CNLDA/NmV3iB8xMThAAAAFQCStcesSgR1adPORzBxTr7hug92LwAAAIBOProm3Gk+HWedLyE8IfofLaOeRnbBRHAOL4z0SexKkVOnQ/LGN/uDIIPGGBDYTvXgKZT+jbHeulRJ2jKgfSpGKN4JxFQ8uzVH492jEiiUJtT72Ss1dCV4PmyERVIw+f54itihV3z/t25dWgowhb0int8iC/OY3cGodlmYb3wdcQAAAIBuLbB45djZXzUkOTzzcRDIRfhaxo5WipbtEM2B1fuBt2gyrvksPpH/LK6xTjdIIb0CxPu4OCxwJG0aOz5kJoRnOWIXQGhH7VowrJhsqhIc8gN9ErbO5ea8b1L76MNcAotmBDeTUiPw01IJ8MdDxfmcsCslJKgoRKSmQpCwXQtN2g== tomk@hp2
+          - {{ lookup('file', 'my_packet_sshkey') }}
         coreos:
           etcd:
             discovery: https://discovery.etcd.io/6a28e078895c5ec737174db2419bb2f3
@@ -202,7 +208,7 @@ devices:
     type: array
     sample: '[{"hostname": "my-server.com", "id": "server-id", "public-ipv4": "147.229.15.12", "private-ipv4": "10.0.15.12", "public-ipv6": ""2604:1380:2:5200::3"}]'
     returned: always
-'''
+'''  # NOQA
 
 
 import os
@@ -346,7 +352,7 @@ def get_hostname_list(module):
         _msg = ("If you set count>1, you should only specify one hostname "
                 "with the %d formatter, not a list of hostnames.")
         raise Exception(_msg)
-        
+
     if (len(hostnames) == 1) and (count > 0):
         hostname_spec = hostnames[0]
         count_range = range(count_offset, count_offset + count)
@@ -382,7 +388,7 @@ def get_device_id_list(module):
         raise Exception("You specified too many devices, max is %d" %
                          MAX_DEVICES)
     return device_ids
-     
+
 
 def create_single_device(module, packet_conn, hostname):
 
@@ -430,12 +436,12 @@ def wait_for_ips(module, packet_conn, created_devices):
         if all_have_public_ip(refreshed):
             return refreshed
         time.sleep(5)
-    
+
     raise Exception("Waiting for IP assignment timed out. Hostnames: %s"
                      % [d.hostname for d in created_devices])
 
 
-def get_existing_devices(module, packet_conn): 
+def get_existing_devices(module, packet_conn):
     project_id = module.params.get('project_id')
     return packet_conn.list_devices(project_id, params={'per_page': MAX_DEVICES})
 
@@ -500,7 +506,7 @@ def act_on_devices(target_state, module, packet_conn):
         created_devices = [create_single_device(module, packet_conn, n)
                            for n in create_hostnames]
         if module.params.get('wait'):
-             created_devices = wait_for_ips(module, packet_conn, created_devices)
+            created_devices = wait_for_ips(module, packet_conn, created_devices)
         changed = True
 
     processed_devices = created_devices + process_devices
@@ -545,7 +551,7 @@ def main():
 
     if not module.params.get('auth_token'):
         _fail_msg = ( "if Packet API token is not in environment variable %s, "
-                      "the auth_token parameter is required" % 
+                      "the auth_token parameter is required" %
                        PACKET_API_TOKEN_ENV_VAR)
         module.fail_json(msg=_fail_msg)
 

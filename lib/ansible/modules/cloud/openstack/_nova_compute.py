@@ -17,27 +17,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-import operator
-import os
-import time
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
 
-try:
-    from novaclient.v1_1 import client as nova_client
-    from novaclient.v1_1 import floating_ips
-    from novaclient import exceptions
-    from novaclient import utils
-    HAS_NOVACLIENT = True
-except ImportError:
-    HAS_NOVACLIENT = False
-
-ANSIBLE_METADATA = {'status': ['deprecated'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: nova_compute
 version_added: "1.2"
+author: "Benno Joy (@bennojoy)"
 deprecated: Deprecated in 2.0. Use M(os_server) instead.
 short_description: Create/Delete VMs from OpenStack
 description:
@@ -91,7 +80,8 @@ options:
      version_added: "1.8"
    image_exclude:
      description:
-        - Text to use to filter image names, for the case, such as HP, where there are multiple image names matching the common identifying portions. image_exclude is a negative match filter - it is text that may not exist in the image name. Defaults to "(deprecated)"
+        - Text to use to filter image names, for the case, such as HP, where there are multiple image names matching the common identifying
+          portions. image_exclude is a negative match filter - it is text that may not exist in the image name. Defaults to "(deprecated)"
      version_added: "1.8"
    flavor_id:
      description:
@@ -106,7 +96,8 @@ options:
      version_added: "1.8"
    flavor_include:
      description:
-        - Text to use to filter flavor names, for the case, such as Rackspace, where there are multiple flavors that have the same ram count. flavor_include is a positive match filter - it must exist in the flavor name.
+        - Text to use to filter flavor names, for the case, such as Rackspace, where there are multiple flavors that have the same ram count.
+          flavor_include is a positive match filter - it must exist in the flavor name.
      version_added: "1.8"
    key_name:
      description:
@@ -280,6 +271,18 @@ EXAMPLES = '''
       flavor_include: Performance
 '''
 
+import operator
+import os
+import time
+
+try:
+    from novaclient.v1_1 import client as nova_client
+    from novaclient.v1_1 import floating_ips
+    from novaclient import exceptions
+    from novaclient import utils
+    HAS_NOVACLIENT = True
+except ImportError:
+    HAS_NOVACLIENT = False
 
 
 def _delete_server(module, nova):
@@ -337,7 +340,7 @@ def _add_floating_ip_from_pool(module, nova, server):
         if not pool_ips:
             try:
                 new_ip = nova.floating_ips.create(pool)
-            except Exception as e: 
+            except Exception as e:
                 module.fail_json(msg = "Unable to create floating ip: %s" % (e.message))
             pool_ips.append(new_ip.ip)
         # Add to the main list
@@ -428,12 +431,12 @@ def _create_server(module, nova):
     flavor_id = _get_flavor_id(module, nova)
     bootargs = [module.params['name'], image_id, flavor_id]
     bootkwargs = {
-                'nics' : module.params['nics'],
-                'meta' : module.params['meta'],
-                'security_groups': module.params['security_groups'].split(','),
-                #userdata is unhyphenated in novaclient, but hyphenated here for consistency with the ec2 module:
-                'userdata': module.params['user_data'],
-                'config_drive': module.params['config_drive'],
+        'nics' : module.params['nics'],
+        'meta' : module.params['meta'],
+        'security_groups': module.params['security_groups'].split(','),
+        #userdata is unhyphenated in novaclient, but hyphenated here for consistency with the ec2 module:
+        'userdata': module.params['user_data'],
+        'config_drive': module.params['config_drive'],
     }
 
     for optional_param in ('region_name', 'key_name', 'availability_zone', 'scheduler_hints'):
@@ -443,14 +446,14 @@ def _create_server(module, nova):
         server = nova.servers.create(*bootargs, **bootkwargs)
         server = nova.servers.get(server.id)
     except Exception as e:
-            module.fail_json( msg = "Error in creating instance: %s " % e.message)
+        module.fail_json( msg = "Error in creating instance: %s " % e.message)
     if module.params['wait'] == 'yes':
         expire = time.time() + int(module.params['wait_for'])
         while time.time() < expire:
             try:
                 server = nova.servers.get(server.id)
             except Exception as e:
-                    module.fail_json( msg = "Error in getting info from instance: %s" % e.message)
+                module.fail_json( msg = "Error in getting info from instance: %s" % e.message)
             if server.status == 'ACTIVE':
                 server = _add_floating_ip(module, nova, server)
 
@@ -458,7 +461,7 @@ def _create_server(module, nova):
                 public = openstack_find_nova_addresses(getattr(server, 'addresses'), 'floating', 'public')
 
                 # now exit with info
-                module.exit_json(changed = True, id = server.id, private_ip=''.join(private), public_ip=''.join(public), status = server.status, info = server._info)
+                module.exit_json(changed=True, id=server.id, private_ip=''.join(private), public_ip=''.join(public), status=server.status, info=server._info)
 
             if server.status == 'ERROR':
                 module.fail_json(msg = "Error in creating the server, please check logs")
@@ -466,7 +469,7 @@ def _create_server(module, nova):
 
         module.fail_json(msg = "Timeout waiting for the server to come up.. Please check manually")
     if server.status == 'ERROR':
-            module.fail_json(msg = "Error in creating the server.. Please check manually")
+        module.fail_json(msg = "Error in creating the server.. Please check manually")
     private = openstack_find_nova_addresses(getattr(server, 'addresses'), 'fixed', 'private')
     public = openstack_find_nova_addresses(getattr(server, 'addresses'), 'floating', 'public')
 

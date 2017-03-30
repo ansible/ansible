@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -262,7 +263,7 @@ def main():
 
     # Determine if the "--yes" option should be used
     version_found = get_lvm_version(module)
-    if version_found == None:
+    if version_found is None:
         module.fail_json(msg="Failed to get LVM version number")
     version_yesopt = mkversion(2, 2, 99) # First LVM with the "--yes" option
     if version_found >= version_yesopt:
@@ -313,16 +314,17 @@ def main():
             size_unit = ''
 
         if not '%' in size:
-        # LVCREATE(8) -L --size option unit
+            # LVCREATE(8) -L --size option unit
             if size[-1].lower() in 'bskmgtpe':
-               size_unit = size[-1].lower()
-               size = size[0:-1]
+                size_unit = size[-1].lower()
+                size = size[0:-1]
 
             try:
-               float(size)
-               if not size[0].isdigit(): raise ValueError()
+                float(size)
+                if not size[0].isdigit():
+                    raise ValueError()
             except ValueError:
-               module.fail_json(msg="Bad size specification of '%s'" % size)
+                module.fail_json(msg="Bad size specification of '%s'" % size)
 
     # when no unit, megabytes by default
     if size_opt == 'l':
@@ -414,10 +416,13 @@ def main():
             if '+' in size:
                 size_requested += this_lv['size']
             if this_lv['size'] < size_requested:
-                if (size_free > 0)  and (('+' not in size) or (size_free >= (size_requested -  this_lv['size']))):
+                if (size_free > 0) and (('+' not in size) or (size_free >= (size_requested - this_lv['size']))):
                     tool = module.get_bin_path("lvextend", required=True)
                 else:
-                    module.fail_json(msg="Logical Volume %s could not be extended. Not enough free space left (%s%s required / %s%s available)" % (this_lv['name'], (size_requested -  this_lv['size']), unit, size_free, unit))
+                    module.fail_json(
+                        msg="Logical Volume %s could not be extended. Not enough free space left (%s%s required / %s%s available)" %
+                            (this_lv['name'], (size_requested -  this_lv['size']), unit, size_free, unit)
+                    )
             elif shrink and this_lv['size'] > size_requested + this_vg['ext_size']:  # more than an extent too large
                 if size_requested == 0:
                     module.fail_json(msg="Sorry, no shrinking of %s to 0 permitted." % (this_lv['name']))

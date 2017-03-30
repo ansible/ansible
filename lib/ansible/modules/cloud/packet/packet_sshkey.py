@@ -16,6 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+
 DOCUMENTATION = '''
 ---
 module: packet_sshkey
@@ -64,7 +69,7 @@ EXAMPLES = '''
   hosts: localhost
   tasks:
     packet_sshkey:
-      key: ssh-dss AAAAB3NzaC1kc3MAAACBAIfNT5S0ncP4BBJBYNhNPxFF9lqVhfPeu6SM1LoCocxqDc1AT3zFRi8hjIf6TLZ2AA4FYbcAWxLMhiBxZRVldT9GdBXile78kAK5z3bKTwq152DCqpxwwbaTIggLFhsU8wrfBsPWnDuAxZ0h7mmrCjoLIE3CNLDA/NmV3iB8xMThAAAAFQCStcesSgR1adPORzBxTr7hug92LwAAAIBOProm3Gk+HWedLyE8IfofLaOeRnbBRHAOL4z0SexKkVOnQ/LGN/uDIIPGGBDYTvXgKZT+jbHeulRJ2jKgfSpGKN4JxFQ8uzVH492jEiiUJtT72Ss1dCV4PmyERVIw+f54itihV3z/t25dWgowhb0int8iC/OY3cGodlmYb3wdcQAAAIBuLbB45djZXzUkOTzzcRDIRfhaxo5WipbtEM2B1fuBt2gyrvksPpH/LK6xTjdIIb0CxPu4OCxwJG0aOz5kJoRnOWIXQGhH7VowrJhsqhIc8gN9ErbO5ea8b1L76MNcAotmBDeTUiPw01IJ8MdDxfmcsCslJKgoRKSmQpCwXQtN2g== tomk@hp2
+      key: "{{ lookup('file', 'my_packet_sshkey.pub') }}"
 
 - name: create sshkey from file
   hosts: localhost
@@ -92,14 +97,14 @@ sshkeys:
     type: array
     sample: [
         {
-            "fingerprint": "5c:93:74:7c:ed:07:17:62:28:75:79:23:d6:08:93:46", 
-            "id": "41d61bd8-3342-428b-a09c-e67bdd18a9b7", 
-            "key": "ssh-dss AAAAB3NzaC1kc3MAAACBAIfNT5S0ncP4BBJBYNhNPxFF9lqVhfPeu6SM1LoCocxqDc1AT3zFRi8hjIf6TLZ2AA4FYbcAWxLMhiBxZRVldT9GdBXile78kAK5z3bKTwq152DCqpxwwbaTIggLFhsU8wrfBsPWnDuAxZ0h7mmrCjoLIE3CNLDA/NmV3iB8xMThAAAAFQCStcesSgR1adPORzBxTr7hug92LwAAAIBOProm3Gk+HWedLyE8IfofLaOeRnbBRHAOL4z0SexKkVOnQ/LGN/uDIIPGGBDYTvXgKZT+jbHeulRJ2jKgfSpGKN4JxFQ8uzVH492jEiiUJtT72Ss1dCV4PmyERVIw+f54itihV3z/t25dWgowhb0int8iC/OY3cGodlmYb3wdcQAAAIBuLbB45djZXzUkOTzzcRDIRfhaxo5WipbtEM2B1fuBt2gyrvksPpH/LK6xTjdIIb0CxPu4OCxwJG0aOz5kJoRnOWIXQGhH7VowrJhsqhIc8gN9ErbO5ea8b1L76MNcAotmBDeTUiPw01IJ8MdDxfmcsCslJKgoRKSmQpCwXQtN2g== tomk@hp2", 
+            "fingerprint": "5c:93:74:7c:ed:07:17:62:28:75:79:23:d6:08:93:46",
+            "id": "41d61bd8-3342-428b-a09c-e67bdd18a9b7",
+            "key": "ssh-dss AAAAB3NzaC1kc3MAAACBAIfNT5S0ncP4BBJBYNhNPxFF9lqVhfPeu6SM1LoCocxqDc1AT3zFRi8hjIf6TLZ2AA4FYbcAWxLMhiBxZRVldT9GdBXile78kAK5z3bKTwq152DCqpxwwbaTIggLFhsU8wrfBsPWnDuAxZ0h7mmrCjoLIE3CNLDA/NmV3iB8xMThAAAAFQCStcesSgR1adPORzBxTr7hug92LwAAAIBOProm3Gk+HWedLyE8IfofLaOeRnbBRHAOL4z0SexKkVOnQ/LGN/uDIIPGGBDYTvXgKZT+jbHeulRJ2jKgfSpGKN4JxFQ8uzVH492jEiiUJtT72Ss1dCV4PmyERVIw+f54itihV3z/t25dWgowhb0int8iC/OY3cGodlmYb3wdcQAAAIBuLbB45djZXzUkOTzzcRDIRfhaxo5WipbtEM2B1fuBt2gyrvksPpH/LK6xTjdIIb0CxPu4OCxwJG0aOz5kJoRnOWIXQGhH7VowrJhsqhIc8gN9ErbO5ea8b1L76MNcAotmBDeTUiPw01IJ8MdDxfmcsCslJKgoRKSmQpCwXQtN2g== tomk@hp2",
             "label": "mynewkey33"
         }
     ]
     returned: always
-'''
+'''  # NOQA
 
 import os
 import uuid
@@ -169,10 +174,10 @@ def get_sshkey_selector(module):
     def selector(k):
         if 'key' in select_dict:
             # if key string is specified, compare only the key strings
-             return k.key == select_dict['key']
+            return k.key == select_dict['key']
         else:
             # if key string not specified, all the fields must match
-             return all([select_dict[f] == getattr(k,f) for f in select_dict])
+            return all([select_dict[f] == getattr(k,f) for f in select_dict])
     return selector
 
 
@@ -202,9 +207,9 @@ def act_on_sshkeys(target_state, module, packet_conn):
                     raise Exception(_msg)
             matching_sshkeys = []
             new_key_response = packet_conn.create_ssh_key(
-                                        newkey['label'], newkey['key'])
+                newkey['label'], newkey['key'])
             changed = True
-                              
+
             matching_sshkeys.append(new_key_response)
     else:
         # state is 'absent' => delete mathcing keys
@@ -251,7 +256,7 @@ def main():
 
     if not module.params.get('auth_token'):
         _fail_msg = ( "if Packet API token is not in environment variable %s, "
-                      "the auth_token parameter is required" % 
+                      "the auth_token parameter is required" %
                        PACKET_API_TOKEN_ENV_VAR)
         module.fail_json(msg=_fail_msg)
 

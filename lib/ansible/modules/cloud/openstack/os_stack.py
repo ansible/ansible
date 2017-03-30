@@ -17,17 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-from time import sleep
-from distutils.version import StrictVersion
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -74,6 +67,10 @@ options:
         - Maximum number of seconds to wait for the stack creation
       required: false
       default: 3600
+    availability_zone:
+      description:
+        - Ignored. Present for backwards compatability
+      required: false
 requirements:
     - "python >= 2.6"
     - "shade"
@@ -94,12 +91,12 @@ EXAMPLES = '''
         bmc_flavor: m1.medium
         bmc_image: CentOS
         key_name: default
-        private_net: {{ private_net_param }}
+        private_net: "{{ private_net_param }}"
         node_count: 2
         name: undercloud
         image: CentOS
         my_flavor: m1.large
-        external_net: {{ external_net_param }}
+        external_net: "{{ external_net_param }}"
 '''
 
 RETURN = '''
@@ -156,6 +153,15 @@ stack:
                     'timeout_mins': 60,
                     'updated_time': null}"
 '''
+
+from time import sleep
+from distutils.version import StrictVersion
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
 
 def _create_stack(module, stack, cloud):
     try:

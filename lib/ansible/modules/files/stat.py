@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -423,7 +424,7 @@ def format_output(module, path, st):
             ('st_rsize', 'real_size'),
             ('st_creator', 'creator'),
             ('st_type', 'file_type'),
-        ]:
+    ]:
         if hasattr(st, other[0]):
             output[other[1]] = getattr(st, other[0])
 

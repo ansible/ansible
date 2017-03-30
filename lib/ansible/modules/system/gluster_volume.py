@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 module: gluster_volume
@@ -241,11 +242,11 @@ def get_peers():
                 uuid = value
             if key.lower() == 'state':
                 state = value
-                peers[hostname] = [ uuid, state ]
+                peers[hostname] = [uuid, state]
         elif row.lower() == 'other names:':
             shortNames = True
-        elif row != '' and shortNames == True:
-            peers[row] = [ uuid, state ]
+        elif row != '' and shortNames is True:
+            peers[row] = [uuid, state]
         elif row == '':
             shortNames = False
     return peers
@@ -436,13 +437,13 @@ def main():
 
     # Clean up if last element is empty. Consider that yml can look like this:
     #   cluster="{% for host in groups['glusterfs'] %}{{ hostvars[host]['private_ip'] }},{% endfor %}"
-    if cluster != None and len(cluster) > 1 and cluster[-1] == '':
+    if cluster is not None and len(cluster) > 1 and cluster[-1] == '':
         cluster = cluster[0:-1]
 
-    if cluster == None or cluster[0] == '':
+    if cluster is None or cluster[0] == '':
         cluster = [myhostname]
 
-    if brick_paths != None and "," in brick_paths:
+    if brick_paths is not None and "," in brick_paths:
         brick_paths = brick_paths.split(",")
     else:
         brick_paths = [brick_paths]

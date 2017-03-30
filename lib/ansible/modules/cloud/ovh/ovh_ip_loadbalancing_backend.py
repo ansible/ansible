@@ -13,9 +13,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -26,8 +27,8 @@ description:
 version_added: "2.2"
 author: Pascal HERAUD @pascalheraud
 notes:
-    - Uses the python OVH Api U(https://github.com/ovh/python-ovh). 
-      You have to create an application (a key and secret) with a consummer 
+    - Uses the python OVH Api U(https://github.com/ovh/python-ovh).
+      You have to create an application (a key and secret) with a consummer
       key as described into U(https://eu.api.ovh.com/g934.first_step_with_api)
 requirements:
     - ovh >  0.3.5
@@ -76,16 +77,15 @@ options:
             - The consumer key to use
     timeout:
         required: false
-        type: "int"
         default: 120
         description:
-            - The timeout in seconds used to wait for a task to be 
-              completed. Default is 120 seconds.
+            - The timeout in seconds used to wait for a task to be
+              completed.
 
 '''
 
 EXAMPLES = '''
-# Adds or modify the backend '212.1.1.1' to a 
+# Adds or modify the backend '212.1.1.1' to a
 # loadbalancing 'ip-1.1.1.1'
 - ovh_ip_loadbalancing:
     name: ip-1.1.1.1

@@ -16,11 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'core',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
@@ -87,33 +86,21 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
-vars:
-  cli:
-    host: "{{ inventory_hostname }}"
-    username: cisco
-    password: cisco
-    transport: cli
-
 tasks:
   - name: run show version on remote devices
     ios_command:
       commands: show version
-      provider: "{{ cli }}"
 
   - name: run show version and check to see if output contains IOS
     ios_command:
       commands: show version
       wait_for: result[0] contains IOS
-      provider: "{{ cli }}"
 
   - name: run multiple commands on remote nodes
-     ios_command:
+    ios_command:
       commands:
         - show version
         - show interfaces
-      provider: "{{ cli }}"
 
   - name: run multiple commands and evaluate the output
     ios_command:
@@ -123,7 +110,6 @@ tasks:
       wait_for:
         - result[0] contains IOS
         - result[1] contains Loopback0
-      provider: "{{ cli }}"
 """
 
 RETURN = """
@@ -132,13 +118,11 @@ stdout:
   returned: always
   type: list
   sample: ['...', '...']
-
 stdout_lines:
   description: The value of stdout split into a list
   returned: always
   type: list
   sample: [['...', '...'], ['...'], ['...']]
-
 failed_conditions:
   description: The list of conditionals that have failed
   returned: failed
@@ -147,13 +131,12 @@ failed_conditions:
 """
 import time
 
-from ansible.module_utils.local import LocalAnsibleModule
 from ansible.module_utils.ios import run_commands
+from ansible.module_utils.ios import ios_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.six import string_types
-
-VALID_KEYS = ['command', 'output']
 
 def to_lines(stdout):
     for item in stdout:
@@ -165,10 +148,9 @@ def parse_commands(module, warnings):
     command = ComplexList(dict(
         command=dict(key=True),
         prompt=dict(),
-        response=dict()
-    ))
+        answer=dict()
+    ), module)
     commands = command(module.params['commands'])
-
     for index, item in enumerate(commands):
         if module.check_mode and not item['command'].startswith('show'):
             warnings.append(
@@ -180,12 +162,12 @@ def parse_commands(module, warnings):
                 msg='ios_command does not support running config mode '
                     'commands.  Please use ios_config instead'
             )
-        commands[index] = module.jsonify(item)
     return commands
 
 def main():
-    spec = dict(
-        # { command: <str>, prompt: <str>, response: <str> }
+    """main entry point for module execution
+    """
+    argument_spec = dict(
         commands=dict(type='list', required=True),
 
         wait_for=dict(type='list', aliases=['waitfor']),
@@ -195,11 +177,17 @@ def main():
         interval=dict(default=1, type='int')
     )
 
-    module = LocalAnsibleModule(argument_spec=spec,
-                                supports_check_mode=True)
+    argument_spec.update(ios_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
+
+    result = {'changed': False}
 
     warnings = list()
+    check_args(module, warnings)
     commands = parse_commands(module, warnings)
+    result['warnings'] = warnings
 
     wait_for = module.params['wait_for'] or list()
     conditionals = [Conditional(c) for c in wait_for]
@@ -230,12 +218,11 @@ def main():
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
 
-    result = {
+    result.update({
         'changed': False,
         'stdout': responses,
-        'warnings': warnings,
         'stdout_lines': list(to_lines(responses))
-    }
+    })
 
     module.exit_json(**result)
 

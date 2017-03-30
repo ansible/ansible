@@ -19,16 +19,16 @@
 
 ########################################################
 from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
+__metaclass__ = type
 __requires__ = ['ansible']
+
 try:
     import pkg_resources
 except Exception:
     pass
 
 import fcntl
-import hashlib
 import os
 import shlex
 import signal
@@ -39,6 +39,7 @@ import time
 import traceback
 import syslog
 import datetime
+import logging
 
 from io import BytesIO
 
@@ -48,6 +49,8 @@ from ansible.module_utils.six.moves import cPickle, StringIO
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import connection_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
+from ansible.errors import AnsibleConnectionFailure
+from ansible.utils.display import Display
 
 
 def do_fork():
@@ -60,7 +63,7 @@ def do_fork():
         if pid > 0:
             return pid
 
-        os.chdir("/")
+        #os.chdir("/")
         os.setsid()
         os.umask(0)
 
@@ -69,9 +72,16 @@ def do_fork():
             if pid > 0:
                 sys.exit(0)
 
+            if C.DEFAULT_LOG_PATH != '':
+                out_file = file(C.DEFAULT_LOG_PATH, 'a+')
+                err_file = file(C.DEFAULT_LOG_PATH, 'a+', 0)
+            else:
+                out_file = file('/dev/null', 'a+')
+                err_file = file('/dev/null', 'a+', 0)
+
+            os.dup2(out_file.fileno(), sys.stdout.fileno())
+            os.dup2(err_file.fileno(), sys.stderr.fileno())
             os.close(sys.stdin.fileno())
-            os.close(sys.stdout.fileno())
-            os.close(sys.stderr.fileno())
 
             return pid
         except OSError as e:
@@ -104,36 +114,30 @@ def recv_data(s):
 class Server():
 
     def __init__(self, path, play_context):
+
         self.path = path
         self.play_context = play_context
 
+        display.display("starting new persistent socket with path %s" % path, log_only=True)
+        display.display('current working directory is %s' % os.getcwd(), log_only=True)
+
         self._start_time = datetime.datetime.now()
 
-        try:
-            # FIXME: the connection loader here is created brand new,
-            #        so it will not see any custom paths loaded (ie. via
-            #        roles), so we will need to serialize the connection
-            #        loader and send it over as we do the PlayContext
-            #        in the main() method below.
-            self.log('loading connection plugin %s' % str(play_context.connection))
-            self.conn = connection_loader.get(play_context.connection, play_context, sys.stdin)
-            self.conn._connect()
+        display.display("using connection plugin %s" % self.play_context.connection, log_only=True)
 
-            self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            self.socket.bind(path)
-            self.socket.listen(1)
+        self.conn = connection_loader.get(play_context.connection, play_context, sys.stdin)
+        self.conn._connect()
+        if not self.conn.connected:
+            raise AnsibleConnectionFailure('unable to connect to remote host')
 
-        except Exception as exc:
-            self.log(exc)
-            return
+        connection_time = datetime.datetime.now() - self._start_time
+        display.display('connection established in %s' % connection_time, log_only=True)
+
+        self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.socket.bind(path)
+        self.socket.listen(1)
 
         signal.signal(signal.SIGALRM, self.alarm_handler)
-
-    def log(self, msg):
-        syslog_msg = '[%s] %s' % (self.play_context.remote_addr, msg)
-        facility = getattr(syslog, C.DEFAULT_SYSLOG_FACILITY, syslog.LOG_USER)
-        syslog.openlog('ansible-connection', 0, facility)
-        syslog.syslog(syslog.LOG_INFO, syslog_msg)
 
     def dispatch(self, obj, name, *args, **kwargs):
         meth = getattr(obj, name, None)
@@ -165,6 +169,7 @@ class Server():
                 signal.alarm(C.PERSISTENT_CONNECT_TIMEOUT)
                 try:
                     (s, addr) = self.socket.accept()
+                    display.display('incoming request accepted on persistent socket', log_only=True)
                     # clear the alarm
                     # FIXME: potential race condition here between the accept and
                     #        time to this call.
@@ -182,6 +187,7 @@ class Server():
                     rc = 255
                     try:
                         if data.startswith(b'EXEC: '):
+                            display.display("socket operation is EXEC", log_only=True)
                             cmd = data.split(b'EXEC: ')[1]
                             (rc, stdout, stderr) = self.conn.exec_command(cmd)
                         elif data.startswith(b'PUT: ') or data.startswith(b'FETCH: '):
@@ -189,13 +195,16 @@ class Server():
                             stdout = stderr = ''
                             try:
                                 if op == 'FETCH:':
+                                    display.display("socket operation is FETCH", log_only=True)
                                     self.conn.fetch_file(src, dst)
                                 elif op == 'PUT:':
+                                    display.display("socket operation is PUT", log_only=True)
                                     self.conn.put_file(src, dst)
                                 rc = 0
                             except:
                                 pass
                         elif data.startswith(b'CONTEXT: '):
+                            display.display("socket operation is CONTEXT", log_only=True)
                             pc_data = data.split(b'CONTEXT: ')[1]
 
                             src = StringIO(pc_data)
@@ -208,6 +217,7 @@ class Server():
                             self.dispatch(self.conn, 'update_play_context', pc)
                             continue
                         else:
+                            display.display("socket operation is UNKNOWN", log_only=True)
                             stdout = ''
                             stderr = 'Invalid action specified'
                     except:
@@ -216,20 +226,20 @@ class Server():
 
                     signal.alarm(0)
 
+                    display.display("socket operation completed with rc %s" % rc, log_only=True)
+
                     send_data(s, to_bytes(str(rc)))
                     send_data(s, to_bytes(stdout))
                     send_data(s, to_bytes(stderr))
                 s.close()
         except Exception as e:
-            # FIXME: proper logging and error handling here
-            self.log('runtime exception: %s' % e)
-            print(traceback.format_exc())
+            display.display(traceback.foramt_exec(), log_only=True)
         finally:
             # when done, close the connection properly and cleanup
             # the socket file so it can be recreated
             end_time = datetime.datetime.now()
             delta = end_time - self._start_time
-            self.log('shutting down connection, connection was active for %s secs' % delta)
+            display.display('shutting down control socket, connection was active for %s secs' % delta, log_only=True)
             try:
                 self.conn.close()
                 self.socket.close()
@@ -238,6 +248,7 @@ class Server():
             os.remove(self.path)
 
 def main():
+
     try:
         # read the play context data via stdin, which means depickling it
         # FIXME: as noted above, we will probably need to deserialize the
@@ -252,30 +263,23 @@ def main():
             cur_line = sys.stdin.readline()
         src = BytesIO(to_bytes(init_data))
         pc_data = cPickle.load(src)
-        #src.close()
 
         pc = PlayContext()
         pc.deserialize(pc_data)
     except Exception as e:
         # FIXME: better error message/handling/logging
-        print("FAIL: %s" % e)
-        print(traceback.format_exc())
-        sys.exit(1)
+        sys.stderr.write(traceback.format_exc())
+        sys.exit("FAIL: %s" % e)
 
-    # here we create a hash to use later when creating the socket file,
-    # so we can hide the info about the target host/user/etc.
-    m = hashlib.sha256()
-    for attr in ('connection', 'remote_addr', 'port', 'remote_user'):
-        val = getattr(pc, attr, None)
-        if val:
-            m.update(to_bytes(val))
+    ssh = connection_loader.get('ssh', class_only=True)
+    m = ssh._create_control_path(pc.remote_addr, pc.port, pc.remote_user)
 
     # create the persistent connection dir if need be and create the paths
     # which we will be using later
     tmp_path = unfrackpath("$HOME/.ansible/pc")
     makedirs_safe(tmp_path)
     lk_path = unfrackpath("%s/.ansible_pc_lock" % tmp_path)
-    sf_path = unfrackpath("%s/conn-%s" % (tmp_path, m.hexdigest()[0:12]))
+    sf_path = unfrackpath(m % dict(directory=tmp_path))
 
     # if the socket file doesn't exist, spin up the daemon process
     lock_fd = os.open(lk_path, os.O_RDWR|os.O_CREAT, 0o600)
@@ -283,11 +287,22 @@ def main():
     if not os.path.exists(sf_path):
         pid = do_fork()
         if pid == 0:
-            server = Server(sf_path, pc)
+            rc = 0
+            try:
+                server = Server(sf_path, pc)
+            except AnsibleConnectionFailure as exc:
+                display.display(str(exc), pc.remote_addr, pc.remote_user, log_only=True)
+                rc = 1
+            except Exception as exc:
+                display.display(traceback.format_exc(), pc.remote_addr, pc.remote_user, log_only=True)
+                rc = 1
             fcntl.lockf(lock_fd, fcntl.LOCK_UN)
             os.close(lock_fd)
-            server.run()
-            sys.exit(0)
+            if rc == 0:
+                server.run()
+            sys.exit(rc)
+    else:
+        display.display('re-using existing socket connection', pc.remote_addr, pc.remote_user, log_only=True)
     fcntl.lockf(lock_fd, fcntl.LOCK_UN)
     os.close(lock_fd)
 
@@ -312,13 +327,13 @@ def main():
                 time.sleep(C.PERSISTENT_CONNECT_INTERVAL)
                 attempts += 1
                 if attempts > C.PERSISTENT_CONNECT_RETRIES:
-                    sys.stderr.write("failed to connect to the host, connection timeout")
+                    display.display('number of connection attempts exceeded, unable to connect to control socket', pc.remote_addr, pc.remote_user, log_only=True)
+                    display.display('persistent_connect_interval=%s, persistent_connect_retries=%s' % (C.PERSISTENT_CONNECT_INTERVAL, C.PERSISTENT_CONNECT_RETRIES), pc.remote_addr, pc.remote_user, log_only=True)
+                    sys.stderr.write('failed to connect to control socket')
                     sys.exit(255)
 
-        #
         # send the play_context back into the connection so the connection
-        # can handle any privilege escalation or deescalation activities
-        #
+        # can handle any privilege escalation activities
         pc_data = 'CONTEXT: %s' % src.getvalue()
         send_data(sf, to_bytes(pc_data))
         src.close()
@@ -338,4 +353,5 @@ def main():
     sys.exit(rc)
 
 if __name__ == '__main__':
+    display = Display()
     main()

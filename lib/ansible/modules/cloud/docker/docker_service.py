@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 
@@ -44,19 +45,16 @@ options:
         - Path to a directory containing a docker-compose.yml or docker-compose.yaml file.
         - Mutually exclusive with C(definition).
         - Required when no C(definition) is provided.
-      type: path
       required: false
   project_name:
       description:
         - Provide a project name. If not provided, the project name is taken from the basename of C(project_src).
         - Required when no C(definition) is provided.
-      type: str
       required: false
   files:
       description:
         - List of file names relative to C(project_src). Overrides docker-compose.yml or docker-compose.yaml.
         - Files are loaded and merged in the order given.
-      type: list
       required: false
   state:
       description:
@@ -67,18 +65,15 @@ options:
         - absent
         - present
       default: present
-      type: str
       required: false
   services:
       description:
         - When C(state) is I(present) run I(docker-compose up) on a subset of services.
-      type: list
       required: false
   scale:
       description:
         - When C(state) is I(present) scale services. Provide a dictionary of key/value pairs where the key
           is the name of the service and the value is an integer count for the number of containers.
-      type: complex
       required: false
   dependencies:
       description:
@@ -90,7 +85,6 @@ options:
       description:
         - Provide docker-compose yaml describing one or more services, networks and volumes.
         - Mutually exclusive with C(project_src) and C(files).
-      type: complex
       required: false
   hostname_check:
       description:
@@ -103,7 +97,6 @@ options:
         - By default containers will be recreated when their configuration differs from the service definition.
         - Setting to I(never) ignores configuration differences and leaves existing containers unchanged.
         - Setting to I(always) forces recreation of all existing containers.
-      type: str
       required: false
       choices:
         - always
@@ -139,7 +132,6 @@ options:
   remove_images:
       description:
         - Use with state I(absent) to remove the all images or only local images.
-      type: str
       required: false
       default: null
   remove_volumes:
@@ -503,25 +495,25 @@ AUTH_PARAM_MAPPING = {
 
 @contextmanager
 def stdout_redirector(path_name):
-    old_stdout = sys.stdout  
+    old_stdout = sys.stdout
     fd = open(path_name, 'w')
     sys.stdout = fd
     try:
         yield
     finally:
-        sys.stdout = old_stdout    
+        sys.stdout = old_stdout
 
 def get_stdout(path_name):
     full_stdout = ''
-    last_line = '' 
+    last_line = ''
     with open(path_name, 'r') as fd:
         for line in fd:
             # strip terminal format/color chars
             new_line = re.sub(r'\x1b\[.+m', '', line.encode('ascii'))
             full_stdout += new_line
             if new_line.strip():
-               # Assuming last line contains the error message 
-               last_line = new_line.strip().encode('utf-8')
+                # Assuming last line contains the error message
+                last_line = new_line.strip().encode('utf-8')
     fd.close()
     os.remove(path_name)
     return full_stdout, last_line
@@ -639,7 +631,7 @@ class ContainerManager(DockerBaseClass):
         return options
 
     def cmd_up(self):
-    
+
         start_deps = self.dependencies
         service_names = self.services
         detached = True
@@ -666,12 +658,12 @@ class ContainerManager(DockerBaseClass):
 
         if self.pull:
             pull_output = self.cmd_pull()
-            result['changed'] = pull_output['changed']  
+            result['changed'] = pull_output['changed']
             result['actions'] += pull_output['actions']
 
         if self.build:
             build_output = self.cmd_build()
-            result['changed'] = build_output['changed']  
+            result['changed'] = build_output['changed']
             result['actions'] += build_output['actions']
 
         for service in self.project.services:
@@ -679,8 +671,8 @@ class ContainerManager(DockerBaseClass):
                 plan = service.convergence_plan(strategy=converge)
                 if plan.action != 'noop':
                     result['changed'] = True
-                    result_action = dict(service=service.name) 
-                    result_action[plan.action] = []                      
+                    result_action = dict(service=service.name)
+                    result_action[plan.action] = []
                     for container in plan.containers:
                         result_action[plan.action].append(dict(
                             id=container.id,
@@ -712,17 +704,17 @@ class ContainerManager(DockerBaseClass):
 
         if self.stopped:
             stop_output = self.cmd_stop(service_names)
-            result['changed'] = stop_output['changed']  
+            result['changed'] = stop_output['changed']
             result['actions'] += stop_output['actions']
 
         if self.restarted:
             restart_output = self.cmd_restart(service_names)
-            result['changed'] = restart_output['changed']  
+            result['changed'] = restart_output['changed']
             result['actions'] += restart_output['actions']
 
         if self.scale:
             scale_output = self.cmd_scale()
-            result['changed'] = scale_output['changed']  
+            result['changed'] = scale_output['changed']
             result['actions'] += scale_output['actions']
 
         for service in self.project.services:
@@ -791,7 +783,7 @@ class ContainerManager(DockerBaseClass):
         if not self.check_mode:
             for service in self.project.get_services(self.services, include_deps=False):
                 if 'image' not in service.options:
-                    continue 
+                    continue
 
                 self.log('Pulling image for service %s' % service.name)
                 # store the existing image ID
@@ -809,16 +801,16 @@ class ContainerManager(DockerBaseClass):
                 try:
                     service.pull(ignore_pull_failures=False)
                 except Exception as exc:
-                    self.client.fail("Error: pull failed with %s" % str(exc)) 
+                    self.client.fail("Error: pull failed with %s" % str(exc))
 
                 # store the new image ID
-                new_image_id = '' 
+                new_image_id = ''
                 try:
                     image = service.image()
                     if image and image.get('Id'):
                         new_image_id = image['Id']
                 except NoSuchImageError as exc:
-                    self.client.fail("Error: service image lookup failed after pull - %s" % str(exc))    
+                    self.client.fail("Error: service image lookup failed after pull - %s" % str(exc))
 
                 if new_image_id != old_image_id:
                     # if a new image was pulled
@@ -856,13 +848,13 @@ class ContainerManager(DockerBaseClass):
                     try:
                         new_image_id = service.build(pull=True, no_cache=self.nocache)
                     except Exception as exc:
-                        self.client.fail("Error: build failed with %s" % str(exc)) 
+                        self.client.fail("Error: build failed with %s" % str(exc))
 
                     if new_image_id not in old_image_id:
                         # if a new image was built
                         result['changed'] = True
                         result['actions'].append(dict(
-                            service=service.name, 
+                            service=service.name,
                             built_image=dict(
                                 name=service.image_name,
                                 id=new_image_id
@@ -901,7 +893,7 @@ class ContainerManager(DockerBaseClass):
                 service_res = dict(
                     service=service.name,
                     stop=[]
-                ) 
+                )
                 for container in service.containers(stopped=False):
                     result['changed'] = True
                     service_res['stop'].append(dict(
@@ -943,7 +935,7 @@ class ContainerManager(DockerBaseClass):
                         short_id=container.short_id
                     ))
                 result['actions'].append(service_res)
-         
+
         if not self.check_mode and result['changed']:
             _, fd_name = tempfile.mkstemp(prefix="ansible")
             try:
@@ -977,7 +969,7 @@ class ContainerManager(DockerBaseClass):
                             service.scale(int(self.scale[service.name]))
                         except Exception as exc:
                             self.client.fail("Error scaling %s - %s" % (service.name, str(exc)))
-                    result['actions'].append(service_res) 
+                    result['actions'].append(service_res)
         return result
 
 

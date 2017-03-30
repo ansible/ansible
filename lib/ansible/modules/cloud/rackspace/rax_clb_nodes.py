@@ -16,9 +16,10 @@
 
 # This is a DOCUMENTATION stub specific to this module, it extends
 # a documentation fragment located in ansible.utils.module_docs_fragments
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -43,17 +44,14 @@ options:
         balancer
   load_balancer_id:
     required: true
-    type: integer
     description:
       - Load balancer id
   node_id:
     required: false
-    type: integer
     description:
       - Node id
   port:
     required: false
-    type: integer
     description:
       - Port number of the load balanced service on the node
   state:
@@ -81,7 +79,6 @@ options:
       - Wait for the load balancer to become active before returning
   wait_timeout:
     required: false
-    type: integer
     default: 30
     description:
       - How long to wait before giving up and returning an error

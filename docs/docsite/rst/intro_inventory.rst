@@ -141,6 +141,14 @@ It is also possible to make groups of groups using the ``:children`` suffix. Jus
 If you need to store lists or hash data, or prefer to keep host and group specific variables
 separate from the inventory file, see the next section.
 
+.. _default_groups:
+
+Default groups
+++++++++++++++
+
+There are two default groups: ``all`` and ``ungrouped``. ``all`` contains every host.
+``ungrouped`` contains all hosts that don't have another group aside from ``all``.
+
 .. _splitting_out_vars:
 
 Splitting Out Host and Group Specific Data
@@ -310,7 +318,8 @@ ansible_docker_extra_args
 Here is an example of how to instantly deploy to created containers::
 
   - name: create jenkins container
-    docker:
+    docker_container:
+      docker_host: myserver.net:4243
       name: my_jenkins
       image: jenkins
 

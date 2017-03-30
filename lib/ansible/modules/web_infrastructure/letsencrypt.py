@@ -18,15 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import binascii
-import copy
-import locale
-import textwrap
-from datetime import datetime
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -94,7 +89,7 @@ options:
          will lead to an individual challenge that must be fulfilled for the
          CSR to be signed."
     required: true
-    alias: ['src']
+    aliases: ['src']
   data:
     description:
       - "The data to validate ongoing challenges."
@@ -105,13 +100,13 @@ options:
   dest:
     description: The destination file for the certificate.
     required: true
-    alias: ['cert']
+    aliases: ['cert']
   remaining_days:
     description:
       - "The number of days the certificate must have left being valid.
          If C(cert_days < remaining_days), then it will be renewed.
          If the certificate is not renewed, module return values will not
-         include C(challenge_data)."         
+         include C(challenge_data)."
     required: false
     default: 10
 '''
@@ -167,6 +162,13 @@ authorizations:
         returned: success
         type: dict
 '''
+
+import binascii
+import copy
+import locale
+import textwrap
+from datetime import datetime
+
 
 def nopad_b64(data):
     return base64.urlsafe_b64encode(data).decode('utf8').replace("=", "")
@@ -279,7 +281,8 @@ class ACMEDirectory(object):
 
         self.directory = simple_get(self.module,self.directory_root)
 
-    def __getitem__(self, key): return self.directory[key]
+    def __getitem__(self, key):
+        return self.directory[key]
 
     def get_nonce(self,resource=None):
         url = self.directory_root
@@ -774,7 +777,7 @@ def main():
         ),
         supports_check_mode = True,
     )
- 
+
     # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
     locale.setlocale(locale.LC_ALL, "C")
 

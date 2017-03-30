@@ -61,6 +61,8 @@ The top level of the directory would contain files and directories like so::
                 main.yml      #  <-- default lower priority variables for this role
             meta/             #
                 main.yml      #  <-- role dependencies
+            library/          # roles can also include custom modules
+            lookup_plugins/   # or other types of plugins, like lookup in this case
 
         webtier/              # same kind of structure as "common" was above, done for the webtier role
         monitoring/           # ""
@@ -486,7 +488,7 @@ This best practice has no limit on the amount of variable and vault files or the
        Learn how to extend Ansible by writing your own modules
    :doc:`intro_patterns`
        Learn about how to select hosts
-   `GitHub examples directory <https://github.com/ansible/ansible/tree/devel/examples/playbooks>`_
+   `GitHub examples directory <https://github.com/ansible/ansible-examples>`_
        Complete playbook files from the github project source
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

@@ -137,6 +137,7 @@ def filter_targets(targets, patterns, include=True, directories=True, errors=Tru
     :rtype: collections.Iterable[CompletionTarget]
     """
     unmatched = set(patterns or ())
+    compiled_patterns = dict((p, re.compile('^%s$' % p)) for p in patterns) if patterns else None
 
     for target in targets:
         matched_directories = set()
@@ -145,7 +146,7 @@ def filter_targets(targets, patterns, include=True, directories=True, errors=Tru
         if patterns:
             for alias in target.aliases:
                 for pattern in patterns:
-                    if re.match('^%s$' % pattern, alias):
+                    if compiled_patterns[pattern].match(alias):
                         match = True
 
                         try:
@@ -282,6 +283,9 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None)
     """
     for root, _, file_names in os.walk(path or '.', topdown=False):
         if root.endswith('/__pycache__'):
+            continue
+
+        if '/.tox/' in root:
             continue
 
         if path is None:

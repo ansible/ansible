@@ -36,8 +36,7 @@ class Block(Base, Become, Conditional, Taggable):
     _always           = FieldAttribute(isa='list', default=[], inherit=False)
 
     # other fields
-    _any_errors_fatal = FieldAttribute(isa='bool')
-    _delegate_to      = FieldAttribute(isa='list')
+    _delegate_to      = FieldAttribute(isa='string')
     _delegate_facts   = FieldAttribute(isa='bool', default=False)
     _name             = FieldAttribute(isa='string', default='')
 
@@ -52,6 +51,9 @@ class Block(Base, Become, Conditional, Taggable):
         self._dep_chain    = None
         self._use_handlers = use_handlers
         self._implicit     = implicit
+
+        # end of role flag
+        self._eor = False
 
         if task_include:
             self._parent = task_include
@@ -139,13 +141,13 @@ class Block(Base, Become, Conditional, Taggable):
     def _load_always(self, attr, ds):
         try:
             return load_list_of_tasks(
-                ds, 
+                ds,
                 play=self._play,
-                block=self, 
-                role=self._role, 
+                block=self,
+                role=self._role,
                 task_include=None,
-                variable_manager=self._variable_manager, 
-                loader=self._loader, 
+                variable_manager=self._variable_manager,
+                loader=self._loader,
                 use_handlers=self._use_handlers,
             )
         except AssertionError:
@@ -182,6 +184,7 @@ class Block(Base, Become, Conditional, Taggable):
         new_me = super(Block, self).copy()
         new_me._play         = self._play
         new_me._use_handlers = self._use_handlers
+        new_me._eor          = self._eor
 
         if self._dep_chain is not None:
             new_me._dep_chain = self._dep_chain[:]
@@ -214,6 +217,7 @@ class Block(Base, Become, Conditional, Taggable):
                 data[attr] = getattr(self, attr)
 
         data['dep_chain'] = self.get_dep_chain()
+        data['eor'] = self._eor
 
         if self._role is not None:
             data['role'] = self._role.serialize()
@@ -241,6 +245,7 @@ class Block(Base, Become, Conditional, Taggable):
                 setattr(self, attr, data.get(attr))
 
         self._dep_chain = data.get('dep_chain', None)
+        self._eor = data.get('eor', False)
 
         # if there was a serialized role, unpack it too
         role_data = data.get('role')
@@ -342,9 +347,9 @@ class Block(Base, Become, Conditional, Taggable):
             for task in target:
                 if isinstance(task, Block):
                     tmp_list.append(evaluate_block(task))
-                elif task.action == 'meta' \
-                or (task.action == 'include' and task.evaluate_tags([], play_context.skip_tags, all_vars=all_vars)) \
-                or task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars):
+                elif (task.action == 'meta' or
+                        (task.action == 'include' and task.evaluate_tags([], play_context.skip_tags, all_vars=all_vars)) or
+                        task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars)):
                     tmp_list.append(task)
             return tmp_list
 

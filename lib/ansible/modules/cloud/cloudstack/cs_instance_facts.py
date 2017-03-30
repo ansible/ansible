@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -232,7 +233,7 @@ class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
         if not instance:
             self.module.fail_json(msg="Instance not found: %s" % self.module.params.get('name'))
         self.facts['cloudstack_instance'] = self.get_result(instance)
-        return  self.facts
+        return self.facts
 
 
     def get_result(self, instance):

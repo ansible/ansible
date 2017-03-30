@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = """
 ---
@@ -71,24 +72,24 @@ options:
   security_group_ids:
     description:
       - A list of security groups to apply to the elb
-    require: false
+    required: false
     default: None
     version_added: "1.6"
   security_group_names:
     description:
       - A list of security group names to apply to the elb
-    require: false
+    required: false
     default: None
     version_added: "2.0"
   health_check:
     description:
       - An associative array of health check configuration settings (see example)
-    require: false
+    required: false
     default: None
   access_logs:
     description:
       - An associative array of access logs configuration settings (see example)
-    require: false
+    required: false
     default: None
     version_added: "2.0"
   subnets:
@@ -397,13 +398,16 @@ try:
     import boto.vpc
     from boto.ec2.elb.healthcheck import HealthCheck
     from boto.ec2.tag import Tag
-    from boto.regioninfo import RegionInfo
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
 
 import time
 import random
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, connect_to_aws, AnsibleAWSError
+from ansible.module_utils.ec2 import get_aws_connection_info
 
 def _throttleable_operation(max_retries):
     def _operation_wrapper(op):
@@ -577,13 +581,13 @@ class ElbManager(object):
 
             # instance state counts: InService or OutOfService
             if info['instance_health']:
-              for instance_state in info['instance_health']:
-                  if instance_state['state'] == "InService":
-                    info['in_service_count'] += 1
-                  elif instance_state['state'] == "OutOfService":
-                    info['out_of_service_count'] += 1
-                  else:
-                    info['unknown_instance_state_count'] += 1
+                for instance_state in info['instance_health']:
+                    if instance_state['state'] == "InService":
+                        info['in_service_count'] += 1
+                    elif instance_state['state'] == "OutOfService":
+                        info['out_of_service_count'] += 1
+                    else:
+                        info['unknown_instance_state_count'] += 1
 
             if check_elb.health_check:
                 info['health_check'] = {
@@ -607,7 +611,7 @@ class ElbManager(object):
                 info['listeners'] = []
 
             if self._check_attribute_support('connection_draining'):
-                info['connection_draining_timeout'] = self.elb_conn.get_lb_attribute(self.name, 'ConnectionDraining').timeout
+                info['connection_draining_timeout'] = int(self.elb_conn.get_lb_attribute(self.name, 'ConnectionDraining').timeout)
 
             if self._check_attribute_support('connecting_settings'):
                 info['idle_timeout'] = self.elb_conn.get_lb_attribute(self.name, 'ConnectingSettings').idle_timeout
@@ -633,7 +637,7 @@ class ElbManager(object):
 
         for x in range(0, max_retries):
             try:
-                result = self.elb_conn.get_all_lb_attributes(self.name)
+                self.elb_conn.get_all_lb_attributes(self.name)
             except (boto.exception.BotoServerError, StandardError) as e:
                 if "LoadBalancerNotFound" in e.code:
                     status_achieved = True
@@ -650,7 +654,7 @@ class ElbManager(object):
         status_achieved = False
 
         elb_interfaces = self.ec2_conn.get_all_network_interfaces(
-                    filters={'attachment.instance-owner-id': 'amazon-elb',
+            filters={'attachment.instance-owner-id': 'amazon-elb',
                         'description': 'ELB {0}'.format(self.name) })
 
         for x in range(0, max_retries):
@@ -886,7 +890,7 @@ class ElbManager(object):
                 self._disable_zones(zones_to_disable)
 
     def _set_security_groups(self):
-        if self.security_group_ids != None and set(self.elb.security_groups) != set(self.security_group_ids):
+        if self.security_group_ids is not None and set(self.elb.security_groups) != set(self.security_group_ids):
             self.elb_conn.apply_security_groups_to_lb(self.name, self.security_group_ids)
             self.changed = True
 
@@ -940,7 +944,7 @@ class ElbManager(object):
         attributes = self.elb.get_attributes()
         if self.access_logs:
             if 's3_location' not in self.access_logs:
-              self.module.fail_json(msg='s3_location information required')
+                self.module.fail_json(msg='s3_location information required')
 
             access_logs_config = {
                 "enabled": True,
@@ -951,7 +955,7 @@ class ElbManager(object):
 
             update_access_logs_config = False
             for attr, desired_value in access_logs_config.items():
-              if getattr(attributes.access_log, attr) != desired_value:
+                if getattr(attributes.access_log, attr) != desired_value:
                     setattr(attributes.access_log, attr, desired_value)
                     update_access_logs_config = True
             if update_access_logs_config:
@@ -1033,7 +1037,7 @@ class ElbManager(object):
                 policy = []
                 policy_type = 'LBCookieStickinessPolicyType'
 
-                if self.module.boolean(self.stickiness['enabled']) == True:
+                if self.module.boolean(self.stickiness['enabled']):
 
                     if 'expiration' not in self.stickiness:
                         self.module.fail_json(msg='expiration must be set when type is loadbalancer')
@@ -1050,7 +1054,7 @@ class ElbManager(object):
                     policy.append(self._policy_name(policy_attrs['type']))
 
                     self._set_stickiness_policy(elb_info, listeners_dict, policy, **policy_attrs)
-                elif self.module.boolean(self.stickiness['enabled']) == False:
+                elif not self.module.boolean(self.stickiness['enabled']):
                     if len(elb_info.policies.lb_cookie_stickiness_policies):
                         if elb_info.policies.lb_cookie_stickiness_policies[0].policy_name == self._policy_name(policy_type):
                             self.changed = True
@@ -1062,7 +1066,7 @@ class ElbManager(object):
             elif self.stickiness['type'] == 'application':
                 policy = []
                 policy_type = 'AppCookieStickinessPolicyType'
-                if self.module.boolean(self.stickiness['enabled']) == True:
+                if self.module.boolean(self.stickiness['enabled']):
 
                     if 'cookie' not in self.stickiness:
                         self.module.fail_json(msg='cookie must be set when type is application')
@@ -1076,7 +1080,7 @@ class ElbManager(object):
                     }
                     policy.append(self._policy_name(policy_attrs['type']))
                     self._set_stickiness_policy(elb_info, listeners_dict, policy, **policy_attrs)
-                elif self.module.boolean(self.stickiness['enabled']) == False:
+                elif not self.module.boolean(self.stickiness['enabled']):
                     if len(elb_info.policies.app_cookie_stickiness_policies):
                         if elb_info.policies.app_cookie_stickiness_policies[0].policy_name == self._policy_name(policy_type):
                             self.changed = True
@@ -1227,29 +1231,29 @@ class ElbManager(object):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            state={'required': True, 'choices': ['present', 'absent']},
-            name={'required': True},
-            listeners={'default': None, 'required': False, 'type': 'list'},
-            purge_listeners={'default': True, 'required': False, 'type': 'bool'},
-            instance_ids={'default': None, 'required': False, 'type': 'list'},
-            purge_instance_ids={'default': False, 'required': False, 'type': 'bool'},
-            zones={'default': None, 'required': False, 'type': 'list'},
-            purge_zones={'default': False, 'required': False, 'type': 'bool'},
-            security_group_ids={'default': None, 'required': False, 'type': 'list'},
-            security_group_names={'default': None, 'required': False, 'type': 'list'},
-            health_check={'default': None, 'required': False, 'type': 'dict'},
-            subnets={'default': None, 'required': False, 'type': 'list'},
-            purge_subnets={'default': False, 'required': False, 'type': 'bool'},
-            scheme={'default': 'internet-facing', 'required': False},
-            connection_draining_timeout={'default': None, 'required': False},
-            idle_timeout={'default': None, 'required': False},
-            cross_az_load_balancing={'default': None, 'required': False},
-            stickiness={'default': None, 'required': False, 'type': 'dict'},
-            access_logs={'default': None, 'required': False, 'type': 'dict'},
-            wait={'default': False, 'type': 'bool', 'required': False},
-            wait_timeout={'default': 60, 'type': 'int', 'required': False},
-            tags={'default': None, 'required': False, 'type': 'dict'}
-        )
+        state={'required': True, 'choices': ['present', 'absent']},
+        name={'required': True},
+        listeners={'default': None, 'required': False, 'type': 'list'},
+        purge_listeners={'default': True, 'required': False, 'type': 'bool'},
+        instance_ids={'default': None, 'required': False, 'type': 'list'},
+        purge_instance_ids={'default': False, 'required': False, 'type': 'bool'},
+        zones={'default': None, 'required': False, 'type': 'list'},
+        purge_zones={'default': False, 'required': False, 'type': 'bool'},
+        security_group_ids={'default': None, 'required': False, 'type': 'list'},
+        security_group_names={'default': None, 'required': False, 'type': 'list'},
+        health_check={'default': None, 'required': False, 'type': 'dict'},
+        subnets={'default': None, 'required': False, 'type': 'list'},
+        purge_subnets={'default': False, 'required': False, 'type': 'bool'},
+        scheme={'default': 'internet-facing', 'required': False},
+        connection_draining_timeout={'default': None, 'required': False, 'type': 'int'},
+        idle_timeout={'default': None, 'type': 'int', 'required': False},
+        cross_az_load_balancing={'default': None, 'type': 'bool', 'required': False},
+        stickiness={'default': None, 'required': False, 'type': 'dict'},
+        access_logs={'default': None, 'required': False, 'type': 'dict'},
+        wait={'default': False, 'type': 'bool', 'required': False},
+        wait_timeout={'default': 60, 'type': 'int', 'required': False},
+        tags={'default': None, 'required': False, 'type': 'dict'}
+    )
     )
 
     module = AnsibleModule(
@@ -1299,7 +1303,7 @@ def main():
     if security_group_names:
         security_group_ids = []
         try:
-            ec2 = ec2_connect(module)
+            ec2 = connect_to_aws(boto.ec2, region, **aws_connect_params)
             if subnets: # We have at least one subnet, ergo this is a VPC
                 vpc_conn = _get_vpc_connection(module=module, region=region, aws_connect_params=aws_connect_params)
                 vpc_id = vpc_conn.get_all_subnets([subnets[0]])[0].vpc_id
@@ -1350,9 +1354,6 @@ def main():
 
     module.exit_json(**ec2_facts_result)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

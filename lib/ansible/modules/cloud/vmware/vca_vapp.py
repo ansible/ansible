@@ -18,9 +18,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -137,12 +138,12 @@ EXAMPLES = '''
 - name: Creates a new vApp in a VCA instance
   vca_vapp:
     vapp_name: tower
-    state=present
-    template_name='Ubuntu Server 12.04 LTS (amd64 20150127)'
-    vdc_name=VDC1
-    instance_id=<your instance id here>
-    username=<your username here>
-    password=<your password here>
+    state: present
+    template_name: 'Ubuntu Server 12.04 LTS (amd64 20150127)'
+    vdc_name: VDC1
+    instance_id: '<your instance id here>'
+    username: '<your username here>'
+    password: '<your password here>'
 
 '''
 
@@ -188,6 +189,9 @@ def create(module):
     task = module.vca.create_vapp(vdc_name, vapp_name, template_name,
                                   catalog_name, network_name, network_mode,
                                   vm_name, vm_cpus, vm_memory, deploy, poweron)
+
+    if task is False:
+        module.fail('Failed to create vapp: ' + vapp_name)
 
     module.vca.block_until_completed(task)
 

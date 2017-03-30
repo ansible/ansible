@@ -16,22 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-import time
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
 
-try:
-    from novaclient.v1_1 import client as nova_client
-    try:
-        from neutronclient.neutron import client
-    except ImportError:
-        from quantumclient.quantum import client
-    from keystoneclient.v2_0 import client as ksclient
-    HAVE_DEPS = True
-except ImportError:
-    HAVE_DEPS = False
-
-ANSIBLE_METADATA = {'status': ['deprecated'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -110,6 +98,20 @@ EXAMPLES = '''
     internal_network_name: internal_network
 '''
 
+import time
+
+try:
+    from novaclient.v1_1 import client as nova_client
+    try:
+        from neutronclient.neutron import client
+    except ImportError:
+        from quantumclient.quantum import client
+    from keystoneclient.v2_0 import client as ksclient
+    HAVE_DEPS = True
+except ImportError:
+    HAVE_DEPS = False
+
+
 def _get_ksclient(module, kwargs):
     try:
         kclient = ksclient.Client(username=kwargs.get('login_username'),
@@ -136,8 +138,8 @@ def _get_neutron_client(module, kwargs):
     token = _ksclient.auth_token
     endpoint = _get_endpoint(module, _ksclient)
     kwargs = {
-            'token': token,
-            'endpoint_url': endpoint
+        'token': token,
+        'endpoint_url': endpoint
     }
     try:
         neutron = client.Client('2.0', **kwargs)
@@ -174,7 +176,7 @@ def _get_port_info(neutron, module, instance_id, internal_network_name=None):
         subnets = neutron.list_subnets(**kwargs)
         subnet_id = subnets['subnets'][0]['id']
     kwargs = {
-            'device_id': instance_id,
+        'device_id': instance_id,
     }
     try:
         ports = neutron.list_ports(**kwargs)
@@ -193,7 +195,7 @@ def _get_port_info(neutron, module, instance_id, internal_network_name=None):
 
 def _get_floating_ip(module, neutron, fixed_ip_address, network_name):
     kwargs = {
-            'fixed_ip_address': fixed_ip_address
+        'fixed_ip_address': fixed_ip_address
     }
     try:
         ips = neutron.list_floatingips(**kwargs)
@@ -214,9 +216,9 @@ def _check_ips_network(neutron, net_id, network_name):
 
 def _create_floating_ip(neutron, module, port_id, net_id, fixed_ip):
     kwargs = {
-            'port_id': port_id,
-            'floating_network_id': net_id,
-            'fixed_ip_address': fixed_ip
+        'port_id': port_id,
+        'floating_network_id': net_id,
+        'fixed_ip_address': fixed_ip
     }
     try:
         result = neutron.create_floatingip({'floatingip': kwargs})
@@ -231,7 +233,7 @@ def _get_net_id(neutron, module):
     try:
         networks = neutron.list_networks(**kwargs)
     except Exception as e:
-        module.fail_json("Error in listing neutron networks: %s" % e.message)
+        module.fail_json(msg="Error in listing neutron networks: %s" % e.message)
     if not networks['networks']:
         return None
     return networks['networks'][0]['id']
@@ -251,10 +253,10 @@ def main():
 
     argument_spec = openstack_argument_spec()
     argument_spec.update(dict(
-            network_name                    = dict(required=True),
-            instance_name                   = dict(required=True),
-            state                           = dict(default='present', choices=['absent', 'present']),
-            internal_network_name           = dict(default=None),
+        network_name                    = dict(required=True),
+        instance_name                   = dict(required=True),
+        state                           = dict(default='present', choices=['absent', 'present']),
+        internal_network_name           = dict(default=None),
     ))
     module = AnsibleModule(argument_spec=argument_spec)
 

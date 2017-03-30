@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -48,7 +49,11 @@ options:
   password:
     description:
       - set the user's password, before 1.4 this was required.
-      - "When passing an encrypted password, the encrypted parameter must also be true, and it must be generated with the format C('str[\\"md5\\"] + md5[ password + username ]'), resulting in a total of 35 characters.  An easy way to do this is: C(echo \\"md5`echo -n \\"verysecretpasswordJOE\\" | md5`\\"). Note that if encrypted is set, the stored password will be hashed whether or not it is pre-encrypted."
+      - >
+        When passing an encrypted password, the encrypted parameter must also be true, and it must be generated with the format
+        C('str[\\"md5\\"] + md5[ password + username ]'), resulting in a total of 35 characters.  An easy way to do this is:
+        C(echo \\"md5`echo -n \\"verysecretpasswordJOE\\" | md5`\\"). Note that if encrypted is set, the stored password will be hashed whether or not
+        it is pre-encrypted.
     required: false
     default: null
   db:
@@ -107,7 +112,8 @@ options:
     choices: [ "present", "absent" ]
   encrypted:
     description:
-      - whether the password is stored hashed in the database. boolean. Passwords can be passed already hashed or unhashed, and postgresql ensures the stored password is hashed when encrypted is set.
+      - whether the password is stored hashed in the database. boolean. Passwords can be passed already hashed or unhashed, and postgresql ensures the
+        stored password is hashed when encrypted is set.
     required: false
     default: false
     version_added: '1.4'
@@ -119,11 +125,28 @@ options:
     version_added: '1.4'
   no_password_changes:
     description:
-      - if C(yes), don't inspect database for password changes. Effective when C(pg_authid) is not accessible (such as AWS RDS). Otherwise, make password changes as necessary.
+      - if C(yes), don't inspect database for password changes. Effective when C(pg_authid) is not accessible (such as AWS RDS). Otherwise, make
+        password changes as necessary.
     required: false
     default: 'no'
     choices: [ "yes", "no" ]
     version_added: '2.0'
+  ssl_mode:
+    description:
+      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+      - Default of C(prefer) matches libpq default.
+    required: false
+    default: prefer
+    choices: [disable, allow, prefer, require, verify-ca, verify-full]
+    version_added: '2.3'
+  ssl_rootcert:
+    description:
+      - Specifies the name of a file containing SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be
+        verified to be signed by one of these authorities.
+    required: false
+    default: null
+    version_added: '2.3'
 notes:
    - The default authentication assumes that you are either logging in as or
      sudo'ing to the postgres account on the host.
@@ -140,6 +163,7 @@ notes:
    - If you specify PUBLIC as the user, then the privilege changes will apply
      to all users. You may not specify password or role_attr_flags when the
      PUBLIC user is specified.
+   - The ssl_rootcert parameter requires at least Postgres version 8.4 and I(psycopg2) version 2.4.3.
 requirements: [ psycopg2 ]
 author: "Ansible Core Team"
 '''
@@ -174,7 +198,7 @@ EXAMPLES = '''
     state: absent
 
 # Example privileges string format
-INSERT,UPDATE/table:SELECT/anothertable:ALL
+# INSERT,UPDATE/table:SELECT/anothertable:ALL
 
 # Remove an existing user's password
 - postgresql_user:
@@ -314,6 +338,56 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
 
         try:
             cursor.execute(' '.join(alter), query_password_data)
+        except psycopg2.InternalError:
+            e = get_exception()
+            if e.pgcode == '25006':
+                # Handle errors due to read-only transactions indicated by pgcode 25006
+                # ERROR:  cannot execute ALTER ROLE in a read-only transaction
+                changed = False
+                module.fail_json(msg=e.pgerror)
+                return changed
+            else:
+                raise psycopg2.InternalError(e)
+
+        # Grab new role attributes.
+        cursor.execute(select, {"user": user})
+        new_role_attrs = cursor.fetchone()
+
+        # Detect any differences between current_ and new_role_attrs.
+        for i in range(len(current_role_attrs)):
+            if current_role_attrs[i] != new_role_attrs[i]:
+                changed = True
+
+    elif no_password_changes and role_attr_flags != '':
+        # Grab role information from pg_roles instead of pg_authid
+        select = "SELECT * FROM pg_roles where rolname=%(user)s"
+        cursor.execute(select, {"user": user})
+        # Grab current role attributes.
+        current_role_attrs = cursor.fetchone()
+
+        role_attr_flags_changing = False
+
+        if role_attr_flags:
+            role_attr_flags_dict = {}
+            for r in role_attr_flags.split(' '):
+                if r.startswith('NO'):
+                    role_attr_flags_dict[r.replace('NO', '', 1)] = False
+                else:
+                    role_attr_flags_dict[r] = True
+
+            for role_attr_name, role_attr_value in role_attr_flags_dict.items():
+                if current_role_attrs[PRIV_TO_AUTHID_COLUMN[role_attr_name]] != role_attr_value:
+                    role_attr_flags_changing = True
+
+        if not role_attr_flags_changing:
+            return False
+
+        alter = ['ALTER USER %(user)s' % {"user": pg_quote_identifier(user, 'role')}]
+        if role_attr_flags:
+            alter.append('WITH %s' % role_attr_flags)
+
+        try:
+            cursor.execute(' '.join(alter))
         except psycopg2.InternalError:
             e = get_exception()
             if e.pgcode == '25006':
@@ -580,7 +654,9 @@ def main():
             role_attr_flags=dict(default=''),
             encrypted=dict(type='bool', default='no'),
             no_password_changes=dict(type='bool', default='no'),
-            expires=dict(default=None)
+            expires=dict(default=None),
+            ssl_mode=dict(default='prefer', choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+            ssl_rootcert=dict(default=None)
         ),
         supports_check_mode = True
     )
@@ -605,6 +681,7 @@ def main():
     else:
         encrypted = "UNENCRYPTED"
     expires = module.params["expires"]
+    sslrootcert = module.params["ssl_rootcert"]
 
     if not postgresqldb_found:
         module.fail_json(msg="the python psycopg2 module is required")
@@ -617,19 +694,31 @@ def main():
         "login_user":"user",
         "login_password":"password",
         "port":"port",
-        "db":"database"
+        "db":"database",
+        "ssl_mode":"sslmode",
+        "ssl_rootcert":"sslrootcert"
     }
     kw = dict( (params_map[k], v) for (k, v) in iteritems(module.params)
-              if k in params_map and v != "" )
+              if k in params_map and v != "" and v is not None)
 
     # If a login_unix_socket is specified, incorporate it here.
     is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
     if is_localhost and module.params["login_unix_socket"] != "":
         kw["host"] = module.params["login_unix_socket"]
 
+    if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
+        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
+
     try:
         db_connection = psycopg2.connect(**kw)
         cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    except TypeError:
+        e = get_exception()
+        if 'sslrootcert' in e.args[0]:
+            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
+        module.fail_json(msg="unable to connect to database: %s" % e)
+
     except Exception:
         e = get_exception()
         module.fail_json(msg="unable to connect to database: %s" % e)
@@ -658,7 +747,7 @@ def main():
             module.fail_json(msg=str(e))
     else:
         if user_exists(cursor, user):
-            if  module.check_mode:
+            if module.check_mode:
                 changed = True
                 kw['user_removed'] = True
             else:

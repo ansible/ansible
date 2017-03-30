@@ -16,19 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    try:
-        from neutronclient.neutron import client
-    except ImportError:
-        from quantumclient.quantum import client
-    from keystoneclient.v2_0 import client as ksclient
-    HAVE_DEPS = True
-except ImportError:
-    HAVE_DEPS = False
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['deprecated'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -103,9 +94,19 @@ EXAMPLES = '''
     subnet_name: t1subnet
 '''
 
+try:
+    try:
+        from neutronclient.neutron import client
+    except ImportError:
+        from quantumclient.quantum import client
+    from keystoneclient.v2_0 import client as ksclient
+    HAVE_DEPS = True
+except ImportError:
+    HAVE_DEPS = False
 
 _os_keystone = None
 _os_tenant_id = None
+
 
 def _get_ksclient(module, kwargs):
     try:
@@ -132,8 +133,8 @@ def _get_neutron_client(module, kwargs):
     token = _ksclient.auth_token
     endpoint = _get_endpoint(module, _ksclient)
     kwargs = {
-            'token': token,
-            'endpoint_url': endpoint
+        'token': token,
+        'endpoint_url': endpoint
     }
     try:
         neutron = client.Client('2.0', **kwargs)
@@ -171,8 +172,8 @@ def _get_router_id(module, neutron):
 def _get_subnet_id(module, neutron):
     subnet_id = None
     kwargs = {
-            'tenant_id': _os_tenant_id,
-            'name': module.params['subnet_name'],
+        'tenant_id': _os_tenant_id,
+        'name': module.params['subnet_name'],
     }
     try:
         subnets = neutron.list_subnets(**kwargs)
@@ -184,8 +185,8 @@ def _get_subnet_id(module, neutron):
 
 def _get_port_id(neutron, module, router_id, subnet_id):
     kwargs = {
-            'tenant_id': _os_tenant_id,
-            'device_id': router_id,
+        'tenant_id': _os_tenant_id,
+        'device_id': router_id,
     }
     try:
         ports = neutron.list_ports(**kwargs)
@@ -193,7 +194,7 @@ def _get_port_id(neutron, module, router_id, subnet_id):
         module.fail_json( msg = "Error in listing ports: %s" % e.message)
     if not ports['ports']:
         return None
-    for port in  ports['ports']:
+    for port in ports['ports']:
         for subnet in port['fixed_ips']:
             if subnet['subnet_id'] == subnet_id:
                 return port['id']
@@ -209,7 +210,7 @@ def _add_interface_router(neutron, module, router_id, subnet_id):
         module.fail_json(msg = "Error in adding interface to router: %s" % e.message)
     return True
 
-def  _remove_interface_router(neutron, module, router_id, subnet_id):
+def _remove_interface_router(neutron, module, router_id, subnet_id):
     kwargs = {
         'subnet_id': subnet_id
     }
@@ -222,10 +223,10 @@ def  _remove_interface_router(neutron, module, router_id, subnet_id):
 def main():
     argument_spec = openstack_argument_spec()
     argument_spec.update(dict(
-            router_name                     = dict(required=True),
-            subnet_name                     = dict(required=True),
-            tenant_name                     = dict(default=None),
-            state                           = dict(default='present', choices=['absent', 'present']),
+        router_name                     = dict(required=True),
+        subnet_name                     = dict(required=True),
+        tenant_name                     = dict(default=None),
+        state                           = dict(default='present', choices=['absent', 'present']),
     ))
     module = AnsibleModule(argument_spec=argument_spec)
     if not HAVE_DEPS:

@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 module: openwrt_init
@@ -110,13 +111,13 @@ def main():
     # init
     module = AnsibleModule(
         argument_spec = dict(
-                name = dict(required=True, type='str', aliases=['service']),
-                state = dict(choices=['started', 'stopped', 'restarted', 'reloaded'], type='str'),
-                enabled = dict(type='bool'),
-                pattern = dict(required=False, default=None),
-            ),
-            supports_check_mode=True,
-            required_one_of=[['state', 'enabled']],
+            name = dict(required=True, type='str', aliases=['service']),
+            state = dict(choices=['started', 'stopped', 'restarted', 'reloaded'], type='str'),
+            enabled = dict(type='bool'),
+            pattern = dict(required=False, default=None),
+        ),
+        supports_check_mode=True,
+        required_one_of=[['state', 'enabled']],
         )
 
     # initialize

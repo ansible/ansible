@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -52,6 +53,20 @@ options:
      - if false, the ssh host key of the device is not checked
     default: true
     required: false
+  look_for_keys:
+    description:
+     - if true, enables looking in the usual locations for ssh keys (e.g. ~/.ssh/id_*)
+     - if false, disables looking for ssh keys
+    default: true
+    required: false
+    version_added: "2.3"
+  allow_agent:
+    description:
+     - if true, enables querying SSH agent (if found) for keys
+     - if false, disables querying the SSH agent for ssh keys
+    default: true
+    required: false
+    version_added: "2.3"
   username:
     description:
      - the username to authenticate with
@@ -142,7 +157,7 @@ def netconf_edit_config(m, xml, commit, retkwargs):
         m.edit_config(target=datastore, config=xml)
         config_after = m.get_config(source=datastore)
         changed = config_before.data_xml != config_after.data_xml
-        if changed and commit:
+        if changed and commit and ":candidate" in m.server_capabilities:
             if ":confirmed-commit" in m.server_capabilities:
                 m.commit(confirmed=True)
                 m.commit()
@@ -164,6 +179,8 @@ def main():
             host=dict(type='str', required=True),
             port=dict(type='int', default=830),
             hostkey_verify=dict(type='bool', default=True),
+            allow_agent=dict(type='bool', default=True),
+            look_for_keys=dict(type='bool', default=True),
             username=dict(type='str', required=True, no_log=True),
             password=dict(type='str', required=True, no_log=True),
             xml=dict(type='str', required=True),
@@ -188,6 +205,8 @@ def main():
         host=module.params['host'],
         port=module.params['port'],
         hostkey_verify=module.params['hostkey_verify'],
+        allow_agent=module.params['allow_agent'],
+        look_for_keys=module.params['look_for_keys'],
         username=module.params['username'],
         password=module.params['password'],
     )

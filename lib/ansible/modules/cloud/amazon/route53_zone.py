@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 module: route53_zone
@@ -138,11 +139,11 @@ from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            zone=dict(required=True),
-            state=dict(default='present', choices=['present', 'absent']),
-            vpc_id=dict(default=None),
-            vpc_region=dict(default=None),
-            comment=dict(default='')))
+        zone=dict(required=True),
+        state=dict(default='present', choices=['present', 'absent']),
+        vpc_id=dict(default=None),
+        vpc_region=dict(default=None),
+        comment=dict(default='')))
     module = AnsibleModule(argument_spec=argument_spec)
 
     if not HAS_BOTO:

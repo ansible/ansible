@@ -21,9 +21,10 @@ You should have received a copy of the GNU General Public License
 along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -81,7 +82,7 @@ RETURN = '''
 
 EXAMPLES = '''
 # Create a new server
-- a10_server: 
+- a10_server:
     host: a10.mydomain.com
     username: myadmin
     password: mypassword
@@ -204,7 +205,7 @@ def main():
 
     changed = False
     if operation == 'create':
-        if slb_server_exists == False:
+        if slb_server_exists is False:
             result = axapi_call_v3(module, axapi_base_url+'slb/server/', method='POST', body=json.dumps(json_post), signature=signature)
             if axapi_failure(result):
                 module.fail_json(msg="failed to create the server: %s" % result['response']['err']['msg'])

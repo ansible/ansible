@@ -43,7 +43,7 @@
 
 - name: start SimpleHTTPServer
   shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ output_dir}}/testserver.py {{ http_port }}
-  async: 60 # this test set takes ~15 seconds to run
+  async: 120 # this test set can take ~1m to run on FreeBSD (via Shippable)
   poll: 0
 
 - wait_for: port={{ http_port }}
@@ -180,7 +180,8 @@
     url: 'http://{{ httpbin_host }}/digest-auth/auth/user/passwd'
     user: user
     password: passwd
-    HEADER_Cookie: "fake=fake_value"
+    headers:
+      Cookie: "fake=fake_value"
 
 - name: test PUT
   uri:
@@ -197,7 +198,7 @@
 - name: Assert we got an allow header
   assert:
     that:
-      - 'result.allow|default("") == "HEAD, OPTIONS, GET"'
+      - 'result.allow.split(", ")|sort == ["GET", "HEAD", "OPTIONS"]'
 
 # Ubuntu12.04 doesn't have python-urllib3, this makes handling required dependencies a pain across all variations
 # We'll use this to just skip 12.04 on those tests.  We should be sufficiently covered with other OSes and versions
@@ -280,3 +281,16 @@
     status_code: 202
     method: POST
     body: foo
+
+- name: Validate body_format json does not override content-type in 2.3 or newer
+  uri:
+    url: "https://{{ httpbin_host }}/post"
+    method: POST
+    body:
+      foo: bar
+    body_format: json
+    headers:
+      'Content-Type': 'text/json'
+    return_content: true
+  register: result
+  failed_when: result.json.headers['Content-Type'] != 'text/json'

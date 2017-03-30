@@ -19,9 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -29,7 +30,7 @@ module: command
 short_description: Executes a command on a remote node
 version_added: historical
 description:
-     - The M(command) module takes the command name followed by a list of space-delimited arguments.
+     - The C(command) module takes the command name followed by a list of space-delimited arguments.
      - The given command will be executed on all selected nodes. It will not be
        processed through the shell, so variables like C($HOME) and operations
        like C("<"), C(">"), C("|"), C(";") and C("&") will not work (use the M(shell)
@@ -72,10 +73,10 @@ options:
     required: false
 notes:
     -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), etc), you actually want the M(shell) module instead.
-       The M(command) module is much more secure as it's not affected by the user's environment.
+       The C(command) module is much more secure as it's not affected by the user's environment.
     -  " C(creates), C(removes), and C(chdir) can be specified after the command.
        For instance, if you only want to run a command if a certain file does not exist, use this."
-author: 
+author:
     - Ansible Core Team
     - Michael DeHaan
 '''
@@ -95,7 +96,7 @@ EXAMPLES = '''
     chdir: somedir/
     creates: /path/to/database
 
-- name: safely use tempalated variable to run command. Always use the quote filter to avoid injection issues.
+- name: safely use templated variable to run command. Always use the quote filter to avoid injection issues.
   command: cat {{ myfile|quote }}
   register: myoutput
 '''
@@ -136,13 +137,13 @@ def main():
     # hence don't copy this one if you are looking to build others!
     module = AnsibleModule(
         argument_spec=dict(
-          _raw_params = dict(),
-          _uses_shell = dict(type='bool', default=False),
-          chdir = dict(type='path'),
-          executable = dict(),
-          creates = dict(type='path'),
-          removes = dict(type='path'),
-          warn = dict(type='bool', default=True),
+            _raw_params = dict(),
+            _uses_shell = dict(type='bool', default=False),
+            chdir = dict(type='path'),
+            executable = dict(),
+            creates = dict(type='path'),
+            removes = dict(type='path'),
+            warn = dict(type='bool', default=True),
         )
     )
 

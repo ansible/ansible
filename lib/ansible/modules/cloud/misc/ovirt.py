@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -27,7 +28,8 @@ module: ovirt
 author: "Vincent Van der Kussen (@vincentvdk)"
 short_description: oVirt/RHEV platform management
 description:
-    - allows you to create new instances, either from scratch or an image, in addition to deleting or stopping instances on the oVirt/RHEV platform
+    - This module only supports oVirt/RHEV version 3. A newer module M(ovirt_vms) supports oVirt/RHV version 4.
+    - Allows you to create new instances, either from scratch or an image, in addition to deleting or stopping instances on the oVirt/RHEV platform.
 version_added: "1.4"
 options:
   user:
@@ -290,7 +292,9 @@ def conn(url, user, password):
 def create_vm(conn, vmtype, vmname, zone, vmdisk_size, vmcpus, vmnic, vmnetwork, vmmem, vmdisk_alloc, sdomain, vmcores, vmos, vmdisk_int):
     if vmdisk_alloc == 'thin':
         # define VM params
-        vmparams = params.VM(name=vmname,cluster=conn.clusters.get(name=zone),os=params.OperatingSystem(type_=vmos),template=conn.templates.get(name="Blank"),memory=1024 * 1024 * int(vmmem),cpu=params.CPU(topology=params.CpuTopology(cores=int(vmcores))), type_=vmtype)
+        vmparams = params.VM(name=vmname, cluster=conn.clusters.get(name=zone), os=params.OperatingSystem(type_=vmos),
+                             template=conn.templates.get(name="Blank"), memory=1024 * 1024 * int(vmmem),
+                             cpu=params.CPU(topology=params.CpuTopology(cores=int(vmcores))), type_=vmtype)
         # define disk params
         vmdisk= params.Disk(size=1024 * 1024 * 1024 * int(vmdisk_size), wipe_after_delete=True, sparse=True, interface=vmdisk_int, type_="System", format='cow',
         storage_domains=params.StorageDomains(storage_domain=[conn.storagedomains.get(name=sdomain)]))
@@ -299,14 +303,16 @@ def create_vm(conn, vmtype, vmname, zone, vmdisk_size, vmcpus, vmnic, vmnetwork,
         nic_net1 = params.NIC(name='nic1', network=network_net, interface='virtio')
     elif vmdisk_alloc == 'preallocated':
         # define VM params
-        vmparams = params.VM(name=vmname,cluster=conn.clusters.get(name=zone),os=params.OperatingSystem(type_=vmos),template=conn.templates.get(name="Blank"),memory=1024 * 1024 * int(vmmem),cpu=params.CPU(topology=params.CpuTopology(cores=int(vmcores))) ,type_=vmtype)
+        vmparams = params.VM(name=vmname, cluster=conn.clusters.get(name=zone), os=params.OperatingSystem(type_=vmos),
+                             template=conn.templates.get(name="Blank"), memory=1024 * 1024 * int(vmmem),
+                             cpu=params.CPU(topology=params.CpuTopology(cores=int(vmcores))) ,type_=vmtype)
         # define disk params
-        vmdisk= params.Disk(size=1024 * 1024 * 1024 * int(vmdisk_size), wipe_after_delete=True, sparse=False, interface=vmdisk_int, type_="System", format='raw',
-        storage_domains=params.StorageDomains(storage_domain=[conn.storagedomains.get(name=sdomain)]))
+        vmdisk= params.Disk(size=1024 * 1024 * 1024 * int(vmdisk_size), wipe_after_delete=True, sparse=False, interface=vmdisk_int, type_="System",
+                            format='raw', storage_domains=params.StorageDomains(storage_domain=[conn.storagedomains.get(name=sdomain)]))
         # define network parameters
         network_net = params.Network(name=vmnetwork)
         nic_net1 = params.NIC(name=vmnic, network=network_net, interface='virtio')
-        
+
     try:
         conn.vms.add(vmparams)
     except:
@@ -382,7 +388,7 @@ def vm_status(conn, vmname):
 # Get VM object and return it's name if object exists
 def get_vm(conn, vmname):
     vm = conn.vms.get(name=vmname)
-    if vm == None:
+    if vm is None:
         name = "empty"
     else:
         name = vm.get_name()
@@ -446,7 +452,7 @@ def main():
     vmcpus        = module.params['instance_cpus']      # number of cpu
     vmnic         = module.params['instance_nic']       # network interface
     vmnetwork     = module.params['instance_network']   # logical network
-    vmmem         = module.params['instance_mem']       # mem size 
+    vmmem         = module.params['instance_mem']       # mem size
     vmdisk_alloc  = module.params['disk_alloc']         # thin, preallocated
     vmdisk_int    = module.params['disk_int']           # disk interface virtio or ide
     vmos          = module.params['instance_os']        # Operating System
@@ -502,7 +508,7 @@ def main():
         else:
             vm_stop(c, vmname)
             module.exit_json(changed=True, msg="VM %s is shutting down" % vmname)
-    
+
     if state == 'restart':
         if vm_status(c, vmname) == 'up':
             vm_restart(c, vmname)

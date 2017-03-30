@@ -2,16 +2,23 @@
 
 set -o pipefail
 
-add-apt-repository 'ppa:ubuntu-toolchain-r/test'
-add-apt-repository 'ppa:jonathonf/python-3.6'
+declare -a args
+IFS='/:' read -ra args <<< "${TEST}"
 
-apt-get update -qq
-apt-get install -qq \
-    g++-4.9 \
-    python3.6-dev \
+version="${args[1]}"
 
-ln -sf x86_64-linux-gnu-gcc-4.9 /usr/bin/x86_64-linux-gnu-gcc
+if [ "${version}" = "3.6" ]; then
+    retry.py add-apt-repository 'ppa:ubuntu-toolchain-r/test'
+    retry.py add-apt-repository 'ppa:fkrull/deadsnakes'
 
-pip install tox --disable-pip-version-check
+    retry.py apt-get update -qq
+    retry.py apt-get install -qq \
+        g++-4.9 \
+        python3.6-dev \
 
-ansible-test units --color -v --tox --coverage
+    ln -sf x86_64-linux-gnu-gcc-4.9 /usr/bin/x86_64-linux-gnu-gcc
+fi
+
+retry.py pip install tox --disable-pip-version-check
+
+ansible-test units --color -v --tox --coverage --python "${version}"

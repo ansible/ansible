@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -347,13 +348,13 @@ def main():
 
     if inline_data:
         if not isinstance(inline_data, dict) and not isinstance(inline_data, list):
-            data = yaml.load(inline_data)
+            data = yaml.safe_load(inline_data)
         else:
             data = inline_data
     else:
         try:
             f = open(file_reference, "r")
-            data = [x for x in yaml.load_all(f)]
+            data = [x for x in yaml.safe_load_all(f)]
             f.close()
             if not data:
                 module.fail_json(msg="No valid data could be found.")

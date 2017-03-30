@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -41,9 +42,7 @@ options:
     api_url:
         required: true
         description:
-        - The url to the SANtricity WebServices Proxy or embedded REST API.
-        example:
-        - https://prod-1.wahoo.acme.com/devmgr/v2
+        - The url to the SANtricity WebServices Proxy or embedded REST API, for example C(https://prod-1.wahoo.acme.com/devmgr/v2).
     validate_certs:
         required: false
         default: true
@@ -60,7 +59,8 @@ options:
         required: True
     host_type_index:
         description:
-            - The index that maps to host type you wish to create. It is recommended to use the M(netapp_e_facts) module to gather this information. Alternatively you can use the WSP portal to retrieve the information.
+            - The index that maps to host type you wish to create. It is recommended to use the M(netapp_e_facts) module to gather this information.
+              Alternatively you can use the WSP portal to retrieve the information.
         required: True
     ports:
         description:
@@ -289,7 +289,9 @@ class Host(object):
                         needs_update = True
                     else:
                         self.module.fail_json(
-                            msg="The port you specified:\n%s\n is associated with a different host. Specify force_port as True or try a different port spec" % arg_port)
+                            msg="The port you specified:\n%s\n is associated with a different host. Specify force_port as True or try a different "
+                                "port spec" % arg_port
+                        )
 
         return needs_update
 

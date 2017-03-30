@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -200,12 +201,14 @@ def main():
                 ( 'x-max-length' not in response['arguments'] and module.params['max_length'] is None )
             ) and
             (
-                ( 'x-dead-letter-exchange' in response['arguments'] and response['arguments']['x-dead-letter-exchange'] == module.params['dead_letter_exchange'] ) or
-                ( 'x-dead-letter-exchange' not in response['arguments'] and module.params['dead_letter_exchange'] is None )
+                ('x-dead-letter-exchange' in response['arguments'] and
+                 response['arguments']['x-dead-letter-exchange'] == module.params['dead_letter_exchange']) or
+                ('x-dead-letter-exchange' not in response['arguments'] and module.params['dead_letter_exchange'] is None)
             ) and
             (
-                ( 'x-dead-letter-routing-key' in response['arguments'] and response['arguments']['x-dead-letter-routing-key'] == module.params['dead_letter_routing_key'] ) or
-                ( 'x-dead-letter-routing-key' not in response['arguments'] and module.params['dead_letter_routing_key'] is None )
+                ('x-dead-letter-routing-key' in response['arguments'] and
+                 response['arguments']['x-dead-letter-routing-key'] == module.params['dead_letter_routing_key']) or
+                ('x-dead-letter-routing-key' not in response['arguments'] and module.params['dead_letter_routing_key'] is None)
             )
         ):
             module.fail_json(
@@ -237,15 +240,15 @@ def main():
     if change_required:
         if module.params['state'] == 'present':
             r = requests.put(
-                    url,
-                    auth = (module.params['login_user'],module.params['login_password']),
-                    headers = { "content-type": "application/json"},
-                    data = json.dumps({
-                        "durable": module.params['durable'],
-                        "auto_delete": module.params['auto_delete'],
-                        "arguments": module.params['arguments']
+                url,
+                auth = (module.params['login_user'],module.params['login_password']),
+                headers = { "content-type": "application/json"},
+                data = json.dumps({
+                    "durable": module.params['durable'],
+                    "auto_delete": module.params['auto_delete'],
+                    "arguments": module.params['arguments']
                     })
-                )
+            )
         elif module.params['state'] == 'absent':
             r = requests.delete( url, auth = (module.params['login_user'],module.params['login_password']))
 

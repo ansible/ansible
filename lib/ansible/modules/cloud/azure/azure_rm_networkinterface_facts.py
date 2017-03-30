@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -119,7 +120,7 @@ azure_networkinterfaces:
         "tags": {},
         "type": "Microsoft.Network/networkInterfaces"
     }]
-'''
+'''  # NOQA
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.azure_rm_common import *

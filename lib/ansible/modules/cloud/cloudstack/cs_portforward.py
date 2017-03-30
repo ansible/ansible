@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -84,6 +85,18 @@ options:
       - VM guest NIC secondary IP address for the port forwarding rule.
     required: false
     default: false
+  network:
+    description:
+      - Name of the network.
+    required: false
+    default: null
+    version_added: "2.3"
+  vpc:
+    description:
+      - Name of the VPC.
+    required: false
+    default: null
+    version_added: "2.3"
   domain:
     description:
       - Domain the C(vm) is related to.
@@ -205,6 +218,18 @@ vm_guest_ip:
   returned: success
   type: string
   sample: 10.101.65.152
+vpc:
+  description: Name of the VPC.
+  version_added: "2.3"
+  returned: success
+  type: string
+  sample: my_vpc
+network:
+  description: Name of the network.
+  version_added: "2.3"
+  returned: success
+  type: string
+  sample: dmz
 '''
 
 # import cloudstack common
@@ -250,8 +275,8 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
 
             if portforwarding_rules and 'portforwardingrule' in portforwarding_rules:
                 for rule in portforwarding_rules['portforwardingrule']:
-                    if protocol == rule['protocol'] \
-                        and public_port == int(rule['publicport']):
+                    if (protocol == rule['protocol'] and
+                            public_port == int(rule['publicport'])):
                         self.portforwarding_rule = rule
                         break
         return self.portforwarding_rule
@@ -279,6 +304,7 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
         args['virtualmachineid']    = self.get_vm(key='id')
         args['account']             = self.get_account(key='name')
         args['domainid']            = self.get_domain(key='id')
+        args['networkid']           = self.get_network(key='id')
 
         portforwarding_rule = None
         self.result['changed'] = True
@@ -300,6 +326,7 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
         args['vmguestip']           = self.get_vm_guest_ip()
         args['ipaddressid']         = self.get_ip_address(key='id')
         args['virtualmachineid']    = self.get_vm(key='id')
+        args['networkid']           = self.get_network(key='id')
 
         if self.has_changed(args, portforwarding_rule):
             self.result['changed'] = True
@@ -332,8 +359,16 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
 
     def get_result(self, portforwarding_rule):
         super(AnsibleCloudStackPortforwarding, self).get_result(portforwarding_rule)
+
+        network_name = self.get_network(key='name')
+        if network_name:
+            self.result['network'] = network_name
+
+        vpc_name = self.get_vpc(key='name')
+        if vpc_name:
+            self.result['vpc'] = vpc_name
+
         if portforwarding_rule:
-            # Bad bad API does not always return int when it should.
             for search_key, return_key in self.returns_to_int.items():
                 if search_key in portforwarding_rule:
                     self.result[return_key] = int(portforwarding_rule[search_key])
@@ -353,6 +388,8 @@ def main():
         open_firewall = dict(type='bool', default=False),
         vm_guest_ip = dict(default=None),
         vm = dict(default=None),
+        vpc = dict(default=None),
+        network = dict(default=None),
         zone = dict(default=None),
         domain = dict(default=None),
         account = dict(default=None),

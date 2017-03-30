@@ -46,12 +46,12 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
     junk = [u"single line of junk", u"line 1/2 of junk\nline 2/2 of junk"]
 
     unparsable_cases = (
-            u'No json here',
-            u'"olá": "mundo"',
-            u'{"No json": "ending"',
-            u'{"wrong": "ending"]',
-            u'["wrong": "ending"}',
-            )
+        u'No json here',
+        u'"olá": "mundo"',
+        u'{"No json": "ending"',
+        u'{"wrong": "ending"]',
+        u'["wrong": "ending"}',
+        )
 
     def test_just_json(self):
         for i in self.all_inputs:

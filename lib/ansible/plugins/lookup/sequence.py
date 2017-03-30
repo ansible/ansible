@@ -19,10 +19,11 @@ __metaclass__ = type
 
 from re import compile as re_compile, IGNORECASE
 
-from ansible.compat.six.moves import xrange
 from ansible.errors import AnsibleError
+from ansible.module_utils.six.moves import xrange
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
+
 
 # shortcut format
 NUM = "(0?x?[0-9a-f]+)"
@@ -98,7 +99,7 @@ class LookupModule(LookupBase):
             except ValueError:
                 raise AnsibleError(
                     "can't parse arg %s=%r as integer"
-                        % (arg, arg_raw)
+                    % (arg, arg_raw)
                 )
         if 'format' in args:
             self.format = args.pop("format")
@@ -140,6 +141,8 @@ class LookupModule(LookupBase):
             self.stride = stride
         if format is not None:
             self.format = format
+
+        return True
 
     def sanity_check(self):
         if self.count is None and self.end is None:

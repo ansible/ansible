@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -57,7 +58,8 @@ options:
 '''
 
 EXAMPLES = '''
-Simple Example:
+---
+# Simple Example:
 
 - name: "Create Product"
   local_action:
@@ -69,9 +71,8 @@ Simple Example:
       params:
         name: "Centos 7"
 
-Abstraction Example:
-
-katello.yml
+# Abstraction Example:
+# katello.yml
 ---
 - name: "{{ name }}"
   local_action:
@@ -82,7 +83,7 @@ katello.yml
       entity: "{{ entity }}"
       params: "{{ params }}"
 
-tasks.yml
+# tasks.yml
 ---
 - include: katello.yml
   vars:
@@ -243,9 +244,9 @@ class NailGun(object):
             return True
         except Exception:
             e = get_exception()
-            
+
             if "Import is the same as existing data" in e.message:
-                return True
+                return False
             else:
                 self._module.fail_json(msg="Manifest import failed with %s" % e)
 
@@ -263,7 +264,7 @@ class NailGun(object):
             product.create()
 
         return True
-        
+
     def sync_product(self, params):
         org = self.find_organization(params['organization'])
         product = self.find_product(params['name'], org.name)
@@ -287,7 +288,7 @@ class NailGun(object):
             repository.create()
 
         return True
-        
+
     def sync_repository(self, params):
         org = self.find_organization(params['organization'])
         repository = self.find_repository(params['name'], params['product'], org.name)
@@ -308,7 +309,7 @@ class NailGun(object):
             formatted_name = [params['name'].replace('(', '').replace(')', '')]
             formatted_name.append(params['basearch'])
 
-            if params['releasever']:
+            if 'releasever' in params:
                 formatted_name.append(params['releasever'])
 
             formatted_name = ' '.join(formatted_name)
@@ -319,7 +320,10 @@ class NailGun(object):
             repository = repository.search()
 
             if len(repository) == 0:
-                reposet.enable(data={'basearch': params['basearch'], 'releasever': params['releasever']})
+                if 'releasever' in params:
+                    reposet.enable(data={'basearch': params['basearch'], 'releasever': params['releasever']})
+                else:
+                    reposet.enable(data={'basearch': params['basearch']})
 
         return True
 
@@ -354,7 +358,7 @@ class NailGun(object):
             for name in products:
                 product = self.find_product(name, org.name)
                 ids.append(product.id)
-            
+
             sync_plan.add_products(data={'product_ids': ids})
 
         return True
@@ -370,7 +374,7 @@ class NailGun(object):
             content_view.update()
         else:
             content_view = content_view.create()
-        
+
         if params['repositories']:
             repos = []
 

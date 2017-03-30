@@ -31,9 +31,10 @@
 # This module is based on python-crontab by Martin Owens.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = """
 ---
@@ -605,9 +606,9 @@ def main():
         ),
         supports_check_mode = True,
         mutually_exclusive=[
-                ['reboot', 'special_time'],
-                ['insertafter', 'insertbefore'],
-            ]
+            ['reboot', 'special_time'],
+            ['insertafter', 'insertbefore'],
+        ]
     )
 
     name         = module.params['name']
@@ -725,7 +726,7 @@ def main():
                 changed = True
 
     # no changes to env/job, but existing crontab needs a terminating newline
-    if not changed:
+    if not changed and not crontab.existing == '':
         if not (crontab.existing.endswith('\r') or crontab.existing.endswith('\n')):
             changed = True
 

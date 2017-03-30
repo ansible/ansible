@@ -95,6 +95,13 @@
   assert:
     that: "{{_.failed}}"
 
+- name: Test extract
+  assert:
+    that:
+        - '"c" == 2 | extract(["a", "b", "c"])'
+        - '"b" == 1 | extract(["a", "b", "c"])'
+        - '"a" == 0 | extract(["a", "b", "c"])'
+
 - name: Container lookups with extract
   assert:
     that:
@@ -104,8 +111,17 @@
         - "31 == ['x','y']|map('extract',{'x':42,'y':31})|list|last"
         - "'local' == ['localhost']|map('extract',hostvars,'ansible_connection')|list|first"
         - "'local' == ['localhost']|map('extract',hostvars,['ansible_connection'])|list|first"
+  # map was added to jinja2 in version 2.7
+  when: "{{ ( lookup('pipe', '{{ ansible_python[\"executable\"] }} -c \"import jinja2; print(jinja2.__version__)\"') |
+              version_compare('2.7', '>=') ) }}"
 
 - name: Test json_query filter
   assert:
     that:
       - "users | json_query('[*].hosts[].host') == ['host_a', 'host_b', 'host_c', 'host_d']"
+
+- name: Test hash filter
+  assert:
+    that:
+      - '"{{ "hash" | hash("sha1") }}" == "2346ad27d7568ba9896f1b7da6b5991251debdf2"'
+      - '"{{ "café" | hash("sha1") }}" == "f424452a9673918c6f09b0cdd35b20be8e6ae7d7"'

@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -112,7 +113,9 @@ state:
     type: string
     sample: completed
 state_message:
-    description: Encrypted Amazon EBS snapshots are copied asynchronously. If a snapshot copy operation fails (for example, if the proper AWS Key Management Service (AWS KMS) permissions are not obtained) this field displays error state details to help you diagnose why the error occurred.
+    description: Encrypted Amazon EBS snapshots are copied asynchronously. If a snapshot copy operation fails (for example, if the proper
+                 AWS Key Management Service (AWS KMS) permissions are not obtained) this field displays error state details to help you diagnose why the
+                 error occurred.
     type: string
     sample:
 start_time:
@@ -141,7 +144,7 @@ owner_alias:
     sample: 033440102211
 tags:
     description: Any tags assigned to the snapshot.
-    type: list
+    type: dict
     sample: "{ 'my_tag_key': 'my_tag_value' }"
 encrypted:
     description: Indicates whether the snapshot is encrypted.

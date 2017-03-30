@@ -18,10 +18,10 @@ output of "spacewalk-report system-groups-systems|inventory".
 
 Tested with Ansible 1.9.2 and spacewalk 2.3
 """
-# 
+#
 # Author:: Jon Miller <jonEbird@gmail.com>
 # Copyright:: Copyright (c) 2013, Jon Miller
-# 
+#
 # Extended for support of multiple organizations and
 # adding the "_meta" dictionary to --list output by
 # Bernhard Lichtinger <bernhard.lichtinger@lrz.de> 2015
@@ -30,15 +30,15 @@ Tested with Ansible 1.9.2 and spacewalk 2.3
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or (at
 # your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
 from __future__ import print_function
 
@@ -62,7 +62,7 @@ CACHE_DIR = os.path.join(base_dir, ".spacewalk_reports")
 CACHE_AGE = 300 # 5min
 INI_FILE = os.path.join(base_dir, "spacewalk.ini")
 
-    # Sanity check
+# Sanity check
 if not os.path.exists(SW_REPORT):
     print('Error: %s is required for operation.' % (SW_REPORT), file=sys.stderr)
     sys.exit(1)
@@ -109,10 +109,10 @@ parser.add_option('--host', default=None, dest="host",
 parser.add_option('-H', '--human', dest="human",
                   default=False, action="store_true",
                   help="Produce a friendlier version of either server list or host detail")
-parser.add_option('-o', '--org', default=None, dest="org_number", 
-		  help="Limit to spacewalk organization number")
+parser.add_option('-o', '--org', default=None, dest="org_number",
+                  help="Limit to spacewalk organization number")
 parser.add_option('-p', default=False, dest="prefix_org_name", action="store_true",
-		  help="Prefix the group name with the organization number")
+                  help="Prefix the group name with the organization number")
 (options, args) = parser.parse_args()
 
 
@@ -133,13 +133,13 @@ if os.path.exists(INI_FILE):
 #------------------------------
 org_groups = {}
 try:
-	for group in spacewalk_report('system-groups'):
-	    org_groups[group['spacewalk_group_id']] = group['spacewalk_org_id']
+    for group in spacewalk_report('system-groups'):
+        org_groups[group['spacewalk_group_id']] = group['spacewalk_org_id']
 
 except (OSError) as e:
-	print('Problem executing the command "%s system-groups": %s' %
+    print('Problem executing the command "%s system-groups": %s' %
           (SW_REPORT, str(e)), file=sys.stderr)
-	sys.exit(2)
+    sys.exit(2)
 
 
 # List out the known server from Spacewalk
@@ -187,7 +187,7 @@ if options.list:
 
                 groups[group_name].add(system['spacewalk_server_name'])
                 if system['spacewalk_server_name'] in host_vars and not system['spacewalk_server_name'] in meta[ "hostvars" ]:
-                        meta[ "hostvars" ][ system['spacewalk_server_name'] ] = host_vars[ system['spacewalk_server_name'] ]
+                    meta[ "hostvars" ][ system['spacewalk_server_name'] ] = host_vars[ system['spacewalk_server_name'] ]
 
     except (OSError) as e:
         print('Problem executing the command "%s system-groups-systems": %s' %
@@ -220,7 +220,7 @@ elif options.host:
         print('Problem executing the command "%s inventory": %s' %
               (SW_REPORT, str(e)), file=sys.stderr)
         sys.exit(2)
-    
+
     if options.human:
         print('Host: %s' % options.host)
         for k, v in iteritems(host_details):

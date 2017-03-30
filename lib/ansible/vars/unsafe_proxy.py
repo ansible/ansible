@@ -54,7 +54,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
-from ansible.compat.six import string_types, text_type
+from ansible.module_utils.six import string_types, text_type
 from ansible.module_utils._text import to_text
 
 
@@ -98,14 +98,10 @@ class AnsibleJSONUnsafeDecoder(json.JSONDecoder):
 
 
 def _wrap_dict(v):
-    # Create new dict to get rid of the keys that are not wrapped.
-    new = {}
     for k in v.keys():
         if v[k] is not None:
-            new[wrap_var(k)] = wrap_var(v[k])
-        else:
-            new[wrap_var(k)] = None
-    return new
+            v[wrap_var(k)] = wrap_var(v[k])
+    return v
 
 
 def _wrap_list(v):

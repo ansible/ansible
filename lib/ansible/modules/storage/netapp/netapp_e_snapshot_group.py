@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -42,8 +43,6 @@ options:
         required: true
         description:
         - The url to the SANtricity WebServices Proxy or embedded REST API.
-        example:
-        - https://prod-1.wahoo.acme.com/devmgr/v2
     validate_certs:
         required: false
         default: true
@@ -79,7 +78,8 @@ options:
     delete_limit:
         description:
             - The automatic deletion indicator.
-            - If non-zero, the oldest snapshot image will be automatically deleted when creating a new snapshot image to keep the total number of snapshot images limited to the number specified.
+            - If non-zero, the oldest snapshot image will be automatically deleted when creating a new snapshot image to keep the total number of
+              snapshot images limited to the number specified.
             - This value is overridden by the consistency group setting if this snapshot group is associated with a consistency group.
         required: False
         default: 30

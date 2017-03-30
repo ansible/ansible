@@ -16,18 +16,19 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: nxos_pim_interface
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages PIM interface configuration.
 description:
     - Manages PIM interface configuration settings.
-extends_documentation_fragment: nxos
 author:
     - Jason Edelman (@jedelman8)
 notes:
@@ -153,31 +154,31 @@ proposed:
     description: k/v pairs of parameters passed into module
     returned: always
     type: dict
-    sample: {"interface": "eth1/33", "neighbor_policy": "test", 
+    sample: {"interface": "eth1/33", "neighbor_policy": "test",
             "neighbor_type": "routemap", "sparse": true}
 existing:
     description:
         - k/v pairs of existing configuration
     type: dict
-    sample: {"border": false, "dr_prio": "1", "hello_interval": "30000", 
-            "isauth": false, "jp_bidir": false, "jp_policy_in": "JPIN", 
-            "jp_policy_out": "1", "jp_type_in": "routemap", 
-            "jp_type_out": null, "neighbor_policy": "test1", 
+    sample: {"border": false, "dr_prio": "1", "hello_interval": "30000",
+            "isauth": false, "jp_bidir": false, "jp_policy_in": "JPIN",
+            "jp_policy_out": "1", "jp_type_in": "routemap",
+            "jp_type_out": null, "neighbor_policy": "test1",
             "neighbor_type": "prefix", "sparse": true}
 end_state:
     description: k/v pairs of configuration after module execution
     returned: always
     type: dict
-    sample: {"border": false, "dr_prio": "1", "hello_interval": "30000", 
-            "isauth": false, "jp_bidir": false, "jp_policy_in": "JPIN", 
-            "jp_policy_out": "1", "jp_type_in": "routemap", 
-            "jp_type_out": null, "neighbor_policy": "test", 
+    sample: {"border": false, "dr_prio": "1", "hello_interval": "30000",
+            "isauth": false, "jp_bidir": false, "jp_policy_in": "JPIN",
+            "jp_policy_out": "1", "jp_type_in": "routemap",
+            "jp_type_out": null, "neighbor_policy": "test",
             "neighbor_type": "routemap", "sparse": true}
 updates:
     description: command sent to the device
     returned: always
     type: list
-    sample: ["interface eth1/33", "ip pim neighbor-policy test", 
+    sample: ["interface eth1/33", "ip pim neighbor-policy test",
             "ip pim neighbor-policy test"]
 changed:
     description: check to see if a change was made on the device
@@ -187,232 +188,15 @@ changed:
 '''
 
 
-import json
+from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netcfg import CustomNetworkConfig
+
 import time
 
-# COMMON CODE FOR MIGRATION
 import re
-
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
-from ansible.module_utils.shell import ShellError
-
-try:
-    from ansible.module_utils.nxos import get_module
-except ImportError:
-    from ansible.module_utils.nxos import NetworkModule
-
-
-def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
-
-
-class CustomNetworkConfig(NetworkConfig):
-
-    def expand_section(self, configobj, S=None):
-        if S is None:
-            S = list()
-        S.append(configobj)
-        for child in configobj.children:
-            if child in S:
-                continue
-            self.expand_section(child, S)
-        return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
-
-    def to_block(self, section):
-        return '\n'.join([item.raw for item in section])
-
-    def get_section(self, path):
-        try:
-            section = self.get_section_objects(path)
-            return self.to_block(section)
-        except ValueError:
-            return list()
-
-    def get_section_objects(self, path):
-        if not isinstance(path, list):
-            path = [path]
-        obj = self.get_object(path)
-        if not obj:
-            raise ValueError('path does not exist in config')
-        return self.expand_section(obj)
-
-
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
-
-        ancestors = list()
-        offset = 0
-        obj = None
-
-        ## global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
-
-        else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
-
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
-
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
-
-
-def get_network_module(**kwargs):
-    try:
-        return get_module(**kwargs)
-    except NameError:
-        return NetworkModule(**kwargs)
-
-def get_config(module, include_defaults=False):
-    config = module.params['config']
-    if not config:
-        try:
-            config = module.get_config()
-        except AttributeError:
-            defaults = module.params['include_defaults']
-            config = module.config.get_config(include_defaults=defaults)
-    return CustomNetworkConfig(indent=2, contents=config)
-
-def load_config(module, candidate):
-    config = get_config(module)
-
-    commands = candidate.difference(config)
-    commands = [str(c).strip() for c in commands]
-
-    save_config = module.params['save']
-
-    result = dict(changed=False)
-
-    if commands:
-        if not module.check_mode:
-            try:
-                module.configure(commands)
-            except AttributeError:
-                module.config(commands)
-
-            if save_config:
-                try:
-                    module.config.save_config()
-                except AttributeError:
-                    module.execute(['copy running-config startup-config'])
-
-        result['changed'] = True
-        result['updates'] = commands
-
-    return result
-# END OF COMMON CODE
-
-
-def execute_config_command(commands, module):
-    try:
-        module.configure(commands)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending CLI commands',
-                         error=str(clie), commands=commands)
-    except AttributeError:
-        try:
-            commands.insert(0, 'configure')
-            module.cli.add_commands(commands, output='config')
-            module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending CLI commands',
-                             error=str(clie), commands=commands)
-
-
-def get_cli_body_ssh(command, response, module, text=False):
-    """Get response for when transport=cli.  This is kind of a hack and mainly
-    needed because these modules were originally written for NX-API.  And
-    not every command supports "| json" when using cli/ssh.  As such, we assume
-    if | json returns an XML string, it is a valid command, but that the
-    resource doesn't exist yet. Instead, the output will be a raw string
-    when issuing commands containing 'show run'.
-    """
-    if 'xml' in response[0] or response[0] == '\n' or '^' in response[0]:
-        body = []
-    elif 'show run' in command or text:
-        body = response
-    else:
-        try:
-            body = [json.loads(response[0])]
-        except ValueError:
-            module.fail_json(msg='Command does not support JSON output',
-                             command=command)
-    return body
-
-
-def execute_show(cmds, module, command_type=None):
-    command_type_map = {
-        'cli_show': 'json',
-        'cli_show_ascii': 'text'
-    }
-
-    try:
-        if command_type:
-            response = module.execute(cmds, command_type=command_type)
-        else:
-            response = module.execute(cmds)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(cmds),
-                         error=str(clie))
-    except AttributeError:
-        try:
-            if command_type:
-                command_type = command_type_map.get(command_type)
-                module.cli.add_commands(cmds, output=command_type)
-                response = module.cli.run_commands()
-            else:
-                module.cli.add_commands(cmds, raw=True)
-                response = module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending {0}'.format(cmds),
-                             error=str(clie))
-    return response
+import re
 
 
 def execute_show_command(command, module, command_type='cli_show', text=False):
@@ -420,11 +204,10 @@ def execute_show_command(command, module, command_type='cli_show', text=False):
         if 'show run' not in command and text is False:
             command += ' | json'
         cmds = [command]
-        response = execute_show(cmds, module)
-        body = get_cli_body_ssh(command, response, module, text=text)
+        body = run_commands(module, cmds)
     elif module.params['transport'] == 'nxapi':
         cmds = [command]
-        body = execute_show(cmds, module, command_type=command_type)
+        body = run_commands(module, cmds)
 
     return body
 
@@ -495,10 +278,10 @@ def get_interface_mode(interface, intf_type, module):
 def get_pim_interface(module, interface):
     pim_interface = {}
     command = 'show ip pim interface {0}'.format(interface)
-    
+
     body = execute_show_command(command, module,
                                 command_type='cli_show_ascii', text=True)
-    
+
     if body:
         if 'not running' not in body[0]:
             body = execute_show_command(command, module)
@@ -552,7 +335,7 @@ def get_pim_interface(module, interface):
         return {}
 
     command = 'show run interface {0}'.format(interface)
-    
+
     body = execute_show_command(command, module, command_type='cli_show_ascii')
 
     jp_configs = []
@@ -737,10 +520,10 @@ def default_pim_interface_policies(existing, jp_bidir):
 
     if jp_bidir:
         if existing.get('jp_policy_in') or existing.get('jp_policy_out'):
-                if existing.get('jp_type_in') == 'prefix':
-                    command = 'no ip pim jp-policy prefix-list {0}'.format(
-                        existing.get('jp_policy_in')
-                        )
+            if existing.get('jp_type_in') == 'prefix':
+                command = 'no ip pim jp-policy prefix-list {0}'.format(
+                    existing.get('jp_policy_in')
+                    )
         if command:
             commands.append(command)
 
@@ -784,7 +567,7 @@ def config_pim_interface_defaults(existing, jp_bidir, isauth):
     # returns a dict
     defaults = get_pim_interface_defaults()
     delta = dict(set(defaults.items()).difference(
-                                                     existing.items()))
+        existing.items()))
     if delta:
         # returns a list
         command = config_pim_interface(delta, existing,
@@ -799,23 +582,30 @@ def config_pim_interface_defaults(existing, jp_bidir, isauth):
 
 def main():
     argument_spec=dict(
-            interface=dict(required=True),
-            sparse=dict(type='bool', default=True),
-            dr_prio=dict(type='str'),
-            hello_auth_key=dict(type='str'),
-            hello_interval=dict(type='int'),
-            jp_policy_out=dict(type='str'),
-            jp_policy_in=dict(type='str'),
-            jp_type_out=dict(choices=['prefix', 'routemap']),
-            jp_type_in=dict(choices=['prefix', 'routemap']),
-            border=dict(type='bool'),
-            neighbor_policy=dict(type='str'),
-            neighbor_type=dict(choices=['prefix', 'routemap']),
-            state=dict(choices=['present', 'absent', 'default'],
+        interface=dict(required=True),
+        sparse=dict(type='bool', default=True),
+        dr_prio=dict(type='str'),
+        hello_auth_key=dict(type='str'),
+        hello_interval=dict(type='int'),
+        jp_policy_out=dict(type='str'),
+        jp_policy_in=dict(type='str'),
+        jp_type_out=dict(choices=['prefix', 'routemap']),
+        jp_type_in=dict(choices=['prefix', 'routemap']),
+        border=dict(type='bool'),
+        neighbor_policy=dict(type='str'),
+        neighbor_type=dict(choices=['prefix', 'routemap']),
+        state=dict(choices=['present', 'absent', 'default'],
                        default='present'),
     )
-    module = get_network_module(argument_spec=argument_spec,
+
+    argument_spec.update(nxos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
                                 supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
+
 
     state = module.params['state']
 
@@ -892,7 +682,7 @@ def main():
             commands.append(defaults)
 
     elif state == 'absent':
-        if existing.get('sparse') == True:
+        if existing.get('sparse') is True:
             delta['sparse'] = False
             # defaults is a list of commands
             defaults = config_pim_interface_defaults(existing, jp_bidir, isauth)
@@ -912,7 +702,7 @@ def main():
             module.exit_json(changed=True, commands=cmds)
         else:
             changed = True
-            execute_config_command(cmds, module)
+            load_config(module, cmds)
             time.sleep(1)
             get_existing = get_pim_interface(module, interface)
             end_state, jp_bidir, isauth = local_existing(get_existing)
@@ -923,6 +713,7 @@ def main():
     results['existing'] = existing
     results['updates'] = cmds
     results['changed'] = changed
+    results['warnings'] = warnings
     results['end_state'] = end_state
 
     module.exit_json(**results)
@@ -930,3 +721,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

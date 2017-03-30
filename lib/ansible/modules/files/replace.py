@@ -18,15 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
-import os
-import tempfile
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
 
-from ansible.module_utils._text import to_text, to_bytes
-
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = """
 ---
@@ -43,11 +38,12 @@ description:
     same pattern would never match any replacements made.
 version_added: "1.6"
 options:
-  dest:
+  path:
     required: true
-    aliases: [ name, destfile ]
+    aliases: [ dest, destfile, name ]
     description:
       - The file to modify.
+      - Before 2.3 this option was only usable as I(dest), I(destfile) and I(name).
   regexp:
     required: true
     description:
@@ -56,12 +52,32 @@ options:
         U(http://docs.python.org/2/library/re.html).
         Uses multiline mode, which means C(^) and C($) match the beginning
         and end respectively of I(each line) of the file.
+      - Note that, as of ansible 2, short form tasks should have any escape
+        sequences backslash-escaped in order to prevent them being parsed
+        as string literal escapes. See the examples.
+
   replace:
     required: false
     description:
       - The string to replace regexp matches. May contain backreferences
         that will get expanded with the regexp capture groups if the regexp
         matches. If not set, matches are removed entirely.
+  after:
+    required: false
+    version_added: "2.4"
+    description:
+      - If specified, the line after the replace/remove will start. Can be used
+        in combination with C(before).
+        Uses Python regular expressions; see
+        U(http://docs.python.org/2/library/re.html).
+  before:
+    required: false
+    version_added: "2.4"
+    description:
+      - If specified, the line before the replace/remove will occur. Can be used
+        in combination with C(after).
+        Uses Python regular expressions; see
+        U(http://docs.python.org/2/library/re.html).
   backup:
     required: false
     default: "no"
@@ -80,30 +96,75 @@ options:
     version_added: "1.9"
     description:
       - 'This flag indicates that filesystem links, if they exist, should be followed.'
+notes:
+  - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
 """
 
 EXAMPLES = r"""
+# Before 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
 - replace:
-    dest: /etc/hosts
+    path: /etc/hosts
     regexp: '(\s+)old\.host\.name(\s+.*)?$'
     replace: '\1new.host.name\2'
     backup: yes
 
+# Replace after the expression till the end of the file (requires >=2.4)
 - replace:
-    dest: /home/jdoe/.ssh/known_hosts
+    path: /etc/hosts
+    regexp: '(\s+)old\.host\.name(\s+.*)?$'
+    replace: '\1new.host.name\2'
+    after: 'Start after line.*'
+    backup: yes
+
+# Replace before the expression till the begin of the file (requires >=2.4)
+- replace:
+    path: /etc/hosts
+    regexp: '(\s+)old\.host\.name(\s+.*)?$'
+    replace: '\1new.host.name\2'
+    before: 'Start before line.*'
+    backup: yes
+
+# Replace between the expressions (requires >=2.4)
+- replace:
+    path: /etc/hosts
+    regexp: '(\s+)old\.host\.name(\s+.*)?$'
+    replace: '\1new.host.name\2'
+    after: 'Start after line.*'
+    before: 'Start before line.*'
+    backup: yes
+
+- replace:
+    path: /home/jdoe/.ssh/known_hosts
     regexp: '^old\.host\.name[^\n]*\n'
     owner: jdoe
     group: jdoe
     mode: 0644
 
 - replace:
-    dest: /etc/apache/ports
+    path: /etc/apache/ports
     regexp: '^(NameVirtualHost|Listen)\s+80\s*$'
     replace: '\1 127.0.0.1:8080'
     validate: '/usr/sbin/apache2ctl -f %s -t'
+
+- name: short form task (in ansible 2+) necessitates backslash-escaped sequences
+  replace: dest=/etc/hosts regexp='\\b(localhost)(\\d*)\\b' replace='\\1\\2.localdomain\\2 \\1\\2'
+
+- name: long form task does not
+  replace:
+    dest: /etc/hosts
+    regexp: '\b(localhost)(\d*)\b'
+    replace: '\1\2.localdomain\2 \1\2'
 """
 
-def write_changes(module,contents,dest):
+import os
+import re
+import tempfile
+
+from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils.basic import AnsibleModule
+
+
+def write_changes(module, contents, path):
 
     tmpfd, tmpfile = tempfile.mkstemp()
     f = os.fdopen(tmpfd,'wb')
@@ -121,7 +182,8 @@ def write_changes(module,contents,dest):
             module.fail_json(msg='failed to validate: '
                                  'rc:%s error:%s' % (rc,err))
     if valid:
-        module.atomic_move(tmpfile, dest, unsafe_writes=module.params['unsafe_writes'])
+        module.atomic_move(tmpfile, path, unsafe_writes=module.params['unsafe_writes'])
+
 
 def check_file_attrs(module, changed, message):
 
@@ -135,12 +197,15 @@ def check_file_attrs(module, changed, message):
 
     return message, changed
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            dest=dict(required=True, aliases=['name', 'destfile']),
+            path=dict(required=True, aliases=['dest', 'destfile', 'name'], type='path'),
             regexp=dict(required=True),
             replace=dict(default='', type='str'),
+            after=dict(required=False),
+            before=dict(required=False),
             backup=dict(default=False, type='bool'),
             validate=dict(default=None, type='str'),
         ),
@@ -149,30 +214,50 @@ def main():
     )
 
     params = module.params
-    dest = os.path.expanduser(params['dest'])
+    path = params['path']
     res_args = dict()
 
-    if os.path.isdir(dest):
-        module.fail_json(rc=256, msg='Destination %s is a directory !' % dest)
+    if os.path.isdir(path):
+        module.fail_json(rc=256, msg='Path %s is a directory !' % path)
 
-    if not os.path.exists(dest):
-        module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
+    if not os.path.exists(path):
+        module.fail_json(rc=257, msg='Path %s does not exist !' % path)
     else:
-        f = open(dest, 'rb')
+        f = open(path, 'rb')
         contents = to_text(f.read(), errors='surrogate_or_strict')
         f.close()
 
-    mre = re.compile(params['regexp'], re.MULTILINE)
-    result = re.subn(mre, params['replace'], contents, 0)
+    pattern = ''
+    if params['after']:
+        pattern = '%s(.*)' % params['after']
+    elif params['before']:
+        pattern = '(.*)%s' % params['before']
+    elif params['after'] and params['before']:
+        pattern = '%s(.*?)%s' % (params['before'], params['after'])
+
+    if pattern:
+        section_re = re.compile(pattern, re.DOTALL)
+        match = re.search(section_re, contents)
+        if match:
+            section = match.group(0)
+
+        mre = re.compile(params['regexp'], re.MULTILINE)
+        result = re.subn(mre, params['replace'], section, 0)
+        if result[1] > 0 and section != result[0]:
+            result = (contents.replace(section, result[0]), result[1])
+
+    else:
+        mre = re.compile(params['regexp'], re.MULTILINE)
+        result = re.subn(mre, params['replace'], contents, 0)
 
     if result[1] > 0 and contents != result[0]:
         msg = '%s replacements made' % result[1]
         changed = True
         if module._diff:
             res_args['diff'] = {
-                'before_header': dest,
+                'before_header': path,
                 'before': contents,
-                'after_header': dest,
+                'after_header': path,
                 'after': result[0],
             }
     else:
@@ -180,17 +265,15 @@ def main():
         changed = False
 
     if changed and not module.check_mode:
-        if params['backup'] and os.path.exists(dest):
-            res_args['backup_file'] = module.backup_local(dest)
-        if params['follow'] and os.path.islink(dest):
-            dest = os.path.realpath(dest)
-        write_changes(module, result[0], dest)
+        if params['backup'] and os.path.exists(path):
+            res_args['backup_file'] = module.backup_local(path)
+        if params['follow'] and os.path.islink(path):
+            path = os.path.realpath(path)
+        write_changes(module, result[0], path)
 
     res_args['msg'], res_args['changed'] = check_file_attrs(module, changed, msg)
     module.exit_json(**res_args)
 
-# this is magic, see lib/ansible/module_common.py
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

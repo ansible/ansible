@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -62,7 +63,15 @@ options:
     version_added: "2.1"
   priv:
     description:
-      - "MySQL privileges string in the format: C(db.table:priv1,priv2)"
+      - "MySQL privileges string in the format: C(db.table:priv1,priv2)."
+      - "Multiple privileges can be specified by separating each one using
+        a forward slash: C(db.table:priv/db.table:priv)."
+      - The format is based on MySQL C(GRANT) statement.
+      - Database and table names can be quoted, MySQL-style.
+      - If column privileges are used, the C(priv1,priv2) part must be
+        exactly as returned by a C(SHOW GRANT) statement. If not followed,
+        the module will always report changes. It includes grouping columns
+        by permission (C(SELECT(col1,col2)) instead of C(SELECT(col1),SELECT(col2))).
     required: false
     default: null
   append_privs:
@@ -183,7 +192,7 @@ EXAMPLES = """
     state: present
 
 # Example privileges string format
-mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
+# mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
 
 # Example using login_unix_socket to connect to server
 - mysql_user:
@@ -200,10 +209,9 @@ mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
     sql_log_bin: no
 
 # Example .my.cnf file for setting the root password
-
-[client]
-user=root
-password=n<_665{vS43y
+# [client]
+# user=root
+# password=n<_665{vS43y
 """
 
 import getpass
@@ -238,7 +246,7 @@ class InvalidPrivsError(Exception):
 # User Authentication Management was change in MySQL 5.7
 # This is a generic check for if the server version is less than version 5.7
 def server_version_check(cursor):
-    cursor.execute("SELECT VERSION()");
+    cursor.execute("SELECT VERSION()")
     result = cursor.fetchone()
     version_str = result[0]
     version = version_str.split('.')
@@ -475,7 +483,7 @@ def privileges_unpack(priv, mode):
         if '(' in pieces[1]:
             output[pieces[0]] = re.split(r',\s*(?=[^)]*(?:\(|$))', pieces[1].upper())
             for i in output[pieces[0]]:
-                privs.append(re.sub(r'\(.*\)','',i))
+                privs.append(re.sub(r'\s*\(.*\)','',i))
         else:
             output[pieces[0]] = pieces[1].upper().split(',')
             privs = output[pieces[0]]
@@ -589,7 +597,8 @@ def main():
                                    connect_timeout=connect_timeout)
     except Exception:
         e = get_exception()
-        module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. Exception message: %s" % (config_file, e))
+        module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
+                             "Exception message: %s" % (config_file, e))
 
     if not sql_log_bin:
         cursor.execute("SET SQL_LOG_BIN=0;")

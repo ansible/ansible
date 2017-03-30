@@ -17,11 +17,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-DOCUMENTATION = '''
+
+DOCUMENTATION = r'''
 ---
 module: win_file_version
 version_added: "2.1"
@@ -48,7 +49,7 @@ EXAMPLES = r'''
     msg: '{{ exe_file_version }}'
 '''
 
-RETURN = """
+RETURN = r'''
 win_file_version.path:
   description: file path
   returned: always
@@ -84,4 +85,4 @@ win_file_version.file_private_part:
   returned: no error
   type: string
 
-"""
+'''

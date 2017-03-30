@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION='''
 ---
@@ -152,19 +153,19 @@ def get_bundler_executable(module):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-                executable=dict(default=None, required=False),
-                state=dict(default='present', required=False, choices=['present', 'latest']),
-                chdir=dict(default=None, required=False, type='path'),
-                exclude_groups=dict(default=None, required=False, type='list'),
-                clean=dict(default=False, required=False, type='bool'),
-                gemfile=dict(default=None, required=False, type='path'),
-                local=dict(default=False, required=False, type='bool'),
-                deployment_mode=dict(default=False, required=False, type='bool'),
-                user_install=dict(default=True, required=False, type='bool'),
-                gem_path=dict(default=None, required=False, type='path'),
-                binstub_directory=dict(default=None, required=False, type='path'),
-                extra_args=dict(default=None, required=False),
-            ),
+            executable=dict(default=None, required=False),
+            state=dict(default='present', required=False, choices=['present', 'latest']),
+            chdir=dict(default=None, required=False, type='path'),
+            exclude_groups=dict(default=None, required=False, type='list'),
+            clean=dict(default=False, required=False, type='bool'),
+            gemfile=dict(default=None, required=False, type='path'),
+            local=dict(default=False, required=False, type='bool'),
+            deployment_mode=dict(default=False, required=False, type='bool'),
+            user_install=dict(default=True, required=False, type='bool'),
+            gem_path=dict(default=None, required=False, type='path'),
+            binstub_directory=dict(default=None, required=False, type='path'),
+            extra_args=dict(default=None, required=False),
+        ),
         supports_check_mode=True
         )
 

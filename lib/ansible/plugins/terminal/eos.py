@@ -28,12 +28,12 @@ from ansible.errors import AnsibleConnectionFailure
 
 class TerminalModule(TerminalBase):
 
-    terminal_prompts_re = [
+    terminal_stdout_re = [
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
         re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
     ]
 
-    terminal_errors_re = [
+    terminal_stderr_re = [
         re.compile(r"% ?Error"),
         re.compile(r"^% \w+", re.M),
         re.compile(r"% User not present"),
@@ -79,9 +79,4 @@ class TerminalModule(TerminalBase):
         elif prompt.endswith('#'):
             self._exec_cli_command('disable')
 
-    @staticmethod
-    def guess_network_os(conn):
-        stdin, stdout, stderr = conn.exec_command('show version')
-        if 'Arista' in stdout.read():
-            return 'eos'
 
