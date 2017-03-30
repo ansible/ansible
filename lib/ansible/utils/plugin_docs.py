@@ -77,17 +77,17 @@ def add_fragments(doc, filename):
             raise Exception("missing options in fragment (%s), possibly misformatted?: %s" % (fragment_name, filename))
 
         for key, value in fragment.items():
-            if key not in doc:
-                doc[key] = value
-            else:
+            if key in doc:
+                # assumes both structures have same type
                 if isinstance(doc[key], MutableMapping):
-                    doc[key].update(value)
+                    value.update(doc[key])
                 elif isinstance(doc[key], MutableSet):
-                    doc[key].add(value)
+                    value.add(doc[key])
                 elif isinstance(doc[key], MutableSequence):
-                    doc[key] = sorted(frozenset(doc[key] + value))
+                    value = sorted(frozenset(value + doc[key]))
                 else:
                     raise Exception("Attempt to extend a documentation fragement (%s) of unknown type: %s" % (fragment_name, filename))
+            doc[key] = value
 
 
 def get_docstring(filename, verbose=False):
