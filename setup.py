@@ -18,6 +18,19 @@ with open('requirements.txt') as requirements_file:
                 "That indicates this copy of the source code is incomplete.")
         sys.exit(2)
 
+if not os.path.islink(os.path.join(os.getcwd(), 'bin', 'ansible-playbook')):
+    # GitHub creates .zip files automatically, but these .zip files do not
+    # support symlinks. For Ansible to work, everything in bin that's _not_
+    # bin/ansible needs to be a symlink to bin/ansible - otherwise the CLI
+    # script will simply believe it is running bin/ansible and fail, with an
+    # unhelpful error message.
+    print("It appears that you are installing Ansible from an archive that "
+          "does not support symbolic links, usually a .zip file downloaded "
+          "from GitHub. This renders your copy of Ansible unusable.\n\n")
+    print("Please re-acquire Ansible from PyPI or from the git repository, "
+          "and try again.")
+    sys.exit(3)
+
 setup(
     name='ansible',
     version=__version__,
