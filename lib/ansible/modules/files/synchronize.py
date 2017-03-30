@@ -476,9 +476,9 @@ def main():
             ssh_cmd.extend(['-o', 'Port=%s' % dest_port])
         if not verify_host:
             ssh_cmd.extend(['-o', 'StrictHostKeyChecking=no'])
-        if ssh_args:
-            ssh_cmd.append(ssh_args)
         ssh_cmd_str = ' '.join(shlex_quote(arg) for arg in ssh_cmd)
+        if ssh_args:
+            ssh_cmd_str += ' %s' % ssh_args
         cmd.append('--rsh=%s' % ssh_cmd_str)
 
     if rsync_path:
