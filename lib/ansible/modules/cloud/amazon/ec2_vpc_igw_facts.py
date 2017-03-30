@@ -121,7 +121,6 @@ def list_internet_gateways(client, module):
     params = dict()
 
     params['Filters'] = ansible_dict_to_boto3_filter_list(module.params.get('filters'))
-    params['DryRun'] = module.check_mode
 
     if module.params.get("internet_gateway_ids"):
         params['InternetGatewayIds'] = module.params.get("internet_gateway_ids")
