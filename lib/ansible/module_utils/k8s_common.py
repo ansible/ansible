@@ -23,10 +23,11 @@ import os
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from openshift.helper.ansible import AnsibleModuleHelper, OpenShiftException, ARG_ATTRIBUTES_BLACKLIST
-    HAS_OPENSHIFT = True
+    from openshift.helper.ansible import KubernetesAnsibleModuleHelper, ARG_ATTRIBUTES_BLACKLIST
+    from openshift.helper.exceptions import KubernetesException
+    HAS_K8S_MODULE_HELPER = True
 except ImportError as exc:
-    HAS_OPENSHIFT = False
+    HAS_K8S_MODULE_HELPER = False
 
 try:
     import yaml
@@ -35,31 +36,34 @@ except ImportError:
     HAS_YAML = False
 
 
-class OpenShiftAnsibleException(Exception):
+class KubernetesAnsibleException(Exception):
     pass
 
 
-class OpenShiftAnsibleModule(AnsibleModule):
+class KubernetesAnsibleModule(AnsibleModule):
+    @staticmethod
+    def get_helper(api_version, kind):
+        return KubernetesAnsibleModuleHelper(api_version, kind)
 
     def __init__(self, kind, api_version):
         self.api_version = api_version
         self.kind = kind
         self.argspec_cache = None
 
-        if not HAS_OPENSHIFT:
-            raise OpenShiftAnsibleException(
+        if not HAS_K8S_MODULE_HELPER:
+            raise KubernetesAnsibleException(
                 "This module requires the OpenShift Python client. Try `pip install openshift`"
             )
 
         if not HAS_YAML:
-            raise OpenShiftAnsibleException(
+            raise KubernetesAnsibleException(
                 "This module requires PyYAML. Try `pip install PyYAML`"
             )
 
         try:
-            self.helper = AnsibleModuleHelper(api_version, kind)
+            self.helper = self.get_helper(api_version, kind)
         except Exception as exc:
-            raise OpenShiftAnsibleException(
+            raise KubernetesAnsibleException(
                 "Error initializing AnsibleModuleHelper: {}".format(exc)
             )
 
@@ -134,7 +138,7 @@ class OpenShiftAnsibleModule(AnsibleModule):
                 if value.get('auth_option') and self.params.get(key) is not None:
                     auth_options[key] = self.params[key]
             self.helper.set_client_config(**auth_options)
-        except OpenShiftException as e:
+        except KubernetesException as e:
             self.fail_json(msg='Error loading config', error=str(e))
 
         if state is None:
@@ -156,7 +160,7 @@ class OpenShiftAnsibleModule(AnsibleModule):
         # CRUD modules
         try:
             existing = self.helper.get_object(name, namespace)
-        except OpenShiftException as exc:
+        except KubernetesException as exc:
             self.fail_json(msg='Failed to retrieve requested object: {}'.format(exc.message),
                            error=exc.value.get('status'))
 
@@ -169,18 +173,14 @@ class OpenShiftAnsibleModule(AnsibleModule):
                 if not self.check_mode:
                     try:
                         self.helper.delete_object(name, namespace)
-                    except OpenShiftException as exc:
+                    except KubernetesException as exc:
                         self.fail_json(msg="Failed to delete object: {}".format(exc.message),
                                        error=exc.value.get('status'))
                 return_attributes['changed'] = True
                 self.exit_json(**return_attributes)
         else:
             if not existing:
-                # create new object
-                if self.kind.lower() == 'project':
-                    k8s_obj = self._create_project()
-                else:
-                    k8s_obj = self._create(namespace)
+                k8s_obj = self._create(namespace)
                 return_attributes[self.kind] = k8s_obj.to_dict()
                 return_attributes['changed'] = True
                 self.exit_json(**return_attributes)
@@ -191,7 +191,7 @@ class OpenShiftAnsibleModule(AnsibleModule):
                 if not self.check_mode:
                     try:
                         k8s_obj = self.helper.replace_object(name, namespace, body=request_body)
-                    except OpenShiftException as exc:
+                    except KubernetesException as exc:
                         self.fail_json(msg="Failed to replace object: {}".format(exc.message),
                                        error=exc.value.get('status'))
                 return_attributes[self.kind] = k8s_obj.to_dict()
@@ -202,7 +202,7 @@ class OpenShiftAnsibleModule(AnsibleModule):
             k8s_obj = copy.deepcopy(existing)
             try:
                 self.helper.object_from_params(self.params, obj=k8s_obj)
-            except OpenShiftException as exc:
+            except KubernetesException as exc:
                 self.fail_json(msg="Failed to patch object: {}".format(exc.message))
             match, diff = self.helper.objects_match(existing, k8s_obj)
             if match:
@@ -217,7 +217,7 @@ class OpenShiftAnsibleModule(AnsibleModule):
             if not self.check_mode:
                 try:
                     k8s_obj = self.helper.patch_object(name, namespace, k8s_obj)
-                except OpenShiftException as exc:
+                except KubernetesException as exc:
                     self.fail_json(msg="Failed to patch object: {}".format(exc.message))
             return_attributes[self.kind] = k8s_obj.to_dict()
             return_attributes['changed'] = True
@@ -228,37 +228,21 @@ class OpenShiftAnsibleModule(AnsibleModule):
         k8s_obj = None
         try:
             request_body = self.helper.request_body_from_params(self.params)
-        except OpenShiftException as exc:
+        except KubernetesException as exc:
             self.fail_json(msg="Failed to create object: {}".format(exc.message))
         if not self.check_mode:
             try:
                 k8s_obj = self.helper.create_object(namespace, body=request_body)
-            except OpenShiftException as exc:
+            except KubernetesException as exc:
                 self.fail_json(msg="Failed to create object: {}".format(exc.message),
                                error=exc.value.get('status'))
-        return k8s_obj
-
-    def _create_project(self):
-        new_obj = None
-        k8s_obj = None
-        try:
-            new_obj = self.helper.object_from_params(self.params)
-        except OpenShiftException as exc:
-            self.fail_json(msg="Failed to create object: {}".format(exc.message))
-        try:
-            k8s_obj = self.helper.create_project(metadata=new_obj.metadata,
-                                                 display_name=self.params.get('display_name'),
-                                                 description=self.params.get('description'))
-        except OpenShiftException as exc:
-            self.fail_json(msg='Failed to retrieve requested object',
-                           error=exc.value.get('status'))
         return k8s_obj
 
     def _read(self, name, namespace):
         k8s_obj = None
         try:
             k8s_obj = self.helper.get_object(name, namespace)
-        except OpenShiftException as exc:
+        except KubernetesException as exc:
             self.fail_json(msg='Failed to retrieve requested object',
                            error=exc.value.get('status'))
         return k8s_obj
