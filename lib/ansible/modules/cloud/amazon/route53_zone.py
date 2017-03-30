@@ -177,7 +177,8 @@ def main():
             comment=dict(default='')
         )
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     if not HAS_BOTO3:
         module.fail_json("boto3 and botocore are required for route53_zone module")
@@ -245,10 +246,11 @@ def main():
                       CallerReference=str(uuid.uuid4()))
         if private_zone:
             params['VPC'] = dict(VPCRegion=vpc_region, VPCId=vpc_id[0])
-        result = conn.create_hosted_zone(**params)
-        hosted_zone = result['HostedZone']
-        zone_id = hosted_zone['Id'].replace('/hostedzone/', '')
-        record['zone_id'] = zone_id
+        if not module.check_mode:
+            result = conn.create_hosted_zone(**params)
+            hosted_zone = result['HostedZone']
+            zone_id = hosted_zone['Id'].replace('/hostedzone/', '')
+            record['zone_id'] = zone_id
         record['name'] = zone_in
         if len(desired_vpcs) > 1:
             current_vpcs = set([vpc_id[0]])
@@ -258,7 +260,8 @@ def main():
         module.exit_json(changed=True, set=record)
 
     elif state == 'absent' and zone_in in zones:
-        conn.delete_hosted_zone(zones[zone_in])
+        if not module.check_mode:
+            conn.delete_hosted_zone(zones[zone_in])
         module.exit_json(changed=True)
 
     elif state == 'absent':
