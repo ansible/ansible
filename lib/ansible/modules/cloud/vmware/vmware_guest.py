@@ -732,7 +732,7 @@ class PyVmomiHelper(object):
         # Network settings
         adaptermaps = []
         for network in self.params['networks']:
-            if ('ip' in network and 'netmask' in network) or ('dhcp' in network):
+            if 'ip' in network and 'netmask' in network or 'dhcp' in network:
                 guest_map = vim.vm.customization.AdapterMapping()
                 guest_map.adapter = vim.vm.customization.IPSettings()
 
