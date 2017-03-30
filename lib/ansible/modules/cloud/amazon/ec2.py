@@ -1235,7 +1235,7 @@ def create_instances(module, ec2, vpc, override_count=None):
         # wait here until the instances are up
         num_running = 0
         wait_timeout = time.time() + wait_timeout
-        res_list = None
+        res_list = ()
         while wait_timeout > time.time() and num_running < len(instids):
             try:
                 res_list = ec2.get_all_instances(instids)
@@ -1264,7 +1264,7 @@ def create_instances(module, ec2, vpc, override_count=None):
             module.fail_json(msg="wait for instances running timeout on %s" % time.asctime())
 
         # We do this after the loop ends so that we end up with one list
-        for res in res_list or ():
+        for res in res_list:
             running_instances.extend(res.instances)
 
         # Enabled by default by AWS
@@ -1278,7 +1278,7 @@ def create_instances(module, ec2, vpc, override_count=None):
                 inst.modify_attribute('disableApiTermination', True)
 
         # Leave this as late as possible to try and avoid InvalidInstanceID.NotFound
-        if instance_tags:
+        if instance_tags and instids:
             try:
                 ec2.create_tags(instids, instance_tags)
             except boto.exception.EC2ResponseError as e:
