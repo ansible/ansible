@@ -330,6 +330,7 @@ def set_ratio(api, pool, address, port, ratio):
         ratios=[[ratio]]
     )
 
+
 def get_priority(api, pool, address, port):
     members = [{'address': address, 'port': port}]
     result = api.LocalLB.Pool.get_member_priority(
