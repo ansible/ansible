@@ -110,7 +110,6 @@ lib/ansible/modules/cloud/amazon/ec2_vpc_igw.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_nacl.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_nacl_facts.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_net.py
-lib/ansible/modules/cloud/amazon/ec2_vpc_net_facts.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_peer.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_vgw.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_vgw_facts.py

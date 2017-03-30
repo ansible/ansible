@@ -75,17 +75,17 @@ def get_vpc_info(vpc):
     except AttributeError:
         classic_link = False
 
-    vpc_info = { 'id': vpc.id,
-                 'instance_tenancy': vpc.instance_tenancy,
-                 'classic_link_enabled': classic_link,
-                 'dhcp_options_id': vpc.dhcp_options_id,
-                 'state': vpc.state,
-                 'is_default': vpc.is_default,
-                 'cidr_block': vpc.cidr_block,
-                 'tags': vpc.tags
-               }
+    vpc_info = {'id': vpc.id,
+                'instance_tenancy': vpc.instance_tenancy,
+                'classic_link_enabled': classic_link,
+                'dhcp_options_id': vpc.dhcp_options_id,
+                'state': vpc.state,
+                'is_default': vpc.is_default,
+                'cidr_block': vpc.cidr_block,
+                'tags': vpc.tags}
 
     return vpc_info
+
 
 def list_ec2_vpcs(connection, module):
 
@@ -107,7 +107,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            filters = dict(default=None, type='dict')
+            filters=dict(default=None, type='dict')
         )
     )
 
