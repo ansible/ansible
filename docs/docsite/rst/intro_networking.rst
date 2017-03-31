@@ -49,16 +49,16 @@ As of version 2.3, Ansible includes support for `persistent connections`. Persis
 
 Persistent Connection had been enable for the following groups of modules:
 
- * dellos6
- * dellos9
- * dellos10
- * eos
- * ios
- * iosxr
- * junos
- * nxos (some)
- * vyos
- * sros (from 2.3 RC2)
+* dellos6
+* dellos9
+* dellos10
+* eos
+* ios
+* iosxr
+* junos
+* nxos (some)
+* vyos
+* sros
 
 
 .. notes: Future support
