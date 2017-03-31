@@ -8,4 +8,3 @@ PyYAML
 paramiko
 cryptography
 setuptools
-
