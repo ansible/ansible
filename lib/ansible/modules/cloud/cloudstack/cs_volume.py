@@ -127,6 +127,14 @@ options:
       - Poll async jobs until job has finished.
     required: false
     default: true
+  tags:
+    description:
+      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
+      - "To delete all tags, set a empty list e.g. C(tags: [])."
+    required: false
+    default: null
+    aliases: [ 'tag' ]
+    version_added: "2.4"
 extends_documentation_fragment: cloudstack
 '''
 
