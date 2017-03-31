@@ -356,6 +356,8 @@ PARAMETER_MAP = {
 
 def await_resource(conn, resource, status, module):
     wait_timeout = module.params.get('wait_timeout') + time.time()
+    # Refresh the resource immediately in case we just changed it's state; should we sleep first?
+    resource = get_db_instance(conn, resource.name)
     while wait_timeout > time.time() and resource.status != status:
         time.sleep(5)
         if wait_timeout <= time.time():
