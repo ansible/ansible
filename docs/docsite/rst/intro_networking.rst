@@ -8,25 +8,37 @@ Networking Support
 .. _working_with_networking_devices:
 
 Working with Networking Devices
-====================================
+===============================
 
-Starting with Ansible version 2.1, you can now use the familiar Ansible models of playbook authoring and module development to manage heterogenous networking devices.  Ansible supports a growing number of network devices using both CLI over SSH and API (when available) transports.
+Starting with Ansible version 2.1, you can now use the familiar Ansible models of playbook authoring and module development to manage heterogeneous networking devices.  Ansible supports a growing number of network devices using both CLI over SSH and API (when available) transports.
 
 .. _networking_installation:
 
 Network Automation Installation
-================================================
+===============================
+
+Networking support comes as default with Ansible
 
 * Install the `latest Ansible release <http://docs.ansible.com/ansible/intro_installation.html>`_.
 
 .. _networking_module_index:
 
 Available Networking Modules
-====================================
+=============================
 
 Most standard Ansible modules are designed to work with Linux/Unix or Windows machines and will not work with networking devices. Some modules (including "slurp", "raw", and "setup") are platform-agnostic and will work with networking devices.
 
 To see what modules are available for networking devices, please browse the `"networking" section of the Ansible module index <https://docs.ansible.com/ansible/list_of_network_modules.html#>`_.
+
+
+What does Ansible Networking look like?
+=======================================
+
+TBD Add real work example here
+
+For more examples and how-tos go to LINK
+
+
 
 
 Persistent Connections
