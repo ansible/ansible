@@ -88,9 +88,9 @@ from distutils.version import StrictVersion
 
 def _needs_update(module, aggregate):
     new_metadata = (module.params['metadata'] or {})
-    
+
     if module.params['availability_zone'] is not None:
-      new_metadata['availability_zone'] = module.params['availability_zone']
+        new_metadata['availability_zone'] = module.params['availability_zone']
 
     if ((module.params['name'] != aggregate.name) or
             (module.params['hosts'] is not None and set(module.params['hosts']) != set(aggregate.hosts)) or
