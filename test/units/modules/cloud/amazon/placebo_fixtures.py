@@ -75,7 +75,7 @@ def placeboify(request, monkeypatch):
 
     def boto3_middleman_connection(module, conn_type, resource, region='us-west-2', **kwargs):
         if conn_type != 'client':
-            #TODO support resource-based connections
+            # TODO support resource-based connections
             raise ValueError('Mocker only supports client, not %s' % conn_type)
         return session.client(resource, region_name=region)
 
@@ -108,7 +108,7 @@ def basic_launch_config():
     asg = boto3.client('autoscaling')
     asg.create_launch_configuration(
         LaunchConfigurationName='pytest_basic_lc',
-        ImageId='ami-9be6f38c', # Amazon Linux 2016.09 us-east-1 AMI, can be any valid AMI
+        ImageId='ami-9be6f38c',  # Amazon Linux 2016.09 us-east-1 AMI, can be any valid AMI
         SecurityGroups=[],
         UserData='#!/bin/bash\necho hello world',
         InstanceType='t2.micro',
@@ -124,6 +124,7 @@ def basic_launch_config():
         if 'not found' in e.message:
             return
         raise
+
 
 @pytest.fixture(scope='module')
 def scratch_vpc():
@@ -186,6 +187,7 @@ def scratch_vpc():
         if 'not found' in e.message:
             return
         raise
+
 
 @pytest.fixture(scope='module')
 def maybe_sleep():
