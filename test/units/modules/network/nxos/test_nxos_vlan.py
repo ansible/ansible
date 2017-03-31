@@ -98,3 +98,8 @@ class TestNxosVlanModule(TestNxosModule):
         set_module_args(dict(vlan_id='1', admin_state='down'))
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['vlan 1', 'shutdown', 'exit'])
+
+    def test_nxos_vlan_no_change(self):
+        set_module_args(dict(vlan_id='1', name='default', vlan_state='active', admin_state='up'))
+        result = self.execute_module(changed=False)
+        self.assertEqual(result['commands'], [])
