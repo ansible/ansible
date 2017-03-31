@@ -87,7 +87,7 @@ Fields
    :community:
    
    For information on what the support level values entail, please see
-   :doc:`../modules_support.rst`
+   `Modules Support <http://docs.ansible.com/ansible/modules_support.html>`_.
 
 :status: This field records information about the module that is
    important to the end user. It’s a list of strings. The default value
