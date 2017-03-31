@@ -116,9 +116,29 @@ arguments in the argument string.
 Top-level arguments
 ^^^^^^^^^^^^^^^^^^^
 
+Since the introduction of the network modules into Ansible, the connection
+arguments have been provided via top-level arguments in the module. 
 
-FIXME Example
+.. code-block:: yaml
 
+    - name: example of using top-level arguments for connection properties
+      ios_command:
+        commands: show version
+        host: "{{ inventory_hostname }}'
+        username: cisco
+        password: cisco
+        authorize: yes
+        auth_pass: cisco
+
+
+In addition, the same arguments could also be provided via a single entry in the
+provider argument.  With the introduction of the new connection framework,
+Ansible has officially deprecated the use of top level connection arguments in
+favor of provider arguments.  Top-level arguments will continue to work but
+playbooks should be updated to use provider arguments instead.
+
+When running playbooks in Ansible 2.3 and later, Ansible will display a warning
+when top-level arguments are found
 
 .. code-block:: yaml
 
@@ -134,7 +154,11 @@ FIXME Example
 Provider Arguments
 ^^^^^^^^^^^^^^^^^^
 
-TBD
+In order to making passing repeated credential information into modules,
+network modules support a single ``provider`` argument that defines the
+necessary key / value pairs for authenticating to network devices.  As of
+Ansible 2.3, use of the provider argument is the preferred method for providing
+authentication information to network modules.
 
 **Version:** Ansible 2.2 - 2.3
 
@@ -155,15 +179,70 @@ Accessing over API (eapi, nxapi)
 
 **Platforms:** eos and nxapi
 
+Some network operating systems support additional command line transports in
+addition to SSH.  Most notable Arista EOS and Cisco NX-OS support sending CLi
+commands over JSON-RPC using an HTTP/S transport.  Ansible modules for these
+devices support those transports as a per-module configurable option. 
+
+In order to change the default transport from SSH to using the HTTP/S transport
+configure the ``transport`` argument in the provider.  The ``transport``
+argument accepts device dependent values for changing the transport (eapi for
+EOS based devices and nxapi for NXOS based devices).
+
+
 TDB, Include details regarding ``use_ssl``
 
 .. code-block:: yaml
 
    - name: Gather facts
      - eos_facts:
-         transport: eapi
+         providier:
+           host: "{{ inventory_hostname }}
+           username: admin
+           password: admin
+           transport; eapi
 
 
+Note: Both ``eapi`` and ``nxapi`` support additional arguments to change the
+default behavior of the HTTP/S connection.  
+
+When specifying the transport value as either eapi or nxapi, the playbook 
+implementer can chose to either use ``HTTP`` or ``HTTPS` by setting the value 
+of ``use_ssl`` to either True or False.  
+
+.. code-block:: yaml
+
+   - name: Gather facts
+     - eos_facts:
+         providier:
+           host: "{{ inventory_hostname }}
+           username: admin
+           password: admin
+           transport; eapi
+           use_ssl: no
+
+
+When configuring the transport to use SSL, it is sometimes desirable to disable
+certificate validation.  In order to disable ceriticate validation use the
+``validate_certs`` option.
+
+.. code-block:: yaml
+
+   - name: Gather facts
+     - eos_facts:
+         providier:
+           host: "{{ inventory_hostname }}
+           username: admin
+           password: admin
+           transport; eapi
+           use_ssl: yes
+           validate_certs: no
+
+Note; Please be sure you understand the security implications to changing
+either or both of these values.
+
+See the individual module documentation for more information on supported
+values and default settings.
 
 FIXME REVIEW AND MOVE THE FOLLOWING BITS FIXME
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
