@@ -72,12 +72,46 @@ Or you can use SSH keys..
 Connecting using SSH Keys
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-TBD: This is the recomended way, ``ssh_keyfile``
+Using SSH keys provides a more secure way to authenticate to network devices
+versus the standard password authentication method.   Ansible network modules
+support using SSH keys to authenticate to network devices.  
+
+-- code-block:: yaml
+
+    - name: use ssh keys to authenticate
+      eos_command:
+        commands: show version
+        provider:
+          host: "{{ inventory_hostname }}"
+          username: ansible
+          ssh_keyfile: ~/.ssh/id_rsa
+
+The example playbook above will use the SSH key specified by the ssh_keyfile
+argument to authenticate to the remote device.  If logging is enabled, it will
+show that SSH keys have been used to authenticate to the remote device.  Look
+for the following entry in the log file.
+
+``2017-03-31 11:57:47,958 paramiko.transport Authentication (publickey) successful!``
+
 
 Connecting using Command line arguments
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-TBD ``-u user -k``
+With the new connection framework introduced in Ansible 2.3, running Ansible
+ad-hoc commands has been greatly simplified.  In order to use Ansible ad-hoc
+commands, specify the authentication parameters using the standard Ansible
+command line options.
+
+``$ ansible -m ios_command -a "commands='show version'" -u cisco -k``
+
+When the above is executed Ansible will prompt for the SSH password (because of
+the -k option)
+
+Pleas note that if you need to enter "enable" mode you will still need to pass those
+arguments in the argument string.
+
+``$ ansible -m ios_command -a "commands='show version' authorize=True auth_pass=cisco" -u cisco -k``
+
 
 Top-level arguments
 ^^^^^^^^^^^^^^^^^^^
