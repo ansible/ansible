@@ -305,17 +305,6 @@ lib/ansible/modules/cloud/misc/virt.py
 lib/ansible/modules/cloud/misc/virt_net.py
 lib/ansible/modules/cloud/misc/virt_pool.py
 lib/ansible/modules/cloud/misc/xenserver_facts.py
-lib/ansible/modules/cloud/openstack/_glance_image.py
-lib/ansible/modules/cloud/openstack/_keystone_user.py
-lib/ansible/modules/cloud/openstack/_nova_compute.py
-lib/ansible/modules/cloud/openstack/_nova_keypair.py
-lib/ansible/modules/cloud/openstack/_quantum_floating_ip.py
-lib/ansible/modules/cloud/openstack/_quantum_floating_ip_associate.py
-lib/ansible/modules/cloud/openstack/_quantum_network.py
-lib/ansible/modules/cloud/openstack/_quantum_router.py
-lib/ansible/modules/cloud/openstack/_quantum_router_gateway.py
-lib/ansible/modules/cloud/openstack/_quantum_router_interface.py
-lib/ansible/modules/cloud/openstack/_quantum_subnet.py
 lib/ansible/modules/cloud/openstack/os_group.py
 lib/ansible/modules/cloud/openstack/os_image.py
 lib/ansible/modules/cloud/openstack/os_image_facts.py
