@@ -102,13 +102,15 @@ class CloudFrontServiceManager:
     def __init__(self, module, cloudfront_facts_mgr):
         self.module = module
         self.cloudfront_facts_mgr = cloudfront_facts_mgr
-        self.set_defaults
-        self.create_client('cloudfront')
-
-    def set_defaults(self):
         self.__default_http_port = 80
         self.__default_https_port = 443
-        self.__default_origin_ssl_protocols = [ "SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2" ]
+        self.__default_origin_ssl_protocols = [ "TLSv1", "TLSv1.1", "TLSv1.2" ]
+        self.__default_datetime_string = self.generate_datetime_string()
+        self.create_client('cloudfront')
+
+    @property
+    def default_datetime_string(self):
+        return self.__default_datetime_string
 
     def create_client(self, resource):
         try:
@@ -377,17 +379,17 @@ class CloudFrontServiceManager:
             return snake_dict_to_pascal_dict(valid_origins)
         return None
 
-    def validate_cache_behaviors(self, cache_behaviors):
+    def validate_cache_behaviors(self, cache_behaviors, valid_origins):
         if cache_behaviors is None:
             cache_behaviors = []
         for cache_behavior in cache_behaviors:
-            self.validate_cache_behavior(cache_behavior)
+            self.validate_cache_behavior(cache_behavior, valid_origins)
         return_value = {}
         return_value["Items"] = cache_behaviors
         return_value["Quantity"] = len(cache_behaviors)
         return return_value
 
-    def validate_cache_behavior(self, cache_behavior):
+    def validate_cache_behavior(self, cache_behavior, valid_origins):
         if cache_behavior is None:
             cache_behavior = {}
         if cache_behavior.get("min_ttl") is None:
@@ -398,8 +400,8 @@ class CloudFrontServiceManager:
             temp_trusted_signers = cache_behavior["trusted_signers"]
             cache_behavior["trusted_signers"]["items"] = temp_trusted_signers
             cache_behavior["trusted_signers"]["quantity"] = len(temp_trusted_signers)
-        if cache_behavior["target_origin_id"] is None:
-            cache_behavior["target_origin_id"] = self.get_first_origin_id_for_default_cache_behavior(valid_origins, default_datetime_string)
+        if cache_behavior.get("target_origin_id") is None:
+            cache_behavior["target_origin_id"] = self.get_first_origin_id_for_default_cache_behavior(valid_origins)
 
 
     def validate_custom_origin_configs(self, custom_origin_configs):
@@ -462,17 +464,18 @@ class CloudFrontServiceManager:
     def generate_datetime_string(self):
         return datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")
 
-    def get_first_origin_id_for_default_cache_behavior(self, valid_origins, default_id):
+    def get_first_origin_id_for_default_cache_behavior(self, valid_origins):
         if valid_origins is None:
-            return default_id
+            return self.__default_datetime_string
         param_id = valid_origins["Items"][0].get("Id")
         if param_id is None:
-            return default_id
+            return self.__default_datetime_string
         return param_id
 
 # TODO: validate delete parameters
 #       more validation of update parameters - CallerReference and S3Origin and Origins
 #       validate required create parameters  
+#       fix update dist
 
 def snake_dict_to_pascal_dict(snake_dict):
     def pascalize(complex_type):
@@ -671,8 +674,8 @@ def main():
     valid_origins = service_mgr.validate_origins(origins, default_origin_domain_name, default_origin_access_identity,
             default_origin_path, streaming_distribution, create_distribution)
 
-    valid_cache_behaviors = service_mgr.validate_cache_behaviors(cache_behaviors)
-    valid_default_cache_behavior = service_mgr.validate_default_cache_behavior(default_cache_behavior)
+    valid_cache_behaviors = service_mgr.validate_cache_behaviors(cache_behaviors, valid_origins)
+    valid_default_cache_behavior = service_mgr.validate_cache_behavior(default_cache_behavior, valid_origins)
 
     # DefaultCacheBehavior
     # CacheBehaviors
@@ -690,8 +693,6 @@ def main():
     valid_s3_origin = service_mgr.validate_s3_origin(s3_origin)
     valid_viewer_certificate = service_mgr.validate_viewer_certificate(viewer_certificate)
 
-    default_datetime_string = service_mgr.generate_datetime_string()
-
     if create_distribution:
         if config is None:
             config = {}
@@ -702,7 +703,7 @@ def main():
                         "Enabled": False,
                         "Quantity": 0
                     },
-                    "TargetOriginId": service_mgr.get_first_origin_id_for_default_cache_behavior(valid_origins, default_datetime_string),
+                    "TargetOriginId": service_mgr.get_first_origin_id_for_default_cache_behavior(valid_origins),
                     "Compress": False,
                     "ViewerProtocolPolicy": "allow-all",
                     "ForwardedValues": {
@@ -720,12 +721,12 @@ def main():
         if http_version:
             config["HttpVersion"] = http_version
         if comment is None:
-            config["Comment"] = "distribution created by ansible with datetime " + default_datetime_string
+            config["Comment"] = "distribution created by ansible with datetime " + service_mgr.default_datetime_string
     elif create_streaming_distribution:
         if config is None:
             config = {}
         if comment is None:
-            config["Comment"] = "streaming distribution created by ansible with datetime " + default_datetime_string
+            config["Comment"] = "streaming distribution created by ansible with datetime " + service_mgr.default_datetime_string
         if valid_trusted_signers is None:
             config["TrustedSigners"] = {
                     "Enabled": False,
@@ -757,7 +758,7 @@ def main():
         if caller_reference:
             config["CallerReference"] = caller_reference
         else:
-            config["CallerReference"] = default_datetime_string
+            config["CallerReference"] = service_mgr.default_datetime_string
 
     if create_origin_access_identity:
         result=service_mgr.create_origin_access_identity(caller_reference, comment)
