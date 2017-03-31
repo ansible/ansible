@@ -26,9 +26,9 @@ Specifying Credentials
 
 
 
-In Ansible versions 2.0 to 2.2, network modules support providing connection credentials as top-level arguments in the module. The forthcoming release of Ansible 2.3 introduces a new connection framework that is more tightly integrated into Ansible.
+In Ansible versions 2.0 to 2.2, network modules support providing connection credentials as top-level options;in the module. The forthcoming release of Ansible 2.3 introduces a new connection framework that is more tightly integrated into Ansible.
 
-With this new connection framework, we have decided to immediately deprecate the use of top level arguments for passing credentials into network modules.  This applies to all top-level credentials arguments except ``provider``. Platforms that support privilege, such as eos and ios, top-level options ``auth_pass`` and ``authorize`` are still supported. Top-level arguments that have been deprecated (including ``username``, ``host``, and ``password``) will still function, but Ansible will display a warning saying that those arguments have been deprecated and will be removed in a future release.
+With this new connection framework, we have decided to immediately deprecate the use of top level options for passing credentials into network modules.  This applies to all top-level credentials options except ``provider''. Top-level arguments that have been deprecated (including ``username``, ``host``, and ``password``) will still function, but Ansible will display a warning saying that those arguments have been deprecated and will be removed in a future release.
 
 Since the new connection framework in Ansible 2.3 is now completely integrated as an Ansible plugin, you can now pass credential information from the command line in Ansible just as you can for non-network modules.
 
@@ -64,7 +64,7 @@ Note that the new task entry does not include any credential information anywher
  ios01                      : ok=1    changed=0    unreachable=0    failed=0
 
 
-This removes the requirement to encode any credentials into the Playbook, further simplifying the Playbook. Please note that the ``-u`` switch is functionally equivalent to ``ansible_ssh_user`` and the ``-k`` switch is functionally equivalant to ``ansible_ssh_pass``. Meaning these variables do not have to be set via command line, and can be set the same as any variable in ansible.
+This removes the requirement to encode any credentials into the Playbook, further simplifying the Playbook. Please note that the ``-u`` switch is functionally equivalent to ``ansible_ssh_user`` and the ``-k`` switch is functionally equivalent to ``ansible_ssh_pass``. Meaning these variables do not have to be set via command line, and can be set the same as any variable in ansible.
 
 Or you can use SSH keys..
 
@@ -74,9 +74,9 @@ Connecting using SSH Keys
 
 Using SSH keys provides a more secure way to authenticate to network devices
 versus the standard password authentication method.   Ansible network modules
-support using SSH keys to authenticate to network devices.  
+support using SSH keys to authenticate to network devices.
 
--- code-block:: yaml
+.. code-block:: yaml
 
     - name: use ssh keys to authenticate
       eos_command:
@@ -86,8 +86,8 @@ support using SSH keys to authenticate to network devices.
           username: ansible
           ssh_keyfile: ~/.ssh/id_rsa
 
-The example playbook above will use the SSH key specified by the ssh_keyfile
-argument to authenticate to the remote device.  If logging is enabled, it will
+The example playbook above will use the SSH key specified by the ``ssh_keyfile``
+option to authenticate to the remote device.  If logging is enabled, it will
 show that SSH keys have been used to authenticate to the remote device.  Look
 for the following entry in the log file.
 
@@ -102,26 +102,26 @@ ad-hoc commands has been greatly simplified.  In order to use Ansible ad-hoc
 commands, specify the authentication parameters using the standard Ansible
 command line options.
 
-``$ ansible -m ios_command -a "commands='show version'" -u cisco -k``
+``ansible -m ios_command -a "commands='show version'" -u cisco -k``
 
 When the above is executed Ansible will prompt for the SSH password (because of
 the -k option)
 
-Pleas note that if you need to enter "enable" mode you will still need to pass those
-arguments in the argument string.
+Please note that if you need to enter "enable" mode you will still need to pass those
+options in the argument string.
 
-``$ ansible -m ios_command -a "commands='show version' authorize=True auth_pass=cisco" -u cisco -k``
+``ansible -m ios_command -a "commands='show version' authorize=True auth_pass=cisco" -u cisco -k``
 
 
-Top-level arguments
-^^^^^^^^^^^^^^^^^^^
+Top-level options
+^^^^^^^^^^^^^^^^^
 
 Since the introduction of the network modules into Ansible, the connection
-arguments have been provided via top-level arguments in the module. 
+options have been provided via top-level options in the module.
 
 .. code-block:: yaml
 
-    - name: example of using top-level arguments for connection properties
+    - name: example of using top-level options for connection properties
       ios_command:
         commands: show version
         host: "{{ inventory_hostname }}'
@@ -131,14 +131,14 @@ arguments have been provided via top-level arguments in the module.
         auth_pass: cisco
 
 
-In addition, the same arguments could also be provided via a single entry in the
-provider argument.  With the introduction of the new connection framework,
-Ansible has officially deprecated the use of top level connection arguments in
-favor of provider arguments.  Top-level arguments will continue to work but
-playbooks should be updated to use provider arguments instead.
+In addition, the same options could also be provided via a single entry in the
+provider option.  With the introduction of the new connection framework,
+Ansible has officially deprecated the use of top level connection option in
+favor of provider option.  Top-level option will continue to work but
+playbooks should be updated to use provider options instead.
 
 When running playbooks in Ansible 2.3 and later, Ansible will display a warning
-when top-level arguments are found
+when top-level options are found
 
 .. code-block:: yaml
 
@@ -147,9 +147,9 @@ when top-level arguments are found
    [WARNING]: argument password has been deprecated and will be removed in a future version
 
 
-.. note: Don't use this
+.. note: Top-level arguments are deprecated
 
-   We suggest you move away from this form and use ``provider:`` (LINK) or better yet SSH keys are your earliest convenience. Support for this method will be removed in FIXME x.y
+   We suggest you move away from this form and use ``provider:`` (FIXME LINK) or better yet SSH keys are your earliest convenience. Support for this method will be removed in a future release
 
 Provider Arguments
 ^^^^^^^^^^^^^^^^^^
@@ -182,12 +182,12 @@ Accessing over API (eapi, nxapi)
 Some network operating systems support additional command line transports in
 addition to SSH.  Most notable Arista EOS and Cisco NX-OS support sending CLi
 commands over JSON-RPC using an HTTP/S transport.  Ansible modules for these
-devices support those transports as a per-module configurable option. 
+devices support those transports as a per-module configurable option.
 
 In order to change the default transport from SSH to using the HTTP/S transport
 configure the ``transport`` argument in the provider.  The ``transport``
 argument accepts device dependent values for changing the transport (eapi for
-EOS based devices and nxapi for NXOS based devices).
+EOS based devices and nxapi for NX-OS based devices).
 
 
 TDB, Include details regarding ``use_ssl``
@@ -204,11 +204,11 @@ TDB, Include details regarding ``use_ssl``
 
 
 Note: Both ``eapi`` and ``nxapi`` support additional arguments to change the
-default behavior of the HTTP/S connection.  
+default behavior of the HTTP/S connection.
 
-When specifying the transport value as either eapi or nxapi, the playbook 
-implementer can chose to either use ``HTTP`` or ``HTTPS` by setting the value 
-of ``use_ssl`` to either True or False.  
+When specifying the transport value as either eapi or nxapi, the playbook
+implementer can chose to either use ``HTTP`` or ``HTTPS` by setting the value
+of ``use_ssl`` to either True or False.
 
 .. code-block:: yaml
 
@@ -218,12 +218,12 @@ of ``use_ssl`` to either True or False.
            host: "{{ inventory_hostname }}
            username: admin
            password: admin
-           transport; eapi
+           transport: eapi
            use_ssl: no
 
 
 When configuring the transport to use SSL, it is sometimes desirable to disable
-certificate validation.  In order to disable ceriticate validation use the
+certificate validation.  In order to disable certificate validation use the
 ``validate_certs`` option.
 
 .. code-block:: yaml
@@ -234,7 +234,7 @@ certificate validation.  In order to disable ceriticate validation use the
            host: "{{ inventory_hostname }}
            username: admin
            password: admin
-           transport; eapi
+           transport: eapi
            use_ssl: yes
            validate_certs: no
 
@@ -368,9 +368,9 @@ authorize ANSIBLE_NET_AUTHORIZE
 auth_pass ANSIBLE_NET_AUTH_PASS
 
 
-FIXME, not sure why this is here, need to say why it's relevant and link to the offical source (where?) in other Ansible docs
+FIXME, not sure why this is here, need to say why it's relevant and link to the official source (where?) in other Ansible docs
 
-Variables are evaulated in the following order, listed from lowest to highest priority:
+Variables are evaluated in the following order, listed from lowest to highest priority:
 
 * Default
 * Environment
