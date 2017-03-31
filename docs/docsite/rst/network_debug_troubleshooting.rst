@@ -9,7 +9,7 @@ Network Debug and Troubleshooting Guide
 Introduction
 ============
 
-Starting with Ansible version 2.1, you can now use the familiar Ansible models of playbook authoring and module development to manage heterogenous networking devices. Ansible supports a growing number of network devices using both CLI over SSH and API (when available) transports.
+Starting with Ansible version 2.1, you can now use the familiar Ansible models of playbook authoring and module development to manage heterogeneous networking devices. Ansible supports a growing number of network devices using both CLI over SSH and API (when available) transports.
 
 This section discusses how to debug and troubleshoot network modules in Ansible 2.3.
 
@@ -17,8 +17,8 @@ This section discusses how to debug and troubleshoot network modules in Ansible 
 
 
 
-Troubleshooting Network Modules
-===============================
+How to troubleshoot
+===================
 
 This section covers troubleshooting issues with Network Modules.
 
@@ -73,16 +73,14 @@ From the log notice:
 
 * ``p=28990`` Is the PID (Process ID) of the ``ansible-connection`` process
 * ``u=fred`` Is the user `running` ansible, not the remote-user you are attempting to connect as
-* ``creating new control socket for host veos01:22 as user admin``
+* ``creating new control socket for host veos01:22 as user admin`` host:port as user
 * ``control socket path is`` location on disk where the persistent connection socket is created
 * ``using connection plugin network_cli`` Informs you that persistent connection is being used
 * ``connection established to veos01 in 0:00:22.580626`` Time taken to obtain a shell on the remote device
 
-Because the log files are verbose, you can use grep to look for specific information. For example, to look up the `pid`::
+Because the log files are verbose, you can use grep to look for specific information. For example, once you have identified the ```pid`` from the ``creating new control socket for host`` line you can search for other connection log entries::
 
   grep "p=28990" $ANSIBLE_LOG_PATH
-
-
 
 Isolating an error
 ------------------
@@ -102,6 +100,11 @@ FIXME
 * ad-hoc
 
 Reference back to `how to read logfile`
+
+Troubleshooting Network Modules
+===============================
+
+This section covers some of the more common error messages and troubleshooting steps.
 
 
 
@@ -231,14 +234,14 @@ For example:
 
 .. code-block:: yaml
 
-	TASK [ios_system : configure name_servers] *****************************************************************************
-	task path:
-	fatal: [ios-csr1000v]: FAILED! => {
-	    "changed": false,
-	    "failed": true,
-	   "msg": "unable to enter configuration mode",
-	    "rc": 255
-	}
+  TASK [ios_system : configure name_servers] *****************************************************************************
+  task path:
+  fatal: [ios-csr1000v]: FAILED! => {
+      "changed": false,
+      "failed": true,
+     "msg": "unable to enter configuration mode",
+      "rc": 255
+  }
 
 Suggestions to resolve:
 
@@ -246,11 +249,12 @@ Add ``authorize: yes`` to the task. For example:
 
 .. code-block:: yaml
 
-	- name: configure hostname
-	  ios_system:
-	    hostname: foo
-	    authorize: yes
-	  register: result
+  - name: configure hostname
+    ios_system:
+      provider:
+        hostname: foo
+        authorize: yes
+    register: result
 
 If the user requires a password to go into privileged mode, this can be specified with ``auth_pass``; if ``auth_pass`` isn't set, the environment variable ``ANSIBLE_NET_AUTHORIZE`` will be used instead.
 
@@ -259,12 +263,13 @@ Add `authorize: yes` to the task. For example:
 
 .. code-block:: yaml
 
-	- name: configure hostname
-	  ios_system:
-	    hostname: foo
-	    authorize: yes
-        auth_pass: "{{ mypasswordvar }}"
-	  register: result
+  - name: configure hostname
+    ios_system:
+    provider:
+      hostname: foo
+      authorize: yes
+      auth_pass: "{{ mypasswordvar }}"
+  register: result
 
 
 
@@ -305,7 +310,7 @@ Clearing Out Persistent Connections
 
 In Ansible 2.3, persistent connection sockets are stored in ``~/.ansible/pc`` for all network devices.  When an Ansible playbook runs, the persistent socket connection is displayed when verbose output is specified.
 
-``<switch> socket_path: /home/operations/.ansible/pc/f64ddfa760``
+``<switch> socket_path: /home/fred/.ansible/pc/f64ddfa760``
 
 To clear out a persistent connection before it times out (the default timeout is 30 seconds
 of inactivity), simple delete the socket file.
