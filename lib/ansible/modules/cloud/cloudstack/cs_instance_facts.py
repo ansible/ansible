@@ -208,7 +208,6 @@ class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
             'isoname':              'iso',
             'templatename':         'template',
             'keypair':              'ssh_key',
-            'volumes':              []
         }
         self.facts = {
             'cloudstack_instance': None,
@@ -237,7 +236,9 @@ class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
         volume_details = []
         if instance:
             args                = {}
-            args['projectid']   = instance['projectid']
+            args['account']     = instance['account'] if instance.has_key('account') else None
+            args['domainid']    = instance['domainid'] if instance.has_key('domainid') else None
+            args['projectid']   = instance['projectid'] if instance.has_key('projectid') else None
             args['virtualmachineid'] = instance['id']
 
             volumes = self.cs.listVolumes(**args)
