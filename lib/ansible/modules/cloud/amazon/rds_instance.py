@@ -516,17 +516,17 @@ def modify_db_instance(module, conn):
     force_password_update = module.params.pop('force_password_update')
     required_vars = ['instance_name']
     valid_vars = ['apply_immediately', 'backup_retention', 'backup_window',
-                  'db_name', 'engine_version',
+                  'db_name',  'db_engine', 'engine_version',
                   'instance_type', 'iops', 'license_model',
                   'maint_window', 'multi_zone', 'new_instance_name',
                   'option_group', 'parameter_group', 'password', 'port', 'size',
-                  'storage_type', 'subnet', 'tags', 'upgrade', 'vpc_security_groups']
+                  'storage_type', 'subnet', 'tags', 'upgrade', 'username', 'vpc_security_groups']
 
     existing_instance_name = module.params.get('instance_name')
     existing_instance = get_db_instance(conn, existing_instance_name)
     for immutable_key in ['username', 'db_engine', 'db_name']:
         if immutable_key in module.params:
-            if module.params[immutable_key] != existing_instance.data[immutable_key]:
+            if immutable_key in existing_instance.data and module.params[immutable_key] != existing_instance.data[immutable_key]:
                 module.fail_json(msg="Cannot modify parameter %s for instance %s" %
                                  (immutable_key, existing_instance_name))
             del(module.params[immutable_key])
