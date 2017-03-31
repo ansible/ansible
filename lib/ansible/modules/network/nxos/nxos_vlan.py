@@ -123,8 +123,8 @@ def vlan_range_to_list(vlans):
                 start, end = int(start), int(end)
                 result.extend(range(start, end + 1))
             else:
-                vlan_id = int(part)
-                result.append(vlan_id)
+                vlan = int(part)
+                result.append(vlan)
         return numerical_sort(result)
     return result
 
@@ -345,7 +345,7 @@ def main():
                 commands = get_vlan_config_commands(delta, vlan_id)
 
     if commands:
-        if existing.get('mapped_vni') and state != 'absent':
+        if existing.get('mapped_vni'):
             if (existing.get('mapped_vni') != proposed.get('mapped_vni') and
                     existing.get('mapped_vni') != '0' and proposed.get('mapped_vni') != 'default'):
                 commands.insert(1, 'no vn-segment')
@@ -355,10 +355,6 @@ def main():
         else:
             load_config(module, commands)
             changed = True
-            if 'configure' in commands:
-                commands.pop(0)
-            if 'exit' in commands:
-                commands.pop()
 
     results = {
         'commands': commands,

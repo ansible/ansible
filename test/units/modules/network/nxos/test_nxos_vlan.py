@@ -82,7 +82,7 @@ class TestNxosVlanModule(TestNxosModule):
     def test_nxos_vlan_id(self):
         set_module_args(dict(vlan_id='15', state='present'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['vlan 15'])
+        self.assertEqual(result['commands'], ['vlan 15', 'exit'])
 
     def test_nxos_vlan_id_absent(self):
         set_module_args(dict(vlan_id='1', state='absent'))
@@ -92,9 +92,9 @@ class TestNxosVlanModule(TestNxosModule):
     def test_nxos_vlan_named_vlan(self):
         set_module_args(dict(vlan_id='15', name='WEB'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['vlan 15', 'name WEB'])
+        self.assertEqual(result['commands'], ['vlan 15', 'name WEB', 'exit'])
 
     def test_nxos_vlan_shut_down(self):
         set_module_args(dict(vlan_id='1', admin_state='down'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['vlan 1', 'shutdown'])
+        self.assertEqual(result['commands'], ['vlan 1', 'shutdown', 'exit'])
