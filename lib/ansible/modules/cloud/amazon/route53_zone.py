@@ -53,11 +53,11 @@ options:
         default: ''
     hosted_zone_id:
         description:
-            - "The unique zone identifier you want to delete or "all" if there are many zones with the same domain name.
-              Required if there are multiple zones identified with the above options."
+            - The unique zone identifier you want to delete or "all" if there are many zones with the same domain name.
+              Required if there are multiple zones identified with the above options
         required: false
-        defaut: null
-        version: '2.4.0'
+        default: null
+        version_added: 2.4
 extends_documentation_fragment:
     - aws
     - ec2
@@ -96,7 +96,7 @@ EXAMPLES = '''
     var: zone_out
 '''
 
-RETURN='''
+RETURN = '''
 comment:
     description: optional hosted zone comment
     returned: when hosted zone exists
@@ -182,7 +182,6 @@ def create(conn, module, matching_zones):
 def create_private(conn, matching_zones, vpc_id, vpc_region, zone_in, record):
     for z in matching_zones:
         zone_details = conn.get_hosted_zone(z)['GetHostedZoneResponse']  # could be in different regions or have different VPCids
-        #if 'VPCs' in zone_details:
         current_vpc_id = None
         current_vpc_region = None
         if isinstance(zone_details['VPCs'], dict):
