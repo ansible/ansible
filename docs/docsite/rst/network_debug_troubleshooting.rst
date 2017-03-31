@@ -87,19 +87,37 @@ Isolating an error
 
 **Platforms:** Any
 
-TBD Troubleshooting best practice - Single machine, use ad-hoc, etc
+As with any effort to troubleshoot it's important to simplify the test case as much as possible.
 
-Use of ``--limit`` and ad-hoc
+For Ansible this can be done ensuring you are only running against one remote device:
 
+* Using ``ansible-playbook --limit switch1.example.net...``
+* Using an ad-hoc ``ansible`` command
 
-When combined with logging...
+`ad-hoc` refers to running Ansible to perform some quick command, using ``/usr/bin/ansible``, rather than the orchestration language, which is ``/usr/bin/ansible-playbook``, in this case we can ensure connectivity by attempting to execute a single command on the remote device::
 
-FIXME
-* Set ANSIBLE_LOG_PATH
-* Delete socket
-* ad-hoc
+  ansible -m eos_command -a 'commands=?' -i inventory switch1.example.net -e 'ansible_connection=local' -u admin -k
 
-Reference back to `how to read logfile`
+In the above example we:
+
+* Connect to ``switch1.example.net`` specified in the inventory file ``inventory``
+* Use the module ``eos_command``
+* Run the command ``?``
+* Connect using the username ``admin``
+* Inform ansible to prompt for the ssh password by specifying ``-k``
+
+If you have SSH keys configured correctly you can drop the ``-k`` parameter
+
+If the above still fails you can combine it the LINK(Enabling Network logging) section, for example::
+
+  # Specify the location for the log file
+  export ANSIBLE_LOG_PATH=~/ansible.log
+  # Run with 4*v for connection level verbosity
+  ANSIBLE_DEBUG=True ansible -m eos_command -a 'commands=?' -i inventory switch1.example.net -e 'ansible_connection=local' -u admin -k
+
+Then review the log file and find the relevant error message in the rest of this document.
+
+For details on other ways to authenticate see LINKTOAUTHHOWTODOCS.
 
 Troubleshooting Network Modules
 ===============================
@@ -192,7 +210,7 @@ Error: "Authentication failed"
 
 **Platforms:** Any
 
-Occurs if the credentials (username, passwords, or ssh keys) passed to ``ansible-connection`` (via ``ansible`` or ``ansible-playboo``) can not be used to connect to the remote device.
+Occurs if the credentials (username, passwords, or ssh keys) passed to ``ansible-connection`` (via ``ansible`` or ``ansible-playbook``) can not be used to connect to the remote device.
 
 
 

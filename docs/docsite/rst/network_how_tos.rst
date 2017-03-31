@@ -371,7 +371,7 @@ Ansible allows you to use conditionals to control the flow of your playbooks. An
 
 Conditional statements evalute the results from the commands that are
 executed remotely on the device.  Once the task executes the command
-set, the waitfor argument can be used to evalute the results before
+set, the wait_for argument can be used to evalute the results before
 returning control to the Ansible playbook.
 
 For example::
@@ -381,7 +381,7 @@ For example::
       eos_command:
           commands:
               - show interface Ethernet4 | json
-          waitfor:
+          wait_for:
               - "result[0].interfaces.Ethernet4.interfaceStatus eq connected"
 
 In the above example task, the command :code:`show interface Ethernet4 | json`
@@ -401,7 +401,7 @@ results in an interface.  For instance::
           commands:
               - show interface Ethernet4 | json
               - show interface Ethernet5 | json
-          waitfor:
+          wait_for:
               - "result[0].interfaces.Ethernet4.interfaceStatus eq connected"
               - "result[1].interfaces.Ethernet4.interfaceStatus eq connected"
 
@@ -410,7 +410,7 @@ remote device, and the results are evaluated.  By specifying the result
 index value (0 or 1), the correct result output is checked against the
 conditional.
 
-The waitfor argument must always start with result and then the
+The wait_for argument must always start with result and then the
 command index in [], where 0 is the first command in the commands list,
 1 is the second command, 2 is the third and so on.
 
