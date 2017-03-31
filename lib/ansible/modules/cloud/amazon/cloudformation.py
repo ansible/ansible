@@ -237,6 +237,8 @@ except ImportError:
 
 # import a class, otherwise we'll use a fully qualified path
 from ansible.module_utils.ec2 import AWSRetry
+from ansible.module_utils.basic import AnsibleModule
+import ansible.module_utils.ec2
 
 def boto_exception(err):
     '''generic error message handler'''
@@ -248,17 +250,6 @@ def boto_exception(err):
         error = '%s: %s' % (Exception, err)
 
     return error
-
-
-def boto_version_required(version_tuple):
-    parts = boto3.__version__.split('.')
-    boto_version = []
-    try:
-        for part in parts:
-            boto_version.append(int(part))
-    except ValueError:
-        boto_version.append(-1)
-    return tuple(boto_version) >= tuple(version_tuple)
 
 
 def get_stack_events(cfn, stack_name):
@@ -506,10 +497,6 @@ def main():
             'since Ansible 2.3, JSON and YAML templates are now passed '
             'directly to the CloudFormation API.')]
     module.exit_json(**result)
-
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-import ansible.module_utils.ec2
 
 
 if __name__ == '__main__':

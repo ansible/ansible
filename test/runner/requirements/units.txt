@@ -1,5 +1,6 @@
 boto
 boto3
+placebo
 jinja2
 mock
 nose
