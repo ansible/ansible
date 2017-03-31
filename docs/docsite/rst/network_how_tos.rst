@@ -238,121 +238,13 @@ certificate validation.  In order to disable certificate validation use the
            use_ssl: yes
            validate_certs: no
 
-Note; Please be sure you understand the security implications to changing
-either or both of these values.
+.. warning: Disabling SSL check
+
+    Please be sure you understand the security implications to changing either or both of ``use_ssl: no`` or ``validate_certs: no``.
 
 See the individual module documentation for more information on supported
 values and default settings.
 
-FIXME REVIEW AND MOVE THE FOLLOWING BITS FIXME
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-All core networking modules implement a *provider* argument, which is a collection of arguments used to define the characteristics of how to connect to the device.  This section will assist in understanding how the provider argument is used.
-
-
-Each core network module supports an underlying operating system and transport.  The operating system is a one-to-one match with the module, and the transport maintains a one-to-many relationship to the operating system as appropriate. Some network operating systems only have a single transport option.
-
-
-
-FIXME: If people must use this, do so under ``provider:``, link to module docs for a more readable version & to avoid repeating stuff
-
-Each core network module supports some basic arguments for configuring the transport:
-
-* host - defines the hostname or IP address of the remote host
-* port - defines the port to connect to
-* username - defines the username to use to authenticate the connection
-* password - defines the password to use to authenticate the connection
-* transport - defines the type of connection transport to build
-* authorize - enables privilege escalation for devices that require it
-* auth_pass  - defines the password, if needed, for privilege escalation
-
-Individual modules can set defaults for these arguments to common values that match device default configuration settings.  For instance, the default value for transport is universally 'cli'.  Some modules support other values such as EOS (eapi) and NXOS (nxapi), while some only support 'cli'.  All arguments are fully documented for each module.
-
-By allowing individual tasks to set the transport arguments independently, modules that use different transport mechanisms and authentication credentials can be combined as necessary.
-
-One downside to this approach is that every task needs to include the required arguments.  This is where the provider argument comes into play. The provider argument accepts keyword arguments and passes them through to the task to assign connection and authentication parameters.
-
-The following two config modules are essentially identical (using nxos_config) as an example but it applies to all core networking modules::
-
-
-    ---
-    nxos_config:
-       src: config.j2
-       host: "{{ inventory_hostname }}"
-       username: "{{ ansible_ssh_user }}"
-       password: "{{ ansible_ssh_pass }}"
-       transport: cli
-
-    ---
-    vars:
-       cli:
-          host: "{{ inventory_hostname }}"
-          username: "{{ ansible_ssh_user }}"
-          password: "{{ ansible_ssh_pass }} "
-          transport: cli
-
-
-    nxos_config:
-       src: config.j2
-       provider: "{{ cli }}"
-
-Given the above two examples that are equivalent, the arguments can also be used to establish precedence and defaults.  Consider the following example::
-
-    ---
-    vars:
-        cli:
-           host: "{{ inventory_hostname }}"
-           username: operator
-           password: secret
-           transport: cli
-
-    tasks:
-    - nxos_config:
-       src: config.j2
-       provider: "{{ cli }}"
-       username: admin
-       password: admin
-
-
-In this example, the values of admin for username and admin for password will override the values of operator in cli['username'] and secret in cli['password'])
-
-This is true for all values in the provider including transport.  So you could have a singular task that is now supported over CLI or NXAPI (assuming the configuration is value). ::
-
-
-    ---
-    vars:
-        cli:
-           host: "{{ inventory_hostname }}"
-           username: operator
-           password: secret
-           transport: cli
-
-    tasks:
-      - nxos_config:
-          src: config.j2
-          provider: "{{ cli }}"
-          transport: nxapi
-
-If all values are provided via the provider argument, the rules for requirements are still honored for the module.   For instance, take the following scenario::
-
-    ---
-    vars:
-      conn:
-         password: cisco_pass
-         transport: cli
-
-    tasks:
-    - nxos_config:
-      src: config.j2
-      provider: "{{ conn }}"
-
-Running the above task will cause an error to be generated with a message that required parameters are missing.  ::
-
-    "msg": "missing required arguments: username,host"
-
-Overall, this provides a very granular level of control over how credentials are used with modules.  It provides the playbook designer maximum control for changing context during a playbook run as needed.
-
-.. _networking_environment_variables:
 
 FIXME Networking Environment Variables FIXME
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -380,10 +272,10 @@ Variables are evaluated in the following order, listed from lowest to highest pr
 
 
 
-Connecting via A Proxy Host
----------------------------
+Connecting via A Proxy Host (CLI
+--------------------------------
 
-**Platforms:** Any
+**Platforms:** Any CLI
 
 The new connection framework in Ansible 2.3 no longer supports the use of the
 ``delegate_to`` directive.  In order to use a bastion or intermediate jump host
@@ -419,6 +311,13 @@ network device by first connecting to the host specified in
    This is done to prevent secrets from leaking out, for example in ``ps`` output.
 
    We recommend using SSH Keys, and if needed and ssh-agent, where ever possible.
+
+Connecting via A Proxy Host (API)
+---------------------------------
+
+**Platforms:** Any API
+
+TBD: Is this something we need to document?
 
 
 Entering Configuration Mode
@@ -473,12 +372,12 @@ Conditionals in Networking Modules
 
 Ansible allows you to use conditionals to control the flow of your playbooks. Ansible networking command modules use the following unique conditional statements.
 
-* eq - Equal
-* neq - Not equal
-* gt - Greater than
-* ge - Greater than or equal
-* lt - Less than
-* le - Less than or equal
+* ``eq`` - Equal
+* ``neq`` - Not equal
+* ``gt`` - Greater than
+* ``ge`` - Greater than or equal
+* ``lt`` - Less than
+* ``le`` - Less than or equal
 * contains - Object contains specified item
 
 
@@ -486,6 +385,8 @@ Conditional statements evalute the results from the commands that are
 executed remotely on the device.  Once the task executes the command
 set, the wait_for argument can be used to evalute the results before
 returning control to the Ansible playbook.
+
+FIXME Example needs reviewing
 
 For example::
 
@@ -500,6 +401,7 @@ For example::
 In the above example task, the command :code:`show interface Ethernet4 | json`
 is executed on the remote device and the results are evaluated.  If
 the path
+FIXME Example needs reviewing
 :code:`(result[0].interfaces.Ethernet4.interfaceStatus)` is not equal to
 "connected", then the command is retried.  This process continues
 until either the condition is satisfied or the number of retries has
@@ -507,6 +409,8 @@ expired (by default, this is 10 retries at 1 second intervals).
 
 The commands module can also evaluate more than one set of command
 results in an interface.  For instance::
+
+    FIXME Example needs reviewing
 
     ---
     - name: wait for interfaces to be admin enabled
