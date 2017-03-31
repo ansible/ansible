@@ -117,6 +117,14 @@ options:
     required: false
     default: true
     version_added: "2.3"
+  tags:
+    description:
+      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
+      - "To delete all tags, set a empty list e.g. C(tags: [])."
+    required: false
+    default: null
+    aliases: [ 'tag' ]
+    version_added: "2.4"
 extends_documentation_fragment: cloudstack
 '''
 
@@ -255,6 +263,11 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
                 if 'errortext' in res:
                     self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
                 iso = res['iso'][0]
+
+        if iso:
+            iso = self.ensure_tags(resource=iso, resource_type='ISO')
+            self.iso=iso
+
         return iso
 
 
@@ -325,6 +338,7 @@ def main():
         is_dynamically_scalable = dict(type='bool', default=False),
         state = dict(choices=['present', 'absent'], default='present'),
         poll_async = dict(type='bool', default=True),
+        tags=dict(type='list', aliases=['tag'], default=None),
     ))
 
     module = AnsibleModule(

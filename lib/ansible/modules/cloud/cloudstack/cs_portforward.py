@@ -123,6 +123,14 @@ options:
       - Poll async jobs until job has finished.
     required: false
     default: true
+  tags:
+    description:
+      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
+      - "To delete all tags, set a empty list e.g. C(tags: [])."
+    required: false
+    default: null
+    aliases: [ 'tag' ]
+    version_added: "2.4"
 extends_documentation_fragment: cloudstack
 '''
 
@@ -288,6 +296,11 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
             portforwarding_rule = self.update_portforwarding_rule(portforwarding_rule)
         else:
             portforwarding_rule = self.create_portforwarding_rule()
+
+        if portforwarding_rule:
+            portforwarding_rule = self.ensure_tags(resource=portforwarding_rule, resource_type='PortForwardingRule')
+            self.portforwarding_rule=portforwarding_rule
+
         return portforwarding_rule
 
 
@@ -395,6 +408,7 @@ def main():
         account = dict(default=None),
         project = dict(default=None),
         poll_async = dict(type='bool', default=True),
+        tags=dict(type='list', aliases=['tag'], default=None),
     ))
 
     module = AnsibleModule(

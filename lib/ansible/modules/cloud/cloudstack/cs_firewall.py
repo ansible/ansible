@@ -115,6 +115,14 @@ options:
       - Poll async jobs until job has finished.
     required: false
     default: true
+  tags:
+    description:
+      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
+      - "To delete all tags, set a empty list e.g. C(tags: [])."
+    required: false
+    default: null
+    aliases: [ 'tag' ]
+    version_added: "2.4"
 extends_documentation_fragment: cloudstack
 '''
 
@@ -345,6 +353,11 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
                     firewall_rule = self.poll_job(res, 'firewallrule')
+
+        if firewall_rule:
+            firewall_rule = self.ensure_tags(resource=firewall_rule, resource_type='Firewallrule')
+            self.firewall_rule = firewall_rule
+
         return firewall_rule
 
     def remove_firewall_rule(self):
@@ -398,6 +411,7 @@ def main():
         account=dict(),
         project=dict(),
         poll_async=dict(type='bool', default=True),
+        tags=dict(type='list', aliases=['tag'], default=None),
     ))
 
     required_together = cs_required_together()
