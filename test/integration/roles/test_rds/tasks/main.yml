@@ -40,11 +40,12 @@
   rds_snapshot:
     instance_name: "{{ instance_name }}"
     snapshot: "{{ instance_name }}-snapshot"
+    wait_timeout: 1200
     wait: yes
 
 - name: get snapshot facts
   rds_snapshot_facts:
-    snapshot: "{{ instance_name }}-snapshot"
+    instance_name: "{{ instance_name }}"
 
 - name: delete snapshot
   rds_snapshot:
