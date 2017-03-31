@@ -639,7 +639,7 @@ class TaskExecutor:
         if async_jid is None:
             return dict(failed=True, msg="No job id was returned by the async task")
 
-        # Create a new psuedo-task to run the async_status module, and run
+        # Create a new pseudo-task to run the async_status module, and run
         # that (with a sleep for "poll" seconds between each retry) until the
         # async time limit is exceeded.
 
