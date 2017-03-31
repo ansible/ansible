@@ -187,7 +187,7 @@ except ImportError:
 try:
     result = connection.aws_call()
 except ClientError, e:
-    module.fail_json(msg=e.message, exception=traceback.format_ex(),
+    module.fail_json(msg=e.message, exception=traceback.format_exc(),
                      **camel_dict_to_snake_dict(e.response))
 ```
 
