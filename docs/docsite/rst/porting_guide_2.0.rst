@@ -161,9 +161,7 @@ Here are some corner cases encountered when updating, these are mostly caused by
 
   This worked 'by accident' as the errors were retemplated and ended up resolving the variable, it was never intended as valid syntax and now properly returns an error, use the following instead.::
 
-    with_items: "{{vars['myvar_' + res_of_name]}}"
-
-  Or `hostvars[inventory_hostname]['myvar_' + rest_of_name]` if appropriate.
+    hostvars[inventory_hostname]['myvar_' + rest_of_name]
 
 * Misspelled directives::
 
