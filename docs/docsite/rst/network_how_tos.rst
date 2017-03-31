@@ -272,8 +272,8 @@ Variables are evaluated in the following order, listed from lowest to highest pr
 
 
 
-Connecting via A Proxy Host (CLI
---------------------------------
+Connecting via A Proxy Host (CLI)
+---------------------------------
 
 **Platforms:** Any CLI
 
