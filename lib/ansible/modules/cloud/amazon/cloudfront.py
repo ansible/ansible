@@ -377,6 +377,31 @@ class CloudFrontServiceManager:
             return snake_dict_to_pascal_dict(valid_origins)
         return None
 
+    def validate_cache_behaviors(self, cache_behaviors):
+        if cache_behaviors is None:
+            cache_behaviors = []
+        for cache_behavior in cache_behaviors:
+            self.validate_cache_behavior(cache_behavior)
+        return_value = {}
+        return_value["Items"] = cache_behaviors
+        return_value["Quantity"] = len(cache_behaviors)
+        return return_value
+
+    def validate_cache_behavior(self, cache_behavior):
+        if cache_behavior is None:
+            cache_behavior = {}
+        if cache_behavior.get("min_ttl") is None:
+            cache_behavior["min_t_t_l"] = 0
+        if cache_behavior.get("trusted_signers") is None:
+            cache_behavior["trusted_signers"] = { "Enabled": False, "Quantity": 0 }
+        else:
+            temp_trusted_signers = cache_behavior["trusted_signers"]
+            cache_behavior["trusted_signers"]["items"] = temp_trusted_signers
+            cache_behavior["trusted_signers"]["quantity"] = len(temp_trusted_signers)
+        if cache_behavior["target_origin_id"] is None:
+            cache_behavior["target_origin_id"] = self.get_first_origin_id_for_default_cache_behavior(valid_origins, default_datetime_string)
+
+
     def validate_custom_origin_configs(self, custom_origin_configs):
         if origin.get("custom_origin_config"):
             if(origin["custom_origin_config"].get("http_port") is None or origin["custom_origin_config"].get("https_port") is None 
@@ -414,7 +439,7 @@ class CloudFrontServiceManager:
 
     def validate_update_or_delete_distribution_parameters(self, alias, distribution_id, config, e_tag):
         if distribution_id is None and alias is None:
-            self.module.fail_json(msg="Error: distribution_id or alias must be specified for updating or deleting a distribution.")
+            self.module.fail_json(msg="distribution_id or alias must be specified for updating or deleting a distribution.")
         if distribution_id is None:
             distribution_id = self.cloudfront_facts_mgr.get_distribution_id_from_domain_name(alias)
         if config is None:
@@ -469,14 +494,12 @@ def snake_dict_to_pascal_dict(snake_dict):
     return pascalize(snake_dict)
 
 def pascal_dict_to_snake_dict(pascal_dict):
-
     def pascal_to_snake(name):
         import re
         first_cap_re = re.compile('(.)([A-Z][a-z]+)')
         all_cap_re = re.compile('([a-z0-9])([A-Z])')
         s1 = first_cap_re.sub(r'\1_\2', name)
         return all_cap_re.sub(r'\1_\2', s1).lower()
-    
     def value_is_list(pascal_list):
         checked_list = []
         for item in pascal_list:
@@ -487,9 +510,7 @@ def pascal_dict_to_snake_dict(pascal_dict):
             else:
                 checked_list.append(item)
         return checked_list
-
     snake_dict = {}
-    
     for k, v in pascal_dict.items():
         if isinstance(v, dict):
             snake_dict[pascal_to_snake(k)] = pascal_dict_to_snake_dict(v)
@@ -497,31 +518,36 @@ def pascal_dict_to_snake_dict(pascal_dict):
             snake_dict[pascal_to_snake(k)] = value_is_list(v)
         else:
             snake_dict[pascal_to_snake(k)] = v
-
     return snake_dict
+
+# TODO: fill out
+def add_quantities_to_arrays_in_dict(config):
+    return config
 
 def main():
     argument_spec = ec2_argument_spec()
 
     argument_spec.update(dict(
         create_origin_access_identity=dict(required=False, default=False, type='bool'),
-        caller_reference=dict(required=False, default=None, type='str'),
-        comment=dict(required=False, default=None, type='str'),
+        update_origin_access_identity=dict(required=False, default=False, type='bool'),
         create_distribution=dict(required=False, default=False, type='bool'),
         delete_distribution=dict(required=False, default=False, type='bool'),
         update_distribution=dict(required=False, default=False, type='bool'),
         create_invalidation=dict(required=False, default=False, type='bool'),
-        distribution_id=dict(required=False, default=None, type='str'),
-        streaming_distribution_id=dict(required=False, default=None, type='str'),
-        invalidation_batch=dict(required=False, default=None, type='str'),
         create_streaming_distribution=dict(required=False, default=False, type='bool'),
         delete_streaming_distribution=dict(required=False, default=False, type='bool'),
         update_streaming_distribution=dict(required=False, default=False, type='bool'),
         delete_origin_access_identity=dict(required=False, default=False, type='bool'),
-        origin_access_identity_id=dict(required=False, default=None, type='str'),
-        e_tag=dict(required=False, default=None, type='str'),
         generate_presigned_url=dict(required=False, default=False, type='bool'),
         generate_s3_presigned_url=dict(required=False, default=False, type='bool'),
+        generate_signed_url_from_pem_private_key=dict(required=False, default=False, type='bool'),
+        origin_access_identity_id=dict(required=False, default=None, type='str'),
+        caller_reference=dict(required=False, default=None, type='str'),
+        comment=dict(required=False, default=None, type='str'),
+        distribution_id=dict(required=False, default=None, type='str'),
+        streaming_distribution_id=dict(required=False, default=None, type='str'),
+        invalidation_batch=dict(required=False, default=None, type='str'),
+        e_tag=dict(required=False, default=None, type='str'),
         client_method=dict(required=False, default=None, type='str'),
         s3_bucket_name=dict(required=False, default=None, type='str'),
         s3_key_name=dict(required=False, default=None, type='str'),
@@ -529,7 +555,6 @@ def main():
         http_method=dict(required=False, default=None, type='str'),
         tag_resource=dict(required=False, default=False, type='bool'),
         untag_resource=dict(required=False, default=False, type='bool'),
-        update_origin_access_identity=dict(required=False, default=False, type='bool'),
         config=dict(required=False, default=None, type='json'),
         tags=dict(required=False, default=None, type='str'),
         alias=dict(required=False, default=None, type='str'),
@@ -554,7 +579,6 @@ def main():
         default_origin_domain_name=dict(required=False, default=None, type='str'),
         default_origin_path=dict(required=False, default='', type='str'),
         default_origin_access_identity=dict(required=False, default='', type='str'),
-        generate_signed_url_from_pem_private_key=dict(required=False, default=False, type='bool'),
         signed_url_pem_private_key_string=dict(required=False, default=None, type='str'),
         signed_url_url=dict(required=False, default=None, type='str'),
         signed_url_expire_date=dict(required=False, default=None, type='str')
@@ -647,6 +671,9 @@ def main():
     valid_origins = service_mgr.validate_origins(origins, default_origin_domain_name, default_origin_access_identity,
             default_origin_path, streaming_distribution, create_distribution)
 
+    valid_cache_behaviors = service_mgr.validate_cache_behaviors(cache_behaviors)
+    valid_default_cache_behavior = service_mgr.validate_default_cache_behavior(default_cache_behavior)
+
     # DefaultCacheBehavior
     # CacheBehaviors
     # CustomErrorResponses
@@ -658,10 +685,10 @@ def main():
     #    alias
     #    trusted signer
     #    custom error response
+
     valid_trusted_signers = service_mgr.validate_trusted_signers(trusted_signers)
     valid_s3_origin = service_mgr.validate_s3_origin(s3_origin)
     valid_viewer_certificate = service_mgr.validate_viewer_certificate(viewer_certificate)
-
 
     default_datetime_string = service_mgr.generate_datetime_string()
 
