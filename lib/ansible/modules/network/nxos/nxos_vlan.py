@@ -99,66 +99,18 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-proposed_vlans_list:
-    description: list of VLANs being proposed
-    returned: when debug enabled
-    type: list
-    sample: ["100"]
-existing_vlans_list:
-    description: list of existing VLANs on the switch prior to making changes
-    returned: when debug enabled
-    type: list
-    sample: ["1", "2", "3", "4", "5", "20"]
-end_state_vlans_list:
-    description: list of VLANs after the module is executed
-    returned: when debug enabled
-    type: list
-    sample:  ["1", "2", "3", "4", "5", "20", "100"]
-proposed:
-    description: k/v pairs of parameters passed into module (does not include
-                 vlan_id or vlan_range)
-    returned: when debug enabled
-    type: dict
-    sample: {"admin_state": "down", "name": "app_vlan",
-            "vlan_state": "suspend", "mapped_vni": "5000"}
-existing:
-    description: k/v pairs of existing vlan or null when using vlan_range
-    returned: when debug enabled
-    type: dict
-    sample: {"admin_state": "down", "name": "app_vlan",
-             "vlan_id": "20", "vlan_state": "suspend", "mapped_vni": ""}
-end_state:
-    description: k/v pairs of the VLAN after executing module or null
-                 when using vlan_range
-    returned: when debug enabled
-    type: dict
-    sample: {"admin_state": "down", "name": "app_vlan", "vlan_id": "20",
-             "vlan_state": "suspend", "mapped_vni": "5000"}
-updates:
-    description: command string sent to the device
-    returned: always
-    type: list
-    sample: ["vlan 20", "vlan 55", "vn-segment 5000"]
 commands:
-    description: command string sent to the device
+    description: Set of command strings to send to the remote device
     returned: always
     type: list
     sample: ["vlan 20", "vlan 55", "vn-segment 5000"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
+import re
+
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
-import re
-
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
-from ansible.module_utils.nxos import run_commands, load_config, get_config
-from ansible.module_utils.basic import AnsibleModule
 
 def vlan_range_to_list(vlans):
     result = []
@@ -167,12 +119,12 @@ def vlan_range_to_list(vlans):
             if part == 'none':
                 break
             if '-' in part:
-                a, b = part.split('-')
-                a, b = int(a), int(b)
-                result.extend(range(a, b + 1))
+                start, end = part.split('-')
+                start, end = int(start), int(end)
+                result.extend(range(start, end + 1))
             else:
-                a = int(part)
-                result.append(a)
+                vlan_id = int(part)
+                result.append(vlan_id)
         return numerical_sort(result)
     return result
 
@@ -261,8 +213,7 @@ def get_list_of_vlans(module):
 def get_vni(vlanid, module):
     flags = str('all | section vlan.{0}'.format(vlanid)).split(' ')
     body = get_config(module, flags=flags)
-    #command = 'show run all | section vlan.{0}'.format(vlanid)
-    #body = execute_show_command(command, module, command_type='cli_show_ascii')[0]
+
     value = ''
     if body:
         REGEX = re.compile(r'(?:vn-segment\s)(?P<value>.*)$', re.M)
@@ -276,9 +227,6 @@ def get_vlan(vlanid, module):
     """
     command = 'show vlan id %s | json' % vlanid
     body = run_commands(module, [command])
-
-    #command = 'show vlan id ' + vlanid
-    #body = execute_show_command(command, module)
 
     try:
         vlan_table = body[0]['TABLE_vlanbriefid']['ROW_vlanbriefid']
@@ -327,8 +275,7 @@ def main():
         name=dict(required=False),
         vlan_state=dict(choices=['active', 'suspend'], required=False),
         mapped_vni=dict(required=False, type='str'),
-        state=dict(choices=['present', 'absent'], default='present',
-                       required=False),
+        state=dict(choices=['present', 'absent'], default='present', required=False),
         admin_state=dict(choices=['up', 'down'], required=False),
 
         # Deprecated in Ansible 2.4
@@ -387,9 +334,8 @@ def main():
             commands = build_commands(vlans_common, state)
     else:
         existing = get_vlan(vlan_id, module)
-        if state == 'absent':
-            if existing:
-                commands = ['no vlan ' + vlan_id]
+        if state == 'absent' and existing:
+            commands = ['no vlan ' + vlan_id]
         elif state == 'present':
             if (existing.get('mapped_vni') == '0' and
                     proposed.get('mapped_vni') == 'default'):
@@ -397,9 +343,6 @@ def main():
             delta = dict(set(proposed.items()).difference(existing.items()))
             if delta or not existing:
                 commands = get_vlan_config_commands(delta, vlan_id)
-
-    end_state = existing
-    end_state_vlans_list = existing_vlans_list
 
     if commands:
         if existing.get('mapped_vni') and state != 'absent':
@@ -412,28 +355,16 @@ def main():
         else:
             load_config(module, commands)
             changed = True
-            end_state_vlans_list = numerical_sort(get_list_of_vlans(module))
             if 'configure' in commands:
                 commands.pop(0)
-            if vlan_id:
-                end_state = get_vlan(vlan_id, module)
+            if 'exit' in commands:
+                commands.pop()
 
     results = {
         'commands': commands,
-        'updates': commands,
         'changed': changed,
         'warnings': warnings
     }
-
-    if module._debug:
-        results.update({
-            'proposed_vlans_list': proposed_vlans_list,
-            'existing_vlans_list': existing_vlans_list,
-            'proposed': proposed,
-            'existing': existing,
-            'end_state': end_state,
-            'end_state_vlans_list': end_state_vlans_list
-        })
 
     module.exit_json(**results)
 
