@@ -43,9 +43,9 @@ Enabling Networking logging and how to read the logfile
 
 **Platforms:** Any
 
-Ansible 2.3 feature improved logging to help diagnose and troubleshoot issues regarding Ansible Networking modules.
+Ansible 2.3 features improved logging to help diagnose and troubleshoot issues regarding Ansible Networking modules.
 
-As the logging is very verbose it is disabled by default, it an be enable via the ``ANSIBLE_LOG_PATH`` and ``ANISBLE_DEBUG`` options::
+Because logging is very verbose it is disabled by default. It can be enabled via the ``ANSIBLE_LOG_PATH`` and ``ANISBLE_DEBUG`` options::
 
    # Specify the location for the log file
    export ANSIBLE_LOG_PATH=~/ansible.log
@@ -53,7 +53,7 @@ As the logging is very verbose it is disabled by default, it an be enable via th
    # Run with 4*v for connection level verbosity
    ANSIBLE_DEBUG=True ansible-playbook -vvvv ...
 
-After ansible has finished running you can inspect the log file:
+After Ansible has finished running you can inspect the log file:
 
 .. code::
 
@@ -78,14 +78,14 @@ From the log notice:
 * ``using connection plugin network_cli`` Informs you that persistent connection is being used
 * ``connection established to veos01 in 0:00:22.580626`` Time taken to obtain a shell on the remote device
 
-If the log file has a lot of information in you can look up the `pid` and grep for that, for example::
+Because the log files are verbose, you can use grep to look for specific information. For example, to look up the `pid`::
 
   grep "p=28990" $ANSIBLE_LOG_PATH
 
 
 
-Isolating the error
--------------------
+Isolating an error
+------------------
 
 **Platforms:** Any
 
@@ -127,7 +127,7 @@ For example:
 
 Suggestions to resolve:
 
-Rerun ansible extra logging. For example:
+Rerun Ansible with extra logging. For example:
 
 :code:`export ANSIBLE_LOG_PATH=~/ansible.log`
 
@@ -145,7 +145,7 @@ For example:
   2017-03-10 15:32:06,222 p=19669 u=fred |  fatal: [veos01]: FAILED! => {
     "changed": false,
 
-Look for error message in this document, in this case the relevant lines are
+Look for an error message in this document. In this example, the relevant lines are:
 
 .. code-block:: yaml
 
@@ -156,7 +156,7 @@ Look for error message in this document, in this case the relevant lines are
 
 .. notes: Easier to read error messages
 
-   The final Ansible 2.3 will include improved logging which will make it easier to identify connection lines in the log
+   The final version of Ansible 2.3 will include improved logging which will make it easier to identify connection lines in the log
 
 
 Error: "number of connection attempts exceeded, unable to connect to control socket"
@@ -203,15 +203,13 @@ For example:
 
 Suggestions to resolve:
 
-If you are specifying credentials via ``password:`` (either directly or via ``provider:``) or the environment variable ``ANSIBLE_NET_PASSWORD`` it is possible that ``paramiko`` (the Python SSH library that Ansible uses) is using ssh keys, and therefore the credentials you are specifying could be ignored. To find out if this is the case, disable "look for keys".
-
-This can be done via:
+If you are specifying credentials via ``password:`` (either directly or via ``provider:``) or the environment variable ``ANSIBLE_NET_PASSWORD`` it is possible that ``paramiko`` (the Python SSH library that Ansible uses) is using ssh keys, and therefore the credentials you are specifying are being ignored. To find out if this is the case, disable "look for keys". This can be done like this:
 
 .. code-block:: yaml
 
    export ANSIBLE_PARAMIKO_LOOK_FOR_KEYS=False
 
-To make this a permanent change, add the following to your ``ansible.cfg``
+To make this a permanent change, add the following to your ``ansible.cfg`` file:
 
 .. code-block:: ini
 
@@ -254,7 +252,7 @@ Add ``authorize: yes`` to the task. For example:
 	    authorize: yes
 	  register: result
 
-If the user requires a password to go into privileged mode, this can be specified with ``auth_pass``; if ``auth_pass`` isn't set the environment variable ``ANSIBLE_NET_AUTHORIZE`` will be used instead.
+If the user requires a password to go into privileged mode, this can be specified with ``auth_pass``; if ``auth_pass`` isn't set, the environment variable ``ANSIBLE_NET_AUTHORIZE`` will be used instead.
 
 
 Add `authorize: yes` to the task. For example:
@@ -275,9 +273,9 @@ Error: "invalid connection specified, expected connection=local, got ssh"
 
 **Platforms:** Any
 
-Network modules require the connection to be set to ``local``.  Any other
+Network modules require that the connection is set to ``local``.  Any other
 connection setting will cause the playbook to fail.  Ansible will now detect
-this condition and return an error message.
+this condition and return an error message:
 
 .. code-block:: yaml
 
@@ -288,8 +286,8 @@ this condition and return an error message.
     }
 
 
-To fix this issue set the connection value to ``local`` using one of the
-following ways.
+To fix this issue, set the connection value to ``local`` using one of the
+following methods:
 
 * Set the play to use ``connection: local``
 * Set the task to use ``connection: local``
@@ -305,13 +303,11 @@ Clearing Out Persistent Connections
 
 **Platforms:** Any
 
-Persistent connection sockets are stored in ``~/.ansible/pc`` in Ansible 2.3
-for all network devices.  When an Ansible playbook runs the persistent socket
-connection displayed when specifying verbose output.
+In Ansible 2.3, persistent connection sockets are stored in ``~/.ansible/pc`` for all network devices.  When an Ansible playbook runs, the persistent socket connection is displayed when verbose output is specified.
 
 ``<switch> socket_path: /home/operations/.ansible/pc/f64ddfa760``
 
-To clear out a persistent connection before it times out (default is 30 seconds
+To clear out a persistent connection before it times out (the default timeout is 30 seconds
 of inactivity), simple delete the socket file.
 
 
