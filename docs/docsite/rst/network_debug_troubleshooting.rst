@@ -319,7 +319,24 @@ following methods:
 Timeouts
 --------
 
-TDB Detail when to use the ``timeout:`` option
+All network modules support a timeout value that can be set on a per task
+basis.  The timeout value controls the amount of time in seconds before the
+task will fail if the command has not returned.  
+
+.. code-block:: yaml
+    
+    - name: save running-config
+      ios_command: 
+        commands: copy running-config startup-config
+        provider: "{{ cli }}"
+        timeout: 30
+
+Some operations take longer than the default 10 seconds to complete.  One good
+example is saving the current running config on IOS devices to startup config.
+In this case, changing the timeout value form the default 10 seconds to 30
+seconds will prevent the task from failing before the command completes
+successfully.
+
 
 Clearing Out Persistent Connections
 -----------------------------------
