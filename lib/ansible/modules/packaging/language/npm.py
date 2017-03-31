@@ -84,6 +84,7 @@ options:
       - Extra options passed to npm.
     required: false
     default: null
+    version_added: "2.4"
 '''
 
 EXAMPLES = '''
