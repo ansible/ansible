@@ -37,6 +37,9 @@ class TestNxosVlanModule(TestNxosModule):
         self.mock_load_config = patch('ansible.modules.network.nxos.nxos_vlan.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.mock_get_config = patch('ansible.modules.network.nxos.nxos_vlan.get_config')
+        self.get_config = self.mock_get_config.start()
+
     def tearDown(self):
         self.mock_run_commands.stop()
         self.mock_load_config.stop()
@@ -52,7 +55,7 @@ class TestNxosVlanModule(TestNxosModule):
                     command = obj['command']
                 except ValueError:
                     command = item
-                filename = str(command).replace(' ', '_')
+                filename = str(command).split(' | ')[0].replace(' ', '_')
                 filename = 'nxos_vlan/%s.txt' % filename
                 output.append(load_fixture(filename))
             return output
@@ -60,8 +63,30 @@ class TestNxosVlanModule(TestNxosModule):
         self.run_commands.side_effect = load_from_file
         self.load_config.return_value = None
 
-    def test_nxos_vlan_range_absent(self):
+    def test_nxos_vlan_range(self):
         set_module_args(dict(vlan_range='6-10'))
         result = self.execute_module(changed=True)
         self.assertEqual(len(result['commands']), 5)
+        self.assertTrue('vlan 6' in result['commands'])
         self.assertTrue('vlan 7' in result['commands'])
+        self.assertTrue('vlan 8' in result['commands'])
+        self.assertTrue('vlan 9' in result['commands'])
+        self.assertTrue('vlan 10' in result['commands'])
+
+    def test_nxos_vlan_range_absent(self):
+        set_module_args(dict(vlan_range='1-5', state='absent'))
+        result = self.execute_module(changed=True)
+        self.assertEqual(len(result['commands']), 1)
+        self.assertTrue('no vlan 1' in result['commands'])
+
+    def test_nxos_vlan_id(self):
+        set_module_args(dict(vlan_id='15', state='present'))
+        result = self.execute_module(changed=True)
+        self.assertEqual(len(result['commands']), 1)
+        self.assertTrue('vlan 15' in result['commands'])
+
+    def test_nxos_vlan_id_absent(self):
+        set_module_args(dict(vlan_id='1', state='absent'))
+        result = self.execute_module(changed=True)
+        self.assertEqual(len(result['commands']), 1)
+        self.assertTrue('no vlan 1' in result['commands'])
