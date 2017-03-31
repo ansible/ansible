@@ -121,23 +121,21 @@ def vlan_range_to_list(vlans):
             if '-' in part:
                 start, end = part.split('-')
                 start, end = int(start), int(end)
-                result.extend(range(start, end + 1))
+                result.extend([str(i) for i in range(start, end + 1)])
             else:
-                vlan = int(part)
-                result.append(vlan)
-        return numerical_sort(result)
+                result.append(part)
     return result
 
 
-def numerical_sort(string_int_list):
+def numerical_sort(iterable):
     """Sort list of strings (VLAN IDs) that are digits in numerical order.
     """
-
     as_int_list = []
-    as_str_list = []
-    for vlan in string_int_list:
+    for vlan in iterable:
         as_int_list.append(int(vlan))
     as_int_list.sort()
+
+    as_str_list = []
     for vlan in as_int_list:
         as_str_list.append(str(vlan))
     return as_str_list
@@ -268,6 +266,7 @@ def apply_value_map(value_map, resource):
         resource[key] = value[resource.get(key)]
     return resource
 
+
 def main():
     argument_spec = dict(
         vlan_id=dict(required=False, type='str'),
@@ -313,9 +312,8 @@ def main():
 
     proposed = dict((k, v) for k, v in args.items() if v is not None)
 
-    proposed_vlans_list = numerical_sort(vlan_range_to_list(
-        vlan_id or vlan_range))
-    existing_vlans_list = numerical_sort(get_list_of_vlans(module))
+    proposed_vlans_list = vlan_range_to_list(vlan_id or vlan_range)
+    existing_vlans_list = get_list_of_vlans(module)
     commands = []
     existing = {}
 
@@ -323,13 +321,13 @@ def main():
         if state == 'present':
             # These are all of the VLANs being proposed that don't
             # already exist on the switch
-            vlans_delta = list(
+            vlans_delta = numerical_sort(
                 set(proposed_vlans_list).difference(existing_vlans_list))
             commands = build_commands(vlans_delta, state)
         elif state == 'absent':
             # VLANs that are common between what is being proposed and
             # what is on the switch
-            vlans_common = list(
+            vlans_common = numerical_sort(
                 set(proposed_vlans_list).intersection(existing_vlans_list))
             commands = build_commands(vlans_common, state)
     else:

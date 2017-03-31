@@ -66,18 +66,12 @@ class TestNxosVlanModule(TestNxosModule):
     def test_nxos_vlan_range(self):
         set_module_args(dict(vlan_range='6-10'))
         result = self.execute_module(changed=True)
-        self.assertEqual(len(result['commands']), 5)
-        self.assertTrue('vlan 6' in result['commands'])
-        self.assertTrue('vlan 7' in result['commands'])
-        self.assertTrue('vlan 8' in result['commands'])
-        self.assertTrue('vlan 9' in result['commands'])
-        self.assertTrue('vlan 10' in result['commands'])
+        self.assertEqual(result['commands'], ['vlan 6', 'vlan 7', 'vlan 8', 'vlan 9', 'vlan 10'])
 
     def test_nxos_vlan_range_absent(self):
         set_module_args(dict(vlan_range='1-5', state='absent'))
         result = self.execute_module(changed=True)
-        self.assertEqual(len(result['commands']), 1)
-        self.assertTrue('no vlan 1' in result['commands'])
+        self.assertEqual(result['commands'], ['no vlan 1'])
 
     def test_nxos_vlan_id(self):
         set_module_args(dict(vlan_id='15', state='present'))
