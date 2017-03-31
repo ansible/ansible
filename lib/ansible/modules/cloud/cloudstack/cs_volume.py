@@ -127,6 +127,14 @@ options:
       - Poll async jobs until job has finished.
     required: false
     default: true
+  tags:
+    description:
+      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
+      - "To delete all tags, set a empty list e.g. C(tags: [])."
+    required: false
+    default: null
+    aliases: [ 'tag' ]
+    version_added: "2.4"
 extends_documentation_fragment: cloudstack
 '''
 
@@ -338,6 +346,10 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
                     volume = self.poll_job(res, 'volume')
+        if volume:
+            volume = self.ensure_tags(resource=volume, resource_type='Volume')
+            self.volume=volume
+
         return volume
 
 
@@ -458,6 +470,7 @@ def main():
         account = dict(default=None),
         project = dict(default=None),
         poll_async = dict(type='bool', default=True),
+        tags=dict(type='list', aliases=['tag'], default=None),
     ))
 
     module = AnsibleModule(
