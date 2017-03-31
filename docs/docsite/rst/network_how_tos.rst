@@ -64,7 +64,7 @@ Note that the new task entry does not include any credential information anywher
  ios01                      : ok=1    changed=0    unreachable=0    failed=0
 
 
-This removes the requirement to encode any credentials into the Playbook, further simplifying the Playbook.
+This removes the requirement to encode any credentials into the Playbook, further simplifying the Playbook. Please note that the ``-u`` switch is functionally equivalent to ``ansible_ssh_user`` and the ``-k`` switch is functionally equivalant to ``ansible_ssh_pass``. Meaning these variables do not have to be set via command line, and can be set the same as any variable in ansible.
 
 Or you can use SSH keys..
 
