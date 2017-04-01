@@ -108,6 +108,13 @@ options:
         - Whether to boot the server with config drive enabled
      type: bool
      default: 'no'
+   files:
+     description:
+       - Files to insert into the instance.
+         Equivalent of files= option in nova boot for personality
+     required: false
+     default: null
+     version_added: "2.4"
    userdata:
      description:
         - Opaque blob of data which is made available to the instance
@@ -505,6 +512,7 @@ def _create_server(module, cloud):
         security_groups=module.params['security_groups'],
         userdata=module.params['userdata'],
         config_drive=module.params['config_drive'],
+        files=module.params['files'],
     )
     for optional_param in (
             'key_name', 'availability_zone', 'network',
