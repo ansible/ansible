@@ -708,54 +708,58 @@ def validate_parameters(required_vars, valid_vars, module):
     return params
 
 
-def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            state = dict(choices=['absent', 'present', 'rebooted'], default='present'),
-            instance_name = dict(required=True),
-            source_instance = dict(),
-            db_engine = dict(choices=DB_ENGINES),
-            size = dict(type='int'),
-            instance_type = dict(aliases=['type']),
-            username = dict(),
-            password = dict(no_log=True),
-            db_name = dict(),
-            engine_version = dict(),
-            parameter_group = dict(),
-            license_model = dict(choices=LICENSE_MODELS),
-            multi_zone = dict(type='bool', default=False),
-            iops = dict(type='int'),
-            storage_type = dict(choices=['standard', 'io1', 'gp2'], default='standard'),
-            security_groups = dict(),
-            vpc_security_groups = dict(type='list'),
-            port = dict(type='int'),
-            upgrade = dict(type='bool', default=False),
-            option_group = dict(),
-            maint_window = dict(),
-            backup_window = dict(),
-            backup_retention = dict(type='int'),
-            zone = dict(aliases=['aws_zone', 'ec2_zone']),
-            subnet = dict(),
-            wait = dict(type='bool', default=False),
-            wait_timeout = dict(type='int', default=600),
-            snapshot = dict(),
-            skip_final_snapshot = dict(type='bool'),
-            apply_immediately = dict(type='bool', default=False),
-            old_instance_name = dict(),
-            tags = dict(type='dict'),
-            publicly_accessible = dict(),
-            character_set_name = dict(),
-            force_failover = dict(type='bool', default=False),
-            force_password_update = dict(type='bool', default=False),
-        )
+argument_spec = ec2_argument_spec()
+argument_spec.update(
+    dict(
+        state = dict(choices=['absent', 'present', 'rebooted'], default='present'),
+        instance_name = dict(required=True),
+        source_instance = dict(),
+        db_engine = dict(choices=DB_ENGINES),
+        size = dict(type='int'),
+        instance_type = dict(aliases=['type']),
+        username = dict(),
+        password = dict(no_log=True),
+        db_name = dict(),
+        engine_version = dict(),
+        parameter_group = dict(),
+        license_model = dict(choices=LICENSE_MODELS),
+        multi_zone = dict(type='bool', default=False),
+        iops = dict(type='int'),
+        storage_type = dict(choices=['standard', 'io1', 'gp2'], default='standard'),
+        security_groups = dict(),
+        vpc_security_groups = dict(type='list'),
+        port = dict(type='int'),
+        upgrade = dict(type='bool', default=False),
+        option_group = dict(),
+        maint_window = dict(),
+        backup_window = dict(),
+        backup_retention = dict(type='int'),
+        zone = dict(aliases=['aws_zone', 'ec2_zone']),
+        subnet = dict(),
+        wait = dict(type='bool', default=False),
+        wait_timeout = dict(type='int', default=600),
+        snapshot = dict(),
+        skip_final_snapshot = dict(type='bool'),
+        apply_immediately = dict(type='bool', default=False),
+        old_instance_name = dict(),
+        tags = dict(type='dict'),
+        publicly_accessible = dict(),
+        character_set_name = dict(),
+        force_failover = dict(type='bool', default=False),
+        force_password_update = dict(type='bool', default=False),
     )
+)
+required_if=[
+    ('storage_type', 'io1', ['iops']),
+]
+
+
+
+def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_if=[
-            ('storage_type', 'io1', ['iops']),
-        ],
+        required_if=required_if
     )
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
@@ -784,4 +788,5 @@ def main():
         restore_db_instance(module, conn)
     ensure_db_state(module, conn)
 
-main()
+if __name__ == '__main__':
+    main()
