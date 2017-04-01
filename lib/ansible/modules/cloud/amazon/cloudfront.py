@@ -402,7 +402,26 @@ class CloudFrontServiceManager:
             cache_behavior["trusted_signers"]["quantity"] = len(temp_trusted_signers)
         if cache_behavior.get("target_origin_id") is None:
             cache_behavior["target_origin_id"] = self.get_first_origin_id_for_default_cache_behavior(valid_origins)
-
+        if cache_behavior.get("forwarded_values") is None:
+            cache_behavior["forwarded_values"] = {}
+        forwarded_values = cache_behavior["forwarded_values"]
+        if forwarded_values.get("headers") is None:
+            forwarded_values["headers"] = { "quantity": 0 }
+        if forwarded_values.get("cookies") is None:
+            forwarded_values["cookies"] = { "forward": "none" }
+        if forwarded_values.get("query_string_cache_keys") is None:
+            forwarded_values["query_string_cache_keys"] = { "quantity": 0 }
+        if forwarded_values.get("query_string") is None:
+            forwarded_values["query_string"] = True
+        if cache_behavior.get("allowed_methods"):
+            if cache_behavior["allowed_methods"].get("items") is None:
+                self.module.fail_json(msg="a list of items must be specified for allowed_methods")
+            if cache_behavior.get("cached_methods") and not isinstance(cache_behavior.get("cached_methods"), list):
+                self.module.fail_json(msg="cached_methods must be a list")
+        if cache_behavior.get("lambda_function_associations"):
+            lambda_function_associations = cache_behavior.get("lambda_function_associations")
+            if not isinstance(lambda_function_assocations, list):
+                self.module.fail_json(msg="lambda_function_associations must be a list")
 
     def validate_custom_origin_configs(self, custom_origin_configs):
         if origin.get("custom_origin_config"):
@@ -471,11 +490,6 @@ class CloudFrontServiceManager:
         if param_id is None:
             return self.__default_datetime_string
         return param_id
-
-# TODO: validate delete parameters
-#       more validation of update parameters - CallerReference and S3Origin and Origins
-#       validate required create parameters  
-#       fix update dist
 
 def snake_dict_to_pascal_dict(snake_dict):
     def pascalize(complex_type):
@@ -681,13 +695,11 @@ def main():
     # CacheBehaviors
     # CustomErrorResponses
     # Restrictions
-    #  Add/remove:
-    #    origin
-    #    cachebehavior
-    #    restriction
-    #    alias
-    #    trusted signer
-    #    custom error response
+    # duplicate_distribution
+    # duplicate streaming_distribution
+    # check all required attributes
+    # url signing
+    # doc
 
     valid_trusted_signers = service_mgr.validate_trusted_signers(trusted_signers)
     valid_s3_origin = service_mgr.validate_s3_origin(s3_origin)
