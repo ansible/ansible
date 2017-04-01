@@ -545,20 +545,25 @@ def snake_dict_to_pascal_dict(snake_dict):
 
     return pascalize(snake_dict)
 
-def pascal_dict_to_snake_dict(pascal_dict):
+def pascal_dict_to_snake_dict(pascal_dict, split_caps=False):
 
     def pascal_to_snake(name):
         import re
         first_cap_re = re.compile('(.)([A-Z][a-z]+)')
-        all_cap_re = re.compile('([a-z0-9])([A-Z])')
-        s1 = first_cap_re.sub(r'\1_\2', name)
-        return all_cap_re.sub(r'\1_\2', s1).lower()
+        all_cap_re = re.compile('([a-z0-9])([A-Z]+)')
+        split_cap_re = re.compile('([A-Z])')
+        s1 = first_cap_re.sub(r'\1\2', name)
+        if split_caps:
+            s2 = split_cap_re.sub(r'_\1', s1).lower().replace('_', '', 1)
+        else:
+            s2 = all_cap_re.sub(r'\1_\2', s1).lower()
+        return s2
 
     def value_is_list(pascal_list):
         checked_list = []
         for item in pascal_list:
             if isinstance(item, dict):
-                checked_list.append(pascal_dict_to_snake_dict(item))
+                checked_list.append(pascal_dict_to_snake_dict(item, split_caps))
             elif isinstance(item, list):
                 checked_list.append(value_is_list(item))
             else:
@@ -569,7 +574,7 @@ def pascal_dict_to_snake_dict(pascal_dict):
 
     for k, v in pascal_dict.items():
         if isinstance(v, dict):
-            snake_dict[pascal_to_snake(k)] = pascal_dict_to_snake_dict(v)
+            snake_dict[pascal_to_snake(k)] = pascal_dict_to_snake_dict(v, split_caps)
         elif isinstance(v, list):
             snake_dict[pascal_to_snake(k)] = value_is_list(v)
         else:
@@ -789,7 +794,7 @@ def main():
         else:
             config["caller_reference"] = service_mgr.default_datetime_string
 
-    config = snake_dict_to_pascal_dict(config)
+    config = snake_dict_to_pascal_dict(pascal_dict_to_snake_dict(config, True))
 
     if create_origin_access_identity:
         result=service_mgr.create_origin_access_identity(caller_reference, comment)
