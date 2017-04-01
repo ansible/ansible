@@ -273,7 +273,6 @@ EXAMPLES = '''
 '''
 
 import time
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict
@@ -360,14 +359,14 @@ def await_resource(conn, resource, status, module):
     resource = get_db_instance(conn, resource.name)
     while wait_timeout > time.time() and resource.status != status:
         time.sleep(5)
-        if wait_timeout <= time.time():
-            module.fail_json(msg="Timeout waiting for RDS resource %s" % resource.name)
         # Temporary until all the rds2 commands have their responses parsed
         if resource.name is None:
             module.fail_json(msg="There was a problem waiting for RDS instance %s" % resource.instance)
         resource = get_db_instance(conn, resource.name)
         if resource is None:
             break
+    if wait_timeout <= time.time() and resource.status != status:
+        module.fail_json(msg="Timeout waiting for RDS resource %s" % resource.name)
     return resource
 
 
@@ -447,6 +446,11 @@ def delete_db_instance(module, conn):
     #we have to accept but ignore variables which have defaults
     valid_vars = ['snapshot', 'skip_final_snapshot', 'storage_type']
 
+    try:
+        del(module.params['storage_type'])
+    except KeyError:
+        pass
+
     params = validate_parameters(required_vars, valid_vars, module)
     instance_name = module.params.get('instance_name')
     snapshot = module.params.get('snapshot')
@@ -471,7 +475,7 @@ def delete_db_instance(module, conn):
     # If we're not waiting for a delete to complete then we're all done
     # so just return
     if not module.params.get('wait'):
-        module.exit_json(changed=True)
+        module.exit_json(changed=True, operation="delete")
     try:
         instance = await_resource(conn, instance, 'deleted', module)
         module.exit_json(changed=True)
@@ -480,9 +484,9 @@ def delete_db_instance(module, conn):
             module.exit_json(changed=True, operation="delete")
         else:
             module.fail_json(msg=str(e))
+    assert(False), "error in module logic - this should not be reached"
 
-
-def update_rds_tags(conn, resource, current_tags, desired_tags):
+def update_rds_tags(module, conn, resource, current_tags, desired_tags):
     changed = False
     # it's much easier to do set manipulation in ansible form
     current_tags = boto3_tag_list_to_ansible_dict(current_tags)
@@ -524,21 +528,22 @@ def modify_db_instance(module, conn):
                   'option_group', 'parameter_group', 'password', 'port', 'size',
                   'storage_type', 'subnet', 'tags', 'upgrade', 'username', 'vpc_security_groups']
 
-    existing_instance_name = module.params.get('instance_name')
-    existing_instance = get_db_instance(conn, existing_instance_name)
+    before_instance_name = module.params.get('instance_name')
+    before_instance = get_db_instance(conn, before_instance_name)
     for immutable_key in ['username', 'db_engine', 'db_name']:
         if immutable_key in module.params:
-            if immutable_key in existing_instance.data and module.params[immutable_key] != existing_instance.data[immutable_key]:
+            if ( immutable_key in before_instance.data
+                 and module.params[immutable_key] != before_instance.data[immutable_key] ):
                 module.fail_json(msg="Cannot modify parameter %s for instance %s" %
-                                 (immutable_key, existing_instance_name))
+                                 (immutable_key, before_instance_name))
             del(module.params[immutable_key])
 
     params = validate_parameters(required_vars, valid_vars, module)
-    new_instance_name = module.params.get('new_instance_name')
+    after_instance_name = module.params.get('new_instance_name')
 
-    will_change = existing_instance.diff(module.params)
+    will_change = before_instance.diff(module.params)
     if not will_change:
-        module.exit_json(changed=False, instance=existing_instance.data, operation="modify")
+        module.exit_json(changed=False, instance=before_instance.data, operation="modify")
 
     # modify_db_instance takes DBPortNumber in contrast to
     # create_db_instance which takes Port
@@ -550,7 +555,7 @@ def modify_db_instance(module, conn):
         tags = {}
 
     # modify_db_instance does not cope with DBSubnetGroup not moving VPC!
-    if existing_instance.instance['DBSubnetGroup']['DBSubnetGroupName'] == params.get('DBSubnetGroupName'):
+    if before_instance.instance['DBSubnetGroup']['DBSubnetGroupName'] == params.get('DBSubnetGroupName'):
         del(params['DBSubnetGroupName'])
     if not force_password_update:
         try:
@@ -560,37 +565,47 @@ def modify_db_instance(module, conn):
 
     try:
         response = conn.modify_db_instance(**params)
-        instance = RDSDBInstance(response['DBInstance'])
+        return_instance = RDSDBInstance(response['DBInstance'])
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=str(e))
-    if params.get('apply_immediately'):
-        if new_instance_name:
+
+    if params.get('apply_immediately') and after_instance_name:
             # Wait until the new instance name is valid
-            new_instance = None
-            while not new_instance:
-                new_instance = get_db_instance(conn, new_instance_name)
+            after_instance = None
+            while not after_instance:
+                #FIXME: Timeout!!!
+                after_instance = get_db_instance(conn, after_instance_name)
                 time.sleep(5)
 
             # Found instance but it briefly flicks to available
             # before rebooting so let's wait until we see it rebooting
             # before we check whether to 'wait'
-            instance = await_resource(conn, new_instance, 'rebooting', module)
-            instance_name = new_instance_name
+            return_instance_name = after_instance_name
+            after_instance = await_resource(conn, after_instance, 'rebooting', module)
+    else:
+        return_instance_name=before_instance_name
+        after_instance = get_db_instance(conn, before_instance_name)
+
+    # Do we have a race condition here where, if we are unlucky, the name of the instance
+    # set to change without apply_immediately _could_ change before we look it up again?
+    # If so, when instance lookup fails with the old name we should try the new.
 
     if module.params.get('wait'):
-        instance = await_resource(conn, instance, 'available', module)
+        return_instance = await_resource(conn, after_instance, 'available', module)
     else:
-        instance = get_db_instance(conn, instance_name)
+        return_instance = after_instance
 
     # guess that this changed the DB, need a way to check
-    diff = existing_instance.diff(instance.data)
+    diff = before_instance.diff(return_instance.data)
     changed = not not diff
+
     # boto3 modify_db_instance can't modify tags directly
     current_tags = conn.list_tags_for_resource(ResourceName=response['DBInstance']['DBInstanceArn'])['TagList']
-    if update_rds_tags(conn, response['DBInstance']['DBInstanceArn'],
+    if update_rds_tags(module, conn, response['DBInstance']['DBInstanceArn'],
                        current_tags, tags):
         changed = True
-    module.exit_json(changed=changed, instance=instance.data, operation="modify", diff=will_change)
+    module.exit_json(changed=changed, instance=return_instance.data, operation="modify",
+                     diff=will_change)
 
 
 def promote_db_instance(module, conn):
@@ -676,6 +691,7 @@ def ensure_db_state(module, conn):
     if instance.data.get('replication_source') and not module.params.get('source_instance'):
         promote_db_instance(module, conn)
     modify_db_instance(module, conn)
+    # not reached!
     module.exit_json(changed=False, instance=instance.data)
 
 
@@ -697,7 +713,7 @@ def validate_parameters(required_vars, valid_vars, module):
         try:
             PARAMETER_MAP[item]
         except KeyError as e:
-            module.fail_json(str(e))
+            module.fail_json(msg="unexpected module parameter" + str(e))
 
     if module.params.get('security_groups'):
         params['DBSecurityGroups'] = module.params.get('security_groups').split(',')
@@ -761,6 +777,9 @@ def main():
         argument_spec=argument_spec,
         required_if=required_if
     )
+
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 is required for rds_instance module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     if not region:
