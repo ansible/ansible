@@ -236,9 +236,9 @@ class AnsibleCloudStackInstanceFacts(AnsibleCloudStack):
         volume_details = []
         if instance:
             args                = {}
-            args['account']     = instance['account'] if 'account' in instance.keys() else None
-            args['domainid']    = instance['domainid'] if 'domainid' in instance.keys() else None
-            args['projectid']   = instance['projectid'] if 'projectid' in instance.keys() else None
+            args['account']     = instance.get('account')
+            args['domainid']    = instance.get('domainid')
+            args['projectid']   = instance.get('projectid')
             args['virtualmachineid'] = instance['id']
 
             volumes = self.cs.listVolumes(**args)
