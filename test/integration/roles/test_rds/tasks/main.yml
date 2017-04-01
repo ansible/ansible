@@ -7,6 +7,13 @@
     #instance_name: "rds-{{ random_string }}"
     instance_name: rds-yunrxdbj
 
+# important in case we restart the tests after a fail.
+- name: ensure instance we are going to create is not present so create test is valid
+  rds_instance:
+    instance_name: "{{ instance_name }}"
+    wait: yes
+    state: absent
+
 - name: ensure non-existent instance is not present
   rds_instance:
     instance_name: "rds-XYZ-{{ random_string }}"
@@ -20,6 +27,7 @@
 - name: create rds instance
   rds_instance:
     instance_name: "{{ instance_name }}"
+    wait_timeout: 1200
     wait: yes
     size: 5
     instance_type: db.t2.micro
@@ -51,6 +59,10 @@
   rds_snapshot:
     snapshot: "{{ instance_name }}-snapshot"
     state: absent
+
+- name: get instance facts again to debug
+  rds_instance_facts:
+    instance_name: "{{ instance_name }}"
 
 - name: modify rds instance
   rds_instance:
@@ -85,7 +97,6 @@
 - name: check non modify worked
   assert:
     that: not rds_instance_modify|changed
-
 
 - name: create rds replica
   rds_instance:
