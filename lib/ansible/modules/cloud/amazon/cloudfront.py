@@ -106,6 +106,14 @@ class CloudFrontServiceManager:
         self.__default_https_port = 443
         self.__default_origin_ssl_protocols = [ "TLSv1", "TLSv1.1", "TLSv1.2" ]
         self.__default_datetime_string = self.generate_datetime_string()
+        self.__default_cache_behavior_min_ttl = 0
+        self.__default_cache_behavior_max_ttl = 31536000
+        self.__default_cache_behavior_trusted_signers_enabled = False
+        self.__default_cache_behavior_compress = False
+        self.__default_cache_behavior_viewer_protocol_policy = "allow-all"
+        self.__default_cache_behavior_smooth_streaming = False
+        self.__default_cache_behavior_forwarded_values_cookies = 'none'
+        self.__default_cache_behavior_forwarded_values_query_string = True
         self.create_client('cloudfront')
 
     @property
@@ -121,9 +129,10 @@ class CloudFrontServiceManager:
             self.module.fail_json(msg = ("Region must be specified as a parameter, in "
                                          "AWS_DEFAULT_REGION environment variable or in "
                                          "boto configuration file") )
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Can't establish connection - " + str(e),
-                    exception=traceback.format_exc())
+                    exception=traceback.format_exc(),
+                    **camel_dict_to_snake_dict(e.response))
 
     def create_origin_access_identity(self, caller_reference, comment):
         try:
@@ -131,18 +140,20 @@ class CloudFrontServiceManager:
                     CloudFrontOriginAccessIdentityConfig =
                     { 'CallerReference': caller_reference, 'Comment': comment })
             return self.paginated_response(func)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error creating cloud front origin access identity - " + str(e), 
-                    exception=traceback.format_exc())
+                    exception=traceback.format_exc(),
+                    **camel_dict_to_snake_dict(e.response))
 
     def delete_origin_access_identity(self, origin_access_identity_id, e_tag):
         try:
             func = partial(self.client.delete_cloud_front_origin_access_identity,
                     Id=origin_access_identity_id, IfMatch=e_tag)
             return self.paginated_response(func)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error deleting cloud front origin access identity - " + str(e),
-                    exception=traceback.format_exc())
+                    exception=traceback.format_exc(),
+                    **camel_dict_to_snake_dict(e.response))
 
     def update_origin_access_identity(self, caller_reference, comment, origin_access_identity_id, e_tag):
         try:
@@ -153,27 +164,30 @@ class CloudFrontServiceManager:
                         },
                     Id=origin_access_identity_id, IfMatch=e_tag)
             return self.paginated_response(func)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error updating cloud front origin access identity - " + str(e),
-                    exception=traceback.format_exc())
+                    exception=traceback.format_exc(),
+                    **camel_dict_to_snake_dict(e.response))
     
     def create_invalidation(self, distribution_id, invalidation_batch):
         try:
             func = partial(self.client.create_invalidation, DistributionId = distribution_id, 
                     InvalidationBatch=invalidation_batch)
             return self.paginated_response(func)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error creating invalidation(s) - " + str(e),
-                    exception=traceback.format_exc())
+                    exception=traceback.format_exc(),
+                    **camel_dict_to_snake_dict(e.response))
 
     def generate_presigned_url(self, client_method, params, expires_in, http_method):
         try:
             func = partial(self.client.generate_presigned_url, ClientMethod = client_method,
                     Params=params, ExpiresIn=expires_in, HttpMethod=http_method)
             return self.paginated_response(func)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error generating presigned url - " + str(e),
-                    exception=traceback.format_exc())
+                    exception=traceback.format_exc(),
+                    **camel_dict_to_snake_dict(e.response))
 
     def generate_signed_url_from_pem_private_key(self, distribution_id, private_key_string, url, expire_date):
         try:
@@ -182,7 +196,8 @@ class CloudFrontServiceManager:
             return {"presigned_url": signed_url }
         except Exception as e:
             self.module.fail_json(msg="Error generating signed url from pem private key - " + str(e),
-                    exception=traceback.format_exc())
+                    exception=traceback.format_exc(),
+                    **camel_dict_to_snake_dict(e.response))
 
     def rsa_signer(message, private_key_string):
         private_key = serialization.load_pem_private_key(
@@ -201,9 +216,10 @@ class CloudFrontServiceManager:
             response = self.client.generate_presigned_url(client_method, Params=params,
                     ExpiresIn=expires_in, HttpMethod=http_method)
             return { "presigned_url": response }
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error generating s3 presigned url - " + str(e),
-                    exception=traceback.format_exc())
+                    exception=traceback.format_exc(),
+                    **camel_dict_to_snake_dict(e.response))
 
     def create_distribution(self, config, tags):
         try:
@@ -216,27 +232,30 @@ class CloudFrontServiceManager:
                 func = partial(self.client.create_disribution_with_tags,
                         DistributionConfigWithTags=distribution_config_with_tags)
             return self.paginated_response(func)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error creating distribution - " + str(e),
-                    exception=traceback.format_exc())
+                    exception=traceback.format_exc(),
+                    **camel_dict_to_snake_dict(e.response))
 
     def delete_distribution(self, distribution_id, e_tag):
         try:
             func = partial(self.client.delete_distribution, Id = distribution_id,
                     IfMatch=e_tag)
             return self.paginated_response(func)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error deleting distribution - " + str(e),
-                    exception=traceback.format_exc())
+                    exception=traceback.format_exc(),
+                    **camel_dict_to_snake_dict(e.response))
 
     def update_distribution(self, config, distribution_id, e_tag):
         try:
             func = partial(self.client.update_distribution, DistributionConfig=config,
                     Id = distribution_id, IfMatch=e_tag)
             return self.paginated_response(func)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error updating distribution - " + str(e),
-                    exception=traceback.format_exc())
+                    exception=traceback.format_exc(),
+                    **camel_dict_to_snake_dict(e.response))
 
     def create_streaming_distribution(self, config, tags):
         try:
@@ -248,27 +267,30 @@ class CloudFrontServiceManager:
                 func = partial(self.client.create_streaming_disribution_with_tags, 
                         StreamingDistributionConfigWithTags=streaming_distribution_config_with_tags)
             return self.paginated_response(func)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error creating streaming distribution - " + str(e),
-                    exception=traceback.format_exc())
+                    exception=traceback.format_exc(),
+                    **camel_dict_to_snake_dict(e.response))
 
     def delete_streaming_distribution(self, streaming_distribution_id, e_tag):
         try:
             func = partial(self.client.delete_streaming_distribution, Id = streaming_distribution_id,
                     IfMatch=e_tag)
             return self.paginated_response(func)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error deleting streaming distribution - " + str(e),
-                    exception=traceback.format_exc())
+                    exception=traceback.format_exc(),
+                    **camel_dict_to_snake_dict(e.response))
     
     def update_streaming_distribution(self, config, streaming_distribution_id, e_tag):
         try:
             func = partial(self.client.update_streaming_distribution, StreamingDistributionConfig=config,
                     Id = streaming_distribution_id, IfMatch=e_tag)
             return self.paginated_response(func)
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error updating streaming distribution - " + str(e),
-                    exception=traceback.format_exc())
+                    exception=traceback.format_exc(),
+                    **camel_dict_to_snake_dict(e.response))
 
     def paginated_response(self, func, result_key=""):
         '''
@@ -293,30 +315,35 @@ class CloudFrontServiceManager:
 
     def validate_aliases(self, aliases, alias):
         if sum(map(bool, [aliases, alias])) > 1:
-            self.module.fail_json(msg="Error: both aliases and alias are defined. Please specify only one.")
+            self.module.fail_json(msg="both aliases and alias are defined. please specify only one.")
         if alias:
             aliases = [ alias ]
         if aliases:
-            return {
-                    "Quantity": len(aliases),
-                    "Items": aliases
-                    }
+            return self.python_list_to_aws_list(aliases)
         return None
+
+    def python_list_to_aws_list(self, list_items=None):
+        if list_items is None:
+            list_items = []
+        if not isinstance(list_items, list):
+            self.module.fail_json(msg="expecting a list []. got a " + type(list_items).__name__ ) 
+        result = {}
+        result["quantity"] = len(list_items)
+        result["items"] = list_items
+        return result
 
     def validate_logging(self, logging, streaming):
         if logging is None:
             return None
         if logging and not streaming and (logging["enabled"] is None or logging["include_cookies"] is None or logging["bucket"] is None or logging["prefix"]):
-            self.module.fail_json(msg="the logging a parameters enabled, include_cookies, bucket and prefix must be specified")
+            self.module.fail_json(msg="the logging parameters enabled, include_cookies, bucket and prefix must be specified")
         if logging and streaming and (logging["enabled"] is None or logging["bucket"] is None or logging["prefix"]):
-            self.module.fail_json(msg="the logging a parameters enabled, bucket and prefix must be specified")
-        valid_logging = {
-            "Enabled": logging["enabled"],
-            "Bucket": logging["bucket"],
-            "Prefix": logging["prefix"]
-            }
+            self.module.fail_json(msg="the logging parameters enabled, bucket and prefix must be specified")
+        valid_logging["enabled"] = logging["enabled"]
+        valid_logging["bucket"] = logging["bucket"]
+        valid_logging["prefix"] = logging["prefix"]
         if not streaming:
-            valid_logging["IncludeCookies"] = logging["include_cookies"]
+            valid_logging["include_cookies"] = logging["include_cookies"]
         return valid_logging
 
     def validate_origins(self, origins, default_origin_domain_name, default_origin_access_identity, default_origin_path, streaming, create_distribution):
@@ -348,7 +375,7 @@ class CloudFrontServiceManager:
                         temp_custom_headers = origin.get("custom_headers")
                         origin["custom_headers"] = { "items": temp_custom_headers, "quantity": custom_headers_quantity }
                 else:
-                    origin["custom_headers"] = { "Quantity": 0 }
+                    origin["custom_headers"] = { "quantity": 0 }
                 if ".s3.awsamazon.com" in origin.get("domain_name"):
                     if origin.get("s3_origin_config") is None or origin.get("s3_origin_config").get("origin_access_identity") is None:
                         origin["s3_origin_config"] = {}
@@ -374,9 +401,7 @@ class CloudFrontServiceManager:
                     temp_origin_ssl_protocols = custom_origin_config["origin_ssl_protocols"]
                     origin_ssl_protocols_quantity = len(temp_origin_ssl_protocols)
                     custom_origin_config["origin_ssl_protocols"] = { "items": temp_origin_ssl_protocols, "quantity": origin_ssl_protocols_quantity }
-            valid_origins["items"] = origins
-            valid_origins["quantity"] = quantity
-            return snake_dict_to_pascal_dict(valid_origins)
+            return self.python_list_to_aws_list(origins)
         return None
 
     def validate_cache_behaviors(self, cache_behaviors, valid_origins):
@@ -384,44 +409,54 @@ class CloudFrontServiceManager:
             cache_behaviors = []
         for cache_behavior in cache_behaviors:
             self.validate_cache_behavior(cache_behavior, valid_origins)
-        return_value = {}
-        return_value["Items"] = cache_behaviors
-        return_value["Quantity"] = len(cache_behaviors)
-        return return_value
+        return self.python_list_to_aws_list(cache_behaviors)
 
     def validate_cache_behavior(self, cache_behavior, valid_origins):
         if cache_behavior is None:
             cache_behavior = {}
-        if cache_behavior.get("min_ttl") is None:
-            cache_behavior["min_t_t_l"] = 0
-        if cache_behavior.get("trusted_signers") is None:
-            cache_behavior["trusted_signers"] = { "Enabled": False, "Quantity": 0 }
+        if 'min_ttl' not in cache_behavior:
+            cache_behavior["min_t_t_l"] = self.__default_cache_behavior_min_ttl
+        if 'max_ttl' not in cache_behavior:
+            cache_behavior["max_t_t_l"] = self.__default_cache_behavior_max_ttl
+        if 'compress' not in cache_behavior:
+            cache_behavior["compress"] = self.__default_cache_behavior_compress
+        trusted_signers = cache_behavior.get("trusted_signers")
+        if trusted_signers is None:
+            cache_behavior["trusted_signers"] = { "enabled": self.__default_cache_behavior_trusted_signers_enabled, "quantity": 0 }
         else:
-            temp_trusted_signers = cache_behavior["trusted_signers"]
-            cache_behavior["trusted_signers"]["items"] = temp_trusted_signers
-            cache_behavior["trusted_signers"]["quantity"] = len(temp_trusted_signers)
-        if cache_behavior.get("target_origin_id") is None:
+            if 'enabled' in cache_behavior["trusted_signers"]:
+                temp_enabled = cache_behavior["trusted_signers"]["enabled"]
+            else:
+                temp_enabled = self.__default_cache_behavior_trusted_signers_enabled
+            cache_behavior["trusted_signers"] = self.python_list_to_aws_list(trusted_signers)
+            cache_behavior["enabled"] = temp_enabled
+        if 'target_origin_id' not in cache_behavior:
             cache_behavior["target_origin_id"] = self.get_first_origin_id_for_default_cache_behavior(valid_origins)
-        if cache_behavior.get("forwarded_values") is None:
+        if 'forwarded_values' not in cache_behavior:
             cache_behavior["forwarded_values"] = {}
         forwarded_values = cache_behavior["forwarded_values"]
-        if forwarded_values.get("headers") is None:
-            forwarded_values["headers"] = { "quantity": 0 }
-        if forwarded_values.get("cookies") is None:
-            forwarded_values["cookies"] = { "forward": "none" }
-        if forwarded_values.get("query_string_cache_keys") is None:
-            forwarded_values["query_string_cache_keys"] = { "quantity": 0 }
-        if forwarded_values.get("query_string") is None:
-            forwarded_values["query_string"] = True
-        if cache_behavior.get("allowed_methods"):
-            if cache_behavior["allowed_methods"].get("items") is None:
+        if 'headers' not in forwarded_values:
+            forwarded_values["headers"] = self.python_list_to_aws_list()
+        if 'cookies' not in forwarded_values:
+            forwarded_values["cookies"] = { "forward": self.__default_cache_behavior_forwarded_values_cookies }
+        if 'query_string_cache_keys' not in forwarded_values:
+            forwarded_values["query_string_cache_keys"] = self.python_list_to_aws_list()
+        if 'query_string' not in forwarded_values:
+            forwarded_values["query_string"] = self.__default_cache_behavior_forwarded_values_query_string
+        if 'allowed_methods' in cache_behavior:
+            if 'items' not in cache_behavior["allowed_methods"]:
                 self.module.fail_json(msg="a list of items must be specified for allowed_methods")
-            if cache_behavior.get("cached_methods") and not isinstance(cache_behavior.get("cached_methods"), list):
-                self.module.fail_json(msg="cached_methods must be a list")
-        if cache_behavior.get("lambda_function_associations"):
-            lambda_function_associations = cache_behavior.get("lambda_function_associations")
-            if not isinstance(lambda_function_assocations, list):
+            if 'cached_methods' in cache_behavior and not isinstance(cache_behavior.get("cached_methods"), list):
+                self.module.fail_json(msg="allowed_methods.cached_methods must be a list")
+        if 'lambda_function_associations' in cache_behavior:
+            if not isinstance(cache_behavior["lambda_function_associations"], list):
                 self.module.fail_json(msg="lambda_function_associations must be a list")
+        else:
+            cache_behavior["lambda_function_associations"] = self.python_list_to_aws_list()
+        if 'viewer_protocol_policy' not in cache_behavior:
+            cache_behavior["viewer_protocol_policy"] = self.__default_cache_behavior_viewer_protocol_policy
+        if 'smooth_streaming' not in cache_behavior:
+            cache_behavior["smooth_streaming"] = self.__default_cache_behavior_smooth_streaming
 
     def validate_custom_origin_configs(self, custom_origin_configs):
         if origin.get("custom_origin_config"):
@@ -435,11 +470,9 @@ class CloudFrontServiceManager:
                 trusted_signers["enabled"] = True
             if 'items' not in trusted_signers:
                 trusted_signers["items"] = []
-            return {
-                "Enabled": trusted_signers["enabled"],
-                "Quantity": len(trusted_signers["items"]),
-                "Items": trusted_signers["items"]
-                }
+            valid_trusted_signers = self.python_list_to_aws_list(trusted_signers["items"])
+            valid_trusted_signers["enabled"] = trusted_signers["enabled"]
+            return valid_trusted_signers
         return None
 
     def validate_s3_origin(self, s3_origin):
@@ -449,8 +482,8 @@ class CloudFrontServiceManager:
             if 'origin_access_identity' not in s3_origin:
                 self.module.fail_json("origin_access_identity must be specified for s3_origin")
             return {
-                "DomainName": s3_origin["domain_name"],
-                "OriginAccessIdentity": s3_origin["origin_access_identity"]
+                "domain_name": s3_origin["domain_name"],
+                "origin_access_identity": s3_origin["origin_access_identity"]
                 }
         return None
 
@@ -492,6 +525,7 @@ class CloudFrontServiceManager:
         return param_id
 
 def snake_dict_to_pascal_dict(snake_dict):
+
     def pascalize(complex_type):
         if complex_type is None:
             return
@@ -505,18 +539,21 @@ def snake_dict_to_pascal_dict(snake_dict):
         else:
             return complex_type
         return new_type
+
     def pascal(words):
         return words.capitalize().split('_')[0] + ''.join(x.capitalize() or '_' for x in words.split('_')[1:])
 
     return pascalize(snake_dict)
 
 def pascal_dict_to_snake_dict(pascal_dict):
+
     def pascal_to_snake(name):
         import re
         first_cap_re = re.compile('(.)([A-Z][a-z]+)')
         all_cap_re = re.compile('([a-z0-9])([A-Z])')
         s1 = first_cap_re.sub(r'\1_\2', name)
         return all_cap_re.sub(r'\1_\2', s1).lower()
+
     def value_is_list(pascal_list):
         checked_list = []
         for item in pascal_list:
@@ -527,7 +564,9 @@ def pascal_dict_to_snake_dict(pascal_dict):
             else:
                 checked_list.append(item)
         return checked_list
+
     snake_dict = {}
+
     for k, v in pascal_dict.items():
         if isinstance(v, dict):
             snake_dict[pascal_to_snake(k)] = pascal_dict_to_snake_dict(v)
@@ -535,11 +574,8 @@ def pascal_dict_to_snake_dict(pascal_dict):
             snake_dict[pascal_to_snake(k)] = value_is_list(v)
         else:
             snake_dict[pascal_to_snake(k)] = v
-    return snake_dict
 
-# TODO: fill out
-def add_quantities_to_arrays_in_dict(config):
-    return config
+    return snake_dict
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -695,6 +731,7 @@ def main():
     # CacheBehaviors
     # CustomErrorResponses
     # Restrictions
+    # ViewerCertificate
     # duplicate_distribution
     # duplicate streaming_distribution
     # check all required attributes
@@ -708,69 +745,51 @@ def main():
     if create_distribution:
         if config is None:
             config = {}
-        if default_cache_behavior is None:
-            config["DefaultCacheBehavior"] = {
-                    "MinTTL": 0,
-                    "TrustedSigners": {
-                        "Enabled": False,
-                        "Quantity": 0
-                    },
-                    "TargetOriginId": service_mgr.get_first_origin_id_for_default_cache_behavior(valid_origins),
-                    "Compress": False,
-                    "ViewerProtocolPolicy": "allow-all",
-                    "ForwardedValues": {
-                        "Headers": { "Quantity": 0 },
-                        "Cookies": { "Forward": "none" },
-                        "QueryStringCacheKeys": { "Quantity": 0 },
-                        "QueryString": True
-                    },
-                    "MaxTTL": 31536000,
-                    "SmoothStreaming": False,
-                    "LambdaFunctionAssociations": { "Quantity": 0 }
-                }
-        config["DefaultRootObject"] = default_root_object
-        config["IsIPV6Enabled"] = is_ipv6_enabled
+        config["default_root_object"] = default_root_object
+        config["is_i_p_v_6_enabled"] = is_ipv6_enabled
         if http_version:
-            config["HttpVersion"] = http_version
+            config["http_version"] = http_version
         if comment is None:
-            config["Comment"] = "distribution created by ansible with datetime " + service_mgr.default_datetime_string
+            config["comment"] = "distribution created by ansible with datetime " + service_mgr.default_datetime_string
     elif create_streaming_distribution:
         if config is None:
             config = {}
         if comment is None:
-            config["Comment"] = "streaming distribution created by ansible with datetime " + service_mgr.default_datetime_string
+            config["comment"] = "streaming distribution created by ansible with datetime " + service_mgr.default_datetime_string
         if valid_trusted_signers is None:
-            config["TrustedSigners"] = {
-                    "Enabled": False,
-                    "Quantity": 0
+            config["trusted_signers"] = {
+                    "enabled": False,
+                    "quantity": 0
                 }
         else:
-            config["TrustedSigners"] = valid_trusted_signers
+            config["trusted_signers"] = valid_trusted_signers
         if create_streaming_distribution:
             if valid_s3_origin:
-                config["S3Origin"] = valid_s3_origin
+                config["s3_origin"] = valid_s3_origin
             else:
-                config["S3Origin"] = {
-                    "DomainName": s3_origin_domain_name,
-                    "OriginAccessIdentity": s3_origin_origin_access_identity
+                config["s3_origin"] = {
+                    "domain_name": s3_origin_domain_name,
+                    "origin_access_identity": s3_origin_origin_access_identity
                 }
     if distribution or streaming_distribution:
-        config["Enabled"] = enabled
+        config["enabled"] = enabled
         if valid_origins:
-            config["Origins"] = valid_origins
+            config["origins"] = valid_origins
         if valid_aliases:
-            config["Aliases"] = valid_aliases
+            config["aliases"] = valid_aliases
         if valid_logging:
-            config["Logging"] = valid_logging
+            config["logging"] = valid_logging
         if price_class:
-            config["PriceClass"] = price_class
+            config["price_class"] = price_class
         if comment:
-            config["Comment"] = comment
+            config["comment"] = comment
     if create_distribution or create_streaming_distribution:
         if caller_reference:
-            config["CallerReference"] = caller_reference
+            config["caller_reference"] = caller_reference
         else:
-            config["CallerReference"] = service_mgr.default_datetime_string
+            config["caller_reference"] = service_mgr.default_datetime_string
+
+    config = snake_dict_to_pascal_dict(config)
 
     if create_origin_access_identity:
         result=service_mgr.create_origin_access_identity(caller_reference, comment)
