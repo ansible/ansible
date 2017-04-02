@@ -31,12 +31,14 @@ import ansible.module_utils.basic as ba
 from ansible.module_utils.rds import RDSDBInstance
 import pytest
 import pdb
+import time
 boto3 = pytest.importorskip("boto3")
 boto = pytest.importorskip("boto")
 
 def diff_return_a_populated_dict(junk,junktoo):
     """ return a populated dict which will be treated as true => something changed """
     return {"before":"fake","after":"faketoo"}
+
 
 def test_modify_should_return_changed_if_param_changes():
     ba._ANSIBLE_ARGS='{"ANSIBLE_MODULE_ARGS":{"instance_name":"fred", "port": 242}}'
@@ -56,7 +58,6 @@ def test_modify_should_return_false_in_changed_if_param_same():
     ba._ANSIBLE_ARGS='{"ANSIBLE_MODULE_ARGS":{"instance_name":"fred", "port": 342}}'
     params={"port":342,"force_password_update":True,"instance_name":"fred"}
     rds_client_double = MagicMock()
-#    pdb.set_trace()
     module_double = MagicMock(AnsibleModule(argument_spec=rds_i.argument_spec,
                                             required_if=rds_i.required_if), params=params)
     rds_i.modify_db_instance(module_double, rds_client_double)
@@ -69,8 +70,63 @@ def test_modify_should_return_false_in_changed_if_param_same():
 def test_diff_should_be_true_if_something_changed():
     dbinstance_double = MagicMock()
     rdi = rds_u.RDSDBInstance(dbinstance_double)
-    params={"port":342,"force_password_update":True,"instance_name":"fred"}
+    params={"port":342,"iops":3924,"instance_name":"fred"}
     diff=rdi.diff(params)
     print("diff:\n" + str(diff))
     print("dbinstance calls:\n" + str(dbinstance_double.mock_calls))
     assert(not not diff)
+
+
+def test_diff_should_be_true_if_only_the_port_changed():
+    dbinstance_double = MagicMock()
+    rdi = rds_u.RDSDBInstance(dbinstance_double)
+    params={"endpoint":{"port":342}}
+    diff=rdi.diff(params)
+    print("diff:\n" + str(diff))
+    print("dbinstance calls:\n" + str(dbinstance_double.mock_calls))
+    assert(not not diff)
+
+
+def test_await_should_wait_till_not_pending():
+    sleeper_double=MagicMock()
+    get_db_instance_double = MagicMock(side_effect=[
+        MagicMock(status='rebooting', data={ "pending_modified_values":  {"a":"b", "c":"d"}}),
+        MagicMock(status='available', data={ "pending_modified_values":  {"a":"b", "c":"d"}}),
+        MagicMock(status='rebooting', data={ "pending_modified_values":  {"a":"b"}}),
+        MagicMock(status='rebooting', data={ "pending_modified_values":  {"a":"b", "c":"d"}}),
+        MagicMock(status='rebooting', data={ "pending_modified_values":  {}}),
+        MagicMock(status='available', data={ "pending_modified_values":  {"a":"b", "c":"d"}}),
+        MagicMock(status='rebooting', data={ "pending_modified_values":  {"a":"b", "c":"d"}}),
+        MagicMock(status='available', data={ "pending_modified_values":  {}}),
+        MagicMock(status='available', data={ "pending_modified_values":  {}}),
+    ])
+    with patch.object(time, 'sleep',sleeper_double):
+        with patch.object(rds_i, 'get_db_instance', get_db_instance_double):
+            rds_i.await_resource(MagicMock(), MagicMock(), "available", MagicMock(),
+                                 await_pending=1)
+
+    print("dbinstance calls:\n" + str(get_db_instance_double.mock_calls))
+    assert(len(sleeper_double.mock_calls) > 5), "await_pending didn't wait enough"
+    assert(len(get_db_instance_double.mock_calls) > 7), "await_pending didn't wait enough"
+
+
+def test_await_should_wait_for_delete_and_handle_none():
+    sleeper_double=MagicMock()
+    get_db_instance_double = MagicMock(side_effect=[
+        MagicMock(status='rebooting', data={ "pending_modified_values":  {"a":"b", "c":"d"}}),
+        MagicMock(status='available', data={ "pending_modified_values":  {"a":"b", "c":"d"}}),
+        MagicMock(status='rebooting', data={ "pending_modified_values":  {"a":"b"}}),
+        MagicMock(status='rebooting', data={ "pending_modified_values":  {}}),
+        MagicMock(status='rebooting', data={ "pending_modified_values":  {"a":"b", "c":"d"}}),
+        MagicMock(status='deleting', data={ "pending_modified_values":  {}}),
+        None,
+        None,
+    ])
+    with patch.object(time, 'sleep',sleeper_double):
+        with patch.object(rds_i, 'get_db_instance', get_db_instance_double):
+            rds_i.await_resource(MagicMock(), MagicMock(), "deleted", MagicMock(),
+                                 await_pending=1)
+
+    print("dbinstance calls:\n" + str(get_db_instance_double.mock_calls))
+    assert(len(sleeper_double.mock_calls) > 3), "await_pending didn't wait enough"
+    assert(len(get_db_instance_double.mock_calls) > 5), "await_pending didn't wait enough"
