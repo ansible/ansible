@@ -805,14 +805,14 @@ def main():
         streaming_distribution_id, config, e_tag = service_mgr.validate_update_delete_streaming_distribution_parameters(alias,
                 streaming_distribution_id, config, e_tag)
 
-    # DefaultCacheBehavior
-    # CacheBehaviors
     # CustomErrorResponses
     # Restrictions
     # ViewerCertificate
+
     # duplicate_distribution
     # duplicate streaming_distribution
     # distribution status
+
     # validate distribution
     # check all required attributes
     # url signing
