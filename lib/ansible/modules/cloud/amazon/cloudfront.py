@@ -383,7 +383,7 @@ class CloudFrontServiceManager:
                 else:
                     origin["custom_headers"] = self.python_list_to_aws_list()
                 if ".s3.awsamazon.com" in origin.get("domain_name"):
-                    if 's3_origin_config' not in origin or origin.get("s3_origin_config").get("origin_access_identity") is None:
+                    if 's3_origin_config' not in origin or 'origin_access_identity' not in origin.get("s3_origin_config"):
                         origin["s3_origin_config"] = {}
                         origin["s3_origin_config"]["origin_access_identity"] = default_origin_access_identity
                 else:
