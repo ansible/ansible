@@ -562,8 +562,10 @@ class CloudFrontServiceManager:
             price_class, comment, is_streaming_distribution):
         if config is None:
             config = {}
-        config["aliases"] = self.python_list_to_aws_list(aliases)
-        config["logging"] = self.validate_logging(logging, is_streaming_distribution)
+        if aliases is not None:
+            config["aliases"] = self.python_list_to_aws_list(aliases)
+        if logging is not None:
+            config["logging"] = self.validate_logging(logging, is_streaming_distribution)
         if enabled:
             config["enabled"] = enabled
         else:
@@ -817,7 +819,7 @@ def main():
     # doc
 
     if create_update_distribution or create_update_streaming_distribution:
-        service_mgr.validate_common_distribution_parameters(config, enabled, aliases, logging, price_class,
+        config = service_mgr.validate_common_distribution_parameters(config, enabled, aliases, logging, price_class,
                 comment, create_update_streaming_distribution)
     if create_distribution:
         config["viewer_certificate"] = service_mgr.validate_viewer_certificate(viewer_certificate)
@@ -836,8 +838,6 @@ def main():
         config = service_mgr.validate_caller_reference_for_distribution_creation(config, caller_reference)
 
     config = snake_dict_to_pascal_dict(pascal_dict_to_snake_dict(config, True))
-
-    print "config::: " + str(config)
 
     if create_origin_access_identity:
         result=service_mgr.create_origin_access_identity(caller_reference, comment)
