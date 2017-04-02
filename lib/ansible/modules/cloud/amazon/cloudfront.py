@@ -29,7 +29,7 @@ requirements:
   - python >= 2.6
 version_added: "2.3"
 author: Willem van Ketwich (@wilvk)
-  
+
 options:
   distribution_id:
       description:
@@ -85,7 +85,7 @@ from ansible.module_utils.ec2 import ec2_argument_spec
 from ansible.module_utils.ec2 import boto3_conn
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.modules.cloud.amazon.cloudfront_facts import CloudFrontFactsServiceManager 
+from ansible.modules.cloud.amazon.cloudfront_facts import CloudFrontFactsServiceManager
 from functools import partial
 import json
 import traceback
@@ -104,21 +104,28 @@ class CloudFrontServiceManager:
         self.cloudfront_facts_mgr = cloudfront_facts_mgr
         self.__default_http_port = 80
         self.__default_https_port = 443
-        self.__default_origin_ssl_protocols = [ "TLSv1", "TLSv1.1", "TLSv1.2" ]
+        self.__default_origin_ssl_protocols = [ 'TLSv1', 'TLSv1.1', 'TLSv1.2' ]
+        self.__default_custom_origin_protocol_policy = 'match-viewer'
         self.__default_datetime_string = self.generate_datetime_string()
         self.__default_cache_behavior_min_ttl = 0
         self.__default_cache_behavior_max_ttl = 31536000
         self.__default_cache_behavior_trusted_signers_enabled = False
         self.__default_cache_behavior_compress = False
-        self.__default_cache_behavior_viewer_protocol_policy = "allow-all"
+        self.__default_cache_behavior_viewer_protocol_policy = 'allow-all'
         self.__default_cache_behavior_smooth_streaming = False
         self.__default_cache_behavior_forwarded_values_cookies = 'none'
         self.__default_cache_behavior_forwarded_values_query_string = True
+        self.__default_trusted_signers_enabled = True
+        self.__default_presigned_url_expires_in = 3600
         self.create_client('cloudfront')
 
     @property
     def default_datetime_string(self):
         return self.__default_datetime_string
+
+    @property
+    def default_presigned_url_expires_in(self):
+        return self.__default_presigned_url_expires_in
 
     def create_client(self, resource):
         try:
@@ -126,22 +133,22 @@ class CloudFrontServiceManager:
             self.client = boto3_conn(self.module, conn_type='client', resource=resource,
                     region=region, endpoint=ec2_url, **aws_connect_kwargs)
         except botocore.exceptions.NoRegionError:
-            self.module.fail_json(msg = ("Region must be specified as a parameter, in "
+            self.module.fail_json(msg = ("region must be specified as a parameter in "
                                          "AWS_DEFAULT_REGION environment variable or in "
                                          "boto configuration file") )
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Can't establish connection - " + str(e),
+            self.module.fail_json(msg="unable to establish connection - " + str(e),
                     exception=traceback.format_exc(),
                     **camel_dict_to_snake_dict(e.response))
 
     def create_origin_access_identity(self, caller_reference, comment):
         try:
-            func = partial(self.client.create_cloud_front_origin_access_identity, 
+            func = partial(self.client.create_cloud_front_origin_access_identity,
                     CloudFrontOriginAccessIdentityConfig =
                     { 'CallerReference': caller_reference, 'Comment': comment })
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error creating cloud front origin access identity - " + str(e), 
+            self.module.fail_json(msg="error creating cloud front origin access identity - " + str(e),
                     exception=traceback.format_exc(),
                     **camel_dict_to_snake_dict(e.response))
 
@@ -151,7 +158,7 @@ class CloudFrontServiceManager:
                     Id=origin_access_identity_id, IfMatch=e_tag)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error deleting cloud front origin access identity - " + str(e),
+            self.module.fail_json(msg="error deleting cloud front origin access identity - " + str(e),
                     exception=traceback.format_exc(),
                     **camel_dict_to_snake_dict(e.response))
 
@@ -165,17 +172,17 @@ class CloudFrontServiceManager:
                     Id=origin_access_identity_id, IfMatch=e_tag)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error updating cloud front origin access identity - " + str(e),
+            self.module.fail_json(msg="error updating cloud front origin access identity - " + str(e),
                     exception=traceback.format_exc(),
                     **camel_dict_to_snake_dict(e.response))
-    
+
     def create_invalidation(self, distribution_id, invalidation_batch):
         try:
-            func = partial(self.client.create_invalidation, DistributionId = distribution_id, 
+            func = partial(self.client.create_invalidation, DistributionId = distribution_id,
                     InvalidationBatch=invalidation_batch)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error creating invalidation(s) - " + str(e),
+            self.module.fail_json(msg="error creating invalidation(s) - " + str(e),
                     exception=traceback.format_exc(),
                     **camel_dict_to_snake_dict(e.response))
 
@@ -185,7 +192,7 @@ class CloudFrontServiceManager:
                     Params=params, ExpiresIn=expires_in, HttpMethod=http_method)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error generating presigned url - " + str(e),
+            self.module.fail_json(msg="error generating presigned url - " + str(e),
                     exception=traceback.format_exc(),
                     **camel_dict_to_snake_dict(e.response))
 
@@ -195,16 +202,13 @@ class CloudFrontServiceManager:
             signed_url = cloudfront_signer.generate_presigned_url(url, date_less_than=expire_date)
             return {"presigned_url": signed_url }
         except Exception as e:
-            self.module.fail_json(msg="Error generating signed url from pem private key - " + str(e),
+            self.module.fail_json(msg="error generating signed url from pem private key - " + str(e),
                     exception=traceback.format_exc(),
                     **camel_dict_to_snake_dict(e.response))
 
-    def rsa_signer(message, private_key_string):
-        private_key = serialization.load_pem_private_key(
-            private_key_string,
-            password=None,
-            backend=default_backend()
-        )
+    def rsa_signer(message, private_key_string, pawwsord=None):
+        private_key = serialization.load_pem_private_key(private_key_string, password=password,
+                backend=default_backend())
         signer = private_key.signer(padding.PKCS1v15(), hashes.SHA1())
         signer.update(message)
         return signer.finalize()
@@ -217,7 +221,7 @@ class CloudFrontServiceManager:
                     ExpiresIn=expires_in, HttpMethod=http_method)
             return { "presigned_url": response }
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error generating s3 presigned url - " + str(e),
+            self.module.fail_json(msg="error generating s3 presigned url - " + str(e),
                     exception=traceback.format_exc(),
                     **camel_dict_to_snake_dict(e.response))
 
@@ -233,7 +237,7 @@ class CloudFrontServiceManager:
                         DistributionConfigWithTags=distribution_config_with_tags)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error creating distribution - " + str(e),
+            self.module.fail_json(msg="error creating distribution - " + str(e),
                     exception=traceback.format_exc(),
                     **camel_dict_to_snake_dict(e.response))
 
@@ -243,7 +247,7 @@ class CloudFrontServiceManager:
                     IfMatch=e_tag)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error deleting distribution - " + str(e),
+            self.module.fail_json(msg="error deleting distribution - " + str(e),
                     exception=traceback.format_exc(),
                     **camel_dict_to_snake_dict(e.response))
 
@@ -253,7 +257,7 @@ class CloudFrontServiceManager:
                     Id = distribution_id, IfMatch=e_tag)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error updating distribution - " + str(e),
+            self.module.fail_json(msg="error updating distribution - " + str(e),
                     exception=traceback.format_exc(),
                     **camel_dict_to_snake_dict(e.response))
 
@@ -264,11 +268,11 @@ class CloudFrontServiceManager:
             else:
                 streaming_distribution_config_with_tags["StreamingDistributionConfig"] = config
                 streaming_distribution_config_with_tags["Tags"] = tags
-                func = partial(self.client.create_streaming_disribution_with_tags, 
+                func = partial(self.client.create_streaming_disribution_with_tags,
                         StreamingDistributionConfigWithTags=streaming_distribution_config_with_tags)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error creating streaming distribution - " + str(e),
+            self.module.fail_json(msg="error creating streaming distribution - " + str(e),
                     exception=traceback.format_exc(),
                     **camel_dict_to_snake_dict(e.response))
 
@@ -278,24 +282,24 @@ class CloudFrontServiceManager:
                     IfMatch=e_tag)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error deleting streaming distribution - " + str(e),
+            self.module.fail_json(msg="error deleting streaming distribution - " + str(e),
                     exception=traceback.format_exc(),
                     **camel_dict_to_snake_dict(e.response))
-    
+
     def update_streaming_distribution(self, config, streaming_distribution_id, e_tag):
         try:
             func = partial(self.client.update_streaming_distribution, StreamingDistributionConfig=config,
                     Id = streaming_distribution_id, IfMatch=e_tag)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="Error updating streaming distribution - " + str(e),
+            self.module.fail_json(msg="error updating streaming distribution - " + str(e),
                     exception=traceback.format_exc(),
                     **camel_dict_to_snake_dict(e.response))
 
     def paginated_response(self, func, result_key=""):
         '''
         Returns expanded response for paginated operations.
-        The 'result_key' is used to define the concatenated results that are combined 
+        The 'result_key' is used to define the concatenated results that are combined
         from each paginated response.
         '''
         args = dict()
@@ -326,7 +330,7 @@ class CloudFrontServiceManager:
         if list_items is None:
             list_items = []
         if not isinstance(list_items, list):
-            self.module.fail_json(msg="expecting a list []. got a " + type(list_items).__name__ ) 
+            self.module.fail_json(msg="expecting a list []. got a " + type(list_items).__name__ )
         result = {}
         result["quantity"] = len(list_items)
         result["items"] = list_items
@@ -335,9 +339,11 @@ class CloudFrontServiceManager:
     def validate_logging(self, logging, streaming):
         if logging is None:
             return None
-        if logging and not streaming and (logging["enabled"] is None or logging["include_cookies"] is None or logging["bucket"] is None or logging["prefix"]):
-            self.module.fail_json(msg="the logging parameters enabled, include_cookies, bucket and prefix must be specified")
-        if logging and streaming and (logging["enabled"] is None or logging["bucket"] is None or logging["prefix"]):
+        if(logging and not streaming and ('enabled' not in logging or 'include_cookies' not in logging
+                or 'bucket' not in logging or logging["prefix"])):
+            self.module.fail_json(msg="the logging parameters enabled, include_cookies, bucket and "
+                    "prefix must be specified")
+        if logging and streaming and ('enabled' not in logging or 'bucket' not in loggin or logging["prefix"]):
             self.module.fail_json(msg="the logging parameters enabled, bucket and prefix must be specified")
         valid_logging["enabled"] = logging["enabled"]
         valid_logging["bucket"] = logging["bucket"]
@@ -346,61 +352,60 @@ class CloudFrontServiceManager:
             valid_logging["include_cookies"] = logging["include_cookies"]
         return valid_logging
 
-    def validate_origins(self, origins, default_origin_domain_name, default_origin_access_identity, default_origin_path, streaming, create_distribution):
+    def validate_origins(self, origins, default_origin_domain_name, default_origin_access_identity,
+            default_origin_path, streaming, create_distribution):
         valid_origins = {}
         if origins is None:
             origins = []
         quantity = len(origins)
         if quantity == 0 and default_origin_domain_name is None and create_distribution:
-            self.module.fail_json(msg="origins and default_origin_domain_name have not been specified. please specify at least one.")
+            self.module.fail_json(msg="both origins[] and default_origin_domain_name have not been "
+                    "specified. please specify at least one.")
         if quantity > 0:
             for origin in origins:
-                if origin.get("origin_path") is None:
+                if 'origin_path' not in origin:
                     origin["origin_path"] = default_origin_path
-                if origin.get("domain_name") is None:
-                    self.module.fail_json(msg="origins[].domain_name must be specified for an origin as a minimum")
-                if origin.get("id") is None:
+                if 'domain_name' not in origin:
+                    self.module.fail_json(msg="origins[].domain_name must be specified for an origin")
+                if 'id' not in origin:
                     origin["id"] = self.generate_datetime_string()
                 else:
-                    origin["id"] = str(origin["id"])
-                if origin.get("custom_headers") and streaming:
-                    self.module.fail_json(msg="custom_headers has been specified for a streaming distribution. " +
-                            "custom headers are for web distributions only")
-                if origin.get("custom_headers"):
-                    custom_headers_quantity = len(origin.get("custom_headers"))
-                    if custom_headers_quantity > 0:
-                        for custom_header in origin["custom_headers"]:
-                            if custom_header.get("header_name") is None or custom_header.get("header_value") is None:
-                                self.module.fail_json(msg="both origins[].custom_headers.header_name and origins[].custom_headers.header_value must be specified")
-                        temp_custom_headers = origin.get("custom_headers")
-                        origin["custom_headers"] = { "items": temp_custom_headers, "quantity": custom_headers_quantity }
+                    origin["id"] = origin["id"]
+                if 'custom_headers' in origin and streaming:
+                    self.module.fail_json(msg="custom_headers has been specified for a streaming " +
+                            "distribution. custom headers are for web distributions only")
+                if 'custom_headers' in origin and len(origin.get("custom_headers") > 0 ):
+                    for custom_header in origin.get("custom_headers"):
+                        if 'header_name' not in custom_header or 'header_value' not in custom_header:
+                            self.module.fail_json(msg="both origins[].custom_headers.header_name and " +
+                                    "origins[].custom_headers.header_value must be specified")
+                    origin["custom_headers"] = self.python_list_to_aws_list(origin.get("custom_headers"))
                 else:
-                    origin["custom_headers"] = { "quantity": 0 }
+                    origin["custom_headers"] = self.python_list_to_aws_list()
                 if ".s3.awsamazon.com" in origin.get("domain_name"):
-                    if origin.get("s3_origin_config") is None or origin.get("s3_origin_config").get("origin_access_identity") is None:
+                    if 's3_origin_config' not in origin or origin.get("s3_origin_config").get("origin_access_identity") is None:
                         origin["s3_origin_config"] = {}
                         origin["s3_origin_config"]["origin_access_identity"] = default_origin_access_identity
                 else:
-                    if origin.get("custom_origin_config") is None:
-		        origin["custom_origin_config"] = {}
-                    custom_origin_config = origin["custom_origin_config"]
-		    if custom_origin_config.get("origin_protocol_policy") is None:
-		        custom_origin_config["origin_protocol_policy"] = "match-viewer"
-        		if custom_origin_config.get("http_port") is None:
-        		    custom_origin_config["h_t_t_p_port"] = self.__default_http_port
-                    else: 
-		        custom_origin_config["h_t_t_p_port"] = origin["custom_origin_config"]["http_port"]
-		        custom_origin_config.pop("http_port", None)
-		    if custom_origin_config.get("https_port") is None:
-		        custom_origin_config["h_t_t_p_s_port"] = self.__default_https_port
+                    if 'custom_origin_config' not in origin:
+                        origin["custom_origin_config"] = {}
+                    custom_origin_config = origin.get("custom_origin_config")
+                    if 'origin_protocol_policy' not in custom_origin_config:
+                        custom_origin_config["origin_protocol_policy"] = self.__default_custom_origin_protocol_policy
+                    if 'http_port' not in custom_origin_config:
+                            custom_origin_config["h_t_t_p_port"] = self.__default_http_port
                     else:
-		        custom_origin_config["h_t_t_p_s_port"] = custom_origin_config["https_port"]
-		        custom_origin_config.pop("https_port", None)
-                    if custom_origin_config.get("origin_ssl_protocols") is None:
-		        temp_origin_ssl_protocols = self.__default_origin_ssl_protocols
-                    temp_origin_ssl_protocols = custom_origin_config["origin_ssl_protocols"]
-                    origin_ssl_protocols_quantity = len(temp_origin_ssl_protocols)
-                    custom_origin_config["origin_ssl_protocols"] = { "items": temp_origin_ssl_protocols, "quantity": origin_ssl_protocols_quantity }
+                        custom_origin_config["h_t_t_p_port"] = origin.get("custom_origin_config").get("http_port")
+                        custom_origin_config.pop("http_port", None)
+                    if 'https_port' not in custom_origin_config:
+                        custom_origin_config["h_t_t_p_s_port"] = self.__default_https_port
+                    else:
+                        custom_origin_config["h_t_t_p_s_port"] = custom_origin_config.get("https_port")
+                        custom_origin_config.pop("https_port", None)
+                    if 'origin_ssl_protocols' not in custom_origin_config:
+                        temp_origin_ssl_protocols = self.__default_origin_ssl_protocols
+                    temp_origin_ssl_protocols = custom_origin_config.get("origin_ssl_protocols")
+                    custom_origin_config["origin_ssl_protocols"] = self.python_list_to_aws_list(temp_origin_ssl_protocols)
             return self.python_list_to_aws_list(origins)
         return None
 
@@ -422,10 +427,11 @@ class CloudFrontServiceManager:
             cache_behavior["compress"] = self.__default_cache_behavior_compress
         trusted_signers = cache_behavior.get("trusted_signers")
         if trusted_signers is None:
-            cache_behavior["trusted_signers"] = { "enabled": self.__default_cache_behavior_trusted_signers_enabled, "quantity": 0 }
+            trusted_signers = self.python_list_to_aws_list()
+            trusted_signers["enabled"] = self.__default_cache_behavior_trusted_signers_enabled
         else:
-            if 'enabled' in cache_behavior["trusted_signers"]:
-                temp_enabled = cache_behavior["trusted_signers"]["enabled"]
+            if 'enabled' in trusted_signers:
+                temp_enabled = trusted_signers.get("enabled")
             else:
                 temp_enabled = self.__default_cache_behavior_trusted_signers_enabled
             cache_behavior["trusted_signers"] = self.python_list_to_aws_list(trusted_signers)
@@ -434,22 +440,23 @@ class CloudFrontServiceManager:
             cache_behavior["target_origin_id"] = self.get_first_origin_id_for_default_cache_behavior(valid_origins)
         if 'forwarded_values' not in cache_behavior:
             cache_behavior["forwarded_values"] = {}
-        forwarded_values = cache_behavior["forwarded_values"]
+        forwarded_values = cache_behavior.get("forwarded_values")
         if 'headers' not in forwarded_values:
             forwarded_values["headers"] = self.python_list_to_aws_list()
         if 'cookies' not in forwarded_values:
-            forwarded_values["cookies"] = { "forward": self.__default_cache_behavior_forwarded_values_cookies }
+            forwarded_values["cookies"] = {}
+            forwarded_values["cookies"]["forward"] = self.__default_cache_behavior_forwarded_values_cookies
         if 'query_string_cache_keys' not in forwarded_values:
             forwarded_values["query_string_cache_keys"] = self.python_list_to_aws_list()
         if 'query_string' not in forwarded_values:
             forwarded_values["query_string"] = self.__default_cache_behavior_forwarded_values_query_string
         if 'allowed_methods' in cache_behavior:
-            if 'items' not in cache_behavior["allowed_methods"]:
+            if 'items' not in cache_behavior.get("allowed_methods"):
                 self.module.fail_json(msg="a list of items must be specified for allowed_methods")
             if 'cached_methods' in cache_behavior and not isinstance(cache_behavior.get("cached_methods"), list):
                 self.module.fail_json(msg="allowed_methods.cached_methods must be a list")
         if 'lambda_function_associations' in cache_behavior:
-            if not isinstance(cache_behavior["lambda_function_associations"], list):
+            if not isinstance(cache_behavior.get("lambda_function_associations"), list):
                 self.module.fail_json(msg="lambda_function_associations must be a list")
         else:
             cache_behavior["lambda_function_associations"] = self.python_list_to_aws_list()
@@ -459,19 +466,20 @@ class CloudFrontServiceManager:
             cache_behavior["smooth_streaming"] = self.__default_cache_behavior_smooth_streaming
 
     def validate_custom_origin_configs(self, custom_origin_configs):
-        if origin.get("custom_origin_config"):
-            if(origin["custom_origin_config"].get("http_port") is None or origin["custom_origin_config"].get("https_port") is None 
-                     or origin["custom_origin_config"].get("origin_protocol_policy") is None):
+        custom_origin_config = origin.get('custom_origin_config')
+        if custom_origin_config:
+            if('http_port' not in custom_origin_config or 'https_port' not in custom_origin_config or
+                    'origin_protocol_policy' not in custom_origin_config):
                 self.module.fail_json(msg="http_port, https_port and origin_protocol_policy must all be specified")
 
     def validate_trusted_signers(self, trusted_signers):
         if trusted_signers:
             if 'enabled' not in trusted_signers:
-                trusted_signers["enabled"] = True
+                trusted_signers["enabled"] = self.__default_trusted_signers_enabled
             if 'items' not in trusted_signers:
                 trusted_signers["items"] = []
-            valid_trusted_signers = self.python_list_to_aws_list(trusted_signers["items"])
-            valid_trusted_signers["enabled"] = trusted_signers["enabled"]
+            valid_trusted_signers = self.python_list_to_aws_list(trusted_signers.get("items"))
+            valid_trusted_signers["enabled"] = trusted_signers.get("enabled")
             return valid_trusted_signers
         return None
 
@@ -481,10 +489,7 @@ class CloudFrontServiceManager:
                 self.module.fail_json("domain_name must be specified for s3_origin")
             if 'origin_access_identity' not in s3_origin:
                 self.module.fail_json("origin_access_identity must be specified for s3_origin")
-            return {
-                "domain_name": s3_origin["domain_name"],
-                "origin_access_identity": s3_origin["origin_access_identity"]
-                }
+            return s3_origin
         return None
 
     def validate_viewer_certificate(self, viewer_certificate):
@@ -493,22 +498,26 @@ class CloudFrontServiceManager:
 
     def validate_update_or_delete_distribution_parameters(self, alias, distribution_id, config, e_tag):
         if distribution_id is None and alias is None:
-            self.module.fail_json(msg="distribution_id or alias must be specified for updating or deleting a distribution.")
+            self.module.fail_json(msg="distribution_id or alias must be specified for updating or "
+                    "deleting a distribution.")
         if distribution_id is None:
             distribution_id = self.cloudfront_facts_mgr.get_distribution_id_from_domain_name(alias)
         if config is None:
-            config = self.cloudfront_facts_mgr.get_distribution_config(distribution_id)["DistributionConfig"]
+            config = self.cloudfront_facts_mgr.get_distribution_config(distribution_id).get("DistributionConfig")
         if e_tag is None:
             e_tag = self.cloudfront_facts_mgr.get_etag_from_distribution_id(distribution_id, False)
         return distribution_id, config, e_tag
- 
-    def validate_update_or_delete_streaming_distribution_parameters(self, alias, streaming_distribution_id, config, e_tag):
+
+    def validate_update_or_delete_streaming_distribution_parameters(self, alias, streaming_distribution_id,
+            config, e_tag):
         if streaming_distribution_id is None and alias is None:
-            self.module.fail_json(msg="streaming_distribution_id or alias must be specified for updating or deleting a streaming distribution.")
+            self.module.fail_json(msg="streaming_distribution_id or alias must be specified for updating "
+                    "or deleting a streaming distribution.")
         if streaming_distribution_id is None:
             streaming_distribution_id = self.cloudfront_facts_mgr.get_distribution_id_from_domain_name(alias)
         if config is None:
-            config = self.cloudfront_facts_mgr.get_streaming_distribution_config(streaming_distribution_id)["StreamingDistributionConfig"]
+            config = self.cloudfront_facts_mgr.get_streaming_distribution_config(
+                    streaming_distribution_id).get("StreamingDistributionConfig")
         if e_tag is None:
             e_tag = self.cloudfront_facts_mgr.get_etag_from_distribution_id(streaming_distribution_id, True)
         return streaming_distribution_id, config, e_tag
@@ -519,7 +528,9 @@ class CloudFrontServiceManager:
     def get_first_origin_id_for_default_cache_behavior(self, valid_origins):
         if valid_origins is None:
             return self.__default_datetime_string
-        param_id = valid_origins["Items"][0].get("Id")
+        if isinstance(valid_origins, list) and len(valid_origins) > 0:
+            return self.__default_datetime_string
+        param_id = valid_origins.get("Items")[0].get("Id")
         if param_id is None:
             return self.__default_datetime_string
         return param_id
@@ -588,14 +599,14 @@ def main():
     argument_spec.update(dict(
         create_origin_access_identity=dict(required=False, default=False, type='bool'),
         update_origin_access_identity=dict(required=False, default=False, type='bool'),
+        delete_origin_access_identity=dict(required=False, default=False, type='bool'),
         create_distribution=dict(required=False, default=False, type='bool'),
-        delete_distribution=dict(required=False, default=False, type='bool'),
         update_distribution=dict(required=False, default=False, type='bool'),
+        delete_distribution=dict(required=False, default=False, type='bool'),
         create_invalidation=dict(required=False, default=False, type='bool'),
         create_streaming_distribution=dict(required=False, default=False, type='bool'),
-        delete_streaming_distribution=dict(required=False, default=False, type='bool'),
         update_streaming_distribution=dict(required=False, default=False, type='bool'),
-        delete_origin_access_identity=dict(required=False, default=False, type='bool'),
+        delete_streaming_distribution=dict(required=False, default=False, type='bool'),
         generate_presigned_url=dict(required=False, default=False, type='bool'),
         generate_s3_presigned_url=dict(required=False, default=False, type='bool'),
         generate_signed_url_from_pem_private_key=dict(required=False, default=False, type='bool'),
@@ -609,7 +620,7 @@ def main():
         client_method=dict(required=False, default=None, type='str'),
         s3_bucket_name=dict(required=False, default=None, type='str'),
         s3_key_name=dict(required=False, default=None, type='str'),
-        expires_in=dict(required=False, default=3600, type='int'),
+        expires_in=dict(required=False, default=None, type='int'),
         http_method=dict(required=False, default=None, type='str'),
         tag_resource=dict(required=False, default=False, type='bool'),
         untag_resource=dict(required=False, default=False, type='bool'),
@@ -651,29 +662,29 @@ def main():
 
     cloudfront_facts_mgr = CloudFrontFactsServiceManager(module)
     service_mgr = CloudFrontServiceManager(module, cloudfront_facts_mgr)
-    
+
     create_origin_access_identity = module.params.get('create_origin_access_identity')
-    caller_reference = module.params.get('caller_reference')
-    comment = module.params.get('comment')
-    delete_origin_access_identity = module.params.get('delete_origin_access_identity')
-    origin_access_identity_id = module.params.get('origin_access_identity_id')
-    e_tag = module.params.get('e_tag')
     update_origin_access_identity = module.params.get('update_origin_access_identity')
-    origin_access_identity_id = module.params.get('origin_access_identity_id')
+    delete_origin_access_identity = module.params.get('delete_origin_access_identity')
+    create_distribution = module.params.get('create_distribution')
+    update_distribution = module.params.get('update_distribution')
+    delete_distribution = module.params.get('delete_distribution')
+    create_streaming_distribution = module.params.get('create_streaming_distribution')
+    update_streaming_distribution = module.params.get('update_streaming_distribution')
+    delete_streaming_distribution = module.params.get('delete_streaming_distribution')
     generate_presigned_url = module.params.get('generate_presigned_url')
     generate_s3_presigned_url = module.params.get('generate_s3_presigned_url')
     generate_signed_url_from_pem_private_key = module.params.get('generate_signed_url_from_pem_private_key')
+    caller_reference = module.params.get('caller_reference')
+    comment = module.params.get('comment')
+    origin_access_identity_id = module.params.get('origin_access_identity_id')
+    e_tag = module.params.get('e_tag')
+    origin_access_identity_id = module.params.get('origin_access_identity_id')
     client_method = module.params.get('client_method')
     s3_bucket_name = module.params.get('s3_bucket_name')
     s3_key_name = module.params.get('s3_key_name')
     expires_in = module.params.get('expires_in')
     http_method = module.params.get('http_method')
-    create_distribution = module.params.get('create_distribution')
-    delete_distribution = module.params.get('delete_distribution')
-    update_distribution = module.params.get('update_distribution')
-    create_streaming_distribution = module.params.get('create_streaming_distribution')
-    delete_streaming_distribution = module.params.get('delete_streaming_distribution')
-    update_streaming_distribution = module.params.get('update_streaming_distribution')
     config = module.params.get('config')
     tags = module.params.get('tags')
     create_invalidation = module.params.get('create_invalidation')
@@ -739,6 +750,8 @@ def main():
     # ViewerCertificate
     # duplicate_distribution
     # duplicate streaming_distribution
+    # distribution status
+    # validate distribution
     # check all required attributes
     # url signing
     # doc
@@ -793,6 +806,9 @@ def main():
             config["caller_reference"] = caller_reference
         else:
             config["caller_reference"] = service_mgr.default_datetime_string
+
+    if (generate_s3_presigned_url or generate_presigned_url) and expires_in is None:
+        expires_in = service_mgr.default_presigned_url_expires_in
 
     config = snake_dict_to_pascal_dict(pascal_dict_to_snake_dict(config, True))
 
