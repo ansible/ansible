@@ -441,7 +441,8 @@ def replicate_db_instance(module, conn):
             instance = RDSDBInstance(response['DBInstance'])
             changed = True
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Failed to create replica instance: %s " % str(e))
+            module.fail_json(msg="Failed to create replica instance: %s " % str(e),
+                             exception=traceback.format_exc() )
 
     if module.params.get('wait'):
         resource = await_resource(conn, instance, 'available', module)
@@ -481,7 +482,8 @@ def delete_db_instance(module, conn):
         response = conn.delete_db_instance(**params)
         instance = RDSDBInstance(response['DBInstance'])
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed to delete instance: %s" % str(e))
+        module.fail_json(msg="Failed to delete instance: %s" % str(e),
+                         exception=traceback.format_exc() )
 
     # If we're not waiting for a delete to complete then we're all done
     # so just return
@@ -494,7 +496,7 @@ def delete_db_instance(module, conn):
         if e.code == 'DBInstanceNotFound':
             module.exit_json(changed=True, operation="delete")
         else:
-            module.fail_json(msg=str(e))
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
     assert(False), "error in module logic - this should not be reached"
 
 def update_rds_tags(module, conn, resource, current_tags, desired_tags):
@@ -517,7 +519,7 @@ def update_rds_tags(module, conn, resource, current_tags, desired_tags):
             conn.remove_tags_from_resource(ResourceName=resource, TagKeys=list(to_delete))
             changed = True
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e))
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
     if to_add:
         try:
             conn.add_tags_to_resource(ResourceName=resource,
@@ -525,7 +527,7 @@ def update_rds_tags(module, conn, resource, current_tags, desired_tags):
                                             for k in to_add])
             changed = True
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e))
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
     return changed
 
 
@@ -581,7 +583,7 @@ def modify_db_instance(module, conn):
         response = conn.modify_db_instance(**params)
         return_instance = RDSDBInstance(response['DBInstance'])
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
 
     if module.params.get('apply_immediately') and after_instance_name:
             # Wait until the new instance name is valid
@@ -646,7 +648,7 @@ def promote_db_instance(module, conn):
             instance = RDSDBInstance(response['DBInstance'])
             changed = True
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e))
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
     else:
         changed = False
 
@@ -669,7 +671,7 @@ def reboot_db_instance(module, conn):
         response = conn.reboot_db_instance(**params)
         instance = RDSDBInstance(response['DBInstance'])
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=str(e), exception=traceback.format_exc())
 
     if module.params.get('wait'):
         instance = await_resource(conn, instance, 'available', module)
@@ -695,7 +697,7 @@ def restore_db_instance(module, conn):
             instance = RDSDBInstance(response['DBInstance'])
             changed = True
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e))
+            module.fail_json(msg=str(e), exception=traceback.format_exc())
 
     if module.params.get('wait'):
         instance = await_resource(conn, instance, 'available', module)
@@ -735,7 +737,7 @@ def validate_parameters(required_vars, valid_vars, module):
         try:
             PARAMETER_MAP[item]
         except KeyError as e:
-            module.fail_json(msg="unexpected module parameter" + str(e))
+            module.fail_json(msg="unexpected module parameter" + str(e), exception=traceback.format_exc())
 
     if module.params.get('security_groups'):
         params['DBSecurityGroups'] = module.params.get('security_groups').split(',')
