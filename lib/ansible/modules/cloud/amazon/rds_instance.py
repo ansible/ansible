@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'version': '0.1'}
@@ -277,6 +280,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.rds import RDSDBInstance, get_db_instance
+import sys
 
 try:
     import botocore
@@ -352,17 +356,24 @@ PARAMETER_MAP = {
     'zone': 'AvailabilityZone',
 }
 
+def eprint(*args, **kwargs):
+    print(args, file=sys.stderr, **kwargs)
 
-def await_resource(conn, resource, status, module):
+def await_resource(conn, resource, status, module, await_pending=None):
     wait_timeout = module.params.get('wait_timeout') + time.time()
     # Refresh the resource immediately in case we just changed it's state; should we sleep first?
     resource = get_db_instance(conn, resource.name)
-    while wait_timeout > time.time() and resource.status != status:
+    eprint(str(resource))
+    eprint("wait is " +  str(wait_timeout) + " " + str(time.time()) + " await_pending is "
+           + str(await_pending) + " status is " + str(resource.status) )
+    while (  ( await_pending and resource.data["pending_modified_values"] )
+             or resource.status != status ) and wait_timeout > time.time():
         time.sleep(5)
         # Temporary until all the rds2 commands have their responses parsed
         if resource.name is None:
             module.fail_json(msg="There was a problem waiting for RDS instance %s" % resource.instance)
         resource = get_db_instance(conn, resource.name)
+        eprint(str(resource))
         if resource is None:
             break
     if wait_timeout <= time.time() and resource.status != status:
@@ -569,7 +580,7 @@ def modify_db_instance(module, conn):
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=str(e))
 
-    if params.get('apply_immediately') and after_instance_name:
+    if module.params.get('apply_immediately') and after_instance_name:
             # Wait until the new instance name is valid
             after_instance = None
             while not after_instance:
@@ -591,8 +602,16 @@ def modify_db_instance(module, conn):
     # If so, when instance lookup fails with the old name we should try the new.
 
     if module.params.get('wait'):
-        return_instance = await_resource(conn, after_instance, 'available', module)
+        if module.params.get('apply_immediately'):
+            await_pending=True
+        else:
+            await_pending=False
+
+        eprint("about to wait")
+        return_instance = await_resource(conn, after_instance, 'available', module,
+                                         await_pending=await_pending)
     else:
+        eprint("skipping wait")
         return_instance = after_instance
 
     # guess that this changed the DB, need a way to check
@@ -605,7 +624,7 @@ def modify_db_instance(module, conn):
                        current_tags, tags):
         changed = True
     module.exit_json(changed=changed, instance=return_instance.data, operation="modify",
-                     diff=will_change)
+                     diff=diff)
 
 
 def promote_db_instance(module, conn):
