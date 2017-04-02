@@ -56,6 +56,15 @@ class RDSDBInstance(object):
         return camel_dict_to_snake_dict(self.instance)
 
     def diff(self, params):
+        # FIXME compare_keys should be all things that can be modified
+        # except port and instance_name which are handled separately
+        # valid_vars = ['backup_retention', 'backup_window',
+        #               'db_name',  'db_engine', 'engine_version',
+        #               'instance_type', 'iops', 'license_model',
+        #               'maint_window', 'multi_zone', 'new_instance_name',
+        #               'option_group', 'parameter_group', 'password', 'size',
+        #               'storage_type', 'subnet', 'tags', 'upgrade', 'username',
+        #               'vpc_security_groups']
         compare_keys = ['backup_retention', 'instance_type', 'iops',
                         'maintenance_window', 'multi_zone',
                         'replication_source',
@@ -70,10 +79,17 @@ class RDSDBInstance(object):
                 else:
                     before[k] = self.data.get(k)
                     after[k] = params.get(k)
-        port = self.data.get('port')
-        if port != params.get('port'):
-            before['port'] = port
-            after['port'] = params.get('port')
+        try:
+            old_port = self.data.get("endpoint")["port"]
+        except TypeError:
+            old_port = None
+        try:
+            new_port=params.get("endpoint")["port"]
+        except TypeError:
+            new_port = None
+        if old_port != new_port:
+            before['port'] = old_port
+            after['port'] = new_port
         result = dict()
         if before:
             result = dict(before_header=self.name, before=before, after=after)
