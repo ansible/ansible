@@ -156,7 +156,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         if not isinstance(parent_include, TaskInclude):
                             parent_include = parent_include._parent
                             continue
-                        parent_include_dir = templar.template(os.path.dirname(parent_include.args.get('_raw_params')))
+                        parent_include_dir = os.path.dirname(templar.template(parent_include.args.get('_raw_params')))
                         if cumulative_path is None:
                             cumulative_path = parent_include_dir
                         elif not os.path.isabs(cumulative_path):
