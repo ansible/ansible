@@ -558,7 +558,10 @@ def modify_db_instance(module, conn):
 
     # modify_db_instance takes DBPortNumber in contrast to
     # create_db_instance which takes Port
-    params['DBPortNumber'] = params.pop('Port')
+    try:
+        params['DBPortNumber'] = params.pop('Port')
+    except KeyError:
+        pass
     # modify_db_instance does not accept tags
     try:
         tags = params.pop('Tags')
