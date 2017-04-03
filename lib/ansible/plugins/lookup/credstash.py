@@ -1,3 +1,4 @@
+
 # (c) 2015, Ensighten <infra@ensighten.com>
 #
 # This file is part of Ansible
@@ -41,7 +42,8 @@ class LookupModule(LookupBase):
                 version = kwargs.pop('version', '')
                 region = kwargs.pop('region', None)
                 table = kwargs.pop('table', 'credential-store')
-                val = credstash.getSecret(term, version, region, table,
+                profile = kwargs.pop('profile', None)
+                val = credstash.getSecret(term, version, region, table, profile_name=profile,
                                           context=kwargs)
             except credstash.ItemNotFound:
                 raise AnsibleError('Key {0} not found'.format(term))
