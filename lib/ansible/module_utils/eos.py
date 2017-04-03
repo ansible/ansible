@@ -111,10 +111,6 @@ class Cli:
             rc, out, err = self.exec_command(cmd)
         return out.endswith('#')
 
-    def supports_sessions(self):
-        rc, out, err = self.exec_command('show configuration sessions')
-        return rc == 0
-
     def get_config(self, flags=[]):
         """Retrieves the current config from the device or cache
         """
