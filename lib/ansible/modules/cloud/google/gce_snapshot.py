@@ -199,31 +199,32 @@ def main():
     instance_disks = instance.extra['disks']
 
     for instance_disk in instance_disks:
+        disk_snapshot_name = snapshot_name
         device_name = instance_disk['deviceName']
         if disks is None or device_name in disks:
             volume_obj = gce.ex_get_volume(device_name)
 
             # If we have more than one disk to snapshot, prepend the disk name
             if len(instance_disks) > 1:
-                snapshot_name = device_name + "-" + snapshot_name
+                disk_snapshot_name = device_name + "-" + disk_snapshot_name
 
-            snapshot = find_snapshot(volume_obj, snapshot_name)
+            snapshot = find_snapshot(volume_obj, disk_snapshot_name)
 
             if snapshot and state == 'present':
-                json_output['snapshots_existing'].append(snapshot_name)
+                json_output['snapshots_existing'].append(disk_snapshot_name)
 
             elif snapshot and state == 'absent':
                 snapshot.destroy()
                 json_output['changed'] = True
-                json_output['snapshots_deleted'].append(snapshot_name)
+                json_output['snapshots_deleted'].append(disk_snapshot_name)
 
             elif not snapshot and state == 'present':
-                volume_obj.snapshot(snapshot_name)
+                volume_obj.snapshot(disk_snapshot_name)
                 json_output['changed'] = True
-                json_output['snapshots_created'].append(snapshot_name)
+                json_output['snapshots_created'].append(disk_snapshot_name)
 
             elif not snapshot and state == 'absent':
-                json_output['snapshots_absent'].append(snapshot_name)
+                json_output['snapshots_absent'].append(disk_snapshot_name)
 
     module.exit_json(**json_output)
 
