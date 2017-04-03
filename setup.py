@@ -18,6 +18,13 @@ with open('requirements.txt') as requirements_file:
                 "That indicates this copy of the source code is incomplete.")
         sys.exit(2)
 
+long_description = '''Ansible is a radically simple IT automation system. It handles configuration-management, application deployment, cloud provisioning, ad-hoc task-execution, and multinode orchestration - including trivializing things like zero downtime rolling updates with load balancers.
+
+Read the documentation and more at http://ansible.com/'''
+
+if os.path.exists('README.txt'):
+      long_description = open('README.txt').read()
+
 setup(
     name='ansible',
     version=__version__,

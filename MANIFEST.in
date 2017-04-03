@@ -1,6 +1,6 @@
 prune ticket_stubs
 prune hacking
-include README.md COPYING
+include README.rst COPYING
 include requirements.txt
 include examples/hosts
 include examples/ansible.cfg
