@@ -258,3 +258,17 @@
   assert:
     that:
     - replace_follow_result.checksum == target_file_result.stdout
+
+# Test destination file name defaults to home directory (issue 5268)
+
+- name: copy with file name as destination
+  copy: content="foo" dest=foo.txt
+  register: filename_dest_result
+
+- name: assert that file was copied to home directory
+  assert:
+    that:
+      - "filename_dest_result.dest == '{{ansible_env.HOME}}/foo.txt'"
+
+- name: clean up
+  file: dest={{ansible_env.HOME}}/foo.txt state=absent
