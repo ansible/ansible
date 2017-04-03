@@ -368,3 +368,10 @@ following methods:
 * Set the task to use ``connection: local``
 * Run ansible-playbook using the ``-c local`` setting
 
+
+delete_to not honoured
+----------------------
+
+FIXME Do we get an error message
+
+FIXME Link to howto
