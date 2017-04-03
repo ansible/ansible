@@ -177,7 +177,7 @@ def create(conn, module, matching_zones):
     if private_zone:
         changed, result = create_private(conn, matching_zones, vpc_id, vpc_region, zone_in, record)
     else:
-        changed, result = create_public(conn, zone_in, record)
+        changed, result = create_public(conn, matching_zones, zone_in, record)
 
     return changed, result
 
@@ -213,13 +213,19 @@ def create_private(conn, matching_zones, vpc_id, vpc_region, zone_in, record):
     return changed, record
 
 
-def create_public(conn, zone_in, record):
-    result = conn.create_hosted_zone(zone_in, **record)
-    hosted_zone = result['CreateHostedZoneResponse']['HostedZone']
-    zone_id = hosted_zone['Id'].replace('/hostedzone/', '')
-    record['zone_id'] = zone_id
-    record['name'] = zone_in
-    changed = True
+def create_public(conn, matching_zones, zone_in, record):
+    if zone_in in matching_zones.values():
+        zone_details = conn.get_hosted_zone(
+            list(matching_zones)[0])['GetHostedZoneResponse']['HostedZone']
+        changed = False
+    else:
+        result = conn.create_hosted_zone(zone_in, **record)
+        zone_details = result['CreateHostedZoneResponse']['HostedZone']
+        changed = True
+
+    record['zone_id'] = zone_details['Id'].replace('/hostedzone/', '')
+    record['name'] = zone_details['Name']
+
     return changed, record
 
 
