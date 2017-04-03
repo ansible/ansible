@@ -48,7 +48,7 @@ Ansible Changes By Release
 * Allow module_utils for custom modules to be placed in site-specific directories and shipped in roles
 * On platforms that support it, use more modern system polling API instead of select in the ssh connection plugin.
   This removes one limitation on how many parallel forks are feasible on these systems.
-* Windows/WinRM supports become method "runas" to run modules and scripts as a different user, and to transparently access network resources.
+* Windows/WinRM supports (experimental) become method "runas" to run modules and scripts as a different user, and to transparently access network resources.
 * The WinRM connection plugin now uses pipelining when executing modules, resulting in significantly faster execution for small tasks.
 * The WinRM connection plugin can now manage Kerberos tickets automatically when `ansible_winrm_transport=kerberos` and `ansible_user`/`ansible_password` are specified.
 * Refactored/standardized most Windows modules, adding check-mode and diff support where possible.
