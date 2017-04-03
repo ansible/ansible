@@ -119,7 +119,17 @@ class CloudFrontServiceManager:
         self.__default_cache_behavior_forwarded_values_query_string = True
         self.__default_trusted_signers_enabled = True
         self.__default_presigned_url_expires_in = 3600
-        self.__valid_price_classes = ['PriceClass_100','PriceClass_200','PriceClass_All']
+        self.__valid_price_classes = [ 'PriceClass_100', 'PriceClass_200', 'PriceClass_All' ]
+        self.__valid_custom_origin_protocol_policies = [ 'http-only', 'match-viewer', 'https-only' ]
+        self.__valid_origin_ssl_protocols = [ 'SSLv3', 'TLSv1', 'TLSv1.1', 'TLSv1.2' ]
+        self.__valid_cookie_forwarding = [ 'none', 'whitelist', 'all' ]
+        self.__valid_viewer_protocol_policies = [ 'allow-all', 'https-only', 'redirect-to-https' ]
+        self.__valid_methods = [ 'GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'OPTIONS', 'DELETE' ]
+        self.__valid_lambda_function_association_event_types = [ 'viewer-request', 'viewer-response', 'origin-request', 'origin-response' ]
+        self.__valid_viewer_certificate_ssl_support_methods = [ 'sni-only', 'vip' ]
+        self.__valid_viewer_certificate_minimum_protocol_versions = [ 'SSLv3', 'TLSv1' ]
+        self.__valid_viewer_certificate_certificate_sources = [ 'cloudfront', 'iam', 'acm' ]
+        self.__valid_http_versions = [ 'http1.1', 'http2' ]
         self.__s3_bucket_domain_identifier = '.s3.amazonaws.com'
         self.create_client('cloudfront')
 
