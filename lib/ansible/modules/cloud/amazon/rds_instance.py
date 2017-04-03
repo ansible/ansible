@@ -378,7 +378,7 @@ def await_resource(conn, resource, status, module, await_pending=None):
         if resource is None:
             break
     if wait_timeout <= time.time() and resource.status != status:
-        module.fail_json(msg="Timeout waiting for RDS resource %s" % resource.name)
+        module.fail_json(msg="Timeout waiting for RDS resource %s status is still %s" % resource.name, status)
     return resource
 
 
@@ -415,7 +415,8 @@ def create_db_instance(module, conn):
             instance = RDSDBInstance(response['DBInstance'])
             changed = True
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Failed to create instance: %s" % str(e))
+            module.fail_json(msg="Failed to create instance: %s " % str(e),
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message) )
 
     if module.params.get('wait'):
         resource = await_resource(conn, instance, 'available', module)
@@ -443,7 +444,7 @@ def replicate_db_instance(module, conn):
             changed = True
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failed to create replica instance: %s " % str(e),
-                             exception=traceback.format_exc() )
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message) )
 
     if module.params.get('wait'):
         resource = await_resource(conn, instance, 'available', module)
@@ -483,8 +484,8 @@ def delete_db_instance(module, conn):
         response = conn.delete_db_instance(**params)
         instance = RDSDBInstance(response['DBInstance'])
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg="Failed to delete instance: %s" % str(e),
-                         exception=traceback.format_exc() )
+        module.fail_json(msg="Failed to delete instance: %s " % str(e),
+                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message) )
 
     # If we're not waiting for a delete to complete then we're all done
     # so just return
@@ -497,7 +498,8 @@ def delete_db_instance(module, conn):
         if e.code == 'DBInstanceNotFound':
             module.exit_json(changed=True, operation="delete")
         else:
-            module.fail_json(msg=str(e), exception=traceback.format_exc())
+            module.fail_json(msg="Failure waiting for deletion to complete: %s " % str(e),
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message) )
     assert(False), "error in module logic - this should not be reached"
 
 def update_rds_tags(module, conn, resource, current_tags, desired_tags):
@@ -520,7 +522,8 @@ def update_rds_tags(module, conn, resource, current_tags, desired_tags):
             conn.remove_tags_from_resource(ResourceName=resource, TagKeys=list(to_delete))
             changed = True
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e), exception=traceback.format_exc())
+            module.fail_json(msg="Failure removing instance tags: %s" % str(e),
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message) )
     if to_add:
         try:
             conn.add_tags_to_resource(ResourceName=resource,
@@ -528,7 +531,8 @@ def update_rds_tags(module, conn, resource, current_tags, desired_tags):
                                             for k in to_add])
             changed = True
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e), exception=traceback.format_exc())
+            module.fail_json(msg="Failure adding instance tags: %s" % str(e),
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message) )
     return changed
 
 
@@ -584,7 +588,8 @@ def modify_db_instance(module, conn):
         response = conn.modify_db_instance(**params)
         return_instance = RDSDBInstance(response['DBInstance'])
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=str(e), exception=traceback.format_exc())
+            module.fail_json(msg="Failed to modify instance: %s " % str(e),
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message) )
 
     if module.params.get('apply_immediately') and after_instance_name:
             # Wait until the new instance name is valid
@@ -649,7 +654,8 @@ def promote_db_instance(module, conn):
             instance = RDSDBInstance(response['DBInstance'])
             changed = True
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e), exception=traceback.format_exc())
+            module.fail_json(msg="Failed to promote replica instance: %s " % str(e),
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message) )
     else:
         changed = False
 
@@ -672,8 +678,8 @@ def reboot_db_instance(module, conn):
         response = conn.reboot_db_instance(**params)
         instance = RDSDBInstance(response['DBInstance'])
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=str(e), exception=traceback.format_exc())
-
+        module.fail_json(msg="Failed to reboot instance: %s " % str(e),
+                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message) )
     if module.params.get('wait'):
         instance = await_resource(conn, instance, 'available', module)
     else:
@@ -698,7 +704,8 @@ def restore_db_instance(module, conn):
             instance = RDSDBInstance(response['DBInstance'])
             changed = True
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e), exception=traceback.format_exc())
+            module.fail_json(msg="Failed to restore instance: %s " % str(e),
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message) )
 
     if module.params.get('wait'):
         instance = await_resource(conn, instance, 'available', module)
