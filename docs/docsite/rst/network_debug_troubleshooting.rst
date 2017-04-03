@@ -119,8 +119,8 @@ Then review the log file and find the relevant error message in the rest of this
 
 For details on other ways to authenticate see LINKTOAUTHHOWTODOCS.
 
-Troubleshooting Network Modules
-===============================
+Authentication and connection issues
+====================================
 
 This section covers some of the more common error messages and troubleshooting steps.
 
@@ -290,6 +290,58 @@ Add `authorize: yes` to the task. For example:
   register: result
 
 
+FIXME Host not found
+--------------------
+
+FIXME host not found
+
+Clearing Out Persistent Connections
+-----------------------------------
+
+**Platforms:** Any
+
+In Ansible 2.3, persistent connection sockets are stored in ``~/.ansible/pc`` for all network devices.  When an Ansible playbook runs, the persistent socket connection is displayed when verbose output is specified.
+
+``<switch> socket_path: /home/fred/.ansible/pc/f64ddfa760``
+
+To clear out a persistent connection before it times out (the default timeout is 30 seconds
+of inactivity), simple delete the socket file.
+
+
+Timeout issues
+==============
+
+Timeouts
+--------
+
+All network modules support a timeout value that can be set on a per task
+basis.  The timeout value controls the amount of time in seconds before the
+task will fail if the command has not returned.
+
+For example:
+
+FIXME: Detail error here
+
+
+Suggestions to resolve:
+
+.. code-block:: yaml
+
+    - name: save running-config
+      ios_command:
+        commands: copy running-config startup-config
+        provider: "{{ cli }}"
+        timeout: 30
+
+Some operations take longer than the default 10 seconds to complete.  One good
+example is saving the current running config on IOS devices to startup config.
+In this case, changing the timeout value form the default 10 seconds to 30
+seconds will prevent the task from failing before the command completes
+successfully.
+
+Playbook issues
+===============
+This section details issues are caused by issues with the Playbook itself.
 
 Error: "invalid connection specified, expected connection=local, got ssh"
 -------------------------------------------------------------------------
@@ -315,40 +367,4 @@ following methods:
 * Set the play to use ``connection: local``
 * Set the task to use ``connection: local``
 * Run ansible-playbook using the ``-c local`` setting
-
-Timeouts
---------
-
-All network modules support a timeout value that can be set on a per task
-basis.  The timeout value controls the amount of time in seconds before the
-task will fail if the command has not returned.  
-
-.. code-block:: yaml
-    
-    - name: save running-config
-      ios_command: 
-        commands: copy running-config startup-config
-        provider: "{{ cli }}"
-        timeout: 30
-
-Some operations take longer than the default 10 seconds to complete.  One good
-example is saving the current running config on IOS devices to startup config.
-In this case, changing the timeout value form the default 10 seconds to 30
-seconds will prevent the task from failing before the command completes
-successfully.
-
-
-Clearing Out Persistent Connections
------------------------------------
-
-**Platforms:** Any
-
-In Ansible 2.3, persistent connection sockets are stored in ``~/.ansible/pc`` for all network devices.  When an Ansible playbook runs, the persistent socket connection is displayed when verbose output is specified.
-
-``<switch> socket_path: /home/fred/.ansible/pc/f64ddfa760``
-
-To clear out a persistent connection before it times out (the default timeout is 30 seconds
-of inactivity), simple delete the socket file.
-
-
 

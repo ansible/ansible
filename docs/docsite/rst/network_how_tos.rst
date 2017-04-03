@@ -190,7 +190,9 @@ argument accepts device dependent values for changing the transport (eapi for
 EOS based devices and nxapi for NX-OS based devices).
 
 
-TDB, Include details regarding ``use_ssl``
+FIXME, Include details regarding ``use_ssl``
+
+FIXME: Detail how to enable eapi & nxapi
 
 .. code-block:: yaml
 
@@ -200,7 +202,7 @@ TDB, Include details regarding ``use_ssl``
            host: "{{ inventory_hostname }}"
            username: admin
            password: admin
-           transport; eapi
+           transport: eapi
 
 
 Note: Both ``eapi`` and ``nxapi`` support additional arguments to change the
