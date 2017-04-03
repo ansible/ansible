@@ -1537,7 +1537,10 @@ class Container(DockerBaseClass):
             if isinstance(container_port, int):
                 container_port = "%s/tcp" % container_port
             if len(config) == 1:
-                expected_bound_ports[container_port] = [{'HostIp': "0.0.0.0", 'HostPort': ""}]
+                if isinstance(config[0], int):
+                    expected_bound_ports[container_port] = [{'HostIp': "0.0.0.0", 'HostPort': config[0]}]
+                else:
+                    expected_bound_ports[container_port] = [{'HostIp': config[0], 'HostPort': ""}]
             elif isinstance(config[0], tuple):
                 expected_bound_ports[container_port] = []
                 for host_ip, host_port in config:
