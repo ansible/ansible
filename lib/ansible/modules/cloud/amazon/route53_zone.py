@@ -162,10 +162,11 @@ def create(conn, module, matching_zones):
     vpc_region = module.params.get('vpc_region')
     comment = module.params.get('comment')
 
-    if zone_in[-1:] != '.':
+    if not zone_in.endswith('.'):
         zone_in += "."
 
-    private_zone = vpc_id is not None and vpc_region is not None
+    private_zone = bool(vpc_id and vpc_region)
+
     record = {
         'private_zone': private_zone,
         'vpc_id': vpc_id,
@@ -285,12 +286,12 @@ def delete(conn, module, matching_zones):
     comment = module.params.get('comment')
     hosted_zone_id = module.params.get('hosted_zone_id')
 
-    if zone_in[-1:] != '.':
+    if not zone_in.endswith('.'):
         zone_in += "."
 
-    private_zone = vpc_id is not None and vpc_region is not None
+    private_zone = bool(vpc_id and vpc_region)
 
-    if zone_in in [matching_zones[z] for z in matching_zones]:
+    if zone_in in matching_zones.values():
         if hosted_zone_id:
             changed, result = delete_hosted_id(conn, hosted_zone_id, matching_zones)
         else:
@@ -324,10 +325,10 @@ def main():
     vpc_id = module.params.get('vpc_id')
     vpc_region = module.params.get('vpc_region')
 
-    if zone_in[-1:] != '.':
+    if not zone_in.endswith('.'):
         zone_in += "."
 
-    private_zone = vpc_id is not None and vpc_region is not None
+    private_zone = bool(vpc_id and vpc_region)
 
     _, _, aws_connect_kwargs = get_aws_connection_info(module)
 
