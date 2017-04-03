@@ -36,11 +36,13 @@ extends_documentation_fragment: fortios
 options:
   id:
     description:
-      - Policy ID.
+      - Policy ID (/!\ warning: policy I(id) != Policy sequence! /!\ 
+        Default display show only policies sequence numbers, 
+        you need to add policy I(id) column in display options.
     required: true
   state:
     description:
-      - Specifies if address need to be added or deleted.
+      - Specifies if policy I(id) need to be added or deleted.
     choices: ['present', 'absent']
     default: present
   src_intf:
@@ -180,12 +182,12 @@ def main():
         src_intf                  = dict(default='any'),
         dst_intf                  = dict(default='any'),
         state                     = dict(choices=['present', 'absent'], default='present'),
-        src_addr                  = dict(required=True, type='list'),
-        dst_addr                  = dict(required=True, type='list'),
+        src_addr                  = dict(type='list'),
+        dst_addr                  = dict(type='list'),
         src_addr_negate           = dict(type='bool', default=False),
         dst_addr_negate           = dict(type='bool', default=False),
-        policy_action             = dict(choices=['accept','deny'], required=True, aliases=['action']),
-        service                   = dict(aliases=['services'], required=True, type='list'),
+        policy_action             = dict(choices=['accept','deny'], aliases=['action']),
+        service                   = dict(aliases=['services'], type='list'),
         service_negate            = dict(type='bool', default=False),
         schedule                  = dict(type='str', default='always'),
         nat                       = dict(type='bool', default=False),
@@ -200,14 +202,21 @@ def main():
     #merge global required_if & argument_spec from module_utils/fortios.py
     argument_spec.update(fortios_argument_spec)
 
+    ipv4_policy_required_if = [
+        ['state', 'present', ['src_addr', 'dst_addr', 'policy_action', 'service']],
+    ]
+
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=fortios_required_if,
+        required_if=fortios_required_if + ipv4_policy_required_if ,
     )
 
     #init forti object
     fortigate = AnsibleFortios(module)
+
+    #Security policies root path
+    config_path = 'firewall policy'
 
     #test params
     #NAT related
@@ -221,11 +230,11 @@ def main():
     policy_id = str(module.params['id'])
 
     #load config
-    fortigate.load_config('firewall policy')
+    fortigate.load_config(config_path)
 
     #Absent State
     if module.params['state'] == 'absent':
-        fortigate.candidate_config[path].del_block(policy_id)
+        fortigate.candidate_config[config_path].del_block(policy_id)
 
     #Present state
     elif module.params['state'] == 'present':
