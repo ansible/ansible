@@ -1,4 +1,5 @@
 import os
+import os.path
 import sys
 
 sys.path.insert(0, os.path.abspath('lib'))
@@ -17,6 +18,25 @@ with open('requirements.txt') as requirements_file:
         print("Unable to read requirements from the requirements.txt file"
                 "That indicates this copy of the source code is incomplete.")
         sys.exit(2)
+
+SYMLINKS = {'ansible': frozenset(('ansible-console',
+                                  'ansible-doc',
+                                  'ansible-galaxy',
+                                  'ansible-playbook',
+                                  'ansible-pull',
+                                  'ansible-vault'))}
+
+for source in SYMLINKS:
+    for dest in SYMLINKS[source]:
+        dest_path = os.path.join('bin', dest)
+        if not os.path.islink(dest_path):
+            try:
+                os.unlink(dest_path)
+            except OSError as e:
+                if e.errno == 2:
+                    # File does not exist which is all we wanted
+                    pass
+            os.symlink(source, dest_path)
 
 setup(
     name='ansible',
