@@ -954,9 +954,33 @@ class Connection(ConnectionBase):
             args = (ssh_executable, self.host, cmd)
 
         cmd = self._build_command(*args)
+
+        if display.verbosity >= 4:
+            # for 'ssh -G', the 'cmd' is not used, so this just removes it from the
+            # ssh command we use for a cleaner msg.
+            debug_args = args[:-1]
+            self._display_ssh_config(debug_args, in_data, sudoable)
+
         (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable)
 
         return (returncode, stdout, stderr)
+
+    def _display_ssh_config(self, args, in_data=None, sudoable=True):
+        # only 'ssh' (not sftp or scp) support -G. And only ~recentish versions.
+
+        debug_args = tuple(args[:] + ('-G',))
+        cmd = self._build_command(*debug_args)
+
+        try:
+            (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable, checkrc=False)
+        except AnsibleConnectionFailure:
+            # -G failed, could be too old, not openssh, etc.
+            return
+
+        if returncode != 0:
+            return
+
+        display.vvvv(u"SSH CONFIG DEBUG: {0}".format(stdout), host=self.host)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
