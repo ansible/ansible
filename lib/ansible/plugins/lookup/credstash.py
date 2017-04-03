@@ -43,7 +43,7 @@ class LookupModule(LookupBase):
                 region = kwargs.pop('region', None)
                 table = kwargs.pop('table', 'credential-store')
                 profile = kwargs.pop('profile', None)
-                iam_arn_assume_role = kwargs.pop('iam_arn_credentials_store', None)
+                iam_arn_assume_role = kwargs.pop('iam_arn_assume_role', None)
                 val = credstash.getSecret(term, version, region, table, profile_name=profile,
                                           arn=iam_arn_assume_role, context=kwargs)
             except credstash.ItemNotFound:
