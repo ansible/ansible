@@ -37,7 +37,7 @@ options:
   id:
     description:
       - Policy ID
-        Warning: policy I(id)# is different than Policy sequence#
+        Warning, policy I(id) number is different than Policy sequence number
         Default web display show only policies sequence numbers,
         you need to add policy id column in display options.
     required: true
