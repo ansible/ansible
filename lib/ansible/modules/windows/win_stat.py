@@ -150,7 +150,7 @@ stat:
             returned: success, path exists
             type: boolean
             sample: True
-        islink:
+        islnk:
             description: if the path is a symbolic link or junction or not
             returned: success, path exists
             type: boolean
