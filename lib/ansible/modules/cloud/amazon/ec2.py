@@ -357,6 +357,8 @@ EXAMPLES = '''
         volume_size: 8
     vpc_subnet_id: subnet-29e63245
     assign_public_ip: yes
+    count_tag:
+      Name: dbserver
     exact_count: 1
 
 # Multiple groups example
