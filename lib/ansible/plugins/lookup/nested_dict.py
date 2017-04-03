@@ -60,12 +60,14 @@ The nested keys and value of each are then exposed to an iterative task:
       with_nested_dict: "{{ holidays_by_year_month_day }}"
 
 """
+
+
 class LookupModule(LookupBase):
 
     @staticmethod
     def _flatten_nested_hash_to_list(terms, result=None, stack=None):
-        result = [] if result is None else result
-        stack = { 'nested':[] } if stack is None else stack
+        result = list() if result is None else result
+        stack = dict(nested=list()) if stack is None else stack
 
         for key, val in terms.items():
             working = LookupModule._stack_copy(stack)
@@ -90,4 +92,3 @@ class LookupModule(LookupBase):
             raise AnsibleError("with_nested_dict expects a dict")
 
         return self._flatten_nested_hash_to_list(terms)
-
