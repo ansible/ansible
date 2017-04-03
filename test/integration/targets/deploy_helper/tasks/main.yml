@@ -62,7 +62,7 @@
 
 # Setup older releases for tests
 - file: path={{ deploy_helper.releases_path }}/{{ item }} state=directory
-  with_items: ['first','second','third', 'fourth', 'fifth', 'sixth', 'seventh']
+  with_items: ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh']
 # Setup the new release
 - file: path={{ deploy_helper.new_release_path }} state=directory
 # Add a buildfile, just like in a real deploy
@@ -90,12 +90,12 @@
   assert:
     that:
     - "not third_release_path.stat.exists"
-    - "{{ releases_count.stdout|trim }} == 5"
+    - "releases_count.stdout|trim == '6'"
 - deploy_helper: path={{ deploy_helper_test_root }} release={{ deploy_helper.new_release }} state=query
 - name: Assert State=finalize with default parameters (previous_release checks)
   assert:
     that:
-    - "{{ deploy_helper.new_release }} == {{ deploy_helper.previous_release }}"
+    - "deploy_helper.new_release == deploy_helper.previous_release"
 
 - name: State=absent with default parameters
   deploy_helper: path={{ deploy_helper_test_root }} state=absent
@@ -122,7 +122,7 @@
 
 # Setup older releases for tests
 - file: path={{ deploy_helper.releases_path }}/{{ item }} state=directory
-  with_items: ['first','second','third', 'fourth', 'fifth']
+  with_items: ['first', 'second', 'third', 'fourth', 'fifth']
 # Setup the new release
 - file: path={{ deploy_helper.new_release_path }} state=directory
 # Add a buildfile, just like in a real deploy
@@ -142,8 +142,8 @@
   assert:
     that:
     - "not third_release_path.stat.exists"
-    - "{{ before_releases_count.stdout|trim }} == 6"
-    - "{{ releases_count.stdout|trim }} == 3"
+    - "before_releases_count.stdout|trim == '6'"
+    - "releases_count.stdout|trim == '3'"
 
 # Remove the root folder
 - file: path={{ deploy_helper_test_root }} state=absent
