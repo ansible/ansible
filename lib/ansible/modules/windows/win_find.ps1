@@ -111,12 +111,12 @@ Function Assert-Age($info) {
 
             if ($specified_seconds -ge 0) {
                 $start_date = (Get-Date).AddSeconds($abs_seconds * -1)
-                if ($age_comparison -lt $start_date) {
+                if ($age_comparison -gt $start_date) {
                     $valid_match = $false
                 }
             } else {
                 $start_date = (Get-Date).AddSeconds($abs_seconds)
-                if ($age_comparison -gt $start_date) {
+                if ($age_comparison -lt $start_date) {
                     $valid_match = $false
                 }
             }
@@ -246,13 +246,13 @@ Function Get-FileStat($file) {
         filename = $file.Name
     }
 
-    $islink = $false
+    $islnk = $false
     $isdir = $false
     $isshared = $false
 
     if ($attributes -contains 'ReparsePoint') {
         # TODO: Find a way to differenciate between soft and junction links
-        $islink = $true
+        $islnk = $true
         $isdir = $true
 
         # Try and get the symlink source, can result in failure if link is broken
@@ -287,7 +287,7 @@ Function Get-FileStat($file) {
         }
     }
 
-    $file_stat.islink = $islink
+    $file_stat.islnk = $islnk
     $file_stat.isdir = $isdir
     $file_stat.isshared = $isshared
 
@@ -326,7 +326,7 @@ foreach ($path in $paths) {
         Fail-Json $result "Argument path $path does not exist cannot get information on"
     }
 }
-$paths_to_check = $paths_to_check | Select -Unique
+$paths_to_check = $paths_to_check | Select-Object -Unique
 
 foreach ($path in $paths_to_check) {
     $file = Get-Item -Force -Path $path
