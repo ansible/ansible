@@ -96,7 +96,7 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
         else:
             cfg.append(candidate)
 
-    return send_request(module, obj, fail_rc=False)
+    return send_request(module, obj)
 
 def get_configuration(module, compare=False, format='xml', rollback='0'):
     if format not in CONFIG_FORMATS:
@@ -156,13 +156,7 @@ def load_config(module, candidate, warnings, action='merge', commit=False, forma
 
         reply = load_configuration(module, candidate, action=action, format=format)
         if isinstance(reply, tuple):
-            ns = {'nc': "urn:ietf:params:xml:ns:netconf:base:1.0"}
-            severity = reply[1].find('nc:error-severity', ns).text
-            message = reply[1].find('nc:error-message', ns).text
-            if severity == 'warning':
-                warnings.append(message)
-            else:
-                module.fail_json(msg=message)
+            warnings.append(reply[1])
 
         validate(module)
         diff = get_diff(module)

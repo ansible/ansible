@@ -31,16 +31,22 @@ from xml.etree.ElementTree import tostring, fromstring
 
 from ansible.module_utils.connection import exec_command
 
-def send_request(module, obj, check_rc=True, fail_rc=True):
+def send_request(module, obj, check_rc=True):
     request = tostring(obj)
     rc, out, err = exec_command(module, request)
-    if rc != 0:
-        if check_rc:
-            if fail_rc:
-                module.fail_json(msg=str(err))
-            else:
-                return rc, fromstring(err)
-        return fromstring(out)
+    if rc != 0 and check_rc:
+        rpc_error = fromstring(err)
+        ns = {'nc': "urn:ietf:params:xml:ns:netconf:base:1.0"}
+        try:
+            severity  = rpc_error.find('nc:error-severity', ns).text
+            message = rpc_error.find('nc:error-message', ns).text
+        except AttributeError:
+            module.fail_json(msg=str(err))
+
+        if severity == 'warning':
+            return rc, message
+        else:
+            module.fail_json(msg=message)
     return fromstring(out)
 
 def children(root, iterable):
