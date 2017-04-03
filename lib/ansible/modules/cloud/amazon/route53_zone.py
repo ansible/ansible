@@ -145,10 +145,14 @@ def find_zones(conn, zone_in, private_zone):
     results = conn.get_all_hosted_zones()
     zones = {}
     for r53zone in results['ListHostedZonesResponse']['HostedZones']:
-        # if both private or both public
-        if (r53zone['Config']['PrivateZone'] == 'true' and private_zone) or (r53zone['Config']['PrivateZone'] == 'false' and not private_zone):
-            if r53zone['Name'] == zone_in:
-                zones[r53zone.get('Id', '').replace('/hostedzone/','')] = r53zone['Name']
+        if r53zone['Name'] != zone_in:
+            continue
+        # only save zone names that match the public/private setting
+        if r53zone['Config']['PrivateZone'] == 'true' and private_zone:
+            zones[r53zone.get('Id', '').replace('/hostedzone/', '')] = r53zone['Name']
+        if r53zone['Config']['PrivateZone'] == 'false' and not private_zone:
+            zones[r53zone.get('Id', '').replace('/hostedzone/', '')] = r53zone['Name']
+
     return zones
 
 
