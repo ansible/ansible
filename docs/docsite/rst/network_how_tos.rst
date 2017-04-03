@@ -124,7 +124,7 @@ options have been provided via top-level options in the module.
     - name: example of using top-level options for connection properties
       ios_command:
         commands: show version
-        host: "{{ inventory_hostname }}'
+        host: "{{ inventory_hostname }}"
         username: cisco
         password: cisco
         authorize: yes
@@ -197,7 +197,7 @@ TDB, Include details regarding ``use_ssl``
    - name: Gather facts
      - eos_facts:
          provider:
-           host: "{{ inventory_hostname }}
+           host: "{{ inventory_hostname }}"
            username: admin
            password: admin
            transport; eapi
@@ -215,7 +215,7 @@ of ``use_ssl`` to either True or False.
    - name: Gather facts
      - eos_facts:
          provider:
-           host: "{{ inventory_hostname }}
+           host: "{{ inventory_hostname }}"
            username: admin
            password: admin
            transport: eapi
@@ -231,7 +231,7 @@ certificate validation.  In order to disable certificate validation use the
    - name: Gather facts
      - eos_facts:
          provider:
-           host: "{{ inventory_hostname }}
+           host: "{{ inventory_hostname }}"
            username: admin
            password: admin
            transport: eapi
