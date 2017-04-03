@@ -443,8 +443,8 @@ def main():
                                 src_group_id=grantGroup,
                                 cidr_ip=thisip)
                         changed = True
-        elif vpc_id:
-            # when using a vpc, but no egress rules are specified,
+        else:
+            # when no egress rules are specified,
             # we add in a default allow all out rule, which was the
             # default behavior before egress rules were added
             default_egress_rule = 'out--1-None-None-None-0.0.0.0/0'
