@@ -232,7 +232,7 @@ def filter_delete_statements(module, candidate):
 
     return modified_candidate
 
-def configure_device(module):
+def configure_device(module, warnings):
     candidate = module.params['lines'] or module.params['src']
     if isinstance(candidate, string_types):
         candidate = candidate.split('\n')
@@ -264,7 +264,7 @@ def configure_device(module):
         kwargs['format'] = 'text'
         kwargs['action'] = 'set'
 
-    return load_config(module, candidate, **kwargs)
+    return load_config(module, candidate, warnings, **kwargs)
 
 def main():
     """ main entry point for module execution
@@ -328,7 +328,7 @@ def main():
         result['changed'] = True
 
     else:
-        diff = configure_device(module)
+        diff = configure_device(module, warnings)
         if diff:
             if module._diff:
                 result['diff'] = {'prepared': diff}

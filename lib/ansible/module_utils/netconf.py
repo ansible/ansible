@@ -31,12 +31,15 @@ from xml.etree.ElementTree import tostring, fromstring
 
 from ansible.module_utils.connection import exec_command
 
-def send_request(module, obj, check_rc=True):
+def send_request(module, obj, check_rc=True, fail_rc=True):
     request = tostring(obj)
     rc, out, err = exec_command(module, request)
     if rc != 0:
         if check_rc:
-            module.fail_json(msg=str(err))
+            if fail_rc:
+                module.fail_json(msg=str(err))
+            else:
+                return rc, fromstring(err)
         return fromstring(out)
     return fromstring(out)
 
