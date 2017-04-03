@@ -204,7 +204,7 @@ def main():
         elif module.params['state'] == 'absent':
             r = requests.delete( url, auth = (module.params['login_user'],module.params['login_password']))
 
-        if r.status_code == 204:
+        if r.status_code in [201, 204]:
             module.exit_json(
                 changed = True,
                 name = module.params['name']
