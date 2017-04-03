@@ -31,6 +31,7 @@ import getpass
 import subprocess
 from abc import ABCMeta, abstractmethod
 
+import ansible
 from ansible.release import __version__
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
@@ -483,6 +484,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         else:
             cpath = C.DEFAULT_MODULE_PATH
         result = result + "\n  configured module search path = %s" % cpath
+        result = result + "\n  ansible python module location = %s" % ':'.join(ansible.__path__)
         result = result + "\n  python version = %s" % ''.join(sys.version.splitlines())
         return result
 
