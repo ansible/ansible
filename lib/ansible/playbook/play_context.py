@@ -552,6 +552,7 @@ class PlayContext(Base):
 
             elif self.become_method == 'runas':
                 # become is handled inside the WinRM connection plugin
+                display.warning("The Windows 'runas' become method is experimental, and may change significantly in future Ansible releases.")
                 becomecmd = cmd
 
             elif self.become_method == 'doas':
