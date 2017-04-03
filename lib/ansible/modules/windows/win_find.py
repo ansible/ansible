@@ -23,7 +23,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_find
@@ -36,15 +35,15 @@ options:
     age:
         description:
             - Select files or folders whose age is equal to or greater than
-              the specified tim. Use a negative age to find files equal to or
-              less than the specified time. You can choose seconds, minues,
+              the specified time. Use a negative age to find files equal to or
+              less than the specified time. You can choose seconds, minutes,
               hours, days or weeks by specifying the first letter of an of
-              those words (e.g., "1w").
+              those words (e.g., "2s", "10d", 1w").
         required: false
     age_stamp:
         description:
             - Choose the file property against which we compare C(age). The
-              default attribute we compare with is last modification time.
+              default attribute we compare with is the last modification time.
         required: false
         default: mtime
         choices: ['atime', 'mtime', 'ctime']
@@ -271,7 +270,7 @@ files:
             returned: success, path exists
             type: boolean
             sample: True
-        islink:
+        islnk:
             description: if the path is a symbolic link or junction or not
             returned: success, path exists
             type: boolean
