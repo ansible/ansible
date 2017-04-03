@@ -36,9 +36,10 @@ extends_documentation_fragment: fortios
 options:
   id:
     description:
-      - Policy ID (/!\ warning: policy I(id) != Policy sequence! /!\ 
-        Default display show only policies sequence numbers, 
-        you need to add policy I(id) column in display options.
+      - Policy ID
+        /!\ Warning: policy I(id)# is different than Policy sequence# /!\
+        Default web display show only policies sequence numbers,
+        you need to add policy id column in display options.
     required: true
   state:
     description:
