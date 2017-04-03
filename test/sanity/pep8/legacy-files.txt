@@ -344,7 +344,6 @@ lib/ansible/modules/cloud/profitbricks/profitbricks_datacenter.py
 lib/ansible/modules/cloud/profitbricks/profitbricks_nic.py
 lib/ansible/modules/cloud/profitbricks/profitbricks_volume.py
 lib/ansible/modules/cloud/profitbricks/profitbricks_volume_attachments.py
-lib/ansible/modules/cloud/pubnub/pubnub_blocks.py
 lib/ansible/modules/cloud/rackspace/rax_cbs_attachments.py
 lib/ansible/modules/cloud/rackspace/rax_cdb.py
 lib/ansible/modules/cloud/rackspace/rax_clb.py
