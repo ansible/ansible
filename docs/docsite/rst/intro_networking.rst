@@ -45,7 +45,7 @@ Persistent Connections
 ======================
 Before diving into the technical detail of how to troubleshoot it can be useful to understand how Ansible communicates with the remote network device.
 
-As of version 2.3, Ansible includes support for `persistent connections`. Persistent connections are useful for playbooks with multiple tasks that require multiple SSH connections. In previous releases, these SSH connections had to be established and destroyed each time a task was run, which was inefficient. Persistent connections allows an SSH connection to stay active across multiple Ansible tasks and plays, eliminating the need to spend time establishing and destroying the connection. This is done by keeping a Linux socket open, via a daemon process called ``ansible-connection``.
+As of version 2.3, Ansible includes support for `persistent connections`. Persistent connections are useful for playbooks with multiple tasks that require multiple SSH connections. In previous releases, these SSH connections had to be established and destroyed each time a task was run, which was inefficient. Persistent connections allows an SSH connection to stay active across multiple Ansible tasks and plays, eliminating the need to spend time establishing and destroying the connection. This is done by keeping a Unix socket open, via a daemon process called ``ansible-connection``.
 
 Persistent Connection had been enable for the following groups of modules:
 

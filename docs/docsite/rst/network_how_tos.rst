@@ -196,7 +196,7 @@ TDB, Include details regarding ``use_ssl``
 
    - name: Gather facts
      - eos_facts:
-         providier:
+         provider:
            host: "{{ inventory_hostname }}
            username: admin
            password: admin
@@ -214,7 +214,7 @@ of ``use_ssl`` to either True or False.
 
    - name: Gather facts
      - eos_facts:
-         providier:
+         provider:
            host: "{{ inventory_hostname }}
            username: admin
            password: admin
@@ -230,7 +230,7 @@ certificate validation.  In order to disable certificate validation use the
 
    - name: Gather facts
      - eos_facts:
-         providier:
+         provider:
            host: "{{ inventory_hostname }}
            username: admin
            password: admin
