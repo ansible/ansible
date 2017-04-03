@@ -110,6 +110,7 @@ options:
       - The scheme to use when creating the ELB. For a private VPC-visible ELB use 'internal'.
         If you choose to update your scheme with a different value the ELB will be destroyed and
         recreated. To update scheme you must use the option wait.
+    choices: ["internal", "internet-facing"]
     required: false
     default: 'internet-facing'
     version_added: "1.7"
@@ -489,8 +490,7 @@ class ElbManager(object):
             # Zones and listeners will be added at creation
             self._create_elb()
         else:
-            new_scheme = self._get_scheme()
-            if new_scheme:
+            if self._get_scheme():
                 # the only way to change the scheme is by recreating the resource
                 self.ensure_gone()
                 self._create_elb()
@@ -881,7 +881,7 @@ class ElbManager(object):
 
     def _get_scheme(self):
         """Determine if the current scheme is different than the scheme of the ELB"""
-        if self.scheme and self.scheme != "":
+        if self.scheme:
             if self.elb.scheme != self.scheme:
                 if not self.wait:
                     module.fail_json(msg="Unable to modify scheme without using the wait option")
@@ -1261,7 +1261,7 @@ def main():
         health_check={'default': None, 'required': False, 'type': 'dict'},
         subnets={'default': None, 'required': False, 'type': 'list'},
         purge_subnets={'default': False, 'required': False, 'type': 'bool'},
-        scheme={'default': 'internet-facing', 'required': False},
+        scheme={'default': 'internet-facing', 'required': False, 'choices': ['internal', 'internet-facing']},
         connection_draining_timeout={'default': None, 'required': False, 'type': 'int'},
         idle_timeout={'default': None, 'type': 'int', 'required': False},
         cross_az_load_balancing={'default': None, 'type': 'bool', 'required': False},
