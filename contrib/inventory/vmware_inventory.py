@@ -560,7 +560,10 @@ class VMWareInventory(object):
 
                     # if the val wasn't set yet, get it from the parent
                     if not val:
-                        val = getattr(vm, x)
+                        try:
+                            val = getattr(vm, x)
+                        except AttributeError as e:
+                            self.debugl(e)
                     else:
                         # in a subkey, get the subprop from the previous attrib
                         try:
