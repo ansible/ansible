@@ -331,7 +331,8 @@ class CloudFrontServiceManager:
         if list_items is None:
             list_items = []
         if not isinstance(list_items, list):
-            self.module.fail_json(msg="expecting a list []. got a " + type(list_items).__name__ )
+            self.module.fail_json(msg="expected a list []. got a " + type(list_items).__name__ +
+                    " with item: " + str(list_items))
         result = {}
         result["quantity"] = len(list_items)
         result["items"] = list_items
@@ -434,14 +435,14 @@ class CloudFrontServiceManager:
             cache_behavior["compress"] = self.__default_cache_behavior_compress
         trusted_signers = cache_behavior.get("trusted_signers")
         if trusted_signers is None:
-            trusted_signers = self.python_list_to_aws_list()
+            trusted_signers["items"] = self.python_list_to_aws_list()
             trusted_signers["enabled"] = self.__default_cache_behavior_trusted_signers_enabled
         else:
             if 'enabled' in trusted_signers:
                 temp_enabled = trusted_signers.get("enabled")
             else:
                 temp_enabled = self.__default_cache_behavior_trusted_signers_enabled
-            cache_behavior["trusted_signers"] = self.python_list_to_aws_list(trusted_signers)
+            cache_behavior["trusted_signers"] = self.python_list_to_aws_list(trusted_signers["items"])
             cache_behavior["enabled"] = temp_enabled
         if 'target_origin_id' not in cache_behavior:
             cache_behavior["target_origin_id"] = self.get_first_origin_id_for_default_cache_behavior(valid_origins)
@@ -640,7 +641,8 @@ def pascal_dict_to_snake_dict(pascal_dict, split_caps=False):
         split_cap_re = re.compile('([A-Z])')
         s1 = first_cap_re.sub(r'\1\2', name)
         if split_caps:
-            s2 = split_cap_re.sub(r'_\1', s1).lower().replace('_', '', 1)
+            s2 = split_cap_re.sub(r'_\1', s1).lower()
+            s2 = s2[1:] if s2[0] == '_' else s2
         else:
             s2 = all_cap_re.sub(r'\1_\2', s1).lower()
         return s2
@@ -831,14 +833,29 @@ def main():
     if create_update_distribution or create_update_streaming_distribution:
         config = service_mgr.validate_common_distribution_parameters(config, enabled, aliases, logging, price_class,
                 comment, create_update_streaming_distribution)
-    if create_distribution:
-        config["viewer_certificate"] = service_mgr.validate_viewer_certificate(viewer_certificate)
-        config["cache_behaviors"] = service_mgr.validate_cache_behaviors(cache_behaviors, valid_origins)
-        config["default_cache_behavior"] = service_mgr.validate_cache_behavior(default_cache_behavior, valid_origins)
-        config["origins"] = service_mgr.validate_origins(origins, default_origin_domain_name, default_origin_access_identity,
-            default_origin_path, streaming_distribution, create_distribution)
-        config["custom_error_responses"] = service_mgr.validate_custom_error_responses(custom_error_responses)
-        config["restrictions"] = service_mgr.validate_restrictions(restrictions)
+
+    config = pascal_dict_to_snake_dict(config, True)
+
+    if create_update_distribution:
+        valid_viewer_certificate = service_mgr.validate_viewer_certificate(viewer_certificate)
+        if valid_viewer_certificate is not None:
+            config["viewer_certificate"] = valid_viewer_certificate
+        valid_origins = service_mgr.validate_origins(origins, default_origin_domain_name, default_origin_access_identity,
+            default_origin_path, create_update_streaming_distribution, create_distribution)
+        if valid_origins is not None:
+            config["origins"] = valid_origins
+        valid_cache_behaviors = service_mgr.validate_cache_behaviors(cache_behaviors, config["origins"])
+        if valid_cache_behaviors is not None:
+            config["cache_behaviors"] = valid_cache_behaviors
+        valid_default_cache_behavior = service_mgr.validate_cache_behavior(default_cache_behavior, config["origins"])
+        if valid_default_cache_behavior is not None:
+            config["default_cache_behavior"] = valid_default_cache_behavior
+        valid_custom_error_responses = service_mgr.validate_custom_error_responses(custom_error_responses)
+        if valid_custom_error_responses is not None:
+            config["custom_error_responses"] = valid_custom_error_responses
+        valid_restrictions = service_mgr.validate_restrictions(restrictions)
+        if valid_restrictions is not None:
+            config["restrictions"] = valid_restrictions
         config = service_mgr.validate_distribution_config_parameters(config, default_root_object,
                 is_ipv6_enabled, http_version, comment)
     elif create_streaming_distribution:
@@ -848,6 +865,8 @@ def main():
         config = service_mgr.validate_caller_reference_for_distribution_creation(config, caller_reference)
 
     config = snake_dict_to_pascal_dict(pascal_dict_to_snake_dict(config, True))
+
+    #print "cache behaviors:: " + str(snake_dict_to_pascal_dict(pascal_dict_to_snake_dict(config, True)))
 
     if create_origin_access_identity:
         result=service_mgr.create_origin_access_identity(caller_reference, comment)
