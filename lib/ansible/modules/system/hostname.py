@@ -739,18 +739,39 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name=dict(required=True)
-        )
+        ),
+        supports_check_mode=True,
     )
 
-    hostname = Hostname(module)
+    check_mode = module.check_mode
     name = module.params['name']
-    changed = hostname.update_current_and_permanent_hostname()
 
-    module.exit_json(changed=changed, name=name,
-                     ansible_facts=dict(ansible_hostname=name.split('.')[0],
-                                        ansible_nodename=name,
-                                        ansible_fqdn=socket.getfqdn(),
-                                        ansible_domain='.'.join(socket.getfqdn().split('.')[1:])))
+    hostname = Hostname(module)
+    current_hostname = hostname.get_current_hostname()
+    permanent_hostname = hostname.get_permanent_hostname()
+
+    changed = False
+    if name != current_hostname:
+        changed = True
+        name_before = current_hostname
+    elif name != permanent_hostname:
+        changed = True
+        name_before = permanent_hostname
+
+    if not check_mode:
+        hostname.update_current_and_permanent_hostname()
+
+    kw = dict(changed=changed, name=name,
+              ansible_facts=dict(ansible_hostname=name.split('.')[0],
+                                 ansible_nodename=name,
+                                 ansible_fqdn=socket.getfqdn(),
+                                 ansible_domain='.'.join(socket.getfqdn().split('.')[1:])))
+
+    if changed:
+        kw['diff'] = {'after': 'hostname = ' + name + '\n',
+                      'before': 'hostname = ' + name_before + '\n'}
+
+    module.exit_json(**kw)
 
 if __name__ == '__main__':
     main()
