@@ -127,7 +127,8 @@ def main():
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec,)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     # Validate Requirements
     if not HAS_BOTO3:
