@@ -30,3 +30,4 @@
 - include: tag-verification.yml
 - include: localmods.yml
 - include: reset-origin.yml
+- include: ambiguous-ref.yml
