@@ -288,19 +288,18 @@ new exception-catching syntax which uses the ``as`` keyword:
 Octal numbers
 -------------
 
-In Python-2.6, octal literals could be specified as ``0755``.  In Python-3, that is
-invalid and octals must be specified as ``0o755``.
+In Python-2.x, octal literals could be specified as ``0755``.  In Python-3,
+octals must be specified as ``0o755``.
 
 String formatting
 -----------------
 
-Python-2.6 has less featureful .format()
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+str.format() compatibility
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Starting in Python-2.6, strings gained a method called ``format()`` to put
-strings together.  However, one commonly used
-feature of ``format()`` wasn't added until Python-2.7 so you need to remember
-not to use it in Ansible code:
+strings together.  However, one commonly used feature of ``format()`` wasn't
+added until Python-2.7, so you need to remember not to use it in Ansible code:
 
 .. code-block:: python
 
@@ -310,10 +309,10 @@ not to use it in Ansible code:
     # Use this instead
     new_string = "Dear {0}, Welcome to {1}".format(username, location)
 
-Both of the format strings above map positional arguments to the ``format()``
+Both of the format strings above map positional arguments of the ``format()``
 method into the string.  However, the first version doesn't work in
-Python-2.6.  Always remember to put numbers into the placeholders and things
-will work fine.
+Python-2.6.  Always remember to put numbers into the placeholders so the code
+is compatible with Python-2.6.
 
 .. seealso::
     Python documentation on `format strings <https://docs.python.org/2/library/string.html#formatstrings>`_
