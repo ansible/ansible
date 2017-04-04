@@ -285,6 +285,15 @@ new exception-catching syntax which uses the ``as`` keyword:
     except ValueError as e:
         module.fail_json(msg="Tried to divide by zero: %s" % e)
 
+Do **not** use the following syntax as it will fail on every version of Python-3:
+
+.. code-block:: python
+
+    try:
+        a = 2/0
+    except ValueError, e:
+        module.fail_json(msg="Tried to divide by zero: %s" % e)
+
 Octal numbers
 -------------
 
@@ -373,8 +382,8 @@ coded to expect bytes on Python-2 and text on Python-3.
 Tips, tricks, and idioms to adopt
 =================================
 
-Old Exception Syntax
---------------------
+Python-2.4 Compatible Exception Syntax
+--------------------------------------
 
 Until Ansible-2.4, modules needed to be compatible with Python-2.4 as
 well.  Python-2.4 did not understand the new exception-catching syntax so
