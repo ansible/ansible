@@ -14,20 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import json
-
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
-from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, HAS_BOTO3
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 module: ec2_vpc_peering_facts
 short_description: Retrieves AWS VPC Peering details using AWS methods.
 description:
   - Gets various details related to AWS VPC Peers
-version_added: "2.3"
+version_added: "2.4"
 requirements: [ boto3 ]
 options:
   peer_connection_ids:
@@ -79,6 +75,13 @@ result:
   returned: success
   type: list
 '''
+
+import json
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, HAS_BOTO3
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 try:
     import botocore
