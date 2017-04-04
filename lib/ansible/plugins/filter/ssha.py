@@ -14,8 +14,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # prune@lecentre.net - 20150813
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-from __future__ import absolute_import
+
 from ansible import errors
 import os
 import hashlib
@@ -41,5 +43,4 @@ class FilterModule(object):
         return {
             # ssha password encoding
             'to_ssha' : to_ssha,
-
         }
