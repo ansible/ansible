@@ -16,7 +16,6 @@ not-callable
 R
 raising-bad-type
 raising-non-exception
-return-in-init
 too-few-format-args
 too-many-format-args
 too-many-function-args
