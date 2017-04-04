@@ -293,7 +293,7 @@ class VariableManager:
                 # push local to top namespace, ensure we always have, even if empty
                 if 'ansible_local' in all_vars['ansible_facts']:
                     all_vars.update({'ansible_local': all_vars['ansible_facts']['ansible_local']})
-                else:
+                elif 'ansible_local' not in all_vars:
                     all_vars.update({'ansible_local': {}})
 
                 # remove possible extra ansible_local from ansible_facts namespace
