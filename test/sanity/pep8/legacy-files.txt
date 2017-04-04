@@ -176,7 +176,6 @@ lib/ansible/modules/cloud/amazon/ec2_vol_facts.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_dhcp_options.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_dhcp_options_facts.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_igw.py
-lib/ansible/modules/cloud/amazon/ec2_vpc_igw_facts.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_nacl.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_nacl_facts.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_nat_gateway.py
