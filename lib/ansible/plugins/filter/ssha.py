@@ -22,7 +22,8 @@ from ansible import errors
 import os
 import hashlib
 
-def to_ssha (term):
+
+def to_ssha(term):
     """ This filter transform a term in a  SSHA value
         It is used to compute LDAP passwords
         Usage:
@@ -36,11 +37,12 @@ def to_ssha (term):
 
     return '{{SSHA}}{}'.format(digest_salt_b64)
 
+
 class FilterModule(object):
     ''' Ansible ssha jinja2 filters '''
 
     def filters(self):
         return {
             # ssha password encoding
-            'to_ssha' : to_ssha,
+            'to_ssha': to_ssha,
         }
