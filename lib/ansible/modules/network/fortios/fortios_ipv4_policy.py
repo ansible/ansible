@@ -59,7 +59,7 @@ options:
     default: any
   src_addr:
     description:
-      - Specifies source address (or group) object name(s).
+      - Specifies source address (or group) object name(s). Required when I(state=present).
   src_addr_negate:
     description:
       - Negate source address param.
@@ -67,7 +67,7 @@ options:
     choices: ["true", "false"]
   dst_addr:
     description:
-      - Specifies destination address (or group) object name(s).
+      - Specifies destination address (or group) object name(s). Required when I(state=present).
   dst_addr_negate:
     description:
       - Negate destination address param.
@@ -75,12 +75,12 @@ options:
     choices: ["true", "false"]
   policy_action:
     description:
-      - Specifies accept or deny action policy.
+      - Specifies accept or deny action policy. Required when I(state=present).
     choices: ['accept', 'deny']
     aliases: ['action']
   service:
     description:
-      - "Specifies policy service(s), could be a list (ex: ['MAIL','DNS'])."
+      - "Specifies policy service(s), could be a list (ex: ['MAIL','DNS']). Required when I(state=present)."
     aliases:
       - services
   service_negate:
