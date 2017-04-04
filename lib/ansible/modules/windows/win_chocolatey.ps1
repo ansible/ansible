@@ -100,7 +100,7 @@ Function Choco-IsInstalled
         [string]$package
     )
 
-    $cmd = "$executable list --local-only $package"
+    $cmd = "$executable list --local-only --exact $package"
     $output = invoke-expression $cmd
 
     $result.rc = $LastExitCode
@@ -249,7 +249,7 @@ Function Choco-Install
 
     if (Choco-IsInstalled $package)
     {
-        if ($upgrade)
+        if ($state -eq "latest")
         {
             Choco-Upgrade -package $package -version $version -source $source -force $force `
                 -installargs $installargs -packageparams $packageparams `
