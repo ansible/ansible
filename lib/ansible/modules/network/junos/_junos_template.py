@@ -157,7 +157,7 @@ def main():
             module.fail_json(msg='unable to retrieve device configuration')
         result['__backup__'] = str(match.text).strip()
 
-    diff = load_config(module, src, action=action, commit=commit, format=fmt)
+    diff = load_config(module, src, warnings, action=action, commit=commit, format=fmt)
     if diff:
         result['changed'] = True
         if module._diff:

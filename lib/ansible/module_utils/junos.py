@@ -147,7 +147,7 @@ def get_diff(module):
     if output is not None:
         return output.text
 
-def load_config(module, candidate, action='merge', commit=False, format='xml',
+def load_config(module, candidate, warnings, action='merge', commit=False, format='xml',
                 comment=None, confirm=False, confirm_timeout=None):
 
     with locked_config(module):
@@ -155,6 +155,8 @@ def load_config(module, candidate, action='merge', commit=False, format='xml',
             candidate = '\n'.join(candidate)
 
         reply = load_configuration(module, candidate, action=action, format=format)
+        if isinstance(reply, list):
+            warnings.extend(reply)
 
         validate(module)
         diff = get_diff(module)
@@ -168,4 +170,3 @@ def load_config(module, candidate, action='merge', commit=False, format='xml',
                 discard_changes(module)
 
         return diff
-
