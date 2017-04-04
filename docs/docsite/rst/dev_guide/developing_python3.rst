@@ -1,12 +1,18 @@
-===============================
-Ansible and Porting to Python 3
-===============================
+====================
+Ansible and Python 3
+====================
+
+Ansible is pursuing a strategy of having one code base that runs on both
+Python-2 and Python-3 because we want Ansible to be able to manage a wide
+variety of machines.  Contributors to Ansible should be aware of the tips in
+this document so that they can write code that will run on the same versions
+of Python as the rest of Ansible.
 
 Ansible can be divided into three overlapping pieces for the purposes of
 porting:
 
 1. Controller-side code.  This is the code which runs on the machine where you
-   invoke /usr/bin/ansible
+   invoke :command:`/usr/bin/ansible`
 2. Modules.  This is the code which Ansible transmits over the wire and
    invokes on the managed machine.
 3. module_utils code.  This is code whose primary purpose is to be used by the
