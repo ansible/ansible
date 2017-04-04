@@ -59,7 +59,7 @@ ssh_key_facts:
       "ssh_public_keys": [
             {
                 "Fingerprint": "19:72:05:e0:bf:7e:15:c7:09:8a:c3:65:fc:c1:18:a3",
-                "SSHPublicKeyBody": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDZu11q42q3RAAzn+2LVvP+rPcgzuFM6hHTLBQjwQL69RnqLvzWNzyafAfyM1JD4wkOlhjw0KY/qNoPjxpikPW5O6VME6Y3rO6mbFbfuAyuj/x+gQrw6WES81/04iO+I/6CiUBHNV/nY8plsz31a2m/Wg1SGTFMxpvhAAQ1qQsUzErrIXlqe2f5qN9/wTTuuHms1kuNP3rHfUku18fjr05V5bUUKc7vyEnkZuuX4BsADIYu4t/X/bveEhhOzjvd6dAmEwTPsamH8ROcwa32F5cdShBu2AFjck9H3hij6TKgYZTHTJA3WZSXFNlXdcgfbHm67gHjCq86PKdObsdUzkq5",
+                "SSHPublicKeyBody": "ssh-rsa ...",
                 "SSHPublicKeyId": "APKAIJFT7TINGJTDLAZQ",
                 "Status": "Active",
                 "UploadDate": "2017-04-03T23:15:20+00:00",
@@ -67,7 +67,7 @@ ssh_key_facts:
             },
             {
                 "Fingerprint": "84:62:be:70:88:d4:ed:f8:26:58:15:90:f1:4b:27:70",
-                "SSHPublicKeyBody": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCNpbiWvkOtiN64cBl7Papp2HfB7Co2RGWG6m5iL8jXafwlqLuKxmNiaNgJ1q1vbcZvczxBzPo2wVQy2ra3Ea9/cjICxoHpl7rpPJ9zAViWQ+4NiudLgyNwvvcfywzzmCMw+vqOi6vlr/iy89Y1AMz7pDP0Ax/OY1yJkkXqL1BQiF1dxNzVjCnRhLbA85e2LDUE30zaJC+9qe6GOhLOkqUSOn0H8WqcJTPqdd1lgPhZKDtnN6GKBaOBqGt7m5EKqUewU13+FOroRQBQsMX6EH4/MHaZNUi8LKAfmY2gPGahTlQLJwypDZ4zD1C6BDvTLLzoL0QkbSEaP6mXYBQ3zMzP",
+                "SSHPublicKeyBody": "ssh-rsa ...",
                 "SSHPublicKeyId": "APKAI7OSUMJCHQXBILUA",
                 "Status": "Active",
                 "UploadDate": "2017-04-04T14:20:58+00:00",
@@ -85,6 +85,10 @@ EXAMPLES = '''
     register: ssh_key_facts
 '''
 
+
+import json
+import itertools
+import sys
 try:
     import boto3
     from botocore.exceptions import ClientError
@@ -104,7 +108,7 @@ def get_ssh_public_key_ids(connection, module):
         response = connection.list_ssh_public_keys(**args)
     except ClientError as e:
         module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
-     
+
     key_id_array = []
     for ssh_public_key in response['SSHPublicKeys']:
         key_id_array.append(ssh_public_key['SSHPublicKeyId'])
