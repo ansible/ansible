@@ -289,17 +289,6 @@ class VariableManager:
                     all_vars = combine_vars(all_vars, host_facts)
                 # always return namespaced facts
                 all_vars = combine_vars(all_vars, {'ansible_facts': host_facts})
-
-                # push local to top namespace, ensure we always have, even if empty
-                if 'ansible_local' in all_vars['ansible_facts']:
-                    all_vars.update({'ansible_local': all_vars['ansible_facts']['ansible_local']})
-                else:
-                    all_vars.update({'ansible_local': {}})
-
-                # remove possible extra ansible_local from ansible_facts namespace
-                if 'ansible_local' in all_vars['ansible_facts']:
-                    del all_vars['ansible_facts']['ansible_local']
-
             except KeyError:
                 pass
 
