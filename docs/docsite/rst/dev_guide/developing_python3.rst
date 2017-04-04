@@ -1,12 +1,18 @@
-===============================
-Ansible and Porting to Python 3
-===============================
+====================
+Ansible and Python 3
+====================
+
+Ansible is pursuing a strategy of having one code base that runs on both
+Python-2 and Python-3 because we want Ansible to be able to manage a wide
+variety of machines.  Contributors to Ansible should be aware of the tips in
+this document so that they can write code that will run on the same versions
+of Python as the rest of Ansible.
 
 Ansible can be divided into three overlapping pieces for the purposes of
 porting:
 
 1. Controller-side code.  This is the code which runs on the machine where you
-   invoke /usr/bin/ansible
+   invoke :command:`/usr/bin/ansible`
 2. Modules.  This is the code which Ansible transmits over the wire and
    invokes on the managed machine.
 3. module_utils code.  This is code whose primary purpose is to be used by the
@@ -15,6 +21,8 @@ porting:
 
 Much of the knowledge of porting code will be usable on all three of these
 pieces but there are some special considerations for some of it as well.
+Information that is generally applicable to all three places is located in the
+controller-side section.
 
 --------------------------------------------
 Minimum Version of Python-3.x and Python-2.x
@@ -108,7 +116,9 @@ Reading and writing to files
 
 In Python-2, reading from files yields bytes.  In Python-3, it can yield text.
 To make code that's portable to both we don't make use of Python-3's ability
-to yield text but instead do the conversion explicitly ourselves. For example::
+to yield text but instead do the conversion explicitly ourselves. For example:
+
+.. code-block:: python
 
     from ansible.module_utils._text import to_text
 
@@ -125,7 +135,9 @@ to yield text but instead do the conversion explicitly ourselves. For example::
     point, if there is demand for other encodings we may change that, but for
     now it is safe to assume that bytes are UTF-8.
 
-Writing to files is the opposite process::
+Writing to files is the opposite process:
+
+.. code-block:: python
 
     from ansible.module_utils._text import to_bytes
 
@@ -145,7 +157,9 @@ functions, the text string will be converted to a byte string inside of the
 function and a traceback will occur if non-ASCII characters are present.  In
 Python-3, a traceback will only occur if the text string can't be decoded in
 the current locale, but it's still good to be explicit and have code which
-works on both versions::
+works on both versions:
+
+.. code-block:: python
 
     import os.path
 
@@ -160,7 +174,9 @@ works on both versions::
 
 When you are only manipulating a filename as a string without talking to the
 filesystem (or a C library which talks to the filesystem) you can often get
-away without converting to bytes::
+away without converting to bytes:
+
+.. code-block:: python
 
     import os.path
 
@@ -188,7 +204,7 @@ subprocess library and byte strings should be expected back from it.
 
 One of the main places in Ansible's controller code that we interact with
 other programs is the connection plugins' ``exec_command`` methods.  These
-methods transform any text strings they receive in the command (and arugments
+methods transform any text strings they receive in the command (and arguments
 to the command) to execute into bytes and return stdout and stderr as byte strings 
 Higher level functions (like action plugins' ``_low_level_execute_command``)
 transform the output into text strings.
@@ -200,7 +216,9 @@ Forwards Compatibility Boilerplate
 ----------------------------------
 
 Use the following boilerplate code at the top of all controller-side modules
-to make certain constructs act the same way on Python-2 and Python-3::
+to make certain constructs act the same way on Python-2 and Python-3:
+
+.. code-block:: python
 
     # Make coding more python3-ish
     from __future__ import (absolute_import, division, print_function)
@@ -229,7 +247,9 @@ Prefix byte strings with "b\_"
 
 Since mixing text and bytes types leads to tracebacks we want to be clear
 about what variables hold text and what variables hold bytes.  We do this by
-prefixing any variable holding bytes with ``b_``.  For instance::
+prefixing any variable holding bytes with ``b_``.  For instance:
+
+.. code-block:: python
 
     filename = u'/var/tmp/café.txt'
     b_filename = to_bytes(filename)
@@ -239,6 +259,100 @@ prefixing any variable holding bytes with ``b_``.  For instance::
 We do not prefix the text strings instead because we only operate
 on byte strings at the borders, so there are fewer variables that need bytes
 than text.
+
+Bundled six
+-----------
+
+The third-party `python-six <https://pythonhosted.org/six/>`_ library exists
+to help projects create code that runs on both Python-2 and Python-3.  Ansible
+includes a version of the library in module_utils so that other modules can use it
+without requiring that it is installed on the remote system.  To make use of
+it, import it like this:
+
+.. code-block:: python
+
+    from ansible.module_utils import six
+
+.. note:: Ansible can also use a system copy of six
+
+    Ansible will use a system copy of six if the system copy is a later
+    version than the one Ansible bundles.
+
+Exceptions
+----------
+
+In order for code to function on Python-2.6+ and Python-3, use the
+new exception-catching syntax which uses the ``as`` keyword:
+
+.. code-block:: python
+
+    try:
+        a = 2/0
+    except ValueError as e:
+        module.fail_json(msg="Tried to divide by zero: %s" % e)
+
+Do **not** use the following syntax as it will fail on every version of Python-3:
+
+.. code-block:: python
+
+    try:
+        a = 2/0
+    except ValueError, e:
+        module.fail_json(msg="Tried to divide by zero: %s" % e)
+
+Octal numbers
+-------------
+
+In Python-2.x, octal literals could be specified as ``0755``.  In Python-3,
+octals must be specified as ``0o755``.
+
+String formatting
+-----------------
+
+str.format() compatibility
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Starting in Python-2.6, strings gained a method called ``format()`` to put
+strings together.  However, one commonly used feature of ``format()`` wasn't
+added until Python-2.7, so you need to remember not to use it in Ansible code:
+
+.. code-block:: python
+
+    # Does not work in Python-2.6!
+    new_string = "Dear {}, Welcome to {}".format(username, location)
+
+    # Use this instead
+    new_string = "Dear {0}, Welcome to {1}".format(username, location)
+
+Both of the format strings above map positional arguments of the ``format()``
+method into the string.  However, the first version doesn't work in
+Python-2.6.  Always remember to put numbers into the placeholders so the code
+is compatible with Python-2.6.
+
+.. seealso::
+    Python documentation on `format strings <https://docs.python.org/2/library/string.html#formatstrings>`_
+
+
+Use percent format with byte strings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In Python-3.x, byte strings do not have a ``format()`` method.  However, it
+does have support for the older, percent-formatting.
+
+.. code-block:: python
+
+    b_command_line = b'ansible-playbook --become-user %s -K %s' % (user, playbook_file)
+
+.. note:: Percent formatting added in Python-3.5
+
+    Percent formatting of byte strings was added back into Python3 in 3.5.
+    This isn't a problem for us because Python-3.5 is our minimum version.
+    However, if you happen to be testing Ansible code with Python-3.4 or
+    earlier, you will find that the byte string formatting here won't work.
+    Upgrade to Python-3.5 to test.
+
+.. seealso::
+    Python documentation on `percent formatting <https://docs.python.org/2/library/stdtypes.html#string-formatting>`_
 
 ---------------------------
 Porting Modules to Python 3
@@ -274,67 +388,42 @@ coded to expect bytes on Python-2 and text on Python-3.
 Tips, tricks, and idioms to adopt
 =================================
 
-Exceptions
-----------
+Python-2.4 Compatible Exception Syntax
+--------------------------------------
 
-In order for code to function on Python-2.6+ and Python-3, use the
-new exception-catching syntax which uses the ``as`` keyword::
+Until Ansible-2.4, modules needed to be compatible with Python-2.4 as
+well.  Python-2.4 did not understand the new exception-catching syntax so
+we had to write a compatibility function that could work with both
+Python-2 and Python-3.  You may still see this used in some modules:
+
+.. code-block:: python
+
+    from ansible.module_utils.pycompat24 import get_exception
+    [...]
 
     try:
         a = 2/0
-    except ValueError as e:
+    except ValueError:
+        e = get_exception()
         module.fail_json(msg="Tried to divide by zero: %s" % e)
 
+Unless a change is going to be backported to Ansible-2.3, you should not
+have to use this in new code.
 
-.. note:: Old exception syntax
+Python 2.4 octal workaround
+---------------------------
 
-    Until Ansible-2.4, modules needed to be compatible with Python-2.4 as
-    well.  Python-2.4 did not understand the new exception-catching syntax so
-    we had to write a compatibility function that could work with both
-    Python-2 and Python-3.  You may still see this used in some modules::
+Before Ansible-2.4, modules had to be compatible with Python-2.4.
+Python-2.4 did not understand the new syntax for octal literals so we used
+the following workaround to specify octal values:
 
-        from ansible.module_utils.pycompat24 import get_exception
-        [...]
+.. code-block:: python
 
-        try:
-            a = 2/0
-        except ValueError:
-            e = get_exception()
-            module.fail_json(msg="Tried to divide by zero: %s" % e)
+    # Can't use 0755 on Python-3 and can't use 0o755 on Python-2.4
+    EXECUTABLE_PERMS = int('0755', 8)
 
-    Unless a change is going to be backported to Ansible-2.3, you should not
-    have to use this in new code.
-
-Octal numbers
--------------
-
-In Python-2.6, octal literals could be specified as ``0755``.  In Python-3, that is
-invalid and octals must be specified as ``0o755``.
-
-.. note:: Workaround from Python-2.4 era
-
-    Before Ansible-2.4, modules had to be compatible with Python-2.4.
-    Python-2.4 did not understand the new syntax for octal literals so we used
-    the following workaround to specify octal values::
-
-        # Can't use 0755 on Python-3 and can't use 0o755 on Python-2.4
-        EXECUTABLE_PERMS = int('0755', 8)
-
-Bundled six
------------
-
-The third-party `python-six <https://pythonhosted.org/six/>`_ library exists
-to help projects create code that runs on both Python-2 and Python-3.  Ansible
-includes a version of the library in module_utils so that other modules can use it
-without requiring that it is installed on the remote system.  To make use of
-it, import it like this::
-
-    from ansible.module_utils import six
-
-.. note:: Ansible can also use a system copy of six
-
-    Ansible will use a system copy of six if the system copy is a later
-    version than the one Ansible bundles.
+Unless a change is going to be backported to Ansible-2.3, you should not
+have to use this in new code.
 
 -------------------------------------
 Porting module_utils code to Python 3
