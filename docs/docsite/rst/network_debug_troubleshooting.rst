@@ -234,6 +234,10 @@ To make this a permanent change, add the following to your ``ansible.cfg`` file:
 Error: "connecting to host <hostname> returned an error" or "Bad address"
 -------------------------------------------------------------------------
 
+This may occur if the SSH fingerprint hasn't been added to Paramiko's (the Python SSH library) know hosts file.
+
+When using persistent connections with Paramiko, the connection runs in a background process.  If the host doesn't already have a valid SSH key, by default Ansible will prompt to add the host key.  This will cause connections running in background processes to fail.
+
 For example:
 
 .. code-block:: yaml
@@ -247,7 +251,35 @@ For example:
 
 Suggestions to resolve:
 
-p, 'paramiko_connection', 'host_key_auto_add', 'ANSIBLE_PARAMIKO_HOST_KEY_AUTO_ADD',
+Use ``ssh-keyscan`` to pre-populate the known_hosts. You need to ensure the keys are correct.
+
+.. code-block:: shell
+
+   ssh-keyscan veos01
+
+
+or
+
+You can tell Ansible to automatically accept the keys
+
+Environment variable method::
+
+  ANSIBLE_PARAMIKO_HOST_KEY_AUTO_ADD=True ansible-playbook ...
+
+``ansible.cfg`` method:
+
+ansible.cfg
+
+.. code-block: ini
+
+  [paramiko_connection]
+  host_key_auto_add = True
+
+
+
+.. warning: Security warning
+
+   Care should be taken before accepting keys.
 
 Error: "No authentication methods available"
 --------------------------------------------
