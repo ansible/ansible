@@ -516,6 +516,9 @@ def iterate_all(attr, map_method, **kwargs):
                 sleep(wait)
                 wait = wait * 2
                 continue
+            else:
+                raise
+
 
 def targets_equal(keys, a, b):
     """
