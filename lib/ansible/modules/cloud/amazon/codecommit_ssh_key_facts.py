@@ -1,4 +1,9 @@
 #!/usr/bin/python
+
+# -*- coding: utf-8 -*-
+#
+# (c) 2017, Pat Sharkey <psharkey@cleo.com>
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -8,19 +13,25 @@
 #
 # Ansible is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: codecommit_ssh_key_facts
-short_description: Get the AWS CodeCommit SSH Public Key facts for a given user
+short_description: Get the AWS SSH Public Key facts
 description:
     - Get the AWS CodeCommit SSH Public Key facts for a given user
-version_added: "2.2.1.0"
+version_added: "2.4"
 author: "Pat Sharkey, (@psharkey)"
 options:
   user_name:
