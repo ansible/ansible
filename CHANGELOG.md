@@ -260,6 +260,14 @@ Ansible Changes By Release
   * panos_service
 - postgresql_schema
 - proxmox_kvm
+- proxysql:
+  * proxysql_backend_servers
+  * proxysql_global_variables
+  * proxysql_manage_config
+  * proxysql_mysql_users
+  * proxysql_query_rules
+  * proxysql_replication_hostgroups
+  * proxysql_scheduler
 - pubnub_blocks
 - pulp_repo
 - runit
