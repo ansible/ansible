@@ -61,7 +61,7 @@ What to do if an incompatibility is found
 -----------------------------------------
 
 If you find a bug while testing modules with Python3 you can submit a bug
-report on `Ansible's GitHUb project
+report on `Ansible's GitHub project
 <https://github.com/ansible/ansible/issues/>_`.  Be sure to mention Python3 in
 the bug report so that the right people look at it.
 
