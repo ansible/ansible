@@ -28,7 +28,6 @@ Errors generally fall into one of the following categories:
   * Not correctly specifying credentials
   * Remote device (network switch/router) not falling back to other other authentication methods
   * SSH key issues
-  * Use of ``delgate_to``, use ``ProxyCommand`` instead
 :Timeout issues:
   * Can occur when trying to pull a large amount of data
   * May actually be masking a authentication issue
@@ -37,6 +36,11 @@ Errors generally fall into one of the following categories:
   * Not using ``connection: local``
 
 
+.. warning: ``unable to open shell`
+
+  The ``unable to open shell`` message is new in Ansible 2.3, it means that the ``ansible-connection`` daemon has not been able to successfully
+  talk to the remote network device. This generally means that there is an authentication issue. See the "Authentication and connection issues" section
+  in this this document for more information.
 
 Enabling Networking logging and how to read the logfile
 -------------------------------------------------------
@@ -77,6 +81,12 @@ From the log notice:
 * ``control socket path is`` location on disk where the persistent connection socket is created
 * ``using connection plugin network_cli`` Informs you that persistent connection is being used
 * ``connection established to veos01 in 0:00:22.580626`` Time taken to obtain a shell on the remote device
+
+
+.. note: Port None ``creating new control socket for host veos01:None``
+
+   If the log reports the port as ``None`` this means that the default port is being used.
+   A future Ansible release will improve this message so that the port is always logged.
 
 Because the log files are verbose, you can use grep to look for specific information. For example, once you have identified the ```pid`` from the ``creating new control socket for host`` line you can search for other connection log entries::
 
@@ -119,25 +129,32 @@ Then review the log file and find the relevant error message in the rest of this
 
 For details on other ways to authenticate see LINKTOAUTHHOWTODOCS.
 
-Authentication and connection issues
-====================================
+Category "Unable to open shell"
+===============================
 
-This section covers some of the more common error messages and troubleshooting steps.
-
-
-
-Error: "Unable to open shell"
------------------------------
 
 **Platforms:** Any
 
-This occurs when something happens that prevents a shell from opening on the remote device.
+The ``unable to open shell`` message is new in Ansible 2.3, it means that the ``ansible-connection`` daemon has not been able to successfully
+talk to the remote network device. This generally means that there is an authentication issue. It is a "catch all" message, meaning you need to enable
+``ANSIBLE_LOG_PATH`` to find the underlying issues.
+
+
 
 For example:
 
 .. code-block:: yaml
 
-   TASK [ios_system : configure name_servers] *****************************************************************************
+  TASK [prepare_eos_tests : enable cli on remote device] **************************************************
+  fatal: [veos01]: FAILED! => {"changed": false, "failed": true, "msg": "unable to open shell"}
+
+
+or:
+
+
+.. code-block:: yaml
+
+   TASK [ios_system : configure name_servers] *************************************************************
    task path:
    fatal: [ios-csr1000v]: FAILED! => {
        "changed": false,
@@ -148,62 +165,38 @@ For example:
 
 Suggestions to resolve:
 
-Rerun Ansible with extra logging. For example:
+Follow the steps detailed in FIXMELINK:Enabling Networking logging and how to read the log file.
 
-:code:`export ANSIBLE_LOG_PATH=~/ansible.log`
+Once you've identified the error message from the log file, the specific solution can be found in the rest of this document.
 
-:code:`ANISBLE_DEBUG=True ansible-playbook -vvvvv  ...`
 
-Once the task has failed, find the relevant log lines.
+
+Error: "[Errno -2] Name or service not known"
+---------------------------------------------
+
+**Platforms:** Any
+
+Indicates that the remote host you are trying to connect to can not be reached
 
 For example:
 
 .. code-block:: yaml
 
-  less $ANSIBLE_LOG_PATH
-  2017-03-10 15:32:06,173 p=19677 u=fred |  number of connection attempts exceeded, unable to connect to control socket
-  2017-03-10 15:32:06,174 p=19677 u=fred |  persistent_connect_interval=1, persistent_connect_retries=10
-  2017-03-10 15:32:06,222 p=19669 u=fred |  fatal: [veos01]: FAILED! => {
-    "changed": false,
+   2017-04-04 11:39:48,147 p=15299 u=fred |  control socket path is /home/fred/.ansible/pc/ca5960d27a
+   2017-04-04 11:39:48,147 p=15299 u=fred |  current working directory is /home/fred/git/ansible-inc/stable-2.3/test/integration
+   2017-04-04 11:39:48,147 p=15299 u=fred |  using connection plugin network_cli
+   2017-04-04 11:39:48,340 p=15299 u=fred |  connecting to host veos01 returned an error
+   2017-04-04 11:39:48,340 p=15299 u=fred |  [Errno -2] Name or service not known
 
-Look for an error message in this document. In this example, the relevant lines are:
-
-.. code-block:: yaml
-
-  number of connection attempts exceeded, unable to connect to control socket
-  persistent_connect_interval=1, persistent_connect_retries=10
-
-...indicates a connection timeout has occurred, see next section.
-
-.. notes: Easier to read error messages
-
-   The final version of Ansible 2.3 will include improved logging which will make it easier to identify connection lines in the log
-
-
-Error: "number of connection attempts exceeded, unable to connect to control socket"
-------------------------------------------------------------------------------------
-
-**Platforms:** Any
-
-This occurs when Ansible wasn't able to connect to the remote device and obtain a shell with the timeout.
-
-
-This information is available when ``ANSIBLE_LOG_PATH`` is set see (FIXMELINKTOSECTION):
-
-.. code-block:: yaml
-
-  less $ANSIBLE_LOG_PATH
-  2017-03-10 15:32:06,173 p=19677 u=fred |  number of connection attempts exceeded, unable to connect to control socket
-  2017-03-10 15:32:06,174 p=19677 u=fred |  persistent_connect_interval=1, persistent_connect_retries=10
-  2017-03-10 15:32:06,222 p=19669 u=fred |  fatal: [veos01]: FAILED! => {
 
 Suggestions to resolve:
 
-Do stuff For example:
+* If you are using the ``provider:`` options ensure that it's suboption ``host:`` is set correctly. FIXMELINK to Howto
+* If you are not using ``provider:`` nor top-level arguments ensure your inventory file is correct.
 
-.. code-block:: yaml
 
-	Example stuff
+
+
 
 Error: "Authentication failed"
 ------------------------------
@@ -238,8 +231,121 @@ To make this a permanent change, add the following to your ``ansible.cfg`` file:
    look_for_keys = False
 
 
+Error: "connecting to host <hostname> returned an error" or "Bad address"
+-------------------------------------------------------------------------
+
+For example:
+
+.. code-block:: yaml
+
+   2017-04-04 12:06:03,486 p=17981 u=fred |  using connection plugin network_cli
+   2017-04-04 12:06:04,680 p=17981 u=fred |  connecting to host veos01 returned an error
+   2017-04-04 12:06:04,682 p=17981 u=fred |  (14, 'Bad address')
+   2017-04-04 12:06:33,519 p=17981 u=fred |  number of connection attempts exceeded, unable to connect to control socket
+   2017-04-04 12:06:33,520 p=17981 u=fred |  persistent_connect_interval=1, persistent_connect_retries=30
 
 
+Suggestions to resolve:
+
+p, 'paramiko_connection', 'host_key_auto_add', 'ANSIBLE_PARAMIKO_HOST_KEY_AUTO_ADD',
+
+Error: "No authentication methods available"
+--------------------------------------------
+
+For example:
+
+.. code-block:: yaml
+
+   2017-04-04 12:19:05,670 p=18591 u=fred |  creating new control socket for host veos01:None as user admin
+   2017-04-04 12:19:05,670 p=18591 u=fred |  control socket path is /home/fred/.ansible/pc/ca5960d27a
+   2017-04-04 12:19:05,670 p=18591 u=fred |  current working directory is /home/fred/git/ansible-inc/ansible-workspace-2/test/integration
+   2017-04-04 12:19:05,670 p=18591 u=fred |  using connection plugin network_cli
+   2017-04-04 12:19:06,606 p=18591 u=fred |  connecting to host veos01 returned an error
+   2017-04-04 12:19:06,606 p=18591 u=fred |  No authentication methods available
+   2017-04-04 12:19:35,708 p=18591 u=fred |  number of connection attempts exceeded, unable to connect to control socket
+   2017-04-04 12:19:35,709 p=18591 u=fred |  persistent_connect_interval=1, persistent_connect_retries=30
+
+
+Suggestions to resolve:
+
+No password or SSH key supplied
+
+Clearing Out Persistent Connections
+-----------------------------------
+
+**Platforms:** Any
+
+In Ansible 2.3, persistent connection sockets are stored in ``~/.ansible/pc`` for all network devices.  When an Ansible playbook runs, the persistent socket connection is displayed when verbose output is specified.
+
+``<switch> socket_path: /home/fred/.ansible/pc/f64ddfa760``
+
+To clear out a persistent connection before it times out (the default timeout is 30 seconds
+of inactivity), simple delete the socket file.
+
+
+
+Timeout issues
+==============
+
+Timeouts
+--------
+
+All network modules support a timeout value that can be set on a per task
+basis.  The timeout value controls the amount of time in seconds before the
+task will fail if the command has not returned.
+
+For example:
+
+FIXME: Detail error here
+
+
+Suggestions to resolve:
+
+.. code-block:: yaml
+
+    - name: save running-config
+      ios_command:
+        commands: copy running-config startup-config
+        provider: "{{ cli }}"
+        timeout: 30
+
+Some operations take longer than the default 10 seconds to complete.  One good
+example is saving the current running config on IOS devices to startup config.
+In this case, changing the timeout value form the default 10 seconds to 30
+seconds will prevent the task from failing before the command completes
+successfully.
+
+
+
+Playbook issues
+===============
+
+This section details issues are caused by issues with the Playbook itself.
+
+Error: "invalid connection specified, expected connection=local, got ssh"
+-------------------------------------------------------------------------
+
+**Platforms:** Any
+
+Network modules require that the connection is set to ``local``.  Any other
+connection setting will cause the playbook to fail.  Ansible will now detect
+this condition and return an error message:
+
+.. code-block:: yaml
+
+    fatal: [nxos01]: FAILED! => {
+        "changed": false,
+        "failed": true,
+        "msg": "invalid connection specified, expected connection=local, got ssh"
+    }
+
+
+To fix this issue, set the connection value to ``local`` using one of the
+following methods:
+
+* Set the play to use ``connection: local``
+* Set the task to use ``connection: local``
+* Run ansible-playbook using the ``-c local`` setting
 
 Error: "Unable to enter configuration mode"
 -------------------------------------------
@@ -290,88 +396,41 @@ Add `authorize: yes` to the task. For example:
   register: result
 
 
-FIXME Host not found
---------------------
-
-FIXME host not found
-
-Clearing Out Persistent Connections
------------------------------------
-
-**Platforms:** Any
-
-In Ansible 2.3, persistent connection sockets are stored in ``~/.ansible/pc`` for all network devices.  When an Ansible playbook runs, the persistent socket connection is displayed when verbose output is specified.
-
-``<switch> socket_path: /home/fred/.ansible/pc/f64ddfa760``
-
-To clear out a persistent connection before it times out (the default timeout is 30 seconds
-of inactivity), simple delete the socket file.
-
-
-Timeout issues
-==============
-
-Timeouts
---------
-
-All network modules support a timeout value that can be set on a per task
-basis.  The timeout value controls the amount of time in seconds before the
-task will fail if the command has not returned.
-
-For example:
-
-FIXME: Detail error here
-
-
-Suggestions to resolve:
-
-.. code-block:: yaml
-
-    - name: save running-config
-      ios_command:
-        commands: copy running-config startup-config
-        provider: "{{ cli }}"
-        timeout: 30
-
-Some operations take longer than the default 10 seconds to complete.  One good
-example is saving the current running config on IOS devices to startup config.
-In this case, changing the timeout value form the default 10 seconds to 30
-seconds will prevent the task from failing before the command completes
-successfully.
-
-Playbook issues
-===============
-This section details issues are caused by issues with the Playbook itself.
-
-Error: "invalid connection specified, expected connection=local, got ssh"
--------------------------------------------------------------------------
-
-**Platforms:** Any
-
-Network modules require that the connection is set to ``local``.  Any other
-connection setting will cause the playbook to fail.  Ansible will now detect
-this condition and return an error message:
-
-.. code-block:: yaml
-
-    fatal: [nxos01]: FAILED! => {
-        "changed": false,
-        "failed": true,
-        "msg": "invalid connection specified, expected connection=local, got ssh"
-    }
-
-
-To fix this issue, set the connection value to ``local`` using one of the
-following methods:
-
-* Set the play to use ``connection: local``
-* Set the task to use ``connection: local``
-* Run ansible-playbook using the ``-c local`` setting
-
-
 delete_to not honoured
 ----------------------
 
 FIXME Do we get an error message
 
 FIXME Link to howto
+
+
+
+
+fixmes
+======
+
+Error: "number of connection attempts exceeded, unable to connect to control socket"
+------------------------------------------------------------------------------------
+
+**Platforms:** Any
+
+This occurs when Ansible wasn't able to connect to the remote device and obtain a shell with the timeout.
+
+
+This information is available when ``ANSIBLE_LOG_PATH`` is set see (FIXMELINKTOSECTION):
+
+.. code-block:: yaml
+
+  less $ANSIBLE_LOG_PATH
+  2017-03-10 15:32:06,173 p=19677 u=fred |  number of connection attempts exceeded, unable to connect to control socket
+  2017-03-10 15:32:06,174 p=19677 u=fred |  persistent_connect_interval=1, persistent_connect_retries=10
+  2017-03-10 15:32:06,222 p=19669 u=fred |  fatal: [veos01]: FAILED! => {
+
+Suggestions to resolve:
+
+Do stuff For example:
+
+.. code-block:: yaml
+
+	Example stuff
+
