@@ -454,9 +454,10 @@ class StrategyBase:
                                     for target_handler_uuid in self._notified_handlers:
                                         target_handler = search_handler_blocks_by_uuid(target_handler_uuid, iterator._play.handlers)
                                         if target_handler and parent_handler_match(target_handler, handler_name):
-                                            self._notified_handlers[target_handler._uuid].append(original_host)
-                                            display.vv("NOTIFIED HANDLER %s" % (target_handler.get_name(),))
                                             found = True
+                                            if original_host not in self._notified_handlers[target_handler._uuid]:
+                                                self._notified_handlers[target_handler._uuid].append(original_host)
+                                                display.vv("NOTIFIED HANDLER %s" % (target_handler.get_name(),))
 
                                 if handler_name in self._listening_handlers:
                                     for listening_handler_uuid in self._listening_handlers[handler_name]:
