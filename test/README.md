@@ -1,6 +1,8 @@
 Ansible Test System
 ===================
 
+Before starting you probably want the setup in the `hacking' directory.
+
 Folders
 =======
 
@@ -12,7 +14,10 @@ mock interfaces rather than producing side effects.
 
 Playbook engine code is better suited for integration tests.
 
-Requirements: `sudo pip install paramiko PyYAML jinja2 httplib2 passlib nose pytest mock`
+Requirements: `sudo pip install paramiko PyYAML jinja2 httplib2 passlib nose pytest pytest-xdist mock`
+
+You can also install tox which will run the unit tests and other checks when run.  This includes
+python style checks (PEP8 etc) which will be required for contributions to ansible.
 
 integration
 -----------
