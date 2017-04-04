@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Alain Dejoux ²adejoux@djouxtech.net>
+# (c) 2016, Alain Dejoux <adejoux@djouxtech.net>
 #
 # This file is part of Ansible
 #
