@@ -816,7 +816,7 @@ def switch_version(git_path, module, dest, remote, version, verify_commit, depth
         if rc != 0:
             module.fail_json(msg="Failed to checkout branch %s" % branch,
                              stdout=out, stderr=err, rc=rc)
-        cmd = "%s reset --hard %s --" % (git_path, remote)
+        cmd = "%s reset --hard %s/%s --" % (git_path, remote, branch)
     else:
         # FIXME check for local_branch first, should have been fetched already
         if is_remote_branch(git_path, module, dest, remote, version):
