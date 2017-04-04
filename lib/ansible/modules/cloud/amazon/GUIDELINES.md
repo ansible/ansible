@@ -285,7 +285,7 @@ Pass this function a list of security group names or combination of security gro
 return a list of IDs.  You should also pass the VPC ID if known because security group names are not necessarily unique
 across VPCs.
 
-### sort_json_policy_dict
+#### sort_json_policy_dict
 
 Pass any JSON policy dict to this function in order to sort any list contained therein. This is useful
 because AWS rarely return lists in the same order that they were submitted so without this function, comparison
