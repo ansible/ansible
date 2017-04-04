@@ -7,7 +7,6 @@ import-error
 locally-disabled
 locally-enabled
 method-hidden
-misplaced-bare-raise
 no-member
 no-name-in-module
 no-value-for-parameter
