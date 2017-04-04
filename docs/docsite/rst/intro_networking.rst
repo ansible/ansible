@@ -17,9 +17,7 @@ Starting with Ansible version 2.1, you can now use the familiar Ansible models o
 Network Automation Installation
 ===============================
 
-Networking support comes as default with Ansible
-
-* Install the `latest Ansible release <http://docs.ansible.com/ansible/intro_installation.html>`_.
+Ansible comes packaged with networking support. To install Ansible, get the `latest Ansible release <http://docs.ansible.com/ansible/intro_installation.html>`_.
 
 .. _networking_module_index:
 
@@ -43,7 +41,6 @@ For more examples and how-tos go to LINK
 
 Persistent Connections
 ======================
-Before diving into the technical detail of how to troubleshoot it can be useful to understand how Ansible communicates with the remote network device.
 
 As of version 2.3, Ansible includes support for `persistent connections`. Persistent connections are useful for playbooks with multiple tasks that require multiple SSH connections. In previous releases, these SSH connections had to be established and destroyed each time a task was run, which was inefficient. Persistent connections allows an SSH connection to stay active across multiple Ansible tasks and plays, eliminating the need to spend time establishing and destroying the connection. This is done by keeping a Unix socket open, via a daemon process called ``ansible-connection``.
 
@@ -65,22 +62,22 @@ Persistent Connection had been enable for the following groups of modules:
 
    The list of network platforms that support Persistent Connection will grow with each release.
 
-.. notes: Persistent Connections is for `cli` (ssh), not for API transports.
+.. notes: Persistent Connections work with the `cli` (ssh) provider, not for API transports.
 
-   The Persistent Connection work added in Ansible 2.3 only applies to `cli transport`. It doesn't apply to APIs such as eos's eapi, or nxos's nxapi. Starting with Ansible 2.3, using CLI should be faster in most cases than using the API transport. Using CLI also allows you be benefit from using SSH Keys.
+   The Persistent Connection work added in Ansible 2.3 only applies to the `cli transport`. It doesn't apply to APIs (such as eos's eapi, or nxos's nxapi). Starting with Ansible 2.3, using CLI should be faster in most cases than using the API transport. Using CLI also allows you to benefit from using SSH Keys.
 
-Playbook Structure from 2.1 to 2.3
-==================================
+Playbook Structure Changes from 2.1 to 2.3
+==========================================
 
 Ansible 2.3 makes it easier to write playbooks by simplifying how connections are handled. This means that you no longer need to define the connection details in every task (via ``host:`` or ``provider:``); instead you can utilize ssh keys and write shortened playbooks.
 
 
-Ansible 2.3 maintains backwards with playbooks created in Ansible 2.2, so you are not forced to upgrade your playbooks when you upgrade to Ansible 2.3.
+Ansible 2.3 maintains backwards compatibility with playbooks created in Ansible 2.2, so you are not forced to upgrade your playbooks when you upgrade to Ansible 2.3.
 
 Why is this changing
 --------------------
 
-As of Ansible 2.FIXME specifying credentials directly under the task or under provider will no longer be supported in network modules. This is to make the network modules work in the same way as normal Linux and Windows modules. This has the following advantages:
+As of Ansible 2.FIXME, specifying credentials directly under the task or under provider will no longer be supported in network modules. This is to make the network modules work in the same way as normal Linux and Windows modules. This has the following advantages:
 
 * Easier to understand
 * Consistent with the rest of Ansible
