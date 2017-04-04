@@ -64,7 +64,6 @@
    register: forget_service
    ignore_errors: True
 
-
  - name: Verify that all previous test have failed
    assert:
      that:
@@ -72,5 +71,4 @@
       - "forget_src_addr.failed == True"
       - "forget_dst_addr.failed == True"
       - "forget_policy_action.failed == True"
-      - "forget_service.failed == True"      
-
+      - "forget_service.failed == True"

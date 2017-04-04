@@ -66,4 +66,3 @@
    assert:
      that:
       - "del_policy.changed == false"
-

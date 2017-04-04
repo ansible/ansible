@@ -60,6 +60,11 @@ fortios_required_if = [
     ['backup',   True   , ['backup_path']   ],
 ]
 
+fortios_mutually_exclusive = [
+    ['config_file', 'host'],
+    ['config_file', 'username'],
+    ['config_file', 'password']
+]
 
 fortios_error_codes = {
     '-3':"Object not found",
