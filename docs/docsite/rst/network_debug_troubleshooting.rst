@@ -129,6 +129,8 @@ Then review the log file and find the relevant error message in the rest of this
 
 For details on other ways to authenticate see LINKTOAUTHHOWTODOCS.
 
+.. _unable_to_open_shell:
+
 Category "Unable to open shell"
 ===============================
 
@@ -143,7 +145,7 @@ talk to the remote network device. This generally means that there is an authent
 
 For example:
 
-.. code-block:: yaml
+.. code-block::
 
   TASK [prepare_eos_tests : enable cli on remote device] **************************************************
   fatal: [veos01]: FAILED! => {"changed": false, "failed": true, "msg": "unable to open shell"}
