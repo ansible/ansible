@@ -87,8 +87,9 @@ EXAMPLES = '''
 
 
 import json
-import itertools
-import sys
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
+
 try:
     import boto3
     from botocore.exceptions import ClientError
@@ -156,10 +157,6 @@ def main():
 
     module.exit_json(ssh_public_keys=public_key_array)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
