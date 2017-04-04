@@ -36,13 +36,13 @@ extends_documentation_fragment: fortios
 options:
   id:
     description:
-      - "Policy ID\n
-        Warning: policy ID # is different than Policy sequence# \n
-        The policy ID is the number assigned at policy creation. \n
-        The sequence # represents the order in which the Fortigate will evaluate the rule for policy enforcement, \n
-        and also the order in which rules are listed in the GUI and CLI.\n
-        These two numbers do not necessarily correlate: this module is based off policy ID.\n
-        TIP: policy ID can be viewed in the GUI by adding "ID" to the display columns."
+      - "Policy ID.
+        Warning: policy ID number is different than Policy sequence number.
+        The policy ID is the number assigned at policy creation.
+        The sequence number represents the order in which the Fortigate will evaluate the rule for policy enforcement,
+        and also the order in which rules are listed in the GUI and CLI.
+        These two numbers do not necessarily correlate: this module is based off policy ID.
+        TIP: policy ID can be viewed in the GUI by adding 'ID' to the display columns"
     required: true
   state:
     description:
