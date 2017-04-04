@@ -36,10 +36,13 @@ extends_documentation_fragment: fortios
 options:
   id:
     description:
-      - 'Policy ID
-        Warning, policy I(id) number is different than Policy sequence number
-        Default web display show only policies sequence numbers,
-        you need to add policy id column in display options.'
+      - "Policy ID\n
+        Warning: policy ID # is different than Policy sequence# \n
+        The policy ID is the number assigned at policy creation. \n
+        The sequence # represents the order in which the Fortigate will evaluate the rule for policy enforcement, \n
+        and also the order in which rules are listed in the GUI and CLI.\n
+        These two numbers do not necessarily correlate: this module is based off policy ID.\n
+        TIP: policy ID can be viewed in the GUI by adding "ID" to the display columns."
     required: true
   state:
     description:
