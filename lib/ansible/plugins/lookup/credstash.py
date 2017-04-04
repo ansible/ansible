@@ -57,7 +57,7 @@ class LookupModule(LookupBase):
                     except Exception as e:
                         raise AnsibleError('error assuming role {0} in profile {1}: {2}'.format(iam_arn_assume_role, profile, e))
                 try:
-                    val = credstash.getSecret(term, version, region, table, profile_name=profile, 
+                    val = credstash.getSecret(term, version, region, table, profile_name=profile,
                                               context=kwargs)
                 except Exception as e:
                     raise AnsibleError('credstash.getSecret failed with context {}'.format(kwargs))
