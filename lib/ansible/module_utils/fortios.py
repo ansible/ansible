@@ -172,7 +172,7 @@ class AnsibleFortios(object):
                     error_list = self.get_error_infos(e)
                     self.module.fail_json(msg_error_list=error_list, msg="Unable to commit change, check your args, the error was %s" % e.message )
 
-            self.forti_device.close()
+                self.forti_device.close()
         self.module.exit_json(**self.result)
 
 
