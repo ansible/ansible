@@ -1,6 +1,5 @@
 access-member-before-definition
 assignment-from-no-return
-bad-format-character
 C
 function-redefined
 import-error
