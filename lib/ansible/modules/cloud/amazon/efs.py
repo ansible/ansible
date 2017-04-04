@@ -518,8 +518,8 @@ def iterate_all(attr, map_method, **kwargs):
                 continue
             else:
                 raise
-                
-                
+
+
 def targets_equal(keys, a, b):
     """
      Method compare two mount targets by specified attributes
