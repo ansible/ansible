@@ -194,7 +194,7 @@ def check_args(module, warnings):
     if module.params['replace'] is not None:
         module.fail_json(msg='argument replace is deprecated, use update')
 
-zeroize = lambda x: send_request(x, Element('request-system-zeroize'))
+zeroize = lambda x: send_request(x, ElementTree.Element('request-system-zeroize'))
 rollback = lambda x: get_diff(x)
 
 def guess_format(config):
