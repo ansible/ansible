@@ -60,7 +60,6 @@ options:
   src_addr:
     description:
       - Specifies source address (or group) object name(s).
-    required: true
   src_addr_negate:
     description:
       - Negate source address param.
@@ -69,7 +68,6 @@ options:
   dst_addr:
     description:
       - Specifies destination address (or group) object name(s).
-    required: true
   dst_addr_negate:
     description:
       - Negate destination address param.
@@ -79,12 +77,10 @@ options:
     description:
       - Specifies accept or deny action policy.
     choices: ['accept', 'deny']
-    required: true
     aliases: ['action']
   service:
     description:
       - "Specifies policy service(s), could be a list (ex: ['MAIL','DNS'])."
-    required: true
     aliases:
       - services
   service_negate:
