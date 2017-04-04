@@ -219,11 +219,9 @@ def filter_delete_statements(module, candidate):
     reply = get_configuration(module, format='set')
     match = reply.find('.//configuration-set')
     if match is None:
-        module.fail_json(msg='unable to retrieve device configuration')
+        # Could not find configuration-set in reply, perhaps device does not support it?
+        return candidate
     config = str(match.text)
-
-    #if 'delete interfaces lo0' in candidate:
-    #    raise ValueError(config)
 
     modified_candidate = candidate[:]
     for index, line in enumerate(candidate):
@@ -234,7 +232,7 @@ def filter_delete_statements(module, candidate):
 
     return modified_candidate
 
-def configure_device(module):
+def configure_device(module, warnings):
     candidate = module.params['lines'] or module.params['src']
     if isinstance(candidate, string_types):
         candidate = candidate.split('\n')
@@ -266,7 +264,7 @@ def configure_device(module):
         kwargs['format'] = 'text'
         kwargs['action'] = 'set'
 
-    return load_config(module, candidate, **kwargs)
+    return load_config(module, candidate, warnings, **kwargs)
 
 def main():
     """ main entry point for module execution
@@ -307,10 +305,14 @@ def main():
     result = {'changed': False, 'warnings': warnings}
 
     if module.params['backup']:
-        reply = get_configuration(module, format='set')
-        match = reply.find('.//configuration-set')
-        if match is None:
+        for conf_format in ['set', 'text']:
+            reply = get_configuration(module, format=conf_format)
+            match = reply.find('.//configuration-%s' % conf_format)
+            if match is not None:
+                break
+        else:
             module.fail_json(msg='unable to retrieve device configuration')
+
         result['__backup__'] = str(match.text).strip()
 
     if module.params['rollback']:
@@ -326,7 +328,7 @@ def main():
         result['changed'] = True
 
     else:
-        diff = configure_device(module)
+        diff = configure_device(module, warnings)
         if diff:
             if module._diff:
                 result['diff'] = {'prepared': diff}
