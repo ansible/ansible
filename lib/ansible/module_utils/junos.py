@@ -155,8 +155,8 @@ def load_config(module, candidate, warnings, action='merge', commit=False, forma
             candidate = '\n'.join(candidate)
 
         reply = load_configuration(module, candidate, action=action, format=format)
-        if isinstance(reply, tuple):
-            warnings.append(reply[1])
+        if isinstance(reply, list):
+            warnings.extend(reply)
 
         validate(module)
         diff = get_diff(module)
