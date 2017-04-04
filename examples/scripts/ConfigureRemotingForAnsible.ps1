@@ -26,6 +26,13 @@
 #
 # Use option -SubjectName to specify the CN name of the certificate. This
 # defaults to the system's hostname and generally should not be specified.
+#
+# Use option -PfxPath to specify the full path to a PKCS12 file to import
+# a certificate and key from.
+#
+# Use the option -PfxPassword to specify the password for the PKCS12 file
+# import. If you do not specify this the script will prompt you for the
+# password.
 
 # Written by Trond Hindenes <trond@hindenes.com>
 # Updated by Chris Church <cchurch@ansible.com>
@@ -34,6 +41,7 @@
 # Updated by Nicolas Simond <contact@nicolas-simond.com>
 # Updated by Dag Wieërs <dag@wieers.com>
 # Updated by Jordan Borean <jborean93@gmail.com>
+# Updated by Barney Sowood <barney@sowood.co.uk>
 #
 # Version 1.0 - 2014-07-06
 # Version 1.1 - 2014-11-11
@@ -52,7 +60,9 @@ Param (
     [switch]$SkipNetworkProfileCheck,
     $CreateSelfSignedCert = $true,
     [switch]$ForceNewSSLCert,
-    [switch]$EnableCredSSP
+    [switch]$EnableCredSSP,
+    [string]$PfxPath = $null,
+    [string]$PfxPassword = $null
 )
 
 Function Write-Log
@@ -119,6 +129,29 @@ Function New-LegacySelfSignedCert
     $parsed_cert.Import([System.Text.Encoding]::UTF8.GetBytes($certdata))
 
     return $parsed_cert.Thumbprint
+}
+
+function Import-Certificate ([string]$PfxPath, [string]$PfxPassword = $null, [string]$SubjectName, [string]$storeName = "My", [string]$storeLocation = "LocalMachine")
+{
+    if (!$PfxPassword)
+    {
+        $password = Read-Host “Enter the PFX password” -assecurestring
+        $PfxPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
+    }
+
+    $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($PfxPath, $PfxPassword, "MachineKeySet,PersistKeySet")
+    if ($cert.Subject -ne "CN=$SubjectName")
+    {
+        Write-Log "Certifcate SubjectName does not match"
+        Throw "Certifcate SubjectName does not match"
+    }
+
+    $store = New-Object System.Security.Cryptography.X509Certificates.X509Store($storeName, $storeLocation)
+    $store.Open("ReadWrite")
+    $store.Add($cert)
+    $store.Close()
+
+    return $cert.Thumbprint
 }
 
 # Setup error handling.
@@ -203,9 +236,17 @@ Else
 $listeners = Get-ChildItem WSMan:\localhost\Listener
 If (!($listeners | Where {$_.Keys -like "TRANSPORT=HTTPS"}))
 {
-    # We cannot use New-SelfSignedCertificate on 2012R2 and earlier
-    $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName -ValidDays $CertValidityDays
-    Write-HostLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
+    If ($PfxPath)
+    {
+        $thumbprint = Import-Certificate -PfxPath $PfxPath -PfxPassword $PfxPassword -SubjectName $SubjectName
+        Write-HostLog "Imported SSL certificate installed; thumbprint: $thumbprint"
+    }
+    Else
+    {
+        # We cannot use New-SelfSignedCertificate on 2012R2 and earlier
+        $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName -ValidDays $CertValidityDays
+        Write-HostLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
+    }
 
     # Create the hashtables of settings to be used.
     $valueset = @{
@@ -230,9 +271,17 @@ Else
     If ($ForceNewSSLCert)
     {
 
-        # We cannot use New-SelfSignedCertificate on 2012R2 and earlier
-        $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName -ValidDays $CertValidityDays
-        Write-HostLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
+        If ($PfxPath)
+        {
+            $thumbprint = Import-Certificate -PfxPath $PfxPath -PfxPassword $PfxPassword -SubjectName $SubjectName
+            Write-HostLog "Imported SSL certificate installed; thumbprint: $thumbprint"
+        }
+        Else
+        {
+            # We cannot use New-SelfSignedCertificate on 2012R2 and earlier
+            $thumbprint = New-LegacySelfSignedCert -SubjectName $SubjectName -ValidDays $CertValidityDays
+            Write-HostLog "Self-signed SSL certificate generated; thumbprint: $thumbprint"
+        }
 
         $valueset = @{
             CertificateThumbprint = $thumbprint
