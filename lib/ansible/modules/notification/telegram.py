@@ -44,7 +44,7 @@ options:
     required: true
   msg_format:
     description:
-      - Message format.
+      - Message format. Formatting options `markdown` and `html` described in Telegram API docs: https://core.telegram.org/bots/api#formatting-options. If option `plain` set, message will not be formatted.
     default: plain
     choices: [ "plain", "markdown", "html" ]
     version_added: "2.4"
