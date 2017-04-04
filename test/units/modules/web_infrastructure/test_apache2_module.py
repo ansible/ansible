@@ -10,6 +10,7 @@ REPLACEMENTS = [
     ('thismoduledoesnotexist', 'thismoduledoesnotexist_module'),  # the default
 ]
 
+
 @pytest.mark.parametrize("replacement", REPLACEMENTS, ids=lambda x: x[0])
 def test_apache_identifier(replacement):
     "test the correct replacement of an a2enmod name with an apache2ctl name"
