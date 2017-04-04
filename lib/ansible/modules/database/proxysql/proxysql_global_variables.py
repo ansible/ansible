@@ -104,11 +104,10 @@ stdout:
     }
 '''
 
-ANSIBLE_METADATA = {
-    'version': '1.0',
-    'supported_by': 'community',
-    'status': ['stableinterface']
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.mysql import mysql_connect
