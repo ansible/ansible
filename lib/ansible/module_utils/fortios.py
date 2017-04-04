@@ -42,7 +42,7 @@ except:
     HAS_PYFG=False
 
 fortios_argument_spec = dict(
-    file_mode       = dict(type=bool, default=False),
+    file_mode       = dict(type='bool', default=False),
     config_file     = dict(type='path'),
     host            = dict( ),
     username        = dict( ),
@@ -55,8 +55,8 @@ fortios_argument_spec = dict(
 )
 
 fortios_required_if = [
-    ['file_mode', False, ['host', 'username', 'password']]
-    ['file_mode', True, ['config_file']]
+    ['file_mode', False, ['host', 'username', 'password']],
+    ['file_mode', True, ['config_file']],
     ['backup',   True   , ['backup_path']   ],
 ]
 
@@ -116,10 +116,11 @@ class AnsibleFortios(object):
 
     def load_config(self, path):
         self.path = path
+        self._connect()
         #load in file_mode
         if self.module.params['file_mode']:
             try:
-                f = open('running.conf', 'r')
+                f = open(self.module.params['config_file'], 'r')
                 running = f.read()
                 f.close()
             except IOError:
@@ -128,7 +129,6 @@ class AnsibleFortios(object):
             self.forti_device.load_config(config_text=running, path = path)
 
         else:
-            self._connect()
             #get  config
             try:
                 self.forti_device.load_config(path=path)
@@ -137,12 +137,13 @@ class AnsibleFortios(object):
                 e = get_exception()
                 self.module.fail_json(msg='Error reading running config. %s' % e)
 
-            #backup if needed
-            if self.module.params['backup']:
-                backup(self.module, self.result['running_config'])
         #set configs in object
         self.result['running_config'] = self.forti_device.running_config.to_text()
         self.candidate_config = self.forti_device.candidate_config
+
+        #backup if needed
+        if self.module.params['backup']:
+            backup(self.module, self.forti_device.running_config.to_text())
 
 
     def apply_changes(self):
@@ -155,7 +156,7 @@ class AnsibleFortios(object):
         if change_string and not self.module.check_mode:
             if self.module.params['file_mode']:
                 try: 
-                    f = open('running.conf', 'w')
+                    f = open(self.module.params['config_file'], 'w')
                     f.write(self.candidate_config.to_text())
                     f.close
                 except IOError:
@@ -171,7 +172,7 @@ class AnsibleFortios(object):
                     error_list = self.get_error_infos(e)
                     self.module.fail_json(msg_error_list=error_list, msg="Unable to commit change, check your args, the error was %s" % e.message )
 
-        self.forti_device.close()
+            self.forti_device.close()
         self.module.exit_json(**self.result)
 
 
