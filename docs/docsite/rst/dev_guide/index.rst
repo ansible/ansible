@@ -16,7 +16,7 @@ To get started, select one of the following topics.
 
    overview_architecture
    developing_modules
-   developing_modules_python3
+   developing_python3
    developing_plugins
    developing_inventory
    developing_api

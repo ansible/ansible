@@ -91,7 +91,7 @@ And that's it.
 
 Before pushing your PR to GitHub it's a good idea to review the :doc:`developing_modules_checklist` again.
 
-After publishing your PR to https://github.com/ansible/ansible, a Shippable CI test should run within a few minutes. Check the results (at the end of the PR page) to ensure that it's passing (green). If it's not passing, inspect each of the results. Most of the errors should be self-explanatory and are often related to badly formatted documentation (see :doc:`../YAMLSyntax`) or code that isn't valid Python 2.6  or valid Python 3.5 (see :doc:`developing_modules_python3`). If you aren't sure what a Shippable test message means, copy it into the PR along with a comment and we will review.
+After publishing your PR to https://github.com/ansible/ansible, a Shippable CI test should run within a few minutes. Check the results (at the end of the PR page) to ensure that it's passing (green). If it's not passing, inspect each of the results. Most of the errors should be self-explanatory and are often related to badly formatted documentation (see :doc:`../YAMLSyntax`) or code that isn't valid Python 2.6  or valid Python 3.5 (see :doc:`developing_python3`). If you aren't sure what a Shippable test message means, copy it into the PR along with a comment and we will review.
 
 If you need further advice, consider join the ``#ansible-devel`` IRC channel (see how in the "Where to get support").
 
