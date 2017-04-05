@@ -476,18 +476,12 @@ class BigIpRouteDomain(object):
         result = dict()
         state = self.params['state']
 
-        if self.params['check_mode']:
-            if value == current:
-                changed = False
-            else:
-                changed = True
-        else:
-            if state == "present":
-                changed = self.present()
-                current = self.read()
-                result.update(current)
-            elif state == "absent":
-                changed = self.absent()
+        if state == "present":
+            changed = self.present()
+            current = self.read()
+            result.update(current)
+        elif state == "absent":
+            changed = self.absent()
 
         result.update(dict(changed=changed))
         return result
