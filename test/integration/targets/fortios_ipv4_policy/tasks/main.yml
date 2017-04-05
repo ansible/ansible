@@ -1,3 +1,7 @@
 ---
+- name: install pyfg library
+  pip:
+    name: pyfg
+
 - { include: test_indempotency.yml }
 - { include: test_params.yml }
