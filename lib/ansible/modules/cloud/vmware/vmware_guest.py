@@ -1109,7 +1109,7 @@ class PyVmomiHelper(object):
                             self.params['template'], self.params['snapshot_name']))
 
                     if len(snapshot) == 1:
-                       snapshot = snapshot[0].snapshot
+                        snapshot = snapshot[0].snapshot
                     clonespec.snapshot = snapshot
 
                 clonespec.config = self.configspec
