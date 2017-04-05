@@ -25,8 +25,7 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'this is my login banner' in result.commands"
-      - "'that has a multiline' in result.commands"
+      - "'banner login @\nthis is my login banner\nthat has a multiline\nstring\n@' in result.commands"
 
 - name: Set login again (idempotent)
   ios_banner:
