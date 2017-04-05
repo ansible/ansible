@@ -444,6 +444,8 @@ class BigIpSslCertificate(object):
 
     def delete(self):
         changed = False
+        name = self.params['name']
+        partition = self.params['partition']
 
         check_mode = self.params['check_mode']
 
