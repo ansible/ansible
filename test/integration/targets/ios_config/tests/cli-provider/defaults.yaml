@@ -9,12 +9,14 @@
     parents:
       - interface Loopback999
     match: none
+    provider: "{{ cli }}"
 
 - name: configure device with defaults included
   ios_config:
     src: defaults/config.j2
     defaults: yes
     timeout: 90
+    provider: "{{ cli }}"
   register: result
 
 - debug: var=result
@@ -30,6 +32,7 @@
     src: defaults/config.j2
     defaults: yes
     timeout: 90
+    provider: "{{ cli }}"
   register: result
 
 - debug: var=result

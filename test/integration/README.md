@@ -156,29 +156,32 @@ For further help with this please contact `gundalow` in `#ansible-devel` on Free
 $ ANSIBLE_ROLES_PATH=targets ansible-playbook network-all.yaml
 ```
 
-*NOTE* To run the network tests you will need a number of test machines and sutabily configured inventory file, a sample is included in `test/integration/inventory.network`
+*NOTE* To run the network tests you will need a number of test machines and suitably configured inventory file, a sample is included in `test/integration/inventory.network`
 
 *NOTE* As with the rest of the integration tests, they can be found grouped by module in `test/integration/targets/MODULENAME/`
 
-To filter a set of test cases set `limit_to` to the name of the group, generally this is the name of the module: 
+To filter a set of test cases set `limit_to` to the name of the group, generally this is the name of the module:
 
 ```
 $ ANSIBLE_ROLES_PATH=targets ansible-playbook -i inventory.network network-all.yaml -e "limit_to=eos_command"
 ```
 
 To filter a singular test case set the tags options to eapi or cli, set limit_to to the test group,
-and test_cases to the name of the test:  
+and test_cases to the name of the test:
 
 ```
 $ ANSIBLE_ROLES_PATH=targets ansible-playbook -i inventory.network network-all.yaml --tags="cli" -e "limit_to=eos_command test_case=notequal"
 ```
 
-## Contributing Test Cases 
+## Contributing Test Cases
 
 Test cases are added to roles based on the module being testing. Test cases
-should include both `cli` and `eapi` test cases. Cli test cases should be
-added to `test/integration/targets/modulename/tests/cli` and eapi tests should be added to
-`test/integration/targets/modulename/tests/eapi`.
+should include:
+
+* `targets/modulename/tests/cli/*.yaml` - Without `provider:` set
+* `targets/modulename/tests/cli-provider/*.yaml` - With `provider:` set, not this is only for modules that existed in 2.2 (and older) releases
+* `targets/modulename/tests/(eapi,nxapi,etc)/*.yaml` - For other transports
+
 
 In addition to positive testing, negative tests are required to ensure user friendly warnings & errors are generated, rather than backtraces, for example:
 

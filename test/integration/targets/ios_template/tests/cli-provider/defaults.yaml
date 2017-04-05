@@ -3,40 +3,41 @@
 
 - name: setup
   ios_config:
-    commands:
-      - no description
-      - shutdown
-    parents:
-      - interface Loopback999
+    commands: no interface Loopback999
     match: none
+    provider: "{{ cli }}"
+  ignore_errors: yes
 
 - name: configure device with defaults included
-  ios_config:
+  ios_template:
     src: defaults/config.j2
-    defaults: yes
+    include_defaults: yes
+    provider: "{{ cli }}"
     timeout: 90
   register: result
-
-- debug: var=result
 
 - assert:
     that:
       - "result.changed == true"
-# FIXME Bug https://github.com/ansible/ansible/issues/19382
-#    - "result.updates is not defined"
+      - "result.updates is defined"
 
 - name: check device with defaults included
-  ios_config:
+  ios_template:
     src: defaults/config.j2
-    defaults: yes
+    include_defaults: yes
+    provider: "{{ cli }}"
     timeout: 90
   register: result
-
-- debug: var=result
 
 - assert:
     that:
       - "result.changed == false"
-      - "result.updates is not defined"
+      - "result.updates is defined"
+
+- name: teardown
+  ios_config:
+    commands: no interface Loopback999
+    match: none
+    provider: "{{ cli }}"
 
 - debug: msg="END cli/defaults.yaml"

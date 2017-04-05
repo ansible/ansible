@@ -1,17 +1,19 @@
 ---
-- debug: msg="START cli/basic.yaml"
+- debug: msg="START cli/force.yaml"
 
 - name: setup
   ios_config:
     commands:
       - no interface Loopback999
     match: none
-    timeout: 90
+    provider: "{{ cli }}"
   ignore_errors: yes
 
 - name: configure device with config
   ios_template:
     src: basic/config.j2
+    provider: "{{ cli }}"
+    force: yes
   register: result
 
 - assert:
@@ -22,11 +24,13 @@
 - name: check device with config
   ios_template:
     src: basic/config.j2
+    provider: "{{ cli }}"
+    force: yes
   register: result
 
 - assert:
     that:
-      - "result.changed == false"
+      - "result.changed == true"
       - "result.updates is defined"
 
 - name: teardown
@@ -34,5 +38,6 @@
     commands:
       - no interface Loopback999
     match: none
+    provider: "{{ cli }}"
 
-- debug: msg="END cli/basic.yaml"
+- debug: msg="END cli/force.yaml"
