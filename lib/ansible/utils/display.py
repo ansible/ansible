@@ -36,7 +36,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.utils.color import stringc
 from ansible.utils.singleton import Singleton
-from ansible.compat.six import with_metaclass
+from ansible.module_utils.six import with_metaclass
 from ansible.module_utils._text import to_bytes, to_text
 
 
