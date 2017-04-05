@@ -40,7 +40,10 @@ options:
     required: true
   encoding:
     description:
-      - The desired format for the returned key which can be either PEM or SSH
+      - The desired format for the returned key.
+    choices:
+      - PEM
+      - SSH
     required: true
 extends_documentation_fragment:
     - aws
