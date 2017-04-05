@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Maciej Delmanowski <drybjed@gmail.com>
+# (c) 2016, Cristian Klein <cristiklein@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -40,7 +41,7 @@ options:
               defined with xml.
     state:
         required: false
-        choices: [ "active", "inactive", "present", "absent" ]
+        choices: [ "active", "inactive", "present", "absent", "latest" ]
         description:
             - specify which state you want a network to be in.
               If 'active', network will be started.
@@ -48,6 +49,8 @@ options:
               state; if it's missing, you need to specify xml argument.
               If 'inactive', network will be stopped.
               If 'undefined' or 'absent', network will be removed from I(libvirt) configuration.
+              If 'latest', ensure the network is configured according to the
+              xml; undefine and redefine it otherwise.
     command:
         required: false
         choices: [ "define", "create", "start", "stop", "destroy",
@@ -83,6 +86,13 @@ EXAMPLES = '''
     command: define
     name: br_nat
     xml: '{{ lookup("template", "network/bridge.xml.j2") }}'
+
+# Ensure network configuration is up-to-date and active
+- virt_net:
+    state: latest
+    name: br_nat
+    xml: '{{ lookup("template", "network/bridge.xml.j2") }}'
+    autostart: yes
 
 # Start a network
 - virt_net:
@@ -537,6 +547,26 @@ def core(module):
                     v.destroy(name)
                 res['changed'] = True
                 res['msg'] = v.undefine(name)
+        elif state in [ 'latest' ]:
+            if xml is not None:
+                if v.get_xml(name) != xml:
+                    res['changed'] = True
+                    entries = v.list_nets()
+                    if name in entries:
+                        if v.status(name) is not 'inactive':
+                            v.destroy(name)
+                        res['msg_undefine'] = v.undefine(name)
+                    v.define(name, xml)
+                    res['created'] = name
+
+            if v.status(name) is not 'active':
+                res['changed'] = True
+                res['msg_start'] = v.start(name)
+
+            if autostart is not None:
+                if v.get_autostart(name) != autostart:
+                    res['changed'] = True
+                    res['msg_autostart'] = v.set_autostart(name, autostart)
         else:
             module.fail_json(msg="unexpected state")
 
@@ -597,7 +627,8 @@ def main():
     module = AnsibleModule (
         argument_spec = dict(
             name = dict(aliases=['network']),
-            state = dict(choices=['active', 'inactive', 'present', 'absent']),
+            state = dict(choices=['active', 'inactive', 'present', 'absent',
+                                  'latest']),
             command = dict(choices=ALL_COMMANDS),
             uri = dict(default='qemu:///system'),
             xml = dict(),
