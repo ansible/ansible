@@ -92,7 +92,7 @@ def map_obj_to_commands(updates, module):
     want, have = updates
     state = module.params['state']
 
-    if state == 'absent' and have['text']:
+    if state == 'absent' and 'text' in have.keys() and have['text']:
         commands.append('no banner %s' % module.params['banner'])
 
     elif state == 'present':
