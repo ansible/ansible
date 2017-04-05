@@ -84,7 +84,7 @@ options:
     choices: ['yes', 'no']
   validate_certs:
     description:
-    - If C(no), SSL certificates will not be validated. This should only be used
+      - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled sites using self-signed certificates.  If the transport
         argument is not nxapi, this value is ignored.
     choices: ['yes', 'no']
