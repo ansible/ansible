@@ -79,7 +79,7 @@ BLACKLIST_IMPORTS = {
         }
     },
 }
-
+WHITELIST_SHELL_OUT = frozenset(('service', 'async_wrapper'))
 
 class ReporterEncoder(json.JSONEncoder):
     def default(self, o):
@@ -1076,8 +1076,10 @@ class ModuleValidator(Validator):
             self._check_for_tabs()
             first_callable = self._get_first_callable()
             self._ensure_imports_below_docs(doc_info, first_callable)
-            self._check_for_subprocess()
-            self._check_for_os_call()
+
+            if self.name not in WHITELIST_SHELL_OUT:
+                self._check_for_subprocess()
+                self._check_for_os_call()
 
         if self._powershell_module():
             self._find_ps_replacers()
