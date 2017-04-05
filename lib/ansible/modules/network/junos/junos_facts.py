@@ -65,7 +65,7 @@ ansible_facts:
 """
 
 import re
-from xml.etree.ElementTree import Element, SubElement
+from xml.etree.ElementTree import Element, SubElement, tostring
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
@@ -89,7 +89,7 @@ class FactsBase(object):
         reply = command(self.module, command)
         output = reply.find('.//output')
         if not output:
-            module.fail_json(msg='failed to retrieve facts for command %s' % command)
+            self.module.fail_json(msg='failed to retrieve facts for command %s' % command)
         return str(output.text).strip()
 
     def rpc(self, rpc):
