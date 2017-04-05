@@ -774,11 +774,11 @@ def delete_autoscaling_group(connection, module):
             connection.delete_auto_scaling_group(AutoScalingGroupName=group_name, ForceDelete=True)
             return True
 
-        wait_timeout = time.time() + wait_timeout            
+        wait_timeout = time.time() + wait_timeout
         connection.update_auto_scaling_group(
-                AutoScalingGroupName=group_name,
-                MinSize=0, MaxSize=0,
-                DesiredCapacity=0)
+            AutoScalingGroupName=group_name,
+            MinSize=0, MaxSize=0,
+            DesiredCapacity=0)
         instances = True
         while instances and wait_for_instances and wait_timeout >= time.time():
             tmp_groups = connection.describe_auto_scaling_groups(AutoScalingGroupNames=[group_name]).get(
@@ -791,7 +791,7 @@ def delete_autoscaling_group(connection, module):
 
         if wait_timeout <= time.time():
             # waiting took too long
-            module.fail_json(msg = "Waited too long for old instances to terminate. %s" % time.asctime())        
+            module.fail_json(msg = "Waited too long for old instances to terminate. %s" % time.asctime())
 
         connection.delete_auto_scaling_group(AutoScalingGroupName=group_name)
         while len(connection.describe_auto_scaling_groups(AutoScalingGroupNames=[group_name]).get('AutoScalingGroups')):
