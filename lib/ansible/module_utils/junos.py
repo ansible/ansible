@@ -18,12 +18,11 @@
 #
 from contextlib import contextmanager
 
-from xml.etree.ElementTree import Element, SubElement, tostring
+from xml.etree.ElementTree import Element, SubElement
 
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.netconf import send_request, children
 from ansible.module_utils.netconf import discard_changes, validate
-from ansible.module_utils.network_common import to_list
 from ansible.module_utils.six import string_types
 
 ACTIONS = frozenset(['merge', 'override', 'replace', 'update', 'set'])
@@ -49,7 +48,7 @@ def check_args(module, warnings):
             warnings.append('argument %s has been deprecated and will be '
                     'removed in a future version' % key)
 
-def _validate_rollback_id(value):
+def _validate_rollback_id(module, value):
     try:
         if not 0 <= int(value) <= 49:
             raise ValueError
@@ -75,7 +74,7 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
         module.fail_json(msg='format must be text when action is set')
 
     if rollback is not None:
-        _validate_rollback_id(rollback)
+        _validate_rollback_id(module, rollback)
         xattrs = {'rollback': str(rollback)}
     else:
         xattrs = {'action': action, 'format': format}
@@ -103,7 +102,7 @@ def get_configuration(module, compare=False, format='xml', rollback='0'):
         module.fail_json(msg='invalid config format specified')
     xattrs = {'format': format}
     if compare:
-        _validate_rollback_id(rollback)
+        _validate_rollback_id(module, rollback)
         xattrs['compare'] = 'rollback'
         xattrs['rollback'] = str(rollback)
     return send_request(module, Element('get-configuration', xattrs))
