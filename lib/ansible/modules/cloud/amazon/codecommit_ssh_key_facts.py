@@ -40,7 +40,7 @@ options:
     required: true
   encoding:
     description:
-      - The desired format for the returned key PEM | SSH
+      - The desired format for the returned key which can be either PEM or SSH
     required: true
 extends_documentation_fragment:
     - aws
@@ -138,7 +138,7 @@ def main():
     argument_spec.update(
         dict(
             user_name=dict(required=True),
-            encoding=dict(required=True)
+            encoding=dict(required=True, choices=['PEM', 'SSH'])
         )
     )
 
