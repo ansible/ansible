@@ -62,7 +62,7 @@ from ansible.module_utils._text import to_bytes, to_text
 
 class LookupModule(LookupBase):
 
-    GLOBS =frozenset(['?', '*', '['])
+    GLOBS = frozenset(['?', '*', '['])
 
     def run(self, terms, variables=None, **kwargs):
 
