@@ -36,11 +36,17 @@ extends_documentation_fragment: fortios
 options:
   id:
     description:
-      - Policy ID.
+      - "Policy ID.
+        Warning: policy ID number is different than Policy sequence number.
+        The policy ID is the number assigned at policy creation.
+        The sequence number represents the order in which the Fortigate will evaluate the rule for policy enforcement,
+        and also the order in which rules are listed in the GUI and CLI.
+        These two numbers do not necessarily correlate: this module is based off policy ID.
+        TIP: policy ID can be viewed in the GUI by adding 'ID' to the display columns"
     required: true
   state:
     description:
-      - Specifies if address need to be added or deleted.
+      - Specifies if policy I(id) need to be added or deleted.
     choices: ['present', 'absent']
     default: present
   src_intf:
@@ -53,8 +59,7 @@ options:
     default: any
   src_addr:
     description:
-      - Specifies source address (or group) object name(s).
-    required: true
+      - Specifies source address (or group) object name(s). Required when I(state=present).
   src_addr_negate:
     description:
       - Negate source address param.
@@ -62,8 +67,7 @@ options:
     choices: ["true", "false"]
   dst_addr:
     description:
-      - Specifies destination address (or group) object name(s).
-    required: true
+      - Specifies destination address (or group) object name(s). Required when I(state=present).
   dst_addr_negate:
     description:
       - Negate destination address param.
@@ -71,14 +75,12 @@ options:
     choices: ["true", "false"]
   policy_action:
     description:
-      - Specifies accept or deny action policy.
+      - Specifies accept or deny action policy. Required when I(state=present).
     choices: ['accept', 'deny']
-    required: true
     aliases: ['action']
   service:
     description:
-      - "Specifies policy service(s), could be a list (ex: ['MAIL','DNS'])."
-    required: true
+      - "Specifies policy service(s), could be a list (ex: ['MAIL','DNS']). Required when I(state=present)."
     aliases:
       - services
   service_negate:
@@ -180,12 +182,12 @@ def main():
         src_intf                  = dict(default='any'),
         dst_intf                  = dict(default='any'),
         state                     = dict(choices=['present', 'absent'], default='present'),
-        src_addr                  = dict(required=True, type='list'),
-        dst_addr                  = dict(required=True, type='list'),
+        src_addr                  = dict(type='list'),
+        dst_addr                  = dict(type='list'),
         src_addr_negate           = dict(type='bool', default=False),
         dst_addr_negate           = dict(type='bool', default=False),
-        policy_action             = dict(choices=['accept','deny'], required=True, aliases=['action']),
-        service                   = dict(aliases=['services'], required=True, type='list'),
+        policy_action             = dict(choices=['accept','deny'], aliases=['action']),
+        service                   = dict(aliases=['services'], type='list'),
         service_negate            = dict(type='bool', default=False),
         schedule                  = dict(type='str', default='always'),
         nat                       = dict(type='bool', default=False),
@@ -200,14 +202,21 @@ def main():
     #merge global required_if & argument_spec from module_utils/fortios.py
     argument_spec.update(fortios_argument_spec)
 
+    ipv4_policy_required_if = [
+        ['state', 'present', ['src_addr', 'dst_addr', 'policy_action', 'service']],
+    ]
+
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=fortios_required_if,
+        required_if=fortios_required_if + ipv4_policy_required_if ,
     )
 
     #init forti object
     fortigate = AnsibleFortios(module)
+
+    #Security policies root path
+    config_path = 'firewall policy'
 
     #test params
     #NAT related
@@ -221,11 +230,11 @@ def main():
     policy_id = str(module.params['id'])
 
     #load config
-    fortigate.load_config('firewall policy')
+    fortigate.load_config(config_path)
 
     #Absent State
     if module.params['state'] == 'absent':
-        fortigate.candidate_config[path].del_block(policy_id)
+        fortigate.candidate_config[config_path].del_block(policy_id)
 
     #Present state
     elif module.params['state'] == 'present':
