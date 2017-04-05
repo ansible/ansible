@@ -25,8 +25,8 @@
 - assert:
     that:
       - "result.changed == true"
-      - "'this is my login banner' in result.commands"
-      - "'that has a multiline' in result.commands"
+      - "result.commands.0.cmd == 'banner login'"
+      - "result.commands.0.input == 'this is my login banner\nthat has a multiline\nstring'"
       # Ensure sessions contains epoc. Will fail after 18th May 2033
       - "'ansible_1' in result.session_name"
 
