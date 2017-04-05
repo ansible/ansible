@@ -119,7 +119,7 @@ from functools import partial
 from ncclient.xml_ import new_ele, sub_ele, to_xml
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.junos import load
+from ansible.module_utils.junos import load_config
 from ansible.module_utils.six import iteritems
 
 ROLES = ['operator', 'read-only', 'super-user', 'unauthorized']
@@ -242,7 +242,7 @@ def main():
     if module.params['purge']:
         kwargs['action'] = 'replace'
 
-    diff = load(module, ele, **kwargs)
+    diff = load_config(module, ele, **kwargs)
 
     if diff:
         result.update({

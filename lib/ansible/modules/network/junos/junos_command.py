@@ -246,7 +246,7 @@ def parse_rpcs(module):
 
     return items
 
-def parse_commands(module):
+def parse_commands(module, warnings):
     items = list()
 
     for command in (module.params['commands'] or list()):
@@ -301,7 +301,7 @@ def main():
     check_args(module, warnings)
 
     items = list()
-    items.extend(parse_commands(module))
+    items.extend(parse_commands(module, warnings))
     items.extend(parse_rpcs(module))
 
     wait_for = module.params['wait_for'] or list()
