@@ -104,6 +104,11 @@ options:
             - Wait until vCenter detects an IP address for the VM
             - This requires vmware-tools (vmtoolsd) to properly work after creation
         default: False
+   snapshot_name:
+        description:
+            - A string that when specified, will create a linked clone copy of the VM. Snapshot must already be taken in vCenter.
+        default: None
+        version_added: "2.4"
    force:
         description:
             - Ignore warnings and complete the actions
@@ -1089,9 +1094,23 @@ class PyVmomiHelper(object):
                 relospec.datastore = datastore
                 relospec.pool = resource_pool
 
+                if self.params['snapshot_name'] is not None:
+                    relospec.diskMoveType = vim.vm.RelocateSpec.DiskMoveOptions.createNewChildDiskBacking
+
                 clonespec = vim.vm.CloneSpec(template=self.params['is_template'], location=relospec)
                 if self.customspec:
                     clonespec.customization = self.customspec
+
+                if self.params['snapshot_name'] is not None:
+                    snapshot = self.get_snapshots_by_name_recursively(snapshots=vm_obj.snapshot.rootSnapshotList,
+                                                                      snapname=self.params['snapshot_name'])
+                    if len(snapshot) != 1:
+                        self.module.fail_json(msg='virtual machine "{0}" does not contain snapshot named "{1}"'.format(
+                            self.params['template'], self.params['snapshot_name']))
+
+                    if len(snapshot) == 1:
+                       snapshot = snapshot[0].snapshot
+                    clonespec.snapshot = snapshot
 
                 clonespec.config = self.configspec
                 task = vm_obj.Clone(folder=destfolder, name=self.params['name'], spec=clonespec)
@@ -1133,6 +1152,15 @@ class PyVmomiHelper(object):
 
             vm_facts = self.gather_facts(vm)
             return {'changed': self.change_detected, 'failed': False, 'instance': vm_facts}
+
+    def get_snapshots_by_name_recursively(self, snapshots, snapname):
+        snap_obj = []
+        for snapshot in snapshots:
+            if snapshot.name == snapname:
+                snap_obj.append(snapshot)
+            else:
+                snap_obj = snap_obj + self.get_snapshots_by_name_recursively(snapshot.childSnapshotList, snapname)
+        return snap_obj
 
     def reconfigure_vm(self):
         self.configspec = vim.vm.ConfigSpec()
@@ -1276,6 +1304,7 @@ def main():
             esxi_hostname=dict(type='str'),
             cluster=dict(type='str'),
             wait_for_ip_address=dict(type='bool', default=False),
+            snapshot_name=dict(type='str', default=None),
             networks=dict(type='list', default=[]),
             resource_pool=dict(type='str'),
             customization=dict(type='dict', no_log=True, default={}),
