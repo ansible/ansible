@@ -255,7 +255,7 @@ try:
 except ImportError:
     pass  # will be detected by imported HAS_BOTO3
 
-#log.basicConfig(filename='/tmp/ansible_ec2_asg.log', level=log.DEBUG, format='%(asctime)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+# log.basicConfig(filename='/tmp/ansible_ec2_asg.log', level=log.DEBUG, format='%(asctime)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 ASG_ATTRIBUTES = ('AvailabilityZones', 'DefaultCooldown', 'DesiredCapacity',
                   'HealthCheckGracePeriod', 'HealthCheckType', 'LaunchConfigurationName',
@@ -263,6 +263,7 @@ ASG_ATTRIBUTES = ('AvailabilityZones', 'DefaultCooldown', 'DesiredCapacity',
                   'TerminationPolicies', 'VPCZoneIdentifier')
 
 INSTANCE_ATTRIBUTES = ('instance_id', 'health_status', 'lifecycle_state', 'launch_config_name')
+
 
 def enforce_required_arguments(module):
     ''' As many arguments are not required for autoscale group deletion
@@ -314,6 +315,7 @@ def get_properties(autoscaling_group):
 
     return properties
 
+
 def elb_dreg(asg_connection, module, group_name, instance_id):
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     as_group = asg_connection.describe_auto_scaling_groups(AutoScalingGroupNames=[group_name])['AutoScalingGroups'][0]
@@ -350,7 +352,7 @@ def elb_dreg(asg_connection, module, group_name, instance_id):
 
     if wait_timeout <= time.time():
         # waiting took too long
-        module.fail_json(msg = "Waited too long for instance to deregister. {0}".format(time.asctime()))
+        module.fail_json(msg="Waited too long for instance to deregister. {0}".format(time.asctime()))
 
 
 def elb_healthy(asg_connection, elb_connection, module, group_name):
@@ -500,6 +502,7 @@ def suspend_processes(ec2_connection, as_group, module):
 
     return True
 
+
 @AWSRetry.backoff(tries=3, delay=0.1)
 def create_autoscaling_group(connection, module):
     group_name = module.params.get('name')
@@ -539,8 +542,8 @@ def create_autoscaling_group(connection, module):
 
     asg_tags = []
     for tag in set_tags:
-        for k,v in tag.items():
-            if k !='propagate_at_launch':
+        for k, v in tag.items():
+            if k != 'propagate_at_launch':
                 asg_tags.append(dict(Key=k,
                                      Value=v,
                                      PropagateAtLaunch=bool(tag.get('propagate_at_launch', True)),
@@ -791,7 +794,7 @@ def delete_autoscaling_group(connection, module):
 
         if wait_timeout <= time.time():
             # waiting took too long
-            module.fail_json(msg = "Waited too long for old instances to terminate. %s" % time.asctime())
+            module.fail_json(msg="Waited too long for old instances to terminate. %s" % time.asctime())
 
         connection.delete_auto_scaling_group(AutoScalingGroupName=group_name)
         while len(connection.describe_auto_scaling_groups(AutoScalingGroupNames=[group_name]).get('AutoScalingGroups')):
@@ -799,6 +802,7 @@ def delete_autoscaling_group(connection, module):
         return True
 
     return False
+
 
 def get_chunks(l, n):
     for i in range(0, len(l), n):
@@ -821,9 +825,9 @@ def replace(connection, module):
     batch_size = module.params.get('replace_batch_size')
     wait_timeout = module.params.get('wait_timeout')
     group_name = module.params.get('name')
-    max_size =  module.params.get('max_size')
-    min_size =  module.params.get('min_size')
-    desired_capacity =  module.params.get('desired_capacity')
+    max_size = module.params.get('max_size')
+    min_size = module.params.get('min_size')
+    desired_capacity = module.params.get('desired_capacity')
     lc_check = module.params.get('lc_check')
     replace_instances = module.params.get('replace_instances')
 
@@ -892,8 +896,9 @@ def replace(connection, module):
     as_group = connection.describe_auto_scaling_groups(AutoScalingGroupNames=[group_name])['AutoScalingGroups'][0]
     asg_properties = get_properties(as_group)
     log.debug("Rolling update complete.")
-    changed=True
+    changed = True
     return(changed, asg_properties)
+
 
 def get_instances_by_lc(props, lc_check, initial_instances):
 
@@ -902,7 +907,7 @@ def get_instances_by_lc(props, lc_check, initial_instances):
     # old instances are those that have the old launch config
     if lc_check:
         for i in props['instances']:
-            if props['instance_facts'][i]['launch_config_name']  == props['launch_config_name']:
+            if props['instance_facts'][i]['launch_config_name'] == props['launch_config_name']:
                 new_instances.append(i)
             else:
                 old_instances.append(i)
@@ -922,13 +927,13 @@ def get_instances_by_lc(props, lc_check, initial_instances):
 
 def list_purgeable_instances(props, lc_check, replace_instances, initial_instances):
     instances_to_terminate = []
-    instances = ( inst_id for inst_id in replace_instances if inst_id in props['instances'])
+    instances = (inst_id for inst_id in replace_instances if inst_id in props['instances'])
 
     # check to make sure instances given are actually in the given ASG
     # and they have a non-current launch config
     if lc_check:
         for i in instances:
-            if props['instance_facts'][i]['launch_config_name']  != props['launch_config_name']:
+            if props['instance_facts'][i]['launch_config_name'] != props['launch_config_name']:
                 instances_to_terminate.append(i)
     else:
         for i in instances:
@@ -936,10 +941,11 @@ def list_purgeable_instances(props, lc_check, replace_instances, initial_instanc
                 instances_to_terminate.append(i)
     return instances_to_terminate
 
+
 def terminate_batch(connection, module, replace_instances, initial_instances, leftovers=False):
     batch_size = module.params.get('replace_batch_size')
-    min_size =  module.params.get('min_size')
-    desired_capacity =  module.params.get('desired_capacity')
+    min_size = module.params.get('min_size')
+    desired_capacity = module.params.get('desired_capacity')
     group_name = module.params.get('name')
     wait_timeout = int(module.params.get('wait_timeout'))
     lc_check = module.params.get('lc_check')
@@ -968,7 +974,7 @@ def terminate_batch(connection, module, replace_instances, initial_instances, le
             connection.update_auto_scaling_group(AutoScalingGroupName=as_group['AutoScalingGroupName'],
                                                  MinSize=min_size)
             log.debug("Updating minimum size back to original of {0}".format(min_size))
-        #if are some leftover old instances, but we are already at capacity with new ones
+        # if are some leftover old instances, but we are already at capacity with new ones
         # we don't want to decrement capacity
         if leftovers:
             decrement_capacity = False
@@ -977,7 +983,7 @@ def terminate_batch(connection, module, replace_instances, initial_instances, le
         desired_size = min_size
         log.debug("No new instances needed")
 
-    if num_new_inst_needed < batch_size and num_new_inst_needed !=0 :
+    if num_new_inst_needed < batch_size and num_new_inst_needed != 0:
         instances_to_terminate = instances_to_terminate[:num_new_inst_needed]
         decrement_capacity = False
         break_loop = False
@@ -1013,18 +1019,18 @@ def wait_for_term_inst(connection, module, term_instances):
         as_group = connection.describe_auto_scaling_groups(AutoScalingGroupNames=[group_name])['AutoScalingGroups'][0]
         props = get_properties(as_group)
         instance_facts = props['instance_facts']
-        instances = ( i for i in instance_facts if i in term_instances)
+        instances = (i for i in instance_facts if i in term_instances)
         for i in instances:
             lifecycle = instance_facts[i]['lifecycle_state']
             health = instance_facts[i]['health_status']
-            log.debug("Instance {0} has state of {1},{2}".format(i,lifecycle,health ))
+            log.debug("Instance {0} has state of {1},{2}".format(i, lifecycle, health))
             if lifecycle == 'Terminating' or health == 'Unhealthy':
                 count += 1
         time.sleep(10)
 
     if wait_timeout <= time.time():
         # waiting took too long
-        module.fail_json(msg = "Waited too long for old instances to terminate. %s" % time.asctime())
+        module.fail_json(msg="Waited too long for old instances to terminate. %s" % time.asctime())
 
 
 def wait_for_new_inst(module, connection, group_name, wait_timeout, desired_size, prop):
@@ -1042,9 +1048,10 @@ def wait_for_new_inst(module, connection, group_name, wait_timeout, desired_size
         props = get_properties(as_group)
     if wait_timeout <= time.time():
         # waiting took too long
-        module.fail_json(msg = "Waited too long for new instances to become viable. %s" % time.asctime())
+        module.fail_json(msg="Waited too long for new instances to become viable. %s" % time.asctime())
     log.debug("Reached {0}: {1}".format(prop, desired_size))
     return props
+
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -1085,7 +1092,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        mutually_exclusive = [['replace_all_instances', 'replace_instances']]
+        mutually_exclusive=[['replace_all_instances', 'replace_instances']]
     )
 
     if not HAS_BOTO3:
@@ -1109,15 +1116,15 @@ def main():
     changed = create_changed = replace_changed = False
 
     if state == 'present':
-        create_changed, asg_properties=create_autoscaling_group(connection, module)
+        create_changed, asg_properties = create_autoscaling_group(connection, module)
     elif state == 'absent':
         changed = delete_autoscaling_group(connection, module)
-        module.exit_json( changed = changed )
+        module.exit_json(changed=changed)
     if replace_all_instances or replace_instances:
-        replace_changed, asg_properties=replace(connection, module)
+        replace_changed, asg_properties = replace(connection, module)
     if create_changed or replace_changed:
         changed = True
-    module.exit_json( changed = changed, **asg_properties )
+    module.exit_json(changed=changed, **asg_properties)
 
 if __name__ == '__main__':
     main()
