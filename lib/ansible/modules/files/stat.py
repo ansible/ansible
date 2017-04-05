@@ -39,7 +39,8 @@ options:
     default: no
   get_md5:
     description:
-      - Whether to return the md5 sum of the file.  Will return None if we're
+      - Whether to return the md5 sum of the file.
+      - Will return None if not a regular file or if we're
         unable to use md5 (Common for FIPS-140 compliant systems)
     required: false
     default: yes
