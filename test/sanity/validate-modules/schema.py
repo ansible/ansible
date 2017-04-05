@@ -57,6 +57,30 @@ option_schema = Schema(
 # for example in Python 3: {str: option_schema}
 list_dict_option_schema = [{str_type: option_schema} for str_type in string_types]
 
+
+def return_schema(data):
+
+    return_schema_dict = {
+        Required('description'): Any(basestring, list),
+        Required('returned'): basestring,
+        Required('type'): Any('string', 'list', 'boolean', 'dict', 'complex', 'bool', 'float', 'int', 'dictionary', 'str'),
+        'sample': Any(None, basestring, list, dict, int, float),
+        'example': Any(None, basestring, list, dict, int, float)
+    }
+    if isinstance(data, dict):
+        if 'type' in data and (data['type'] == 'complex'):
+            # This will just check if the schema has a 'contains' value.
+            # It won't recursively validate the contents of the 'contains' field
+            additional_schema = {
+                Required('contains'): Any(basestring, dict, list)
+            }
+            return_schema_dict.update(additional_schema)
+
+    return Schema(
+        return_schema_dict,
+        extra=PREVENT_EXTRA
+    )
+
 def doc_schema(module_name):
     if module_name.startswith('_'):
         module_name = module_name[1:]
@@ -77,6 +101,7 @@ def doc_schema(module_name):
         extra=PREVENT_EXTRA
     )
 
+
 def metadata_schema(deprecated):
     valid_status = Any('stableinterface', 'preview', 'deprecated', 'removed')
     if deprecated:
@@ -94,7 +119,7 @@ def metadata_schema(deprecated):
 
 # Things to add soon
 ####################
-# 1) Validate RETURN, including `contains` if `type: complex`
+# 1) Recursively validate `type: complex` fields
 #    This will improve documentation, though require fair amount of module tidyup
 
 # Possible Future Enhancements

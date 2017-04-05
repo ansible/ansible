@@ -41,7 +41,7 @@ from ansible.utils.plugin_docs import BLACKLIST, get_docstring
 
 from module_args import get_argument_spec
 
-from schema import doc_schema, option_schema, metadata_schema
+from schema import doc_schema, option_schema, metadata_schema, return_schema
 
 from utils import CaptureStd, parse_yaml
 from voluptuous.humanize import humanize_error
@@ -696,9 +696,13 @@ class ModuleValidator(Validator):
             else:
                 self.warnings.append((312, 'No RETURN provided'))
         else:
-            _, errors, traces = parse_yaml(doc_info['RETURN']['value'],
+            data, errors, traces = parse_yaml(doc_info['RETURN']['value'],
                                            doc_info['RETURN']['lineno'],
                                            self.name, 'RETURN')
+
+            if data:
+                for ret_key in data:
+                    self._validate_docs_schema(data[ret_key], return_schema(data[ret_key]), 'RETURN', 319)
             self.errors.extend([(313, error) for error in errors])
             self.traces.extend(traces)
 
