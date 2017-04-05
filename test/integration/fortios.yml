@@ -4,10 +4,6 @@
   gather_facts: no
   tags:
     - fortios
-  pre_tasks:
-    - name: install pyfg library
-      pip:
-        name: pyfg
 
   roles:
     - { role: fortios_ipv4_policy, tags: test_fortios_ipv4_policy }
