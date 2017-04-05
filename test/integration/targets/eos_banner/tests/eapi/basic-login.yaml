@@ -5,7 +5,7 @@
     banner: login
     state: absent
     authorize: yes
-    transport: "{{ eapi }}"
+    provider: "{{ eapi }}"
 
 - name: Set login
   eos_banner:
@@ -16,7 +16,7 @@
       string
     state: present
     authorize: yes
-    transport: "{{ eapi }}"
+    provider: "{{ eapi }}"
   register: result
 
 - debug:
@@ -39,7 +39,7 @@
       string
     state: present
     authorize: yes
-    transport: "{{ eapi }}"
+    provider: "{{ eapi }}"
   register: result
 
 - assert:
