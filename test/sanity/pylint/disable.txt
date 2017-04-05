@@ -15,7 +15,6 @@ not-callable
 R
 raising-bad-type
 raising-non-exception
-too-few-format-args
 too-many-function-args
 truncated-format-string
 undefined-variable
