@@ -45,10 +45,7 @@ def get_db_snapshot(conn, snapshotid):
 class RDSDBInstance(object):
     def __init__(self, dbinstance):
         self.instance = dbinstance
-        if 'DBInstanceIdentifier' not in dbinstance:
-            self.name = None
-        else:
-            self.name = self.instance.get('DBInstanceIdentifier')
+        self.name = self.instance.get('DBInstanceIdentifier')
         self.status = self.instance.get('DBInstanceStatus')
         self.data = self.get_data()
 
