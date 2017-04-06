@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import codecs
 import os
 import re
 import time
@@ -74,7 +75,7 @@ class ActionModule(_ActionModule):
             os.remove(fn)
         tstamp = time.strftime("%Y-%m-%d@%H:%M:%S", time.localtime(time.time()))
         filename = '%s/%s_config.%s' % (backup_path, host, tstamp)
-        open(filename, 'w').write(contents)
+        codecs.open(filename, 'w', encoding='utf8').write(contents)
         return filename
 
     def _handle_template(self):
@@ -110,4 +111,3 @@ class ActionModule(_ActionModule):
         searchpath.append(os.path.dirname(source))
         self._templar.environment.loader.searchpath = searchpath
         self._task.args['src'] = self._templar.template(template_data)
-

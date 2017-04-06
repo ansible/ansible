@@ -231,7 +231,7 @@ def filter_delete_statements(module, candidate):
     if match is None:
         # Could not find configuration-set in reply, perhaps device does not support it?
         return candidate
-    config = str(match.text)
+    config = match.text
 
     modified_candidate = candidate[:]
     for index, line in enumerate(candidate):
@@ -324,7 +324,7 @@ def main():
         else:
             module.fail_json(msg='unable to retrieve device configuration')
 
-        result['__backup__'] = str(match.text).strip()
+        result['__backup__'] = match.text.strip()
 
     if module.params['rollback']:
         if not module.check_mode:
