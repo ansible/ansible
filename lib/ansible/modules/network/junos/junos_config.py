@@ -194,6 +194,7 @@ from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.junos import check_args as junos_check_args
 from ansible.module_utils.netconf import send_request
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_text
 
 USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_config'
@@ -266,6 +267,7 @@ def configure_device(module, warnings):
             kwargs.update({'format': config_format, 'action': module.params['update']})
 
     if isinstance(candidate, string_types):
+        candidate = to_text(candidate, encoding='latin1')
         candidate = candidate.split('\n')
 
     # this is done to filter out `delete ...` statements which map to
