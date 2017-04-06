@@ -429,6 +429,10 @@ class CloudFrontServiceManager:
             cache_behavior = {}
         if 'min_ttl' not in cache_behavior:
             cache_behavior["min_t_t_l"] = self.__default_cache_behavior_min_ttl
+        else:
+            temp_min_ttl = cache_behavior["min_ttl"]
+            cache_behavior.pop("min_ttl", None)
+            cache_behavior["min_t_t_l"] = temp_min_ttl
         if 'max_ttl' not in cache_behavior:
             cache_behavior["max_t_t_l"] = self.__default_cache_behavior_max_ttl
         if 'compress' not in cache_behavior:
@@ -472,6 +476,8 @@ class CloudFrontServiceManager:
             cache_behavior["viewer_protocol_policy"] = self.__default_cache_behavior_viewer_protocol_policy
         if 'smooth_streaming' not in cache_behavior:
             cache_behavior["smooth_streaming"] = self.__default_cache_behavior_smooth_streaming
+        print "cb::: " + str(cache_behavior)
+        return cache_behavior
 
     def validate_custom_origin_configs(self, custom_origin_configs):
         custom_origin_config = origin.get('custom_origin_config')
@@ -858,15 +864,15 @@ def main():
             config["restrictions"] = valid_restrictions
         config = service_mgr.validate_distribution_config_parameters(config, default_root_object,
                 is_ipv6_enabled, http_version, comment)
-    elif create_streaming_distribution:
+    elif create_update_streaming_distribution:
         config = service_mgr.validate_streaming_distribution_config_parameters(config, comment,
                 trusted_signers, s3_origin, default_s3_origin_domain_name, default_s3_origin_access_identity)
     if create_distribution or create_streaming_distribution:
         config = service_mgr.validate_caller_reference_for_distribution_creation(config, caller_reference)
+   
+    config = snake_dict_to_pascal_dict(config)
 
-    config = snake_dict_to_pascal_dict(pascal_dict_to_snake_dict(config, True))
-
-    #print "cache behaviors:: " + str(snake_dict_to_pascal_dict(pascal_dict_to_snake_dict(config, True)))
+    print "cache behaviors:: " + str(snake_dict_to_pascal_dict(pascal_dict_to_snake_dict(config, True)))
 
     if create_origin_access_identity:
         result=service_mgr.create_origin_access_identity(caller_reference, comment)
@@ -896,7 +902,7 @@ def main():
     elif update_streaming_distribution:
         result=service_mgr.update_streaming_distribution(config, streaming_distribution_id, e_tag)
 
-    module.exit_json(changed=True, **camel_dict_to_snake_dict(result))
+    #module.exit_json(changed=True, **camel_dict_to_snake_dict(result))
 
 if __name__ == '__main__':
     main()
