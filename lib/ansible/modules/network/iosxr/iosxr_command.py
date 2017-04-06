@@ -163,7 +163,6 @@ def parse_commands(module, warnings):
                 msg='iosxr_command does not support running config mode '
                     'commands.  Please use iosxr_config instead'
             )
-        commands[index] = module.jsonify(item)
     return commands
 
 def main():
