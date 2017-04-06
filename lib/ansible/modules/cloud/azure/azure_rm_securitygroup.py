@@ -524,8 +524,9 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
             purge_default_rules=dict(type='bool', default=False),
             purge_rules=dict(type='bool', default=False),
             resource_group=dict(required=True, type='str'),
+            resource=dict(type='str', default=None),
             rules=dict(type='list'),
-            state=dict(type='str', default='present', choices=['present', 'absent']),
+            state=dict(type='str', default='present', choices=['present', 'absent'])
         )
 
         self.default_rules = None

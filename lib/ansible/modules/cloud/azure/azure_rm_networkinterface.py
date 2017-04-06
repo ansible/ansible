@@ -307,6 +307,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
             os_type=dict(type='str', choices=['Windows', 'Linux'], default='Linux'),
             open_ports=dict(type='list'),
             public_ip_allocation_method=dict(type='str', choices=['Dynamic', 'Static'], default='Dynamic'),
+            resource=dict(type='str', default=None)
         )
 
         self.resource_group = None

@@ -408,6 +408,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
 
         self.module_arg_spec = dict(
             resource_group_name=dict(type='str', required=True, aliases=['resource_group']),
+            resource=dict(type='str', default=None),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             template=dict(type='dict', default=None),
             parameters=dict(type='dict', default=None),

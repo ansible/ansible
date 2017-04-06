@@ -162,6 +162,7 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
             location=dict(type='str'),
             allocation_method=dict(type='str', default='Dynamic', choices=['Dynamic', 'Static']),
             domain_name=dict(type='str', aliases=['domain_name_label']),
+            resource=dict(type='str', default=None)
         )
 
         self.resource_group = None

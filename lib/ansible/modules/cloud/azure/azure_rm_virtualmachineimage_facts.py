@@ -133,7 +133,8 @@ class AzureRMVirtualMachineImageFacts(AzureRMModuleBase):
             publisher=dict(type='str'),
             offer=dict(type='str'),
             sku=dict(type='str'),
-            version=dict(type='str')
+            version=dict(type='str'),
+            resource=dict(type='str', default=None)
         )
 
         self.results = dict(

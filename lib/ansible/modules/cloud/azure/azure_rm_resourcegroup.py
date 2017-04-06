@@ -131,7 +131,8 @@ class AzureRMResourceGroup(AzureRMModuleBase):
             name=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             location=dict(type='str'),
-            force=dict(type='bool', default=False)
+            force=dict(type='bool', default=False),
+            resource=dict(type='str', default=None)
         )
 
         self.name = None
