@@ -197,7 +197,7 @@ class LinodeInventory(object):
         try:
             return Linode.find(api_id=linode_id)
         except chube_api.linode_api.ApiError as e:
-            sys.exit("Looks like Linode's API is down:\n%" % e)
+            sys.exit("Looks like Linode's API is down:\n%s" % e)
 
     def populate_datacenter_cache(self):
         """Creates self._datacenter_cache, containing all Datacenters indexed by ID."""

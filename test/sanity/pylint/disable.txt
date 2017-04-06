@@ -1,13 +1,11 @@
 access-member-before-definition
 assignment-from-no-return
-bad-format-character
 C
 function-redefined
 import-error
 locally-disabled
 locally-enabled
 method-hidden
-misplaced-bare-raise
 no-member
 no-name-in-module
 no-value-for-parameter
@@ -17,11 +15,7 @@ not-callable
 R
 raising-bad-type
 raising-non-exception
-return-in-init
-too-few-format-args
-too-many-format-args
 too-many-function-args
-truncated-format-string
 undefined-variable
 unexpected-keyword-arg
 unsubscriptable-object
