@@ -336,6 +336,7 @@ state:
     }
 '''  # NOQA
 
+from ansible.module_utils.six import string_types
 from ansible.module_utils.basic import *
 from ansible.module_utils.azure_rm_common import *
 
@@ -366,7 +367,13 @@ def validate_rule(rule, rule_type=None):
     priority = rule.get('priority', None)
     if not priority:
         raise Exception("Rule priority is required.")
-    if not isinstance(priority, (int, long)):
+    if isinstance(priority, string_types):
+        try:
+            priority = int(priority)
+            rule['priority'] = priority
+        except ValueError:
+            raise Exception("Can't parse rule priority integer.")
+    elif not isinstance(priority, (int, long)):
         raise Exception("Rule priority attribute must be an integer.")
     if rule_type != 'default' and (priority < 100 or priority > 4096):
         raise Exception("Rule priority must be between 100 and 4096")
@@ -416,10 +423,10 @@ def compare_rules(r, rule):
         if rule['protocol'] != r['protocol']:
             changed = True
             r['protocol'] = rule['protocol']
-        if rule['source_port_range'] != r['source_port_range']:
+        if str(rule['source_port_range']) != r['source_port_range']:
             changed = True
             r['source_port_range'] = rule['source_port_range']
-        if rule['destination_port_range'] != r['destination_port_range']:
+        if str(rule['destination_port_range']) != r['destination_port_range']:
             changed = True
             r['destination_port_range'] = rule['destination_port_range']
         if rule['access'] != r['access']:
