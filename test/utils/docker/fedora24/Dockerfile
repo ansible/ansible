@@ -10,6 +10,10 @@ rm -f /lib/systemd/system/basic.target.wants/*; \
 rm -f /lib/systemd/system/anaconda.target.wants/*;
 
 RUN dnf clean all && \
+    dnf -y update libsolv && \
+    dnf clean all
+
+RUN dnf clean all && \
     dnf -y --setopt=install_weak_deps=false install \
     acl \
     asciidoc \
