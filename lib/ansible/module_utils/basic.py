@@ -1882,7 +1882,7 @@ class AnsibleModule(object):
         try:
             cwd = os.getcwd()
             if not os.access(cwd, os.F_OK|os.R_OK):
-                raise
+                raise Exception()
             return cwd
         except:
             # we don't have access to the cwd, probably because of sudo.

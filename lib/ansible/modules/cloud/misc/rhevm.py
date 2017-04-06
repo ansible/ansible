@@ -449,7 +449,7 @@ class RHEVConn(object):
                 currentdisk = VM.disks.get(name=diskname)
                 if attempt == 100:
                     setMsg("Error, disk %s, state %s" % (diskname, str(currentdisk.status.state)))
-                    raise
+                    raise Exception()
                 else:
                     attempt += 1
                     time.sleep(2)
@@ -489,7 +489,7 @@ class RHEVConn(object):
                 currentnic = VM.nics.get(name=nicname)
                 if attempt == 100:
                     setMsg("Error, iface %s, state %s" % (nicname, str(currentnic.active)))
-                    raise
+                    raise Exception()
                 else:
                     attempt += 1
                     time.sleep(2)

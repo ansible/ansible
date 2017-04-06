@@ -200,8 +200,7 @@ class AzureRMResourceGroup(AzureRMModuleBase):
                     # Create resource group
                     self.log("Creating resource group {0}".format(self.name))
                     if not self.location:
-                        self.fail("Parameter error: location is required when creating a resource "
-                                  "group.".format(self.name))
+                        self.fail("Parameter error: location is required when creating a resource group.")
                     if self.name_exists():
                         self.fail("Error: a resource group with the name {0} already exists in your subscription."
                                   .format(self.name))
