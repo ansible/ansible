@@ -116,6 +116,8 @@ output:
     sample: 'Result: true'
 '''
 
+import json
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 try:
@@ -124,6 +126,26 @@ try:
 except ImportError:
     # python3
     from urllib.parse import urlencode
+
+def is_csrf_protection_enabled(module):
+    resp, info = fetch_url(module,
+                           module.params['url'] + '/api/json',
+                           method='GET')
+    if info["status"] != 200:
+        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
+
+    content = resp.read()
+    return json.loads(content).get('useCrumbs', False)
+
+def get_crumb(module):
+    resp, info = fetch_url(module,
+                           module.params['url'] + '/crumbIssuer/api/json',
+                           method='GET')
+    if info["status"] != 200:
+        module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"])
+
+    content = resp.read()
+    return json.loads(content)
 
 def main():
 
@@ -153,10 +175,15 @@ def main():
     else:
         script_contents = module.params['script']
 
+    headers = {}
+    if is_csrf_protection_enabled(module):
+        crumb = get_crumb(module)
+        headers = {crumb['crumbRequestField']: crumb['crumb']}
 
     resp, info = fetch_url(module,
                            module.params['url'] + "/scriptText",
                            data=urlencode({'script': script_contents}),
+                           headers = headers,
                            method="POST")
 
     if info["status"] != 200:
