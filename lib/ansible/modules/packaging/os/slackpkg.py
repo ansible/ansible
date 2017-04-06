@@ -102,9 +102,8 @@ from ansible.module_utils.basic import *
 
 def query_package(name):
     machine = platform.machine()
-    packages = glob.glob("/var/log/packages/%s-*-[%s|noarch]*" % (name,
-                                                                  machine))
-    pattern = re.compile("{}-([^-]+)-({}|noarch)-.*".format(name, machine))
+    packages = glob.glob("/var/log/packages/%s-*-*" % name)
+    pattern = re.compile("{}-([^-]+)-({}|noarch|x86)-.*".format(name, machine))
     for package in packages:
         package = package[len("/var/log/packages/"):]
         if pattern.match(package):
@@ -116,7 +115,7 @@ def query_repository(module, slackpkg_path, name):
     if rc != 0:
         module.fail_json(msg="Could not search repository")
     machine = platform.machine()
-    pattern = re.compile(" ({}-([^-]+)-({}|noarch)-[^ ]*)".format(name, machine))
+    pattern = re.compile(" ({}-([^-]+)-({}|noarch|x86)-[^ ]*)".format(name, machine))
     for line in out.split('\n'):
         matches = re.findall(pattern, line)
         if len(matches) == 1:
@@ -231,7 +230,9 @@ def upgrade_packages(module, slackpkg_path, blacklist, packages):
                     slackpkg_path,
                     current_version[0]))
         elif not module.check_mode and newer_version is not None:
-            if LooseVersion(newer_version[1]) < LooseVersion(current_version[1]):
+            if (
+                    not current_version[1].endswith('git') and \
+                    LooseVersion(newer_version[1]) < LooseVersion(current_version[1])):
                 # don't do anything if a newer version than the one in the
                 # repository is installed already
                 continue
