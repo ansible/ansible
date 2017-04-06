@@ -14,9 +14,8 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
 import botocore
-import time
 
-from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 
 def get_db_instance(conn, instancename):
@@ -36,7 +35,7 @@ def get_db_snapshot(conn, snapshotid):
         response = conn.describe_db_snapshots(DBSnapshotIdentifier=snapshotid)
         snapshot = RDSSnapshot(response['DBSnapshots'][0])
         return snapshot
-    except botocore.exceptions.ClientError:
+    except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == 'DBSnapshotNotFound':
             return None
         else:
@@ -60,7 +59,7 @@ class RDSDBInstance(object):
         compare_keys = ['backup_retention', 'instance_type', 'iops',
                         'maintenance_window', 'multi_zone',
                         'replication_source',
-                        'size','storage_type', 'tags', 'zone']
+                        'size', 'storage_type', 'tags', 'zone']
         before = dict()
         after = dict()
         for k in compare_keys:
