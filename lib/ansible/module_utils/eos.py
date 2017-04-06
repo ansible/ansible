@@ -40,8 +40,7 @@ _DEVICE_CONNECTION = None
 
 eos_argument_spec = {
     'host': dict(),
-    'port': dict(type='int'),
-
+    'port': dict(type='int', default=443),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
@@ -50,8 +49,8 @@ eos_argument_spec = {
     'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     'auth_pass': dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
 
-    'use_ssl': dict(type='bool'),
-    'validate_certs': dict(type='bool'),
+    'use_ssl': dict(type='bool', default=True),
+    'validate_certs': dict(type='bool', default=True),
     'timeout': dict(type='int'),
 
     'provider': dict(type='dict', no_log=True),
@@ -236,20 +235,18 @@ class Eapi:
         self._session_support = None
         self._device_configs =  {}
 
-        host = module.params['host']
-        port = module.params['port']
+        host = module.params['provider']['host']
+        port = module.params['provider']['port']
 
         self._module.params['url_username'] = self._module.params['username']
         self._module.params['url_password'] = self._module.params['password']
 
-        if module.params['use_ssl']:
+        if module.params['provider']['use_ssl']:
             proto = 'https'
-            if not port:
-                port = 443
         else:
             proto = 'http'
-            if not port:
-                port = 80
+
+        module.params['validate_certs'] = module.params['provider']['validate_certs']
 
         self._url = '%s://%s:%s/command-api' % (proto, host, port)
 
