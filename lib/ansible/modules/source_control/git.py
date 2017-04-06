@@ -186,6 +186,33 @@ options:
               to be installed. The commit MUST be signed and the public key MUST
               be trusted in the GPG trustdb.
 
+    archive:
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+        version_added: "2.4"
+        description:
+            - if C(yes), creates an archive of the specified format containing
+              the tree structure for the source tree.
+
+    archive_format:
+        required: false
+        default: "tar"
+        choices: [ "zip", "tar", "tar.gz" ]
+        version_added: "2.4"
+        description:
+            - if specified, then creates archive in specified format.
+              Default is "tar"
+
+    archive_file:
+        required: false
+        default: null
+        version_added: "2.4"
+        description:
+            - Required parameter if archive is specified. If not specified
+              file path is created using version and archive_format inside
+              clone repository directory.
+
 requirements:
     - git>=1.7.1 (the command line tool)
 
@@ -925,6 +952,10 @@ def main():
             recursive=dict(default='yes', type='bool'),
             track_submodules=dict(default='no', type='bool'),
             umask=dict(default=None, type='raw'),
+            archive=dict(default='no', type='bool'),
+            archive_format=dict(default="zip", choices=['zip', 'tar',
+                                                        'tar.gz']),
+            archive_file=dict(default=None, type='path'),
         ),
         supports_check_mode=True
     )
@@ -945,6 +976,7 @@ def main():
     key_file = module.params['key_file']
     ssh_opts = module.params['ssh_opts']
     umask = module.params['umask']
+    archive = module.params['archive']
 
     result = dict(changed=False, warnings=list())
 
@@ -1003,6 +1035,46 @@ def main():
     track_submodules = module.params['track_submodules']
 
     result.update(before=None)
+
+    if archive:
+        if module.check_mode:
+            result.update(changed=True)
+            module.exit_json(**result)
+
+        try:
+            os.makedirs(dest)
+        except OSError:
+            pass
+
+        if archive_file is None:
+            archive_file = "%s.%s" % (os.path.join(dest, version),
+                                      archive_fmt)
+
+        repo_name = repo.split("/")[-1].replace(".git", "")
+        # Git archive is not supported by all git servers, so
+        # we will first clone and perform git archive from local directory
+        repo_dest = os.path.join(dest, repo_name)
+
+
+        if not os.path.exists(repo_dest):
+            cmd = "%s clone %s %s" % (git_path, repo, repo_name)
+            (rc, out, err) = module.run_command(cmd, cwd=dest)
+            if rc != 0:
+                module.fail_json(msg="Failed to clone source",
+                                 details="Git clone failed, try again "
+                                         "after removing %s" % repo_dest)
+        # Perform archive from local directory
+        cmd = "%s archive --format=%s --output=%s %s" \
+              % (git_path, archive_fmt, archive_file, version)
+        (rc, out, err) = module.run_command(cmd, cwd=repo_dest)
+        if rc != 0:
+            module.fail_json(msg="Failed to perform archive operation",
+                             details="Git archive command failed to create "
+                                     "archive using %s directory."
+                                     "Error: %s" % (repo_dest, err))
+        result.update(changed=True)
+        module.exit_json(**result)
+
     local_mods = False
     need_fetch = True
     if (dest and not os.path.exists(gitconfig)) or (not dest and not allow_clone):
