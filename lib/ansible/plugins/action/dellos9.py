@@ -73,7 +73,10 @@ class ActionModule(_ActionModule):
             # start the connection if it isn't started
             rc, out, err = connection.exec_command('open_shell()')
             if not rc == 0:
-                return {'failed': True, 'msg': 'unable to open shell', 'rc': rc}
+                return {'failed': True,
+                        'msg': 'unable to open shell. Please see: ' +
+                               'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell',
+                        'rc': rc}
         else:
             # make sure we are in the right cli context which should be
             # enable mode and not config module
