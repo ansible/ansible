@@ -54,7 +54,6 @@ class Cli(CliBase):
 
     def __init__(self, *args, **kwargs):
         super(Cli, self).__init__(*args, **kwargs)
-        self.default_output = 'text'
 
     def connect(self, params, **kwargs):
         super(Cli, self).connect(params, kickstart=False, **kwargs)
