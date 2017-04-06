@@ -381,34 +381,41 @@ def await_resource(conn, resource, status, module, await_pending=None):
         if resource is None:
             break
     if wait_timeout <= time.time() and resource.status != status:
-        module.fail_json(msg="Timeout waiting for RDS resource %s status is still %s should be %s" % (resource.name, resource.status, status))
+        module.fail_json(msg="Timeout waiting for RDS resource %s status is still %s should be %s" % (
+            resource.name, resource.status, status))
     return resource
 
 
 def create_db_instance(module, conn):
     if module.params.get('db_engine') in ['aurora']:
         required_vars = ['instance_name', 'instance_type', 'db_engine']
-        valid_vars = ['character_set_name', 'cluster', 'db_name', 'engine_version',
-                      'instance_type', 'license_model', 'maint_window',
-                      'option_group', 'parameter_group', 'port',
-                      'publicly_accessible', 'subnet',
-                      'upgrade', 'tags', 'zone']
+        valid_vars = ['apply_immediately', 'character_set_name', 'cluster', 'db_name',
+                      'engine_version', 'instance_type', 'license_model', 'maint_window',
+                      'option_group', 'parameter_group', 'port', 'publicly_accessible',
+                      'subnet', 'upgrade', 'tags', 'zone']
     else:
-        required_vars = ['instance_name', 'db_engine',
-                         'size', 'instance_type', 'username', 'password']
-        valid_vars = ['backup_retention', 'backup_window',
+        required_vars = ['instance_name', 'db_engine', 'size', 'instance_type',
+                         'username', 'password']
+        valid_vars = ['apply_immediately', 'backup_retention', 'backup_window',
                       'character_set_name', 'cluster', 'db_name', 'engine_version',
                       'instance_type', 'license_model', 'maint_window', 'multi_zone',
                       'option_group', 'parameter_group', 'port', 'publicly_accessible',
                       'storage_type', 'subnet', 'upgrade', 'tags', 'security_groups',
-                      'vpc_security_groups',
-                      'zone']
+                      'vpc_security_groups', 'zone']
 
     if module.params.get('subnet'):
         valid_vars.append('vpc_security_groups')
     else:
         valid_vars.append('security_groups')
     params = validate_parameters(required_vars, valid_vars, module)
+
+    # we accept apply_immediately for compatibility with modify but ignore it.  -
+    # FIXME should that not apply to _every_ variable which is extra in modify?
+    try:
+        del(params['ApplyImmediately'])
+    except KeyError:
+        pass
+
     instance_name = module.params.get('instance_name')
 
     instance = get_db_instance(conn, instance_name)
@@ -811,7 +818,7 @@ argument_spec.update(
         apply_immediately=dict(type='bool', default=False),
         old_instance_name=dict(),
         tags=dict(type='dict'),
-        publicly_accessible=dict(),
+        publicly_accessible=dict(type='bool'),
         character_set_name=dict(),
         force_failover=dict(type='bool', default=False),
         force_password_update=dict(type='bool', default=False),
