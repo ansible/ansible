@@ -234,8 +234,6 @@ def filter_delete_statements(module, candidate):
 
 def configure_device(module, warnings):
     candidate = module.params['lines'] or module.params['src']
-    if isinstance(candidate, string_types):
-        candidate = candidate.split('\n')
 
     kwargs = {
         'comment': module.params['comment'],
@@ -256,6 +254,9 @@ def configure_device(module, warnings):
             kwargs.update({'format': 'text', 'action': 'set'})
         else:
             kwargs.update({'format': config_format, 'action': module.params['update']})
+
+    if isinstance(candidate, string_types):
+        candidate = candidate.split('\n')
 
     # this is done to filter out `delete ...` statements which map to
     # nothing in the config as that will cause an exception to be raised
