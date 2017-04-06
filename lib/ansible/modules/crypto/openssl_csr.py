@@ -162,7 +162,8 @@ subjectAltName:
     sample: 'DNS:www.ansible.com,DNS:m.ansible.com'
 '''
 
-from ansible.module_utils.basic import *
+import errno
+import os
 
 try:
     from OpenSSL import crypto
@@ -171,11 +172,13 @@ except ImportError:
 else:
     pyopenssl_found = True
 
-import os
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 
 
 class CertificateSigningRequestError(Exception):
     pass
+
 
 class CertificateSigningRequest(object):
 
@@ -204,7 +207,7 @@ class CertificateSigningRequest(object):
         if self.subjectAltName is None:
             self.subjectAltName = 'DNS:%s' % self.subject['CN']
 
-        for (key,value) in self.subject.items():
+        for (key, value) in self.subject.items():
             if value is None:
                 del self.subject[key]
 
@@ -215,7 +218,7 @@ class CertificateSigningRequest(object):
             req = crypto.X509Req()
             req.set_version(self.version)
             subject = req.get_subject()
-            for (key,value) in self.subject.items():
+            for (key, value) in self.subject.items():
                 if value is not None:
                     setattr(subject, key, value)
 
@@ -243,7 +246,6 @@ class CertificateSigningRequest(object):
         if module.set_fs_attributes_if_different(file_args, False):
             self.changed = True
 
-
     def remove(self):
         '''Remove the Certificate Signing Request.'''
 
@@ -255,7 +257,6 @@ class CertificateSigningRequest(object):
                 raise CertificateSigningRequestError(e)
             else:
                 self.changed = False
-
 
     def dump(self):
         '''Serialize the object into a dictionnary.'''
@@ -272,7 +273,7 @@ class CertificateSigningRequest(object):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             digest=dict(default='sha256', type='str'),
             privatekey_path=dict(require=True, type='path'),
@@ -288,8 +289,8 @@ def main():
             commonName=dict(aliases=['CN'], type='str'),
             emailAddress=dict(aliases=['E'], type='str'),
         ),
-        add_file_common_args = True,
-        supports_check_mode = True,
+        add_file_common_args=True,
+        supports_check_mode=True,
         required_one_of=[['commonName', 'subjectAltName']],
     )
 
