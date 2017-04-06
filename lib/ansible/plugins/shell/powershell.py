@@ -316,6 +316,15 @@ Write-Output $output
 
 } # end exec_wrapper
 
+Function Dump-Error ($excep) {
+    $eo = @{failed=$true}
+
+    $eo.msg = $excep.Exception.Message
+    $eo.exception = $excep | Out-String
+    $host.SetShouldExit(1)
+
+    $eo | ConvertTo-Json -Depth 10
+}
 
 Function Run($payload) {
     # NB: action popping handled inside subprocess wrapper
@@ -371,14 +380,25 @@ Function Run($payload) {
         $psi.Username = $username
         $psi.Password = $($password | ConvertTo-SecureString -AsPlainText -Force)
 
-        [Ansible.Shell.ProcessUtil]::GrantAccessToWindowStationAndDesktop($username)
+        Try {
+            [Ansible.Shell.ProcessUtil]::GrantAccessToWindowStationAndDesktop($username)
+        }
+        Catch {
+            $excep = $_
+            throw "Error granting windowstation/desktop access to '$username' (is the username valid?): $excep"
+        }
 
         Try {
             $proc.Start() | Out-Null # will always return $true for non shell-exec cases
         }
         Catch {
-            Write-Output $_.Exception.InnerException
-            return
+            $excep = $_
+            if ($excep.Exception.InnerException -and `
+                $excep.Exception.InnerException -is [System.ComponentModel.Win32Exception] -and `
+                $excep.Exception.InnerException.NativeErrorCode -eq 5) {
+              throw "Become method 'runas' become is not currently supported with the NTLM or Kerberos auth types"
+            }
+            throw "Error launching under identity '$username': $excep"
         }
 
         $payload_string = $payload | ConvertTo-Json -Depth 99 -Compress
@@ -404,6 +424,10 @@ Function Run($payload) {
         Else {
             Throw "failed, rc was $rc, stderr was $stderr, stdout was $stdout"
         }
+    }
+    Catch {
+        $excep = $_
+        Dump-Error $excep
     }
     Finally {
         Remove-Item $temp -ErrorAction SilentlyContinue
