@@ -258,3 +258,48 @@
   assert:
     that:
     - replace_follow_result.checksum == target_file_result.stdout
+
+- name: create a test dir to copy
+  file:
+    path: '{{ output_dir }}/top_dir'
+    state: directory
+
+- name: create a test dir to symlink to
+  file:
+    path: '{{ output_dir }}/linked_dir'
+    state: directory
+
+- name: create a file in the test dir
+  copy:
+    dest: '{{ output_dir }}/linked_dir/file1'
+    content: 'hello world'
+
+- name: create a link to the test dir
+  file:
+    path: '{{ output_dir }}/top_dir/follow_link_dir'
+    src: '{{ output_dir }}/linked_dir'
+    state: link
+
+- name: copy the directory's link
+  copy:
+    src: '{{ output_dir }}/top_dir'
+    dest: '{{ output_dir }}/new_dir'
+    follow: True
+
+- name: stat the copied path
+  stat:
+    path: '{{ output_dir }}/new_dir/top_dir/follow_link_dir'
+  register: stat_dir_result
+
+- name: stat the copied path
+  stat:
+    path: '{{ output_dir }}/new_dir/top_dir/follow_link_dir/file1'
+  register: stat_file_in_dir_result
+
+- name: assert that the directory exists
+  assert:
+    that:
+    - stat_dir_result.stat.exists
+    - stat_dir_result.stat.isdir
+    - stat_file_in_dir_result.stat.exists
+    - stat_file_in_dir_result.stat.isreg
