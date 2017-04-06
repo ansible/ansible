@@ -168,57 +168,57 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-load_balancer:
-    load_balancer_arn:
-        description: The Amazon Resource Name (ARN) of the load balancer.
-        type: string
-        sample: TBA
-    dns_name:
-        description: The public DNS name of the load balancer.
-        type: string
-        sample: TBA
-    canonical_hosted_zone_id:
-        description: The ID of the Amazon Route 53 hosted zone associated with the load balancer.
-        type: string
-        sample: TBA
-    created_time:
-        description: The date and time the load balancer was created.
-        type: datetime
-        sample: 2015-02-12T02:14:02+00:00
-    load_balancer_name:
-        description: The name of the load balancer.
-        type: string
-        sample: TBA
-    scheme:
-        description: Internet-facing or internal load balancer.
-        type: string
-        sample: internet-facing
-    vpc_id:
-        description: The ID of the VPC for the load balancer.
-        type: string
-        sample: My important backup
-    state:
-        description: The state of the load balancer.
-        type: dict
-        sample: TBA
-    type:
-        description: The type of load balancer.
-        type: string
-        sample: application
-    availability_zones:
-        description: The Availability Zones for the load balancer.
-        type: list
-        sample: TBA
-    security_groups:
-        description: The IDs of the security groups for the load balancer.
-        type: list
-        sample: TBA
-    tags:
-        description: The tags attached to the load balancer.
-        type: dict
-        sample: "{
-            'Tag': 'Example'
-        }"
+load_balancer_arn:
+    description: The Amazon Resource Name (ARN) of the load balancer.
+    returned: when status is present
+    type: string
+    sample: TBA
+dns_name:
+    description: The public DNS name of the load balancer.
+    type: string
+    sample: TBA
+canonical_hosted_zone_id:
+    description: The ID of the Amazon Route 53 hosted zone associated with the load balancer.
+    type: string
+    sample: TBA
+created_time:
+    description: The date and time the load balancer was created.
+    type: datetime
+    sample: 2015-02-12T02:14:02+00:00
+load_balancer_name:
+    description: The name of the load balancer.
+    type: string
+    sample: TBA
+scheme:
+    description: Internet-facing or internal load balancer.
+    type: string
+    sample: internet-facing
+vpc_id:
+    description: The ID of the VPC for the load balancer.
+    type: string
+    sample: My important backup
+state:
+    description: The state of the load balancer.
+    type: dict
+    sample: TBA
+type:
+    description: The type of load balancer.
+    type: string
+    sample: application
+availability_zones:
+    description: The Availability Zones for the load balancer.
+    type: list
+    sample: TBA
+security_groups:
+    description: The IDs of the security groups for the load balancer.
+    type: list
+    sample: TBA
+tags:
+    description: The tags attached to the load balancer.
+    type: dict
+    sample: "{
+        'Tag': 'Example'
+    }"
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -314,6 +314,17 @@ def _compare_tags(current_tags, proposed_tags, purge):
     return tag_keys_to_delete, tags_need_modify
 
 
+def _get_key_pairs(list_of_kps, list_of_keys_to_find):
+
+    key_pairs = {}
+    for key in list_of_keys_to_find:
+        for kp in list_of_kps:
+            if kp['Key'] ==  key:
+                key_pairs[kp['Key']] = kp['Value']
+
+    return key_pairs
+
+
 def _get_subnet_ids_from_subnet_list(subnet_list):
 
     subnet_id_list = []
@@ -327,7 +338,7 @@ def get_elb(connection, module):
 
     try:
         return connection.describe_load_balancers(Names=[module.params.get("name")])['LoadBalancers'][0]
-    except (ClientError, NoCredentialsError) as e:
+    except ClientError as e:
         if e.response['Error']['Code'] == 'LoadBalancerNotFound':
             return None
         else:
@@ -545,10 +556,19 @@ def create_or_update_elb(connection, connection_ec2, module):
         params['SecurityGroups'] = get_ec2_security_group_ids_from_names(module.params.get('security_groups'), connection_ec2, boto3=True)
     except ValueError as e:
         module.fail_json(msg=str(e))
+    except ClientError as e:
+        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except NoCredentialsError as e:
+        module.fail_json(msg="AWS authentication problem. " + e.message, exception=traceback.format_exc())
+
     params['Scheme'] = module.params.get("scheme")
     if module.params.get("tags"):
         params['Tags'] = ansible_dict_to_boto3_tag_list(module.params.get("tags"))
     purge_tags = module.params.get("purge_tags")
+    access_logs_s3_bucket = module.params.get("access_logs_s3_bucket")
+    access_logs_s3_prefix = module.params.get("access_logs_s3_prefix")
+    deletion_protection = module.params.get("deletion_protection")
+    idle_timeout = module.params.get("idle_timeout")
 
     # Does the ELB currently exist?
     elb = get_elb(connection, module)
@@ -601,18 +621,27 @@ def create_or_update_elb(connection, connection_ec2, module):
             elb = connection.create_load_balancer(**params)['LoadBalancers'][0]
             changed = True
             new_load_balancer = True
-        except (ClientError, NoCredentialsError) as e:
+        except ClientError as e:
             module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
         if module.params.get("wait"):
             status_achieved, new_elb = wait_for_status(connection, module, elb['LoadBalancerArn'], 'active')
 
     # Now set ELB attributes. Use try statement here so we can remove the ELB if this stage fails
+    update_attributes_dict = {}
+    # Get current attributes
+    current_elb_attributes = boto3_tag_list_to_ansible_dict(connection.describe_load_balancer_attributes(LoadBalancerArn=elb['LoadBalancerArn']))
+
+    # Access logs
+    if access_logs_s3_bucket != current_elb_attributes['access_logs.s3.bucket'] or access_logs_s3_prefix != current_elb_attributes['access_logs.s3.prefix']:
+        update_attributes_dict['access_logs.s3.enabled'] = True
+    module.exit_json(**current_elb_attributes)
+
     try:
         attribute_changed = update_elb_attributes(connection, module, elb)
         if attribute_changed:
             changed = True
-    except (ClientError, NoCredentialsError) as e:
+    except ClientError as e:
         # Something went wrong setting attributes. If this ELB was created during this task, delete it to leave a consistent state
         if new_load_balancer:
             connection.delete_load_balancer(LoadBalancerArn=elb['LoadBalancerArn'])
@@ -635,7 +664,7 @@ def create_or_update_elb(connection, connection_ec2, module):
     elb_tags = connection.describe_tags(ResourceArns=[elb['LoadBalancerArn']])['TagDescriptions'][0]['Tags']
     elb['Tags'] = boto3_tag_list_to_ansible_dict(elb_tags)
 
-    module.exit_json(changed=changed, load_balancer=camel_dict_to_snake_dict(elb))
+    module.exit_json(changed=changed, **camel_dict_to_snake_dict(elb))
 
 
 def delete_elb(connection, module):
@@ -670,7 +699,6 @@ def main():
             scheme=dict(required=False, default='internet-facing', choices=['internet-facing', 'internal']),
             state=dict(required=True, choices=['present', 'absent'], type='str'),
             tags=dict(required=False, default={}, type='dict'),
-            attributes=dict(required=False, type='list'),
             wait_timeout=dict(required=False, type='int'),
             wait=dict(required=False, type='bool')
         )
