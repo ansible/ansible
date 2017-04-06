@@ -60,6 +60,33 @@ namespace Ansible.Shell
 }
 "@
 
+# Cleanse CLIXML from stderr (sift out error stream data, discard others for now)
+Function Cleanse-Stderr($raw_stderr) {
+    Try {
+        # NB: this regex isn't perfect, but is decent at finding CLIXML amongst other stderr noise
+        If($raw_stderr -match "(?s)(?<prenoise1>.*)#< CLIXML(?<prenoise2>.*)(?<clixml><Objs.+</Objs>)(?<postnoise>.*)") {
+            $clixml = [xml]$matches["clixml"]
+
+            $merged_stderr = "{0}{1}{2}{3}" -f @(
+               $matches["prenoise1"],
+               $matches["prenoise2"],
+               # filter out just the Error-tagged strings for now, and zap embedded CRLF chars
+               ($clixml.Objs.ChildNodes | ? { $_.Name -eq 'S' } | ? { $_.S -eq 'Error' } | % { $_.'#text'.Replace('_x000D__x000A_','') } | Out-String),
+               $matches["postnoise"]) | Out-String
+
+            return $merged_stderr.Trim()
+
+            # FUTURE: parse/return other streams
+        }
+        Else {
+            $raw_stderr
+        }
+    }
+    Catch {
+        "***EXCEPTION PARSING CLIXML: $_***" + $raw_stderr
+    }
+}
+
 $params = Parse-Args $args -supports_check_mode $false
 
 $raw_command_line = Get-AnsibleParam -obj $params -name "_raw_params" -type "str" -failifempty $true
@@ -133,7 +160,7 @@ $stdout = $stderr = [string] $null
 [Ansible.Shell.ProcessUtil]::GetProcessOutput($proc.StandardOutput, $proc.StandardError, [ref] $stdout, [ref] $stderr) | Out-Null
 
 $result.stdout = $stdout
-$result.stderr = $stderr
+$result.stderr = Cleanse-Stderr $stderr
 
 # TODO: decode CLIXML stderr output (and other streams?)
 
