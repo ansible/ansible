@@ -45,8 +45,7 @@ class TestIosxrCommandModule(TestIosxrModule):
 
             for item in commands:
                 try:
-                    obj = json.loads(item)
-                    command = obj['command']
+                    command = item['command']
                 except ValueError:
                     command = item
                 filename = str(command).replace(' ', '_')
