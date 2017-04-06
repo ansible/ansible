@@ -59,14 +59,14 @@ options:
      - if false, disables looking for ssh keys
     default: true
     required: false
-    version_added: "2.3"
+    version_added: "2.4"
   allow_agent:
     description:
      - if true, enables querying SSH agent (if found) for keys
      - if false, disables querying the SSH agent for ssh keys
     default: true
     required: false
-    version_added: "2.3"
+    version_added: "2.4"
   username:
     description:
      - the username to authenticate with
