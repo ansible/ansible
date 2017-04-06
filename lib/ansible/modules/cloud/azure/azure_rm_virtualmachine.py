@@ -688,8 +688,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         except CloudError:
             self.log('Virtual machine {0} does not exist'.format(self.name))
             if self.state == 'present':
-                self.log("CHANGED: virtual machine does not exist but state is present." \
-                    .format(self.name))
+                self.log("CHANGED: virtual machine {0} does not exist but state is 'present'.".format(self.name))
                 changed = True
 
         self.results['changed'] = changed
@@ -887,7 +886,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             vm = self.compute_client.virtual_machines.get(self.resource_group, self.name, expand='instanceview')
             return vm
         except Exception as exc:
-            self.fail("Error getting virtual machine (0) - {1}".format(self.name, str(exc)))
+            self.fail("Error getting virtual machine {0} - {1}".format(self.name, str(exc)))
 
     def serialize_vm(self, vm):
         '''

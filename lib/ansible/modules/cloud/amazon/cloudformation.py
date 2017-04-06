@@ -372,7 +372,7 @@ def get_stack_facts(cfn, stack_name):
     #except AmazonCloudFormationException as e:
     except (botocore.exceptions.ValidationError,botocore.exceptions.ClientError) as err:
         error_msg = boto_exception(err)
-        if 'does not exist'.format(stack_name) in error_msg:
+        if 'does not exist' in error_msg:
             # missing stack, don't bail.
             return None
 
