@@ -113,17 +113,13 @@ class ActionModule(ActionBase):
                 sz = len(source.rsplit('/', 1)[0]) + 1
 
             # Walk the directory and append the file tuples to source_files.
-            for base_path, sub_folders, files in os.walk(to_bytes(source)):
+            for base_path, sub_folders, files in os.walk(to_bytes(source), followlinks=True):
                 for file in files:
                     full_path = to_text(os.path.join(base_path, file), errors='surrogate_or_strict')
                     rel_path = full_path[sz:]
                     if rel_path.startswith('/'):
                         rel_path = rel_path[1:]
                     source_files.append((full_path, rel_path))
-
-                # recurse into subdirs
-                for sf in sub_folders:
-                    source_files += self._get_recursive_files(os.path.join(source, to_text(sf)), sz=sz)
 
             # If it's recursive copy, destination is always a dir,
             # explicitly mark it so (note - copy module relies on this).
@@ -325,22 +321,6 @@ class ActionModule(ActionBase):
             result['diff'] = diffs
 
         return result
-
-    def _get_recursive_files(self, topdir, sz=0):
-        ''' Recursively create file tuples for sub folders '''
-        r_files = []
-        for base_path, sub_folders, files in os.walk(to_bytes(topdir)):
-            for fname in files:
-                full_path = to_text(os.path.join(base_path, fname), errors='surrogate_or_strict')
-                rel_path = full_path[sz:]
-                if rel_path.startswith('/'):
-                    rel_path = rel_path[1:]
-                r_files.append((full_path, rel_path))
-
-                for sf in sub_folders:
-                    r_files += self._get_recursive_files(os.path.join(topdir, to_text(sf)), sz=sz)
-
-        return r_files
 
     def _create_content_tempfile(self, content):
         ''' Create a tempfile containing defined content '''
