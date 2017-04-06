@@ -12,4 +12,5 @@ eapi:
   password: "{{ eos_eapi_pass | default('admin') }}"
   transport: eapi
   use_ssl: no
+  port: 80
   authorize: yes
