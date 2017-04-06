@@ -129,13 +129,13 @@ options:
         candidate configuration. If statements in the loaded configuration
         conflict with statements in the candidate configuration, the loaded
         statements replace the candidate ones.
-        C(overwrite) discards the entire candidate configuration and replaces
+        C(override) discards the entire candidate configuration and replaces
         it with the loaded configuration.
         C(replace) substitutes each hierarchy level in the loaded configuration
         for the corresponding level.
     required: false
     default: merge
-    choices: ['merge', 'overwrite', 'replace']
+    choices: ['merge', 'override', 'replace']
     version_added: "2.3"
 requirements:
   - junos-eznc
@@ -277,7 +277,7 @@ def main():
         src_format=dict(choices=['xml', 'text', 'set', 'json']),
 
         # update operations
-        update=dict(default='merge', choices=['merge', 'overwrite', 'replace', 'update']),
+        update=dict(default='merge', choices=['merge', 'override', 'replace', 'update']),
 
         # deprecated replace in Ansible 2.3
         replace=dict(type='bool'),
