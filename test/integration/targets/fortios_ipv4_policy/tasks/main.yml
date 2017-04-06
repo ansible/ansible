@@ -1,7 +1,7 @@
 ---
 - name: install required libraries
   pip:
-    requirements: "{{ role_dir}}/files/requirements.txt"
+    requirements: "{{ role_path }}/files/requirements.txt"
 
 - { include: test_indempotency.yml }
 - { include: test_params.yml }
