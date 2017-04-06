@@ -52,8 +52,9 @@ import socket
 from distutils.version import LooseVersion
 
 # import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.facts import *
+from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
+from ansible.module_utils.basic import get_platform, get_distribution, get_distribution_version
+from ansible.module_utils.facts import Facts
 from ansible.module_utils._text import to_bytes, to_native
 
 
