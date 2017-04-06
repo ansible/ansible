@@ -975,6 +975,11 @@ class Connection(ConnectionBase):
             (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable, checkrc=False)
         except AnsibleConnectionFailure:
             # -G failed, could be too old, not openssh, etc.
+            # The 'ssh -G' option will not attempt to connect (even versions without -G will
+            # exit with an invalid option error) so errors here should always indicate -G not being supported if
+            # we can assume the rest of the constructed cmd line is valid. ie, a user adding '--sdfadfasdfasd' to ssh_args
+            # will get this message in addition to normal ssh errors.
+            display.vvvv(u"SSH CONFIG DEBUG: {0}".format("Version of ssh doesn't support '-G'?"), host=self.host)
             return
 
         if returncode != 0:
