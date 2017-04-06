@@ -179,7 +179,9 @@ class AzureRMStorageAccount(AzureRMModuleBase):
             state=dict(default='present', choices=['present', 'absent']),
             force=dict(type='bool', default=False),
             tags=dict(type='dict'),
-            kind=dict(type='str', default='Storage', choices=['Storage', 'BlobStorage'])
+            kind=dict(type='str', default='Storage', choices=['Storage', 'BlobStorage']),
+            storage_endpoint_suffix=dict(type='str', default=None),
+            resource=dict(type='str', default=None)
         )
 
         for key in SkuName:

@@ -125,6 +125,8 @@ class AzureRMStorageAccountFacts(AzureRMModuleBase):
         self.module_arg_spec = dict(
             name=dict(type='str'),
             resource_group=dict(type='str'),
+            resource=dict(type='str', default=None),
+            storage_endpoint_suffix=dict(type='str', default=None),
             tags=dict(type='list'),
         )
 
