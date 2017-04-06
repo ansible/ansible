@@ -78,13 +78,14 @@
       password: "{{ rds_db_master_password }}"
       publicly_accessible: no
       wait: yes
+      apply_immediately: yes
       wait_timeout: 1200 # 600 doesn't cut it!!
     register: result
 
   - name: Then the RDS should have SSD disks
     assert:
       that:
-        - 'result.instance[0].storage_type == "gp2"'
+        - 'result.instance.storage_type == "gp2"'
 
 #We should probably delete the RDS at this point
 
@@ -102,6 +103,7 @@
       username: "{{ rds_master_db_user }}"
       password: "{{ rds_db_master_password }}"
       publicly_accessible: no
+      apply_immediately: yes
       wait: yes
       wait_timeout: 1200 # 600 doesn't cut it!!
     register: result
@@ -123,7 +125,7 @@
       wait_timeout: 1200 # 600 doesn't cut it!!
     register: rds_result
 
-  - name: And I check the configuration with the new rds_instance module
+  - name: And I enforce the configuration with the new rds_instance module
     tags: test_amazon_rds
     local_action:
       module: rds_instance
@@ -137,6 +139,7 @@
       username: "{{ rds_master_db_user }}"
       password: "{{ rds_db_master_password }}"
       publicly_accessible: no
+      apply_immediately: yes
       wait: yes
       wait_timeout: 1200 # 600 doesn't cut it!!
     register: result
@@ -147,7 +150,7 @@
       that:
         - 'result.changed == False'
         - '"failed" not in result'
-        - 'result.instance[0].storage_type == "gp2"'
+        - 'result.instance.storage_type == "gp2"'
 
   - name: Given that I have an RDS with SSD disks
     tags: test_amazon_rds
