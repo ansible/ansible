@@ -1,7 +1,7 @@
 ---
-- name: install pyfg library
+- name: install required libraries
   pip:
-    name: pyfg
+    requirements: "{{ role_dir}}/files/requirements.txt"
 
 - { include: test_indempotency.yml }
 - { include: test_params.yml }
