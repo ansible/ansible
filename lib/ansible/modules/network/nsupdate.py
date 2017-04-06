@@ -223,13 +223,14 @@ class RecordManager(object):
                 self.dns_rc = self.modify_record()
                 if self.dns_rc != 0:
                     result['msg'] = "Failed to update DNS record (rc: %d)" % self.dns_rc
+
+            if self.dns_rc != 0:
+                result['failed'] = True
+            else:
+                result['changed'] = True
+
         else:
             result['changed'] = False
-
-        if self.dns_rc != 0:
-            result['failed'] = True
-        else:
-            result['changed'] = True
 
         return result
 
