@@ -95,7 +95,7 @@ class ActionModule(_ActionModule):
                 provider['host'] = self._play_context.remote_addr
 
             if provider.get('port') is None:
-                provider['port'] = 443
+                provider['port'] = eos_argument_spec['port']['default']
 
             if provider.get('timeout') is None:
                 provider['timeout'] = self._play_context.timeout
@@ -110,10 +110,10 @@ class ActionModule(_ActionModule):
                 provider['authorize'] = False
 
             if provider.get('use_ssl') is None:
-                provider['use_ssl'] = True
+                provider['use_ssl'] = eos_argument_spec['use_ssl']['default']
 
             if provider.get('validate_certs') is None:
-                provider['validate_certs'] = True
+                provider['validate_certs'] = eos_argument_spec['validate_certs']['default']
 
             self._task.args['provider'] = provider
 
