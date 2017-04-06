@@ -121,7 +121,8 @@ def map_config_to_obj(module):
         else:
             # On EAPI we need to extract the banner text from dict key
             # 'loginBanner'
-            obj['text'] = output[0]['loginBanner'].strip('\n')
+            if isinstance(output[0], dict) and 'loginBanner' in output[0].keys():
+                obj['text'] = output[0]['loginBanner'].strip('\n')
         obj['state'] = 'present'
     return obj
 
