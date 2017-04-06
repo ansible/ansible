@@ -525,7 +525,7 @@ class AnsibleDockerClient(Client):
             msg = "You asked for verification that Docker host name matches %s. The actual hostname is %s. " \
                 "Most likely you need to set DOCKER_TLS_HOSTNAME or pass tls_hostname with a value of %s. " \
                 "You may also use TLS without verification by setting the tls parameter to true." \
-                % (self.auth_params['tls_hostname'], match.group(1))
+                % (self.auth_params['tls_hostname'], match.group(1), match.group(1))
             self.fail(msg)
         self.fail("SSL Exception: %s" % (error))
 
