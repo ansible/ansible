@@ -32,29 +32,19 @@
     that:
       - "result.changed == false"
 
-- name: configure interface mtu
+- name: configure invalid (odd) interface mtu
   nxos_mtu:
     interface: Ethernet3/1
     mtu: 2001
     provider: "{{ nxapi }}"
   register: result
+  ignore_errors: yes
 
 - assert:
     that:
-      - "result.changed == true"
+      - "result.failed == true"
 
-- name: verify interface mtu
-  nxos_mtu:
-    interface: Ethernet3/1
-    mtu: 2001
-    provider: "{{ nxapi }}"
-  register: result
-
-- assert:
-    that:
-      - "result.changed == false"
-
-- name: invalid mtu setting
+- name: configure invalid (large) mtu setting
   nxos_mtu:
     interface: Ethernet3/1
     mtu: 100000
