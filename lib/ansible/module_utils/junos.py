@@ -37,7 +37,7 @@ junos_argument_spec = {
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int', default=10),
-    'provider': dict(type='dict', no_log=True),
+    'provider': dict(type='dict'),
     'transport': dict()
 }
 
