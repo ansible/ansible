@@ -16,11 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'core',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
@@ -202,6 +201,10 @@ class Hardware(FactsBase):
 
     def populate_filesystems(self):
         data = self.responses[0]
+
+        if isinstance(data, dict):
+            data = data['messages'][0]
+
         fs = re.findall(r'^Directory of (.+)/', data, re.M)
         return dict(filesystems=fs)
 

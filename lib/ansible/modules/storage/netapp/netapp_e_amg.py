@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -118,7 +119,7 @@ msg:
     returned: success
     type: string
     sample: '{"changed": true, "connectionType": "fc", "groupRef": "3700000060080E5000299C24000006E857AC7EEC", "groupState": "optimal", "id": "3700000060080E5000299C24000006E857AC7EEC", "label": "amg_made_by_ansible", "localRole": "primary", "mirrorChannelRemoteTarget": "9000000060080E5000299C24005B06E557AC7EEC", "orphanGroup": false, "recoveryPointAgeAlertThresholdMinutes": 20, "remoteRole": "secondary", "remoteTarget": {"nodeName": {"ioInterfaceType": "fc", "iscsiNodeName": null, "remoteNodeWWN": "20040080E5299F1C"}, "remoteRef": "9000000060080E5000299C24005B06E557AC7EEC", "scsiinitiatorTargetBaseProperties": {"ioInterfaceType": "fc", "iscsiinitiatorTargetBaseParameters": null}}, "remoteTargetId": "ansible2", "remoteTargetName": "Ansible2", "remoteTargetWwn": "60080E5000299F880000000056A25D56", "repositoryUtilizationWarnThreshold": 80, "roleChangeProgress": "none", "syncActivity": "idle", "syncCompletionTimeAlertThresholdMinutes": 10, "syncIntervalMinutes": 10, "worldWideName": "60080E5000299C24000006E857AC7EEC"}'
-"""
+"""  # NOQA
 
 import json
 

@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -28,7 +29,8 @@ module: copy
 version_added: "historical"
 short_description: Copies files to remote locations.
 description:
-     - The C(copy) module copies a file on the local box to remote locations. Use the M(fetch) module to copy files from remote locations to the local box. If you need variable interpolation in copied files, use the M(template) module.
+    - The C(copy) module copies a file on the local box to remote locations. Use the M(fetch) module to copy files from remote locations to the local box.
+      If you need variable interpolation in copied files, use the M(template) module.
 options:
   src:
     description:
@@ -96,6 +98,7 @@ options:
 extends_documentation_fragment:
     - files
     - validate
+    - decrypt
 author:
     - "Ansible Core Team"
     - "Michael DeHaan"

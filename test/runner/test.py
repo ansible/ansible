@@ -163,6 +163,9 @@ def parse_args():
                       action='store_true',
                       help='analyze code coverage when running tests')
 
+    test.add_argument('--metadata',
+                      help=argparse.SUPPRESS)
+
     add_changes(test, argparse)
     add_environments(test)
 
@@ -382,6 +385,11 @@ def add_lint(parser):
     parser.add_argument('--junit',
                         action='store_true',
                         help='write test failures to junit xml files')
+
+    parser.add_argument('--failure-ok',
+                        action='store_true',
+                        help='exit successfully on failed tests after saving results')
+
 
 
 def add_changes(parser, argparse):

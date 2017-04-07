@@ -17,6 +17,84 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+'''
+DOCUMENTATION:
+    connection: ssh
+    short_description: connect via ssh client binary
+    description:
+        - This connection plugin allows ansible to communicate to the target machines via normal ssh command line.
+    author: ansible (@core)
+    version_added: historical
+    options:
+        _host:
+            description: Hostname/ip to connect to.
+            default: inventory_hostname
+            host_vars:
+                 - ansible_host
+                 - ansible_ssh_host
+        _host_key_checking:
+            type: bool
+            description: Determines if ssh should check host keys
+            config:
+                - section: defaults
+                  key: 'host_key_checking'
+            env_vars:
+                - ANSIBLE_HOST_KEY_CHECKING
+        _password:
+            description: Authentication password for the C(remote_user). Can be supplied as CLI option.
+            host_vars:
+                - ansible_password
+                - ansible_ssh_pass
+        _ssh_args:
+            description: Arguments to pass to all ssh cli tools
+            default: '-C -o ControlMaster=auto -o ControlPersist=60s'
+            config:
+                - section: 'ssh_connection'
+                  key: 'ssh_args'
+            env_vars:
+                - ANSIBLE_SSH_ARGS
+        _ssh_common_args:
+            description: Common extra args for ssh CLI tools
+            host_vars:
+                - ansible_ssh_common_args
+        _scp_extra_args:
+            description: Extra exclusive to the 'scp' CLI
+            host_vars:
+                - ansible_scp_extra_args
+        _sftp_extra_args:
+            description: Extra exclusive to the 'sftp' CLI
+            host_vars:
+                - ansible_sftp_extra_args
+        _ssh_extra_args:
+            description: Extra exclusive to the 'ssh' CLI
+            host_vars:
+                - ansible_ssh_extra_args
+        port:
+            description: Remote port to connect to.
+            type: int
+            config:
+               - section: defaults
+                 key: remote_port
+                 default: 22
+            env_vars:
+               - ANSIBLE_REMOTE_PORT
+            host_vars:
+               - ansible_port
+               - ansible_ssh_port
+        remote_user:
+            description:
+                - User name with which to login to the remote server, normally set by the remote_user keyword.
+                - If no user is supplied, Ansible will let the ssh client binary choose the user as it normally
+            config:
+               - section: defaults
+                 key: remote_user
+            env_vars:
+               - ANSIBLE_REMOTE_USER
+            host_vars:
+               - ansible_user
+               - ansible_ssh_user
+'''
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -31,12 +109,12 @@ import time
 
 from functools import wraps
 from ansible import constants as C
-from ansible.compat import selectors
-from ansible.compat.six import PY3, text_type, binary_type
-from ansible.compat.six.moves import shlex_quote
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils.basic import BOOLEANS
+from ansible.compat import selectors
+from ansible.module_utils.six import PY3, text_type, binary_type
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.utils.path import unfrackpath, makedirs_safe
@@ -49,8 +127,13 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 SSHPASS_AVAILABLE = None
 
+
+class AnsibleControlPersistBrokenPipeError(AnsibleError):
+    ''' ControlPersist broken pipe '''
+    pass
 
 def _ssh_retry(func):
     """
@@ -69,11 +152,17 @@ def _ssh_retry(func):
         cmd_summary = "%s..." % args[0]
         for attempt in range(remaining_tries):
             try:
-                return_tuple = func(self, *args, **kwargs)
-                display.vvv(return_tuple, host=self.host)
-                # 0 = success
-                # 1-254 = remote command return code
-                # 255 = failure from the ssh command itself
+                try:
+                    return_tuple = func(self, *args, **kwargs)
+                    display.vvv(return_tuple, host=self.host)
+                    # 0 = success
+                    # 1-254 = remote command return code
+                    # 255 = failure from the ssh command itself
+                except (AnsibleControlPersistBrokenPipeError) as e:
+                    # Retry one more time because of the ControlPersist broken pipe (see #16731)
+                    display.vvv(u"RETRYING BECAUSE OF CONTROLPERSIST BROKEN PIPE")
+                    return_tuple = func(self, *args, **kwargs)
+
                 if return_tuple[0] != 255:
                     break
                 else:
@@ -657,11 +746,19 @@ class Connection(ConnectionBase):
 
         if C.HOST_KEY_CHECKING:
             if cmd[0] == b"sshpass" and p.returncode == 6:
-                raise AnsibleError('Using a SSH password instead of a key is not possible because Host Key checking is enabled and sshpass does not support this.  Please add this host\'s fingerprint to your known_hosts file to manage this host.')
+                raise AnsibleError('Using a SSH password instead of a key is not possible because Host Key checking is enabled and sshpass does not support '
+                                   'this.  Please add this host\'s fingerprint to your known_hosts file to manage this host.')
 
         controlpersisterror = b'Bad configuration option: ControlPersist' in b_stderr or b'unknown configuration option: ControlPersist' in b_stderr
         if p.returncode != 0 and controlpersisterror:
-            raise AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ssh_args in [ssh_connection] section of the config file) before running again')
+            raise AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" '
+                               '(or ssh_args in [ssh_connection] section of the config file) before running again')
+
+        # If we find a broken pipe because of ControlPersist timeout expiring (see #16731),
+        # we raise a special exception so that we can retry a connection.
+        controlpersist_broken_pipe = b'mux_client_hello_exchange: write packet: Broken pipe' in b_stderr
+        if p.returncode == 255 and controlpersist_broken_pipe:
+            raise AnsibleControlPersistBrokenPipeError('SSH Error: data could not be sent because of ControlPersist broken pipe.')
 
         if p.returncode == 255 and in_data and checkrc:
             raise AnsibleConnectionFailure('SSH Error: data could not be sent to remote host "%s". Make sure this host can be reached over ssh' % self.host)

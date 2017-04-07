@@ -20,9 +20,10 @@
 #
 # see examples/playbooks/get_url.yml
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -155,6 +156,22 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "no"
+  client_cert:
+    required: false
+    default: null
+    description:
+      - PEM formatted certificate chain file to be used for SSL client
+        authentication. This file can also include the key as well, and if
+        the key is included, I(client_key) is not required
+    version_added: 2.4
+  client_key:
+    required: false
+    default: null
+    description:
+      - PEM formatted file that contains your private key to be used for SSL
+        client authentication. If I(client_cert) contains both the certificate
+        and key, this option is not required.
+    version_added: 2.4
   others:
     description:
       - all arguments accepted by the M(file) module also work here

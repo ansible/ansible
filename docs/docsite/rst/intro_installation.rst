@@ -66,10 +66,9 @@ This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
 Managed Node Requirements
 `````````````````````````
 
-On the managed nodes, you need a way to communicate, which is normally ssh. By default this uses sftp. If that's not available, you can switch to scp in ansible.cfg.
-You also need Python 2.4 or later. If you are running less than Python 2.5 on the remotes, you will also need:
-
-* ``python-simplejson``
+On the managed nodes, you need a way to communicate, which is normally ssh. By
+default this uses sftp. If that's not available, you can switch to scp in
+:file:`ansible.cfg`.  You also need Python 2.6 or later.
 
 .. note::
 
@@ -91,7 +90,7 @@ You also need Python 2.4 or later. If you are running less than Python 2.5 on th
    Ansible 2.2 introduces a tech preview of support for Python 3. For more information, see `Python 3 Support <http://docs.ansible.com/ansible/python_3_support.html>`_.
 
    By default, Ansible uses Python 2 in order to maintain compatibility with older distributions
-   such as RHEL 5 and RHEL 6. However, some Linux distributions (Gentoo, Arch) may not have a
+   such as RHEL 6. However, some Linux distributions (Gentoo, Arch) may not have a
    Python 2.X interpreter installed by default.  On those systems, you should install one, and set
    the 'ansible_python_interpreter' variable in inventory (see :doc:`intro_inventory`) to point at your 2.X Python.  Distributions
    like Red Hat Enterprise Linux, CentOS, Fedora, and Ubuntu all have a 2.X interpreter installed
@@ -118,7 +117,7 @@ RPMs are available from yum for `EPEL
 Fedora distributions.
 
 Ansible itself can manage earlier operating
-systems that contain Python 2.4 or higher (so also EL5).
+systems that contain Python 2.6 or higher (so also EL6).
 
 Fedora users can install Ansible directly, though if you are using RHEL or CentOS and have not already done so, `configure EPEL <http://fedoraproject.org/wiki/EPEL>`_
 

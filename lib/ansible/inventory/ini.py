@@ -103,7 +103,6 @@ class InventoryParser(object):
             self.lineno += 1
 
             line = line.strip()
-
             # Skip empty lines and comments
             if not line or line[0] in self._COMMENT_MARKERS:
                 continue
@@ -156,14 +155,14 @@ class InventoryParser(object):
                 for h in hosts:
                     self.groups[groupname].add_host(h)
 
+                #FIXME: needed to save hosts to group, find out why
+                self.groups[groupname].get_hosts()
+
             # [groupname:vars] contains variable definitions that must be
             # applied to the current group.
             elif state == 'vars':
                 (k, v) = self._parse_variable_definition(line)
-                if k != 'ansible_group_priority':
-                    self.groups[groupname].set_variable(k, v)
-                else:
-                    self.groups[groupname].set_priority(v)
+                self.groups[groupname].set_variable(k, v)
 
             # [groupname:children] contains subgroup names that must be
             # added as children of the current group. The subgroup names
@@ -202,7 +201,7 @@ class InventoryParser(object):
         # 'all' at the time it was created.
 
         for group in self.groups.values():
-            if group.depth == 0 and group.name not in ('all', 'ungrouped'):
+            if group.depth == 0 and group.name != 'all':
                 self.groups['all'].add_child_group(group)
 
     def _parse_group_name(self, line):
@@ -328,17 +327,16 @@ class InventoryParser(object):
         Attempt to transform the string value from an ini file into a basic python object
         (int, dict, list, unicode string, etc).
         '''
-        if "#" not in v:
-            try:
-                v = ast.literal_eval(v)
-            # Using explicit exceptions.
-            # Likely a string that literal_eval does not like. We wil then just set it.
-            except ValueError:
-                # For some reason this was thought to be malformed.
-                pass
-            except SyntaxError:
-                # Is this a hash with an equals at the end?
-                pass
+        try:
+            v = ast.literal_eval(v)
+        # Using explicit exceptions.
+        # Likely a string that literal_eval does not like. We wil then just set it.
+        except ValueError:
+            # For some reason this was thought to be malformed.
+            pass
+        except SyntaxError:
+            # Is this a hash with an equals at the end?
+            pass
         return to_text(v, nonstring='passthru', errors='surrogate_or_strict')
 
     def get_host_variables(self, host):

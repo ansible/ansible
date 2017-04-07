@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -448,7 +449,7 @@ class RHEVConn(object):
                 currentdisk = VM.disks.get(name=diskname)
                 if attempt == 100:
                     setMsg("Error, disk %s, state %s" % (diskname, str(currentdisk.status.state)))
-                    raise
+                    raise Exception()
                 else:
                     attempt += 1
                     time.sleep(2)
@@ -488,7 +489,7 @@ class RHEVConn(object):
                 currentnic = VM.nics.get(name=nicname)
                 if attempt == 100:
                     setMsg("Error, iface %s, state %s" % (nicname, str(currentnic.active)))
-                    raise
+                    raise Exception()
                 else:
                     attempt += 1
                     time.sleep(2)

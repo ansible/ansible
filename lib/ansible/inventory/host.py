@@ -106,27 +106,42 @@ class Host:
     def set_gathered_facts(self, gathered):
         self._gathered_facts = gathered
 
+    def populate_ancestors(self):
+
+        # populate ancestors
+        for group in self.groups:
+            self.add_group(group)
+
     def add_group(self, group):
 
-        self.groups.append(group)
+        # populate ancestors
+        for oldg in group.get_ancestors():
+            if oldg not in self.groups:
+                self.add_group(oldg)
+
+        if group not in self.groups:
+            self.groups.append(group)
 
     def remove_group(self, group):
 
-        self.groups.remove(group)
+        if group in self.groups:
+            self.groups.remove(group)
+
+            # remove exclusive ancestors, xcept all!
+            for oldg in group.get_ancestors():
+                if oldg.name != 'all':
+                    for childg in self.groups:
+                        if oldg in childg.get_ancestors():
+                            break
+                    else:
+                        self.remove_group(oldg)
 
     def set_variable(self, key, value):
 
         self.vars[key]=value
 
     def get_groups(self):
-
-        groups = {}
-        for g in self.groups:
-            groups[g.name] = g
-            ancestors = g.get_ancestors()
-            for a in ancestors:
-                groups[a.name] = a
-        return groups.values()
+        return self.groups
 
     def get_vars(self):
 
@@ -140,6 +155,6 @@ class Host:
     def get_group_vars(self):
         results = {}
         groups = self.get_groups()
-        for group in sorted(groups, key=lambda g: (g.depth, g.name)):
+        for group in sorted(groups, key=lambda g: (g.depth, g.priority, g.name)):
             results = combine_vars(results, group.get_vars())
         return results

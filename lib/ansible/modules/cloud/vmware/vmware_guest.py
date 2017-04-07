@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -81,7 +82,9 @@ options:
         description:
             - "Set the guest ID (Debian, RHEL, Windows...)"
             - "This field is required when creating a VM"
-            - "Valid values are referenced here: https://www.vmware.com/support/developer/converter-sdk/conv55_apireference/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html"
+            - >
+              Valid values are referenced here:
+              https://www.vmware.com/support/developer/converter-sdk/conv55_apireference/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html
         version_added: "2.3"
    disk:
         description:
@@ -107,7 +110,6 @@ options:
    datacenter:
         description:
             - Destination datacenter for the deploy operation
-        required: False
         default: ha-datacenter
    cluster:
         description:
@@ -138,23 +140,23 @@ options:
         description:
           - "Parameters to customize template"
           - "Common parameters (Linux/Windows):"
-          - "  dns_servers (list): List of DNS servers to configure"
-          - "  dns_suffix (list): List of domain suffixes, aka DNS search path (default: C(domain) parameter)"
-          - "  domain (string): DNS domain name to use"
-          - "  hostname (string): Computer hostname (default: C(name) parameter)"
+          - "  C(dns_servers) (list): List of DNS servers to configure"
+          - "  C(dns_suffix) (list): List of domain suffixes, aka DNS search path (default: C(domain) parameter)"
+          - "  C(domain) (string): DNS domain name to use"
+          - "  C(hostname) (string): Computer hostname (default: C(name) parameter)"
           - "Parameters related to windows customization:"
-          - "  autologon (bool): Auto logon after VM customization (default: False)"
-          - "  autologoncount (int): Number of autologon after reboot (default: 1)"
-          - "  domainadmin (string): User used to join in AD domain (mandatory with joindomain)"
-          - "  domainadminpassword (string): Password used to join in AD domain (mandatory with joindomain)"
-          - "  fullname (string): Server owner name (default: Administrator)"
-          - "  joindomain (string): AD domain to join (Not compatible with C(joinworkgroup))"
-          - "  joinworkgroup (string): Workgroup to join (Not compatible with C(joindomain), default: WORKGROUP)"
-          - "  orgname (string): Organisation name (default: ACME)"
-          - "  password (string): Local administrator password (mandatory)"
-          - "  productid (string): Product ID"
-          - "  runonce (list): List of commands to run at first user logon"
-          - "  timezone (int): Timezone (default: 85) See https://msdn.microsoft.com/en-us/library/ms912391(v=winembedded.11).aspx"
+          - "  C(autologon) (bool): Auto logon after VM customization (default: False)"
+          - "  C(autologoncount) (int): Number of autologon after reboot (default: 1)"
+          - "  C(domainadmin) (string): User used to join in AD domain (mandatory with joindomain)"
+          - "  C(domainadminpassword) (string): Password used to join in AD domain (mandatory with joindomain)"
+          - "  C(fullname) (string): Server owner name (default: Administrator)"
+          - "  C(joindomain) (string): AD domain to join (Not compatible with C(joinworkgroup))"
+          - "  C(joinworkgroup) (string): Workgroup to join (Not compatible with C(joindomain), default: WORKGROUP)"
+          - "  C(orgname) (string): Organisation name (default: ACME)"
+          - "  C(password) (string): Local administrator password (mandatory)"
+          - "  C(productid) (string): Product ID"
+          - "  C(runonce) (list): List of commands to run at first user logon"
+          - "  C(timezone) (int): Timezone (default: 85) See U(https://msdn.microsoft.com/en-us/library/ms912391(v=winembedded.11).aspx)"
         version_added: "2.3"
 extends_documentation_fragment: vmware.documentation
 '''
@@ -188,6 +190,7 @@ EXAMPLES = '''
         mac: 'aa:bb:dd:aa:00:14'
       template: template_el7
       wait_for_ip_address: yes
+    delegate_to: localhost
     register: deploy
 
 # Clone a VM from Template and customize
@@ -220,6 +223,7 @@ EXAMPLES = '''
         password: new_vm_password
         runonce:
         - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\Enable-WinRM.ps1 -ForceNewSSLCert
+    delegate_to: localhost
 
 # Create a VM template
   - name: create a VM template
@@ -244,6 +248,7 @@ EXAMPLES = '''
         num_cpus: 1
         scsi: lsilogic
       wait_for_ip_address: yes
+    delegate_to: localhost
     register: deploy
 
 # Rename a VM (requires the VM's uuid)
@@ -254,6 +259,7 @@ EXAMPLES = '''
       uuid: 421e4592-c069-924d-ce20-7e7533fab926
       name: new_name
       state: present
+    delegate_to: localhost
 
 # Remove a VM by uuid
   - vmware_guest:
@@ -262,6 +268,7 @@ EXAMPLES = '''
       password: vmware
       uuid: 421e4592-c069-924d-ce20-7e7533fab926
       state: absent
+    delegate_to: localhost
 '''
 
 RETURN = """
@@ -484,17 +491,19 @@ class PyVmomiHelper(object):
         facts = self.gather_facts(vm)
         expected_state = state.replace('_', '').lower()
         current_state = facts['hw_power_status'].lower()
-        result = {}
+        result = dict(
+            changed=False,
+            failed=False,
+        )
 
         # Need Force
         if not force and current_state not in ['poweredon', 'poweredoff']:
-            return "VM is in %s power state. Force is required!" % current_state
+            result['failed'] = True
+            result['msg'] = "VM is in %s power state. Force is required!" % current_state
+            return result
 
-        # State is already true
-        if current_state == expected_state:
-            result['changed'] = False
-            result['failed'] = False
-        else:
+        # State is not already true
+        if current_state != expected_state:
             task = None
             try:
                 if expected_state == 'poweredoff':
@@ -507,15 +516,15 @@ class PyVmomiHelper(object):
                     if current_state in ('poweredon', 'poweringon', 'resetting', 'poweredoff'):
                         task = vm.Reset()
                     else:
-                        result = {'changed': False, 'failed': True,
-                                  'msg': "Cannot restart VM in the current state %s" % current_state}
+                        result['failed'] = True
+                        result['msg'] = "Cannot restart VM in the current state %s" % current_state
 
                 elif expected_state == 'suspended':
                     if current_state in ('poweredon', 'poweringon'):
                         task = vm.Suspend()
                     else:
-                        result = {'changed': False, 'failed': True,
-                                  'msg': 'Cannot suspend VM in the current state %s' % current_state}
+                        result['failed'] = True
+                        result['msg'] = 'Cannot suspend VM in the current state %s' % current_state
 
                 elif expected_state in ['shutdownguest', 'rebootguest']:
                     if current_state == 'poweredon' and vm.guest.toolsRunningStatus == 'guestToolsRunning':
@@ -524,25 +533,28 @@ class PyVmomiHelper(object):
                         else:
                             task = vm.RebootGuest()
                     else:
-                        result = {'changed': False, 'failed': True,
-                                  'msg': "VM %s must be in poweredon state & tools should be installed for guest shutdown/reboot" % vm.name}
+                        result['failed'] = True
+                        result['msg'] = "VM %s must be in poweredon state & tools should be installed for guest shutdown/reboot" % vm.name
 
             except Exception:
                 e = get_exception()
-                result = {'changed': False, 'failed': True, 'msg': e}
+                result['failed'] = True
+                result['msg'] = str(e)
 
             if task:
                 self.wait_for_task(task)
                 if task.info.state == 'error':
-                    result = {'changed': False, 'failed': True, 'msg': task.info.error.msg}
+                    result['failed'] = True
+                    result['msg'] = str(task.info.error.msg)
                 else:
-                    result = {'changed': True, 'failed': False}
+                    result['changed'] = True
 
         # need to get new metadata if changed
         if result['changed']:
             newvm = self.getvm(uuid=vm.config.uuid)
             facts = self.gather_facts(newvm)
             result['instance'] = facts
+
         return result
 
     def gather_facts(self, vm):
@@ -670,7 +682,9 @@ class PyVmomiHelper(object):
                 # VDS switch
                 pg_obj = get_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_devices[key]['name'])
 
-                if nic.device.backing and ( nic.device.backing.port.portgroupKey != pg_obj.key or nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid ):
+                if (nic.device.backing and
+                        (nic.device.backing.port.portgroupKey != pg_obj.key or
+                         nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid)):
                     nic_change_detected = True
 
                 dvs_port_connection = vim.dvs.PortConnection()
@@ -787,7 +801,8 @@ class PyVmomiHelper(object):
 
             if 'joindomain' in self.params['customization']:
                 if 'domainadmin' not in self.params['customization'] or 'domainadminpassword' not in self.params['customization']:
-                    self.module.fail_json(msg="'domainadmin' and 'domainadminpassword' entries are mandatory in 'customization' section to use joindomain feature")
+                    self.module.fail_json(msg="'domainadmin' and 'domainadminpassword' entries are mandatory in 'customization' section to use "
+                                              "joindomain feature")
 
                 ident.identification.domainAdmin = str(self.params['customization'].get('domainadmin'))
                 ident.identification.joinDomain = str(self.params['customization'].get('joindomain'))
@@ -1249,26 +1264,26 @@ def main():
                     'rebootguest'
                 ],
                 default='present'),
-            validate_certs=dict(required=False, type='bool', default=True),
-            template_src=dict(required=False, type='str', aliases=['template'], default=None),
-            is_template=dict(required=False, type='bool', default=False),
-            annotation=dict(required=False, type='str', aliases=['notes']),
-            customvalues=dict(required=False, type='list', default=[]),
+            validate_certs=dict(type='bool', default=True),
+            template_src=dict(type='str', aliases=['template']),
+            is_template=dict(type='bool', default=False),
+            annotation=dict(type='str', aliases=['notes']),
+            customvalues=dict(type='list', default=[]),
             name=dict(required=True, type='str'),
-            name_match=dict(required=False, type='str', default='first'),
-            uuid=dict(required=False, type='str'),
-            folder=dict(required=False, type='str', default='/vm'),
-            guest_id=dict(required=False, type='str', default=None),
-            disk=dict(required=False, type='list', default=[]),
-            hardware=dict(required=False, type='dict', default={}),
-            force=dict(required=False, type='bool', default=False),
-            datacenter=dict(required=False, type='str', default='ha-datacenter'),
-            esxi_hostname=dict(required=False, type='str', default=None),
-            cluster=dict(required=False, type='str', default=None),
-            wait_for_ip_address=dict(required=False, type='bool', default=False),
-            networks=dict(required=False, type='list', default=[]),
-            resource_pool=dict(required=False, type='str', default=None),
-            customization=dict(required=False, type='dict', no_log=True, default={}),
+            name_match=dict(type='str', default='first'),
+            uuid=dict(type='str'),
+            folder=dict(type='str', default='/vm'),
+            guest_id=dict(type='str'),
+            disk=dict(type='list', default=[]),
+            hardware=dict(type='dict', default={}),
+            force=dict(type='bool', default=False),
+            datacenter=dict(type='str', default='ha-datacenter'),
+            esxi_hostname=dict(type='str'),
+            cluster=dict(type='str'),
+            wait_for_ip_address=dict(type='bool', default=False),
+            networks=dict(type='list', default=[]),
+            resource_pool=dict(type='str'),
+            customization=dict(type='dict', no_log=True, default={}),
         ),
         supports_check_mode=True,
         mutually_exclusive=[

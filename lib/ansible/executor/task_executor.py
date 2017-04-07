@@ -24,11 +24,10 @@ import sys
 import time
 import traceback
 
-from ansible.compat.six import iteritems, string_types, binary_type
-
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure
 from ansible.executor.task_result import TaskResult
+from ansible.module_utils.six import iteritems, string_types, binary_type
 from ansible.module_utils._text import to_text
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
@@ -43,6 +42,7 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 __all__ = ['TaskExecutor']
 
@@ -196,10 +196,12 @@ class TaskExecutor:
             if self._task.loop in self._shared_loader_obj.lookup_loader:
                 if self._task.loop == 'first_found':
                     # first_found loops are special. If the item is undefined then we want to fall through to the next value rather than failing.
-                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=False, convert_bare=False)
+                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=False,
+                                                             convert_bare=False)
                     loop_terms = [t for t in loop_terms if not templar._contains_vars(t)]
                 else:
-                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=True, convert_bare=False)
+                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=True,
+                                                             convert_bare=False)
 
                 # get lookup
                 mylookup = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader, templar=templar)
@@ -468,7 +470,9 @@ class TaskExecutor:
                 self._task.args = variable_params
 
         # get the connection and the handler for this execution
-        if not self._connection or not getattr(self._connection, 'connected', False) or self._play_context.remote_addr != self._connection._play_context.remote_addr:
+        if (not self._connection or
+                not getattr(self._connection, 'connected', False) or
+                self._play_context.remote_addr != self._connection._play_context.remote_addr):
             self._connection = self._get_connection(variables=variables, templar=templar)
             hostvars = variables.get('hostvars', None)
             if hostvars:
@@ -557,7 +561,9 @@ class TaskExecutor:
                 return failed_when_result
 
             if 'ansible_facts' in result:
-                vars_copy.update(result['ansible_facts'])
+                if not C.NAMESPACE_FACTS:
+                    vars_copy.update(result['ansible_facts'])
+                vars_copy.update({'ansible_facts': result['ansible_facts']})
 
             # set the failed property if the result has a non-zero rc. This will be
             # overridden below if the failed_when property is set
@@ -596,7 +602,9 @@ class TaskExecutor:
             variables[self._task.register] = wrap_var(result)
 
         if 'ansible_facts' in result:
-            variables.update(result['ansible_facts'])
+            if not C.NAMESPACE_FACTS:
+                variables.update(result['ansible_facts'])
+            variables.update({'ansible_facts': result['ansible_facts']})
 
         # save the notification target in the result, if it was specified, as
         # this task may be running in a loop in which case the notification
@@ -631,7 +639,7 @@ class TaskExecutor:
         if async_jid is None:
             return dict(failed=True, msg="No job id was returned by the async task")
 
-        # Create a new psuedo-task to run the async_status module, and run
+        # Create a new pseudo-task to run the async_status module, and run
         # that (with a sleep for "poll" seconds between each retry) until the
         # async time limit is exceeded.
 
@@ -662,11 +670,14 @@ class TaskExecutor:
                 # have issues which result in a half-written/unparseable result
                 # file on disk, which manifests to the user as a timeout happening
                 # before it's time to timeout.
-                if int(async_result.get('finished', 0)) == 1 or ('failed' in async_result and async_result.get('_ansible_parsed', False)) or 'skipped' in async_result:
+                if (int(async_result.get('finished', 0)) == 1 or
+                        ('failed' in async_result and async_result.get('_ansible_parsed', False)) or
+                        'skipped' in async_result):
                     break
             except Exception as e:
                 # Connections can raise exceptions during polling (eg, network bounce, reboot); these should be non-fatal.
-                # On an exception, call the connection's reset method if it has one (eg, drop/recreate WinRM connection; some reused connections are in a broken state)
+                # On an exception, call the connection's reset method if it has one
+                # (eg, drop/recreate WinRM connection; some reused connections are in a broken state)
                 display.vvvv("Exception during async poll, retrying... (%s)" % to_text(e))
                 display.debug("Async poll exception was:\n%s" % to_text(traceback.format_exc()))
                 try:

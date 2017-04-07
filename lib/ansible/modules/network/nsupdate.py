@@ -23,9 +23,10 @@ You should have received a copy of the GNU General Public License
 along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -222,13 +223,14 @@ class RecordManager(object):
                 self.dns_rc = self.modify_record()
                 if self.dns_rc != 0:
                     result['msg'] = "Failed to update DNS record (rc: %d)" % self.dns_rc
+
+            if self.dns_rc != 0:
+                result['failed'] = True
+            else:
+                result['changed'] = True
+
         else:
             result['changed'] = False
-
-        if self.dns_rc != 0:
-            result['failed'] = True
-        else:
-            result['changed'] = True
 
         return result
 

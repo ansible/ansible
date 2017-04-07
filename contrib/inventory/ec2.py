@@ -132,6 +132,7 @@ from boto import ec2
 from boto import rds
 from boto import elasticache
 from boto import route53
+from boto import sts
 import six
 
 from ansible.module_utils import ec2 as ec2_utils
@@ -249,11 +250,11 @@ class Ec2Inventory(object):
         # Regions
         self.regions = []
         configRegions = config.get('ec2', 'regions')
-        configRegions_exclude = config.get('ec2', 'regions_exclude')
         if (configRegions == 'all'):
             if self.eucalyptus_host:
                 self.regions.append(boto.connect_euca(host=self.eucalyptus_host).region.name, **self.credentials)
             else:
+                configRegions_exclude = config.get('ec2', 'regions_exclude')
                 for regionInfo in ec2.regions():
                     if regionInfo.name not in configRegions_exclude:
                         self.regions.append(regionInfo.name)
@@ -421,6 +422,12 @@ class Ec2Inventory(object):
         else:
             self.replace_dash_in_groups = True
 
+        # IAM role to assume for connection
+        if config.has_option('ec2', 'iam_role'):
+            self.iam_role = config.get('ec2', 'iam_role')
+        else:
+            self.iam_role = None
+
         # Configure which groups should be created.
         group_by_options = [
             'group_by_instance_id',
@@ -547,6 +554,13 @@ class Ec2Inventory(object):
         if self.boto_profile:
             connect_args['profile_name'] = self.boto_profile
             self.boto_fix_security_token_in_profile(connect_args)
+
+        if self.iam_role:
+            sts_conn = sts.connect_to_region(region, **connect_args)
+            role = sts_conn.assume_role(self.iam_role, 'ansible_dynamic_inventory')
+            connect_args['aws_access_key_id'] = role.credentials.access_key
+            connect_args['aws_secret_access_key'] = role.credentials.secret_key
+            connect_args['security_token'] = role.credentials.session_token
 
         conn = module.connect_to_region(region, **connect_args)
         # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
@@ -1254,12 +1268,13 @@ class Ec2Inventory(object):
         if not self.all_elasticache_replication_groups and replication_group['Status'] != 'available':
             return
 
+        # Skip clusters we cannot address (e.g. private VPC subnet or clustered redis)
+        if replication_group['NodeGroups'][0]['PrimaryEndpoint'] is None or \
+           replication_group['NodeGroups'][0]['PrimaryEndpoint']['Address'] is None:
+            return
+
         # Select the best destination address (PrimaryEndpoint)
         dest = replication_group['NodeGroups'][0]['PrimaryEndpoint']['Address']
-
-        if not dest:
-            # Skip clusters we cannot address (e.g. private VPC subnet)
-            return
 
         # Add to index
         self.index[dest] = [region, replication_group['ReplicationGroupId']]
@@ -1363,7 +1378,7 @@ class Ec2Inventory(object):
             elif key == 'ec2__previous_state':
                 instance_vars['ec2_previous_state'] = instance.previous_state or ''
                 instance_vars['ec2_previous_state_code'] = instance.previous_state_code
-            elif type(value) in [int, bool]:
+            elif isinstance(value, (int, bool)):
                 instance_vars[key] = value
             elif isinstance(value, six.string_types):
                 instance_vars[key] = value.strip()
@@ -1468,7 +1483,7 @@ class Ec2Inventory(object):
 
             # Target: Everything
             # Preserve booleans and integers
-            elif type(value) in [int, bool]:
+            elif isinstance(value, (int, bool)):
                 host_info[key] = value
 
             # Target: Everything

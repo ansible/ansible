@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -211,7 +212,18 @@ def main():
             dcs_service = connection.system_service().data_centers_service()
             dc = dcs_service.list(search='Clusters.name=%s' % cluster_name)[0]
             networks_service = dcs_service.service(dc.id).networks_service()
-            network = search_by_name(networks_service, module.params['network'])
+            network = next(
+                (n for n in networks_service.list()
+                if n.name == module.params['network']),
+                None
+            )
+            if network is None:
+                raise Exception(
+                    "Network '%s' was not found in datacenter '%s'." % (
+                        module.params['network'],
+                        dc.name
+                    )
+                )
             for vnic in connection.system_service().vnic_profiles_service().list():
                 if vnic.name == profile and vnic.network.id == network.id:
                     vmnics_module.vnic_id = vnic.id

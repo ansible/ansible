@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -51,6 +52,9 @@ options:
     vms:
         description:
             - "List of the VMs names, which should have assigned this tag."
+    hosts:
+        description:
+            - "List of the hosts names, which should have assigned this tag."
 extends_documentation_fragment: ovirt
 '''
 

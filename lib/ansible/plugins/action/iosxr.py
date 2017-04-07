@@ -23,13 +23,13 @@ import os
 import sys
 import copy
 
-from ansible.plugins.action.normal import ActionModule as _ActionModule
-from ansible.module_utils._text import to_bytes
-from ansible.utils.path import unfrackpath
-from ansible.plugins import connection_loader
-from ansible.compat.six import iteritems
-from ansible.module_utils.iosxr import iosxr_argument_spec
 from ansible.module_utils.basic import AnsibleFallbackNotFound
+from ansible.module_utils.iosxr import iosxr_argument_spec
+from ansible.module_utils.six import iteritems
+from ansible.module_utils._text import to_bytes
+from ansible.plugins import connection_loader
+from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.utils.path import unfrackpath
 
 try:
     from __main__ import display
@@ -67,7 +67,10 @@ class ActionModule(_ActionModule):
             display.vvvv('calling open_shell()', pc.remote_addr)
             rc, out, err = connection.exec_command('open_shell()')
             if rc != 0:
-                return {'failed': True, 'msg': 'unable to open shell', 'rc': rc}
+                return {'failed': True,
+                        'msg': 'unable to open shell. Please see: ' +
+                               'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell',
+                        'rc': rc}
         else:
             # make sure we are in the right cli context which should be
             # enable mode and not config module
@@ -80,6 +83,11 @@ class ActionModule(_ActionModule):
         task_vars['ansible_socket'] = socket_path
 
         result = super(ActionModule, self).run(tmp, task_vars)
+
+        try:
+            del result['invocation']['module_args']['provider']
+        except KeyError:
+            pass
 
         return result
 

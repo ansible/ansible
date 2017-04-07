@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -287,7 +288,12 @@ class HAProxy(object):
         """
         data = self.execute('show stat', 200, False).lstrip('# ')
         r = csv.DictReader(data.splitlines())
-        state = tuple(map(lambda d: { 'status': d['status'], 'weight': d['weight'] }, filter(lambda d: (pxname is None or d['pxname'] == pxname) and d['svname'] == svname, r)))
+        state = tuple(
+            map(
+                lambda d: {'status': d['status'], 'weight': d['weight']},
+                filter(lambda d: (pxname is None or d['pxname'] == pxname) and d['svname'] == svname, r)
+            )
+        )
         return state or None
 
 

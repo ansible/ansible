@@ -26,9 +26,9 @@ import copy
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.utils.path import unfrackpath
 from ansible.plugins import connection_loader
-from ansible.compat.six import iteritems
-from ansible.module_utils.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleFallbackNotFound
+from ansible.module_utils.nxos import nxos_argument_spec
+from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_bytes
 
 try:
@@ -36,6 +36,7 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 class ActionModule(_ActionModule):
 
@@ -56,6 +57,7 @@ class ActionModule(_ActionModule):
             pc = copy.deepcopy(self._play_context)
             pc.connection = 'network_cli'
             pc.network_os = 'nxos'
+            pc.remote_addr = provider['host'] or self._play_context.remote_addr
             pc.port = provider['port'] or self._play_context.port or 22
             pc.remote_user = provider['username'] or self._play_context.connection_user
             pc.password = provider['password'] or self._play_context.password
@@ -72,7 +74,10 @@ class ActionModule(_ActionModule):
                 rc, out, err = connection.exec_command('open_shell()')
                 display.vvvv('open_shell() returned %s %s %s' % (rc, out, err))
                 if rc != 0:
-                    return {'failed': True, 'msg': 'unable to open shell', 'rc': rc}
+                    return {'failed': True,
+                            'msg': 'unable to open shell. Please see: '
+                                   + 'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell',
+                            'rc': rc}
             else:
                 # make sure we are in the right cli context which should be
                 # enable mode and not config module
@@ -86,22 +91,42 @@ class ActionModule(_ActionModule):
             task_vars['ansible_socket'] = socket_path
 
         else:
-            provider_arg = {
-                'transport': 'nxapi',
-                'host': self._play_context.remote_addr,
-                'port': provider.get('port'),
-                'username': provider.get('username') or self._play_context.connection_user,
-                'password': provider.get('password') or self._play_context.password,
-                'timeout': provider.get('timeout') or self._play_context.timeout,
-                'use_ssl': task_vars.get('nxapi_use_ssl') or False,
-                'validate_certs': task_vars.get('nxapi_validate_certs') or True
-            }
-            self._task.args['provider'] = provider_arg
+            provider['transport'] = 'nxapi'
+
+            if provider.get('host') is None:
+                provider['host'] = self._play_context.remote_addr
+
+            if provider.get('port') is None:
+                provider['port'] = 80
+
+            if provider.get('timeout') is None:
+                provider['timeout'] = self._play_context.timeout
+
+            if provider.get('username') is None:
+                provider['username'] = self._play_context.connection_user
+
+            if provider.get('password') is None:
+                provider['password'] = self._play_context.password
+
+            if provider.get('use_ssl') is None:
+                provider['use_ssl'] = False
+
+            if provider.get('validate_certs') is None:
+                provider['validate_certs'] = True
+
+            self._task.args['provider'] = provider
 
         # make sure a transport value is set in args
         self._task.args['transport'] = transport
 
-        return super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(tmp, task_vars)
+
+        try:
+            del result['invocation']['module_args']['provider']
+        except KeyError:
+            pass
+
+        return result
 
     def _get_socket_path(self, play_context):
         ssh = connection_loader.get('ssh', class_only=True)

@@ -33,23 +33,28 @@ All modules must have the following sections defined in this order:
 ANSIBLE_METADATA Block
 ----------------------
 
-ANSIBLE_METADATA contains information about the module for use by other tools. At the moment, it informs other tools which type of maintainer the module has and to what degree users can rely on a module's behaviour remaining the same over time.
+``ANSIBLE_METADATA`` contains information about the module for use by other tools. At the moment, it informs other tools which type of maintainer the module has and to what degree users can rely on a module's behaviour remaining the same over time.
 
 For new modules, the following block can be simply added into your module
 
 .. code-block:: python
 
-   ANSIBLE_METADATA = {'status': ['preview'],
-                       'supported_by': 'community',
-                       'version': '1.0'}
-
-.. warning:: version field
-
-   This is the version of the ``ANSIBLE_METADATA`` schema, *not* the version of the module.
+   ANSIBLE_METADATA = {'metadata_version': '1.0',
+                       'status': ['preview'],
+                       'supported_by': 'community'}
 
 .. warning::
 
-   Promoting a module's ``status`` or ``supported_by`` status should only be done by members of the Ansible Core Team.
+   * ``metadata_version`` is the version of the ``ANSIBLE_METADATA`` schema, *not* the version of the module.
+   * Promoting a module's ``status`` or ``supported_by`` status should only be done by members of the Ansible Core Team.
+
+.. note:: Pre-released metdata version
+
+    During development of Ansible-2.3, modules had an initial version of the
+    metadata.  This version was modified slightly after release to fix some
+    points of confusion.  You may occassionally see PRs for modules where the
+    ANSIBLE_METADATA doesn't look quite right because of this.  Module
+    metadata should be fixed before checking it into the repository.
 
 Version 1.0 of the metadata
 +++++++++++++++++++++++++++
@@ -60,34 +65,29 @@ Structure
 .. code-block:: python
 
   ANSIBLE_METADATA = {
-      'version': '1.0',
-      'supported_by': 'core|community|unmaintained|committer',
-      'status': ['stableinterface|preview|deprecated|removed']
+      'metadata_version': '1.0',
+      'supported_by': 'community',
+      'status': ['preview', 'deprecated']
   }
 
 Fields
 ``````
 
-:version: An “X.Y” formatted string. X and Y are integers which
+:metadata_version: An “X.Y” formatted string. X and Y are integers which
    define the metadata format version. Modules shipped with Ansible are
    tied to an Ansible release, so we will only ship with a single version
    of the metadata. We’ll increment Y if we add fields or legal values
    to an existing field. We’ll increment X if we remove fields or values
    or change the type or meaning of a field.
 :supported_by: This field records who supports the module.
-   Default value is community. Values are:
+   Default value is ``community``. Values are:
 
-   :core: Maintained by the Ansible core team. Core team will fix
-      bugs, add new features, and review PRs.
-   :community: This module is maintained by the community at large,
-      which is responsible for fixing bugs, adding new features, and
-      reviewing changes.
-   :unmaintained: This module currently needs a new community
-      contributor to help maintain it.
-   :committer: Committers to the Ansible repository are the
-      gatekeepers for this module. They will review PRs from the community
-      before merging but might not generate fixes and code for new features
-      on their own.
+   :core:
+   :curated:
+   :community:
+   
+   For information on what the support level values entail, please see
+   `Modules Support <http://docs.ansible.com/ansible/modules_support.html>`_.
 
 :status: This field records information about the module that is
    important to the end user. It’s a list of strings. The default value
@@ -143,9 +143,13 @@ The following fields can be used and are all required unless specified otherwise
   This is a `string`, and not a float, i.e. ``version_added: "2.1"``
 :author:
   Name of the module author in the form ``First Last (@GitHubID)``. Use a multi-line list if there is more than one author.
+:deprecated:
+  If this module is deprecated, detail when that happened, and what to use instead, e.g.
+  `Deprecated in 2.3. Use M(whatmoduletouseinstead) instead.`
+  Ensure `CHANGELOG.md` is updated to reflect this.
 :options:
   One per module argument:
-  
+
   :option-name:
 
     * Declarative operation (not CRUD)–this makes it easy for a user not to care what the existing state is, just about the final state, for example `online:`, rather than `is_online:`.
@@ -155,7 +159,6 @@ The following fields can be used and are all required unless specified otherwise
 
     * Detailed explanation of what this option does. It should be written in full sentences.
     * Should not list the options values (that's what ``choices:`` is for, though it should explain `what` the values do if they aren't obvious.
-    * If an argument takes both True)/False and Yes)/No, the documentation should use True and False.
     * If an optional parameter is sometimes required this need to be reflected in the documentation, e.g. "Required when I(state=present)."
     * Mutually exclusive options must be documented as the final sentence on each of the options.
   :required:
@@ -167,22 +170,24 @@ The following fields can be used and are all required unless specified otherwise
     * The default option must not be listed as part of the description.
   :choices:
     List of option values. Should be absent if empty.
+  :type:
+    If an argument is ``type='bool'``, this field should be set to ``type: bool`` and no ``choices`` should be specified.
   :aliases:
     List of option name aliases; generally not needed.
   :version_added:
     Only needed if this option was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
     This is a string, and not a float, i.e. ``version_added: "2.3"``.
-  :requirements:
-    List of requirements, and minimum versions (if applicable)
-  :notes:
+  :suboptions:
+    If this option takes a dict, you can define it here. See `azure_rm_securitygroup`, `os_ironic_node` for examples.
+:requirements:
+  List of requirements, and minimum versions (if applicable)
+:notes:
     Details of any important information that doesn't fit in one of the above sections; for example if ``check_mode`` isn't supported, or a link to external documentation.
 
 
 .. note::
 
    - The above fields are are all in lowercase.
-
-   - There is no need to document the ``type:`` of an option.
 
    - If the module doesn't doesn't have any options (for example, it's a ``_facts`` module), you can use ``options: {}``.
 
@@ -216,6 +221,41 @@ The RETURN section documents what the module returns, and is required for all ne
 For each value returned, provide a ``description``, in what circumstances the value is ``returned``,
 the ``type`` of the value and a ``sample``.  For example, from the ``copy`` module::
 
+
+The following fields can be used and are all required unless specified otherwise.
+
+:return name:
+  Name of the returned field.
+
+  :description:
+    Detailed description of what this value represents.
+  :returned:
+    When this value is returned, such as `always`, on `success`, `always`
+  :type:
+    Data type
+  :sample:
+    One or more examples.
+  :contains:
+    Optional, if you set `type: complex` you can detail the dictionary here by repeating the above elements.
+
+    :return name:
+      One per return
+
+      :description:
+        Detailed description of what this value represents.
+      :returned:
+        When this value is returned, such as `always`, on `success`, `always`
+      :type:
+        Data type
+      :sample:
+        One or more examples.
+
+
+For complex nested returns type can be specified as ``type: complex``.
+
+Example::
+
+
     RETURN = '''
     dest:
         description: destination file/path
@@ -233,7 +273,7 @@ the ``type`` of the value and a ``sample``.  For example, from the ``copy`` modu
         type: string
         sample: 2a5aeecc61dc98c4d780b14b330e3282
     ...
-    '''
+
 
 .. note::
 

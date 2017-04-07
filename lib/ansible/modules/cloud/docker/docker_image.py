@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -143,13 +144,17 @@ options:
     version_added: "2.1"
     suboptions:
       memory:
-        description: Set memory limit for build
+        description:
+          - Set memory limit for build.
       memswap:
-        description: Total memory (memory + swap), -1 to disable swap
+        description:
+          - Total memory (memory + swap), -1 to disable swap.
       cpushares:
-        description: CPU shares (relative weight)
+        description:
+          - CPU shares (relative weight).
       cpusetcpus:
-        description: CPUs in which to allow execution, e.g., "0-3", "0,1"
+        description:
+          - CPUs in which to allow execution, e.g., "0-3", "0,1".
   use_tls:
     description:
       - "DEPRECATED. Whether to use tls to connect to the docker server. Set to C(no) when TLS will not be used. Set to
@@ -393,9 +398,9 @@ class ImageManager(DockerBaseClass):
                 self.fail("Error getting image %s - %s" % (image_name, str(exc)))
 
             try:
-                image_tar = open(self.archive_path, 'w')
-                image_tar.write(image.data)
-                image_tar.close()
+                with open(self.archive_path, 'w') as fd:
+                    for chunk in image.stream(2048, decode_content=False):
+                        fd.write(chunk)
             except Exception as exc:
                 self.fail("Error writing image archive %s - %s" % (self.archive_path, str(exc)))
 

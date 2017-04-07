@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -41,7 +42,7 @@ options:
             - "Should the quota be present/absent."
         choices: ['present', 'absent']
         default: present
-    datacenter:
+    data_center:
         description:
             - "Name of the datacenter where quota should be managed."
         required: true
@@ -83,7 +84,7 @@ EXAMPLES = '''
 # Add cluster quota to cluster cluster1 with memory limit 20GiB and CPU limit to 10:
 ovirt_quotas:
     name: quota1
-    datacenter: dcX
+    data_center: dcX
     clusters:
         - name: cluster1
           memory: 20
@@ -92,7 +93,7 @@ ovirt_quotas:
 # Add cluster quota to all clusters with memory limit 30GiB and CPU limit to 15:
 ovirt_quotas:
     name: quota2
-    datacenter: dcX
+    data_center: dcX
     clusters:
         - memory: 30
           cpu: 15
@@ -100,7 +101,7 @@ ovirt_quotas:
 # Add storage quota to storage data1 with size limit to 100GiB
 ovirt_quotas:
     name: quota3
-    datacenter: dcX
+    data_center: dcX
     storage_grace: 40
     storage_threshold: 60
     storages:
@@ -110,7 +111,7 @@ ovirt_quotas:
 # Remove quota quota1 (Note the quota must not be assigned to any VM/disk):
 ovirt_quotas:
     state: absent
-    datacenter: dcX
+    data_center: dcX
     name: quota1
 '''
 
@@ -222,7 +223,7 @@ def main():
             default='present',
         ),
         name=dict(required=True),
-        datacenter=dict(required=True),
+        data_center=dict(required=True),
         description=dict(default=None),
         cluster_threshold=dict(default=None, type='int', aliases=['cluster_soft_limit']),
         cluster_grace=dict(default=None, type='int', aliases=['cluster_hard_limit']),
@@ -241,7 +242,7 @@ def main():
         auth = module.params.pop('auth')
         connection = create_connection(auth)
         datacenters_service = connection.system_service().data_centers_service()
-        dc_name = module.params['datacenter']
+        dc_name = module.params['data_center']
         dc_id = getattr(search_by_name(datacenters_service, dc_name), 'id', None)
         if dc_id is None:
             raise Exception("Datacenter '%s' was not found." % dc_name)

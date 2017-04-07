@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -420,7 +421,7 @@ options:
     required: false
   tty:
     description:
-      - Allocate a psuedo-TTY.
+      - Allocate a pseudo-TTY.
     default: false
     required: false
   ulimits:
@@ -574,7 +575,7 @@ EXAMPLES = '''
   docker_container:
     name: sleepy
     image: ubuntu:14.04
-    command: sleep infinity
+    command: ["sleep", "infinity"]
 
 - name: Add container to networks
   docker_container:
@@ -800,6 +801,14 @@ class TaskParameters(DockerBaseClass):
                     self.fail("Parameter error: network named %s could not be found. Does it exist?" % network['name'])
                 if network.get('links'):
                     network['links'] = self._parse_links(network['links'])
+
+        if self.entrypoint:
+            # convert from list to str.
+            self.entrypoint = ' '.join([str(x) for x in self.entrypoint])
+
+        if self.command:
+            # convert from list to str
+            self.command = ' '.join([str(x) for x in self.command])
 
     def fail(self, msg):
         self.client.module.fail_json(msg=msg)
@@ -1279,10 +1288,19 @@ class Container(DockerBaseClass):
                         set_a = set(getattr(self.parameters, key))
                         set_b = set(value)
                         match = (set_a <= set_b)
+                elif isinstance(getattr(self.parameters, key), list) and not len(getattr(self.parameters, key)) \
+                        and value is None:
+                    # an empty list and None are ==
+                    continue
                 elif isinstance(getattr(self.parameters, key), dict) and isinstance(value, dict):
                     # compare two dicts
                     self.log("comparing two dicts: %s" % key)
                     match = self._compare_dicts(getattr(self.parameters, key), value)
+
+                elif isinstance(getattr(self.parameters, key), dict) and \
+                        not len(list(getattr(self.parameters, key).keys())) and value is None:
+                    # an empty dict and None are ==
+                    continue
                 else:
                     # primitive compare
                     self.log("primitive compare: %s" % key)
@@ -1483,7 +1501,6 @@ class Container(DockerBaseClass):
         return expected_devices
 
     def _get_expected_entrypoint(self):
-        self.log('_get_expected_entrypoint')
         if not self.parameters.entrypoint:
             return None
         return shlex.split(self.parameters.entrypoint)
@@ -1681,7 +1698,7 @@ class ContainerManager(DockerBaseClass):
     def present(self, state):
         container = self._get_container(self.parameters.name)
         image = self._get_image()
-
+        self.log(image, pretty_print=True)
         if not container.exists:
             # New container
             self.log('No container found')
@@ -1940,7 +1957,7 @@ def main():
         blkio_weight=dict(type='int'),
         capabilities=dict(type='list'),
         cleanup=dict(type='bool', default=False),
-        command=dict(type='str'),
+        command=dict(type='list'),
         cpu_period=dict(type='int'),
         cpu_quota=dict(type='int'),
         cpuset_cpus=dict(type='str'),
@@ -1953,7 +1970,7 @@ def main():
         dns_search_domains=dict(type='list'),
         env=dict(type='dict'),
         env_file=dict(type='path'),
-        entrypoint=dict(type='str'),
+        entrypoint=dict(type='list'),
         etc_hosts=dict(type='dict'),
         exposed_ports=dict(type='list', aliases=['exposed', 'expose']),
         force_kill=dict(type='bool', default=False, aliases=['forcekill']),

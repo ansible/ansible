@@ -69,7 +69,8 @@ class Connection(ConnectionBase):
             tries = 3
             self.conn = socket.socket()
             self.conn.settimeout(C.ACCELERATE_CONNECT_TIMEOUT)
-            display.vvvv("attempting connection to %s via the accelerated port %d" % (self._play_context.remote_addr, self._play_context.accelerate_port), host=self._play_context.remote_addr)
+            display.vvvv("attempting connection to %s via the accelerated port %d" % (self._play_context.remote_addr, self._play_context.accelerate_port),
+                         host=self._play_context.remote_addr)
             while tries > 0:
                 try:
                     self.conn.connect((self._play_context.remote_addr,self._play_context.accelerate_port))
@@ -80,7 +81,8 @@ class Connection(ConnectionBase):
                     tries -= 1
             if tries == 0:
                 display.vvv("Could not connect via the accelerated connection, exceeded # of tries", host=self._play_context.remote_addr)
-                raise AnsibleConnectionFailure("Failed to connect to %s on the accelerated port %s" % (self._play_context.remote_addr, self._play_context.accelerate_port))
+                raise AnsibleConnectionFailure("Failed to connect to %s on the accelerated port %s" % (self._play_context.remote_addr,
+                                                                                                       self._play_context.accelerate_port))
             elif wrong_user:
                 display.vvv("Restarting daemon with a different remote_user", host=self._play_context.remote_addr)
                 raise AnsibleError("The accelerated daemon was started on the remote with a different user")

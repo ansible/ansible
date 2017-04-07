@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = r'''
 ---
@@ -49,14 +50,15 @@ options:
       - set the specified path as the current working directory before executing a command
   executable:
     description:
-      - change the shell used to execute the command (eg, C(cmd)). The target shell must accept a C(/c) parameter followed by the raw command line to be executed.
+      - change the shell used to execute the command (eg, C(cmd)). The target shell must accept a C(/c) parameter followed by the raw command line to be
+        executed.
 notes:
    -  If you want to run an executable securely and predictably, it may be
       better to use the M(win_command) module instead. Best practices when writing
       playbooks will follow the trend of using M(win_command) unless C(win_shell) is
       explicitly required. When running ad-hoc commands, use your best judgement.
-   -  WinRM will not return from a command execution until all child processes created have exited. Thus, it is not possible to use win_shell to spawn long-running child or background processes.
-      Consider creating a Windows service for managing background processes.
+   -  WinRM will not return from a command execution until all child processes created have exited. Thus, it is not possible to use win_shell to spawn
+      long-running child or background processes. Consider creating a Windows service for managing background processes.
 author:
     - Matt Davis
 '''

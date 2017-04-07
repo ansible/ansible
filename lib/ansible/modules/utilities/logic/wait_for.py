@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -75,7 +76,8 @@ options:
     description:
       - either C(present), C(started), or C(stopped), C(absent), or C(drained)
       - When checking a port C(started) will ensure the port is open, C(stopped) will check that it is closed, C(drained) will check for active connections
-      - When checking for a file or a search string C(present) or C(started) will ensure that the file or string is present before continuing, C(absent) will check that file is absent or removed
+      - When checking for a file or a search string C(present) or C(started) will ensure that the file or string is present before continuing,
+        C(absent) will check that file is absent or removed
     choices: [ "present", "started", "stopped", "absent", "drained" ]
     required: False
     default: "started"
@@ -293,7 +295,8 @@ class LinuxTCPConnectionInfo(TCPConnectionInfo):
                 tcp_connection = tcp_connection.strip().split()
                 if tcp_connection[self.local_address_field] == 'local_address':
                     continue
-                if tcp_connection[self.connection_state_field] not in [ get_connection_state_id(_connection_state) for _connection_state in self.module.params['active_connection_states'] ]:
+                if (tcp_connection[self.connection_state_field] not in
+                        [get_connection_state_id(_connection_state) for _connection_state in self.module.params['active_connection_states']]):
                     continue
                 (local_ip, local_port) = tcp_connection[self.local_address_field].split(':')
                 if self.port != local_port:

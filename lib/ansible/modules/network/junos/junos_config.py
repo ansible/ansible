@@ -16,11 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'core',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
@@ -130,13 +129,13 @@ options:
         candidate configuration. If statements in the loaded configuration
         conflict with statements in the candidate configuration, the loaded
         statements replace the candidate ones.
-        C(overwrite) discards the entire candidate configuration and replaces
+        C(override) discards the entire candidate configuration and replaces
         it with the loaded configuration.
         C(replace) substitutes each hierarchy level in the loaded configuration
         for the corresponding level.
     required: false
     default: merge
-    choices: ['merge', 'overwrite', 'replace']
+    choices: ['merge', 'override', 'replace']
     version_added: "2.3"
 requirements:
   - junos-eznc
@@ -178,26 +177,25 @@ import re
 import json
 
 from xml.etree import ElementTree
-from ncclient.xml_ import to_xml
 
-from ansible.module_utils.junos import get_diff, load
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.junos import get_diff, load_config, get_configuration
 from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.junos import check_args as junos_check_args
-from ansible.module_utils.junos import locked_config, load_configuration
-from ansible.module_utils.junos import get_configuration
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import NetworkConfig
+from ansible.module_utils.netconf import send_request
+from ansible.module_utils.six import string_types
 
+USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_config'
 
 def check_args(module, warnings):
     junos_check_args(module, warnings)
-    if module.params['zeroize']:
-        module.fail_json(msg='argument zeroize is deprecated and no longer '
-                'supported, use junos_command instead')
 
     if module.params['replace'] is not None:
         module.fail_json(msg='argument replace is deprecated, use update')
+
+zeroize = lambda x: send_request(x, ElementTree.Element('request-system-zeroize'))
+rollback = lambda x: get_diff(x)
 
 def guess_format(config):
     try:
@@ -217,83 +215,57 @@ def guess_format(config):
 
     return 'text'
 
-def config_to_commands(config):
-    set_format = config.startswith('set') or config.startswith('delete')
-    candidate = NetworkConfig(indent=4, contents=config, device_os='junos')
-    if not set_format:
-        candidate = [c.line for c in candidate.items]
-        commands = list()
-        # this filters out less specific lines
-        for item in candidate:
-            for index, entry in enumerate(commands):
-                if item.startswith(entry):
-                    del commands[index]
-                    break
-            commands.append(item)
-
-    else:
-        commands = str(candidate).split('\n')
-
-    return commands
-
 def filter_delete_statements(module, candidate):
     reply = get_configuration(module, format='set')
-    config = reply.xpath('//configuration-set')[0].text.strip()
+    match = reply.find('.//configuration-set')
+    if match is None:
+        # Could not find configuration-set in reply, perhaps device does not support it?
+        return candidate
+    config = str(match.text)
+
+    modified_candidate = candidate[:]
     for index, line in enumerate(candidate):
         if line.startswith('delete'):
             newline = re.sub('^delete', 'set', line)
             if newline not in config:
-                del candidate[index]
-    return candidate
+                del modified_candidate[index]
 
-def load_config(module):
-    candidate =  module.params['lines'] or module.params['src']
-    if isinstance(candidate, basestring):
-        candidate = candidate.split('\n')
+    return modified_candidate
 
-    confirm = module.params['confirm'] > 0
-    confirm_timeout = module.params['confirm']
+def configure_device(module, warnings):
+    candidate = module.params['lines'] or module.params['src']
 
     kwargs = {
-        'confirm': module.params['confirm'] is not None,
-        'confirm_timeout': module.params['confirm'],
         'comment': module.params['comment'],
-        'commit': not module.check_mode,
+        'commit': not module.check_mode
     }
+
+    if module.params['confirm'] > 0:
+        kwargs.update({
+            'confirm': True,
+            'confirm_timeout': module.params['confirm']
+        })
+
+    config_format = None
 
     if module.params['src']:
         config_format = module.params['src_format'] or guess_format(str(candidate))
-        kwargs.update({'format': config_format, 'action': module.params['update']})
+        if config_format == 'set':
+            kwargs.update({'format': 'text', 'action': 'set'})
+        else:
+            kwargs.update({'format': config_format, 'action': module.params['update']})
+
+    if isinstance(candidate, string_types):
+        candidate = candidate.split('\n')
 
     # this is done to filter out `delete ...` statements which map to
     # nothing in the config as that will cause an exception to be raised
-    if module.params['lines']:
+    if any((module.params['lines'], config_format == 'set')):
         candidate = filter_delete_statements(module, candidate)
-        kwargs.update({'action': 'set', 'format': 'text'})
+        kwargs['format'] = 'text'
+        kwargs['action'] = 'set'
 
-    return load(module, candidate, **kwargs)
-
-def rollback_config(module, result):
-    rollback = module.params['rollback']
-    diff = None
-
-    with locked_config:
-        load_configuration(module, rollback=rollback)
-        diff = get_diff(module)
-
-    return diff
-
-def confirm_config(module):
-    with locked_config:
-        commit_configuration(confirm=True)
-
-def update_result(module, result, diff=None):
-    if diff == '':
-        diff = None
-    result['changed'] = diff is not None
-    if module._diff:
-        result['diff'] =  {'prepared': diff}
-
+    return load_config(module, candidate, warnings, **kwargs)
 
 def main():
     """ main entry point for module execution
@@ -305,7 +277,7 @@ def main():
         src_format=dict(choices=['xml', 'text', 'set', 'json']),
 
         # update operations
-        update=dict(default='merge', choices=['merge', 'overwrite', 'replace', 'update']),
+        update=dict(default='merge', choices=['merge', 'override', 'replace', 'update']),
 
         # deprecated replace in Ansible 2.3
         replace=dict(type='bool'),
@@ -317,13 +289,12 @@ def main():
         backup=dict(type='bool', default=False),
         rollback=dict(type='int'),
 
-        # deprecated zeroize in Ansible 2.3
         zeroize=dict(default=False, type='bool'),
     )
 
     argument_spec.update(junos_argument_spec)
 
-    mutually_exclusive = [('lines', 'src', 'rollback')]
+    mutually_exclusive = [('lines', 'src', 'rollback', 'zeroize')]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=mutually_exclusive,
@@ -335,18 +306,34 @@ def main():
     result = {'changed': False, 'warnings': warnings}
 
     if module.params['backup']:
-        result['__backup__'] = get_configuration()
+        for conf_format in ['set', 'text']:
+            reply = get_configuration(module, format=conf_format)
+            match = reply.find('.//configuration-%s' % conf_format)
+            if match is not None:
+                break
+        else:
+            module.fail_json(msg='unable to retrieve device configuration')
+
+        result['__backup__'] = str(match.text).strip()
 
     if module.params['rollback']:
-        diff = get_diff(module)
-        update_result(module, result, diff)
+        if not module.check_mode:
+            diff = rollback(module)
+            if module._diff:
+                result['diff'] = {'prepared': diff}
+        result['changed'] = True
 
-    elif not any((module.params['src'], module.params['lines'])):
-        confirm_config(module)
+    elif module.params['zeroize']:
+        if not module.check_mode:
+            zeroize(module)
+        result['changed'] = True
 
     else:
-        diff = load_config(module)
-        update_result(module, result, diff)
+        diff = configure_device(module, warnings)
+        if diff:
+            if module._diff:
+                result['diff'] = {'prepared': diff}
+            result['changed'] = True
 
     module.exit_json(**result)
 

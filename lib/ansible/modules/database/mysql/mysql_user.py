@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -596,7 +597,8 @@ def main():
                                    connect_timeout=connect_timeout)
     except Exception:
         e = get_exception()
-        module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. Exception message: %s" % (config_file, e))
+        module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
+                             "Exception message: %s" % (config_file, e))
 
     if not sql_log_bin:
         cursor.execute("SET SQL_LOG_BIN=0;")

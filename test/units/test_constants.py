@@ -26,8 +26,8 @@ import os
 import pytest
 
 from ansible import constants
-from ansible.compat.six import StringIO
-from ansible.compat.six.moves import configparser
+from ansible.module_utils.six import StringIO
+from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_text
 
 

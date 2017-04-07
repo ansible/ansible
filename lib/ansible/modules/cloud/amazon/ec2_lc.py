@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = """
 ---
@@ -29,6 +30,7 @@ notes:
   - "Amazon ASG Autoscaling Launch Configurations are immutable once created, so modifying the configuration
     after it is changed will not modify the launch configuration on AWS. You must create a new config and assign
     it to the ASG instead."
+  - encrypted volumes are supported on versions >= 2.4
 version_added: "1.6"
 author: "Gareth Rushgrove (@garethr)"
 options:
@@ -57,11 +59,14 @@ options:
     required: false
   security_groups:
     description:
-      - A list of security groups to apply to the instances. For VPC instances, specify security group IDs. For EC2-Classic, specify either security group names or IDs.
+      - A list of security groups to apply to the instances. Since version 2.4 you can specify either security group names or IDs or a mix.  Previous to 2.4,
+        for VPC instances, specify security group IDs and for EC2-Classic, specify either security group names or IDs.
     required: false
   volumes:
     description:
-      - a list of volume dicts, each containing device name and optionally ephemeral id or snapshot id. Size and type (and number of iops for io device type) must be specified for a new volume or a root volume, and may be passed for a snapshot volume. For any volume, a volume size less than 1 will be interpreted as a request not to create the volume.
+      - a list of volume dicts, each containing device name and optionally ephemeral id or snapshot id.
+        Size and type (and number of iops for io device type) must be specified for a new volume or a root volume, and may be passed for a snapshot volume.
+        For any volume, a volume size less than 1 will be interpreted as a request not to create the volume.
     required: false
   user_data:
     description:
@@ -86,7 +91,8 @@ options:
     default: false
   assign_public_ip:
     description:
-      - Used for Auto Scaling groups that launch instances into an Amazon Virtual Private Cloud. Specifies whether to assign a public IP address to each instance launched in a Amazon VPC.
+      - Used for Auto Scaling groups that launch instances into an Amazon Virtual Private Cloud. Specifies whether to assign a public IP
+        address to each instance launched in a Amazon VPC.
     required: false
     version_added: "1.8"
   ramdisk_id:
@@ -123,7 +129,8 @@ requirements:
 """
 
 EXAMPLES = '''
-- ec2_lc:
+- name: note that encrypted volumes are only supporte in >= Ansible 2.4
+  ec2_lc:
     name: special
     image_id: ami-XXX
     key_name: default
@@ -135,6 +142,7 @@ EXAMPLES = '''
       device_type: io1
       iops: 3000
       delete_on_termination: true
+      encrypted: true
     - device_name: /dev/sdb
       ephemeral: ephemeral0
 
@@ -142,7 +150,8 @@ EXAMPLES = '''
 import traceback
 
 from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+from ansible.module_utils.ec2 import ec2_argument_spec, ec2_connect, connect_to_aws, \
+    get_ec2_security_group_ids_from_names, get_aws_connection_info, AnsibleAWSError
 
 try:
     from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
@@ -172,14 +181,18 @@ def create_block_device(module, volume):
                            size=volume.get('volume_size'),
                            volume_type=volume.get('device_type'),
                            delete_on_termination=volume.get('delete_on_termination', False),
-                           iops=volume.get('iops'))
+                           iops=volume.get('iops'),
+                           encrypted=volume.get('encrypted',None))
 
 
 def create_launch_config(connection, module):
     name = module.params.get('name')
     image_id = module.params.get('image_id')
     key_name = module.params.get('key_name')
-    security_groups = module.params['security_groups']
+    try:
+        security_groups = get_ec2_security_group_ids_from_names(module.params.get('security_groups'), ec2_connect(module), vpc_id=None, boto3=False)
+    except ValueError as e:
+        module.fail_json(msg=str(e))
     user_data = module.params.get('user_data')
     user_data_path = module.params.get('user_data_path')
     volumes = module.params['volumes']

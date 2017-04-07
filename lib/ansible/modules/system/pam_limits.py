@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -46,7 +47,26 @@ options:
     description:
       - The limit to be set
     required: true
-    choices: [ "core", "data", "fsize", "memlock", "nofile", "rss", "stack", "cpu", "nproc", "as", "maxlogins", "maxsyslogins", "priority", "locks", "sigpending", "msgqueue", "nice", "rtprio", "chroot" ]
+    choices:
+        - "core"
+        - "data"
+        - "fsize"
+        - "memlock"
+        - "nofile"
+        - "rss"
+        - "stack"
+        - "cpu"
+        - "nproc"
+        - "as"
+        - "maxlogins"
+        - "maxsyslogins"
+        - "priority"
+        - "locks"
+        - "sigpending"
+        - "msgqueue"
+        - "nice"
+        - "rtprio"
+        - "chroot"
   value:
     description:
       - The value of the limit.
@@ -119,7 +139,8 @@ import re
 
 def main():
 
-    pam_items = [ 'core', 'data', 'fsize', 'memlock', 'nofile', 'rss', 'stack', 'cpu', 'nproc', 'as', 'maxlogins', 'maxsyslogins', 'priority', 'locks', 'sigpending', 'msgqueue', 'nice', 'rtprio', 'chroot' ]
+    pam_items = ['core', 'data', 'fsize', 'memlock', 'nofile', 'rss', 'stack', 'cpu', 'nproc', 'as', 'maxlogins', 'maxsyslogins', 'priority', 'locks',
+                 'sigpending', 'msgqueue', 'nice', 'rtprio', 'chroot']
 
     pam_types = [ 'soft', 'hard', '-' ]
 

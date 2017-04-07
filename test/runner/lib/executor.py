@@ -41,6 +41,7 @@ from lib.util import (
     remove_tree,
     make_dirs,
     is_shippable,
+    is_binary_file,
 )
 
 from lib.test import (
@@ -82,6 +83,10 @@ from lib.test import (
     TestSkipped,
 )
 
+from lib.metadata import (
+    Metadata,
+)
+
 SUPPORTED_PYTHON_VERSIONS = (
     '2.6',
     '2.7',
@@ -89,7 +94,7 @@ SUPPORTED_PYTHON_VERSIONS = (
     '3.6',
 )
 
-COMPILE_PYTHON_VERSIONS = tuple(sorted(SUPPORTED_PYTHON_VERSIONS + ('2.4',)))
+COMPILE_PYTHON_VERSIONS = SUPPORTED_PYTHON_VERSIONS
 
 coverage_path = ''  # pylint: disable=locally-disabled, invalid-name
 
@@ -712,8 +717,13 @@ def command_compile(args):
             failed.append('compile --python %s' % version)
 
     if failed:
-        raise ApplicationError('The %d compile test(s) listed below (out of %d) failed. See error output above for details.\n%s' % (
-            len(failed), total, '\n'.join(failed)))
+        message = 'The %d compile test(s) listed below (out of %d) failed. See error output above for details.\n%s' % (
+            len(failed), total, '\n'.join(failed))
+
+        if args.failure_ok:
+            display.error(message)
+        else:
+            raise ApplicationError(message)
 
 
 def compile_version(args, python_version, include, exclude):
@@ -914,7 +924,7 @@ def detect_changes(args):
 
 def detect_changes_shippable(args):
     """Initialize change detection on Shippable.
-    :type args: CommonConfig
+    :type args: TestConfig
     :rtype: list[str]
     """
     git = Git(args)
@@ -928,6 +938,9 @@ def detect_changes_shippable(args):
         job_type = 'merge commit'
 
     display.info('Processing %s for branch %s commit %s' % (job_type, result.branch, result.commit))
+
+    if not args.metadata.changes:
+        args.metadata.populate_changes(result.diff)
 
     return result.paths
 
@@ -971,6 +984,19 @@ def detect_changes_local(args):
         names |= set(result.staged)
     if args.unstaged:
         names |= set(result.unstaged)
+
+    if not args.metadata.changes:
+        args.metadata.populate_changes(result.diff)
+
+        for path in result.untracked:
+            if is_binary_file(path):
+                args.metadata.changes[path] = ((0, 0),)
+                continue
+
+            with open(path, 'r') as source_fd:
+                line_count = len(source_fd.read().splitlines())
+
+            args.metadata.changes[path] = ((1, line_count),)
 
     return sorted(names)
 
@@ -1113,6 +1139,9 @@ class SanityConfig(TestConfig):
                 self.base_branch = os.environ['BASE_BRANCH']  # str
             except KeyError as ex:
                 raise MissingEnvironmentVariable(name=ex.args[0])
+
+            if self.base_branch:
+                self.base_branch = 'origin/%s' % self.base_branch
         else:
             self.base_branch = ''
 

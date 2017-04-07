@@ -16,9 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
@@ -239,8 +240,8 @@ def run(module, result):
 
             result['commands'] = commands
 
-        diff = load_config(module, commands, not check_mode,
-                           replace_config, comment)
+        diff = load_config(module, commands, result['warnings'],
+                           not check_mode, replace_config, comment)
         if diff:
             result['diff'] = dict(prepared=diff)
             result['changed'] = True

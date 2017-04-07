@@ -21,9 +21,10 @@ You should have received a copy of the GNU General Public License
 along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -99,6 +100,12 @@ EXAMPLES = '''
         protocol: TCP
 
 '''
+import json
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import url_argument_spec
+from ansible.module_utils.a10 import axapi_call_v3, a10_argument_spec, axapi_authenticate_v3, axapi_failure
+from ansible.module_utils.a10 import AXAPI_PORT_PROTOCOLS
 
 VALID_PORT_FIELDS = ['port-number', 'protocol', 'action']
 
@@ -243,13 +250,6 @@ def main():
     # log out gracefully and exit
     axapi_call_v3(module, axapi_base_url + 'logoff/', method='POST', body='', signature=signature)
     module.exit_json(changed=changed, content=result)
-
-
-import json
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import url_argument_spec
-from ansible.module_utils.a10 import axapi_call_v3, a10_argument_spec, axapi_authenticate_v3, axapi_failure
-
 
 if __name__ == '__main__':
     main()

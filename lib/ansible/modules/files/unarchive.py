@@ -21,23 +21,27 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
 module: unarchive
 version_added: 1.4
 short_description: Unpacks an archive after (optionally) copying it from the local machine.
-extends_documentation_fragment: files
+extends_documentation_fragment: [files, decrypt]
 description:
-     - The C(unarchive) module unpacks an archive. By default, it will copy the source file from the local system to the target before unpacking - set remote_src=yes to unpack an archive which already exists on the target..
+     - The C(unarchive) module unpacks an archive. By default, it will copy the source file from the local system to the target before unpacking.
+       Set remote_src=yes to unpack an archive which already exists on the target.
 options:
   src:
     description:
-      - If remote_src=no (default), local path to archive file to copy to the target server; can be absolute or relative. If remote_src=yes, path on the target server to existing archive file to unpack.
-      - If remote_src=yes and src contains ://, the remote machine will download the file from the url first. (version_added 2.0). This is only for simple cases, for full download support look at the M(get_url) module.
+      - If remote_src=no (default), local path to archive file to copy to the target server; can be absolute or relative. If remote_src=yes, path on the
+        target server to existing archive file to unpack.
+      - If remote_src=yes and src contains ://, the remote machine will download the file from the url first. (version_added 2.0). This is only for
+        simple cases, for full download support look at the M(get_url) module.
     required: true
     default: null
   dest:
@@ -145,7 +149,7 @@ import time
 import binascii
 import codecs
 from zipfile import ZipFile, BadZipfile
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_bytes, to_text
 
 try:  # python 3.3+
     from shlex import quote
@@ -799,12 +803,15 @@ def main():
                 # If download fails, raise a proper exception
                 if rsp is None:
                     raise Exception(info['msg'])
+
+                # open in binary mode for python3
                 f = open(package, 'wb')
                 # Read 1kb at a time to save on ram
                 while True:
                     data = rsp.read(BUFSIZE)
+                    data = to_bytes(data, errors='surrogate_or_strict')
 
-                    if data == "":
+                    if len(data) < 1:
                         break # End of file, break while loop
 
                     f.write(data)

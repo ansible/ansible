@@ -25,18 +25,19 @@ import re
 from jinja2.compiler import generate
 from jinja2.exceptions import UndefinedError
 
-from ansible.compat.six import text_type
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
+from ansible.module_utils.six import text_type
+from ansible.module_utils._text import to_native
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
 from ansible.template.safe_eval import safe_eval
-from ansible.module_utils._text import to_native
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 DEFINED_REGEX = re.compile(r'(hostvars\[.+\]|[\w_]+)\s+(not\s+is|is|is\s+not)\s+(defined|undefined)')
 LOOKUP_REGEX = re.compile(r'lookup\s*\(')

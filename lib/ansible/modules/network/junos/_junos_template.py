@@ -16,11 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'status': ['deprecated'],
-    'supported_by': 'community',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
+
 
 
 DOCUMENTATION = """
@@ -113,9 +112,10 @@ EXAMPLES = """
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.junos import check_args, junos_argument_spec
-from ansible.module_utils.junos import get_configuration, load
+from ansible.module_utils.junos import get_configuration, load_config
 from ansible.module_utils.six import text_type
 
+USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_template'
 
 def main():
@@ -125,9 +125,8 @@ def main():
         confirm=dict(default=0, type='int'),
         comment=dict(default=DEFAULT_COMMENT),
         action=dict(default='merge', choices=['merge', 'overwrite', 'replace']),
-        config_format=dict(choices=['text', 'set', 'xml']),
+        config_format=dict(choices=['text', 'set', 'xml'], default='text'),
         backup=dict(default=False, type='bool'),
-        transport=dict(default='netconf', choices=['netconf'])
     )
 
     argument_spec.update(junos_argument_spec)
@@ -152,9 +151,13 @@ def main():
             "set per junos-pyez documentation")
 
     if module.params['backup']:
-        result['__backup__'] = text_type(get_configuration(module))
+        reply = get_configuration(module, format='set')
+        match = reply.find('.//configuration-set')
+        if match is None:
+            module.fail_json(msg='unable to retrieve device configuration')
+        result['__backup__'] = str(match.text).strip()
 
-    diff = load(module, src, action=action, commit=commit, format=fmt)
+    diff = load_config(module, src, warnings, action=action, commit=commit, format=fmt)
     if diff:
         result['changed'] = True
         if module._diff:

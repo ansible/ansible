@@ -19,7 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import string_types
+from ansible.module_utils.six import string_types
+
 
 def pct_to_int(value, num_items, min_value=1):
     '''

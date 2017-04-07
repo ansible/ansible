@@ -40,7 +40,7 @@ vyos_argument_spec = {
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
 
     'timeout': dict(type='int'),
-    'provider': dict(type='dict', no_log=True),
+    'provider': dict(type='dict'),
 }
 
 def check_args(module, warnings):

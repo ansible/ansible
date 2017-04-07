@@ -16,20 +16,19 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'core',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
 module: junos_command
 version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
-short_description: Run arbitrary commands on an Juniper junos device
+short_description: Run arbitrary commands on an Juniper JUNOS device
 description:
-  - Sends an arbitrary set of commands to an junos node and returns the results
+  - Sends an arbitrary set of commands to an JUNOS node and returns the results
     read from the device.  This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
@@ -42,7 +41,16 @@ options:
         is returned.  If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
         the number of I(retries) has been exceeded.
-    required: true
+    required: false
+    default: null
+  rpcs:
+    description:
+      - The C(rpcs) argument accepts a list of RPCs to be executed
+        over a netconf session and the results from the RPC execution
+        is return to the playbook via the modules results dictionary.
+    required: false
+    default: null
+    version_added: "2.3"
   wait_for:
     description:
       - Specifies what to evaluate from the output of the command
@@ -85,9 +93,6 @@ options:
 """
 
 EXAMPLES = """
-# Note: examples below use the following provider dict to handle
-#       transport and authentication to the node.
----
 - name: run show version on remote devices
   junos_command:
     commands: show version
@@ -114,9 +119,13 @@ EXAMPLES = """
 
 - name: run commands and specify the output format
   junos_command:
-    commands:
-      - command: show version
-        output: json
+    commands: show version
+    display: json
+
+- name: run rpc on the remote device
+  junos_command:
+    rpcs: get-software-information
+
 """
 
 RETURN = """
@@ -127,17 +136,19 @@ failed_conditions:
   sample: ['...', '...']
 """
 import time
+import re
+import shlex
 
 from functools import partial
 from xml.etree import ElementTree as etree
+from xml.etree.ElementTree import Element, SubElement, tostring
 
-from ansible.module_utils.junos import run_commands
-from ansible.module_utils.junos import junos_argument_spec
-from ansible.module_utils.junos import check_args as junos_check_args
+from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import string_types
 from ansible.module_utils.netcli import Conditional, FailedConditionalError
-from ansible.module_utils.network_common import ComplexList
+from ansible.module_utils.netconf import send_request
+from ansible.module_utils.network_common import ComplexList, to_list
+from ansible.module_utils.six import string_types, iteritems
 
 try:
     import jxmlease
@@ -145,12 +156,7 @@ try:
 except ImportError:
     HAS_JXMLEASE = False
 
-def check_args(module, warnings):
-    junos_check_args(module, warnings)
-
-    if module.params['rpcs']:
-        module.fail_json(msg='argument rpcs has been deprecated, please use '
-                             'junos_rpc instead')
+USE_PERSISTENT_CONNECTION = True
 
 def to_lines(stdout):
     lines = list()
@@ -160,46 +166,121 @@ def to_lines(stdout):
         lines.append(item)
     return lines
 
+def rpc(module, items):
+
+    responses = list()
+
+    for item in items:
+        name = item['name']
+        xattrs = item['xattrs']
+
+        args = item.get('args')
+        text = item.get('text')
+
+        name = str(name).replace('_', '-')
+
+        if all((module.check_mode, not name.startswith('get'))):
+            module.fail_json(msg='invalid rpc for running in check_mode')
+
+        element = Element(name, xattrs)
+
+        if text:
+            element.text = text
+
+        elif args:
+            for key, value in iteritems(args):
+                key = str(key).replace('_', '-')
+                if isinstance(value, list):
+                    for item in value:
+                        child = SubElement(element, key)
+                        if item is not True:
+                            child.text = item
+                else:
+                    child = SubElement(element, key)
+                    if value is not True:
+                        child.text = value
+
+        reply = send_request(module, element)
+
+        if xattrs['format'] == 'text':
+            data = reply.find('.//output')
+            responses.append(data.text.strip())
+
+        elif xattrs['format'] == 'json':
+            responses.append(module.from_json(reply.text.strip()))
+
+        else:
+            responses.append(tostring(reply))
+
+    return responses
+
+def split(value):
+    lex = shlex.shlex(value)
+    lex.quotes = '"'
+    lex.whitespace_split = True
+    lex.commenters = ''
+    return list(lex)
+
+def parse_rpcs(module):
+    items = list()
+
+    for rpc in (module.params['rpcs'] or list()):
+        parts = split(rpc)
+
+        name = parts.pop(0)
+        args = dict()
+
+        for item in parts:
+            key, value = item.split('=')
+            if str(value).upper() in ['TRUE', 'FALSE']:
+                args[key] = bool(value)
+            elif re.match(r'^[0-9]+$', value):
+                args[key] = int(value)
+            else:
+                args[key] = str(value)
+
+        display = module.params['display'] or 'xml'
+        xattrs = {'format': display}
+
+        items.append({'name': name, 'args': args, 'xattrs': xattrs})
+
+    return items
+
 def parse_commands(module, warnings):
-    spec = dict(
-        command=dict(key=True),
-        output=dict(default=module.params['display'], choices=['text', 'json', 'xml']),
-        prompt=dict(),
-        answer=dict()
-    )
+    items = list()
 
-    transform = ComplexList(spec, module)
-    commands = transform(module.params['commands'])
-
-    for index, item in enumerate(commands):
-        if module.check_mode and not item['command'].startswith('show'):
+    for command in (module.params['commands'] or list()):
+        if module.check_mode and not command.startswith('show'):
             warnings.append(
                 'Only show commands are supported when using check_mode, not '
-                'executing %s' % item['command']
+                'executing %s' % command
             )
 
-        if item['output'] == 'json' and 'display json' not in item['command']:
-            item['command'] += '| display json'
-        elif item['output'] == 'xml' and 'display xml' not in item['command']:
-            item['command'] += '| display xml'
-        else:
-            if '| display json' in item['command']:
-                item['command'] = str(item['command']).replace(' | display json', '')
-            elif '| display xml' in item['command']:
-                item['command'] = str(item['command']).replace(' | display xml', '')
-        commands[index] = item
+        parts = command.split('|')
+        text = parts[0]
 
-    return commands
+        display = module.params['display'] or 'text'
+        xattrs = {'format': display}
+
+        if '| display json' in command:
+            xattrs['format'] = 'json'
+
+        elif '| display xml' in command:
+            xattrs['format'] = 'xml'
+
+        items.append({'name': 'command', 'xattrs': xattrs, 'text': text})
+
+    return items
+
 
 def main():
     """entry point for module execution
     """
     argument_spec = dict(
-        commands=dict(type='list', required=True),
-        display=dict(choices=['text', 'json', 'xml'], default='text', aliases=['format', 'output']),
-
-        # deprecated (Ansible 2.3) - use junos_rpc
+        commands=dict(type='list'),
         rpcs=dict(type='list'),
+
+        display=dict(choices=['text', 'json', 'xml'], aliases=['format', 'output']),
 
         wait_for=dict(type='list', aliases=['waitfor']),
         match=dict(default='all', choices=['all', 'any']),
@@ -210,14 +291,18 @@ def main():
 
     argument_spec.update(junos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+    required_one_of = [('commands', 'rpcs')]
 
+    module = AnsibleModule(argument_spec=argument_spec,
+                           required_one_of=required_one_of,
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
 
-    commands = parse_commands(module, warnings)
+    items = list()
+    items.extend(parse_commands(module, warnings))
+    items.extend(parse_rpcs(module))
 
     wait_for = module.params['wait_for'] or list()
     display = module.params['display']
@@ -228,21 +313,26 @@ def main():
     match = module.params['match']
 
     while retries > 0:
-        responses = run_commands(module, commands)
+        responses = rpc(module, items)
 
-        for index, (resp, cmd) in enumerate(zip(responses, commands)):
-            if cmd['output'] == 'xml':
+        transformed = list()
+
+        for item, resp in zip(items, responses):
+            if item['xattrs']['format'] == 'xml':
                 if not HAS_JXMLEASE:
                     module.fail_json(msg='jxmlease is required but does not appear to '
                         'be installed.  It can be installed using `pip install jxmlease`')
+
                 try:
-                    responses[index] = jxmlease.parse(resp)
+                    transformed.append(jxmlease.parse(resp))
                 except:
                     raise ValueError(resp)
+            else:
+                transformed.append(resp)
 
         for item in list(conditionals):
             try:
-                if item(responses):
+                if item(transformed):
                     if match == 'any':
                         conditionals = list()
                         break

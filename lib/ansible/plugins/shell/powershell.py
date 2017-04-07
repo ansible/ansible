@@ -111,6 +111,11 @@ Function Run($payload) {
     # redefine Write-Host to dump to output instead of failing- lots of scripts use it
     $ps.AddStatement().AddScript("Function Write-Host(`$msg){ Write-Output `$msg }") | Out-Null
 
+    ForEach ($env_kv in $payload.environment.GetEnumerator()) {
+        $escaped_env_set = "`$env:{0} = '{1}'" -f $env_kv.Key,$env_kv.Value.Replace("'","''")
+        $ps.AddStatement().AddScript($escaped_env_set) | Out-Null
+    }
+
     # dynamically create/load modules
     ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
         $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
@@ -118,6 +123,9 @@ Function Run($payload) {
         $ps.AddCommand("Import-Module").AddParameters(@{WarningAction="SilentlyContinue"}) | Out-Null
         $ps.AddCommand("Out-Null") | Out-Null
     }
+
+    # force input encoding to preamble-free UTF8 so PS sub-processes (eg, Start-Job) don't blow up
+    $ps.AddStatement().AddScript("[Console]::InputEncoding = New-Object Text.UTF8Encoding `$false") | Out-Null
 
     $ps.AddStatement().AddScript($entrypoint) | Out-Null
 
@@ -132,6 +140,7 @@ Function Run($payload) {
         If(-not $exit_code) {
             $exit_code = 1
         }
+        # need to use this instead of Exit keyword to prevent runspace from crashing with dynamic modules
         $host.SetShouldExit($exit_code)
     }
 }
@@ -307,6 +316,15 @@ Write-Output $output
 
 } # end exec_wrapper
 
+Function Dump-Error ($excep) {
+    $eo = @{failed=$true}
+
+    $eo.msg = $excep.Exception.Message
+    $eo.exception = $excep | Out-String
+    $host.SetShouldExit(1)
+
+    $eo | ConvertTo-Json -Depth 10
+}
 
 Function Run($payload) {
     # NB: action popping handled inside subprocess wrapper
@@ -314,7 +332,7 @@ Function Run($payload) {
     $username = $payload.become_user
     $password = $payload.become_password
 
-    Add-Type -TypeDefinition $helper_def
+    Add-Type -TypeDefinition $helper_def -Debug:$false
 
     $exec_args = $null
 
@@ -361,9 +379,26 @@ Function Run($payload) {
         $psi.Username = $username
         $psi.Password = $($password | ConvertTo-SecureString -AsPlainText -Force)
 
-        [Ansible.Shell.ProcessUtil]::GrantAccessToWindowStationAndDesktop($username)
+        Try {
+            [Ansible.Shell.ProcessUtil]::GrantAccessToWindowStationAndDesktop($username)
+        }
+        Catch {
+            $excep = $_
+            throw "Error granting windowstation/desktop access to '$username' (is the username valid?): $excep"
+        }
 
-        $proc.Start() | Out-Null # will always return $true for non shell-exec cases
+        Try {
+            $proc.Start() | Out-Null # will always return $true for non shell-exec cases
+        }
+        Catch {
+            $excep = $_
+            if ($excep.Exception.InnerException -and `
+                $excep.Exception.InnerException -is [System.ComponentModel.Win32Exception] -and `
+                $excep.Exception.InnerException.NativeErrorCode -eq 5) {
+              throw "Become method 'runas' become is not currently supported with the NTLM or Kerberos auth types"
+            }
+            throw "Error launching under identity '$username': $excep"
+        }
 
         $payload_string = $payload | ConvertTo-Json -Depth 99 -Compress
 
@@ -388,6 +423,10 @@ Function Run($payload) {
         Else {
             Throw "failed, rc was $rc, stderr was $stderr, stdout was $stdout"
         }
+    }
+    Catch {
+        $excep = $_
+        Dump-Error $excep
     }
     Finally {
         Remove-Item $temp -ErrorAction SilentlyContinue
@@ -493,7 +532,7 @@ Function Run($payload) {
                     IntPtr lpEnvironment,
                     [MarshalAs(UnmanagedType.LPTStr)]
                     string lpCurrentDirectory,
-                    STARTUPINFO lpStartupInfo,
+                    STARTUPINFOEX lpStartupInfo,
                     out PROCESS_INFORMATION lpProcessInformation);
 
                 [DllImport("kernel32.dll", SetLastError=true, CharSet=CharSet.Unicode)]
@@ -515,6 +554,18 @@ Function Run($payload) {
                 [DllImport("kernel32.dll", SetLastError=true)]
                 public static extern bool SetHandleInformation(IntPtr hObject, HandleFlags dwMask, int dwFlags);
 
+                [DllImport("kernel32.dll", SetLastError=true)]
+                public static extern bool InitializeProcThreadAttributeList(IntPtr lpAttributeList, int dwAttributeCount, int dwFlags, ref int lpSize);
+
+                [DllImport("kernel32.dll", SetLastError=true)]
+                public static extern bool UpdateProcThreadAttribute(
+                     IntPtr lpAttributeList,
+                     uint dwFlags,
+                     IntPtr Attribute,
+                     IntPtr lpValue,
+                     IntPtr cbSize,
+                     IntPtr lpPreviousValue,
+                     IntPtr lpReturnSize);
 
                 public static string SearchPath(string findThis)
                 {
@@ -617,6 +668,17 @@ Function Run($payload) {
             }
 
             [StructLayout(LayoutKind.Sequential)]
+            public class STARTUPINFOEX {
+                public STARTUPINFO startupInfo;
+                public IntPtr lpAttributeList;
+
+                public STARTUPINFOEX() {
+                    startupInfo = new STARTUPINFO();
+                    startupInfo.cb = Marshal.SizeOf(this);
+                }
+            }
+
+            [StructLayout(LayoutKind.Sequential)]
             public struct PROCESS_INFORMATION
             {
                 public IntPtr hProcess;
@@ -663,26 +725,28 @@ Function Run($payload) {
 
     [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($results_path)) | Out-Null
 
-    Add-Type -TypeDefinition $native_process_util
+    Add-Type -TypeDefinition $native_process_util -Debug:$false
 
     # FUTURE: create under new job to ensure all children die on exit?
 
-    # FUTURE: move these flags into C# enum
+    # FUTURE: move these flags into C# enum?
     # start process suspended + breakaway so we can record the watchdog pid without worrying about a completion race
     Set-Variable CREATE_BREAKAWAY_FROM_JOB -Value ([uint32]0x01000000) -Option Constant
     Set-Variable CREATE_SUSPENDED -Value ([uint32]0x00000004) -Option Constant
     Set-Variable CREATE_UNICODE_ENVIRONMENT -Value ([uint32]0x000000400) -Option Constant
     Set-Variable CREATE_NEW_CONSOLE -Value ([uint32]0x00000010) -Option Constant
+    Set-Variable EXTENDED_STARTUPINFO_PRESENT -Value ([uint32]0x00080000) -Option Constant
 
-    $pstartup_flags = $CREATE_BREAKAWAY_FROM_JOB -bor $CREATE_UNICODE_ENVIRONMENT -bor $CREATE_NEW_CONSOLE -bor $CREATE_SUSPENDED
+    $pstartup_flags = $CREATE_BREAKAWAY_FROM_JOB -bor $CREATE_UNICODE_ENVIRONMENT -bor $CREATE_NEW_CONSOLE `
+        -bor $CREATE_SUSPENDED -bor $EXTENDED_STARTUPINFO_PRESENT
 
-    # execute the dynamic watchdog as a breakway process, which will in turn exec the module
-    $si = New-Object Ansible.Async.STARTUPINFO
+    # execute the dynamic watchdog as a breakway process to free us from the WinRM job, which will in turn exec the module
+    $si = New-Object Ansible.Async.STARTUPINFOEX
 
     # setup stdin redirection, we'll leave stdout/stderr as normal
-    $si.dwFlags = [Ansible.Async.StartupInfoFlags]::USESTDHANDLES
-    $si.hStdOutput = [Ansible.Async.NativeProcessUtil]::GetStdHandle([Ansible.Async.StandardHandleValues]::STD_OUTPUT_HANDLE)
-    $si.hStdError = [Ansible.Async.NativeProcessUtil]::GetStdHandle([Ansible.Async.StandardHandleValues]::STD_ERROR_HANDLE)
+    $si.startupInfo.dwFlags = [Ansible.Async.StartupInfoFlags]::USESTDHANDLES
+    $si.startupInfo.hStdOutput = [Ansible.Async.NativeProcessUtil]::GetStdHandle([Ansible.Async.StandardHandleValues]::STD_OUTPUT_HANDLE)
+    $si.startupInfo.hStdError = [Ansible.Async.NativeProcessUtil]::GetStdHandle([Ansible.Async.StandardHandleValues]::STD_ERROR_HANDLE)
 
     $stdin_read = $stdin_write = 0
 
@@ -695,7 +759,35 @@ Function Run($payload) {
     If(-not [Ansible.Async.NativeProcessUtil]::SetHandleInformation($stdin_write, [Ansible.Async.HandleFlags]::INHERIT, 0)) {
         throw "Stdin handle setup failed, Win32Error: $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
     }
-    $si.hStdInput = $stdin_read
+    $si.startupInfo.hStdInput = $stdin_read
+
+    # create an attribute list with our explicit handle inheritance list to pass to CreateProcess
+    [int]$buf_sz = 0
+
+    # determine the buffer size necessary for our attribute list
+    If(-not [Ansible.Async.NativeProcessUtil]::InitializeProcThreadAttributeList([IntPtr]::Zero, 1, 0, [ref]$buf_sz)) {
+        $last_err = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
+        If($last_err -ne 122) { # ERROR_INSUFFICIENT_BUFFER
+            throw "Attribute list size query failed, Win32Error: $last_err"
+        }
+    }
+
+    $si.lpAttributeList = [System.Runtime.InteropServices.Marshal]::AllocHGlobal($buf_sz)
+
+    # initialize the attribute list
+    If(-not [Ansible.Async.NativeProcessUtil]::InitializeProcThreadAttributeList($si.lpAttributeList, 1, 0, [ref]$buf_sz)) {
+        throw "Attribute list init failed, Win32Error: $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
+    }
+
+    $handles_to_inherit = [IntPtr[]]@($stdin_read)
+    $pinned_handles = [System.Runtime.InteropServices.GCHandle]::Alloc($handles_to_inherit, [System.Runtime.InteropServices.GCHandleType]::Pinned)
+
+    # update the attribute list with the handles we want to inherit
+    If(-not [Ansible.Async.NativeProcessUtil]::UpdateProcThreadAttribute($si.lpAttributeList, 0, 0x20002 <# PROC_THREAD_ATTRIBUTE_HANDLE_LIST #>, `
+        $pinned_handles.AddrOfPinnedObject(), [System.Runtime.InteropServices.Marshal]::SizeOf([type][IntPtr]) * $handles_to_inherit.Length, `
+        [System.IntPtr]::Zero, [System.IntPtr]::Zero)) {
+        throw "Attribute list update failed, Win32Error: $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
+    }
 
     # need to use a preamble-free version of UTF8Encoding
     $utf8_encoding = New-Object System.Text.UTF8Encoding @($false)
@@ -892,12 +984,8 @@ class ShellModule(object):
 
     # TODO: implement module transfer
     # TODO: implement #Requires -Modules parser/locator
-    # TODO: add raw failure + errcode preservation (all success right now)
     # TODO: add KEEP_REMOTE_FILES support + debug wrapper dump
-    # TODO: add become support
     # TODO: add binary module support
-    # TODO: figure out non-pipelined path (or force pipelining)
-
 
     def assert_safe_env_key(self, key):
         if not self.safe_envkey.match(key):
@@ -912,9 +1000,8 @@ class ShellModule(object):
         return to_text(value, errors='surrogate_or_strict')
 
     def env_prefix(self, **kwargs):
-        env = self.env.copy()
-        env.update(kwargs)
-        return ';'.join(["$env:%s='%s'" % (self.assert_safe_env_key(k), self.safe_env_value(k,v)) for k,v in env.items()])
+        # powershell/winrm env handling is handled in the exec wrapper
+        return ""
 
     def join_path(self, *args):
         parts = []

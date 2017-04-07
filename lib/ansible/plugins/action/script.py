@@ -69,7 +69,7 @@ class ActionModule(ActionBase):
         args   = ' '.join(parts[1:])
 
         try:
-            source = self._loader.get_real_file(self._find_needle('files', source))
+            source = self._loader.get_real_file(self._find_needle('files', source), decrypt=self._task.args.get('decrypt', True))
         except AnsibleError as e:
             return dict(failed=True, msg=to_native(e))
 
@@ -81,11 +81,17 @@ class ActionModule(ActionBase):
         self._fixup_perms2((tmp, tmp_src), execute=True)
 
         # add preparation steps to one ssh roundtrip executing the script
-        env_string = self._compute_environment_string()
+        env_dict = dict()
+        env_string = self._compute_environment_string(env_dict)
         script_cmd = ' '.join([env_string, tmp_src, args])
         script_cmd = self._connection._shell.wrap_for_exec(script_cmd)
 
-        result.update(self._low_level_execute_command(cmd=script_cmd, sudoable=True))
+        exec_data = None
+        # HACK: come up with a sane way to pass around env outside the command
+        if self._connection.transport == "winrm":
+            exec_data = self._connection._create_raw_wrapper_payload(script_cmd, env_dict)
+
+        result.update(self._low_level_execute_command(cmd=script_cmd, in_data=exec_data, sudoable=True))
 
         # clean up after
         self._remove_tmp_path(tmp)

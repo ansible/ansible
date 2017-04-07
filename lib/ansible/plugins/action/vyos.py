@@ -26,16 +26,17 @@ import copy
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.utils.path import unfrackpath
 from ansible.plugins import connection_loader
-from ansible.compat.six import iteritems
-from ansible.module_utils.vyos import vyos_argument_spec
 from ansible.module_utils.basic import AnsibleFallbackNotFound
+from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.vyos import vyos_argument_spec
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 class ActionModule(_ActionModule):
 
@@ -79,7 +80,14 @@ class ActionModule(_ActionModule):
 
         task_vars['ansible_socket'] = socket_path
 
-        return super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(tmp, task_vars)
+
+        try:
+            del result['invocation']['module_args']['provider']
+        except KeyError:
+            pass
+
+        return result
 
     def _get_socket_path(self, play_context):
         ssh = connection_loader.get('ssh', class_only=True)

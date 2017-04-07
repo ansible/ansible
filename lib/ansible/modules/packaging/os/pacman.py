@@ -20,9 +20,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -156,7 +157,9 @@ def get_version(pacman_output):
     return None
 
 def query_package(module, pacman_path, name, state="present"):
-    """Query the package status in both the local system and the repository. Returns a boolean to indicate if the package is installed, a second boolean to indicate if the package is up-to-date and a third boolean to indicate whether online information were available"""
+    """Query the package status in both the local system and the repository. Returns a boolean to indicate if the package is installed, a second
+    boolean to indicate if the package is up-to-date and a third boolean to indicate whether online information were available
+    """
     if state == "present":
         lcmd = "%s -Qi %s" % (pacman_path, name)
         lrc, lstdout, lstderr = module.run_command(lcmd, check_rc=False)

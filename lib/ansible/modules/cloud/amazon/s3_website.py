@@ -13,9 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -43,7 +44,10 @@ options:
     default: null
   region:
     description:
-     - "AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked, followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the S3 Location: US Standard."
+     - >
+       AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked,
+       followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the
+       S3 Location: US Standard.
     required: false
     default: null
   state:
@@ -54,7 +58,10 @@ options:
     choices: [ 'present', 'absent' ]
   suffix:
     description:
-      - "Suffix that is appended to a request that is for a directory on the website endpoint (e.g. if the suffix is index.html and you make a request to samplebucket/images/ the data that is returned will be for the object with the key name images/index.html). The suffix must not include a slash character."
+      - >
+        Suffix that is appended to a request that is for a directory on the website endpoint (e.g. if the suffix is index.html and you make a request to
+        samplebucket/images/ the data that is returned will be for the object with the key name images/index.html). The suffix must not include a slash
+        character.
     required: false
     default: index.html
 
@@ -114,7 +121,8 @@ routing_rules:
       sample: ansible.com
     condition:
       key_prefix_equals:
-        description: object key name prefix when the redirect is applied. For example, to redirect requests for ExamplePage.html, the key prefix will be ExamplePage.html
+        description: object key name prefix when the redirect is applied. For example, to redirect requests for ExamplePage.html, the key prefix will be
+                     ExamplePage.html
         returned: when routing rule present
         type: string
         sample: docs/

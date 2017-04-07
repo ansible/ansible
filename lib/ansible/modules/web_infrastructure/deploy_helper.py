@@ -19,9 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -315,7 +316,10 @@ class DeployHelper(object):
         if not self.release and (self.state == 'query' or self.state == 'present'):
             self.release = time.strftime("%Y%m%d%H%M%S")
 
-        new_release_path = os.path.join(releases_path, self.release)
+        if self.release:
+            new_release_path = os.path.join(releases_path, self.release)
+        else:
+            new_release_path = None
 
         return {
             'project_path':             self.path,

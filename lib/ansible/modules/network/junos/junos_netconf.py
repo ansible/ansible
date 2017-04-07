@@ -16,11 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'core',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
@@ -77,10 +76,13 @@ commands:
 """
 import re
 
-from ansible.module_utils.junos import load_config, get_config
 from ansible.module_utils.junos import junos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import exec_command
+from ansible.module_utils.network_common import to_list
 from ansible.module_utils.six import iteritems
+
+USE_PERSISTENT_CONNECTION = True
 
 
 def map_obj_to_commands(updates, module):
@@ -95,10 +97,11 @@ def map_obj_to_commands(updates, module):
     elif want['state'] == 'absent' and have['state'] == 'present':
         commands.append('delete system services netconf')
 
-    elif want['netconf_port'] != have.get('netconf_port'):
-        commands.append(
-            'set system services netconf ssh port %s' % want['netconf_port']
-        )
+    elif want['state'] == 'present':
+        if want['netconf_port'] != have.get('netconf_port'):
+            commands.append(
+                'set system services netconf ssh port %s' % want['netconf_port']
+            )
 
     return commands
 
@@ -108,7 +111,12 @@ def parse_port(config):
         return int(match.group(1))
 
 def map_config_to_obj(module):
-    config = get_config(module, ['system services netconf'])
+    cmd = 'show configuration system services netconf'
+    rc, out, err = exec_command(module, cmd)
+    if rc != 0:
+        module.fail_json(msg='unable to retrieve current config', stderr=err)
+    config = str(out).strip()
+
     obj = {'state': 'absent'}
     if config:
         obj.update({
@@ -135,6 +143,26 @@ def map_params_to_obj(module):
             validator(value, module)
 
     return obj
+
+def load_config(module, config, commit=False):
+
+    exec_command(module, 'configure')
+
+    for item in to_list(config):
+        rc, out, err = exec_command(module, item)
+        if rc != 0:
+            module.fail_json(msg=str(err))
+
+    exec_command(module, 'top')
+    rc, diff, err = exec_command(module, 'show | compare')
+
+    if commit:
+        exec_command(module, 'commit and-quit')
+    else:
+        for cmd in ['rollback 0', 'exit']:
+            exec_command(module, cmd)
+
+    return str(diff).strip()
 
 def main():
     """main entry point for module execution
@@ -163,7 +191,7 @@ def main():
     if commands:
         commit = not module.check_mode
         diff = load_config(module, commands, commit=commit)
-        if diff and module._diff:
+        if diff:
             if module._diff:
                 result['diff'] = {'prepared': diff}
             result['changed'] = True

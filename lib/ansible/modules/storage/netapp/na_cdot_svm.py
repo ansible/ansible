@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 
@@ -104,8 +105,8 @@ class NetAppCDOTSVM(object):
             name=dict(required=True, type='str'),
             root_volume=dict(type='str'),
             root_volume_aggregate=dict(type='str'),
-            root_volume_security_style=dict(type='str', choices=['nfs',
-                                                                 'cifs',
+            root_volume_security_style=dict(type='str', choices=['unix',
+                                                                 'ntfs',
                                                                  'mixed',
                                                                  'unified'
                                                                  ]),

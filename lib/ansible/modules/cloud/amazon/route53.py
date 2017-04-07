@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -76,7 +77,8 @@ options:
     default: false
   value:
     description:
-      - The new value when creating a DNS record.  Multiple comma-spaced values are allowed for non-alias records.  When deleting a record all values for the record must be specified or Route53 will not delete it.
+      - The new value when creating a DNS record.  Multiple comma-spaced values are allowed for non-alias records.  When deleting a record all values
+        for the record must be specified or Route53 will not delete it.
     required: false
     default: null
   overwrite:
@@ -86,12 +88,14 @@ options:
     default: null
   retry_interval:
     description:
-      - In the case that route53 is still servicing a prior request, this module will wait and try again after this many seconds. If you have many domain names, the default of 500 seconds may be too long.
+      - In the case that route53 is still servicing a prior request, this module will wait and try again after this many seconds. If you have many
+        domain names, the default of 500 seconds may be too long.
     required: false
     default: 500
   private_zone:
     description:
-      - If set to true, the private zone matching the requested name within the domain will be used if there are both public and private zones. The default is to use the public zone.
+      - If set to true, the private zone matching the requested name within the domain will be used if there are both public and private zones.
+        The default is to use the public zone.
     required: false
     default: false
     version_added: "1.9"

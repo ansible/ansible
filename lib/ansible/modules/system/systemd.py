@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 module: systemd
@@ -31,7 +32,7 @@ description:
     - Controls systemd services on remote hosts.
 options:
     name:
-        required: true
+        required: false
         description:
             - Name of the service. When using in a chroot environment you always need to specify the full name i.e. (crond.service).
         aliases: ['unit', 'service']
@@ -77,40 +78,44 @@ options:
               Enqueued job will continue without Ansible blocking on its completion.
         version_added: "2.3"
 notes:
-    - One option other than name is required.
+    - Since 2.4, one of the following options is required 'state', 'enabled', 'masked', 'daemon_reload', and all except 'daemon_reload' also require 'name'.
+    - Before 2.4 you always required 'name'.
 requirements:
     - A system managed by systemd
 '''
 
 EXAMPLES = '''
-# Example action to start service httpd, if not running
-- systemd: state=started name=httpd
+- name: Make sure a service is running
+  systemd: state=started name=httpd
 
-# Example action to stop service cron on debian, if running
-- systemd: name=cron state=stopped
+- name: stop service cron on debian, if running
+  systemd: name=cron state=stopped
 
-# Example action to restart service cron on centos, in all cases, also issue daemon-reload to pick up config changes
-- systemd:
+- name: restart service cron on centos, in all cases, also issue daemon-reload to pick up config changes
+  systemd:
     state: restarted
     daemon_reload: yes
     name: crond
 
-# Example action to reload service httpd, in all cases
-- systemd:
+- name: reload service httpd, in all cases
+  systemd:
     name: httpd
     state: reloaded
 
-# Example action to enable service httpd and ensure it is not masked
-- systemd:
+- name: enable service httpd and ensure it is not masked
+  systemd:
     name: httpd
     enabled: yes
     masked: no
 
-# Example action to enable a timer for dnf-automatic
-- systemd:
+- name: enable a timer for dnf-automatic
+  systemd:
     name: dnf-automatic.timer
     state: started
     enabled: True
+
+- name: just force systemd to reread configs (2.4 and above)
+  systemd: daemon_reload=yes
 '''
 
 RETURN = '''
@@ -241,7 +246,7 @@ status:
             "WatchdogTimestampMonotonic": "0",
             "WatchdogUSec": "0",
         }
-'''
+'''  # NOQA
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.service import sysv_exists, sysv_is_enabled, fail_if_missing
@@ -259,7 +264,7 @@ def main():
     # initialize
     module = AnsibleModule(
         argument_spec = dict(
-            name = dict(required=True, type='str', aliases=['unit', 'service']),
+            name = dict(aliases=['unit', 'service']),
             state = dict(choices=[ 'started', 'stopped', 'restarted', 'reloaded'], type='str'),
             enabled = dict(type='bool'),
             masked = dict(type='bool'),
@@ -284,6 +289,10 @@ def main():
         'changed': False,
         'status': {},
     }
+
+    for requires in ('state', 'enabled', 'masked'):
+        if requires is not None and unit is None:
+            module.fail_json(msg="name is also required when specifying %s" % requires)
 
     # Run daemon-reload first, if requested
     if module.params['daemon_reload']:

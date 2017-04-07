@@ -16,9 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -414,7 +415,7 @@ def get_custom_value(arg, config, module):
     value = ''
 
     if (arg.startswith('filter_list') or arg.startswith('prefix_list') or
-        arg.startswith('route_map')):
+            arg.startswith('route_map')):
         value = in_out_param(arg, splitted_config, module)
     elif arg == 'send_community':
         for line in splitted_config:
@@ -873,9 +874,9 @@ def main():
 
     state = module.params['state']
     if ((module.params['max_prefix_interval'] or
-        module.params['max_prefix_warning'] or
-        module.params['max_prefix_threshold']) and
-        not module.params['max_prefix_limit']):
+            module.params['max_prefix_warning'] or
+            module.params['max_prefix_threshold']) and
+            not module.params['max_prefix_limit']):
         module.fail_json(msg='max_prefix_limit is required when using '
                              'max_prefix_warning, max_prefix_limit or '
                              'max_prefix_threshold.')
@@ -921,7 +922,7 @@ def main():
     existing = invoke('get_existing', module, args)
     if existing.get('asn'):
         if (existing.get('asn') != module.params['asn'] and
-            state == 'present'):
+                state == 'present'):
             module.fail_json(msg='Another BGP ASN already exists.',
                              proposed_asn=module.params['asn'],
                              existing_asn=existing.get('asn'))

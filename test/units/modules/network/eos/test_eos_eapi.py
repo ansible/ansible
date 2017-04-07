@@ -53,7 +53,7 @@ class TestEosEapiModule(TestEosModule):
         except RuntimeError:
             pass
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, transport='eapi'):
         def run_commands(module, commands, **kwargs):
             output = list()
             for cmd in commands:

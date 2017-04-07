@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION='''
 module: win_domain
@@ -53,7 +54,7 @@ reboot_required:
 
 EXAMPLES=r'''
 # ensure the named domain is reachable from the target host; if not, create the domain in a new forest residing on the target host
-- win_domain_controller:
+- win_domain:
     dns_domain_name: ansible.vagrant
     safe_mode_password: password123!
 

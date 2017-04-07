@@ -23,9 +23,10 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = r'''
 ---
@@ -63,7 +64,9 @@ options:
     default: none
   rights:
     description:
-      - The rights/permissions that are to be allowed/denyed for the specified user or group for the given src file or directory.  Can be entered as a comma separated list (Ex. "Modify, Delete, ExecuteFile").  For more information on the choices see MSDN FileSystemRights Enumeration.
+      - The rights/permissions that are to be allowed/denyed for the specified user or group for the given src file or directory.
+        Can be entered as a comma separated list (Ex. "Modify, Delete, ExecuteFile").  For more information on the choices see MSDN FileSystemRights
+        Enumeration.
     required: yes
     choices:
       - AppendData
@@ -90,7 +93,8 @@ options:
     default: none
   inherit:
     description:
-      - Inherit flags on the ACL rules.  Can be specified as a comma separated list (Ex. "ContainerInherit, ObjectInherit").  For more information on the choices see MSDN InheritanceFlags Enumeration.
+      - Inherit flags on the ACL rules.  Can be specified as a comma separated list (Ex. "ContainerInherit, ObjectInherit").  For more information on
+        the choices see MSDN InheritanceFlags Enumeration.
     required: no
     choices:
       - ContainerInherit

@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -220,7 +221,7 @@ def main():
         cert_alias=dict(type='str'),
         cert_port=dict(default='443', type='int'),
         keystore_path=dict(type='str'),
-        keystore_pass=dict(required=True, type='str'),
+        keystore_pass=dict(required=True, type='str', no_log=True),
         keystore_create=dict(default=False, type='bool'),
         executable=dict(default='keytool', type='str'),
         state=dict(default='present',

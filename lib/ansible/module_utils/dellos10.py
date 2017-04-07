@@ -1,5 +1,6 @@
 #
 # (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# (c) 2017 Red Hat, Inc
 #
 # Copyright (c) 2016 Dell Inc.
 #
@@ -28,28 +29,98 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
 import re
 
-from ansible.module_utils.network import register_transport, to_list
-from ansible.module_utils.shell import CliBase
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
+from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.network_common import to_list, ComplexList
+from ansible.module_utils.connection import exec_command
+from ansible.module_utils.netcfg import NetworkConfig,ConfigLine
+
+_DEVICE_CONFIGS = {}
+
+WARNING_PROMPTS_RE = [
+    r"[\r\n]?\[confirm yes/no\]:\s?$",
+    r"[\r\n]?\[y/n\]:\s?$",
+    r"[\r\n]?\[yes/no\]:\s?$"
+]
+
+dellos10_argument_spec = {
+    'host': dict(),
+    'port': dict(type='int'),
+    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
+    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
+    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
+    'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
+    'timeout': dict(type='int'),
+    'provider': dict(type='dict'),
+}
+
+def check_args(module, warnings):
+    provider = module.params['provider'] or {}
+    for key in dellos10_argument_spec:
+        if key != 'provider' and module.params[key]:
+            warnings.append('argument %s has been deprecated and will be '
+                            'removed in a future version' % key)
 
 
-def get_config(module):
-    contents = module.params['config']
+def get_config(module, flags=[]):
+    cmd = 'show running-config '
+    cmd += ' '.join(flags)
+    cmd = cmd.strip()
 
-    if not contents:
-        contents = module.config.get_config()
-        module.params['config'] = contents
-        return NetworkConfig(indent=1, contents=contents[0])
-    else:
-        return NetworkConfig(indent=1, contents=contents)
+    try:
+        return _DEVICE_CONFIGS[cmd]
+    except KeyError:
+        rc, out, err = exec_command(module, cmd)
+        if rc != 0:
+            module.fail_json(msg='unable to retrieve current config', stderr=err)
+        cfg = str(out).strip()
+        _DEVICE_CONFIGS[cmd] = cfg
+        return cfg
 
+
+def to_commands(module, commands):
+    spec = {
+        'command': dict(key=True),
+        'prompt': dict(),
+        'answer': dict()
+    }
+    transform = ComplexList(spec, module)
+    return transform(commands)
+
+
+def run_commands(module, commands, check_rc=True):
+    responses = list()
+    commands = to_commands(module, to_list(commands))
+    for cmd in commands:
+        cmd = module.jsonify(cmd)
+        rc, out, err = exec_command(module, cmd)
+        if check_rc and rc != 0:
+            module.fail_json(msg=err, rc=rc)
+        responses.append(out)
+    return responses
+
+def load_config(module, commands):
+    rc, out, err = exec_command(module, 'configure terminal')
+    if rc != 0:
+        module.fail_json(msg='unable to enter configuration mode', err=err)
+
+    commands.append('commit')
+    for command in to_list(commands):
+        if command == 'end':
+            continue
+        cmd = {'command': command, 'prompt': WARNING_PROMPTS_RE, 'answer': 'yes'}
+        rc, out, err = exec_command(module, module.jsonify(cmd))
+        if rc != 0:
+            module.fail_json(msg=err, command=command, rc=rc)
+
+    exec_command(module, 'end')
 
 def get_sublevel_config(running_config, module):
     contents = list()
     current_config_contents = list()
+    running_config = NetworkConfig(contents=running_config, indent=1)
     obj = running_config.get_object(module.params['parents'])
     if obj:
         contents = obj.children
@@ -61,67 +132,8 @@ def get_sublevel_config(running_config, module):
             current_config_contents.append(c.rjust(len(c) + indent, ' '))
         if isinstance(c, ConfigLine):
             current_config_contents.append(c.raw)
-        indent = indent + 1
+        indent = 1
     sublevel_config = '\n'.join(current_config_contents)
 
     return sublevel_config
 
-
-class Cli(CliBase):
-
-    NET_PASSWD_RE = re.compile(r"[\r\n]?password:\s?$", re.I)
-
-    CLI_PROMPTS_RE = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:#) ?$"),
-        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
-    ]
-
-    CLI_ERRORS_RE = [
-        re.compile(r"% ?Error"),
-        re.compile(r"% ?Bad secret"),
-        re.compile(r"Syntax error:"),
-        re.compile(r"invalid input", re.I),
-        re.compile(r"(?:incomplete|ambiguous) command", re.I),
-        re.compile(r"connection timed out", re.I),
-        re.compile(r"[^\r\n]+ not found", re.I),
-        re.compile(r"'[^']' +returned error code: ?\d+"),
-    ]
-
-
-    def connect(self, params, **kwargs):
-        super(Cli, self).connect(params, kickstart=False, **kwargs)
-        self.shell.send('terminal length 0')
-
-
-    def configure(self, commands, **kwargs):
-        cmds = ['configure terminal']
-        cmds.extend(to_list(commands))
-        cmds.append('end')
-        cmds.append('commit')
-
-        responses = self.execute(cmds)
-        responses.pop(0)
-        return responses
-
-
-    def get_config(self, **kwargs):
-        return self.execute(['show running-configuration'])
-
-
-    def load_config(self, commands, **kwargs):
-        return self.configure(commands)
-
-
-    def commit_config(self, **kwargs):
-        self.execute(['commit'])
-
-
-    def abort_config(self, **kwargs):
-        self.execute(['discard'])
-
-
-    def save_config(self):
-        self.execute(['copy running-config startup-config'])
-
-
-Cli = register_transport('cli', default=True)(Cli)

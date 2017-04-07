@@ -17,9 +17,10 @@ You should have received a copy of the GNU General Public License
 along with this software.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -761,7 +762,10 @@ def get_vminfo(module, proxmox, node, vmid, **kwargs):
             k = vm[k]
             k = re.search('=(.*?),', k).group(1)
             mac[interface] = k
-        if re.match(r'virtio[0-9]', k) is not None or re.match(r'ide[0-9]', k) is not None or re.match(r'scsi[0-9]', k) is not None or re.match(r'sata[0-9]', k) is not None:
+        if (re.match(r'virtio[0-9]', k) is not None or
+                re.match(r'ide[0-9]', k) is not None or
+                re.match(r'scsi[0-9]', k) is not None or
+                re.match(r'sata[0-9]', k) is not None):
             device = k
             k = vm[k]
             k = re.search('(.*?),', k).group(1)
@@ -857,13 +861,13 @@ def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sock
         taskid = getattr(proxmox_node, VZ_TYPE).create(vmid=vmid, name=name, memory=memory, cpu=cpu, cores=cores, sockets=sockets, **kwargs)
 
     while timeout:
-        if (proxmox_node.tasks(taskid).status.get()['status'] == 'stopped'
-            and proxmox_node.tasks(taskid).status.get()['exitstatus'] == 'OK'):
+        if (proxmox_node.tasks(taskid).status.get()['status'] == 'stopped' and
+                proxmox_node.tasks(taskid).status.get()['exitstatus'] == 'OK'):
             return True
         timeout = timeout - 1
         if timeout == 0:
-            module.fail_json(msg='Reached timeout while waiting for creating VM. Last line in task before timeout: %s'
-                             % proxmox_node.tasks(taskid).log.get()[:1])
+            module.fail_json(msg='Reached timeout while waiting for creating VM. Last line in task before timeout: %s' %
+                                 proxmox_node.tasks(taskid).log.get()[:1])
         time.sleep(1)
     return False
 
@@ -871,8 +875,8 @@ def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sock
 def start_vm(module, proxmox, vm, vmid, timeout):
     taskid = getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.start.post()
     while timeout:
-        if (proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['status'] == 'stopped'
-            and proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['exitstatus'] == 'OK' ):
+        if (proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['status'] == 'stopped' and
+                proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['exitstatus'] == 'OK' ):
             return True
         timeout = timeout - 1
         if timeout == 0:
@@ -889,8 +893,8 @@ def stop_vm(module, proxmox, vm, vmid, timeout, force):
     else:
         taskid = getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.shutdown.post()
     while timeout:
-        if (proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['status'] == 'stopped'
-            and proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['exitstatus'] == 'OK'):
+        if (proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['status'] == 'stopped' and
+                proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['exitstatus'] == 'OK'):
             return True
         timeout = timeout - 1
         if timeout == 0:
@@ -1206,8 +1210,8 @@ def main():
 
             taskid = getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE).delete(vmid)
             while timeout:
-                if (proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['status'] == 'stopped'
-                    and proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['exitstatus'] == 'OK' ):
+                if (proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['status'] == 'stopped' and
+                        proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['exitstatus'] == 'OK' ):
                     module.exit_json(changed=True, msg="VM %s removed" % vmid)
                 timeout = timeout - 1
                 if timeout == 0:

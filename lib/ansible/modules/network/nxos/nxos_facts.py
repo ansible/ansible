@@ -16,11 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'community',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -204,7 +203,7 @@ class FactsBase(object):
         try:
             return resp[0]
         except IndexError:
-            self.warnings.append('command %s returned to data, facts will not be populated' % command_string)
+            self.warnings.append('command %s failed, facts will not be populated' % command_string)
             return None
 
     def transform_dict(self, data, keymap):
@@ -217,7 +216,6 @@ class FactsBase(object):
     def transform_iterable(self, iterable, keymap):
         for item in iterable:
             yield self.transform_dict(item, keymap)
-
 
 
 class Default(FactsBase):
@@ -291,13 +289,13 @@ class Interfaces(FactsBase):
         if data:
             self.facts['interfaces'] = self.populate_interfaces(data)
 
-        data = self.run('show ipv6 inteface', 'json')
+        data = self.run('show ipv6 interface', 'json')
         if data:
-            self.parse_ipv6_interfaces(out)
+            self.parse_ipv6_interfaces(data)
 
         data = self.run('show lldp neighbors')
         if data:
-            self.facts['neighbors'] = self.populate_neighbors(out)
+            self.facts['neighbors'] = self.populate_neighbors(data)
 
     def populate_interfaces(self, data):
         interfaces = dict()
@@ -316,19 +314,38 @@ class Interfaces(FactsBase):
         return interfaces
 
     def populate_neighbors(self, data):
-        data = data['TABLE_nbor']['ROW_nbor']
-        if isinstance(data, dict):
-            data = [data]
-
         objects = dict()
-        for item in data:
-            local_intf = item['l_port_id']
-            if local_intf not in objects:
-                objects[local_intf] = list()
-            nbor = dict()
-            nbor['port'] = item['port_id']
-            nbor['host'] = item['chassis_id']
-            objects[local_intf].append(nbor)
+        if isinstance(data, str):
+            # if there are no neighbors the show command returns
+            # ERROR: No neighbour information
+            if data.startswith('ERROR'):
+                return dict()
+
+            lines = data.split('\n')
+            regex = re.compile('(\S+)\s+(\S+)\s+\d+\s+\w+\s+(\S+)')
+
+            for item in data.split('\n')[4:-1]:
+                match = regex.match(item)
+                if match:
+                    nbor = {'host': match.group(1), 'port': match.group(3)}
+                    if match.group(2) not in objects:
+                        objects[match.group(2)] = []
+                    objects[match.group(2)].append(nbor)
+
+        elif isinstance(data, dict):
+            data = data['TABLE_nbor']['ROW_nbor']
+            if isinstance(data, dict):
+                data = [data]
+
+            for item in data:
+                local_intf = item['l_port_id']
+                if local_intf not in objects:
+                    objects[local_intf] = list()
+                nbor = dict()
+                nbor['port'] = item['port_id']
+                nbor['host'] = item['chassis_id']
+                objects[local_intf].append(nbor)
+
         return objects
 
     def parse_ipv6_interfaces(self, data):

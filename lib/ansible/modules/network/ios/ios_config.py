@@ -16,11 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'core',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
@@ -207,6 +206,7 @@ import re
 import time
 
 from ansible.module_utils.ios import run_commands, get_config, load_config
+from ansible.module_utils.ios import get_defaults_flag
 from ansible.module_utils.ios import ios_argument_spec
 from ansible.module_utils.ios import check_args as ios_check_args
 from ansible.module_utils.basic import AnsibleModule
@@ -267,7 +267,7 @@ def get_running_config(module):
     if not contents:
         flags = []
         if module.params['defaults']:
-            flags.append('all')
+            flags.append(get_defaults_flag(module))
         contents = get_config(module, flags=flags)
     contents, banners = extract_banners(contents)
     return NetworkConfig(indent=1, contents=contents), banners

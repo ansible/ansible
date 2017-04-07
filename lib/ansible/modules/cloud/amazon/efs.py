@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -515,6 +516,9 @@ def iterate_all(attr, map_method, **kwargs):
                 sleep(wait)
                 wait = wait * 2
                 continue
+            else:
+                raise
+
 
 def targets_equal(keys, a, b):
     """

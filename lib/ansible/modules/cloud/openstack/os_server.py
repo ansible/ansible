@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -372,6 +373,46 @@ EXAMPLES = '''
         volumes:
         - photos
         - music
+
+# Creates a new instance with provisioning userdata using Cloud-Init
+- name: launch a compute instance
+  hosts: localhost
+  tasks:
+    - name: launch an instance
+      os_server:
+        name: vm1
+        state: present
+        image: "Ubuntu Server 14.04"
+        flavor: "P-1"
+        network: "Production"
+        userdata: |
+          #cloud-config
+          chpasswd:
+            list: |
+              ubuntu:{{ default_password }}
+            expire: False
+          packages:
+            - ansible
+          package_upgrade: true
+
+# Creates a new instance with provisioning userdata using Bash Scripts
+- name: launch a compute instance
+  hosts: localhost
+  tasks:
+    - name: launch an instance
+      os_server:
+        name: vm1
+        state: present
+        image: "Ubuntu Server 14.04"
+        flavor: "P-1"
+        network: "Production"
+        userdata: |
+          {%- raw -%}#!/bin/bash
+          echo "  up ip route add 10.0.0.0/8 via {% endraw -%}{{ intra_router }}{%- raw -%}" >> /etc/network/interfaces.d/eth0.conf
+          echo "  down ip route del 10.0.0.0/8" >> /etc/network/interfaces.d/eth0.conf
+          ifdown eth0 && ifup eth0
+          {% endraw %}
+
 '''
 
 try:

@@ -16,11 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'community',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -36,27 +35,21 @@ extends_documentation_fragment: eos
 options:
   banner:
     description:
-      - The C(banner) argument specifies the banner that should be
-        configured on the remote device.  Current this module supports
-        configuration of either C(login) or C(motd) banners.
+      - Specifies which banner that should be
+        configured on the remote device.
     required: true
     default: null
+    choices: ['login', 'banner']
   text:
     description:
-      - The C(text) argument specifics the banner text that should be
+      - The banner text that should be
         present in the remote device running configuration.  This argument
-        accepts a multiline string.
-    required: false
+        accepts a multiline string. Requires I(state=present).
     default: null
   state:
     description:
-      - The C(state) argument specifies whether or not the configuration is
-        present in the current devices active running configuration.  When
-        this value is set to C(present), the configuration stanzas should be
-        in the current device configuration.  When this value is set to
-        C(absent), the configuration should not be in the current running
-        configuration.
-    required: false
+      - Specifies whether or not the configuration is
+        present in the current devices active running configuration.
     default: present
     choices: ['present', 'absent']
 """
@@ -89,7 +82,7 @@ commands:
     - EOF
 session_name:
   description: The EOS config session name used to load the configuration
-  returned: always
+  returned: if changes
   type: str
   sample: ansible_1479315771
 """
@@ -102,14 +95,20 @@ def map_obj_to_commands(updates, module):
     want, have = updates
     state = module.params['state']
 
-    if state == 'absent' and have['text']:
+    if state == 'absent' and 'text' in have.keys() and have['text']:
         commands.append('no banner %s' % module.params['banner'])
 
     elif state == 'present':
         if want['text'] and (want['text'] != have.get('text')):
-            commands.append('banner %s' % module.params['banner'])
-            commands.extend(want['text'].strip().split('\n'))
-            commands.append('EOF')
+            if module.params['transport'] == 'cli':
+                commands.append('banner %s' % module.params['banner'])
+                commands.extend(want['text'].strip().split('\n'))
+                commands.append('EOF')
+            else:
+                # For EAPI we need to construct a dict with cmd/input
+                # key/values for the banner
+                commands.append({'cmd': 'banner %s' % module.params['banner'],
+                                 'input': want['text'].strip('\n')})
 
     return commands
 
@@ -117,7 +116,17 @@ def map_config_to_obj(module):
     output = run_commands(module, ['show banner %s' % module.params['banner']])
     obj = {'banner': module.params['banner'], 'state': 'absent'}
     if output:
-        obj['text'] = output[0]
+        if module.params['transport'] == 'cli':
+            obj['text'] = output[0]
+        else:
+            # On EAPI we need to extract the banner text from dict key
+            # 'loginBanner'
+            if module.params['banner'] == 'login':
+                banner_response_key = 'loginBanner'
+            else:
+                banner_response_key = 'motd'
+            if isinstance(output[0], dict) and banner_response_key in output[0].keys():
+                obj['text'] = output[0][banner_response_key].strip('\n')
         obj['state'] = 'present'
     return obj
 

@@ -20,9 +20,10 @@
 #
 # see examples/playbooks/uri.yml
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -155,6 +156,22 @@ options:
     default: 'yes'
     choices: ['yes', 'no']
     version_added: '1.9.2'
+  client_cert:
+    required: false
+    default: null
+    description:
+      - PEM formatted certificate chain file to be used for SSL client
+        authentication. This file can also include the key as well, and if
+        the key is included, I(client_key) is not required
+    version_added: 2.4
+  client_key:
+    required: false
+    default: null
+    description:
+      - PEM formatted file that contains your private key to be used for SSL
+        client authentication. If I(client_cert) contains both the certificate
+        and key, this option is not required.
+    version_added: 2.4
 notes:
   - The dependency on httplib2 was removed in Ansible 2.1
 author: "Romeo Theriault (@romeotheriault)"
@@ -424,15 +441,14 @@ def main():
         # and the filename already exists.  This allows idempotence
         # of uri executions.
         if os.path.exists(creates):
-            module.exit_json(stdout="skipped, since %s exists" % creates,
-                             changed=False, stderr=False, rc=0)
+            module.exit_json(stdout="skipped, since %s exists" % creates, changed=False, rc=0)
 
     if removes is not None:
         # do not run the command if the line contains removes=filename
         # and the filename do not exists.  This allows idempotence
         # of uri executions.
         if not os.path.exists(removes):
-            module.exit_json(stdout="skipped, since %s does not exist" % removes, changed=False, stderr=False, rc=0)
+            module.exit_json(stdout="skipped, since %s does not exist" % removes, changed=False, rc=0)
 
     # Make the request
     resp, content, dest = uri(module, url, dest, body, body_format, method,

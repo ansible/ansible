@@ -17,9 +17,10 @@
 # this is a windows documentation stub, actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = r'''
 ---
@@ -149,7 +150,7 @@ stat:
             returned: success, path exists
             type: boolean
             sample: True
-        islink:
+        islnk:
             description: if the path is a symbolic link or junction or not
             returned: success, path exists
             type: boolean
