@@ -332,3 +332,44 @@
     return_content: true
   register: result
   failed_when: result.json.headers['Content-Type'] != 'text/json'
+
+- name: Test client cert auth, no certs
+  uri:
+    url: "https://ansible.http.tests/ssl_client_verify"
+    status_code: 200
+    return_content: true
+  register: result
+  failed_when: result.content != "ansible.http.tests:NONE"
+  when: has_httptester
+
+- name: Test client cert auth, with certs
+  uri:
+    url: "https://ansible.http.tests/ssl_client_verify"
+    client_cert: "{{ output_dir }}/client.pem"
+    client_key: "{{ output_dir }}/client.key"
+    return_content: true
+  register: result
+  failed_when: result.content != "ansible.http.tests:SUCCESS"
+  when: has_httptester
+
+- name: Test client cert auth, with no validation
+  uri:
+    url: "https://fail.ansible.http.tests/ssl_client_verify"
+    client_cert: "{{ output_dir }}/client.pem"
+    client_key: "{{ output_dir }}/client.key"
+    return_content: true
+    validate_certs: no
+  register: result
+  failed_when: result.content != "ansible.http.tests:SUCCESS"
+  when: has_httptester
+
+- name: Test client cert auth, with validation and ssl mismatch
+  uri:
+    url: "https://fail.ansible.http.tests/ssl_client_verify"
+    client_cert: "{{ output_dir }}/client.pem"
+    client_key: "{{ output_dir }}/client.key"
+    return_content: true
+    validate_certs: yes
+  register: result
+  failed_when: not result|failed
+  when: has_httptester
