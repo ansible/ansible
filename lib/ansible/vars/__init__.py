@@ -550,7 +550,7 @@ class VariableManager:
         else:
             return name
 
-    def _load_inventory_file(self, path, loader):
+    def _load_inventory_file(self, path, loader, filter_ext=False):
         '''
         helper function, which loads the file and gets the
         basename of the file without the extension
@@ -569,24 +569,26 @@ class VariableManager:
             names.sort()
 
             # do not parse hidden files or dirs, e.g. .svn/
-            paths = [os.path.join(path, name) for name in names if not name.startswith('.')]
+            paths = [os.path.join(path, name) for name in names if not (name.startswith('.') or name.endswith('~'))]
             for p in paths:
-                results = self._load_inventory_file(path=p, loader=loader)
+                results = self._load_inventory_file(path=p, loader=loader, filter_ext=True)
                 if results is not None:
                     data = combine_vars(data, results)
 
         else:
             file_name, ext = os.path.splitext(path)
             data = None
-            if not ext or ext not in C.YAML_FILENAME_EXTENSIONS:
-                for test_ext in C.YAML_FILENAME_EXTENSIONS:
-                    new_path = path + test_ext
-                    if loader.path_exists(new_path):
-                        data = loader.load_from_file(new_path)
-                        break
-            else:
+            if not filter_ext or ext in C.YAML_FILENAME_EXTENSIONS:
                 if loader.path_exists(path):
                     data = loader.load_from_file(path)
+                else:
+                    # try appending yaml extenstion to find valid files
+                    # avoid empty extensions otherwise all files would be tried
+                    for test_ext in (ext for ext in C.YAML_FILENAME_EXTENSIONS if ext):
+                        new_path = path + test_ext
+                        if loader.path_exists(new_path):
+                            data = loader.load_from_file(new_path)
+                            break
 
         rval = AnsibleInventoryVarsData()
         rval.path = path
