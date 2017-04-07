@@ -126,6 +126,11 @@ content:
   type: string
   sample: "mynewservicegroup"
 '''
+import json
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import url_argument_spec
+from ansible.module_utils.a10 import axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure, axapi_enabled_disabled
 
 VALID_SERVICE_GROUP_FIELDS = ['name', 'protocol', 'lb_method']
 VALID_SERVER_FIELDS = ['server', 'port', 'status']
@@ -339,13 +344,6 @@ def main():
     # log out of the session nicely and exit
     axapi_call(module, session_url + '&method=session.close')
     module.exit_json(changed=changed, content=result)
-
-# standard ansible module imports
-import json
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import url_argument_spec
-from ansible.module_utils.a10 import axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure, axapi_enabled_disabled
-
 
 if __name__ == '__main__':
     main()
