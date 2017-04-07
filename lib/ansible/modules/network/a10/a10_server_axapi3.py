@@ -250,6 +250,7 @@ import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import url_argument_spec
 from ansible.module_utils.a10 import axapi_call_v3, a10_argument_spec, axapi_authenticate_v3, axapi_failure
+from ansible.module_utils.a10 import AXAPI_PORT_PROTOCOLS
 
 
 if __name__ == '__main__':
