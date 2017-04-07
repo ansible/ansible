@@ -21,10 +21,14 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 DOCUMENTATION = r'''
 ---
 module: win_route
-version_added: "2.3"
+version_added: "2.4"
 short_description: Add or remove a static route.
 description:
     - Add or remove a static route. Powershell 3.0 is needed
@@ -54,6 +58,7 @@ options:
       - present or absent
     required: false
     default: present
+author: Daniele Lazzari
 '''
 
 EXAMPLES = r'''
@@ -74,4 +79,6 @@ EXAMPLES = r'''
     subnet_mask: 255.255.255.255
     gateway: 192.168.1.1
     state: absent
+'''
+RETURN = r'''
 '''
