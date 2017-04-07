@@ -21,7 +21,7 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-DOCUMENTATION = '''
+DOCUMENTATION=r'''
 ---
 module: win_route
 version_added: "2.3"
@@ -37,18 +37,18 @@ options:
   subnet_mask:
     description:
         - Subent mask of the destination IP address
-      required: true
-      default: none
+    required: true
+    default: none
   gateway:
     description:
         - Gateway used by the static route
-      required: true
-      default: none
+    required: true
+    default: none
   metric:
     description:
         - Metric used by the static route
-      required: false
-      default: 1
+    required: false
+    default: 1
   state:
     description:
       - present or absent
@@ -56,8 +56,8 @@ options:
     default: present
 '''
 
-EXAMPLES = '''
-
+EXAMPLES=r'''
+---
 # Add a network static route
 
 - win_route:
