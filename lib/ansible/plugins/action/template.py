@@ -17,10 +17,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import datetime
 import os
-import pwd
-import time
 
 from ansible import constants as C
 from ansible.compat.six import string_types
@@ -29,6 +26,7 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
+from ansible.template import generate_ansible_template_vars
 
 boolean = C.mk_boolean
 
@@ -94,37 +92,8 @@ class ActionModule(ActionBase):
             with open(b_source, 'r') as f:
                 template_data = to_text(f.read())
 
-            try:
-                template_uid = pwd.getpwuid(os.stat(b_source).st_uid).pw_name
-            except:
-                template_uid = os.stat(b_source).st_uid
-
-            temp_vars = task_vars.copy()
-            temp_vars['template_host']     = os.uname()[1]
-            temp_vars['template_path']     = source
-            temp_vars['template_mtime']    = datetime.datetime.fromtimestamp(os.path.getmtime(b_source))
-            temp_vars['template_uid']      = template_uid
-            temp_vars['template_fullpath'] = os.path.abspath(source)
-            temp_vars['template_run_date'] = datetime.datetime.now()
-
-            managed_default = C.DEFAULT_MANAGED_STR
-            managed_str = managed_default.format(
-                host = temp_vars['template_host'],
-                uid  = temp_vars['template_uid'],
-                file = to_bytes(temp_vars['template_path'])
-            )
-            temp_vars['ansible_managed'] = time.strftime(
-                managed_str,
-                time.localtime(os.path.getmtime(b_source))
-            )
-
-
-            searchpath = []
             # set jinja2 internal search path for includes
-            if 'ansible_search_path' in task_vars:
-                searchpath = task_vars['ansible_search_path']
-                # our search paths aren't actually the proper ones for jinja includes.
-
+            searchpath = task_vars.get('ansible_search_path', [])
             searchpath.extend([self._loader._basedir, os.path.dirname(source)])
 
             # We want to search into the 'templates' subdir of each search path in
@@ -136,6 +105,10 @@ class ActionModule(ActionBase):
             searchpath = newsearchpath
 
             self._templar.environment.loader.searchpath = searchpath
+
+            # add ansible 'template' vars
+            temp_vars = task_vars.copy()
+            temp_vars.update(generate_ansible_template_vars(source))
 
             old_vars = self._templar._available_variables
             self._templar.set_available_variables(temp_vars)

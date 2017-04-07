@@ -21,8 +21,11 @@ __metaclass__ = type
 
 import ast
 import contextlib
+import datetime
 import os
+import pwd
 import re
+import time
 
 from io import StringIO
 from numbers import Number
@@ -30,7 +33,7 @@ from numbers import Number
 from jinja2 import Environment
 from jinja2.loaders import FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
-from jinja2.utils import concat as j2_concat, missing
+from jinja2.utils import concat as j2_concat
 from jinja2.runtime import Context, StrictUndefined
 from ansible import constants as C
 from ansible.compat.six import string_types, text_type
@@ -39,7 +42,7 @@ from ansible.plugins import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_native, to_text, to_bytes
 
 try:
     from hashlib import sha1
@@ -53,7 +56,7 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-__all__ = ['Templar']
+__all__ = ['Templar', 'generate_ansible_template_vars']
 
 # A regex for checking to see if a variable we're trying to
 # expand is just a single variable name.
@@ -62,6 +65,33 @@ __all__ = ['Templar']
 NON_TEMPLATED_TYPES = ( bool, Number )
 
 JINJA2_OVERRIDE = '#jinja2:'
+
+
+def generate_ansible_template_vars(path):
+
+    b_path = to_bytes(path)
+    try:
+        template_uid = pwd.getpwuid(os.stat(b_path).st_uid).pw_name
+    except:
+        template_uid = os.stat(b_path).st_uid
+
+    temp_vars = {}
+    temp_vars['template_host']     = os.uname()[1]
+    temp_vars['template_path']     = b_path
+    temp_vars['template_mtime']    = datetime.datetime.fromtimestamp(os.path.getmtime(b_path))
+    temp_vars['template_uid']      = template_uid
+    temp_vars['template_fullpath'] = os.path.abspath(path)
+    temp_vars['template_run_date'] = datetime.datetime.now()
+
+    managed_default = C.DEFAULT_MANAGED_STR
+    managed_str = managed_default.format(
+        host = temp_vars['template_host'],
+        uid  = temp_vars['template_uid'],
+        file = temp_vars['template_path'],
+    )
+    temp_vars['ansible_managed'] = time.strftime( managed_str, time.localtime(os.path.getmtime(b_path)))
+
+    return temp_vars
 
 
 def _escape_backslashes(data, jinja_env):
