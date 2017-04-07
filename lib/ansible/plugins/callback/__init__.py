@@ -208,8 +208,10 @@ class CallbackBase:
         del result._result['results']
 
     def _clean_results(self, result, task_name):
-        if 'invocation' in result and task_name in ['debug']:
-            del result['invocation']
+        if task_name in ['debug']:
+            for remove_key in ('changed', 'invocation'):
+                if remove_key in result:
+                    del result[remove_key]
 
 
     def set_play_context(self, play_context):
