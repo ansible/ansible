@@ -21,11 +21,11 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-DOCUMENTATION=r'''
+DOCUMENTATION = r'''
 ---
 module: win_route
 version_added: "2.3"
-short_description: Add or remove a static route 
+short_description: Add or remove a static route.
 description:
     - Add or remove a static route. Powershell 3.0 is needed
 options:
@@ -56,7 +56,7 @@ options:
     default: present
 '''
 
-EXAMPLES=r'''
+EXAMPLES = r'''
 ---
 # Add a network static route
 
