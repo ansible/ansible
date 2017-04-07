@@ -87,7 +87,7 @@ class ActionModule(_ActionModule):
         except KeyError:
             pass
 
-        return result 
+        return result
 
     def _get_socket_path(self, play_context):
         ssh = connection_loader.get('ssh', class_only=True)

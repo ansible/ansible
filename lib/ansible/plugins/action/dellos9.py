@@ -91,7 +91,7 @@ class ActionModule(_ActionModule):
         if self._play_context.become_method == 'enable':
             self._play_context.become = False
             self._play_context.become_method = None
-        
+
         result = super(ActionModule, self).run(tmp, task_vars)
 
         try:
