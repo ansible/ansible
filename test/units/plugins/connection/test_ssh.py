@@ -590,7 +590,7 @@ class TestSSHConnectionRetries(object):
 
         self.mock_popen_res.stdout.read.side_effect = [b"", b"my_stdout\n", b"second_line"]
         self.mock_popen_res.stderr.read.side_effect = [b"", b"my_stderr"]
-        type(self.mock_popen_res).returncode = PropertyMock(side_effect=[255] * 3 + [0] * 4)
+        type(self.mock_popen_res).returncode = PropertyMock(side_effect=[255] * 4 + [0] * 4)
 
         self.mock_selector.select.side_effect = [
             [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
@@ -621,7 +621,7 @@ class TestSSHConnectionRetries(object):
 
         self.mock_popen_res.stdout.read.side_effect = [b"", b"my_stdout\n", b"second_line"]
         self.mock_popen_res.stderr.read.side_effect = [b"", b"my_stderr"]
-        type(self.mock_popen_res).returncode = PropertyMock(side_effect=[255] * 3 + [0] * 4)
+        type(self.mock_popen_res).returncode = PropertyMock(side_effect=[255] * 4 + [0] * 4)
 
         self.mock_selector.select.side_effect = [
             [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
