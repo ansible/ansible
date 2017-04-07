@@ -319,7 +319,7 @@ def create_eni(connection, vpc_id, module):
 
     try:
         eni = connection.create_network_interface(subnet_id, private_ip_address, description, security_groups)
-        if attached == True and instance_id is not None:
+        if attached and instance_id is not None:
             try:
                 eni.attach(instance_id, device_index)
             except BotoServerError:
@@ -494,7 +494,7 @@ def uniquely_find_eni(connection, module):
                 filters['attachment.instance-id'] = instance_id
                 filters['attachment.device-index'] = device_index
 
-        if eni_id == None and len(filters) == 0:
+        if eni_id is None and len(filters) == 0:
             return None
 
         eni_result = connection.get_all_network_interfaces(eni_id, filters=filters)
