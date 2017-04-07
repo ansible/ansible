@@ -534,7 +534,10 @@ def create_autoscaling_group(connection, module):
                     if 'topic' not in notification:
                         module.fail_json(msg="You must specify a topic for each object specified in notifications.")
                     elif 'types' not in notification:
-                        notification['types'] = ['autoscaling:EC2_INSTANCE_LAUNCH', 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR', 'autoscaling:EC2_INSTANCE_TERMINATE', 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR']
+                        notification['types'] = ['autoscaling:EC2_INSTANCE_LAUNCH',
+                                                 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR',
+                                                 'autoscaling:EC2_INSTANCE_TERMINATE',
+                                                 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR']
 
                     ag.put_notification_configuration(notification['topic'], notification['types'])
 
@@ -617,7 +620,10 @@ def create_autoscaling_group(connection, module):
                     if 'topic' not in notification:
                         module.fail_json(msg="You must specify a topic for each object specified in notifications.")
                     elif 'types' not in notification:
-                        notification['types'] = ['autoscaling:EC2_INSTANCE_LAUNCH', 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR', 'autoscaling:EC2_INSTANCE_TERMINATE', 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR']
+                        notification['types'] = ['autoscaling:EC2_INSTANCE_LAUNCH',
+                                                 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR',
+                                                 'autoscaling:EC2_INSTANCE_TERMINATE',
+                                                 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR']
 
                     as_group.put_notification_configuration(notification['topic'], notification['types'])
             except BotoServerError as e:
@@ -647,7 +653,10 @@ def delete_autoscaling_group(connection, module):
             if 'topic' not in notification:
                 module.fail_json(msg="You must specify a topic for each object specified in notifications.")
             elif 'types' not in notification:
-                notification['types'] = ['autoscaling:EC2_INSTANCE_LAUNCH', 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR', 'autoscaling:EC2_INSTANCE_TERMINATE', 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR']
+                notification['types'] = ['autoscaling:EC2_INSTANCE_LAUNCH',
+                                         'autoscaling:EC2_INSTANCE_LAUNCH_ERROR',
+                                         'autoscaling:EC2_INSTANCE_TERMINATE',
+                                         'autoscaling:EC2_INSTANCE_TERMINATE_ERROR']
 
             ag.delete_notification_configuration(notification['topic'], notification['types'])
 
