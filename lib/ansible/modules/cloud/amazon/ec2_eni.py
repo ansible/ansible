@@ -494,7 +494,7 @@ def uniquely_find_eni(connection, module):
                 filters['attachment.instance-id'] = instance_id
                 filters['attachment.device-index'] = device_index
 
-        if eni_id == None or len(filters) == 0:
+        if eni_id == None and len(filters) == 0:
             return None
 
         eni_result = connection.get_all_network_interfaces(eni_id, filters=filters)
