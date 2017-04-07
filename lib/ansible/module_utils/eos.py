@@ -30,7 +30,7 @@
 import os
 import time
 
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network_common import to_list, ComplexList
 from ansible.module_utils.six import iteritems
@@ -63,6 +63,11 @@ def check_args(module, warnings):
         if key not in ['provider', 'transport', 'authorize'] and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
                     'removed in a future version' % key)
+
+    if provider:
+        for param in ('auth_pass', 'password'):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
 
 def load_params(module):
     provider = module.params.get('provider') or dict()
