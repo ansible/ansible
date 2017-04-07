@@ -269,12 +269,15 @@ any boto3 _facts modules.
 #### boto3_tag_list_to_ansible_dict
 
 Converts a boto3 tag list to an Ansible dict. Boto3 returns tags as a list of dicts containing keys called
-'Key' and 'Value'. This function converts this list in to a single dict where the dict key is the tag
-key and the dict value is the tag value.
+'Key' and 'Value' by default.  This key names can be overriden when calling the function.  For example, if you have already
+camel_cased your list of tags you may want to pass lowercase key names instead i.e. 'key' and 'value'.
+
+This function converts the list in to a single dict where the dict key is the tag key and the dict value is the tag value.
 
 #### ansible_dict_to_boto3_tag_list
 
-Opposite of above. Converts an Ansible dict to a boto3 tag list of dicts.
+Opposite of above. Converts an Ansible dict to a boto3 tag list of dicts. You can again override the key names used if 'Key'
+and 'Value' is not suitable.
 
 #### get_ec2_security_group_ids_from_names
 
@@ -287,3 +290,12 @@ across VPCs.
 Pass any JSON policy dict to this function in order to sort any list contained therein. This is useful
 because AWS rarely return lists in the same order that they were submitted so without this function, comparison
 of identical policies returns false.
+
+### compare_aws_tags
+
+Pass two dicts of tags and an optional purge parameter and this function will return a dict containing key pairs you need
+to modify and a list of tag key names that you need to remove.  Purge is True by default.  If purge is False then any
+existing tags will not be modified.
+
+This function is useful when using boto3 'add_tags' and 'remove_tags' functions. Be sure to use the other helper function
+'boto3_tag_list_to_ansible_dict' to get an appropriate tag dict before calling this function.
