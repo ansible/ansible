@@ -722,11 +722,6 @@ class AnsibleModule(object):
                 no_log_object = self.params.get(arg_name, None)
                 if no_log_object:
                     self.no_log_values.update(return_values(no_log_object))
-            elif arg_name == 'provider' and isinstance(self.params.get(arg_name), dict):
-                param = self.params[arg_name]
-                for sub_param in ['auth_pass', 'password']:
-                    if param.get(sub_param):
-                        self.no_log_values.update(return_values(param[sub_param]))
 
             if arg_opts.get('removed_in_version') is not None and arg_name in self.params:
                 self._deprecations.append({
