@@ -230,7 +230,7 @@ this, just have the module return a `ansible_facts` key, like so, along with oth
 These 'facts' will be available to all statements called after that module (but not before) in the playbook.
 A good idea might be to make a module called 'site_facts' and always call it at the top of each playbook, though
 we're always open to improving the selection of core facts in Ansible as well.
- 
+
 Returning a new fact from a python module could be done like::
 
         module.exit_json(msg=message, ansible_facts=dict(leptons=5000, colors=my_colors))
@@ -239,6 +239,9 @@ Returning a new fact from a python module could be done like::
 
 Common Module Boilerplate
 `````````````````````````
+
+FIXME Add in a minimal module example, then have linkable subsections for each section. Use highlight line to mark the sections
+
 
 As mentioned, if you are writing a module in Python, there are some very powerful shortcuts you can use.
 Modules are still transferred as one file, but an arguments file is no longer needed, so these are not
@@ -251,6 +254,7 @@ The 'group' and 'user' modules are reasonably non-trivial and showcase what this
 Key parts include always importing the boilerplate code from
 :mod:`ansible.module_utils.basic` like this:
 
+FIXME This sample is wrong
 .. code-block:: python
 
     from ansible.module_utils.basic import AnsibleModule
@@ -266,7 +270,14 @@ Key parts include always importing the boilerplate code from
 
         from ansible.module_utils.basic import *
 
-And instantiating the module class like:
+
+main() and AnsibleModule & argument_spec
+++++++++++++++++++++++++++++++++++++++++
+
+
+# FIXME Flesh out example showing all options
+
+# FIXME Add a module & integration test that defends all of this (I think modules can go relative to the roles dir)
 
 .. code-block:: python
 
@@ -279,6 +290,100 @@ And instantiating the module class like:
                 something = dict(aliases=['whatever'])
             )
         )
+
+The ``AnsibleModule`` class takes the following:
+
+All arguments are optional unless otherwise specified.
+
+:argument_spec:
+  A dictionary of options in the following form:
+
+  :name: `required`
+    The (primary) name of the option. A ``dict`` defines the option
+
+    :required:
+      Is this option always required?
+      Only needed if True, as the default is False.
+      Iif the option is only required sometimes see the conditional options such as ``mutually_exclusive``, ``required_together``, etc.
+    :default:
+     FIXME fallbackenv
+    :type:
+      Optionally validate the format of the data.
+      If you wish to add extra validation rules, see ``module_utils/basic.py``.
+      The following types are built into Ansible.
+
+        :str:
+        :list:
+        :dict:
+        :bool:
+          This option should accept the common terms for truth, such as "yes", "on", 1, True, etc.
+          If you find yourself trying to create an option that access bool & other values then that's an indication that the design needs revisiting.
+          Do not specify ``choices`` when using bool.
+        :int:
+        :float:
+        :path:
+          Ensure option is a path where the playbook is executed.
+        :raw:
+        :jsonarg:
+          FIXME details of when this would be useful
+        :json:
+        :bytes: # example (human_to_bytes)i
+          # FIXME test and check return type
+        :bits: # example (human_to_bytes)
+          # FIXME test and check return type
+     :choices:
+       A list of possible allowed values for this option.
+       Must not be set when using ``type='bool'``.
+     :aliases:
+       A list of aliases that this option name can be referred to in playbooks.
+     :no_log:
+       Boolean to state if this option may contain sensitive data, such as passwords, or authentication tokens.
+     :removed_in_version:
+       FIXME
+
+
+
+
+
+
+Things to document (same style RST field table?)
+* name (primary
+* default
+* Different types (explain validation)
+* choices
+* aliases
+* no_log
+* fallback env
+* reimoved_in_version
+
+str
+list
+dict
+bool # Don't specify choices
+int
+float
+path # Where the playbook is executed?
+raw
+jsonarg
+json
+bytes # example (human_to_bytes)
+bits # example (human_to_bytes)
+
+* suboptions
+
+* Link to how to document your module
+* Shared arguments (cloud, network)
+* add_file_common_args
+
+
+* mutually_exclusive
+* required_together
+* required_one_of
+* require_if
+* supports_check_mode
+* Naming of common options (verify_ssl)
+
+
 
 The :class:`AnsibleModule` provides lots of common code for handling returns, parses your arguments
 for you, and allows you to check inputs.
