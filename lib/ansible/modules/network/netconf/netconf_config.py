@@ -67,6 +67,14 @@ options:
     default: true
     required: false
     version_added: "2.4"
+  datastore:
+    description:
+     - auto, uses candidate and fallback to running
+     - candidate, edit <candidate/> datastore and then commit
+     - running, edit <running/> datastore directly
+    default: auto
+    required: false
+    version_added: "2.4"
   username:
     description:
      - the username to authenticate with
@@ -144,20 +152,16 @@ except ImportError:
 import logging
 
 
-def netconf_edit_config(m, xml, commit, retkwargs):
-    if ":candidate" in m.server_capabilities:
-        datastore = 'candidate'
-    else:
-        datastore = 'running'
+def netconf_edit_config(m, xml, commit, retkwargs, datastore):
     m.lock(target=datastore)
     try:
-        if ":candidate" in m.server_capabilities:
+        if datastore == "candidate":
             m.discard_changes()
         config_before = m.get_config(source=datastore)
         m.edit_config(target=datastore, config=xml)
         config_after = m.get_config(source=datastore)
         changed = config_before.data_xml != config_after.data_xml
-        if changed and commit and ":candidate" in m.server_capabilities:
+        if changed and commit and datastore == "candidate":
             if ":confirmed-commit" in m.server_capabilities:
                 m.commit(confirmed=True)
                 m.commit()
@@ -181,6 +185,7 @@ def main():
             hostkey_verify=dict(type='bool', default=True),
             allow_agent=dict(type='bool', default=True),
             look_for_keys=dict(type='bool', default=True),
+            datastore=dict(type='str', default='auto'),
             username=dict(type='str', required=True, no_log=True),
             password=dict(type='str', required=True, no_log=True),
             xml=dict(type='str', required=True),
@@ -226,13 +231,48 @@ def main():
         )
         return
     retkwargs['server_capabilities'] = list(m.server_capabilities)
+    if module.params['datastore'] == 'candidate':
+        if ':candidate' in m.server_capabilities:
+            datastore = 'candidate'
+        else:
+            m.close_session()
+            module.fail_json(
+                msg=':candidate is not supported by this netconf server'
+            )
+    elif module.params['datastore'] == 'running':
+        if ':writable-running' in m.server_capabilities:
+            datastore = 'running'
+        else:
+            m.close_session()
+            module.fail_json(
+                msg=':writable-running is not supported by this netconf server'
+            )
+    elif module.params['datastore'] == 'auto':
+        if ':candidate' in m.server_capabilities:
+            datastore = 'candidate'
+        elif ':writable-running' in m.server_capabilities:
+            datastore = 'running'
+        else:
+            m.close_session()
+            module.fail_json(
+                msg='neither :candidate nor :writable-running are supported by this netconf server')
+    else:
+        m.close_session()
+        module.fail_json(
+            msg=module.params['datastore'] +
+            ' datastore is not supported by this ansible module')
+
     try:
         changed = netconf_edit_config(
             m=m,
             xml=module.params['xml'],
             commit=True,
             retkwargs=retkwargs,
+            datastore=datastore,
         )
+    except:
+        e = get_exception()
+        module.fail_json(msg='error editing configuration: ' + str(e))
     finally:
         m.close_session()
     module.exit_json(changed=changed, **retkwargs)
