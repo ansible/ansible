@@ -473,7 +473,7 @@ def detach_eni(eni, module):
         module.exit_json(changed=False, interface=get_eni_info(eni))
 
 
-def univocally_find_eni(connection, module):
+def uniquely_find_eni(connection, module):
 
     eni_id = module.params.get("eni_id")
     private_ip_address = module.params.get('private_ip_address')
@@ -579,7 +579,7 @@ def main():
         subnet_id = module.params.get("subnet_id")
         vpc_id = _get_vpc_id(vpc_connection, module, subnet_id)
 
-        eni = univocally_find_eni(connection, module)
+        eni = uniquely_find_eni(connection, module)
         if eni is None:
             create_eni(connection, vpc_id, module)
         else:
