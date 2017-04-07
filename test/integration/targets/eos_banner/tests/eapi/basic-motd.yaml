@@ -5,6 +5,7 @@
     banner: motd
     state: absent
     authorize: yes
+    provider: "{{ eapi }}"
 
 - name: Set motd
   eos_banner:
