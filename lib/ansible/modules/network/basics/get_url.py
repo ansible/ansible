@@ -167,7 +167,7 @@ options:
       - PEM formatted certificate chain file to be used for SSL client
         authentication. This file can also include the key as well, and if
         the key is included, I(client_key) is not required
-    version_added: 2.3
+    version_added: 2.4
   client_key:
     required: false
     default: null
@@ -175,7 +175,7 @@ options:
       - PEM formatted file that contains your private key to be used for SSL
         client authentication. If I(client_cert) contains both the certificate
         and key, this option is not required.
-    version_added: 2.3
+    version_added: 2.4
   others:
     description:
       - all arguments accepted by the M(file) module also work here
