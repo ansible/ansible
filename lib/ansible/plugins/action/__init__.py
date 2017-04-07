@@ -952,12 +952,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 else:
                     display.debug("Reading local copy of the file %s" % source)
                     try:
-                        src = open(source)
-                        src_contents = src.read()
+                        with open(source, 'rb') as src:
+                            src_contents = src.read()
                     except Exception as e:
                         raise AnsibleError("Unexpected error while reading source (%s) for diff: %s " % (source, str(e)))
 
-                    if "\x00" in src_contents:
+                    if b"\x00" in src_contents:
                         diff['src_binary'] = 1
                     else:
                         diff['after_header'] = source
