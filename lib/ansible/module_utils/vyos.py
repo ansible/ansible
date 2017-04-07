@@ -51,8 +51,9 @@ def check_args(module, warnings):
                     'removed in a future version' % key)
 
     if provider:
-        if provider.get('password'):
-            module.no_log_values.update(return_values(provider[param]))
+        for param in ('password',):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
 
 def get_config(module, target='commands'):
     cmd = ' '.join(['show configuration', target])
