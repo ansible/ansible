@@ -23,11 +23,11 @@ __metaclass__ = type
 import passlib
 from passlib.handlers import pbkdf2
 
-from ansible.compat.six import text_type
-from ansible.compat.six.moves import builtins
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import mock_open, patch
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import text_type
+from ansible.module_utils.six.moves import builtins
 from ansible.plugins import PluginLoader
 from ansible.utils import encrypt
 

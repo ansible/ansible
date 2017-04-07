@@ -620,7 +620,8 @@ def _load_params():
     except KeyError:
         # This helper does not have access to fail_json so we have to print
         # json output on our own.
-        print('\n{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS in json data from stdin.  Unable to figure out what parameters were passed", "failed": true}')
+        print('\n{"msg": "Error: Module unable to locate ANSIBLE_MODULE_ARGS in json data from stdin.  Unable to figure out what parameters were passed", '
+              '"failed": true}')
         sys.exit(1)
 
 def env_fallback(*args, **kwargs):
@@ -664,9 +665,9 @@ class AnsibleFallbackNotFound(Exception):
 
 class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
-        check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
-        required_one_of=None, add_file_common_args=False, supports_check_mode=False,
-        required_if=None):
+                 check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
+                 required_one_of=None, add_file_common_args=False, supports_check_mode=False,
+                 required_if=None):
 
         '''
         common code for quickly building an ansible module in Python
@@ -691,7 +692,9 @@ class AnsibleModule(object):
         self._deprecations = []
 
         self.aliases = {}
-        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity', '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility', '_ansible_socket']
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity',
+                              '_ansible_selinux_special_fs', '_ansible_module_name', '_ansible_version', '_ansible_syslog_facility',
+                              '_ansible_socket']
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -1142,6 +1145,8 @@ class AnsibleModule(object):
             b_path = os.path.expanduser(os.path.expandvars(b_path))
         path = to_text(b_path, errors='surrogate_then_strict')
 
+        existing = self.get_file_attributes(b_path)
+
         if existing.get('attr_flags','') != attributes:
             attrcmd = self.get_bin_path('chattr')
             if attrcmd:
@@ -1369,10 +1374,12 @@ class AnsibleModule(object):
             e = get_exception()
             self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" % e)
 
-    def _handle_aliases(self):
+    def _handle_aliases(self, spec=None):
         # this uses exceptions as it happens before we can safely call fail_json
         aliases_results = {} #alias:canon
-        for (k,v) in self.argument_spec.items():
+        if spec is None:
+            spec = self.argument_spec
+        for (k,v) in spec.items():
             self._legal_inputs.append(k)
             aliases = v.get('aliases', None)
             default = v.get('default', None)
@@ -1474,12 +1481,16 @@ class AnsibleModule(object):
                 if 0 in counts:
                     self.fail_json(msg="parameters are required together: %s" % (check,))
 
-    def _check_required_arguments(self):
+    def _check_required_arguments(self, spec=None, param=None ):
         ''' ensure all required arguments are present '''
         missing = []
-        for (k,v) in self.argument_spec.items():
+        if spec is None:
+            spec = self.argument_spec
+        if param is None:
+            param = self.params
+        for (k,v) in spec.items():
             required = v.get('required', False)
-            if required and k not in self.params:
+            if required and k not in param:
                 missing.append(k)
         if len(missing) > 0:
             self.fail_json(msg="missing required arguments: %s" % ",".join(missing))
@@ -1510,37 +1521,41 @@ class AnsibleModule(object):
             if len(missing) and len(missing) >= max_missing_count:
                 self.fail_json(msg="%s is %s but the following are missing: %s" % (key, val, ','.join(missing)))
 
-    def _check_argument_values(self):
+    def _check_argument_values(self, spec=None, param=None):
         ''' ensure all arguments have the requested values, and there are no stray arguments '''
-        for (k,v) in self.argument_spec.items():
+        if spec is None:
+            spec = self.argument_spec
+        if param is None:
+            param = self.params
+        for (k,v) in spec.items():
             choices = v.get('choices',None)
             if choices is None:
                 continue
             if isinstance(choices, SEQUENCETYPE) and not isinstance(choices, (binary_type, text_type)):
-                if k in self.params:
-                    if self.params[k] not in choices:
+                if k in param:
+                    if param[k] not in choices:
                         # PyYaml converts certain strings to bools.  If we can unambiguously convert back, do so before checking
                         # the value.  If we can't figure this out, module author is responsible.
                         lowered_choices = None
-                        if self.params[k] == 'False':
+                        if param[k] == 'False':
                             lowered_choices = _lenient_lowercase(choices)
                             FALSEY = frozenset(BOOLEANS_FALSE)
                             overlap = FALSEY.intersection(choices)
                             if len(overlap) == 1:
                                 # Extract from a set
-                                (self.params[k],) = overlap
+                                (param[k],) = overlap
 
-                        if self.params[k] == 'True':
+                        if param[k] == 'True':
                             if lowered_choices is None:
                                 lowered_choices = _lenient_lowercase(choices)
                             TRUTHY = frozenset(BOOLEANS_TRUE)
                             overlap = TRUTHY.intersection(choices)
                             if len(overlap) == 1:
-                                (self.params[k],) = overlap
+                                (param[k],) = overlap
 
-                        if self.params[k] not in choices:
+                        if param[k] not in choices:
                             choices_str=",".join([to_native(c) for c in choices])
-                            msg="value of %s must be one of: %s, got: %s" % (k, choices_str, self.params[k])
+                            msg="value of %s must be one of: %s, got: %s" % (k, choices_str, param[k])
                             self.fail_json(msg=msg)
             else:
                 self.fail_json(msg="internal error: choices for argument %s are not iterable: %s" % (k, choices))
@@ -1695,11 +1710,16 @@ class AnsibleModule(object):
         except ValueError:
             raise TypeError('%s cannot be converted to a Bit value' % type(value))
 
-    def _check_argument_types(self):
+    def _check_argument_types(self, spec=None, param=None):
         ''' ensure all arguments have the requested type '''
-        for (k, v) in self.argument_spec.items():
+
+        if spec is None:
+            spec = self.argument_spec
+        if param is None:
+            param= self.params
+        for (k, v) in spec.items():
             wanted = v.get('type', None)
-            if k not in self.params:
+            if k not in param:
                 continue
             if wanted is None:
                 # Mostly we want to default to str.
@@ -1722,6 +1742,15 @@ class AnsibleModule(object):
             except (TypeError, ValueError):
                 e = get_exception()
                 self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s: %s" % (k, type(value), wanted, e))
+
+            # deal with sub options to create sub spec
+            spec = None
+            if wanted == 'dict' or (wanted == 'list' and v.get('elements', '') == 'dict'):
+                spec = v.get('options', None)
+                if spec:
+                    self._check_required_arguments(spec, param[k])
+                    self._check_argument_types(spec, param[k])
+                    self._check_argument_values(spec, param[k])
 
     def _set_defaults(self, pre=True):
         for (k,v) in self.argument_spec.items():
@@ -1853,7 +1882,7 @@ class AnsibleModule(object):
         try:
             cwd = os.getcwd()
             if not os.access(cwd, os.F_OK|os.R_OK):
-                raise
+                raise Exception()
             return cwd
         except:
             # we don't have access to the cwd, probably because of sudo.
@@ -1959,9 +1988,9 @@ class AnsibleModule(object):
             if isinstance(kwargs['deprecations'], list):
                 for d in kwargs['deprecations']:
                     if isinstance(d, SEQUENCETYPE) and len(d) == 2:
-                       self.deprecate(d[0], version=d[1])
+                        self.deprecate(d[0], version=d[1])
                     else:
-                       self.deprecate(d)
+                        self.deprecate(d)
             else:
                 self.deprecate(d)
 
@@ -2145,7 +2174,8 @@ class AnsibleModule(object):
                     # would end in something like:
                     #     file = _os.path.join(dir, pre + name + suf)
                     # TypeError: can't concat bytes to str
-                    self.fail_json(msg='Failed creating temp file for atomic move.  This usually happens when using Python3 less than Python3.5.  Please use Python2.x or Python3.5 or greater.', exception=traceback.format_exc())
+                    self.fail_json(msg='Failed creating temp file for atomic move.  This usually happens when using Python3 less than Python3.5. '
+                                       'Please use Python2.x or Python3.5 or greater.', exception=traceback.format_exc())
 
                 b_tmp_dest_name = to_bytes(tmp_dest_name, errors='surrogate_or_strict')
 
@@ -2230,7 +2260,8 @@ class AnsibleModule(object):
 
         return data
 
-    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict'):
+    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
+                    use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict'):
         '''
         Execute a command, returns rc, stdout, and stderr.
 

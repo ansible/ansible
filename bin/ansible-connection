@@ -39,6 +39,7 @@ import time
 import traceback
 import syslog
 import datetime
+import logging
 
 from io import BytesIO
 
@@ -62,7 +63,7 @@ def do_fork():
         if pid > 0:
             return pid
 
-        os.chdir("/")
+        #os.chdir("/")
         os.setsid()
         os.umask(0)
 
@@ -109,25 +110,34 @@ def recv_data(s):
         data += d
     return data
 
+
 class Server():
 
     def __init__(self, path, play_context):
-        display.vvvv("starting new persistent socket with path %s" % path, play_context.remote_addr)
 
         self.path = path
         self.play_context = play_context
 
+        display.display(
+            'creating new control socket for host %s:%s as user %s' %
+            (play_context.remote_addr, play_context.port, play_context.remote_user),
+            log_only=True
+        )
+
+        display.display('control socket path is %s' % path, log_only=True)
+        display.display('current working directory is %s' % os.getcwd(), log_only=True)
+
         self._start_time = datetime.datetime.now()
 
-        display.vvv("using connection plugin %s" % self.play_context.connection, play_context.remote_addr)
+        display.display("using connection plugin %s" % self.play_context.connection, log_only=True)
 
         self.conn = connection_loader.get(play_context.connection, play_context, sys.stdin)
         self.conn._connect()
         if not self.conn.connected:
-            raise AnsibleConnectionFailure('unable to connect to remote host')
+            raise AnsibleConnectionFailure('unable to connect to remote host %s' % self._play_context.remote_addr)
 
         connection_time = datetime.datetime.now() - self._start_time
-        display.vvvv('connection established in %s' % connection_time, play_context.remote_addr)
+        display.display('connection established to %s in %s' % (play_context.remote_addr, connection_time), log_only=True)
 
         self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.socket.bind(path)
@@ -165,7 +175,7 @@ class Server():
                 signal.alarm(C.PERSISTENT_CONNECT_TIMEOUT)
                 try:
                     (s, addr) = self.socket.accept()
-                    display.vvvv('incoming request accepted on persistent socket', self.play_context.remote_addr)
+                    display.display('incoming request accepted on persistent socket', log_only=True)
                     # clear the alarm
                     # FIXME: potential race condition here between the accept and
                     #        time to this call.
@@ -177,14 +187,13 @@ class Server():
                     data = recv_data(s)
                     if not data:
                         break
-                    display.vvvv("received data on socket with len %s" % len(data), self.play_context.remote_addr)
 
                     signal.alarm(C.DEFAULT_TIMEOUT)
 
                     rc = 255
                     try:
                         if data.startswith(b'EXEC: '):
-                            display.vvvv("socket operation is EXEC", self.play_context.remote_addr)
+                            display.display("socket operation is EXEC", log_only=True)
                             cmd = data.split(b'EXEC: ')[1]
                             (rc, stdout, stderr) = self.conn.exec_command(cmd)
                         elif data.startswith(b'PUT: ') or data.startswith(b'FETCH: '):
@@ -192,16 +201,16 @@ class Server():
                             stdout = stderr = ''
                             try:
                                 if op == 'FETCH:':
-                                    display.vvvv("socket operation is FETCH", self.play_context.remote_addr)
+                                    display.display("socket operation is FETCH", log_only=True)
                                     self.conn.fetch_file(src, dst)
                                 elif op == 'PUT:':
-                                    display.vvvv("socket operation is PUT", self.play_context.remote_addr)
+                                    display.display("socket operation is PUT", log_only=True)
                                     self.conn.put_file(src, dst)
                                 rc = 0
                             except:
                                 pass
                         elif data.startswith(b'CONTEXT: '):
-                            display.vvvv("socket operation is CONTEXT", self.play_context.remote_addr)
+                            display.display("socket operation is CONTEXT", log_only=True)
                             pc_data = data.split(b'CONTEXT: ')[1]
 
                             src = StringIO(pc_data)
@@ -214,7 +223,7 @@ class Server():
                             self.dispatch(self.conn, 'update_play_context', pc)
                             continue
                         else:
-                            display.vvvv("socket operation is UNKNOWN", self.play_context.remote_addr)
+                            display.display("socket operation is UNKNOWN", log_only=True)
                             stdout = ''
                             stderr = 'Invalid action specified'
                     except:
@@ -223,20 +232,20 @@ class Server():
 
                     signal.alarm(0)
 
-                    display.vvvv("socket operation completed with rc %s" % rc, self.play_context.remote_addr)
+                    display.display("socket operation completed with rc %s" % rc, log_only=True)
 
                     send_data(s, to_bytes(str(rc)))
                     send_data(s, to_bytes(stdout))
                     send_data(s, to_bytes(stderr))
                 s.close()
         except Exception as e:
-            display.vvvv(traceback.format_exc())
+            display.display(traceback.format_exec(), log_only=True)
         finally:
             # when done, close the connection properly and cleanup
             # the socket file so it can be recreated
             end_time = datetime.datetime.now()
             delta = end_time - self._start_time
-            display.v('shutting down control socket, connection was active for %s secs' % delta, self.play_context.remote_addr)
+            display.display('shutting down control socket, connection was active for %s secs' % delta, log_only=True)
             try:
                 self.conn.close()
                 self.socket.close()
@@ -268,8 +277,6 @@ def main():
         sys.stderr.write(traceback.format_exc())
         sys.exit("FAIL: %s" % e)
 
-    display.verbosity = pc.verbosity
-
     ssh = connection_loader.get('ssh', class_only=True)
     m = ssh._create_control_path(pc.remote_addr, pc.port, pc.remote_user)
 
@@ -290,16 +297,20 @@ def main():
             try:
                 server = Server(sf_path, pc)
             except AnsibleConnectionFailure as exc:
-                display.vvv(str(exc), pc.remote_addr)
+                display.display('connecting to host %s returned an error' % pc.remote_addr, log_only=True)
+                display.display(str(exc), log_only=True)
                 rc = 1
             except Exception as exc:
-                display.vvv(traceback.format_exc(), pc.remote_addr)
+                display.display('failed to create control socket for host %s' % pc.remote_addr, log_only=True)
+                display.display(traceback.format_exc(), log_only=True)
                 rc = 1
             fcntl.lockf(lock_fd, fcntl.LOCK_UN)
             os.close(lock_fd)
             if rc == 0:
                 server.run()
             sys.exit(rc)
+    else:
+        display.display('re-using existing socket for %s@%s:%s' % (pc.remote_user, pc.remote_addr, pc.port), log_only=True)
     fcntl.lockf(lock_fd, fcntl.LOCK_UN)
     os.close(lock_fd)
 
@@ -324,8 +335,8 @@ def main():
                 time.sleep(C.PERSISTENT_CONNECT_INTERVAL)
                 attempts += 1
                 if attempts > C.PERSISTENT_CONNECT_RETRIES:
-                    display.vvvv('number of connection attempts exceeded, unable to connect to control socket')
-                    display.vvvv('persistent_connect_interval=%s, persistent_connect_retries=%s' % (C.PERSISTENT_CONNECT_INTERVAL, C.PERSISTENT_CONNECT_RETRIES))
+                    display.display('number of connection attempts exceeded, unable to connect to control socket', pc.remote_addr, pc.remote_user, log_only=True)
+                    display.display('persistent_connect_interval=%s, persistent_connect_retries=%s' % (C.PERSISTENT_CONNECT_INTERVAL, C.PERSISTENT_CONNECT_RETRIES), pc.remote_addr, pc.remote_user, log_only=True)
                     sys.stderr.write('failed to connect to control socket')
                     sys.exit(255)
 

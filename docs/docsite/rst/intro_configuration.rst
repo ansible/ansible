@@ -507,7 +507,7 @@ It used to be called hostfile in Ansible before 1.9
 inventory_ignore_extensions
 ===========================
 
-Coma-separated list of file extension patterns to ignore when Ansible inventory
+Comma-separated list of file extension patterns to ignore when Ansible inventory
 is a directory with multiple sources (static and dynamic)::
 
     inventory_ignore_extensions = ~, .orig, .bak, .ini, .cfg, .retry, .pyc, .pyo
@@ -569,7 +569,7 @@ things gets stored in a temporary file until ansible exits and cleans up after
 itself.  The default location is a subdirectory of the user's home directory.
 If you'd like to change that, you can do so by altering this setting::
 
-    local_tmp = $HOME/.ansible/tmp
+    local_tmp = ~/.ansible/tmp
 
 Ansible will then choose a random directory name inside this location.
 
@@ -747,7 +747,7 @@ Ansible works by transferring modules to your remote machines, running them, and
 cases, you may not wish to use the default location and would like to change the path.  You can do so by altering this
 setting::
 
-    remote_tmp = $HOME/.ansible/tmp
+    remote_tmp = ~/.ansible/tmp
 
 The default is to use a subdirectory of the user's home directory.  Ansible will then choose a random directory name
 inside this location.
@@ -1105,7 +1105,7 @@ This is the base directory of the ControlPath sockets.
 It is the ``%(directory)s`` part of the ``control_path`` option.
 This defaults to::
 
-    control_path_dir=$HOME/.ansible/cp
+    control_path_dir=~/.ansible/cp
 
 .. _scp_if_ssh:
 

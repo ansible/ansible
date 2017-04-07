@@ -32,7 +32,8 @@ module: win_say
 version_added: "2.3"
 short_description: Text to speech module for Windows to speak messages and optionally play sounds
 description:
-    - Uses .NET libraries to convert text to speech and optionally play .wav sounds.  Audio Service needs to be running and some kind of speakers or headphones need to be attached to the windows target(s) for the speech to be audible.
+    - Uses .NET libraries to convert text to speech and optionally play .wav sounds.  Audio Service needs to be running and some kind of speakers or
+      headphones need to be attached to the windows target(s) for the speech to be audible.
 options:
   msg:
     description:
@@ -41,12 +42,14 @@ options:
     default: none
   msg_file:
     description:
-      - Full path to a windows format text file containing the text to be spokend.  Use either msg or msg_file.  Optional so that you can use this module just to play sounds.
+      - Full path to a windows format text file containing the text to be spokend.  Use either msg or msg_file.  Optional so that you can use this module
+        just to play sounds.
     required: false
     default: none
   voice:
     description:
-      - Which voice to use. See notes for how to discover installed voices.  If the requested voice is not available the default voice will be used. Example voice names from Windows 10 are 'Microsoft Zira Desktop' and 'Microsoft Hazel Desktop'.
+      - Which voice to use. See notes for how to discover installed voices.  If the requested voice is not available the default voice will be used.
+        Example voice names from Windows 10 are 'Microsoft Zira Desktop' and 'Microsoft Hazel Desktop'.
     required: false
     default: system default voice
   speech_speed:
@@ -56,12 +59,14 @@ options:
     default: 0
   start_sound_path:
     description:
-      - Full path to a C(.wav) file containing a sound to play before the text is spoken.  Useful on conference calls to alert other speakers that ansible has something to say.
+      - Full path to a C(.wav) file containing a sound to play before the text is spoken.  Useful on conference calls to alert other speakers that ansible
+        has something to say.
     required: false
     default: null
   end_sound_path:
     description:
-      - Full path to a C(.wav) file containing a sound to play after the text has been spoken.  Useful on conference calls to alert other speakers that ansible has finished speaking.
+      - Full path to a C(.wav) file containing a sound to play after the text has been spoken.  Useful on conference calls to alert other speakers that
+        ansible has finished speaking.
     required: false
     default: null
 author: "Jon Hawkesworth (@jhawkesworth)"
@@ -112,4 +117,3 @@ voice_info:
     type: string
     sample: Could not load voice TestVoice, using system default voice
 '''
-

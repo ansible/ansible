@@ -1139,6 +1139,9 @@ class SanityConfig(TestConfig):
                 self.base_branch = os.environ['BASE_BRANCH']  # str
             except KeyError as ex:
                 raise MissingEnvironmentVariable(name=ex.args[0])
+
+            if self.base_branch:
+                self.base_branch = 'origin/%s' % self.base_branch
         else:
             self.base_branch = ''
 

@@ -21,11 +21,11 @@ __metaclass__ = type
 
 from collections import defaultdict
 
-from ansible.compat.six import iteritems
-from ansible.compat.six.moves import builtins
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import MagicMock, mock_open, patch
 from ansible.inventory import Inventory
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.six.moves import builtins
 from ansible.playbook.play import Play
 
 from units.mock.loader import DictDataLoader

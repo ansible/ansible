@@ -50,6 +50,7 @@ except ImportError:
 
 
 class GalaxyCLI(CLI):
+    '''command to manage Ansible roles in shared repostories, the default of which is Ansible Galaxy *https://galaxy.ansible.com*.'''
 
     SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
     VALID_ACTIONS = ("delete", "import", "info", "init", "install", "list", "login", "remove", "search", "setup")
@@ -59,19 +60,10 @@ class GalaxyCLI(CLI):
         self.galaxy = None
         super(GalaxyCLI, self).__init__(args)
 
-    def parse(self):
-        ''' create an options parser for bin/ansible '''
+    def set_action(self):
 
-        self.parser = CLI.base_parser(
-            usage = "usage: %%prog [%s] [--help] [options] ..." % "|".join(self.VALID_ACTIONS),
-            epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
-        )
+        super(GalaxyCLI, self).set_action()
 
-        self.set_action()
-
-        # common
-        self.parser.add_option('-s', '--server', dest='api_server', default=C.GALAXY_SERVER, help='The API server destination')
-        self.parser.add_option('-c', '--ignore-certs', action='store_true', dest='ignore_certs', default=C.GALAXY_IGNORE_CERTS, help='Ignore SSL certificate validation errors.')
 
         # specific to actions
         if self.action == "delete":
@@ -79,20 +71,25 @@ class GalaxyCLI(CLI):
         elif self.action == "import":
             self.parser.set_usage("usage: %prog import [options] github_user github_repo")
             self.parser.add_option('--no-wait', dest='wait', action='store_false', default=True, help='Don\'t wait for import results.')
-            self.parser.add_option('--branch', dest='reference', help='The name of a branch to import. Defaults to the repository\'s default branch (usually master)')
+            self.parser.add_option('--branch', dest='reference',
+                                   help='The name of a branch to import. Defaults to the repository\'s default branch (usually master)')
             self.parser.add_option('--role-name', dest='role_name', help='The name the role should have, if different than the repo name')
-            self.parser.add_option('--status', dest='check_status', action='store_true', default=False, help='Check the status of the most recent import request for given github_user/github_repo.')
+            self.parser.add_option('--status', dest='check_status', action='store_true', default=False,
+                                   help='Check the status of the most recent import request for given github_user/github_repo.')
         elif self.action == "info":
             self.parser.set_usage("usage: %prog info [options] role_name[,version]")
         elif self.action == "init":
             self.parser.set_usage("usage: %prog init [options] role_name")
-            self.parser.add_option('-p', '--init-path', dest='init_path', default="./", help='The path in which the skeleton role will be created. The default is the current working directory.')
+            self.parser.add_option('-p', '--init-path', dest='init_path', default="./",
+                                   help='The path in which the skeleton role will be created. The default is the current working directory.')
             self.parser.add_option('--container-enabled', dest='container_enabled', action='store_true', default=False,
                                    help='Initialize the skeleton role with default contents for a Container Enabled role.')
-            self.parser.add_option('--role-skeleton', dest='role_skeleton', default=None, help='The path to a role skeleton that the new role should be based upon.')
+            self.parser.add_option('--role-skeleton', dest='role_skeleton', default=None,
+                                   help='The path to a role skeleton that the new role should be based upon.')
         elif self.action == "install":
             self.parser.set_usage("usage: %prog install [options] [-r FILE | role_name(s)[,version] | scm+role_repo_url[,version] | tar_file(s)]")
-            self.parser.add_option('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False, help='Ignore errors and continue with the next specified role.')
+            self.parser.add_option('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
+                                   help='Ignore errors and continue with the next specified role.')
             self.parser.add_option('-n', '--no-deps', dest='no_deps', action='store_true', default=False, help='Don\'t download roles listed as dependencies')
             self.parser.add_option('-r', '--role-file', dest='role_file', help='A file containing a list of roles to be imported')
         elif self.action == "remove":
@@ -103,13 +100,15 @@ class GalaxyCLI(CLI):
             self.parser.set_usage("usage: %prog login [options]")
             self.parser.add_option('--github-token', dest='token', default=None, help='Identify with github token rather than username and password.')
         elif self.action == "search":
-            self.parser.set_usage("usage: %prog search [searchterm1 searchterm2] [--galaxy-tags galaxy_tag1,galaxy_tag2] [--platforms platform1,platform2] [--author username]")
+            self.parser.set_usage("usage: %prog search [searchterm1 searchterm2] [--galaxy-tags galaxy_tag1,galaxy_tag2] [--platforms platform1,platform2] "
+                                  "[--author username]")
             self.parser.add_option('--platforms', dest='platforms', help='list of OS platforms to filter by')
             self.parser.add_option('--galaxy-tags', dest='galaxy_tags', help='list of galaxy tags to filter by')
             self.parser.add_option('--author', dest='author', help='GitHub username')
         elif self.action == "setup":
             self.parser.set_usage("usage: %prog setup [options] source github_user github_repo secret")
-            self.parser.add_option('--remove', dest='remove_id', default=None, help='Remove the integration matching the provided ID value. Use --list to see ID values.')
+            self.parser.add_option('--remove', dest='remove_id', default=None,
+                                   help='Remove the integration matching the provided ID value. Use --list to see ID values.')
             self.parser.add_option('--list', dest="setup_list", action='store_true', default=False, help='List all of your integrations.')
 
         # options that apply to more than one action
@@ -119,11 +118,27 @@ class GalaxyCLI(CLI):
         if self.action not in ("delete","import","init","login","setup"):
             # NOTE: while the option type=str, the default is a list, and the
             # callback will set the value to a list.
-            self.parser.add_option('-p', '--roles-path', dest='roles_path', action="callback", callback=CLI.expand_paths, type=str, default=C.DEFAULT_ROLES_PATH,
-                help='The path to the directory containing your roles. The default is the roles_path configured in your ansible.cfg file (/etc/ansible/roles if not configured)')
+            self.parser.add_option('-p', '--roles-path', dest='roles_path', action="callback", callback=CLI.expand_paths, type=str,
+                                   default=C.DEFAULT_ROLES_PATH,
+                                   help='The path to the directory containing your roles. The default is the roles_path configured in your ansible.cfg '
+                                        'file (/etc/ansible/roles if not configured)')
 
         if self.action in ("init","install"):
             self.parser.add_option('-f', '--force', dest='force', action='store_true', default=False, help='Force overwriting an existing role')
+
+    def parse(self):
+        ''' create an options parser for bin/ansible '''
+
+        self.parser = CLI.base_parser(
+            usage = "usage: %%prog [%s] [--help] [options] ..." % "|".join(self.VALID_ACTIONS),
+            epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
+        )
+
+        # common
+        self.parser.add_option('-s', '--server', dest='api_server', default=C.GALAXY_SERVER, help='The API server destination')
+        self.parser.add_option('-c', '--ignore-certs', action='store_true', dest='ignore_certs', default=C.GALAXY_IGNORE_CERTS,
+                               help='Ignore SSL certificate validation errors.')
+        self.set_action()
 
         super(GalaxyCLI, self).parse()
 
@@ -172,8 +187,7 @@ class GalaxyCLI(CLI):
 
     def execute_init(self):
         """
-        Executes the init action, which creates the skeleton framework
-        of a role that complies with the galaxy metadata format.
+        creates the skeleton framework of a role that complies with the galaxy metadata format.
         """
 
         init_path  = self.get_opt('init_path', './')
@@ -245,9 +259,7 @@ class GalaxyCLI(CLI):
 
     def execute_info(self):
         """
-        Executes the info action. This action prints out detailed
-        information about an installed role as well as info available
-        from the galaxy API.
+        prints out detailed information about an installed role as well as info available from the galaxy API.
         """
 
         if len(self.args) == 0:
@@ -294,10 +306,8 @@ class GalaxyCLI(CLI):
 
     def execute_install(self):
         """
-        Executes the installation action. The args list contains the
-        roles to be installed, unless -f was specified. The list of roles
-        can be a name (which will be downloaded via the galaxy API and github),
-        or it can be a local .tar.gz file.
+        uses the args list of roles to be installed, unless -f was specified. The list of roles
+        can be a name (which will be downloaded via the galaxy API and github), or it can be a local .tar.gz file.
         """
 
         role_file  = self.get_opt("role_file", None)
@@ -422,8 +432,7 @@ class GalaxyCLI(CLI):
 
     def execute_remove(self):
         """
-        Executes the remove action. The args list contains the list
-        of roles to be removed. This list can contain more than one role.
+        removes the list of roles passed as arguments from the local system.
         """
 
         if len(self.args) == 0:
@@ -443,10 +452,7 @@ class GalaxyCLI(CLI):
 
     def execute_list(self):
         """
-        Executes the list action. The args list can contain zero
-        or one role. If one is specified, only that role will be
-        shown, otherwise all roles in the specified directory will
-        be shown.
+        lists the roles installed on the local system or matches a single role passed as an argument.
         """
 
         if len(self.args) > 1:
@@ -490,6 +496,7 @@ class GalaxyCLI(CLI):
         return 0
 
     def execute_search(self):
+        ''' searches for roles on the Ansible Galaxy server'''
         page_size = 1000
         search = None
 
@@ -534,7 +541,7 @@ class GalaxyCLI(CLI):
 
     def execute_login(self):
         """
-        Verify user's identify via Github and retrieve an auth token from Galaxy.
+        verify user's identify via Github and retrieve an auth token from Ansible Galaxy.
         """
         # Authenticate with github and retrieve a token
         if self.options.token is None:
@@ -557,9 +564,7 @@ class GalaxyCLI(CLI):
         return 0
 
     def execute_import(self):
-        """
-        Import a role into Galaxy
-        """
+        """ used to import a role into Ansible Galaxy """
 
         colors = {
             'INFO':    'normal',
@@ -615,9 +620,7 @@ class GalaxyCLI(CLI):
         return 0
 
     def execute_setup(self):
-        """
-        Setup an integration from Github or Travis
-        """
+        """ Setup an integration from Github or Travis for Ansible Galaxy roles"""
 
         if self.options.setup_list:
             # List existing integration secrets
@@ -654,9 +657,7 @@ class GalaxyCLI(CLI):
         return 0
 
     def execute_delete(self):
-        """
-        Delete a role from galaxy.ansible.com
-        """
+        """ Delete a role from Ansible Galaxy. """
 
         if len(self.args) < 2:
             raise AnsibleError("Missing one or more arguments. Expected: github_user github_repo")

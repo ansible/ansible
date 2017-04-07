@@ -144,7 +144,9 @@ def main():
                 # Sort the subnet groups before we compare them
                 matching_groups[0].subnet_ids.sort()
                 group_subnets.sort()
-                if ( (matching_groups[0].name != group_name) or (matching_groups[0].description != group_description) or (matching_groups[0].subnet_ids != group_subnets) ):
+                if (matching_groups[0].name != group_name or
+                        matching_groups[0].description != group_description or
+                        matching_groups[0].subnet_ids != group_subnets):
                     changed_group = conn.modify_db_subnet_group(group_name, description=group_description, subnet_ids=group_subnets)
                     changed = True
     except BotoServerError as e:

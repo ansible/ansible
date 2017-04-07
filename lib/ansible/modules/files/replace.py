@@ -52,12 +52,32 @@ options:
         U(http://docs.python.org/2/library/re.html).
         Uses multiline mode, which means C(^) and C($) match the beginning
         and end respectively of I(each line) of the file.
+      - Note that, as of ansible 2, short form tasks should have any escape
+        sequences backslash-escaped in order to prevent them being parsed
+        as string literal escapes. See the examples.
+
   replace:
     required: false
     description:
       - The string to replace regexp matches. May contain backreferences
         that will get expanded with the regexp capture groups if the regexp
         matches. If not set, matches are removed entirely.
+  after:
+    required: false
+    version_added: "2.4"
+    description:
+      - If specified, the line after the replace/remove will start. Can be used
+        in combination with C(before).
+        Uses Python regular expressions; see
+        U(http://docs.python.org/2/library/re.html).
+  before:
+    required: false
+    version_added: "2.4"
+    description:
+      - If specified, the line before the replace/remove will occur. Can be used
+        in combination with C(after).
+        Uses Python regular expressions; see
+        U(http://docs.python.org/2/library/re.html).
   backup:
     required: false
     default: "no"
@@ -88,6 +108,31 @@ EXAMPLES = r"""
     replace: '\1new.host.name\2'
     backup: yes
 
+# Replace after the expression till the end of the file (requires >=2.4)
+- replace:
+    path: /etc/hosts
+    regexp: '(\s+)old\.host\.name(\s+.*)?$'
+    replace: '\1new.host.name\2'
+    after: 'Start after line.*'
+    backup: yes
+
+# Replace before the expression till the begin of the file (requires >=2.4)
+- replace:
+    path: /etc/hosts
+    regexp: '(\s+)old\.host\.name(\s+.*)?$'
+    replace: '\1new.host.name\2'
+    before: 'Start before line.*'
+    backup: yes
+
+# Replace between the expressions (requires >=2.4)
+- replace:
+    path: /etc/hosts
+    regexp: '(\s+)old\.host\.name(\s+.*)?$'
+    replace: '\1new.host.name\2'
+    after: 'Start after line.*'
+    before: 'Start before line.*'
+    backup: yes
+
 - replace:
     path: /home/jdoe/.ssh/known_hosts
     regexp: '^old\.host\.name[^\n]*\n'
@@ -100,6 +145,15 @@ EXAMPLES = r"""
     regexp: '^(NameVirtualHost|Listen)\s+80\s*$'
     replace: '\1 127.0.0.1:8080'
     validate: '/usr/sbin/apache2ctl -f %s -t'
+
+- name: short form task (in ansible 2+) necessitates backslash-escaped sequences
+  replace: dest=/etc/hosts regexp='\\b(localhost)(\\d*)\\b' replace='\\1\\2.localdomain\\2 \\1\\2'
+
+- name: long form task does not
+  replace:
+    dest: /etc/hosts
+    regexp: '\b(localhost)(\d*)\b'
+    replace: '\1\2.localdomain\2 \1\2'
 """
 
 import os
@@ -130,6 +184,7 @@ def write_changes(module, contents, path):
     if valid:
         module.atomic_move(tmpfile, path, unsafe_writes=module.params['unsafe_writes'])
 
+
 def check_file_attrs(module, changed, message):
 
     file_args = module.load_file_common_arguments(module.params)
@@ -142,12 +197,15 @@ def check_file_attrs(module, changed, message):
 
     return message, changed
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             path=dict(required=True, aliases=['dest', 'destfile', 'name'], type='path'),
             regexp=dict(required=True),
             replace=dict(default='', type='str'),
+            after=dict(required=False),
+            before=dict(required=False),
             backup=dict(default=False, type='bool'),
             validate=dict(default=None, type='str'),
         ),
@@ -169,8 +227,28 @@ def main():
         contents = to_text(f.read(), errors='surrogate_or_strict')
         f.close()
 
-    mre = re.compile(params['regexp'], re.MULTILINE)
-    result = re.subn(mre, params['replace'], contents, 0)
+    pattern = ''
+    if params['after']:
+        pattern = '%s(.*)' % params['after']
+    elif params['before']:
+        pattern = '(.*)%s' % params['before']
+    elif params['after'] and params['before']:
+        pattern = '%s(.*?)%s' % (params['before'], params['after'])
+
+    if pattern:
+        section_re = re.compile(pattern, re.DOTALL)
+        match = re.search(section_re, contents)
+        if match:
+            section = match.group(0)
+
+        mre = re.compile(params['regexp'], re.MULTILINE)
+        result = re.subn(mre, params['replace'], section, 0)
+        if result[1] > 0 and section != result[0]:
+            result = (contents.replace(section, result[0]), result[1])
+
+    else:
+        mre = re.compile(params['regexp'], re.MULTILINE)
+        result = re.subn(mre, params['replace'], contents, 0)
 
     if result[1] > 0 and contents != result[0]:
         msg = '%s replacements made' % result[1]
@@ -195,6 +273,7 @@ def main():
 
     res_args['msg'], res_args['changed'] = check_file_attrs(module, changed, msg)
     module.exit_json(**res_args)
+
 
 if __name__ == '__main__':
     main()

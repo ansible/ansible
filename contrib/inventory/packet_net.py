@@ -385,7 +385,7 @@ class PacketInventory(object):
                 device_vars[key] = device.state or ''
             elif key == 'packet_hostname':
                 device_vars[key] = value
-            elif type(value) in [int, bool]:
+            elif isinstance(value, (int, bool)):
                 device_vars[key] = value
             elif isinstance(value, six.string_types):
                 device_vars[key] = value.strip()

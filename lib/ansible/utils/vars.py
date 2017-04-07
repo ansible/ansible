@@ -26,17 +26,19 @@ import uuid
 from json import dumps
 from collections import MutableMapping
 
-from ansible.compat.six import iteritems, string_types
+from ansible.module_utils.six import iteritems, string_types
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.parsing.splitter import parse_kv
 from ansible.module_utils._text import to_native, to_text
 
+
 _MAXSIZE   = 2**32
 cur_id     = 0
 node_mac   = ("%012x" % uuid.getnode())[:12]
 random_int = ("%08x" % random.randint(0, _MAXSIZE))[:8]
+
 
 def get_unique_id():
     global cur_id

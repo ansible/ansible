@@ -23,19 +23,20 @@ import os
 import sys
 import copy
 
+from ansible.module_utils.basic import AnsibleFallbackNotFound
+from ansible.module_utils.eos import eos_argument_spec
+from ansible.module_utils.six import iteritems
+from ansible.module_utils._text import to_bytes
+from ansible.plugins import connection_loader
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.utils.path import unfrackpath
-from ansible.plugins import connection_loader
-from ansible.compat.six import iteritems
-from ansible.module_utils.eos import eos_argument_spec
-from ansible.module_utils.basic import AnsibleFallbackNotFound
-from ansible.module_utils._text import to_bytes
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 class ActionModule(_ActionModule):
 
@@ -73,7 +74,9 @@ class ActionModule(_ActionModule):
                 display.vvvv('calling open_shell()', pc.remote_addr)
                 rc, out, err = connection.exec_command('open_shell()')
                 if not rc == 0:
-                    return {'failed': True, 'msg': 'unable to open shell'}
+                    return {'failed': True,
+                            'msg': 'unable to open shell. Please see: ' +
+                                   'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
             else:
                 # make sure we are in the right cli context which should be
                 # enable mode and not config module
@@ -92,7 +95,7 @@ class ActionModule(_ActionModule):
                 provider['host'] = self._play_context.remote_addr
 
             if provider.get('port') is None:
-                provider['port'] = 443
+                provider['port'] = eos_argument_spec['port']['default']
 
             if provider.get('timeout') is None:
                 provider['timeout'] = self._play_context.timeout
@@ -107,16 +110,12 @@ class ActionModule(_ActionModule):
                 provider['authorize'] = False
 
             if provider.get('use_ssl') is None:
-                provider['use_ssl'] = True
+                provider['use_ssl'] = eos_argument_spec['use_ssl']['default']
 
             if provider.get('validate_certs') is None:
-                provider['validate_certs'] = True
+                provider['validate_certs'] = eos_argument_spec['validate_certs']['default']
 
             self._task.args['provider'] = provider
-
-        if self._play_context.become_method == 'enable':
-            self._play_context.become = False
-            self._play_context.become_method = None
 
         return super(ActionModule, self).run(tmp, task_vars)
 

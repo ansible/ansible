@@ -122,10 +122,11 @@ import os
 
 from jinja2.exceptions import UndefinedError
 
-from ansible.compat.six import string_types
-from ansible.errors import AnsibleFileNotFound, AnsibleLookupError, AnsibleUndefinedVariable
-from ansible.plugins.lookup import LookupBase
 from ansible.constants import mk_boolean as boolean
+from ansible.errors import AnsibleFileNotFound, AnsibleLookupError, AnsibleUndefinedVariable
+from ansible.module_utils.six import string_types
+from ansible.plugins.lookup import LookupBase
+
 
 class LookupModule(LookupBase):
 
@@ -188,5 +189,6 @@ class LookupModule(LookupBase):
             if skip:
                 return []
             else:
-                raise AnsibleLookupError("No file was found when using with_first_found. Use the 'skip: true' option to allow this task to be skipped if no files are found")
+                raise AnsibleLookupError("No file was found when using with_first_found. Use the 'skip: true' option to allow this task to be skipped if no "
+                                         "files are found")
 

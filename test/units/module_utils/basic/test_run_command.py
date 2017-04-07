@@ -27,7 +27,7 @@ from io import BytesIO, StringIO
 
 import pytest
 
-from ansible.compat.six import PY3
+from ansible.module_utils.six import PY3
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import call, MagicMock, Mock, patch, sentinel
 

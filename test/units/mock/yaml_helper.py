@@ -1,10 +1,10 @@
 import io
 import yaml
 
+from ansible.module_utils.six import PY3
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.dumper import AnsibleDumper
 
-from ansible.compat.six import PY3
 
 class YamlTestUtils(object):
     """Mixin class to combine with a unittest.TestCase subclass."""

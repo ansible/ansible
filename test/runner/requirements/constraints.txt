@@ -1,2 +1,3 @@
 coverage >= 4.2, != 4.3.2 # features in 4.2+ required, avoid known bug in 4.3.2 on python 2.6
 pywinrm >= 0.2.1 # 0.1.1 required, but 0.2.1 provides better performance
+pylint >= 1.5.3 # 1.4.1 adds JSON output, but 1.5.3 fixes bugs related to JSON output

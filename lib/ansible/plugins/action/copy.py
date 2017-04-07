@@ -50,6 +50,7 @@ class ActionModule(ActionBase):
         force   = boolean(self._task.args.get('force', 'yes'))
         remote_src = boolean(self._task.args.get('remote_src', False))
         follow  = boolean(self._task.args.get('follow', False))
+        decrypt = boolean(self._task.args.get('decrypt', True))
 
         result['failed'] = True
         if (source is None and content is None) or dest is None:
@@ -157,7 +158,7 @@ class ActionModule(ActionBase):
 
             # If the local file does not exist, get_real_file() raises AnsibleFileNotFound
             try:
-                source_full = self._loader.get_real_file(source_full)
+                source_full = self._loader.get_real_file(source_full, decrypt=decrypt)
             except AnsibleFileNotFound as e:
                 result['failed'] = True
                 result['msg'] = "could not find src=%s, %s" % (source_full, e)
@@ -255,8 +256,11 @@ class ActionModule(ActionBase):
                         original_basename=source_rel,
                     )
                 )
-                if 'content' in new_module_args:
-                    del new_module_args['content']
+
+                # remove action plugin only keys
+                for key in ('content', 'decrypt'):
+                    if key in new_module_args:
+                        del new_module_args[key]
 
                 module_return = self._execute_module(module_name='copy',
                         module_args=new_module_args, task_vars=task_vars,

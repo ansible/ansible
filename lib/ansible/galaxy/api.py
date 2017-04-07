@@ -25,11 +25,11 @@ __metaclass__ = type
 import json
 
 import ansible.constants as C
-from ansible.compat.six import string_types
-from ansible.compat.six.moves.urllib.error import HTTPError
-from ansible.compat.six.moves.urllib.parse import quote as urlquote, urlencode
 from ansible.errors import AnsibleError
 from ansible.galaxy.token import GalaxyToken
+from ansible.module_utils.six import string_types
+from ansible.module_utils.six.moves.urllib.error import HTTPError
+from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import open_url
 

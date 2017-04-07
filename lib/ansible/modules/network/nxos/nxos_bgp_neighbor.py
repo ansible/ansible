@@ -582,7 +582,7 @@ def main():
     existing = invoke('get_existing', module, args)
     if existing.get('asn'):
         if (existing.get('asn') != module.params['asn'] and
-            state == 'present'):
+                state == 'present'):
             module.fail_json(msg='Another BGP ASN already exists.',
                              proposed_asn=module.params['asn'],
                              existing_asn=existing.get('asn'))

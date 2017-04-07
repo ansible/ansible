@@ -19,7 +19,8 @@ author: "Allen Sanabria (@linuxdynasty)"
 module: include_vars
 short_description: Load variables from files, dynamically within a task.
 description:
-     - Loads variables from a YAML/JSON files dynamically from within a file or from a directory recursively during task runtime. If loading a directory, the files are sorted alphabetically before being loaded.
+    - Loads variables from a YAML/JSON files dynamically from within a file or from a directory recursively during task runtime. If loading a directory,
+      the files are sorted alphabetically before being loaded.
 version_added: "1.4"
 options:
   file:

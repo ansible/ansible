@@ -62,7 +62,8 @@ options:
   array_wwn:
     required: false
     description:
-    - The WWN of the array to manage. Only necessary if in-band managing multiple arrays on the same agent host.  Mutually exclusive of controller_addresses parameter.
+    - The WWN of the array to manage. Only necessary if in-band managing multiple arrays on the same agent host.  Mutually exclusive of
+      controller_addresses parameter.
   array_password:
     required: false
     description:
@@ -231,7 +232,9 @@ def main():
                 changed = True
             if array_detail['wwn'] != array_wwn and array_wwn is not None:
                 module.fail_json(
-                    msg='It seems you may have specified a bad WWN. The storage system ID you specified, %s, currently has the WWN of %s' % (ssid, array_detail['wwn']))
+                    msg='It seems you may have specified a bad WWN. The storage system ID you specified, %s, currently has the WWN of %s' %
+                        (ssid, array_detail['wwn'])
+                )
     elif rc == 404:
         if state == 'present':
             changed = True

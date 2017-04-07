@@ -39,7 +39,8 @@ author: "Balazs Pocze (@banyek)"
 options:
     mode:
         description:
-            - module operating mode. Could be getslave (SHOW SLAVE STATUS), getmaster (SHOW MASTER STATUS), changemaster (CHANGE MASTER TO), startslave (START SLAVE), stopslave (STOP SLAVE), resetslave (RESET SLAVE), resetslaveall (RESET SLAVE ALL)
+            - module operating mode. Could be getslave (SHOW SLAVE STATUS), getmaster (SHOW MASTER STATUS), changemaster (CHANGE MASTER TO), startslave
+              (START SLAVE), stopslave (STOP SLAVE), resetslave (RESET SLAVE), resetslaveall (RESET SLAVE ALL)
         required: False
         choices:
             - getslave
@@ -267,7 +268,8 @@ def main():
     except Exception:
         e = get_exception()
         if os.path.exists(config_file):
-            module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. Exception message: %s" % (config_file, e))
+            module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
+                                 "Exception message: %s" % (config_file, e))
         else:
             module.fail_json(msg="unable to find %s. Exception message: %s" % (config_file, e))
 

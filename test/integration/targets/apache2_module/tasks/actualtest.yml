@@ -15,9 +15,12 @@
 
 - name: install apache via apt
   apt:
-    name: apache2
+    name: "{{item}}"
     state: present
   when: "ansible_os_family == 'Debian'"
+  with_items:
+    - apache2
+    - libapache2-mod-evasive
 
 - name: install apache via zypper
   zypper:
@@ -84,4 +87,11 @@
     name: autoindex
     state: absent
     force: True
-  when: "ansible_os_family != 'Suse'"
+  when: "ansible_os_family == 'Debian'"
+
+
+- name: enable evasive module, test https://github.com/ansible/ansible/issues/22635
+  apache2_module:
+    name: evasive
+    state: present
+  when: "ansible_os_family == 'Debian'"

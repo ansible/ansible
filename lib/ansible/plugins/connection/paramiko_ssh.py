@@ -37,11 +37,10 @@ import re
 from termios import tcflush, TCIFLUSH
 from binascii import hexlify
 
-from ansible.compat.six import iteritems
-
 from ansible import constants as C
-from ansible.compat.six.moves import input
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.six.moves import input
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import makedirs_safe
 from ansible.module_utils._text import to_bytes
@@ -204,7 +203,8 @@ class Connection(ConnectionBase):
             raise AnsibleError("paramiko is not installed")
 
         port = self._play_context.port or 22
-        display.vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr), host=self._play_context.remote_addr)
+        display.vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr),
+                    host=self._play_context.remote_addr)
 
         ssh = paramiko.SSHClient()
 
@@ -302,7 +302,7 @@ class Connection(ConnectionBase):
                     chunk = chan.recv(bufsize)
                     display.debug("chunk is: %s" % chunk)
                     if not chunk:
-                        if 'unknown user' in become_output:
+                        if b'unknown user' in become_output:
                             raise AnsibleError( 'user %s does not exist' % self._play_context.become_user)
                         else:
                             break

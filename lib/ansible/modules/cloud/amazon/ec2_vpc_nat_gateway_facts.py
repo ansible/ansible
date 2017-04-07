@@ -91,7 +91,7 @@ result:
 import json
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, HAS_BOTO3
 
 try:
@@ -127,7 +127,8 @@ def main():
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec,)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
     # Validate Requirements
     if not HAS_BOTO3:

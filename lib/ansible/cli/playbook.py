@@ -44,13 +44,15 @@ except ImportError:
 #---------------------------------------------------------------------------------------------------
 
 class PlaybookCLI(CLI):
-    ''' code behind ansible playbook cli'''
+    ''' the tool to run *Ansible playbooks*, which are a configuration and multinode deployment system.
+        See the project home page (https://docs.ansible.com) for more information. '''
+
 
     def parse(self):
 
         # create parser for CLI options
         parser = CLI.base_parser(
-            usage = "%prog playbook.yml",
+            usage = "%prog [options] playbook.yml [playbook2 ...]",
             connect_opts=True,
             meta_opts=True,
             runas_opts=True,
@@ -61,6 +63,7 @@ class PlaybookCLI(CLI):
             vault_opts=True,
             fork_opts=True,
             module_opts=True,
+            desc="Runs Ansible playbooks, executing the defined tasks on the targeted hosts.",
         )
 
         # ansible playbook specific opts
@@ -149,7 +152,8 @@ class PlaybookCLI(CLI):
             self._flush_cache(inventory, variable_manager)
 
         # create the playbook executor, which manages running the plays via a task queue manager
-        pbex = PlaybookExecutor(playbooks=self.args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=self.options, passwords=passwords)
+        pbex = PlaybookExecutor(playbooks=self.args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=self.options,
+                                passwords=passwords)
 
         results = pbex.run()
 

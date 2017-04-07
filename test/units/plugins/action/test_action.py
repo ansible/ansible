@@ -23,18 +23,19 @@ __metaclass__ = type
 import os
 
 from ansible import constants as C
-from ansible.compat.six import text_type
-from ansible.compat.six.moves import shlex_quote, builtins
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, mock_open
 
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import text_type
+from ansible.module_utils.six.moves import shlex_quote, builtins
+from ansible.module_utils._text import to_bytes
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.action import ActionBase
 from ansible.template import Templar
 
 from units.mock.loader import DictDataLoader
-from ansible.module_utils._text import to_bytes
+
 
 python_module_replacers = b"""
 #!/usr/bin/python
@@ -591,6 +592,7 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
                          'stdout_lines': stdout.splitlines(),
                          'stderr': err}
         res = action_base._parse_returned_data(returned_data)
+        del res['_ansible_parsed'] # we always have _ansible_parsed
         self.assertEqual(len(res), 0)
         self.assertFalse(res)
 
