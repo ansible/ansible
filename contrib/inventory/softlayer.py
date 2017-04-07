@@ -138,7 +138,7 @@ class SoftLayerInventory(object):
             return
 
         if 'userData' in instance:
-          instance['userData'] = instance['userData'][0]['value']
+            instance['userData'] = instance['userData'][0]['value']
 
         dest = instance['primaryIpAddress']
 
