@@ -20,7 +20,7 @@ from contextlib import contextmanager
 
 from xml.etree.ElementTree import Element, SubElement
 
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.netconf import send_request, children
 from ansible.module_utils.netconf import discard_changes, validate
 from ansible.module_utils.six import string_types
@@ -47,6 +47,11 @@ def check_args(module, warnings):
         if key in ('provider',) and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
                     'removed in a future version' % key)
+
+    if provider:
+        for param in ('password',):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
 
 def _validate_rollback_id(module, value):
     try:
