@@ -920,10 +920,9 @@ def create_autoscaling_group(connection):
                 # Wait for target group health if target group(s)defined
                 if target_group_arns:
                     wait_for_target_group(connection, group_name)
-            as_group = connection.get_all_groups(names=[group_name])[0]
 
             if notification_topic:
-                notifications = [{'type': notification_topic, 'types': notification_types}]
+                notifications = [{'topic': notification_topic, 'types': notification_types}]
 
             for notification in notifications:
                 if 'topic' not in notification:
@@ -935,12 +934,11 @@ def create_autoscaling_group(connection):
                         'autoscaling:EC2_INSTANCE_TERMINATE',
                         'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'
                     ]
-                put_notification_configuration(
+                put_notification_config(
                     connection,
                     group_name,
                     notification['topic'],
                     notification['types'])
-
 
             as_group = connection.get_all_groups(names=[group_name])[0]
             asg_properties = get_properties(as_group)
@@ -1107,7 +1105,7 @@ def create_autoscaling_group(connection):
             module.fail_json(msg="Failed to update autoscaling group: %s" % to_native(e),
                              exception=traceback.format_exc())
         if notification_topic:
-            notifications = [{'type': notification_topic, 'types': notification_types}]
+            notifications = [{'topic': notification_topic, 'types': notification_types}]
 
         try:
             for notification in notifications:
@@ -1170,19 +1168,12 @@ def delete_autoscaling_group(connection):
     wait_timeout = module.params.get('wait_timeout')
 
     if notification_topic:
-        del_notification_config(connection, group_name, notification_topic)
-    else:
-        for notification in notifications:
-            if 'topic' not in notification:
-                module.fail_json(msg="You must specify a topic for each object specified in notifications.")
-            elif 'types' not in notification:
-                notification['types'] = [
-                    'autoscaling:EC2_INSTANCE_LAUNCH',
-                    'autoscaling:EC2_INSTANCE_LAUNCH_ERROR',
-                    'autoscaling:EC2_INSTANCE_TERMINATE',
-                    'autoscaling:EC2_INSTANCE_TERMINATE_ERROR']
+        notifications = [{'topic': notification_topic}]
 
-            del_notification_config(notification['topic'], notification['types'])
+    for notification in notifications:
+        if 'topic' not in notification:
+            module.fail_json(msg="You must specify a topic for each object specified in notifications.")
+        del_notification_config(connection, group_name, notification['topic'])
 
     groups = describe_autoscaling_groups(connection, group_name)
     if groups:
