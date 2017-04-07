@@ -158,14 +158,20 @@ class Inventory(object):
 
         self._vars_plugins = [ x for x in vars_loader.all(self) ]
 
+        ### POST PROCESS groups and hosts after specific parser was invoked
+
+        hosts = []
+        group_names = set()
         # set group vars from group_vars/ files and vars plugins
         for g in self.groups:
             group = self.groups[g]
             group.vars = combine_vars(group.vars, self.get_group_variables(group.name))
             self.get_group_vars(group)
+            group_names.add(group.name)
+            hosts.extend(group.get_hosts())
 
         # get host vars from host_vars/ files and vars plugins
-        for host in self.get_hosts(ignore_limits=True, ignore_restrictions=True):
+        for host in hosts:
             host.vars = combine_vars(host.vars, self.get_host_variables(host.name))
             self.get_host_vars(host)
 
