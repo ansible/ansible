@@ -280,7 +280,7 @@ class Block(Base, Become, Conditional, Taggable):
                 dep.set_loader(loader)
 
     def _get_attr_environment(self):
-        return self._get_parent_attribute('environment', extend=True)
+        return self._get_parent_attribute('environment', extend=True, prepend=True)
 
     def _get_parent_attribute(self, attr, extend=False, prepend=False):
         '''
