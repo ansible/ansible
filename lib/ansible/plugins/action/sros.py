@@ -77,8 +77,15 @@ class ActionModule(_ActionModule):
                         'rc': rc}
 
         task_vars['ansible_socket'] = socket_path
+        
+        result = super(ActionModule, self).run(tmp, task_vars)
 
-        return super(ActionModule, self).run(tmp, task_vars)
+        try:
+            del result['invocation']['module_args']['provider']
+        except KeyError:
+            pass
+
+        return result 
 
     def _get_socket_path(self, play_context):
         ssh = connection_loader.get('ssh', class_only=True)
