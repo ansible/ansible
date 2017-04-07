@@ -30,7 +30,7 @@
 #
 import re
 
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network_common import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.netcfg import NetworkConfig, ConfigLine, ignore_line, DEFAULT_COMMENT_TOKENS
@@ -62,6 +62,11 @@ def check_args(module, warnings):
         if key != 'provider' and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
                             'removed in a future version' % key)
+
+    if provider:
+        for param in ('auth_pass', 'password'):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
 
 
 def get_config(module, flags=[]):
