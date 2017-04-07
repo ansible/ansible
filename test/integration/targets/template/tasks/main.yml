@@ -66,10 +66,10 @@
   register: diff_result
 
 - name: verify templated file matches known good
-  assert:
-    that:
-        - 'diff_result.stdout == ""'
-        - "diff_result.rc == 0"
+  assert:  
+    that: 
+        - 'diff_result.stdout == ""' 
+        - "diff_result.rc == 0" 
 
 # VERIFY MODE
 
@@ -251,6 +251,46 @@
   assert:
     that:
     - "template_result|changed"
+
+## demonstrate copy module failing to overwrite a file that's been hard linked
+## https://github.com/ansible/ansible/issues/10834
+
+- name: ensure test dir is absent
+  file:
+    path: /tmp/10834.2_test
+    state: absent
+
+- name: create test dir
+  file:
+    path: /tmp/10834.2_test
+    state: directory
+
+- name: template out test file to system 1
+  template:
+    src: foo.j2
+    dest: /tmp/10834.2_test/test_file
+
+# not an issue when not hard linked
+- name: template out test file to system 2
+  template:
+    src: foo.j2
+    dest: /tmp/10834.2_test/test_file
+
+- name: make hard link
+  file:
+    src: /tmp/10834.2_test/test_file
+    dest: /tmp/10834.2_test/test_file_hardlink
+    state: hard
+
+- name: template out test file to system 3
+  template:
+    src: foo.j2
+    dest: /tmp/10834.2_test/test_file
+
+- name: cleanup
+  file:
+    path: /tmp/10834.2_test
+    state: absent
 
 - name: change var for the template
   set_fact:
