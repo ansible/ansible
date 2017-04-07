@@ -24,7 +24,9 @@ options:
         description:
           - register or deregister the alarm
         required: true
-        choices: ['present', 'absent']
+        choices:
+          - 'present'
+          - 'absent'
     name:
         description:
           - Unique name for the alarm
@@ -43,12 +45,21 @@ options:
           - Operation applied to the metric
           - Works in conjunction with period and evaluation_periods to determine the comparison value
         required: false
-        choices: ['SampleCount','Average','Sum','Minimum','Maximum']
+        choices:
+          - 'SampleCount'
+          - 'Average'
+          - 'Sum'
+          - 'Minimum'
+          - 'Maximum'
     comparison:
         description:
           - Determines how the threshold value is compared
         required: false
-        choices: ['<=','<','>','>=']
+        choices:
+          - 'LessThanOrEqualToThreshold'
+          - 'LessThanThreshold'
+          - 'GreaterThanThreshold'
+          - 'GreaterThanOrEqualToThreshold'
     threshold:
         description:
           - Sets the min/max bound for triggering the alarm
@@ -66,33 +77,33 @@ options:
           - The threshold's unit of measurement
         required: false
         choices:
-            - 'Seconds'
-            - 'Microseconds'
-            - 'Milliseconds'
-            - 'Bytes'
-            - 'Kilobytes'
-            - 'Megabytes'
-            - 'Gigabytes'
-            - 'Terabytes'
-            - 'Bits'
-            - 'Kilobits'
-            - 'Megabits'
-            - 'Gigabits'
-            - 'Terabits'
-            - 'Percent'
-            - 'Count'
-            - 'Bytes/Second'
-            - 'Kilobytes/Second'
-            - 'Megabytes/Second'
-            - 'Gigabytes/Second'
-            - 'Terabytes/Second'
-            - 'Bits/Second'
-            - 'Kilobits/Second'
-            - 'Megabits/Second'
-            - 'Gigabits/Second'
-            - 'Terabits/Second'
-            - 'Count/Second'
-            - 'None'
+          - 'Seconds'
+          - 'Microseconds'
+          - 'Milliseconds'
+          - 'Bytes'
+          - 'Kilobytes'
+          - 'Megabytes'
+          - 'Gigabytes'
+          - 'Terabytes'
+          - 'Bits'
+          - 'Kilobits'
+          - 'Megabits'
+          - 'Gigabits'
+          - 'Terabits'
+          - 'Percent'
+          - 'Count'
+          - 'Bytes/Second'
+          - 'Kilobytes/Second'
+          - 'Megabytes/Second'
+          - 'Gigabytes/Second'
+          - 'Terabytes/Second'
+          - 'Bits/Second'
+          - 'Kilobits/Second'
+          - 'Megabits/Second'
+          - 'Gigabits/Second'
+          - 'Terabits/Second'
+          - 'Count/Second'
+          - 'None'
     description:
         description:
           - A longer description of the alarm
@@ -113,6 +124,17 @@ options:
         description:
           - A list of the names of action(s) to take when the alarm is in the 'ok' status
         required: false
+    treat_missing_data:
+        description:
+          - Sets how the alarm handles missing data points.
+        required: false
+        choices:
+          - 'breaching'
+          - 'notBreaching'
+          - 'ignore'
+          - 'missing'
+        default: 'missing'
+        version_added: "2.5"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -127,7 +149,7 @@ EXAMPLES = '''
       metric: "CPUUtilization"
       namespace: "AWS/EC2"
       statistic: Average
-      comparison: "<="
+      comparison: "LessThanOrEqualToThreshold"
       threshold: 5.0
       period: 300
       evaluation_periods: 3
@@ -135,24 +157,19 @@ EXAMPLES = '''
       description: "This will alarm when a bamboo slave's cpu usage average is lower than 5% for 15 minutes "
       dimensions: {'InstanceId':'i-XXX'}
       alarm_actions: ["action1","action2"]
-
-
 '''
 
 try:
-    import boto.ec2.cloudwatch
-    from boto.ec2.cloudwatch import MetricAlarm
-    from boto.exception import BotoServerError, NoAuthHandlerFound
+    import botocore
 except ImportError:
-    pass  # Taken care of by ec2.HAS_BOTO
+    pass  # caught by imported HAS_BOTO3
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (AnsibleAWSError, HAS_BOTO, connect_to_aws, ec2_argument_spec,
+from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, ec2_argument_spec,
                                       get_aws_connection_info)
 
 
 def create_metric_alarm(connection, module):
-
     name = module.params.get('name')
     metric = module.params.get('metric')
     namespace = module.params.get('namespace')
@@ -167,101 +184,142 @@ def create_metric_alarm(connection, module):
     alarm_actions = module.params.get('alarm_actions')
     insufficient_data_actions = module.params.get('insufficient_data_actions')
     ok_actions = module.params.get('ok_actions')
+    treat_missing_data = module.params.get('treat_missing_data')
 
-    alarms = connection.describe_alarms(alarm_names=[name])
+    warnings = []
 
-    if not alarms:
+    alarms = connection.describe_alarms(AlarmNames=[name])
 
-        alm = MetricAlarm(
-            name=name,
-            metric=metric,
-            namespace=namespace,
-            statistic=statistic,
-            comparison=comparison,
-            threshold=threshold,
-            period=period,
-            evaluation_periods=evaluation_periods,
-            unit=unit,
-            description=description,
-            dimensions=dimensions,
-            alarm_actions=alarm_actions,
-            insufficient_data_actions=insufficient_data_actions,
-            ok_actions=ok_actions
-        )
+    comparisons = {
+        '<=': 'LessThanOrEqualToThreshold',
+        '<': 'LessThanThreshold',
+        '>=': 'GreaterThanOrEqualToThreshold',
+        '>': 'GreaterThanThreshold'
+    }
+    if comparison in ('<=', '<', '>', '>='):
+        warnings.append('Using the <=, <, > and >= operators for comparison has been deprecated. Please use LessThanOrEqualToThreshold, '
+                        'LessThanThreshold, GreaterThanThreshold or GreaterThanOrEqualToThreshold instead.')
+        comparison = comparisons[comparison]
+
+    if not isinstance(dimensions, list):
+        fixed_dimensions = []
+        for key, value in dimensions.items():
+            fixed_dimensions.append({'Name': key, 'Value': value})
+        dimensions = fixed_dimensions
+
+    if not alarms['MetricAlarms']:  # we create alarm
         try:
-            connection.create_alarm(alm)
+            connection.put_metric_alarm(
+                AlarmName=name,
+                MetricName=metric,
+                Namespace=namespace,
+                Statistic=statistic,
+                ComparisonOperator=comparison,
+                Threshold=threshold,
+                Period=period,
+                EvaluationPeriods=evaluation_periods,
+                Unit=unit,
+                AlarmDescription=description,
+                Dimensions=dimensions,
+                AlarmActions=alarm_actions,
+                InsufficientDataActions=insufficient_data_actions,
+                OKActions=ok_actions,
+                TreatMissingData=treat_missing_data
+            )
             changed = True
-            alarms = connection.describe_alarms(alarm_names=[name])
-        except BotoServerError as e:
+            alarms = connection.describe_alarms(AlarmNames=[name])
+        except botocore.exceptions.ClientError as e:
             module.fail_json(msg=str(e))
 
     else:
-        alarm = alarms[0]
         changed = False
+        alarm = alarms['MetricAlarms'][0]
 
-        for attr in ('comparison','metric','namespace','statistic','threshold','period','evaluation_periods','unit','description'):
-            if getattr(alarm, attr) != module.params.get(attr):
+        # Workaround for alarms created before TreatMissingData was introduced
+        if 'TreatMissingData' not in alarm.keys():
+            alarm['TreatMissingData'] = 'missing'
+
+        for key, value in {
+            'MetricName': metric,
+            'Namespace': namespace,
+            'Statistic': statistic,
+            'ComparisonOperator': comparison,
+            'Threshold': threshold,
+            'Period': period,
+            'EvaluationPeriods': evaluation_periods,
+            'Unit': unit,
+            'AlarmDescription': description,
+            'Dimensions': dimensions,
+            'TreatMissingData': treat_missing_data
+        }.items():
+            if alarm[key] != value:
                 changed = True
-                setattr(alarm, attr, module.params.get(attr))
-        #this is to deal with a current bug where you cannot assign '<=>' to the comparator when modifying an existing alarm
-        comparison = alarm.comparison
-        comparisons = {'<=' : 'LessThanOrEqualToThreshold', '<' : 'LessThanThreshold', '>=' : 'GreaterThanOrEqualToThreshold', '>' : 'GreaterThanThreshold'}
-        alarm.comparison = comparisons[comparison]
+                alarm[key] = value
 
-        dim1 = module.params.get('dimensions')
-        dim2 = alarm.dimensions
-
-        for keys in dim1:
-            if not isinstance(dim1[keys], list):
-                dim1[keys] = [dim1[keys]]
-            if keys not in dim2 or dim1[keys] != dim2[keys]:
-                changed=True
-                setattr(alarm, 'dimensions', dim1)
-
-        for attr in ('alarm_actions','insufficient_data_actions','ok_actions'):
-            action = module.params.get(attr) or []
-            # Boto and/or ansible may provide same elements in lists but in different order.
-            # Compare on sets since they do not need any order.
-            if set(getattr(alarm, attr)) != set(action):
+        for key, value in {
+            'AlarmActions': alarm_actions,
+            'InsufficientDataActions': insufficient_data_actions,
+            'OKActions': ok_actions
+        }.items():
+            action = value or []
+            if alarm[key] != action:
                 changed = True
-                setattr(alarm, attr, module.params.get(attr))
+                alarm[key] = value
 
         try:
             if changed:
-                connection.create_alarm(alarm)
-        except BotoServerError as e:
+                connection.put_metric_alarm(AlarmName=alarm['AlarmName'],
+                                            MetricName=alarm['MetricName'],
+                                            Namespace=alarm['Namespace'],
+                                            Statistic=alarm['Statistic'],
+                                            ComparisonOperator=alarm['ComparisonOperator'],
+                                            Threshold=alarm['Threshold'],
+                                            Period=alarm['Period'],
+                                            EvaluationPeriods=alarm['EvaluationPeriods'],
+                                            Unit=alarm['Unit'],
+                                            AlarmDescription=alarm['AlarmDescription'],
+                                            Dimensions=alarm['Dimensions'],
+                                            AlarmActions=alarm['AlarmActions'],
+                                            InsufficientDataActions=alarm['InsufficientDataActions'],
+                                            OKActions=alarm['OKActions'],
+                                            TreatMissingData=alarm['TreatMissingData'])
+        except botocore.exceptions.ClientError as e:
             module.fail_json(msg=str(e))
-    result = alarms[0]
-    module.exit_json(changed=changed, name=result.name,
-        actions_enabled=result.actions_enabled,
-        alarm_actions=result.alarm_actions,
-        alarm_arn=result.alarm_arn,
-        comparison=result.comparison,
-        description=result.description,
-        dimensions=result.dimensions,
-        evaluation_periods=result.evaluation_periods,
-        insufficient_data_actions=result.insufficient_data_actions,
-        last_updated=result.last_updated,
-        metric=result.metric,
-        namespace=result.namespace,
-        ok_actions=result.ok_actions,
-        period=result.period,
-        state_reason=result.state_reason,
-        state_value=result.state_value,
-        statistic=result.statistic,
-        threshold=result.threshold,
-        unit=result.unit)
+
+    result = alarms['MetricAlarms'][0]
+    module.exit_json(
+        changed=changed,
+        warnings=warnings,
+        name=result['AlarmName'],
+        actions_enabled=result['ActionsEnabled'],
+        alarm_actions=result['AlarmActions'],
+        alarm_arn=result['AlarmArn'],
+        comparison=result['ComparisonOperator'],
+        description=result['AlarmDescription'],
+        dimensions=result['Dimensions'],
+        evaluation_periods=result['EvaluationPeriods'],
+        insufficient_data_actions=result['InsufficientDataActions'],
+        last_updated=result['AlarmConfigurationUpdatedTimestamp'],
+        metric=result['MetricName'],
+        namespace=result['Namespace'],
+        ok_actions=result['OKActions'],
+        period=result['Period'],
+        state_reason=result['StateReason'],
+        state_value=result['StateValue'],
+        statistic=result['Statistic'],
+        threshold=result['Threshold'],
+        unit=result['Unit'])
+
 
 def delete_metric_alarm(connection, module):
     name = module.params.get('name')
+    alarms = connection.describe_alarms(AlarmNames=[name])
 
-    alarms = connection.describe_alarms(alarm_names=[name])
-
-    if alarms:
+    if alarms['MetricAlarms']:
         try:
-            connection.delete_alarms([name])
+            connection.delete_alarms(AlarmNames=[name])
             module.exit_json(changed=True)
-        except BotoServerError as e:
+        except (botocore.exceptions.ClientError) as e:
             module.fail_json(msg=str(e))
     else:
         module.exit_json(changed=False)
@@ -275,36 +333,40 @@ def main():
             metric=dict(type='str'),
             namespace=dict(type='str'),
             statistic=dict(type='str', choices=['SampleCount', 'Average', 'Sum', 'Minimum', 'Maximum']),
-            comparison=dict(type='str', choices=['<=', '<', '>', '>=']),
+            comparison=dict(type='str', choices=['LessThanOrEqualToThreshold', 'LessThanThreshold', 'GreaterThanThreshold',
+                                                 'GreaterThanOrEqualToThreshold', '<=', '<', '>', '>=']),
             threshold=dict(type='float'),
             period=dict(type='int'),
-            unit=dict(type='str', choices=['Seconds', 'Microseconds', 'Milliseconds', 'Bytes', 'Kilobytes', 'Megabytes', 'Gigabytes', 'Terabytes',
-                                           'Bits', 'Kilobits', 'Megabits', 'Gigabits', 'Terabits', 'Percent', 'Count', 'Bytes/Second', 'Kilobytes/Second',
-                                           'Megabytes/Second', 'Gigabytes/Second', 'Terabytes/Second', 'Bits/Second', 'Kilobits/Second', 'Megabits/Second',
-                                           'Gigabits/Second', 'Terabits/Second', 'Count/Second', 'None']),
+            unit=dict(type='str', choices=['Seconds', 'Microseconds', 'Milliseconds', 'Bytes', 'Kilobytes', 'Megabytes', 'Gigabytes',
+                                           'Terabytes', 'Bits', 'Kilobits', 'Megabits', 'Gigabits', 'Terabits', 'Percent', 'Count',
+                                           'Bytes/Second', 'Kilobytes/Second', 'Megabytes/Second', 'Gigabytes/Second',
+                                           'Terabytes/Second', 'Bits/Second', 'Kilobits/Second', 'Megabits/Second', 'Gigabits/Second',
+                                           'Terabits/Second', 'Count/Second', 'None']),
             evaluation_periods=dict(type='int'),
             description=dict(type='str'),
             dimensions=dict(type='dict', default={}),
             alarm_actions=dict(type='list'),
             insufficient_data_actions=dict(type='list'),
             ok_actions=dict(type='list'),
+            treat_missing_data=dict(type='str', choices=['breaching', 'notBreaching', 'ignore', 'missing'], default='missing'),
             state=dict(default='present', choices=['present', 'absent']),
-            )
+        )
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
 
-    if not HAS_BOTO:
-        module.fail_json(msg='boto required for this module')
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 required for this module')
 
     state = module.params.get('state')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
 
     if region:
         try:
-            connection = connect_to_aws(boto.ec2.cloudwatch, region, **aws_connect_params)
-        except (NoAuthHandlerFound, AnsibleAWSError) as e:
+            connection = boto3_conn(module, conn_type='client', resource='cloudwatch',
+                                    region=region, endpoint=ec2_url, **aws_connect_params)
+        except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="region must be specified")
