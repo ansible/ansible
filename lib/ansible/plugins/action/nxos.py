@@ -120,12 +120,6 @@ class ActionModule(_ActionModule):
         self._task.args['transport'] = transport
 
         result = super(ActionModule, self).run(tmp, task_vars)
-
-        try:
-            del result['invocation']['module_args']['provider']
-        except KeyError:
-            pass
-
         return result
 
     def _get_socket_path(self, play_context):
@@ -160,5 +154,3 @@ class ActionModule(_ActionModule):
             return strategy(*args, **kwargs)
         except AnsibleFallbackNotFound:
             pass
-
-

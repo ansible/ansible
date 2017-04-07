@@ -89,12 +89,6 @@ class ActionModule(_ActionModule):
             self._play_context.become_method = None
 
         result = super(ActionModule, self).run(tmp, task_vars)
-
-        try:
-            del result['invocation']['module_args']['provider']
-        except KeyError:
-            pass
-
         return result
 
     def _get_socket_path(self, play_context):
