@@ -295,7 +295,8 @@ main() and AnsibleModule & argument_spec
                 state     = dict(default='present', choices=['present', 'absent']),
                 name      = dict(required=True),
                 enabled   = dict(required=True, type='bool'),
-                something = dict(aliases=['whatever'])
+                something = dict(aliases=['whatever']),
+                password  = dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
             )
         )
 
@@ -307,14 +308,17 @@ All arguments are optional unless otherwise specified.
   A dictionary of options in the following form:
 
   :name: `required`
-    The (primary) name of the option. A ``dict`` defines the option
+    The (primary) name of the option. A ``dict`` defines the following parameters:
 
     :required:
-      Is this option always required?
+      Is this option `always` required?
       Only needed if True, as the default is False.
       If the option is only required sometimes see the conditional options such as ``mutually_exclusive``, ``required_together``, etc.
     :default:
-     FIXME fallbackenv
+     FIXME
+    :fallback:
+      If a value isn't specified in the playbook gives the ability to read from another source.
+      Currently supports ``env_fallback``. In this case the environment variable of where Ansible is run is used.
     :type:
       Optionally validate the format of the data.
       If you wish to add extra validation rules, see ``module_utils/basic.py``.
