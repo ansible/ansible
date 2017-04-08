@@ -21,14 +21,17 @@
 
 # win_route (Add or remove a network static route)
 
-$params = Parse-Args $args;
+$params = Parse-Args $args -supports_check_mode $true
 
-$destip = Get-Attr $params "destination_ip" -failifempty $true;
-$mask = Get-Attr $params "subnet_mask" -failifempty $true;
-$gateway = Get-Attr $params "gateway" -failifempty $true;
-$metric = Get-Attr $params "metric" -default 1;
-$state = Get-Attr $params "state" -default "present" -validateSet "present","absent";
-$result = New-Object PSObject @{"changed" = $false; "output" = ""};
+$destip = Get-AnsibleParam -obj $params -name "destination_ip" -type "str" -failifempty $true
+$mask = Get-AnsibleParam -obj $params -name "subnet_mask" -type "str" -failifempty $true
+$gateway = Get-AnsibleParam -obj $params -name "gateway" -type "str" -failifempty $true
+$metric = Get-AnsibleParam -obj $params -name "metric" -type "int" -default 1
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateSet "present","absent"
+$result = @{
+             "changed" = $false
+             "output" = ""
+           }
 
 Function Test-SubnetMask {
     Param (
