@@ -219,7 +219,7 @@ RETURN Block
 The RETURN section documents what the module returns, and is required for all new modules.
 
 For each value returned, provide a ``description``, in what circumstances the value is ``returned``,
-the ``type`` of the value and a ``sample``.  For example, from the ``copy`` module::
+the ``type`` of the value and a ``sample``.  For example, from the ``copy`` module:
 
 
 The following fields can be used and are all required unless specified otherwise.
