@@ -145,22 +145,21 @@ class NetboxAsInventory(object):
             "ip": "address"
         }
 
-    def get_hosts_list(self):
+    def get_hosts_list(self, api_url, specific_host=None):
         """Retrieves hosts list from netbox API.
 
         Returns:
             A list of all hosts from netbox API.
         """
 
-        if not self.api_url:
+        if not api_url:
             print("Please check API URL in script configuration file.")
-            print("Current configuration file: %s" % (get_full_path(self.config_file)))
             sys.exit(1)
 
-        if self.host:
-            data_source = "{}?name={}".format(self.api_url, self.host)
+        if specific_host:
+            data_source = "{}?name={}".format(api_url, specific_host)
         else:
-            data_source = self.api_url
+            data_source = api_url
 
         hosts_list = requests.get(data_source).json()
         return hosts_list
@@ -305,7 +304,7 @@ class NetboxAsInventory(object):
         """
 
         inventory_dict = dict()
-        netbox_hosts_list = self.get_hosts_list()
+        netbox_hosts_list = self.get_hosts_list(self.api_url, self.host)
         if netbox_hosts_list:
             inventory_dict.update({"_meta": {"hostvars": {}}})
             for current_host in netbox_hosts_list:
