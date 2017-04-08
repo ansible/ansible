@@ -21,8 +21,8 @@ import os
 import sys
 import yaml
 import argparse
+import requests
 from functools import reduce
-from ansible.module_utils.urls import open_url
 try:
     import json
 except ImportError:
@@ -164,8 +164,7 @@ class NetboxAsInventory(object):
         else:
             data_source = self.api_url
 
-        json_data = open_url(data_source).read()
-        hosts_list = json.loads(json_data)
+        hosts_list = requests.get(data_source).json()
         return hosts_list
 
     def add_host_to_group(self, server_name, group_value, inventory_dict):
