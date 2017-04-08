@@ -111,6 +111,7 @@ Else {
         Else {
             Expand-Archive -Path $src -OutputPath $dest -Force
         }
+        $result.changed = $true
     }
     Catch {
         $err_msg = $_.Exception.Message

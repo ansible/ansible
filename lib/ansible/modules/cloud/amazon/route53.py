@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -76,7 +77,8 @@ options:
     default: false
   value:
     description:
-      - The new value when creating a DNS record.  Multiple comma-spaced values are allowed for non-alias records.  When deleting a record all values for the record must be specified or Route53 will not delete it.
+      - The new value when creating a DNS record.  Multiple comma-spaced values are allowed for non-alias records.  When deleting a record all values
+        for the record must be specified or Route53 will not delete it.
     required: false
     default: null
   overwrite:
@@ -86,12 +88,14 @@ options:
     default: null
   retry_interval:
     description:
-      - In the case that route53 is still servicing a prior request, this module will wait and try again after this many seconds. If you have many domain names, the default of 500 seconds may be too long.
+      - In the case that route53 is still servicing a prior request, this module will wait and try again after this many seconds. If you have many
+        domain names, the default of 500 seconds may be too long.
     required: false
     default: 500
   private_zone:
     description:
-      - If set to true, the private zone matching the requested name within the domain will be used if there are both public and private zones. The default is to use the public zone.
+      - If set to true, the private zone matching the requested name within the domain will be used if there are both public and private zones.
+        The default is to use the public zone.
     required: false
     default: false
     version_added: "1.9"
@@ -207,7 +211,7 @@ EXAMPLES = '''
       "zone": "foo.com"
       "record": "_example-service._tcp.foo.com"
       "type": "SRV"
-      "value": ["0 0 22222 host1.foo.com", "0 0 22222 host2.foo.com"]
+      "value": "0 0 22222 host1.foo.com,0 0 22222 host2.foo.com"
 
 # Add a TXT record. Note that TXT and SPF records must be surrounded
 # by quotes when sent to Route 53:
@@ -321,7 +325,7 @@ class TimeoutError(Exception):
 
 def get_zone_by_name(conn, module, zone_name, want_private, zone_id, want_vpc_id):
     """Finds a zone by name or zone_id"""
-    for zone in conn.get_zones():
+    for zone in invoke_with_throttling_retries(conn.get_zones):
         # only save this zone id if the private status of the zone matches
         # the private_zone_in boolean specified in the params
         private_zone = module.boolean(zone.config.get('PrivateZone', False))
@@ -329,7 +333,8 @@ def get_zone_by_name(conn, module, zone_name, want_private, zone_id, want_vpc_id
             if want_vpc_id:
                 # NOTE: These details aren't available in other boto methods, hence the necessary
                 # extra API call
-                zone_details = conn.get_hosted_zone(zone.id)['GetHostedZoneResponse']
+                hosted_zone = invoke_with_throttling_retries(conn.get_hosted_zone, zone.id)
+                zone_details = hosted_zone['GetHostedZoneResponse']
                 # this is to deal with this boto bug: https://github.com/boto/boto/pull/2882
                 if isinstance(zone_details['VPCs'], dict):
                     if zone_details['VPCs']['VPC']['VPCId'] == want_vpc_id:
@@ -373,11 +378,11 @@ def commit(changes, retry_interval, wait, wait_timeout):
 # Shamelessly copied over from https://git.io/vgmDG
 IGNORE_CODE = 'Throttling'
 MAX_RETRIES=5
-def invoke_with_throttling_retries(function_ref, *argv):
+def invoke_with_throttling_retries(function_ref, *argv, **kwargs):
     retries=0
     while True:
         try:
-            retval=function_ref(*argv)
+            retval=function_ref(*argv, **kwargs)
             return retval
         except boto.exception.BotoServerError as e:
             if e.code != IGNORE_CODE or retries==MAX_RETRIES:
@@ -506,7 +511,8 @@ def main():
         else:
             wanted_rset.add_value(v)
 
-    sets = conn.get_all_rrsets(zone.id, name=record_in, type=type_in, identifier=identifier_in)
+    sets = invoke_with_throttling_retries(conn.get_all_rrsets, zone.id, name=record_in,
+                                          type=type_in, identifier=identifier_in)
     for rset in sets:
         # Due to a bug in either AWS or Boto, "special" characters are returned as octals, preventing round
         # tripping of things like * and @.
@@ -554,7 +560,8 @@ def main():
             ns = record['values']
         else:
             # Retrieve name servers associated to the zone.
-            ns = conn.get_zone(zone_in).get_nameservers()
+            z = invoke_with_throttling_retries(conn.get_zone, zone_in)
+            ns = invoke_with_throttling_retries(z.get_nameservers)
 
         module.exit_json(changed=False, set=record, nameservers=ns)
 

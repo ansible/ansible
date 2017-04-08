@@ -21,9 +21,10 @@
 
 ######################################################################
 
-ANSIBLE_METADATA = {'status': ['deprecated'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -623,7 +624,7 @@ def normalize_image(image):
 def is_running(container):
     '''Return True if an inspected container is in a state we consider "running."'''
 
-    return container['State']['Running'] == True and not container['State'].get('Ghost', False)
+    return container['State']['Running'] is True and not container['State'].get('Ghost', False)
 
 
 def get_docker_py_versioninfo():

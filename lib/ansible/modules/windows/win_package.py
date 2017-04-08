@@ -21,9 +21,10 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = r'''
 ---
@@ -33,7 +34,10 @@ author: Trond Hindenes
 short_description: Installs/Uninstalls an installable package, either from local file system or url
 description:
      - Installs or uninstalls a package.
-     - 'Optionally uses a product_id to check if the package needs installing. You can find product ids for installed programs in the windows registry either in C(HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall) or for 32 bit programs C(HKLM:Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall)'
+     - >
+       Optionally uses a product_id to check if the package needs installing. You can find product ids for installed programs in the windows registry
+       either in C(HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall) or for 32 bit programs
+       C(HKLM:Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall)
 options:
   path:
     description:
@@ -47,7 +51,9 @@ options:
   product_id:
     description:
       - Product id of the installed package (used for checking if already installed)
-      - You can find product ids for installed programs in the windows registry either in C(HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall) or for 32 bit programs C(HKLM:Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall)'
+      - >
+        You can find product ids for installed programs in the windows registry either in C(HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall)
+        or for 32 bit programs C(HKLM:Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall)
     required: true
     aliases: [productid]
   arguments:
@@ -66,12 +72,14 @@ options:
     aliases: [ensure]
   user_name:
     description:
-      - Username of an account with access to the package if it's located on a file share. Only needed if the winrm user doesn't have access to the package. Also specify user_password for this to function properly.
+      - Username of an account with access to the package if it's located on a file share. Only needed if the winrm user doesn't have access to the package.
+        Also specify user_password for this to function properly.
     default: null
     required: false
   user_password:
     description:
-      - Password of an account with access to the package if it's located on a file share. Only needed if the winrm user doesn't have access to the package. Also specify user_name for this to function properly.
+      - Password of an account with access to the package if it's located on a file share. Only needed if the winrm user doesn't have access to the package.
+        Also specify user_name for this to function properly.
     default: null
     required: false
   expected_return_code:
@@ -104,20 +112,20 @@ EXAMPLES = r'''
 # Specify the expected non-zero return code when successful
 # In this case 3010 indicates 'reboot required'
 - name: 'Microsoft .NET Framework 4.5.1'
-    win_package:
-      path: https://download.microsoft.com/download/1/6/7/167F0D79-9317-48AE-AEDB-17120579F8E2/NDP451-KB2858728-x86-x64-AllOS-ENU.exe
-      productid: '{7DEBE4EB-6B40-3766-BB35-5CBBC385DA37}'
-      arguments: '/q /norestart'
-      ensure: present
-      expected_return_code: 3010
+  win_package:
+    path: https://download.microsoft.com/download/1/6/7/167F0D79-9317-48AE-AEDB-17120579F8E2/NDP451-KB2858728-x86-x64-AllOS-ENU.exe
+    productid: '{7DEBE4EB-6B40-3766-BB35-5CBBC385DA37}'
+    arguments: '/q /norestart'
+    ensure: present
+    expected_return_code: 3010
 
 # Specify multiple non-zero return codes when successful
 # In this case we can say that both 0 (SUCCESSFUL) and 3010 (REBOOT REQUIRED) codes are acceptable
-  - name: 'Microsoft .NET Framework 4.5.1'
-    win_package:
-      path: https://download.microsoft.com/download/1/6/7/167F0D79-9317-48AE-AEDB-17120579F8E2/NDP451-KB2858728-x86-x64-AllOS-ENU.exe
-      productid: '{7DEBE4EB-6B40-3766-BB35-5CBBC385DA37}'
-      arguments: '/q /norestart'
-      ensure: present
-      expected_return_code: [0,3010]
+- name: 'Microsoft .NET Framework 4.5.1'
+  win_package:
+    path: https://download.microsoft.com/download/1/6/7/167F0D79-9317-48AE-AEDB-17120579F8E2/NDP451-KB2858728-x86-x64-AllOS-ENU.exe
+    productid: '{7DEBE4EB-6B40-3766-BB35-5CBBC385DA37}'
+    arguments: '/q /norestart'
+    ensure: present
+    expected_return_code: [0,3010]
 '''

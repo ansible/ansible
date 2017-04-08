@@ -46,7 +46,9 @@ except ImportError:
 ########################################################
 
 class AdHocCLI(CLI):
-    ''' code behind ansible ad-hoc cli'''
+    ''' is an extra-simple tool/framework/API for doing 'remote things'.
+        this command allows you to define and run a single task 'playbook' against a set of hosts
+    '''
 
     def parse(self):
         ''' create an options parser for bin/ansible '''
@@ -63,6 +65,8 @@ class AdHocCLI(CLI):
             vault_opts=True,
             fork_opts=True,
             module_opts=True,
+            desc="Define and run a single task 'playbook' against a set of hosts",
+            epilog="Some modules do not make sense in Ad-Hoc (include, meta, etc)",
         )
 
         # options unique to ansible ad-hoc
@@ -92,20 +96,16 @@ class AdHocCLI(CLI):
         )
 
     def run(self):
-        ''' use Runner lib to do SSH things '''
+        ''' create and execute the single task playbook '''
 
         super(AdHocCLI, self).run()
 
         # only thing left should be host pattern
         pattern = to_text(self.args[0], errors='surrogate_or_strict')
 
-        # ignore connection password cause we are local
-        if self.options.connection == "local":
-            self.options.ask_pass = False
-
         sshpass    = None
         becomepass = None
-        vault_pass = None
+        b_vault_pass = None
 
         self.normalize_become_options()
         (sshpass, becomepass) = self.ask_passwords()
@@ -115,11 +115,11 @@ class AdHocCLI(CLI):
 
         if self.options.vault_password_file:
             # read vault_pass from a file
-            vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
-            loader.set_vault_password(vault_pass)
+            b_vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
+            loader.set_vault_password(b_vault_pass)
         elif self.options.ask_vault_pass:
-            vault_pass = self.ask_vault_passwords()
-            loader.set_vault_password(vault_pass)
+            b_vault_pass = self.ask_vault_passwords()
+            loader.set_vault_password(b_vault_pass)
 
         variable_manager = VariableManager()
         variable_manager.extra_vars = load_extra_vars(loader=loader, options=self.options)

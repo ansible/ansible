@@ -19,30 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-try:
-    import ovirtsdk4.types as otypes
-except ImportError:
-    pass
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    follow_link,
-    get_link_name,
-    ovirt_full_argument_spec,
-    search_by_attributes,
-    search_by_name,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -143,6 +123,26 @@ permission:
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/permission."
     returned: On success if permission is found.
 '''
+
+try:
+    import ovirtsdk4.types as otypes
+except ImportError:
+    pass
+
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    follow_link,
+    get_link_name,
+    ovirt_full_argument_spec,
+    search_by_attributes,
+    search_by_name,
+)
 
 
 def _objects_service(connection, object_type):
@@ -286,7 +286,8 @@ def main():
         module.fail_json(msg='"user_name" or "group_name" is required')
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         permissions_service = _object_service(connection, module).permissions_service()
         permissions_module = PermissionsModule(
             connection=connection,
@@ -305,7 +306,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":

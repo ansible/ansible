@@ -20,9 +20,10 @@
 #
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 
@@ -54,8 +55,8 @@ options:
 
 EXAMPLES = """
 
-send a message to chat in playbook
-- telegram:
+- name: send a message to chat in playbook
+  telegram:
     token: 'bot9999999:XXXXXXXXXXXXXXXXXXXXXXX'
     chat_id: 000000
     msg: Ansible task finished

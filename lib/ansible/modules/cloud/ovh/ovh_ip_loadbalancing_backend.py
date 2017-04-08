@@ -13,9 +13,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -76,11 +77,10 @@ options:
             - The consumer key to use
     timeout:
         required: false
-        type: "int"
         default: 120
         description:
             - The timeout in seconds used to wait for a task to be
-              completed. Default is 120 seconds.
+              completed.
 
 '''
 

@@ -19,9 +19,10 @@
 # along with Ansible.    If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION='''
 ---
@@ -171,7 +172,9 @@ options:
         required: False
         default: None
         description:
-            - 'This is only used with bridge - MAC address of the bridge (note: this requires a recent kernel feature, originally introduced in 3.15 upstream kernel)'
+            - >
+              This is only used with bridge - MAC address of the bridge
+              (note: this requires a recent kernel feature, originally introduced in 3.15 upstream kernel)
     slavepriority:
         required: False
         default: 32
@@ -186,7 +189,8 @@ options:
         required: False
         default: yes
         description:
-            - This is only used with 'bridge-slave' - 'hairpin mode' for the slave, which allows frames to be sent back out through the slave the frame was received on.
+            - This is only used with 'bridge-slave' - 'hairpin mode' for the slave, which allows frames to be sent back out through the slave the
+              frame was received on.
     vlanid:
         required: False
         default: None
@@ -361,26 +365,26 @@ EXAMPLES='''
       - '{{ nmcli_team_slave }}'
 
 ###### Working with all cloud nodes - Bonding
- - name: try nmcli add bond - conn_name only & ip4 gw4 mode
-   nmcli:
-     type: bond
-     conn_name: '{{ item.conn_name }}'
-     ip4: '{{ item.ip4 }}'
-     gw4: '{{ item.gw4 }}'
-     mode: '{{ item.mode }}'
-     state: present
-   with_items:
-     - '{{ nmcli_bond }}'
+  - name: try nmcli add bond - conn_name only & ip4 gw4 mode
+    nmcli:
+      type: bond
+      conn_name: '{{ item.conn_name }}'
+      ip4: '{{ item.ip4 }}'
+      gw4: '{{ item.gw4 }}'
+      mode: '{{ item.mode }}'
+      state: present
+    with_items:
+      - '{{ nmcli_bond }}'
 
- - name: try nmcli add bond-slave
-   nmcli:
-     type: bond-slave
-     conn_name: '{{ item.conn_name }}'
-     ifname: '{{ item.ifname }}'
-     master: '{{ item.master }}'
-     state: present
-   with_items:
-     - '{{ nmcli_bond_slave }}'
+  - name: try nmcli add bond-slave
+    nmcli:
+      type: bond-slave
+      conn_name: '{{ item.conn_name }}'
+      ifname: '{{ item.ifname }}'
+      master: '{{ item.master }}'
+      state: present
+    with_items:
+      - '{{ nmcli_bond_slave }}'
 
 ##### Working with all cloud nodes - Ethernet
   - name: nmcli add Ethernet - conn_name only & ip4 gw4
@@ -394,8 +398,6 @@ EXAMPLES='''
       - '{{ nmcli_ethernet }}'
 
 ## playbook-del.yml example
-
----
 - hosts: openstack-stage
   remote_user: root
   tasks:
@@ -1107,7 +1109,8 @@ def main():
             gw6=dict(required=False, default=None, type='str'),
             dns6=dict(required=False, default=None, type='str'),
             # Bond Specific vars
-            mode=dict(require=False, default="balance-rr", choices=["balance-rr", "active-backup", "balance-xor", "broadcast", "802.3ad", "balance-tlb", "balance-alb"], type='str'),
+            mode=dict(require=False, default="balance-rr", type='str', choices=["balance-rr", "active-backup", "balance-xor", "broadcast", "802.3ad",
+                                                                                "balance-tlb", "balance-alb"]),
             miimon=dict(required=False, default=None, type='str'),
             downdelay=dict(required=False, default=None, type='str'),
             updelay=dict(required=False, default=None, type='str'),

@@ -17,14 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-import os
-import platform
-import tempfile
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -158,6 +154,12 @@ EXAMPLES = '''
     state: attached
     attach_options: -u
 '''
+
+import sys
+import os
+import platform
+import tempfile
+
 
 class Zone(object):
     def __init__(self, module):
@@ -442,18 +444,18 @@ class Zone(object):
 
 def main():
     module = AnsibleModule(
-        argument_spec       = dict(
-            name            = dict(required=True),
-            state           = dict(default='present', choices=['running', 'started', 'present', 'installed', 'stopped', 'absent', 'configured', 'detached', 'attached']),
-            path            = dict(default=None),
-            sparse          = dict(default=False, type='bool'),
-            root_password   = dict(default=None, no_log=True),
-            timeout         = dict(default=600, type='int'),
-            config          = dict(default=''),
-            create_options  = dict(default=''),
-            install_options = dict(default=''),
-            attach_options  = dict(default=''),
-            ),
+        argument_spec=dict(
+            name=dict(required=True),
+            state=dict(default='present', choices=['running', 'started', 'present', 'installed', 'stopped', 'absent', 'configured', 'detached', 'attached']),
+            path=dict(default=None),
+            sparse=dict(default=False, type='bool'),
+            root_password=dict(default=None, no_log=True),
+            timeout=dict(default=600, type='int'),
+            config=dict(default=''),
+            create_options=dict(default=''),
+            install_options=dict(default=''),
+            attach_options=dict(default=''),
+        ),
         supports_check_mode=True
     )
 

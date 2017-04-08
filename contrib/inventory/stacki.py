@@ -170,7 +170,7 @@ def main():
         for cfg_file in config_files:
             if os.path.isfile(cfg_file):
                 stream = open(cfg_file, 'r')
-                config = yaml.load(stream)
+                config = yaml.safe_load(stream)
                 break
         if not config:
             sys.stderr.write("No config file found at {}\n".format(config_files))

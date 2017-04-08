@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -27,6 +28,7 @@ module: rhevm
 author: Timothy Vandenbrande
 short_description: RHEV/oVirt automation
 description:
+    - This module only supports oVirt/RHEV version 3. A newer module M(ovirt_vms) supports oVirt/RHV version 4.
     - Allows you to create/remove/update or powermanage virtual machines on a RHEV/oVirt platform.
 version_added: "2.2"
 requirements:
@@ -217,8 +219,7 @@ vm:
 
 EXAMPLES = '''
 # basic get info from VM
-  action: rhevm
-  args:
+  - rhevm:
       name: "demo"
       user: "{{ rhev.admin.name }}"
       password: "{{ rhev.admin.pass }}"
@@ -226,8 +227,7 @@ EXAMPLES = '''
       state: "info"
 
 # basic create example from image
-  action: rhevm
-  args:
+  - rhevm:
       name: "demo"
       user: "{{ rhev.admin.name }}"
       password: "{{ rhev.admin.pass }}"
@@ -237,8 +237,7 @@ EXAMPLES = '''
       cluster: "centos"
 
 # power management
-  action: rhevm
-  args:
+  - rhevm:
       name: "uptime_server"
       user: "{{ rhev.admin.name }}"
       password: "{{ rhev.admin.pass }}"
@@ -246,11 +245,10 @@ EXAMPLES = '''
       cluster: "RH"
       state: "down"
       image: "centos7_x64"
-      cluster: "centos
+      cluster: "centos"
 
 # multi disk, multi nic create example
-  action: rhevm
-  args:
+  - rhevm:
       name: "server007"
       user: "{{ rhev.admin.name }}"
       password: "{{ rhev.admin.pass }}"
@@ -290,23 +288,21 @@ EXAMPLES = '''
         - "hd"
 
 # add a CD to the disk cd_drive
-  action: rhevm
-  args:
-    name: 'server007'
-    user: "{{ rhev.admin.name }}"
-    password: "{{ rhev.admin.pass }}"
-    state: 'cd'
-    cd_drive: 'rhev-tools-setup.iso'
+  - rhevm:
+      name: 'server007'
+      user: "{{ rhev.admin.name }}"
+      password: "{{ rhev.admin.pass }}"
+      state: 'cd'
+      cd_drive: 'rhev-tools-setup.iso'
 
 # new host deployment + host network configuration
-  action: rhevm
-  args:
-    name: "ovirt_node007"
-    password: "{{ rhevm.admin.pass }}"
-    type: "host"
-    state: present
-    cluster: "rhevm01"
-    ifaces:
+  - rhevm:
+      name: "ovirt_node007"
+      password: "{{ rhevm.admin.pass }}"
+      type: "host"
+      state: present
+      cluster: "rhevm01"
+      ifaces:
         - name: em1
         - name: em2
         - name: p3p1
@@ -453,7 +449,7 @@ class RHEVConn(object):
                 currentdisk = VM.disks.get(name=diskname)
                 if attempt == 100:
                     setMsg("Error, disk %s, state %s" % (diskname, str(currentdisk.status.state)))
-                    raise
+                    raise Exception()
                 else:
                     attempt += 1
                     time.sleep(2)
@@ -493,7 +489,7 @@ class RHEVConn(object):
                 currentnic = VM.nics.get(name=nicname)
                 if attempt == 100:
                     setMsg("Error, iface %s, state %s" % (nicname, str(currentnic.active)))
-                    raise
+                    raise Exception()
                 else:
                     attempt += 1
                     time.sleep(2)
@@ -1485,7 +1481,7 @@ def main():
         argument_spec = dict(
             state      = dict(default='present', choices=['ping', 'present', 'absent', 'up', 'down', 'restarted', 'cd', 'info']),
             user       = dict(default="admin@internal"),
-            password   = dict(required=True),
+            password   = dict(required=True, no_log=True),
             server     = dict(default="127.0.0.1"),
             port       = dict(default="443"),
             insecure_api = dict(default=False, type='bool'),

@@ -14,22 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: os_user
 short_description: Manage OpenStack Identity Users
 extends_documentation_fragment: openstack
+author: David Shrewsbury
 version_added: "2.0"
 description:
     - Manage OpenStack Identity users. Users can be created,
@@ -80,6 +75,10 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatability
+     required: false
 requirements:
     - "python >= 2.6"
     - "shade"
@@ -143,6 +142,13 @@ user:
             sample: "demouser"
 '''
 
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+
 def _needs_update(params_dict, user):
     for k, v in params_dict.items():
         if k not in ('password', 'update_password') and user[k] != v:
@@ -182,7 +188,7 @@ def main():
 
     argument_spec = openstack_full_argument_spec(
         name=dict(required=True),
-        password=dict(required=False, default=None),
+        password=dict(required=False, default=None, no_log=True),
         email=dict(required=False, default=None),
         default_project=dict(required=False, default=None),
         domain=dict(required=False, default=None),

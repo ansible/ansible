@@ -18,19 +18,16 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-import shlex
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = """
 ---
 module: pn_vrouterlbif
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
-version: 1.0
 short_description: CLI command to add/remove vrouter-loopback-interface.
 description:
   - Execute vrouter-loopback-interface-add, vrouter-loopback-interface-remove
@@ -101,6 +98,7 @@ changed:
   type: bool
 """
 
+import shlex
 
 VROUTER_EXISTS = None
 LB_INTERFACE_EXISTS = None

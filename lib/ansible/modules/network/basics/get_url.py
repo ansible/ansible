@@ -20,14 +20,10 @@
 #
 # see examples/playbooks/get_url.yml
 
-import shutil
-import datetime
-import re
-import tempfile
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -160,6 +156,22 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "no"
+  client_cert:
+    required: false
+    default: null
+    description:
+      - PEM formatted certificate chain file to be used for SSL client
+        authentication. This file can also include the key as well, and if
+        the key is included, I(client_key) is not required
+    version_added: 2.4
+  client_key:
+    required: false
+    default: null
+    description:
+      - PEM formatted file that contains your private key to be used for SSL
+        client authentication. If I(client_cert) contains both the certificate
+        and key, this option is not required.
+    version_added: 2.4
   others:
     description:
       - all arguments accepted by the M(file) module also work here
@@ -208,6 +220,10 @@ EXAMPLES='''
     dest: /tmp/afilecopy.txt
 '''
 
+import shutil
+import datetime
+import re
+import tempfile
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
 
 # ==============================================================
@@ -290,13 +306,13 @@ def main():
     argument_spec = url_argument_spec()
     argument_spec.update(
         url = dict(required=True),
-        dest = dict(required=True),
+        dest = dict(required=True, type='path'),
         backup = dict(default=False, type='bool'),
         sha256sum = dict(default=''),
         checksum = dict(default=''),
         timeout = dict(required=False, type='int', default=10),
         headers = dict(required=False, default=None),
-        tmp_dest = dict(required=False, default=''),
+        tmp_dest = dict(required=False, default='', type='path'),
     )
 
     module = AnsibleModule(
@@ -306,14 +322,14 @@ def main():
     )
 
     url  = module.params['url']
-    dest = os.path.expanduser(module.params['dest'])
+    dest = module.params['dest']
     backup = module.params['backup']
     force = module.params['force']
     sha256sum = module.params['sha256sum']
     checksum = module.params['checksum']
     use_proxy = module.params['use_proxy']
     timeout = module.params['timeout']
-    tmp_dest = os.path.expanduser(module.params['tmp_dest'])
+    tmp_dest = module.params['tmp_dest']
 
     # Parse headers to dict
     if module.params['headers']:
@@ -458,7 +474,7 @@ def main():
 
     res_args = dict(
         url = url, dest = dest, src = tmpsrc, md5sum = md5sum, checksum_src = checksum_src,
-        checksum_dest = checksum_dest, changed = changed, msg = info.get('msg', '')
+        checksum_dest = checksum_dest, changed = changed, msg = info.get('msg', ''), status_code=info.get('status','')
     )
     if backup_file:
         res_args['backup_file'] = backup_file

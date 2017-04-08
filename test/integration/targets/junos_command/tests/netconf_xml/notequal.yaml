@@ -8,7 +8,7 @@
       - show interfaces fxp0
     format: xml
     wait_for:
-      - "result[0].software-information.host-name neq localhost"
+      - "result[0].rpc-reply.software-information.host-name neq localhost"
     provider: "{{ netconf }}"
   register: result
 
@@ -25,7 +25,7 @@
       - show interfaces fxp0
     format: xml
     wait_for:
-      - "result[0].software-information.host-name != localhost"
+      - "result[0].rpc-reply.software-information.host-name != localhost"
     provider: "{{ netconf }}"
   register: result
 

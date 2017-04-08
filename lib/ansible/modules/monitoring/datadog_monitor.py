@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 # import module snippets
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -64,7 +65,9 @@ options:
         description: ["The name of the alert."]
         required: true
     message:
-        description: ["A message to include with notifications for this monitor. Email notifications can be sent to specific users by using the same '@username' notation as events. Monitor message template variables can be accessed by using double square brackets, i.e '[[' and ']]'."]
+        description:
+            - A message to include with notifications for this monitor. Email notifications can be sent to specific users by using the same
+              '@username' notation as events. Monitor message template variables can be accessed by using double square brackets, i.e '[[' and ']]'.
         required: false
         default: null
     silenced:
@@ -76,7 +79,9 @@ options:
         required: false
         default: False
     no_data_timeframe:
-        description: ["The number of minutes before a monitor will notify when data stops reporting. Must be at least 2x the monitor timeframe for metric alerts or 2 minutes for service checks."]
+        description:
+            - The number of minutes before a monitor will notify when data stops reporting. Must be at least 2x the monitor timeframe for metric
+              alerts or 2 minutes for service checks.
         required: false
         default: 2x timeframe for metric, 2 minutes for service
     timeout_h:
@@ -84,11 +89,15 @@ options:
         required: false
         default: null
     renotify_interval:
-        description: ["The number of minutes after the last notification before a monitor will re-notify on the current status. It will only re-notify if it's not resolved."]
+        description:
+            - The number of minutes after the last notification before a monitor will re-notify on the current status. It will only re-notify if it's
+              not resolved.
         required: false
         default: null
     escalation_message:
-        description: ["A message to include with a re-notification. Supports the '@username' notification we allow elsewhere. Not applicable if renotify_interval is None"]
+        description:
+            - A message to include with a re-notification. Supports the '@username' notification we allow elsewhere. Not applicable if renotify_interval
+              is None
         required: false
         default: null
     notify_audit:
@@ -96,7 +105,9 @@ options:
         required: false
         default: False
     thresholds:
-        description: ["A dictionary of thresholds by status. This option is only available for service checks and metric alerts. Because each of them can have multiple thresholds, we don't define them directly in the query."]
+        description:
+            - A dictionary of thresholds by status. This option is only available for service checks and metric alerts. Because each of them can have
+              multiple thresholds, we don't define them directly in the query."]
         required: false
         default: {'ok': 1, 'critical': 1, 'warning': 1}
     locked:
@@ -105,7 +116,9 @@ options:
         default: False
         version_added: "2.2"
     require_full_window:
-        description: ["A boolean indicating whether this monitor needs a full window of data before it's evaluated. We highly recommend you set this to False for sparse metrics, otherwise some evaluations will be skipped."]
+        description:
+            - A boolean indicating whether this monitor needs a full window of data before it's evaluated. We highly recommend you set this to False for
+              sparse metrics, otherwise some evaluations will be skipped.
         required: false
         default: null
         version_added: "2.3"
@@ -122,7 +135,7 @@ datadog_monitor:
   type: "metric alert"
   name: "Test monitor"
   state: "present"
-  query: "datadog.agent.up".over("host:host1").last(2).count_by_status()"
+  query: "datadog.agent.up.over('host:host1').last(2).count_by_status()"
   message: "Host [[host.name]] with IP [[host.ip]] is failing to report to datadog."
   api_key: "9775a026f1ca7d1c6c5af9d94d9595a4"
   app_key: "87ce4a24b5553d2e482ea8a8500e71b8ad4554ff"

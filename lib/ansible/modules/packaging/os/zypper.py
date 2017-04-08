@@ -26,12 +26,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from xml.dom.minidom import parseString as parseXML
-import re
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'curated'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -50,7 +48,8 @@ options:
     name:
         description:
         - Package name C(name) or package specifier.
-        - Can include a version like C(name=1.0), C(name>3.4) or C(name<=2.7). If a version is given, C(oldpackage) is implied and zypper is allowed to update the package within the version range given.
+        - Can include a version like C(name=1.0), C(name>3.4) or C(name<=2.7). If a version is given, C(oldpackage) is implied and zypper is allowed to
+          update the package within the version range given.
         - You can also pass a url or a local path to a rpm file.
         - When using state=latest, this can be '*', which updates all installed packages.
         required: true
@@ -81,7 +80,8 @@ options:
     disable_recommends:
         version_added: "1.8"
         description:
-          - Corresponds to the C(--no-recommends) option for I(zypper). Default behavior (C(yes)) modifies zypper's default behavior; C(no) does install recommended packages.
+          - Corresponds to the C(--no-recommends) option for I(zypper). Default behavior (C(yes)) modifies zypper's default behavior; C(no) does
+            install recommended packages.
         required: false
         default: "yes"
         choices: [ "yes", "no" ]
@@ -103,7 +103,8 @@ options:
     oldpackage:
         version_added: "2.2"
         description:
-          - Adds C(--oldpackage) option to I(zypper). Allows to downgrade packages with less side-effects than force. This is implied as soon as a version is specified as part of the package name.
+          - Adds C(--oldpackage) option to I(zypper). Allows to downgrade packages with less side-effects than force. This is implied as soon as a
+            version is specified as part of the package name.
         required: false
         default: "no"
         choices: [ "yes", "no" ]
@@ -178,6 +179,11 @@ EXAMPLES = '''
     ZYPP_LOCK_TIMEOUT: 20
 '''
 
+import xml
+from ansible.module_utils.pycompat24 import get_exception
+from xml.dom.minidom import parseString as parseXML
+import re
+
 
 def split_name_version(name):
     """splits of the package name and desired version
@@ -239,7 +245,13 @@ def get_installed_state(m, packages):
 def parse_zypper_xml(m, cmd, fail_not_found=True, packages=None):
     rc, stdout, stderr = m.run_command(cmd, check_rc=False)
 
-    dom = parseXML(stdout)
+    try:
+        dom = parseXML(stdout)
+    except xml.parsers.expat.ExpatError:
+        e = get_exception()
+        m.fail_json(msg="Failed to parse zypper xml output: %s" % e,
+                    rc=rc, stdout=stdout, stderr=stderr, cmd=cmd)
+
     if rc == 104:
         # exit code 104 is ZYPPER_EXIT_INF_CAP_NOT_FOUND (no packages found)
         if fail_not_found:

@@ -22,9 +22,10 @@
 
 # pylint: disable=C0111
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -193,7 +194,7 @@ class OVSBridge(object):
         '''Create the bridge'''
         cmd = ['add-br', self.bridge]
         if self.parent and self.vlan: # Add fake bridge
-            cmd += [self.parent, self.vlan]
+            cmd += [self.parent, str(self.vlan)]
 
         if self.set and self.set_opt:
             cmd += ["--", "set"]
@@ -296,6 +297,7 @@ class OVSBridge(object):
                             changed = True
 
         except Exception:
+            raise
             earg = get_exception()
             self.module.fail_json(msg=str(earg))
         # pylint: enable=W0703

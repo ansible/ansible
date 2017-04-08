@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 module: bigip_ssl_certificate
@@ -443,6 +444,8 @@ class BigIpSslCertificate(object):
 
     def delete(self):
         changed = False
+        name = self.params['name']
+        partition = self.params['partition']
 
         check_mode = self.params['check_mode']
 
@@ -514,7 +517,7 @@ def main():
         module.fail_json(msg=str(e))
 
 from ansible.module_utils.basic import *
-from ansible.module_utils.f5 import *
+from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()

@@ -21,9 +21,10 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = r'''
 ---
@@ -38,15 +39,14 @@ options:
   name:
     description:
       - Share name
-    required: yes
+    required: True
   path:
     description:
       - Share directory
-    required: yes
+    required: True
   state:
     description:
       - Specify whether to add C(present) or remove C(absent) the specified share
-    required: no
     choices:
       - present
       - absent
@@ -54,37 +54,37 @@ options:
   description:
     description:
       - Share description
-    required: no
-    default: none
   list:
     description:
       - Specify whether to allow or deny file listing, in case user got no permission on share
-    required: no
     choices:
       - yes
       - no
-    default: none
   read:
     description:
       - Specify user list that should get read access on share, separated by comma.
-    required: no
-    default: none
   change:
     description:
       - Specify user list that should get read and write access on share, separated by comma.
-    required: no
-    default: none
   full:
     description:
       - Specify user list that should get full access on share, separated by comma.
-    required: no
-    default: none
   deny:
     description:
       - Specify user list that should get no access, regardless of implied access on share, separated by comma.
-    required: no
-    default: none
-author: Hans-Joachim Kliemeck (@h0nIg)
+  caching_mode:
+    description:
+      - Set the CachingMode for this share.
+    choices:
+      - BranchCache
+      - Documents
+      - Manual
+      - None
+      - Programs
+      - Unknown
+    default: "Manual"
+    version_added: "2.3"
+author: Hans-Joachim Kliemeck (@h0nIg), David Baumann (@daBONDi)
 '''
 
 EXAMPLES = r'''

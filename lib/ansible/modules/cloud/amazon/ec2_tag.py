@@ -14,16 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
 module: ec2_tag
 short_description: create and remove tag(s) to ec2 resources.
 description:
-    - Creates, removes and lists tags from any EC2 resource.  The resource is referenced by its resource id (e.g. an instance being i-XXXXXXX). It is designed to be used with complex args (tags), see the examples.  This module has a dependency on python-boto.
+    - Creates, removes and lists tags from any EC2 resource.  The resource is referenced by its resource id (e.g. an instance being i-XXXXXXX).
+      It is designed to be used with complex args (tags), see the examples.  This module has a dependency on python-boto.
 version_added: "1.3"
 options:
   resource:
@@ -100,9 +102,8 @@ EXAMPLES = '''
     tags:
       Name: dbserver
       Env: production
-  with_subelements:
-    - ec2_vol.results
-    - volumes
+  with_items:
+    - ec2_vol.volumes
 
 - name: Get EC2 facts
   action: ec2_facts
@@ -135,7 +136,7 @@ def main():
         state = dict(default='present', choices=['present', 'absent', 'list']),
     )
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
@@ -167,8 +168,8 @@ def main():
             for (key, value) in set(tags.items()):
                 if (key, value) not in set(tagdict.items()):
                     dictadd[key] = value
-        tagger = ec2.create_tags(resource, dictadd)
-        gettags = ec2.get_all_tags(filters=filters)
+        if not module.check_mode:
+            ec2.create_tags(resource, dictadd)
         module.exit_json(msg="Tags %s created for resource %s." % (dictadd,resource), changed=True)
 
     if state == 'absent':
@@ -182,8 +183,8 @@ def main():
         for (key, value) in set(tags.items()):
             if (key, value) in set(tagdict.items()):
                 dictremove[key] = value
-        tagger = ec2.delete_tags(resource, dictremove)
-        gettags = ec2.get_all_tags(filters=filters)
+        if not module.check_mode:
+            ec2.delete_tags(resource, dictremove)
         module.exit_json(msg="Tags %s removed for resource %s." % (dictremove,resource), changed=True)
 
     if state == 'list':

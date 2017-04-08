@@ -13,9 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -264,12 +265,12 @@ class JenkinsJob:
         if self.enabled is None:
             return False
 
-        if ( (self.enabled == False and status != "disabled") or (self.enabled == True and status == "disabled") ):
+        if ( (self.enabled is False and status != "disabled") or (self.enabled is True and status == "disabled") ):
             return True
         return False
 
     def switch_state(self):
-        if self.enabled == False:
+        if self.enabled is False:
             self.server.disable_job(self.name)
         else:
             self.server.enable_job(self.name)

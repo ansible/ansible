@@ -14,20 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import datetime
-import sys
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import boto3
-    from botocore.exceptions import ClientError
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -105,6 +95,16 @@ lambda_facts.function.TheName:
     returned: success
     type: dict
 '''
+
+import datetime
+import sys
+
+try:
+    import boto3
+    from botocore.exceptions import ClientError
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
 
 
 def fix_return(node):

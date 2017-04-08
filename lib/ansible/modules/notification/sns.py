@@ -18,15 +18,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 module: sns
 short_description: Send Amazon Simple Notification Service (SNS) messages
 description:
-    - The M(sns) module sends notifications to a topic on your Amazon SNS account
+    - The C(sns) module sends notifications to a topic on your Amazon SNS account
 version_added: 1.6
 author: "Michael J. Schultz (@mjschultz)"
 options:
@@ -202,7 +203,8 @@ def main():
     if not message_structure=='string' and message_attributes:
         module.fail_json(msg="when specifying message_attributes, the message_structure must be set to 'string'; otherwise the attributes will not be sent.")
     elif message_structure=='string' and (email or sqs or sms or http or https):
-        module.fail_json(msg="do not specify non-default message formats when using the 'string' message_structure. they can only be used with the 'json' message_structure.")
+        module.fail_json(msg="do not specify non-default message formats when using the 'string' message_structure. they can only be used with "
+                             "the 'json' message_structure.")
 
     # .publish() takes full ARN topic id, but I'm lazy and type shortnames
     # so do a lookup (topics cannot contain ':', so thats the decider)

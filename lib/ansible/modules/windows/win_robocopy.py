@@ -21,9 +21,10 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = r'''
 ---
@@ -31,7 +32,8 @@ module: win_robocopy
 version_added: "2.2"
 short_description: Synchronizes the contents of two directories using Robocopy.
 description:
-    - Synchronizes the contents of two directories on the remote machine. Under the hood this just calls out to RoboCopy, since that should be available on most modern Windows Systems.
+    - Synchronizes the contents of two directories on the remote machine. Under the hood this just calls out to RoboCopy, since that should be available
+      on most modern Windows Systems.
 options:
   src:
     description:
@@ -47,15 +49,16 @@ options:
     choices:
       - true
       - false
-    defaults: false
+    default: false
     required: false
   purge:
     description:
-      - Deletes any files/directories found in the destination that do not exist in the source (Toggles the `/purge` flag to RoboCopy). If "flags" is set, this will be ignored.
+      - Deletes any files/directories found in the destination that do not exist in the source (Toggles the `/purge` flag to RoboCopy). If "flags" is
+        set, this will be ignored.
     choices:
       - true
       - false
-    defaults: false
+    default: false
     required: false
   flags:
     description:
@@ -64,7 +67,8 @@ options:
     required: false
 author: Corwin Brown (@blakfeld)
 notes:
-    - This is not a complete port of the "synchronize" module. Unlike the "synchronize" module this only performs the sync/copy on the remote machine, not from the master to the remote machine.
+    - This is not a complete port of the "synchronize" module. Unlike the "synchronize" module this only performs the sync/copy on the remote machine,
+      not from the master to the remote machine.
     - This module does not currently support all Robocopy flags.
     - Works on Windows 7, Windows 8, Windows Server 2k8, and Windows Server 2k12
 '''
@@ -98,9 +102,7 @@ EXAMPLES = r'''
   win_robocopy:
     src: C:\DirectoryOne
     dest: C:\DirectoryTwo
-    recurse: True
-    purge: True
-    flags: /XD SOME_DIR /XF SOME_FILE /MT:32
+    flags: /E /PURGE /XD SOME_DIR /XF SOME_FILE /MT:32
 '''
 
 RETURN = r'''
@@ -138,7 +140,7 @@ output:
     description: The output of running the robocopy command.
     returned: success
     type: string
-    sample: "-------------------------------------------------------------------------------\n   ROBOCOPY     ::     Robust File Copy for Windows                              \n-------------------------------------------------------------------------------\n"
+    sample: "----------------------------------------\n   ROBOCOPY     ::     Robust File Copy for Windows         \n----------------------------------------\n"
 msg:
     description: Output intrepreted into a concise message.
     returned: always

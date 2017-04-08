@@ -19,16 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
 
-import os
-import stat
-import fnmatch
-import time
-import re
-
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -65,7 +59,7 @@ options:
         required: true
         aliases: [ "name", "path" ]
         description:
-            - List of paths to the file or directory to search. All paths must be fully qualified.
+            - List of paths of directories to search. All paths must be fully qualified.
     file_type:
         required: false
         description:
@@ -184,6 +178,13 @@ examined:
     type: string
     sample: 34
 '''
+
+import os
+import stat
+import fnmatch
+import time
+import re
+
 
 def pfilter(f, patterns=None, use_regex=False):
     '''filter using glob patterns'''

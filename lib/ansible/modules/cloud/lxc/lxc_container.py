@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -541,6 +542,7 @@ ATTACH_TEMPLATE = """#!/usr/bin/env bash
 pushd "$(getent passwd $(whoami)|cut -f6 -d':')"
     if [[ -f ".bashrc" ]];then
         source .bashrc
+        unset HOSTNAME
     fi
 popd
 

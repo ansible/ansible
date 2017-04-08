@@ -14,7 +14,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
+'''
+DOCUMENTATION:
+    strategy: free
+    short_description: Executes tasks on each host independently
+    description:
+        - Task execution is as fast as possible per host in batch as defined by C(serial) (default all).
+          Ansible will not wait for other hosts to finish the current task before queuing the next task for a host that has finished.
+          Once a host is done with the play, it opens it's slot to a new host that was waiting to start.
+    version_added: "2.0"
+    author: Ansible Core Team
+'''
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -61,7 +71,8 @@ class StrategyModule(StrategyBase):
         work_to_do = True
         while work_to_do and not self._tqm._terminated:
 
-            hosts_left = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
+            hosts_left = self.get_hosts_left(iterator)
+
             if len(hosts_left) == 0:
                 self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
                 result = False

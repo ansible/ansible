@@ -18,11 +18,14 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os.path
+from collections import MutableSequence
 
+from ansible import constants as C
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_text
 from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
 from ansible.plugins.action import ActionBase
 from ansible.plugins import connection_loader
-from ansible import constants as C
 
 boolean = C.mk_boolean
 
@@ -191,7 +194,8 @@ class ActionModule(ActionBase):
         # else only works with delegate_to
         if delegate_to is None and self._connection.transport not in ('ssh', 'paramiko', 'local', 'docker'):
             result['failed'] = True
-            result['msg'] = "synchronize uses rsync to function. rsync needs to connect to the remote host via ssh, docker client or a direct filesystem copy. This remote host is being accessed via %s instead so it cannot work." % self._connection.transport
+            result['msg'] = ("synchronize uses rsync to function. rsync needs to connect to the remote host via ssh, docker client or a direct filesystem "
+                             "copy. This remote host is being accessed via %s instead so it cannot work." % self._connection.transport)
             return result
 
         use_ssh_args = _tmp_args.pop('use_ssh_args', None)
@@ -273,6 +277,20 @@ class ActionModule(ActionBase):
                 localhost_shell = os.path.basename(C.DEFAULT_EXECUTABLE)
             self._play_context.shell = localhost_shell
 
+            # Unike port, there can be only one executable
+            localhost_executable = None
+            for host in C.LOCALHOST:
+                localhost_vars = task_vars['hostvars'].get(host, {})
+                for executable_var in MAGIC_VARIABLE_MAPPING['executable']:
+                    localhost_executable = localhost_vars.get(executable_var, None)
+                    if localhost_executable:
+                        break
+                if localhost_executable:
+                    break
+            else:
+                localhost_executable = C.DEFAULT_EXECUTABLE
+            self._play_context.executable = localhost_executable
+
             new_connection = connection_loader.get('local', self._play_context, new_stdin)
             self._connection = new_connection
             self._override_module_replaced_vars(task_vars)
@@ -349,9 +367,7 @@ class ActionModule(ActionBase):
             # to.
             self._play_context.become = False
 
-        # make sure rsync path is quoted.
-        if rsync_path:
-            _tmp_args['rsync_path'] = '"%s"' % rsync_path
+        _tmp_args['rsync_path'] = rsync_path
 
         if use_ssh_args:
             ssh_args = [
@@ -364,16 +380,23 @@ class ActionModule(ActionBase):
         # If launching synchronize against docker container
         # use rsync_opts to support container to override rsh options
         if self._remote_transport in [ 'docker' ]:
-            if not isinstance(_tmp_args.get('rsync_opts'), list):
-                _tmp_args['rsync_opts'] = self._task.args.get('rsync_opts', '').split(' ')
+            # Replicate what we do in the module argumentspec handling for lists
+            if not isinstance(_tmp_args.get('rsync_opts'), MutableSequence):
+                tmp_rsync_opts = _tmp_args.get('rsync_opts', [])
+                if isinstance(tmp_rsync_opts, string_types):
+                    tmp_rsync_opts = tmp_rsync_opts.split(',')
+                elif isinstance(tmp_rsync_opts, (int, float)):
+                    tmp_rsync_opts = [to_text(tmp_rsync_opts)]
+                _tmp_args['rsync_opts'] = tmp_rsync_opts
+
             if '--blocking-io' not in _tmp_args['rsync_opts']:
                 _tmp_args['rsync_opts'].append('--blocking-io')
             if become and self._play_context.become_user:
-                _tmp_args['rsync_opts'].append("--rsh='%s exec -u %s -i'" % (self._docker_cmd, self._play_context.become_user))
+                _tmp_args['rsync_opts'].append("--rsh=%s exec -u %s -i" % (self._docker_cmd, self._play_context.become_user))
             elif user is not None:
-                _tmp_args['rsync_opts'].append("--rsh='%s exec -u %s -i'" % (self._docker_cmd, user))
+                _tmp_args['rsync_opts'].append("--rsh=%s exec -u %s -i" % (self._docker_cmd, user))
             else:
-                _tmp_args['rsync_opts'].append("--rsh='%s exec -i'" % self._docker_cmd)
+                _tmp_args['rsync_opts'].append("--rsh=%s exec -i" % self._docker_cmd)
 
         # run the module and store the result
         result.update(self._execute_module('synchronize', module_args=_tmp_args, task_vars=task_vars))
@@ -382,5 +405,6 @@ class ActionModule(ActionBase):
             # Emit a warning about using python3 because synchronize is
             # somewhat unique in running on localhost
             result['exception'] = result['msg']
-            result['msg'] = 'SyntaxError parsing module.  Perhaps invoking "python" on your local (or delegate_to) machine invokes python3.  You can set ansible_python_interpreter for localhost (or the delegate_to machine) to the location of python2 to fix this'
+            result['msg'] = ('SyntaxError parsing module.  Perhaps invoking "python" on your local (or delegate_to) machine invokes python3. '
+                             'You can set ansible_python_interpreter for localhost (or the delegate_to machine) to the location of python2 to fix this')
         return result

@@ -19,15 +19,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import re
-import socket
-import json
-import signal
+import logging
 
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.plugins.connection import ConnectionBase, ensure_connect
-from ansible.module_utils.six.moves import StringIO
 
 try:
     from ncclient import manager
@@ -43,24 +39,28 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+logging.getLogger('ncclient').setLevel(logging.INFO)
+
+
 class Connection(ConnectionBase):
-    ''' NetConf base connections '''
+    ''' NetConf connections '''
 
     transport = 'netconf'
     has_pipelining = False
-    action_handler = 'network'
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
         self._network_os = self._play_context.network_os or 'default'
-        display.vvv('network_os is set to %s' % self._network_os, play_context.remote_addr)
+        display.display('network_os is set to %s' % self._network_os, log_only=True)
 
         self._manager = None
         self._connected = False
 
     def _connect(self):
         super(Connection, self)._connect()
+
+        display.display('ssh connection done, stating ncclient', log_only=True)
 
         allow_agent = True
         if self._play_context.password is not None:
@@ -69,6 +69,9 @@ class Connection(ConnectionBase):
         key_filename = None
         if self._play_context.private_key_file:
             key_filename = os.path.expanduser(self._play_context.private_key_file)
+
+        if not self._network_os:
+            raise AnsibleConnectionFailure('network_os must be set for netconf connections')
 
         try:
             self._manager = manager.connect(
@@ -89,6 +92,8 @@ class Connection(ConnectionBase):
         if not self._manager.connected:
             return (1, '', 'not connected')
 
+        display.display('ncclient manager object created successfully', log_only=True)
+
         self._connected = True
         return (0, self._manager.session_id, '')
 
@@ -102,6 +107,9 @@ class Connection(ConnectionBase):
     def exec_command(self, request):
         """Sends the request to the node and returns the reply
         """
+        if request == 'open_session()':
+            return (0, 'ok', '')
+
         req = to_ele(request)
         if req is None:
             return (1, '', 'unable to parse request')
@@ -113,9 +121,10 @@ class Connection(ConnectionBase):
 
         return (0, reply.data_xml, '')
 
-    def fetch_file(self):
+    def put_file(self, in_path, out_path):
+        """Transfer a file from local to remote"""
         pass
 
-    def put_file(self):
+    def fetch_file(self, in_path, out_path):
+        """Fetch a file from remote to local"""
         pass
-

@@ -16,11 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'core',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
@@ -33,9 +32,7 @@ description:
     for segmenting configuration into sections.  This module provides
     an implementation for working with IOS configuration sections in
     a deterministic way.
-notes:
-  - Provider arguments are no longer supported.  Network tasks should now
-    specify connection plugin network_cli instead.
+extends_documentation_fragment: ios
 options:
   lines:
     description:
@@ -204,33 +201,22 @@ backup_path:
   returned: when backup is yes
   type: path
   sample: /playbooks/ansible/backup/ios_config.2016-07-16@22:28:34
-start:
-  description: The time the job started
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:15.126146"
-end:
-  description: The time the job ended
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:25.595612"
-delta:
-  description: The time elapsed to perform all operations
-  returned: always
-  type: str
-  sample: "0:00:10.469466"
 """
 import re
 import time
 
-from ansible.module_utils.local import LocalAnsibleModule
-from ansible.module_utils.ios import load_config, get_config, run_commands
+from ansible.module_utils.ios import run_commands, get_config, load_config
+from ansible.module_utils.ios import get_defaults_flag
+from ansible.module_utils.ios import ios_argument_spec
+from ansible.module_utils.ios import check_args as ios_check_args
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.netcfg import NetworkConfig, dumps
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.network import NET_TRANSPORT_ARGS, _transitional_argument_spec
 
 
 def check_args(module, warnings):
+    ios_check_args(module, warnings)
     if module.params['multiline_delimiter']:
         if len(module.params['multiline_delimiter']) != 1:
             module.fail_json(msg='multiline_delimiter value can only be a '
@@ -239,14 +225,6 @@ def check_args(module, warnings):
         warnings.append('The force argument is deprecated as of Ansible 2.2, '
                         'please use match=none instead.  This argument will '
                         'be removed in the future')
-
-    for key in NET_TRANSPORT_ARGS:
-        if module.params[key]:
-            warnings.append(
-                'network provider arguments are no longer supported.  Please '
-                'use connection: network_cli for the task'
-            )
-            break
 
 def extract_banners(config):
     banners = {}
@@ -289,7 +267,7 @@ def get_running_config(module):
     if not contents:
         flags = []
         if module.params['defaults']:
-            flags.append('all')
+            flags.append(get_defaults_flag(module))
         contents = get_config(module, flags=flags)
     contents, banners = extract_banners(contents)
     return NetworkConfig(indent=1, contents=contents), banners
@@ -335,7 +313,7 @@ def main():
         save=dict(type='bool', default=False),
     )
 
-    argument_spec.update(_transitional_argument_spec())
+    argument_spec.update(ios_argument_spec)
 
     mutually_exclusive = [('lines', 'src')]
 
@@ -343,18 +321,19 @@ def main():
                    ('match', 'exact', ['lines']),
                    ('replace', 'block', ['lines'])]
 
-    module = LocalAnsibleModule(argument_spec=argument_spec,
-                                mutually_exclusive=mutually_exclusive,
-                                required_if=required_if,
-                                supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           mutually_exclusive=mutually_exclusive,
+                           required_if=required_if,
+                           supports_check_mode=True)
 
     if module.params['force'] is True:
         module.params['match'] = 'none'
 
+    result = {'changed': False}
+
     warnings = list()
     check_args(module, warnings)
-
-    result = {'changed': False, 'warnings': warnings}
+    result['warnings'] = warnings
 
     if any((module.params['lines'], module.params['src'])):
         match = module.params['match']
@@ -384,6 +363,7 @@ def main():
                 if module.params['after']:
                     commands.extend(module.params['after'])
 
+            result['commands'] = commands
             result['updates'] = commands
             result['banners'] = banners
 
@@ -402,7 +382,7 @@ def main():
 
     if module.params['save']:
         if not module.check_mode:
-            run_commands(module, ['copy running-config startup-config'])
+            run_commands(module, ['copy running-config startup-config\r'])
         result['changed'] = True
 
     module.exit_json(**result)

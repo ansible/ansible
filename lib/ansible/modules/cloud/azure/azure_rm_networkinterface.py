@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -137,7 +138,6 @@ options:
             - When a default security group is created for a Linux host a rule will be added allowing inbound TCP
               connections to the default SSH port 22, and for a Windows host rules will be added allowing inbound
               access to RDP ports 3389 and 5986. Override the default ports by providing a list of open ports.
-        type: list
         required: false
         default: null
 extends_documentation_fragment:
@@ -151,14 +151,14 @@ author:
 
 EXAMPLES = '''
     - name: Create a network interface with minimal parameters
-        azure_rm_networkinterface:
+      azure_rm_networkinterface:
             name: nic001
             resource_group: Testing
             virtual_network_name: vnet001
             subnet_name: subnet001
 
-     - name: Create a network interface with private IP address only (no Public IP)
-        azure_rm_networkinterface:
+    - name: Create a network interface with private IP address only (no Public IP)
+      azure_rm_networkinterface:
             name: nic001
             resource_group: Testing
             virtual_network_name: vnet001
@@ -166,7 +166,7 @@ EXAMPLES = '''
             public_ip: no
 
     - name: Create a network interface for use in a Windows host (opens RDP port) with custom RDP port
-        azure_rm_networkinterface:
+      azure_rm_networkinterface:
             name: nic002
             resource_group: Testing
             virtual_network_name: vnet001
@@ -175,7 +175,7 @@ EXAMPLES = '''
             rdp_port: 3399
 
     - name: Create a network interface using existing security group and public IP
-        azure_rm_networkinterface:
+      azure_rm_networkinterface:
             name: nic003
             resource_group: Testing
             virtual_network_name: vnet001
@@ -184,7 +184,7 @@ EXAMPLES = '''
             public_ip_address_name: publicip001
 
     - name: Delete network interface
-        azure_rm_networkinterface:
+      azure_rm_networkinterface:
             resource_group: Testing
             name: nic003
             state: absent

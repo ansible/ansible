@@ -21,15 +21,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 module: slack
 short_description: Send Slack notifications
 description:
-    - The M(slack) module sends notifications to U(http://slack.com) via the Incoming WebHook integration
+    - The C(slack) module sends notifications to U(http://slack.com) via the Incoming WebHook integration
 version_added: "1.6"
 author: "Ramon de la Fuente (@ramondelafuente)"
 options:
@@ -162,7 +163,7 @@ EXAMPLES = """
         title: System load
         fields:
           - title: System A
-            value: load average: 0,74, 0,66, 0,63"
+            value: "load average: 0,74, 0,66, 0,63"
             short: True
           - title: System B
             value: 'load average: 5,16, 4,64, 2,43'

@@ -16,6 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+
 DOCUMENTATION = '''
 ---
 module: stacki_host
@@ -58,7 +63,7 @@ options:
   force_install:
     description:
      - Set value to True to force node into install state if it already exists in stacki.
-    requiored: False
+    required: False
 
 author: "Hugh Ma <Hugh.Ma@flextronics.com>"
 '''

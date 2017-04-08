@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -100,10 +101,10 @@ def _get_fs_size(fssize_cmd, dev, module):
         rc, size, err = module.run_command("%s %s" % (cmd, dev))
         if rc == 0:
             for line in size.splitlines():
-                #if 'data' in line:
-                if 'data ' in line:
-                    block_size = int(line.split('=')[2].split()[0])
-                    block_count = int(line.split('=')[3].split(',')[0])
+                col = line.split('=')
+                if col[0].strip() == 'data':
+                    block_size = int(col[2].split()[0])
+                    block_count = int(col[3].split(',')[0])
                     break
         else:
             module.fail_json(msg="Failed to get block count and block size of %s with %s" % (dev, cmd), rc=rc, err=err )
@@ -208,9 +209,9 @@ def main():
     rc,raw_fs,err = module.run_command("%s -c /dev/null -o value -s TYPE %s" % (cmd, dev))
     fs = raw_fs.strip()
 
-    if fs == fstype and resizefs == False and not force:
+    if fs == fstype and resizefs is False and not force:
         module.exit_json(changed=False)
-    elif fs == fstype and resizefs == True:
+    elif fs == fstype and resizefs is True:
         # Get dev and fs size and compare
         devsize_in_bytes = _get_dev_size(dev, module)
         fssize_in_bytes = _get_fs_size(fssize_cmd, dev, module)

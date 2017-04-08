@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -43,7 +44,8 @@ options:
   s3_bucket_prefix:
     description:
       - bucket to place CloudTrail in.
-      - this bucket should exist and have the proper policy. See U(http://docs.aws.amazon.com/awscloudtrail/latest/userguide/aggregating_logs_regions_bucket_policy.html)
+      - this bucket should exist and have the proper policy.
+        See U(http://docs.aws.amazon.com/awscloudtrail/latest/userguide/aggregating_logs_regions_bucket_policy.html)
       - required when state=enabled.
     required: false
   s3_key_prefix:
@@ -83,7 +85,8 @@ extends_documentation_fragment: aws
 
 EXAMPLES = """
   - name: enable cloudtrail
-    local_action: cloudtrail
+    local_action:
+      module: cloudtrail
       state: enabled
       name: main
       s3_bucket_name: ourbucket
@@ -91,7 +94,8 @@ EXAMPLES = """
       region: us-east-1
 
   - name: enable cloudtrail with different configuration
-    local_action: cloudtrail
+    local_action:
+      module: cloudtrail
       state: enabled
       name: main
       s3_bucket_name: ourbucket2
@@ -99,7 +103,8 @@ EXAMPLES = """
       region: us-east-1
 
   - name: remove cloudtrail
-    local_action: cloudtrail
+    local_action:
+      module: cloudtrail
       state: disabled
       name: main
       region: us-east-1
@@ -211,12 +216,14 @@ def main():
               results['view'].get('S3KeyPrefix', '')      != s3_key_prefix or \
               results['view']['IncludeGlobalServiceEvents'] != include_global_events:
                 if not module.check_mode:
-                    results['update'] = cf_man.update(name=ct_name, s3_bucket_name=s3_bucket_name, s3_key_prefix=s3_key_prefix, include_global_service_events=include_global_events)
+                    results['update'] = cf_man.update(name=ct_name, s3_bucket_name=s3_bucket_name, s3_key_prefix=s3_key_prefix,
+                                                      include_global_service_events=include_global_events)
                 results['changed'] = True
         else:
             if not module.check_mode:
                 # doesn't exist. create it.
-                results['enable'] = cf_man.enable(name=ct_name, s3_bucket_name=s3_bucket_name, s3_key_prefix=s3_key_prefix, include_global_service_events=include_global_events)
+                results['enable'] = cf_man.enable(name=ct_name, s3_bucket_name=s3_bucket_name, s3_key_prefix=s3_key_prefix,
+                                                  include_global_service_events=include_global_events)
             results['changed'] = True
 
         # given cloudtrail should exist now. Enable the logging.

@@ -4,6 +4,7 @@ import yaml
 import inspect
 import collections
 
+from ansible.module_utils.six import string_types
 from ansible.modules.cloud.openstack import os_server
 
 
@@ -26,7 +27,7 @@ def params_from_doc(func):
     for task in cfg:
         for module, params in task.items():
             for k, v in params.items():
-                if k in ['nics'] and type(v) == str:
+                if k in ['nics'] and isinstance(v, string_types):
                     params[k] = [v]
         task[module] = collections.defaultdict(str,
                                                params)

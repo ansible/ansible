@@ -34,7 +34,7 @@ Ok, let's get going with an example.  We'll use Python.  For starters, save this
 
     date = str(datetime.datetime.now())
     print json.dumps({
-        "Hello world!" : date
+        "time" : date
     })
 
 .. _module_testing:

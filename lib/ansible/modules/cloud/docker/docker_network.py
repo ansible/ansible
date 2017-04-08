@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 module: docker_network
@@ -100,7 +101,7 @@ options:
 extends_documentation_fragment:
     - docker
 
-authors:
+author:
     - "Ben Keith (@keitwb)"
     - "Chris Houseknecht (@chouseknecht)"
 

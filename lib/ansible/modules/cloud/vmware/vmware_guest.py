@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -45,7 +46,7 @@ options:
             - What state should the virtual machine be in?
             - If C(state) is set to C(present) and VM exists, ensure the VM configuration conforms to task arguments
         required: True
-        choices: ['present', 'absent', 'poweredon', 'poweredoff', 'restarted', 'suspended']
+        choices: ['present', 'absent', 'poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest']
    name:
         description:
             - Name of the VM to work with
@@ -81,7 +82,9 @@ options:
         description:
             - "Set the guest ID (Debian, RHEL, Windows...)"
             - "This field is required when creating a VM"
-            - "Valid values are referenced here: https://www.vmware.com/support/developer/converter-sdk/conv55_apireference/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html"
+            - >
+              Valid values are referenced here:
+              https://www.vmware.com/support/developer/converter-sdk/conv55_apireference/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html
         version_added: "2.3"
    disk:
         description:
@@ -100,13 +103,14 @@ options:
         description:
             - Wait until vCenter detects an IP address for the VM
             - This requires vmware-tools (vmtoolsd) to properly work after creation
+        default: False
    force:
         description:
             - Ignore warnings and complete the actions
    datacenter:
         description:
             - Destination datacenter for the deploy operation
-        required: True
+        default: ha-datacenter
    cluster:
         description:
             - The cluster name where the VM will run.
@@ -132,48 +136,32 @@ options:
           - Add an optional C(dns_servers) or C(domain) entry per interface (Windows)
           - Add an optional C(device_type) to configure the virtual NIC (pcnet32, vmxnet2, vmxnet3, e1000, e1000e)
         version_added: "2.3"
-   snapshot_op:
-        description:
-          - A key, value pair of snapshot operation types and their additional required parameters.
-          - Beware that this functionality will disappear in v2.3 and move into module C(vmware_guest_snapshot)
-        version_added: "2.3"
    customization:
         description:
           - "Parameters to customize template"
           - "Common parameters (Linux/Windows):"
-          - "  dns_servers (list): List of DNS servers to configure"
-          - "  dns_suffix (list): List of domain suffixes, aka DNS search path (default: C(domain) parameter)"
-          - "  domain (string): DNS domain name to use"
-          - "  hostname (string): Computer hostname (default: C(name) parameter)"
+          - "  C(dns_servers) (list): List of DNS servers to configure"
+          - "  C(dns_suffix) (list): List of domain suffixes, aka DNS search path (default: C(domain) parameter)"
+          - "  C(domain) (string): DNS domain name to use"
+          - "  C(hostname) (string): Computer hostname (default: C(name) parameter)"
           - "Parameters related to windows customization:"
-          - "  autologon (bool): Auto logon after VM customization (default: False)"
-          - "  autologoncount (int): Number of autologon after reboot (default: 1)"
-          - "  domainadmin (string): User used to join in AD domain (mandatory with joindomain)"
-          - "  domainadminpassword (string): Password used to join in AD domain (mandatory with joindomain)"
-          - "  fullname (string): Server owner name (default: Administrator)"
-          - "  joindomain (string): AD domain to join (Not compatible with C(joinworkgroup))"
-          - "  joinworkgroup (string): Workgroup to join (Not compatible with C(joindomain), default: WORKGROUP)"
-          - "  orgname (string): Organisation name (default: ACME)"
-          - "  password (string): Local administrator password (mandatory)"
-          - "  productid (string): Product ID"
-          - "  runonce (list): List of commands to run at first user logon"
-          - "  timezone (int): Timezone (default: 85) See https://msdn.microsoft.com/en-us/library/ms912391(v=winembedded.11).aspx"
+          - "  C(autologon) (bool): Auto logon after VM customization (default: False)"
+          - "  C(autologoncount) (int): Number of autologon after reboot (default: 1)"
+          - "  C(domainadmin) (string): User used to join in AD domain (mandatory with joindomain)"
+          - "  C(domainadminpassword) (string): Password used to join in AD domain (mandatory with joindomain)"
+          - "  C(fullname) (string): Server owner name (default: Administrator)"
+          - "  C(joindomain) (string): AD domain to join (Not compatible with C(joinworkgroup))"
+          - "  C(joinworkgroup) (string): Workgroup to join (Not compatible with C(joindomain), default: WORKGROUP)"
+          - "  C(orgname) (string): Organisation name (default: ACME)"
+          - "  C(password) (string): Local administrator password (mandatory)"
+          - "  C(productid) (string): Product ID"
+          - "  C(runonce) (list): List of commands to run at first user logon"
+          - "  C(timezone) (int): Timezone (default: 85) See U(https://msdn.microsoft.com/en-us/library/ms912391(v=winembedded.11).aspx)"
         version_added: "2.3"
 extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# Gather facts only
-  - name: gather the VM facts
-    vmware_guest:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      validate_certs: no
-      esxi_hostname: 192.168.1.117
-      uuid: 421e4592-c069-924d-ce20-7e7533fab926
-    register: facts
-
 # Create a VM from a template
   - name: create the VM
     vmware_guest:
@@ -202,6 +190,7 @@ EXAMPLES = '''
         mac: 'aa:bb:dd:aa:00:14'
       template: template_el7
       wait_for_ip_address: yes
+    delegate_to: localhost
     register: deploy
 
 # Clone a VM from Template and customize
@@ -234,6 +223,7 @@ EXAMPLES = '''
         password: new_vm_password
         runonce:
         - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\Enable-WinRM.ps1 -ForceNewSSLCert
+    delegate_to: localhost
 
 # Create a VM template
   - name: create a VM template
@@ -258,6 +248,7 @@ EXAMPLES = '''
         num_cpus: 1
         scsi: lsilogic
       wait_for_ip_address: yes
+    delegate_to: localhost
     register: deploy
 
 # Rename a VM (requires the VM's uuid)
@@ -268,6 +259,7 @@ EXAMPLES = '''
       uuid: 421e4592-c069-924d-ce20-7e7533fab926
       name: new_name
       state: present
+    delegate_to: localhost
 
 # Remove a VM by uuid
   - vmware_guest:
@@ -276,68 +268,7 @@ EXAMPLES = '''
       password: vmware
       uuid: 421e4592-c069-924d-ce20-7e7533fab926
       state: absent
-
-### Snapshot Operations
-
-# BEWARE: This functionality will move into vmware_guest_snapshot before release !
-
-# Create snapshot
-  - vmware_guest:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      name: dummy_vm
-      snapshot_op:
-        op_type: create
-        name: snap1
-        description: snap1_description
-
-# Remove a snapshot
-  - vmware_guest:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      name: dummy_vm
-      snapshot_op:
-        op_type: remove
-        name: snap1
-
-# Revert to a snapshot
-  - vmware_guest:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      name: dummy_vm
-      snapshot_op:
-        op_type: revert
-        name: snap1
-
-# List all snapshots of a VM
-  - vmware_guest:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      name: dummy_vm
-      snapshot_op:
-        op_type: list_all
-
-# List current snapshot of a VM
-  - vmware_guest:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      name: dummy_vm
-      snapshot_op:
-        op_type: list_current
-
-# Remove all snapshots of a VM
-  - vmware_guest:
-      hostname: 192.168.1.209
-      username: administrator@vsphere.local
-      password: vmware
-      name: dummy_vm
-      snapshot_op:
-        op_type: remove_all
+    delegate_to: localhost
 '''
 
 RETURN = """
@@ -356,7 +287,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.vmware import get_all_objs, connect_to_api
+from ansible.module_utils.vmware import get_all_objs, connect_to_api, gather_vm_facts
 
 try:
     import json
@@ -560,17 +491,19 @@ class PyVmomiHelper(object):
         facts = self.gather_facts(vm)
         expected_state = state.replace('_', '').lower()
         current_state = facts['hw_power_status'].lower()
-        result = {}
+        result = dict(
+            changed=False,
+            failed=False,
+        )
 
         # Need Force
         if not force and current_state not in ['poweredon', 'poweredoff']:
-            return "VM is in %s power state. Force is required!" % current_state
+            result['failed'] = True
+            result['msg'] = "VM is in %s power state. Force is required!" % current_state
+            return result
 
-        # State is already true
-        if current_state == expected_state:
-            result['changed'] = False
-            result['failed'] = False
-        else:
+        # State is not already true
+        if current_state != expected_state:
             task = None
             try:
                 if expected_state == 'poweredoff':
@@ -583,94 +516,49 @@ class PyVmomiHelper(object):
                     if current_state in ('poweredon', 'poweringon', 'resetting', 'poweredoff'):
                         task = vm.Reset()
                     else:
-                        result = {'changed': False, 'failed': True,
-                                  'msg': "Cannot restart VM in the current state %s" % current_state}
+                        result['failed'] = True
+                        result['msg'] = "Cannot restart VM in the current state %s" % current_state
+
                 elif expected_state == 'suspended':
                     if current_state in ('poweredon', 'poweringon'):
                         task = vm.Suspend()
                     else:
-                        result = {'changed': False, 'failed': True,
-                                  'msg': 'Cannot suspend VM in the current state %s' % current_state}
+                        result['failed'] = True
+                        result['msg'] = 'Cannot suspend VM in the current state %s' % current_state
+
+                elif expected_state in ['shutdownguest', 'rebootguest']:
+                    if current_state == 'poweredon' and vm.guest.toolsRunningStatus == 'guestToolsRunning':
+                        if expected_state == 'shutdownguest':
+                            task = vm.ShutdownGuest()
+                        else:
+                            task = vm.RebootGuest()
+                    else:
+                        result['failed'] = True
+                        result['msg'] = "VM %s must be in poweredon state & tools should be installed for guest shutdown/reboot" % vm.name
 
             except Exception:
                 e = get_exception()
-                result = {'changed': False, 'failed': True, 'msg': e}
+                result['failed'] = True
+                result['msg'] = str(e)
 
             if task:
                 self.wait_for_task(task)
                 if task.info.state == 'error':
-                    result = {'changed': False, 'failed': True, 'msg': task.info.error.msg}
+                    result['failed'] = True
+                    result['msg'] = str(task.info.error.msg)
                 else:
-                    result = {'changed': True, 'failed': False}
+                    result['changed'] = True
 
         # need to get new metadata if changed
         if result['changed']:
             newvm = self.getvm(uuid=vm.config.uuid)
             facts = self.gather_facts(newvm)
             result['instance'] = facts
+
         return result
 
     def gather_facts(self, vm):
-        """ Gather facts from vim.VirtualMachine object. """
-        facts = {
-            'module_hw': True,
-            'hw_name': vm.config.name,
-            'hw_power_status': vm.summary.runtime.powerState,
-            'hw_guest_full_name': vm.summary.guest.guestFullName,
-            'hw_guest_id': vm.summary.guest.guestId,
-            'hw_product_uuid': vm.config.uuid,
-            'hw_processor_count': vm.config.hardware.numCPU,
-            'hw_memtotal_mb': vm.config.hardware.memoryMB,
-            'hw_interfaces': [],
-            'ipv4': None,
-            'ipv6': None,
-            'annotation': vm.config.annotation,
-            'customvalues': {},
-        }
-
-        cfm = self.content.customFieldsManager
-        # Resolve customvalues
-        for value_obj in vm.summary.customValue:
-            kn = value_obj.key
-            if cfm is not None and cfm.field:
-                for f in cfm.field:
-                    if f.key == value_obj.key:
-                        kn = f.name
-                        # Exit the loop immediately, we found it
-                        break
-
-            facts['customvalues'][kn] = value_obj.value
-
-        netDict = {}
-        for device in vm.guest.net:
-            netDict[device.macAddress] = list(device.ipAddress)
-
-        for k, v in iteritems(netDict):
-            for ipaddress in v:
-                if ipaddress:
-                    if '::' in ipaddress:
-                        facts['ipv6'] = ipaddress
-                    else:
-                        facts['ipv4'] = ipaddress
-
-        ethernet_idx = 0
-        for idx, entry in enumerate(vm.config.hardware.device):
-            if not hasattr(entry, 'macAddress'):
-                continue
-
-            factname = 'hw_eth' + str(ethernet_idx)
-            facts[factname] = {
-                'addresstype': entry.addressType,
-                'label': entry.deviceInfo.label,
-                'macaddress': entry.macAddress,
-                'ipaddresses': netDict.get(entry.macAddress, None),
-                'macaddress_dash': entry.macAddress.replace(':', '-'),
-                'summary': entry.deviceInfo.summary,
-            }
-            facts['hw_interfaces'].append('eth' + str(ethernet_idx))
-            ethernet_idx += 1
-
-        return facts
+        return gather_vm_facts(self.content, vm)
 
     def remove_vm(self, vm):
         # https://www.vmware.com/support/developer/converter-sdk/conv60_apireference/vim.ManagedEntity.html#destroy
@@ -713,6 +601,7 @@ class PyVmomiHelper(object):
             # memory_mb is mandatory for VM creation
             elif vm_creation and not self.should_deploy_from_template():
                 self.module.fail_json(msg="hardware.memory_mb attribute is mandatory for VM creation")
+
 
     def get_vm_network_interfaces(self, vm=None):
         if vm is None:
@@ -793,7 +682,9 @@ class PyVmomiHelper(object):
                 # VDS switch
                 pg_obj = get_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_devices[key]['name'])
 
-                if nic.device.backing and ( nic.device.backing.port.portgroupKey != pg_obj.key or nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid ):
+                if (nic.device.backing and
+                        (nic.device.backing.port.portgroupKey != pg_obj.key or
+                         nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid)):
                     nic_change_detected = True
 
                 dvs_port_connection = vim.dvs.PortConnection()
@@ -801,6 +692,7 @@ class PyVmomiHelper(object):
                 dvs_port_connection.switchUuid = pg_obj.config.distributedVirtualSwitch.uuid
                 nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
                 nic.device.backing.port = dvs_port_connection
+                nic_change_detected = True
             else:
                 # vSwitch
                 if not isinstance(nic.device.backing, vim.vm.device.VirtualEthernetCard.NetworkBackingInfo):
@@ -909,7 +801,8 @@ class PyVmomiHelper(object):
 
             if 'joindomain' in self.params['customization']:
                 if 'domainadmin' not in self.params['customization'] or 'domainadminpassword' not in self.params['customization']:
-                    self.module.fail_json(msg="'domainadmin' and 'domainadminpassword' entries are mandatory in 'customization' section to use joindomain feature")
+                    self.module.fail_json(msg="'domainadmin' and 'domainadminpassword' entries are mandatory in 'customization' section to use "
+                                              "joindomain feature")
 
                 ident.identification.domainAdmin = str(self.params['customization'].get('domainadmin'))
                 ident.identification.joinDomain = str(self.params['customization'].get('joindomain'))
@@ -1190,7 +1083,7 @@ class PyVmomiHelper(object):
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
 
-        if len(self.params['customization']) > 0:
+        if len(self.params['customization']) > 0 or len(self.params['networks']) > 0:
             self.customize_vm(vm_obj=vm_obj)
 
         try:
@@ -1282,7 +1175,7 @@ class PyVmomiHelper(object):
                 return {'changed': change_applied, 'failed': True, 'msg': task.info.error.msg}
 
         # Rename VM
-        if self.params['uuid'] and self.params['name'] and self.params['name'] != vm.config.name:
+        if self.params['uuid'] and self.params['name'] and self.params['name'] != self.current_vm_obj.config.name:
             task = self.current_vm_obj.Rename_Task(self.params['name'])
             self.wait_for_task(task)
             change_applied = True
@@ -1292,8 +1185,7 @@ class PyVmomiHelper(object):
 
         # Mark VM as Template
         if self.params['is_template']:
-            task = self.current_vm_obj.MarkAsTemplate()
-            self.wait_for_task(task)
+            self.current_vm_obj.MarkAsTemplate()
             change_applied = True
 
         vm_facts = self.gather_facts(self.current_vm_obj)
@@ -1321,110 +1213,6 @@ class PyVmomiHelper(object):
                 thispoll += 1
 
         return facts
-
-    def list_snapshots_recursively(self, snapshots):
-        snapshot_data = []
-        for snapshot in snapshots:
-            snap_text = 'Id: %s; Name: %s; Description: %s; CreateTime: %s; State: %s' % (snapshot.id, snapshot.name,
-                                                                                          snapshot.description,
-                                                                                          snapshot.createTime,
-                                                                                          snapshot.state)
-            snapshot_data.append(snap_text)
-            snapshot_data = snapshot_data + self.list_snapshots_recursively(snapshot.childSnapshotList)
-        return snapshot_data
-
-    def get_snapshots_by_name_recursively(self, snapshots, snapname):
-        snap_obj = []
-        for snapshot in snapshots:
-            if snapshot.name == snapname:
-                snap_obj.append(snapshot)
-            else:
-                snap_obj = snap_obj + self.get_snapshots_by_name_recursively(snapshot.childSnapshotList, snapname)
-        return snap_obj
-
-    def get_current_snap_obj(self, snapshots, snapob):
-        snap_obj = []
-        for snapshot in snapshots:
-            if snapshot.snapshot == snapob:
-                snap_obj.append(snapshot)
-            snap_obj = snap_obj + self.get_current_snap_obj(snapshot.childSnapshotList, snapob)
-        return snap_obj
-
-    def snapshot_vm(self, vm, guest, snapshot_op):
-        """ To perform snapshot operations create/remove/revert/list_all/list_current/remove_all """
-
-        snapshot_op_name = None
-        try:
-            snapshot_op_name = snapshot_op['op_type']
-        except KeyError:
-            self.module.fail_json(msg="Specify op_type - create/remove/revert/list_all/list_current/remove_all")
-
-        task = None
-        result = {}
-
-        if snapshot_op_name not in ['create', 'remove', 'revert', 'list_all', 'list_current', 'remove_all']:
-            self.module.fail_json(msg="Specify op_type - create/remove/revert/list_all/list_current/remove_all")
-
-        if snapshot_op_name != 'create' and vm.snapshot is None:
-            self.module.exit_json(msg="VM - %s doesn't have any snapshots" % guest)
-
-        if snapshot_op_name == 'create':
-            try:
-                snapname = snapshot_op['name']
-            except KeyError:
-                self.module.fail_json(msg="specify name & description(optional) to create a snapshot")
-
-            if 'description' in snapshot_op:
-                snapdesc = snapshot_op['description']
-            else:
-                snapdesc = ''
-
-            dumpMemory = False
-            quiesce = False
-            task = vm.CreateSnapshot(snapname, snapdesc, dumpMemory, quiesce)
-
-        elif snapshot_op_name in ['remove', 'revert']:
-            try:
-                snapname = snapshot_op['name']
-            except KeyError:
-                self.module.fail_json(msg="specify snapshot name")
-
-            snap_obj = self.get_snapshots_by_name_recursively(vm.snapshot.rootSnapshotList, snapname)
-
-            # if len(snap_obj) is 0; then no snapshots with specified name
-            if len(snap_obj) == 1:
-                snap_obj = snap_obj[0].snapshot
-                if snapshot_op_name == 'remove':
-                    task = snap_obj.RemoveSnapshot_Task(True)
-                else:
-                    task = snap_obj.RevertToSnapshot_Task()
-            else:
-                self.module.exit_json(
-                    msg="Couldn't find any snapshots with specified name: %s on VM: %s" % (snapname, guest))
-
-        elif snapshot_op_name == 'list_all':
-            snapshot_data = self.list_snapshots_recursively(vm.snapshot.rootSnapshotList)
-            result['snapshot_data'] = snapshot_data
-
-        elif snapshot_op_name == 'list_current':
-            current_snapref = vm.snapshot.currentSnapshot
-            current_snap_obj = self.get_current_snap_obj(vm.snapshot.rootSnapshotList, current_snapref)
-            result['current_snapshot'] = 'Id: %s; Name: %s; Description: %s; CreateTime: %s; State: %s' % (
-                current_snap_obj[0].id,
-                current_snap_obj[0].name, current_snap_obj[0].description, current_snap_obj[0].createTime,
-                current_snap_obj[0].state)
-
-        elif snapshot_op_name == 'remove_all':
-            task = vm.RemoveAllSnapshots()
-
-        if task:
-            self.wait_for_task(task)
-            if task.info.state == 'error':
-                result = {'changed': False, 'failed': True, 'msg': task.info.error.msg}
-            else:
-                result = {'changed': True, 'failed': False}
-
-        return result
 
 
 def get_obj(content, vimtype, name):
@@ -1472,30 +1260,30 @@ def main():
                     'absent',
                     'restarted',
                     'suspended',
-                    'gatherfacts',
+                    'shutdownguest',
+                    'rebootguest'
                 ],
                 default='present'),
-            validate_certs=dict(required=False, type='bool', default=True),
-            template_src=dict(required=False, type='str', aliases=['template'], default=None),
-            is_template=dict(required=False, type='bool', default=False),
-            annotation=dict(required=False, type='str', aliases=['notes']),
-            customvalues=dict(required=False, type='list', default=[]),
+            validate_certs=dict(type='bool', default=True),
+            template_src=dict(type='str', aliases=['template']),
+            is_template=dict(type='bool', default=False),
+            annotation=dict(type='str', aliases=['notes']),
+            customvalues=dict(type='list', default=[]),
             name=dict(required=True, type='str'),
-            name_match=dict(required=False, type='str', default='first'),
-            snapshot_op=dict(required=False, type='dict', default={}),
-            uuid=dict(required=False, type='str'),
-            folder=dict(required=False, type='str', default='/vm'),
-            guest_id=dict(required=False, type='str', default=None),
-            disk=dict(required=False, type='list', default=[]),
-            hardware=dict(required=False, type='dict', default={}),
-            force=dict(required=False, type='bool', default=False),
-            datacenter=dict(required=True, type='str'),
-            esxi_hostname=dict(required=False, type='str', default=None),
-            cluster=dict(required=False, type='str', default=None),
-            wait_for_ip_address=dict(required=False, type='bool', default=True),
-            networks=dict(required=False, type='list', default=[]),
-            resource_pool=dict(required=False, type='str', default=None),
-            customization=dict(required=False, type='dict', no_log=True, default={}),
+            name_match=dict(type='str', default='first'),
+            uuid=dict(type='str'),
+            folder=dict(type='str', default='/vm'),
+            guest_id=dict(type='str'),
+            disk=dict(type='list', default=[]),
+            hardware=dict(type='dict', default={}),
+            force=dict(type='bool', default=False),
+            datacenter=dict(type='str', default='ha-datacenter'),
+            esxi_hostname=dict(type='str'),
+            cluster=dict(type='str'),
+            wait_for_ip_address=dict(type='bool', default=False),
+            networks=dict(type='list', default=[]),
+            resource_pool=dict(type='str'),
+            customization=dict(type='dict', no_log=True, default={}),
         ),
         supports_check_mode=True,
         mutually_exclusive=[
@@ -1530,22 +1318,13 @@ def main():
             result = pyv.remove_vm(vm)
         elif module.params['state'] == 'present':
             result = pyv.reconfigure_vm()
-        elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted', 'suspended']:
+        elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest']:
             # set powerstate
             tmp_result = pyv.set_powerstate(vm, module.params['state'], module.params['force'])
             if tmp_result['changed']:
                 result["changed"] = True
             if not tmp_result["failed"]:
                 result["failed"] = False
-        elif module.params['state'] == 'gatherfacts':
-            # Run for facts only
-            try:
-                module.exit_json(instance=pyv.gather_facts(vm))
-            except Exception:
-                e = get_exception()
-                module.fail_json(msg="Fact gather failed with exception %s" % e)
-        elif module.params['snapshot_op']:
-            result = pyv.snapshot_vm(vm, module.params['name'], module.params['snapshot_op'])
         else:
             # This should not happen
             assert False
@@ -1554,8 +1333,6 @@ def main():
         if module.params['state'] in ['poweredon', 'poweredoff', 'present', 'restarted', 'suspended']:
             # Create it ...
             result = pyv.deploy_vm()
-        elif module.params['state'] == 'gatherfacts':
-            module.fail_json(msg="Unable to gather facts for non-existing VM %(name)s" % module.params)
 
     if 'failed' not in result:
         result['failed'] = False

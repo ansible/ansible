@@ -21,8 +21,8 @@ __metaclass__ = type
 
 import os
 
-from ansible.compat.six import iteritems
 from ansible.errors import AnsibleParserError, AnsibleError
+from ansible.module_utils.six import iteritems
 from ansible.parsing.splitter import split_args, parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import FieldAttribute
@@ -30,6 +30,7 @@ from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.template import Templar
+
 
 class PlaybookInclude(Base, Conditional, Taggable):
 
@@ -49,6 +50,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
 
         # import here to avoid a dependency loop
         from ansible.playbook import Playbook
+        from ansible.playbook.play import Play
 
         # first, we use the original parent method to correctly load the object
         # via the load_data/preprocess_data system we normally use for other
@@ -73,6 +75,11 @@ class PlaybookInclude(Base, Conditional, Taggable):
         # finally, update each loaded playbook entry with any variables specified
         # on the included playbook and/or any tags which may have been set
         for entry in pb._entries:
+
+            # conditional includes on a playbook need a marker to skip gathering
+            if new_obj.when and isinstance(entry, Play):
+                entry._included_conditional = new_obj.when[:]
+
             temp_vars = entry.vars.copy()
             temp_vars.update(new_obj.vars)
             param_tags = temp_vars.pop('tags', None)

@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -57,7 +58,8 @@ options:
 '''
 
 EXAMPLES = '''
-Simple Example:
+---
+# Simple Example:
 
 - name: "Create Product"
   local_action:
@@ -69,9 +71,8 @@ Simple Example:
       params:
         name: "Centos 7"
 
-Abstraction Example:
-
-katello.yml
+# Abstraction Example:
+# katello.yml
 ---
 - name: "{{ name }}"
   local_action:
@@ -82,7 +83,7 @@ katello.yml
       entity: "{{ entity }}"
       params: "{{ params }}"
 
-tasks.yml
+# tasks.yml
 ---
 - include: katello.yml
   vars:

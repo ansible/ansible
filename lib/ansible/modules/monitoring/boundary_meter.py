@@ -22,9 +22,10 @@ You should have received a copy of the GNU General Public License
 along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 
@@ -161,7 +162,7 @@ def create_meter(module, name, apiid, apikey):
             try:
                 os.makedirs(config_directory)
             except:
-                module.fail_json("Could not create " + config_directory)
+                module.fail_json(msg="Could not create " + config_directory)
 
 
         # Download both cert files from the api host
@@ -173,8 +174,8 @@ def create_meter(module, name, apiid, apikey):
             except IOError:
                 # Now download the file...
                 rc = download_request(module, name, apiid, apikey, cert_type)
-                if rc == False:
-                    module.fail_json("Download request for " + cert_type + ".pem failed")
+                if rc is False:
+                    module.fail_json(msg="Download request for " + cert_type + ".pem failed")
 
         return 0, "Meter " + name + " created"
 
@@ -183,7 +184,7 @@ def search_meter(module, name, apiid, apikey):
     response, info = http_request(module, name, apiid, apikey, action="search")
 
     if info['status'] != 200:
-        module.fail_json("Failed to connect to api host to search for meter")
+        module.fail_json(msg="Failed to connect to api host to search for meter")
 
     # Return meters
     return json.loads(response.read())
@@ -206,7 +207,7 @@ def delete_meter(module, name, apiid, apikey):
     else:
         response, info = http_request(module, name, apiid, apikey, action, meter_id)
         if info['status'] != 200:
-            module.fail_json("Failed to delete meter")
+            module.fail_json(msg="Failed to delete meter")
 
         # Each new meter gets a new key.pem and ca.pem file, so they should be deleted
         types = ['cert', 'key']
@@ -215,7 +216,7 @@ def delete_meter(module, name, apiid, apikey):
                 cert_file = '%s/%s.pem' % (config_directory,cert_type)
                 os.remove(cert_file)
             except OSError:
-                module.fail_json("Failed to remove " + cert_type + ".pem file")
+                module.fail_json(msg="Failed to remove " + cert_type + ".pem file")
 
     return 0, "Meter " + name + " deleted"
 
@@ -227,7 +228,7 @@ def download_request(module, name, apiid, apikey, cert_type):
         action = "certificates"
         response, info = http_request(module, name, apiid, apikey, action, meter_id, cert_type)
         if info['status'] != 200:
-            module.fail_json("Failed to connect to api host to download certificate")
+            module.fail_json(msg="Failed to connect to api host to download certificate")
 
         if result:
             try:
@@ -238,11 +239,11 @@ def download_request(module, name, apiid, apikey, cert_type):
                 cert_file.close()
                 os.chmod(cert_file_path, int('0600', 8))
             except:
-                module.fail_json("Could not write to certificate file")
+                module.fail_json(msg="Could not write to certificate file")
 
         return True
     else:
-        module.fail_json("Could not get meter id")
+        module.fail_json(msg="Could not get meter id")
 
 def main():
 

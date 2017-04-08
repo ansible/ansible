@@ -55,7 +55,11 @@ class TestErrors(unittest.TestCase):
         mock_method.return_value = ('this is line 1\n', '')
         e = AnsibleError(self.message, self.obj)
 
-        self.assertEqual(e.message, "This is the error message\n\nThe error appears to have been in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n\nthis is line 1\n^ here\n")
+        self.assertEqual(
+            e.message,
+            ("This is the error message\n\nThe error appears to have been in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the file depending on the "
+             "exact syntax problem.\n\nThe offending line appears to be:\n\n\nthis is line 1\n^ here\n")
+        )
 
     def test_get_error_lines_from_file(self):
         m = mock_open()
@@ -65,12 +69,20 @@ class TestErrors(unittest.TestCase):
             # this line will be found in the file
             self.obj.ansible_pos = ('foo.yml', 1, 1)
             e = AnsibleError(self.message, self.obj)
-            self.assertEqual(e.message, "This is the error message\n\nThe error appears to have been in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n\nthis is line 1\n^ here\n")
+            self.assertEqual(
+                e.message,
+                ("This is the error message\n\nThe error appears to have been in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the file depending on "
+                 "the exact syntax problem.\n\nThe offending line appears to be:\n\n\nthis is line 1\n^ here\n")
+            )
 
             # this line will not be found, as it is out of the index range
             self.obj.ansible_pos = ('foo.yml', 2, 1)
             e = AnsibleError(self.message, self.obj)
-            self.assertEqual(e.message, "This is the error message\n\nThe error appears to have been in 'foo.yml': line 2, column 1, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\n(specified line no longer in file, maybe it changed?)")
+            self.assertEqual(
+                e.message,
+                ("This is the error message\n\nThe error appears to have been in 'foo.yml': line 2, column 1, but may\nbe elsewhere in the file depending on "
+                 "the exact syntax problem.\n\n(specified line no longer in file, maybe it changed?)")
+            )
 
         m = mock_open()
         m.return_value.readlines.return_value = ['this line has unicode \xf0\x9f\x98\xa8 in it!\n']
@@ -79,5 +91,9 @@ class TestErrors(unittest.TestCase):
             # this line will be found in the file
             self.obj.ansible_pos = ('foo.yml', 1, 1)
             e = AnsibleError(self.unicode_message, self.obj)
-            self.assertEqual(e.message, "This is an error with \xf0\x9f\x98\xa8 in it\n\nThe error appears to have been in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n\nthis line has unicode \xf0\x9f\x98\xa8 in it!\n^ here\n")
-
+            self.assertEqual(
+                e.message,
+                ("This is an error with \xf0\x9f\x98\xa8 in it\n\nThe error appears to have been in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the "
+                 "file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n\nthis line has unicode \xf0\x9f\x98\xa8 in it!\n^ "
+                 "here\n")
+            )

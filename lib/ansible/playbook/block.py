@@ -36,8 +36,7 @@ class Block(Base, Become, Conditional, Taggable):
     _always           = FieldAttribute(isa='list', default=[], inherit=False)
 
     # other fields
-    _any_errors_fatal = FieldAttribute(isa='bool')
-    _delegate_to      = FieldAttribute(isa='list')
+    _delegate_to      = FieldAttribute(isa='string')
     _delegate_facts   = FieldAttribute(isa='bool', default=False)
     _name             = FieldAttribute(isa='string', default='')
 
@@ -348,9 +347,9 @@ class Block(Base, Become, Conditional, Taggable):
             for task in target:
                 if isinstance(task, Block):
                     tmp_list.append(evaluate_block(task))
-                elif task.action == 'meta' \
-                    or (task.action == 'include' and task.evaluate_tags([], play_context.skip_tags, all_vars=all_vars)) \
-                    or task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars):
+                elif (task.action == 'meta' or
+                        (task.action == 'include' and task.evaluate_tags([], play_context.skip_tags, all_vars=all_vars)) or
+                        task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars)):
                     tmp_list.append(task)
             return tmp_list
 

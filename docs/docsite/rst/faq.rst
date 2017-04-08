@@ -112,17 +112,16 @@ While you can write ansible modules in any language, most ansible modules are wr
 are important core ones.
 
 By default Ansible assumes it can find a /usr/bin/python on your remote system that is a 2.X version of Python, specifically
-2.4 or higher.
+2.6 or higher.
 
 Setting of an inventory variable 'ansible_python_interpreter' on any host will allow Ansible to auto-replace the interpreter
 used when executing python modules.   Thus, you can point to any python you want on the system if /usr/bin/python on your
 system does not point to a Python 2.X interpreter.  
 
 Some Linux operating systems, such as Arch, may only have Python 3 installed by default.  This is not sufficient and you will
-get syntax errors trying to run modules with Python 3.  Python 3 is essentially not the same
-language as Python 2.  Ansible modules currently need to support older Pythons for users that  still have Enterprise Linux 5 deployed, so they are not yet ported to run under Python 3.0.  This is not a problem though as you can just install Python 2 also on a managed host.
-
-Python 3.0 support will likely be addressed at a later point in time when usage becomes more mainstream.
+get syntax errors trying to run modules with Python 3.  Python 3 is essentially not the same language as Python 2.  Python 3
+support is being worked on but some Ansible modules are not yet ported to run under Python 3.0.  This is not a problem though
+as you can just install Python 2 also on a managed host.
 
 Do not replace the shebang lines of your python modules.  Ansible will do this for you automatically at deploy time.
 
@@ -299,7 +298,7 @@ Once the library is ready, SHA512 password values can then be generated as follo
 
 .. code-block:: shell-session
 
-    python -c "from passlib.hash import sha512_crypt; import getpass; print sha512_crypt.encrypt(getpass.getpass())"
+    python -c "from passlib.hash import sha512_crypt; import getpass; print sha512_crypt.using(rounds=5000).hash(getpass.getpass())"
 
 Use the integrated :ref:`hash_filters` to generate a hashed version of a password.
 You shouldn't put plaintext passwords in your playbook or host_vars; instead, use :doc:`playbooks_vault` to encrypt sensitive data.
@@ -309,9 +308,9 @@ You shouldn't put plaintext passwords in your playbook or host_vars; instead, us
 Can I get training on Ansible?
 ++++++++++++++++++++++++++++++
 
-Yes!  See our `services page <http://www.ansible.com/consulting>`_ for information on our services and training offerings. Email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
+Yes!  See our `services page <https://www.ansible.com/consulting>`_ for information on our services and training offerings. Email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
 
-We also offer free web-based training classes on a regular basis. See our `webinar page <http://www.ansible.com/webinars-training>`_ for more info on upcoming webinars.
+We also offer free web-based training classes on a regular basis. See our `webinar page <https://www.ansible.com/webinars-training>`_ for more info on upcoming webinars.
 
 .. _web_interface:
 

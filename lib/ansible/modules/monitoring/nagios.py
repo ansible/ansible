@@ -15,20 +15,25 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: nagios
 short_description: Perform common tasks in Nagios related to downtime and notifications.
 description:
-  - "The M(nagios) module has two basic functions: scheduling downtime and toggling alerts for services or hosts."
-  - All actions require the I(host) parameter to be given explicitly. In playbooks you can use the C({{inventory_hostname}}) variable to refer to the host the playbook is currently running on.
+  - "The C(nagios) module has two basic functions: scheduling downtime and toggling alerts for services or hosts."
+  - All actions require the I(host) parameter to be given explicitly. In playbooks you can use the C({{inventory_hostname}}) variable to refer
+    to the host the playbook is currently running on.
   - You can specify multiple services at once by separating them with commas, .e.g., C(services=httpd,nfs,puppet).
-  - When specifying what service to handle there is a special service value, I(host), which will handle alerts/downtime for the I(host itself), e.g., C(service=host). This keyword may not be given with other services at the same time. I(Setting alerts/downtime for a host does not affect alerts/downtime for any of the services running on it.) To schedule downtime for all services on particular host use keyword "all", e.g., C(service=all).
-  - When using the M(nagios) module you will need to specify your Nagios server using the C(delegate_to) parameter.
+  - When specifying what service to handle there is a special service value, I(host), which will handle alerts/downtime for the I(host itself),
+    e.g., C(service=host). This keyword may not be given with other services at the same time.
+    I(Setting alerts/downtime for a host does not affect alerts/downtime for any of the services running on it.) To schedule downtime for all
+    services on particular host use keyword "all", e.g., C(service=all).
+  - When using the C(nagios) module you will need to specify your Nagios server using the C(delegate_to) parameter.
 version_added: "0.7"
 options:
   action:
@@ -196,13 +201,14 @@ EXAMPLES = '''
     command: DISABLE_FAILURE_PREDICTION
 '''
 
-import ConfigParser
 import types
 import time
 import os.path
 
-######################################################################
+from ansible.module_utils.basic import AnsibleModule
 
+
+######################################################################
 
 def which_cmdfile():
     locations = [
@@ -1079,9 +1085,6 @@ class Nagios(object):
         self.module.exit_json(nagios_commands=self.command_results,
                               changed=True)
 
-######################################################################
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

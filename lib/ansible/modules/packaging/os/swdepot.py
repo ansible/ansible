@@ -18,12 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
-import pipes
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -77,6 +75,10 @@ EXAMPLES = '''
     state: absent
 '''
 
+import re
+import pipes
+
+
 def compare_package(version1, version2):
     """ Compare version packages.
         Return values:
@@ -93,7 +95,8 @@ def query_package(module, name, depot=None):
 
     cmd_list = '/usr/sbin/swlist -a revision -l product'
     if depot:
-        rc, stdout, stderr = module.run_command("%s -s %s %s | grep %s" % (cmd_list, pipes.quote(depot), pipes.quote(name), pipes.quote(name)), use_unsafe_shell=True)
+        rc, stdout, stderr = module.run_command("%s -s %s %s | grep %s" % (cmd_list, pipes.quote(depot), pipes.quote(name), pipes.quote(name)),
+                                                use_unsafe_shell=True)
     else:
         rc, stdout, stderr = module.run_command("%s %s | grep %s" % (cmd_list, pipes.quote(name), pipes.quote(name)), use_unsafe_shell=True)
     if rc == 0:
@@ -154,7 +157,7 @@ def main():
     else:
         installed = False
 
-    if ( state == 'present' or state == 'latest' ) and installed == False:
+    if ( state == 'present' or state == 'latest' ) and installed is False:
         if module.check_mode:
             module.exit_json(changed=True)
         rc, output = install_package(module, depot, name)
@@ -166,7 +169,7 @@ def main():
         else:
             module.fail_json(name=name, msg=output, rc=rc)
 
-    elif state == 'latest' and installed == True:
+    elif state == 'latest' and installed is True:
         #Check depot version
         rc, version_depot = query_package(module, name, depot)
 
@@ -188,7 +191,7 @@ def main():
             output = "Software package not in repository " + depot
             module.fail_json(name=name, msg=output, rc=rc)
 
-    elif state == 'absent' and installed == True:
+    elif state == 'absent' and installed is True:
         if module.check_mode:
             module.exit_json(changed=True)
         rc, output = remove_package(module, name)

@@ -27,7 +27,10 @@ UNAME := $(shell uname | tr '[:upper:]' '[:lower:]')
 
 all: other non_destructive destructive
 
-other: ansible test_test_infra parsing test_var_blending test_var_precedence unicode test_templating_settings environment test_as includes blocks pull_run pull_no_127 pull_limit_inventory check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts test_binary_modules_posix test_hosts_field test_lookup_properties args test_jinja2_groupby
+other: ansible test_test_infra parsing test_var_blending test_var_precedence unicode test_templating_settings \
+	environment test_as includes blocks pull_run pull_no_127 pull_limit_inventory check_mode test_hash test_handlers \
+	test_group_by test_vault test_tags test_lookup_paths no_log test_gathering_facts test_binary_modules_posix \
+	test_hosts_field test_lookup_properties args test_jinja2_groupby test_callback_retry_task_name
 
 ansible:
 	(cd targets/ansible && ./runme.sh $(TEST_FLAGS))
@@ -326,3 +329,6 @@ test_lookup_properties:
 
 args:
 	(cd targets/args && ./runme.sh $(TEST_FLAGS))
+
+test_callback_retry_task_name:
+	(cd targets/callback_retry_task_name && ./runme.sh $(TEST_FLAGS))

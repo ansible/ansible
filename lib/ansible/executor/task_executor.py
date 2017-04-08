@@ -20,17 +20,15 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import base64
-import subprocess
 import sys
 import time
 import traceback
 
-from ansible.compat.six import iteritems, string_types, binary_type
-
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure
 from ansible.executor.task_result import TaskResult
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.six import iteritems, string_types, binary_type
+from ansible.module_utils._text import to_text
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.template import Templar
@@ -44,6 +42,7 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 __all__ = ['TaskExecutor']
 
@@ -130,17 +129,27 @@ class TaskExecutor:
             if 'changed' not in res:
                 res['changed'] = False
 
-            def _clean_res(res):
+            def _clean_res(res, errors='surrogate_or_strict'):
                 if isinstance(res, UnsafeProxy):
                     return res._obj
                 elif isinstance(res, binary_type):
-                    return to_text(res, errors='surrogate_or_strict')
+                    return to_text(res, errors=errors)
                 elif isinstance(res, dict):
                     for k in res:
-                        res[k] = _clean_res(res[k])
+                        try:
+                            res[k] = _clean_res(res[k], errors=errors)
+                        except UnicodeError:
+                            if k == 'diff':
+                                # If this is a diff, substitute a replacement character if the value
+                                # is undecodable as utf8.  (Fix #21804)
+                                display.warning("We were unable to decode all characters in the module return data."
+                                                " Replaced some in an effort to return as much as possible")
+                                res[k] = _clean_res(res[k], errors='surrogate_then_replace')
+                            else:
+                                raise
                 elif isinstance(res, list):
                     for idx,item in enumerate(res):
-                        res[idx] = _clean_res(item)
+                        res[idx] = _clean_res(item, errors=errors)
                 return res
 
             display.debug("dumping result to json")
@@ -187,10 +196,12 @@ class TaskExecutor:
             if self._task.loop in self._shared_loader_obj.lookup_loader:
                 if self._task.loop == 'first_found':
                     # first_found loops are special. If the item is undefined then we want to fall through to the next value rather than failing.
-                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=False, convert_bare=False)
+                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=False,
+                                                             convert_bare=False)
                     loop_terms = [t for t in loop_terms if not templar._contains_vars(t)]
                 else:
-                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=True, convert_bare=False)
+                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=True,
+                                                             convert_bare=False)
 
                 # get lookup
                 mylookup = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader, templar=templar)
@@ -291,7 +302,15 @@ class TaskExecutor:
                 templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
                 res['_ansible_item_label'] = templar.template(label)
 
-            self._rslt_q.put(TaskResult(self._host.name, self._task._uuid, res), block=False)
+            self._rslt_q.put(
+                TaskResult(
+                    self._host.name,
+                    self._task._uuid,
+                    res,
+                    task_fields=self._task.dump_attrs(),
+                ),
+                block=False,
+            )
             results.append(res)
             del task_vars[loop_var]
 
@@ -451,7 +470,9 @@ class TaskExecutor:
                 self._task.args = variable_params
 
         # get the connection and the handler for this execution
-        if not self._connection or not getattr(self._connection, 'connected', False) or self._play_context.remote_addr != self._connection._play_context.remote_addr:
+        if (not self._connection or
+                not getattr(self._connection, 'connected', False) or
+                self._play_context.remote_addr != self._connection._play_context.remote_addr):
             self._connection = self._get_connection(variables=variables, templar=templar)
             hostvars = variables.get('hostvars', None)
             if hostvars:
@@ -517,6 +538,7 @@ class TaskExecutor:
             if self._task.async > 0:
                 if self._task.poll > 0 and not result.get('skipped'):
                     result = self._poll_async_result(result=result, templar=templar, task_vars=vars_copy)
+                    #FIXME callback 'v2_runner_on_async_poll' here
 
                 # ensure no log is preserved
                 result["_ansible_no_log"] = self._play_context.no_log
@@ -539,7 +561,9 @@ class TaskExecutor:
                 return failed_when_result
 
             if 'ansible_facts' in result:
-                vars_copy.update(result['ansible_facts'])
+                if not C.NAMESPACE_FACTS:
+                    vars_copy.update(result['ansible_facts'])
+                vars_copy.update({'ansible_facts': result['ansible_facts']})
 
             # set the failed property if the result has a non-zero rc. This will be
             # overridden below if the failed_when property is set
@@ -564,7 +588,7 @@ class TaskExecutor:
                         result['_ansible_retry'] = True
                         result['retries'] = retries
                         display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
-                        self._rslt_q.put(TaskResult(self._host.name, self._task._uuid, result), block=False)
+                        self._rslt_q.put(TaskResult(self._host.name, self._task._uuid, result, task_fields=self._task.dump_attrs()), block=False)
                         time.sleep(delay)
         else:
             if retries > 1:
@@ -578,7 +602,9 @@ class TaskExecutor:
             variables[self._task.register] = wrap_var(result)
 
         if 'ansible_facts' in result:
-            variables.update(result['ansible_facts'])
+            if not C.NAMESPACE_FACTS:
+                variables.update(result['ansible_facts'])
+            variables.update({'ansible_facts': result['ansible_facts']})
 
         # save the notification target in the result, if it was specified, as
         # this task may be running in a loop in which case the notification
@@ -613,12 +639,13 @@ class TaskExecutor:
         if async_jid is None:
             return dict(failed=True, msg="No job id was returned by the async task")
 
-        # Create a new psuedo-task to run the async_status module, and run
+        # Create a new pseudo-task to run the async_status module, and run
         # that (with a sleep for "poll" seconds between each retry) until the
         # async time limit is exceeded.
 
         async_task = Task().load(dict(action='async_status jid=%s' % async_jid))
 
+        #FIXME: this is no longer the case, normal takes care of all, see if this can just be generalized
         # Because this is an async task, the action handler is async. However,
         # we need the 'normal' action handler for the status check, so get it
         # now via the action_loader
@@ -643,11 +670,14 @@ class TaskExecutor:
                 # have issues which result in a half-written/unparseable result
                 # file on disk, which manifests to the user as a timeout happening
                 # before it's time to timeout.
-                if int(async_result.get('finished', 0)) == 1 or ('failed' in async_result and async_result.get('_ansible_parsed', False)) or 'skipped' in async_result:
+                if (int(async_result.get('finished', 0)) == 1 or
+                        ('failed' in async_result and async_result.get('_ansible_parsed', False)) or
+                        'skipped' in async_result):
                     break
             except Exception as e:
                 # Connections can raise exceptions during polling (eg, network bounce, reboot); these should be non-fatal.
-                # On an exception, call the connection's reset method if it has one (eg, drop/recreate WinRM connection; some reused connections are in a broken state)
+                # On an exception, call the connection's reset method if it has one
+                # (eg, drop/recreate WinRM connection; some reused connections are in a broken state)
                 display.vvvv("Exception during async poll, retrying... (%s)" % to_text(e))
                 display.debug("Async poll exception was:\n%s" % to_text(traceback.format_exc()))
                 try:
@@ -698,18 +728,16 @@ class TaskExecutor:
                 if not check_for_controlpersist(self._play_context.ssh_executable):
                     conn_type = "paramiko"
 
-        # if using persistent connections (or the action has set the FORCE_PERSISTENT_CONNECTION
-        # attribute to True), then we use the persistent connection plugion. Otherwise load the
-        # requested connection plugin
-        if C.USE_PERSISTENT_CONNECTIONS or getattr(self, 'FORCE_PERSISTENT_CONNECTION', False) or conn_type == 'persistent':
-            # if someone did `connection: persistent`, default it to using a
-            # persistent paramiko connection to avoid problems
-            if conn_type == 'persistent':
-                self._play_context.connection = 'paramiko'
+        # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems
+        if conn_type == 'persistent':
+            self._play_context.connection = 'paramiko'
 
-            connection = self._shared_loader_obj.connection_loader.get('persistent', self._play_context, self._new_stdin)
-        else:
-            connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
+        # if using persistent connections (or the action has set the FORCE_PERSISTENT_CONNECTION attribute to True),
+        # then we use the persistent connection plugion. Otherwise load the requested connection plugin
+        elif C.USE_PERSISTENT_CONNECTIONS or getattr(self, 'FORCE_PERSISTENT_CONNECTION', False):
+            conn_type == 'persistent'
+
+        connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
 
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
@@ -757,15 +785,15 @@ class TaskExecutor:
         Returns the correct action plugin to handle the requestion task action
         '''
 
+        module_prefix = self._task.action.split('_')[0]
+
+        # let action plugin override module, fallback to 'normal' action plugin otherwise
         if self._task.action in self._shared_loader_obj.action_loader:
-            if self._task.async != 0:
-                raise AnsibleError("async mode is not supported with the %s module" % self._task.action)
             handler_name = self._task.action
-        elif self._task.async == 0:
-            pc_conn = self._shared_loader_obj.connection_loader.get(self._play_context.connection, class_only=True)
-            handler_name = getattr(pc_conn, 'action_handler', 'normal')
+        elif all((module_prefix in C.NETWORK_GROUP_MODULES, module_prefix in self._shared_loader_obj.action_loader)):
+            handler_name = module_prefix
         else:
-            handler_name = 'async'
+            handler_name = 'normal'
 
         handler = self._shared_loader_obj.action_loader.get(
             handler_name,

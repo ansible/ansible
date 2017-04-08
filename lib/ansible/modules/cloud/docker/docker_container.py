@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -185,7 +186,7 @@ options:
   kill_signal:
     description:
       - Override default signal used to kill a running container.
-    default null:
+    default: null
     required: false
   kernel_memory:
     description:
@@ -309,7 +310,7 @@ options:
       - "Use docker CLI syntax: C(8000), C(9000:8000), or C(0.0.0.0:9000:8000), where 8000 is a
         container port, 9000 is a host port, and 0.0.0.0 is a host interface."
       - Container ports must be exposed either in the Dockerfile or via the C(expose) option.
-      - A value of ALL will publish all exposed container ports to random host ports, ignoring
+      - A value of all will publish all exposed container ports to random host ports, ignoring
         any other mappings.
       - If C(networks) parameter is provided, will inspect each network to see if there exists
         a bridge network with optional parameter com.docker.network.bridge.host_binding_ipv4.
@@ -420,7 +421,7 @@ options:
     required: false
   tty:
     description:
-      - Allocate a psuedo-TTY.
+      - Allocate a pseudo-TTY.
     default: false
     required: false
   ulimits:
@@ -574,7 +575,7 @@ EXAMPLES = '''
   docker_container:
     name: sleepy
     image: ubuntu:14.04
-    command: sleep infinity
+    command: ["sleep", "infinity"]
 
 - name: Add container to networks
   docker_container:
@@ -611,8 +612,9 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-ansible_docker_container:
+docker_container:
     description:
+      - Before 2.3 this was 'ansible_docker_container' but was renamed due to conflicts with the connection plugin.
       - Facts representing the current state of the container. Matches the docker inspection output.
       - Note that facts are not part of registered vars but accessible directly.
       - Empty if C(state) is I(absent)
@@ -766,7 +768,7 @@ class TaskParameters(DockerBaseClass):
 
         self.publish_all_ports = False
         self.published_ports = self._parse_publish_ports()
-        if self.published_ports == 'all':
+        if self.published_ports in ('all', 'ALL'):
             self.publish_all_ports = True
             self.published_ports = None
 
@@ -799,6 +801,14 @@ class TaskParameters(DockerBaseClass):
                     self.fail("Parameter error: network named %s could not be found. Does it exist?" % network['name'])
                 if network.get('links'):
                     network['links'] = self._parse_links(network['links'])
+
+        if self.entrypoint:
+            # convert from list to str.
+            self.entrypoint = ' '.join([str(x) for x in self.entrypoint])
+
+        if self.command:
+            # convert from list to str
+            self.command = ' '.join([str(x) for x in self.command])
 
     def fail(self, msg):
         self.client.module.fail_json(msg=msg)
@@ -1278,10 +1288,19 @@ class Container(DockerBaseClass):
                         set_a = set(getattr(self.parameters, key))
                         set_b = set(value)
                         match = (set_a <= set_b)
+                elif isinstance(getattr(self.parameters, key), list) and not len(getattr(self.parameters, key)) \
+                        and value is None:
+                    # an empty list and None are ==
+                    continue
                 elif isinstance(getattr(self.parameters, key), dict) and isinstance(value, dict):
                     # compare two dicts
                     self.log("comparing two dicts: %s" % key)
                     match = self._compare_dicts(getattr(self.parameters, key), value)
+
+                elif isinstance(getattr(self.parameters, key), dict) and \
+                        not len(list(getattr(self.parameters, key).keys())) and value is None:
+                    # an empty dict and None are ==
+                    continue
                 else:
                     # primitive compare
                     self.log("primitive compare: %s" % key)
@@ -1482,7 +1501,6 @@ class Container(DockerBaseClass):
         return expected_devices
 
     def _get_expected_entrypoint(self):
-        self.log('_get_expected_entrypoint')
         if not self.parameters.entrypoint:
             return None
         return shlex.split(self.parameters.entrypoint)
@@ -1675,12 +1693,12 @@ class ContainerManager(DockerBaseClass):
             self.results['diff'] = self.diff
 
         if self.facts:
-            self.results['ansible_facts'] = {'ansible_docker_container': self.facts}
+            self.results['ansible_facts'] = {'docker_container': self.facts}
 
     def present(self, state):
         container = self._get_container(self.parameters.name)
         image = self._get_image()
-
+        self.log(image, pretty_print=True)
         if not container.exists:
             # New container
             self.log('No container found')
@@ -1748,9 +1766,12 @@ class ContainerManager(DockerBaseClass):
         if not self.check_mode:
             if not image or self.parameters.pull:
                 self.log("Pull the image.")
-                image = self.client.pull_image(repository, tag)
-                self.results['actions'].append(dict(pulled_image="%s:%s" % (repository, tag)))
-                self.results['changed'] = True
+                image, alreadyToLatest = self.client.pull_image(repository, tag)
+                if alreadyToLatest:
+                    self.results['changed'] = False
+                else:
+                    self.results['changed'] = True
+                    self.results['actions'].append(dict(pulled_image="%s:%s" % (repository, tag)))
         self.log("image")
         self.log(image, pretty_print=True)
         return image
@@ -1936,7 +1957,7 @@ def main():
         blkio_weight=dict(type='int'),
         capabilities=dict(type='list'),
         cleanup=dict(type='bool', default=False),
-        command=dict(type='str'),
+        command=dict(type='list'),
         cpu_period=dict(type='int'),
         cpu_quota=dict(type='int'),
         cpuset_cpus=dict(type='str'),
@@ -1949,7 +1970,7 @@ def main():
         dns_search_domains=dict(type='list'),
         env=dict(type='dict'),
         env_file=dict(type='path'),
-        entrypoint=dict(type='str'),
+        entrypoint=dict(type='list'),
         etc_hosts=dict(type='dict'),
         exposed_ports=dict(type='list', aliases=['exposed', 'expose']),
         force_kill=dict(type='bool', default=False, aliases=['forcekill']),

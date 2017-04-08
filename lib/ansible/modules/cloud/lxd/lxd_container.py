@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -96,14 +97,14 @@ options:
         default: 30
     wait_for_ipv4_addresses:
         description:
-          - If this is true, the M(lxd_container) waits until IPv4 addresses
+          - If this is true, the C(lxd_container) waits until IPv4 addresses
             are set to the all network interfaces in the container after
             starting or restarting.
         required: false
         default: false
     force_stop:
         description:
-          - If this is true, the M(lxd_container) forces to stop the container
+          - If this is true, the C(lxd_container) forces to stop the container
             when it stops or restarts the container.
         required: false
         default: false
@@ -599,9 +600,7 @@ def main():
                 type='str',
                 default='{}/.config/lxc/client.crt'.format(os.environ['HOME'])
             ),
-            trust_password=dict(
-                type='str',
-            )
+            trust_password=dict( type='str', no_log=True )
         ),
         supports_check_mode=False,
     )

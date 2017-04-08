@@ -13,9 +13,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = """
 ---
@@ -81,7 +82,8 @@ options:
     default: 1
   replace_instances:
     description:
-      - List of instance_ids belonging to the named ASG that you would like to terminate and be replaced with instances matching the current launch configuration.
+      - List of instance_ids belonging to the named ASG that you would like to terminate and be replaced with instances matching the current launch
+        configuration.
     required: false
     version_added: "1.8"
     default: None
@@ -128,14 +130,16 @@ options:
     version_added: "1.8"
   wait_for_instances:
     description:
-      - Wait for the ASG instances to be in a ready state before exiting.  If instances are behind an ELB, it will wait until the ELB determines all instances have a lifecycle_state of  "InService" and  a health_status of "Healthy".
+      - Wait for the ASG instances to be in a ready state before exiting.  If instances are behind an ELB, it will wait until the ELB determines all
+        instances have a lifecycle_state of  "InService" and  a health_status of "Healthy".
     version_added: "1.9"
     default: yes
     required: False
   termination_policies:
     description:
         - An ordered list of criteria used for selecting instances to be removed from the Auto Scaling group when reducing capacity.
-        - For 'Default', when used to create a new autoscaling group, the "Default"i value is used. When used to change an existent autoscaling group, the current termination policies are maintained.
+        - For 'Default', when used to create a new autoscaling group, the "Default"i value is used. When used to change an existent autoscaling group, the
+          current termination policies are maintained.
     required: false
     default: Default
     choices: ['OldestInstance', 'NewestInstance', 'OldestLaunchConfiguration', 'ClosestToNextInstanceHour', 'Default']
@@ -149,7 +153,11 @@ options:
   notification_types:
     description:
       - A list of auto scaling events to trigger notifications on.
-    default: ['autoscaling:EC2_INSTANCE_LAUNCH', 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR', 'autoscaling:EC2_INSTANCE_TERMINATE', 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR']
+    default:
+        - 'autoscaling:EC2_INSTANCE_LAUNCH'
+        - 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR'
+        - 'autoscaling:EC2_INSTANCE_TERMINATE'
+        - 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'
     required: false
     version_added: "2.2"
   suspend_processes:
@@ -182,15 +190,15 @@ EXAMPLES = '''
 
 # Rolling ASG Updates
 
-Below is an example of how to assign a new launch config to an ASG and terminate old instances.
-
-All instances in "myasg" that do not have the launch configuration named "my_new_lc" will be terminated in
-a rolling fashion with instances using the current launch configuration, "my_new_lc".
-
-This could also be considered a rolling deploy of a pre-baked AMI.
-
-If this is a newly created group, the instances will not be replaced since all instances
-will have the current launch configuration.
+# Below is an example of how to assign a new launch config to an ASG and terminate old instances.
+#
+# All instances in "myasg" that do not have the launch configuration named "my_new_lc" will be terminated in
+# a rolling fashion with instances using the current launch configuration, "my_new_lc".
+#
+# This could also be considered a rolling deploy of a pre-baked AMI.
+#
+# If this is a newly created group, the instances will not be replaced since all instances
+# will have the current launch configuration.
 
 - name: create launch config
   ec2_lc:
@@ -213,8 +221,8 @@ will have the current launch configuration.
     desired_capacity: 5
     region: us-east-1
 
-To only replace a couple of instances instead of all of them, supply a list
-to "replace_instances":
+# To only replace a couple of instances instead of all of them, supply a list
+# to "replace_instances":
 
 - ec2_asg:
     name: myasg
@@ -306,6 +314,8 @@ def get_properties(autoscaling_group):
                 properties['terminating_instances'] += 1
             if i.lifecycle_state == 'Pending':
                 properties['pending_instances'] += 1
+    else:
+        properties['instances'] = []
     properties['instance_facts'] = instance_facts
     properties['load_balancers'] = autoscaling_group.load_balancers
 
@@ -504,7 +514,7 @@ def create_autoscaling_group(connection, module):
             changed = True
             return(changed, asg_properties)
         except BotoServerError as e:
-            module.fail_json(msg="Failed to create Autoscaling Group: %s" % str(e), exception=traceback.format_exc(e))
+            module.fail_json(msg="Failed to create Autoscaling Group: %s" % str(e), exception=traceback.format_exc())
     else:
         as_group = as_groups[0]
         changed = False
@@ -564,13 +574,13 @@ def create_autoscaling_group(connection, module):
             try:
                 as_group.update()
             except BotoServerError as e:
-                module.fail_json(msg="Failed to update Autoscaling Group: %s" % str(e), exception=traceback.format_exc(e))
+                module.fail_json(msg="Failed to update Autoscaling Group: %s" % str(e), exception=traceback.format_exc())
 
         if notification_topic:
             try:
                 as_group.put_notification_configuration(notification_topic, notification_types)
             except BotoServerError as e:
-                module.fail_json(msg="Failed to update Autoscaling Group notifications: %s" % str(e), exception=traceback.format_exc(e))
+                module.fail_json(msg="Failed to update Autoscaling Group notifications: %s" % str(e), exception=traceback.format_exc())
 
         if wait_for_instances:
             wait_for_new_inst(module, connection, group_name, wait_timeout, desired_capacity, 'viable_instances')
@@ -579,13 +589,14 @@ def create_autoscaling_group(connection, module):
             as_group = connection.get_all_groups(names=[group_name])[0]
             asg_properties = get_properties(as_group)
         except BotoServerError as e:
-            module.fail_json(msg="Failed to read existing Autoscaling Groups: %s" % str(e), exception=traceback.format_exc(e))
+            module.fail_json(msg="Failed to read existing Autoscaling Groups: %s" % str(e), exception=traceback.format_exc())
         return(changed, asg_properties)
 
 
 def delete_autoscaling_group(connection, module):
     group_name = module.params.get('name')
     notification_topic = module.params.get('notification_topic')
+    wait_for_instances = module.params.get('wait_for_instances')
 
     if notification_topic:
         ag.delete_notification_configuration(notification_topic)
@@ -593,6 +604,11 @@ def delete_autoscaling_group(connection, module):
     groups = connection.get_all_groups(names=[group_name])
     if groups:
         group = groups[0]
+
+        if not wait_for_instances:
+            group.delete(True)
+            return True
+
         group.max_size = 0
         group.min_size = 0
         group.desired_capacity = 0
@@ -609,11 +625,9 @@ def delete_autoscaling_group(connection, module):
         group.delete()
         while len(connection.get_all_groups(names=[group_name])):
             time.sleep(5)
-        changed=True
-        return changed
-    else:
-        changed=False
-        return changed
+        return True
+
+    return False
 
 def get_chunks(l, n):
     for i in xrange(0, len(l), n):

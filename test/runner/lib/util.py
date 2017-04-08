@@ -165,10 +165,14 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
         raise
 
     if communicate:
-        stdout, stderr = process.communicate(data)
+        encoding = 'utf-8'
+        data_bytes = data.encode(encoding) if data else None
+        stdout_bytes, stderr_bytes = process.communicate(data_bytes)
+        stdout_text = stdout_bytes.decode(encoding) if stdout_bytes else u''
+        stderr_text = stderr_bytes.decode(encoding) if stderr_bytes else u''
     else:
         process.wait()
-        stdout, stderr = None, None
+        stdout_text, stderr_text = None, None
 
     status = process.returncode
     runtime = time.time() - start
@@ -176,9 +180,9 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
     display.info('Command exited with status %s after %s seconds.' % (status, runtime), verbosity=4)
 
     if status == 0:
-        return stdout, stderr
+        return stdout_text, stderr_text
 
-    raise SubprocessError(cmd, status, stdout, stderr, runtime)
+    raise SubprocessError(cmd, status, stdout_text, stderr_text, runtime)
 
 
 def common_environment():
@@ -227,7 +231,7 @@ def deepest_path(path_a, path_b):
     """Return the deepest of two paths, or None if the paths are unrelated.
     :type path_a: str
     :type path_b: str
-    :return: str | None
+    :rtype: str | None
     """
     if path_a == '.':
         path_a = ''
@@ -266,6 +270,15 @@ def make_dirs(path):
             raise
 
 
+def is_binary_file(path):
+    """
+    :type path: str
+    :rtype: bool
+    """
+    with open(path, 'rb') as path_fd:
+        return b'\0' in path_fd.read(1024)
+
+
 class Display(object):
     """Manages color console output."""
     clear = '\033[0m'
@@ -287,6 +300,8 @@ class Display(object):
         self.verbosity = 0
         self.color = True
         self.warnings = []
+        self.warnings_unique = set()
+        self.info_stderr = False
 
     def __warning(self, message):
         """
@@ -304,10 +319,17 @@ class Display(object):
         for warning in self.warnings:
             self.__warning(warning)
 
-    def warning(self, message):
+    def warning(self, message, unique=False):
         """
         :type message: str
+        :type unique: bool
         """
+        if unique:
+            if message in self.warnings_unique:
+                return
+
+            self.warnings_unique.add(message)
+
         self.__warning(message)
         self.warnings.append(message)
 
@@ -330,7 +352,7 @@ class Display(object):
         """
         if self.verbosity >= verbosity:
             color = self.verbosity_colors.get(verbosity, self.yellow)
-            self.print_message(message, color=color)
+            self.print_message(message, color=color, fd=sys.stderr if self.info_stderr else sys.stdout)
 
     def print_message(self, message, color=None, fd=sys.stdout):  # pylint: disable=locally-disabled, invalid-name
         """
@@ -416,6 +438,7 @@ class CommonConfig(object):
         self.color = args.color  # type: bool
         self.explain = args.explain  # type: bool
         self.verbosity = args.verbosity  # type: int
+        self.debug = args.debug  # type: bool
 
 
 class EnvironmentConfig(CommonConfig):

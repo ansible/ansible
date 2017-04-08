@@ -13,16 +13,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: ec2_win_password
 short_description: gets the default administrator password for ec2 windows instances
 description:
-    - Gets the default administrator password from any EC2 Windows instance.  The instance is referenced by its id (e.g. i-XXXXXXX). This module has a dependency on python-boto.
+    - Gets the default administrator password from any EC2 Windows instance.  The instance is referenced by its id (e.g. i-XXXXXXX). This module
+      has a dependency on python-boto.
 version_added: "2.0"
 author: "Rick Mendes (@rickmendes)"
 options:
@@ -37,7 +39,8 @@ options:
   key_passphrase:
     version_added: "2.0"
     description:
-      - The passphrase for the instance key pair. The key must use DES or 3DES encryption for this module to decrypt it. You can use openssl to convert your password protected keys if they do not use DES or 3DES. ex) openssl rsa -in current_key -out new_key -des3.
+      - The passphrase for the instance key pair. The key must use DES or 3DES encryption for this module to decrypt it. You can use openssl to
+        convert your password protected keys if they do not use DES or 3DES. ex) openssl rsa -in current_key -out new_key -des3.
     required: false
     default: null
   wait:
@@ -92,7 +95,6 @@ tasks:
 '''
 
 from base64 import b64decode
-from os.path import expanduser
 from Crypto.Cipher import PKCS1_v1_5
 from Crypto.PublicKey import RSA
 import datetime
@@ -107,7 +109,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         instance_id = dict(required=True),
-        key_file = dict(required=True),
+        key_file = dict(required=True, type='path'),
         key_passphrase = dict(no_log=True, default=None, required=False),
         wait = dict(type='bool', default=False, required=False),
         wait_timeout = dict(default=120, required=False),
@@ -119,7 +121,7 @@ def main():
         module.fail_json(msg='Boto required for this module.')
 
     instance_id = module.params.get('instance_id')
-    key_file = expanduser(module.params.get('key_file'))
+    key_file = module.params.get('key_file')
     key_passphrase = module.params.get('key_passphrase')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))

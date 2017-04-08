@@ -16,9 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -95,7 +96,11 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
+import binascii
+
 from ansible.module_utils.basic import *
+from ansible.module_utils._text import to_text
+
 from collections import defaultdict
 
 try:
@@ -141,7 +146,7 @@ def decode_hex(hexstring):
     if len(hexstring) < 3:
         return hexstring
     if hexstring[:2] == "0x":
-        return hexstring[2:].decode("hex")
+        return to_text(binascii.unhexlify(hexstring[2:]))
     else:
         return hexstring
 
@@ -205,7 +210,7 @@ def main():
 
     # Verify that we receive a community when using snmp v2
     if m_args['version'] == "v2" or m_args['version'] == "v2c":
-        if m_args['community'] == False:
+        if m_args['community'] is False:
             module.fail_json(msg='Community not set when using snmp version 2')
 
     if m_args['version'] == "v3":
@@ -236,7 +241,8 @@ def main():
 
     # Use SNMP Version 3 with authPriv
     else:
-        snmp_auth = cmdgen.UsmUserData(m_args['username'], authKey=m_args['authkey'], privKey=m_args['privkey'], authProtocol=integrity_proto, privProtocol=privacy_proto)
+        snmp_auth = cmdgen.UsmUserData(m_args['username'], authKey=m_args['authkey'], privKey=m_args['privkey'], authProtocol=integrity_proto,
+                                       privProtocol=privacy_proto)
 
     # Use p to prefix OIDs with a dot for polling
     p = DefineOid(dotprefix=True)

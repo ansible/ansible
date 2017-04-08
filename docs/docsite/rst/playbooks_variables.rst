@@ -830,20 +830,25 @@ In 1.x, the precedence is as follows (with the last listed variables winning pri
 In 2.x, we have made the order of precedence more specific (with the last listed variables winning prioritization):
 
   * role defaults [1]_
-  * inventory vars [2]_
-  * inventory group_vars
-  * inventory host_vars
-  * playbook group_vars
-  * playbook host_vars
+  * inventory INI or script group vars [2]_
+  * inventory group_vars/all
+  * playbook group_vars/all
+  * inventory group_vars/*
+  * playbook group_vars/*
+  * inventory INI or script host vars [2]_
+  * inventory host_vars/*
+  * playbook host_vars/*
   * host facts
   * play vars
   * play vars_prompt
   * play vars_files
-  * registered vars
-  * set_facts
-  * role and include vars
+  * role vars (defined in role/vars/main.yml)
   * block vars (only for tasks in block)
   * task vars (only for the task)
+  * role (and include_role) params
+  * include params
+  * include_vars
+  * set_facts / registered vars
   * extra vars (always win precedence)
 
 Basically, anything that goes into "role defaults" (the defaults folder inside the role) is the most malleable and easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in namespace.  The idea here to follow is that the more explicit you get in scope, the more precedence it takes with command line ``-e`` extra vars always winning.  Host and/or inventory variables can win over role defaults, but not explicit includes like the vars directory or an ``include_vars`` task.
@@ -859,15 +864,30 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
 .. note:: the previous describes the default config `hash_behavior=replace`, switch to 'merge' to only partially overwrite.
 
 
-Another important thing to consider (for all versions) is that connection specific variables override config, command line and play specific options and directives.  For example::
+Another important thing to consider (for all versions) is that connection variables override config, command line and play/role/task specific options and directives.  For example::
 
-    ansible_ssh_user will override `-u <user>` and `remote_user: <user>`
+    ansible -u lola myhost
 
-This is done so host specific settings can override the general settings. These variables are normally defined per host or group in inventory,
-but they behave like other variables, so if you really want to override the remote user globally even over inventory you can use extra vars::
+This will still connect as ``ramon`` because ``ansible_ssh_user`` is set to ``ramon`` in inventory for myhost.
+For plays/tasks this is also true for ``remote_user``::
 
-    ansible... -e "ansible_ssh_user=<user>"
+ - hosts: myhost
+   tasks:
+    - command: i'll connect as ramon still
+      remote_user: lola
 
+This is done so host-specific settings can override the general settings. These variables are normally defined per host or group in inventory,
+but they behave like other variables. If you want to override the remote user globally (even over inventory) you can use extra vars::
+
+    ansible... -e "ansible_user=<user>"
+
+You can also override as a normal variable in a play::
+
+    - hosts: all
+      vars:
+        ansible_user: lola
+      tasks:
+        - command: i'll connect as lola!
 
 .. _variable_scopes:
 

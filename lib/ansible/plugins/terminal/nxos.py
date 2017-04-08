@@ -27,12 +27,12 @@ from ansible.errors import AnsibleConnectionFailure
 
 class TerminalModule(TerminalBase):
 
-    terminal_prompts_re = [
+    terminal_stdout_re = [
         re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*[>|#|%](?:\s*)$'),
         re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*\(.+\)#(?:\s*)$')
     ]
 
-    terminal_errors_re = [
+    terminal_stderr_re = [
         re.compile(r"% ?Error"),
         re.compile(r"^% \w+", re.M),
         re.compile(r"% ?Bad secret"),
@@ -51,12 +51,4 @@ class TerminalModule(TerminalBase):
             self._exec_cli_command('terminal length 0')
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
-
-    @staticmethod
-    def guess_network_os(conn):
-        stdin, stdout, stderr = conn.exec_command('show version')
-        if 'NX-OS' in stdout.read():
-            return 'nxos'
-
-
 

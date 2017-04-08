@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -276,7 +277,7 @@ def main():
             target = dict(required=False, aliases=['name', 'targetname']),
             node_auth = dict(required=False, default='CHAP'),
             node_user = dict(required=False),
-            node_pass = dict(required=False),
+            node_pass = dict(required=False, no_log=True),
 
             # actions
             login = dict(type='bool', aliases=['state']),

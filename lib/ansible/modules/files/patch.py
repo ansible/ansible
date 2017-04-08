@@ -19,9 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -67,7 +68,6 @@ options:
         that will be stripped from each file name found in the patch file.
         For more information see the strip parameter of the GNU patch tool.
     required: false
-    type: "int"
     default: "0"
   backup:
     version_added: "2.0"
@@ -83,9 +83,8 @@ options:
         line endings into LF. Line endings of src and dest must match. If set to
         C(no), patch will replace CRLF in src files on POSIX.
     required: false
-    type: "bool"
     default: "no"
-note:
+notes:
   - This module requires GNU I(patch) utility to be installed on the remote host.
 '''
 

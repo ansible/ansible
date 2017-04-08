@@ -14,16 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: s3_sync
 short_description: Efficiently upload multiple files to S3
 description:
-     - The S3 module is great, but it is very slow for a large volume of files- even a dozen will be noticeable. In addition to speed, it handles globbing, inclusions/exclusions, mime types, expiration mapping, recursion, and smart directory mapping.
+     - The S3 module is great, but it is very slow for a large volume of files- even a dozen will be noticeable. In addition to speed, it handles globbing,
+       inclusions/exclusions, mime types, expiration mapping, recursion, and smart directory mapping.
 version_added: "2.3"
 options:
   mode:
@@ -62,10 +64,10 @@ options:
     choices: [ '', private, public-read, public-read-write, authenticated-read, aws-exec-read, bucket-owner-read, bucket-owner-full-control ]
   mime_map:
     description:
-    - Dict entry from extension to MIME type. This will override any default/sniffed MIME type.
-    type: dict
+    - >
+      Dict entry from extension to MIME type. This will override any default/sniffed MIME type.
+      For example C({".txt": "application/text", ".yml": "appication/text"})
     required: false
-    sample: {".txt": "application/text", ".yml": "appication/text"}
   include:
     description:
     - Shell pattern-style file matching.
@@ -363,7 +365,10 @@ def head_s3(s3, bucket, s3keys):
         try:
             retentry['s3_head'] = s3.head_object(Bucket=bucket, Key=entry['s3_path'])
         except botocore.exceptions.ClientError as err:
-            if hasattr(err, 'response') and 'ResponseMetadata' in err.response and 'HTTPStatusCode' in err.response['ResponseMetadata'] and str(err.response['ResponseMetadata']['HTTPStatusCode']) == '404':
+            if (hasattr(err, 'response') and
+                    'ResponseMetadata' in err.response and
+                    'HTTPStatusCode' in err.response['ResponseMetadata'] and
+                    str(err.response['ResponseMetadata']['HTTPStatusCode']) == '404'):
                 pass
             else:
                 raise Exception(err)
@@ -445,7 +450,8 @@ def main():
         bucket = dict(required=True),
         key_prefix = dict(required=False, default=''),
         file_root = dict(required=True, type='path'),
-        permission = dict(required=False, choices=['private', 'public-read', 'public-read-write', 'authenticated-read', 'aws-exec-read', 'bucket-owner-read', 'bucket-owner-full-control']),
+        permission = dict(required=False, choices=['private', 'public-read', 'public-read-write', 'authenticated-read', 'aws-exec-read', 'bucket-owner-read',
+                                                   'bucket-owner-full-control']),
         retries = dict(required=False),
         mime_map = dict(required=False, type='dict'),
         exclude = dict(required=False, default=".*"),

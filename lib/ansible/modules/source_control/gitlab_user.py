@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -331,7 +332,7 @@ def main():
     # or with login_token
     try:
         if use_credentials:
-            git = gitlab.Gitlab(host=server_url)
+            git = gitlab.Gitlab(host=server_url, verify_ssl=verify_ssl)
             git.login(user=login_user, password=login_password)
         else:
             git = gitlab.Gitlab(server_url, token=login_token, verify_ssl=verify_ssl)

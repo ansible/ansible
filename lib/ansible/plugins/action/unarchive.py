@@ -42,6 +42,7 @@ class ActionModule(ActionBase):
         dest    = self._task.args.get('dest', None)
         remote_src = boolean(self._task.args.get('remote_src', False))
         creates = self._task.args.get('creates', None)
+        decrypt = self._task.args.get('decrypt', True)
 
         # "copy" is deprecated in favor of "remote_src".
         if 'copy' in self._task.args:
@@ -59,10 +60,8 @@ class ActionModule(ActionBase):
             result['msg'] = "src (or content) and dest are required"
             return result
 
-        remote_user = self._play_context.remote_user
         if not tmp:
-            tmp = self._make_tmp_path(remote_user)
-            self._cleanup_remote_tmp = True
+            tmp = self._make_tmp_path()
 
         if creates:
             # do not run the command if the line contains creates=filename
@@ -79,7 +78,7 @@ class ActionModule(ActionBase):
 
         if not remote_src:
             try:
-                source = self._loader.get_real_file(self._find_needle('files', source))
+                source = self._loader.get_real_file(self._find_needle('files', source), decrypt=decrypt)
             except AnsibleError:
                 result['failed'] = True
                 result['msg'] = to_native(get_exception())
@@ -110,7 +109,7 @@ class ActionModule(ActionBase):
 
         if not remote_src:
             # fix file permissions when the copy is done as a different user
-            self._fixup_perms2((tmp, tmp_src), remote_user)
+            self._fixup_perms2((tmp, tmp_src))
             # Build temporary module_args.
             new_module_args = self._task.args.copy()
             new_module_args.update(
@@ -127,6 +126,11 @@ class ActionModule(ActionBase):
                     original_basename=os.path.basename(source),
                 ),
             )
+
+        # remove action plugin only key
+        for key in ('remote_src', 'decrypt'):
+            if key in new_module_args:
+                del new_module_args[key]
 
         # execute the unarchive module now, with the updated args
         result.update(self._execute_module(module_args=new_module_args, task_vars=task_vars))

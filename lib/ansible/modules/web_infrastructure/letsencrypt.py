@@ -18,15 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import binascii
-import copy
-import locale
-import textwrap
-from datetime import datetime
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -94,7 +89,7 @@ options:
          will lead to an individual challenge that must be fulfilled for the
          CSR to be signed."
     required: true
-    alias: ['src']
+    aliases: ['src']
   data:
     description:
       - "The data to validate ongoing challenges."
@@ -105,7 +100,7 @@ options:
   dest:
     description: The destination file for the certificate.
     required: true
-    alias: ['cert']
+    aliases: ['cert']
   remaining_days:
     description:
       - "The number of days the certificate must have left being valid.
@@ -167,6 +162,13 @@ authorizations:
         returned: success
         type: dict
 '''
+
+import binascii
+import copy
+import locale
+import textwrap
+from datetime import datetime
+
 
 def nopad_b64(data):
     return base64.urlsafe_b64encode(data).decode('utf8').replace("=", "")

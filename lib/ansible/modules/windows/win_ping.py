@@ -21,9 +21,10 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = r'''
 ---
@@ -42,7 +43,7 @@ author: "Chris Church (@cchurch)"
 
 EXAMPLES = r'''
 # Test connectivity to a windows host
-ansible winserver -m win_ping
+# ansible winserver -m win_ping
 
 # Example from an Ansible Playbook
 - win_ping:

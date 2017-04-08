@@ -16,8 +16,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 module: pamd
@@ -134,7 +137,7 @@ EXAMPLES = """
     control: required
     module_path: pam_faillock.so
     new_type: auth
-    new_control=sufficient
+    new_control: sufficient
     new_module_path: pam_faillock.so
     state: after
 
@@ -195,6 +198,9 @@ dest:
     sample: "/etc/pam.d/system-auth"
 ...
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 
 
 # The PamdRule class encapsulates a rule in a pam.d service

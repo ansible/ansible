@@ -14,13 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -63,7 +60,13 @@ options:
     floating_ips:
         required: False
         default: None
-        description: Number of floating IP's to allow.
+        description: Number of floating IP's to allow in Compute.
+        aliases: ['compute_floating_ips']
+    floatingip:
+        required: False
+        default: None
+        description: Number of floating IP's to allow in Network.
+        aliases: ['network_floating_ips']
     gigabytes:
         required: False
         default: None
@@ -160,6 +163,10 @@ options:
         required: False
         default: None
         description: Number of LVM volumes to allow.
+    availability_zone:
+      description:
+        - Ignored. Present for backwards compatability
+      required: false
 
 
 requirements:
@@ -202,6 +209,7 @@ EXAMPLES = '''
     cores: "{{ item.cores }}"
     fixed_ips: "{{ item.fixed_ips }}"
     floating_ips: "{{ item.floating_ips }}"
+    floatingip: "{{ item.floatingip }}"
     gigabytes: "{{ item.gigabytes }}"
     injected_file_size: "{{ item.injected_file_size }}"
     injected_files: "{{ item.injected_files }}"
@@ -277,6 +285,15 @@ openstack_quotas:
     }
 
 '''
+
+import sys
+
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
 
 def _get_volume_quotas(cloud, project):
 
@@ -363,7 +380,8 @@ def main():
         backups=dict(required=False, type='int', default=None),
         cores=dict(required=False, type='int', default=None),
         fixed_ips=dict(required=False, type='int', default=None),
-        floating_ips=dict(required=False, type='int', default=None),
+        floating_ips=dict(required=False, type='int', default=None, aliases=['compute_floating_ips']),
+        floatingip=dict(required=False, type='int', default=None, aliases=['network_floating_ips']),
         gigabytes=dict(required=False, type='int', default=None),
         gigabytes_types=dict(required=False, type='dict', default={}),
         injected_file_size=dict(required=False, type='int', default=None),

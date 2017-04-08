@@ -24,22 +24,20 @@ import gettext
 import os
 import shlex
 from abc import ABCMeta, abstractmethod, abstractproperty
-
 from functools import wraps
-from ansible.compat.six import with_metaclass
 
 from ansible import constants as C
-from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types, with_metaclass
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins import shell_loader
-
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 __all__ = ['ConnectionBase', 'ensure_connect']
 
@@ -61,6 +59,8 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
     '''
 
     has_pipelining = False
+    has_native_async = False # eg, winrm
+    always_pipeline_modules = False # eg, winrm
     become_methods = C.BECOME_METHODS
     # When running over this connection type, prefer modules written in a certain language
     # as discovered by the specified file extension.  An empty string as the
@@ -253,10 +253,11 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         if self._play_context.prompt is None:
             return False
         elif isinstance(self._play_context.prompt, string_types):
-            b_prompt = to_bytes(self._play_context.prompt)
-            return b_output.startswith(b_prompt)
-        else:
-            return self._play_context.prompt(b_output)
+            b_prompt = to_bytes(self._play_context.prompt).strip()
+            b_lines = b_output.splitlines(True)
+            if not b_lines:
+                return False
+            return b_lines[-1].strip().endswith(b_prompt) or b_lines[0].strip().endswith(b_prompt)
 
     def check_incorrect_password(self, b_output):
         b_incorrect_password = to_bytes(gettext.dgettext(self._play_context.become_method, C.BECOME_ERROR_STRINGS[self._play_context.become_method]))
@@ -276,3 +277,6 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         f = self._play_context.connection_lockfd
         fcntl.lockf(f, fcntl.LOCK_UN)
         display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
+
+    def reset(self):
+        display.warning("Reset is not implemented for this connection")

@@ -133,7 +133,7 @@ When run for a specific container using the --host option this script returns th
     "docker_hostspath": "/mnt/sda1/var/lib/docker/containers/9f2f80b0a702361d1ac432e6af816c19bda46da15c21264fb418c873de635a14/hosts",
     "docker_id": "9f2f80b0a702361d1ac432e6af816c19bda46da15c21264fb418c873de635a14",
     "docker_image": "0a6ba66e537a53a5ea94f7c6a99c534c6adb12e3ed09326d4bf3b38f7c3ba4e7",
-    "docker_logpath": "/mnt/sda1/var/lib/docker/containers/9f2f80b0a702361d1ac432e6af816c19bda46da15c21264fb418c873de635a14/9f2f80b0a702361d1ac432e6af816c19bda46da15c21264fb418c873de635a14-json.log",
+    "docker_logpath": "/mnt/sda1/var/lib/docker/containers/9f2f80b0a702361d1ac432e6af816c19bda46da15c21264fb418c873de635a14/9f2f80b0a702361d1ac432e6a-json.log",
     "docker_mountlabel": "",
     "docker_mounts": [],
     "docker_name": "/hello-world",
@@ -525,7 +525,7 @@ class AnsibleDockerClient(Client):
             msg = "You asked for verification that Docker host name matches %s. The actual hostname is %s. " \
                 "Most likely you need to set DOCKER_TLS_HOSTNAME or pass tls_hostname with a value of %s. " \
                 "You may also use TLS without verification by setting the tls parameter to true." \
-                % (self.auth_params['tls_hostname'], match.group(1))
+                % (self.auth_params['tls_hostname'], match.group(1), match.group(1))
             self.fail(msg)
         self.fail("SSL Exception: %s" % (error))
 

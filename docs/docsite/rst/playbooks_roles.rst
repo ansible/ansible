@@ -37,7 +37,7 @@ Task versus Play includes
 Tasks and plays both use the `include` keyword, but implement the keyword differently. The difference between them is determined by their positioning and content. If the include is inside a play it can only be a 'task' include and include a list of tasks; if it is at the top level, it can only include plays. For example::
 
     # this is a 'play' include
-    - include: listofplays
+    - include: intro_example.yml
 
     - name: another play
       hosts: all
@@ -484,7 +484,7 @@ They can then be used in a template or a jinja template in any role called after
 Ansible Galaxy
 ``````````````
 
-`Ansible Galaxy <http://galaxy.ansible.com>`_ is a free site for finding, downloading, rating, and reviewing all kinds of community developed Ansible roles and can be a great way to get a jumpstart on your automation projects.
+`Ansible Galaxy <https://galaxy.ansible.com>`_ is a free site for finding, downloading, rating, and reviewing all kinds of community developed Ansible roles and can be a great way to get a jumpstart on your automation projects.
 
 You can sign up with social auth, and the download client 'ansible-galaxy' is included in Ansible 1.4.2 and later.
 

@@ -21,9 +21,10 @@
 #
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -93,7 +94,7 @@ requirements:
     - "docker-py >= 1.7.0"
     - "Docker API >= 1.20"
     - 'Only to be able to logout (state=absent): the docker command line utility'
-authors:
+author:
     - "Olaf Kilian <olaf.kilian@symanex.com>"
     - "Chris Houseknecht (@chouseknecht)"
     - "James Tanner (@jctanner)"

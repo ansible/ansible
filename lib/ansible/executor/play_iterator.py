@@ -21,13 +21,13 @@ __metaclass__ = type
 
 import fnmatch
 
-from ansible.compat.six import iteritems
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils.six import cmp
+from ansible.module_utils.six import iteritems
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 from ansible.playbook.role_include import IncludeRole
+
 
 boolean = C.mk_boolean
 
@@ -80,30 +80,29 @@ class HostState:
                         ret.append(states[i])
                 return "|".join(ret)
 
-        return "HOST STATE: block=%d, task=%d, rescue=%d, always=%d, run_state=%s, fail_state=%s, pending_setup=%s, tasks child state? (%s), rescue child state? (%s), always child state? (%s), did rescue? %s, did start at task? %s" % (
-            self.cur_block,
-            self.cur_regular_task,
-            self.cur_rescue_task,
-            self.cur_always_task,
-            _run_state_to_string(self.run_state),
-            _failed_state_to_string(self.fail_state),
-            self.pending_setup,
-            self.tasks_child_state,
-            self.rescue_child_state,
-            self.always_child_state,
-            self.did_rescue,
-            self.did_start_at_task,
-        )
+        return ("HOST STATE: block=%d, task=%d, rescue=%d, always=%d, run_state=%s, fail_state=%s, pending_setup=%s, tasks child state? (%s), "
+                "rescue child state? (%s), always child state? (%s), did rescue? %s, did start at task? %s" % (
+                    self.cur_block,
+                    self.cur_regular_task,
+                    self.cur_rescue_task,
+                    self.cur_always_task,
+                    _run_state_to_string(self.run_state),
+                    _failed_state_to_string(self.fail_state),
+                    self.pending_setup,
+                    self.tasks_child_state,
+                    self.rescue_child_state,
+                    self.always_child_state,
+                    self.did_rescue,
+                    self.did_start_at_task,
+                ))
 
     def __eq__(self, other):
         if not isinstance(other, HostState):
             return False
 
-        for attr in (
-            '_blocks', 'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task',
-            'run_state', 'fail_state', 'pending_setup', 'cur_dep_chain',
-            'tasks_child_state', 'rescue_child_state', 'always_child_state'
-            ):
+        for attr in ('_blocks', 'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task',
+                     'run_state', 'fail_state', 'pending_setup', 'cur_dep_chain',
+                     'tasks_child_state', 'rescue_child_state', 'always_child_state'):
             if getattr(self, attr) != getattr(other, attr):
                 return False
 
@@ -184,6 +183,9 @@ class PlayIterator:
         if fact_path:
             setup_task.args['fact_path'] = fact_path
         setup_task.set_loader(self._play._loader)
+        # short circuit fact gathering if the entire playbook is conditional
+        if self._play._included_conditional is not None:
+            setup_task.when = self._play._included_conditional[:]
         setup_block.block = [setup_task]
 
         setup_block = setup_block.filter_tagged_tasks(play_context, all_vars)

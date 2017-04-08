@@ -26,8 +26,9 @@ from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.inventory.expand_hosts import detect_range
 from ansible.inventory.expand_hosts import expand_hostname_range
+from ansible.module_utils.six import string_types
 from ansible.parsing.utils.addresses import parse_address
-from ansible.compat.six import string_types
+
 
 class InventoryParser(object):
     """
@@ -70,7 +71,7 @@ class InventoryParser(object):
         # 'all' at the time it was created.
         for group in self.groups.values():
             if group.depth == 0 and group.name not in ('all', 'ungrouped'):
-                self.groups['all'].add_child_group(Group(group_name))
+                self.groups['all'].add_child_group(group)
 
     def _parse_groups(self, group, group_data):
 
@@ -85,10 +86,7 @@ class InventoryParser(object):
 
             if 'vars' in group_data:
                 for var in group_data['vars']:
-                    if var != 'ansible_group_priority':
-                        self.groups[group].set_variable(var, group_data['vars'][var])
-                    else:
-                        self.groups[group].set_priority(group_data['vars'][var])
+                    self.groups[group].set_variable(var, group_data['vars'][var])
 
             if 'children' in group_data:
                 for subgroup in group_data['children']:

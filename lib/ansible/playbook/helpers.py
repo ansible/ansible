@@ -21,8 +21,8 @@ __metaclass__ = type
 import os
 
 from ansible import constants as C
-from ansible.compat.six import string_types
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
+from ansible.module_utils.six import string_types
 
 try:
     from __main__ import display

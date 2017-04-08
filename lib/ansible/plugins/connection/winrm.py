@@ -23,10 +23,12 @@ import inspect
 import os
 import re
 import shlex
+import socket
 import traceback
 import json
 import tempfile
 import subprocess
+import itertools
 
 HAVE_KERBEROS = False
 try:
@@ -35,12 +37,13 @@ try:
 except ImportError:
     pass
 
-from ansible.compat.six import string_types
-from ansible.compat.six.moves.urllib.parse import urlunsplit
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
+from ansible.module_utils.six import string_types
+from ansible.module_utils.six.moves.urllib.parse import urlunsplit
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
+from ansible.plugins.shell.powershell import exec_wrapper, become_wrapper, leaf_exec
 from ansible.utils.hashing import secure_hash
 from ansible.utils.path import makedirs_safe
 
@@ -48,13 +51,13 @@ try:
     import winrm
     from winrm import Response
     from winrm.protocol import Protocol
-except ImportError:
-    raise AnsibleError("winrm is not installed")
+except ImportError as e:
+    raise AnsibleError("winrm or requests is not installed: %s" % str(e))
 
 try:
     import xmltodict
-except ImportError:
-    raise AnsibleError("xmltodict is not installed")
+except ImportError as e:
+    raise AnsibleError("xmltodict is not installed: %s" % str(e))
 
 try:
     from __main__ import display
@@ -68,12 +71,14 @@ class Connection(ConnectionBase):
 
     transport = 'winrm'
     module_implementation_preferences = ('.ps1', '.exe', '')
-    become_methods = []
+    become_methods = ['runas']
     allow_executable = False
 
     def __init__(self,  *args, **kwargs):
 
-        self.has_pipelining   = False
+        self.has_pipelining   = True
+        self.always_pipeline_modules = True
+        self.has_native_async = True
         self.protocol         = None
         self.shell_id         = None
         self.delegate         = None
@@ -81,6 +86,14 @@ class Connection(ConnectionBase):
         # FUTURE: Add runas support
 
         super(Connection, self).__init__(*args, **kwargs)
+
+    def transport_test(self, connect_timeout):
+        ''' Test the transport mechanism, if available '''
+        host = self._winrm_host
+        port = int(self._winrm_port)
+        display.vvv("attempting transport test to %s:%s" % (host, port))
+        sock = socket.create_connection((host, port), connect_timeout)
+        sock.close()
 
     def set_host_overrides(self, host, hostvars=None):
         '''
@@ -92,6 +105,9 @@ class Connection(ConnectionBase):
         self._winrm_path = hostvars.get('ansible_winrm_path', '/wsman')
         self._winrm_user = self._play_context.remote_user
         self._winrm_pass = self._play_context.password
+        self._become_method = self._play_context.become_method
+        self._become_user = self._play_context.become_user
+        self._become_pass = self._play_context.become_pass
 
         self._kinit_cmd  = hostvars.get('ansible_winrm_kinit_cmd', 'kinit')
 
@@ -241,7 +257,8 @@ class Connection(ConnectionBase):
             stdin_push_failed = False
             command_id = self.protocol.run_command(self.shell_id, to_bytes(command), map(to_bytes, args), console_mode_stdin=(stdin_iterator is None))
 
-            # TODO: try/except around this, so we can get/return the command result on a broken pipe or other failure (probably more useful than the 500 that comes from this)
+            # TODO: try/except around this, so we can get/return the command result on a broken pipe or other failure (probably more useful than the 500 that
+            # comes from this)
             try:
                 if stdin_iterator:
                     for (data, is_last) in stdin_iterator:
@@ -288,7 +305,52 @@ class Connection(ConnectionBase):
         self.shell_id = None
         self._connect()
 
+    def _create_raw_wrapper_payload(self, cmd, environment=dict()):
+        payload = {
+            'module_entry': base64.b64encode(to_bytes(cmd)),
+            'powershell_modules': {},
+            'actions': ['exec'],
+            'exec': base64.b64encode(to_bytes(leaf_exec)),
+            'environment': environment
+        }
+
+        return json.dumps(payload)
+
+    def _wrapper_payload_stream(self, payload, buffer_size=200000):
+        payload_bytes = to_bytes(payload)
+        byte_count = len(payload_bytes)
+        for i in range(0, byte_count, buffer_size):
+            yield payload_bytes[i:i+buffer_size], i+buffer_size >= byte_count
+
     def exec_command(self, cmd, in_data=None, sudoable=True):
+        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
+        cmd_parts = self._shell._encode_script(exec_wrapper, as_list=True, strict_mode=False, preserve_rc=False)
+
+        # TODO: display something meaningful here
+        display.vvv("EXEC (via pipeline wrapper)")
+
+        if not in_data:
+            payload = self._create_raw_wrapper_payload(cmd)
+        else:
+            payload = in_data
+
+        result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True, stdin_iterator=self._wrapper_payload_stream(payload))
+
+        result.std_out = to_bytes(result.std_out)
+        result.std_err = to_bytes(result.std_err)
+
+        # parse just stderr from CLIXML output
+        if self.is_clixml(result.std_err):
+            try:
+                result.std_err = self.parse_clixml_stream(result.std_err)
+            except:
+                # unsure if we're guaranteed a valid xml doc- use raw output in case of error
+                pass
+
+        return (result.status_code, result.std_out, result.std_err)
+
+
+    def exec_command_old(self, cmd, in_data=None, sudoable=True):
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
         cmd_parts = shlex.split(to_bytes(cmd), posix=False)
         cmd_parts = map(to_text, cmd_parts)
@@ -426,7 +488,7 @@ class Connection(ConnectionBase):
                     script = '''
                         If (Test-Path -PathType Leaf "%(path)s")
                         {
-                            $stream = [System.IO.File]::OpenRead("%(path)s");
+                            $stream = New-Object IO.FileStream("%(path)s", [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [IO.FileShare]::ReadWrite);
                             $stream.Seek(%(offset)d, [System.IO.SeekOrigin]::Begin) | Out-Null;
                             $buffer = New-Object Byte[] %(buffer_size)d;
                             $bytesRead = $stream.Read($buffer, 0, %(buffer_size)d);

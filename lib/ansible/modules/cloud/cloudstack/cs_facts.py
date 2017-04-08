@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -146,7 +147,7 @@ class CloudStackFacts(object):
     def _get_user_data_json(self):
         try:
             # this data come form users, we try what we can to parse it...
-            return yaml.load(self._fetch(CS_USERDATA_BASE_URL))
+            return yaml.safe_load(self._fetch(CS_USERDATA_BASE_URL))
         except:
             return None
 

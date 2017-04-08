@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = """
 module: ec2_metric_alarm
@@ -50,12 +51,12 @@ options:
           - Operation applied to the metric
           - Works in conjunction with period and evaluation_periods to determine the comparison value
         required: false
-        options: ['SampleCount','Average','Sum','Minimum','Maximum']
+        choices: ['SampleCount','Average','Sum','Minimum','Maximum']
     comparison:
         description:
           - Determines how the threshold value is compared
         required: false
-        options: ['<=','<','>','>=']
+        choices: ['<=','<','>','>=']
     threshold:
         description:
           - Sets the min/max bound for triggering the alarm
@@ -72,7 +73,34 @@ options:
         description:
           - The threshold's unit of measurement
         required: false
-        options: ['Seconds','Microseconds','Milliseconds','Bytes','Kilobytes','Megabytes','Gigabytes','Terabytes','Bits','Kilobits','Megabits','Gigabits','Terabits','Percent','Count','Bytes/Second','Kilobytes/Second','Megabytes/Second','Gigabytes/Second','Terabytes/Second','Bits/Second','Kilobits/Second','Megabits/Second','Gigabits/Second','Terabits/Second','Count/Second','None']
+        choices:
+            - 'Seconds'
+            - 'Microseconds'
+            - 'Milliseconds'
+            - 'Bytes'
+            - 'Kilobytes'
+            - 'Megabytes'
+            - 'Gigabytes'
+            - 'Terabytes'
+            - 'Bits'
+            - 'Kilobits'
+            - 'Megabits'
+            - 'Gigabits'
+            - 'Terabits'
+            - 'Percent'
+            - 'Count'
+            - 'Bytes/Second'
+            - 'Kilobytes/Second'
+            - 'Megabytes/Second'
+            - 'Gigabytes/Second'
+            - 'Terabytes/Second'
+            - 'Bits/Second'
+            - 'Kilobits/Second'
+            - 'Megabits/Second'
+            - 'Gigabits/Second'
+            - 'Terabits/Second'
+            - 'Count/Second'
+            - 'None'
     description:
         description:
           - A longer description of the alarm
@@ -253,7 +281,10 @@ def main():
             comparison=dict(type='str', choices=['<=', '<', '>', '>=']),
             threshold=dict(type='float'),
             period=dict(type='int'),
-            unit=dict(type='str', choices=['Seconds', 'Microseconds', 'Milliseconds', 'Bytes', 'Kilobytes', 'Megabytes', 'Gigabytes', 'Terabytes', 'Bits', 'Kilobits', 'Megabits', 'Gigabits', 'Terabits', 'Percent', 'Count', 'Bytes/Second', 'Kilobytes/Second', 'Megabytes/Second', 'Gigabytes/Second', 'Terabytes/Second', 'Bits/Second', 'Kilobits/Second', 'Megabits/Second', 'Gigabits/Second', 'Terabits/Second', 'Count/Second', 'None']),
+            unit=dict(type='str', choices=['Seconds', 'Microseconds', 'Milliseconds', 'Bytes', 'Kilobytes', 'Megabytes', 'Gigabytes', 'Terabytes',
+                                           'Bits', 'Kilobits', 'Megabits', 'Gigabits', 'Terabits', 'Percent', 'Count', 'Bytes/Second', 'Kilobytes/Second',
+                                           'Megabytes/Second', 'Gigabytes/Second', 'Terabytes/Second', 'Bits/Second', 'Kilobits/Second', 'Megabits/Second',
+                                           'Gigabits/Second', 'Terabits/Second', 'Count/Second', 'None']),
             evaluation_periods=dict(type='int'),
             description=dict(type='str'),
             dimensions=dict(type='dict', default={}),

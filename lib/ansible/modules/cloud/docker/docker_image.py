@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -134,7 +135,6 @@ options:
       - Provide a dictionary of C(key:value) build arguments that map to Dockerfile ARG directive.
       - Docker expects the value to be a string. For convenience any non-string values will be converted to strings.
       - Requires Docker API >= 1.21 and docker-py >= 1.7.0.
-    type: complex
     required: false
     version_added: "2.2"
   container_limits:
@@ -142,20 +142,19 @@ options:
       - A dictionary of limits applied to each container created by the build process.
     required: false
     version_added: "2.1"
-    type: complex
-    contains:
+    suboptions:
       memory:
-        description: Set memory limit for build
-        type: int
+        description:
+          - Set memory limit for build.
       memswap:
-        description: Total memory (memory + swap), -1 to disable swap
-        type: int
+        description:
+          - Total memory (memory + swap), -1 to disable swap.
       cpushares:
-        description: CPU shares (relative weight)
-        type: int
+        description:
+          - CPU shares (relative weight).
       cpusetcpus:
-        description: CPUs in which to allow execution, e.g., "0-3", "0,1"
-        type: str
+        description:
+          - CPUs in which to allow execution, e.g., "0-3", "0,1".
   use_tls:
     description:
       - "DEPRECATED. Whether to use tls to connect to the docker server. Set to C(no) when TLS will not be used. Set to
@@ -177,7 +176,7 @@ requirements:
   - "docker-py >= 1.7.0"
   - "Docker API >= 1.20"
 
-authors:
+author:
   - Pavel Antonov (@softzilla)
   - Chris Houseknecht (@chouseknecht)
   - James Tanner (@jctanner)
@@ -231,7 +230,7 @@ EXAMPLES = '''
     load_path: my_sinatra.tar
 
 - name: Build image and with buildargs
-   docker_image:
+  docker_image:
      path: /path/to/build/dir
      name: myimage
      buildargs:
@@ -399,9 +398,9 @@ class ImageManager(DockerBaseClass):
                 self.fail("Error getting image %s - %s" % (image_name, str(exc)))
 
             try:
-                image_tar = open(self.archive_path, 'w')
-                image_tar.write(image.data)
-                image_tar.close()
+                with open(self.archive_path, 'w') as fd:
+                    for chunk in image.stream(2048, decode_content=False):
+                        fd.write(chunk)
             except Exception as exc:
                 self.fail("Error writing image archive %s - %s" % (self.archive_path, str(exc)))
 
@@ -508,6 +507,7 @@ class ImageManager(DockerBaseClass):
             dockerfile=self.dockerfile,
             decode=True
         )
+        build_output = []
         if self.tag:
             params['tag'] = "%s:%s" % (self.name, self.tag)
         if self.container_limits:
@@ -521,14 +521,20 @@ class ImageManager(DockerBaseClass):
         for line in self.client.build(**params):
             # line = json.loads(line)
             self.log(line, pretty_print=True)
+            if "stream" in line:
+                build_output.append(line["stream"])
             if line.get('error'):
                 if line.get('errorDetail'):
                     errorDetail = line.get('errorDetail')
-                    self.fail("Error building %s - code: %s message: %s" % (self.name,
-                                                                            errorDetail.get('code'),
-                                                                            errorDetail.get('message')))
+                    self.fail(
+                        "Error building %s - code: %s, message: %s, logs: %s" % (
+                            self.name,
+                            errorDetail.get('code'),
+                            errorDetail.get('message'),
+                            build_output))
                 else:
-                    self.fail("Error building %s - %s" % (self.name, line.get('error')))
+                    self.fail("Error building %s - message: %s, logs: %s" % (
+                        self.name, line.get('error'), build_output))
         return self.client.find_image(name=self.name, tag=self.tag)
 
     def load_image(self):

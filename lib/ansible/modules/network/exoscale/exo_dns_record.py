@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -244,8 +245,30 @@ exo_dns_record:
             sample: "2016-08-12T15:24:23.989Z"
 '''
 
-# import exoscale common
-from ansible.module_utils.exoscale import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.exoscale import (
+    ExoDns,
+    exo_dns_argument_spec,
+    exo_dns_required_together
+)
+
+EXO_RECORD_TYPES = [
+    'A',
+    'ALIAS',
+    'CNAME',
+    'MX',
+    'SPF',
+    'URL',
+    'TXT',
+    'NS',
+    'SRV',
+    'NAPTR',
+    'PTR',
+    'AAAA',
+    'SSHFP',
+    'HINFO',
+    'POOL'
+]
 
 
 class ExoDnsRecord(ExoDns):
@@ -265,8 +288,7 @@ class ExoDnsRecord(ExoDns):
         self.multiple = self.module.params.get('multiple')
         self.record_type = self.module.params.get('record_type')
         if self.multiple and self.record_type != 'A':
-            self.module.fail_json("Multiple is only usable with record_type A")
-
+            self.module.fail_json(msg="Multiple is only usable with record_type A")
 
     def _create_record(self, record):
         self.result['changed'] = True
@@ -357,7 +379,7 @@ def main():
     argument_spec = exo_dns_argument_spec()
     argument_spec.update(dict(
         name=dict(default=""),
-        record_type=dict(choices=['A', 'ALIAS', 'CNAME', 'MX', 'SPF', 'URL', 'TXT', 'NS', 'SRV', 'NAPTR', 'PTR', 'AAAA', 'SSHFP', 'HINFO', 'POOL'], aliases=['rtype', 'type'], default='A'),
+        record_type=dict(choices=EXO_RECORD_TYPES, aliases=['rtype', 'type'], default='A'),
         content=dict(aliases=['value', 'address']),
         multiple=(dict(type='bool', default=False)),
         ttl=dict(type='int', default=3600),
@@ -388,8 +410,6 @@ def main():
     result = exo_dns_record.get_result(resource)
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

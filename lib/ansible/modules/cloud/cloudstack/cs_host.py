@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -306,7 +307,8 @@ state:
   type: string
   sample: Up
 suitable_for_migration:
-  description: Whether this host is suitable (has enough capacity and satisfies all conditions like hosttags, max guests VM limit, etc) to migrate a VM to it or not.
+  description: Whether this host is suitable (has enough capacity and satisfies all conditions like hosttags, max guests VM limit, etc) to migrate a VM
+               to it or not.
   returned: success
   type: string
   sample: true
@@ -505,7 +507,7 @@ def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True, aliases=['url']),
-        password=dict(default=None, not_log=True),
+        password=dict(default=None, no_log=True),
         username=dict(default=None),
         hypervisor=dict(choices=CS_HYPERVISORS, default=None),
         allocation_state=dict(default=None),
