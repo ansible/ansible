@@ -29,6 +29,23 @@ except ImportError:
     import simplejson as json
 
 
+# Script.
+def cli_arguments():
+    """Script cli arguments.
+    By default Ansible calls "--list" as argument.
+    """
+
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("-c", "--config-file", default="netbox.yml",
+                        help="Path for configuration of the script.")
+    parser.add_argument("--list", help="Print all hosts with vars as Ansible dynamic inventory syntax.",
+                        action="store_true")
+    parser.add_argument("--host", help="Print specific host vars as Ansible dynamic inventory syntax.",
+                        action="store")
+    arguments = parser.parse_args()
+    return arguments
+
+
 # Utils.
 def get_value_by_path(source_dict, key_path, ignore_key_error=False):
     """Get key value from nested dict by path.
@@ -70,47 +87,28 @@ def get_full_path(file_name):
     return full_path
 
 
-class Script(object):
-    """All stuff related to script itself.
+def open_yaml_file(yaml_file):
+    """Open YAML file.
+
+    Args:
+        yaml_file: Relative or absolute path to YAML file.
+
+    Returns:
+        Content of YAML the file.
     """
 
-    def cli_arguments(self):
-        """Script cli arguments.
-        By default Ansible calls "--list" as argument.
-        """
-
-        parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-        parser.add_argument("-c", "--config-file", default="netbox.yml",
-                            help="Path for configuration of the script.")
-        parser.add_argument("--list", help="Print all hosts with vars as Ansible dynamic inventory syntax.",
-                            action="store_true")
-        parser.add_argument("--host", help="Print specific host vars as Ansible dynamic inventory syntax.",
-                            action="store")
-        cli_arguments = parser.parse_args()
-        return cli_arguments
-
-    def open_yaml_file(self, yaml_file):
-        """Open YAML file.
-
-        Args:
-            yaml_file: Relative or absolute path to YAML file.
-
-        Returns:
-            Content of YAML the file.
-        """
-
-        # Load content of YAML file.
-        try:
-            with open(yaml_file, 'r') as config_yaml_file:
-                try:
-                    yaml_file_content = yaml.load(config_yaml_file)
-                except yaml.YAMLError as yaml_error:
-                    print(yaml_error)
-                    sys.exit(1)
-        except IOError as io_error:
-            print("Cannot open YAML file: %s\n%s" % (get_full_path(yaml_file), io_error))
-            sys.exit(1)
-        return yaml_file_content
+    # Load content of YAML file.
+    try:
+        with open(yaml_file, 'r') as config_yaml_file:
+            try:
+                yaml_file_content = yaml.load(config_yaml_file)
+            except yaml.YAMLError as yaml_error:
+                print(yaml_error)
+                sys.exit(1)
+    except IOError as io_error:
+        print("Cannot open YAML file: %s\n%s" % (get_full_path(yaml_file), io_error))
+        sys.exit(1)
+    return yaml_file_content
 
 
 class NetboxAsInventory(object):
@@ -338,9 +336,8 @@ class NetboxAsInventory(object):
 # Main.
 if __name__ == "__main__":
     # Script vars.
-    script = Script()
-    args = script.cli_arguments()
-    config_data = script.open_yaml_file(args.config_file)
+    args = cli_arguments()
+    config_data = open_yaml_file(args.config_file)
 
     # Netbox vars.
     netbox = NetboxAsInventory(args, config_data)
