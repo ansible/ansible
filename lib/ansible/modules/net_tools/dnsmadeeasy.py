@@ -101,18 +101,21 @@ options:
     required: true
     default: 'no'
     choices: ['yes', 'no']
+    version_added: 2.4.0
 
   systemDescription:
     description:
       - Description used in failover notification
     required: true
     default: ''
+    version_added: 2.4.0
 
   maxEmails:
     description:
       - Number of emails sent to the contact for a failover event
     required: true
     default: 1
+    version_added: 2.4.0
 
   protocol:
     description:
@@ -120,12 +123,14 @@ options:
     required: true
     default: 'HTTP'
     choices: ['TCP', 'UDP', 'HTTP', 'DNS', 'SMTP', 'HTTPS']
+    version_added: 2.4.0
 
   port:
     description:
       - Monitor port
     required: true
     default: 80
+    version_added: 2.4.0
 
   sensitivity:
     description:
@@ -134,6 +139,7 @@ options:
     required: true
     default: 'Medium'
     choices: ['Low', 'Medium', 'High']
+    version_added: 2.4.0
 
   contactList:
     description:
@@ -141,21 +147,25 @@ options:
       - The default (or '') means the Account Owner
     required: true
     default: ''
+    version_added: 2.4.0
 
   httpFqdn:
     description:
       - The fully qualified domain name to monitor for HTTP or HTTPS monitors
     required: false
+    version_added: 2.4.0
 
   httpFile:
     description:
       - The file to query for HTTP or HTTPS monitors
     required: false
+    version_added: 2.4.0
 
   httpQueryString:
     description:
       - The string to query for HTTP or HTTPS monitors
     required: False
+    version_added: 2.4.0
 
   failover:
     description:
@@ -163,6 +173,7 @@ options:
     required: true
     default: 'no'
     choices: ['yes', 'no']
+    version_added: 2.4.0
 
   autoFailover:
     description:
@@ -171,38 +182,45 @@ options:
     required: true
     default: 'no'
     choices: ['yes', 'no']
+    version_added: 2.4.0
 
   ip1:
     description:
       - Primary IP address
       - Required if adding or changing the monitor or failover
     required: false
+    version_added: 2.4.0
 
   ip2:
     description:
       - Secondary IP address
       - Required if adding or changing the failover
     required: false
+    version_added: 2.4.0
 
   ip3:
     description:
       - Tertiary IP address
     required: false
+    version_added: 2.4.0
 
   ip4:
     description:
       - Quaternary IP address
     required: false
+    version_added: 2.4.0
 
   ip5:
     description:
       - Quinary IP address
     required: false
+    version_added: 2.4.0
 
 notes:
   - The DNS Made Easy service requires that machines interacting with the API have the proper time and timezone set. Be sure you are within a few
     seconds of actual time by using NTP.
-  - This module returns record(s) and monitor(s) in the "result" element when 'state' is set to 'present'. These values can be be registered and used in your playbooks.
+  - This module returns record(s) and monitor(s) in the "result" element when 'state' is set to 'present'.
+    These values can be be registered and used in your playbooks.
   - Only A records can have a monitor or failover.
   - To add failover, the 'failover', 'autoFailover', 'port', 'protocol', 'ip1', and 'ip2' options are required.
   - To add monitor, the 'monitor', 'port', 'protocol', 'maxEmails', 'systemDescription', and 'ip1' options are required.
