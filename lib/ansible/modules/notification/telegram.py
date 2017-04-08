@@ -84,12 +84,8 @@ telegram_error:
   sample: "Bad Request: message text is empty"
 """
 
-try:
-    from urllib import quote
-except ImportError:
-    from urllib.parse import quote
-
 import json
+from ansible.module_utils.six.moves.urllib.parse import quote
 
 
 def main():
