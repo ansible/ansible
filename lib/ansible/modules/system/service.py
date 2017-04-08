@@ -56,7 +56,8 @@ options:
         - If the service is being C(restarted) then sleep this many seconds
           between the stop and start command. This helps to workaround badly
           behaving init scripts that exit immediately after signaling a process
-          to stop.
+          to stop. Note that sleep is not supported for operating systems
+          running systemd.
     pattern:
         required: false
         version_added: "0.7"
