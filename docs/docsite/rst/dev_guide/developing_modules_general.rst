@@ -1,7 +1,13 @@
+==========================
+Developing Ansible Modules
+==========================
+
+.. contents:: Topics
+
 .. _module_dev_tutorial_sample:
 
 Building A Simple Module
-````````````````````````
+------------------------
 
 Let's build a very-basic module to get and set the system time.  For starters, let's build
 a module that just outputs the current time.
@@ -40,7 +46,7 @@ Ok, let's get going with an example.  We'll use Python.  For starters, save this
 .. _module_testing:
 
 Testing Your Module
-```````````````````
+-------------------
 
 There's a useful test script in the source checkout for Ansible:
 
@@ -69,7 +75,8 @@ If you did not, you might have a typo in your module, so recheck it and try agai
 .. _reading_input:
 
 Reading Input
-`````````````
+-------------
+
 Let's modify the module to allow setting the current time.  We'll do this by seeing
 if a key value pair in the form `time=<string>` is passed in to the module.
 
@@ -206,8 +213,8 @@ would resemble something similar to the following payload for a module accepting
 
 .. _module_provided_facts:
 
-Module Provided 'Facts'
-````````````````````````
+Module Provided 'Facts
+----------------------
 
 The :ref:`setup` module that ships with Ansible provides many variables about a system that can be used in playbooks
 and templates.  However, it's possible to also add your own facts without modifying the system module.  To do
@@ -238,7 +245,7 @@ Returning a new fact from a python module could be done like::
 .. _common_module_boilerplate:
 
 Common Module Boilerplate
-`````````````````````````
+-------------------------
 
 FIXME Add in a minimal module example, then have linkable subsections for each section. Use highlight line to mark the sections
 
@@ -255,6 +262,7 @@ Key parts include always importing the boilerplate code from
 :mod:`ansible.module_utils.basic` like this:
 
 FIXME This sample is wrong
+
 .. code-block:: python
 
     from ansible.module_utils.basic import AnsibleModule
@@ -304,7 +312,7 @@ All arguments are optional unless otherwise specified.
     :required:
       Is this option always required?
       Only needed if True, as the default is False.
-      Iif the option is only required sometimes see the conditional options such as ``mutually_exclusive``, ``required_together``, etc.
+      If the option is only required sometimes see the conditional options such as ``mutually_exclusive``, ``required_together``, etc.
     :default:
      FIXME fallbackenv
     :type:
@@ -331,15 +339,15 @@ All arguments are optional unless otherwise specified.
           # FIXME test and check return type
         :bits: # example (human_to_bytes)
           # FIXME test and check return type
-     :choices:
-       A list of possible allowed values for this option.
-       Must not be set when using ``type='bool'``.
-     :aliases:
-       A list of aliases that this option name can be referred to in playbooks.
-     :no_log:
-       Boolean to state if this option may contain sensitive data, such as passwords, or authentication tokens.
-     :removed_in_version:
-       FIXME
+    :choices:
+      A list of possible allowed values for this option.
+      Must not be set when using ``type='bool'``.
+    :aliases:
+      A list of aliases that this option name can be referred to in playbooks.
+    :no_log:
+      Boolean to state if this option may contain sensitive data, such as passwords, or authentication tokens.
+    :removed_in_version:
+      FIXME
 
 
 
@@ -413,7 +421,8 @@ If submitting a module to Ansible's core code, which we encourage, use of
 .. _developing_for_check_mode:
 
 Supporting Check Mode
-`````````````````````
+---------------------
+
 .. versionadded:: 1.1
 
 Modules may optionally support `check mode <http://docs.ansible.com/ansible/playbooks_checkmode.html>`. If the user runs Ansible in check mode, a module should try to predict and report whether changes will occur but not actually make any changes (modules that do not support check mode will also take no action, but just will not report what changes they might have made).
