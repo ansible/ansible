@@ -37,6 +37,10 @@ options:
         description:
             - Name of the resource group to use.
         required: true
+    resource:
+        description:
+            - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
+        required: false
     name:
         description:
             - Name of the storage account to update or create.

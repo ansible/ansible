@@ -37,6 +37,10 @@ options:
     description:
       - The resource group name to use or create to host the deployed template
     required: true
+  resource:
+    description:
+      - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
+    required: false
   location:
     description:
       - The geo-locations in which the resource group will be located.

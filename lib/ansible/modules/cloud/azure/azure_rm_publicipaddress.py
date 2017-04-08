@@ -41,6 +41,10 @@ options:
         description:
             - Name of resource group with which the Public IP is associated.
         required: true
+    resource:
+        description:
+            - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
+        required: false
     allocation_method:
         description:
             - Control whether the assigned Public IP remains permanently assigned to the object. If not

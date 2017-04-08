@@ -45,6 +45,10 @@ options:
         description:
             - Name of the resource group containing the virtual machine.
         required: true
+    resource:
+        description:
+            - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
+        required: false
     name:
         description:
             - Name of the virtual machine.
@@ -129,6 +133,10 @@ options:
             - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
               a new storage account named <vm name>01 will be created using storage type 'Standard_LRS'.
         default: null
+        required: false
+    storage_endpoint_suffix:
+        description:
+            - The endpoint suffix for storage endpoing API (e.g. core.windows.net)
         required: false
     storage_container_name:
         description:

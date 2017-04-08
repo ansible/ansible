@@ -43,6 +43,10 @@ options:
         description:
             - Name of a resource group where the network interface exists or will be created.
         required: true
+    resource:
+        description:
+            - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
+        required: false
     name:
         description:
             - Name of the network interface.

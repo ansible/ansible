@@ -38,6 +38,10 @@ options:
         description:
             - Name of resource group.
         required: true
+    resource:
+        description:
+            - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
+        required: false
     name:
         description:
             - Name of the subnet.

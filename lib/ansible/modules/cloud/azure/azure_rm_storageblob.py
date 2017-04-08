@@ -39,6 +39,10 @@ options:
         required: true
         aliases:
             - account_name
+    storage_endpoint_suffix:
+        description:
+            - The endpoint suffix for storage endpoing API (e.g. core.windows.net)
+        required: false
     blob:
         description:
             - Name of a blob object within the container.
@@ -99,6 +103,10 @@ options:
         description:
             - Name of the resource group to use.
         required: true
+    resource:
+        description:
+            - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
+        required: false
     src:
         description:
             - Source file path. Use with state 'present' to upload a blob.

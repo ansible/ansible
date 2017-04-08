@@ -32,6 +32,10 @@ short_description: Manage Azure resource groups.
 description:
     - Create, update and delete a resource group.
 options:
+    resource:
+        description:
+            - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
+        required: false
     force:
         description:
             - Remove a resource group and all associated resources. Use with state 'absent' to delete a resource
