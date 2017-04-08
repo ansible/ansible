@@ -111,11 +111,12 @@ class CloudFrontServiceManager:
         self.__default_datetime_string = self.generate_datetime_string()
         self.__default_cache_behavior_min_ttl = 0
         self.__default_cache_behavior_max_ttl = 31536000
+        self.__default_cache_behavior_default_ttl = 86400
         self.__default_cache_behavior_trusted_signers_enabled = False
         self.__default_cache_behavior_compress = False
         self.__default_cache_behavior_viewer_protocol_policy = 'allow-all'
         self.__default_cache_behavior_smooth_streaming = False
-        self.__default_cache_behavior_forwarded_values_cookies = 'none'
+        self.__default_cache_behavior_forwarded_values_forward_cookies = 'none'
         self.__default_cache_behavior_forwarded_values_query_string = True
         self.__default_trusted_signers_enabled = True
         self.__default_presigned_url_expires_in = 3600
@@ -437,29 +438,28 @@ class CloudFrontServiceManager:
             cache_behavior["max_t_t_l"] = self.__default_cache_behavior_max_ttl
         if 'compress' not in cache_behavior:
             cache_behavior["compress"] = self.__default_cache_behavior_compress
-        trusted_signers = cache_behavior.get("trusted_signers")
-        if trusted_signers is None:
-            trusted_signers["items"] = self.python_list_to_aws_list()
-            trusted_signers["enabled"] = self.__default_cache_behavior_trusted_signers_enabled
-        else:
-            if 'enabled' in trusted_signers:
-                temp_enabled = trusted_signers.get("enabled")
-            else:
-                temp_enabled = self.__default_cache_behavior_trusted_signers_enabled
-            cache_behavior["trusted_signers"] = self.python_list_to_aws_list(trusted_signers["items"])
-            cache_behavior["enabled"] = temp_enabled
         if 'target_origin_id' not in cache_behavior:
             cache_behavior["target_origin_id"] = self.get_first_origin_id_for_default_cache_behavior(valid_origins)
+        else:
+            cache_behavior["target_origin_id"] = str(cache_behavior["target_origin_id"])
         if 'forwarded_values' not in cache_behavior:
             cache_behavior["forwarded_values"] = {}
         forwarded_values = cache_behavior.get("forwarded_values")
         if 'headers' not in forwarded_values:
             forwarded_values["headers"] = self.python_list_to_aws_list()
+        else:
+            forwarded_values["headers"] = self.python_list_to_aws_list(forwarded_values["headers"])
         if 'cookies' not in forwarded_values:
             forwarded_values["cookies"] = {}
-            forwarded_values["cookies"]["forward"] = self.__default_cache_behavior_forwarded_values_cookies
+            forwarded_values["cookies"]["forward"] = self.__default_cache_behavior_forwarded_values_forward_cookies
+        else:
+            whitelisted_names = forwarded_values["cookies"].get("whitelisted_names")
+            if whitelisted_names is not None:
+                forwarded_values["cookies"]["whitelisted_names"] = self.python_list_to_aws_list(whitelisted_names)
         if 'query_string_cache_keys' not in forwarded_values:
             forwarded_values["query_string_cache_keys"] = self.python_list_to_aws_list()
+        else:
+            forwarded_values["query_string_cache_keys"] = self.python_list_to_aws_list(forwarded_values["query_string_cache_keys"])
         if 'query_string' not in forwarded_values:
             forwarded_values["query_string"] = self.__default_cache_behavior_forwarded_values_query_string
         if 'allowed_methods' in cache_behavior:
@@ -468,15 +468,24 @@ class CloudFrontServiceManager:
             if 'cached_methods' in cache_behavior and not isinstance(cache_behavior.get("cached_methods"), list):
                 self.module.fail_json(msg="allowed_methods.cached_methods must be a list")
         if 'lambda_function_associations' in cache_behavior:
-            if not isinstance(cache_behavior.get("lambda_function_associations"), list):
+            lambda_function_associations = cache_behavior.get("lambda_function_associations")
+            if not isinstance(lambda_function_associations, list):
                 self.module.fail_json(msg="lambda_function_associations must be a list")
+            for association in lambda_function_associations:
+                if association.get("lambda_function_arn") is not None:
+                    association = change_dict_key_name(association, "lambda_function_arn", "lambda_function_a_r_n")
+            cache_behavior["lambda_function_associations"] = self.python_list_to_aws_list(lambda_function_associations)
         else:
             cache_behavior["lambda_function_associations"] = self.python_list_to_aws_list()
         if 'viewer_protocol_policy' not in cache_behavior:
             cache_behavior["viewer_protocol_policy"] = self.__default_cache_behavior_viewer_protocol_policy
         if 'smooth_streaming' not in cache_behavior:
             cache_behavior["smooth_streaming"] = self.__default_cache_behavior_smooth_streaming
-        print "cb::: " + str(cache_behavior)
+        cache_behavior["trusted_signers"] = self.validate_trusted_signers(cache_behavior.get("trusted_signers"))
+        if 'default_ttl' not in cache_behavior:
+            cache_behavior["default_t_t_l"] = self.__default_cache_behavior_default_ttl
+        else:
+            cache_behavior = change_dict_key_name(cache_behavior, "default_ttl", "default_t_t_l")
         return cache_behavior
 
     def validate_custom_origin_configs(self, custom_origin_configs):
@@ -487,15 +496,15 @@ class CloudFrontServiceManager:
                 self.module.fail_json(msg="http_port, https_port and origin_protocol_policy must all be specified")
 
     def validate_trusted_signers(self, trusted_signers):
-        if trusted_signers:
-            if 'enabled' not in trusted_signers:
-                trusted_signers["enabled"] = self.__default_trusted_signers_enabled
-            if 'items' not in trusted_signers:
-                trusted_signers["items"] = []
-            valid_trusted_signers = self.python_list_to_aws_list(trusted_signers.get("items"))
-            valid_trusted_signers["enabled"] = trusted_signers.get("enabled")
-            return valid_trusted_signers
-        return None
+        if trusted_signers is None:
+            trusted_signers = {}
+        if 'enabled' not in trusted_signers:
+            trusted_signers["enabled"] = self.__default_trusted_signers_enabled
+        if 'items' not in trusted_signers:
+            trusted_signers["items"] = []
+        valid_trusted_signers = self.python_list_to_aws_list(trusted_signers.get("items"))
+        valid_trusted_signers["enabled"] = trusted_signers.get("enabled")
+        return valid_trusted_signers
 
     def validate_s3_origin(self, s3_origin, default_s3_origin_domain_name, default_s3_origin_origin_access_identity):
         if s3_origin:
@@ -612,10 +621,19 @@ class CloudFrontServiceManager:
             return self.__default_datetime_string
         if isinstance(valid_origins, list) and len(valid_origins) > 0:
             return self.__default_datetime_string
-        param_id = valid_origins.get("Items")[0].get("Id")
+        param_id = str(valid_origins.get("Items")[0].get("Id"))
         if param_id is None:
             return self.__default_datetime_string
         return param_id
+
+def change_dict_key_name(dictionary, old_key, new_key):
+    if old_key in dictionary:
+        key_value = dictionary.get(old_key)
+        dictionary.pop(old_key, None)
+        dictionary[new_key] = key_value
+        return dictionary
+    else:
+        return None
 
 def snake_dict_to_pascal_dict(snake_dict):
 
@@ -778,7 +796,6 @@ def main():
     invalidation_batch = module.params.get('invalidation_batch')
     alias = module.params.get('alias')
     aliases = module.params.get('aliases')
-    alias_list = module.params.get('alias_list')
     default_root_object = module.params.get('default_root_object')
     origins = module.params.get('origins')
     default_cache_behavior = module.params.get('default_cache_behavior')
@@ -855,7 +872,7 @@ def main():
             config["cache_behaviors"] = valid_cache_behaviors
         valid_default_cache_behavior = service_mgr.validate_cache_behavior(default_cache_behavior, config["origins"])
         if valid_default_cache_behavior is not None:
-            config["default_cache_behavior"] = valid_default_cache_behavior
+            config["default_cache_behavior"] = dict(config["default_cache_behavior"].items() + valid_default_cache_behavior.items())
         valid_custom_error_responses = service_mgr.validate_custom_error_responses(custom_error_responses)
         if valid_custom_error_responses is not None:
             config["custom_error_responses"] = valid_custom_error_responses
@@ -871,8 +888,6 @@ def main():
         config = service_mgr.validate_caller_reference_for_distribution_creation(config, caller_reference)
    
     config = snake_dict_to_pascal_dict(config)
-
-    print "cache behaviors:: " + str(snake_dict_to_pascal_dict(pascal_dict_to_snake_dict(config, True)))
 
     if create_origin_access_identity:
         result=service_mgr.create_origin_access_identity(caller_reference, comment)
