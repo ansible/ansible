@@ -277,8 +277,11 @@ volume:
 '''
 
 import time
+import traceback
 
 from distutils.version import LooseVersion
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, HAS_BOTO3
 
 try:
     import boto.ec2
@@ -287,13 +290,11 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
 try:
     import botocore
-    import boto3
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
-
+    pass  # will be detected by imported HAS_BOTO3
 
 def get_volume(module, ec2):
     name = module.params.get('name')
@@ -423,7 +424,7 @@ def get_boto3_ec2_connection(module):
             module.fail_json(msg="region must be specified")
         return boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except boto.exception.NoAuthHandlerFound as e:
-        module.fail_json(msg="Can't authorize connection - "+str(e))
+        module.fail_json(msg="Can't authorize connection - "+str(e), exception=traceback.format_exc())
 
 def modify_volume(module, ec2, volume):
 
@@ -464,7 +465,8 @@ def modify_volume(module, ec2, volume):
                 modifications = ec2_boto3.describe_volumes_modifications(VolumeIds=[volume.id])
                 modification = modifications['VolumesModifications'][0]
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e))
+            module.fail_json(msg="Failed to modify volume - "+str(e), exception=traceback.format_exc(),
+                **camel_dict_to_snake_dict(e.response))
 
     return changed
 
@@ -696,9 +698,6 @@ def main():
     # without needing to pass an unused volume_size
     if not volume_size and not (id or name or snapshot):
         module.fail_json(msg="You must specify volume_size or identify an existing volume by id, name, or snapshot")
-
-    if volume_size and id:
-        module.fail_json(msg="Cannot specify volume_size together with id")
 
     if state == 'present':
         volume, changed = create_volume(module, ec2, zone)
