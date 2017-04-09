@@ -371,7 +371,7 @@ class CloudFrontServiceManager:
                 if default_origin_path is not None:
                     origin["origin_path"] = default_origin_path
                 else:
-                    origin["origin_path"] = ''
+                    origin["origin_path"] = ""
             if 'domain_name' not in origin:
                 self.module.fail_json(msg="origins[].domain_name must be specified for an origin")
             if 'id' not in origin:
@@ -395,13 +395,16 @@ class CloudFrontServiceManager:
                     if default_origin_access_identity is not None:
                         origin["s3_origin_config"]["origin_access_identity"] = default_origin_access_identity
                     else:
-                        origin["s3_origin_config"]["origin_access_identity"] = ''
+                        origin["s3_origin_config"]["origin_access_identity"] = ""
             else:
                 if 'custom_origin_config' not in origin:
                     origin["custom_origin_config"] = {}
                 custom_origin_config = origin.get("custom_origin_config")
                 if 'origin_protocol_policy' not in custom_origin_config:
                     custom_origin_config["origin_protocol_policy"] = self.__default_custom_origin_protocol_policy
+                else:
+                    self.validate_attribute_with_allowed_values(custom_origin_config.get("origin_protocol_policy"),
+                            "origins[].custom_origin_config.origin_protocol_policy", self.__valid_origin_protocol_policies)
                 if 'http_port' not in custom_origin_config:
                         custom_origin_config["h_t_t_p_port"] = self.__default_http_port
                 else:
@@ -412,6 +415,9 @@ class CloudFrontServiceManager:
                     custom_origin_config = change_dict_key_name(custom_origin_config, "https_port", "h_t_t_p_s_port")
                 if 'origin_ssl_protocols' not in custom_origin_config:
                     temp_origin_ssl_protocols = self.__default_origin_ssl_protocols
+                else:
+                    self.validate_attribute_with_allowed_values(custom_origin_config.get("origin_ssl_protocols"),
+                            "origins[].origin_ssl_protocols", self.__valid_origin_ssl_protocols)
                 temp_origin_ssl_protocols = custom_origin_config.get("origin_ssl_protocols")
                 custom_origin_config["origin_ssl_protocols"] = self.python_list_to_aws_list(temp_origin_ssl_protocols)
         return self.python_list_to_aws_list(origins)
@@ -432,6 +438,12 @@ class CloudFrontServiceManager:
             cache_behavior = change_dict_key_name(cache_behavior, "min_ttl", "min_t_t_l")
         if 'max_ttl' not in cache_behavior:
             cache_behavior["max_t_t_l"] = self.__default_cache_behavior_max_ttl
+        else:
+            cache_behavior = change_dict_key_name(cache_behavior, "max_ttl", "max_t_t_l")
+        if 'default_ttl' not in cache_behavior:
+            cache_behavior["default_t_t_l"] = self.__default_cache_behavior_default_ttl
+        else:
+            cache_behavior = change_dict_key_name(cache_behavior, "default_ttl", "default_t_t_l")
         if 'compress' not in cache_behavior:
             cache_behavior["compress"] = self.__default_cache_behavior_compress
         if 'target_origin_id' not in cache_behavior:
@@ -452,44 +464,51 @@ class CloudFrontServiceManager:
             whitelisted_names = forwarded_values["cookies"].get("whitelisted_names")
             if whitelisted_names is not None:
                 forwarded_values["cookies"]["whitelisted_names"] = self.python_list_to_aws_list(whitelisted_names)
+            cookie_forwarding = forwarded_values["cookies"].get("forward")
+            self.validate_attribute_with_allowed_values(cookie_forwarding, "cache_behavior.forwarded_values.cookies.forward",
+                    self.__valid_cookie_forwarding)
         if 'query_string_cache_keys' not in forwarded_values:
             forwarded_values["query_string_cache_keys"] = self.python_list_to_aws_list()
         else:
             forwarded_values["query_string_cache_keys"] = self.python_list_to_aws_list(forwarded_values["query_string_cache_keys"])
         if 'query_string' not in forwarded_values:
             forwarded_values["query_string"] = self.__default_cache_behavior_forwarded_values_query_string
-        if 'allowed_methods' in cache_behavior:
-            if 'items' not in cache_behavior.get("allowed_methods"):
-                self.module.fail_json(msg="a list of items must be specified for allowed_methods")
-            if 'cached_methods' in cache_behavior and not isinstance(cache_behavior.get("cached_methods"), list):
-                self.module.fail_json(msg="allowed_methods.cached_methods must be a list")
+        allowed_methods = cache_behavior.get("allowed_methods")
+        if allowed_methods is not None:
+            if 'items' not in allowed_methods:
+                self.module.fail_json(msg="a list of items[] must be specified for cache_behavior.allowed_methods")
+            self.validate_attribute_with_allowed_values(cache_behavior.get("cached_methods"),
+                    "cache_behavior.allowed_items.cached_methods[]", self.__valid_methods)
+            if not isinstance(allowed_methods.get("items"), list):
+                self.module.fail_json(msg="cache_behavior.allowed_methods.items must be a list")
+            if 'cached_methods' in allowed_methods:
+                if not isinstance(cache_behavior.get("cached_methods"), list):
+                    self.module.fail_json(msg="cache_behavior.allowed_methods.cached_methods must be a list")
+                self.validate_attribute_with_allowed_values(allowed_methods.get("cached_methods"),
+                        "cache_behavior.allowed_items.cached_methods[]", self.__valid_methods)
         if 'lambda_function_associations' in cache_behavior:
             lambda_function_associations = cache_behavior.get("lambda_function_associations")
             if not isinstance(lambda_function_associations, list):
                 self.module.fail_json(msg="lambda_function_associations must be a list")
             for association in lambda_function_associations:
-                if association.get("lambda_function_arn") is not None:
+                if 'lambda_function_arn' in association:
                     association = change_dict_key_name(association, "lambda_function_arn", "lambda_function_a_r_n")
+                if 'event_type' in association:
+                    self.validate_attribute_with_allowed_values(association.get("event_type"),
+                            "cache_behaviors[].lambda_function_associations.event_type",
+                            self.__valid_lambda_function_association_event_types)
             cache_behavior["lambda_function_associations"] = self.python_list_to_aws_list(lambda_function_associations)
         else:
             cache_behavior["lambda_function_associations"] = self.python_list_to_aws_list()
         if 'viewer_protocol_policy' not in cache_behavior:
             cache_behavior["viewer_protocol_policy"] = self.__default_cache_behavior_viewer_protocol_policy
+        else:
+            self.validate_attribute_with_allowed_values(cache_behavior.get("viewer_protocol_policy"),
+                    "(default_)cache_behavior.viewer_protocol_policy", self.__valid_viewer_protocol_policies)
         if 'smooth_streaming' not in cache_behavior:
             cache_behavior["smooth_streaming"] = self.__default_cache_behavior_smooth_streaming
         cache_behavior["trusted_signers"] = self.validate_trusted_signers(cache_behavior.get("trusted_signers"))
-        if 'default_ttl' not in cache_behavior:
-            cache_behavior["default_t_t_l"] = self.__default_cache_behavior_default_ttl
-        else:
-            cache_behavior = change_dict_key_name(cache_behavior, "default_ttl", "default_t_t_l")
         return cache_behavior
-
-    def validate_custom_origin_configs(self, custom_origin_configs):
-        custom_origin_config = origin.get('custom_origin_config')
-        if custom_origin_config:
-            if('http_port' not in custom_origin_config or 'https_port' not in custom_origin_config or
-                    'origin_protocol_policy' not in custom_origin_config):
-                self.module.fail_json(msg="http_port, https_port and origin_protocol_policy must all be specified")
 
     def validate_trusted_signers(self, trusted_signers):
         if trusted_signers is None:
@@ -503,23 +522,22 @@ class CloudFrontServiceManager:
         return valid_trusted_signers
 
     def validate_s3_origin(self, s3_origin, default_s3_origin_domain_name, default_s3_origin_origin_access_identity):
-        if s3_origin:
+        if s3_origin is not None:
             if 'domain_name' not in s3_origin:
                 self.module.fail_json("s3_origin.domain_name must be specified for s3_origin")
             if 'origin_access_identity' not in s3_origin:
                 self.module.fail_json("s3_origin.origin_origin_access_identity must be specified for s3_origin")
             return s3_origin
+        s3_origin = {}
+        if default_s3_origin_domain_name is not None:
+            s3_origin["domain_name"] = default_s3_origin_domain_name
         else:
-            s3_origin = {}
-            if default_s3_origin_domain_name:
-                s3_origin["domain_name"] = default_s3_origin_domain_name
-            else:
-                self.module.json_fail(msg="s3_origin and default_s3_origin_domain_name not specified. please specify one.")
-            if default_s3_origin_origin_access_identity:
-                s3_origin["origin_access_identity"] = default_origin_access_identity
-            else:
-                self.module.json_fail(msg="s3_origin and default_s3_origin_access_identity not specified. please specify one.")
-            return s3_origin
+            self.module.json_fail(msg="s3_origin and default_s3_origin_domain_name not specified. please specify one.")
+        if default_s3_origin_origin_access_identity is not None:
+            s3_origin["origin_access_identity"] = default_origin_access_identity
+        else:
+            self.module.json_fail(msg="s3_origin and default_s3_origin_access_identity not specified. please specify one.")
+        return s3_origin
 
     def validate_viewer_certificate(self, viewer_certificate):
         if viewer_certificate is None:
@@ -528,17 +546,24 @@ class CloudFrontServiceManager:
                 viewer_certificate.get("ssl_support_method") is not None):
             self.module.fail_json(msg="viewer_certificate.ssl_support_method should not be specified with" +
                     "viewer_certificate_cloudfront_default_certificate set to True")
-        ssl_support_method = viewer_certificate.get("ssl_support_method")
-        self.validate_attribute_against_allowed_list(ssl_support_method, "viewer_certifiate.ssl_support_method",
-                self.__valid_viewer_sertificate_ssl_support_methods)
+        if 'ssl_support_method' in viewer_certificate:
+            self.validate_attribute_with_allowed_values(viewer_certificate.get("ssl_support_method"),
+                    "viewer_certificate.ssl_support_method", self.__valid_viewer_certificate_ssl_support_methods)
+        if 'minimum_protocol_version' in viewer_certificate:
+            self.validate_attribute_with_allowed_values(viewer_certificate.get("minimum_protocol_version"),
+                    "viewer_certificat.minimum_protocol_version", self.__valid_viewer_certificate_minimum_protocol_versions)
+        if 'certificate_source' in viewer_certificate:
+            self.validate_attribute_withallowed_values(viewer_certificate.get("certificate_source"),
+                    "viewer_certificate.certificate_source", self.__valid_viewer_certificate_certificate_sources)
         viewer_certificate = change_dict_key_name(viewer_certificate, "ssl_support_method", "s_s_l_support_method")
         viewer_certificate = change_dict_key_name(viewer_certificate, "iam_certificate_id", "i_a_m_certificate_id")
         viewer_certificate = change_dict_key_name(viewer_certificate, "acm_certificate_arn", "a_c_m_certificate_arn")
         return viewer_certificate
 
-    def validate_attribute_against_allowed_list(self, attribute, attribute_name, allowed_list):
+    def validate_attribute_with_allowed_values(self, attribute, attribute_name, allowed_list):
         if attribute is not None and attribute not in allowed_list:
-            self.module.fail_json(msg="the attribute " + attribute_name  + " must be one of: " + " ".join(str(e) for e in allowed_list))
+            self.module.fail_json(msg="the attribute " + attribute_name  + " must be one of: " +
+                    " ".join(str(e) for e in allowed_list))
 
     def validate_custom_error_responses(self, custom_error_responses):
         if custom_error_responses is None:
@@ -548,6 +573,8 @@ class CloudFrontServiceManager:
         for custom_error_response in custom_error_responses:
             if custom_error_response.get("error_code") is None:
                 self.module.json_fail(msg="custom_error_responses[].error_code must be specified")
+            custom_error_response = change_dict_key_name(custom_error_responses, "error_caching_min_ttl",
+                    "error_caching_min_t_t_l")
         return self.python_list_to_aws_list(custom_error_responses)
 
     def validate_restrictions(self, restrictions):
@@ -579,7 +606,7 @@ class CloudFrontServiceManager:
     def validate_update_delete_streaming_distribution_parameters(self, alias, streaming_distribution_id,
             config, e_tag):
         if streaming_distribution_id is None and alias is None:
-            self.module.fail_json(msg="streaming_distribution_id or alias must be specified for updating "
+            self.module.fail_json(msg="streaming_distribution_id or alias must be specified for updating " +
                     "or deleting a streaming distribution.")
         if streaming_distribution_id is None:
             streaming_distribution_id = self.cloudfront_facts_mgr.get_distribution_id_from_domain_name(alias)
@@ -591,17 +618,20 @@ class CloudFrontServiceManager:
         return streaming_distribution_id, config, e_tag
 
     def validate_distribution_config_parameters(self, config, default_root_object, is_ipv6_enabled,
-            http_version, comment):
-        if default_root_object:
+            http_version, web_acl_id):
+        if default_root_object is not None:
             config["default_root_object"] = default_root_object
         else:
-            config["default_root_object"] = ''
-        if is_ipv6_enabled:
+            config["default_root_object"] = ""
+        if is_ipv6_enabled is not None:
             config["is_i_p_v_6_enabled"] = is_ipv6_enabled
         else:
             config["is_i_p_v_6_enabled"] = self.__default_is_ipv6_enabled
-        if http_version:
+        if http_version is not None:
+            self.valiate_attribute_with_allowed_values(http_version, "http_version", self.__valid_http_versions)
             config["http_version"] = http_version
+        if web_acl_id is not None:
+            config["web_a_c_l_id"] = web_acl_id
         return config
 
     def validate_streaming_distribution_config_parameters(self, config, comment, trusted_signers, s3_origin,
@@ -619,15 +649,13 @@ class CloudFrontServiceManager:
             config["aliases"] = self.python_list_to_aws_list(aliases)
         if logging is not None:
             config["logging"] = self.validate_logging(logging, is_streaming_distribution)
-        if enabled:
+        if enabled is not None:
             config["enabled"] = enabled
         else:
             config["enabled"] = self.__default_distribution_enabled
-        if price_class:
-            if price_class in self.__valid_price_classes:
-                config["price_class"] = price_class
-            else:
-                self.module.json_fail(msg="invalid value for price_class: '" + price_class + "'")
+        if price_class is not None:
+           self.validate_attribute_with_allowed_values(price_class, "price_class", self.__valid_price_classes)
+           config["price_class"] = price_class
         if comment is None:
             config["comment"] = "distribution created by ansible with datetime " + self.__default_datetime_string
         else:
@@ -678,7 +706,7 @@ def snake_dict_to_pascal_dict(snake_dict):
         return new_type
 
     def pascal(words):
-        return words.capitalize().split('_')[0] + ''.join(x.capitalize() or '_' for x in words.split('_')[1:])
+        return words.capitalize().split('_')[0] + "".join(x.capitalize() or '_' for x in words.split('_')[1:])
 
     return pascalize(snake_dict)
 
@@ -775,7 +803,7 @@ def main():
         restrictions=dict(required=False, default=None, type='json'),
         restrictions_restriction_type=dict(required=False, default=None, type='str'),
         restrictions_items=dict(required=False, default=None, type='list'),
-        web_acl=dict(required=False, default=None, type='str'),
+        web_acl_id=dict(required=False, default=None, type='str'),
         http_version=dict(required=False, default=None, type='str'),
         is_ipv6_enabled=dict(required=False, default=None, type='bool'),
         s3_origin=dict(required=False, default=None, type='json'),
@@ -841,7 +869,7 @@ def main():
     enabled = module.params.get('enabled')
     viewer_certificate = module.params.get('viewer_certificate')
     restrictions = module.params.get('restrictions')
-    web_acl = module.params.get('web_acl')
+    web_acl_id = module.params.get('web_acl_id')
     http_version = module.params.get('http_version')
     is_ipv6_enabled = module.params.get('is_ipv6_enabled')
     s3_origin = module.params.get('s3_origin')
@@ -877,10 +905,13 @@ def main():
     # duplicate_distribution
     # duplicate streaming_distribution
     # distribution status
+    # distribution state
+    # try-catches
+    # split to validation and helpers classes
+    # return e_tag for update/create distribution
+    # list of valid actions
 
-    # validation lists
     # validate default_cache target_origin_id in origins list
-    # all double-caps attributes to snake 
     # validate distribution
     # check all required attributes
     # url signing
@@ -906,7 +937,7 @@ def main():
         valid_restrictions = service_mgr.validate_restrictions(restrictions)
         config = merge_validation_into_config(config, valid_restrictions, "restrictions")
         config = service_mgr.validate_distribution_config_parameters(config, default_root_object,
-                is_ipv6_enabled, http_version, comment)
+                is_ipv6_enabled, http_version, web_acl_id)
         valid_viewer_certificate = service_mgr.validate_viewer_certificate(viewer_certificate)
         config = merge_validation_into_config(config, valid_viewer_certificate, "viewer_certificate")
     elif create_update_streaming_distribution:
