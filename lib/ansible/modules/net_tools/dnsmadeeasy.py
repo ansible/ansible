@@ -97,124 +97,123 @@ options:
 
   monitor:
     description:
-      - If true, add or change the monitor
+      - If C(yes), add or change the monitor.  This is applicable only for A records.
     required: true
     default: 'no'
     choices: ['yes', 'no']
-    version_added: 2.4.0
+    version_added: 2.4
 
   systemDescription:
     description:
-      - Description used in failover notification
+      - Description used by the monitor.
     required: true
     default: ''
-    version_added: 2.4.0
+    version_added: 2.4
 
   maxEmails:
     description:
-      - Number of emails sent to the contact for a failover event
+      - Number of emails sent to the contact list by the monitor.
     required: true
     default: 1
-    version_added: 2.4.0
+    version_added: 2.4
 
   protocol:
     description:
-      - Monitor protocol
+      - Protocol used by the monitor.
     required: true
     default: 'HTTP'
     choices: ['TCP', 'UDP', 'HTTP', 'DNS', 'SMTP', 'HTTPS']
-    version_added: 2.4.0
+    version_added: 2.4
 
   port:
     description:
-      - Monitor port
+      - Port used by the monitor.
     required: true
     default: 80
-    version_added: 2.4.0
+    version_added: 2.4
 
   sensitivity:
     description:
-      - Number of checks the monitor performs before a failover occurs
-      - Low = 8, Medium = 5, High = 3
+      - Number of checks the monitor performs before a failover occurs where Low = 8, Medium = 5,and High = 3.
     required: true
     default: 'Medium'
     choices: ['Low', 'Medium', 'High']
-    version_added: 2.4.0
+    version_added: 2.4
 
   contactList:
     description:
-      - Name or id of the contact list that the monitor will email on failover
-      - The default (or '') means the Account Owner
+      - Name or id of the contact list that the monitor will notify.
+      - The default C('') means the Account Owner.
     required: true
     default: ''
-    version_added: 2.4.0
+    version_added: 2.4
 
   httpFqdn:
     description:
-      - The fully qualified domain name to monitor for HTTP or HTTPS monitors
+      - The fully qualified domain name used by the monitor.
     required: false
-    version_added: 2.4.0
+    version_added: 2.4
 
   httpFile:
     description:
-      - The file to query for HTTP or HTTPS monitors
+      - The file at the Fqdn that the monitor queries for HTTP or HTTPS.
     required: false
-    version_added: 2.4.0
+    version_added: 2.4
 
   httpQueryString:
     description:
-      - The string to query for HTTP or HTTPS monitors
+      - The string in the httpFile that the monitor queries for HTTP or HTTPS.
     required: False
-    version_added: 2.4.0
+    version_added: 2.4
 
   failover:
     description:
-      - If true, add or change the failover
+      - If C(yes), add or change the failover.  This is applicable only for A records.
     required: true
     default: 'no'
     choices: ['yes', 'no']
-    version_added: 2.4.0
+    version_added: 2.4
 
   autoFailover:
     description:
-      - If true, fallback to the primary IP address is manual
-      - If false, fallback to the primary IP address is automatic
+      - If true, fallback to the primary IP address is manual after a failover.
+      - If false, fallback to the primary IP address is automatic after a failover.
     required: true
     default: 'no'
     choices: ['yes', 'no']
-    version_added: 2.4.0
+    version_added: 2.4
 
   ip1:
     description:
-      - Primary IP address
-      - Required if adding or changing the monitor or failover
+      - Primary IP address for the failover.
+      - Required if adding or changing the monitor or failover.
     required: false
-    version_added: 2.4.0
+    version_added: 2.4
 
   ip2:
     description:
-      - Secondary IP address
-      - Required if adding or changing the failover
+      - Secondary IP address for the failover.
+      - Required if adding or changing the failover.
     required: false
-    version_added: 2.4.0
+    version_added: 2.4
 
   ip3:
     description:
-      - Tertiary IP address
+      - Tertiary IP address for the failover.
     required: false
-    version_added: 2.4.0
+    version_added: 2.4
 
   ip4:
     description:
-      - Quaternary IP address
+      - Quaternary IP address for the failover.
     required: false
-    version_added: 2.4.0
+    version_added: 2.4
 
   ip5:
     description:
-      - Quinary IP address
+      - Quinary IP address for the failover.
     required: false
-    version_added: 2.4.0
+    version_added: 2.4
 
 notes:
   - The DNS Made Easy service requires that machines interacting with the API have the proper time and timezone set. Be sure you are within a few
