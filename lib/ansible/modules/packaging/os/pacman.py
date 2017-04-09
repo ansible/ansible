@@ -211,7 +211,7 @@ def upgrade(module, pacman_path):
     }
 
     if rc == 0:
-        regex = re.compile('(\w+) ((?:\S+)-(?:\S+)) -> ((?:\S+)-(?:\S+))')
+        regex = re.compile('([\w-]+) ((?:\S+)-(?:\S+)) -> ((?:\S+)-(?:\S+))')
         b = []
         a = []
         for p in data:
