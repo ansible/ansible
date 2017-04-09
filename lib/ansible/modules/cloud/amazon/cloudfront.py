@@ -344,7 +344,7 @@ class CloudFrontServiceManager:
             return None
         if(logging and not streaming and ('enabled' not in logging or 'include_cookies' not in logging
                 or 'bucket' not in logging or logging.get("prefix"))):
-            self.module.fail_json(msg="the logging parameters enabled, include_cookies, bucket and "
+            self.module.fail_json(msg="the logging parameters enabled, include_cookies, bucket and " +
                     "prefix must be specified")
         if logging and streaming and ('enabled' not in logging or 'bucket' not in logging or logging.get("prefix")):
             self.module.fail_json(msg="the logging parameters enabled, bucket and prefix must be specified")
@@ -364,7 +364,7 @@ class CloudFrontServiceManager:
             self.module.fail_json(msg="origins[] must be a list")
         quantity = len(origins)
         if quantity == 0 and default_origin_domain_name is None and create_distribution:
-            self.module.fail_json(msg="both origins[] and default_origin_domain_name have not been "
+            self.module.fail_json(msg="both origins[] and default_origin_domain_name have not been " +
                     "specified. please specify at least one.")
         for origin in origins:
             if 'origin_path' not in origin:
@@ -486,8 +486,8 @@ class CloudFrontServiceManager:
                     self.module.fail_json(msg="cache_behavior.allowed_methods.cached_methods must be a list")
                 self.validate_attribute_with_allowed_values(allowed_methods.get("cached_methods"),
                         "cache_behavior.allowed_items.cached_methods[]", self.__valid_methods)
-        if 'lambda_function_associations' in cache_behavior:
-            lambda_function_associations = cache_behavior.get("lambda_function_associations")
+        lambda_function_associations = cache_behavior.get("lambda_function_associations")
+        if lambda_function_associations is not None:
             if not isinstance(lambda_function_associations, list):
                 self.module.fail_json(msg="lambda_function_associations must be a list")
             for association in lambda_function_associations:
@@ -497,9 +497,7 @@ class CloudFrontServiceManager:
                     self.validate_attribute_with_allowed_values(association.get("event_type"),
                             "cache_behaviors[].lambda_function_associations.event_type",
                             self.__valid_lambda_function_association_event_types)
-            cache_behavior["lambda_function_associations"] = self.python_list_to_aws_list(lambda_function_associations)
-        else:
-            cache_behavior["lambda_function_associations"] = self.python_list_to_aws_list()
+        cache_behavior["lambda_function_associations"] = self.python_list_to_aws_list(lambda_function_associations)
         if 'viewer_protocol_policy' not in cache_behavior:
             cache_behavior["viewer_protocol_policy"] = self.__default_cache_behavior_viewer_protocol_policy
         else:
@@ -911,6 +909,7 @@ def main():
     # return e_tag for update/create distribution
     # list of valid actions
 
+    # validate all lists
     # validate default_cache target_origin_id in origins list
     # validate distribution
     # check all required attributes
