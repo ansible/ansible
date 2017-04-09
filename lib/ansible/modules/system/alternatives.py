@@ -146,7 +146,7 @@ def set_alternative(module, cmd, name, path, link, priority,
 
             module.exit_json(changed=True)
         except subprocess.CalledProcessError:
-            e = get_exception()
+            cpe = get_exception()
             module.fail_json(msg=str(dir(cpe)))
     else:
         module.exit_json(changed=False)
