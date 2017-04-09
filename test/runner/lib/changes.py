@@ -80,7 +80,7 @@ class ShippableChanges(object):
             else:
                 # tracked files (including unchanged)
                 self.paths = sorted(git.get_file_names(['--cached']))
-                self.diff = None
+                self.diff = []
 
     def get_merge_runs(self, project_id, branch):
         """
