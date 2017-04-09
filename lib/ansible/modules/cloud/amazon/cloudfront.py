@@ -429,7 +429,7 @@ class CloudFrontServiceManager:
         if 'min_ttl' not in cache_behavior:
             cache_behavior["min_t_t_l"] = self.__default_cache_behavior_min_ttl
         else:
-            cache_behavior = change_dict_key_name(cache_behavior, "min_ttl", "min_t_t_l") 
+            cache_behavior = change_dict_key_name(cache_behavior, "min_ttl", "min_t_t_l")
         if 'max_ttl' not in cache_behavior:
             cache_behavior["max_t_t_l"] = self.__default_cache_behavior_max_ttl
         if 'compress' not in cache_behavior:
@@ -529,7 +529,7 @@ class CloudFrontServiceManager:
             self.module.fail_json(msg="viewer_certificate.ssl_support_method should not be specified with" +
                     "viewer_certificate_cloudfront_default_certificate set to True")
         ssl_support_method = viewer_certificate.get("ssl_support_method")
-        self.validate_attribute_against_allowed_list(ssl_support_method, "viewer_certifiate.ssl_support_method", 
+        self.validate_attribute_against_allowed_list(ssl_support_method, "viewer_certifiate.ssl_support_method",
                 self.__valid_viewer_sertificate_ssl_support_methods)
         viewer_certificate = change_dict_key_name(viewer_certificate, "ssl_support_method", "s_s_l_support_method")
         viewer_certificate = change_dict_key_name(viewer_certificate, "iam_certificate_id", "i_a_m_certificate_id")
@@ -553,7 +553,7 @@ class CloudFrontServiceManager:
     def validate_restrictions(self, restrictions):
         if restrictions is None:
             return None
-        geo_restriction = restrictions.get("geo_restriction") 
+        geo_restriction = restrictions.get("geo_restriction")
         if geo_restriction is None:
             self.module.fail_json(msg="restrictions.geo_restriction must be specified")
         restriction_type = geo_restriction.get("restriction_type")
@@ -893,14 +893,13 @@ def main():
     config = pascal_dict_to_snake_dict(config, True)
 
     if create_update_distribution:
-        valid_viewer_certificate = service_mgr.validate_viewer_certificate(viewer_certificate)
-        config = merge_validation_into_config(config, valid_viewer_certificate, "viewer_certificate")
         valid_origins = service_mgr.validate_origins(origins, default_origin_domain_name, default_origin_access_identity,
             default_origin_path, create_update_streaming_distribution, create_distribution)
         config = merge_validation_into_config(config, valid_origins, "origins")
-        valid_cache_behaviors = service_mgr.validate_cache_behaviors(cache_behaviors, config["origins"])
+        config_origins = config.get("origins")
+        valid_cache_behaviors = service_mgr.validate_cache_behaviors(cache_behaviors, config_origins)
         config = merge_validation_into_config(config, valid_cache_behaviors, "cache_behaviors")
-        valid_default_cache_behavior = service_mgr.validate_cache_behavior(default_cache_behavior, config["origins"])
+        valid_default_cache_behavior = service_mgr.validate_cache_behavior(default_cache_behavior, config_origins)
         config = merge_validation_into_config(config, valid_default_cache_behavior, "default_cache_behavior")
         valid_custom_error_responses = service_mgr.validate_custom_error_responses(custom_error_responses)
         config = merge_validation_into_config(config, valid_custom_error_responses, "custom_error_responses")
@@ -908,6 +907,8 @@ def main():
         config = merge_validation_into_config(config, valid_restrictions, "restrictions")
         config = service_mgr.validate_distribution_config_parameters(config, default_root_object,
                 is_ipv6_enabled, http_version, comment)
+        valid_viewer_certificate = service_mgr.validate_viewer_certificate(viewer_certificate)
+        config = merge_validation_into_config(config, valid_viewer_certificate, "viewer_certificate")
     elif create_update_streaming_distribution:
         config = service_mgr.validate_streaming_distribution_config_parameters(config, comment,
                 trusted_signers, s3_origin, default_s3_origin_domain_name, default_s3_origin_access_identity)
