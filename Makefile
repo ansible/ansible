@@ -192,7 +192,7 @@ sdist: clean docs
 sdist_upload: clean docs
 	$(PYTHON) setup.py sdist upload 2>&1 |tee upload.log
 
-rpmcommon: docs sdist
+rpmcommon: sdist
 	@mkdir -p rpm-build
 	@cp dist/*.gz rpm-build/
 	@sed -e 's#^Version:.*#Version: $(VERSION)#' -e 's#^Release:.*#Release: $(RPMRELEASE)%{?dist}#' $(RPMSPEC) >rpm-build/$(NAME).spec
