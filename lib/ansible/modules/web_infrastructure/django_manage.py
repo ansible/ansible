@@ -224,7 +224,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             command=dict(default=None, required=True),
-            app_path=dict(default=None, required=True, type='path'),
+            app_path=dict(default=None, required=False, type='path'),
             settings=dict(default=None, required=False),
             pythonpath=dict(default=None, required=False, aliases=['python_path']),
             virtualenv=dict(default=None, required=False, type='path', aliases=['virtual_env']),
@@ -260,7 +260,10 @@ def main():
 
     _ensure_virtualenv(module)
 
-    cmd = "./manage.py %s" % (command, )
+    if app_path is not None:
+        cmd = "./manage.py %s" % (command, )
+    else:
+        cmd = "django-admin %s" % (command, )
 
     if command in noinput_commands:
         cmd = '%s --noinput' % cmd
