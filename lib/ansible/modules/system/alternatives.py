@@ -85,7 +85,12 @@ from ansible.module_utils.basic import *
 from ansible.module_utils.pycompat24 import get_exception
 
 def get_current(module, cmd, name, link):
+    """Get the options and the currently set value for the named alternative.
 
+    If `link` is not specified, this value will be retrieved from the
+    alternatives database.
+
+    Returns a tuple of currently set value, possible options, and link path."""
     current_path = None
     all_alternatives = []
 
@@ -124,6 +129,11 @@ def get_current(module, cmd, name, link):
 
 def set_alternative(module, cmd, name, path, link, priority,
         current_path, all_alternatives):
+    """Set the current named alternative to the specified path.
+
+    If not present in the currently configured alternatives, the requested
+    alternative will be added with the specified priority.  The `link`
+    parameter must be provided in this instance."""
     if current_path != path:
         if module.check_mode:
             module.exit_json(changed=True, current_path=current_path)
@@ -152,7 +162,7 @@ def set_alternative(module, cmd, name, path, link, priority,
         module.exit_json(changed=False)
 
 def main():
-
+    """Main module entrypoint"""
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(required=True),
