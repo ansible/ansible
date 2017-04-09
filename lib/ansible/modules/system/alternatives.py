@@ -141,7 +141,8 @@ def set_alternative(module, cmd, name, path, link, priority,
             # install the requested path if necessary
             if path not in all_alternatives:
                 if not link:
-                    module.fail_json(msg="Needed to install the alternative, but unable to do so as we are missing the link")
+                    module.fail_json(msg="Needed to install the alternative, "
+                        "but unable to do so as we are missing the link")
 
                 module.run_command(
                     [cmd, '--install', link, name, path, str(priority)],
