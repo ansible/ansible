@@ -16,6 +16,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import (absolute_import, division, print_function)
+
+from ansible.utils.path import unfrackpath
+
 __metaclass__ = type
 
 import os
@@ -153,10 +156,24 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     if use_handlers:
                         subdir = 'handlers'
                     while parent_include is not None:
-                        if not isinstance(parent_include, TaskInclude):
+                        source_file = ""
+                        parent_is_symlink = False
+                        if hasattr(parent_include, '_ds') and hasattr(parent_include._ds, '_data_source'):
+                            source_file = parent_include.get_ds()._data_source
+                            parent_is_symlink = os.path.islink(source_file)
+
+                        parent_is_include = isinstance(parent_include, TaskInclude)
+
+                        if not parent_is_include and not parent_is_symlink:
                             parent_include = parent_include._parent
                             continue
-                        parent_include_dir = templar.template(os.path.dirname(parent_include.args.get('_raw_params')))
+
+                        if parent_is_symlink:
+                            real_path = unfrackpath(source_file)
+                            parent_include_dir = os.path.dirname(real_path)
+                        else:
+                            parent_include_dir = templar.template(os.path.dirname(parent_include.args.get('_raw_params')))
+
                         if cumulative_path is None:
                             cumulative_path = parent_include_dir
                         elif not os.path.isabs(cumulative_path):

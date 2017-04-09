@@ -17,13 +17,14 @@
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 import os
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.six import iteritems, string_types
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping, AnsibleUnicode
 from ansible.plugins import lookup_loader
@@ -35,7 +36,7 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.loop_control import LoopControl
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
-
+from ansible.utils.path import unfrackpath
 
 try:
     from __main__ import display
@@ -434,6 +435,19 @@ class Task(Base, Conditional, Taggable, Become):
         task_dir = os.path.dirname(self.get_path())
         if task_dir not in path_stack:
             path_stack.append(task_dir)
+
+        # add real path if data source is a symlink
+        source_file = ""
+        if hasattr(self, '_ds') and hasattr(self._ds, '_data_source'):
+            source_file = self.get_ds()._data_source
+        if os.path.islink(source_file):
+            real_path = unfrackpath(source_file)
+            real_path_directory = os.path.dirname(real_path)
+            path_stack.append(real_path_directory)
+            b_real_path_directory = to_bytes(real_path_directory, errors='surrogate_or_strict')
+
+            if b_real_path_directory.endswith(b'tasks'):
+                path_stack.append(os.path.join(real_path_directory, os.pardir))
 
         return path_stack
 

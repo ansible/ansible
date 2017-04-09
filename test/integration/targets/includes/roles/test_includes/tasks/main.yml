@@ -80,3 +80,6 @@
     # both these via a handler include
     - included_handler
     - verify_handler
+
+- name: test that by including symlinks, files and templates are looked up in symlinked path too
+  include: symlink.yml

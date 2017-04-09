@@ -1,0 +1,15 @@
+# Copy file from included symlinked role
+- copy: src=test.txt dest=~/ansible_testing/foo.txt
+  register: copy_result
+- name: verify that the file checksums are correct
+  assert:
+    that:
+      - "copy_result.checksum == '201a6b3053cc1422d2c3670b62616221d2290929'"
+
+# Copy overwritten file from original role
+- copy: src=test2.txt dest=~/ansible_testing/foo2.txt
+  register: copy_result
+- name: verify that the file checksums are correct
+  assert:
+    that:
+      - "copy_result.checksum == '12a1779384ef90eb1b76d0ccccc3b4cf6fa353b0'"
