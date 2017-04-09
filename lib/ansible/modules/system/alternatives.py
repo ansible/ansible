@@ -180,7 +180,7 @@ def main():
     link = params['link']
     priority = params['priority']
 
-    UPDATE_ALTERNATIVES = module.get_bin_path('update-alternatives',True)
+    UPDATE_ALTERNATIVES = module.get_bin_path('update-alternatives', True)
     (current_path, all_alternatives, link) = get_current(
         module, UPDATE_ALTERNATIVES, name, link)
 
