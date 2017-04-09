@@ -44,7 +44,7 @@ options:
     description:
       - The banner text that should be
         present in the remote device running configuration.  This argument
-        accepts a multiline string. Requires I(state=present).
+        accepts a multiline string, with no empty lines. Requires I(state=present).
     default: null
   state:
     description:
@@ -68,6 +68,13 @@ EXAMPLES = """
   ios_banner:
     banner: motd
     state: absent
+
+- name: Configure banner from file
+  ios_banner:
+    banner:  motd
+    text: "{{ lookup('file', './config_partial/raw_banner.cfg') }}"
+    state: present
+
 """
 
 RETURN = """
