@@ -81,7 +81,7 @@ EXAMPLES = '''
 '''
 
 import re
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule, subprocess
 from ansible.module_utils.pycompat24 import get_exception
 
 def get_current(module, cmd, name, link):
