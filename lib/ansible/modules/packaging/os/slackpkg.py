@@ -102,6 +102,7 @@ def query_package(name):
             return package
     return False
 
+
 def query_repository(module, slackpkg_path, name):
     rc, out, err = module.run_command("%s search %s" % (slackpkg_path, name))
     if rc != 0:
@@ -116,6 +117,7 @@ def query_repository(module, slackpkg_path, name):
             return (matches[0], matches[1])
     module.fail_json(
         msg="failed to locate package {} in repository".format(name))
+
 
 def remove_packages(module, slackpkg_path, blacklist, ignore_blacklist, packages):
     remove_c = 0
@@ -162,6 +164,7 @@ def remove_packages(module, slackpkg_path, blacklist, ignore_blacklist, packages
             msg="package(s) already absent, %s blacklisted" % blacklisted_c)
     else:
         module.exit_json(changed=False, msg="package(s) already absent")
+
 
 def install_packages(module, slackpkg_path, blacklist, packages):
 
@@ -223,7 +226,7 @@ def upgrade_packages(module, slackpkg_path, blacklist, packages):
                     current_version[0]))
         elif not module.check_mode and newer_version is not None:
             if (
-                    not current_version[1].endswith('git') and \
+                    not current_version[1].endswith('git') and
                     LooseVersion(newer_version[1]) < LooseVersion(current_version[1])):
                 # don't do anything if a newer version than the one in the
                 # repository is installed already
@@ -275,6 +278,7 @@ def update_cache(module, slackpkg_path):
         out=out,
         err=err)
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -296,7 +300,7 @@ def main():
     f = open('/etc/slackpkg/blacklist', 'r')
     try:
         blacklist = [
-            line.strip() for line in f.read().split('\n') \
+            line.strip() for line in f.read().split('\n')
             if not line.strip().startswith('#') and len(line.strip()) > 0]
     finally:
         f.close()
