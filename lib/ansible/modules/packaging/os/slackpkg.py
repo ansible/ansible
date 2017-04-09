@@ -68,7 +68,7 @@ options:
         required: false
         default: false
         choices: [ true, false ]
-        version_added: "2.3"
+        version_added: "2.4"
 
 author: Kim Nørgaard (@KimNorgaard)
 requirements: [ "Slackware >= 12.2", "slackpkg" ]
