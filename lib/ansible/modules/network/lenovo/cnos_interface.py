@@ -455,11 +455,11 @@ Tasks : The following are examples of using the module cnos_interface. These are
 
 '''
 RETURN = '''
-  return value: |
-    On successful execution, the method returns a message in JSON format
-    [Interface configurations accomplished.]
-    Upon any failure, the method returns an error display string.
-
+msg:
+  description: Success or failure message
+  returned: always
+  type: string
+  sample: "Interface configurations accomplished."
 '''
 
 import sys
