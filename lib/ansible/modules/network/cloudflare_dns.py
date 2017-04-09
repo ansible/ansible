@@ -193,7 +193,7 @@ RETURN = '''
 record:
     description: dictionary containing the record data
     returned: success, except on record deletion
-    type: dictionary
+    type: complex
     contains:
         content:
             description: the record content (details depend on record type)

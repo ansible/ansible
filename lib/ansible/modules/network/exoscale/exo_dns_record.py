@@ -181,7 +181,7 @@ RETURN = '''
 exo_dns_record:
     description: API record results
     returned: success
-    type: dictionary
+    type: complex
     contains:
         content:
             description: value of the record
