@@ -145,6 +145,8 @@ EXAMPLES = """
 RETURN = """
 command:
   description: The CLI command run on the target node(s).
+  returned: always
+  type: str
 stdout:
   description: The set of responses from the trunk command.
   returned: always
