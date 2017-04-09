@@ -171,9 +171,9 @@ class NetboxAsInventory(object):
         The group will be added if it's not in the inventory.
 
         Args:
-            server_name: The server that will be added to a group.
-            group_value: Name that will be used as a group in the inventory.
-            inventory_dict: The inventory which will be updated.
+            server_name: String, the server that will be added to a group.
+            group_value: String, name that will be used as a group in the inventory.
+            inventory_dict: Dict, the inventory which will be updated.
 
         Returns:
             This function doesn't return, it updates the dict in place.
