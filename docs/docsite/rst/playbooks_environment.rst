@@ -77,7 +77,7 @@ Some language-specific version managers (such as rbenv and nvm) require environm
 
       environment:
         NVM_DIR: /var/local/nvm
-        PATH: /var/local/nvm/versions/node/v4.2.1/bin:{{ (ansible_env|default({})).PATH|default('') }}
+        PATH: /var/local/nvm/versions/node/v4.2.1/bin:{{ ansible_env.PATH }}
 
       tasks:
       - name: check for package.json
