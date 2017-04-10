@@ -42,6 +42,8 @@ Errors generally fall into one of the following categories:
   talk to the remote network device. This generally means that there is an authentication issue. See the "Authentication and connection issues" section
   in this this document for more information.
 
+.. _enable_network_logging:
+
 Enabling Networking logging and how to read the logfile
 -------------------------------------------------------
 
@@ -118,7 +120,7 @@ In the above example we:
 
 If you have SSH keys configured correctly you can drop the ``-k`` parameter
 
-If the above still fails you can combine it the LINK(Enabling Network logging) section, for example::
+If the above still fails you can combine it the enable_network_logging_, for example::
 
   # Specify the location for the log file
   export ANSIBLE_LOG_PATH=~/ansible.log
@@ -127,7 +129,7 @@ If the above still fails you can combine it the LINK(Enabling Network logging) s
 
 Then review the log file and find the relevant error message in the rest of this document.
 
-For details on other ways to authenticate see LINKTOAUTHHOWTODOCS.
+.. For details on other ways to authenticate see LINKTOAUTHHOWTODOCS.
 
 .. _unable_to_open_shell:
 
@@ -167,7 +169,7 @@ or:
 
 Suggestions to resolve:
 
-Follow the steps detailed in FIXMELINK:Enabling Networking logging and how to read the log file.
+Follow the steps detailed in enable_network_logging_.
 
 Once you've identified the error message from the log file, the specific solution can be found in the rest of this document.
 
@@ -193,7 +195,7 @@ For example:
 
 Suggestions to resolve:
 
-* If you are using the ``provider:`` options ensure that it's suboption ``host:`` is set correctly. FIXMELINK to Howto
+* If you are using the ``provider:`` options ensure that it's suboption ``host:`` is set correctly.
 * If you are not using ``provider:`` nor top-level arguments ensure your inventory file is correct.
 
 
@@ -330,7 +332,7 @@ task will fail if the command has not returned.
 
 For example:
 
-FIXME: Detail error here
+.. FIXME: Detail error here
 
 
 Suggestions to resolve:
@@ -430,41 +432,41 @@ Add `authorize: yes` to the task. For example:
   register: result
 
 
-delete_to not honoured
-----------------------
-
-FIXME Do we get an error message
-
-FIXME Link to howto
-
-
-
-
-fixmes
-======
-
-Error: "number of connection attempts exceeded, unable to connect to control socket"
-------------------------------------------------------------------------------------
-
-**Platforms:** Any
-
-This occurs when Ansible wasn't able to connect to the remote device and obtain a shell with the timeout.
-
-
-This information is available when ``ANSIBLE_LOG_PATH`` is set see (FIXMELINKTOSECTION):
-
-.. code-block:: yaml
-
-  less $ANSIBLE_LOG_PATH
-  2017-03-10 15:32:06,173 p=19677 u=fred |  number of connection attempts exceeded, unable to connect to control socket
-  2017-03-10 15:32:06,174 p=19677 u=fred |  persistent_connect_interval=1, persistent_connect_retries=10
-  2017-03-10 15:32:06,222 p=19669 u=fred |  fatal: [veos01]: FAILED! => {
-
-Suggestions to resolve:
-
-Do stuff For example:
-
-.. code-block:: yaml
-
-	Example stuff
-
+.. delete_to not honoured
+   ----------------------
+   
+   FIXME Do we get an error message
+   
+   FIXME Link to howto
+   
+   
+   
+   
+   fixmes
+   ======
+   
+   Error: "number of connection attempts exceeded, unable to connect to control socket"
+   ------------------------------------------------------------------------------------
+   
+   **Platforms:** Any
+   
+   This occurs when Ansible wasn't able to connect to the remote device and obtain a shell with the timeout.
+   
+   
+   This information is available when ``ANSIBLE_LOG_PATH`` is set see (FIXMELINKTOSECTION):
+   
+   .. code-block:: yaml
+   
+     less $ANSIBLE_LOG_PATH
+     2017-03-10 15:32:06,173 p=19677 u=fred |  number of connection attempts exceeded, unable to connect to control socket
+     2017-03-10 15:32:06,174 p=19677 u=fred |  persistent_connect_interval=1, persistent_connect_retries=10
+     2017-03-10 15:32:06,222 p=19669 u=fred |  fatal: [veos01]: FAILED! => {
+   
+   Suggestions to resolve:
+   
+   Do stuff For example:
+   
+   .. code-block:: yaml
+   
+   	Example stuff
+   
