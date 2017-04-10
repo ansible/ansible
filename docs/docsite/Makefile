@@ -22,7 +22,7 @@ clean:
 	-rm -rf htmlout
 	-rm -rf _build
 	-rm -f .buildinfo
-	-rm -f *.inv
+	-rm -f objects.inv
 	-rm -rf *.doctrees
 	@echo "Cleaning up minified css files"
 	find . -type f -name "*.min.css" -delete
