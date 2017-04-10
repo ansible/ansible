@@ -196,10 +196,10 @@ class NetboxAsInventory(object):
         The groups are defined in this inventory script config file.
 
         Args:
-            groups_categories: A dict has a categories of groups that will be
+            groups_categories: Dict, it has a categories of groups that will be
                 used as Ansible inventory groups.
-            inventory_dict: Ansible inventory.
-            host_data: A dict has the host data which will be added to inventory.
+            inventory_dict: Dict, which is Ansible inventory.
+            host_data: Dict, it has the host data that will be added to inventory.
 
         Returns:
             The same dict "inventory_dict" after update.
