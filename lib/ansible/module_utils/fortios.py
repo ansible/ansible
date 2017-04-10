@@ -38,7 +38,7 @@ try:
     from pyFG import FortiOS, FortiConfig
     from pyFG.exceptions import CommandExecutionException, FailedCommit
     HAS_PYFG=True
-except:
+except ImportError:
     HAS_PYFG=False
 
 fortios_argument_spec = dict(
