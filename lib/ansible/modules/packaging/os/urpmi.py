@@ -54,6 +54,14 @@ options:
     required: false
     default: yes
     choices: [ "yes", "no" ]
+  root:
+    description:
+      - Specifies an alternative install root, relative to which all packages will be installed.
+        Corresponds to the C(--root) option for I(urpmi).
+    required: false
+    default: "/"
+    version_added: "2.4"
+    aliases: [ "installroot" ]
 author: "Philippe Makowski (@pmakowski)"
 notes:  []
 '''
@@ -89,20 +97,20 @@ import sys
 URPMI_PATH = '/usr/sbin/urpmi'
 URPME_PATH = '/usr/sbin/urpme'
 
-def query_package(module, name):
+def query_package(module, name, root):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
-    cmd = "rpm -q %s" % (name)
+    cmd = "rpm -q %s %s" % (name, root_option(root))
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc == 0:
         return True
     else:
         return False
 
-def query_package_provides(module, name):
+def query_package_provides(module, name, root):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
-    cmd = "rpm -q --provides %s" % (name)
+    cmd = "rpm -q --provides %s %s" % (name, root_option(root))
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     return rc == 0
 
@@ -114,16 +122,16 @@ def update_package_db(module):
         module.fail_json(msg="could not update package db")
 
 
-def remove_packages(module, packages):
+def remove_packages(module, packages, root):
 
     remove_c = 0
     # Using a for loop in case of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
-        if not query_package(module, package):
+        if not query_package(module, package, root):
             continue
 
-        cmd = "%s --auto %s" % (URPME_PATH, package)
+        cmd = "%s --auto %s %s" % (URPME_PATH, root_option(root), package)
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
@@ -138,11 +146,11 @@ def remove_packages(module, packages):
     module.exit_json(changed=False, msg="package(s) already absent")
 
 
-def install_packages(module, pkgspec, force=True, no_recommends=True):
+def install_packages(module, pkgspec, root, force=True, no_recommends=True):
 
     packages = ""
     for package in pkgspec:
-        if not query_package_provides(module, package):
+        if not query_package_provides(module, package, root):
             packages += "'%s' " % package
 
     if len(packages) != 0:
@@ -156,13 +164,13 @@ def install_packages(module, pkgspec, force=True, no_recommends=True):
         else:
             force_yes = ''
 
-        cmd = ("%s --auto %s --quiet %s %s" % (URPMI_PATH, force_yes, no_recommends_yes, packages))
+        cmd = ("%s --auto %s --quiet %s %s %s" % (URPMI_PATH, force_yes, no_recommends_yes, root_option(root), packages))
 
         rc, out, err = module.run_command(cmd)
 
         installed = True
         for packages in pkgspec:
-            if not query_package_provides(module, package):
+            if not query_package_provides(module, package, root):
                 installed = False
 
         # urpmi always have 0 for exit code if --force is used
@@ -173,6 +181,11 @@ def install_packages(module, pkgspec, force=True, no_recommends=True):
     else:
         module.exit_json(changed=False)
 
+def root_option(root):
+    if (root):
+        return "--root=%s" % (root)
+    else:
+        return ""
 
 def main():
     module = AnsibleModule(
@@ -181,7 +194,8 @@ def main():
             update_cache  = dict(default=False, aliases=['update-cache'], type='bool'),
             force         = dict(default=True, type='bool'),
             no_recommends = dict(default=True, aliases=['no-recommends'], type='bool'),
-            package       = dict(aliases=['pkg', 'name'], required=True)))
+            package       = dict(aliases=['pkg', 'name'], required=True),
+            root          = dict(aliases=['installroot'])))
 
 
     if not os.path.exists(URPMI_PATH):
@@ -191,6 +205,7 @@ def main():
 
     force_yes = p['force']
     no_recommends_yes = p['no_recommends']
+    root = p['root']
 
     if p['update_cache']:
         update_package_db(module)
@@ -198,10 +213,10 @@ def main():
     packages = p['package'].split(',')
 
     if p['state'] in [ 'installed', 'present' ]:
-        install_packages(module, packages, force_yes, no_recommends_yes)
+        install_packages(module, packages, root, force_yes, no_recommends_yes)
 
     elif p['state'] in [ 'removed', 'absent' ]:
-        remove_packages(module, packages)
+        remove_packages(module, packages, root)
 
 # import module snippets
 from ansible.module_utils.basic import *
