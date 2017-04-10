@@ -31,9 +31,10 @@ description:
   - This module configures the timezone setting, both of the system clock and of the hardware clock. If you want to set up the NTP, use M(service) module.
   - It is recommended to restart C(crond) after changing the timezone, otherwise the jobs may run at the wrong time.
   - Several different tools are used depending on the OS/Distribution involved.
-    For Linux it can use C(timedatectl)  or edit C(/etc/sysconfig/clock) or C(/etc/timezone) andC(hwclock).
-    On SmartOS , C(sm-set-timezone), for BSD, C(/etc/localtime) is modified.
+    For Linux it can use C(timedatectl) or edit C(/etc/sysconfig/clock) or C(/etc/timezone) andC(hwclock).
+    On SmartOS, C(sm-set-timezone), for macOS, C(systemsetup), for BSD, C(/etc/localtime) is modified.
   - As of version 2.3 support was added for SmartOS and BSDs.
+  - As of version 2.4 support was added for macOS.
   - Windows, AIX and HPUX are not supported, please let us know if you find any other OS/distro in which this fails.
 version_added: "2.2"
 options:
@@ -58,6 +59,7 @@ notes:
 author:
   - "Shinichi TAMURA (@tmshn)"
   - "Jasper Lievisse Adriaanse (@jasperla)"
+  - "Indrajit Raychaudhuri (@indrajitr)"
 '''
 
 RETURN = '''
@@ -124,6 +126,8 @@ class Timezone(object):
                     module.fail_json(msg='Adjusting timezone is not supported in Global Zone')
 
             return super(Timezone, SmartOSTimezone).__new__(SmartOSTimezone)
+        elif re.match('^Darwin', platform.platform()):
+            return super(Timezone, DarwinTimezone).__new__(DarwinTimezone)
         elif re.match('^(Free|Net|Open)BSD', platform.platform()):
             return super(Timezone, BSDTimezone).__new__(BSDTimezone)
         else:
@@ -503,6 +507,55 @@ class SmartOSTimezone(Timezone):
         else:
             self.module.fail_json(msg='{0} is not a supported option on target platform'.
                                   format(key))
+
+
+class DarwinTimezone(Timezone):
+    """This is the timezone implementation for Darwin which, unlike other *BSD
+    implementations, uses the `systemsetup` command on Darwin to check/set
+    the timezone.
+    """
+
+    regexps = dict(
+        name   = re.compile(r'^\s*Time ?Zone\s*:\s*([^\s]+)', re.MULTILINE)
+    )
+
+    def __init__(self, module):
+        super(DarwinTimezone, self).__init__(module)
+        self.systemsetup = module.get_bin_path('systemsetup', required=True)
+        self.status = dict()
+        # Validate given timezone
+        if 'name' in self.value:
+            self._verify_timezone()
+
+    def _get_current_timezone(self, phase):
+        """Lookup the current timezone via `systemsetup -gettimezone`."""
+        if phase not in self.status:
+            self.status[phase] = self.execute(self.systemsetup, '-gettimezone')
+        return self.status[phase]
+
+    def _verify_timezone(self):
+        tz = self.value['name']['planned']
+        # Lookup the list of supported timezones via `systemsetup -listtimezones`.
+        # Note: Skip the first line that contains the label 'Time Zones:'
+        out = self.execute(self.systemsetup, '-listtimezones').splitlines()[1:]
+        tz_list = list(map(lambda x: x.strip(), out))
+        if not tz in tz_list:
+            self.abort('given timezone "%s" is not available' % tz)
+        return tz
+
+    def get(self, key, phase):
+        if key == 'name':
+            status = self._get_current_timezone(phase)
+            value = self.regexps[key].search(status).group(1)
+            return value
+        else:
+            self.module.fail_json(msg='{0} is not a supported option on target platform'.format(key))
+
+    def set(self, key, value):
+        if key == 'name':
+            self.execute(self.systemsetup, '-settimezone', value, log=True)
+        else:
+            self.module.fail_json(msg='{0} is not a supported option on target platform'.format(key))
 
 
 class BSDTimezone(Timezone):
