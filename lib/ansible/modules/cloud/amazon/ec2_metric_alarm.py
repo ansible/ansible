@@ -251,9 +251,14 @@ def create_metric_alarm(connection, module):
                             'AlarmDescription': description,
                             'Dimensions': dimensions,
                             'TreatMissingData': treat_missing_data }.items():
-            if alarm[key] != value:
-                changed = True
-                alarm[key] = value
+            try:
+                if alarm[key] != value:
+                    changed = True
+            except KeyError:
+                if value is not None:
+                    changed = True
+
+            alarm[key] = value
 
         for key, value in { 'AlarmActions': alarm_actions,
                             'InsufficientDataActions': insufficient_data_actions,
