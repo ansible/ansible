@@ -124,6 +124,11 @@ it's more than that -- you can also read variables about other hosts.  We'll sho
    pieces of files, or to have other ecosystem tools read Ansible files.  Not everyone will need this but it can unlock
    possibilities.
 
+.. seealso::
+
+    :doc:`playbooks_templating`
+        More information about Jinja2 templating
+
 .. _jinja2_filters:
 
 Jinja2 Filters
