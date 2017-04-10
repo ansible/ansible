@@ -255,7 +255,7 @@ def main():
         if state == 'absent':
             module.exit_json(changed=False, msg="Volume group %s does not exist." % vg)
         else:
-            module.fail_json(msg="Volume group %s does not exist." % (vg, vg_info), rc=rc, out=vg_info, err=err)
+            module.fail_json(msg="Volume group %s does not exist." % vg, rc=rc, out=vg_info, err=err)
 
     this_vg = parse_vg(vg_info)
 
