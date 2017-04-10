@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2015 Matt Martz <matt@sivel.net>
@@ -46,6 +46,16 @@ from schema import doc_schema, option_schema, metadata_schema
 from utils import CaptureStd, parse_yaml
 from voluptuous.humanize import humanize_error
 
+from ansible.module_utils.six import PY3, with_metaclass
+
+if PY3:
+    # Because there is no ast.TryExcept in Python 3 ast module
+    TRY_EXCEPT = ast.Try
+    # REPLACER_WINDOWS from ansible.executor.module_common is byte
+    # string but we need unicode for Python 3
+    REPLACER_WINDOWS = REPLACER_WINDOWS.decode('utf-8')
+else:
+    TRY_EXCEPT = ast.TryExcept
 
 BLACKLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
@@ -78,6 +88,7 @@ class ReporterEncoder(json.JSONEncoder):
 
 
 class Reporter(object):
+
     @staticmethod
     @contextmanager
     def _output_handle(output):
@@ -93,10 +104,10 @@ class Reporter(object):
 
     @staticmethod
     def _filter_out_ok(reports):
-        temp_reports = reports.copy()
-        for path, report in temp_reports.items():
-            if not (report['errors'] or report['warnings']):
-                del temp_reports[path]
+        temp_reports = OrderedDict()
+        for path, report in reports.items():
+            if report['errors'] or report['warnings']:
+                temp_reports[path] = report
 
         return temp_reports
 
@@ -148,11 +159,10 @@ class Reporter(object):
         return 3 if sum(ret) else 0
 
 
-class Validator(object):
+class Validator(with_metaclass(abc.ABCMeta, object)):
     """Validator instances are intended to be run on a single object.  if you
     are scanning multiple objects for problems, you'll want to have a separate
     Validator for each one."""
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self):
         self.reset()
@@ -352,7 +362,7 @@ class ModuleValidator(Validator):
             names = []
             if isinstance(child, ast.Import):
                 names.extend(child.names)
-            elif isinstance(child, ast.TryExcept):
+            elif isinstance(child, TRY_EXCEPT):
                 bodies = child.body
                 for handler in child.handlers:
                     bodies.extend(handler.body)
@@ -459,7 +469,7 @@ class ModuleValidator(Validator):
         for child in self.ast.body:
             found_try_except_import = False
             found_has = False
-            if isinstance(child, ast.TryExcept):
+            if isinstance(child, TRY_EXCEPT):
                 bodies = child.body
                 for handler in child.handlers:
                     bodies.extend(handler.body)
@@ -498,7 +508,7 @@ class ModuleValidator(Validator):
                          'line %d' % (child.lineno,))
                     ))
                     break
-            elif isinstance(child, ast.TryExcept):
+            elif isinstance(child, TRY_EXCEPT):
                 bodies = child.body
                 for handler in child.handlers:
                     bodies.extend(handler.body)
@@ -970,7 +980,7 @@ def main():
                 reports.update(mv.report())
 
         for root, dirs, files in os.walk(module):
-            basedir = root[len(module)+1:].split('/', 1)[0]
+            basedir = root[len(module) + 1:].split('/', 1)[0]
             if basedir in BLACKLIST_DIRS:
                 continue
             for dirname in dirs:
@@ -1027,7 +1037,7 @@ class GitCache(object):
         cmd = ['git'] + args
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
-        return stdout.splitlines()
+        return stdout.decode('utf-8').splitlines()
 
 
 if __name__ == '__main__':
