@@ -1,1 +1,1 @@
-pyfg>=0.49_1
+https://github.com/bjolivot/pyfg
