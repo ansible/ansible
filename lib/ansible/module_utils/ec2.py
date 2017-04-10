@@ -255,7 +255,10 @@ def boto_fix_security_token_in_profile(conn, profile_name):
 
 
 def connect_to_aws(aws_module, region, **params):
-    conn = aws_module.connect_to_region(region, **params)
+    try:
+        conn = aws_module.connect_to_region(region, **params)
+    except(boto.provider.ProfileNotFoundError):
+        raise AnsibleAWSError("Profile given for AWS was not found.  Please fix and retry.")
     if not conn:
         if region not in [aws_module_region.name for aws_module_region in aws_module.regions()]:
             raise AnsibleAWSError("Region %s does not seem to be available for aws module %s. If the region definitely exists, you may need to upgrade "
