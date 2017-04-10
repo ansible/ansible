@@ -84,7 +84,7 @@ options:
     description:
       - Number of seconds to wait between each batch. Used with replace_all_instances.
     required: false
-    version_added: "2.3"
+    version_added: "2.4"
     default: 0
   replace_instances:
     description:
