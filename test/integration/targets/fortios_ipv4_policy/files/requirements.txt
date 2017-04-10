@@ -1,1 +1,1 @@
-https://github.com/bjolivot/pyfg.git
+git+https://github.com/bjolivot/pyfg.git
