@@ -19,8 +19,7 @@
 import ast
 import sys
 
-# We only use StringIO, since we cannot setattr on cStringIO
-from StringIO import StringIO
+from io import BytesIO, TextIOWrapper
 
 import yaml
 import yaml.reader
@@ -55,10 +54,8 @@ class CaptureStd():
     def __enter__(self):
         self.sys_stdout = sys.stdout
         self.sys_stderr = sys.stderr
-        sys.stdout = self.stdout = StringIO()
-        sys.stderr = self.stderr = StringIO()
-        setattr(sys.stdout, 'encoding', self.sys_stdout.encoding)
-        setattr(sys.stderr, 'encoding', self.sys_stderr.encoding)
+        sys.stdout = self.stdout = TextIOWrapper(BytesIO(), encoding=self.sys_stdout.encoding)
+        sys.stderr = self.stderr = TextIOWrapper(BytesIO(), encoding=self.sys_stderr.encoding)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
