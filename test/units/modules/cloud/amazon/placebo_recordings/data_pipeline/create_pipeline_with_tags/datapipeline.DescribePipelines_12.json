@@ -1,0 +1,75 @@
+{
+    "status_code": 200, 
+    "data": {
+        "ResponseMetadata": {
+            "RetryAttempts": 0, 
+            "HTTPStatusCode": 200, 
+            "RequestId": "4c282257-1f76-11e7-8d49-c138aed9a16e", 
+            "HTTPHeaders": {
+                "x-amzn-requestid": "4c282257-1f76-11e7-8d49-c138aed9a16e", 
+                "date": "Wed, 12 Apr 2017 11:50:59 GMT", 
+                "content-length": "832", 
+                "content-type": "application/x-amz-json-1.1"
+            }
+        }, 
+        "pipelineDescriptionList": [
+            {
+                "fields": [
+                    {
+                        "stringValue": "[{\"key\":\"ansible\",\"value\":\"test\"}]", 
+                        "key": "*tags"
+                    }, 
+                    {
+                        "stringValue": "2017-04-12T11:50:59", 
+                        "key": "@creationTime"
+                    }, 
+                    {
+                        "stringValue": "ansible-unit-test-5", 
+                        "key": "description"
+                    }, 
+                    {
+                        "stringValue": "PIPELINE", 
+                        "key": "@sphere"
+                    }, 
+                    {
+                        "stringValue": "AIDAIXWKSMISP2Y2H6X7G", 
+                        "key": "pipelineCreator"
+                    }, 
+                    {
+                        "stringValue": "ansible-test-create-pipeline", 
+                        "key": "name"
+                    }, 
+                    {
+                        "stringValue": "df-0992121NH0IXWED63ZG", 
+                        "key": "@id"
+                    }, 
+                    {
+                        "stringValue": "PENDING", 
+                        "key": "@pipelineState"
+                    }, 
+                    {
+                        "stringValue": "448830907657", 
+                        "key": "@accountId"
+                    }, 
+                    {
+                        "stringValue": "a5a00f4e2068f97a4c302b1af18ceda8", 
+                        "key": "uniqueId"
+                    }, 
+                    {
+                        "stringValue": "AIDAIXWKSMISP2Y2H6X7G", 
+                        "key": "@userId"
+                    }
+                ], 
+                "pipelineId": "df-0992121NH0IXWED63ZG", 
+                "name": "ansible-test-create-pipeline", 
+                "tags": [
+                    {
+                        "value": "test", 
+                        "key": "ansible"
+                    }
+                ], 
+                "description": "ansible-unit-test-5"
+            }
+        ]
+    }
+}

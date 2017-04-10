@@ -1,0 +1,21 @@
+{
+    "status_code": 400, 
+    "data": {
+        "ResponseMetadata": {
+            "RetryAttempts": 0, 
+            "HTTPStatusCode": 400, 
+            "RequestId": "730a347e-1f76-11e7-a045-bd111c47de78", 
+            "HTTPHeaders": {
+                "x-amzn-requestid": "730a347e-1f76-11e7-a045-bd111c47de78", 
+                "date": "Wed, 12 Apr 2017 11:52:04 GMT", 
+                "content-length": "106", 
+                "content-type": "application/x-amz-json-1.1", 
+                "cneonction": "close"
+            }
+        }, 
+        "Error": {
+            "Message": "Pipeline with id: df-015440025PF7YGLDK47C does not exist", 
+            "Code": "PipelineDeletedException"
+        }
+    }
+}

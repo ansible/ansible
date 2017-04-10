@@ -1,0 +1,17 @@
+{
+    "status_code": 200, 
+    "data": {
+        "pipelineId": "df-08533701TMMXJMVF5678", 
+        "ResponseMetadata": {
+            "RetryAttempts": 0, 
+            "HTTPStatusCode": 200, 
+            "RequestId": "b9d32aaf-1e45-11e7-af37-1771a7589514", 
+            "HTTPHeaders": {
+                "x-amzn-requestid": "b9d32aaf-1e45-11e7-af37-1771a7589514", 
+                "date": "Mon, 10 Apr 2017 23:30:47 GMT", 
+                "content-length": "40", 
+                "content-type": "application/x-amz-json-1.1"
+            }
+        }
+    }
+}

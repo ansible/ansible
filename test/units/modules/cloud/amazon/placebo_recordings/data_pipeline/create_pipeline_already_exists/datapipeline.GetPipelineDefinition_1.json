@@ -1,0 +1,17 @@
+{
+    "status_code": 200, 
+    "data": {
+        "pipelineObjects": [], 
+        "ResponseMetadata": {
+            "RetryAttempts": 0, 
+            "HTTPStatusCode": 200, 
+            "RequestId": "a269d1e9-1e45-11e7-a13a-436bfdb78ed8", 
+            "HTTPHeaders": {
+                "x-amzn-requestid": "a269d1e9-1e45-11e7-a13a-436bfdb78ed8", 
+                "date": "Mon, 10 Apr 2017 23:30:08 GMT", 
+                "content-length": "22", 
+                "content-type": "application/x-amz-json-1.1"
+            }
+        }
+    }
+}

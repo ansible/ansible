@@ -1,0 +1,79 @@
+{
+    "status_code": 200, 
+    "data": {
+        "ResponseMetadata": {
+            "RetryAttempts": 0, 
+            "HTTPStatusCode": 200, 
+            "RequestId": "9b575d0c-1e45-11e7-a13a-436bfdb78ed8", 
+            "HTTPHeaders": {
+                "x-amzn-requestid": "9b575d0c-1e45-11e7-a13a-436bfdb78ed8", 
+                "date": "Mon, 10 Apr 2017 23:29:56 GMT", 
+                "content-length": "902", 
+                "content-type": "application/x-amz-json-1.1"
+            }
+        }, 
+        "pipelineDescriptionList": [
+            {
+                "fields": [
+                    {
+                        "stringValue": "[{\"key\":\"ansible\",\"value\":\"test\"}]", 
+                        "key": "*tags"
+                    }, 
+                    {
+                        "stringValue": "2017-04-10T23:29:55", 
+                        "key": "@creationTime"
+                    }, 
+                    {
+                        "stringValue": "ansible-unit-test-5", 
+                        "key": "description"
+                    }, 
+                    {
+                        "stringValue": "2017-04-10T23:29:56", 
+                        "key": "@deletionRequestTime"
+                    }, 
+                    {
+                        "stringValue": "PIPELINE", 
+                        "key": "@sphere"
+                    }, 
+                    {
+                        "stringValue": "AIDAIXWKSMISP2Y2H6X7G", 
+                        "key": "pipelineCreator"
+                    }, 
+                    {
+                        "stringValue": "ansible-test-create-pipeline", 
+                        "key": "name"
+                    }, 
+                    {
+                        "stringValue": "df-09438542I6MBTW5RN9EB", 
+                        "key": "@id"
+                    }, 
+                    {
+                        "stringValue": "DELETING", 
+                        "key": "@pipelineState"
+                    }, 
+                    {
+                        "stringValue": "448830907657", 
+                        "key": "@accountId"
+                    }, 
+                    {
+                        "stringValue": "a5a00f4e2068f97a4c302b1af18ceda8", 
+                        "key": "uniqueId"
+                    }, 
+                    {
+                        "stringValue": "AIDAIXWKSMISP2Y2H6X7G", 
+                        "key": "@userId"
+                    }
+                ], 
+                "pipelineId": "df-09438542I6MBTW5RN9EB", 
+                "name": "ansible-test-create-pipeline", 
+                "tags": [
+                    {
+                        "value": "test", 
+                        "key": "ansible"
+                    }
+                ], 
+                "description": "ansible-unit-test-5"
+            }
+        ]
+    }
+}

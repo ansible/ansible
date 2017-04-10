@@ -1,0 +1,23 @@
+{
+    "status_code": 200, 
+    "data": {
+        "hasMoreResults": false, 
+        "ResponseMetadata": {
+            "RetryAttempts": 0, 
+            "HTTPStatusCode": 200, 
+            "RequestId": "8bfb5397-1e45-11e7-8969-cfac31d70ddd", 
+            "HTTPHeaders": {
+                "x-amzn-requestid": "8bfb5397-1e45-11e7-8969-cfac31d70ddd", 
+                "date": "Mon, 10 Apr 2017 23:29:30 GMT", 
+                "content-length": "114", 
+                "content-type": "application/x-amz-json-1.1"
+            }
+        }, 
+        "pipelineIdList": [
+            {
+                "id": "df-020217210E4AXZ796XKX", 
+                "name": "ansible-test-create-pipeline"
+            }
+        ]
+    }
+}

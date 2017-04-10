@@ -1,0 +1,27 @@
+{
+    "status_code": 200, 
+    "data": {
+        "hasMoreResults": false, 
+        "ResponseMetadata": {
+            "RetryAttempts": 0, 
+            "HTTPStatusCode": 200, 
+            "RequestId": "d23705ef-1e44-11e7-af37-1771a7589514", 
+            "HTTPHeaders": {
+                "x-amzn-requestid": "d23705ef-1e44-11e7-af37-1771a7589514", 
+                "date": "Mon, 10 Apr 2017 23:24:18 GMT", 
+                "content-length": "185", 
+                "content-type": "application/x-amz-json-1.1"
+            }
+        }, 
+        "pipelineIdList": [
+            {
+                "id": "df-061289720FU5N8UH3EGA", 
+                "name": "ansible-test-create-pipleine"
+            }, 
+            {
+                "id": "df-03280561TSXEH2WSZUO2", 
+                "name": "ansible-test-create-pipeline"
+            }
+        ]
+    }
+}
