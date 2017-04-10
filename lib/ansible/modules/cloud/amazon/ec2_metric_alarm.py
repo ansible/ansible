@@ -252,9 +252,14 @@ def create_metric_alarm(connection, module):
             'Dimensions': dimensions,
             'TreatMissingData': treat_missing_data
         }.items():
-            if alarm[key] != value:
-                changed = True
-                alarm[key] = value
+            try:
+                if alarm[key] != value:
+                    changed = True
+            except KeyError:
+                if value is not None:
+                    changed = True
+
+            alarm[key] = value
 
         for key, value in {
             'AlarmActions': alarm_actions,
@@ -268,21 +273,23 @@ def create_metric_alarm(connection, module):
 
         try:
             if changed:
-                connection.put_metric_alarm(AlarmName=alarm['AlarmName'],
-                                            MetricName=alarm['MetricName'],
-                                            Namespace=alarm['Namespace'],
-                                            Statistic=alarm['Statistic'],
-                                            ComparisonOperator=alarm['ComparisonOperator'],
-                                            Threshold=alarm['Threshold'],
-                                            Period=alarm['Period'],
-                                            EvaluationPeriods=alarm['EvaluationPeriods'],
-                                            Unit=alarm['Unit'],
-                                            AlarmDescription=alarm['AlarmDescription'],
-                                            Dimensions=alarm['Dimensions'],
-                                            AlarmActions=alarm['AlarmActions'],
-                                            InsufficientDataActions=alarm['InsufficientDataActions'],
-                                            OKActions=alarm['OKActions'],
-                                            TreatMissingData=alarm['TreatMissingData'])
+                connection.put_metric_alarm(
+                    AlarmName=alarm['AlarmName'],
+                    MetricName=alarm['MetricName'],
+                    Namespace=alarm['Namespace'],
+                    Statistic=alarm['Statistic'],
+                    ComparisonOperator=alarm['ComparisonOperator'],
+                    Threshold=alarm['Threshold'],
+                    Period=alarm['Period'],
+                    EvaluationPeriods=alarm['EvaluationPeriods'],
+                    Unit=alarm['Unit'],
+                    AlarmDescription=alarm['AlarmDescription'],
+                    Dimensions=alarm['Dimensions'],
+                    AlarmActions=alarm['AlarmActions'],
+                    InsufficientDataActions=alarm['InsufficientDataActions'],
+                    OKActions=alarm['OKActions'],
+                    TreatMissingData=alarm['TreatMissingData']
+                )
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=str(e))
 
