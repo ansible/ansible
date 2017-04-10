@@ -14,7 +14,7 @@ Please note that all templating happens on the Ansible controller before the tas
    playbooks_filters
    playbooks_tests
    playbooks_lookups
-
+   playbooks_python_version
 
 
 .. seealso::
