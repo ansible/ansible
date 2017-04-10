@@ -1,9 +1,0 @@
----
-- hosts: localhost
-  connection: local
-  gather_facts: no
-  tags:
-    - fortios
-
-  roles:
-    - { role: fortios_ipv4_policy, tags: test_fortios_ipv4_policy }
