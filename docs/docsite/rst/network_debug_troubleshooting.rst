@@ -32,7 +32,7 @@ Errors generally fall into one of the following categories:
   * Can occur when trying to pull a large amount of data
   * May actually be masking a authentication issue
 :Playbook issues:
-  * Use of ``delgate_to``, instead of ``ProxyCommand``
+  * Use of ``delegate_to``, instead of ``ProxyCommand``
   * Not using ``connection: local``
 
 
@@ -120,7 +120,7 @@ In the above example we:
 
 If you have SSH keys configured correctly you can drop the ``-k`` parameter
 
-If the above still fails you can combine it the enable_network_logging_, for example::
+If the connection still fails you can combine it the enable_network_logging_, for example::
 
   # Specify the location for the log file
   export ANSIBLE_LOG_PATH=~/ansible.log
