@@ -226,6 +226,25 @@ def create_metric_alarm(connection, module):
     ok_actions = module.params.get('ok_actions')
     treat_missing_data = module.params.get('treat_missing_data')
 
+    warnings = []
+
+    alarms = connection.describe_alarms(AlarmNames=[name])
+
+    comparisons = {'<=': 'LessThanOrEqualToThreshold',
+                   '<': 'LessThanThreshold',
+                   '>=': 'GreaterThanOrEqualToThreshold',
+                   '>': 'GreaterThanThreshold'}
+    if comparison in ('<=', '<', '>', '>='):
+        warnings.append('Using the <=, <, > and >= operators for comparison has been deprecated. Please use LessThanOrEqualToThreshold, '
+                        'LessThanThreshold, GreaterThanThreshold or GreaterThanOrEqualToThreshold instead.')
+        comparison = comparisons[comparison]
+
+    if not isinstance(dimensions, list):
+        fixed_dimensions = []
+        for key, value in dimensions.items():
+            fixed_dimensions.append({'Name': key, 'Value': value})
+        dimensions = fixed_dimensions
+
     if not alarms['MetricAlarms']:
         try:
             connection.put_metric_alarm(AlarmName=name,
@@ -267,9 +286,14 @@ def create_metric_alarm(connection, module):
                             'AlarmDescription': description,
                             'Dimensions': dimensions,
                             'TreatMissingData': treat_missing_data }.items():
-            if alarm[key] != value:
-                changed = True
-                setattr(alarm, 'dimensions', dim1)
+            try:
+                if alarm[key] != value:
+                    changed = True
+            except KeyError:
+                if value is not None:
+                    changed = True
+
+            alarm[key] = value
 
         for key, value in { 'AlarmActions': alarm_actions,
                             'InsufficientDataActions': insufficient_data_actions,
