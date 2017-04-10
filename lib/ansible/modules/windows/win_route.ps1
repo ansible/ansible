@@ -21,7 +21,7 @@
 
 # win_route (Add or remove a network static route)
 
-$params = Parse-Args $args -supports_check_mode $true
+$params = Parse-Args $args -supports_check_mode $false
 
 $destip = Get-AnsibleParam -obj $params -name "destination_ip" -type "str" -failifempty $true
 $mask = Get-AnsibleParam -obj $params -name "subnet_mask" -type "str" -failifempty $true
@@ -35,7 +35,7 @@ $result = @{
 
 Function Test-SubnetMask {
     Param (
-        [Parameter(Mandatory=$True)]
+        [Parameter(Mandatory=$true)]
         [string]$SubnetMask
     )
     # Validate and convert Subnet Mask to prefix Lenght.
@@ -97,13 +97,13 @@ Function Test-IpAddress {
 
 Function Add-Route {
   Param (
-    [Parameter(Mandatory=$True)]
+    [Parameter(Mandatory=$true)]
     [string]$DestinationIP,
-    [Parameter(Mandatory=$True)]
+    [Parameter(Mandatory=$true)]
     [string]$SubnetMask,
-    [Parameter(Mandatory=$True)]
+    [Parameter(Mandatory=$true)]
     [string]$Gateway,
-    [Parameter(Mandatory=$True)]
+    [Parameter(Mandatory=$true)]
     [int]$Metric
     )
 
@@ -131,7 +131,7 @@ Function Add-Route {
 
 Function Remove-Route {
   Param (
-    [Parameter(Mandatory=$True)]
+    [Parameter(Mandatory=$true)]
     [string]$DestinationIP
     )
   $route = Get-CimInstance win32_ip4PersistedrouteTable -Filter "Destination = '$($DestinationIP)'"
