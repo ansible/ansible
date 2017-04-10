@@ -7,7 +7,6 @@ grep '^#!' -rIn . \
     -e '^\./lib/ansible/modules/' \
     -e '^\./test/integration/targets/[^/]*/library/[^/]*:#!powershell$' \
     -e '^\./test/integration/targets/[^/]*/library/[^/]*:#!/usr/bin/python$' \
-    -e '^\./test/sanity/validate-modules/validate-modules:#!/usr/bin/env python2$' \
     -e '^\./hacking/cherrypick.py:#!/usr/bin/env python3$' \
     -e ':#!/bin/sh$' \
     -e ':#!/bin/bash( -[eux]|$)' \
