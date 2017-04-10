@@ -178,6 +178,8 @@ def set_alternative(module, cmd, name, path, link, priority,
 def remove_alternative(module, cmd, name, path, all_alternatives):
     """Remove the requested path if necessary"""
     if path in all_alternatives:
+        if module.check_mode:
+            module.exit_json(changed=True)
         try:
             module.run_command([cmd, '--remove', name, path], check_rc=True)
             module.exit_json(changed=True)
