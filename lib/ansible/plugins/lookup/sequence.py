@@ -20,8 +20,10 @@ __metaclass__ = type
 from re import compile as re_compile, IGNORECASE
 
 from ansible.errors import AnsibleError
+from ansible.module_utils.six.moves import xrange
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
+
 
 # shortcut format
 NUM = "(0?x?[0-9a-f]+)"
@@ -97,10 +99,10 @@ class LookupModule(LookupBase):
             except ValueError:
                 raise AnsibleError(
                     "can't parse arg %s=%r as integer"
-                        % (arg, arg_raw)
+                    % (arg, arg_raw)
                 )
-            if 'format' in args:
-                self.format = args.pop("format")
+        if 'format' in args:
+            self.format = args.pop("format")
         if args:
             raise AnsibleError(
                 "unrecognized arguments to with_sequence: %r"
@@ -139,6 +141,8 @@ class LookupModule(LookupBase):
             self.stride = stride
         if format is not None:
             self.format = format
+
+        return True
 
     def sanity_check(self):
         if self.count is None and self.end is None:
@@ -186,6 +190,8 @@ class LookupModule(LookupBase):
                 try:
                     if not self.parse_simple_args(term):
                         self.parse_kv_args(parse_kv(term))
+                except AnsibleError:
+                    raise
                 except Exception as e:
                     raise AnsibleError("unknown error parsing with_sequence arguments: %r. Error was: %s" % (term, e))
 

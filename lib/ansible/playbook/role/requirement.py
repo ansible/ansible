@@ -19,15 +19,15 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import string_types
-
 import os
 import shutil
 import subprocess
 import tempfile
 
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types
 from ansible.playbook.role.definition import RoleDefinition
+
 
 __all__ = ['RoleRequirement']
 
@@ -83,8 +83,7 @@ class RoleRequirement(RoleDefinition):
         #   'version': 'v1.0',
         #   'name': 'repo'
         # }
-
-        display.deprecated("The comma separated role spec format, use the yaml/explicit format instead.")
+        display.deprecated("The comma separated role spec format, use the yaml/explicit format instead. Line that trigger this: %s" % role_spec)
 
         default_role_versions = dict(git='master', hg='tip')
 
@@ -145,8 +144,13 @@ class RoleRequirement(RoleDefinition):
             return dict(name=name, src=src, scm=scm, version=version)
 
         if 'role' in role:
-            # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
-            role = RoleRequirement.role_spec_parse(role['role'])
+            name = role['role']
+            if ',' in name:
+                # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
+                role = RoleRequirement.role_spec_parse(role['role'])
+            else:
+                del role['role']
+                role['name'] = name
         else:
             role = role.copy()
 
@@ -169,7 +173,7 @@ class RoleRequirement(RoleDefinition):
             if 'scm' not in role:
                 role['scm'] = None
 
-        for key in role.keys():
+        for key in list(role.keys()):
             if key not in VALID_SPEC_KEYS:
                 role.pop(key)
 

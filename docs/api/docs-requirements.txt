@@ -1,0 +1,8 @@
+sphinx
+
+# extensions
+sphinxcontrib-napoleon
+sphinxcontrib-inheritance
+
+sphinx-rtd-theme
+alabaster

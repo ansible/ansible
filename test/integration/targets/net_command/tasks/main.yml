@@ -1,0 +1,46 @@
+---
+# Test code for the net_command module.
+# (c) 2017, Red Hat
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# This is a placeholder test, will be fleshed out by gundalow at a later point
+
+
+# Check if  ansible_network_os being undef or incorrect
+# Without this we wouldn't run any tests, and not actually test Ansible
+
+# FIXME One we can get ansible_network_os from env remove it from 
+# test/runner/johnb@x260:~/git/ansible-inc/ansible/test/runner/lib/executor.py
+#
+
+- name: Check for acceptable ansible_network_os
+  fail:
+      msg: "ansible_network_os is undefined or not an acceptable platform: '{{ ansible_network_os }}'"
+  when: ansible_network_os not in [ 'vyos', 'junos', 'ios' ]
+
+- name: vyos Specific includes
+  include: vyos.yml
+  when: ansible_network_os == 'vyos'
+
+- name: junos Specific includes
+  include: junos.yml
+  when: ansible_network_os == 'junos'
+
+- name: ios Specific includes
+  include: ios.yml
+  when: ansible_network_os == 'ios'

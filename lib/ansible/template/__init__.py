@@ -25,34 +25,34 @@ import os
 import re
 
 from io import StringIO
-
-from ansible.compat.six import string_types, text_type, binary_type
-from jinja2 import Environment
-from jinja2.loaders import FileSystemLoader
-from jinja2.exceptions import TemplateSyntaxError, UndefinedError
-from jinja2.utils import concat as j2_concat
-from jinja2.runtime import StrictUndefined
-
-from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable
-from ansible.plugins import filter_loader, lookup_loader, test_loader
-from ansible.template.safe_eval import safe_eval
-from ansible.template.template import AnsibleJ2Template
-from ansible.template.vars import AnsibleJ2Vars
-from ansible.utils.unicode import to_unicode, to_str
+from numbers import Number
 
 try:
     from hashlib import sha1
 except ImportError:
     from sha import sha as sha1
 
-from numbers import Number
+from jinja2 import Environment
+from jinja2.loaders import FileSystemLoader
+from jinja2.exceptions import TemplateSyntaxError, UndefinedError
+from jinja2.utils import concat as j2_concat, missing
+from jinja2.runtime import Context, StrictUndefined
+
+from ansible import constants as C
+from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable
+from ansible.module_utils.six import string_types, text_type
+from ansible.module_utils._text import to_native, to_text
+from ansible.plugins import filter_loader, lookup_loader, test_loader
+from ansible.template.safe_eval import safe_eval
+from ansible.template.template import AnsibleJ2Template
+from ansible.template.vars import AnsibleJ2Vars
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 __all__ = ['Templar']
 
@@ -107,6 +107,7 @@ def _escape_backslashes(data, jinja_env):
 
     return data
 
+
 def _count_newlines_from_end(in_str):
     '''
     Counts the number of newlines at the end of a string. This is used during
@@ -124,6 +125,61 @@ def _count_newlines_from_end(in_str):
         # Uncommon cases: zero length string and string containing only newlines
         return i
 
+class AnsibleContext(Context):
+    '''
+    A custom context, which intercepts resolve() calls and sets a flag
+    internally if any variable lookup returns an AnsibleUnsafe value. This
+    flag is checked post-templating, and (when set) will result in the
+    final templated result being wrapped via UnsafeProxy.
+    '''
+    def __init__(self, *args, **kwargs):
+        super(AnsibleContext, self).__init__(*args, **kwargs)
+        self.unsafe = False
+
+    def _is_unsafe(self, val):
+        '''
+        Our helper function, which will also recursively check dict and
+        list entries due to the fact that they may be repr'd and contain
+        a key or value which contains jinja2 syntax and would otherwise
+        lose the AnsibleUnsafe value.
+        '''
+        if isinstance(val, dict):
+            for key in val.keys():
+                if self._is_unsafe(val[key]):
+                    return True
+        elif isinstance(val, list):
+            for item in val:
+                if self._is_unsafe(item):
+                    return True
+        elif isinstance(val, string_types) and hasattr(val, '__UNSAFE__'):
+            return True
+        return False
+
+    def _update_unsafe(self, val):
+        if val is not None and not self.unsafe and self._is_unsafe(val):
+            self.unsafe = True
+
+    def resolve(self, key):
+        '''
+        The intercepted resolve(), which uses the helper above to set the
+        internal flag whenever an unsafe variable value is returned.
+        '''
+        val = super(AnsibleContext, self).resolve(key)
+        self._update_unsafe(val)
+        return val
+
+    def resolve_or_missing(self, key):
+        val = super(AnsibleContext, self).resolve_or_missing(key)
+        self._update_unsafe(val)
+        return val
+
+class AnsibleEnvironment(Environment):
+    '''
+    Our custom environment, which simply allows us to override the class-level
+    values for the Template and Context classes used by jinja2 internally.
+    '''
+    context_class = AnsibleContext
+    template_class = AnsibleJ2Template
 
 class Templar:
     '''
@@ -157,23 +213,23 @@ class Templar:
         self._fail_on_filter_errors    = True
         self._fail_on_undefined_errors = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
 
-        self.environment = Environment(
+        self.environment = AnsibleEnvironment(
             trim_blocks=True,
             undefined=StrictUndefined,
             extensions=self._get_extensions(),
             finalize=self._finalize,
             loader=FileSystemLoader(self._basedir),
         )
-        self.environment.template_class = AnsibleJ2Template
 
         self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (self.environment.variable_start_string, self.environment.variable_end_string))
 
-        self.block_start    = self.environment.block_start_string
-        self.block_end      = self.environment.block_end_string
-        self.variable_start = self.environment.variable_start_string
-        self.variable_end   = self.environment.variable_end_string
-        self._clean_regex   = re.compile(r'(?:%s|%s|%s|%s)' % (self.variable_start, self.block_start, self.block_end, self.variable_end))
-        self._no_type_regex = re.compile(r'.*\|(?:%s)\s*(?:%s)?$' % ('|'.join(C.STRING_TYPE_FILTERS), self.variable_end))
+        self._clean_regex   = re.compile(r'(?:%s|%s|%s|%s)' % (
+            self.environment.variable_start_string,
+            self.environment.block_start_string,
+            self.environment.block_end_string,
+            self.environment.variable_end_string
+        ))
+        self._no_type_regex = re.compile(r'.*\|\s*(?:%s)\s*(?:%s)?$' % ('|'.join(C.STRING_TYPE_FILTERS), self.environment.variable_end_string))
 
     def _get_filters(self):
         '''
@@ -227,7 +283,7 @@ class Templar:
     def _clean_data(self, orig_data):
         ''' remove jinja2 template tags from a string '''
 
-        if not isinstance(orig_data, string_types):
+        if not isinstance(orig_data, string_types) or hasattr(orig_data, '__ENCRYPTED__'):
             return orig_data
 
         with contextlib.closing(StringIO(orig_data)) as data:
@@ -239,26 +295,26 @@ class Templar:
                 token = mo.group(0)
                 token_start = mo.start(0)
 
-                if token[0] == self.variable_start[0]:
-                    if token == self.block_start:
+                if token[0] == self.environment.variable_start_string[0]:
+                    if token == self.environment.block_start_string:
                         block_openings.append(token_start)
-                    elif token == self.variable_start:
+                    elif token == self.environment.variable_start_string:
                         print_openings.append(token_start)
 
-                elif token[1] == self.variable_end[1]:
+                elif token[1] == self.environment.variable_end_string[1]:
                     prev_idx = None
-                    if token == self.block_end and block_openings:
+                    if token == self.environment.block_end_string and block_openings:
                         prev_idx = block_openings.pop()
-                    elif token == self.variable_end and print_openings:
+                    elif token == self.environment.variable_end_string and print_openings:
                         prev_idx = print_openings.pop()
 
                     if prev_idx is not None:
                         # replace the opening
                         data.seek(prev_idx, os.SEEK_SET)
-                        data.write(to_unicode(self.environment.comment_start_string))
+                        data.write(to_text(self.environment.comment_start_string))
                         # replace the closing
                         data.seek(token_start, os.SEEK_SET)
-                        data.write(to_unicode(self.environment.comment_end_string))
+                        data.write(to_text(self.environment.comment_end_string))
 
                 else:
                     raise AnsibleError("Error while cleaning data for safety: unhandled regex match")
@@ -277,11 +333,12 @@ class Templar:
         self._available_variables = variables
         self._cached_result       = {}
 
-    def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, convert_data=True, static_vars = [''], cache = True, bare_deprecated=True):
+    def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None,
+                 convert_data=True, static_vars=[''], cache=True, bare_deprecated=True, disable_lookups=False):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
-        before being sent through the template engine. 
+        before being sent through the template engine.
         '''
 
         if fail_on_undefined is None:
@@ -290,11 +347,8 @@ class Templar:
         # Don't template unsafe variables, instead drop them back down to their constituent type.
         if hasattr(variable, '__UNSAFE__'):
             if isinstance(variable, text_type):
-                return self._clean_data(variable)
-            else:
-                # Do we need to convert these into text_type as well?
-                # return self._clean_data(to_unicode(variable._obj, nonstring='passthru'))
-                return self._clean_data(variable._obj)
+                rval = self._clean_data(variable)
+                return rval
 
         try:
             if convert_bare:
@@ -304,7 +358,6 @@ class Templar:
                 result = variable
 
                 if self._contains_vars(variable):
-
                     # Check to see if the string we are trying to render is just referencing a single
                     # var.  In this case we don't want to accidentally change the type of the variable
                     # to a string by using the jinja template renderer. We just want to pass it.
@@ -322,19 +375,38 @@ class Templar:
                     sha1_hash = None
                     if cache:
                         variable_hash = sha1(text_type(variable).encode('utf-8'))
-                        options_hash  = sha1((text_type(preserve_trailing_newlines) + text_type(escape_backslashes) + text_type(fail_on_undefined) + text_type(overrides)).encode('utf-8'))
+                        options_hash = sha1(
+                            (
+                                text_type(preserve_trailing_newlines) +
+                                text_type(escape_backslashes) +
+                                text_type(fail_on_undefined) +
+                                text_type(overrides)
+                            ).encode('utf-8')
+                        )
                         sha1_hash = variable_hash.hexdigest() + options_hash.hexdigest()
                     if cache and sha1_hash in self._cached_result:
                         result = self._cached_result[sha1_hash]
                     else:
-                        result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, escape_backslashes=escape_backslashes, fail_on_undefined=fail_on_undefined, overrides=overrides)
+                        result = self.do_template(
+                            variable,
+                            preserve_trailing_newlines=preserve_trailing_newlines,
+                            escape_backslashes=escape_backslashes,
+                            fail_on_undefined=fail_on_undefined,
+                            overrides=overrides,
+                            disable_lookups=disable_lookups,
+                        )
+
+                        unsafe = hasattr(result, '__UNSAFE__')
                         if convert_data and not self._no_type_regex.match(variable):
                             # if this looks like a dictionary or list, convert it to such using the safe_eval method
                             if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
-                              result.startswith("[") or result in ("True", "False"):
+                                    result.startswith("[") or result in ("True", "False"):
                                 eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
                                 if eval_results[1] is None:
                                     result = eval_results[0]
+                                    if unsafe:
+                                        from ansible.vars.unsafe_proxy import wrap_var
+                                        result = wrap_var(result)
                                 else:
                                     # FIXME: if the safe_eval raised an error, should we do something with it?
                                     pass
@@ -348,14 +420,26 @@ class Templar:
                 return result
 
             elif isinstance(variable, (list, tuple)):
-                return [self.template(v, preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides) for v in variable]
+                return [self.template(
+                    v,
+                    preserve_trailing_newlines=preserve_trailing_newlines,
+                    fail_on_undefined=fail_on_undefined,
+                    overrides=overrides,
+                    disable_lookups=disable_lookups,
+                    ) for v in variable]
             elif isinstance(variable, dict):
                 d = {}
                 # we don't use iteritems() here to avoid problems if the underlying dict
                 # changes sizes due to the templating, which can happen with hostvars
                 for k in variable.keys():
                     if k not in static_vars:
-                        d[k] = self.template(variable[k], preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
+                        d[k] = self.template(
+                            variable[k],
+                            preserve_trailing_newlines=preserve_trailing_newlines,
+                            fail_on_undefined=fail_on_undefined,
+                            overrides=overrides,
+                            disable_lookups=disable_lookups,
+                            )
                     else:
                         d[k] = variable[k]
                 return d
@@ -368,13 +452,25 @@ class Templar:
             else:
                 return variable
 
+    def templatable(self, data):
+        '''
+        returns True if the data can be templated w/o errors
+        '''
+        templatable = True
+        try:
+            self.template(data)
+        except:
+            templatable = False
+        return templatable
+
     def _contains_vars(self, data):
         '''
         returns True if the data contains a variable pattern
         '''
-        for marker in  [self.environment.block_start_string, self.environment.variable_start_string, self.environment.comment_start_string]:
-            if marker in data:
-                return True
+        if isinstance(data, string_types):
+            for marker in (self.environment.block_start_string, self.environment.variable_start_string, self.environment.comment_start_string):
+                if marker in data:
+                    return True
         return False
 
     def _convert_bare_variable(self, variable, bare_deprecated):
@@ -388,8 +484,9 @@ class Templar:
             first_part = variable.split("|")[0].split(".")[0].split("[")[0]
             if (contains_filters or first_part in self._available_variables) and self.environment.variable_start_string not in variable:
                 if bare_deprecated:
-                     display.deprecated("Using bare variables is deprecated. Update your playbooks so that the environment value uses the full variable syntax ('%s%s%s')" %
-                        (self.environment.variable_start_string, variable, self.environment.variable_end_string))
+                    display.deprecated("Using bare variables is deprecated."
+                            " Update your playbooks so that the environment value uses the full variable syntax ('%s%s%s')" %
+                            (self.environment.variable_start_string, variable, self.environment.variable_end_string))
                 return "%s%s%s" % (self.environment.variable_start_string, variable, self.environment.variable_end_string)
 
         # the variable didn't meet the conditions to be converted,
@@ -401,6 +498,9 @@ class Templar:
         A custom finalize method for jinja2, which prevents None from being returned
         '''
         return thing if thing is not None else ''
+
+    def _fail_lookup(self, name, *args, **kwargs):
+        raise AnsibleError("The lookup `%s` was found, however lookups were disabled from templating" % name)
 
     def _lookup(self, name, *args, **kwargs):
         instance = self._lookup_loader.get(name.lower(), loader=self._loader, templar=self)
@@ -417,7 +517,8 @@ class Templar:
                 raise AnsibleUndefinedVariable(e)
             except Exception as e:
                 if self._fail_on_lookup_errors:
-                    raise
+                    raise AnsibleError("An unhandled exception occurred while running the lookup plugin '%s'. Error was a %s, "
+                                       "original message: %s" % (name, type(e), e))
                 ran = None
 
             if ran:
@@ -437,8 +538,7 @@ class Templar:
         else:
             raise AnsibleError("lookup plugin (%s) not found" % name)
 
-    def _do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None):
-
+    def do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, disable_lookups=False):
         # For preserving the number of input newlines in the output (used
         # later in this method)
         data_newlines = _count_newlines_from_end(data)
@@ -475,14 +575,18 @@ class Templar:
             try:
                 t = myenv.from_string(data)
             except TemplateSyntaxError as e:
-                raise AnsibleError("template error while templating string: %s. String: %s" % (to_str(e), to_str(data)))
+                raise AnsibleError("template error while templating string: %s. String: %s" % (to_native(e), to_native(data)))
             except Exception as e:
-                if 'recursion' in to_str(e):
-                    raise AnsibleError("recursive loop detected in template string: %s" % to_str(data))
+                if 'recursion' in to_native(e):
+                    raise AnsibleError("recursive loop detected in template string: %s" % to_native(data))
                 else:
                     return data
 
-            t.globals['lookup']   = self._lookup
+            if disable_lookups:
+                t.globals['lookup'] = self._fail_lookup
+            else:
+                t.globals['lookup'] = self._lookup
+
             t.globals['finalize'] = self._finalize
 
             jvars = AnsibleJ2Vars(self, t.globals)
@@ -492,14 +596,17 @@ class Templar:
 
             try:
                 res = j2_concat(rf)
+                if new_context.unsafe:
+                    from ansible.vars.unsafe_proxy import wrap_var
+                    res = wrap_var(res)
             except TypeError as te:
-                if 'StrictUndefined' in to_str(te):
-                    errmsg  = "Unable to look up a name or access an attribute in template string (%s).\n" % to_str(data)
-                    errmsg += "Make sure your variable name does not contain invalid characters like '-': %s" % to_str(te)
+                if 'StrictUndefined' in to_native(te):
+                    errmsg  = "Unable to look up a name or access an attribute in template string (%s).\n" % to_native(data)
+                    errmsg += "Make sure your variable name does not contain invalid characters like '-': %s" % to_native(te)
                     raise AnsibleUndefinedVariable(errmsg)
                 else:
-                    display.debug("failing because of a type error, template data is: %s" % to_str(data))
-                    raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_str(data),to_str(te)))
+                    display.debug("failing because of a type error, template data is: %s" % to_native(data))
+                    raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_native(data),to_native(te)))
 
             if preserve_trailing_newlines:
                 # The low level calls above do not preserve the newline
@@ -516,8 +623,7 @@ class Templar:
                 # newline here if preserve_newlines is False.
                 res_newlines = _count_newlines_from_end(res)
                 if data_newlines > res_newlines:
-                    res += '\n' * (data_newlines - res_newlines)
-
+                    res += self.environment.newline_sequence * (data_newlines - res_newlines)
             return res
         except (UndefinedError, AnsibleUndefinedVariable) as e:
             if fail_on_undefined:
@@ -526,3 +632,5 @@ class Templar:
                 #TODO: return warning about undefined var
                 return data
 
+    # for backwards compatibility in case anyone is using old private method directly
+    _do_template = do_template

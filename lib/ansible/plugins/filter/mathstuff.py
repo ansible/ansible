@@ -22,7 +22,11 @@ __metaclass__ = type
 
 import math
 import collections
+import itertools
+
 from ansible import errors
+from ansible.module_utils import basic
+
 
 def unique(a):
     if isinstance(a,collections.Hashable):
@@ -64,17 +68,11 @@ def union(a, b):
 
 def min(a):
     _min = __builtins__.get('min')
-    return _min(a);
+    return _min(a)
 
 def max(a):
     _max = __builtins__.get('max')
-    return _max(a);
-
-def isnotanumber(x):
-    try:
-        return math.isnan(x)
-    except TypeError:
-        return False
+    return _max(a)
 
 
 def logarithm(x, base=math.e):
@@ -105,38 +103,25 @@ def inversepower(x, base=2):
 
 
 def human_readable(size, isbits=False, unit=None):
+    ''' Return a human readable string '''
+    try:
+        return basic.bytes_to_human(size, isbits, unit)
+    except:
+        raise errors.AnsibleFilterError("human_readable() can't interpret following string: %s" % size)
 
-    base = 'bits' if isbits else 'Bytes'
-    suffix = ''
-
-    ranges = (
-            (1<<70, 'Z'),
-            (1<<60, 'E'),
-            (1<<50, 'P'),
-            (1<<40, 'T'),
-            (1<<30, 'G'),
-            (1<<20, 'M'),
-            (1<<10, 'K'),
-            (1, base)
-        )
-
-    for limit, suffix in ranges:
-        if (unit is None and size >= limit) or \
-            unit is not None and unit.upper() == suffix:
-            break
-
-    if limit != 1:
-        suffix += base[0]
-
-    return '%.2f %s' % (float(size)/ limit, suffix)
+def human_to_bytes(size, default_unit=None, isbits=False):
+    ''' Return bytes count from a human readable string '''
+    try:
+        return basic.human_to_bytes(size, default_unit, isbits)
+    except:
+        raise errors.AnsibleFilterError("human_to_bytes() can't interpret following string: %s" % size)
 
 class FilterModule(object):
     ''' Ansible math jinja2 filters '''
 
     def filters(self):
-        return {
+        filters = {
             # general math
-            'isnan': isnotanumber,
             'min' : min,
             'max' : max,
 
@@ -152,7 +137,25 @@ class FilterModule(object):
             'symmetric_difference': symmetric_difference,
             'union': union,
 
+            # combinatorial
+            'permutations': itertools.permutations,
+            'combinations': itertools.combinations,
+
             # computer theory
             'human_readable' : human_readable,
+            'human_to_bytes' : human_to_bytes,
 
         }
+
+        # py2 vs py3, reverse when py3 is predominant version
+        try:
+            filters['zip'] = itertools.izip
+            filters['zip_longest'] = itertools.izip_longest
+        except AttributeError:
+            try:
+                filters['zip'] = itertools.zip
+                filters['zip_longest'] = itertools.zip_longest
+            except:
+                pass
+
+        return filters

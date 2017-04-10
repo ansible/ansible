@@ -83,7 +83,7 @@ class Group:
             raise Exception("can't add group to itself")
 
         # don't add if it's already there
-        if not group in self.child_groups:
+        if group not in self.child_groups:
             self.child_groups.append(group)
 
             # update the depth of the child
@@ -94,8 +94,10 @@ class Group:
 
             # now add self to child's parent_groups list, but only if there
             # isn't already a group with the same name
-            if not self.name in [g.name for g in group.parent_groups]:
+            if self.name not in [g.name for g in group.parent_groups]:
                 group.parent_groups.append(self)
+                for h in group.get_hosts():
+                    h.populate_ancestors()
 
             self.clear_hosts_cache()
 
@@ -114,9 +116,18 @@ class Group:
         host.add_group(self)
         self.clear_hosts_cache()
 
+    def remove_host(self, host):
+
+        self.hosts.remove(host)
+        host.remove_group(self)
+        self.clear_hosts_cache()
+
     def set_variable(self, key, value):
 
-        self.vars[key] = value
+        if key == 'ansible_group_priority':
+            self.set_priority(int(value))
+        else:
+            self.vars[key] = value
 
     def clear_hosts_cache(self):
 
@@ -140,10 +151,14 @@ class Group:
             for kk in kid_hosts:
                 if kk not in seen:
                     seen[kk] = 1
+                    if self.name == 'all' and kk.implicit:
+                        continue
                     hosts.append(kk)
         for mine in self.hosts:
             if mine not in seen:
                 seen[mine] = 1
+                if self.name == 'all' and mine.implicit:
+                    continue
                 hosts.append(mine)
         return hosts
 

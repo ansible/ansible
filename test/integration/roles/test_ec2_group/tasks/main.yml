@@ -18,7 +18,7 @@
   assert:
     that:
        - 'result.failed'
-       - 'result.msg == "missing required arguments: description,name"'
+       - 'result.msg == "missing required arguments: name"'
 
 # ============================================================
 - name: test failure with only name
@@ -31,7 +31,7 @@
   assert:
     that:
        - 'result.failed'
-       - 'result.msg == "missing required arguments: description"'
+       - 'result.msg == "Must provide description when state is present."'
 
 # ============================================================
 - name: test failure with only description
@@ -47,6 +47,21 @@
        - 'result.msg == "missing required arguments: name"'
 
 # ============================================================
+- name: test failure with empty description (AWS API requires non-empty string desc)
+  ec2_group:
+    name='{{ec2_group_name}}'
+    description=''
+    region='{{ec2_region}}'
+  register: result
+  ignore_errors: true
+
+- name: assert failure with empty description
+  assert:
+    that:
+       - 'result.failed'
+       - 'result.msg == "Must provide description when state is present."'
+
+# ============================================================
 - name: test invalid region parameter
   ec2_group:
     name='{{ec2_group_name}}'
@@ -59,7 +74,7 @@
   assert:
     that:
        - 'result.failed'
-       - 'result.msg.startswith("value of region must be one of:")'
+       - 'result.msg.startswith("Region asdf querty 1234 does not seem to be available for aws module boto.ec2. If the region definitely exists, you may need to upgrade boto or extend with endpoints_path")'
 
 # ============================================================
 - name: test valid region parameter
@@ -140,7 +155,7 @@
   assert:
     that:
        - 'result.failed'
-       - '"EC2ResponseError: 401 Unauthorized" in result.msg'
+       - '"Error in get_all_security_groups: AWS was not able to validate the provided access credentials" in result.msg'
 
 # ============================================================
 - name: test credential parameters
@@ -157,7 +172,7 @@
   assert:
     that:
        - 'result.failed'
-       - '"EC2ResponseError: 401 Unauthorized" in result.msg'
+       - '"Error in get_all_security_groups: AWS was not able to validate the provided access credentials" in result.msg'
 
 # ============================================================
 - name: test state=absent
@@ -193,6 +208,24 @@
        - 'result.group_id.startswith("sg-")'
 
 # ============================================================
+- name: test state=present different description raises error
+  ec2_group:
+    name='{{ec2_group_name}}'
+    description='{{ec2_group_description}}CHANGED'
+    ec2_region='{{ec2_region}}'
+    ec2_access_key='{{ec2_access_key}}'
+    ec2_secret_key='{{ec2_secret_key}}'
+    state=present
+  ignore_errors: true
+  register: result
+
+- name: assert matching group with non-matching description raises error
+  assert:
+    that:
+       - 'result.failed'
+       - '"Group description does not match existing group. ec2_group does not support this case." in result.msg'
+
+# ============================================================
 - name: test state=present (expected changed=false)
   ec2_group:
     name='{{ec2_group_name}}'
@@ -213,7 +246,6 @@
 - name: test state=absent (expected changed=true)
   ec2_group:
     name='{{ec2_group_name}}'
-    description='{{ec2_group_description}}'
     state=absent
   environment:
     EC2_REGION: '{{ec2_region}}'
@@ -231,7 +263,6 @@
 - name: test state=absent (expected changed=false)
   ec2_group:
     name='{{ec2_group_name}}'
-    description='{{ec2_group_description}}'
     state=absent
   environment:
     EC2_REGION: '{{ec2_region}}'

@@ -1,0 +1,45 @@
+---
+- debug: msg="START cli/config.yaml"
+
+- name: setup
+  eos_config:
+    lines: hostname {{ inventory_hostname_short }}
+    match: none
+    provider: "{{ cli }}"
+
+- name: get current running-config
+  eos_command:
+    commands: show running-config
+    provider: "{{ cli }}"
+  register: config
+
+- name: configure hostname
+  eos_config:
+    lines: hostname foo
+    config: "{{ config.stdout[0] }}"
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'hostname foo' in result.updates"
+
+- name: configure hostname again
+  eos_config:
+    lines: hostname foo
+    config: "{{ config.stdout[0] }}"
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: teardown
+  eos_config:
+    lines: hostname {{ inventory_hostname_short }}
+    match: none
+    provider: "{{ cli }}"
+
+- debug: msg="END cli/config.yaml"

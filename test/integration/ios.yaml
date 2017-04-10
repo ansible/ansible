@@ -1,0 +1,16 @@
+---
+- hosts: ios
+  gather_facts: no
+  connection: local
+
+  vars:
+    limit_to: "*"
+    debug: false
+
+  roles:
+    - { role: ios_banner, when: "limit_to in ['*', 'ios_banner']" }
+    - { role: ios_command, when: "limit_to in ['*', 'ios_command']" }
+    - { role: ios_config, when: "limit_to in ['*', 'ios_config']" }
+    - { role: ios_facts, when: "limit_to in ['*', 'ios_facts']" }
+    - { role: ios_template, when: "limit_to in ['*', 'ios_template']" }
+    - { role: ios_system, when: "limit_to in ['*', 'ios_system']" }

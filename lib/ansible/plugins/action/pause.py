@@ -109,6 +109,8 @@ class ActionModule(ActionBase):
         old_settings = None
         try:
             if seconds is not None:
+                if seconds < 1:
+                    seconds = 1
                 # setup the alarm handler
                 signal.signal(signal.SIGALRM, timeout_handler)
                 signal.alarm(seconds)

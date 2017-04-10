@@ -19,10 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import uuid
-
 from ansible.inventory.group import Group
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import combine_vars, get_unique_id
 
 __all__ = ['Host']
 
@@ -60,15 +58,17 @@ class Host:
             uuid=self._uuid,
             gathered_facts=self._gathered_facts,
             groups=groups,
+            implicit=self.implicit,
         )
 
     def deserialize(self, data):
-        self.__init__()
+        self.__init__(gen_uuid=False)
 
         self.name    = data.get('name')
         self.vars    = data.get('vars', dict())
         self.address = data.get('address', '')
-        self._uuid   = data.get('uuid', uuid.uuid4())
+        self._uuid   = data.get('uuid', None)
+        self.implicit= data.get('implicit', False)
 
         groups = data.get('groups', [])
         for group_data in groups:
@@ -76,7 +76,7 @@ class Host:
             g.deserialize(group_data)
             self.groups.append(g)
 
-    def __init__(self, name=None, port=None):
+    def __init__(self, name=None, port=None, gen_uuid=True):
 
         self.name = name
         self.vars = {}
@@ -88,7 +88,10 @@ class Host:
             self.set_variable('ansible_port', int(port))
 
         self._gathered_facts = False
-        self._uuid = uuid.uuid4()
+        self._uuid = None
+        if gen_uuid:
+            self._uuid = get_unique_id()
+        self.implicit = False
 
     def __repr__(self):
         return self.get_name()
@@ -103,23 +106,42 @@ class Host:
     def set_gathered_facts(self, gathered):
         self._gathered_facts = gathered
 
+    def populate_ancestors(self):
+
+        # populate ancestors
+        for group in self.groups:
+            self.add_group(group)
+
     def add_group(self, group):
 
-        self.groups.append(group)
+        # populate ancestors
+        for oldg in group.get_ancestors():
+            if oldg not in self.groups:
+                self.add_group(oldg)
+
+        if group not in self.groups:
+            self.groups.append(group)
+
+    def remove_group(self, group):
+
+        if group in self.groups:
+            self.groups.remove(group)
+
+            # remove exclusive ancestors, xcept all!
+            for oldg in group.get_ancestors():
+                if oldg.name != 'all':
+                    for childg in self.groups:
+                        if oldg in childg.get_ancestors():
+                            break
+                    else:
+                        self.remove_group(oldg)
 
     def set_variable(self, key, value):
 
         self.vars[key]=value
 
     def get_groups(self):
-
-        groups = {}
-        for g in self.groups:
-            groups[g.name] = g
-            ancestors = g.get_ancestors()
-            for a in ancestors:
-                groups[a.name] = a
-        return groups.values()
+        return self.groups
 
     def get_vars(self):
 
@@ -133,6 +155,6 @@ class Host:
     def get_group_vars(self):
         results = {}
         groups = self.get_groups()
-        for group in sorted(groups, key=lambda g: g.depth):
+        for group in sorted(groups, key=lambda g: (g.depth, g.priority, g.name)):
             results = combine_vars(results, group.get_vars())
         return results

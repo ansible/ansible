@@ -1,0 +1,21 @@
+- hosts: testhost_binary_modules
+  tasks:
+    - debug: var=ansible_system
+
+    - name: set module filename (POSIX)
+      set_fact:
+        module_filename: "helloworld_{{ ansible_system | lower }}"
+      when: ansible_system != 'Win32NT'
+
+    - name: set module filename (Win32NT)
+      set_fact:
+        module_filename: "helloworld_{{ ansible_system | lower }}.exe"
+      when: ansible_system == 'Win32NT'
+
+    - name: download binary module
+      tags: test_binary_modules
+      local_action:
+        module: get_url
+        url: "https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_binary_modules/{{ module_filename }}"
+        dest: "{{ playbook_dir }}/library/{{ module_filename }}"
+        mode: 0755

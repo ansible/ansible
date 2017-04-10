@@ -20,12 +20,16 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
+import operator as py_operator
+from collections import MutableMapping, MutableSequence
+from distutils.version import LooseVersion, StrictVersion
+
 from ansible import errors
 
 def failed(*a, **kw):
     ''' Test if task result yields failed '''
     item = a[0]
-    if type(item) != dict:
+    if not isinstance(item, MutableMapping):
         raise errors.AnsibleFilterError("|failed expects a dictionary")
     rc = item.get('rc',0)
     failed = item.get('failed',False)
@@ -41,13 +45,13 @@ def success(*a, **kw):
 def changed(*a, **kw):
     ''' Test if task result yields changed '''
     item = a[0]
-    if type(item) != dict:
+    if not isinstance(item, MutableMapping):
         raise errors.AnsibleFilterError("|changed expects a dictionary")
     if not 'changed' in item:
         changed = False
         if ('results' in item    # some modules return a 'results' key
-                and type(item['results']) == list
-                and type(item['results'][0]) == dict):
+                and isinstance(item['results'], MutableSequence)
+                and isinstance(item['results'][0],  MutableMapping)):
             for result in item['results']:
                 changed = changed or result.get('changed', False)
     else:
@@ -57,7 +61,7 @@ def changed(*a, **kw):
 def skipped(*a, **kw):
     ''' Test if task result yields skipped '''
     item = a[0]
-    if type(item) != dict:
+    if not isinstance(item, MutableMapping):
         raise errors.AnsibleFilterError("|skipped expects a dictionary")
     skipped = item.get('skipped', False)
     return skipped
@@ -84,6 +88,33 @@ def search(value, pattern='', ignorecase=False, multiline=False):
     ''' Perform a `re.search` returning a boolean '''
     return regex(value, pattern, ignorecase, multiline, 'search')
 
+def version_compare(value, version, operator='eq', strict=False):
+    ''' Perform a version comparison on a value '''
+    op_map = {
+        '==': 'eq', '=':  'eq', 'eq': 'eq',
+        '<':  'lt', 'lt': 'lt',
+        '<=': 'le', 'le': 'le',
+        '>':  'gt', 'gt': 'gt',
+        '>=': 'ge', 'ge': 'ge',
+        '!=': 'ne', '<>': 'ne', 'ne': 'ne'
+    }
+
+    if strict:
+        Version = StrictVersion
+    else:
+        Version = LooseVersion
+
+    if operator in op_map:
+        operator = op_map[operator]
+    else:
+        raise errors.AnsibleFilterError('Invalid operator type')
+
+    try:
+        method = getattr(py_operator, operator)
+        return method(Version(str(value)), Version(str(version)))
+    except Exception as e:
+        raise errors.AnsibleFilterError('Version comparison: %s' % e)
+
 class TestModule(object):
     ''' Ansible core jinja2 tests '''
 
@@ -91,20 +122,23 @@ class TestModule(object):
         return {
             # failure testing
             'failed'    : failed,
-            'failure'   : failed,
-            'success'   : success,
             'succeeded' : success,
 
             # changed testing
             'changed' : changed,
-            'change'  : changed,
 
             # skip testing
             'skipped' : skipped,
-            'skip'    : skipped,
 
             # regex
             'match': match,
             'search': search,
             'regex': regex,
+
+            # version comparison
+            'version_compare': version_compare,
+
+            # lists
+            'any': any,
+            'all': all,
         }

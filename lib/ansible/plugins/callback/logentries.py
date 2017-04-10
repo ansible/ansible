@@ -61,7 +61,6 @@ import random
 import time
 import codecs
 import uuid
-from ansible.compat.six.moves import configparser
 
 try:
     import certifi
@@ -75,11 +74,8 @@ try:
 except ImportError:
     HAS_FLATDICT = False
 
+from ansible.module_utils.six.moves import configparser
 from ansible.plugins.callback import CallbackBase
-
-
-def to_unicode(ch):
-    return codecs.unicode_escape_decode(ch)[0]
 
 
 def is_unicode(ch):
@@ -106,7 +102,7 @@ class PlainTextSocketAppender(object):
         self.INVALID_TOKEN = ("\n\nIt appears the LOGENTRIES_TOKEN "
                               "parameter you entered is incorrect!\n\n")
         # Unicode Line separator character   \u2028
-        self.LINE_SEP = to_unicode('\u2028')
+        self.LINE_SEP = u'\u2028'
 
         self.verbose = verbose
         self._conn = None
@@ -258,7 +254,8 @@ class CallbackModule(CallbackBase):
             self.token = os.getenv('LOGENTRIES_ANSIBLE_TOKEN')
             if self.token is None:
                 self.disabled = True
-                self._display.warning('Logentries token could not be loaded. The logentries token can be provided using the `LOGENTRIES_TOKEN` environment variable')
+                self._display.warning('Logentries token could not be loaded. The logentries token can be provided using the `LOGENTRIES_TOKEN` environment '
+                                      'variable')
 
             self.flatten = os.getenv('LOGENTRIES_FLATTEN')
             if self.flatten is None:

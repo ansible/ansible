@@ -1,5 +1,3 @@
-#!/usr/bin/python
-#
 # Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
 #                    Chris Houseknecht, <house@redhat.com>
 #
@@ -31,35 +29,42 @@ options:
             - Active Directory username. Use when authenticating with an Active Directory user rather than service
               principal.
         required: false
+        default: null
     password:
         description:
             - Active Directory user password. Use when authenticating with an Active Directory user rather than service
               principal.
         required: false
+        default: null
     profile:
         description:
             - Security profile found in ~/.azure/credentials file.
         required: false
+        default: null
     subscription_id:
         description:
             - Your Azure subscription Id.
         required: false
+        default: null
     client_id:
         description:
             - Azure client ID. Use when authenticating with a Service Principal.
         required: false
+        default: null
     secret:
         description:
             - Azure client secret. Use when authenticating with a Service Principal.
         required: false
+        default: null
     tenant:
         description:
             - Azure tenant ID. Use when authenticating with a Service Principal.
         required: false
+        default: null
 
 requirements:
     - "python >= 2.7"
-    - "azure >= 2.0.0rc2"
+    - "azure == 2.0.0rc5"
 
 notes:
     - For authentication with Azure you can pass parameters, set environment variables or use a profile stored

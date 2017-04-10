@@ -21,8 +21,8 @@ __metaclass__ = type
 
 import os
 
-from ansible.compat.six import iteritems
 from ansible.errors import AnsibleParserError, AnsibleError
+from ansible.module_utils.six import iteritems
 from ansible.parsing.splitter import split_args, parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import FieldAttribute
@@ -30,6 +30,7 @@ from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.template import Templar
+
 
 class PlaybookInclude(Base, Conditional, Taggable):
 
@@ -49,6 +50,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
 
         # import here to avoid a dependency loop
         from ansible.playbook import Playbook
+        from ansible.playbook.play import Play
 
         # first, we use the original parent method to correctly load the object
         # via the load_data/preprocess_data system we normally use for other
@@ -60,15 +62,6 @@ class PlaybookInclude(Base, Conditional, Taggable):
             all_vars.update(variable_manager.get_vars(loader=loader))
 
         templar = Templar(loader=loader, variables=all_vars)
-
-        try:
-            forward_conditional = False
-            if not new_obj.evaluate_conditional(templar=templar, all_vars=all_vars):
-                return None
-        except AnsibleError:
-            # conditional evaluation raised an error, so we set a flag to indicate
-            # we need to forward the conditionals on to the included play(s)
-            forward_conditional = True
 
         # then we use the object to load a Playbook
         pb = Playbook(loader=loader)
@@ -82,6 +75,11 @@ class PlaybookInclude(Base, Conditional, Taggable):
         # finally, update each loaded playbook entry with any variables specified
         # on the included playbook and/or any tags which may have been set
         for entry in pb._entries:
+
+            # conditional includes on a playbook need a marker to skip gathering
+            if new_obj.when and isinstance(entry, Play):
+                entry._included_conditional = new_obj.when[:]
+
             temp_vars = entry.vars.copy()
             temp_vars.update(new_obj.vars)
             param_tags = temp_vars.pop('tags', None)
@@ -95,9 +93,9 @@ class PlaybookInclude(Base, Conditional, Taggable):
             # Check to see if we need to forward the conditionals on to the included
             # plays. If so, we can take a shortcut here and simply prepend them to
             # those attached to each block (if any)
-            if forward_conditional:
-                for task_block in entry.tasks:
-                    task_block.when = self.when[:] + task_block.when
+            if new_obj.when:
+                for task_block in (entry.pre_tasks + entry.roles + entry.tasks + entry.post_tasks):
+                    task_block._attributes['when'] = new_obj.when[:] + task_block.when[:]
 
         return pb
 
@@ -134,6 +132,9 @@ class PlaybookInclude(Base, Conditional, Taggable):
         '''
         Splits the include line up into filename and parameters
         '''
+
+        if v is None:
+            raise AnsibleParserError("include parameter is missing", obj=ds)
 
         # The include line must include at least one item, which is the filename
         # to include. Anything after that should be regarded as a parameter to the include

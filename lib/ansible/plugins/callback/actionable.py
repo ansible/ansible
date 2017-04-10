@@ -33,6 +33,10 @@ class CallbackModule(CallbackModule_default):
         self.last_task = None
         self.shown_title = False
 
+    def v2_playbook_on_handler_task_start(self, task):
+        self.super_ref.v2_playbook_on_handler_task_start(task)
+        self.shown_title = True
+
     def v2_playbook_on_task_start(self, task, is_conditional):
         self.last_task = task
         self.shown_title = False

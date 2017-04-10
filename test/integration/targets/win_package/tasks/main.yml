@@ -1,0 +1,81 @@
+# test code for the win_package module
+# (c) 2014, Chris Church <chris@ninemoreminutes.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: use win_get_url module to download msi
+  win_get_url:
+    url: "{{msi_url}}"
+    dest: "{{msi_download_path}}"
+  register: win_get_url_result
+
+- name: make sure msi is uninstalled
+  win_package:
+    path: "{{msi_download_path}}"
+    product_id: "{{msi_product_code}}"
+    state: absent
+
+- name: install msi
+  win_package:
+    path: "{{msi_download_path}}"
+    product_id: "{{msi_product_code}}"
+    state: present
+  register: win_package_install_result
+
+- name: check win_package install result
+  assert:
+    that:
+      - "not win_package_install_result|failed"
+      - "win_package_install_result|changed"
+
+- name: install msi again (check for no change)
+  win_package:
+    path: "{{msi_download_path}}"
+    product_id: "{{msi_product_code}}"
+    state: present
+  register: win_package_install_again_result
+
+- name: check win_package install again result
+  assert: 
+    that:
+      - "not win_package_install_again_result|failed"
+      - "not win_package_install_again_result|changed"
+
+- name: uninstall msi
+  win_package:
+    path: "{{msi_download_path}}"
+    product_id: "{{msi_product_code}}"
+    state: absent
+  register: win_package_uninstall_result
+
+- name: check win_package uninstall result
+  assert: 
+    that:
+      - "not win_package_uninstall_result|failed"
+      - "win_package_uninstall_result|changed"
+
+- name: uninstall msi again (check for no change)
+  win_package:
+    path: "{{msi_download_path}}"
+    product_id: "{{msi_product_code}}"
+    state: absent
+  register: win_package_uninstall_again_result
+
+- name: check win_package uninstall result
+  assert: 
+    that:
+      - "not win_package_uninstall_result|failed"
+      - "not win_package_uninstall_again_result|changed"

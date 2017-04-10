@@ -17,21 +17,28 @@
 
 
 class ModuleDocFragment(object):
-    # Paramaters for VMware modules
+    # Parameters for VMware modules
     DOCUMENTATION = '''
 options:
     hostname:
         description:
-            - The hostname or IP address of the vSphere vCenter
+            - The hostname or IP address of the vSphere vCenter.
         required: True
     username:
         description:
-            - The username of the vSphere vCenter
+            - The username of the vSphere vCenter.
         required: True
         aliases: ['user', 'admin']
     password:
         description:
-            - The password of the vSphere vCenter
+            - The password of the vSphere vCenter.
         required: True
         aliases: ['pass', 'pwd']
+    validate_certs:
+        description:
+            - Allows connection when SSL certificates are not valid. Set to
+              false when certificates are not trusted.
+        required: False
+        default: 'True'
+        choices: ['True', 'False']
 '''

@@ -26,11 +26,13 @@ from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.inventory.expand_hosts import detect_range
 from ansible.inventory.expand_hosts import expand_hostname_range
+from ansible.module_utils.six import string_types
 from ansible.parsing.utils.addresses import parse_address
+
 
 class InventoryParser(object):
     """
-    Takes an INI-format inventory file and builds a list of groups and subgroups
+    Takes a YAML-format inventory file and builds a list of groups and subgroups
     with their associated hosts and variable settings.
     """
 
@@ -69,7 +71,7 @@ class InventoryParser(object):
         # 'all' at the time it was created.
         for group in self.groups.values():
             if group.depth == 0 and group.name not in ('all', 'ungrouped'):
-                self.groups['all'].add_child_group(Group(group_name))
+                self.groups['all'].add_child_group(group)
 
     def _parse_groups(self, group, group_data):
 
@@ -77,12 +79,14 @@ class InventoryParser(object):
             self.groups[group] = Group(name=group)
 
         if isinstance(group_data, dict):
+            #make sure they are dicts
+            for section in ['vars', 'children', 'hosts']:
+                if section in group_data and isinstance(group_data[section], string_types):
+                    group_data[section] = { group_data[section]: None}
+
             if 'vars' in group_data:
                 for var in group_data['vars']:
-                    if var != 'ansible_group_priority':
-                        self.groups[group].set_variable(var, group_data['vars'][var])
-                    else:
-                        self.groups[group].set_priority(group_data['vars'][var])
+                    self.groups[group].set_variable(var, group_data['vars'][var])
 
             if 'children' in group_data:
                 for subgroup in group_data['children']:
@@ -161,40 +165,6 @@ class InventoryParser(object):
 
     def _compile_patterns(self):
         '''
-        Compiles the regular expressions required to parse the inventory and
-        stores them in self.patterns.
+        Compiles the regular expressions required to parse the inventory and stores them in self.patterns.
         '''
-
-        # Section names are square-bracketed expressions at the beginning of a
-        # line, comprising (1) a group name optionally followed by (2) a tag
-        # that specifies the contents of the section. We ignore any trailing
-        # whitespace and/or comments. For example:
-        #
-        # [groupname]
-        # [somegroup:vars]
-        # [naughty:children] # only get coal in their stockings
-
-        self.patterns['section'] = re.compile(
-            r'''^\[
-                    ([^:\]\s]+)             # group name (see groupname below)
-                    (?::(\w+))?             # optional : and tag name
-                \]
-                \s*                         # ignore trailing whitespace
-                (?:\#.*)?                   # and/or a comment till the
-                $                           # end of the line
-            ''', re.X
-        )
-
-        # FIXME: What are the real restrictions on group names, or rather, what
-        # should they be? At the moment, they must be non-empty sequences of non
-        # whitespace characters excluding ':' and ']', but we should define more
-        # precise rules in order to support better diagnostics.
-
-        self.patterns['groupname'] = re.compile(
-            r'''^
-                ([^:\]\s]+)
-                \s*                         # ignore trailing whitespace
-                (?:\#.*)?                   # and/or a comment till the
-                $                           # end of the line
-            ''', re.X
-        )
+        self.patterns['groupname'] = re.compile( r'''^[A-Za-z_][A-Za-z0-9_]*$''')

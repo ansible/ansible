@@ -29,3 +29,4 @@ clouds:
 ansible:
   use_hostnames: True
   expand_hostvars: False
+  fail_on_errors: True

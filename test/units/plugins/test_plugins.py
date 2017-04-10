@@ -53,11 +53,15 @@ class TestErrors(unittest.TestCase):
         # python library, and then uses the __file__ attribute of
         # the result for that to get the library path, so we mock
         # that here and patch the builtin to use our mocked result
-        m = MagicMock()
-        m.return_value.__file__ = '/path/to/my/test.py'
+        foo = MagicMock()
+        bar = MagicMock()
+        bam = MagicMock()
+        bam.__file__ = '/path/to/my/foo/bar/bam/__init__.py'
+        bar.bam = bam
+        foo.return_value.bar = bar
         pl = PluginLoader('test', 'foo.bar.bam', 'test', 'test_plugin')
-        with patch('{0}.__import__'.format(BUILTINS), m):
-            self.assertEqual(pl._get_package_paths(), ['/path/to/my/bar/bam'])
+        with patch('{0}.__import__'.format(BUILTINS), foo):
+            self.assertEqual(pl._get_package_paths(), ['/path/to/my/foo/bar/bam'])
 
     def test_plugins__get_paths(self):
         pl = PluginLoader('test', '', 'test', 'test_plugin')
