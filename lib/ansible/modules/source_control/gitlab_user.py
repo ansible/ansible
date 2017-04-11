@@ -247,7 +247,7 @@ class GitLabUser(object):
 
         # Lets check if we need to update the user
         for arg_key, arg_value in arguments.items():
-            if user_data[arg_key] != arg_value:
+            if arg_key in user_data and user_data[arg_key] != arg_value:
                 user_changed = True
 
         if user_changed:
