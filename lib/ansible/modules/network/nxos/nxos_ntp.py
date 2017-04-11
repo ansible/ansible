@@ -182,7 +182,7 @@ def get_ntp_peer(module):
     ntp_peer_list = []
     response = execute_show_command(
         command, module, command_type='cli_show_ascii')
-    
+
     if response:
         if isinstance(response, list):
             ntp = response[0]
@@ -190,10 +190,10 @@ def get_ntp_peer(module):
             ntp = response
         if ntp:
             ntp_regex = (
-                        ".*ntp\s(server\s(?P<address>\S+)|peer\s(?P<peer_address>\S+))"
-                        "\s*((?P<prefer>prefer)\s*)?(use-vrf\s(?P<vrf_name>\S+)\s*)?"
-                        "(key\s(?P<key_id>\d+))?.*"
-                        )
+                ".*ntp\s(server\s(?P<address>\S+)|peer\s(?P<peer_address>\S+))"
+                "\s*((?P<prefer>prefer)\s*)?(use-vrf\s(?P<vrf_name>\S+)\s*)?"
+                "(key\s(?P<key_id>\d+))?.*"
+            )
 
             split_ntp = ntp.splitlines()
             for peer_line in split_ntp:
