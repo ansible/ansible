@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import collections
 import os
 import sys
 import stat
@@ -1410,6 +1411,41 @@ class LinuxHardware(Hardware):
 
         self.facts['mounts'] = mounts
 
+    def get_device_links(self, link_dir):
+        if not os.path.exists(link_dir):
+            return {}
+        try:
+            retval = collections.defaultdict(set)
+            for entry in os.listdir(link_dir):
+                try:
+                    target = os.path.basename(os.readlink(os.path.join(link_dir, entry)))
+                    retval[target].add(entry)
+                except OSError:
+                    continue
+            return dict((k, list(sorted(v))) for (k,v) in iteritems(retval))
+        except OSError:
+            return {}
+
+    def get_all_device_owners(self):
+        try:
+            retval = collections.defaultdict(set)
+            for path in glob.glob('/sys/block/*/slaves/*'):
+                elements = path.split('/')
+                device = elements[3]
+                target = elements[5]
+                retval[target].add(device)
+            return dict((k, list(sorted(v))) for (k,v) in iteritems(retval))
+        except OSError:
+            return {}
+
+    def get_all_device_links(self):
+        return {
+            'ids': self.get_device_links('/dev/disk/by-id'),
+            'uuids': self.get_device_links('/dev/disk/by-uuid'),
+            'labels': self.get_device_links('/dev/disk/by-label'),
+            'masters': self.get_all_device_owners(),
+        }
+
     def get_holders(self, block_dev_dict, sysdir):
         block_dev_dict['holders'] = []
         if os.path.isdir(sysdir + "/holders"):
@@ -1449,6 +1485,9 @@ class LinuxHardware(Hardware):
                         continue
                     devs_wwn[os.path.basename(wwn_link)] = link_name[4:]
 
+        links = self.get_all_device_links()
+        self.facts['device_links'] = links
+
         for block in block_devs:
             virtual = 1
             sysfs_no_links = 0
@@ -1461,17 +1500,17 @@ class LinuxHardware(Hardware):
                     sysfs_no_links = 1
                 else:
                     continue
-            if "virtual" in path:
-                continue
             sysdir = os.path.join("/sys/block", path)
             if sysfs_no_links == 1:
                 for folder in os.listdir(sysdir):
                     if "device" in folder:
                         virtual = 0
                         break
-                if virtual:
-                    continue
             d = {}
+            d['virtual'] = virtual
+            d['links'] = {}
+            for (link_type, link_values) in iteritems(links):
+                d['links'][link_type] = link_values.get(block, [])
             diskname = os.path.basename(sysdir)
             for key in ['vendor', 'model', 'sas_address', 'sas_device_handle']:
                 d[key] = get_file_content(sysdir + "/device/" + key)
@@ -1504,6 +1543,10 @@ class LinuxHardware(Hardware):
                     part = {}
                     partname = m.group(1)
                     part_sysdir = sysdir + "/" + partname
+
+                    part['links'] = {}
+                    for (link_type, link_values) in iteritems(links):
+                        part['links'][link_type] = link_values.get(partname, [])
 
                     part['start'] = get_file_content(part_sysdir + "/start",0)
                     part['sectors'] = get_file_content(part_sysdir + "/size",0)
