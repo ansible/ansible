@@ -292,7 +292,7 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
         # Do we actually need to do anything?
         pwchanging = False
         if password is not None:
-            if encrypted:
+            if encrypted == 'ENCRYPTED':
                 if password.startswith('md5'):
                     if password != current_role_attrs['rolpassword']:
                         pwchanging = True
