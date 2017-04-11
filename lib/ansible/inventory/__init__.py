@@ -54,7 +54,7 @@ class Inventory(object):
     Host inventory for ansible.
     """
 
-    def __init__(self, loader, variable_manager, host_list=C.DEFAULT_HOST_LIST):
+    def __init__(self, loader, variable_manager, host_list=C.DEFAULT_HOST_LIST, play_hosts=None):
 
         # the host file file, or script path, or list of hosts
         # if a list, inventory data will NOT be loaded
@@ -62,6 +62,7 @@ class Inventory(object):
         self._loader = loader
         self._variable_manager = variable_manager
         self.localhost = None
+        self.play_hosts = play_hosts
 
         # caching to avoid repeated calculations, particularly with
         # external inventory scripts.
@@ -146,9 +147,9 @@ class Inventory(object):
             if self.is_directory(host_list):
                 # Ensure basedir is inside the directory
                 host_list = os.path.join(self.host_list, "")
-                self.parser = InventoryDirectory(loader=self._loader, groups=self.groups, filename=host_list)
+                self.parser = InventoryDirectory(loader=self._loader, groups=self.groups, filename=host_list, play_hosts=self.play_hosts)
             else:
-                self.parser = get_file_parser(host_list, self.groups, self._loader)
+                self.parser = get_file_parser(host_list, self.groups, self._loader, self.play_hosts)
                 vars_loader.add_directory(self._basedir, with_subdir=True)
 
             if not self.parser:

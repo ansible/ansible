@@ -36,7 +36,7 @@ from ansible.module_utils._text import to_native, to_text
 class InventoryScript:
     ''' Host inventory parser for ansible using external inventory scripts. '''
 
-    def __init__(self, loader, groups=None, filename=C.DEFAULT_HOST_LIST):
+    def __init__(self, loader, groups=None, filename=C.DEFAULT_HOST_LIST, play_hosts=None):
         if groups is None:
             groups = dict()
 
@@ -48,6 +48,10 @@ class InventoryScript:
         # directory when '.' is not in PATH.
         self.filename = os.path.abspath(filename)
         cmd = [ self.filename, "--list" ]
+
+        if isinstance(play_hosts, list):
+            cmd += play_hosts
+
         try:
             sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError as e:
