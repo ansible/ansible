@@ -357,6 +357,7 @@
   ec2_eip:
     instance_id={{ instance_id }}
     region={{ ec2_region }}
+    profile=ansible-testing-bogus-do-not-create
   register: result
   ignore_errors: true
 
@@ -364,7 +365,8 @@
   assert:
     that:
        - 'result.failed'
-       - 'result.msg.startswith("No handler was ready to authenticate.")'
+       - 'result.msg.startswith("Profile")'
+       - '"not found" in result.msg'
 
 # eip allocated:0 assigned:0
 
@@ -374,6 +376,7 @@
   ec2_eip:
     instance_id={{ instance_id }}
     reuse_existing_ip_allowed=yes
+    profile=ansible-testing-bogus-do-not-create
   environment:
     EC2_URL: bogus.example.com
   register: result
@@ -383,7 +386,8 @@
   assert:
     that:
        - 'result.failed'
-       - 'result.msg.startswith("No handler was ready to authenticate.")'
+       - 'result.msg.startswith("Profile")'
+       - '"not found" in result.msg'
 
 # eip allocated:0 assigned:0
 
@@ -392,6 +396,7 @@
   ec2_eip:
     instance_id={{ instance_id }}
     reuse_existing_ip_allowed=yes
+    profile=ansible-testing-bogus-do-not-create
   environment:
     EC2_URL: '{{ec2_url}}'
   register: result
@@ -401,7 +406,8 @@
   assert:
     that:
        - 'result.failed'
-       - 'result.msg.startswith("No handler was ready to authenticate.")'
+       - 'result.msg.startswith("Profile")'
+       - '"not found" in result.msg'
 
 # eip allocated:0 assigned:0
 
@@ -426,7 +432,10 @@
 
 # ============================================================
 - name: test credential parameters
-  ec2_eip: region={{ ec2_region }}
+  ec2_eip:
+    region={{ ec2_region }}
+    ec2_access_key='bogus_access_key'
+    ec2_secret_key='bogus_secret_key'
   register: result
   ignore_errors: true
 
@@ -434,6 +443,6 @@
   assert:
     that:
        - 'result.failed'
-       - '"Check your credentials" in result.msg'
+       - '"401 Unauthorized" in result.msg'
 
 # eip allocated:0 assigned:0
