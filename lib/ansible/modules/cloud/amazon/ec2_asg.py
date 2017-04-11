@@ -551,11 +551,14 @@ def create_autoscaling_group(connection, module):
                 want_tags[tag.key] = [tag.value, tag.propagate_at_launch]
 
             dead_tags = []
-            for tag in as_group.tags:
-                have_tags[tag.key] = [tag.value, tag.propagate_at_launch]
-                if tag.key not in want_tags:
-                    changed = True
-                    dead_tags.append(tag)
+            if getattr(as_group, "tags", None):
+                for tag in as_group.tags:
+                    have_tags[tag.key] = [tag.value, tag.propagate_at_launch]
+                    if tag.key not in want_tags:
+                        changed = True
+                        dead_tags.append(tag)
+            elif getattr(as_group, "tags", None) is None and asg_tags:
+                module.warn("It appears your ASG is attached to a target group. This is a boto2 bug. Tags will be added but no tags are able to be removed.")
 
             if dead_tags != []:
                 connection.delete_tags(dead_tags)
