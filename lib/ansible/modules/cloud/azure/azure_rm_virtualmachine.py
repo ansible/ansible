@@ -139,6 +139,7 @@ options:
         description:
             - The endpoint suffix for storage endpoing API (e.g. core.windows.net)
         required: false
+        version_added: "2.4"
     storage_container_name:
         description:
             - Name of the container to use within the storage account to store VHD blobs. If no name is specified a

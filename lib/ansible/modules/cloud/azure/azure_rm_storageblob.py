@@ -43,6 +43,7 @@ options:
         description:
             - The endpoint suffix for storage endpoing API (e.g. core.windows.net)
         required: false
+        version_added: "2.4"
     blob:
         description:
             - Name of a blob object within the container.
