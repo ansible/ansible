@@ -33,7 +33,7 @@ options:
         description:
             - State whether the task definition should exist or be deleted
         required: true
-        choices: ['present', 'absent', 'create']
+        choices: ['present', 'absent']
     arn:
         description:
             - The arn of the task description to delete
@@ -46,6 +46,11 @@ options:
         description:
             - A revision number for the task definition
         required: False
+    force_create:
+        description:
+            - Always create new task definition
+        required: False
+        version_added: 2.4
     containers:
         description:
             - A list of containers definitions
@@ -219,10 +224,11 @@ def main():
 
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state=dict(required=True, choices=['present', 'absent', 'create']),
+        state=dict(required=True, choices=['present', 'absent']),
         arn=dict(required=False, type='str'),
         family=dict(required=False, type='str'),
         revision=dict(required=False, type='int'),
+        force_create=dict(required=False, type='bool'),
         containers=dict(required=False, type='list'),
         network_mode=dict(required=False, default='bridge', choices=['bridge', 'host', 'none'], type='str'),
         task_role_arn=dict(required=False, default='', type='str'),
@@ -240,7 +246,7 @@ def main():
     task_mgr = EcsTaskManager(module)
     results = dict(changed=False)
 
-    if module.params['state'] in ['present', 'create']:
+    if module.params['state'] == 'present':
         if 'containers' not in module.params or not module.params['containers']:
             module.fail_json(msg="To use task definitions, a list of containers must be specified")
 
@@ -345,7 +351,7 @@ def main():
                 if existing:
                     break
 
-        if existing and not module.params['state'] == 'create':
+        if existing and not ('force_create' in module.params and module.params['force_create']):
             # Awesome. Have an existing one. Nothing to do.
             results['taskdefinition'] = existing
         else:
