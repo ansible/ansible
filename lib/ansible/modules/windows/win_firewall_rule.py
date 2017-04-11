@@ -29,94 +29,98 @@ version_added: "2.0"
 author: Timothy Vandenbrande
 short_description: Windows firewall automation
 description:
-    - allows you to create/remove/update firewall rules
+    - Allows you to create/remove/update firewall rules
 options:
     enabled:
         description:
-            - is this firewall rule enabled or disabled
+            - Is this firewall rule enabled or disabled
         default: 'yes'
         choices: [ 'no', 'yes' ]
         aliases: [ 'enable' ]
     state:
         description:
-            - should this rule be added or removed
+            - Should this rule be added or removed
         default: "present"
         choices: ['present', 'absent']
     name:
         description:
-            - the rules name
+            - The rules name
         required: true
     direction:
         description:
-            - is this rule for inbound or outbound traffic
+            - Is this rule for inbound or outbound traffic
         required: true
-        choices: ['in', 'out']
+        choices: ['In', 'Out']
     action:
         description:
-            - what to do with the items this rule is for
+            - What to do with the items this rule is for
         required: true
-        choices: ['allow', 'block', 'bypass']
+        choices: ['Allow', 'Block', 'Bypass']
     description:
         description:
-            - description for the firewall rule
+            - Description for the firewall rule
     localip:
         description:
-            - the local ip address this rule applies to
-        default: 'any'
+            - The local ip address this rule applies to
+        default: 'Any'
     remoteip:
         description:
-            - the remote ip address/range this rule applies to
-        default: 'any'
+            - The remote ip address/range this rule applies to
+        default: 'Any'
     localport:
         description:
-            - the local port this rule applies to
-        default: 'any'
+            - The local port this rule applies to
     remoteport:
         description:
-            - the remote port this rule applies to
-        default: 'any'
+            - The remote port this rule applies to
     program:
         description:
-            - the program this rule applies to
+            - The program this rule applies to
     service:
         description:
-            - the service this rule applies to
-        default: 'any'
+            - The service this rule applies to
     protocol:
         description:
-            - the protocol this rule applies to
-        default: 'any'
+            - The protocol this rule applies to
+        default: 'Any'
     profiles:
         description:
-            - the profile this rule applies to, e.g. Domain,Private,Public
-        default: 'any'
+            - The profile this rule applies to
+        default: 'Domain,Private,Public'
         aliases: [ 'profile' ]
     force:
         description:
-            - Enforces the change if a rule with different values exists
+            - Replace any existing rule by removing it first.
         default: 'no'
         choices: [ 'no', 'yes' ]
+notes:
+- The implementation uses C(netsh advfirewall) underneath, a pure-Powershell
+  reimplementation would be more powerful.
+- Modifying existing firewall rules is not possible, the module does allow
+  replacing complete rules based on name, but that works by removing the
+  existing rule completely, and recreating it with provided information
+  (when using C(force)).
 '''
 
 EXAMPLES = r'''
 - name: Firewall rule to allow SMTP on TCP port 25
   win_firewall_rule:
-    name: smtp
+    name: SMTP
     localport: 25
-    action: allow
-    direction: in
+    action: Allow
+    direction: In
     protocol: TCP
     state: present
-    enabled: yes
+    enabled: Yes
 
 - name: Firewall rule to allow RDP on TCP port 3389
   win_firewall_rule:
     name: Remote Desktop
     localport: 3389
-    action: allow
-    direction: in
+    action: Allow
+    direction: In
     protocol: TCP
-    profiles: private
+    profiles: Private
     state: present
-    enabled: yes
+    enabled: Yes
 '''

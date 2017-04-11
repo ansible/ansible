@@ -22,7 +22,6 @@
 - name: Check that creating new firewall rule succeeds with a change
   assert:
     that:
-    - add_firewall_rule.failed == false
     - add_firewall_rule.changed == true
 
 - name: Add same firewall rule (again)
@@ -39,7 +38,6 @@
 - name: Check that creating same firewall rule succeeds without a change
   assert:
     that:
-    - add_firewall_rule_again.failed == false
     - add_firewall_rule_again.changed == false
 
 - name: Remove firewall rule
@@ -56,7 +54,6 @@
 - name: Check that removing existing firewall rule succeeds with a change
   assert:
     that:
-    - remove_firewall_rule.failed == false
     - remove_firewall_rule.changed == true
 
 - name: Remove absent firewall rule
@@ -73,7 +70,6 @@
 - name: Check that removing non existing firewall rule succeeds without a change
   assert:
     that:
-    - remove_absent_firewall_rule.failed == false
     - remove_absent_firewall_rule.changed == false
 
 - name: Add firewall rule
@@ -103,7 +99,6 @@
     that:
     - add_different_firewall_rule_without_force.failed == true
     - add_different_firewall_rule_without_force.changed == false
-    - add_different_firewall_rule_without_force.difference == ["block"]
 
 - name: Add different firewall rule with force setting
   win_firewall_rule:
@@ -120,9 +115,7 @@
 - name: Check that creating different firewall rule with enabling force setting succeeds
   assert:
     that:
-    - add_different_firewall_rule_with_force.failed == false
     - add_different_firewall_rule_with_force.changed == true
-    - add_different_firewall_rule_with_force.difference == ["block"]
 
 - name: Add firewall rule when remoteip is range
   win_firewall_rule:
@@ -151,7 +144,6 @@
 - name: Check that creating same firewall rule when remoteip is range succeeds without a change
   assert:
     that:
-    - add_firewall_rule_with_range_remoteip_again.failed == false
     - add_firewall_rule_with_range_remoteip_again.changed == false
 
 - name: Add firewall rule when remoteip in CIDR notation
@@ -181,7 +173,6 @@
 - name: Check that creating same firewall rule succeeds without a change when remoteip in CIDR notation
   assert:
     that:
-    - add_firewall_rule_with_cidr_remoteip_again.failed == false
     - add_firewall_rule_with_cidr_remoteip_again.changed == false
 
 - name: Add firewall rule when remoteip contains a netmask
@@ -211,7 +202,6 @@
 - name: Check that creating same firewall rule succeeds without a change when remoteip contains a netmask
   assert:
     that:
-    - add_firewall_rule_remoteip_contains_netmask_again.failed == false
     - add_firewall_rule_remoteip_contains_netmask_again.changed == false
 
 - name: Add firewall rule when remoteip is IPv4
@@ -241,5 +231,4 @@
 - name: Check that creating same firewall rule when remoteip is IPv4 succeeds without a change
   assert:
     that:
-    - add_firewall_rule_with_ipv4_remoteip_again.failed == false
     - add_firewall_rule_with_ipv4_remoteip_again.changed == false
