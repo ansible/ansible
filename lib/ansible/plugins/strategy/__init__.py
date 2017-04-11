@@ -27,14 +27,15 @@ from multiprocessing import Lock
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
-from ansible.compat.six.moves import queue as Queue
-from ansible.compat.six import iteritems, string_types
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.executor import action_write_locks
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
+from ansible.module_utils.six.moves import queue as Queue
+from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils._text import to_text
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task_include import TaskInclude
@@ -42,7 +43,6 @@ from ansible.playbook.role_include import IncludeRole
 from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
 from ansible.vars import combine_vars, strip_internal_keys
-from ansible.module_utils._text import to_text
 
 
 try:
@@ -52,6 +52,9 @@ except ImportError:
     display = Display()
 
 __all__ = ['StrategyBase']
+
+class StrategySentinel:
+    pass
 
 # TODO: this should probably be in the plugins/__init__.py, with
 #       a smarter mechanism to set all of the attributes based on
@@ -70,12 +73,12 @@ class SharedPluginLoaderObj:
         self.module_loader = module_loader
 
 
-_sentinel = object()
+_sentinel = StrategySentinel()
 def results_thread_main(strategy):
     while True:
         try:
             result = strategy._final_q.get()
-            if type(result) == object:
+            if isinstance(result, StrategySentinel):
                 break
             else:
                 strategy._results_lock.acquire()
@@ -451,9 +454,10 @@ class StrategyBase:
                                     for target_handler_uuid in self._notified_handlers:
                                         target_handler = search_handler_blocks_by_uuid(target_handler_uuid, iterator._play.handlers)
                                         if target_handler and parent_handler_match(target_handler, handler_name):
-                                            self._notified_handlers[target_handler._uuid].append(original_host)
-                                            display.vv("NOTIFIED HANDLER %s" % (target_handler.get_name(),))
                                             found = True
+                                            if original_host not in self._notified_handlers[target_handler._uuid]:
+                                                self._notified_handlers[target_handler._uuid].append(original_host)
+                                                display.vv("NOTIFIED HANDLER %s" % (target_handler.get_name(),))
 
                                 if handler_name in self._listening_handlers:
                                     for listening_handler_uuid in self._listening_handlers[handler_name]:
@@ -468,7 +472,8 @@ class StrategyBase:
 
                                 # and if none were found, then we raise an error
                                 if not found:
-                                    msg = "The requested handler '%s' was not found in either the main handlers list nor in the listening handlers list" % handler_name
+                                    msg = ("The requested handler '%s' was not found in either the main handlers list nor in the listening "
+                                           "handlers list" % handler_name)
                                     if C.ERROR_ON_MISSING_HANDLER:
                                         raise AnsibleError(msg)
                                     else:
@@ -693,8 +698,9 @@ class StrategyBase:
                 tags = tags.split(',')
             if len(tags) > 0:
                 if len(included_file._task.tags) > 0:
-                    raise AnsibleParserError("Include tasks should not specify tags in more than one way (both via args and directly on the task). Mixing tag specify styles is prohibited for whole import hierarchy, not only for single import statement",
-                            obj=included_file._task._ds)
+                    raise AnsibleParserError("Include tasks should not specify tags in more than one way (both via args and directly on the task). "
+                                             "Mixing tag specify styles is prohibited for whole import hierarchy, not only for single import statement",
+                                             obj=included_file._task._ds)
                 display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option")
                 included_file._task.tags = tags
 

@@ -17,35 +17,45 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from voluptuous import PREVENT_EXTRA, Any, Required, Schema
+from ansible.module_utils.six import string_types
+list_string_types = list(string_types)
 
 suboption_schema = Schema(
     {
-        Required('description'): Any(basestring, [basestring]),
+        Required('description'): Any(list_string_types, *string_types),
         'required': bool,
         'choices': list,
-        'aliases': Any(basestring, list),
-        'version_added': Any(basestring, float),
-        'default': Any(None, basestring, float, int, bool, list, dict),
+        'aliases': Any(list, *string_types),
+        'version_added': Any(float, *string_types),
+        'default': Any(None, float, int, bool, list, dict, *string_types),
         # Note: Types are strings, not literal bools, such as True or False
         'type': Any(None, "bool")
     },
     extra=PREVENT_EXTRA
 )
 
+# This generates list of dicts with keys from string_types and suboption_schema value
+# for example in Python 3: {str: suboption_schema}
+list_dict_suboption_schema = [{str_type: suboption_schema} for str_type in string_types]
+
 option_schema = Schema(
     {
-        Required('description'): Any(basestring, [basestring]),
+        Required('description'): Any(list_string_types, *string_types),
         'required': bool,
         'choices': list,
-        'aliases': Any(basestring, list),
-        'version_added': Any(basestring, float),
-        'default': Any(None, basestring, float, int, bool, list, dict),
-        'suboptions': Any(None, {basestring: suboption_schema,}),
+        'aliases': Any(list, *string_types),
+        'version_added': Any(float, *string_types),
+        'default': Any(None, float, int, bool, list, dict, *string_types),
+        'suboptions': Any(None, *list_dict_suboption_schema),
         # Note: Types are strings, not literal bools, such as True or False
         'type': Any(None, "bool")
     },
     extra=PREVENT_EXTRA
 )
+
+# This generates list of dicts with keys from string_types and option_schema value
+# for example in Python 3: {str: option_schema}
+list_dict_option_schema = [{str_type: option_schema} for str_type in string_types]
 
 def doc_schema(module_name):
     if module_name.startswith('_'):
@@ -53,16 +63,16 @@ def doc_schema(module_name):
     return Schema(
         {
             Required('module'): module_name,
-            'deprecated': basestring,
-            Required('short_description'): basestring,
-            Required('description'): Any(basestring, [basestring]),
-            Required('version_added'): Any(basestring, float),
-            Required('author'): Any(None, basestring, [basestring]),
-            'notes': Any(None, [basestring]),
-            'requirements': [basestring],
-            'todo': Any(None, basestring, [basestring]),
-            'options': Any(None, {basestring: option_schema}),
-            'extends_documentation_fragment': Any(basestring, [basestring])
+            'deprecated': Any(*string_types),
+            Required('short_description'): Any(*string_types),
+            Required('description'): Any(list_string_types, *string_types),
+            Required('version_added'): Any(float, *string_types),
+            Required('author'): Any(None, list_string_types, *string_types),
+            'notes': Any(None, list_string_types),
+            'requirements': list_string_types,
+            'todo': Any(None, list_string_types, *string_types),
+            'options': Any(None, *list_dict_option_schema),
+            'extends_documentation_fragment': Any(list_string_types, *string_types)
         },
         extra=PREVENT_EXTRA
     )

@@ -14,6 +14,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+'''
+DOCUMENTATION:
+    cache: yaml
+    short_description: File backed, YAML formated.
+    description:
+        - File backed cache that uses YAML as a format, the files are per host.
+    version_added: "2.3"
+    author: Brian Coca (@bcoca)
+'''
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
@@ -26,7 +35,7 @@ import yaml
 
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.plugins.cache.base import BaseFileCacheModule
+from ansible.plugins.cache import BaseFileCacheModule
 
 class CacheModule(BaseFileCacheModule):
     """

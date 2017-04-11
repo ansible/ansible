@@ -4,7 +4,7 @@ Tags
 If you have a large playbook it may become useful to be able to run a specific part of the configuration without running the whole playbook.
 
 Both plays and tasks support a "tags:" attribute for this reason.
-You can **ONLY** filter tasks based on tags from the command line with `--tags` or `--skip-tags`.
+You can **ONLY** filter tasks based on tags from the command line with ``--tags`` or ``--skip-tags``.
 Adding "tags:" in any part of a play (including roles) adds those tags to the contained tasks.
 
 Example::
@@ -95,7 +95,7 @@ is invoked with the corresponding tags.
 Special Tags
 ````````````
 
-There is a special 'always' tag that will always run a task, unless specifically skipped (--skip-tags always)
+There is a special ``always`` tag that will always run a task, unless specifically skipped (``--skip-tags always``)
 
 Example::
 
@@ -109,10 +109,10 @@ Example::
           tags:
             - tag1
 
-There are another 3 special keywords for tags, 'tagged', 'untagged' and 'all', which run only tagged, only untagged
+There are another 3 special keywords for tags, ``tagged``, ``untagged`` and ``all``, which run only tagged, only untagged
 and all tasks respectively.
 
-By default ansible runs as if '--tags all' had been specified.
+By default ansible runs as if ``--tags all`` had been specified.
 
 
 .. seealso::

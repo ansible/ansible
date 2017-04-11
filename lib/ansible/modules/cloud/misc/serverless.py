@@ -54,7 +54,8 @@ options:
     default: us-east-1
   deploy:
     description:
-      - Whether or not to deploy artifacts after building them. When this option is `false` all the functions will be built, but no stack update will be run to send them out. This is mostly useful for generating artifacts to be stored/deployed elsewhere.
+      - Whether or not to deploy artifacts after building them. When this option is `false` all the functions will be built, but no stack update will be
+        run to send them out. This is mostly useful for generating artifacts to be stored/deployed elsewhere.
     required: false
     default: true
 notes:

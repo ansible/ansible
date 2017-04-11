@@ -30,7 +30,7 @@
 import os
 import time
 
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network_common import to_list, ComplexList
 from ansible.module_utils.six import iteritems
@@ -40,8 +40,7 @@ _DEVICE_CONNECTION = None
 
 eos_argument_spec = {
     'host': dict(),
-    'port': dict(type='int'),
-
+    'port': dict(type='int', default=443),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
@@ -50,11 +49,11 @@ eos_argument_spec = {
     'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     'auth_pass': dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
 
-    'use_ssl': dict(type='bool'),
-    'validate_certs': dict(type='bool'),
+    'use_ssl': dict(type='bool', default=True),
+    'validate_certs': dict(type='bool', default=True),
     'timeout': dict(type='int'),
 
-    'provider': dict(type='dict', no_log=True),
+    'provider': dict(type='dict'),
     'transport': dict(choices=['cli', 'eapi'])
 }
 
@@ -64,6 +63,11 @@ def check_args(module, warnings):
         if key not in ['provider', 'transport', 'authorize'] and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
                     'removed in a future version' % key)
+
+    if provider:
+        for param in ('auth_pass', 'password'):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
 
 def load_params(module):
     provider = module.params.get('provider') or dict()
@@ -110,10 +114,6 @@ class Cli:
         for cmd in ['show clock', 'prompt()']:
             rc, out, err = self.exec_command(cmd)
         return out.endswith('#')
-
-    def supports_sessions(self):
-        rc, out, err = self.exec_command('show configuration sessions')
-        return rc == 0
 
     def get_config(self, flags=[]):
         """Retrieves the current config from the device or cache
@@ -240,20 +240,18 @@ class Eapi:
         self._session_support = None
         self._device_configs =  {}
 
-        host = module.params['host']
-        port = module.params['port']
+        host = module.params['provider']['host']
+        port = module.params['provider']['port']
 
         self._module.params['url_username'] = self._module.params['username']
         self._module.params['url_password'] = self._module.params['password']
 
-        if module.params['use_ssl']:
+        if module.params['provider']['use_ssl']:
             proto = 'https'
-            if not port:
-                port = 443
         else:
             proto = 'http'
-            if not port:
-                port = 80
+
+        module.params['validate_certs'] = module.params['provider']['validate_certs']
 
         self._url = '%s://%s:%s/command-api' % (proto, host, port)
 

@@ -23,18 +23,19 @@ import os
 import sys
 import copy
 
+from ansible.module_utils.basic import AnsibleFallbackNotFound
+from ansible.module_utils.junos import junos_argument_spec
+from ansible.module_utils.six import iteritems
+from ansible.plugins import connection_loader, module_loader
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.utils.path import unfrackpath
-from ansible.plugins import connection_loader, module_loader
-from ansible.compat.six import iteritems
-from ansible.module_utils.junos import junos_argument_spec
-from ansible.module_utils.basic import AnsibleFallbackNotFound
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 class ActionModule(_ActionModule):
 
@@ -57,6 +58,8 @@ class ActionModule(_ActionModule):
         pc = copy.deepcopy(self._play_context)
         pc.network_os = 'junos'
 
+        pc.remote_addr = provider['host'] or self._play_context.remote_addr
+
         if self._task.action == 'junos_netconf':
             pc.connection = 'network_cli'
             pc.port = provider['port'] or self._play_context.port or 22
@@ -69,7 +72,7 @@ class ActionModule(_ActionModule):
         pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
         pc.timeout = provider['timeout'] or self._play_context.timeout
 
-        display.vvv('using connection plugin %s' % pc.connection)
+        display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
         connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
         socket_path = self._get_socket_path(pc)
@@ -83,7 +86,10 @@ class ActionModule(_ActionModule):
                 rc, out, err = connection.exec_command('open_shell()')
 
             if rc != 0:
-                return {'failed': True, 'msg': 'unable to connect to control socket'}
+                return {'failed': True,
+                        'msg': 'unable to open shell. Please see: ' +
+                               'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell',
+                        'rc': rc}
 
         elif pc.connection == 'network_cli':
             # make sure we are in the right cli context which should be
@@ -96,7 +102,8 @@ class ActionModule(_ActionModule):
 
         task_vars['ansible_socket'] = socket_path
 
-        return super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(tmp, task_vars)
+        return result
 
     def _get_socket_path(self, play_context):
         ssh = connection_loader.get('ssh', class_only=True)

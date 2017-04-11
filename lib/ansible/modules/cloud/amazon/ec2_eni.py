@@ -483,9 +483,6 @@ def find_eni(connection, module):
     instance_id = module.params.get('instance_id')
     device_index = module.params.get('device_index')
 
-    if not eni_id:
-        return None
-
     try:
         filters = {}
         if subnet_id:
@@ -499,7 +496,7 @@ def find_eni(connection, module):
                 filters['attachment.device-index'] = device_index
 
         eni_result = connection.get_all_network_interfaces(eni_id, filters=filters)
-        if len(eni_result) > 0:
+        if len(eni_result) == 1:
             return eni_result[0]
         else:
             return None

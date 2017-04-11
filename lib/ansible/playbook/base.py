@@ -27,7 +27,7 @@ from functools import partial
 
 from jinja2.exceptions import UndefinedError
 
-from ansible.compat.six import iteritems, string_types, with_metaclass
+from ansible.module_utils.six import iteritems, string_types, with_metaclass
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable
 from ansible.module_utils._text import to_text
 from ansible.playbook.attribute import Attribute, FieldAttribute

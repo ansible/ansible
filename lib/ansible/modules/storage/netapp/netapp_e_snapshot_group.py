@@ -78,7 +78,8 @@ options:
     delete_limit:
         description:
             - The automatic deletion indicator.
-            - If non-zero, the oldest snapshot image will be automatically deleted when creating a new snapshot image to keep the total number of snapshot images limited to the number specified.
+            - If non-zero, the oldest snapshot image will be automatically deleted when creating a new snapshot image to keep the total number of
+              snapshot images limited to the number specified.
             - This value is overridden by the consistency group setting if this snapshot group is associated with a consistency group.
         required: False
         default: 30

@@ -152,6 +152,11 @@ options:
     description:
      - datacenter to create an instance in (Linode Datacenter)
     default: null
+  kernel_id:
+    description:
+     - kernel to use for the instance (Linode Kernel)
+    default: null
+    version_added: "2.4"
   wait:
     description:
      - wait for the instance to be in state 'running' before returning
@@ -201,6 +206,7 @@ EXAMPLES = '''
      plan: 4
      datacenter: 2
      distribution: 99
+     kernel_id: 138
      password: 'superSecureRootPassword'
      private_ip: yes
      ssh_pub_key: 'ssh-rsa qwerty'
@@ -331,7 +337,7 @@ def getInstanceDetails(api, server):
 def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_threshold, alert_bwout_enabled, alert_bwout_threshold,
                   alert_bwquota_enabled, alert_bwquota_threshold, alert_cpu_enabled, alert_cpu_threshold, alert_diskio_enabled,
                   alert_diskio_threshold,backupweeklyday, backupwindow, displaygroup, plan, additional_disks, distribution,
-                  datacenter, linode_id, payment_term, password, private_ip, ssh_pub_key, swap, wait, wait_timeout, watchdog):
+                  datacenter, kernel_id, linode_id, payment_term, password, private_ip, ssh_pub_key, swap, wait, wait_timeout, watchdog):
     instances = []
     changed = False
     new_server = False
@@ -454,12 +460,13 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
                     arch = '64'
                 break
 
-            # Get latest kernel matching arch
-            for kernel in api.avail_kernels():
-                if not kernel['LABEL'].startswith('Latest %s' % arch):
-                    continue
-                kernel_id = kernel['KERNELID']
-                break
+            # Get latest kernel matching arch if kernel_id is not specified
+            if not kernel_id:
+                for kernel in api.avail_kernels():
+                    if not kernel['LABEL'].startswith('Latest %s' % arch):
+                        continue
+                    kernel_id = kernel['KERNELID']
+                    break
 
             # Get disk list
             disks_id = []
@@ -607,6 +614,7 @@ def main():
             additional_disks= dict(type='list'),
             distribution = dict(type='int'),
             datacenter = dict(type='int'),
+            kernel_id = dict(type='int'),
             linode_id = dict(type='int', aliases=['lid']),
             payment_term = dict(type='int', default=1, choices=[1, 12, 24]),
             password = dict(type='str', no_log=True),
@@ -645,6 +653,7 @@ def main():
     additional_disks = module.params.get('additional_disks')
     distribution = module.params.get('distribution')
     datacenter = module.params.get('datacenter')
+    kernel_id = module.params.get('kernel_id')
     linode_id = module.params.get('linode_id')
     payment_term = module.params.get('payment_term')
     password = module.params.get('password')
@@ -674,7 +683,7 @@ def main():
             alert_bwquota_enabled, alert_bwquota_threshold, alert_cpu_enabled,
             alert_cpu_threshold, alert_diskio_enabled, alert_diskio_threshold,
             backupweeklyday, backupwindow, displaygroup, plan,
-            additional_disks, distribution, datacenter, linode_id,
+            additional_disks, distribution, datacenter, kernel_id, linode_id,
             payment_term, password, private_ip, ssh_pub_key, swap, wait,
             wait_timeout, watchdog)
 

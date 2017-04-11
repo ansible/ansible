@@ -43,7 +43,8 @@ options:
     required: false
   managed_policy:
     description:
-      - A list of managed policy ARNs (can't use friendly names due to AWS API limitation) to attach to the role. To embed an inline policy, use M(iam_policy). To remove existing policies, use an empty list item.
+      - A list of managed policy ARNs (can't use friendly names due to AWS API limitation) to attach to the role. To embed an inline policy,
+        use M(iam_policy). To remove existing policies, use an empty list item.
     required: true
   state:
     description:

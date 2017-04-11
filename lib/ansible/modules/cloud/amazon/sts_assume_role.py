@@ -30,7 +30,8 @@ author: Boris Ekelchik (@bekelchik)
 options:
   role_arn:
     description:
-      - The Amazon Resource Name (ARN) of the role that the caller is assuming (http://docs.aws.amazon.com/IAM/latest/UserGuide/Using_Identifiers.html#Identifiers_ARNs)
+      - The Amazon Resource Name (ARN) of the role that the caller is
+        assuming (http://docs.aws.amazon.com/IAM/latest/UserGuide/Using_Identifiers.html#Identifiers_ARNs)
     required: true
   role_session_name:
     description:
@@ -43,7 +44,8 @@ options:
     default: null
   duration_seconds:
     description:
-      - The duration, in seconds, of the role session. The value can range from 900 seconds (15 minutes) to 3600 seconds (1 hour). By default, the value is set to 3600 seconds.
+      - The duration, in seconds, of the role session. The value can range from 900 seconds (15 minutes) to 3600 seconds (1 hour).
+        By default, the value is set to 3600 seconds.
     required: false
     default: null
   external_id:

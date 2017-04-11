@@ -1,7 +1,7 @@
 OS := $(shell uname -s)
 SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"):
-FORMATTER=../../hacking/module_formatter.py
-DUMPER=../../hacking/dump_playbook_attributes.py
+FORMATTER=../bin/plugin_formatter.py
+DUMPER=../bin/dump_keywords.py
 ifeq ($(shell echo $(OS) | egrep -ic 'Darwin|FreeBSD|OpenBSD|DragonFly'),1)
 CPUS ?= $(shell sysctl hw.ncpu|awk '{print $$2}')
 else
@@ -12,7 +12,7 @@ all: docs
 
 docs: clean htmldocs
 
-htmldocs: directives modules staticmin
+htmldocs: keywords modules staticmin
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
 
 webdocs: docs
@@ -36,14 +36,15 @@ clean:
 	-rm rst/*_by_category.rst
 	-rm rst/*_module.rst
 	-rm rst/playbooks_directives.rst
+	-rm rst/playbooks_keywords.rst
 
 .PHONEY: docs clean
 
-directives: $(FORMATTER) ../../hacking/templates/rst.j2
-	PYTHONPATH=../../lib $(DUMPER) --template-dir=../../hacking/templates --output-dir=rst/ -d ./directive_desc.yml
+keywords: $(FORMATTER) ../templates/playbooks_keywords.rst.j2
+	PYTHONPATH=../../lib $(DUMPER) --template-dir=../templates --output-dir=rst/ -d ./keyword_desc.yml
 
-modules: $(FORMATTER) ../../hacking/templates/rst.j2
-	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../../hacking/templates --module-dir=../../lib/ansible/modules -o rst/
+modules: $(FORMATTER) ../templates/plugin.rst.j2
+	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../templates --module-dir=../../lib/ansible/modules -o rst/
 
 staticmin:
 	cat _themes/srtd/static/css/theme.css | sed -e 's/^[ 	]*//g; s/[ 	]*$$//g; s/\([:{;,]\) /\1/g; s/ {/{/g; s/\/\*.*\*\///g; /^$$/d' | sed -e :a -e '$$!N; s/\n\(.\)/\1/; ta' > _themes/srtd/static/css/theme.min.css

@@ -51,11 +51,12 @@ options:
     description:
       - set the specified path as the current working directory before executing a command
 notes:
-    -  If you want to run a command through a shell (say you are using C(<),
-       C(>), C(|), etc), you actually want the M(win_shell) module instead. The
-       C(win_command) module is much more secure as it's not affected by the user's
-       environment.
-    -  " C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
+    - If you want to run a command through a shell (say you are using C(<),
+      C(>), C(|), etc), you actually want the M(win_shell) module instead. The
+      C(win_command) module is much more secure as it's not affected by the user's
+      environment.
+    - C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not
+      exist, use this.
 author:
     - Matt Davis
 '''

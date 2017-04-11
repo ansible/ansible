@@ -65,7 +65,18 @@ options:
     required: false
     default: round-robin
     aliases: ['method']
-    choices: ['round-robin', 'weighted-rr', 'least-connection', 'weighted-least-connection', 'service-least-connection', 'service-weighted-least-connection', 'fastest-response', 'least-request', 'round-robin-strict', 'src-ip-only-hash', 'src-ip-hash']
+    choices:
+        - 'round-robin'
+        - 'weighted-rr'
+        - 'least-connection'
+        - 'weighted-least-connection'
+        - 'service-least-connection'
+        - 'service-weighted-least-connection'
+        - 'fastest-response'
+        - 'least-request'
+        - 'round-robin-strict'
+        - 'src-ip-only-hash'
+        - 'src-ip-hash'
   servers:
     description:
       - A list of servers to add to the service group. Each list item should be a
@@ -115,6 +126,11 @@ content:
   type: string
   sample: "mynewservicegroup"
 '''
+import json
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import url_argument_spec
+from ansible.module_utils.a10 import axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure, axapi_enabled_disabled
 
 VALID_SERVICE_GROUP_FIELDS = ['name', 'protocol', 'lb_method']
 VALID_SERVER_FIELDS = ['server', 'port', 'status']
@@ -328,13 +344,6 @@ def main():
     # log out of the session nicely and exit
     axapi_call(module, session_url + '&method=session.close')
     module.exit_json(changed=changed, content=result)
-
-# standard ansible module imports
-import json
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import url_argument_spec
-from ansible.module_utils.a10 import axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure, axapi_enabled_disabled
-
 
 if __name__ == '__main__':
     main()

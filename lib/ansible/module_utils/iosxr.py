@@ -26,7 +26,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network_common import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
 
@@ -39,7 +39,7 @@ iosxr_argument_spec = {
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int'),
-    'provider': dict(type='dict', no_log=True)
+    'provider': dict(type='dict')
 }
 
 def check_args(module, warnings):
@@ -48,6 +48,11 @@ def check_args(module, warnings):
         if key != 'provider' and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
                     'removed in a future version' % key)
+
+    if provider:
+        for param in ('password',):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
 
 def get_config(module, flags=[]):
     cmd = 'show running-config '
@@ -79,13 +84,14 @@ def run_commands(module, commands, check_rc=True):
     responses = list()
     commands = to_commands(module, to_list(commands))
     for cmd in to_list(commands):
+        cmd = module.jsonify(cmd)
         rc, out, err = exec_command(module, cmd)
         if check_rc and rc != 0:
             module.fail_json(msg=err, rc=rc)
         responses.append(out)
     return responses
 
-def load_config(module, commands, commit=False, replace=False, comment=None):
+def load_config(module, commands, warnings, commit=False, replace=False, comment=None):
 
     rc, out, err = exec_command(module, 'configure terminal')
     if rc != 0:
@@ -106,6 +112,13 @@ def load_config(module, commands, commit=False, replace=False, comment=None):
         module.fail_json(msg=err, commands=commands, rc=rc)
 
     rc, diff, err = exec_command(module, 'show commit changes diff')
+    if rc != 0:
+        # If we failed, maybe we are in an old version so
+        # we run show configuration instead
+        rc, diff, err = exec_command(module, 'show configuration')
+        if module._diff:
+            warnings.append('device platform does not support config diff')
+
     if commit:
         cmd = 'commit'
         if comment:

@@ -53,6 +53,8 @@ COMMAND = 'sanity'
 PEP8_SKIP_PATH = 'test/sanity/pep8/skip.txt'
 PEP8_LEGACY_PATH = 'test/sanity/pep8/legacy-files.txt'
 
+PYLINT_SKIP_PATH = 'test/sanity/pylint/skip.txt'
+
 
 def command_sanity(args):
     """
@@ -431,6 +433,89 @@ def command_sanity_pep8(args, targets):
     return SanitySuccess(test)
 
 
+def command_sanity_pylint(args, targets):
+    """
+    :type args: SanityConfig
+    :type targets: SanityTargets
+    :rtype: SanityResult
+    """
+    test = 'pylint'
+
+    with open(PYLINT_SKIP_PATH, 'r') as skip_fd:
+        skip_paths = skip_fd.read().splitlines()
+
+    with open('test/sanity/pylint/disable.txt', 'r') as disable_fd:
+        disable = set(disable_fd.read().splitlines())
+
+    skip_paths_set = set(skip_paths)
+
+    paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and i.path not in skip_paths_set)
+
+    if not paths:
+        return SanitySkipped(test)
+
+    cmd = [
+        'pylint',
+        '--jobs', '0',
+        '--reports', 'n',
+        '--max-line-length', '160',
+        '--rcfile', '/dev/null',
+        '--output-format', 'json',
+        '--disable', ','.join(sorted(disable)),
+    ] + paths
+
+    env = ansible_environment(args)
+
+    try:
+        stdout, stderr = run_command(args, cmd, env=env, capture=True)
+        status = 0
+    except SubprocessError as ex:
+        stdout = ex.stdout
+        stderr = ex.stderr
+        status = ex.status
+
+    if stderr or status >= 32:
+        raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
+
+    if args.explain:
+        return SanitySkipped(test)
+
+    if stdout:
+        messages = json.loads(stdout)
+    else:
+        messages = []
+
+    errors = [SanityMessage(
+        message=m['message'],
+        path=m['path'],
+        line=int(m['line']),
+        column=int(m['column']),
+        level=m['type'],
+        code=m['symbol'],
+    ) for m in messages]
+
+    line = 0
+
+    for path in skip_paths:
+        line += 1
+
+        if not os.path.exists(path):
+            # Keep files out of the list which no longer exist in the repo.
+            errors.append(SanityMessage(
+                code='A101',
+                message='Remove "%s" since it does not exist' % path,
+                path=PYLINT_SKIP_PATH,
+                line=line,
+                column=1,
+                confidence=calculate_best_confidence(((PYLINT_SKIP_PATH, line), (path, 0)), args.metadata) if args.metadata.changes else None,
+            ))
+
+    if errors:
+        return SanityFailure(test, messages=errors)
+
+    return SanitySuccess(test)
+
+
 def command_sanity_yamllint(args, targets):
     """
     :type args: SanityConfig
@@ -642,6 +727,7 @@ class SanityFunc(SanityTest):
 SANITY_TESTS = (
     SanityFunc('shellcheck', command_sanity_shellcheck, intercept=False),
     SanityFunc('pep8', command_sanity_pep8, intercept=False),
+    SanityFunc('pylint', command_sanity_pylint, intercept=False),
     SanityFunc('yamllint', command_sanity_yamllint, intercept=False),
     SanityFunc('validate-modules', command_sanity_validate_modules, intercept=False),
     SanityFunc('ansible-doc', command_sanity_ansible_doc),

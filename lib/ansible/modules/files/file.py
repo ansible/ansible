@@ -408,15 +408,10 @@ def main():
         elif prev_state == 'directory':
             changed = True
             if os.path.exists(b_path):
-                if not (state == 'hard' and os.stat(b_path).st_ino == os.stat(b_src).st_ino):
-                    changed = True
-                    if not force:
-                        module.fail_json(dest=path, src=src, msg='Cannot link, different hard link exists at destination')
-                else:
-                    changed = False
+                if state == 'hard' and os.stat(b_path).st_ino == os.stat(b_src).st_ino:
                     module.exit_json(path=path, changed=False)
-            else:
-                changed = True
+                elif not force:
+                    module.fail_json(dest=path, src=src, msg='Cannot link, different hard link exists at destination')
         else:
             module.fail_json(dest=path, src=src, msg='unexpected position reached')
 

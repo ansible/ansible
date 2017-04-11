@@ -129,13 +129,13 @@ options:
         candidate configuration. If statements in the loaded configuration
         conflict with statements in the candidate configuration, the loaded
         statements replace the candidate ones.
-        C(overwrite) discards the entire candidate configuration and replaces
+        C(override) discards the entire candidate configuration and replaces
         it with the loaded configuration.
         C(replace) substitutes each hierarchy level in the loaded configuration
         for the corresponding level.
     required: false
     default: merge
-    choices: ['merge', 'overwrite', 'replace']
+    choices: ['merge', 'override', 'replace']
     version_added: "2.3"
 requirements:
   - junos-eznc
@@ -194,7 +194,7 @@ def check_args(module, warnings):
     if module.params['replace'] is not None:
         module.fail_json(msg='argument replace is deprecated, use update')
 
-zeroize = lambda x: send_request(x, Element('request-system-zeroize'))
+zeroize = lambda x: send_request(x, ElementTree.Element('request-system-zeroize'))
 rollback = lambda x: get_diff(x)
 
 def guess_format(config):
@@ -219,11 +219,9 @@ def filter_delete_statements(module, candidate):
     reply = get_configuration(module, format='set')
     match = reply.find('.//configuration-set')
     if match is None:
-        module.fail_json(msg='unable to retrieve device configuration')
+        # Could not find configuration-set in reply, perhaps device does not support it?
+        return candidate
     config = str(match.text)
-
-    #if 'delete interfaces lo0' in candidate:
-    #    raise ValueError(config)
 
     modified_candidate = candidate[:]
     for index, line in enumerate(candidate):
@@ -234,10 +232,8 @@ def filter_delete_statements(module, candidate):
 
     return modified_candidate
 
-def configure_device(module):
+def configure_device(module, warnings):
     candidate = module.params['lines'] or module.params['src']
-    if isinstance(candidate, string_types):
-        candidate = candidate.split('\n')
 
     kwargs = {
         'comment': module.params['comment'],
@@ -259,6 +255,9 @@ def configure_device(module):
         else:
             kwargs.update({'format': config_format, 'action': module.params['update']})
 
+    if isinstance(candidate, string_types):
+        candidate = candidate.split('\n')
+
     # this is done to filter out `delete ...` statements which map to
     # nothing in the config as that will cause an exception to be raised
     if any((module.params['lines'], config_format == 'set')):
@@ -266,7 +265,7 @@ def configure_device(module):
         kwargs['format'] = 'text'
         kwargs['action'] = 'set'
 
-    return load_config(module, candidate, **kwargs)
+    return load_config(module, candidate, warnings, **kwargs)
 
 def main():
     """ main entry point for module execution
@@ -278,7 +277,7 @@ def main():
         src_format=dict(choices=['xml', 'text', 'set', 'json']),
 
         # update operations
-        update=dict(default='merge', choices=['merge', 'overwrite', 'replace', 'update']),
+        update=dict(default='merge', choices=['merge', 'override', 'replace', 'update']),
 
         # deprecated replace in Ansible 2.3
         replace=dict(type='bool'),
@@ -307,10 +306,14 @@ def main():
     result = {'changed': False, 'warnings': warnings}
 
     if module.params['backup']:
-        reply = get_configuration(module, format='set')
-        match = reply.find('.//configuration-set')
-        if match is None:
+        for conf_format in ['set', 'text']:
+            reply = get_configuration(module, format=conf_format)
+            match = reply.find('.//configuration-%s' % conf_format)
+            if match is not None:
+                break
+        else:
             module.fail_json(msg='unable to retrieve device configuration')
+
         result['__backup__'] = str(match.text).strip()
 
     if module.params['rollback']:
@@ -326,7 +329,7 @@ def main():
         result['changed'] = True
 
     else:
-        diff = configure_device(module)
+        diff = configure_device(module, warnings)
         if diff:
             if module._diff:
                 result['diff'] = {'prepared': diff}

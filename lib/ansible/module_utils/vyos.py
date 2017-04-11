@@ -25,7 +25,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network_common import to_list
 from ansible.module_utils.connection import exec_command
 
@@ -40,7 +40,7 @@ vyos_argument_spec = {
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
 
     'timeout': dict(type='int'),
-    'provider': dict(type='dict', no_log=True),
+    'provider': dict(type='dict'),
 }
 
 def check_args(module, warnings):
@@ -49,6 +49,11 @@ def check_args(module, warnings):
         if key != 'provider' and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
                     'removed in a future version' % key)
+
+    if provider:
+        for param in ('password',):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
 
 def get_config(module, target='commands'):
     cmd = ' '.join(['show configuration', target])

@@ -30,12 +30,12 @@ import time
 from abc import ABCMeta, abstractmethod
 
 from ansible import constants as C
-from ansible.compat.six import binary_type, string_types, text_type, iteritems, with_metaclass
-from ansible.compat.six.moves import shlex_quote
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.executor.module_common import modify_module, build_windows_module_payload
-from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.json_utils import _filter_non_json_lines
+from ansible.module_utils.six import binary_type, string_types, text_type, iteritems, with_metaclass
+from ansible.module_utils.six.moves import shlex_quote
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
 from ansible.release import __version__
@@ -162,14 +162,16 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # FUTURE: we'll have to get fancier about this to support powershell over SSH on Windows...
         if self._connection.transport == "winrm":
             # WinRM always pipelines, so we need to build up a fancier module payload...
+            final_environment = dict()
+            self._compute_environment_string(final_environment)
             module_data = build_windows_module_payload(module_name=module_name, module_path=module_path,
                                                    b_module_data=module_data, module_args=module_args,
                                                    task_vars=task_vars, task=self._task,
-                                                   play_context=self._play_context)
+                                                   play_context=self._play_context, environment=final_environment)
 
         return (module_style, module_shebang, module_data, module_path)
 
-    def _compute_environment_string(self):
+    def _compute_environment_string(self, raw_environment_out=dict()):
         '''
         Builds the environment string to be used when executing the remote task.
         '''
@@ -195,6 +197,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 final_environment.update(temp_environment)
 
         final_environment = self._templar.template(final_environment)
+
+        if isinstance(raw_environment_out, dict):
+            raw_environment_out.clear()
+            raw_environment_out.update(final_environment)
+
         return self._connection._shell.env_prefix(**final_environment)
 
     def _early_needs_tmp_path(self):
@@ -213,14 +220,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # any of these require a true
         for condition in [
-              self._connection.has_pipelining,
-              self._play_context.pipelining,
-              module_style == "new",                     # old style modules do not support pipelining
-              not C.DEFAULT_KEEP_REMOTE_FILES,           # user wants remote files
-              not wrap_async,                            # async does not support pipelining
-              self._play_context.become_method != 'su',  # su does not work with pipelining,
-              # FIXME: we might need to make become_method exclusion a configurable list
-            ]:
+            self._connection.has_pipelining,
+            self._play_context.pipelining,
+            module_style == "new",                     # old style modules do not support pipelining
+            not C.DEFAULT_KEEP_REMOTE_FILES,           # user wants remote files
+            not wrap_async,                            # async does not support pipelining
+            self._play_context.become_method != 'su',  # su does not work with pipelining,
+            # FIXME: we might need to make become_method exclusion a configurable list
+        ]:
             if not condition:
                 return False
 
@@ -482,7 +489,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             get_checksum=checksum,
             checksum_algo='sha1',
         )
-        mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars, tmp=tmp, delete_remote_tmp=(tmp is None), wrap_async=False)
+        mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars, tmp=tmp, delete_remote_tmp=(tmp is None),
+                                      wrap_async=False)
 
         if mystat.get('failed'):
             msg = mystat.get('module_stderr')
@@ -514,7 +522,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         3 = its a directory, not a file
         4 = stat module failed, likely due to not finding python
         '''
-        x = "0"  # unknown error has occured
+        x = "0"  # unknown error has occurred
         try:
             remote_stat = self._execute_remote_stat(path, all_vars, follow=follow)
             if remote_stat['exists'] and remote_stat['isdir']:
@@ -674,7 +682,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         if wrap_async:
             # configure, upload, and chmod the async_wrapper module
-            (async_module_style, shebang, async_module_data, async_module_path) = self._configure_module(module_name='async_wrapper', module_args=dict(), task_vars=task_vars)
+            (async_module_style, shebang, async_module_data, async_module_path) = self._configure_module(module_name='async_wrapper', module_args=dict(),
+                                                                                                         task_vars=task_vars)
             async_module_remote_filename = self._connection._shell.get_remote_filename(async_module_path)
             remote_async_module_path = self._connection._shell.join_path(tmp, async_module_remote_filename)
             self._transfer_data(remote_async_module_path, async_module_data)
@@ -742,7 +751,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # remove internal keys
         self._remove_internal_keys(data)
-        data['_ansible_parsed'] = True
 
         # cleanup tmp?
         if (self._play_context.become and self._play_context.become_user != 'root') and not persist_files and delete_remote_tmp or tmpdir_delete:
@@ -754,16 +762,20 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # pre-split stdout/stderr into lines if needed
         if 'stdout' in data and 'stdout_lines' not in data:
-            data['stdout_lines'] = data.get('stdout', u'').splitlines()
+            # if the value is 'False', a default won't catch it.
+            txt = data.get('stdout', None) or u''
+            data['stdout_lines'] = txt.splitlines()
         if 'stderr' in data and 'stderr_lines' not in data:
-            data['stderr_lines'] = data.get('stderr', u'').splitlines()
+            # if the value is 'False', a default won't catch it.
+            txt = data.get('stderr', None) or u''
+            data['stderr_lines'] = txt.splitlines()
 
         display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
     def _remove_internal_keys(self, data):
         for key in list(data.keys()):
-            if key.startswith('_ansible_') or key in C.INTERNAL_RESULT_KEYS:
+            if key.startswith('_ansible_') and key != '_ansible_parsed' or key in C.INTERNAL_RESULT_KEYS:
                 display.warning("Removed unexpected internal key in module return: %s = %s" % (key, data[key]))
                 del data[key]
 
@@ -820,6 +832,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             if 'ansible_facts' in data and isinstance(data['ansible_facts'], dict):
                 self._clean_returned_data(data['ansible_facts'])
                 data['ansible_facts'] = wrap_var(data['ansible_facts'])
+            data['_ansible_parsed'] = True
         except ValueError:
             # not valid json, lets try to capture error
             data = dict(failed=True, _ansible_parsed=False)
@@ -939,12 +952,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 else:
                     display.debug("Reading local copy of the file %s" % source)
                     try:
-                        src = open(source)
-                        src_contents = src.read()
+                        with open(source, 'rb') as src:
+                            src_contents = src.read()
                     except Exception as e:
                         raise AnsibleError("Unexpected error while reading source (%s) for diff: %s " % (source, str(e)))
 
-                    if "\x00" in src_contents:
+                    if b"\x00" in src_contents:
                         diff['src_binary'] = 1
                     else:
                         diff['after_header'] = source

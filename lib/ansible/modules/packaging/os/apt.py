@@ -34,13 +34,17 @@ version_added: "0.0.2"
 options:
   name:
     description:
-      - A package name, like C(foo), or package specifier with version, like C(foo=1.0). Name wildcards (fnmatch) like C(apt*) and version wildcards like C(foo=1.0*) are also supported.  Note that the apt-get commandline supports implicit regex matches here but we do not because it can let typos through easier (If you typo C(foo) as C(fo) apt-get would install packages that have "fo" in their name with a warning and a prompt for the user.  Since we don't have warnings and prompts before installing we disallow this.  Use an explicit fnmatch pattern if you want wildcarding)
+      - A package name, like C(foo), or package specifier with version, like C(foo=1.0). Name wildcards (fnmatch) like C(apt*) and version wildcards
+        like C(foo=1.0*) are also supported.  Note that the apt-get commandline supports implicit regex matches here but we do not because it can let
+        typos through easier (If you typo C(foo) as C(fo) apt-get would install packages that have "fo" in their name with a warning and a prompt for
+        the user.  Since we don't have warnings and prompts before installing we disallow this.  Use an explicit fnmatch pattern if you want wildcarding)
     required: false
     default: null
     aliases: [ 'pkg', 'package' ]
   state:
     description:
-      - Indicates the desired package state. C(latest) ensures that the latest version is installed. C(build-dep) ensures the package build dependencies are installed.
+      - Indicates the desired package state. C(latest) ensures that the latest version is installed. C(build-dep) ensures the package build dependencies
+        are installed.
     required: false
     default: present
     choices: [ "latest", "absent", "present", "build-dep" ]
@@ -68,7 +72,8 @@ options:
     default: null
   install_recommends:
     description:
-      - Corresponds to the C(--no-install-recommends) option for I(apt). C(yes) installs recommended packages.  C(no) does not install recommended packages. By default, Ansible will use the same defaults as the operating system. Suggested packages are never installed.
+      - Corresponds to the C(--no-install-recommends) option for I(apt). C(yes) installs recommended packages.  C(no) does not install
+        recommended packages. By default, Ansible will use the same defaults as the operating system. Suggested packages are never installed.
     required: false
     default: null
     choices: [ "yes", "no" ]
@@ -219,7 +224,7 @@ stderr:
     returned: success, when needed
     type: string
     sample: "AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to ..."
-'''
+'''  # NOQA
 
 # added to stave off future warnings about apt api
 import warnings
@@ -521,7 +526,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         else:
             diff = {}
         if rc:
-            return (False, dict(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err))
+            return (False, dict(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc))
         else:
             return (True, dict(changed=True, stdout=out, stderr=err, diff=diff))
     else:
@@ -654,7 +659,7 @@ def remove(m, pkgspec, cache, purge=False, force=False,
         else:
             diff = {}
         if rc:
-            m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err), stdout=out, stderr=err)
+            m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err), stdout=out, stderr=err, rc=rc)
         m.exit_json(changed=True, stdout=out, stderr=err, diff=diff)
 
 
@@ -703,7 +708,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     else:
         diff = {}
     if rc:
-        m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err), stdout=out)
+        m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err), stdout=out, rc=rc)
     if (apt_cmd == APT_GET_CMD and APT_GET_ZERO in out) or (apt_cmd == APTITUDE_CMD and APTITUDE_ZERO in out):
         m.exit_json(changed=False, msg=out, stdout=out, stderr=err)
     m.exit_json(changed=True, msg=out, stdout=out, stderr=err, diff=diff)
@@ -780,7 +785,7 @@ def get_cache(module):
                 if rc == 0:
                     break
             if rc != 0:
-                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (str(e), str(so) + str(se)))
+                module.fail_json(msg='Updating the cache to correct corrupt package lists failed:\n%s\n%s' % (str(e), str(so) + str(se)), rc=rc)
             # try again
             cache = apt.Cache()
         else:

@@ -60,13 +60,17 @@ options:
     version_added: "2.1"
   zone:
     description:
-      - 'The firewalld zone to add/remove to/from (NOTE: default zone can be configured per system but "public" is default from upstream. Available choices can be extended based on per-system configs, listed here are "out of the box" defaults).'
+      - >
+        The firewalld zone to add/remove to/from (NOTE: default zone can be configured per system but "public" is default from upstream. Available choices
+        can be extended based on per-system configs, listed here are "out of the box" defaults).
     required: false
     default: system-default(public)
     choices: [ "work", "drop", "internal", "external", "trusted", "home", "dmz", "public", "block" ]
   permanent:
     description:
-      - "Should this configuration be in the running firewalld configuration or persist across reboots. As of Ansible version 2.3, permanent operations can operate on firewalld configs when it's not running (requires firewalld >= 3.0.9)"
+      - >
+        Should this configuration be in the running firewalld configuration or persist across reboots. As of Ansible version 2.3, permanent operations can
+        operate on firewalld configs when it's not running (requires firewalld >= 3.0.9)
     required: false
     default: null
   immediate:
@@ -495,7 +499,8 @@ def main():
     except ImportError:
         ## Make python 2.4 shippable ci tests happy
         e = sys.exc_info()[1]
-        module.fail_json(msg='firewalld and its python 2 module are required for this module, version 2.0.11 or newer required (3.0.9 or newer for offline operations) \n %s' % e)
+        module.fail_json(msg='firewalld and its python 2 module are required for this module, version 2.0.11 or newer required '
+                             '(3.0.9 or newer for offline operations) \n %s' % e)
 
     if fw_offline:
         ## Pre-run version checking

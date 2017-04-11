@@ -172,7 +172,9 @@ options:
         required: False
         default: None
         description:
-            - 'This is only used with bridge - MAC address of the bridge (note: this requires a recent kernel feature, originally introduced in 3.15 upstream kernel)'
+            - >
+              This is only used with bridge - MAC address of the bridge
+              (note: this requires a recent kernel feature, originally introduced in 3.15 upstream kernel)
     slavepriority:
         required: False
         default: 32
@@ -187,7 +189,8 @@ options:
         required: False
         default: yes
         description:
-            - This is only used with 'bridge-slave' - 'hairpin mode' for the slave, which allows frames to be sent back out through the slave the frame was received on.
+            - This is only used with 'bridge-slave' - 'hairpin mode' for the slave, which allows frames to be sent back out through the slave the
+              frame was received on.
     vlanid:
         required: False
         default: None
@@ -1106,7 +1109,8 @@ def main():
             gw6=dict(required=False, default=None, type='str'),
             dns6=dict(required=False, default=None, type='str'),
             # Bond Specific vars
-            mode=dict(require=False, default="balance-rr", choices=["balance-rr", "active-backup", "balance-xor", "broadcast", "802.3ad", "balance-tlb", "balance-alb"], type='str'),
+            mode=dict(require=False, default="balance-rr", type='str', choices=["balance-rr", "active-backup", "balance-xor", "broadcast", "802.3ad",
+                                                                                "balance-tlb", "balance-alb"]),
             miimon=dict(required=False, default=None, type='str'),
             downdelay=dict(required=False, default=None, type='str'),
             updelay=dict(required=False, default=None, type='str'),

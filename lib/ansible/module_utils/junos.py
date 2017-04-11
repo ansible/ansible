@@ -18,12 +18,11 @@
 #
 from contextlib import contextmanager
 
-from xml.etree.ElementTree import Element, SubElement, tostring
+from xml.etree.ElementTree import Element, SubElement
 
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.netconf import send_request, children
 from ansible.module_utils.netconf import discard_changes, validate
-from ansible.module_utils.network_common import to_list
 from ansible.module_utils.six import string_types
 
 ACTIONS = frozenset(['merge', 'override', 'replace', 'update', 'set'])
@@ -38,7 +37,7 @@ junos_argument_spec = {
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'timeout': dict(type='int', default=10),
-    'provider': dict(type='dict', no_log=True),
+    'provider': dict(type='dict'),
     'transport': dict()
 }
 
@@ -49,7 +48,12 @@ def check_args(module, warnings):
             warnings.append('argument %s has been deprecated and will be '
                     'removed in a future version' % key)
 
-def _validate_rollback_id(value):
+    if provider:
+        for param in ('password',):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
+
+def _validate_rollback_id(module, value):
     try:
         if not 0 <= int(value) <= 49:
             raise ValueError
@@ -75,7 +79,7 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
         module.fail_json(msg='format must be text when action is set')
 
     if rollback is not None:
-        _validate_rollback_id(rollback)
+        _validate_rollback_id(module, rollback)
         xattrs = {'rollback': str(rollback)}
     else:
         xattrs = {'action': action, 'format': format}
@@ -103,7 +107,7 @@ def get_configuration(module, compare=False, format='xml', rollback='0'):
         module.fail_json(msg='invalid config format specified')
     xattrs = {'format': format}
     if compare:
-        _validate_rollback_id(rollback)
+        _validate_rollback_id(module, rollback)
         xattrs['compare'] = 'rollback'
         xattrs['rollback'] = str(rollback)
     return send_request(module, Element('get-configuration', xattrs))
@@ -147,7 +151,7 @@ def get_diff(module):
     if output is not None:
         return output.text
 
-def load_config(module, candidate, action='merge', commit=False, format='xml',
+def load_config(module, candidate, warnings, action='merge', commit=False, format='xml',
                 comment=None, confirm=False, confirm_timeout=None):
 
     with locked_config(module):
@@ -155,6 +159,8 @@ def load_config(module, candidate, action='merge', commit=False, format='xml',
             candidate = '\n'.join(candidate)
 
         reply = load_configuration(module, candidate, action=action, format=format)
+        if isinstance(reply, list):
+            warnings.extend(reply)
 
         validate(module)
         diff = get_diff(module)
@@ -168,4 +174,3 @@ def load_config(module, candidate, action='merge', commit=False, format='xml',
                 discard_changes(module)
 
         return diff
-

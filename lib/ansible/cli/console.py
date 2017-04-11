@@ -46,7 +46,7 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
 from ansible.plugins import module_loader
-from ansible.utils import module_docs
+from ansible.utils import plugin_docs
 from ansible.utils.color import stringc
 from ansible.vars import VariableManager
 
@@ -58,8 +58,11 @@ except ImportError:
 
 
 class ConsoleCLI(CLI, cmd.Cmd):
+    ''' a REPL that allows for running ad-hoc tasks against a chosen inventory (based on dominis' ansible-shell).'''
 
     modules = []
+    ARGUMENTS = { 'host-pattern': 'A name of a group in the inventory, a shell-like glob '
+                                'selecting hosts in inventory or any combination of the two separated by commas.', }
 
     def __init__(self, args):
 
@@ -79,7 +82,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     def parse(self):
         self.parser = CLI.base_parser(
-            usage='%prog <host-pattern> [options]',
+            usage='%prog [<host-pattern>] [options]',
             runas_opts=True,
             inventory_opts=True,
             connect_opts=True,
@@ -87,6 +90,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
             vault_opts=True,
             fork_opts=True,
             module_opts=True,
+            desc="REPL console for executing Ansible tasks.",
+            epilog="This is not a live session/connection, each task executes in the background and returns it's results."
         )
 
         # options unique to shell
@@ -356,7 +361,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         if module_name in self.modules:
             in_path = module_loader.find_plugin(module_name)
             if in_path:
-                oc, a, _, _ = module_docs.get_docstring(in_path)
+                oc, a, _, _ = plugin_docs.get_docstring(in_path)
                 if oc:
                     display.display(oc['short_description'])
                     display.display('Parameters:')
@@ -388,7 +393,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     def module_args(self, module_name):
         in_path = module_loader.find_plugin(module_name)
-        oc, a, _, _ = module_docs.get_docstring(in_path)
+        oc, a, _, _ = plugin_docs.get_docstring(in_path)
         return list(oc['options'].keys())
 
     def run(self):

@@ -26,9 +26,9 @@ import copy
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.utils.path import unfrackpath
 from ansible.plugins import connection_loader
-from ansible.compat.six import iteritems
-from ansible.module_utils.ios import ios_argument_spec
 from ansible.module_utils.basic import AnsibleFallbackNotFound
+from ansible.module_utils.ios import ios_argument_spec
+from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_bytes
 
 try:
@@ -36,6 +36,7 @@ try:
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 class ActionModule(_ActionModule):
 
@@ -68,7 +69,10 @@ class ActionModule(_ActionModule):
             # start the connection if it isn't started
             rc, out, err = connection.exec_command('open_shell()')
             if not rc == 0:
-                return {'failed': True, 'msg': 'unable to open shell', 'rc': rc}
+                return {'failed': True,
+                        'msg': 'unable to open shell. Please see: ' +
+                               'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell',
+                        'rc': rc}
         else:
             # make sure we are in the right cli context which should be
             # enable mode and not config module
@@ -83,7 +87,8 @@ class ActionModule(_ActionModule):
             self._play_context.become = False
             self._play_context.become_method = None
 
-        return super(ActionModule, self).run(tmp, task_vars)
+        result = super(ActionModule, self).run(tmp, task_vars)
+        return result
 
     def _get_socket_path(self, play_context):
         ssh = connection_loader.get('ssh', class_only=True)

@@ -24,19 +24,18 @@ import sys
 
 from collections import defaultdict, MutableMapping
 
-from ansible.compat.six import iteritems
-from jinja2.exceptions import UndefinedError
-
 try:
     from hashlib import sha1
 except ImportError:
     from sha import sha as sha1
 
+from jinja2.exceptions import UndefinedError
+
 from ansible import constants as C
 from ansible.cli import CLI
-from ansible.compat.six import string_types, text_type
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
 from ansible.inventory.host import Host
+from ansible.module_utils.six import iteritems, string_types, text_type
 from ansible.plugins import lookup_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
@@ -51,13 +50,16 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-VARIABLE_CACHE = dict()
-HOSTVARS_CACHE = dict()
+
+VARIABLE_CACHE = {}
+HOSTVARS_CACHE = {}
+
 
 class AnsibleInventoryVarsData(dict):
     def __init__(self, *args, **kwargs):
         super(AnsibleInventoryVarsData, self).__init__(*args, **kwargs)
         self.path = None
+
 
 def preprocess_vars(a):
     '''
@@ -331,7 +333,8 @@ class VariableManager:
                             raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
                 except (UndefinedError, AnsibleUndefinedVariable):
                     if host is not None and self._fact_cache.get(host.name, dict()).get('module_setup') and task is not None:
-                        raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'" % vars_file_item, obj=vars_file_item)
+                        raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'" % vars_file_item,
+                                                       obj=vars_file_item)
                     else:
                         # we do not have a full context here, and the missing variable could be
                         # because of that, so just show a warning and continue
@@ -378,7 +381,8 @@ class VariableManager:
             if 'environment' not in all_vars:
                 all_vars['environment'] = task.environment
             else:
-                display.warning("The variable 'environment' appears to be used already, which is also used internally for environment variables set on the task/block/play. You should use a different variable name to avoid conflicts with this internal variable")
+                display.warning("The variable 'environment' appears to be used already, which is also used internally for environment variables set on the "
+                                "task/block/play. You should use a different variable name to avoid conflicts with this internal variable")
 
         # if we have a task and we're delegating to another host, figure out the
         # variables for that host now so we don't have to rely on hostvars later

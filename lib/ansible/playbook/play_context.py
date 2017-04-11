@@ -27,13 +27,14 @@ import random
 import re
 import string
 
-from ansible.compat.six import iteritems, string_types
-from ansible.compat.six.moves import shlex_quote
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
+
 
 boolean = C.mk_boolean
 
@@ -551,6 +552,14 @@ class PlayContext(Base):
 
             elif self.become_method == 'runas':
                 # become is handled inside the WinRM connection plugin
+                display.warning("The Windows 'runas' become method is experimental, and may change significantly in future Ansible releases.")
+
+                if not self.become_user:
+                    raise AnsibleError(("The 'runas' become method requires a username "
+                                        "(specify with the '--become-user' CLI arg, the 'become_user' keyword, or the 'ansible_become_user' variable)"))
+                if not self.become_pass:
+                    raise AnsibleError(("The 'runas' become method requires a password "
+                                       "(specify with the '-K' CLI arg or the 'ansible_become_password' variable)"))
                 becomecmd = cmd
 
             elif self.become_method == 'doas':

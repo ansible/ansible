@@ -13,6 +13,30 @@ Ansible Changes By Release
   Python-2.5 you'll need to install Python-2.6 or better there or run
   Ansible-2.3 until you can upgrade the system.
 
+### Minor Changes
+* removed previously deprecated config option 'hostfile' and env var 'ANSIBLE_HOSTS'
+* removed unused and deprecated config option 'pattern'
+* Updated the copy of six bundled for modules to use from 1.4.1 to 1.10.0
+* Fixed a cornercase with ini inventory vars.  Previously, if an inventory var
+  was a quoted string with hash marks ("#") in it then the parsed string
+  included the quotes.  Now the string will not be quoted.  Previously, if the
+  quoting ended before the string finished and then the hash mark appeared, the
+  hash mark was included as part of the string.  Now it is treated as
+  a trailing comment::
+
+    # Before:
+    var1="string#comment"   ===>  var1: "\"string#comment\""
+    var1="string" #comment  ===>  var1: "\"string\" #comment"
+    # After:
+    var1="string#comment"   ===>  var1: "string#comment"
+    var1="string" #comment  ===>  var1: "string"
+
+  The new behaviour mirrors how the variables would appear if there was no hash
+  mark in the string.
+
+####New Inventory scripts:
+- lxd
+
 #### New: Tests
 - any : true if any element is true
 - all: true if all elements are true
@@ -24,7 +48,7 @@ Ansible Changes By Release
 * Allow module_utils for custom modules to be placed in site-specific directories and shipped in roles
 * On platforms that support it, use more modern system polling API instead of select in the ssh connection plugin.
   This removes one limitation on how many parallel forks are feasible on these systems.
-* Windows/WinRM supports become method "runas" to run modules and scripts as a different user, and to transparently access network resources.
+* Windows/WinRM supports (experimental) become method "runas" to run modules and scripts as a different user, and to transparently access network resources.
 * The WinRM connection plugin now uses pipelining when executing modules, resulting in significantly faster execution for small tasks.
 * The WinRM connection plugin can now manage Kerberos tickets automatically when `ansible_winrm_transport=kerberos` and `ansible_user`/`ansible_password` are specified.
 * Refactored/standardized most Windows modules, adding check-mode and diff support where possible.

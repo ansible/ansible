@@ -24,7 +24,8 @@ DOCUMENTATION = '''
 module: s3
 short_description: manage objects in S3.
 description:
-    - This module allows the user to manage S3 buckets and the objects within them. Includes support for creating and deleting both objects and buckets, retrieving objects as files or strings and generating download links. This module has a dependency on python-boto.
+    - This module allows the user to manage S3 buckets and the objects within them. Includes support for creating and deleting both objects and buckets,
+      retrieving objects as files or strings and generating download links. This module has a dependency on python-boto.
 version_added: "1.1"
 options:
   aws_access_key:
@@ -89,7 +90,8 @@ options:
     version_added: "1.6"
   mode:
     description:
-      - Switches the module behaviour between put (upload), get (download), geturl (return download url, Ansible 1.3+), getstr (download object as string (1.3+)), list (list keys, Ansible 2.0+), create (bucket), delete (bucket), and delobj (delete object, Ansible 2.0+).
+      - Switches the module behaviour between put (upload), get (download), geturl (return download url, Ansible 1.3+),
+        getstr (download object as string (1.3+)), list (list keys, Ansible 2.0+), create (bucket), delete (bucket), and delobj (delete object, Ansible 2.0+).
     required: true
     choices: ['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list']
   object:
@@ -99,7 +101,9 @@ options:
     default: null
   permission:
     description:
-      - This option lets the user set the canned permissions on the object/bucket that are created. The permissions that can be set are 'private', 'public-read', 'public-read-write', 'authenticated-read'. Multiple permissions can be specified as a list.
+      - This option lets the user set the canned permissions on the object/bucket that are created.
+        The permissions that can be set are 'private', 'public-read', 'public-read-write', 'authenticated-read'. Multiple permissions can be
+        specified as a list.
     required: false
     default: private
     version_added: "2.0"
@@ -118,13 +122,17 @@ options:
     version_added: "2.0"
   overwrite:
     description:
-      - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations. Boolean or one of [always, never, different], true is equal to 'always' and false is equal to 'never', new in 2.0
+      - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
+        Boolean or one of [always, never, different], true is equal to 'always' and false is equal to 'never', new in 2.0
     required: false
     default: 'always'
     version_added: "1.2"
   region:
     description:
-     - "AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked, followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the S3 Location: US Standard.  Prior to ansible 1.8 this parameter could be specified but had no effect."
+     - >
+       AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked,
+       followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the
+       S3 Location: US Standard.  Prior to ansible 1.8 this parameter could be specified but had no effect.
     required: false
     default: null
     version_added: "1.8"
@@ -153,7 +161,9 @@ options:
     version_added: "1.3"
   ignore_nonexistent_bucket:
     description:
-      - "Overrides initial bucket lookups in case bucket or iam policies are restrictive. Example: a user may have the GetObject permission but no other permissions. In this case using the option mode: get will fail without specifying ignore_nonexistent_bucket: True."
+      - >
+        Overrides initial bucket lookups in case bucket or iam policies are restrictive. Example: a user may have the GetObject permission but no other
+        permissions. In this case using the option mode: get will fail without specifying ignore_nonexistent_bucket: True.
     default: false
     aliases: []
     version_added: "2.3"
@@ -308,6 +318,8 @@ def bucket_check(module, s3, bucket, validate=True):
     return bool(result)
 
 def create_bucket(module, s3, bucket, location=None):
+    if module.check_mode:
+        module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
     if location is None:
         location = Location.DEFAULT
     try:
@@ -335,6 +347,8 @@ def list_keys(module, bucket_object, prefix, marker, max_keys):
     module.exit_json(msg="LIST operation complete", s3_keys=keys)
 
 def delete_bucket(module, s3, bucket):
+    if module.check_mode:
+        module.exit_json(msg="DELETE operation skipped - running in check mode", changed=True)
     try:
         bucket = s3.lookup(bucket)
         bucket_contents = bucket.list()
@@ -345,6 +359,8 @@ def delete_bucket(module, s3, bucket):
         module.fail_json(msg= str(e))
 
 def delete_key(module, s3, bucket, obj, validate=True):
+    if module.check_mode:
+        module.exit_json(msg="DELETE operation skipped - running in check mode", changed=True)
     try:
         bucket = s3.lookup(bucket, validate=validate)
         bucket.delete_key(obj)
@@ -353,6 +369,8 @@ def delete_key(module, s3, bucket, obj, validate=True):
         module.fail_json(msg= str(e))
 
 def create_dirkey(module, s3, bucket, obj, validate=True):
+    if module.check_mode:
+        module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
     try:
         bucket = s3.lookup(bucket, validate=validate)
         key = bucket.new_key(obj)
@@ -369,6 +387,8 @@ def path_check(path):
 
 
 def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers, validate=True):
+    if module.check_mode:
+        module.exit_json(msg="PUT operation skipped - running in check mode", changed=True)
     try:
         bucket = s3.lookup(bucket, validate=validate)
         key = bucket.new_key(obj)
@@ -385,6 +405,8 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
         module.fail_json(msg= str(e))
 
 def download_s3file(module, s3, bucket, obj, dest, retries, version=None, validate=True):
+    if module.check_mode:
+        module.exit_json(msg="GET operation skipped - running in check mode", changed=True)
     # retries is the number of loops; range/xrange needs to be one
     # more to get that count of loops.
     bucket = s3.lookup(bucket, validate=validate)
@@ -403,6 +425,8 @@ def download_s3file(module, s3, bucket, obj, dest, retries, version=None, valida
             pass
 
 def download_s3str(module, s3, bucket, obj, version=None, validate=True):
+    if module.check_mode:
+        module.exit_json(msg="GET operation skipped - running in check mode", changed=True)
     try:
         bucket = s3.lookup(bucket, validate=validate)
         key = bucket.get_key(obj, version_id=version)
@@ -462,7 +486,10 @@ def main():
         ignore_nonexistent_bucket       = dict(default=False, type='bool')
         ),
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+    )
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
@@ -714,6 +741,13 @@ def main():
 def get_s3_connection(aws_connect_kwargs, location, rgw, s3_url):
     if s3_url and rgw:
         rgw = urlparse(s3_url)
+        # ensure none of the named arguments we will pass to boto.connect_s3
+        # are already present in aws_connect_kwargs
+        for kw in ['is_secure', 'host', 'port', 'calling_format']:
+            try:
+                del aws_connect_kwargs[kw]
+            except KeyError:
+                pass
         s3 = boto.connect_s3(
             is_secure=rgw.scheme == 'https',
             host=rgw.hostname,
@@ -723,6 +757,13 @@ def get_s3_connection(aws_connect_kwargs, location, rgw, s3_url):
         )
     elif is_fakes3(s3_url):
         fakes3 = urlparse(s3_url)
+        # ensure none of the named arguments we will pass to S3Connection
+        # are already present in aws_connect_kwargs
+        for kw in ['is_secure', 'host', 'port', 'calling_format']:
+            try:
+                del aws_connect_kwargs[kw]
+            except KeyError:
+                pass
         s3 = S3Connection(
             is_secure=fakes3.scheme == 'fakes3s',
             host=fakes3.hostname,

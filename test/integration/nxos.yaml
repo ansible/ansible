@@ -17,3 +17,4 @@
     - { role: nxos_feature, when: "limit_to in ['*', 'nxos_feature']" }
     - { role: nxos_mtu, when: "limit_to in ['*', 'nxos_mtu']" }
     - { role: nxos_system, when: "limit_to in ['*', 'nxos_system']" }
+    - { role: nxos_interface, when: "limit_to in ['*', 'nxos_interface']" }

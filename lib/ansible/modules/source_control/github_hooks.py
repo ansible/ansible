@@ -41,7 +41,9 @@ options:
     required: true
   repo:
     description:
-      - "This is the API url for the repository you want to manage hooks for. It should be in the form of: https://api.github.com/repos/user:/repo:. Note this is different than the normal repo url."
+      - >
+        This is the API url for the repository you want to manage hooks for. It should be in the form of: https://api.github.com/repos/user:/repo:.
+        Note this is different than the normal repo url.
     required: true
   hookurl:
     description:
@@ -78,7 +80,8 @@ EXAMPLES = '''
     oauthkey: '{{ oauthkey }}'
     repo: https://api.github.com/repos/pcgentry/Github-Auto-Deploy
 
-# Cleaning all hooks for this repo that had an error on the last update. Since this works for all hooks in a repo it is probably best that this would be called from a handler.
+# Cleaning all hooks for this repo that had an error on the last update. Since this works for all hooks in a repo it is probably best that this would
+# be called from a handler.
 - github_hooks:
     action: cleanall
     user: '{{ gituser }}'

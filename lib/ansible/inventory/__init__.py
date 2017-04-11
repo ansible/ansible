@@ -26,14 +26,13 @@ import sys
 import re
 import itertools
 
-from ansible.compat.six import string_types, iteritems
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-
 from ansible.inventory.dir import InventoryDirectory, get_file_parser
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
+from ansible.module_utils.six import string_types, iteritems
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins import vars_loader
@@ -114,7 +113,7 @@ class Inventory(object):
         self.parser = None
 
         # Always create the 'all' and 'ungrouped' groups, even if host_list is
-        # empty: in this case we will subsequently an the implicit 'localhost' to it.
+        # empty: in this case we will subsequently add the implicit 'localhost' to it.
 
         ungrouped = Group('ungrouped')
         all = Group('all')
@@ -162,6 +161,7 @@ class Inventory(object):
 
         ### POST PROCESS groups and hosts after specific parser was invoked
 
+        hosts = []
         group_names = set()
         # set group vars from group_vars/ files and vars plugins
         for g in self.groups:
@@ -169,10 +169,11 @@ class Inventory(object):
             group.vars = combine_vars(group.vars, self.get_group_variables(group.name))
             self.get_group_vars(group)
             group_names.add(group.name)
+            hosts.extend(group.get_hosts())
 
         host_names = set()
         # get host vars from host_vars/ files and vars plugins
-        for host in self.get_hosts(ignore_limits=True, ignore_restrictions=True):
+        for host in hosts:
             host.vars = combine_vars(host.vars, self.get_host_variables(host.name))
             self.get_host_vars(host)
             host_names.add(host.name)

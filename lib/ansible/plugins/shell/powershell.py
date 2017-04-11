@@ -111,6 +111,11 @@ Function Run($payload) {
     # redefine Write-Host to dump to output instead of failing- lots of scripts use it
     $ps.AddStatement().AddScript("Function Write-Host(`$msg){ Write-Output `$msg }") | Out-Null
 
+    ForEach ($env_kv in $payload.environment.GetEnumerator()) {
+        $escaped_env_set = "`$env:{0} = '{1}'" -f $env_kv.Key,$env_kv.Value.Replace("'","''")
+        $ps.AddStatement().AddScript($escaped_env_set) | Out-Null
+    }
+
     # dynamically create/load modules
     ForEach ($mod in $payload.powershell_modules.GetEnumerator()) {
         $decoded_module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($mod.Value))
@@ -118,6 +123,9 @@ Function Run($payload) {
         $ps.AddCommand("Import-Module").AddParameters(@{WarningAction="SilentlyContinue"}) | Out-Null
         $ps.AddCommand("Out-Null") | Out-Null
     }
+
+    # force input encoding to preamble-free UTF8 so PS sub-processes (eg, Start-Job) don't blow up
+    $ps.AddStatement().AddScript("[Console]::InputEncoding = New-Object Text.UTF8Encoding `$false") | Out-Null
 
     $ps.AddStatement().AddScript($entrypoint) | Out-Null
 
@@ -132,6 +140,7 @@ Function Run($payload) {
         If(-not $exit_code) {
             $exit_code = 1
         }
+        # need to use this instead of Exit keyword to prevent runspace from crashing with dynamic modules
         $host.SetShouldExit($exit_code)
     }
 }
@@ -307,6 +316,15 @@ Write-Output $output
 
 } # end exec_wrapper
 
+Function Dump-Error ($excep) {
+    $eo = @{failed=$true}
+
+    $eo.msg = $excep.Exception.Message
+    $eo.exception = $excep | Out-String
+    $host.SetShouldExit(1)
+
+    $eo | ConvertTo-Json -Depth 10
+}
 
 Function Run($payload) {
     # NB: action popping handled inside subprocess wrapper
@@ -361,14 +379,25 @@ Function Run($payload) {
         $psi.Username = $username
         $psi.Password = $($password | ConvertTo-SecureString -AsPlainText -Force)
 
-        [Ansible.Shell.ProcessUtil]::GrantAccessToWindowStationAndDesktop($username)
+        Try {
+            [Ansible.Shell.ProcessUtil]::GrantAccessToWindowStationAndDesktop($username)
+        }
+        Catch {
+            $excep = $_
+            throw "Error granting windowstation/desktop access to '$username' (is the username valid?): $excep"
+        }
 
         Try {
             $proc.Start() | Out-Null # will always return $true for non shell-exec cases
         }
         Catch {
-            Write-Output $_.Exception.InnerException
-            return
+            $excep = $_
+            if ($excep.Exception.InnerException -and `
+                $excep.Exception.InnerException -is [System.ComponentModel.Win32Exception] -and `
+                $excep.Exception.InnerException.NativeErrorCode -eq 5) {
+              throw "Become method 'runas' become is not currently supported with the NTLM or Kerberos auth types"
+            }
+            throw "Error launching under identity '$username': $excep"
         }
 
         $payload_string = $payload | ConvertTo-Json -Depth 99 -Compress
@@ -394,6 +423,10 @@ Function Run($payload) {
         Else {
             Throw "failed, rc was $rc, stderr was $stderr, stdout was $stdout"
         }
+    }
+    Catch {
+        $excep = $_
+        Dump-Error $excep
     }
     Finally {
         Remove-Item $temp -ErrorAction SilentlyContinue
@@ -967,9 +1000,8 @@ class ShellModule(object):
         return to_text(value, errors='surrogate_or_strict')
 
     def env_prefix(self, **kwargs):
-        env = self.env.copy()
-        env.update(kwargs)
-        return ';'.join(["$env:%s='%s'" % (self.assert_safe_env_key(k), self.safe_env_value(k,v)) for k,v in env.items()])
+        # powershell/winrm env handling is handled in the exec wrapper
+        return ""
 
     def join_path(self, *args):
         parts = []

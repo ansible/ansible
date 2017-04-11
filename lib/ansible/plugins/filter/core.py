@@ -19,21 +19,22 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import sys
 import base64
+import crypt
+import glob
+import hashlib
 import itertools
 import json
-import os.path
 import ntpath
-import glob
+import os.path
 import re
-import crypt
-import hashlib
 import string
+import sys
+import uuid
+from collections import MutableMapping, MutableSequence
+from datetime import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle
-from datetime import datetime
-import uuid
 
 import yaml
 from jinja2.filters import environmentfilter, do_groupby as _do_groupby
@@ -45,9 +46,8 @@ except:
     HAS_PASSLIB = False
 
 from ansible import errors
-from ansible.compat.six import iteritems, string_types, integer_types
-from ansible.compat.six.moves import reduce
-from ansible.compat.six.moves import shlex_quote
+from ansible.module_utils.six import iteritems, string_types, integer_types
+from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.hashing import md5s, checksum_s
@@ -57,6 +57,7 @@ from ansible.vars.hostvars import HostVars
 
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
+
 
 class AnsibleJSONEncoder(json.JSONEncoder):
     '''
@@ -108,14 +109,13 @@ def to_nice_json(a, indent=4, *args, **kw):
 
 def to_bool(a):
     ''' return a bool for the arg '''
-    if a is None or type(a) == bool:
+    if a is None or isinstance(a, bool):
         return a
     if isinstance(a, string_types):
         a = a.lower()
-    if a in ['yes', 'on', '1', 'true', 1]:
+    if a in ('yes', 'on', '1', 'true', 1):
         return True
-    else:
-        return False
+    return False
 
 def to_datetime(string, format="%Y-%d-%m %H:%M:%S"):
     return datetime.strptime(string, format)
@@ -256,7 +256,8 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
                 saltsize = 8
             else:
                 saltsize = 16
-            salt = ''.join([r.choice(string.ascii_letters + string.digits) for _ in range(saltsize)])
+            saltcharset = string.ascii_letters + string.digits + '/.'
+            salt = ''.join([r.choice(saltcharset) for _ in range(saltsize)])
 
         if not HAS_PASSLIB:
             if sys.platform.startswith('darwin'):
@@ -401,10 +402,10 @@ def extract(item, container, morekeys=None):
 def failed(*a, **kw):
     ''' Test if task result yields failed '''
     item = a[0]
-    if type(item) != dict:
+    if not isinstance(item, MutableMapping):
         raise errors.AnsibleFilterError("|failed expects a dictionary")
-    rc = item.get('rc',0)
-    failed = item.get('failed',False)
+    rc = item.get('rc', 0)
+    failed = item.get('failed', False)
     if rc != 0 or failed:
         return True
     else:
@@ -417,13 +418,13 @@ def success(*a, **kw):
 def changed(*a, **kw):
     ''' Test if task result yields changed '''
     item = a[0]
-    if type(item) != dict:
+    if not isinstance(item, MutableMapping):
         raise errors.AnsibleFilterError("|changed expects a dictionary")
     if not 'changed' in item:
         changed = False
         if ('results' in item    # some modules return a 'results' key
-                and type(item['results']) == list
-                and type(item['results'][0]) == dict):
+                and isinstance(item['results'], MutableSequence)
+                and isinstance(item['results'][0], MutableMapping)):
             for result in item['results']:
                 changed = changed or result.get('changed', False)
     else:
@@ -433,7 +434,7 @@ def changed(*a, **kw):
 def skipped(*a, **kw):
     ''' Test if task result yields skipped '''
     item = a[0]
-    if type(item) != dict:
+    if not isinstance(item, MutableMapping):
         raise errors.AnsibleFilterError("|skipped expects a dictionary")
     skipped = item.get('skipped', False)
     return skipped
@@ -459,6 +460,14 @@ def do_groupby(environment, value, attribute):
     return [tuple(t) for t in _do_groupby(environment, value, attribute)]
 
 
+def b64encode(string):
+    return to_text(base64.b64encode(to_bytes(string, errors='surrogate_then_strict')))
+
+
+def b64decode(string):
+    return to_text(base64.b64decode(to_bytes(string, errors='surrogate_then_strict')))
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -468,8 +477,8 @@ class FilterModule(object):
             'groupby': do_groupby,
 
             # base 64
-            'b64decode': partial(unicode_wrap, base64.b64decode),
-            'b64encode': partial(unicode_wrap, base64.b64encode),
+            'b64decode': b64decode,
+            'b64encode': b64encode,
 
             # uuid
             'to_uuid': to_uuid,

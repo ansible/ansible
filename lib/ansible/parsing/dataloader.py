@@ -25,10 +25,10 @@ import json
 import tempfile
 from yaml import YAMLError
 
-from ansible.compat.six import text_type, string_types
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
 from ansible.module_utils.basic import is_executable
+from ansible.module_utils.six import text_type, string_types
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.vault import VaultLib, b_HEADER, is_encrypted, is_encrypted_file
 from ansible.parsing.quoting import unquote
@@ -43,7 +43,7 @@ except ImportError:
     display = Display()
 
 
-class DataLoader():
+class DataLoader:
 
     '''
     The DataLoader class is used to load and parse YAML or JSON content,
@@ -372,7 +372,7 @@ class DataLoader():
             f.close()
         return content_tempfile
 
-    def get_real_file(self, file_path):
+    def get_real_file(self, file_path, decrypt=True):
         """
         If the file is vault encrypted return a path to a temporary decrypted file
         If the file is not encrypted then the path is returned
@@ -392,22 +392,23 @@ class DataLoader():
         real_path = self.path_dwim(file_path)
 
         try:
-            with open(to_bytes(real_path), 'rb') as f:
-                # Limit how much of the file is read since we do not know
-                # whether this is a vault file and therefore it could be very
-                # large.
-                if is_encrypted_file(f, count=len(b_HEADER)):
-                    # if the file is encrypted and no password was specified,
-                    # the decrypt call would throw an error, but we check first
-                    # since the decrypt function doesn't know the file name
-                    data = f.read()
-                    if not self._b_vault_password:
-                        raise AnsibleParserError("A vault password must be specified to decrypt %s" % file_path)
+            if decrypt:
+                with open(to_bytes(real_path), 'rb') as f:
+                    # Limit how much of the file is read since we do not know
+                    # whether this is a vault file and therefore it could be very
+                    # large.
+                    if is_encrypted_file(f, count=len(b_HEADER)):
+                        # if the file is encrypted and no password was specified,
+                        # the decrypt call would throw an error, but we check first
+                        # since the decrypt function doesn't know the file name
+                        data = f.read()
+                        if not self._b_vault_password:
+                            raise AnsibleParserError("A vault password must be specified to decrypt %s" % file_path)
 
-                    data = self._vault.decrypt(data, filename=real_path)
-                    # Make a temp file
-                    real_path = self._create_content_tempfile(data)
-                    self._tempfiles.add(real_path)
+                        data = self._vault.decrypt(data, filename=real_path)
+                        # Make a temp file
+                        real_path = self._create_content_tempfile(data)
+                        self._tempfiles.add(real_path)
 
             return real_path
 

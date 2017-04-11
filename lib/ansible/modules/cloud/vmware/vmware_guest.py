@@ -82,7 +82,9 @@ options:
         description:
             - "Set the guest ID (Debian, RHEL, Windows...)"
             - "This field is required when creating a VM"
-            - "Valid values are referenced here: https://www.vmware.com/support/developer/converter-sdk/conv55_apireference/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html"
+            - >
+              Valid values are referenced here:
+              https://www.vmware.com/support/developer/converter-sdk/conv55_apireference/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html
         version_added: "2.3"
    disk:
         description:
@@ -188,6 +190,7 @@ EXAMPLES = '''
         mac: 'aa:bb:dd:aa:00:14'
       template: template_el7
       wait_for_ip_address: yes
+    delegate_to: localhost
     register: deploy
 
 # Clone a VM from Template and customize
@@ -220,6 +223,7 @@ EXAMPLES = '''
         password: new_vm_password
         runonce:
         - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\Enable-WinRM.ps1 -ForceNewSSLCert
+    delegate_to: localhost
 
 # Create a VM template
   - name: create a VM template
@@ -244,6 +248,7 @@ EXAMPLES = '''
         num_cpus: 1
         scsi: lsilogic
       wait_for_ip_address: yes
+    delegate_to: localhost
     register: deploy
 
 # Rename a VM (requires the VM's uuid)
@@ -254,6 +259,7 @@ EXAMPLES = '''
       uuid: 421e4592-c069-924d-ce20-7e7533fab926
       name: new_name
       state: present
+    delegate_to: localhost
 
 # Remove a VM by uuid
   - vmware_guest:
@@ -262,6 +268,7 @@ EXAMPLES = '''
       password: vmware
       uuid: 421e4592-c069-924d-ce20-7e7533fab926
       state: absent
+    delegate_to: localhost
 '''
 
 RETURN = """
@@ -675,7 +682,9 @@ class PyVmomiHelper(object):
                 # VDS switch
                 pg_obj = get_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_devices[key]['name'])
 
-                if nic.device.backing and ( nic.device.backing.port.portgroupKey != pg_obj.key or nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid ):
+                if (nic.device.backing and
+                        (nic.device.backing.port.portgroupKey != pg_obj.key or
+                         nic.device.backing.port.switchUuid != pg_obj.config.distributedVirtualSwitch.uuid)):
                     nic_change_detected = True
 
                 dvs_port_connection = vim.dvs.PortConnection()
@@ -792,7 +801,8 @@ class PyVmomiHelper(object):
 
             if 'joindomain' in self.params['customization']:
                 if 'domainadmin' not in self.params['customization'] or 'domainadminpassword' not in self.params['customization']:
-                    self.module.fail_json(msg="'domainadmin' and 'domainadminpassword' entries are mandatory in 'customization' section to use joindomain feature")
+                    self.module.fail_json(msg="'domainadmin' and 'domainadminpassword' entries are mandatory in 'customization' section to use "
+                                              "joindomain feature")
 
                 ident.identification.domainAdmin = str(self.params['customization'].get('domainadmin'))
                 ident.identification.joinDomain = str(self.params['customization'].get('joindomain'))
