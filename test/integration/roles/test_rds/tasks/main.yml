@@ -128,6 +128,7 @@
     instance_name: "{{ instance_name }}-restore"
     snapshot: "{{ instance_name }}-snapshot"
     wait: yes
+    wait_timeout: 1200
 
 - name: delete restored instance
   rds_instance:
