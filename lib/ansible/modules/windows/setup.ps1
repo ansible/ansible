@@ -139,7 +139,7 @@ $domain_roles = @{
     5 = "Primary domain controller"
 }
 
-$domain_role = $domain_roles.Get_Item([Int32](Get-CimInstance Win32_ComputerSystem).DomainRole)
+$domain_role = $domain_roles.Get_Item([Int32]$win32_cs.DomainRole)
 
 $ansible_facts = @{
     ansible_architecture = $win32_os.OSArchitecture
