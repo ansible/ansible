@@ -33,21 +33,16 @@ short_description: Add or remove a static route.
 description:
     - Add or remove a static route.
 options:
-  destination_ip:
+  destination:
     description:
-      - Destination IP address
-    required: true
-  subnet_mask:
-    description:
-        - Subnet mask of the destination IP address
+      - Destination IP address in CIDR format (ip address/prefix lenght)
     required: true
   gateway:
     description:
-        - Gateway used by the static route
-    required: true
+        - Gateway used by the static route. If gateway is not provided it will be set to "0.0.0.0"
   metric:
     description:
-        - Metric used by the static route
+        - Metric used by the static route.
     default: 1
   state:
     description:
@@ -62,17 +57,14 @@ EXAMPLES = r'''
 
 - name: Add a network static route
   win_route:
-    destination_ip: 192.168.2.10
-    subnet_mask: 255.255.255.255
+    destination: 192.168.2.10/32
     gateway: 192.168.1.1
     metric: 1
     state: present
 
 - name: Remove a network static route
   win_route:
-    destination_ip: 192.168.2.10
-    subnet_mask: 255.255.255.255
-    gateway: 192.168.1.1
+    destination: 192.168.2.10/32
     state: absent
 '''
 RETURN = r'''

@@ -21,11 +21,11 @@
 
 # win_route (Add or remove a network static route)
 
-$params = Parse-Args $args -supports_check_mode $false
+$params = Parse-Args $args -supports_check_mode $true
 
-$destip = Get-AnsibleParam -obj $params -name "destination_ip" -type "str" -failifempty $true
-$mask = Get-AnsibleParam -obj $params -name "subnet_mask" -type "str" -failifempty $true
-$gateway = Get-AnsibleParam -obj $params -name "gateway" -type "str" -failifempty $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
+$dest = Get-AnsibleParam -obj $params -name "destination" -type "str" -failifempty $true
+$gateway = Get-AnsibleParam -obj $params -name "gateway" -type "str"
 $metric = Get-AnsibleParam -obj $params -name "metric" -type "int" -default 1
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateSet "present","absent"
 $result = @{
@@ -33,87 +33,30 @@ $result = @{
              "output" = ""
            }
 
-Function Test-SubnetMask {
-    Param (
-        [Parameter(Mandatory=$true)]
-        [string]$SubnetMask
-    )
-    # Validate and convert Subnet Mask to prefix Lenght.
-    Switch ($SubnetMask) {
-      "255.255.255.255" {$true}
-      "255.255.255.254" {$true}
-      "255.255.255.252" {$true}
-      "255.255.255.248" {$true}
-      "255.255.255.240" {$true}
-      "255.255.255.224" {$true}
-      "255.255.255.192" {$true}
-      "255.255.255.128" {$true}
-      "255.255.255.0" {$true}
-      "255.255.254.0" {$true}
-      "255.255.252.0" {$true}
-      "255.255.248.0" {$true}
-      "255.255.240.0" {$true}
-      "255.255.224.0" {$true}
-      "255.255.192.0" {$true}
-      "255.255.128.0" {$true}
-      "255.255.0.0" {$true}
-      "255.254.0.0" {$true}
-      "255.252.0.0" {$true}
-      "255.248.0.0" {$true}
-      "255.240.0.0" {$true}
-      "255.224.0.0" {$true}
-      "255.192.0.0" {$true}
-      "255.128.0.0" {$true}
-      "255.0.0.0" {$true}
-      "254.0.0.0" {$true}
-      "252.0.0.0" {$true}
-      "248.0.0.0" {$true}
-      "240.0.0.0" {$true}
-      "224.0.0.0" {$true}
-      "192.0.0.0" {$true}
-      "128.0.0.0" {$true}
-      "0.0.0.0" {$true}
-      default {$ErrorMessage = "$SubnetMask is not a valid subnet mask"; 
-               Fail-Json $result $ErrorMessage}
-      }
-}
-
-Function Test-IpAddress {
-    Param (
-        [string]$IpAddress
-        )
-
-    # Test if is a valid ip address
-    try {
-        [ipaddress]$IpAddress|Out-Null
-        return $true
-    }
-    catch {
-        Fail-Json $result $($_.Exception.Message)
-    }
-    
-}
-
-
 Function Add-Route {
   Param (
     [Parameter(Mandatory=$true)]
-    [string]$DestinationIP,
-    [Parameter(Mandatory=$true)]
-    [string]$SubnetMask,
+    [string]$Destination,
     [Parameter(Mandatory=$true)]
     [string]$Gateway,
     [Parameter(Mandatory=$true)]
-    [int]$Metric
+    [int]$Metric,
+    [Parameter(Mandatory=$true)]
+    [bool]$CheckMode
     )
 
-    
+
+  $IpAddress = $Destination.split('/')[0]
+
   # Check if the static route is already present
-  $route = Get-CimInstance win32_ip4PersistedrouteTable -Filter "Destination = '$($DestinationIP)'"
-  if (!($route)){
+  $Route = Get-CimInstance win32_ip4PersistedrouteTable -Filter "Destination = '$($IpAddress)'"
+  if (!($Route)){
     try {
-      # Add a new static route
-      Start-Process "route.exe" -ArgumentList "ADD $DestinationIp MASK $SubnetMask $Gateway METRIC $metric -p" -NoNewWindow -Wait
+      # Find Interface Index
+      $InterfaceIndex = Find-NetRoute -RemoteIPAddress $IpAddress | Select -First 1 -ExpandProperty InterfaceIndex
+
+      # Add network route
+      New-NetRoute -DestinationPrefix $Destination -NextHop $Gateway -InterfaceIndex $InterfaceIndex -RouteMetric $Metric -ErrorAction Stop -WhatIf:$CheckMode|out-null 
       $result.changed = $true
       $result.output = "Route added"
       
@@ -132,13 +75,15 @@ Function Add-Route {
 Function Remove-Route {
   Param (
     [Parameter(Mandatory=$true)]
-    [string]$DestinationIP
+    [string]$Destination,
+    [bool]$CheckMode
     )
-  $route = Get-CimInstance win32_ip4PersistedrouteTable -Filter "Destination = '$($DestinationIP)'"
-  if ($route){
+  $IpAddress = $Destination.split('/')[0]
+  $Route = Get-CimInstance win32_ip4PersistedrouteTable -Filter "Destination = '$($IpAddress)'"
+  if ($Route){
     try {
-      # remove the static route
-      Start-Process "route.exe" -ArgumentList "DELETE $DestinationIp" -NoNewWindow -Wait
+
+      Remove-NetRoute -DestinationPrefix $Destination -Confirm:$false -ErrorAction Stop -WhatIf:$CheckMode 
       $result.changed = $true
       $result.output = "Route removed"
     }
@@ -153,21 +98,20 @@ Function Remove-Route {
 
 }
 
-
-# Test if there are invalid ip address or subnet masks
-Test-IpAddress -IpAddress $destip
-Test-IpAddress -IpAddress $gateway
-Test-SubnetMask -SubnetMask $mask
+# Set gateway if null 
+if(!($gateway)){
+  $gateway = "0.0.0.0"
+}
 
 
 if ($state -eq "present"){
 
-  Add-Route -DestinationIP $destip -SubnetMask $mask -Gateway $gateway -Metric $metric
+  Add-Route -Destination $dest -Gateway $gateway -Metric $metric -CheckMode $check_mode
 
 }
 else {
 
-  Remove-Route -DestinationIP $destip
+  Remove-Route -Destination $dest -CheckMode $check_mode
 
 }
 
