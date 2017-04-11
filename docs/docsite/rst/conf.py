@@ -28,8 +28,8 @@ import os
 sys.path.insert(0, os.path.join('ansible', 'lib'))
 sys.path.append(os.path.abspath('_themes'))
 
-VERSION='2.2'
-AUTHOR='Ansible, Inc'
+VERSION = '2.4'
+AUTHOR = 'Ansible, Inc'
 
 
 # General configuration

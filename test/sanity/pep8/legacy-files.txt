@@ -40,7 +40,6 @@ contrib/inventory/zone.py
 docs/api/conf.py
 docs/bin/dump_keywords.py
 docs/bin/plugin_formatter.py
-docs/docsite/conf.py
 docs/docsite/rst/conf.py
 examples/scripts/uptime.py
 hacking/cherrypick.py
