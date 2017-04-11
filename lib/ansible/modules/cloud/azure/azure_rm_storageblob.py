@@ -107,6 +107,7 @@ options:
         description:
             - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
         required: false
+        version_added: "2.4"
     src:
         description:
             - Source file path. Use with state 'present' to upload a blob.

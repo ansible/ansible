@@ -36,6 +36,7 @@ options:
         description:
             - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
         required: false
+        version_added: "2.4"
     force:
         description:
             - Remove a resource group and all associated resources. Use with state 'absent' to delete a resource

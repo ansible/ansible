@@ -97,7 +97,6 @@ try:
     from azure.mgmt.resource.resources.resource_management_client import ResourceManagementClient
     from azure.mgmt.storage.storage_management_client import StorageManagementClient
     from azure.mgmt.compute.compute_management_client import ComputeManagementClient
-    from azure.storage.cloudstorageaccount import CloudStorageAccount
 except ImportError as exc:
     HAS_AZURE_EXC = exc
     HAS_AZURE = False
@@ -170,6 +169,9 @@ class AzureRMModuleBase(object):
         if self.resource:
             self.resource.rstrip('\/')
             self.resource += '/'
+
+        self.storage_endpoint_suffix = self.module.params.get('storage_endpoint_suffix')
+
         # self.debug = self.module.params.get('debug')
 
         # authenticate
@@ -474,7 +476,8 @@ class AzureRMModuleBase(object):
 
         try:
             self.log('Create blob service')
-            return CloudStorageAccount(storage_account_name, account_keys.keys[0].value).create_block_blob_service()
+            from azure.storage.blob.blockblobservice import BlockBlobService
+            return BlockBlobService(storage_account_name, account_keys.keys[0].value, endpoint_suffix=self.storage_endpoint_suffix)
         except Exception as exc:
             self.fail("Error creating blob service client for storage account {0} - {1}".format(storage_account_name,
                                                                                                 str(exc)))

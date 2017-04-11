@@ -45,6 +45,7 @@ options:
         description:
             - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
         required: false
+        version_added: "2.4"
     allocation_method:
         description:
             - Control whether the assigned Public IP remains permanently assigned to the object. If not

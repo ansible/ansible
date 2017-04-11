@@ -41,6 +41,7 @@ options:
     description:
       - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
     required: false
+    version_added: "2.4"
   location:
     description:
       - The geo-locations in which the resource group will be located.

@@ -42,6 +42,7 @@ options:
         description:
             - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
         required: false
+        version_added: "2.4"
     address_prefixes_cidr:
         description:
             - List of IPv4 address ranges where each is formatted using CIDR notation. Required when creating

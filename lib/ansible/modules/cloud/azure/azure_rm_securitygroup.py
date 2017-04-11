@@ -71,6 +71,7 @@ options:
         description:
             - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
         required: false
+        version_added: "2.4"
     rules:
         description:
             - Set of rules shaping traffic flow to or from a subnet or NIC. Each rule is a dictionary.

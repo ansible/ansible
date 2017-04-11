@@ -46,6 +46,7 @@ options:
         description:
             - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
         required: false
+        version_added: "2.4"
     location:
         description:
             - Azure location value (ie. westus, eastus, eastus2, northcentralus, etc.). Supplying only a

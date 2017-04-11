@@ -47,6 +47,7 @@ options:
         description:
             - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
         required: false
+        version_added: "2.4"
     name:
         description:
             - Name of the network interface.
