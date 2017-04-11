@@ -140,7 +140,7 @@ function Import-Certificate ([string]$PfxPath, [string]$PfxPassword = $null, [st
     }
 
     $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($PfxPath, $PfxPassword, "MachineKeySet,PersistKeySet")
-    if ($cert.Subject -ne "CN=$SubjectName")
+    if (!($cert.Subject -like "CN=$SubjectName*"))
     {
         Write-Log "Certifcate SubjectName does not match"
         Throw "Certifcate SubjectName does not match"
