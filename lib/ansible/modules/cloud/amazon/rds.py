@@ -1081,7 +1081,7 @@ def main():
         engine_version    = dict(required=False),
         parameter_group   = dict(required=False),
         license_model     = dict(choices=['license-included', 'bring-your-own-license', 'general-public-license', 'postgresql-license'], required=False),
-        multi_zone        = dict(type='bool', default=False),
+        multi_zone        = dict(type='bool', required=False),
         iops              = dict(required=False),
         security_groups   = dict(required=False),
         vpc_security_groups = dict(type='list', required=False),
@@ -1123,6 +1123,9 @@ def main():
         'reboot': reboot_db_instance,
         'restore': restore_db_instance,
     }
+
+    if module.params.['command'] != 'modify' and module.params.['multi_zone'] is None:
+        module.params.['multi_zone'] = False
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
     if not region:
