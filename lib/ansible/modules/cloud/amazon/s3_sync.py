@@ -311,7 +311,8 @@ def gather_files(fileroot, include=None, exclude=None):
                 'fullpath': fullpath,
                 'chopped_path': chopped_path,
                 'modified_epoch': f_modified_epoch,
-                'bytes': f_size})
+                'bytes': f_size,
+            })
         # dirpath = path *to* the directory
         # dirnames = subdirs *in* our directory
         # filenames
@@ -446,11 +447,8 @@ def upload_files(s3, bucket, filelist, params):
         }
         if params.get('permission'):
             args['ACL'] = params['permission']
-        try:
-            s3.upload_file(entry['fullpath'], bucket, entry['s3_path'], ExtraArgs=args, Callback=None, Config=None)
-        except botocore.exceptions.ClientError as err:
-            # caught in main()
-            raise
+        # if this fails exception is caught in main()
+        s3.upload_file(entry['fullpath'], bucket, entry['s3_path'], ExtraArgs=args, Callback=None, Config=None)
         ret.append(entry)
     return ret
 
