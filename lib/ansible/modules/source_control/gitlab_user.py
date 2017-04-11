@@ -136,17 +136,20 @@ EXAMPLES = '''
     state: present
   delegate_to: localhost
 
-- name: "Add Gitlab User to Gitlab Group"
-  local_action: gitlab_user
-                server_url="https://gitlab.dj-wasabi.local"
-                validate_certs=true
-                login_user=dj-wasabi
-                name=My Name
-                username=myusername
-                email=me@home.com
-                group: somegroup
-                access_level: owner
-                state=present
+- name: Add Gitlab User to Group
+  gitlab_user:
+    server_url: https://gitlab.dj-wasabi.local
+    validate_certs: True
+    login_user: dj-wasabi
+    group: somegroup
+    name: My Name
+    username: myusername
+    password: mysecretpassword
+    email: me@example.com
+    sshkey_name: MySSH
+    sshkey_file: ssh-rsa AAAAB3NzaC1yc...
+    state: present
+  delegate_to: localhost
 '''
 
 RETURN = '''# '''

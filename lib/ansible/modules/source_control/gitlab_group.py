@@ -71,9 +71,10 @@ options:
         default: null
     members:
         description:
-            - Users to add to the group in the form {username: NAME, access_level: ACCESS_LEVEL }
+            - "Users to add to the group in the form { username: NAME, access_level: ACCESS_LEVEL }"
         required: false
         default: null
+        version_added: 2.4
     state:
         description:
             - create or delete group.
