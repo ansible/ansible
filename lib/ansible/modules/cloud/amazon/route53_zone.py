@@ -51,6 +51,13 @@ options:
             - Comment associated with the zone
         required: false
         default: ''
+    hosted_zone_id:
+        description:
+            - The unique zone identifier you want to delete or "all" if there are many zones with the same domain name.
+              Required if there are multiple zones identified with the above options
+        required: false
+        default: null
+        version_added: 2.4
 extends_documentation_fragment:
     - aws
     - ec2
@@ -89,7 +96,7 @@ EXAMPLES = '''
     var: zone_out
 '''
 
-RETURN='''
+RETURN = '''
 comment:
     description: optional hosted zone comment
     returned: when hosted zone exists
@@ -124,8 +131,6 @@ zone_id:
 
 try:
     import boto
-    import boto.ec2
-    from boto import route53
     from boto.route53 import Route53Connection
     from boto.route53.zone import Zone
     HAS_BOTO = True
@@ -136,6 +141,177 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
 
 
+def find_zones(conn, zone_in, private_zone):
+    results = conn.get_all_hosted_zones()
+    zones = {}
+    for r53zone in results['ListHostedZonesResponse']['HostedZones']:
+        if r53zone['Name'] != zone_in:
+            continue
+        # only save zone names that match the public/private setting
+        if r53zone['Config']['PrivateZone'] == 'true' and private_zone:
+            zones[r53zone.get('Id', '').replace('/hostedzone/', '')] = r53zone['Name']
+        if r53zone['Config']['PrivateZone'] == 'false' and not private_zone:
+            zones[r53zone.get('Id', '').replace('/hostedzone/', '')] = r53zone['Name']
+
+    return zones
+
+
+def create(conn, module, matching_zones):
+    zone_in = module.params.get('zone').lower()
+    vpc_id = module.params.get('vpc_id')
+    vpc_region = module.params.get('vpc_region')
+    comment = module.params.get('comment')
+
+    if not zone_in.endswith('.'):
+        zone_in += "."
+
+    private_zone = bool(vpc_id and vpc_region)
+
+    record = {
+        'private_zone': private_zone,
+        'vpc_id': vpc_id,
+        'vpc_region': vpc_region,
+        'comment': comment,
+    }
+
+    if private_zone:
+        changed, result = create_private(conn, matching_zones, vpc_id, vpc_region, zone_in, record)
+    else:
+        changed, result = create_public(conn, matching_zones, zone_in, record)
+
+    return changed, result
+
+
+def create_private(conn, matching_zones, vpc_id, vpc_region, zone_in, record):
+    for z in matching_zones:
+        zone_details = conn.get_hosted_zone(z)['GetHostedZoneResponse']  # could be in different regions or have different VPCids
+        current_vpc_id = None
+        current_vpc_region = None
+        if isinstance(zone_details['VPCs'], dict):
+            if zone_details['VPCs']['VPC']['VPCId'] == vpc_id:
+                current_vpc_id = zone_details['VPCs']['VPC']['VPCId']
+                current_vpc_region = zone_details['VPCs']['VPC']['VPCRegion']
+        else:
+            if vpc_id in [v['VPCId'] for v in zone_details['VPCs']]:
+                current_vpc_id = vpc_id
+                if vpc_region in [v['VPCRegion'] for v in zone_details['VPCs']]:
+                    current_vpc_region = vpc_region
+        if vpc_id == current_vpc_id and vpc_region == current_vpc_region:
+            record['zone_id'] = z
+            record['name'] = zone_in
+            record['msg'] = "There is already a private hosted zone in the same region with the same VPC \
+                you chose. Unable to create a new private hosted zone in the same name space."
+            changed = False
+            return changed, record
+
+    result = conn.create_hosted_zone(zone_in, **record)
+    hosted_zone = result['CreateHostedZoneResponse']['HostedZone']
+    zone_id = hosted_zone['Id'].replace('/hostedzone/', '')
+    record['zone_id'] = zone_id
+    record['name'] = zone_in
+    changed = True
+    return changed, record
+
+
+def create_public(conn, matching_zones, zone_in, record):
+    if zone_in in matching_zones.values():
+        zone_details = conn.get_hosted_zone(
+            list(matching_zones)[0])['GetHostedZoneResponse']['HostedZone']
+        changed = False
+    else:
+        result = conn.create_hosted_zone(zone_in, **record)
+        zone_details = result['CreateHostedZoneResponse']['HostedZone']
+        changed = True
+
+    record['zone_id'] = zone_details['Id'].replace('/hostedzone/', '')
+    record['name'] = zone_details['Name']
+
+    return changed, record
+
+
+def delete_private(conn, matching_zones, vpc_id, vpc_region):
+    changed = False
+    for z in matching_zones:
+        zone_details = conn.get_hosted_zone(z)['GetHostedZoneResponse']
+        if isinstance(zone_details['VPCs'], dict):
+            if zone_details['VPCs']['VPC']['VPCId'] == vpc_id and vpc_region == zone_details['VPCs']['VPC']['VPCRegion']:
+                conn.delete_hosted_zone(z)
+                changed = True
+                msg = "Successfully deleted %s" % matching_zones[z]
+                break
+            else:
+                changed = False
+        else:
+            if vpc_id in [v['VPCId'] for v in zone_details['VPCs']] and vpc_region in [v['VPCRegion'] for v in zone_details['VPCs']]:
+                conn.delete_hosted_zone(z)
+                changed = True
+                msg = "Successfully deleted %s" % matching_zones[z]
+                break
+            else:
+                changed = False
+    if not changed:
+        msg = "The vpc_id and the vpc_region do not match a private hosted zone."
+
+    return changed, msg
+
+
+def delete_public(conn, matching_zones):
+    if len(matching_zones) > 1:
+        changed = False
+        msg = "There are multiple zones that match. Use hosted_zone_id to specify the correct zone."
+    else:
+        for z in matching_zones:
+            conn.delete_hosted_zone(z)
+            changed = True
+            msg = "Successfully deleted %s" % matching_zones[z]
+    return changed, msg
+
+
+def delete_hosted_id(conn, hosted_zone_id, matching_zones):
+    if hosted_zone_id == "all":
+        deleted = []
+        for z in matching_zones:
+            deleted.append(z)
+            conn.delete_hosted_zone(z)
+        changed = True
+        msg = "Successfully deleted zones: %s" % deleted
+    elif hosted_zone_id in matching_zones:
+        conn.delete_hosted_zone(hosted_zone_id)
+        changed = True
+        msg = "Successfully deleted zone: %s" % hosted_zone_id
+    else:
+        changed = False
+        msg = "There is no zone to delete that matches hosted_zone_id %s." % hosted_zone_id
+    return changed, msg
+
+
+def delete(conn, module, matching_zones):
+    zone_in = module.params.get('zone').lower()
+    vpc_id = module.params.get('vpc_id')
+    vpc_region = module.params.get('vpc_region')
+    comment = module.params.get('comment')
+    hosted_zone_id = module.params.get('hosted_zone_id')
+
+    if not zone_in.endswith('.'):
+        zone_in += "."
+
+    private_zone = bool(vpc_id and vpc_region)
+
+    if zone_in in matching_zones.values():
+        if hosted_zone_id:
+            changed, result = delete_hosted_id(conn, hosted_zone_id, matching_zones)
+        else:
+            if private_zone:
+                changed, result = delete_private(conn, matching_zones, vpc_id, vpc_region)
+            else:
+                changed, result = delete_public(conn, matching_zones)
+    else:
+        changed = False
+        result = "No zone to delete."
+
+    return changed, result
+
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -143,7 +319,8 @@ def main():
         state=dict(default='present', choices=['present', 'absent']),
         vpc_id=dict(default=None),
         vpc_region=dict(default=None),
-        comment=dict(default='')))
+        comment=dict(default=''),
+        hosted_zone_id=dict()))
     module = AnsibleModule(argument_spec=argument_spec)
 
     if not HAS_BOTO:
@@ -153,12 +330,11 @@ def main():
     state = module.params.get('state').lower()
     vpc_id = module.params.get('vpc_id')
     vpc_region = module.params.get('vpc_region')
-    comment = module.params.get('comment')
 
-    if zone_in[-1:] != '.':
+    if not zone_in.endswith('.'):
         zone_in += "."
 
-    private_zone = vpc_id is not None and vpc_region is not None
+    private_zone = bool(vpc_id and vpc_region)
 
     _, _, aws_connect_kwargs = get_aws_connection_info(module)
 
@@ -168,70 +344,13 @@ def main():
     except boto.exception.BotoServerError as e:
         module.fail_json(msg=e.error_message)
 
-    results = conn.get_all_hosted_zones()
-    zones = {}
-
-    for r53zone in results['ListHostedZonesResponse']['HostedZones']:
-        zone_id = r53zone['Id'].replace('/hostedzone/', '')
-        zone_details = conn.get_hosted_zone(zone_id)['GetHostedZoneResponse']
-        if vpc_id and 'VPCs' in zone_details:
-            # this is to deal with this boto bug: https://github.com/boto/boto/pull/2882
-            if isinstance(zone_details['VPCs'], dict):
-                if zone_details['VPCs']['VPC']['VPCId'] == vpc_id:
-                    zones[r53zone['Name']] = zone_id
-            else: # Forward compatibility for when boto fixes that bug
-                if vpc_id in [v['VPCId'] for v in zone_details['VPCs']]:
-                    zones[r53zone['Name']] = zone_id
-        else:
-            zones[r53zone['Name']] = zone_id
-
-    record = {
-        'private_zone': private_zone,
-        'vpc_id': vpc_id,
-        'vpc_region': vpc_region,
-        'comment': comment,
-    }
-
-    if state == 'present' and zone_in in zones:
-        if private_zone:
-            details = conn.get_hosted_zone(zones[zone_in])
-
-            if 'VPCs' not in details['GetHostedZoneResponse']:
-                module.fail_json(
-                    msg="Can't change VPC from public to private"
-                )
-
-            vpc_details = details['GetHostedZoneResponse']['VPCs']['VPC']
-            current_vpc_id = vpc_details['VPCId']
-            current_vpc_region = vpc_details['VPCRegion']
-
-            if current_vpc_id != vpc_id:
-                module.fail_json(
-                    msg="Can't change VPC ID once a zone has been created"
-                )
-            if current_vpc_region != vpc_region:
-                module.fail_json(
-                    msg="Can't change VPC Region once a zone has been created"
-                )
-
-        record['zone_id'] = zones[zone_in]
-        record['name'] = zone_in
-        module.exit_json(changed=False, set=record)
-
-    elif state == 'present':
-        result = conn.create_hosted_zone(zone_in, **record)
-        hosted_zone = result['CreateHostedZoneResponse']['HostedZone']
-        zone_id = hosted_zone['Id'].replace('/hostedzone/', '')
-        record['zone_id'] = zone_id
-        record['name'] = zone_in
-        module.exit_json(changed=True, set=record)
-
-    elif state == 'absent' and zone_in in zones:
-        conn.delete_hosted_zone(zones[zone_in])
-        module.exit_json(changed=True)
-
+    zones = find_zones(conn, zone_in, private_zone)
+    if state == 'present':
+        changed, result = create(conn, module, matching_zones=zones)
     elif state == 'absent':
-        module.exit_json(changed=False)
+        changed, result = delete(conn, module, matching_zones=zones)
+
+    module.exit_json(changed=changed, result=result)
 
 if __name__ == '__main__':
     main()
