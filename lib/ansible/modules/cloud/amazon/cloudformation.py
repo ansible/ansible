@@ -451,6 +451,7 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive=[['template_url', 'template']],
+        supports_check_mode=True
     )
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 and botocore are required for this module')
@@ -508,6 +509,9 @@ def main():
     cfn.delete_stack = backoff_wrapper(cfn.delete_stack)
 
     stack_info = get_stack_facts(cfn, stack_params['StackName'])
+
+    if module.check_mode:
+        module.exit_json(changed={"changed": True})
 
     if state == 'present':
         if not stack_info:
