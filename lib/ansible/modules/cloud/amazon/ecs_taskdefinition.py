@@ -33,7 +33,7 @@ options:
         description:
             - State whether the task definition should exist or be deleted
         required: true
-        choices: ['present', 'absent']
+        choices: ['present', 'absent', 'create']
     arn:
         description:
             - The arn of the task description to delete
@@ -219,7 +219,7 @@ def main():
 
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state=dict(required=True, choices=['present', 'absent']),
+        state=dict(required=True, choices=['present', 'absent', 'create']),
         arn=dict(required=False, type='str'),
         family=dict(required=False, type='str'),
         revision=dict(required=False, type='int'),
@@ -240,7 +240,7 @@ def main():
     task_mgr = EcsTaskManager(module)
     results = dict(changed=False)
 
-    if module.params['state'] == 'present':
+    if module.params['state'] in ['present', 'create']:
         if 'containers' not in module.params or not module.params['containers']:
             module.fail_json(msg="To use task definitions, a list of containers must be specified")
 
@@ -345,7 +345,7 @@ def main():
                 if existing:
                     break
 
-        if existing:
+        if existing and not module.params['state'] == 'create':
             # Awesome. Have an existing one. Nothing to do.
             results['taskdefinition'] = existing
         else:
