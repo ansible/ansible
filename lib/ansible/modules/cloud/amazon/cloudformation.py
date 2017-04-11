@@ -233,6 +233,8 @@ stack_outputs:
 
 import json
 import time
+import random
+import string
 import traceback
 from hashlib import sha1
 
@@ -297,36 +299,28 @@ def create_stack(module, stack_params, cfn):
 
 def list_changesets(cfn, stack_name):
     res = cfn.list_change_sets(StackName=stack_name)
-    changesets = []
-    for cs in res['Summaries']:
-        changesets.append(cs['ChangeSetName'])
-    return changesets
+    return [cs['ChangeSetName'] for cs in res['Summaries']]
+
 
 def create_changeset(module, stack_params, cfn):
     if 'TemplateBody' not in stack_params and 'TemplateURL' not in stack_params:
         module.fail_json(msg="Either 'template' or 'template_url' is required.")
 
     try:
-        if not 'ChangeSetName' in stack_params:
-            # Determine ChangeSetName using hash of parameters.
-            json_params = json.dumps(stack_params, sort_keys=True)
-
-            changeset_name = 'Ansible-' + stack_params['StackName'] + '-' + sha1(to_bytes(json_params, errors='surrogate_or_strict')).hexdigest()
-            stack_params['ChangeSetName'] = changeset_name
-        else:
-            changeset_name = stack_params['ChangeSetName']
+        changeset_name = build_changeset_name(stack_params)
+        stack_params['ChangeSetName'] = changeset_name
 
         # Determine if this changeset already exists
         pending_changesets = list_changesets(cfn, stack_params['StackName'])
         if changeset_name in pending_changesets:
-            warning = 'WARNING: '+str(len(pending_changesets))+' pending changeset(s) exist(s) for this stack!'
-            result = dict(changed=False, output='ChangeSet ' + changeset_name + ' already exists.', warnings=[warning])
+            warning = 'WARNING: %d pending changeset(s) exist(s) for this stack!' % len(pending_changesets)
+            result = dict(changed=False, output='ChangeSet %s already exists.' % changeset_name, warnings=[warning])
         else:
             cs = cfn.create_change_set(**stack_params)
             result = stack_operation(cfn, stack_params['StackName'], 'UPDATE')
-            result['warnings'] = [('Created changeset named ' + changeset_name + ' for stack ' + stack_params['StackName']),
-                ('You can execute it using: aws cloudformation execute-change-set --change-set-name ' + cs['Id']),
-                ('NOTE that dependencies on this stack might fail due to pending changes!')]
+            result['warnings'] = ['Created changeset named %s for stack %s' % (changeset_name, stack_params['StackName']),
+                'You can execute it using: aws cloudformation execute-change-set --change-set-name %s' % cs['Id'],
+                'NOTE that dependencies on this stack might fail due to pending changes!']
     except Exception as err:
         error_msg = boto_exception(err)
         if 'No updates are to be performed.' in error_msg:
@@ -405,6 +399,41 @@ def stack_operation(cfn, stack_name, operation):
             # this can loop forever :/
             time.sleep(5)
     return {'failed': True, 'output':'Failed for unknown reasons.'}
+
+
+def build_changeset_name(stack_params):
+    if 'ChangeSetName' in stack_params:
+        return stack_params['ChangeSetName']
+
+    json_params = json.dumps(stack_params, sort_keys=True)
+
+    return 'Ansible-{0}-{1}'.format(
+        stack_params['StackName'],
+        sha1(to_bytes(json_params, errors='surrogate_or_strict')).hexdigest()
+    )
+
+
+def check_mode_changeset(module, stack_params, cfn):
+    """Create a change set, describe it and delete it before returning check mode outputs."""
+    stack_params['ChangeSetName'] = build_changeset_name(stack_params)
+    try:
+        change_set = cfn.create_change_set(**stack_params)
+
+        while True:
+            description = cfn.describe_change_set(ChangeSetName=change_set['Id'])
+            if description['Status'] in ['CREATE_COMPLETE', 'FAILED']:
+                break
+            time.sleep(5)
+
+        cfn.delete_change_set(ChangeSetName=change_set['Id'])
+
+        if description['Status'] == 'FAILED' and "didn't contain changes" in description['StatusReason']:
+            return {'changed': False, 'meta': description['StatusReason']}
+
+        return {'changed': True, 'meta': description['Changes']}
+    except (botocore.exceptions.ValidationError, botocore.exceptions.ClientError) as err:
+        error_msg = boto_exception(err)
+        module.fail_json(msg=error_msg, exception=traceback.format_exc())
 
 
 def get_stack_facts(cfn, stack_name):
@@ -511,7 +540,7 @@ def main():
     stack_info = get_stack_facts(cfn, stack_params['StackName'])
 
     if module.check_mode:
-        module.exit_json(changed={"changed": True})
+        module.exit_json(**check_mode_changeset(module, stack_params, cfn))
 
     if state == 'present':
         if not stack_info:
