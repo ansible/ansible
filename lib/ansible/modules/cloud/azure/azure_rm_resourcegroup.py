@@ -32,11 +32,6 @@ short_description: Manage Azure resource groups.
 description:
     - Create, update and delete a resource group.
 options:
-    resource:
-        description:
-            - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
-        required: false
-        version_added: "2.4"
     force:
         description:
             - Remove a resource group and all associated resources. Use with state 'absent' to delete a resource
@@ -136,8 +131,7 @@ class AzureRMResourceGroup(AzureRMModuleBase):
             name=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             location=dict(type='str'),
-            force=dict(type='bool', default=False),
-            resource=dict(type='str', default=None)
+            force=dict(type='bool', default=False)
         )
 
         self.name = None

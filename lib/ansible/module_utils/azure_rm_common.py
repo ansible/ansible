@@ -40,6 +40,7 @@ AZURE_COMMON_ARGS = dict(
     tenant=dict(type='str', no_log=True),
     ad_user=dict(type='str', no_log=True),
     password=dict(type='str', no_log=True),
+    resource=dict(type='str', default=None),
     # debug=dict(type='bool', default=False),
 )
 

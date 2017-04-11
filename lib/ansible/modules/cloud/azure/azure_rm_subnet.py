@@ -38,11 +38,6 @@ options:
         description:
             - Name of resource group.
         required: true
-    resource:
-        description:
-            - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
-        required: false
-        version_added: "2.4"
     name:
         description:
             - Name of the subnet.
@@ -171,12 +166,11 @@ class AzureRMSubnet(AzureRMModuleBase):
 
         self.module_arg_spec = dict(
             resource_group=dict(type='str', required=True),
-            resource=dict(type='str', default=None),
             name=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             virtual_network_name=dict(type='str', required=True, aliases=['virtual_network']),
             address_prefix_cidr=dict(type='str', aliases=['address_prefix']),
-            security_group_name=dict(type='str', aliases=['security_group'])
+            security_group_name=dict(type='str', aliases=['security_group']),
         )
 
         required_if = [

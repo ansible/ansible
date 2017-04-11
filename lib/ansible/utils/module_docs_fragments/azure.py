@@ -61,6 +61,11 @@ options:
             - Azure tenant ID. Use when authenticating with a Service Principal.
         required: false
         default: null
+    resource:
+        description:
+            - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
+        required: false
+        version_added: "2.4"
 
 requirements:
     - "python >= 2.7"

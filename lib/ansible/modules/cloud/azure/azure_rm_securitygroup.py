@@ -67,11 +67,6 @@ options:
         description:
             - Name of the resource group the security group belongs to.
         required: true
-    resource:
-        description:
-            - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
-        required: false
-        version_added: "2.4"
     rules:
         description:
             - Set of rules shaping traffic flow to or from a subnet or NIC. Each rule is a dictionary.
@@ -529,9 +524,8 @@ class AzureRMSecurityGroup(AzureRMModuleBase):
             purge_default_rules=dict(type='bool', default=False),
             purge_rules=dict(type='bool', default=False),
             resource_group=dict(required=True, type='str'),
-            resource=dict(type='str', default=None),
             rules=dict(type='list'),
-            state=dict(type='str', default='present', choices=['present', 'absent'])
+            state=dict(type='str', default='present', choices=['present', 'absent']),
         )
 
         self.default_rules = None

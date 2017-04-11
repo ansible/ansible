@@ -37,11 +37,6 @@ options:
     description:
       - The resource group name to use or create to host the deployed template
     required: true
-  resource:
-    description:
-      - The base URL for the Resource Manager API endpoint (e.g. https://management.azure.com)
-    required: false
-    version_added: "2.4"
   location:
     description:
       - The geo-locations in which the resource group will be located.
@@ -413,7 +408,6 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
 
         self.module_arg_spec = dict(
             resource_group_name=dict(type='str', required=True, aliases=['resource_group']),
-            resource=dict(type='str', default=None),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             template=dict(type='dict', default=None),
             parameters=dict(type='dict', default=None),
