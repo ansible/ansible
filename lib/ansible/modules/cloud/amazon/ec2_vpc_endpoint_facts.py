@@ -31,15 +31,6 @@ options:
       - Specifies the query action to take. Services returns the supported
         AWS services that can be specified when creating an endpoint.
     required: True
-  max_items:
-    description:
-      - Maximum number of items to return. AWS maximum of 1000
-    required: false
-  next_token:
-    description:
-      - If the result exceeds the max_items or the AWS maximum of 1000 you
-        can specify the token to get the next set of results
-    required: false
     choices:
       - services
       - endpoints
@@ -109,6 +100,8 @@ import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, HAS_BOTO3
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+
 
 try:
     import botocore
@@ -121,32 +114,36 @@ def date_handler(obj):
 
 
 def get_supported_services(client, module):
+    results = list()
     params = dict()
-    if module.params.get('max_items'):
-        params['MaxResults'] = module.params.get('max_items')
-    if module.params.get('next_token'):
-        params['NextToken'] = module.params.get('next_token')
-
-    result = client.describe_vpc_endpoint_services(**params)
-    return result
+    while True:
+        response = client.describe_vpc_endpoint_services(**params)
+        results.extend(response['ServiceNames'])
+        if 'NextToken' in response:
+            params['NextToken'] = response['NextToken']
+        else:
+            break
+    return dict(service_names=results)
 
 
 def get_endpoints(client, module):
+    results = list()
     params = dict()
     params['Filters'] = ansible_dict_to_boto3_filter_list(module.params.get('filters'))
-    if module.params.get('max_items'):
-        params['MaxResults'] = module.params.get('max_items')
-    if module.params.get('next_token'):
-        params['NextToken'] = module.params.get('next_token')
     if module.params.get('vpc_endpoint_ids'):
         params['VpcEndpointIds'] = module.params.get('vpc_endpoint_ids')
-
+    while True:
+        response = client.describe_vpc_endpoints(**params)
+        results.extend(response['VpcEndpoints'])
+        if 'NextToken' in response:
+            params['NextToken'] = response['NextToken']
+        else:
+            break
     try:
-        result = json.loads(json.dumps(client.describe_vpc_endpoints(**params), default=date_handler))
+        results = json.loads(json.dumps(results, default=date_handler))
     except Exception as e:
         module.fail_json(msg=str(e.message))
-
-    return result
+    return dict(vpc_endpoints=[camel_dict_to_snake_dict(result) for result in results])
 
 
 def main():
@@ -154,10 +151,8 @@ def main():
     argument_spec.update(
         dict(
             query=dict(choices=['services', 'endpoints'], required=True),
-            max_items=dict(type='int'),
-            next_token=dict(),
             filters=dict(default={}, type='dict'),
-            vpc_endpoint_ids=dict(default=None, type='list'),
+            vpc_endpoint_ids=dict(type='list'),
         )
     )
 
@@ -182,7 +177,7 @@ def main():
     }
     results = invocations[module.params.get('query')](connection, module)
 
-    module.exit_json(result=results)
+    module.exit_json(**results)
 
 
 if __name__ == '__main__':
