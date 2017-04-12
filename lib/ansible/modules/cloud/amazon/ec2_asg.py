@@ -597,9 +597,7 @@ def create_autoscaling_group(connection, module):
                 connection.put_notification_configuration(
                     AutoScalingGroupName=group_name,
                     TopicARN=notification_topic,
-                    NotificationTypes=[
-                        notification_types,
-                    ]
+                    NotificationTypes=notification_types
                 )
             as_group = connection.describe_auto_scaling_groups(AutoScalingGroupNames=[group_name])['AutoScalingGroups'][0]
             asg_properties = get_properties(as_group)
