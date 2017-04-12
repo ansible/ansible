@@ -118,11 +118,13 @@ options:
     description:
       - Specifies Application Control name.
   logtraffic:
+    version_added: "2.4"
     description:
       - Logs sessions that matched policy.
     default: utm
     choices: ['disable', 'utm', 'all']
   logtraffic_start:
+    version_added: "2.4"
     description:
       - Logs begining of session as well.
     default: false
