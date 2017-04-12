@@ -6,7 +6,7 @@ versions:
 - "2.3":
     code_name: "Ramble On"
     releases:
-    - "0": TBD
+    - "0": "04-12-2017"
 - "2.2":
     code_name: "The Battle of Evermore"
     releases:
