@@ -483,7 +483,7 @@ def main():
     region, ec2_url, aws_connect_kwargs = ansible.module_utils.ec2.get_aws_connection_info(module, boto3=True)
     if region:
         s3 = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='s3', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    else:
+    if not region:
         module.fail_json(msg="Region must be specified")
 
     if mode == 'push':
