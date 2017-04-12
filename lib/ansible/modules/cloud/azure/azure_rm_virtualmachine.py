@@ -1243,7 +1243,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
         if self.subnet_name:
             try:
-                subnet = self.network_client.subnets.get(self.resource_group, virtual_network_name)
+                subnet = self.network_client.subnets.get(self.resource_group, virtual_network_name, self.subnet_name)
                 subnet_id = subnet.id
             except Exception as exc:
                 self.fail("Error: fetching subnet {0} - {1}".format(self.subnet_name, str(exc)))
