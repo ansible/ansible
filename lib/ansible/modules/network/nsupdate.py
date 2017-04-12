@@ -55,7 +55,6 @@ options:
     key_secret:
         description:
             - Use TSIG key secret, associated with C(key_name), to authenticate against C(server)
-        default: 7911
     key_algorithm:
         description:
             - Specify key algorithm used by C(key_secret).
