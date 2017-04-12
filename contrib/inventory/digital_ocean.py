@@ -47,7 +47,7 @@ The following groups are generated from --list:
  - size_NAME
  - status_STATUS
 
-When run against a specific host, this script returns the following variables:
+For each host, the following variables are registered:
  - do_backup_ids
  - do_created_at
  - do_disk
@@ -58,7 +58,7 @@ When run against a specific host, this script returns the following variables:
  - do_private_ip_address
  - do_kernel - object
  - do_locked
- - de_memory
+ - do_memory
  - do_name
  - do_networks - object
  - do_next_backup_window
@@ -67,7 +67,9 @@ When run against a specific host, this script returns the following variables:
  - do_size_slug
  - do_snapshot_ids - list
  - do_status
+ - do_tags
  - do_vcpus
+ - do_volume_ids
 
 -----
 ```
@@ -147,8 +149,7 @@ except ImportError:
 try:
     from dopy.manager import DoManager
 except ImportError as e:
-    print("failed=True msg='`dopy` library required for this script'")
-    sys.exit(1)
+    sys.exit("failed=True msg='`dopy` library required for this script'")
 
 
 
@@ -178,9 +179,9 @@ class DigitalOceanInventory(object):
 
         # Verify credentials were set
         if not hasattr(self, 'api_token'):
-            print('''Could not find values for DigitalOcean api_token.
+            sys.stderr.write('''Could not find values for DigitalOcean api_token.
 They must be specified via either ini file, command line argument (--api-token),
-or environment variables (DO_API_TOKEN)''')
+or environment variables (DO_API_TOKEN)\n''')
             sys.exit(-1)
 
         # env command, show DigitalOcean credentials
@@ -196,7 +197,7 @@ or environment variables (DO_API_TOKEN)''')
             self.load_from_cache()
             if len(self.data) == 0:
                 if self.args.force_cache:
-                    print('''Cache is empty and --force-cache was specified''')
+                    sys.stderr.write('''Cache is empty and --force-cache was specified\n''')
                     sys.exit(-1)
 
         self.manager = DoManager(None, self.api_token, api_version=2)
@@ -261,7 +262,7 @@ or environment variables (DO_API_TOKEN)''')
 
         # Private IP Address
         if config.has_option('digital_ocean', 'use_private_network'):
-            self.use_private_network = config.get('digital_ocean', 'use_private_network')
+            self.use_private_network = config.getboolean('digital_ocean', 'use_private_network')
 
         # Group variables
         if config.has_option('digital_ocean', 'group_variables'):
@@ -352,12 +353,12 @@ or environment variables (DO_API_TOKEN)''')
     def build_inventory(self):
         '''Build Ansible inventory of droplets'''
         self.inventory = {
-                            'all': {
-                                    'hosts': [],
-                                    'vars': self.group_variables
-                                   },
-                            '_meta': {'hostvars': {}}
-                        }
+            'all': {
+                'hosts': [],
+                'vars': self.group_variables
+                },
+            '_meta': {'hostvars': {}}
+            }
 
         # add all droplets by id and name
         for droplet in self.data['droplets']:
@@ -373,46 +374,44 @@ or environment variables (DO_API_TOKEN)''')
 
             self.inventory['all']['hosts'].append(dest)
 
-            self.inventory[droplet['id']] = dest
-            self.inventory[droplet['name']] = dest
+            self.inventory[droplet['id']] = [dest]
+            self.inventory[droplet['name']] = [dest]
 
             # groups that are always present
-            for group in [
-                            'region_' + droplet['region']['slug'],
-                            'image_' + str(droplet['image']['id']),
-                            'size_' + droplet['size']['slug'],
-                            'distro_' + self.to_safe(droplet['image']['distribution']),
-                            'status_' + droplet['status'],
-
-                        ]:
+            for group in ('region_' + droplet['region']['slug'],
+                          'image_' + str(droplet['image']['id']),
+                          'size_' + droplet['size']['slug'],
+                          'distro_' + self.to_safe(droplet['image']['distribution']),
+                          'status_' + droplet['status']):
                 if group not in self.inventory:
                     self.inventory[group] = { 'hosts': [ ], 'vars': {} }
                 self.inventory[group]['hosts'].append(dest)
 
             # groups that are not always present
-            for group in [
-                            droplet['image']['slug'],
-                            droplet['image']['name']
-                         ]:
+            for group in (droplet['image']['slug'],
+                          droplet['image']['name']):
                 if group:
                     image = 'image_' + self.to_safe(group)
                     if image not in self.inventory:
                         self.inventory[image] = { 'hosts': [ ], 'vars': {} }
                     self.inventory[image]['hosts'].append(dest)
 
+            if droplet['tags']:
+                for tag in droplet['tags']:
+                    if tag not in self.inventory:
+                        self.inventory[tag] = { 'hosts': [ ], 'vars': {} }
+                    self.inventory[tag]['hosts'].append(dest)
+
+            # hostvars
+            info = self.do_namespace(droplet)
+            self.inventory['_meta']['hostvars'][dest] = info
 
 
     def load_droplet_variables_for_host(self):
         '''Generate a JSON response to a --host call'''
         host = int(self.args.host)
-
         droplet = self.manager.show_droplet(host)
-
-        # Put all the information in a 'do_' namespace
-        info = {}
-        for k, v in droplet.items():
-            info['do_'+k] = v
-
+        info = self.do_namespace(droplet)
         return {'droplet': info}
 
 
@@ -470,6 +469,13 @@ or environment variables (DO_API_TOKEN)''')
     def to_safe(self, word):
         ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible groups '''
         return re.sub("[^A-Za-z0-9\-\.]", "_", word)
+
+    def do_namespace(self, data):
+        ''' Returns a copy of the dictionary with all the keys put in a 'do_' namespace '''
+        info = {}
+        for k, v in data.items():
+            info['do_'+k] = v
+        return info
 
 
 

@@ -1,0 +1,16 @@
+---
+cli:
+  host: "{{ ansible_host }}"
+  username: "{{ eos_cli_user | default('admin') }}"
+  password: "{{ eos_cli_pass | default('admin') }}"
+  transport: cli
+  authorize: yes
+
+eapi:
+  host: "{{ ansible_host }}"
+  username: "{{ eos_eapi_user | default('admin') }}"
+  password: "{{ eos_eapi_pass | default('admin') }}"
+  transport: eapi
+  use_ssl: no
+  port: 80
+  authorize: yes

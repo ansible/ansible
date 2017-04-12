@@ -21,14 +21,17 @@ __metaclass__ = type
 
 import itertools
 
-from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
+
 
 class LoopControl(Base):
 
     _loop_var = FieldAttribute(isa='str')
+    _label    = FieldAttribute(isa='str')
+    _pause    = FieldAttribute(isa='int')
 
     def __init__(self):
         super(LoopControl, self).__init__()

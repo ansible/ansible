@@ -35,9 +35,10 @@ class Become:
     _become              = FieldAttribute(isa='bool')
     _become_method       = FieldAttribute(isa='string')
     _become_user         = FieldAttribute(isa='string')
+    _become_flags        = FieldAttribute(isa='string')
 
     def __init__(self):
-        return super(Become, self).__init__()
+        super(Become, self).__init__()
 
     def _detect_privilege_escalation_conflict(self, ds):
 
@@ -101,29 +102,3 @@ class Become:
             if become_user is None:
                 become_user = C.DEFAULT_BECOME_USER
 
-    def _get_attr_become(self):
-        '''
-        Override for the 'become' getattr fetcher, used from Base.
-        '''
-        if hasattr(self, '_get_parent_attribute'):
-            return self._get_parent_attribute('become')
-        else:
-            return self._attributes['become']
-
-    def _get_attr_become_method(self):
-        '''
-        Override for the 'become_method' getattr fetcher, used from Base.
-        '''
-        if hasattr(self, '_get_parent_attribute'):
-            return self._get_parent_attribute('become_method')
-        else:
-            return self._attributes['become_method']
-
-    def _get_attr_become_user(self):
-        '''
-        Override for the 'become_user' getattr fetcher, used from Base.
-        '''
-        if hasattr(self, '_get_parent_attribute'):
-            return self._get_parent_attribute('become_user')
-        else:
-            return self._attributes['become_user']

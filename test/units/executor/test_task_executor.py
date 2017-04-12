@@ -26,6 +26,7 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.task_executor import TaskExecutor
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import action_loader, lookup_loader
+from ansible.parsing.yaml.objects import AnsibleUnicode
 
 from units.mock.loader import DictDataLoader
 
@@ -138,7 +139,7 @@ class TestTaskExecutor(unittest.TestCase):
 
         mock_host = MagicMock()
 
-        def _copy():
+        def _copy(exclude_parent=False, exclude_tasks=False):
             new_item = MagicMock()
             return new_item
 
@@ -259,7 +260,7 @@ class TestTaskExecutor(unittest.TestCase):
         # you can't use a list as a dict key so that would probably throw
         # an error later.  If so, we can throw it now instead.
         # Squashing in this case would not be intuitive as the user is being
-        # explicit in using each list entry as a key.  
+        # explicit in using each list entry as a key.
         job_vars = dict(pkg_mgr='yum', packages={ "a": "foo", "b": "bar", "foo": "baz", "bar": "quux" })
         items = [['a', 'b'], ['foo', 'bar']]
         mock_task.action = 'yum'
@@ -375,6 +376,7 @@ class TestTaskExecutor(unittest.TestCase):
         # here: on Python 2 comparing MagicMock() > 0 returns True, and the
         # other reason is that if I specify 0 here, the test fails. ;)
         mock_task.async = 1
+        mock_task.poll = 0
 
         mock_play_context = MagicMock()
         mock_play_context.post_validate.return_value = None
@@ -408,11 +410,11 @@ class TestTaskExecutor(unittest.TestCase):
         mock_action.run.return_value = dict(ansible_facts=dict())
         res = te._execute()
 
-        mock_task.changed_when = "1 == 1"
+        mock_task.changed_when = MagicMock(return_value=AnsibleUnicode("1 == 1"))
         res = te._execute()
 
         mock_task.changed_when = None
-        mock_task.failed_when = "1 == 1"
+        mock_task.failed_when = MagicMock(return_value=AnsibleUnicode("1 == 1"))
         res = te._execute()
 
         mock_task.failed_when = None

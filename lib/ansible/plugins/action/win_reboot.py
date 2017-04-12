@@ -19,16 +19,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.plugins.action import ActionBase
-from ansible.utils.boolean import boolean
-from ansible.utils.unicode import to_unicode
-from ansible.errors import AnsibleUndefinedVariable
-
 import socket
 import time
-import traceback
 
 from datetime import datetime, timedelta
+
+from ansible.plugins.action import ActionBase
 
 try:
     from __main__ import display
@@ -36,8 +32,10 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 class TimedOutException(Exception):
     pass
+
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
@@ -47,10 +45,11 @@ class ActionModule(ActionBase):
     DEFAULT_CONNECT_TIMEOUT_SEC = 5
     DEFAULT_PRE_REBOOT_DELAY_SEC = 2
     DEFAULT_TEST_COMMAND = 'whoami'
+    DEFAULT_REBOOT_MESSAGE = 'Reboot initiated by Ansible.'
 
     def do_until_success_or_timeout(self, what, timeout_sec, what_desc, fail_sleep_sec=1):
         max_end_time = datetime.utcnow() + timedelta(seconds=timeout_sec)
-        
+
         while datetime.utcnow() < max_end_time:
             try:
                 what()
@@ -72,7 +71,8 @@ class ActionModule(ActionBase):
         reboot_timeout_sec = int(self._task.args.get('reboot_timeout_sec', self.DEFAULT_REBOOT_TIMEOUT_SEC))
         connect_timeout_sec = int(self._task.args.get('connect_timeout_sec', self.DEFAULT_CONNECT_TIMEOUT_SEC))
         pre_reboot_delay_sec = int(self._task.args.get('pre_reboot_delay_sec', self.DEFAULT_PRE_REBOOT_DELAY_SEC))
-        test_command = self._task.args.get('test_command', self.DEFAULT_TEST_COMMAND)
+        test_command = str(self._task.args.get('test_command', self.DEFAULT_TEST_COMMAND))
+        msg = str(self._task.args.get('msg', self.DEFAULT_REBOOT_MESSAGE))
 
         if self._play_context.check_mode:
             display.vvv("win_reboot: skipping for check_mode")
@@ -82,9 +82,22 @@ class ActionModule(ActionBase):
         winrm_port = self._connection._winrm_port
 
         result = super(ActionModule, self).run(tmp, task_vars)
-        
-        # initiate reboot
-        (rc, stdout, stderr) = self._connection.exec_command("shutdown /r /t %d" % pre_reboot_delay_sec)
+        result['warnings'] = []
+
+        # Initiate reboot
+        (rc, stdout, stderr) = self._connection.exec_command('shutdown /r /t %d /c "%s"' % (pre_reboot_delay_sec, msg))
+
+        # Test for "A system shutdown has already been scheduled. (1190)" and handle it gracefully
+        if rc == 1190:
+            result['warnings'].append('A scheduled reboot was pre-empted by Ansible.')
+
+            # Try to abort (this may fail if it was already aborted)
+            (rc, stdout1, stderr1) = self._connection.exec_command('shutdown /a')
+
+            # Initiate reboot again
+            (rc, stdout2, stderr2) = self._connection.exec_command('shutdown /r /t %d' % pre_reboot_delay_sec)
+            stdout += stdout1 + stdout2
+            stderr += stderr1 + stderr2
 
         if rc != 0:
             result['failed'] = True
@@ -92,7 +105,7 @@ class ActionModule(ActionBase):
             result['msg'] = "Shutdown command failed, error text was %s" % stderr
             return result
 
-        def raise_if_port_open(): 
+        def raise_if_port_open():
             try:
                 sock = socket.create_connection((winrm_host, winrm_port), connect_timeout_sec)
                 sock.close()
@@ -137,4 +150,3 @@ class ActionModule(ActionBase):
             result['msg'] = toex.message
 
         return result
-

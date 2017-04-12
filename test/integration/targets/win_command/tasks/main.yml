@@ -1,0 +1,135 @@
+- name: execute a command
+  win_command: whoami /groups
+  register: cmdout
+
+- name: validate result
+  assert:
+    that:
+    - cmdout|success
+    - cmdout|changed
+    - cmdout.cmd == 'whoami /groups'
+    - cmdout.delta is match('^\d:(\d){2}:(\d){2}.(\d){6}$')
+    - cmdout.end is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
+    - cmdout.rc == 0
+    - cmdout.start is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
+    - cmdout.stderr == ""
+    - cmdout.stdout is search('GROUP INFORMATION')
+    - '"GROUP INFORMATION" in cmdout.stdout_lines'
+
+- name: execute something nonexistent
+  win_command: bogus_command1234
+  register: cmdout
+  ignore_errors: true
+
+- name: validate result
+  assert:
+    that:
+    - cmdout|failed
+    - not cmdout|changed
+    - cmdout.cmd == 'bogus_command1234'
+    - cmdout.rc == 2
+    - cmdout.msg is search('cannot find the file specified')
+
+- name: execute something with error output
+  win_command: cmd /c "echo some output & echo some error 1>&2"
+  register: cmdout
+
+- name: validate result
+  assert:
+    that:
+    - cmdout|success
+    - cmdout|changed
+    - cmdout.cmd == 'cmd /c "echo some output & echo some error 1>&2"'
+    - cmdout.delta is match('^\d:(\d){2}:(\d){2}.(\d){6}$')
+    - cmdout.end is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
+    - cmdout.rc == 0
+    - cmdout.start is match('^(\d){4}\-(\d){2}\-(\d){2} (\d){2}:(\d){2}:(\d){2}.(\d){6}$')
+    - cmdout.stderr is search('some error')
+    - cmdout.stdout == "some output \r\n"
+    - cmdout.stdout_lines == ["some output "]
+
+- name: ensure test file is absent
+  win_file:
+    path: c:\testfile.txt
+    state: absent
+
+- name: run with creates, should create
+  win_command: cmd /c "echo $null >> c:\testfile.txt"
+  args:
+    creates: c:\testfile.txt
+  register: cmdout
+
+- name: validate result
+  assert:
+    that:
+    - cmdout|success
+    - cmdout|changed
+
+- name: run again with creates, should skip
+  win_command: cmd /c "echo $null >> c:\testfile.txt"
+  args:
+    creates: c:\testfile.txt
+  register: cmdout
+
+- name: validate result
+  assert:
+    that:
+    - cmdout|skipped
+    - cmdout.msg is search('exists')
+
+- name: ensure testfile is still present
+  win_stat:
+    path: c:\testfile.txt
+  register: statout
+
+- name: validate result
+  assert:
+    that:
+    - statout.stat.exists == true
+
+- name: run with removes, should remove
+  win_command: cmd /c "del c:\testfile.txt"
+  args:
+    removes: c:\testfile.txt
+  register: cmdout
+
+- name: validate result
+  assert:
+    that:
+    - cmdout|success
+    - cmdout|changed
+
+- name: run again with removes, should skip
+  win_command: cmd /c "del c:\testfile.txt"
+  args:
+    removes: c:\testfile.txt
+  register: cmdout
+
+- name: validate result
+  assert:
+    that:
+    - cmdout|skipped
+    - cmdout.msg is search('does not exist')
+
+- name: run something with known nonzero exit code
+  win_command: cmd /c "exit 254"
+  register: cmdout
+  ignore_errors: true
+
+- name: validate result
+  assert:
+    that:
+    - cmdout|failed
+    - cmdout.rc == 254
+
+- name: interleave large writes between stdout/stderr (check for buffer consumption deadlock)
+  win_command: powershell /c "$ba = New-Object byte[] 4096; (New-Object System.Random 32).NextBytes($ba); $text = [Convert]::ToBase64String($ba); Write-Output startout; Write-Error starterror; Write-Error $text; Write-Output $text; Write-Error $text; Write-Output $text; Write-Error $text; Write-Output $text; Write-Output doneout Write-Error doneerror"
+  register: cmdout
+
+- name: ensure that the entirety of both streams were read
+  assert:
+    that:
+    - cmdout.stdout is search("startout")
+    - cmdout.stdout is search("doneout")
+    - cmdout.stderr is search("starterror")
+    - cmdout.stderr is search("doneerror")

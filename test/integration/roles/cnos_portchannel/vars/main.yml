@@ -1,0 +1,49 @@
+---
+test_portchannel_data1:
+  - {interfaceRange: 33, interfaceArg1: "aggregation-group", interfaceArg2: 33, interfaceArg3: "on"}
+test_portchannel_data2:
+  - {interfaceRange: 33, interfaceArg1: "bridge-port", interfaceArg2: "access", interfaceArg3: 33}
+test_portchannel_data3:
+  - {interfaceRange: 33, interfaceArg1: "bridge-port", interfaceArg2: "mode", interfaceArg3: "access"}
+test_portchannel_data4:
+  - {interfaceRange: 33, interfaceArg1: "description", interfaceArg2: "Hentammoo "}
+test_portchannel_data5:
+  - {interfaceRange: 2, interfaceArg1: "duplex", interfaceArg2: "auto"}
+test_portchannel_data6:
+  - {interfaceRange: 33, interfaceArg1: "flowcontrol", interfaceArg2: "send", interfaceArg3: "off"}
+test_portchannel_data7:
+  - {interfaceRange: 33, interfaceArg1: "lacp", interfaceArg2: "port-priority", interfaceArg3: 33}
+test_portchannel_data8:
+  - {interfaceRange: 33, interfaceArg1: "lldp", interfaceArg2: "tlv-select", interfaceArg3: "max-frame-size"}
+test_portchannel_data9:
+  - {interfaceRange: 33, interfaceArg1: "load-interval", interfaceArg2: "counter", interfaceArg3: 2, interfaceArg4: 33 }
+test_portchannel_data10:
+  - {interfaceRange: 33, interfaceArg1: "mac", interfaceArg2: "copp-system-acl-vlag-hc"}
+test_portchannel_data11:
+  - {interfaceRange: 33, interfaceArg1: "microburst-detection", interfaceArg2: 25}
+test_portchannel_data12:
+  - {interfaceRange: 33, interfaceArg1: "mtu", interfaceArg2: 66}
+test_portchannel_data13:
+  - {interfaceRange: 33, interfaceArg1: "service-policy", interfaceArg2: "input", interfaceArg3: "Anil"}
+test_portchannel_data14:
+  - {interfaceRange: 13, interfaceArg1: "speed", interfaceArg2: "auto"}
+test_portchannel_data15:
+  - {interfaceRange: 33, interfaceArg1: "storm-control", interfaceArg2: "broadcast", interfaceArg3: 12.5 }
+test_portchannel_data16:
+  - {interfaceRange: 33, interfaceArg1: "vlan", interfaceArg2: "disable"}
+test_portchannel_data17:
+  - {interfaceRange: 33, interfaceArg1: "vrrp", interfaceArg2: 33}
+test_portchannel_data18:
+  - {interfaceRange: 33, interfaceArg1: "spanning-tree", interfaceArg2: "bpduguard", interfaceArg3: "enable"}
+test_portchannel_data19:
+  - {interfaceRange: 33, interfaceArg1: "spanning-tree", interfaceArg2: "mst", interfaceArg3: "33-35", interfaceArg4: "cost", interfaceArg5: 33}
+test_portchannel_data20:
+  - {interfaceRange: 33, interfaceArg1: "ip", interfaceArg2: "access-group", interfaceArg3: "anil", interfaceArg4: "in"}
+test_portchannel_data21:
+  - {interfaceRange: 33, interfaceArg1: "ip", interfaceArg2: "port", interfaceArg3: "anil" }
+test_portchannel_data22:
+  - {interfaceRange: 33, interfaceArg1: "bfd", interfaceArg2: "interval", interfaceArg3: 55, interfaceArg4: 55, interfaceArg5: 33}
+test_portchannel_data23:
+  - {interfaceRange: 33, interfaceArg1: "bfd", interfaceArg2: "ipv4", interfaceArg3: "authentication", interfaceArg4: "meticulous-keyed-md5", interfaceArg5: "key-chain", interfaceArg6: "mychain"}
+test_portchannel_data24:
+- {interfaceRange: "1/1-2", interfaceArg1: "aggregation-group", interfaceArg2: 33, interfaceArg3: "on"}

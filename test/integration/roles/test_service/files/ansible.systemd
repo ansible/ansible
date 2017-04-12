@@ -1,7 +1,0 @@
-[Unit]
-Description=Ansible Test Service
-
-[Service]
-ExecStart=/usr/sbin/ansible_test_service "Test\nthat newlines in scripts\nwork"
-ExecReload=/bin/true
-Type=forking

@@ -32,21 +32,16 @@ class CallbackModule(CallbackBase):
     CALLBACK_NEEDS_WHITELIST = True
 
     def __init__(self, *args, **kwargs):
+        super(CallbackModule, self).__init__(*args, **kwargs)
         self.task = None
         self.play = None
 
     def v2_on_any(self, *args, **kwargs):
-        i = 0
-        if self.play:
-            play_str = 'play: %s' % self.play.name
-        if self.task:
-            task_str = 'task: %s' % self.task
-        self._display.display("--- %s %s ---" % (self.play_str, self.task_str))
+        self._display.display("--- play: {} task: {} ---".format(getattr(self.play, 'name', None), self.task))
 
         self._display.display("     --- ARGS ")
-        for a in args:
+        for i, a in enumerate(args):
             self._display.display('     %s: %s' % (i, a))
-            i += 1
 
         self._display.display("      --- KWARGS ")
         for k in kwargs:

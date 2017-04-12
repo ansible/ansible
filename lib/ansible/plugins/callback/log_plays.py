@@ -22,9 +22,11 @@ __metaclass__ = type
 import os
 import time
 import json
+from collections import MutableMapping
 
-from ansible.utils.unicode import to_bytes
+from ansible.module_utils._text import to_bytes
 from ansible.plugins.callback import CallbackBase
+
 
 # NOTE: in Ansible 1.2 or later general logging is available without
 # this plugin, just set ANSIBLE_LOG_PATH as an environment variable
@@ -53,7 +55,7 @@ class CallbackModule(CallbackBase):
             os.makedirs("/var/log/ansible/hosts")
 
     def log(self, host, category, data):
-        if type(data) == dict:
+        if isinstance(data, MutableMapping):
             if '_ansible_verbose_override' in data:
                 # avoid logging extraneous data
                 data = 'omitted'

@@ -1753,11 +1753,6 @@
 		<priority>0.3</priority>
 	</url>
 	<url>
-		<loc>http://docs.ansible.com/ansible/fireball_module.html</loc>
-		<changefreq>weekly</changefreq>
-		<priority>0.3</priority>
-	</url>
-	<url>
 		<loc>http://docs.ansible.com/ansible/gem_module.html</loc>
 		<changefreq>weekly</changefreq>
 		<priority>0.3</priority>

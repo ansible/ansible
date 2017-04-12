@@ -1,6 +1,5 @@
-#!/usr/bin/env python
-
 import os
+import os.path
 import sys
 
 sys.path.insert(0, os.path.abspath('lib'))
@@ -13,44 +12,79 @@ except ImportError:
             " install setuptools).")
     sys.exit(1)
 
-setup(name='ansible',
-      version=__version__,
-      description='Radically simple IT automation',
-      author=__author__,
-      author_email='support@ansible.com',
-      url='http://ansible.com/',
-      license='GPLv3',
-      # Ansible will also make use of a system copy of python-six if installed but use a
-      # Bundled copy if it's not.
-      install_requires=['paramiko', 'jinja2', "PyYAML", 'setuptools', 'pycrypto >= 2.6'],
-      package_dir={ '': 'lib' },
-      packages=find_packages('lib'),
-      package_data={
-         '': ['module_utils/*.ps1', 'modules/core/windows/*.ps1', 'modules/extras/windows/*.ps1', 'galaxy/data/*'],
-      },
-      classifiers=[
-          'Development Status :: 5 - Production/Stable',
-          'Environment :: Console',
-          'Intended Audience :: Developers',
-          'Intended Audience :: Information Technology',
-          'Intended Audience :: System Administrators',
-          'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
-          'Natural Language :: English',
-          'Operating System :: POSIX',
-          'Programming Language :: Python :: 2.6',
-          'Programming Language :: Python :: 2.7',
-          'Topic :: System :: Installation/Setup',
-          'Topic :: System :: Systems Administration',
-          'Topic :: Utilities',
-      ],
-      scripts=[
-         'bin/ansible',
-         'bin/ansible-playbook',
-         'bin/ansible-pull',
-         'bin/ansible-doc',
-         'bin/ansible-galaxy',
-         'bin/ansible-console',
-         'bin/ansible-vault',
-      ],
-      data_files=[],
+with open('requirements.txt') as requirements_file:
+    install_requirements = requirements_file.read().splitlines()
+    if not install_requirements:
+        print("Unable to read requirements from the requirements.txt file"
+                "That indicates this copy of the source code is incomplete.")
+        sys.exit(2)
+
+SYMLINKS = {'ansible': frozenset(('ansible-console',
+                                  'ansible-doc',
+                                  'ansible-galaxy',
+                                  'ansible-playbook',
+                                  'ansible-pull',
+                                  'ansible-vault'))}
+
+for source in SYMLINKS:
+    for dest in SYMLINKS[source]:
+        dest_path = os.path.join('bin', dest)
+        if not os.path.islink(dest_path):
+            try:
+                os.unlink(dest_path)
+            except OSError as e:
+                if e.errno == 2:
+                    # File does not exist which is all we wanted
+                    pass
+            os.symlink(source, dest_path)
+
+setup(
+    name='ansible',
+    version=__version__,
+    description='Radically simple IT automation',
+    author=__author__,
+    author_email='info@ansible.com',
+    url='https://ansible.com/',
+    license='GPLv3',
+    # Ansible will also make use of a system copy of python-six and
+    # python-selectors2 if installed but use a Bundled copy if it's not.
+    install_requires=install_requirements,
+    package_dir={ '': 'lib' },
+    packages=find_packages('lib'),
+    package_data={
+        '': [
+            'module_utils/*.ps1',
+            'modules/windows/*.ps1',
+            'modules/windows/*.ps1',
+            'galaxy/data/*/*.*',
+            'galaxy/data/*/*/*.*',
+            'galaxy/data/*/tests/inventory'
+        ],
+    },
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'Intended Audience :: Information Technology',
+        'Intended Audience :: System Administrators',
+        'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+        'Natural Language :: English',
+        'Operating System :: POSIX',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+        'Topic :: System :: Installation/Setup',
+        'Topic :: System :: Systems Administration',
+        'Topic :: Utilities',
+    ],
+    scripts=[
+        'bin/ansible',
+        'bin/ansible-playbook',
+        'bin/ansible-pull',
+        'bin/ansible-doc',
+        'bin/ansible-galaxy',
+        'bin/ansible-console',
+        'bin/ansible-connection',
+        'bin/ansible-vault',
+    ],
+    data_files=[],
 )

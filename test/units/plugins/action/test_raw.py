@@ -32,8 +32,8 @@ class TestCopyResultExclude(unittest.TestCase):
     def tearDown(self):
         pass
 
-    # The current behavior of the raw aciton in regards to executable is currently in question; 
-    # the test_raw_executable_is_not_empty_string verifies the current behavior (whether it is desireed or not. 
+    # The current behavior of the raw aciton in regards to executable is currently in question;
+    # the test_raw_executable_is_not_empty_string verifies the current behavior (whether it is desireed or not.
     # Please refer to the following for context:
     # Issue: https://github.com/ansible/ansible/issues/16054
     # PR: https://github.com/ansible/ansible/pull/16085
@@ -54,7 +54,7 @@ class TestCopyResultExclude(unittest.TestCase):
         self.mock_am.display = Mock()
 
         self.mock_am.run()
-        self.mock_am._low_level_execute_command.assert_called_with('Args1', executable=None)
+        self.mock_am._low_level_execute_command.assert_called_with('Args1', executable=False)
 
     def test_raw_check_mode_is_True(self):
 

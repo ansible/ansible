@@ -1,0 +1,49 @@
+# The docker --link functionality gives us an ENV var we can key off of to see if we have access to
+# the httptester container
+- set_fact:
+    has_httptester: "{{ lookup('env', 'HTTPTESTER') != '' }}"
+
+# If we are running with access to a httptester container, grab it's cacert and install it
+- block:
+    # Override hostname defaults with httptester linked names
+    - include_vars: httptester.yml
+
+    - name: RedHat - Enable the dynamic CA configuration feature
+      command: update-ca-trust force-enable
+      when: ansible_os_family == 'RedHat'
+
+    - name: RedHat - Retrieve test cacert
+      get_url:
+        url: "http://ansible.http.tests/cacert.pem"
+        dest: "/etc/pki/ca-trust/source/anchors/ansible.pem"
+      when: ansible_os_family == 'RedHat'
+
+    - name: Get client cert/key
+      get_url:
+        url: "http://ansible.http.tests/{{ item }}"
+        dest: "{{ output_dir }}/{{ item }}"
+      with_items:
+        - client.pem
+        - client.key
+
+    - name: Suse - Retrieve test cacert
+      get_url:
+        url: "http://ansible.http.tests/cacert.pem"
+        dest: "/etc/pki/trust/anchors/ansible.pem"
+      when: ansible_os_family == 'Suse'
+
+    - name: Debian - Retrieve test cacert
+      get_url:
+        url: "http://ansible.http.tests/cacert.pem"
+        dest: "/usr/local/share/ca-certificates/ansible.crt"
+      when: ansible_os_family == 'Debian'
+
+    - name: Redhat - Update ca trust
+      command: update-ca-trust extract
+      when: ansible_os_family == 'RedHat'
+
+    - name: Debian/Suse - Update ca certificates
+      command: update-ca-certificates
+      when: ansible_os_family == 'Debian' or ansible_os_family == 'Suse'
+
+  when: has_httptester|bool

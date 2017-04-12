@@ -1,0 +1,12 @@
+- hosts: testhost
+
+  # the following commands should all parse fine and execute fine
+  # and represent quoting scenarios that should be legit
+
+  gather_facts: False
+
+  roles:
+
+    # this one has a lot of things that should fail, see makefile for operation w/ tags
+
+    - { role: test_bad_parsing }
