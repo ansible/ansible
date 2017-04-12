@@ -896,12 +896,12 @@ def main():
         streaming_distribution_id, config, e_tag = service_mgr.validate_update_delete_streaming_distribution_parameters(alias,
                 streaming_distribution_id, config, e_tag)
 
-    # try-catches
     # split to validation and helpers classes
+    # try-catches
     # return e_tag for update/create distribution
 
-    # validate all lists[]
-    # validate default_cache target_origin_id in origins list
+    # validate all lists[] - create method
+    # validate default_cache target_origin_id in origins list - expand
     # validate_distribution
     # check all required attributes
     # url signing
