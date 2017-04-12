@@ -8,25 +8,6 @@
 # ============================================================
 # create and kill an ASG
 
-- name: create a security group with the vpc created in the ec2_setup
-  ec2_group:
-    name: "{{ resource_prefix }}-sg"
-    description: a security group for ansible tests
-    vpc_id: "{{ testing_vpc.vpc.id }}"
-    region: "{{ ec2_region }}"
-    rules:
-      - proto: tcp
-        from_port: 22
-        to_port: 22
-        cidr_ip: 0.0.0.0/0
-      - proto: tcp
-        from_port: 80
-        to_port: 80
-        cidr_ip: 0.0.0.0/0
-    ec2_access_key: "{{ ec2_access_key }}"
-    ec2_secret_key: "{{ ec2_secret_key }}"
-  register: sg
-
 - name: ensure launch config exists
   ec2_lc:
     name: "{{ resource_prefix }}-lc"

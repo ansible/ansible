@@ -53,6 +53,7 @@
     region: "{{ ec2_region }}"
     tags:
       Name: Ansible Testing VPC
+    tenancy: default
   register: testing_vpc
   tags:
     - prepare
@@ -108,3 +109,22 @@
       - "{{ testing_subnet.subnet.id }}"
   tags:
     - prepare
+
+- name: create a security group for use in various tests
+  ec2_group:
+    name: "{{ resource_prefix }}-sg"
+    description: a security group for ansible tests
+    vpc_id: "{{ testing_vpc.vpc.id }}"
+    region: "{{ ec2_region }}"
+    rules:
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: 0.0.0.0/0
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        cidr_ip: 0.0.0.0/0
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+  register: sg
