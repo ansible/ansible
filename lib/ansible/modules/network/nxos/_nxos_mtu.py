@@ -101,6 +101,7 @@ proposed:
 existing:
     description:
         - k/v pairs of existing mtu/sysmtu on the interface/system
+    returned: always
     type: dict
     sample: {"mtu": "1600", "sysmtu": "9216"}
 end_state:

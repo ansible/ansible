@@ -72,12 +72,13 @@ proposed:
     sample: {"location": "New_Test"}
 existing:
     description: k/v pairs of existing snmp location
+    returned: always
     type: dict
     sample: {"location": "Test"}
 end_state:
     description: k/v pairs of location info after module execution
     returned: always
-    type: dict or null
+    type: dict
     sample: {"location": "New_Test"}
 updates:
     description: command sent to the device

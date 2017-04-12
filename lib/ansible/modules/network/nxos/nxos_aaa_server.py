@@ -130,6 +130,7 @@ proposed:
 existing:
     description:
         - k/v pairs of existing aaa server
+    returned: always
     type: dict
     sample: {"deadtime": "0", "directed_request": "disabled",
             "global_key": "unknown", "server_timeout": "5"}

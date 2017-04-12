@@ -138,42 +138,29 @@ cert_name:
     description: >
         The name of the SSL certificate. The C(cert_name) and
         C(key_name) will be equal to each other.
-    returned:
-        - created
-        - changed
-        - deleted
+    returned: created, changed or deleted
     type: string
     sample: "cert1"
 key_name:
     description: >
         The name of the SSL certificate key. The C(key_name) and
         C(cert_name) will be equal to each other.
-    returned:
-        - created
-        - changed
-        - deleted
+    returned: created, changed or deleted
     type: string
     sample: "key1"
 partition:
     description: Partition in which the cert/key was created
-    returned:
-        - changed
-        - created
-        - deleted
+    returned: created, changed or deleted
     type: string
     sample: "Common"
 key_checksum:
     description: SHA1 checksum of the key that was provided
-    return:
-        - changed
-        - created
+    returned: created or changed
     type: string
     sample: "cf23df2207d99a74fbe169e3eba035e633b65d94"
 cert_checksum:
     description: SHA1 checksum of the cert that was provided
-    return:
-        - changed
-        - created
+    returned: created or changed
     type: string
     sample: "f7ff9e8b7bb2e09b70935a5d785e0cc5d9d0abf0"
 '''

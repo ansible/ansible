@@ -75,6 +75,7 @@ proposed:
             "name": "ANSIBLE"}
 existing:
     description: k/v pairs of existing ACL applied to the interface
+    returned: always
     type: dict
     sample: {}
 end_state:

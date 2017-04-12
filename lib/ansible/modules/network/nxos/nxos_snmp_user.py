@@ -93,6 +93,7 @@ proposed:
 existing:
     description:
         - k/v pairs of existing configuration
+    returned: always
     type: dict
     sample: {"authentication": "no", "encrypt": "none",
              "group": ["network-operator"], "user": "ntc"}

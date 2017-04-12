@@ -77,6 +77,7 @@ ansible_net_model:
 ansible_net_serialnum:
   description: The serial number of the remote device
   returned: always
+  type: str
 ansible_net_version:
   description: The operating system version running on the remote device
   returned: always

@@ -101,6 +101,7 @@ EXAMPLES = '''
 
 RETURN = '''
 install_state:
+    description: Boot and install information.
     returned: always
     type: dictionary
     sample: {

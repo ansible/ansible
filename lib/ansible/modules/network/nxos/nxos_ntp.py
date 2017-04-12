@@ -102,6 +102,7 @@ proposed:
 existing:
     description:
         - k/v pairs of existing ntp server/peer
+    returned: always
     type: dict
     sample: {"address": "2.2.2.2", "key_id": "32",
             "peer_type": "server", "prefer": "enabled",
