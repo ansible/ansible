@@ -7,6 +7,7 @@ import os
 import pipes
 import shutil
 import subprocess
+import re
 import sys
 import time
 
@@ -493,6 +494,20 @@ def docker_qualify_image(name):
         return name
 
     return 'ansible/ansible:%s' % name
+
+
+def parse_to_dict(pattern, value):
+    """
+    :type pattern: str
+    :type value: str
+    :return: dict[str, str]
+    """
+    match = re.search(pattern, value)
+
+    if match is None:
+        raise Exception('Pattern "%s" did not match value: %s' % (pattern, value))
+
+    return match.groupdict()
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name

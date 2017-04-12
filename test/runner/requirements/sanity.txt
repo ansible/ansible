@@ -3,5 +3,7 @@ mock
 pep8
 pylint
 pytest
+rstcheck
+sphinx
 voluptuous
 yamllint
