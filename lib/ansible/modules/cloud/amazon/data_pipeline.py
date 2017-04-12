@@ -284,18 +284,12 @@ def check_dp_status(client, dp_id, status):
 
 def pipeline_status_timeout(client, dp_id, status, timeout):
     args = (client, dp_id, status)
-    try:
-        return run_with_timeout(timeout, check_dp_status, *args)
-    except TimeOutException:
-        raise
+    return run_with_timeout(timeout, check_dp_status, *args)
 
 
 def pipeline_exists_timeout(client, dp_id, timeout):
     args = (client, dp_id)
-    try:
-        return run_with_timeout(timeout, check_dp_exists, *args)
-    except TimeOutException:
-        raise
+    return run_with_timeout(timeout, check_dp_exists, *args)
 
 
 def activate_pipeline(client, module):
@@ -318,7 +312,6 @@ def activate_pipeline(client, module):
         except ClientError as e:
             if e.response["Error"]["Code"] == "InvalidRequestException":
                 module.fail_json(msg="You need to populate your pipeline before activation.")
-            raise
         try:
             pipeline_status_timeout(client, dp_id, status=DP_ACTIVE_STATES,
                                     timeout=timeout)
@@ -385,9 +378,7 @@ def delete_pipeline(client, module):
     timeout = module.params.get('timeout')
 
     try:
-        # Raises DataPipelineNotFound if it doesn't exist so changed can be False
         dp_id = pipeline_id(client, dp_name)
-        # Catches DataPipelineNotFound (but not TimeOutException) so changed can be True
         _delete_dp_with_check(dp_id, client, timeout)
         changed = True
     except DataPipelineNotFound:
@@ -456,7 +447,7 @@ def diff_pipeline(client, module, objects, unique_id, dp_name):
     # See if there is already a pipeline with the same unique_id
     unique_id = build_unique_id(module)
     try:
-        dp_id = pipeline_id(client, dp_name)  # raises DataPipelineNotFound if there is no matching pipeline
+        dp_id = pipeline_id(client, dp_name)
         dp_unique_id = pipeline_field(client, dp_id, field="uniqueId")
         if dp_unique_id != unique_id:
             changed, _ = delete_pipeline(client, module)
