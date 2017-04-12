@@ -87,6 +87,7 @@ proposed:
 existing:
     description:
         - k/v pairs of existing configuration
+    returned: always
     type: dict
     sample: {"mode": "aggressive"}
 end_state:
