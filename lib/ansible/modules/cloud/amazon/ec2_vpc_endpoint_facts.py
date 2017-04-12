@@ -52,8 +52,7 @@ extends_documentation_fragment: aws
 '''
 
 EXAMPLES = '''
-# Simple example of listing all support AWS services
-  for VPC endpoints
+# Simple example of listing all support AWS services for VPC endpoints
 - name: List supported AWS endpoint services
   ec2_vpc_endpoint_facts:
     query: services
@@ -89,10 +88,30 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-result:
-  description: The result of the describe.
-  returned: success
-  type: dictionary or a list of dictionaries
+service_names:
+  description: AWS VPC endpoint service names
+  returned: I(query) is C(services)
+  type: list
+  sample:
+    service_names:
+    - com.amazonaws.ap-southeast-2.s3
+vpc_endpoints:
+  description: endpoints that match the query
+  returned: I(query) is C(endpoints)
+  type: list of dictionaries
+  sample:
+    vpc_endpoints:
+    - creation_timestamp: "2017-02-16T11:06:48+00:00"
+      policy_document: >
+        "{\"Version\":\"2012-10-17\",\"Id\":\"Policy1450910922815\",
+        \"Statement\":[{\"Sid\":\"Stmt1450910920641\",\"Effect\":\"Allow\",
+        \"Principal\":\"*\",\"Action\":\"s3:*\",\"Resource\":[\"arn:aws:s3:::*/*\",\"arn:aws:s3:::*\"]}]}"
+      route_table_ids:
+      - rtb-abcd1234
+      service_name: "com.amazonaws.ap-southeast-2.s3"
+      state: "available"
+      vpc_endpoint_id: "vpce-abbad0d0"
+      vpc_id: "vpc-1111ffff"
 '''
 
 import json
