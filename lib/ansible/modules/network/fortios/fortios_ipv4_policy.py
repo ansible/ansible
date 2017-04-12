@@ -121,8 +121,9 @@ options:
     description:
       - Logs sessions that matched policy.
     default: utm
-    choices: ["disable", "utm", "all"]
+    choices: ['disable', 'utm', 'all']
   logtraffic_start:
+    description:
       - Logs begining of session as well.
     default: false
     choices: ["true", "false"]
@@ -215,7 +216,7 @@ def main():
     argument_spec.update(fortios_argument_spec)
 
     ipv4_policy_required_if = [
-        ['state', 'present', ['src_addr', 'dst_addr', 'policy_action', 'service','logtraffic','logtraffic_start']],
+        ['state', 'present', ['src_addr', 'dst_addr', 'policy_action', 'service']],
     ]
 
     module = AnsibleModule(
