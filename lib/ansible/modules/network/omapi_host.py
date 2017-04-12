@@ -117,7 +117,7 @@ changed:
 lease:
     description: dictionnary containing host informations
     returned: success
-    type: dictionnary
+    type: complex
     contains:
         ip-address:
             description: IP address, if there is.

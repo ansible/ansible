@@ -65,6 +65,7 @@ proposed:
     sample: {"contact": "New_Test"}
 existing:
     description: k/v pairs of existing snmp contact
+    returned: always
     type: dict
     sample: {"contact": "Test"}
 end_state:

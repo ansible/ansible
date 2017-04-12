@@ -242,10 +242,11 @@ Tasks : The following are examples of using the module cnos_vlag. These are writ
 
 '''
 RETURN = '''
-return value: |
-    On successful execution, the method returns a message in JSON format
-    [vLAG configurations accomplished]
-    Upon any failure, the method returns an error display string.
+msg:
+  description: Success or failure message
+  returned: always
+  type: string
+  sample: "vLAG configurations accomplished"
 '''
 
 import sys

@@ -85,6 +85,7 @@ proposed:
 existing:
     description:
         - k/v pairs of existing ntp options
+    returned: always
     type: dict
     sample: {"logging": true, "master": true, "stratum": "8"}
 end_state:

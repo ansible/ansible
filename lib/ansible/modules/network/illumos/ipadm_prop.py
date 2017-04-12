@@ -93,7 +93,7 @@ value:
     description: value of the property
     returned: always
     type: int/string (depends on property)
-    sample: 1024/never
+    sample: "'1024' or 'never'"
 '''
 
 SUPPORTED_PROTOCOLS = ['ipv4', 'ipv6', 'icmp', 'tcp', 'udp', 'sctp']

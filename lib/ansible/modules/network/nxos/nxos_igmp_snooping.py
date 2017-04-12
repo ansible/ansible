@@ -105,6 +105,7 @@ proposed:
 existing:
     description:
         - k/v pairs of existing configuration
+    returned: always
     type: dict
     sample: {"group_timeout": "never", "link_local_grp_supp": false,
             "report_supp": true, "snooping": true, "v3_report_supp": true}

@@ -57,13 +57,12 @@ Tasks : The following are examples of using the module cnos_reload. These are wr
       outputfile: "./results/test_reload_{{ inventory_hostname }}_output.txt"
 '''
 RETURN = '''
-  return value: |
-    On successful execution, the method returns a message in JSON format
-    [Device is Reloading. Please wait...]
-    Upon any failure, the method returns an error display string.
-
+msg:
+  description: Success or failure message
+  returned: always
+  type: string
+  sample: "Device is Reloading. Please wait..."
 '''
-
 
 import sys
 import paramiko

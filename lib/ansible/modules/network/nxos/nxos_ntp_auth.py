@@ -98,6 +98,7 @@ proposed:
 existing:
     description:
         - k/v pairs of existing ntp authentication
+    returned: always
     type: dict
     sample: {"authentication": "off", "trusted_key": "false"}
 end_state:

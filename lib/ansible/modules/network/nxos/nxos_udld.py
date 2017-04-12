@@ -89,6 +89,7 @@ proposed:
 existing:
     description:
         - k/v pairs of existing udld configuration
+    returned: always
     type: dict
     sample: {"aggressive": "disabled", "msg_time": "15"}
 end_state:
