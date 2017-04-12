@@ -96,6 +96,7 @@ proposed:
 existing:
     description:
         - k/v pairs of existing portchannel
+    returned: always
     type: dict
     sample: {"group": "12", "members": ["Ethernet2/5",
             "Ethernet2/6"], "members_detail": {

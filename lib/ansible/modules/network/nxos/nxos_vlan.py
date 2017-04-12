@@ -126,7 +126,7 @@ proposed:
     description: k/v pairs of parameters passed into module (does not include
                  vlan_id or vlan_range)
     returned: when debug enabled
-    type: dict or null
+    type: dict
     sample: {"admin_state": "down", "name": "app_vlan",
             "vlan_state": "suspend", "mapped_vni": "5000"}
 existing:
@@ -139,7 +139,7 @@ end_state:
     description: k/v pairs of the VLAN after executing module or null
                  when using vlan_range
     returned: when debug enabled
-    type: dict or null
+    type: dict
     sample: {"admin_state": "down", "name": "app_vlan", "vlan_id": "20",
              "vlan_state": "suspend", "mapped_vni": "5000"}
 updates:

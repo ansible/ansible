@@ -80,6 +80,7 @@ proposed:
     sample: {"interface": "loopback16", "vrf": "ntc"}
 existing:
     description: k/v pairs of existing vrf on the interface
+    returned: always
     type: dict
     sample: {"interface": "loopback16", "vrf": ""}
 end_state:

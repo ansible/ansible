@@ -55,7 +55,7 @@ RETURN = '''
 ansible_facts:
   description: "Dictionary of ip geolocation facts for a host's IP address"
   returned: changed
-  type: dictionary
+  type: complex
   contains:
     ip:
       description: "Public IP address of a host"

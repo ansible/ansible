@@ -65,6 +65,7 @@ proposed:
 existing:
     description:
         - k/v pairs of existing vtp domain
+    returned: always
     type: dict
     sample: {"domain": "testing", "version": "2", "vtp_password": "\"}
 end_state:

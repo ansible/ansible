@@ -115,6 +115,7 @@ proposed:
             "admin_state": "no shutdown"}
 existing:
     description: k/v pairs of existing vrrp info on the interface
+    returned: always
     type: dict
     sample: {}
 end_state:

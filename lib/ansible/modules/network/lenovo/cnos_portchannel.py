@@ -407,12 +407,12 @@ Tasks : The following are examples of using the module cnos_portchannel. These a
 
 '''
 RETURN = '''
-  return value: |
-    On successful execution, the method returns a message in JSON format
-    [Port Channel configurations accomplished]
-    Upon any failure, the method returns an error display string.
+msg:
+  description: Success or failure message
+  returned: always
+  type: string
+  sample: "Port Channel configurations accomplished"
 '''
-
 
 import sys
 import paramiko
