@@ -78,13 +78,10 @@ status:
 '''
 
 
-import re
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
-
-import re
+from ansible.module_utils.shell import ShellError
 
 
 def execute_commands(cmds, module, command_type=None):
@@ -184,4 +181,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
