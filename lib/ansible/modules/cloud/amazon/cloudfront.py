@@ -80,21 +80,23 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-from ansible.module_utils.ec2 import get_aws_connection_info
-from ansible.module_utils.ec2 import ec2_argument_spec
-from ansible.module_utils.ec2 import boto3_conn
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, boto3_conn, HAS_BOTO3
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.module_utils.basic import AnsibleModule
 from ansible.modules.cloud.amazon.cloudfront_facts import CloudFrontFactsServiceManager
+from botocore.signers import CloudFrontSigner
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+import datetime
 from functools import partial
 import json
 import traceback
-import datetime
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import padding
-from botocore.signers import CloudFrontSigner
+
+try:
+    import botocore
+except ImportError:
+    pass
 
 class CloudFrontServiceManager:
     """Handles CloudFront Services"""
@@ -126,7 +128,8 @@ class CloudFrontServiceManager:
         self.__valid_cookie_forwarding = [ 'none', 'whitelist', 'all' ]
         self.__valid_viewer_protocol_policies = [ 'allow-all', 'https-only', 'redirect-to-https' ]
         self.__valid_methods = [ 'GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'OPTIONS', 'DELETE' ]
-        self.__valid_lambda_function_association_event_types = [ 'viewer-request', 'viewer-response', 'origin-request', 'origin-response' ]
+        self.__valid_lambda_function_association_event_types = [ 'viewer-request', 'viewer-response',
+                'origin-request', 'origin-response' ]
         self.__valid_viewer_certificate_ssl_support_methods = [ 'sni-only', 'vip' ]
         self.__valid_viewer_certificate_minimum_protocol_versions = [ 'SSLv3', 'TLSv1' ]
         self.__valid_viewer_certificate_certificate_sources = [ 'cloudfront', 'iam', 'acm' ]
@@ -332,8 +335,8 @@ class CloudFrontServiceManager:
         if list_items is None:
             list_items = []
         if not isinstance(list_items, list):
-            self.module.fail_json(msg="expected a list []. got a " + type(list_items).__name__ +
-                    " with item: " + str(list_items))
+            self.module.fail_json(msg="expected a python list, got a python " + type(list_items).__name__ +
+                    " with value: " + str(list_items))
         result = {}
         result["quantity"] = len(list_items)
         result["items"] = list_items
@@ -654,14 +657,14 @@ class CloudFrontServiceManager:
         if price_class is not None:
            self.validate_attribute_with_allowed_values(price_class, "price_class", self.__valid_price_classes)
            config["price_class"] = price_class
-        if comment is None:
-            config["comment"] = "distribution created by ansible with datetime " + self.__default_datetime_string
-        else:
+        if comment is not None:
             config["comment"] = comment
+        else:
+            config["comment"] = "distribution created by ansible with datetime " + self.__default_datetime_string
         return config
 
     def validate_caller_reference_for_distribution_create(self, config, caller_reference):
-        if caller_reference:
+        if caller_reference is not None:
             config["caller_reference"] = caller_reference
         else:
             config["caller_reference"] = self.__default_datetime_string
@@ -672,12 +675,10 @@ class CloudFrontServiceManager:
     def get_first_origin_id_for_default_cache_behavior(self, valid_origins):
         if valid_origins is None:
             return self.__default_datetime_string
-        origin_id = None
         if isinstance(valid_origins, list) and len(valid_origins) > 0:
-            origin_id = str(valid_origins.get("Items")[0].get("Id"))
-        if origin_id is None:
-            return self.__default_datetime_string
-        return origin_id
+            return str(valid_origins.get("Items")[0].get("Id"))
+        else:
+            return None
 
 def change_dict_key_name(dictionary, old_key, new_key):
     if old_key in dictionary:
@@ -688,7 +689,6 @@ def change_dict_key_name(dictionary, old_key, new_key):
         return None
 
 def snake_dict_to_pascal_dict(snake_dict):
-
     def pascalize(complex_type):
         if complex_type is None:
             return
@@ -702,14 +702,11 @@ def snake_dict_to_pascal_dict(snake_dict):
         else:
             return complex_type
         return new_type
-
     def pascal(words):
         return words.capitalize().split('_')[0] + "".join(x.capitalize() or '_' for x in words.split('_')[1:])
-
     return pascalize(snake_dict)
 
 def pascal_dict_to_snake_dict(pascal_dict, split_caps=False):
-
     def pascal_to_snake(name):
         import re
         first_cap_re = re.compile('(.)([A-Z][a-z]+)')
@@ -722,7 +719,6 @@ def pascal_dict_to_snake_dict(pascal_dict, split_caps=False):
         else:
             s2 = all_cap_re.sub(r'\1_\2', s1).lower()
         return s2
-
     def value_is_list(pascal_list):
         checked_list = []
         for item in pascal_list:
@@ -733,9 +729,7 @@ def pascal_dict_to_snake_dict(pascal_dict, split_caps=False):
             else:
                 checked_list.append(item)
         return checked_list
-
     snake_dict = {}
-
     for k, v in pascal_dict.items():
         if isinstance(v, dict):
             snake_dict[pascal_to_snake(k)] = pascal_dict_to_snake_dict(v, split_caps)
@@ -743,7 +737,6 @@ def pascal_dict_to_snake_dict(pascal_dict, split_caps=False):
             snake_dict[pascal_to_snake(k)] = value_is_list(v)
         else:
             snake_dict[pascal_to_snake(k)] = v
-
     return snake_dict
 
 def merge_validation_into_config(config, validated_node, node_name):
@@ -813,15 +806,15 @@ def main():
         default_s3_origin_origin_access_identity=dict(required=False, default=None, type='str'),
         signed_url_pem_private_key_string=dict(required=False, default=None, type='str'),
         signed_url_url=dict(required=False, default=None, type='str'),
-        signed_url_expire_date=dict(required=False, default=None, type='str')
+        signed_url_expire_date=dict(required=False, default=None, type='str'),
+        duplicate_distribution=dict(required=False, default=False, type='bool'),
+        duplicate_streaming_distribution=dict(required=False, default=False, type='bool')
     ))
 
     result = {}
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required')
 
     cloudfront_facts_mgr = CloudFrontFactsServiceManager(module)
     service_mgr = CloudFrontServiceManager(module, cloudfront_facts_mgr)
@@ -880,51 +873,50 @@ def main():
     signed_url_pem_private_key_string = module.params.get('signed_url_pem_private_key_string')
     signed_url_url = module.params.get('signed_url_url')
     signed_url_expire_date = module.params.get('signed_url_expire_date')
+    duplicate_distribution = module.params.get('duplicate_distribution')
+    duplicate_streaming_distribution = module.params.get('duplicate_streaming_distribution')
 
     create_update_distribution = create_distribution or update_distribution
     create_update_streaming_distribution = create_streaming_distribution or update_streaming_distribution
-    update_delete_distribution = update_distribution or delete_distribution
-    update_delete_streaming_distribution = update_streaming_distribution or delete_streaming_distribution
+    update_delete_duplicate_distribution = update_distribution or delete_distribution
+    update_delete_duplicate_streaming_distribution = update_streaming_distribution or delete_streaming_distribution
 
     if sum(map(bool, [create_origin_access_identity, delete_origin_access_identity, update_origin_access_identity,
             generate_presigned_url, generate_s3_presigned_url, create_distribution, delete_distribution,
             update_distribution, create_streaming_distribution, delete_streaming_distribution,
-            update_streaming_distribution, generate_signed_url_from_pem_private_key])) > 1:
+            update_streaming_distribution, generate_signed_url_from_pem_private_key, duplicate_distribution,
+            duplicate_streaming_distribution])) > 1:
         module.fail_json(msg="more than one cloudfront action has been specified. please select only one action.")
 
-    if update_delete_distribution:
+    if update_delete_duplicate_distribution:
         distribution_id, config, e_tag = service_mgr.validate_update_delete_distribution_parameters(alias,
                 distribution_id, config, e_tag)
 
-    if update_delete_streaming_distribution:
+    if update_delete_duplicate_streaming_distribution:
         streaming_distribution_id, config, e_tag = service_mgr.validate_update_delete_streaming_distribution_parameters(alias,
                 streaming_distribution_id, config, e_tag)
 
-    # duplicate_distribution
-    # duplicate streaming_distribution
-    # distribution status
-    # distribution state
     # try-catches
     # split to validation and helpers classes
     # return e_tag for update/create distribution
-    # list of valid actions
 
-    # validate all lists
+    # validate all lists[]
     # validate default_cache target_origin_id in origins list
-    # validate distribution
+    # validate_distribution
     # check all required attributes
     # url signing
     # doc
 
     if create_update_distribution or create_update_streaming_distribution:
-        config = service_mgr.validate_common_distribution_parameters(config, enabled, aliases, logging, price_class,
-                comment, create_update_streaming_distribution)
+        config = service_mgr.validate_common_distribution_parameters(config, enabled, aliases, logging,
+                price_class, comment, create_update_streaming_distribution)
 
     config = pascal_dict_to_snake_dict(config, True)
 
     if create_update_distribution:
-        valid_origins = service_mgr.validate_origins(origins, default_origin_domain_name, default_origin_access_identity,
-            default_origin_path, create_update_streaming_distribution, create_distribution)
+        valid_origins = service_mgr.validate_origins(origins, default_origin_domain_name,
+                default_origin_access_identity, default_origin_path, create_update_streaming_distribution,
+                create_distribution)
         config = merge_validation_into_config(config, valid_origins, "origins")
         config_origins = config.get("origins")
         valid_cache_behaviors = service_mgr.validate_cache_behaviors(cache_behaviors, config_origins)
@@ -962,13 +954,13 @@ def main():
     elif generate_signed_url_from_pem_private_key:
         result=service_mgr.generate_signed_url_from_pem_private_key(distribution_id, signed_url_pem_private_key_string,
                 signed_url_url, signed_url_expire_date)
-    elif create_distribution:
+    elif create_distribution or duplicate_distribution:
         result=service_mgr.create_distribution(config, tags)
     elif delete_distribution:
         result=service_mgr.delete_distribution(distribution_id, e_tag)
     elif update_distribution:
         result=service_mgr.update_distribution(config, distribution_id, e_tag)
-    elif create_streaming_distribution:
+    elif create_streaming_distribution or duplicate_streaming_distribution:
         result=service_mgr.create_streaming_distribution(config, tags)
     elif delete_streaming_distribution:
         result=service_mgr.delete_streaming_distribution(streaming_distribution_id, e_tag)
