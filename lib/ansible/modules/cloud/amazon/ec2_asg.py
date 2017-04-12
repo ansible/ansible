@@ -172,6 +172,32 @@ options:
     default: []
     choices: ['Launch', 'Terminate', 'HealthCheck', 'ReplaceUnhealthy', 'AZRebalance', 'AlarmNotification', 'ScheduledActions', 'AddToLoadBalancer']
     version_added: "2.3"
+  metrics_collection:
+    description:
+      - Enable group metrics collection for the auto scaling group.
+    default: False
+    required: False
+    version_added: "2.4"
+  metrics_granularity:
+    description:
+      - The granularity to associate with the metrics to collect.
+    required: False
+    default: "1Minute"
+    version_added: "2.4"
+  metrics_members:
+    description:
+      - Group metrics to collect when collection is enabled.
+    required: False
+    default:
+      - GroupMinSize
+      - GroupMaxSize
+      - GroupDesiredCapacity
+      - GroupInServiceInstances
+      - GroupPendingInstances
+      - GroupStandbyInstances
+      - GroupTerminatingInstances
+      - GroupTotalInstances
+    version_added: "2.4"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -528,6 +554,9 @@ def create_autoscaling_group(connection, module):
     termination_policies = module.params.get('termination_policies')
     notification_topic = module.params.get('notification_topic')
     notification_types = module.params.get('notification_types')
+    metrics_collection = module.params.get('metrics_collection')
+    metrics_granularity = module.params.get('metrics_granularity')
+    metrics_members = module.params.get('metrics_members')
 
     if not vpc_zone_identifier and not availability_zones:
         region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
@@ -600,7 +629,13 @@ def create_autoscaling_group(connection, module):
                     TopicARN=notification_topic,
                     NotificationTypes=notification_types
                 )
-            as_group = connection.describe_auto_scaling_groups(AutoScalingGroupNames=[group_name])['AutoScalingGroups'][0]
+            if metrics_collection:
+                # Enable metrics collection of the types defined in
+                # the `metrics_members` list
+                connection.enable_metrics_collection(
+                    AutoScalingGroupName=group_name,
+                    Metrics=metrics_members,
+                    Granularity=metrics_granularity)
             asg_properties = get_properties(as_group)
             changed = True
             return changed, asg_properties
@@ -750,6 +785,57 @@ def create_autoscaling_group(connection, module):
             except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
                 module.fail_json(msg="Failed to update Autoscaling Group notifications.",
                                  exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message))
+
+        # Handle any metric collection changes
+        metrics_current = dict(
+            (m['Metric'], m['Granularity'])
+            for m in as_group.get('EnabledMetrics', [])
+        )
+        metrics_requested = dict(
+            (metric, metrics_granularity)
+            for metric in metrics_members
+        )
+        if not metrics_collection and any(metrics_current):
+            # There are existing metric collections and all should be disabled
+            try:
+                connection.disable_metrics_collection(
+                    AutoScalingGroupName=as_group['AutoScalingGroupName'],
+                    Metrics=[]
+                )
+                changed = True
+            except botocore.exceptions.BotoCoreError as e:
+                module.fail_json(msg="Failed to disable all Autoscaling Group metrics: %s" % str(e),
+                                 exception=traceback.format_exc())
+        elif metrics_collection and metrics_current != metrics_requested:
+            # Metrics collection should be enabled for the types in the
+            # `metrics_members` list. Determine which metrics need to be
+            # enabled and which disabled. Then actuate those changes.
+            try:
+                connection.enable_metrics_collection(
+                    AutoScalingGroupName=as_group['AutoScalingGroupName'],
+                    Metrics=metrics_requested.keys(),
+                    Granularity=metrics_granularity
+                )
+                changed = True
+            except botocore.exceptions.BotoCoreError as e:
+                module.fail_json(msg="Failed to enable desired Autoscaling Group metrics: %s" % str(e),
+                                 exception=traceback.format_exc())
+
+            metrics_to_disable = [
+                metric for metric in metrics_current.keys()
+                if metric not in metrics_requested
+            ]
+            if any(metrics_to_disable):
+                try:
+                    connection.disable_metrics_collection(
+                        AutoScalingGroupName=as_group['AutoScalingGroupName'],
+                        Metrics=metrics_to_disable
+                    )
+                    changed = True
+                except botocore.exceptions.BotoCoreError as e:
+                    module.fail_json(msg="Failed to disable certain Autoscaling Group metrics: %s" % str(e),
+                                     exception=traceback.format_exc())
+
         if wait_for_instances:
             wait_for_new_inst(module, connection, group_name, wait_timeout, desired_capacity, 'viable_instances')
             # Wait for ELB health if ELB(s)defined
@@ -1101,7 +1187,19 @@ def main():
                 'autoscaling:EC2_INSTANCE_TERMINATE',
                 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'
             ]),
-            suspend_processes=dict(type='list', default=[])
+            suspend_processes=dict(type='list', default=[]),
+            metrics_collection=dict(type='bool', default=False),
+            metrics_granularity=dict(type='str', default='1Minute'),
+            metrics_members=dict(type='list', default=[
+                'GroupMinSize',
+                'GroupMaxSize',
+                'GroupDesiredCapacity',
+                'GroupInServiceInstances',
+                'GroupPendingInstances',
+                'GroupStandbyInstances',
+                'GroupTerminatingInstances',
+                'GroupTotalInstances',
+            ]),
         ),
     )
 
