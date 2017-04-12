@@ -80,6 +80,7 @@ proposed:
     sample: {"group": "lldp"}
 existing:
     description: k/v pairs of existing trap status
+    returned: always
     type: dict
     sample: {"lldp": [{"enabled": "No",
             "trap": "lldpRemTablesChange"}]}
