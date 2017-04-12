@@ -73,6 +73,9 @@
         publisher: Canonical
         sku: 16.04-LTS
         version: latest
+      custom_data: |
+        #!/bin/sh
+        echo "custom_data was executed" > /custom_data.txt
   register: output
 
 - assert:
