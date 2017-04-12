@@ -72,14 +72,17 @@ EXAMPLES = """
 
 RETURN = """
 xml:
-  description: The xml return string from the rpc request
+  description: The xml return string from the rpc request.
   returned: always
+  type: string
 output:
-  description: The rpc rely converted to the output format
+  description: The rpc rely converted to the output format.
   returned: always
+  type: string
 output_lines:
-  description: The text output split into lines for readability
+  description: The text output split into lines for readability.
   returned: always
+  type: list
 """
 from ncclient.xml_ import new_ele, sub_ele, to_xml, to_ele
 

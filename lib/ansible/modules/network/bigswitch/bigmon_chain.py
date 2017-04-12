@@ -69,21 +69,7 @@ EXAMPLES = '''
 '''
 
 
-RETURN = '''
-{
-    "changed": true,
-    "invocation": {
-        "module_args": {
-            "access_token": null,
-            "controller": "192.168.86.221",
-            "name": "MyChain",
-            "state": "present",
-            "validate_certs": false
-        },
-        "module_name": "bigmon_chain"
-    }
-}
-'''
+RETURN = ''' # '''
 
 import os
 from ansible.module_utils.basic import AnsibleModule
