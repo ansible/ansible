@@ -55,9 +55,11 @@ Because logging is very verbose it is disabled by default. It can be enabled via
 
    # Specify the location for the log file
    export ANSIBLE_LOG_PATH=~/ansible.log
+   # Enable Debug
+   export ANSIBLE_DEBUG=True
 
    # Run with 4*v for connection level verbosity
-   ANSIBLE_DEBUG=True ansible-playbook -vvvv ...
+   ansible-playbook -vvvv ...
 
 After Ansible has finished running you can inspect the log file:
 
@@ -122,10 +124,12 @@ If you have SSH keys configured correctly you can drop the ``-k`` parameter
 
 If the connection still fails you can combine it the enable_network_logging_, for example::
 
-  # Specify the location for the log file
-  export ANSIBLE_LOG_PATH=~/ansible.log
-  # Run with 4*v for connection level verbosity
-  ANSIBLE_DEBUG=True ansible -m eos_command -a 'commands=?' -i inventory switch1.example.net -e 'ansible_connection=local' -u admin -k
+   # Specify the location for the log file
+   export ANSIBLE_LOG_PATH=~/ansible.log
+   # Enable Debug
+   export ANSIBLE_DEBUG=True
+   # Run with 4*v for connection level verbosity
+   ansible -m eos_command -a 'commands=?' -i inventory switch1.example.net -e 'ansible_connection=local' -u admin -k
 
 Then review the log file and find the relevant error message in the rest of this document.
 
@@ -268,7 +272,8 @@ You can tell Ansible to automatically accept the keys
 
 Environment variable method::
 
-  ANSIBLE_PARAMIKO_HOST_KEY_AUTO_ADD=True ansible-playbook ...
+  export ANSIBLE_PARAMIKO_HOST_KEY_AUTO_ADD=True
+  ansible-playbook ...
 
 ``ansible.cfg`` method:
 
