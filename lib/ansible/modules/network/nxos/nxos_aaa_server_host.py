@@ -132,6 +132,7 @@ proposed:
 existing:
     description:
         - k/v pairs of existing configuration
+    returned: always
     type: dict
     sample: {}
 end_state:

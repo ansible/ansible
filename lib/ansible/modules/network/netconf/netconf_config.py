@@ -136,7 +136,7 @@ RETURN = '''
 server_capabilities:
     description: list of capabilities of the server
     returned: success
-    type: list of strings
+    type: list
     sample: ['urn:ietf:params:netconf:base:1.1','urn:ietf:params:netconf:capability:confirmed-commit:1.0','urn:ietf:params:netconf:capability:candidate:1.0']
 
 '''
