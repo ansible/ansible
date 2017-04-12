@@ -727,6 +727,10 @@ def create_autoscaling_group(connection, module):
             HealthCheckType=health_check_type,
             DefaultCooldown=default_cooldown,
             TerminationPolicies=termination_policies)
+        if availability_zones:
+            ag['AvailabilityZones'] = availability_zones
+        if vpc_zone_identifier:
+            ag['VPCZoneIdentifier'] = vpc_zone_identifier
         connection.update_auto_scaling_group(**ag)
 
         if vpc_zone_identifier:
