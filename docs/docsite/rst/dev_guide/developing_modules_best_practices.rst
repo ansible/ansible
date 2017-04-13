@@ -171,7 +171,7 @@ You should never do this in a module:
 
 .. code-block:: python
 
-    print "some status message"
+    print("some status message")
 
 Because the output is supposed to be valid JSON.
 

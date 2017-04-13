@@ -185,11 +185,11 @@ If the PR does not resolve the issue, or if you see any failures from the unit/i
    |
    | When I ran this Ubuntu 16.04 it failed with the following:
    |
-   |   ```
+   |   \```
    |   BLARG
    |   StrackTrace
    |   RRRARRGGG
-   |   ```
+   |   \```
 
 When you are done testing a feature branch, you can remove it with the following command:
 
