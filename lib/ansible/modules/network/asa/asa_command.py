@@ -27,7 +27,7 @@ DOCUMENTATION = """
 module: asa_command
 version_added: "2.2"
 author: "Peter Sprygada (@privateip), Patrick Ogenstad (@ogenstad)"
-short_description: Run arbitrary commands on Cisco ASA devices.
+short_description: Run arbitrary commands on Cisco ASA devices
 description:
   - Sends arbitrary commands to an ASA node and returns the results
     read from the device. The C(asa_command) module includes an
