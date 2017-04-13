@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -65,7 +66,7 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-Example from Ansible playbook
+# Example from Ansible playbook
 
     - name: Add a VMware vSwitch
       local_action:
@@ -86,14 +87,14 @@ except ImportError:
 
 
 def find_vswitch_by_name(host, vswitch_name):
-        for vss in host.config.network.vswitch:
-            if vss.name == vswitch_name:
-                return vss
-        return None
+    for vss in host.config.network.vswitch:
+        if vss.name == vswitch_name:
+            return vss
+    return None
 
 
 class VMwareHostVirtualSwitch(object):
-    
+
     def __init__(self, module):
         self.host_system = None
         self.content = None
@@ -132,7 +133,7 @@ class VMwareHostVirtualSwitch(object):
 
     # Source from
     # https://github.com/rreubenur/pyvmomi-community-samples/blob/patch-1/samples/create_vswitch.py
-    
+
     def state_create_vswitch(self):
         vss_spec = vim.host.VirtualSwitch.Specification()
         vss_spec.numPorts = self.number_of_ports
@@ -146,7 +147,7 @@ class VMwareHostVirtualSwitch(object):
 
     def state_destroy_vswitch(self):
         config = vim.host.NetworkConfig()
-    
+
         for portgroup in self.host_system.configManager.networkSystem.networkInfo.portgroup:
             if portgroup.spec.vswitchName == self.vss.name:
                 portgroup_config = vim.host.PortGroup.Config()
@@ -158,7 +159,7 @@ class VMwareHostVirtualSwitch(object):
                 portgroup_config.spec.vswitchName = portgroup.spec.vswitchName
                 portgroup_config.spec.policy = vim.host.NetworkPolicy()
                 config.portgroup.append(portgroup_config)
-    
+
         self.host_system.configManager.networkSystem.UpdateNetworkConfig(config, "modify")
         self.host_system.configManager.networkSystem.RemoveVirtualSwitch(self.vss.name)
         self.module.exit_json(changed=True)
@@ -170,15 +171,15 @@ class VMwareHostVirtualSwitch(object):
         host = get_all_objs(self.content, [vim.HostSystem])
         if not host:
             self.module.fail_json(msg="Unable to find host")
-    
+
         self.host_system = host.keys()[0]
         self.vss = find_vswitch_by_name(self.host_system, self.switch_name)
-    
+
         if self.vss is None:
             return 'absent'
         else:
             return 'present'
-    
+
 
 def main():
     argument_spec = vmware_argument_spec()

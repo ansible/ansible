@@ -18,18 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import shade
-    from shade import meta
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -201,6 +193,10 @@ options:
      required: false
      default: true
      version_added: "2.2"
+   availability_zone:
+     description:
+       - Availability zone in which to create the server.
+     required: false
 requirements:
     - "python >= 2.6"
     - "shade"
@@ -307,12 +303,12 @@ EXAMPLES = '''
            username: admin
            password: admin
            project_name: admin
-         name: vm1
-         image: 4f905f38-e52a-43d2-b6ec-754a13ffb529
-         key_name: ansible_key
-         timeout: 200
-         flavor: 4
-         nics: "net-id=4cb08b20-62fe-11e5-9d70-feff819cdc9f,net-id=542f0430-62fe-11e5-9d70-feff819cdc9f..."
+        name: vm1
+        image: 4f905f38-e52a-43d2-b6ec-754a13ffb529
+        key_name: ansible_key
+        timeout: 200
+        flavor: 4
+        nics: "net-id=4cb08b20-62fe-11e5-9d70-feff819cdc9f,net-id=542f0430-62fe-11e5-9d70-feff819cdc9f..."
 
 - name: Creates a new instance and attaches to a network and passes metadata to the instance
   os_server:
@@ -345,7 +341,7 @@ EXAMPLES = '''
     key_name: ansible_key
     timeout: 200
     flavor: 4
-      network: another_network
+    network: another_network
 
 # Create a new instance with 4G of RAM on a 75G Ubuntu Trusty volume
 - name: launch a compute instance
@@ -377,7 +373,54 @@ EXAMPLES = '''
         volumes:
         - photos
         - music
+
+# Creates a new instance with provisioning userdata using Cloud-Init
+- name: launch a compute instance
+  hosts: localhost
+  tasks:
+    - name: launch an instance
+      os_server:
+        name: vm1
+        state: present
+        image: "Ubuntu Server 14.04"
+        flavor: "P-1"
+        network: "Production"
+        userdata: |
+          #cloud-config
+          chpasswd:
+            list: |
+              ubuntu:{{ default_password }}
+            expire: False
+          packages:
+            - ansible
+          package_upgrade: true
+
+# Creates a new instance with provisioning userdata using Bash Scripts
+- name: launch a compute instance
+  hosts: localhost
+  tasks:
+    - name: launch an instance
+      os_server:
+        name: vm1
+        state: present
+        image: "Ubuntu Server 14.04"
+        flavor: "P-1"
+        network: "Production"
+        userdata: |
+          {%- raw -%}#!/bin/bash
+          echo "  up ip route add 10.0.0.0/8 via {% endraw -%}{{ intra_router }}{%- raw -%}" >> /etc/network/interfaces.d/eth0.conf
+          echo "  down ip route del 10.0.0.0/8" >> /etc/network/interfaces.d/eth0.conf
+          ifdown eth0 && ifup eth0
+          {% endraw %}
+
 '''
+
+try:
+    import shade
+    from shade import meta
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
 
 
 def _exit_hostvars(module, cloud, server, changed=True):
@@ -427,6 +470,18 @@ def _network_args(module, cloud):
     return args
 
 
+def _parse_meta(meta):
+    if isinstance(meta, str):
+        metas = {}
+        for kv_str in meta.split(","):
+            k, v = kv_str.split("=")
+            metas[k] = v
+        return metas
+    if not meta:
+        return {}
+    return meta
+
+
 def _delete_server(module, cloud):
     try:
         cloud.delete_server(
@@ -462,12 +517,7 @@ def _create_server(module, cloud):
 
     nics = _network_args(module, cloud)
 
-    if isinstance(module.params['meta'], str):
-        metas = {}
-        for kv_str in module.params['meta'].split(","):
-            k, v = kv_str.split("=")
-            metas[k] = v
-        module.params['meta'] = metas
+    module.params['meta'] = _parse_meta(module.params['meta'])
 
     bootkwargs = dict(
         name=module.params['name'],
@@ -498,6 +548,27 @@ def _create_server(module, cloud):
     )
 
     _exit_hostvars(module, cloud, server)
+
+
+def _update_server(module, cloud, server):
+    changed = False
+
+    module.params['meta'] = _parse_meta(module.params['meta'])
+
+    # cloud.set_server_metadata only updates the key=value pairs, it doesn't
+    # touch existing ones
+    update_meta = {}
+    for (k, v) in module.params['meta'].items():
+        if k not in server.metadata or server.metadata[k] != v:
+            update_meta[k] = v
+
+    if update_meta:
+        cloud.set_server_metadata(server, update_meta)
+        changed = True
+        # Refresh server vars
+        server = cloud.get_server(module.params['name'])
+
+    return (changed, server)
 
 
 def _delete_floating_ip_list(cloud, server, extra_ips):
@@ -549,6 +620,33 @@ def _check_floating_ips(module, cloud, server):
     return (changed, server)
 
 
+def _check_security_groups(module, cloud, server):
+    changed = False
+
+    # server security groups were added to shade in 1.19. Until then this
+    # module simply ignored trying to update security groups and only set them
+    # on newly created hosts.
+    if not (hasattr(cloud, 'add_server_security_groups') and
+            hasattr(cloud, 'remove_server_security_groups')):
+        return changed, server
+
+    module_security_groups = set(module.params['security_groups'])
+    server_security_groups = set(sg.name for sg in server.security_groups)
+
+    add_sgs = module_security_groups - server_security_groups
+    remove_sgs = server_security_groups - module_security_groups
+
+    if add_sgs:
+        cloud.add_server_security_groups(server, list(add_sgs))
+        changed = True
+
+    if remove_sgs:
+        cloud.remove_server_security_groups(server, list(remove_sgs))
+        changed = True
+
+    return (changed, server)
+
+
 def _get_server_state(module, cloud):
     state = module.params['state']
     server = cloud.get_server(module.params['name'])
@@ -558,7 +656,10 @@ def _get_server_state(module, cloud):
                 msg="The instance is available but not Active state: "
                     + server.status)
         (ip_changed, server) = _check_floating_ips(module, cloud, server)
-        _exit_hostvars(module, cloud, server, ip_changed)
+        (sg_changed, server) = _check_security_groups(module, cloud, server)
+        (server_changed, server) = _update_server(module, cloud, server)
+        _exit_hostvars(module, cloud, server,
+                       ip_changed or sg_changed or server_changed)
     if server and state == 'absent':
         return True
     if state == 'absent':

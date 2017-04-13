@@ -1,0 +1,5 @@
+- name: Test normal connection to target node
+  wait_for_connection:
+    connect_timeout: 5
+    sleep: 1
+    timeout: 10

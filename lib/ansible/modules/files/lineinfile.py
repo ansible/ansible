@@ -19,9 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
@@ -164,7 +165,7 @@ EXAMPLES = r"""
     line: '192.168.1.99 foo.lab.net foo'
 
 # Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
-- lineinfile: "
+- lineinfile:
     path: /etc/sudoers
     state: present
     regexp: '^%wheel\s'
@@ -216,7 +217,7 @@ def write_changes(module, b_lines, dest):
     if valid:
         module.atomic_move(tmpfile,
                 to_native(os.path.realpath(to_bytes(dest, errors='surrogate_or_strict')), errors='surrogate_or_strict'),
-                unsafe_writes=module.params['unsafe_writes'])
+            unsafe_writes=module.params['unsafe_writes'])
 
 
 def check_file_attrs(module, changed, message, diff):

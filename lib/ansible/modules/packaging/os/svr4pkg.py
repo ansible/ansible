@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -157,7 +158,7 @@ def run_command(module, cmd):
 
 def package_install(module, name, src, proxy, response_file, zone, category):
     adminfile = create_admin_file()
-    cmd = [ 'pkgadd', '-n'] 
+    cmd = [ 'pkgadd', '-n']
     if zone == 'current':
         cmd += [ '-G' ]
     cmd += [ '-a', adminfile, '-d', src ]

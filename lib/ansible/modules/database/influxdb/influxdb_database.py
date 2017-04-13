@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -67,19 +68,19 @@ options:
 EXAMPLES = '''
 # Example influxdb_database command from Ansible Playbooks
 - name: Create database
-    influxdb_database:
+  influxdb_database:
       hostname: "{{influxdb_ip_address}}"
       database_name: "{{influxdb_database_name}}"
       state: present
 
 - name: Destroy database
-    influxdb_database:
+  influxdb_database:
       hostname: "{{influxdb_ip_address}}"
       database_name: "{{influxdb_database_name}}"
       state: absent
 
 - name: Create database using custom credentials
-    influxdb_database:
+  influxdb_database:
       hostname: "{{influxdb_ip_address}}"
       username: "{{influxdb_username}}"
       password: "{{influxdb_password}}"

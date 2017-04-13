@@ -20,9 +20,10 @@
 #
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -117,15 +118,15 @@ def post_annotation(module):
     params = {}
     params['title'] = title
 
-    if module.params['source'] != None:
+    if module.params['source'] is not None:
         params['source'] = module.params['source']
-    if module.params['description'] != None:
+    if module.params['description'] is not None:
         params['description'] = module.params['description']
-    if module.params['start_time'] != None:
+    if module.params['start_time'] is not None:
         params['start_time'] = module.params['start_time']
-    if module.params['end_time'] != None:
+    if module.params['end_time'] is not None:
         params['end_time'] = module.params['end_time']
-    if module.params['links'] != None:
+    if module.params['links'] is not None:
         params['links'] = module.params['links']
 
     json_body = module.jsonify(params)
@@ -144,21 +145,21 @@ def post_annotation(module):
 
 def main():
 
-  module = AnsibleModule(
-      argument_spec = dict(
-        user         = dict(required=True),
-        api_key      = dict(required=True),
-        name         = dict(required=False),
-        title        = dict(required=True),
-        source       = dict(required=False),
-        description  = dict(required=False),
-        start_time   = dict(required=False, default=None, type='int'),
-        end_time     = dict(require=False, default=None, type='int'),
-        links        = dict(type='list')
+    module = AnsibleModule(
+        argument_spec = dict(
+            user         = dict(required=True),
+            api_key      = dict(required=True),
+            name         = dict(required=False),
+            title        = dict(required=True),
+            source       = dict(required=False),
+            description  = dict(required=False),
+            start_time   = dict(required=False, default=None, type='int'),
+            end_time     = dict(require=False, default=None, type='int'),
+            links        = dict(type='list')
+            )
         )
-      )
 
-  post_annotation(module)
+    post_annotation(module)
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *

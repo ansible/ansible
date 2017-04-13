@@ -18,18 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import datetime
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import pexpect
-    HAS_PEXPECT = True
-except ImportError:
-    HAS_PEXPECT = False
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -37,7 +29,7 @@ module: expect
 version_added: 2.0
 short_description: Executes a command and responds to prompts
 description:
-     - The M(expect) module executes a command and responds to prompts
+     - The C(expect) module executes a command and responds to prompts
      - The given command will be executed on all selected nodes. It will not be
        processed through the shell, so variables like C($HOME) and operations
        like C("<"), C(">"), C("|"), and C("&") will not work
@@ -105,9 +97,22 @@ EXAMPLES = '''
         - response3
 '''
 
+import datetime
+import os
+
+try:
+    import pexpect
+    HAS_PEXPECT = True
+except ImportError:
+    HAS_PEXPECT = False
+
+from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+
 
 def response_closure(module, question, responses):
-    resp_gen = (u'%s\n' % r.rstrip('\n').decode() for r in responses)
+    resp_gen = (u'%s\n' % to_text(r).rstrip(u'\n') for r in responses)
 
     def wrapped(info):
         try:
@@ -125,9 +130,9 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             command=dict(required=True),
-            chdir=dict(),
-            creates=dict(),
-            removes=dict(),
+            chdir=dict(type='path'),
+            creates=dict(type='path'),
+            removes=dict(type='path'),
             responses=dict(type='dict', required=True),
             timeout=dict(type='int', default=30),
             echo=dict(type='bool', default=False),
@@ -150,7 +155,7 @@ def main():
         if isinstance(value, list):
             response = response_closure(module, key, value)
         else:
-            response = u'%s\n' % value.rstrip('\n').decode()
+            response = u'%s\n' % to_text(value).rstrip(u'\n')
 
         events[key.decode()] = response
 
@@ -158,18 +163,17 @@ def main():
         module.fail_json(rc=256, msg="no command given")
 
     if chdir:
-        chdir = os.path.abspath(os.path.expanduser(chdir))
+        chdir = os.path.abspath(chdir)
         os.chdir(chdir)
 
     if creates:
         # do not run the command if the line contains creates=filename
         # and the filename already exists.  This allows idempotence
         # of command executions.
-        v = os.path.expanduser(creates)
-        if os.path.exists(v):
+        if os.path.exists(creates):
             module.exit_json(
                 cmd=args,
-                stdout="skipped, since %s exists" % v,
+                stdout="skipped, since %s exists" % creates,
                 changed=False,
                 rc=0
             )
@@ -178,11 +182,10 @@ def main():
         # do not run the command if the line contains removes=filename
         # and the filename does not exist.  This allows idempotence
         # of command executions.
-        v = os.path.expanduser(removes)
-        if not os.path.exists(v):
+        if not os.path.exists(removes):
             module.exit_json(
                 cmd=args,
-                stdout="skipped, since %s does not exist" % v,
+                stdout="skipped, since %s does not exist" % removes,
                 changed=False,
                 rc=0
             )
@@ -234,9 +237,6 @@ def main():
         ret['msg'] = 'command exceeded timeout'
         module.fail_json(**ret)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()

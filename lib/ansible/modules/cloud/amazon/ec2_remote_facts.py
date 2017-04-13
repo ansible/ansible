@@ -13,9 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -27,7 +28,8 @@ version_added: "2.0"
 options:
   filters:
     description:
-      - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html) for possible filters.
+      - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
+        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html) for possible filters.
     required: false
     default: null
 author:
@@ -127,9 +129,9 @@ def get_instance_info(instance):
                     'requester_id': instance.requester_id,
                     'monitoring_state': instance.monitoring_state,
                     'placement': {
-                                  'tenancy': instance._placement.tenancy,
-                                  'zone': instance._placement.zone
-                                 },
+                        'tenancy': instance._placement.tenancy,
+                        'zone': instance._placement.zone
+                        },
                     'ami_launch_index': instance.ami_launch_index,
                     'launch_time': instance.launch_time,
                     'hypervisor': instance.hypervisor,

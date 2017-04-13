@@ -15,9 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -34,19 +35,22 @@ options:
     required: true
   description:
     description:
-      - Description of the security group.
-    required: true
+      - Description of the security group. Required when C(state) is C(present).
+    required: false
   vpc_id:
     description:
       - ID of the VPC to create the group in.
     required: false
   rules:
     description:
-      - List of firewall inbound rules to enforce in this group (see example). If none are supplied, a default all-out rule is assumed. If an empty list is supplied, no inbound rules will be enabled. Rules list may include its own name in `group_name`. This allows idempotent loopback additions (e.g. allow group to acccess itself).
+      - List of firewall inbound rules to enforce in this group (see example). If none are supplied,
+        no inbound rules will be enabled. Rules list may include its own name in `group_name`.
+        This allows idempotent loopback additions (e.g. allow group to acccess itself).
     required: false
   rules_egress:
     description:
-      - List of firewall outbound rules to enforce in this group (see example). If none are supplied, a default all-out rule is assumed. If an empty list is supplied, no outbound rules will be enabled.
+      - List of firewall outbound rules to enforce in this group (see example). If none are supplied,
+        a default all-out rule is assumed. If an empty list is supplied, no outbound rules will be enabled.
     required: false
     version_added: "1.6"
   state:
@@ -131,24 +135,66 @@ EXAMPLES = '''
         group_name: example-other
         # description to use if example-other needs to be created
         group_desc: other example EC2 group
+
+- name: example2 ec2 group
+  ec2_group:
+    name: example2
+    description: an example2 EC2 group
+    vpc_id: 12345
+    region: eu-west-1a
+    rules:
+      # 'ports' rule keyword was introduced in version 2.4. It accepts a single port value or a list of values including ranges (from_port-to_port).
+      - proto: tcp
+        ports: 22
+        group_name: example-vpn
+      - proto: tcp
+        ports:
+          - 80
+          - 443
+          - 8080-8099
+        cidr_ip: 0.0.0.0/0
+      # Rule sources list support was added in version 2.4. This allows to define multiple sources per source type as well as multiple source types per rule.
+      - proto: tcp
+        ports:
+          - 6379
+          - 26379
+        group_name:
+          - example-vpn
+          - example-redis
+      - proto: tcp
+        ports: 5665
+        group_name: example-vpn
+        cidr_ip:
+          - 172.16.1.0/24
+          - 172.16.17.0/24
+        group_id:
+          - sg-edcd9784
 '''
+
+import re
+import time
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_connect, ec2_argument_spec
 
 try:
     import boto.ec2
     from boto.ec2.securitygroup import SecurityGroup
+    from boto.exception import BotoServerError
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+import traceback
 
 
 def make_rule_key(prefix, rule, group_id, cidr_ip):
     """Creates a unique key for an individual group rule"""
     if isinstance(rule, dict):
         proto, from_port, to_port = [rule.get(x, None) for x in ('proto', 'from_port', 'to_port')]
-        #fix for 11177
+        # fix for 11177
         if proto not in ['icmp', 'tcp', 'udp'] and from_port == -1 and to_port == -1:
             from_port = 'none'
-            to_port   = 'none'
+            to_port = 'none'
 
     else:  # isinstance boto.ec2.securitygroup.IPPermissions
         proto, from_port, to_port = [getattr(rule, x, None) for x in ('ip_protocol', 'from_port', 'to_port')]
@@ -238,19 +284,92 @@ def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
     return group_id, ip, target_group_created
 
 
+def ports_expand(ports):
+    # takes a list of ports and returns a list of (port_from, port_to)
+    ports_expanded = []
+    for port in ports:
+        if not isinstance(port, str):
+            ports_expanded.append((port,) * 2)
+        elif '-' in port:
+            ports_expanded.append(tuple(p.strip() for p in port.split('-', 1)))
+        else:
+            ports_expanded.append((port.strip(),) * 2)
+
+    return ports_expanded
+
+
+def rule_expand_ports(rule):
+    # takes a rule dict and returns a list of expanded rule dicts
+    if 'ports' not in rule:
+        return [rule]
+
+    ports = rule['ports'] if isinstance(rule['ports'], list) else [rule['ports']]
+
+    rule_expanded = []
+    for from_to in ports_expand(ports):
+        temp_rule = rule.copy()
+        del temp_rule['ports']
+        temp_rule['from_port'], temp_rule['to_port'] = from_to
+        rule_expanded.append(temp_rule)
+
+    return rule_expanded
+
+
+def rules_expand_ports(rules):
+    # takes a list of rules and expands it based on 'ports'
+    if not rules:
+        return rules
+
+    return [rule for rule_complex in rules
+            for rule in rule_expand_ports(rule_complex)]
+
+
+def rule_expand_source(rule, source_type):
+    # takes a rule dict and returns a list of expanded rule dicts for specified source_type
+    sources = rule[source_type] if isinstance(rule[source_type], list) else [rule[source_type]]
+    source_types_all = ('cidr_ip', 'group_id', 'group_name')
+
+    rule_expanded = []
+    for source in sources:
+        temp_rule = rule.copy()
+        for s in source_types_all:
+            temp_rule.pop(s, None)
+        temp_rule[source_type] = source
+        rule_expanded.append(temp_rule)
+
+    return rule_expanded
+
+
+def rule_expand_sources(rule):
+    # takes a rule dict and returns a list of expanded rule discts
+    source_types = (stype for stype in ('cidr_ip', 'group_id', 'group_name') if stype in rule)
+
+    return [r for stype in source_types
+            for r in rule_expand_source(rule, stype)]
+
+
+def rules_expand_sources(rules):
+    # takes a list of rules and expands it based on 'cidr_ip', 'group_id', 'group_name'
+    if not rules:
+        return rules
+
+    return [rule for rule_complex in rules
+            for rule in rule_expand_sources(rule_complex)]
+
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            name=dict(type='str', required=True),
-            description=dict(type='str', required=True),
-            vpc_id=dict(type='str'),
-            rules=dict(type='list'),
-            rules_egress=dict(type='list'),
-            state = dict(default='present', type='str', choices=['present', 'absent']),
-            purge_rules=dict(default=True, required=False, type='bool'),
-            purge_rules_egress=dict(default=True, required=False, type='bool'),
+        name=dict(type='str', required=True),
+        description=dict(type='str', required=False),
+        vpc_id=dict(type='str'),
+        rules=dict(type='list'),
+        rules_egress=dict(type='list'),
+        state=dict(default='present', type='str', choices=['present', 'absent']),
+        purge_rules=dict(default=True, required=False, type='bool'),
+        purge_rules_egress=dict(default=True, required=False, type='bool'),
 
-        )
+    )
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -263,11 +382,14 @@ def main():
     name = module.params['name']
     description = module.params['description']
     vpc_id = module.params['vpc_id']
-    rules = module.params['rules']
-    rules_egress = module.params['rules_egress']
+    rules = rules_expand_sources(rules_expand_ports(module.params['rules']))
+    rules_egress = rules_expand_sources(rules_expand_ports(module.params['rules_egress']))
     state = module.params.get('state')
     purge_rules = module.params['purge_rules']
     purge_rules_egress = module.params['purge_rules_egress']
+
+    if state == 'present' and not description:
+        module.fail_json(msg='Must provide description when state is present.')
 
     changed = False
 
@@ -276,7 +398,13 @@ def main():
     # find the group if present
     group = None
     groups = {}
-    for curGroup in ec2.get_all_security_groups():
+
+    try:
+        security_groups = ec2.get_all_security_groups()
+    except BotoServerError as e:
+        module.fail_json(msg="Error in get_all_security_groups: %s" % e.message, exception=traceback.format_exc())
+
+    for curGroup in security_groups:
         groups[curGroup.id] = curGroup
         if curGroup.name in groups:
             # Prioritise groups from the current VPC
@@ -291,36 +419,29 @@ def main():
     # Ensure requested group is absent
     if state == 'absent':
         if group:
-            '''found a match, delete it'''
+            # found a match, delete it
             try:
                 if not module.check_mode:
                     group.delete()
-            except Exception as e:
-                module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e))
+            except BotoServerError as e:
+                module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e.message), exception=traceback.format_exc())
             else:
                 group = None
                 changed = True
         else:
-            '''no match found, no changes required'''
+            # no match found, no changes required
+            pass
 
     # Ensure requested group is present
     elif state == 'present':
         if group:
-            '''existing group found'''
-            # check the group parameters are correct
-            group_in_use = False
-            rs = ec2.get_all_instances()
-            for r in rs:
-                for i in r.instances:
-                    group_in_use |= reduce(lambda x, y: x | (y.name == 'public-ssh'), i.groups, False)
-
+            # existing group
             if group.description != description:
-                if group_in_use:
-                    module.fail_json(msg="Group description does not match, but it is in use so cannot be changed.")
+                module.fail_json(msg="Group description does not match existing group. ec2_group does not support this case.")
 
         # if the group doesn't exist, create it now
         else:
-            '''no match found, create it'''
+            # no match found, create it
             if not module.check_mode:
                 group = ec2.create_security_group(name, description, vpc_id=vpc_id)
 
@@ -329,7 +450,7 @@ def main():
                 # reflected in the object returned by the AWS API
                 # call. We re-read the group for getting an updated object
                 # amazon sometimes takes a couple seconds to update the security group so wait till it exists
-                while len(ec2.get_all_security_groups(filters={ 'group_id': group.id, })) == 0:
+                while len(ec2.get_all_security_groups(filters={'group_id': group.id})) == 0:
                     time.sleep(0.1)
 
                 group = ec2.get_all_security_groups(group_ids=(group.id,))[0]
@@ -427,15 +548,15 @@ def main():
 
                         if not module.check_mode:
                             ec2.authorize_security_group_egress(
-                                    group_id=group.id,
-                                    ip_protocol=rule['proto'],
-                                    from_port=rule['from_port'],
-                                    to_port=rule['to_port'],
-                                    src_group_id=grantGroup,
-                                    cidr_ip=thisip)
+                                group_id=group.id,
+                                ip_protocol=rule['proto'],
+                                from_port=rule['from_port'],
+                                to_port=rule['to_port'],
+                                src_group_id=grantGroup,
+                                cidr_ip=thisip)
                         changed = True
-        elif vpc_id:
-            # when using a vpc, but no egress rules are specified,
+        else:
+            # when no egress rules are specified,
             # we add in a default allow all out rule, which was the
             # default behavior before egress rules were added
             default_egress_rule = 'out--1-None-None-None-0.0.0.0/0'
@@ -462,12 +583,12 @@ def main():
                     grantGroup = groups[grant.group_id].id
                 if not module.check_mode:
                     ec2.revoke_security_group_egress(
-                            group_id=group.id,
-                            ip_protocol=rule.ip_protocol,
-                            from_port=rule.from_port,
-                            to_port=rule.to_port,
-                            src_group_id=grantGroup,
-                            cidr_ip=grant.cidr_ip)
+                        group_id=group.id,
+                        ip_protocol=rule.ip_protocol,
+                        from_port=rule.from_port,
+                        to_port=rule.to_port,
+                        src_group_id=grantGroup,
+                        cidr_ip=grant.cidr_ip)
                 changed = True
 
     if group:
@@ -475,9 +596,6 @@ def main():
     else:
         module.exit_json(changed=changed, group_id=None)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

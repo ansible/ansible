@@ -14,6 +14,7 @@ if [ -s /tmp/network.txt ]; then
 
     ansible-test network-integration --color -v --retry-on-error "${target}" --requirements \
         --platform vyos/1.1.0 \
+        --platform ios/csr1000v \
 
 else
     echo "No changes requiring integration tests specific to networking were detected."

@@ -14,15 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {
-  'version': '1.0',
-  'status': ['preview'],
-  'supported_by': 'committer'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
-module: kms
+module: aws_kms
 short_description: Perform various KMS management tasks.
 description:
      - Manage role/user access to a KMS key. Not designed for encrypting/decrypting.
@@ -184,9 +183,9 @@ def do_grant(kms, keyarn, role_arn, granttypes, mode='grant', dry_run=True, clea
                         if not dry_run:
                             statement['Principal']['AWS'].append(role_arn)
                 elif role_arn in statement['Principal']['AWS']: # not one the places the role should be
-                        changes_needed[granttype] = 'remove'
-                        if not dry_run:
-                            statement['Principal']['AWS'].remove(role_arn)
+                    changes_needed[granttype] = 'remove'
+                    if not dry_run:
+                        statement['Principal']['AWS'].remove(role_arn)
 
             elif mode == 'deny' and statement['Sid'] == statement_label[granttype] and role_arn in statement['Principal']['AWS']:
                 # we don't selectively deny. that's a grant with a
@@ -236,14 +235,14 @@ def assert_policy_shape(policy):
 def main():
     argument_spec = ansible.module_utils.ec2.ec2_argument_spec()
     argument_spec.update(dict(
-            mode = dict(choices=['grant', 'deny'], default='grant'),
-            key_alias = dict(required=False, type='str'),
-            key_arn = dict(required=False, type='str'),
-            role_name = dict(required=False, type='str'),
-            role_arn = dict(required=False, type='str'),
-            grant_types = dict(required=False, type='list'),
-            clean_invalid_entries = dict(type='bool', default=True),
-        )
+        mode = dict(choices=['grant', 'deny'], default='grant'),
+        key_alias = dict(required=False, type='str'),
+        key_arn = dict(required=False, type='str'),
+        role_name = dict(required=False, type='str'),
+        role_arn = dict(required=False, type='str'),
+        grant_types = dict(required=False, type='list'),
+        clean_invalid_entries = dict(type='bool', default=True),
+    )
     )
 
     module = AnsibleModule(
@@ -264,7 +263,7 @@ def main():
         kms = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='kms', region=region, endpoint=ec2_url, **aws_connect_kwargs)
         iam = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='iam', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoCredentialsError as e:
-        module.fail_json(msg='cannot connect to AWS', exception=traceback.format_exc(e))
+        module.fail_json(msg='cannot connect to AWS', exception=traceback.format_exc())
 
 
     try:
@@ -284,12 +283,13 @@ def main():
                 if not g in statement_label:
                     module.fail_json(msg='{} is an unknown grant type.'.format(g))
 
-        ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'], mode=mode, dry_run=module.check_mode, clean_invalid_entries=module.params['clean_invalid_entries'])
+        ret = do_grant(kms, module.params['key_arn'], module.params['role_arn'], module.params['grant_types'], mode=mode, dry_run=module.check_mode,
+                       clean_invalid_entries=module.params['clean_invalid_entries'])
         result.update(ret)
 
     except Exception as err:
         error_msg = boto_exception(err)
-        module.fail_json(msg=error_msg, exception=traceback.format_exc(err))
+        module.fail_json(msg=error_msg, exception=traceback.format_exc())
 
     module.exit_json(**result)
 

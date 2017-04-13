@@ -84,7 +84,9 @@ class Display:
             try:
                 cmd = subprocess.Popen([self.b_cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (out, err) = cmd.communicate()
-                self.cows_available = [ to_bytes(c) for c in set(C.ANSIBLE_COW_WHITELIST).intersection(out.split())]
+                self.cows_available = set([ to_text(c) for c in out.split() ])
+                if C.ANSIBLE_COW_WHITELIST:
+                    self.cows_available = set(C.ANSIBLE_COW_WHITELIST).intersection(self.cows_available)
             except:
                 # could not execute cowsay for some reason
                 self.b_cowsay = False
@@ -244,10 +246,10 @@ class Display:
         runcmd = [self.b_cowsay, b"-W", b"60"]
         if self.noncow:
             thecow = self.noncow
-            if thecow == b'random':
-                thecow = random.choice(self.cows_available)
+            if thecow == 'random':
+                thecow = random.choice(list(self.cows_available))
             runcmd.append(b'-f')
-            runcmd.append(thecow)
+            runcmd.append(to_bytes(thecow))
         runcmd.append(to_bytes(msg))
         cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()

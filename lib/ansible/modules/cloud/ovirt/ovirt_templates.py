@@ -19,31 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import time
-import traceback
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import ovirtsdk4.types as otypes
-except ImportError:
-    pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    get_dict_of_struct,
-    get_link_name,
-    ovirt_full_argument_spec,
-    search_by_attributes,
-    search_by_name,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -140,6 +119,27 @@ template:
     returned: On success if template is found.
 '''
 
+import time
+import traceback
+
+try:
+    import ovirtsdk4.types as otypes
+except ImportError:
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    get_dict_of_struct,
+    get_link_name,
+    ovirt_full_argument_spec,
+    search_by_attributes,
+    search_by_name,
+)
+
 
 class TemplatesModule(BaseModule):
 
@@ -224,7 +224,8 @@ def main():
     check_sdk(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         templates_service = connection.system_service().templates_service()
         templates_module = TemplatesModule(
             connection=connection,
@@ -307,7 +308,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":

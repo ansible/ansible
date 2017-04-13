@@ -16,11 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-DOCUMENTATION='''
+
+DOCUMENTATION = '''
 ---
 module: atomic_image
 short_description: Manage the container images on the atomic host platform
@@ -72,6 +73,11 @@ msg:
     sample: [u'Using default tag: latest ...']
 '''
 
+
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+
+
 def do_upgrade(module, image):
     args = ['atomic', 'update', '--force', image]
     rc, out, err = module.run_command(args, check_rc=False)
@@ -119,12 +125,12 @@ def core(module):
 
 def main():
     module = AnsibleModule(
-                argument_spec = dict(
-                    name    = dict(default=None, required=True),
-                    state   = dict(default='latest', choices=['present', 'absent', 'latest']),
-                    started = dict(default='yes', type='bool'),
-                ),
-            )
+        argument_spec=dict(
+            name=dict(default=None, required=True),
+            state=dict(default='latest', choices=['present', 'absent', 'latest']),
+            started=dict(default='yes', type='bool'),
+            ),
+        )
 
     # Verify that the platform supports atomic command
     rc, out, err = module.run_command('atomic -v', check_rc=False)
@@ -137,7 +143,5 @@ def main():
         module.fail_json(msg=str(e))
 
 
-# import module snippets
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

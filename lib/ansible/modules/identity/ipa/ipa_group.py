@@ -15,9 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -139,10 +140,12 @@ group:
   type: dict
 '''
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.ipa import IPAClient
 
-class GroupIPAClient(IPAClient):
 
+class GroupIPAClient(IPAClient):
     def __init__(self, module, host, port, protocol):
         super(GroupIPAClient, self).__init__(module, host, port, protocol)
 
@@ -190,7 +193,7 @@ def get_group_dict(description=None, external=None, gid=None, nonposix=None):
     return group
 
 
-def get_group_diff(ipa_group, module_group):
+def get_group_diff(client, ipa_group, module_group):
     data = []
     # With group_add attribute nonposix is passed, whereas with group_mod only posix can be passed.
     if 'nonposix' in module_group:
@@ -199,34 +202,7 @@ def get_group_diff(ipa_group, module_group):
             module_group['posix'] = True
         del module_group['nonposix']
 
-    for key in module_group.keys():
-        module_value = module_group.get(key, None)
-        ipa_value = ipa_group.get(key, None)
-        if isinstance(ipa_value, list) and not isinstance(module_value, list):
-            module_value = [module_value]
-        if isinstance(ipa_value, list) and isinstance(module_value, list):
-            ipa_value = sorted(ipa_value)
-            module_value = sorted(module_value)
-        if ipa_value != module_value:
-            data.append(key)
-    return data
-
-
-def modify_if_diff(module, name, ipa_list, module_list, add_method, remove_method):
-    changed = False
-    diff = list(set(ipa_list) - set(module_list))
-    if len(diff) > 0:
-        changed = True
-        if not module.check_mode:
-            remove_method(name=name, item=diff)
-
-    diff = list(set(module_list) - set(ipa_list))
-    if len(diff) > 0:
-        changed = True
-        if not module.check_mode:
-            add_method(name=name, item=diff)
-
-    return changed
+    return client.get_diff(ipa_data=ipa_group, module_data=module_group)
 
 
 def ensure(module, client):
@@ -246,7 +222,7 @@ def ensure(module, client):
             if not module.check_mode:
                 ipa_group = client.group_add(name, item=module_group)
         else:
-            diff = get_group_diff(ipa_group, module_group)
+            diff = get_group_diff(client, ipa_group, module_group)
             if len(diff) > 0:
                 changed = True
                 if not module.check_mode:
@@ -256,14 +232,14 @@ def ensure(module, client):
                     client.group_mod(name=name, item=data)
 
         if group is not None:
-            changed = modify_if_diff(module, name, ipa_group.get('member_group', []), group,
-                                     client.group_add_member_group,
-                                     client.group_remove_member_group) or changed
+            changed = client.modify_if_diff(name, ipa_group.get('member_group', []), group,
+                                            client.group_add_member_group,
+                                            client.group_remove_member_group) or changed
 
         if user is not None:
-            changed = modify_if_diff(module, name, ipa_group.get('member_user', []), user,
-                                     client.group_add_member_user,
-                                     client.group_remove_member_user) or changed
+            changed = client.modify_if_diff(name, ipa_group.get('member_user', []), user,
+                                            client.group_add_member_user,
+                                            client.group_remove_member_user) or changed
 
     else:
         if ipa_group:
@@ -308,9 +284,6 @@ def main():
         e = get_exception()
         module.fail_json(msg=str(e))
 
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
 
 if __name__ == '__main__':
     main()

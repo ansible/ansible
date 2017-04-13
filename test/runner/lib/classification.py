@@ -3,6 +3,7 @@
 from __future__ import absolute_import, print_function
 
 import os
+import time
 
 from lib.target import (
     walk_module_targets,
@@ -10,10 +11,15 @@ from lib.target import (
     walk_units_targets,
     walk_compile_targets,
     walk_sanity_targets,
+    load_integration_prefixes,
 )
 
 from lib.util import (
     display,
+)
+
+from lib.import_analysis import (
+    get_python_module_utils_imports,
 )
 
 
@@ -33,6 +39,26 @@ def categorize_changes(paths, verbose_command=None):
         'windows-integration': set(),
         'network-integration': set(),
     }
+
+    additional_paths = set()
+
+    for path in paths:
+        dependent_paths = mapper.get_dependent_paths(path)
+
+        if not dependent_paths:
+            continue
+
+        display.info('Expanded "%s" to %d dependent file(s):' % (path, len(dependent_paths)), verbosity=1)
+
+        for dependent_path in dependent_paths:
+            display.info(dependent_path, verbosity=1)
+            additional_paths.add(dependent_path)
+
+    additional_paths -= set(paths)  # don't count changed paths as additional paths
+
+    if additional_paths:
+        display.info('Expanded %d changed file(s) into %d additional dependent file(s).' % (len(paths), len(additional_paths)))
+        paths = sorted(set(paths) | additional_paths)
 
     display.info('Mapping %d changed file(s) to tests.' % len(paths))
 
@@ -86,6 +112,7 @@ class PathMapper(object):
 
         self.module_names_by_path = dict((t.path, t.module) for t in self.module_targets)
         self.integration_targets_by_name = dict((t.name, t) for t in self.integration_targets)
+        self.integration_targets_by_alias = dict((a, t) for t in self.integration_targets for a in t.aliases)
 
         self.posix_integration_by_module = dict((m, t.name) for t in self.integration_targets
                                                 if 'posix/' in t.aliases for m in t.modules)
@@ -93,6 +120,45 @@ class PathMapper(object):
                                                   if 'windows/' in t.aliases for m in t.modules)
         self.network_integration_by_module = dict((m, t.name) for t in self.integration_targets
                                                   if 'network/' in t.aliases for m in t.modules)
+
+        self.prefixes = load_integration_prefixes()
+
+        self.python_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
+
+    def get_dependent_paths(self, path):
+        """
+        :type path: str
+        :rtype: list[str]
+        """
+        ext = os.path.splitext(os.path.split(path)[1])[1]
+
+        if path.startswith('lib/ansible/module_utils/'):
+            if ext == '.py':
+                return self.get_python_module_utils_usage(path)
+
+        return []
+
+    def get_python_module_utils_usage(self, path):
+        """
+        :type path: str
+        :rtype: list[str]
+        """
+        if path == 'lib/ansible/module_utils/__init__.py':
+            return []
+
+        if not self.python_module_utils_imports:
+            display.info('Analyzing python module_utils imports...')
+            before = time.time()
+            self.python_module_utils_imports = get_python_module_utils_imports(self.compile_targets)
+            after = time.time()
+            display.info('Processed %d python module_utils in %d second(s).' % (len(self.python_module_utils_imports), after - before))
+
+        name = os.path.splitext(path)[0].replace('/', '.')[4:]
+
+        if name.endswith('.__init__'):
+            name = name[:-9]
+
+        return sorted(self.python_module_utils_imports[name])
 
     def classify(self, path):
         """
@@ -142,7 +208,7 @@ class PathMapper(object):
         if path.startswith('examples/'):
             if path == 'examples/scripts/ConfigureRemotingForAnsible.ps1':
                 return {
-                    'windows-integration': 'all',
+                    'windows-integration': 'connection_winrm',
                 }
 
             return minimal
@@ -170,11 +236,7 @@ class PathMapper(object):
                 }
 
             if ext == '.py':
-                return {
-                    'integration': 'all',
-                    'network-integration': 'all',
-                    'units': 'all',
-                }
+                return minimal  # already expanded using get_dependent_paths
 
         if path.startswith('lib/ansible/plugins/connection/'):
             if name == '__init__':
@@ -223,6 +285,28 @@ class PathMapper(object):
                 'units': units_path,
             }
 
+        if path.startswith('lib/ansible/plugins/terminal/'):
+            if ext == '.py':
+                if name in self.prefixes and self.prefixes[name] == 'network':
+                    network_target = 'network/%s/' % name
+
+                    if network_target in self.integration_targets_by_alias:
+                        return {
+                            'network-integration': network_target,
+                            'units': 'all',
+                        }
+
+                    display.warning('Integration tests for "%s" not found.' % network_target)
+
+                    return {
+                        'units': 'all',
+                    }
+
+                return {
+                    'network-integration': 'all',
+                    'units': 'all',
+                }
+
         if path.startswith('lib/ansible/utils/module_docs_fragments/'):
             return {
                 'sanity': 'all',
@@ -246,6 +330,9 @@ class PathMapper(object):
             return minimal
 
         if path.startswith('test/integration/targets/'):
+            if not os.path.exists(path):
+                return minimal
+
             target = self.integration_targets_by_name[path.split('/')[3]]
 
             if 'hidden/' in target.aliases:

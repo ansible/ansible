@@ -13,9 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -150,7 +151,7 @@ def create_subnet(vpc_conn, vpc_id, cidr, az, check_mode):
             subnet = None
         else:
             raise AnsibleVPCSubnetCreationException(
-              'Unable to create subnet {0}, error: {1}'.format(cidr, e))
+                'Unable to create subnet {0}, error: {1}'.format(cidr, e))
 
     return subnet
 
@@ -233,7 +234,7 @@ def main():
             az = dict(default=None, required=False),
             cidr = dict(default=None, required=True),
             state = dict(default='present', choices=['present', 'absent']),
-            tags = dict(default=None, required=False, type='dict', aliases=['resource_tags']),
+            tags = dict(default={}, required=False, type='dict', aliases=['resource_tags']),
             vpc_id = dict(default=None, required=True)
         )
     )

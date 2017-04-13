@@ -76,7 +76,7 @@ class TestAbstractClass(unittest.TestCase):
 
     def test_subclass_error(self):
         class CacheModule1(BaseCacheModule):
-                pass
+            pass
         with self.assertRaises(TypeError):
             CacheModule1()
 

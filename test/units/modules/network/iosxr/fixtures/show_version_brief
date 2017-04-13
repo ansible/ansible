@@ -1,0 +1,18 @@
+Cisco IOS XR Software, Version 6.0.0[Default]
+Copyright (c) 2015 by Cisco Systems, Inc.
+
+ROM: GRUB, Version 1.99(0), DEV RELEASE
+
+iosxr01 uptime is 11 weeks, 6 days, 2 hours, 2 minutes
+System image file is "bootflash:disk0/xrvr-os-mbi-6.0.0/mbixrvr-rp.vm"
+
+cisco IOS XRv Series (Pentium Celeron Stepping 3) processor with 3169911K bytes
+of memory.
+Pentium Celeron Stepping 3 processor at 3836MHz, Revision 2.174
+IOS XRv Chassis
+
+1 Management Ethernet
+6 GigabitEthernet
+97070k bytes of non-volatile configuration memory.
+866M bytes of hard disk.
+2321392k bytes of disk0: (Sector size 512 bytes).

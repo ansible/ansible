@@ -19,11 +19,12 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
 
-DOCUMENTATION='''
+
+DOCUMENTATION = r'''
 ---
 module: win_reboot
 short_description: Reboot a windows machine
@@ -63,7 +64,7 @@ author:
     - Matt Davis (@nitzmahone)
 '''
 
-EXAMPLES='''
+EXAMPLES = r'''
 # Unconditionally reboot the machine with all defaults
 - win_reboot:
 
@@ -79,7 +80,7 @@ EXAMPLES='''
     reboot_timeout_sec: 3600
 '''
 
-RETURN='''
+RETURN = r'''
 rebooted:
     description: true if the machine was rebooted
     returned: always

@@ -15,17 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -67,11 +60,21 @@ options:
        - Volume snapshot id to create from
      required: false
      default: None
+   volume:
+     description:
+       - Volume name or id to create from
+     required: false
+     default: None
+     version_added: "2.3"
    state:
      description:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
+   availability_zone:
+     description:
+       - Ignored. Present for backwards compatability
+     required: false
 requirements:
      - "python >= 2.6"
      - "shade"
@@ -91,6 +94,12 @@ EXAMPLES = '''
       display_name: test_volume
 '''
 
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
 
 def _present_volume(module, cloud):
     if cloud.volume_exists(module.params['display_name']):
@@ -108,6 +117,12 @@ def _present_volume(module, cloud):
     if module.params['image']:
         image_id = cloud.get_image_id(module.params['image'])
         volume_args['imageRef'] = image_id
+
+    if module.params['volume']:
+        volume_id = cloud.get_volume_id(module.params['volume'])
+        if not volume_id:
+            module.fail_json(msg="Failed to find volume '%s'" % module.params['volume'])
+        volume_args['source_volid'] = volume_id
 
     volume = cloud.create_volume(
         wait=module.params['wait'], timeout=module.params['timeout'],
@@ -134,11 +149,12 @@ def main():
         display_description=dict(default=None, aliases=['description']),
         image=dict(default=None),
         snapshot_id=dict(default=None),
+        volume=dict(default=None),
         state=dict(default='present', choices=['absent', 'present']),
     )
     module_kwargs = openstack_module_kwargs(
         mutually_exclusive=[
-            ['image', 'snapshot_id'],
+            ['image', 'snapshot_id', 'volume'],
         ],
     )
     module = AnsibleModule(argument_spec=argument_spec, **module_kwargs)

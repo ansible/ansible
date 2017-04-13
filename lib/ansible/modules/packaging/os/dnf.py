@@ -20,9 +20,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -34,7 +35,9 @@ description:
 options:
   name:
     description:
-      - "Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: dnf -y update. You can also pass a url or a local path to a rpm file."
+      - >
+        Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: dnf -y update.
+        You can also pass a url or a local path to a rpm file.
     required: true
     default: null
     aliases: []

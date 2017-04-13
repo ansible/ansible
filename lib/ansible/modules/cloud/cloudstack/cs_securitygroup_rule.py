@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -206,27 +207,27 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
 
     def _tcp_udp_match(self, rule, protocol, start_port, end_port):
         return protocol in ['tcp', 'udp'] \
-               and protocol == rule['protocol'] \
-               and start_port == int(rule['startport']) \
-               and end_port == int(rule['endport'])
+            and protocol == rule['protocol'] \
+            and start_port == int(rule['startport']) \
+            and end_port == int(rule['endport'])
 
 
     def _icmp_match(self, rule, protocol, icmp_code, icmp_type):
         return protocol == 'icmp' \
-               and protocol == rule['protocol'] \
-               and icmp_code == int(rule['icmpcode']) \
-               and icmp_type == int(rule['icmptype'])
+            and protocol == rule['protocol'] \
+            and icmp_code == int(rule['icmpcode']) \
+            and icmp_type == int(rule['icmptype'])
 
 
     def _ah_esp_gre_match(self, rule, protocol):
         return protocol in ['ah', 'esp', 'gre'] \
-               and protocol == rule['protocol']
+            and protocol == rule['protocol']
 
 
     def _type_security_group_match(self, rule, security_group_name):
         return security_group_name \
-               and 'securitygroupname' in rule \
-               and security_group_name == rule['securitygroupname']
+            and 'securitygroupname' in rule \
+            and security_group_name == rule['securitygroupname']
 
 
     def _type_cidr_match(self, rule, cidr):
@@ -273,7 +274,7 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
         args['projectid'] = self.get_project('id')
         sgs = self.cs.listSecurityGroups(**args)
         if not sgs or 'securitygroup' not in sgs:
-                self.module.fail_json(msg="security group '%s' not found" % security_group_name)
+            self.module.fail_json(msg="security group '%s' not found" % security_group_name)
         return sgs['securitygroup'][0]
 
 

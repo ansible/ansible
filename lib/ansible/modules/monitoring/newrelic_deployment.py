@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -123,7 +124,7 @@ def main():
         params["application_id"] = module.params["application_id"]
     else:
         module.fail_json(msg="you must set one of 'app_name' or 'application_id'")
-    
+
     for item in [ "changelog", "description", "revision", "user", "appname", "environment" ]:
         if module.params[item]:
             params[item] = module.params[item]

@@ -24,7 +24,8 @@ DOCUMENTATION = '''
 module: panos_nat_policy
 short_description: create a policy NAT rule
 description:
-    - Create a policy nat rule. Keep in mind that we can either end up configuring source NAT, destination NAT, or both. Instead of splitting it into two we will make a fair attempt to determine which one the user wants.
+    - Create a policy nat rule. Keep in mind that we can either end up configuring source NAT, destination NAT, or both. Instead of splitting it
+      into two we will make a fair attempt to determine which one the user wants.
 author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
@@ -140,9 +141,10 @@ RETURN = '''
 # Default return values
 '''
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import get_exception

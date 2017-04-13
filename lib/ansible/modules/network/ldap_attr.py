@@ -19,26 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-
-try:
-    import ldap
-    import ldap.sasl
-
-    HAS_LDAP = True
-except ImportError:
-    HAS_LDAP = False
-
-
-ANSIBLE_METADATA = {
-    'status': [
-        'preview'
-    ],
-    'supported_by': 'community',
-    'version': '1.0'
-}
 
 DOCUMENTATION = """
 ---
@@ -166,10 +150,10 @@ EXAMPLES = """
     olcRootPW: "{SSHA}tabyipcHzhwESzRaGA7oQ/SDoBZQOGND"
 
 - name: Get rid of an unneeded attribute
-  ldap_entry:
+  ldap_attr:
     dn: uid=jdoe,ou=people,dc=example,dc=com
     name: shadowExpire
-    value: ""
+    values: ""
     state: exact
     server_uri: ldap://localhost/
     bind_dn: cn=admin,dc=example,dc=com
@@ -184,10 +168,10 @@ EXAMPLES = """
 #   bind_dn: cn=admin,dc=example,dc=com
 #   bind_pw: password
 - name: Get rid of an unneeded attribute
-  ldap_entry:
+  ldap_attr:
     dn: uid=jdoe,ou=people,dc=example,dc=com
     name: shadowExpire
-    value: ""
+    values: ""
     state: exact
     params: "{{ ldap_auth }}"
 """
@@ -200,6 +184,17 @@ modlist:
   type: list
   sample: '[[2, "olcRootDN", ["cn=root,dc=example,dc=com"]]]'
 """
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+
+try:
+    import ldap
+    import ldap.sasl
+
+    HAS_LDAP = True
+except ImportError:
+    HAS_LDAP = False
 
 
 class LdapAttr(object):

@@ -50,7 +50,14 @@ def get_guests():
         #loop through guests
         for j in json_data:
             #Add information to host vars
-            inventory['_meta']['hostvars'][j['hostname']] = {'ctid': j['ctid'], 'veid': j['veid'], 'vpsid': j['vpsid'], 'private_path': j['private'], 'root_path': j['root'], 'ip': j['ip']}
+            inventory['_meta']['hostvars'][j['hostname']] = {
+                'ctid': j['ctid'],
+                'veid': j['veid'],
+                'vpsid': j['vpsid'],
+                'private_path': j['private'],
+                'root_path': j['root'],
+                'ip': j['ip']
+            }
 
             #determine group from guest description
             if j['description'] is not None:

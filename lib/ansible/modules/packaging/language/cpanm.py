@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -140,14 +141,14 @@ def _is_package_installed(module, name, locallib, cpanm, version):
         os.environ["PERL5LIB"] = "%s/lib/perl5" % locallib
     cmd = "%s perl -e ' use %s" % (cmd, name)
     if version:
-       cmd = "%s %s;'" % (cmd, version)
+        cmd = "%s %s;'" % (cmd, version)
     else:
-       cmd = "%s;'" % cmd
+        cmd = "%s;'" % cmd
     res, stdout, stderr = module.run_command(cmd, check_rc=False)
     if res == 0:
-       return True
+        return True
     else:
-       return False
+        return False
 
 def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, installdeps, cpanm, use_sudo):
     # this code should use "%s" like everything else and just return early but not fixing all of it now.

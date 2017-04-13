@@ -21,8 +21,8 @@ __metaclass__ = type
 
 import os
 
-from ansible.compat.six import iteritems, string_types
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
+from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping, AnsibleUnicode
@@ -68,7 +68,6 @@ class Task(Base, Conditional, Taggable, Become):
     _args                 = FieldAttribute(isa='dict', default=dict())
     _action               = FieldAttribute(isa='string')
 
-    _any_errors_fatal     = FieldAttribute(isa='bool')
     _async                = FieldAttribute(isa='int', default=0)
     _changed_when         = FieldAttribute(isa='list', default=[])
     _delay                = FieldAttribute(isa='int', default=5)
@@ -80,7 +79,7 @@ class Task(Base, Conditional, Taggable, Become):
     _loop_control         = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
     _name                 = FieldAttribute(isa='string', default='')
     _notify               = FieldAttribute(isa='list')
-    _poll                 = FieldAttribute(isa='int')
+    _poll                 = FieldAttribute(isa='int', default=10)
     _register             = FieldAttribute(isa='string')
     _retries              = FieldAttribute(isa='int')
     _until                = FieldAttribute(isa='list', default=[])
@@ -259,25 +258,40 @@ class Task(Base, Conditional, Taggable, Become):
         Override post validation of vars on the play, as we don't want to
         template these too early.
         '''
-        if value is None:
-            return dict()
+        env = {}
+        if value is not None:
 
-        elif isinstance(value, list):
-            if len(value) == 1:
-                return templar.template(value[0], convert_bare=True)
-            else:
-                env = []
+            print(value)
+            def _parse_env_kv(k, v):
+                try:
+                    env[k] = templar.template(v, convert_bare=False)
+                except AnsibleUndefinedVariable as e:
+                    if self.action in ('setup', 'gather_facts') and 'ansible_env' in to_native(e):
+                        # ignore as fact gathering sets ansible_env
+                        pass
+
+            if isinstance(value, list):
                 for env_item in value:
-                    if isinstance(env_item, (string_types, AnsibleUnicode)) and env_item in templar._available_variables:
-                        env[env_item] = templar.template(env_item, convert_bare=False)
-        elif isinstance(value, dict):
-            env = dict()
-            for env_item in value:
-                if isinstance(env_item, (string_types, AnsibleUnicode)) and env_item in templar._available_variables:
-                    env[env_item] = templar.template(value[env_item], convert_bare=False)
+                    if isinstance(env_item, dict):
+                        for k in env_item:
+                            _parse_env_kv(k, env_item[k])
+                    else:
+                        isdict = templar.template(env_item, convert_bare=False)
+                        if isinstance(isdict, dict):
+                            env.update(isdict)
+                        else:
+                            display.warning("could not parse environment value, skipping: %s" % value)
 
-        # at this point it should be a simple string
-        return templar.template(value, convert_bare=True)
+            elif isinstance(value, dict):
+                # should not really happen
+                env = dict()
+                for env_item in value:
+                    _parse_env_kv(env_item, value[env_item])
+            else:
+                # at this point it should be a simple string, also should not happen
+                env = templar.template(value, convert_bare=False)
+
+        return env
 
     def _post_validate_changed_when(self, attr, value, templar):
         '''
@@ -411,7 +425,7 @@ class Task(Base, Conditional, Taggable, Become):
         '''
         Override for the 'tags' getattr fetcher, used from Base.
         '''
-        return self._get_parent_attribute('environment', extend=True)
+        return self._get_parent_attribute('environment', extend=True, prepend=True)
 
     def get_dep_chain(self):
         if self._parent:

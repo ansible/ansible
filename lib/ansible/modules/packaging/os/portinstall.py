@@ -19,9 +19,10 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -195,10 +196,10 @@ def install_packages(module, packages, use_packages):
 
 def main():
     module = AnsibleModule(
-            argument_spec    = dict(
-                state        = dict(default="present", choices=["present","absent"]),
-                name         = dict(aliases=["pkg"], required=True),
-                use_packages = dict(type='bool', default='yes')))
+        argument_spec    = dict(
+            state        = dict(default="present", choices=["present","absent"]),
+            name         = dict(aliases=["pkg"], required=True),
+            use_packages = dict(type='bool', default='yes')))
 
     p = module.params
 

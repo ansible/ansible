@@ -13,9 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -28,7 +29,8 @@ author: "Rob White (@wimnat)"
 options:
   filters:
     description:
-      - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVpcs.html) for possible filters.
+      - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
+        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVpcs.html) for possible filters.
     required: false
     default: null
 
@@ -72,7 +74,7 @@ def get_vpc_info(vpc):
         classic_link = vpc.classic_link_enabled
     except AttributeError:
         classic_link = False
-      
+
     vpc_info = { 'id': vpc.id,
                  'instance_tenancy': vpc.instance_tenancy,
                  'classic_link_enabled': classic_link,

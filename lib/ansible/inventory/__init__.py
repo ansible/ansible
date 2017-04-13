@@ -26,14 +26,13 @@ import sys
 import re
 import itertools
 
-from ansible.compat.six import string_types, iteritems
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-
 from ansible.inventory.dir import InventoryDirectory, get_file_parser
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
+from ansible.module_utils.six import string_types, iteritems
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins import vars_loader
@@ -114,11 +113,12 @@ class Inventory(object):
         self.parser = None
 
         # Always create the 'all' and 'ungrouped' groups, even if host_list is
-        # empty: in this case we will subsequently an the implicit 'localhost' to it.
+        # empty: in this case we will subsequently add the implicit 'localhost' to it.
 
         ungrouped = Group('ungrouped')
         all = Group('all')
         all.add_child_group(ungrouped)
+        base_groups = frozenset([all, ungrouped])
 
         self.groups = dict(all=all, ungrouped=ungrouped)
 
@@ -159,16 +159,44 @@ class Inventory(object):
 
         self._vars_plugins = [ x for x in vars_loader.all(self) ]
 
+        ### POST PROCESS groups and hosts after specific parser was invoked
+
+        hosts = []
+        group_names = set()
         # set group vars from group_vars/ files and vars plugins
         for g in self.groups:
             group = self.groups[g]
             group.vars = combine_vars(group.vars, self.get_group_variables(group.name))
             self.get_group_vars(group)
+            group_names.add(group.name)
+            hosts.extend(group.get_hosts())
 
+        host_names = set()
         # get host vars from host_vars/ files and vars plugins
-        for host in self.get_hosts(ignore_limits=True, ignore_restrictions=True):
+        for host in hosts:
             host.vars = combine_vars(host.vars, self.get_host_variables(host.name))
             self.get_host_vars(host)
+            host_names.add(host.name)
+
+            mygroups = host.get_groups()
+
+            # ensure hosts are always in 'all'
+            if all not in mygroups:
+                all.add_host(host)
+
+            if ungrouped in mygroups:
+                # clear ungrouped of any incorrectly stored by parser
+                if set(mygroups).difference(base_groups):
+                    host.remove_group(ungrouped)
+            else:
+                # add ungrouped hosts to ungrouped
+                length = len(mygroups)
+                if length == 0 or (length == 1 and all in mygroups):
+                    ungrouped.add_host(host)
+
+        # warn if overloading identifier as both group and host
+        for conflict in group_names.intersection(host_names):
+            display.warning("Found both group and host with same name: %s" % conflict)
 
     def _match(self, str, pattern_str):
         try:
@@ -194,7 +222,7 @@ class Inventory(object):
                 results.append(item)
         return results
 
-    def get_hosts(self, pattern="all", ignore_limits=False, ignore_restrictions=False):
+    def get_hosts(self, pattern="all", ignore_limits=False, ignore_restrictions=False, order=None):
         """
         Takes a pattern or list of patterns and returns a list of matching
         inventory host names, taking into account any active restrictions
@@ -231,7 +259,21 @@ class Inventory(object):
             seen = set()
             HOSTS_PATTERNS_CACHE[pattern_hash] = [x for x in hosts if x not in seen and not seen.add(x)]
 
-        return HOSTS_PATTERNS_CACHE[pattern_hash][:]
+        # sort hosts list if needed (should only happen when called from strategy)
+        if order in ['sorted', 'reverse_sorted']:
+            from operator import attrgetter
+            hosts = sorted(HOSTS_PATTERNS_CACHE[pattern_hash][:], key=attrgetter('name'), reverse=(order == 'reverse_sorted'))
+        elif order == 'reverse_inventory':
+            hosts = sorted(HOSTS_PATTERNS_CACHE[pattern_hash][:], reverse=True)
+        else:
+            hosts = HOSTS_PATTERNS_CACHE[pattern_hash][:]
+            if order == 'shuffle':
+                from random import shuffle
+                shuffle(hosts)
+            elif order not in [None, 'inventory']:
+                AnsibleError("Invalid 'order' specified for inventory hosts: %s" % order)
+
+        return hosts
 
     @classmethod
     def split_host_pattern(cls, pattern):
@@ -446,34 +488,33 @@ class Inventory(object):
         """
 
         results = []
-        hostnames = set()
 
         def __append_host_to_results(host):
-            if host.name not in hostnames:
-                hostnames.add(host.name)
-                results.append(host)
+            if host.name not in results:
+                if not host.implicit:
+                    results.append(host)
 
         groups = self.get_groups()
+        matched = False
         for group in groups.values():
-            if pattern == 'all':
+            if self._match(group.name, pattern):
+                matched = True
                 for host in group.get_hosts():
-                    if host.implicit:
-                        continue
                     __append_host_to_results(host)
             else:
-                if self._match(group.name, pattern) and group.name not in ('all', 'ungrouped'):
-                    for host in group.get_hosts():
-                        if host.implicit:
-                            continue
-                        __append_host_to_results(host)
-                else:
-                    matching_hosts = self._match_list(group.get_hosts(), 'name', pattern)
+                matching_hosts = self._match_list(group.get_hosts(), 'name', pattern)
+                if matching_hosts:
+                    matched = True
                     for host in matching_hosts:
                         __append_host_to_results(host)
 
         if pattern in C.LOCALHOST and len(results) == 0:
             new_host = self._create_implicit_localhost(pattern)
             results.append(new_host)
+            matched = True
+
+        if not matched:
+            display.warning("Could not match supplied host pattern, ignoring: %s" %  pattern)
         return results
 
     def _create_implicit_localhost(self, pattern):

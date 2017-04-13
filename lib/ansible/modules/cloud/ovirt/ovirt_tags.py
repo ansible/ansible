@@ -19,27 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import traceback
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-try:
-    import ovirtsdk4.types as otypes
-except ImportError:
-    pass
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    ovirt_full_argument_spec,
-    search_by_name,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -69,6 +52,9 @@ options:
     vms:
         description:
             - "List of the VMs names, which should have assigned this tag."
+    hosts:
+        description:
+            - "List of the hosts names, which should have assigned this tag."
 extends_documentation_fragment: ovirt
 '''
 
@@ -105,6 +91,23 @@ tag:
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/tag."
     returned: On success if tag is found.
 '''
+
+import traceback
+
+try:
+    import ovirtsdk4.types as otypes
+except ImportError:
+    pass
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    ovirt_full_argument_spec,
+    search_by_name,
+)
 
 
 class TagsModule(BaseModule):
@@ -188,7 +191,8 @@ def main():
     check_sdk(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         tags_service = connection.system_service().tags_service()
         tags_module = TagsModule(
             connection=connection,
@@ -206,7 +210,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":

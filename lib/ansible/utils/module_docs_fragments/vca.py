@@ -80,4 +80,3 @@ options:
       required: false
       default: gateway
 """
-

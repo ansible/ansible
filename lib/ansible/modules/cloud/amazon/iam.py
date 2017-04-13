@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -54,7 +55,8 @@ options:
     choices: [ "present", "absent", "update" ]
   path:
     description:
-      - When creating or updating, specify the desired path of the resource. If state is present, it will replace the current path to match what is passed in when they do not match.
+      - When creating or updating, specify the desired path of the resource. If state is present,
+        it will replace the current path to match what is passed in when they do not match.
     required: false
     default: "/"
   trust_policy:
@@ -100,7 +102,8 @@ options:
     description:
      - C(always) will update passwords if they differ.  C(on_create) will only set the password for newly created users.
 notes:
-  - 'Currently boto does not support the removal of Managed Policies, the module will error out if your user/group/role has managed policies when you try to do state=absent. They will need to be removed manually.'
+  - 'Currently boto does not support the removal of Managed Policies, the module will error out if your
+    user/group/role has managed policies when you try to do state=absent. They will need to be removed manually.'
 author:
     - "Jonathan I. Davila (@defionscode)"
     - "Paul Seiffert (@seiffert)"
@@ -167,7 +170,7 @@ try:
     import boto.ec2
     HAS_BOTO = True
 except ImportError:
-   HAS_BOTO = False
+    HAS_BOTO = False
 
 def boto_exception(err):
     '''generic error message handler'''
@@ -253,10 +256,10 @@ def delete_user(module, iam, name):
         except boto.exception.BotoServerError as err:
             error_msg = boto_exception(err)
             if ('Cannot find Login Profile') in error_msg:
-               del_meta = iam.delete_user(name).delete_user_response
+                del_meta = iam.delete_user(name).delete_user_response
         else:
-          iam.delete_login_profile(name)
-          del_meta = iam.delete_user(name).delete_user_response
+            iam.delete_login_profile(name)
+            del_meta = iam.delete_user(name).delete_user_response
     except Exception as ex:
         module.fail_json(changed=False, msg="delete failed %s" %ex)
         if ('must detach all policies first') in error_msg:
@@ -267,10 +270,10 @@ def delete_user(module, iam, name):
             except boto.exception.BotoServerError as err:
                 error_msg = boto_exception(err)
                 if ('must detach all policies first') in error_msg:
-                      module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
-                                                            "that %s has Managed Polices. This is not "
-                                                            "currently supported by boto. Please detach the polices "
-                                                            "through the console and try again." % name)
+                    module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
+                                                          "that %s has Managed Polices. This is not "
+                                                          "currently supported by boto. Please detach the polices "
+                                                          "through the console and try again." % name)
                 else:
                     module.fail_json(changed=changed, msg=str(error_msg))
             else:
@@ -297,9 +300,9 @@ def update_user(module, iam, name, new_name, new_path, key_state, key_count, key
         error_msg = boto_exception(err)
         if 'cannot be found' in error_msg and updated:
             current_keys, status = \
-            [ck['access_key_id'] for ck in
+                [ck['access_key_id'] for ck in
              iam.get_all_access_keys(new_name).list_access_keys_result.access_key_metadata],\
-            [ck['status'] for ck in
+                [ck['status'] for ck in
                 iam.get_all_access_keys(new_name).list_access_keys_result.access_key_metadata]
             name = new_name
         else:
@@ -457,13 +460,13 @@ def delete_group(module=None, iam=None, name=None):
                 iam.delete_group_policy(name, policy)
             try:
                 iam.delete_group(name)
-            except boto.exception.BotoServerError as  err:
+            except boto.exception.BotoServerError as err:
                 error_msg = boto_exception(err)
                 if ('must detach all policies first') in error_msg:
-                      module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
-                                                            "that %s has Managed Polices. This is not "
-                                                            "currently supported by boto. Please detach the polices "
-                                                            "through the console and try again." % name)
+                    module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
+                                                          "that %s has Managed Polices. This is not "
+                                                          "currently supported by boto. Please detach the polices "
+                                                          "through the console and try again." % name)
                 else:
                     module.fail_json(changed=changed, msg=str(err))
             else:
@@ -527,25 +530,25 @@ def delete_role(module, iam, name, role_list, prof_list):
             for profile in cur_ins_prof:
                 iam.remove_role_from_instance_profile(profile, name)
             try:
-              iam.delete_role(name)
+                iam.delete_role(name)
             except boto.exception.BotoServerError as err:
-              error_msg = boto_exception(err)
-              if ('must detach all policies first') in error_msg:
-                for policy in iam.list_role_policies(name).list_role_policies_result.policy_names:
-                  iam.delete_role_policy(name, policy)
-              try:
-                iam_role_result = iam.delete_role(name)
-              except boto.exception.BotoServerError as err:
-                  error_msg = boto_exception(err)
-                  if ('must detach all policies first') in error_msg:
-                      module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
-                                                            "that %s has Managed Polices. This is not "
-                                                            "currently supported by boto. Please detach the polices "
-                                                            "through the console and try again." % name)
-                  else:
-                      module.fail_json(changed=changed, msg=str(err))
-              else:
-                changed = True
+                error_msg = boto_exception(err)
+                if ('must detach all policies first') in error_msg:
+                    for policy in iam.list_role_policies(name).list_role_policies_result.policy_names:
+                        iam.delete_role_policy(name, policy)
+                try:
+                    iam_role_result = iam.delete_role(name)
+                except boto.exception.BotoServerError as err:
+                    error_msg = boto_exception(err)
+                    if ('must detach all policies first') in error_msg:
+                        module.fail_json(changed=changed, msg="All inline polices have been removed. Though it appears"
+                                                              "that %s has Managed Polices. This is not "
+                                                              "currently supported by boto. Please detach the polices "
+                                                              "through the console and try again." % name)
+                    else:
+                        module.fail_json(changed=changed, msg=str(err))
+                else:
+                    changed = True
 
             else:
                 changed = True
@@ -590,7 +593,7 @@ def main():
     )
 
     if not HAS_BOTO:
-       module.fail_json(msg='This module requires boto, please install it')
+        module.fail_json(msg='This module requires boto, please install it')
 
     state = module.params.get('state').lower()
     iam_type = module.params.get('iam_type').lower()
@@ -700,7 +703,7 @@ def main():
             if name_change and new_name:
                 orig_name = name
                 name = new_name
-            if groups:
+            if isinstance(groups, list):
                 user_groups, groups_changed = set_users_groups(
                     module, iam, name, groups, been_updated, new_name)
                 if groups_changed == user_changed:
@@ -732,12 +735,12 @@ def main():
         elif state == 'absent':
             if user_exists:
                 try:
-                   set_users_groups(module, iam, name, '')
-                   del_meta, name, changed = delete_user(module, iam, name)
-                   module.exit_json(deleted_user=name, changed=changed)
+                    set_users_groups(module, iam, name, '')
+                    del_meta, name, changed = delete_user(module, iam, name)
+                    module.exit_json(deleted_user=name, changed=changed)
 
                 except Exception as ex:
-                       module.fail_json(changed=changed, msg=str(ex))
+                    module.fail_json(changed=changed, msg=str(ex))
             else:
                 module.exit_json(
                     changed=False, msg="User %s is already absent from your AWS IAM users" % name)

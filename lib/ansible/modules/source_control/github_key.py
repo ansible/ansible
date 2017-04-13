@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 module: github_key
@@ -169,7 +170,7 @@ def delete_keys(session, to_delete, check_mode):
         return
 
     for key in to_delete:
-        session.request('DELETE', API_BASE + '/user/keys/%s' % key[id])
+        session.request('DELETE', API_BASE + '/user/keys/%s' % key["id"])
 
 
 def ensure_key_absent(session, name, check_mode):

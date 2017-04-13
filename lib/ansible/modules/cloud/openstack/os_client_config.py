@@ -15,12 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-import os_client_config
-from os_client_config import exceptions
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -56,6 +54,9 @@ EXAMPLES = '''
       - mordred
 '''
 
+import os_client_config
+from os_client_config import exceptions
+
 
 def main():
     module = AnsibleModule(argument_spec=dict(
@@ -72,7 +73,7 @@ def main():
                 clouds.append(cloud.config)
         module.exit_json(ansible_facts=dict(openstack=dict(clouds=clouds)))
     except exceptions.OpenStackConfigException as e:
-        module.fail_json(msg=str(e)) 
+        module.fail_json(msg=str(e))
 
 # import module snippets
 from ansible.module_utils.basic import *

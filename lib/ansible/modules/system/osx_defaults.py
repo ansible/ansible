@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -326,10 +327,10 @@ class OSXDefaults(object):
         # Current value matches the given value. Nothing need to be done. Arrays need extra care
         if self.type == "array" and self.current_value is not None and not self.array_add and \
                 set(self.current_value) == set(self.value):
-                return False
+            return False
         elif self.type == "array" and self.current_value is not None and self.array_add and \
                 len(list(set(self.value) - set(self.current_value))) == 0:
-                return False
+            return False
         elif self.current_value == self.value:
             return False
 

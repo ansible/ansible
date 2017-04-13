@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
@@ -125,6 +126,12 @@ EXAMPLES = r"""
       iface eth0 inet static
           address 192.0.2.23
           netmask 255.255.255.0
+
+- name: insert/update configuration using a local file
+  blockinfile:
+    block: "{{ lookup('file', './local/ssh_config') }}"
+    dest: "/etc/ssh/ssh_config"
+    backup: yes
 
 - name: insert/update HTML surrounded by custom markers after <body> line
   blockinfile:

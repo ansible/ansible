@@ -19,97 +19,120 @@
 
 $ErrorActionPreference = "Stop"
 
-$params = Parse-Args $args
+$params = Parse-Args $args -supports_check_mode $true
 
-# path
-$path = Get-Attr $params "path" $FALSE
-If ($path -eq $FALSE)
-{
-    $path = Get-Attr $params "dest" $FALSE
-    If ($path -eq $FALSE)
-    {
-        $path = Get-Attr $params "name" $FALSE
-        If ($path -eq $FALSE)
-        {
-            Fail-Json (New-Object psobject) "missing required argument: path"
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
+
+$path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -aliases "dest","name"
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -validateset "absent","directory","file","touch"
+
+$result = @{
+    changed = $false
+}
+
+# Used to delete symlinks as powershell cannot delete broken symlinks
+$symlink_util = @"
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+
+namespace Ansible.Command {
+    public class SymLinkHelper {
+        [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)]
+        public static extern bool RemoveDirectory(string lpPathName);
+
+        public static void DeleteSymLink(string linkPathName) {
+            bool result = RemoveDirectory(linkPathName);
+            if (result == false)
+                throw new Exception(String.Format("Error deleting symlink: {0}", new Win32Exception(Marshal.GetLastWin32Error()).Message));
         }
     }
 }
+"@
+Add-Type -TypeDefinition $symlink_util
 
-# JH Following advice from Chris Church, only allow the following states
-# in the windows version for now:
-# state - file, directory, touch, absent
-# (originally was: state - file, link, directory, hard, touch, absent)
-
-$state = Get-Attr $params "state" "unspecified"
-# if state is not supplied, test the $path to see if it looks like 
-# a file or a folder and set state to file or folder
-
-# result
-$result = New-Object psobject @{
-    changed = $FALSE
+# Used to delete directories and files with logic on handling symbolic links
+function Remove-File($file, $checkmode) {
+    try {
+        if ($file.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+            # Bug with powershell, if you try and delete a symbolic link that is pointing
+            # to an invalid path it will fail, using Win32 API to do this instead
+            if (-Not $checkmode) {
+                [Ansible.Command.SymLinkHelper]::DeleteSymLink($file.FullName)
+            }
+        } elseif ($file.PSIsContainer) {
+            Remove-Directory -directory $file -WhatIf:$checkmode
+        } else {
+            Remove-Item -Path $file.FullName -Force -WhatIf:$checkmode
+        }
+    } catch [Exception] {
+        Fail-Json $result "Failed to delete $($file.FullName): $($_.Exception.Message)"
+    }
 }
 
-If ( $state -eq "touch" )
-{
-    If(Test-Path $path)
-    {
-        (Get-ChildItem $path).LastWriteTime = Get-Date
+function Remove-Directory($directory) {
+    foreach ($file in Get-ChildItem $directory.FullName) {
+        Remove-File -file $file
     }
-    Else
-    {
-        echo $null > $path
-    }
-    $result.changed = $TRUE
+    Remove-Item -Path $directory.FullName -Force -Recurse
 }
 
-If (Test-Path $path)
-{
-    $fileinfo = Get-Item $path
-    If ( $state -eq "absent" )
-    {   
-        Remove-Item -Recurse -Force $fileinfo
-        $result.changed = $TRUE
+
+if ($state -eq "touch") {
+    if (Test-Path -Path $path) {
+        (Get-ChildItem -Path $path).LastWriteTime = Get-Date
+    } else {
+        Write-Output $null | Out-File -FilePath $path -Encoding ASCII -WhatIf:$check_mode
+        $result.changed = $true
     }
-    Else
-    {
-        If ( $state -eq "directory" -and -not $fileinfo.PsIsContainer )
-        {
-            Fail-Json (New-Object psobject) "path is not a directory"
+}
+
+if (Test-Path $path) {
+    $fileinfo = Get-Item -Path $path
+    if ($state -eq "absent") {
+        Remove-File -File $fileinfo -CheckMode $check_mode
+        $result.changed = $true
+    } else {
+        if ($state -eq "directory" -and -not $fileinfo.PsIsContainer) {
+            Fail-Json $result "path $path is not a directory"
         }
 
-        If ( $state -eq "file" -and $fileinfo.PsIsContainer )
-        {
-            Fail-Json (New-Object psobject) "path is not a file"
+        if ($state -eq "file" -and $fileinfo.PsIsContainer) {
+            Fail-Json $result "path $path is not a file"
         }
     }
-}
-Else
-# doesn't yet exist
-{
-    If ( $state -eq "unspecified" )
-    {
+
+} else {
+
+    # If state is not supplied, test the $path to see if it looks like
+    # a file or a folder and set state to file or folder
+    if ($state -eq $null) {
         $basename = Split-Path -Path $path -Leaf
-        If ($basename.length -gt 0) 
-        {
+        if ($basename.length -gt 0) {
            $state = "file"
-        }
-        Else
-        {
+        } else {
            $state = "directory"
         }
     }
 
-    If ( $state -eq "directory" )
-    {
-        New-Item -ItemType directory -Path $path | Out-Null
-        $result.changed = $TRUE
+    if ($state -eq "directory") {
+        try {
+            New-Item -Path $path -ItemType Directory -WhatIf:$check_mode | Out-Null
+        } catch {
+            if ($_.CategoryInfo.Category -eq "ResourceExists") {
+                $fileinfo = Get-Item $_.CategoryInfo.TargetName
+                if ($state -eq "directory" -and -not $fileinfo.PsIsContainer) {
+                    Fail-Json $result "path $path is not a directory"
+                }
+            } else {
+                Fail-Json $result $_.Exception.Message
+            }
+        }
+        $result.changed = $true
+    } elseif ($state -eq "file") {
+        Fail-Json $result "path $path will not be created"
     }
 
-    If ( $state -eq "file" )
-    {
-        Fail-Json (New-Object psobject) "path will not be created"
-    }
 }
 
 Exit-Json $result

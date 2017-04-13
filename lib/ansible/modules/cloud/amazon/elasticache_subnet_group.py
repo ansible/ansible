@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -54,7 +55,7 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 # Add or change a subnet group
-- elasticache_subnet_group
+- elasticache_subnet_group:
     state: present
     name: norwegian-blue
     description: My Fancy Ex Parrot Subnet Group
@@ -80,11 +81,11 @@ except ImportError:
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            state             = dict(required=True,  choices=['present', 'absent']),
-            name              = dict(required=True),
-            description       = dict(required=False),
-            subnets           = dict(required=False, type='list'),
-        )
+        state             = dict(required=True,  choices=['present', 'absent']),
+        name              = dict(required=True),
+        description       = dict(required=False),
+        subnets           = dict(required=False, type='list'),
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 

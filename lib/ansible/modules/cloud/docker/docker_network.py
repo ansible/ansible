@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 module: docker_network
@@ -100,7 +101,7 @@ options:
 extends_documentation_fragment:
     - docker
 
-authors:
+author:
     - "Ben Keith (@keitwb)"
     - "Chris Houseknecht (@chouseknecht)"
 
@@ -164,7 +165,10 @@ from ansible.module_utils.docker_common import *
 
 try:
     from docker import utils
-    from docker.utils.types import Ulimit
+    if HAS_DOCKER_PY_2:
+        from docker.types import Ulimit, IPAMPool, IPAMConfig
+    else:
+        from docker.utils.types import Ulimit
 except:
     # missing docker-py handled in ansible.module_utils.docker
     pass
@@ -275,9 +279,16 @@ class DockerNetworkManager(object):
         if not self.existing_network:
             ipam_pools = []
             if self.parameters.ipam_options:
-                ipam_pools.append(utils.create_ipam_pool(**self.parameters.ipam_options))
+                if HAS_DOCKER_PY_2:
+                    ipam_pools.append(IPAMPool(**self.parameters.ipam_options))
+                else:
+                    ipam_pools.append(utils.create_ipam_pool(**self.parameters.ipam_options))
 
-            ipam_config = utils.create_ipam_config(driver=self.parameters.ipam_driver,
+            if HAS_DOCKER_PY_2:
+                ipam_config = IPAMConfig(driver=self.parameters.ipam_driver,
+                                                   pool_configs=ipam_pools)
+            else:
+                ipam_config = utils.create_ipam_config(driver=self.parameters.ipam_driver,
                                                    pool_configs=ipam_pools)
 
             if not self.check_mode:

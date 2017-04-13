@@ -5,14 +5,12 @@
   ios_config:
     commands: no interface Loopback999
     match: none
-    provider: "{{ cli }}"
   ignore_errors: yes
 
 - name: configure device with defaults included
   ios_template:
     src: defaults/config.j2
     include_defaults: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -24,7 +22,6 @@
   ios_template:
     src: defaults/config.j2
     include_defaults: yes
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -36,6 +33,5 @@
   ios_config:
     commands: no interface Loopback999
     match: none
-    provider: "{{ cli }}"
 
 - debug: msg="END cli/defaults.yaml"

@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 module: clc_server
@@ -613,7 +614,7 @@ class ClcServer:
             ttl=dict(default=None),
             managed_os=dict(type='bool', default=False),
             description=dict(default=None),
-            source_server_password=dict(default=None),
+            source_server_password=dict(default=None, no_log=True),
             cpu_autoscale_policy_id=dict(default=None),
             anti_affinity_policy_id=dict(default=None),
             anti_affinity_policy_name=dict(default=None),

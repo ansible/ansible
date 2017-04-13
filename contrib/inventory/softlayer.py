@@ -3,7 +3,7 @@
 SoftLayer external inventory script.
 
 The SoftLayer Python API client is required. Use `pip install softlayer` to install it.
-You have a few different options for configuring your username and api_key. You can pass 
+You have a few different options for configuring your username and api_key. You can pass
 environment variables (SL_USERNAME and SL_API_KEY). You can also write INI file to
 ~/.softlayer or /etc/softlayer.conf. For more information see the SL API at:
 - https://softlayer-python.readthedocs.org/en/latest/config_file.html
@@ -95,7 +95,7 @@ class SoftLayerInventory(object):
         '''Push an element onto an array that may not have been defined in the dict'''
 
         if key in my_dict:
-            my_dict[key].append(element);
+            my_dict[key].append(element)
         else:
             my_dict[key] = [element]
 
@@ -169,7 +169,7 @@ class SoftLayerInventory(object):
 
         # Inventory: group by tag
         for tag in instance['tagReferences']:
-             self.push(self.inventory, tag['tag']['name'], dest)
+            self.push(self.inventory, tag['tag']['name'], dest)
 
     def get_virtual_servers(self):
         '''Get all the CCI instances'''

@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -176,8 +177,8 @@ def main():
     argument_spec = url_argument_spec()
 
     module = AnsibleModule(
-            argument_spec=argument_spec,
-            supports_check_mode=True,
+        argument_spec=argument_spec,
+        supports_check_mode=True,
     )
 
     ec2_facts = Ec2Metadata(module).run()

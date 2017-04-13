@@ -16,9 +16,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-from ansible.module_utils.basic import AnsibleModule, BOOLEANS_TRUE
-from ansible.module_utils.pycompat24 import get_exception
-import subprocess
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 module: gconftool2
@@ -101,6 +103,10 @@ RETURN = '''
 ...
 '''
 
+from ansible.module_utils.basic import AnsibleModule, BOOLEANS_TRUE
+from ansible.module_utils.pycompat24 import get_exception
+import subprocess
+
 
 class GConf2Preference(object):
     def __init__(self, ansible, key, value_type, value,
@@ -166,21 +172,21 @@ def main():
     # Setup the Ansible module
     module = AnsibleModule(
         argument_spec=dict(
-                           key=dict(required=True, default=None, type='str'),
-                           value_type=dict(required=False,
+            key=dict(required=True, default=None, type='str'),
+            value_type=dict(required=False,
                                            choices=['int', 'bool',
                                                     'float', 'string'],
                                            type='str'),
-                           value=dict(required=False, default=None,
+            value=dict(required=False, default=None,
                                       type='str'),
-                           state=dict(required=True, default=None,
+            state=dict(required=True, default=None,
                                       choices=['present', 'get', 'absent'],
                                       type='str'),
-                           direct=dict(required=False,
+            direct=dict(required=False,
                                        default=False, type='bool'),
-                           config_source=dict(required=False,
+            config_source=dict(required=False,
                                               default=None, type='str')
-                           ),
+            ),
         supports_check_mode=True
     )
 

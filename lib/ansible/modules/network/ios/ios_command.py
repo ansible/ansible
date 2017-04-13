@@ -16,11 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {
-    'status': ['preview'],
-    'supported_by': 'core',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = """
 ---
@@ -35,9 +34,7 @@ description:
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
     Please use M(ios_config) to configure IOS devices.
-notes:
-  - Provider arguments are no longer supported.  Network tasks should now
-    specify connection plugin network_cli instead.
+extends_documentation_fragment: ios
 options:
   commands:
     description:
@@ -100,7 +97,7 @@ tasks:
       wait_for: result[0] contains IOS
 
   - name: run multiple commands on remote nodes
-     ios_command:
+    ios_command:
       commands:
         - show version
         - show interfaces
@@ -131,31 +128,15 @@ failed_conditions:
   returned: failed
   type: list
   sample: ['...', '...']
-start:
-  description: The time the job started
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:15.126146"
-end:
-  description: The time the job ended
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:25.595612"
-delta:
-  description: The time elapsed to perform all operations
-  returned: always
-  type: str
-  sample: "0:00:10.469466"
 """
 import time
 
-from ansible.module_utils.local import LocalAnsibleModule
 from ansible.module_utils.ios import run_commands
+from ansible.module_utils.ios import ios_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network_common import ComplexList
 from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.six import string_types
-
-VALID_KEYS = ['command', 'output']
 
 def to_lines(stdout):
     for item in stdout:
@@ -167,10 +148,9 @@ def parse_commands(module, warnings):
     command = ComplexList(dict(
         command=dict(key=True),
         prompt=dict(),
-        response=dict()
-    ))
+        answer=dict()
+    ), module)
     commands = command(module.params['commands'])
-
     for index, item in enumerate(commands):
         if module.check_mode and not item['command'].startswith('show'):
             warnings.append(
@@ -182,12 +162,12 @@ def parse_commands(module, warnings):
                 msg='ios_command does not support running config mode '
                     'commands.  Please use ios_config instead'
             )
-        commands[index] = module.jsonify(item)
     return commands
 
 def main():
-    spec = dict(
-        # { command: <str>, prompt: <str>, response: <str> }
+    """main entry point for module execution
+    """
+    argument_spec = dict(
         commands=dict(type='list', required=True),
 
         wait_for=dict(type='list', aliases=['waitfor']),
@@ -197,11 +177,17 @@ def main():
         interval=dict(default=1, type='int')
     )
 
-    module = LocalAnsibleModule(argument_spec=spec,
-                                supports_check_mode=True)
+    argument_spec.update(ios_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
+
+    result = {'changed': False}
 
     warnings = list()
+    check_args(module, warnings)
     commands = parse_commands(module, warnings)
+    result['warnings'] = warnings
 
     wait_for = module.params['wait_for'] or list()
     conditionals = [Conditional(c) for c in wait_for]
@@ -232,12 +218,11 @@ def main():
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
 
-    result = {
+    result.update({
         'changed': False,
         'stdout': responses,
-        'warnings': warnings,
         'stdout_lines': list(to_lines(responses))
-    }
+    })
 
     module.exit_json(**result)
 

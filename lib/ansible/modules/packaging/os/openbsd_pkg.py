@@ -18,17 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import platform
-import re
-import shlex
-import sqlite3
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-from distutils.version import StrictVersion
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -136,6 +129,15 @@ EXAMPLES = '''
 - openbsd_pkg: name=qt5 quick=yes state=absent
 '''
 
+import os
+import platform
+import re
+import shlex
+import sqlite3
+
+from distutils.version import StrictVersion
+
+
 # Function used for executing commands.
 def execute_command(cmd, module):
     # Break command line into arguments.
@@ -161,9 +163,9 @@ def get_package_state(names, pkg_spec, module):
             # find multiple packages with that name.
             pkg_spec[name]['installed_names'] = [installed_name for installed_name in stdout.splitlines()]
             module.debug("get_package_state(): installed_names = %s" % pkg_spec[name]['installed_names'])
-            pkg_spec[name]['installed_state'] = True;
+            pkg_spec[name]['installed_state'] = True
         else:
-            pkg_spec[name]['installed_state'] = False;
+            pkg_spec[name]['installed_state'] = False
 
 # Function used to make sure a package is present.
 def package_present(names, pkg_spec, module):
@@ -190,7 +192,8 @@ def package_present(names, pkg_spec, module):
                         flavors = pkg_spec[name]['flavor'].replace('-', ' ')
                         install_cmd = "cd %s && make clean=depends && FLAVOR=\"%s\" make install && make clean=depends" % (port_dir, flavors)
                     elif pkg_spec[name]['subpackage']:
-                        install_cmd = "cd %s && make clean=depends && SUBPACKAGE=\"%s\" make install && make clean=depends" % (port_dir, pkg_spec[name]['subpackage'])
+                        install_cmd = "cd %s && make clean=depends && SUBPACKAGE=\"%s\" make install && make clean=depends" % (port_dir,
+                                                                                                                               pkg_spec[name]['subpackage'])
                     else:
                         install_cmd = "cd %s && make install && make clean=depends" % (port_dir)
                 else:
@@ -301,7 +304,7 @@ def package_latest(names, pkg_spec, module):
             # parse out a successful update above. This way we will report a
             # successful run when we actually modify something but fail
             # otherwise.
-            if pkg_spec[name]['changed'] != True:
+            if pkg_spec[name]['changed'] is not True:
                 if pkg_spec[name]['stderr']:
                     pkg_spec[name]['rc'] = 1
 
@@ -613,7 +616,7 @@ def main():
                 else:
                     combined_error_message = pkg_spec[n]['stdout']
 
-        if pkg_spec[n]['changed'] == True:
+        if pkg_spec[n]['changed'] is True:
             combined_changed = True
 
     # If combined_error_message contains anything at least some part of the

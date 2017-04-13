@@ -19,30 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-try:
-    import ovirtsdk4.types as otypes
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-    from ovirtsdk4.types import StorageDomainStatus as sdstate
-except ImportError:
-    pass
-
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    ovirt_full_argument_spec,
-    search_by_name,
-    wait,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -203,6 +183,27 @@ storage_domain:
     returned: On success if storage domain is found.
 '''
 
+try:
+    import ovirtsdk4.types as otypes
+
+    from ovirtsdk4.types import StorageDomainStatus as sdstate
+except ImportError:
+    pass
+
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    get_entity,
+    ovirt_full_argument_spec,
+    search_by_name,
+    wait,
+)
+
 
 class StorageDomainModule(BaseModule):
 
@@ -285,7 +286,7 @@ class StorageDomainModule(BaseModule):
             return
 
         attached_sd_service = attached_sds_service.storage_domain_service(storage_domain.id)
-        attached_sd = attached_sd_service.get()
+        attached_sd = get_entity(attached_sd_service)
 
         if attached_sd and attached_sd.status != sdstate.MAINTENANCE:
             if not self._module.check_mode:
@@ -305,7 +306,7 @@ class StorageDomainModule(BaseModule):
             return
 
         attached_sd_service = attached_sds_service.storage_domain_service(storage_domain.id)
-        attached_sd = attached_sd_service.get()
+        attached_sd = get_entity(attached_sd_service)
 
         if attached_sd and attached_sd.status == sdstate.MAINTENANCE:
             if not self._module.check_mode:
@@ -333,7 +334,7 @@ class StorageDomainModule(BaseModule):
 
         # If storage domain isn't attached, attach it:
         attached_sd_service = self._service.service(storage_domain.id)
-        if attached_sd_service.get() is None:
+        if get_entity(attached_sd_service) is None:
             self._service.add(
                 otypes.StorageDomain(
                     id=storage_domain.id,
@@ -425,7 +426,8 @@ def main():
     check_sdk(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         storage_domains_service = connection.system_service().storage_domains_service()
         storage_domains_module = StorageDomainModule(
             connection=connection,
@@ -470,7 +472,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":

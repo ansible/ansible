@@ -850,6 +850,7 @@ function Set-TargetResource
                     if($process)
                     {
                         $exitCode = $process.ExitCode
+                        Set-Attr -obj $result -name "exit_code" -value $exitCode
                     }
                 }
             }

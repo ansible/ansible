@@ -38,3 +38,6 @@
     local_action: file path={{ local_tmp }}-汉语 state=absent
   - name: remove remote temp file
     action: "{{ action_prefix }}file path={{ remote_tmp }}-汉语 state=absent"
+
+  ### test wait_for_connection plugin
+  - wait_for_connection:

@@ -16,11 +16,12 @@
 # You should have received a copy of the GNU General Public licenses
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-DOCUMENTATION='''
+
+DOCUMENTATION = '''
 ---
 module: atomic_host
 short_description: Manage the atomic host platform
@@ -62,6 +63,10 @@ msg:
     sample: 'Already on latest'
 '''
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule, os
+
+
 def core(module):
     revision = module.params['revision']
     args = []
@@ -89,10 +94,10 @@ def core(module):
 
 def main():
     module = AnsibleModule(
-                argument_spec = dict(
-                    revision = dict(default='latest', required=False, aliases=["version"]),
-                ),
-            )
+        argument_spec=dict(
+            revision=dict(default='latest', required=False, aliases=["version"]),
+            ),
+        )
 
     # Verify that the platform is atomic host
     if not os.path.exists("/run/ostree-booted"):
@@ -104,7 +109,5 @@ def main():
         module.fail_json(msg=str(e))
 
 
-# import module snippets
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

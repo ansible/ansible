@@ -1,0 +1,50 @@
+---
+- debug: msg="START nxapi/nv_overlay_evpn"
+
+- name: setup
+  nxos_config:
+    lines: no nv overlay evpn
+    match: none
+    provider: "{{ nxapi }}"
+
+- name: enable nv overlay evpn
+  nxos_evpn_global:
+    nv_overlay_evpn: yes
+    provider: "{{ nxapi }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify nv overlay evpn
+  nxos_evpn_global:
+    nv_overlay_evpn: yes
+    provider: "{{ nxapi }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: disable nv overlay evpn
+  nxos_evpn_global:
+    nv_overlay_evpn: no
+    provider: "{{ nxapi }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: verify nv overlay evpn
+  nxos_evpn_global:
+    nv_overlay_evpn: no
+    provider: "{{ nxapi }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- debug: msg="END nxapi/nv_overlay_evpn"

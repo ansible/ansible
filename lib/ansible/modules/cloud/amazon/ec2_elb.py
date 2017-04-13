@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = """
 ---
@@ -68,7 +69,8 @@ options:
     version_added: "1.5"
   wait_timeout:
     description:
-      - Number of seconds to wait for an instance to change state. If 0 then this module may return an error if a transient error occurs. If non-zero then any transient errors are ignored until the timeout is reached. Ignored when wait=no.
+      - Number of seconds to wait for an instance to change state. If 0 then this module may return an error if a transient error occurs.
+        If non-zero then any transient errors are ignored until the timeout is reached. Ignored when wait=no.
     required: false
     default: 0
     version_added: "1.6"
@@ -129,7 +131,7 @@ class ElbManager:
         to report it out-of-service"""
 
         for lb in self.lbs:
-            initial_state = self._get_instance_health(lb) 
+            initial_state = self._get_instance_health(lb)
             if initial_state is None:
                 # Instance isn't registered with this load
                 # balancer. Ignore it and try the next one.
@@ -257,7 +259,7 @@ class ElbManager:
                   are attached to self.instance_id"""
 
         if not ec2_elbs:
-           ec2_elbs = self._get_auto_scaling_group_lbs()
+            ec2_elbs = self._get_auto_scaling_group_lbs()
 
         try:
             elb = connect_to_aws(boto.ec2.elb, self.region, **self.aws_connect_params)
@@ -293,24 +295,24 @@ class ElbManager:
            indirectly through its auto scaling group membership"""
 
         try:
-           asg = connect_to_aws(boto.ec2.autoscale, self.region, **self.aws_connect_params)
+            asg = connect_to_aws(boto.ec2.autoscale, self.region, **self.aws_connect_params)
         except (boto.exception.NoAuthHandlerFound, AnsibleAWSError) as e:
             self.module.fail_json(msg=str(e))
 
         asg_instances = asg.get_all_autoscaling_instances([self.instance_id])
         if len(asg_instances) > 1:
-           self.module.fail_json(msg="Illegal state, expected one auto scaling group instance.")
+            self.module.fail_json(msg="Illegal state, expected one auto scaling group instance.")
 
         if not asg_instances:
-           asg_elbs = []
+            asg_elbs = []
         else:
-           asg_name = asg_instances[0].group_name
+            asg_name = asg_instances[0].group_name
 
-           asgs = asg.get_all_groups([asg_name])
-           if len(asg_instances) != 1:
-              self.module.fail_json(msg="Illegal state, expected one auto scaling group.")
+            asgs = asg.get_all_groups([asg_name])
+            if len(asg_instances) != 1:
+                self.module.fail_json(msg="Illegal state, expected one auto scaling group.")
 
-           asg_elbs = asgs[0].load_balancers
+            asg_elbs = asgs[0].load_balancers
 
         return asg_elbs
 
@@ -326,13 +328,13 @@ class ElbManager:
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            state={'required': True},
-            instance_id={'required': True},
-            ec2_elbs={'default': None, 'required': False, 'type':'list'},
-            enable_availability_zone={'default': True, 'required': False, 'type': 'bool'},
-            wait={'required': False, 'default': True, 'type': 'bool'},
-            wait_timeout={'required': False, 'default': 0, 'type': 'int'}
-        )
+        state={'required': True},
+        instance_id={'required': True},
+        ec2_elbs={'default': None, 'required': False, 'type':'list'},
+        enable_availability_zone={'default': True, 'required': False, 'type': 'bool'},
+        wait={'required': False, 'default': True, 'type': 'bool'},
+        wait_timeout={'required': False, 'default': 0, 'type': 'int'}
+    )
     )
 
     module = AnsibleModule(

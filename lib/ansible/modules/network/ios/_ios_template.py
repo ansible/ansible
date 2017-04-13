@@ -15,11 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {
-    'status': ['deprecated'],
-    'supported_by': 'community',
-    'version': '1.0'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -35,9 +34,7 @@ description:
     commands that are not already configured.  The config source can
     be a set of commands or a template.
 deprecated: Deprecated in 2.2. Use M(ios_config) instead.
-notes:
-  - Provider arguments are no longer supported.  Network tasks should now
-    specify connection plugin network_cli instead.
+extends_documentation_fragment: ios
 options:
   src:
     description:
@@ -110,38 +107,12 @@ updates:
   returned: always
   type: list
   sample: ['...', '...']
-start:
-  description: The time the job started
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:15.126146"
-end:
-  description: The time the job ended
-  returned: always
-  type: str
-  sample: "2016-11-16 10:38:25.595612"
-delta:
-  description: The time elapsed to perform all operations
-  returned: always
-  type: str
-  sample: "0:00:10.469466"
 """
-from ansible.module_utils.local import LocalAnsibleModule
+from ansible.module_utils.ios import load_config, get_config
+from ansible.module_utils.ios import ios_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netcli import Conditional
 from ansible.module_utils.netcfg import NetworkConfig, dumps
-from ansible.module_utils.ios import get_config, load_config
-from ansible.module_utils.network import NET_TRANSPORT_ARGS, _transitional_argument_spec
-
-
-def check_args(module):
-    warnings = list()
-    for key in NET_TRANSPORT_ARGS:
-        if module.params[key]:
-            warnings.append(
-                'network provider arguments are no longer supported.  Please '
-                'use connection: network_cli for the task'
-            )
-            break
-    return warnings
 
 def get_current_config(module):
     if module.params['config']:
@@ -150,7 +121,7 @@ def get_current_config(module):
         flags = ['all']
     else:
         flags = []
-    return get_config(flags=flags)
+    return get_config(module=module, flags=flags)
 
 def main():
     """ main entry point for module execution
@@ -163,26 +134,23 @@ def main():
         config=dict(),
     )
 
-    # Removed the use of provider arguments in 2.3 due to network_cli
-    # connection plugin.  To be removed in 2.5
-    argument_spec.update(_transitional_argument_spec())
+    argument_spec.update(ios_argument_spec)
 
     mutually_exclusive = [('config', 'backup'), ('config', 'force')]
 
-    module = LocalAnsibleModule(argument_spec=argument_spec,
-                                mutually_exclusive=mutually_exclusive,
-                                supports_check_mode=True)
-
-    warnings = check_args(module)
-
-    result = dict(changed=False, warnings=warnings)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           mutually_exclusive=mutually_exclusive,
+                           supports_check_mode=True)
 
     candidate = NetworkConfig(contents=module.params['src'], indent=1)
 
     result = {'changed': False}
+    warnings = list()
+    check_args(module, warnings)
+    result['warnings'] = warnings
 
     if module.params['backup']:
-        result['__backup__'] = get_config()
+        result['__backup__'] = get_config(module=module)
 
     if not module.params['force']:
         contents = get_current_config(module)
@@ -195,10 +163,11 @@ def main():
 
     if commands:
         if not module.check_mode:
-            load_config(commands)
+            load_config(module, commands)
         result['changed'] = True
 
     result['updates'] = commands
+    result['commands'] = commands
 
     module.exit_json(**result)
 

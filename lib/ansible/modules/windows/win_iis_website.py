@@ -18,11 +18,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-DOCUMENTATION = '''
+
+DOCUMENTATION = r'''
 ---
 module: win_iis_website
 version_added: "2.0"
@@ -98,7 +99,7 @@ options:
 author: Henrik Wallström
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 
 # Start a website
 
@@ -110,9 +111,15 @@ EXAMPLES = '''
     ip: 127.0.0.1
     hostname: acme.local
     application_pool: "acme"
-    physical_path: 'c:\\sites\\acme'
-    parameters: 'logfile.directory:c:\\sites\\logs'
+    physical_path: c:\sites\acme
+    parameters: logfile.directory:c:\sites\logs
   register: website
+
+# Remove Default Web Site and the standard port 80 binding
+- name: Remove Default Web Site
+  win_iis_website:
+    name: "Default Web Site"
+    state: absent
 
 # Some commandline examples:
 

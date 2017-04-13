@@ -16,13 +16,15 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: nxos_bgp
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages BGP configuration.
 description:
@@ -30,7 +32,6 @@ description:
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbino (@GGabriele)
-extends_documentation_fragment: nxos
 notes:
     - C(state=absent) removes the whole BGP ASN configuration when
       C(vrf=default) or the whole VRF instance within the BGP process when
@@ -361,156 +362,11 @@ changed:
     sample: true
 '''
 
-# COMMON CODE FOR MIGRATION
 import re
-
-import ansible.module_utils.nxos
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
-from ansible.module_utils.network import NetworkModule
-from ansible.module_utils.shell import ShellError
-
-
-def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
-
-
-class CustomNetworkConfig(NetworkConfig):
-
-    def expand_section(self, configobj, S=None):
-        if S is None:
-            S = list()
-        S.append(configobj)
-        for child in configobj.children:
-            if child in S:
-                continue
-            self.expand_section(child, S)
-        return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
-
-    def to_block(self, section):
-        return '\n'.join([item.raw for item in section])
-
-    def get_section(self, path):
-        try:
-            section = self.get_section_objects(path)
-            return self.to_block(section)
-        except ValueError:
-            return list()
-
-    def get_section_objects(self, path):
-        if not isinstance(path, list):
-            path = [path]
-        obj = self.get_object(path)
-        if not obj:
-            raise ValueError('path does not exist in config')
-        return self.expand_section(obj)
-
-
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
-
-        ancestors = list()
-        offset = 0
-        obj = None
-
-        ## global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
-
-        else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
-
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
-
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
-
-
-def get_network_module(**kwargs):
-    try:
-        return get_module(**kwargs)
-    except NameError:
-        return NetworkModule(**kwargs)
-
-def get_config(module, include_defaults=False):
-    config = module.params['config']
-    if not config:
-        try:
-            config = module.get_config()
-        except AttributeError:
-            defaults = module.params['include_defaults']
-            config = module.config.get_config(include_defaults=defaults)
-    return CustomNetworkConfig(indent=2, contents=config)
-
-def load_config(module, candidate):
-    config = get_config(module)
-
-    commands = candidate.difference(config)
-    commands = [str(c).strip() for c in commands]
-
-    save_config = module.params['save']
-
-    result = dict(changed=False)
-
-    if commands:
-        if not module.check_mode:
-            try:
-                module.configure(commands)
-            except AttributeError:
-                module.config(commands)
-
-            if save_config:
-                try:
-                    module.config.save_config()
-                except AttributeError:
-                    module.execute(['copy running-config startup-config'])
-
-        result['changed'] = True
-        result['updates'] = commands
-
-    return result
-# END OF COMMON CODE
+from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netcfg import CustomNetworkConfig
 
 
 WARNINGS = []
@@ -787,8 +643,8 @@ def state_present(module, existing, proposed, candidate):
                 commands.append('{0} {1}'.format(key, peer_string))
             elif key.startswith('timers bgp'):
                 command = 'timers bgp {0} {1}'.format(
-                                            proposed['timer_bgp_keepalive'],
-                                            proposed['timer_bgp_hold'])
+                    proposed['timer_bgp_keepalive'],
+                    proposed['timer_bgp_hold'])
                 if command not in commands:
                     commands.append(command)
             else:
@@ -857,98 +713,105 @@ def fix_commands(commands):
 
 def main():
     argument_spec = dict(
-            asn=dict(required=True, type='str'),
-            vrf=dict(required=False, type='str', default='default'),
-            bestpath_always_compare_med=dict(required=False, type='bool'),
-            bestpath_aspath_multipath_relax=dict(required=False, type='bool'),
-            bestpath_compare_neighborid=dict(required=False, type='bool'),
-            bestpath_compare_routerid=dict(required=False, type='bool'),
-            bestpath_cost_community_ignore=dict(required=False, type='bool'),
-            bestpath_med_confed=dict(required=False, type='bool'),
-            bestpath_med_missing_as_worst=dict(required=False, type='bool'),
-            bestpath_med_non_deterministic=dict(required=False, type='bool'),
-            cluster_id=dict(required=False, type='str'),
-            confederation_id=dict(required=False, type='str'),
-            confederation_peers=dict(required=False, type='str'),
-            disable_policy_batching=dict(required=False, type='bool'),
-            disable_policy_batching_ipv4_prefix_list=dict(required=False, type='str'),
-            disable_policy_batching_ipv6_prefix_list=dict(required=False, type='str'),
-            enforce_first_as=dict(required=False, type='bool'),
-            event_history_cli=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
-            event_history_detail=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
-            event_history_events=dict(required=False, choices=['true', 'false', 'default' 'size_small', 'size_medium', 'size_large', 'size_disable']),
-            event_history_periodic=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
-            fast_external_fallover=dict(required=False, type='bool'),
-            flush_routes=dict(required=False, type='bool'),
-            graceful_restart=dict(required=False, type='bool'),
-            graceful_restart_helper=dict(required=False, type='bool'),
-            graceful_restart_timers_restart=dict(required=False, type='str'),
-            graceful_restart_timers_stalepath_time=dict(required=False, type='str'),
-            isolate=dict(required=False, type='bool'),
-            local_as=dict(required=False, type='str'),
-            log_neighbor_changes=dict(required=False, type='bool'),
-            maxas_limit=dict(required=False, type='str'),
-            neighbor_down_fib_accelerate=dict(required=False, type='bool'),
-            reconnect_interval=dict(required=False, type='str'),
-            router_id=dict(required=False, type='str'),
-            shutdown=dict(required=False, type='bool'),
-            suppress_fib_pending=dict(required=False, type='bool'),
-            timer_bestpath_limit=dict(required=False, type='str'),
-            timer_bgp_hold=dict(required=False, type='str'),
-            timer_bgp_keepalive=dict(required=False, type='str'),
-            state=dict(choices=['present', 'absent'], default='present',
+        asn=dict(required=True, type='str'),
+        vrf=dict(required=False, type='str', default='default'),
+        bestpath_always_compare_med=dict(required=False, type='bool'),
+        bestpath_aspath_multipath_relax=dict(required=False, type='bool'),
+        bestpath_compare_neighborid=dict(required=False, type='bool'),
+        bestpath_compare_routerid=dict(required=False, type='bool'),
+        bestpath_cost_community_ignore=dict(required=False, type='bool'),
+        bestpath_med_confed=dict(required=False, type='bool'),
+        bestpath_med_missing_as_worst=dict(required=False, type='bool'),
+        bestpath_med_non_deterministic=dict(required=False, type='bool'),
+        cluster_id=dict(required=False, type='str'),
+        confederation_id=dict(required=False, type='str'),
+        confederation_peers=dict(required=False, type='str'),
+        disable_policy_batching=dict(required=False, type='bool'),
+        disable_policy_batching_ipv4_prefix_list=dict(required=False, type='str'),
+        disable_policy_batching_ipv6_prefix_list=dict(required=False, type='str'),
+        enforce_first_as=dict(required=False, type='bool'),
+        event_history_cli=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
+        event_history_detail=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
+        event_history_events=dict(required=False, choices=['true', 'false', 'default' 'size_small', 'size_medium', 'size_large', 'size_disable']),
+        event_history_periodic=dict(required=False, choices=['true', 'false', 'default', 'size_small', 'size_medium', 'size_large', 'size_disable']),
+        fast_external_fallover=dict(required=False, type='bool'),
+        flush_routes=dict(required=False, type='bool'),
+        graceful_restart=dict(required=False, type='bool'),
+        graceful_restart_helper=dict(required=False, type='bool'),
+        graceful_restart_timers_restart=dict(required=False, type='str'),
+        graceful_restart_timers_stalepath_time=dict(required=False, type='str'),
+        isolate=dict(required=False, type='bool'),
+        local_as=dict(required=False, type='str'),
+        log_neighbor_changes=dict(required=False, type='bool'),
+        maxas_limit=dict(required=False, type='str'),
+        neighbor_down_fib_accelerate=dict(required=False, type='bool'),
+        reconnect_interval=dict(required=False, type='str'),
+        router_id=dict(required=False, type='str'),
+        shutdown=dict(required=False, type='bool'),
+        suppress_fib_pending=dict(required=False, type='bool'),
+        timer_bestpath_limit=dict(required=False, type='str'),
+        timer_bgp_hold=dict(required=False, type='str'),
+        timer_bgp_keepalive=dict(required=False, type='str'),
+        state=dict(choices=['present', 'absent'], default='present',
                        required=False),
-            include_defaults=dict(default=True),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        include_defaults=dict(default=True),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
-    module = get_network_module(argument_spec=argument_spec,
+
+    argument_spec.update(nxos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
                                 required_together=[['timer_bgp_hold',
                                             'timer_bgp_keepalive']],
                                 supports_check_mode=True)
 
+    warnings = list()
+    check_args(module, warnings)
+
+
     state = module.params['state']
     args =  [
-            "asn",
-            "bestpath_always_compare_med",
-            "bestpath_aspath_multipath_relax",
-            "bestpath_compare_neighborid",
-            "bestpath_compare_routerid",
-            "bestpath_cost_community_ignore",
-            "bestpath_med_confed",
-            "bestpath_med_missing_as_worst",
-            "bestpath_med_non_deterministic",
-            "cluster_id",
-            "confederation_id",
-            "confederation_peers",
-            "disable_policy_batching",
-            "disable_policy_batching_ipv4_prefix_list",
-            "disable_policy_batching_ipv6_prefix_list",
-            "enforce_first_as",
-            "event_history_cli",
-            "event_history_detail",
-            "event_history_events",
-            "event_history_periodic",
-            "fast_external_fallover",
-            "flush_routes",
-            "graceful_restart",
-            "graceful_restart_helper",
-            "graceful_restart_timers_restart",
-            "graceful_restart_timers_stalepath_time",
-            "isolate",
-            "local_as",
-            "log_neighbor_changes",
-            "maxas_limit",
-            "neighbor_down_fib_accelerate",
-            "reconnect_interval",
-            "router_id",
-            "shutdown",
-            "suppress_fib_pending",
-            "timer_bestpath_limit",
-            "timer_bgp_hold",
-            "timer_bgp_keepalive",
-            "vrf"
-        ]
+        "asn",
+        "bestpath_always_compare_med",
+        "bestpath_aspath_multipath_relax",
+        "bestpath_compare_neighborid",
+        "bestpath_compare_routerid",
+        "bestpath_cost_community_ignore",
+        "bestpath_med_confed",
+        "bestpath_med_missing_as_worst",
+        "bestpath_med_non_deterministic",
+        "cluster_id",
+        "confederation_id",
+        "confederation_peers",
+        "disable_policy_batching",
+        "disable_policy_batching_ipv4_prefix_list",
+        "disable_policy_batching_ipv6_prefix_list",
+        "enforce_first_as",
+        "event_history_cli",
+        "event_history_detail",
+        "event_history_events",
+        "event_history_periodic",
+        "fast_external_fallover",
+        "flush_routes",
+        "graceful_restart",
+        "graceful_restart_helper",
+        "graceful_restart_timers_restart",
+        "graceful_restart_timers_stalepath_time",
+        "isolate",
+        "local_as",
+        "log_neighbor_changes",
+        "maxas_limit",
+        "neighbor_down_fib_accelerate",
+        "reconnect_interval",
+        "router_id",
+        "shutdown",
+        "suppress_fib_pending",
+        "timer_bestpath_limit",
+        "timer_bgp_hold",
+        "timer_bgp_keepalive",
+        "vrf"
+    ]
 
     if module.params['vrf'] != 'default':
         for param, inserted_value in module.params.items():
@@ -962,7 +825,7 @@ def main():
 
     if existing.get('asn'):
         if (existing.get('asn') != module.params['asn'] and
-            state == 'present'):
+                state == 'present'):
             module.fail_json(msg='Another BGP ASN already exists.',
                              proposed_asn=module.params['asn'],
                              existing_asn=existing.get('asn'))
@@ -995,7 +858,6 @@ def main():
     else:
         result['updates'] = []
 
-    result['connected'] = module.connected
     if module._verbosity > 0:
         end_state = invoke('get_existing', module, args)
         result['end_state'] = end_state
@@ -1010,3 +872,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

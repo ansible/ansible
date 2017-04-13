@@ -134,7 +134,7 @@ Target: September 2016
       - Strategy: removing keyczar when we drop accelerate for 2.3. Print deprecation in 2.1.
 
     - Module_utils ported to dual python3/python2(2.4 for much of it, python2.6 for specific things)
-      **Mostly done:**  Also not line-by-line audited but the unittests 
+      **Mostly done:**  Also not line-by-line audited but the unittests
       and integration tests do show that the most use functionality is working.
     - Add module_utils files to help port
       - Update: copy of the six library (v1.4.1 for python2.4 compat) and unicode helpers are here (ansible.module_utils._text.{to_bytes,to_text,to_native})

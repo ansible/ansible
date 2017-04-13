@@ -18,19 +18,16 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-import shlex
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = """
 ---
 module: pn_vrouterif
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
-version: 1.0
 short_description: CLI command to add/remove/modify vrouter-interface.
 description:
   - Execute vrouter-interface-add, vrouter-interface-remove,
@@ -144,13 +141,15 @@ EXAMPLES = """
 """
 
 RETURN = """
-vrouterifcmd:
+command:
   description: The CLI command run on the target node(s).
-stdout/msg:
+  returned: always
+  type: str
+stdout:
   description: The set of responses from the vrouterif command.
   returned: on success
   type: list
-stderr/msg:
+stderr:
   description: The set of error responses from the vrouterif command.
   returned: on error
   type: str
@@ -160,6 +159,7 @@ changed:
   type: bool
 """
 
+import shlex
 
 VROUTER_EXISTS = None
 INTERFACE_EXISTS = None

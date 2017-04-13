@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -321,7 +322,7 @@ class User(object):
                 self.expires = time.gmtime(module.params['expires'])
             except Exception:
                 e = get_exception()
-                module.fail_json("Invalid expires time %s: %s" %(self.expires, str(e)))
+                module.fail_json(msg="Invalid expires time %s: %s" %(self.expires, str(e)))
 
         if module.params['ssh_key_file'] is not None:
             self.ssh_file = module.params['ssh_key_file']
@@ -368,8 +369,8 @@ class User(object):
             cmd.append(self.group)
         elif self.group_exists(self.name):
             # use the -N option (no user group) if a group already
-            # exists with the same name as the user to prevent 
-            # errors from useradd trying to create a group when 
+            # exists with the same name as the user to prevent
+            # errors from useradd trying to create a group when
             # USERGROUPS_ENAB is set in /etc/login.defs.
             if os.path.exists('/etc/redhat-release'):
                 dist = platform.dist()
@@ -922,7 +923,7 @@ class FreeBsdUser(User):
                 self.module.get_bin_path('chpass', True),
                 '-p',
                 self.password,
-                self.name 
+                self.name
             ]
             return self.execute_command(cmd)
 
@@ -1258,7 +1259,7 @@ class SunOS(User):
     """
     This is a SunOS User manipulation class - The main difference between
     this class and the generic user class is that Solaris-type distros
-    don't support the concept of a "system" account and we need to 
+    don't support the concept of a "system" account and we need to
     edit the /etc/shadow file manually to set a password. (Ugh)
 
     This overrides the following methods from the generic class:-
@@ -1419,8 +1420,8 @@ class SunOS(User):
                 cmd.append(','.join(new_groups))
 
         if self.comment is not None and info[4] != self.comment:
-                cmd.append('-c')
-                cmd.append(self.comment)
+            cmd.append('-c')
+            cmd.append(self.comment)
 
         if self.home is not None and info[5] != self.home:
             if self.move_home:
@@ -1563,7 +1564,7 @@ class DarwinUser(User):
             if max_uid < current_uid:
                 max_uid = current_uid
             if max_system_uid < current_uid and current_uid < 500:
-                    max_system_uid = current_uid
+                max_system_uid = current_uid
 
         if system and (0 < max_system_uid < 499):
             return max_system_uid + 1
@@ -1923,8 +1924,8 @@ class AIX(User):
                 cmd.append(','.join(groups))
 
         if self.comment is not None and info[4] != self.comment:
-                cmd.append('-c')
-                cmd.append(self.comment)
+            cmd.append('-c')
+            cmd.append(self.comment)
 
         if self.home is not None and info[5] != self.home:
             if self.move_home:
@@ -1953,7 +1954,7 @@ class AIX(User):
         else:
             (rc2, out2, err2) = (None, '', '')
 
-        if rc != None:
+        if rc is not None:
             return (rc, out+out2, err+err2)
         else:
             return (rc2, out+out2, err+err2)
@@ -2112,10 +2113,10 @@ class HPUX(User):
 
 def main():
     ssh_defaults = {
-            'bits': 0,
-            'type': 'rsa',
-            'passphrase': None,
-            'comment': 'ansible-generated on %s' % socket.gethostname()
+        'bits': 0,
+        'type': 'rsa',
+        'passphrase': None,
+        'comment': 'ansible-generated on %s' % socket.gethostname()
     }
     module = AnsibleModule(
         argument_spec = dict(
@@ -2207,7 +2208,7 @@ def main():
 
     if user.user_exists():
         info = user.user_info()
-        if info == False:
+        if info is False:
             result['msg'] = "failed to look up user name: %s" % user.name
             result['failed'] = True
         result['uid'] = info[2]

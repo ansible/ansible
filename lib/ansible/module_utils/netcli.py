@@ -202,7 +202,6 @@ class Conditional(object):
 
     def __init__(self, conditional, encoding=None):
         self.raw = conditional
-        self.encoding = encoding or 'json'
 
         try:
             key, op, val = shlex.split(conditional)
@@ -236,36 +235,11 @@ class Conditional(object):
         raise AttributeError('unknown operator: %s' % oper)
 
     def get_value(self, result):
-        if self.encoding in ['json', 'text']:
-            try:
-                return self.get_json(result)
-            except (IndexError, TypeError, AttributeError):
-                msg = 'unable to apply conditional to result'
-                raise FailedConditionalError(msg, self.raw)
-
-        elif self.encoding == 'xml':
-            return self.get_xml(result.get('result'))
-
-    def get_xml(self, result):
-        parts = self.key.split('.')
-
-        value_index = None
-        match = re.match(r'^\S+(\[)(\d+)\]', parts[-1])
-        if match:
-            start, end = match.regs[1]
-            parts[-1] = parts[-1][0:start]
-            value_index = int(match.group(2))
-
-        path = '/'.join(parts[1:])
-        path = '/%s' % path
-        path += '/text()'
-
-        index = int(re.match(r'result\[(\d+)\]', parts[0]).group(1))
-        values = result[index].findall(path)
-
-        if value_index is not None:
-            return values[value_index].strip()
-        return [v.strip() for v in values]
+        try:
+            return self.get_json(result)
+        except (IndexError, TypeError, AttributeError):
+            msg = 'unable to apply conditional to result'
+            raise FailedConditionalError(msg, self.raw)
 
     def get_json(self, result):
         string = re.sub(r"\[[\'|\"]", ".", self.key)

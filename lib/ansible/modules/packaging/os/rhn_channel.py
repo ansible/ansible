@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -133,9 +134,9 @@ def main():
             sysname = dict(required=True),
             url = dict(required=True),
             user = dict(required=True),
-            password = dict(required=True, aliases=['pwd']),
+            password = dict(required=True, aliases=['pwd'], no_log=True),
         )
-#        supports_check_mode=True
+        #        supports_check_mode=True
     )
 
     state = module.params['state']
@@ -144,18 +145,18 @@ def main():
     saturl = module.params['url']
     user = module.params['user']
     password = module.params['password']
-    
+
     #initialize connection
     client = xmlrpclib.Server(saturl, verbose=0)
     session = client.auth.login(user, password)
-     
+
     # get systemid
     sys_id = get_systemid(client, session, systname)
 
     # get channels for system
     chans = base_channels(client, session, sys_id)
-    
-    
+
+
     if state == 'present':
         if channelname in chans:
             module.exit_json(changed=False, msg="Channel %s already exists" % channelname)

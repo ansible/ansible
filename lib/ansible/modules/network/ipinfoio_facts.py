@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -54,7 +55,7 @@ RETURN = '''
 ansible_facts:
   description: "Dictionary of ip geolocation facts for a host's IP address"
   returned: changed
-  type: dictionary
+  type: complex
   contains:
     ip:
       description: "Public IP address of a host"

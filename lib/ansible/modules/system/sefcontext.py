@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -117,14 +118,14 @@ if HAVE_SEOBJECT:
 
 ### Make backward compatible
 option_to_file_type_str = dict(
-  a = 'all files',
-  b = 'block device',
-  c = 'character device',
-  d = 'directory',
-  f = 'regular file',
-  l = 'symbolic link',
-  p = 'named pipe',
-  s = 'socket file',
+    a = 'all files',
+    b = 'block device',
+    c = 'character device',
+    d = 'directory',
+    f = 'regular file',
+    l = 'symbolic link',
+    p = 'named pipe',
+    s = 'socket file',
 )
 
 def semanage_fcontext_exists(sefcontext, target, ftype):
@@ -225,14 +226,14 @@ def semanage_fcontext_delete(module, result, target, ftype, do_reload, sestore='
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-                target  = dict(required=True, aliases=['path']),
-                ftype   = dict(required=False, choices=option_to_file_type_str.keys(), default='a'),
-                setype  = dict(required=True),
-                seuser  = dict(required=False, default=None),
-                selevel = dict(required=False, default=None, aliases=['serange']),
-                state   = dict(required=False, choices=['present', 'absent'], default='present'),
-                reload  = dict(required=False, type='bool', default='yes'),
-            ),
+            target  = dict(required=True, aliases=['path']),
+            ftype   = dict(required=False, choices=option_to_file_type_str.keys(), default='a'),
+            setype  = dict(required=True),
+            seuser  = dict(required=False, default=None),
+            selevel = dict(required=False, default=None, aliases=['serange']),
+            state   = dict(required=False, choices=['present', 'absent'], default='present'),
+            reload  = dict(required=False, type='bool', default='yes'),
+        ),
         supports_check_mode = True,
     )
     if not HAVE_SELINUX:

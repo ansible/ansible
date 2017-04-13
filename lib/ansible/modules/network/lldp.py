@@ -14,11 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -31,14 +30,14 @@ description:
 options: {}
 author: "Andy Hill (@andyhky)"
 notes:
-  - Requires lldpd running and lldp enabled on switches 
+  - Requires lldpd running and lldp enabled on switches
 '''
 
 EXAMPLES = '''
 # Retrieve switch/port information
  - name: Gather information from lldp
    lldp:
- 
+
  - name: Print each switch/port
    debug:
     msg: "{{ lldp[item]['chassis']['name'] }} / {{ lldp[item]['port']['ifalias'] }}"
@@ -50,6 +49,9 @@ EXAMPLES = '''
 # ok: [10.13.0.22] => (item=eth0) => {"item": "eth0", "msg": "switch3.example.com / Gi0/3"}
 
 '''
+
+import subprocess
+
 
 def gather_lldp():
     cmd = ['lldpctl', '-f', 'keyvalue']
@@ -73,7 +75,7 @@ def gather_lldp():
                 current_dict = current_dict[path_component]
             current_dict[final] = value
         return output_dict
-            
+
 
 def main():
     module = AnsibleModule({})
@@ -83,8 +85,8 @@ def main():
         data = {'lldp': lldp_output['lldp']}
         module.exit_json(ansible_facts=data)
     except TypeError:
-        module.fail_json(msg="lldpctl command failed. is lldpd running?")    
-   
+        module.fail_json(msg="lldpctl command failed. is lldpd running?")
+
 # import module snippets
 from ansible.module_utils.basic import *
 

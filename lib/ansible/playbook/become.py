@@ -38,7 +38,7 @@ class Become:
     _become_flags        = FieldAttribute(isa='string')
 
     def __init__(self):
-        return super(Become, self).__init__()
+        super(Become, self).__init__()
 
     def _detect_privilege_escalation_conflict(self, ds):
 

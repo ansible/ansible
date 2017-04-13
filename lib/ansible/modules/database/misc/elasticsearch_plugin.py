@@ -1,30 +1,27 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import os
+# Ansible module to manage elasticsearch plugins
+# (c) 2015, Mathew Davies <thepixeldeveloper@googlemail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-Ansible module to manage elasticsearch plugins
-(c) 2015, Mathew Davies <thepixeldeveloper@googlemail.com>
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-This file is part of Ansible
-
-Ansible is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Ansible is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -103,6 +100,8 @@ EXAMPLES = '''
     name: mobz/elasticsearch-head
 '''
 
+import os
+
 PACKAGE_STATE_MAP = dict(
     present="install",
     absent="remove"
@@ -161,7 +160,7 @@ def install_plugin(module, plugin_bin, plugin_name, version, url, proxy_host, pr
     if rc != 0:
         reason = parse_error(out)
         module.fail_json(msg=reason)
-    
+
     return True, cmd, out, err
 
 def remove_plugin(module, plugin_bin, plugin_name):
@@ -177,7 +176,7 @@ def remove_plugin(module, plugin_bin, plugin_name):
     if rc != 0:
         reason = parse_error(out)
         module.fail_json(msg=reason)
-    
+
     return True, cmd, out, err
 
 def main():

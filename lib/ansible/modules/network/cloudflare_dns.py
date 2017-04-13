@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -35,7 +36,8 @@ description:
 options:
   account_api_token:
     description:
-      - "Account API token. You can obtain your API key from the bottom of the Cloudflare 'My Account' page, found here: U(https://www.cloudflare.com/a/account)"
+      - >
+        Account API token. You can obtain your API key from the bottom of the Cloudflare 'My Account' page, found here: U(https://www.cloudflare.com/a/account)
     required: true
   account_email:
     description:
@@ -191,7 +193,7 @@ RETURN = '''
 record:
     description: dictionary containing the record data
     returned: success, except on record deletion
-    type: dictionary
+    type: complex
     contains:
         content:
             description: the record content (details depend on record type)
@@ -391,7 +393,7 @@ class CloudflareAPI(object):
                 error_msg += "; Failed to parse API response: {0}".format(content)
 
         # received an error status but no data with details on what failed
-        if  (info['status'] not in [200,304]) and (result is None):
+        if (info['status'] not in [200,304]) and (result is None):
             self.module.fail_json(msg=error_msg)
 
         if not result['success']:
@@ -514,10 +516,10 @@ class CloudflareAPI(object):
     def ensure_dns_record(self,**kwargs):
         params = {}
         for param in ['port','priority','proto','proxied','service','ttl','type','record','value','weight','zone']:
-          if param in kwargs:
-              params[param] = kwargs[param]
-          else:
-              params[param] = getattr(self,param)
+            if param in kwargs:
+                params[param] = kwargs[param]
+            else:
+                params[param] = getattr(self,param)
 
         search_value = params['value']
         search_record = params['record']
@@ -628,18 +630,18 @@ def main():
         ),
         supports_check_mode = True,
         required_if = ([
-                ('state','present',['record','type']),
-                ('type','MX',['priority','value']),
-                ('type','SRV',['port','priority','proto','service','value','weight']),
-                ('type','A',['value']),
-                ('type','AAAA',['value']),
-                ('type','CNAME',['value']),
-                ('type','TXT',['value']),
-                ('type','NS',['value']),
-                ('type','SPF',['value'])
-            ]
-       ),
-       required_one_of = (
+            ('state','present',['record','type']),
+            ('type','MX',['priority','value']),
+            ('type','SRV',['port','priority','proto','service','value','weight']),
+            ('type','A',['value']),
+            ('type','AAAA',['value']),
+            ('type','CNAME',['value']),
+            ('type','TXT',['value']),
+            ('type','NS',['value']),
+            ('type','SPF',['value'])
+        ]
+        ),
+        required_one_of = (
             [['record','value','type']]
         )
     )

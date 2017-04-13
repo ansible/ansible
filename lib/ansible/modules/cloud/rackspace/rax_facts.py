@@ -16,9 +16,10 @@
 
 # This is a DOCUMENTATION stub specific to this module, it extends
 # a documentation fragment located in ansible.utils.module_docs_fragments
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -101,9 +102,9 @@ def rax_facts(module, address, name, server_id):
             servers.append(cs.servers.get(server_id))
         except Exception as e:
             pass
-    
+
     servers[:] = [server for server in servers if server.status != "DELETED"]
-    
+
     if len(servers) > 1:
         module.fail_json(msg='Multiple servers found matching provided '
                              'search parameters')

@@ -18,23 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.urls import url_argument_spec
-import base64
-import hashlib
-import json
-import os
-import tempfile
-import time
-import urllib
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -306,6 +293,18 @@ state:
     type: string
     sample: "present"
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.urls import fetch_url, url_argument_spec
+from ansible.module_utils._text import to_native
+import base64
+import hashlib
+import json
+import os
+import tempfile
+import time
+import urllib
 
 
 class JenkinsPlugin(object):
@@ -586,7 +585,7 @@ class JenkinsPlugin(object):
                 e = get_exception()
                 self.module.fail_json(
                     msg="Cannot close the tmp updates file %s." % updates_file,
-                    detail=str(e))
+                    details=to_native(e))
 
         # Open the updates file
         try:
@@ -595,7 +594,7 @@ class JenkinsPlugin(object):
             e = get_exception()
             self.module.fail_json(
                 msg="Cannot open temporal updates file.",
-                details=str(e))
+                details=to_native(e))
 
         i = 0
         for line in f:
@@ -658,7 +657,7 @@ class JenkinsPlugin(object):
             e = get_exception()
             self.module.fail_json(
                 msg='Cannot close the temporal plugin file %s.' % tmp_f,
-                details=str(e))
+                details=to_native(e))
 
         # Move the file onto the right place
         self.module.atomic_move(tmp_f, f)
@@ -785,7 +784,7 @@ def main():
         e = get_exception()
         module.fail_json(
             msg='Cannot convert %s to float.' % module.params['timeout'],
-            details=str(e))
+            details=to_native(e))
 
     # Set version to latest if state is latest
     if module.params['state'] == 'latest':

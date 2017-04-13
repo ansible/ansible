@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -1639,7 +1640,9 @@ def main():
     if validate_certs:
         import ssl
         if not hasattr(ssl, 'SSLContext'):
-            module.fail_json(msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task')
+            module.fail_json(
+                msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task'
+            )
 
     if fact_filter:
         regex = fnmatch.translate(fact_filter)
@@ -1722,7 +1725,7 @@ def main():
 
 # include magic from lib/ansible/module_common.py
 from ansible.module_utils.basic import *
-from ansible.module_utils.f5 import *
+from ansible.module_utils.f5_utils import *
 
 if __name__ == '__main__':
     main()

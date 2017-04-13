@@ -16,9 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -26,7 +27,7 @@ module: vertica_schema
 version_added: '2.0'
 short_description: Adds or removes Vertica database schema and roles.
 description:
-  - Adds or removes Vertica database schema and, optionally, roles 
+  - Adds or removes Vertica database schema and, optionally, roles
     with schema access privileges.
   - A schema will not be removed until all the objects have been dropped.
   - In such a situation, if the module tries to remove the schema it
@@ -184,12 +185,12 @@ def update_roles(schema_facts, cursor, schema,
         cursor.execute("create role {0}".format(role))
         cursor.execute("grant usage on schema {0} to {1}".format(schema, role))
     for role in set(create_required) - set(create_existing):
-         cursor.execute("grant create on schema {0} to {1}".format(schema, role))
+        cursor.execute("grant create on schema {0} to {1}".format(schema, role))
 
 def check(schema_facts, schema, usage_roles, create_roles, owner):
     schema_key = schema.lower()
     if schema_key not in schema_facts:
-       return False
+        return False
     if owner and owner.lower() == schema_facts[schema_key]['owner'].lower():
         return False
     if cmp(sorted(usage_roles), sorted(schema_facts[schema_key]['usage_roles'])) != 0:
@@ -215,8 +216,8 @@ def present(schema_facts, cursor, schema, usage_roles, create_roles, owner):
                 "Changing schema owner is not supported. "
                 "Current owner: {0}."
                 ).format(schema_facts[schema_key]['owner']))
-        if cmp(sorted(usage_roles), sorted(schema_facts[schema_key]['usage_roles'])) != 0 or \
-            cmp(sorted(create_roles), sorted(schema_facts[schema_key]['create_roles'])) != 0:
+        if (cmp(sorted(usage_roles), sorted(schema_facts[schema_key]['usage_roles'])) != 0 or
+                cmp(sorted(create_roles), sorted(schema_facts[schema_key]['create_roles'])) != 0):
             update_roles(schema_facts, cursor, schema,
                 schema_facts[schema_key]['usage_roles'], usage_roles,
                 schema_facts[schema_key]['create_roles'], create_roles)
@@ -254,7 +255,7 @@ def main():
             cluster=dict(default='localhost'),
             port=dict(default='5433'),
             login_user=dict(default='dbadmin'),
-            login_password=dict(default=None),
+            login_password=dict(default=None, no_log=True),
         ), supports_check_mode = True)
 
     if not pyodbc_found:

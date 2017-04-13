@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -39,46 +40,37 @@ options:
       - The command you would like to perform against the cluster.
     required: false
     default: null
-    aliases: []
     choices: ['ping', 'kv_test', 'join', 'plan', 'commit']
   config_dir:
     description:
       - The path to the riak configuration directory
     required: false
     default: /etc/riak
-    aliases: []
   http_conn:
     description:
       - The ip address and port that is listening for Riak HTTP queries
     required: false
     default: 127.0.0.1:8098
-    aliases: []
   target_node:
     description:
       - The target node for certain operations (join, ping)
     required: false
     default: riak@127.0.0.1
-    aliases: []
   wait_for_handoffs:
     description:
       - Number of seconds to wait for handoffs to complete.
     required: false
     default: null
-    aliases: []
-    type: 'int'
   wait_for_ring:
     description:
       - Number of seconds to wait for all nodes to agree on the ring.
     required: false
     default: null
-    aliases: []
-    type: 'int'
   wait_for_service:
     description:
       - Waits for a riak service to come online before continuing.
     required: false
     default: None
-    aliases: []
     choices: ['kv']
   validate_certs:
     description:
@@ -131,16 +123,16 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-        command=dict(required=False, default=None, choices=[
-                    'ping', 'kv_test', 'join', 'plan', 'commit']),
-        config_dir=dict(default='/etc/riak', type='path'),
-        http_conn=dict(required=False, default='127.0.0.1:8098'),
-        target_node=dict(default='riak@127.0.0.1', required=False),
-        wait_for_handoffs=dict(default=False, type='int'),
-        wait_for_ring=dict(default=False, type='int'),
-        wait_for_service=dict(
-            required=False, default=None, choices=['kv']),
-        validate_certs = dict(default='yes', type='bool'))
+            command=dict(required=False, default=None, choices=[
+                'ping', 'kv_test', 'join', 'plan', 'commit']),
+            config_dir=dict(default='/etc/riak', type='path'),
+            http_conn=dict(required=False, default='127.0.0.1:8098'),
+            target_node=dict(default='riak@127.0.0.1', required=False),
+            wait_for_handoffs=dict(default=False, type='int'),
+            wait_for_ring=dict(default=False, type='int'),
+            wait_for_service=dict(
+                required=False, default=None, choices=['kv']),
+            validate_certs = dict(default='yes', type='bool'))
     )
 
 
@@ -179,7 +171,7 @@ def main():
     ring_size = stats['ring_creation_size']
     rc, out, err = module.run_command([riak_bin, 'version'] )
     version = out.strip()
-    
+
     result = dict(node_name=node_name,
               nodes=nodes,
               ring_size=ring_size,

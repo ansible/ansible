@@ -14,13 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-from distutils.version import StrictVersion
 
 DOCUMENTATION = '''
 ---
@@ -80,14 +77,23 @@ RETURN = '''
 
 '''
 
+try:
+    import shade
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
+from distutils.version import StrictVersion
+
+
 def _needs_update(module, aggregate):
     new_metadata = (module.params['metadata'] or {})
     new_metadata['availability_zone'] = module.params['availability_zone']
 
-    if (module.params['name'] != aggregate.name) or \
-        (module.params['hosts'] is not None and module.params['hosts'] != aggregate.hosts) or \
-        (module.params['availability_zone'] is not None and module.params['availability_zone'] != aggregate.availability_zone) or \
-        (module.params['metadata'] is not None and new_metadata != aggregate.metadata):
+    if ((module.params['name'] != aggregate.name) or
+            (module.params['hosts'] is not None and module.params['hosts'] != aggregate.hosts) or
+            (module.params['availability_zone'] is not None and module.params['availability_zone'] != aggregate.availability_zone) or
+            (module.params['metadata'] is not None and new_metadata != aggregate.metadata)):
         return True
 
     return False

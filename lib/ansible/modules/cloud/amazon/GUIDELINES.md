@@ -2,18 +2,13 @@
 
 ## Getting Started
 
-Since Ansible 2.0, it is a requirement that all new AWS modules are written to use boto3.
+Since Ansible 2.0, it is required that all new AWS modules are written to use boto3.
 
-Prior to 2.0, modules may of been written in boto or boto3. Modules written using boto can continue to be extended using boto.
-
-Backward compatibility of older modules must be maintained.
+Prior to 2.0, modules may have been written in boto or boto3. The effort to port all modules to boto3 has begun.
 
 ## Bug fixing
 
-If you are writing a bugfix for a module that uses boto, you should continue to use boto to maintain backward compatibility.
-
-If you are adding new functionality to an existing module that uses boto but the new functionality requires boto3, you
-must maintain backward compatibility of the module and ensure the module still works without boto3.
+Bug fixes to code that relies on boto will still be accepted. When possible, the code should be ported to use boto3. 
 
 ## Naming your module
 
@@ -28,14 +23,14 @@ AWS, that's fine, but don't create new ones independently
 
 ## Adding new features
 
-Try and keep backward compatibility with relatively recent
-versions of boto. That means that if want to implement some
-functionality that uses a new feature of boto, it should only
+Try to keep backward compatibility with relatively recent
+versions of boto3. That means that if you want to implement some
+functionality that uses a new feature of boto3, it should only
 fail if that feature actually needs to be run, with a message
-saying which version of boto is needed.
+saying which version of boto3 is needed.
 
-Use feature testing (e.g. `hasattr('boto.module', 'shiny_new_method')`)
-to check whether boto supports a feature rather than version checking
+Use feature testing (e.g. `hasattr('boto3.module', 'shiny_new_method')`)
+to check whether boto3 supports a feature rather than version checking
 
 e.g. from the `ec2` module:
 ```python
@@ -85,8 +80,7 @@ def main():
 
 #### boto and boto3 combined
 
-If you want to add boto3 functionality to a module written using boto, you must maintain backward compatibility.
-Ensure that you clearly document if a new parameter requires boto3. Import boto3 at the top of the
+Ensure that you clearly document if a new parameter requires requires a specific version. Import boto3 at the top of the
 module as normal and then use the HAS_BOTO3 bool when necessary, before the new feature.
 
 ```python
@@ -111,11 +105,9 @@ if my_new_feauture_Parameter_is_set:
 
 ### Connecting to AWS
 
-To connect to AWS, you should use `get_aws_connection_info` and then
-`boto3_conn` (or `connect_to_aws` for boto).
+To connect to AWS, you should use `get_aws_connection_info` and then `boto3_conn`.
 
-These functions handle some of the more esoteric connection options, such as security tokens and
-boto profiles.
+These functions handle some of the more esoteric connection options, such as security tokens and boto profiles.
 
 Some boto services require that the region is specified. You should check for the region parameter if required.
 
@@ -150,7 +142,7 @@ else:
 ### Exception Handling
 
 You should wrap any boto call in a try block. If an exception is thrown, it is up to you decide how to handle it
-but usually calling fail_json with the error message will suffice.
+but usually calling fail_json with the error or helpful message and traceback will suffice.
 
 #### boto
 
@@ -170,7 +162,8 @@ except ImportError:
 try:
     result = connection.aws_call()
 except BotoServerError, e:
-    module.fail_json(msg=e.message)
+    module.fail_json(msg="helpful message here", exception=traceback.format_exc(),
+                     **camel_dict_to_snake_dict(e.message))
 ```
 
 #### boto3
@@ -194,7 +187,8 @@ except ImportError:
 try:
     result = connection.aws_call()
 except ClientError, e:
-    module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+    module.fail_json(msg=e.message, exception=traceback.format_exc(),
+                     **camel_dict_to_snake_dict(e.response))
 ```
 
 If you need to perform an action based on the error boto3 returned, use the error code.
@@ -207,7 +201,8 @@ except ClientError, e:
     if e.response['Error']['Code'] == 'NoSuchEntity':
         return None
     else:
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg=e.message, exception=traceback.format_exc(),
+                         **camel_dict_to_snake_dict(e.response))
 ```
 
 ### Returning Values
@@ -290,7 +285,7 @@ Pass this function a list of security group names or combination of security gro
 return a list of IDs.  You should also pass the VPC ID if known because security group names are not necessarily unique
 across VPCs.
 
-### sort_json_policy_dict
+#### sort_json_policy_dict
 
 Pass any JSON policy dict to this function in order to sort any list contained therein. This is useful
 because AWS rarely return lists in the same order that they were submitted so without this function, comparison

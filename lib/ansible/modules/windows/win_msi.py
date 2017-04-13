@@ -21,11 +21,12 @@
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
 
-ANSIBLE_METADATA = {'status': ['deprecated'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
 
-DOCUMENTATION = '''
+
+DOCUMENTATION = r'''
 ---
 module: win_msi
 version_added: "1.7"
@@ -41,7 +42,6 @@ options:
     extra_args:
         description:
             - Additional arguments to pass to the msiexec.exe command
-        required: false
     state:
         description:
             - Whether the MSI file should be installed or uninstalled
@@ -61,10 +61,13 @@ options:
             - true
             - false
         default: false
+notes:
+- Check-mode support is currently not supported.
+- Please look into M(win_package) instead, this package will be deprecated in Ansible v2.3.
 author: "Matt Martz (@sivel)"
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Install an MSI file
   win_msi:
     path: C:\7z920-x64.msi

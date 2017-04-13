@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -100,7 +101,7 @@ RETURN = '''
 exo_dns_domain:
     description: API domain results
     returned: success
-    type: dictionary
+    type: complex
     contains:
         account_id:
             description: Your account ID
@@ -184,8 +185,12 @@ exo_dns_domain:
             sample: false
 '''
 
-# import exoscale common
-from ansible.module_utils.exoscale import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.exoscale import (
+    ExoDns,
+    exo_dns_argument_spec,
+    exo_dns_required_together
+)
 
 
 class ExoDnsDomain(ExoDns):
@@ -252,8 +257,6 @@ def main():
 
     module.exit_json(**result)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

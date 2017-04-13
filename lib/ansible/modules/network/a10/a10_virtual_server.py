@@ -22,9 +22,10 @@ You should have received a copy of the GNU General Public License
 along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -86,7 +87,7 @@ RETURN = '''
 
 EXAMPLES = '''
 # Create a new virtual server
-- a10_virtual_server: 
+- a10_virtual_server:
     host: a10.mydomain.com
     username: myadmin
     password: mypassword
@@ -113,6 +114,12 @@ content:
   type: string
   sample: "mynewvirtualserver"
 '''
+import json
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import url_argument_spec
+from ansible.module_utils.a10 import axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure
+from ansible.module_utils.a10 import axapi_enabled_disabled, axapi_get_vport_protocol, AXAPI_VPORT_PROTOCOLS
 
 VALID_PORT_FIELDS = ['port', 'protocol', 'service_group', 'status']
 
@@ -282,13 +289,6 @@ def main():
     # log out of the session nicely and exit
     axapi_call(module, session_url + '&method=session.close')
     module.exit_json(changed=changed, content=result)
-
-# standard ansible module imports
-import json
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import url_argument_spec
-from ansible.module_utils.a10 import axapi_call, a10_argument_spec, axapi_authenticate, axapi_failure, axapi_enabled_disabled, axapi_get_vport_protocol
-
 
 if __name__ == '__main__':
     main()

@@ -16,20 +16,21 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: nxos_snapshot
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manage snapshots of the running states of selected features.
 description:
     - Create snapshots of the running states of selected features, add
       new show commands for snapshot creation, delete and compare
       existing snapshots.
-extends_documentation_fragment: nxos
 author:
     - Gabriele Gerbino (@GGabriele)
 notes:
@@ -208,200 +209,20 @@ changed:
     type: boolean
     sample: true
 '''
-
 import os
-# COMMON CODE FOR MIGRATION
 import re
 
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
-from ansible.module_utils.shell import ShellError
-
-try:
-    from ansible.module_utils.nxos import get_module
-except ImportError:
-    from ansible.module_utils.nxos import NetworkModule
-
-
-def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
-
-
-class CustomNetworkConfig(NetworkConfig):
-
-    def expand_section(self, configobj, S=None):
-        if S is None:
-            S = list()
-        S.append(configobj)
-        for child in configobj.children:
-            if child in S:
-                continue
-            self.expand_section(child, S)
-        return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
-
-    def to_block(self, section):
-        return '\n'.join([item.raw for item in section])
-
-    def get_section(self, path):
-        try:
-            section = self.get_section_objects(path)
-            return self.to_block(section)
-        except ValueError:
-            return list()
-
-    def get_section_objects(self, path):
-        if not isinstance(path, list):
-            path = [path]
-        obj = self.get_object(path)
-        if not obj:
-            raise ValueError('path does not exist in config')
-        return self.expand_section(obj)
-
-
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
-
-        ancestors = list()
-        offset = 0
-        obj = None
-
-        ## global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
-
-        else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
-
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
-
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
-
-
-def get_network_module(**kwargs):
-    try:
-        return get_module(**kwargs)
-    except NameError:
-        return NetworkModule(**kwargs)
-
-def get_config(module, include_defaults=False):
-    config = module.params['config']
-    if not config:
-        try:
-            config = module.get_config()
-        except AttributeError:
-            defaults = module.params['include_defaults']
-            config = module.config.get_config(include_defaults=defaults)
-    return CustomNetworkConfig(indent=2, contents=config)
-
-def load_config(module, candidate):
-    config = get_config(module)
-
-    commands = candidate.difference(config)
-    commands = [str(c).strip() for c in commands]
-
-    save_config = module.params['save']
-
-    result = dict(changed=False)
-
-    if commands:
-        if not module.check_mode:
-            try:
-                module.configure(commands)
-            except AttributeError:
-                module.config(commands)
-
-            if save_config:
-                try:
-                    module.config.save_config()
-                except AttributeError:
-                    module.execute(['copy running-config startup-config'])
-
-        result['changed'] = True
-        result['updates'] = commands
-
-    return result
-# END OF COMMON CODE
-
-
-def execute_show(cmds, module, command_type=None):
-    command_type_map = {
-        'cli_show': 'json',
-        'cli_show_ascii': 'text'
-    }
-
-    try:
-        if command_type:
-            response = module.execute(cmds, command_type=command_type)
-        else:
-            response = module.execute(cmds)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(cmds),
-                         error=str(clie))
-    except AttributeError:
-        try:
-            if command_type:
-                command_type = command_type_map.get(command_type)
-                module.cli.add_commands(cmds, output=command_type)
-                response = module.cli.run_commands()
-            else:
-                module.cli.add_commands(cmds, output=command_type)
-                response = module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending {0}'.format(cmds),
-                             error=str(clie))
-    return response
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.nxos import load_config, run_commands
+from ansible.module_utils.nxos import nxos_argument_spec, check_args
 
 
 def execute_show_command(command, module, command_type='cli_show_ascii'):
     cmds = [command]
     if module.params['transport'] == 'cli':
-        body = execute_show(cmds, module)
+        body = run_commands(module, cmds)
     elif module.params['transport'] == 'nxapi':
-        body = execute_show(cmds, module, command_type=command_type)
+        body = run_commands(module, cmds)
 
     return body
 
@@ -485,13 +306,13 @@ def action_add(module, existing_snapshots):
     if proposed not in sections:
         if module.params['element_key2']:
             commands.append('snapshot section add {0} "{1}" {2} {3} {4}'.format(
-            module.params['section'], module.params['show_command'],
-            module.params['row_id'], module.params['element_key1'],
-            module.params['element_key2']))
+                module.params['section'], module.params['show_command'],
+                module.params['row_id'], module.params['element_key1'],
+                module.params['element_key2']))
         else:
             commands.append('snapshot section add {0} "{1}" {2} {3}'.format(
-            module.params['section'], module.params['show_command'],
-            module.params['row_id'], module.params['element_key1']))
+                module.params['section'], module.params['show_command'],
+                module.params['row_id'], module.params['element_key1']))
 
     return commands
 
@@ -535,24 +356,6 @@ def invoke(name, *args, **kwargs):
         return func(*args, **kwargs)
 
 
-def execute_config_command(commands, module):
-    try:
-        module.configure(commands)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending CLI commands',
-                         error=str(clie), commands=commands)
-    except AttributeError:
-        try:
-            commands.insert(0, 'configure')
-            module.cli.add_commands(commands, output='config')
-            module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending CLI commands',
-                             error=str(clie), commands=commands)
-
-
 def get_snapshot(module):
     command = 'show snapshot dump {0}'.format(module.params['snapshot_name'])
     body = execute_show_command(command, module)[0]
@@ -575,29 +378,29 @@ def write_on_file(content, filename, module):
 
 def main():
     argument_spec = dict(
-            action=dict(required=True, choices=['create', 'add',
-                                                'compare', 'delete',
-                                                'delete_all']),
-            snapshot_name=dict(required=False, type='str'),
-            description=dict(required=False, type='str'),
-            snapshot1=dict(required=False, type='str'),
-            snapshot2=dict(required=False, type='str'),
-            compare_option=dict(required=False,
-                        choices=['summary', 'ipv4routes', 'ipv6routes']),
-            comparison_results_file=dict(required=False, type='str'),
-            section=dict(required=False, type='str'),
-            show_command=dict(required=False, type='str'),
-            row_id=dict(required=False, type='str'),
-            element_key1=dict(required=False, type='str'),
-            element_key2=dict(required=False, type='str'),
-            save_snapshot_locally=dict(required=False, type='bool',
-                                       default=False),
-            path=dict(required=False, type='str', default='./')
+        action=dict(required=True, choices=['create', 'add', 'compare', 'delete', 'delete_all']),
+        snapshot_name=dict(type='str'),
+        description=dict(type='str'),
+        snapshot1=dict(type='str'),
+        snapshot2=dict(type='str'),
+        compare_option=dict(choices=['summary', 'ipv4routes', 'ipv6routes']),
+        comparison_results_file=dict(type='str'),
+        section=dict(type='str'),
+        show_command=dict(type='str'),
+        row_id=dict(type='str'),
+        element_key1=dict(type='str'),
+        element_key2=dict(type='str'),
+        save_snapshot_locally=dict(type='bool', default=False),
+        path=dict(type='str', default='./')
     )
-    module = get_network_module(argument_spec=argument_spec,
-                                mutually_exclusive=[['delete_all',
-                                                     'delete_snapshot']],
-                                supports_check_mode=True)
+
+    argument_spec.update(nxos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
 
     action = module.params['action']
     comparison_results_file = module.params['comparison_results_file']
@@ -608,7 +411,7 @@ def main():
 
     if not os.path.isdir(module.params['path']):
         module.fail_json(msg='{0} is not a valid directory name.'.format(
-                module.params['path']))
+            module.params['path']))
 
     if action == 'create':
         for param in CREATE_PARAMS:
@@ -643,22 +446,21 @@ def main():
         if action == 'compare':
             written_file = write_on_file(action_results,
                           module.params['comparison_results_file'],
-                          module)
+                module)
             result['updates'] = []
         else:
             if action_results:
-                execute_config_command(action_results, module)
+                load_config(module, action_results)
                 changed = True
                 final_snapshots = invoke('get_existing', module)
                 result['updates'] = action_results
 
                 if (action == 'create' and
-                    module.params['save_snapshot_locally']):
+                        module.params['save_snapshot_locally']):
                     snapshot = get_snapshot(module)
                     written_file = write_on_file(snapshot,
                                     module.params['snapshot_name'], module)
 
-    result['connected'] = module.connected
     result['changed'] = changed
     if module._verbosity > 0:
         end_state = invoke('get_existing', module)
@@ -672,3 +474,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -24,32 +25,36 @@ module: dnsmadeeasy
 version_added: "1.3"
 short_description: Interface with dnsmadeeasy.com (a DNS hosting service).
 description:
-   - "Manages DNS records via the v2 REST API of the DNS Made Easy service.  It handles records only; there is no manipulation of domains or monitor/account support yet. See: U(https://www.dnsmadeeasy.com/integration/restapi/)"
+   - >
+     Manages DNS records via the v2 REST API of the DNS Made Easy service.  It handles records only; there is no manipulation of domains or
+     monitor/account support yet. See: U(https://www.dnsmadeeasy.com/integration/restapi/)
 options:
   account_key:
     description:
       - Account API Key.
     required: true
     default: null
-    
+
   account_secret:
     description:
       - Account Secret Key.
     required: true
     default: null
-    
+
   domain:
     description:
-      - Domain to work with. Can be the domain name (e.g. "mydomain.com") or the numeric ID of the domain in DNS Made Easy (e.g. "839989") for faster resolution.
+      - Domain to work with. Can be the domain name (e.g. "mydomain.com") or the numeric ID of the domain in DNS Made Easy (e.g. "839989") for faster
+        resolution
     required: true
     default: null
-    
+
   record_name:
     description:
-      - Record name to get/create/delete/update. If record_name is not specified; all records for the domain will be returned in "result" regardless of the state argument.
+      - Record name to get/create/delete/update. If record_name is not specified; all records for the domain will be returned in "result" regardless
+        of the state argument.
     required: false
     default: null
-    
+
   record_type:
     description:
       - Record type.
@@ -58,25 +63,29 @@ options:
     default: null
 
   record_value:
-    description: 
-      - "Record value. HTTPRED: <redirection URL>, MX: <priority> <target name>, NS: <name server>, PTR: <target name>, SRV: <priority> <weight> <port> <target name>, TXT: <text value>"
-      - "If record_value is not specified; no changes will be made and the record will be returned in 'result' (in other words, this module can be used to fetch a record's current id, type, and ttl)"
+    description:
+      - >
+        Record value. HTTPRED: <redirection URL>, MX: <priority> <target name>, NS: <name server>, PTR: <target name>,
+        SRV: <priority> <weight> <port> <target name>, TXT: <text value>"
+      - >
+        If record_value is not specified; no changes will be made and the record will be returned in 'result'
+        (in other words, this module can be used to fetch a record's current id, type, and ttl)
     required: false
     default: null
-    
+
   record_ttl:
     description:
       - record's "Time to live".  Number of seconds the record remains cached in DNS servers.
     required: false
     default: 1800
-    
+
   state:
     description:
       - whether the record should exist or not
     required: true
     choices: [ 'present', 'absent' ]
     default: null
-    
+
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
@@ -87,9 +96,10 @@ options:
     version_added: 1.5.1
 
 notes:
-  - The DNS Made Easy service requires that machines interacting with the API have the proper time and timezone set. Be sure you are within a few seconds of actual time by using NTP. 
+  - The DNS Made Easy service requires that machines interacting with the API have the proper time and timezone set. Be sure you are within a few
+    seconds of actual time by using NTP.
   - This module returns record(s) in the "result" element when 'state' is set to 'present'. This value can be be registered and used in your playbooks.
-  
+
 requirements: [ hashlib, hmac ]
 author: "Brice Burgess (@briceburg)"
 '''
@@ -102,7 +112,7 @@ EXAMPLES = '''
     domain: my.com
     state: present
   register: response
-  
+
 # create / ensure the presence of a record
 - dnsmadeeasy:
     account_key: key
@@ -130,7 +140,7 @@ EXAMPLES = '''
     state: present
     record_name: test
   register: response
-  
+
 # delete a record / ensure it is absent
 - dnsmadeeasy:
     account_key: key

@@ -19,17 +19,18 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
 
-DOCUMENTATION = '''
+
+DOCUMENTATION = r'''
 ---
 module: win_command
 short_description: Executes a command on a remote Windows node
 version_added: 2.2
 description:
-     - The M(win_command) module takes the command name followed by a list of space-delimited arguments.
+     - The C(win_command) module takes the command name followed by a list of space-delimited arguments.
      - The given command will be executed on all selected nodes. It will not be
        processed through the shell, so variables like C($env:HOME) and operations
        like C("<"), C(">"), C("|"), and C(";") will not work (use the M(win_shell)
@@ -50,33 +51,34 @@ options:
     description:
       - set the specified path as the current working directory before executing a command
 notes:
-    -  If you want to run a command through a shell (say you are using C(<),
-       C(>), C(|), etc), you actually want the M(win_shell) module instead. The
-       M(win_command) module is much more secure as it's not affected by the user's
-       environment.
-    -  " C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
-author: 
+    - If you want to run a command through a shell (say you are using C(<),
+      C(>), C(|), etc), you actually want the M(win_shell) module instead. The
+      C(win_command) module is much more secure as it's not affected by the user's
+      environment.
+    - C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not
+      exist, use this.
+author:
     - Matt Davis
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Example from Ansible Playbooks.
 - win_command: whoami
   register: whoami_out
 
 # Run the command only if the specified file does not exist.
-- win_command: wbadmin -backupTarget:c:\\backup\\ creates=c:\\backup\\
+- win_command: wbadmin -backupTarget:C:\backup\ creates=C:\backup\
 
 # You can also use the 'args' form to provide the options. This command
-# will change the working directory to c:\\somedir\\ and will only run when
-# c:\\backup\\ doesn't exist.
-- win_command: wbadmin -backupTarget:c:\\backup\\ creates=c:\\backup\\
+# will change the working directory to C:\somedir\\ and will only run when
+# C:\backup\ doesn't exist.
+- win_command: wbadmin -backupTarget:C:\backup\ creates=C:\backup\
   args:
-    chdir: c:\\somedir\\
-    creates: c:\\backup\\
+    chdir: C:\somedir\
+    creates: C:\backup\
 '''
 
-RETURN = '''
+RETURN = r'''
 msg:
     description: changed
     returned: always

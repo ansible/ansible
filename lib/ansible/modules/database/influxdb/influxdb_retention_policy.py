@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -77,7 +78,7 @@ options:
 EXAMPLES = '''
 # Example influxdb_retention_policy command from Ansible Playbooks
 - name: create 1 hour retention policy
-    influxdb_retention_policy:
+  influxdb_retention_policy:
       hostname: "{{influxdb_ip_address}}"
       database_name: "{{influxdb_database_name}}"
       policy_name: test
@@ -85,7 +86,7 @@ EXAMPLES = '''
       replication: 1
 
 - name: create 1 day retention policy
-    influxdb_retention_policy:
+  influxdb_retention_policy:
       hostname: "{{influxdb_ip_address}}"
       database_name: "{{influxdb_database_name}}"
       policy_name: test
@@ -93,7 +94,7 @@ EXAMPLES = '''
       replication: 1
 
 - name: create 1 week retention policy
-    influxdb_retention_policy:
+  influxdb_retention_policy:
       hostname: "{{influxdb_ip_address}}"
       database_name: "{{influxdb_database_name}}"
       policy_name: test
@@ -101,7 +102,7 @@ EXAMPLES = '''
       replication: 1
 
 - name: create infinite retention policy
-    influxdb_retention_policy:
+  influxdb_retention_policy:
       hostname: "{{influxdb_ip_address}}"
       database_name: "{{influxdb_database_name}}"
       policy_name: test
@@ -201,7 +202,9 @@ def alter_retention_policy(module, client, retention_policy):
     elif duration == 'INF':
         influxdb_duration_format = '0'
 
-    if not retention_policy['duration'] == influxdb_duration_format or not retention_policy['replicaN'] == int(replication) or not retention_policy['default'] == default:
+    if (not retention_policy['duration'] == influxdb_duration_format or
+            not retention_policy['replicaN'] == int(replication) or
+            not retention_policy['default'] == default):
         if not module.check_mode:
             try:
                 client.alter_retention_policy(policy_name, database_name, duration, replication, default)

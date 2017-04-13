@@ -21,31 +21,23 @@
 
 # Based on: http://powershellblogger.com/2016/01/create-shortcuts-lnk-or-url-files-with-powershell/
 
-# TODO: Add debug information with what has changed using windows functions
-# TODO: Ensure that by default variables default to $null automatically (so that they can be tested)
-
 $ErrorActionPreference = "Stop"
 
-$params = Parse-Args $args -supports_check_mode $true;
+$params = Parse-Args $args -supports_check_mode $true
+$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-$_ansible_check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -default $false
-
-$src = Get-AnsibleParam -obj $params -name "src" -type "path" -default $null
+$src = Get-AnsibleParam -obj $params -name "src" -type "path"
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
-$state = Get-AnsibleParam -obj $params -name "state" -type "string" -default "present"
-$orig_args = Get-AnsibleParam -obj $params -name "args" -type "string" -default $null
-$directory = Get-AnsibleParam -obj $params -name "directory" -type "path" -default $null
-$hotkey = Get-AnsibleParam -obj $params -name "hotkey" -type "string" -default $null
-$icon = Get-AnsibleParam -obj $params -name "icon" -type "path" -default $null
-$orig_description = Get-AnsibleParam -obj $params -name "description" -type "string" -default $null
-$windowstyle = Get-AnsibleParam -obj $params -name "windowstyle" -type "string" -validateset "default","maximized","minimized" -default $null
+$state = Get-AnsibleParam -obj $params -name "state" -type "string" -default "present" -validateset "present","absent"
+$orig_args = Get-AnsibleParam -obj $params -name "args" -type "string"
+$directory = Get-AnsibleParam -obj $params -name "directory" -type "path"
+$hotkey = Get-AnsibleParam -obj $params -name "hotkey" -type "string"
+$icon = Get-AnsibleParam -obj $params -name "icon" -type "path"
+$orig_description = Get-AnsibleParam -obj $params -name "description" -type "string"
+$windowstyle = Get-AnsibleParam -obj $params -name "windowstyle" -type "string" -validateset "normal","maximized","minimized"
 
-# Expand environment variables on non-path types (Beware: turns $null into "")
-#$src = [System.Environment]::ExpandEnvironmentVariables($orig_src)
-#$dest = [System.Environment]::ExpandEnvironmentVariables($orig_dest)
+# Expand environment variables on non-path types
 $args = Expand-Environment($orig_args)
-#$directory = [System.Environment]::ExpandEnvironmentVariables($orig_directory)
-#$icon = [System.Environment]::ExpandEnvironmentVariables($orig_icon)
 $description = Expand-Environment($orig_description)
 
 $result = @{
@@ -56,19 +48,19 @@ $result = @{
 
 # Convert from window style name to window style id
 $windowstyles = @{
-    default = 1
+    normal = 1
     maximized = 3
     minimized = 7
 }
 
 # Convert from window style id to window style name
-$windowstyleids = @( "", "default", "", "maximized", "", "", "", "minimized" )
+$windowstyleids = @( "", "normal", "", "maximized", "", "", "", "minimized" )
 
 If ($state -eq "absent") {
-    If (Test-Path "$dest") {
+    If (Test-Path -Path $dest) {
         # If the shortcut exists, try to remove it
         Try {
-            Remove-Item -Path "$dest";
+            Remove-Item -Path $dest -WhatIf:$check_mode
         } Catch {
             # Report removal failure
             Fail-Json $result "Failed to remove shortcut $dest. (" + $_.Exception.Message + ")"
@@ -85,6 +77,13 @@ If ($state -eq "absent") {
 
     # Compare existing values with new values, report as changed if required
 
+    If ($src -ne $null) {
+        # Windows translates executables to absolute path, so do we
+        If (Get-Command -Name $src -Type Application -ErrorAction SilentlyContinue) {
+            $src = (Get-Command -Name $src -Type Application).Definition
+        }
+    }
+
     If ($src -ne $null -and $ShortCut.TargetPath -ne $src) {
         $result.changed = $true
         $ShortCut.TargetPath = $src
@@ -94,7 +93,6 @@ If ($state -eq "absent") {
     # Determine if we have a WshShortcut or WshUrlShortcut by checking the Arguments property
     # A WshUrlShortcut objects only consists of a TargetPath property
 
-    # TODO: Find a better way to do has_attr() or isinstance() ?
     If (Get-Member -InputObject $ShortCut -Name Arguments) {
 
         # This is a full-featured application shortcut !
@@ -110,7 +108,7 @@ If ($state -eq "absent") {
         }
         $result.directory = $ShortCut.WorkingDirectory
 
-        # FIXME: Not all values are accepted here !
+        # FIXME: Not all values are accepted here ! Improve docs too.
         If ($hotkey -ne $null -and $ShortCut.Hotkey -ne $hotkey) {
             $result.changed = $true
             $ShortCut.Hotkey = $hotkey
@@ -136,7 +134,7 @@ If ($state -eq "absent") {
         $result.windowstyle = $windowstyleids[$ShortCut.WindowStyle]
     }
 
-    If ($result.changed -eq $true -and $_ansible_check_mode -ne $true) {
+    If ($result.changed -eq $true -and $check_mode -ne $true) {
         Try {
             $ShortCut.Save()
         } Catch {

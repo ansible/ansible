@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -52,12 +53,14 @@ options:
     required: true
   image:
     description:
-      - system image for creating the virtual machine (e.g., b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu_DAILY_BUILD-precise-12_04_3-LTS-amd64-server-20131205-en-us-30GB)
+      - system image for creating the virtual machine
+        (e.g., b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu_DAILY_BUILD-precise-12_04_3-LTS-amd64-server-20131205-en-us-30GB)
     required: true
     default: null
   role_size:
     description:
-      - azure role size for the new virtual machine (e.g., Small, ExtraLarge, A6). You have to pay attention to the fact that instances of type G and DS are not available in all regions (locations). Make sure if you selected the size and type of instance available in your chosen location.
+      - azure role size for the new virtual machine (e.g., Small, ExtraLarge, A6). You have to pay attention to the fact that instances of
+        type G and DS are not available in all regions (locations). Make sure if you selected the size and type of instance available in your chosen location.
     required: false
     default: Small
   endpoints:
@@ -77,7 +80,8 @@ options:
     default: null
   ssh_cert_path:
     description:
-      - path to an X509 certificate containing the public ssh key to install in the virtual machine. See http://www.windowsazure.com/en-us/manage/linux/tutorials/intro-to-linux/ for more details.
+      - path to an X509 certificate containing the public ssh key to install in the virtual machine.
+        See http://www.windowsazure.com/en-us/manage/linux/tutorials/intro-to-linux/ for more details.
       - if this option is specified, password-based ssh authentication will be disabled.
     required: false
     default: null
@@ -258,11 +262,11 @@ try:
     import azure as windows_azure
 
     if hasattr(windows_azure, '__version__') and LooseVersion(windows_azure.__version__) <= "0.11.1":
-      from azure import WindowsAzureError as AzureException
-      from azure import WindowsAzureMissingResourceError as AzureMissingException
+        from azure import WindowsAzureError as AzureException
+        from azure import WindowsAzureMissingResourceError as AzureMissingException
     else:
-      from azure.common import AzureException as AzureException
-      from azure.common import AzureMissingResourceHttpError as AzureMissingException
+        from azure.common import AzureException as AzureException
+        from azure.common import AzureMissingResourceHttpError as AzureMissingException
 
     from azure.servicemanagement import (ServiceManagementService, OSVirtualHardDisk, SSH, PublicKeys,
                                          PublicKey, LinuxConfigurationSet, ConfigurationSetInputEndpoints,
@@ -276,7 +280,8 @@ from types import MethodType
 import json
 
 def _wait_for_completion(azure, promise, wait_timeout, msg):
-    if not promise: return
+    if not promise:
+        return
     wait_timeout = time.time() + wait_timeout
     while wait_timeout > time.time():
         operation_result = azure.get_operation_status(promise.request_id)
@@ -300,7 +305,7 @@ def _delete_disks_when_detached(azure, wait_timeout, disk_names):
                     azure.delete_disk(disk.name, True)
                     disk_names.remove(disk_name)
     except AzureException as e:
-        module.fail_json(msg="failed to get or delete disk, error was: %s" % (disk_name, str(e)))
+        module.fail_json(msg="failed to get or delete disk %s, error was: %s" % (disk_name, str(e)))
     finally:
         signal.alarm(0)
 
@@ -365,7 +370,7 @@ def create_virtual_machine(module, azure):
         azure.get_role(name, name, name)
     except AzureMissingException:
         # vm does not exist; create it
-        
+
         if os_type == 'linux':
             # Create linux configuration
             disable_ssh_password_authentication = not password
@@ -563,7 +568,7 @@ def main():
     cloud_service_raw = None
     if module.params.get('state') == 'absent':
         (changed, public_dns_name, deployment) = terminate_virtual_machine(module, azure)
-    
+
     elif module.params.get('state') == 'present':
         # Changed is always set to true when provisioning new instances
         if not module.params.get('name'):

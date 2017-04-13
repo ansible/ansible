@@ -32,11 +32,13 @@ included, provided the requesting user belongs to it.
 
 The following variables are established for every host. They can be retrieved from the hostvars
 dictionary.
+ - brook_pid: str
  - brook_name: str
  - brook_description: str
  - brook_project: str
  - brook_template: str
  - brook_region: str
+ - brook_zone: str
  - brook_status: str
  - brook_tags: list(str)
  - brook_internal_ips: list(str)
@@ -70,7 +72,7 @@ Support:
   This script is tested on Python 2.7 and 3.4. It may work on other versions though.
 
 Author: Francisco Ros <fjros@doalitic.com>
-Version: 0.1
+Version: 0.2
 """
 
 
@@ -122,9 +124,8 @@ class BrookInventory:
         self.project_id = config.get('brook', 'project_id')
 
         if not self.api_token:
-            print('You must provide (at least) your Brook.io API token to generate the dynamic '
-                  'inventory.')
-            sys.exit(1)
+            sys.exit('You must provide (at least) your Brook.io API token to generate the dynamic '
+                     'inventory.')
 
     def get_api_client(self):
         """Authenticate user via the provided credentials and return the corresponding API client.
@@ -168,8 +169,8 @@ class BrookInventory:
         for project_id in projects:
             project = projects_api.show_project(project_id=project_id)
             for instance in instances_api.index_instances(project_id=project_id):
-                # Get template used for this instance
-                template = templates_api.show_template(template_id=instance.template)
+                # Get template used for this instance if known
+                template = templates_api.show_template(template_id=instance.template) if instance.template else None
 
                 # Update hostvars
                 try:
@@ -212,11 +213,13 @@ class BrookInventory:
         """
 
         hostvars = instance.to_dict()
+        hostvars['brook_pid'] = hostvars.pop('pid')
         hostvars['brook_name'] = hostvars.pop('name')
         hostvars['brook_description'] = hostvars.pop('description')
         hostvars['brook_project'] = hostvars.pop('project')
         hostvars['brook_template'] = hostvars.pop('template')
         hostvars['brook_region'] = hostvars.pop('region')
+        hostvars['brook_zone'] = hostvars.pop('zone')
         hostvars['brook_created_at'] = hostvars.pop('created_at')
         hostvars['brook_updated_at'] = hostvars.pop('updated_at')
         del hostvars['id']
@@ -227,7 +230,7 @@ class BrookInventory:
         # Substitute identifiers for names
         #
         hostvars['brook_project'] = project.name
-        hostvars['brook_template'] = template.name
+        hostvars['brook_template'] = template.name if template else None
 
         # Retrieve instance state
         #

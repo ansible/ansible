@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -115,11 +116,11 @@ requirements: [ mosquitto ]
 notes:
  - This module requires a connection to an MQTT broker such as Mosquitto
    U(http://mosquitto.org) and the I(Paho) C(mqtt) Python client (U(https://pypi.python.org/pypi/paho-mqtt)).
-author: "Jan-Piet Mens (@jpmens)" 
+author: "Jan-Piet Mens (@jpmens)"
 '''
 
 EXAMPLES = '''
--  mqtt:
+- mqtt:
     topic: 'service/ansible/{{ ansible_hostname }}'
     payload: 'Hello at {{ ansible_date_time.iso8601 }}'
     qos: 0

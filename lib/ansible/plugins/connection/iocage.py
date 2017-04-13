@@ -56,7 +56,7 @@ class Connection(Jail):
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT)
-        
+
         stdout, stderr = p.communicate()
         # otherwise p.returncode would not be set
         p.wait()

@@ -58,7 +58,8 @@ class MDTInventory(object):
         Connect to MDT and dump contents of dbo.ComputerIdentity database
         '''
         if not self.conn:
-            self.conn = pymssql.connect(server=self.mdt_server + "\\" + self.mdt_instance, user=self.mdt_user, password=self.mdt_password, database=self.mdt_database)
+            self.conn = pymssql.connect(server=self.mdt_server + "\\" + self.mdt_instance, user=self.mdt_user, password=self.mdt_password,
+                                        database=self.mdt_database)
             cursor = self.conn.cursor()
             cursor.execute(query)
             self.mdt_dump = cursor.fetchall()
@@ -69,9 +70,10 @@ class MDTInventory(object):
         Gets host from MDT Database
         '''
         if hostname:
-        	query = "SELECT t1.ID, t1.Description, t1.MacAddress, t2.Role FROM ComputerIdentity as t1 join Settings_Roles as t2 on t1.ID = t2.ID where t1.Description = '%s'" % hostname
+            query = ("SELECT t1.ID, t1.Description, t1.MacAddress, t2.Role "
+                     "FROM ComputerIdentity as t1 join Settings_Roles as t2 on t1.ID = t2.ID where t1.Description = '%s'" % hostname)
         else:
-        	query = 'SELECT t1.ID, t1.Description, t1.MacAddress, t2.Role FROM ComputerIdentity as t1 join Settings_Roles as t2 on t1.ID = t2.ID'
+            query = 'SELECT t1.ID, t1.Description, t1.MacAddress, t2.Role FROM ComputerIdentity as t1 join Settings_Roles as t2 on t1.ID = t2.ID'
         self._connect(query)
 
         # Configure to group name configured in Ansible Tower for this inventory

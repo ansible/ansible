@@ -197,7 +197,7 @@ class LinodeInventory(object):
         try:
             return Linode.find(api_id=linode_id)
         except chube_api.linode_api.ApiError as e:
-            sys.exit("Looks like Linode's API is down:\n%" % e)
+            sys.exit("Looks like Linode's API is down:\n%s" % e)
 
     def populate_datacenter_cache(self):
         """Creates self._datacenter_cache, containing all Datacenters indexed by ID."""
@@ -300,7 +300,7 @@ class LinodeInventory(object):
     def push(self, my_dict, key, element):
         """Pushed an element onto an array that may not have been defined in the dict."""
         if key in my_dict:
-            my_dict[key].append(element);
+            my_dict[key].append(element)
         else:
             my_dict[key] = [element]
 

@@ -19,30 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-try:
-    import ovirtsdk4.types as otypes
-except ImportError:
-    pass
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_sdk,
-    create_connection,
-    equal,
-    follow_link,
-    get_link_name,
-    ovirt_full_argument_spec,
-    search_by_attributes,
-    search_by_name,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -71,7 +51,7 @@ options:
     object_type:
         description:
             - "The object where the permissions should be managed."
-        default: 'virtual_machine'
+        default: 'vm'
         choices: [
             'data_center',
             'cluster',
@@ -82,13 +62,22 @@ options:
             'vm',
             'vm_pool',
             'template',
+            'cpu_profile',
+            'disk_profile',
+            'vnic_profile',
+            'system',
         ]
     user_name:
         description:
-            - "Username of the the user to manage. In most LDAPs it's I(uid) of the user, but in Active Directory you must specify I(UPN) of the user."
+            - "Username of the the user to manage. In most LDAPs it's I(uid) of the user,
+               but in Active Directory you must specify I(UPN) of the user."
+            - "Note that if user don't exist in the system this module will fail,
+               you should ensure the user exists by using M(ovirt_users) module."
     group_name:
         description:
             - "Name of the the group to manage."
+            - "Note that if group don't exist in the system this module will fail,
+               you should ensure the group exists by using M(ovirt_groups) module."
     authz_name:
         description:
             - "Authorization provider of the user/group. In previous versions of oVirt known as domain."
@@ -135,8 +124,31 @@ permission:
     returned: On success if permission is found.
 '''
 
+try:
+    import ovirtsdk4.types as otypes
+except ImportError:
+    pass
+
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_sdk,
+    create_connection,
+    equal,
+    follow_link,
+    get_link_name,
+    ovirt_full_argument_spec,
+    search_by_attributes,
+    search_by_name,
+)
+
 
 def _objects_service(connection, object_type):
+    if object_type == 'system':
+        return connection.system_service()
+
     return getattr(
         connection.system_service(),
         '%ss_service' % object_type,
@@ -147,6 +159,8 @@ def _objects_service(connection, object_type):
 def _object_service(connection, module):
     object_type = module.params['object_type']
     objects_service = _objects_service(connection, object_type)
+    if object_type == 'system':
+        return objects_service
 
     object_id = module.params['object_id']
     if object_id is None:
@@ -232,7 +246,7 @@ def main():
         ),
         role=dict(default='UserRole'),
         object_type=dict(
-            default='virtual_machine',
+            default='vm',
             choices=[
                 'data_center',
                 'cluster',
@@ -243,6 +257,10 @@ def main():
                 'vm',
                 'vm_pool',
                 'template',
+                'cpu_profile',
+                'disk_profile',
+                'vnic_profile',
+                'system',
             ]
         ),
         authz_name=dict(required=True, aliases=['domain']),
@@ -258,14 +276,18 @@ def main():
     )
     check_sdk(module)
 
-    if module.params['object_name'] is None and module.params['object_id'] is None:
+    if (
+        (module.params['object_name'] is None and module.params['object_id'] is None)
+        and module.params['object_type'] != 'system'
+    ):
         module.fail_json(msg='"object_name" or "object_id" is required')
 
     if module.params['user_name'] is None and module.params['group_name'] is None:
         module.fail_json(msg='"user_name" or "group_name" is required')
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         permissions_service = _object_service(connection, module).permissions_service()
         permissions_module = PermissionsModule(
             connection=connection,
@@ -284,7 +306,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":

@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -156,8 +157,7 @@ EXAMPLES = '''
 
 # Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+). You do not have to supply '-e' option in extra_args.
 - pip:
-    name: svn+http://myrepo/svn/MyApp#
-    egg: MyApp'
+    name: svn+http://myrepo/svn/MyApp#egg=MyApp
 
 # Install MyApp using one of the remote protocols (bzr+,hg+,git+) in a non editable way.
 - pip:
@@ -305,7 +305,6 @@ def _get_pip(module, env=None, executable=None):
 
     pip = None
     if executable is not None:
-        executable = os.path.expanduser(executable)
         if os.path.isabs(executable):
             pip = executable
         else:
@@ -402,7 +401,7 @@ def main():
             extra_args=dict(),
             editable=dict(default=True, type='bool'),
             chdir=dict(type='path'),
-            executable=dict(),
+            executable=dict(type='path'),
             umask=dict(),
         ),
         required_one_of=[['name', 'requirements']],

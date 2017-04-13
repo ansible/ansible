@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -178,7 +179,7 @@ def list_launch_configs(connection, module):
             launch_config['CreatedTime'] = str(launch_config['CreatedTime'])
 
     if sort:
-      snaked_launch_configs.sort(key=lambda e: e[sort], reverse=(sort_order=='descending'))
+        snaked_launch_configs.sort(key=lambda e: e[sort], reverse=(sort_order=='descending'))
 
     try:
         if sort and sort_start and sort_end:

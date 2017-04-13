@@ -153,9 +153,11 @@ class Facts(object):
                  { 'path' : '/usr/sbin/swlist',     'name' : 'SD-UX' },
                  { 'path' : '/usr/bin/emerge',      'name' : 'portage' },
                  { 'path' : '/usr/sbin/pkgadd',     'name' : 'svr4pkg' },
-                 { 'path' : '/usr/bin/pkg',         'name' : 'pkg' },
+                 { 'path' : '/usr/bin/pkg',         'name' : 'pkg5' },
                  { 'path' : '/usr/bin/xbps-install','name' : 'xbps' },
                  { 'path' : '/usr/local/sbin/pkg',  'name' : 'pkgng' },
+                 { 'path' : '/usr/bin/swupd',       'name' : 'swupd' },
+                 { 'path' : '/usr/sbin/sorcery',    'name' : 'sorcery' },
                 ]
 
     def __init__(self, module, load_on_init=True, cached_facts=None):
@@ -324,7 +326,7 @@ class Facts(object):
 
     def get_pkg_mgr_facts(self):
         if self.facts['system'] == 'OpenBSD':
-                self.facts['pkg_mgr'] = 'openbsd_pkg'
+            self.facts['pkg_mgr'] = 'openbsd_pkg'
         else:
             self.facts['pkg_mgr'] = 'unknown'
             for pkg in Facts.PKG_MGRS:
@@ -332,12 +334,15 @@ class Facts(object):
                     self.facts['pkg_mgr'] = pkg['name']
 
     def get_service_mgr_facts(self):
-        #TODO: detect more custom init setups like bootscripts, dmd, s6, Epoch, runit, etc
+        #TODO: detect more custom init setups like bootscripts, dmd, s6, Epoch, etc
         # also other OSs other than linux might need to check across several possible candidates
 
         # Mapping of proc_1 values to more useful names
         proc_1_map = {
             'procd': 'openwrt_init',
+            'runit-init': 'runit',
+            'svscan': 'svc',
+            'openrc-init': 'openrc',
         }
 
         # try various forms of querying pid 1
@@ -368,20 +373,19 @@ class Facts(object):
             self.facts['service_mgr'] = proc_1_map.get(proc_1, proc_1)
 
         # start with the easy ones
-        elif  self.facts['distribution'] == 'MacOSX':
+        elif self.facts['distribution'] == 'MacOSX':
             #FIXME: find way to query executable, version matching is not ideal
             if LooseVersion(platform.mac_ver()[0]) >= LooseVersion('10.4'):
                 self.facts['service_mgr'] = 'launchd'
             else:
                 self.facts['service_mgr'] = 'systemstarter'
         elif 'BSD' in self.facts['system'] or self.facts['system'] in ['Bitrig', 'DragonFly']:
-            #FIXME: we might want to break out to individual BSDs
+            #FIXME: we might want to break out to individual BSDs or 'rc'
             self.facts['service_mgr'] = 'bsdinit'
         elif self.facts['system'] == 'AIX':
             self.facts['service_mgr'] = 'src'
         elif self.facts['system'] == 'SunOS':
-            #FIXME: smf?
-            self.facts['service_mgr'] = 'svcs'
+            self.facts['service_mgr'] = 'smf'
         elif self.facts['distribution'] == 'OpenWrt':
             self.facts['service_mgr'] = 'openwrt_init'
         elif self.facts['system'] == 'Linux':
@@ -389,7 +393,7 @@ class Facts(object):
                 self.facts['service_mgr'] = 'systemd'
             elif self.module.get_bin_path('initctl') and os.path.exists("/etc/init/"):
                 self.facts['service_mgr'] = 'upstart'
-            elif os.path.realpath('/sbin/rc') == '/sbin/openrc':
+            elif os.path.exists('/sbin/openrc'):
                 self.facts['service_mgr'] = 'openrc'
             elif os.path.exists('/etc/init.d/'):
                 self.facts['service_mgr'] = 'sysvinit'
@@ -401,7 +405,7 @@ class Facts(object):
     def get_lsb_facts(self):
         lsb_path = self.module.get_bin_path('lsb_release')
         if lsb_path:
-            rc, out, err = self.module.run_command([lsb_path, "-a"], errors='surrogate_or_replace')
+            rc, out, err = self.module.run_command([lsb_path, "-a"], errors='surrogate_then_replace')
             if rc == 0:
                 self.facts['lsb'] = {}
                 for line in out.splitlines():
@@ -472,14 +476,14 @@ class Facts(object):
     def get_apparmor_facts(self):
         self.facts['apparmor'] = {}
         if os.path.exists('/sys/kernel/security/apparmor'):
-             self.facts['apparmor']['status'] = 'enabled'
+            self.facts['apparmor']['status'] = 'enabled'
         else:
-             self.facts['apparmor']['status'] = 'disabled'
+            self.facts['apparmor']['status'] = 'disabled'
 
     def get_caps_facts(self):
         capsh_path = self.module.get_bin_path('capsh')
         if capsh_path:
-            rc, out, err = self.module.run_command([capsh_path, "--print"], errors='surrogate_or_replace')
+            rc, out, err = self.module.run_command([capsh_path, "--print"], errors='surrogate_then_replace')
             enforced_caps = []
             enforced = 'NA'
             for line in out.splitlines():
@@ -548,6 +552,10 @@ class Facts(object):
         self.facts['user_gecos'] = pwent.pw_gecos
         self.facts['user_dir'] = pwent.pw_dir
         self.facts['user_shell'] = pwent.pw_shell
+        self.facts['real_user_id'] = os.getuid()
+        self.facts['effective_user_id'] = os.geteuid()
+        self.facts['real_group_id'] = os.getgid()
+        self.facts['effective_group_id'] = os.getgid()
 
     def get_env_facts(self):
         self.facts['env'] = {}
@@ -649,24 +657,28 @@ class Distribution(object):
         {'path': '/etc/os-release', 'name': 'Debian'},
         {'path': '/etc/lsb-release', 'name': 'Mandriva'},
         {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
+        {'path': '/etc/sourcemage-release', 'name': 'SMGL'},
         {'path': '/etc/os-release', 'name': 'NA'},
         {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
+        {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
     )
 
     SEARCH_STRING = {
         'OracleLinux': 'Oracle Linux',
         'RedHat': 'Red Hat',
         'Altlinux': 'ALT Linux',
+        'ClearLinux': 'Clear Linux Software for Intel Architecture',
+        'SMGL': 'Source Mage GNU/Linux',
     }
 
     # A list with OS Family members
     OS_FAMILY = dict(
         RedHat = 'RedHat', Fedora = 'RedHat', CentOS = 'RedHat', Scientific = 'RedHat',
         SLC = 'RedHat', Ascendos = 'RedHat', CloudLinux = 'RedHat', PSBM = 'RedHat',
-        OracleLinux = 'RedHat', OVS = 'RedHat', OEL = 'RedHat', Amazon = 'RedHat',
+        OracleLinux = 'RedHat', OVS = 'RedHat', OEL = 'RedHat', Amazon = 'RedHat', Virtuozzo = 'RedHat',
         XenServer = 'RedHat', Ubuntu = 'Debian', Debian = 'Debian', Raspbian = 'Debian', Slackware = 'Slackware', SLES = 'Suse',
-        SLED = 'Suse', openSUSE = 'Suse', openSUSE_Tumbleweed = 'Suse', SuSE = 'Suse', SLES_SAP = 'Suse', SUSE_LINUX = 'Suse', Gentoo = 'Gentoo', Funtoo = 'Gentoo',
-        Archlinux = 'Archlinux', Manjaro = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake', Altlinux = 'Altlinux',
+        SLED = 'Suse', openSUSE = 'Suse', openSUSE_Tumbleweed = 'Suse', SuSE = 'Suse', SLES_SAP = 'Suse', SUSE_LINUX = 'Suse', Gentoo = 'Gentoo',
+        Funtoo = 'Gentoo', Archlinux = 'Archlinux', Manjaro = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake', Altlinux = 'Altlinux', SMGL = 'SMGL',
         Solaris = 'Solaris', Nexenta = 'Solaris', OmniOS = 'Solaris', OpenIndiana = 'Solaris',
         SmartOS = 'Solaris', AIX = 'AIX', Alpine = 'Alpine', MacOSX = 'Darwin',
         FreeBSD = 'FreeBSD', HPUX = 'HP-UX', openSUSE_Leap = 'Suse', Neon = 'Debian'
@@ -828,6 +840,9 @@ class Distribution(object):
         self.facts['distribution'] = 'Alpine'
         self.facts['distribution_version'] = data
 
+    def get_distribution_SMGL(self):
+        self.facts['distribution'] = 'Source Mage GNU/Linux'
+
     def get_distribution_SunOS(self):
         data = get_file_content('/etc/release').splitlines()[0]
         if 'Solaris' in data:
@@ -878,9 +893,9 @@ class Distribution(object):
                 # example pattern are 13.04 13.0 13
                 distribution_version = re.search('^VERSION_ID="?([0-9]+\.?[0-9]*)"?', line)
                 if distribution_version:
-                        self.facts['distribution_version'] = distribution_version.group(1)
+                    self.facts['distribution_version'] = distribution_version.group(1)
                 if 'open' in data.lower():
-                    release = re.search("^PRETTY_NAME=[^(]+ \(?([^)]+?)\)", line)
+                    release = re.search('^VERSION_ID="?[0-9]+\.?([0-9]*)"?', line)
                     if release:
                         self.facts['distribution_release'] = release.groups()[0]
                 elif 'enterprise' in data.lower() and 'VERSION_ID' in line:
@@ -919,11 +934,20 @@ class Distribution(object):
             release = re.search("PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
             if release:
                 self.facts['distribution_release'] = release.groups()[0]
+
+            # Last resort: try to find release from tzdata as either lsb is missing or this is very old debian
+            if self.facts['distribution_release'] == 'NA' and 'Debian' in data:
+                dpkg_cmd = self.module.get_bin_path('dpkg')
+                if dpkg_cmd:
+                    cmd = "%s --status tzdata|grep Provides|cut -f2 -d'-'" % dpkg_cmd
+                    rc, out, err = self.module.run_command(cmd)
+                    if rc == 0:
+                        self.facts['distribution_release'] = out.strip()
         elif 'Ubuntu' in data:
             self.facts['distribution'] = 'Ubuntu'
-            pass  # Ubuntu gets correct info from python functions
+            # nothing else to do, Ubuntu gets correct info from python functions
         else:
-            return False  # TODO: remove if tested without this
+            return False
 
     def get_distribution_Mandriva(self, name, data, path):
         if 'Mandriva' in data:
@@ -1065,8 +1089,8 @@ class LinuxHardware(Hardware):
                 self.facts["%s_mb" % key.lower()] = int(val) // 1024
 
             if key in self.MEMORY_FACTS:
-                 val = data[1].strip().split(' ')[0]
-                 memstats[key.lower()] = int(val) // 1024
+                val = data[1].strip().split(' ')[0]
+                memstats[key.lower()] = int(val) // 1024
 
         if None not in (memstats.get('memtotal'), memstats.get('memfree')):
             memstats['real:used'] = memstats['memtotal'] - memstats['memfree']
@@ -1078,22 +1102,22 @@ class LinuxHardware(Hardware):
             memstats['swap:used'] = memstats['swaptotal'] - memstats['swapfree']
 
         self.facts['memory_mb'] = {
-                     'real' : {
-                         'total': memstats.get('memtotal'),
-                         'used': memstats.get('real:used'),
-                         'free': memstats.get('memfree'),
-                     },
-                     'nocache' : {
-                         'free': memstats.get('nocache:free'),
-                         'used': memstats.get('nocache:used'),
-                     },
-                     'swap' : {
-                         'total': memstats.get('swaptotal'),
-                         'free': memstats.get('swapfree'),
-                         'used': memstats.get('swap:used'),
-                         'cached': memstats.get('swapcached'),
-                     },
-                 }
+            'real' : {
+                'total': memstats.get('memtotal'),
+                'used': memstats.get('real:used'),
+                'free': memstats.get('memfree'),
+                },
+            'nocache' : {
+                'free': memstats.get('nocache:free'),
+                'used': memstats.get('nocache:used'),
+                },
+            'swap' : {
+                'total': memstats.get('swaptotal'),
+                'free': memstats.get('swapfree'),
+                'used': memstats.get('swap:used'),
+                'cached': memstats.get('swapcached'),
+                },
+            }
 
     def get_cpu_facts(self):
         i = 0
@@ -1212,15 +1236,15 @@ class LinuxHardware(Hardware):
                             "CompactPCI", "AdvancedTCA", "Blade" ]
 
             DMI_DICT = {
-                    'bios_date': '/sys/devices/virtual/dmi/id/bios_date',
-                    'bios_version': '/sys/devices/virtual/dmi/id/bios_version',
-                    'form_factor': '/sys/devices/virtual/dmi/id/chassis_type',
-                    'product_name': '/sys/devices/virtual/dmi/id/product_name',
-                    'product_serial': '/sys/devices/virtual/dmi/id/product_serial',
-                    'product_uuid': '/sys/devices/virtual/dmi/id/product_uuid',
-                    'product_version': '/sys/devices/virtual/dmi/id/product_version',
-                    'system_vendor': '/sys/devices/virtual/dmi/id/sys_vendor'
-                    }
+                'bios_date': '/sys/devices/virtual/dmi/id/bios_date',
+                'bios_version': '/sys/devices/virtual/dmi/id/bios_version',
+                'form_factor': '/sys/devices/virtual/dmi/id/chassis_type',
+                'product_name': '/sys/devices/virtual/dmi/id/product_name',
+                'product_serial': '/sys/devices/virtual/dmi/id/product_serial',
+                'product_uuid': '/sys/devices/virtual/dmi/id/product_uuid',
+                'product_version': '/sys/devices/virtual/dmi/id/product_version',
+                'system_vendor': '/sys/devices/virtual/dmi/id/sys_vendor'
+                }
 
             for (key,path) in DMI_DICT.items():
                 data = get_file_content(path)
@@ -1239,15 +1263,15 @@ class LinuxHardware(Hardware):
             # Fall back to using dmidecode, if available
             dmi_bin = self.module.get_bin_path('dmidecode')
             DMI_DICT = {
-                    'bios_date': 'bios-release-date',
-                    'bios_version': 'bios-version',
-                    'form_factor': 'chassis-type',
-                    'product_name': 'system-product-name',
-                    'product_serial': 'system-serial-number',
-                    'product_uuid': 'system-uuid',
-                    'product_version': 'system-version',
-                    'system_vendor': 'system-manufacturer'
-                    }
+                'bios_date': 'bios-release-date',
+                'bios_version': 'bios-version',
+                'form_factor': 'chassis-type',
+                'product_name': 'system-product-name',
+                'product_serial': 'system-serial-number',
+                'product_uuid': 'system-uuid',
+                'product_version': 'system-version',
+                'system_vendor': 'system-manufacturer'
+                }
             for (k, v) in DMI_DICT.items():
                 if dmi_bin is not None:
                     (rc, out, err) = self.module.run_command('%s -s %s' % (dmi_bin, v))
@@ -1308,7 +1332,7 @@ class LinuxHardware(Hardware):
     def _run_findmnt(self, findmnt_path):
         args = ['--list', '--noheadings', '--notruncate']
         cmd = [findmnt_path] + args
-        rc, out, err = self.module.run_command(cmd, errors='surrogate_or_replace')
+        rc, out, err = self.module.run_command(cmd, errors='surrogate_then_replace')
         return rc, out, err
 
     def _find_bind_mounts(self):
@@ -1402,7 +1426,7 @@ class LinuxHardware(Hardware):
         self.facts['devices'] = {}
         lspci = self.module.get_bin_path('lspci')
         if lspci:
-            rc, pcidata, err = self.module.run_command([lspci, '-D'], errors='surrogate_or_replace')
+            rc, pcidata, err = self.module.run_command([lspci, '-D'], errors='surrogate_then_replace')
         else:
             pcidata = None
 
@@ -1410,6 +1434,20 @@ class LinuxHardware(Hardware):
             block_devs = os.listdir("/sys/block")
         except OSError:
             return
+
+        devs_wwn = {}
+        try:
+            devs_by_id = os.listdir("/dev/disk/by-id")
+        except OSError:
+            pass
+        else:
+            for link_name in devs_by_id:
+                if link_name.startswith("wwn-"):
+                    try:
+                        wwn_link = os.readlink(os.path.join("/dev/disk/by-id", link_name))
+                    except OSError:
+                        continue
+                    devs_wwn[os.path.basename(wwn_link)] = link_name[4:]
 
         for block in block_devs:
             virtual = 1
@@ -1438,10 +1476,26 @@ class LinuxHardware(Hardware):
             for key in ['vendor', 'model', 'sas_address', 'sas_device_handle']:
                 d[key] = get_file_content(sysdir + "/device/" + key)
 
+            sg_inq = self.module.get_bin_path('sg_inq')
+
+            if sg_inq:
+                device = "/dev/%s" % (block)
+                rc, drivedata, err = self.module.run_command([sg_inq, device])
+                if rc == 0:
+                    serial = re.search("Unit serial number:\s+(\w+)", drivedata)
+                    if serial:
+                        d['serial'] = serial.group(1)
+
+            for key in ['vendor', 'model']:
+                d[key] = get_file_content(sysdir + "/device/" + key)
+
             for key,test in [ ('removable','/removable'), \
                               ('support_discard','/queue/discard_granularity'),
                               ]:
                 d[key] = get_file_content(sysdir + test)
+
+            if diskname in devs_wwn:
+                d['wwn'] = devs_wwn[diskname]
 
             d['partitions'] = {}
             for folder in os.listdir(sysdir):
@@ -1499,6 +1553,17 @@ class LinuxHardware(Hardware):
             uptime_seconds_string = uptime_file_content.split(' ')[0]
             self.facts['uptime_seconds'] = int(float(uptime_seconds_string))
 
+    def _find_mapper_device_name(self, dm_device):
+        dm_prefix = '/dev/dm-'
+        mapper_device = dm_device
+        if dm_device.startswith(dm_prefix):
+            dmsetup_cmd = self.module.get_bin_path('dmsetup', True)
+            mapper_prefix = '/dev/mapper/'
+            rc, dm_name, err = self.module.run_command("%s info -C --noheadings -o name %s" % (dmsetup_cmd, dm_device))
+            if rc == 0:
+                mapper_device = mapper_prefix + dm_name.rstrip()
+        return mapper_device
+
     def get_lvm_facts(self):
         """ Get LVM Facts if running as root and lvm utils are available """
 
@@ -1527,7 +1592,20 @@ class LinuxHardware(Hardware):
                     items = lv_line.split()
                     lvs[items[0]] = {'size_g': items[3], 'vg': items[1]}
 
-            self.facts['lvm'] = {'lvs': lvs, 'vgs': vgs}
+
+            pvs_path = self.module.get_bin_path('pvs')
+            #pvs fields: PV VG #Fmt #Attr PSize PFree
+            pvs = {}
+            if pvs_path:
+                rc, pv_lines, err = self.module.run_command( '%s %s' % (pvs_path, lvm_util_options))
+                for pv_line in pv_lines.splitlines():
+                    items = pv_line.split()
+                    pvs[self._find_mapper_device_name(items[0])] = {
+                        'size_g': items[4],
+                        'free_g': items[5],
+                        'vg': items[1]}
+
+            self.facts['lvm'] = {'lvs': lvs, 'vgs': vgs, 'pvs': pvs}
 
 
 class SunOSHardware(Hardware):
@@ -1617,7 +1695,15 @@ class SunOSHardware(Hardware):
             for line in fstab.splitlines():
                 fields = line.split('\t')
                 size_total, size_available = self._get_mount_size_facts(fields[1])
-                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'time': fields[4], 'size_total': size_total, 'size_available': size_available})
+                self.facts['mounts'].append({
+                    'mount': fields[1],
+                    'device': fields[0],
+                    'fstype' : fields[2],
+                    'options': fields[3],
+                    'time': fields[4],
+                    'size_total': size_total,
+                    'size_available': size_available
+                })
 
     def get_dmi_facts(self):
         uname_path = self.module.get_bin_path("prtdiag")
@@ -1744,7 +1830,14 @@ class OpenBSDHardware(Hardware):
                 if fields[1] == 'none' or fields[3] == 'xx':
                     continue
                 size_total, size_available = self._get_mount_size_facts(fields[1])
-                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'size_total': size_total, 'size_available': size_available})
+                self.facts['mounts'].append({
+                    'mount': fields[1],
+                    'device': fields[0],
+                    'fstype' : fields[2],
+                    'options': fields[3],
+                    'size_total': size_total,
+                    'size_available': size_available
+                })
 
 
     def get_memory_facts(self):
@@ -1805,8 +1898,8 @@ class OpenBSDHardware(Hardware):
         }
 
         for mib in sysctl_to_dmi:
-          if mib in self.sysctl:
-            self.facts[sysctl_to_dmi[mib]] = self.sysctl[mib]
+            if mib in self.sysctl:
+                self.facts[sysctl_to_dmi[mib]] = self.sysctl[mib]
 
 class FreeBSDHardware(Hardware):
     """
@@ -1885,7 +1978,14 @@ class FreeBSDHardware(Hardware):
                     continue
                 fields = re.sub(r'\s+',' ',line).split()
                 size_total, size_available = self._get_mount_size_facts(fields[1])
-                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'size_total': size_total, 'size_available': size_available})
+                self.facts['mounts'].append({
+                    'mount': fields[1],
+                    'device': fields[0],
+                    'fstype': fields[2],
+                    'options': fields[3],
+                    'size_total': size_total,
+                    'size_available': size_available
+                })
 
     def get_device_facts(self):
         sysdir = '/dev'
@@ -2016,7 +2116,14 @@ class NetBSDHardware(Hardware):
                     continue
                 fields = re.sub(r'\s+',' ',line).split()
                 size_total, size_available = self._get_mount_size_facts(fields[1])
-                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'size_total': size_total, 'size_available': size_available})
+                self.facts['mounts'].append({
+                    'mount': fields[1],
+                    'device': fields[0],
+                    'fstype' : fields[2],
+                    'options': fields[3],
+                    'size_total': size_total,
+                    'size_available': size_available
+                })
 
     def get_dmi_facts(self):
         # We don't use dmidecode(1) here because:
@@ -2034,8 +2141,8 @@ class NetBSDHardware(Hardware):
         }
 
         for mib in sysctl_to_dmi:
-          if mib in self.sysctl:
-            self.facts[sysctl_to_dmi[mib]] = self.sysctl[mib]
+            if mib in self.sysctl:
+                self.facts[sysctl_to_dmi[mib]] = self.sysctl[mib]
 
 class AIX(Hardware):
     """
@@ -2155,7 +2262,7 @@ class AIX(Hardware):
                     rc, out, err = self.module.run_command(cmd)
                     if rc == 0 and out:
                         pp_size = re.search(r'PP SIZE:\s+(\d+\s+\S+)',out).group(1)
-                        for n in  re.finditer(r'(\S+)\s+(\w+)\s+(\d+)\s+(\d+).*',m.group(0)):
+                        for n in re.finditer(r'(\S+)\s+(\w+)\s+(\d+)\s+(\d+).*',m.group(0)):
                             pv_info = { 'pv_name': n.group(1),
                                         'pv_state': n.group(2),
                                         'total_pps': n.group(3),
@@ -2186,7 +2293,8 @@ class AIX(Hardware):
                         # nfs or cifs based mount
                         # in case of nfs if no mount options are provided on command line
                         # add into fields empty string...
-                        if len(fields) < 8: fields.append("")
+                        if len(fields) < 8:
+                            fields.append("")
                         self.facts['mounts'].append({'mount': fields[2],
                                                  'device': '%s:%s' % (fields[0], fields[1]),
                                                  'fstype' : fields[3],
@@ -2274,10 +2382,11 @@ class HPUX(Hardware):
                 #For systems where memory details aren't sent to syslog or the log has rotated, use parsed
                 #adb output. Unfortunately /dev/kmem doesn't have world-read, so this only works as root.
                 if os.access("/dev/kmem", os.R_OK):
-                    rc, out, err = self.module.run_command("echo 'phys_mem_pages/D' | adb -k /stand/vmunix /dev/kmem | tail -1 | awk '{print $2}'", use_unsafe_shell=True)
+                    rc, out, err = self.module.run_command("echo 'phys_mem_pages/D' | adb -k /stand/vmunix /dev/kmem | tail -1 | awk '{print $2}'",
+                                                           use_unsafe_shell=True)
                     if not err:
-                      data = out
-                      self.facts['memtotal_mb'] = int(data) / 256
+                        data = out
+                        self.facts['memtotal_mb'] = int(data) / 256
         else:
             rc, out, err = self.module.run_command("/usr/contrib/bin/machinfo | grep Memory", use_unsafe_shell=True)
             data = re.search('Memory[\ :=]*([0-9]*).*MB.*',out).groups()[0].strip()
@@ -2301,7 +2410,7 @@ class HPUX(Hardware):
             self.facts['firmware_version'] = out.split(separator)[1].strip()
             rc, out, err = self.module.run_command("/usr/contrib/bin/machinfo |grep -i 'Machine serial number' ",use_unsafe_shell=True)
             if rc == 0 and out:
-              self.facts['product_serial'] = out.split(separator)[1].strip()
+                self.facts['product_serial'] = out.split(separator)[1].strip()
 
 class Darwin(Hardware):
     """
@@ -2424,6 +2533,7 @@ class LinuxNetwork(Network):
     platform = 'Linux'
     INTERFACE_TYPE = {
         '1': 'ether',
+        '32': 'infiniband',
         '512': 'ppp',
         '772': 'loopback',
         '65534': 'tunnel',
@@ -2455,12 +2565,12 @@ class LinuxNetwork(Network):
         )
         interface = dict(v4 = {}, v6 = {})
         for v in 'v4', 'v6':
-            if v == 'v6' and self.facts['os_family'] == 'RedHat' \
-                and self.facts['distribution_version'].startswith('4.'):
+            if (v == 'v6' and self.facts['os_family'] == 'RedHat' and
+                    self.facts['distribution_version'].startswith('4.')):
                 continue
             if v == 'v6' and not socket.has_ipv6:
                 continue
-            rc, out, err = self.module.run_command(command[v], errors='surrogate_or_replace')
+            rc, out, err = self.module.run_command(command[v], errors='surrogate_then_replace')
             if not out:
                 # v6 routing may result in
                 #   RTNETLINK answers: Invalid argument
@@ -2521,6 +2631,8 @@ class LinuxNetwork(Network):
                     path = os.path.join(path, 'bonding', 'all_slaves_active')
                     if os.path.exists(path):
                         interfaces[device]['all_slaves_active'] = get_file_content(path) == '1'
+            if os.path.exists(os.path.join(path, 'bonding_slave')):
+                interfaces[device]['perm_macaddress'] = get_file_content(os.path.join(path, 'bonding_slave', 'perm_hwaddr'), default='')
             if os.path.exists(os.path.join(path,'device')):
                 interfaces[device]['pciid'] = os.path.basename(os.readlink(os.path.join(path,'device')))
             if os.path.exists(os.path.join(path, 'speed')):
@@ -2625,15 +2737,15 @@ class LinuxNetwork(Network):
             ip_path = self.module.get_bin_path("ip")
 
             args = [ip_path, 'addr', 'show', 'primary', device]
-            rc, primary_data, stderr = self.module.run_command(args, errors='surrogate_or_replace')
+            rc, primary_data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
 
             args = [ip_path, 'addr', 'show', 'secondary', device]
-            rc, secondary_data, stderr = self.module.run_command(args, errors='surrogate_or_replace')
+            rc, secondary_data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
 
             parse_ip_output(primary_data)
             parse_ip_output(secondary_data, secondary=True)
 
-            interfaces[device]['features'] = self.get_ethtool_data(device)
+            interfaces[device].update(self.get_ethtool_data(device))
 
         # replace : by _ in interface name since they are hard to use in template
         new_interfaces = {}
@@ -2646,12 +2758,13 @@ class LinuxNetwork(Network):
 
     def get_ethtool_data(self, device):
 
-        features = {}
+        data = {}
         ethtool_path = self.module.get_bin_path("ethtool")
         if ethtool_path:
             args = [ethtool_path, '-k', device]
-            rc, stdout, stderr = self.module.run_command(args, errors='surrogate_or_replace')
+            rc, stdout, stderr = self.module.run_command(args, errors='surrogate_then_replace')
             if rc == 0:
+                features = {}
                 for line in stdout.strip().splitlines():
                     if not line or line.endswith(":"):
                         continue
@@ -2659,7 +2772,18 @@ class LinuxNetwork(Network):
                     if not value:
                         continue
                     features[key.strip().replace('-','_')] = value.strip()
-        return features
+                data['features'] = features
+
+            args = [ethtool_path, '-T', device]
+            rc, stdout, stderr = self.module.run_command(args, errors='surrogate_then_replace')
+            if rc == 0:
+                data['timestamping'] = [m.lower() for m in re.findall('SOF_TIMESTAMPING_(\w+)', stdout)]
+                data['hw_timestamp_filters'] = [m.lower() for m in re.findall('HWTSTAMP_FILTER_(\w+)', stdout)]
+                m = re.search('PTP Hardware Clock: (\d+)', stdout)
+                if m:
+                    data['phc_index'] = int(m.groups()[0])
+
+        return data
 
 
 class GenericBsdIfconfigNetwork(Network):
@@ -2919,18 +3043,18 @@ class HPUXNetwork(Network):
         interfaces = self.get_interfaces_info()
         self.facts['interfaces'] = interfaces.keys()
         for iface in interfaces:
-                self.facts[iface] = interfaces[iface]
+            self.facts[iface] = interfaces[iface]
         return self.facts
 
     def get_default_interfaces(self):
         rc, out, err = self.module.run_command("/usr/bin/netstat -nr")
         lines = out.splitlines()
         for line in lines:
-                words = line.split()
-                if len(words) > 1:
-                    if words[0] == 'default':
-                        self.facts['default_interface'] = words[4]
-                        self.facts['default_gateway'] = words[1]
+            words = line.split()
+            if len(words) > 1:
+                if words[0] == 'default':
+                    self.facts['default_interface'] = words[4]
+                    self.facts['default_gateway'] = words[1]
 
     def get_interfaces_info(self):
         interfaces = {}
@@ -3115,7 +3239,7 @@ class OpenBSDNetwork(GenericBsdIfconfigNetwork):
 
     # OpenBSD 'ifconfig -a' does not have information about aliases
     def get_interfaces_info(self, ifconfig_path, ifconfig_options='-aA'):
-       return super(OpenBSDNetwork, self).get_interfaces_info(ifconfig_path, ifconfig_options)
+        return super(OpenBSDNetwork, self).get_interfaces_info(ifconfig_path, ifconfig_options)
 
     # Return macaddress instead of lladdr
     def parse_lladdr_line(self, words, current_if, ips):
@@ -3914,9 +4038,6 @@ def get_all_facts(module):
     for (k,v) in setup_options.items():
         if module.params['filter'] == '*' or fnmatch.fnmatch(k, module.params['filter']):
             setup_result['ansible_facts'][k] = v
-
-    # hack to keep --verbose from showing all the setup module results
-    setup_result['_ansible_verbose_override'] = True
 
     return setup_result
 

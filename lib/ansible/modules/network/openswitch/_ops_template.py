@@ -15,9 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['deprecated'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['deprecated'],
+                    'supported_by': 'community'}
+
 
 
 DOCUMENTATION = """
@@ -76,14 +77,14 @@ options:
 
 EXAMPLES = """
 - name: set hostname with file lookup
-    ops_template:
+  ops_template:
     src: ./hostname.json
     backup: yes
     remote_user: admin
     become: yes
 
 - name: set hostname with var
-    ops_template:
+  ops_template:
     src: "{{ config }}"
     remote_user: admin
     become: yes

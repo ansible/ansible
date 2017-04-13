@@ -20,9 +20,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -34,6 +35,8 @@ description:
        to manage the file as a whole with, say, M(template) or M(assemble). Adds missing
        sections if they don't exist.
      - Before version 2.0, comments are discarded when the source file is read, and therefore will not show up in the destination file.
+     - Since version 2.3, this module adds missing ending newlines to files to keep in line with the POSIX standard, even when
+       no other modifications need to be applied.
 version_added: "0.9"
 options:
   path:
@@ -132,17 +135,17 @@ from ansible.module_utils.basic import AnsibleModule
 # match_opt
 
 def match_opt(option, line):
-  option = re.escape(option)
-  return re.match(' *%s( |\t)*=' % option, line) \
-    or re.match('# *%s( |\t)*=' % option, line) \
-    or re.match('; *%s( |\t)*=' % option, line)
+    option = re.escape(option)
+    return re.match(' *%s( |\t)*=' % option, line) \
+      or re.match('# *%s( |\t)*=' % option, line) \
+      or re.match('; *%s( |\t)*=' % option, line)
 
 # ==============================================================
 # match_active_opt
 
 def match_active_opt(option, line):
-  option = re.escape(option)
-  return re.match(' *%s( |\t)*=' % option, line)
+    option = re.escape(option)
+    return re.match(' *%s( |\t)*=' % option, line)
 
 # ==============================================================
 # do_ini
@@ -172,12 +175,22 @@ def do_ini(module, filename, section=None, option=None, value=None,
     if module._diff:
         diff['before'] = ''.join(ini_lines)
 
+    changed = False
+
+    # ini file could be empty
+    if not ini_lines:
+        ini_lines.append('\n')
+
+    # last line of file may not contain a trailing newline
+    if ini_lines[-1] == "" or ini_lines[-1][-1] != '\n':
+        ini_lines[-1] += '\n'
+        changed = True
+
     # append a fake section line to simplify the logic
     ini_lines.append('[')
 
     within_section = not section
     section_start = 0
-    changed = False
     msg = 'OK'
     if no_extra_spaces:
         assignment_format = '%s=%s\n'
@@ -211,11 +224,12 @@ def do_ini(module, filename, section=None, option=None, value=None,
                     # change the existing option line
                     if match_opt(option, line):
                         newline = assignment_format % (option, value)
-                        changed = ini_lines[index] != newline
-                        if changed:
+                        option_changed = ini_lines[index] != newline
+                        changed = changed or option_changed
+                        if option_changed:
                             msg = 'option changed'
                         ini_lines[index] = newline
-                        if changed:
+                        if option_changed:
                             # remove all possible option occurrences from the rest of the section
                             index = index + 1
                             while index < len(ini_lines):
@@ -279,7 +293,7 @@ def main():
         supports_check_mode = True
     )
 
-    path = os.path.expanduser(module.params['path'])
+    path = module.params['path']
     section = module.params['section']
     option = module.params['option']
     value = module.params['value']

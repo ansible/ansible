@@ -21,23 +21,27 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
 module: unarchive
 version_added: 1.4
 short_description: Unpacks an archive after (optionally) copying it from the local machine.
-extends_documentation_fragment: files
+extends_documentation_fragment: [files, decrypt]
 description:
-     - The M(unarchive) module unpacks an archive. By default, it will copy the source file from the local system to the target before unpacking - set remote_src=yes to unpack an archive which already exists on the target..
+     - The C(unarchive) module unpacks an archive. By default, it will copy the source file from the local system to the target before unpacking.
+       Set remote_src=yes to unpack an archive which already exists on the target.
 options:
   src:
     description:
-      - If remote_src=no (default), local path to archive file to copy to the target server; can be absolute or relative. If remote_src=yes, path on the target server to existing archive file to unpack.
-      - If remote_src=yes and src contains ://, the remote machine will download the file from the url first. (version_added 2.0). This is only for simple cases, for full download support look at the M(get_url) module.
+      - If remote_src=no (default), local path to archive file to copy to the target server; can be absolute or relative. If remote_src=yes, path on the
+        target server to existing archive file to unpack.
+      - If remote_src=yes and src contains ://, the remote machine will download the file from the url first. (version_added 2.0). This is only for
+        simple cases, for full download support look at the M(get_url) module.
     required: true
     default: null
   dest:
@@ -145,7 +149,7 @@ import time
 import binascii
 import codecs
 from zipfile import ZipFile, BadZipfile
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_bytes, to_text
 
 try:  # python 3.3+
     from shlex import quote
@@ -168,7 +172,7 @@ BUFSIZE = 65536
 
 def crc32(path):
     ''' Return a CRC32 checksum of a file '''
-    return binascii.crc32(open(path).read()) & 0xffffffff
+    return binascii.crc32(open(path, 'rb').read()) & 0xffffffff
 
 def shell_escape(string):
     ''' Quote meta-characters in the args for the unix shell '''
@@ -217,7 +221,7 @@ class ZipArchive(object):
         for line in out.splitlines()[3:-2]:
             fields = line.split(None, 7)
             self._files_in_archive.append(fields[7])
-            self._infodict[fields[7]] = long(fields[6])
+            self._infodict[fields[7]] = int(fields[6])
 
     def _crc32(self, path):
         if self._infodict:
@@ -236,7 +240,7 @@ class ZipArchive(object):
         else:
             try:
                 for item in archive.infolist():
-                    self._infodict[item.filename] = long(item.CRC)
+                    self._infodict[item.filename] = int(item.CRC)
             except:
                 archive.close()
                 raise UnarchiveError('Unable to list files in the archive')
@@ -349,8 +353,10 @@ class ZipArchive(object):
                 continue
 
             # Check first and seventh field in order to skip header/footer
-            if len(pcs[0]) != 7 and len(pcs[0]) != 10: continue
-            if len(pcs[6]) != 15: continue
+            if len(pcs[0]) != 7 and len(pcs[0]) != 10:
+                continue
+            if len(pcs[6]) != 15:
+                continue
 
             # Possible entries:
             #   -rw-rws---  1.9 unx    2802 t- defX 11-Aug-91 13:48 perms.2660
@@ -559,10 +565,10 @@ class ZipArchive(object):
         if self.opts:
             cmd.extend(self.opts)
         cmd.append(self.src)
-         # NOTE: Including (changed) files as arguments is problematic (limits on command line/arguments)
-#        if self.includes:
-            # NOTE: Command unzip has this strange behaviour where it expects quoted filenames to also be escaped
-#            cmd.extend(map(shell_escape, self.includes))
+        # NOTE: Including (changed) files as arguments is problematic (limits on command line/arguments)
+        # if self.includes:
+        # NOTE: Command unzip has this strange behaviour where it expects quoted filenames to also be escaped
+        # cmd.extend(map(shell_escape, self.includes))
         if self.excludes:
             cmd.extend([ '-x' ] + self.excludes)
         cmd.extend([ '-d', self.dest ])
@@ -589,7 +595,7 @@ class TgzArchive(object):
         self.opts = module.params['extra_opts']
         self.module = module
         if self.module.check_mode:
-             self.module.exit_json(skipped=True, msg="remote module (%s) does not support check mode when using gtar" % self.module._name)
+            self.module.exit_json(skipped=True, msg="remote module (%s) does not support check mode when using gtar" % self.module._name)
         self.excludes = [ path.rstrip('/') for path in self.module.params['exclude']]
         # Prefer gtar (GNU tar) as it supports the compression options -z, -j and -J
         self.cmd_path = self.module.get_bin_path('gtar', None)
@@ -633,7 +639,7 @@ class TgzArchive(object):
 
         for filename in out.splitlines():
             # Compensate for locale-related problems in gtar output (octal unicode representation) #11348
-#            filename = filename.decode('string_escape')
+            # filename = filename.decode('string_escape')
             filename = codecs.escape_decode(filename)[0]
             if filename and filename not in self.excludes:
                 self._files_in_archive.append(to_native(filename))
@@ -779,8 +785,8 @@ def main():
         supports_check_mode = True,
     )
 
-    src        = os.path.expanduser(module.params['src'])
-    dest       = os.path.expanduser(module.params['dest'])
+    src        = module.params['src']
+    dest       = module.params['dest']
     copy       = module.params['copy']
     remote_src = module.params['remote_src']
     file_args = module.load_file_common_arguments(module.params)
@@ -797,12 +803,15 @@ def main():
                 # If download fails, raise a proper exception
                 if rsp is None:
                     raise Exception(info['msg'])
-                f = open(package, 'w')
+
+                # open in binary mode for python3
+                f = open(package, 'wb')
                 # Read 1kb at a time to save on ram
                 while True:
                     data = rsp.read(BUFSIZE)
+                    data = to_bytes(data, errors='surrogate_or_strict')
 
-                    if data == "":
+                    if len(data) < 1:
                         break # End of file, break while loop
 
                     f.write(data)
@@ -863,10 +872,10 @@ def main():
         for filename in handler.files_in_archive:
             file_args['path'] = os.path.join(dest, filename)
             try:
-                res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
+                res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
             except (IOError, OSError):
                 e = get_exception()
-                module.fail_json(msg="Unexpected error when accessing exploded file: %s" % str(e), **res_args)
+                module.fail_json(msg="Unexpected error when accessing exploded file: %s" % e, **res_args)
 
     if module.params['list_files']:
         res_args['files'] = handler.files_in_archive

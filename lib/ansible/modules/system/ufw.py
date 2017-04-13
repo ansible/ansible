@@ -21,9 +21,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -53,7 +54,7 @@ options:
     description:
       - Change the default policy for incoming or outgoing traffic.
     required: false
-    alias: default
+    aliases: ['default']
     choices: ['allow', 'deny', 'reject']
   direction:
     description:
@@ -276,7 +277,7 @@ def main():
         module.fail_json(msg="Not any of the command arguments %s given" % commands)
 
     if(params['interface'] is not None and params['direction'] is None):
-      module.fail_json(msg="Direction must be specified when creating a rule on an interface")
+        module.fail_json(msg="Direction must be specified when creating a rule on an interface")
 
     # Ensure ufw is available
     ufw_bin = module.get_bin_path('ufw', True)

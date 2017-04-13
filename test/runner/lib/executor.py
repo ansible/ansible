@@ -2,10 +2,9 @@
 
 from __future__ import absolute_import, print_function
 
-import glob
 import os
+import re
 import tempfile
-import sys
 import time
 import textwrap
 import functools
@@ -21,6 +20,7 @@ import lib.thread
 
 from lib.core_ci import (
     AnsibleCoreCI,
+    SshKey,
 )
 
 from lib.manage_ci import (
@@ -30,16 +30,22 @@ from lib.manage_ci import (
 
 from lib.util import (
     CommonConfig,
+    EnvironmentConfig,
     ApplicationWarning,
     ApplicationError,
     SubprocessError,
+    MissingEnvironmentVariable,
     display,
     run_command,
-    deepest_path,
     common_environment,
     remove_tree,
     make_dirs,
     is_shippable,
+    is_binary_file,
+)
+
+from lib.test import (
+    TestConfig,
 )
 
 from lib.ansible_util import (
@@ -55,7 +61,6 @@ from lib.target import (
     walk_windows_integration_targets,
     walk_units_targets,
     walk_compile_targets,
-    walk_sanity_targets,
 )
 
 from lib.changes import (
@@ -71,6 +76,17 @@ from lib.classification import (
     categorize_changes,
 )
 
+from lib.test import (
+    TestMessage,
+    TestSuccess,
+    TestFailure,
+    TestSkipped,
+)
+
+from lib.metadata import (
+    Metadata,
+)
+
 SUPPORTED_PYTHON_VERSIONS = (
     '2.6',
     '2.7',
@@ -78,9 +94,26 @@ SUPPORTED_PYTHON_VERSIONS = (
     '3.6',
 )
 
-COMPILE_PYTHON_VERSIONS = tuple(sorted(SUPPORTED_PYTHON_VERSIONS + ('2.4',)))
+COMPILE_PYTHON_VERSIONS = SUPPORTED_PYTHON_VERSIONS
 
 coverage_path = ''  # pylint: disable=locally-disabled, invalid-name
+
+
+def check_startup():
+    """Checks to perform at startup before running commands."""
+    check_legacy_modules()
+
+
+def check_legacy_modules():
+    """Detect conflicts with legacy core/extras module directories to avoid problems later."""
+    for directory in 'core', 'extras':
+        path = 'lib/ansible/modules/%s' % directory
+
+        for root, _, file_names in os.walk(path):
+            if file_names:
+                # the directory shouldn't exist, but if it does, it must contain no files
+                raise ApplicationError('Files prohibited in "%s". '
+                                       'These are most likely legacy modules from version 2.2 or earlier.' % root)
 
 
 def create_shell_command(command):
@@ -108,14 +141,18 @@ def install_command_requirements(args):
     if not args.requirements:
         return
 
-    cmd = generate_pip_install(args.command)
-
-    if not cmd:
-        return
+    packages = []
 
     if isinstance(args, TestConfig):
         if args.coverage:
-            cmd += ['coverage']
+            packages.append('coverage')
+        if args.junit:
+            packages.append('junit-xml')
+
+    cmd = generate_pip_install(args.command, packages)
+
+    if not cmd:
+        return
 
     try:
         run_command(args, cmd)
@@ -143,18 +180,27 @@ def generate_egg_info(args):
     run_command(args, ['python', 'setup.py', 'egg_info'], capture=args.verbosity < 3)
 
 
-def generate_pip_install(command):
+def generate_pip_install(command, packages=None):
     """
     :type command: str
-    :return: list[str] | None
+    :type packages: list[str] | None
+    :rtype: list[str] | None
     """
     constraints = 'test/runner/requirements/constraints.txt'
     requirements = 'test/runner/requirements/%s.txt' % command
 
-    if not os.path.exists(requirements) or not os.path.getsize(requirements):
+    options = []
+
+    if os.path.exists(requirements) and os.path.getsize(requirements):
+        options += ['-r', requirements]
+
+    if packages:
+        options += packages
+
+    if not options:
         return None
 
-    return ['pip', 'install', '--disable-pip-version-check', '-r', requirements, '-c', constraints]
+    return ['pip', 'install', '--disable-pip-version-check', '-c', constraints] + options
 
 
 def command_shell(args):
@@ -183,12 +229,23 @@ def command_network_integration(args):
     :type args: NetworkIntegrationConfig
     """
     internal_targets = command_integration_filter(args, walk_network_integration_targets())
+    platform_targets = set(a for t in internal_targets for a in t.aliases if a.startswith('network/'))
 
     if args.platform:
         instances = []  # type: list [lib.thread.WrappedThread]
 
+        # generate an ssh key (if needed) up front once, instead of for each instance
+        SshKey(args)
+
         for platform_version in args.platform:
             platform, version = platform_version.split('/', 1)
+            platform_target = 'network/%s/' % platform
+
+            if platform_target not in platform_targets and 'network/basics/' not in platform_targets:
+                display.warning('Skipping "%s" because selected tests do not target the "%s" platform.' % (
+                    platform_version, platform))
+                continue
+
             instance = lib.thread.WrappedThread(functools.partial(network_run, args, platform, version))
             instance.daemon = True
             instance.start()
@@ -202,9 +259,12 @@ def command_network_integration(args):
         remotes = [instance.wait_for_result() for instance in instances]
         inventory = network_inventory(remotes)
 
+        filename = 'test/integration/inventory.networking'
+
+        display.info('>>> Inventory: %s\n%s' % (filename, inventory.strip()), verbosity=3)
+
         if not args.explain:
-            with open('test/integration/inventory.networking', 'w') as inventory_fd:
-                display.info('>>> Inventory: %s\n%s' % (inventory_fd.name, inventory.strip()), verbosity=3)
+            with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
     else:
         install_command_requirements(args)
@@ -241,7 +301,6 @@ def network_inventory(remotes):
         options = dict(
             ansible_host=remote.connection.hostname,
             ansible_user=remote.connection.username,
-            ansible_connection='network_cli',
             ansible_ssh_private_key_file=remote.ssh_key.key,
             ansible_network_os=remote.platform,
         )
@@ -258,12 +317,12 @@ def network_inventory(remotes):
     for group in groups:
         hosts = '\n'.join(groups[group])
 
-        template += """
+        template += textwrap.dedent("""
         [%s]
         %s
-        """ % (group, hosts)
+        """) % (group, hosts)
 
-    inventory = textwrap.dedent(template)
+    inventory = template
 
     return inventory
 
@@ -291,9 +350,12 @@ def command_windows_integration(args):
         remotes = [instance.wait_for_result() for instance in instances]
         inventory = windows_inventory(remotes)
 
+        filename = 'test/integration/inventory.winrm'
+
+        display.info('>>> Inventory: %s\n%s' % (filename, inventory.strip()), verbosity=3)
+
         if not args.explain:
-            with open('test/integration/inventory.winrm', 'w') as inventory_fd:
-                display.info('>>> Inventory: %s\n%s' % (inventory_fd.name, inventory.strip()), verbosity=3)
+            with open(filename, 'w') as inventory_fd:
                 inventory_fd.write(inventory)
     else:
         install_command_requirements(args)
@@ -408,10 +470,6 @@ def command_integration_filtered(args, targets):
 
     test_dir = os.path.expanduser('~/ansible_testing')
 
-    if not args.explain:
-        remove_tree(test_dir)
-        make_dirs(test_dir)
-
     if any('needs/ssh/' in target.aliases for target in targets):
         max_tries = 20
         display.info('SSH service required for tests. Checking to make sure we can connect.')
@@ -442,6 +500,11 @@ def command_integration_filtered(args, targets):
         try:
             while tries:
                 tries -= 1
+
+                if not args.explain:
+                    # create a fresh test directory for each test target
+                    remove_tree(test_dir)
+                    make_dirs(test_dir)
 
                 try:
                     if target.script_path:
@@ -514,11 +577,11 @@ def command_integration_role(args, target, start_at_task):
 
     vars_file = 'integration_config.yml'
 
-    if 'windows/' in target.aliases:
+    if isinstance(args, WindowsIntegrationConfig):
         inventory = 'inventory.winrm'
         hosts = 'windows'
         gather_facts = False
-    elif 'network/' in target.aliases:
+    elif isinstance(args, NetworkIntegrationConfig):
         inventory = 'inventory.networking'
         hosts = target.name[:target.name.find('_')]
         gather_facts = False
@@ -587,6 +650,7 @@ def command_units(args):
 
         cmd = [
             'pytest',
+            '--boxed',
             '-r', 'a',
             '--color',
             'yes' if args.color else 'no',
@@ -634,194 +698,96 @@ def command_compile(args):
 
     install_command_requirements(args)
 
-    version_commands = []
+    total = 0
+    failed = []
 
     for version in COMPILE_PYTHON_VERSIONS:
         # run all versions unless version given, in which case run only that version
         if args.python and version != args.python:
             continue
 
-        # optional list of regex patterns to exclude from tests
-        skip_file = 'test/compile/python%s-skip.txt' % version
-
-        if os.path.exists(skip_file):
-            with open(skip_file, 'r') as skip_fd:
-                skip_paths = skip_fd.read().splitlines()
-        else:
-            skip_paths = []
-
-        # augment file exclusions
-        skip_paths += [e.path for e in exclude]
-        skip_paths.append('/.tox/')
-
-        skip_paths = sorted(skip_paths)
-
-        python = 'python%s' % version
-        cmd = [python, '-m', 'compileall', '-fq']
-
-        if skip_paths:
-            cmd += ['-x', '|'.join(skip_paths)]
-
-        cmd += [target.path if target.path == '.' else './%s' % target.path for target in include]
-
-        version_commands.append((version, cmd))
-
-    for version, command in version_commands:
         display.info('Compile with Python %s' % version)
-        run_command(args, command)
 
+        result = compile_version(args, version, include, exclude)
+        result.write(args)
 
-def command_sanity(args):
-    """
-    :type args: SanityConfig
-    """
-    changes = get_changes_filter(args)
-    require = (args.require or []) + changes
-    targets = SanityTargets(args.include, args.exclude, require)
+        total += 1
 
-    if not targets.include:
-        raise AllTargetsSkipped()
+        if isinstance(result, TestFailure):
+            failed.append('compile --python %s' % version)
 
-    if args.delegate:
-        raise Delegate(require=changes)
+    if failed:
+        message = 'The %d compile test(s) listed below (out of %d) failed. See error output above for details.\n%s' % (
+            len(failed), total, '\n'.join(failed))
 
-    install_command_requirements(args)
-
-    tests = SANITY_TESTS
-
-    if args.test:
-        tests = [t for t in tests if t.name in args.test]
-
-    if args.skip_test:
-        tests = [t for t in tests if t.name not in args.skip_test]
-
-    for test in tests:
-        if args.list_tests:
-            display.info(test.name)
-            continue
-
-        if test.intercept:
-            versions = SUPPORTED_PYTHON_VERSIONS
+        if args.failure_ok:
+            display.error(message)
         else:
-            versions = None,
-
-        for version in versions:
-            if args.python and version and version != args.python:
-                continue
-
-            display.info('Sanity check using %s%s' % (test.name, ' with Python %s' % version if version else ''))
-
-            if test.intercept:
-                test.func(args, targets, python_version=version)
-            else:
-                test.func(args, targets)
+            raise ApplicationError(message)
 
 
-def command_sanity_code_smell(args, _):
+def compile_version(args, python_version, include, exclude):
     """
-    :type args: SanityConfig
-    :type _: SanityTargets
+    :type args: CompileConfig
+    :type python_version: str
+    :type include: tuple[CompletionTarget]
+    :param exclude: tuple[CompletionTarget]
+    :rtype: TestResult
     """
-    with open('test/sanity/code-smell/skip.txt', 'r') as skip_fd:
-        skip_tests = skip_fd.read().splitlines()
+    command = 'compile'
+    test = ''
 
-    tests = glob.glob('test/sanity/code-smell/*')
-    tests = sorted(p for p in tests
-                   if os.access(p, os.X_OK)
-                   and os.path.isfile(p)
-                   and os.path.basename(p) not in skip_tests)
+    # optional list of regex patterns to exclude from tests
+    skip_file = 'test/compile/python%s-skip.txt' % python_version
 
-    for test in tests:
-        display.info('Code smell check using %s' % os.path.basename(test))
-        run_command(args, [test])
+    if os.path.exists(skip_file):
+        with open(skip_file, 'r') as skip_fd:
+            skip_paths = skip_fd.read().splitlines()
+    else:
+        skip_paths = []
 
+    # augment file exclusions
+    skip_paths += [e.path for e in exclude]
 
-def command_sanity_validate_modules(args, targets):
-    """
-    :type args: SanityConfig
-    :type targets: SanityTargets
-    """
-    env = ansible_environment(args)
+    skip_paths = sorted(skip_paths)
 
-    paths = [deepest_path(i.path, 'lib/ansible/modules/') for i in targets.include_external]
-    paths = sorted(set(p for p in paths if p))
-
-    if not paths:
-        display.info('No tests applicable.', verbosity=1)
-        return
-
-    cmd = ['test/sanity/validate-modules/validate-modules'] + paths
-
-    with open('test/sanity/validate-modules/skip.txt', 'r') as skip_fd:
-        skip_paths = skip_fd.read().splitlines()
-
-    skip_paths += [e.path for e in targets.exclude_external]
+    python = 'python%s' % python_version
+    cmd = [python, 'test/compile/compile.py']
 
     if skip_paths:
-        cmd += ['--exclude', '^(%s)' % '|'.join(skip_paths)]
+        cmd += ['-x', '|'.join(skip_paths)]
 
-    run_command(args, cmd, env=env)
+    cmd += [target.path if target.path == '.' else './%s' % target.path for target in include]
 
-
-def command_sanity_shellcheck(args, targets):
-    """
-    :type args: SanityConfig
-    :type targets: SanityTargets
-    """
-    with open('test/sanity/shellcheck/skip.txt', 'r') as skip_fd:
-        skip_paths = set(skip_fd.read().splitlines())
-
-    paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.sh' and i.path not in skip_paths)
-
-    if not paths:
-        display.info('No tests applicable.', verbosity=1)
-        return
-
-    run_command(args, ['shellcheck'] + paths)
-
-
-def command_sanity_yamllint(args, targets):
-    """
-    :type args: SanityConfig
-    :type targets: SanityTargets
-    """
-    paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.yml', '.yaml'))
-
-    if not paths:
-        display.info('No tests applicable.', verbosity=1)
-        return
-
-    run_command(args, ['yamllint'] + paths)
-
-
-def command_sanity_ansible_doc(args, targets, python_version):
-    """
-    :type args: SanityConfig
-    :type targets: SanityTargets
-    :type python_version: str
-    """
-    with open('test/sanity/ansible-doc/skip.txt', 'r') as skip_fd:
-        skip_modules = set(skip_fd.read().splitlines())
-
-    modules = sorted(set(m for i in targets.include_external for m in i.modules) -
-                     set(m for i in targets.exclude_external for m in i.modules) -
-                     skip_modules)
-
-    if not modules:
-        display.info('No tests applicable.', verbosity=1)
-        return
-
-    env = ansible_environment(args)
-    cmd = ['ansible-doc'] + modules
-
-    stdout, stderr = intercept_command(args, cmd, env=env, capture=True, python_version=python_version)
+    try:
+        stdout, stderr = run_command(args, cmd, capture=True)
+        status = 0
+    except SubprocessError as ex:
+        stdout = ex.stdout
+        stderr = ex.stderr
+        status = ex.status
 
     if stderr:
-        display.error('Output on stderr from ansible-doc is considered an error.')
-        raise SubprocessError(cmd, stderr=stderr)
+        raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
 
-    if stdout:
-        display.info(stdout.strip(), verbosity=3)
+    if args.explain:
+        return TestSkipped(command, test, python_version=python_version)
+
+    pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
+
+    results = [re.search(pattern, line).groupdict() for line in stdout.splitlines()]
+
+    results = [TestMessage(
+        message=r['message'],
+        path=r['path'].replace('./', ''),
+        line=int(r['line']),
+        column=int(r['column']),
+    ) for r in results]
+
+    if results:
+        return TestFailure(command, test, messages=results, python_version=python_version)
+
+    return TestSuccess(command, test, python_version=python_version)
 
 
 def intercept_command(args, cmd, capture=False, env=None, data=None, cwd=None, python_version=None):
@@ -958,7 +924,7 @@ def detect_changes(args):
 
 def detect_changes_shippable(args):
     """Initialize change detection on Shippable.
-    :type args: CommonConfig
+    :type args: TestConfig
     :rtype: list[str]
     """
     git = Git(args)
@@ -972,6 +938,9 @@ def detect_changes_shippable(args):
         job_type = 'merge commit'
 
     display.info('Processing %s for branch %s commit %s' % (job_type, result.branch, result.commit))
+
+    if not args.metadata.changes:
+        args.metadata.populate_changes(result.diff)
 
     return result.paths
 
@@ -1016,18 +985,20 @@ def detect_changes_local(args):
     if args.unstaged:
         names |= set(result.unstaged)
 
+    if not args.metadata.changes:
+        args.metadata.populate_changes(result.diff)
+
+        for path in result.untracked:
+            if is_binary_file(path):
+                args.metadata.changes[path] = ((0, 0),)
+                continue
+
+            with open(path, 'r') as source_fd:
+                line_count = len(source_fd.read().splitlines())
+
+            args.metadata.changes[path] = ((1, line_count),)
+
     return sorted(names)
-
-
-def docker_qualify_image(name):
-    """
-    :type name: str
-    :rtype: str
-    """
-    if not name or any((c in name) for c in ('/', ':')):
-        return name
-
-    return 'ansible/ansible:%s' % name
 
 
 def get_integration_filter(args, targets):
@@ -1140,106 +1111,6 @@ class NoTestsForChanges(ApplicationWarning):
         super(NoTestsForChanges, self).__init__('No tests found for detected changes.')
 
 
-class SanityTargets(object):
-    """Sanity test target information."""
-    def __init__(self, include, exclude, require):
-        """
-        :type include: list[str]
-        :type exclude: list[str]
-        :type require: list[str]
-        """
-        self.all = not include
-        self.targets = tuple(sorted(walk_sanity_targets()))
-        self.include = walk_internal_targets(self.targets, include, exclude, require)
-        self.include_external, self.exclude_external = walk_external_targets(self.targets, include, exclude, require)
-
-
-class SanityTest(object):
-    """Sanity test base class."""
-    def __init__(self, name):
-        self.name = name
-
-
-class SanityFunc(SanityTest):
-    """Sanity test function information."""
-    def __init__(self, name, func, intercept=True):
-        """
-        :type name: str
-        :type func: (SanityConfig, SanityTargets) -> None
-        :type intercept: bool
-        """
-        super(SanityFunc, self).__init__(name)
-
-        self.func = func
-        self.intercept = intercept
-
-
-class EnvironmentConfig(CommonConfig):
-    """Configuration common to all commands which execute in an environment."""
-    def __init__(self, args, command):
-        """
-        :type args: any
-        """
-        super(EnvironmentConfig, self).__init__(args)
-
-        self.command = command
-
-        self.local = args.local is True
-
-        if args.tox is True or args.tox is False or args.tox is None:
-            self.tox = args.tox is True
-            self.tox_args = 0
-            self.python = args.python if 'python' in args else None  # type: str
-        else:
-            self.tox = True
-            self.tox_args = 1
-            self.python = args.tox  # type: str
-
-        self.docker = docker_qualify_image(args.docker)  # type: str
-        self.remote = args.remote  # type: str
-
-        self.docker_privileged = args.docker_privileged if 'docker_privileged' in args else False  # type: bool
-        self.docker_util = docker_qualify_image(args.docker_util if 'docker_util' in args else '')  # type: str
-        self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
-
-        self.tox_sitepackages = args.tox_sitepackages  # type: bool
-
-        self.remote_stage = args.remote_stage  # type: str
-
-        self.requirements = args.requirements  # type: bool
-
-        self.python_version = self.python or '.'.join(str(i) for i in sys.version_info[:2])
-
-        self.delegate = self.tox or self.docker or self.remote
-
-        if self.delegate:
-            self.requirements = True
-
-
-class TestConfig(EnvironmentConfig):
-    """Configuration common to all test commands."""
-    def __init__(self, args, command):
-        """
-        :type args: any
-        :type command: str
-        """
-        super(TestConfig, self).__init__(args, command)
-
-        self.coverage = args.coverage  # type: bool
-        self.include = args.include  # type: list [str]
-        self.exclude = args.exclude  # type: list [str]
-        self.require = args.require  # type: list [str]
-
-        self.changed = args.changed  # type: bool
-        self.tracked = args.tracked  # type: bool
-        self.untracked = args.untracked  # type: bool
-        self.committed = args.committed  # type: bool
-        self.staged = args.staged  # type: bool
-        self.unstaged = args.unstaged  # type: bool
-        self.changed_from = args.changed_from  # type: str
-        self.changed_path = args.changed_path  # type: list [str]
-
-
 class ShellConfig(EnvironmentConfig):
     """Configuration for the shell command."""
     def __init__(self, args):
@@ -1260,6 +1131,19 @@ class SanityConfig(TestConfig):
         self.test = args.test  # type: list [str]
         self.skip_test = args.skip_test  # type: list [str]
         self.list_tests = args.list_tests  # type: bool
+
+        if args.base_branch:
+            self.base_branch = args.base_branch  # str
+        elif is_shippable():
+            try:
+                self.base_branch = os.environ['BASE_BRANCH']  # str
+            except KeyError as ex:
+                raise MissingEnvironmentVariable(name=ex.args[0])
+
+            if self.base_branch:
+                self.base_branch = 'origin/%s' % self.base_branch
+        else:
+            self.base_branch = ''
 
 
 class IntegrationConfig(TestConfig):
@@ -1297,6 +1181,9 @@ class WindowsIntegrationConfig(IntegrationConfig):
         super(WindowsIntegrationConfig, self).__init__(args, 'windows-integration')
 
         self.windows = args.windows  # type: list [str]
+
+        if self.windows:
+            self.allow_destructive = True
 
 
 class NetworkIntegrationConfig(IntegrationConfig):
@@ -1348,14 +1235,3 @@ class AllTargetsSkipped(ApplicationWarning):
     """All targets skipped."""
     def __init__(self):
         super(AllTargetsSkipped, self).__init__('All targets skipped.')
-
-
-SANITY_TESTS = (
-    # tests which ignore include/exclude (they're so fast it doesn't matter)
-    SanityFunc('code-smell', command_sanity_code_smell, intercept=False),
-    # tests which honor include/exclude
-    SanityFunc('shellcheck', command_sanity_shellcheck, intercept=False),
-    SanityFunc('yamllint', command_sanity_yamllint, intercept=False),
-    SanityFunc('validate-modules', command_sanity_validate_modules, intercept=False),
-    SanityFunc('ansible-doc', command_sanity_ansible_doc),
-)

@@ -1,0 +1,125 @@
+- name: Remove potentially leftover scheduled task
+  win_scheduled_task: &wst_absent
+    name: Ansible Test
+    state: absent
+
+
+- name: Add scheduled task
+  win_scheduled_task: &wst_present
+    name: Ansible Test
+    executable: dir.exe
+    arguments: C:\Windows\Temp\
+    frequency: once
+    time: 5pm
+    user: SYSTEM
+  register: add_scheduled_task
+
+- name: Test add_scheduled_task
+  assert:
+    that:
+    - add_scheduled_task.changed == true
+    - add_scheduled_task.exists == false
+
+
+- name: Add scheduled task (again)
+  win_scheduled_task: *wst_present
+  register: add_scheduled_task_again
+
+- name: Test add_scheduled_task_again (normal mode)
+  assert:
+    that:
+    - add_scheduled_task_again.changed == false
+    - add_scheduled_task_again.exists == true
+  when: not in_check_mode
+
+- name: Test add_scheduled_task_again (check-mode)
+  assert:
+    that:
+    - add_scheduled_task_again.changed == true
+    - add_scheduled_task_again.exists == false
+  when: in_check_mode
+
+
+# FIXME: The below tasks should not require all options
+#        See: https://github.com/ansible/ansible/issues/19279
+- name: Run tests for normal mode only (expects scheduled task)
+  when: not in_check_mode
+  block:
+
+  - name: Disable scheduled task
+    win_scheduled_task:
+      <<: *wst_present
+      enabled: no
+    register: disable_scheduled_task
+
+  - name: Test disable_scheduled_task
+    assert:
+      that:
+      - disable_scheduled_task.changed == true
+      - disable_scheduled_task.exists == true
+
+
+  - name: Disable scheduled task (again)
+    win_scheduled_task:
+      <<: *wst_present
+      enabled: no
+    register: disable_scheduled_task_again
+
+  - name: Test disable_scheduled_task_again
+    assert:
+      that:
+      - disable_scheduled_task_again.changed == false
+      - disable_scheduled_task_again.exists == true
+
+
+  - name: Enable scheduled task
+    win_scheduled_task:
+      <<: *wst_present
+      enabled: yes
+    register: enable_scheduled_task
+
+  - assert:
+      that:
+      - enable_scheduled_task.changed == true
+      - enable_scheduled_task.exists == true
+
+  - name: Enable scheduled task (again)
+    win_scheduled_task:
+      <<: *wst_present
+      enabled: yes
+    register: enable_scheduled_task_again
+
+  - assert:
+      that:
+      - enable_scheduled_task_again.changed == false
+      - enable_scheduled_task_again.exists == true
+
+
+- name: Remove scheduled task
+  win_scheduled_task: *wst_absent
+  register: remove_scheduled_task
+
+- name: Test remove_scheduled_task (normal mode)
+  assert:
+    that:
+    - remove_scheduled_task.changed == true
+    - remove_scheduled_task.exists == true
+  when: not in_check_mode
+
+- name: Test remove_scheduled_task (check-mode)
+  assert:
+    that:
+    - remove_scheduled_task.changed == false
+    - remove_scheduled_task.exists == false
+  when: in_check_mode
+
+
+- name: Remove scheduled task (again)
+  win_scheduled_task: *wst_absent
+  register: remove_scheduled_task_again
+
+- name: Test remove_scheduled_task_again
+  assert:
+    that:
+    - remove_scheduled_task_again.changed == false
+    - remove_scheduled_task_again.exists == false

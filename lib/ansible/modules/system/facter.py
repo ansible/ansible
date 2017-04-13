@@ -20,9 +20,10 @@
 #
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -36,7 +37,7 @@ version_added: "0.2"
 options: {}
 notes: []
 requirements: [ "facter", "ruby-json" ]
-author: 
+author:
     - "Ansible Core Team"
     - "Michael DeHaan"
 '''

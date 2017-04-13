@@ -19,19 +19,19 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import iteritems, string_types
 
 from ansible.errors import AnsibleParserError,AnsibleError
+from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_text
 from ansible.plugins import module_loader
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.template import Templar
 
+
 # For filtering out modules correctly below
 RAW_PARAM_MODULES = ([
     'command',
     'win_command',
-    'net_command',
     'shell',
     'win_shell',
     'script',
@@ -43,6 +43,7 @@ RAW_PARAM_MODULES = ([
     'raw',
     'meta',
 ])
+
 
 class ModuleArgsParser:
 
@@ -141,7 +142,8 @@ class ModuleArgsParser:
                 if templar._contains_vars(additional_args):
                     final_args['_variable_params'] = additional_args
                 else:
-                    raise AnsibleParserError("Complex args containing variables cannot use bare variables, and must use the full variable style ('{{var_name}}')")
+                    raise AnsibleParserError("Complex args containing variables cannot use bare variables, and must use the full variable style "
+                                             "('{{var_name}}')")
             elif isinstance(additional_args, dict):
                 final_args.update(additional_args)
             else:
@@ -165,7 +167,7 @@ class ModuleArgsParser:
 
         # only internal variables can start with an underscore, so
         # we don't allow users to set them directy in arguments
-        if args and action not in ('command', 'net_command', 'win_command', 'shell', 'win_shell', 'script', 'raw'):
+        if args and action not in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw'):
             for arg in args:
                 arg = to_text(arg)
                 if arg.startswith('_ansible_'):
@@ -196,7 +198,7 @@ class ModuleArgsParser:
             args = thing
         elif isinstance(thing, string_types):
             # form is like: copy: src=a dest=b
-            check_raw = action in ('command', 'net_command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
+            check_raw = action in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
             args = parse_kv(thing, check_raw=check_raw)
         elif thing is None:
             # this can happen with modules which take no params, like ping:
@@ -287,7 +289,7 @@ class ModuleArgsParser:
             if item in module_loader or item in ['meta', 'include', 'include_role']:
                 # finding more than one module name is a problem
                 if action is not None:
-                    raise AnsibleParserError("conflicting action statements", obj=self._task_ds)
+                    raise AnsibleParserError("conflicting action statements: %s, %s" % (action, item), obj=self._task_ds)
                 action = item
                 thing = value
                 action, args = self._normalize_parameters(thing, action=action, additional_args=additional_args)
@@ -302,14 +304,17 @@ class ModuleArgsParser:
                         obj=self._task_ds)
 
             else:
-                raise AnsibleParserError("no action detected in task. This often indicates a misspelled module name, or incorrect module path.", obj=self._task_ds)
+                raise AnsibleParserError("no action detected in task. This often indicates a misspelled module name, or incorrect module path.",
+                                         obj=self._task_ds)
         elif args.get('_raw_params', '') != '' and action not in RAW_PARAM_MODULES:
             templar = Templar(loader=None)
             raw_params = args.pop('_raw_params')
             if templar._contains_vars(raw_params):
                 args['_variable_params'] = raw_params
             else:
-                raise AnsibleParserError("this task '%s' has extra params, which is only allowed in the following modules: %s" % (action, ", ".join(RAW_PARAM_MODULES)), obj=self._task_ds)
+                raise AnsibleParserError("this task '%s' has extra params, which is only allowed in the following modules: %s" % (action,
+                                                                                                                                  ", ".join(RAW_PARAM_MODULES)),
+                                         obj=self._task_ds)
 
         # shell modules require special handling
         (action, args) = self._handle_shell_weirdness(action, args)

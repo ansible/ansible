@@ -19,12 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import tempfile
-import os.path
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -82,7 +80,7 @@ options:
     choices: [present, latest]
     default: present
 notes:
-    - Please note that the M(easy_install) module can only install Python
+    - Please note that the C(easy_install) module can only install Python
       libraries. Thus this module is not able to remove libraries. It is
       generally recommended to use the M(pip) module which you can first install
       using M(easy_install).
@@ -103,6 +101,9 @@ EXAMPLES = '''
     name: bottle
     virtualenv: /webapps/myapp/venv
 '''
+
+import tempfile
+import os.path
 
 def _is_package_installed(module, name, easy_install, executable_arguments):
     executable_arguments = executable_arguments + ['--dry-run']

@@ -20,14 +20,10 @@
 #
 # see examples/playbooks/get_url.yml
 
-import shutil
-import datetime
-import re
-import tempfile
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -160,6 +156,22 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "no"
+  client_cert:
+    required: false
+    default: null
+    description:
+      - PEM formatted certificate chain file to be used for SSL client
+        authentication. This file can also include the key as well, and if
+        the key is included, I(client_key) is not required
+    version_added: 2.4
+  client_key:
+    required: false
+    default: null
+    description:
+      - PEM formatted file that contains your private key to be used for SSL
+        client authentication. If I(client_cert) contains both the certificate
+        and key, this option is not required.
+    version_added: 2.4
   others:
     description:
       - all arguments accepted by the M(file) module also work here
@@ -173,41 +185,45 @@ author: "Jan-Piet Mens (@jpmens)"
 
 EXAMPLES='''
 - name: download foo.conf
-  get_url: 
-    url: http://example.com/path/file.conf 
-    dest: /etc/foo.conf 
+  get_url:
+    url: http://example.com/path/file.conf
+    dest: /etc/foo.conf
     mode: 0440
 
 - name: download file and force basic auth
-  get_url: 
-    url: http://example.com/path/file.conf 
-    dest: /etc/foo.conf 
+  get_url:
+    url: http://example.com/path/file.conf
+    dest: /etc/foo.conf
     force_basic_auth: yes
 
 - name: download file with custom HTTP headers
-  get_url: 
-    url: http://example.com/path/file.conf 
-    dest: /etc/foo.conf 
+  get_url:
+    url: http://example.com/path/file.conf
+    dest: /etc/foo.conf
     headers: 'key:value,key:value'
 
 - name: download file with check (sha256)
-  get_url: 
-    url: http://example.com/path/file.conf 
-    dest: /etc/foo.conf 
+  get_url:
+    url: http://example.com/path/file.conf
+    dest: /etc/foo.conf
     checksum: sha256:b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c
 
 - name: download file with check (md5)
-  get_url: 
-    url: http://example.com/path/file.conf 
+  get_url:
+    url: http://example.com/path/file.conf
     dest: /etc/foo.conf
     checksum: md5:66dffb5228a211e61d6d7ef4a86f5758
 
 - name: download file from a file path
-  get_url: 
-    url: "file:///tmp/afile.txt" 
-    dest: /tmp/afilecopy.txt  
+  get_url:
+    url: "file:///tmp/afile.txt"
+    dest: /tmp/afilecopy.txt
 '''
 
+import shutil
+import datetime
+import re
+import tempfile
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
 
 # ==============================================================
@@ -290,13 +306,13 @@ def main():
     argument_spec = url_argument_spec()
     argument_spec.update(
         url = dict(required=True),
-        dest = dict(required=True),
+        dest = dict(required=True, type='path'),
         backup = dict(default=False, type='bool'),
         sha256sum = dict(default=''),
         checksum = dict(default=''),
         timeout = dict(required=False, type='int', default=10),
         headers = dict(required=False, default=None),
-        tmp_dest = dict(required=False, default=''),
+        tmp_dest = dict(required=False, default='', type='path'),
     )
 
     module = AnsibleModule(
@@ -306,14 +322,14 @@ def main():
     )
 
     url  = module.params['url']
-    dest = os.path.expanduser(module.params['dest'])
+    dest = module.params['dest']
     backup = module.params['backup']
     force = module.params['force']
     sha256sum = module.params['sha256sum']
     checksum = module.params['checksum']
     use_proxy = module.params['use_proxy']
     timeout = module.params['timeout']
-    tmp_dest = os.path.expanduser(module.params['tmp_dest'])
+    tmp_dest = module.params['tmp_dest']
 
     # Parse headers to dict
     if module.params['headers']:
@@ -427,7 +443,7 @@ def main():
                 if os.path.exists(dest):
                     backup_file = module.backup_local(dest)
             shutil.copyfile(tmpsrc, dest)
-        except Exception: 
+        except Exception:
             err = get_exception()
             os.remove(tmpsrc)
             module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, str(err)))
@@ -458,7 +474,7 @@ def main():
 
     res_args = dict(
         url = url, dest = dest, src = tmpsrc, md5sum = md5sum, checksum_src = checksum_src,
-        checksum_dest = checksum_dest, changed = changed, msg = info.get('msg', '')
+        checksum_dest = checksum_dest, changed = changed, msg = info.get('msg', ''), status_code=info.get('status','')
     )
     if backup_file:
         res_args['backup_file'] = backup_file

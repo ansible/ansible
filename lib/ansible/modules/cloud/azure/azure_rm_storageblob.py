@@ -19,9 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'curated'}
+
 
 DOCUMENTATION = '''
 ---
@@ -372,7 +373,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
         self.log('Create container %s' % self.container)
 
         tags = None
-        if not self.blob and  self.tags:
+        if not self.blob and self.tags:
             # when a blob is present, then tags are assigned at the blob level
             tags = self.tags
 

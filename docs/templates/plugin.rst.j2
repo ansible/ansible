@@ -1,0 +1,238 @@
+.. _@{ module }@:
+
+{% if short_description %}
+{% set title = module + ' - ' + short_description|convert_symbols_to_format %}
+{% else %}
+{% set title = module %}
+{% endif %}
+{% set title_len = title|length %}
+
+@{ title }@
+@{ '+' * title_len }@
+
+{% if version_added is defined -%}
+.. versionadded:: @{ version_added }@
+{% endif %}
+
+
+.. contents::
+   :local:
+   :depth: 2
+
+{# ------------------------------------------
+ #
+ # Please note: this looks like a core dump
+ # but it isn't one.
+ #
+ --------------------------------------------#}
+
+{% if deprecated is defined -%}
+DEPRECATED
+----------
+
+@{ deprecated | convert_symbols_to_format }@
+{% endif %}
+
+Synopsis
+--------
+
+{% for desc in description -%}
+ * @{ desc | convert_symbols_to_format }@
+{% endfor %}
+
+{% if aliases is defined -%}
+Aliases: @{ ','.join(aliases) }@
+{% endif %}
+
+{% if requirements %}
+Requirements (on host that executes module)
+-------------------------------------------
+
+{% for req in requirements %}
+  * @{ req | convert_symbols_to_format }@
+{% endfor %}
+{% endif %}
+
+
+{% if options -%}
+Options
+-------
+
+.. raw:: html
+
+    <table border=1 cellpadding=4>
+    <tr>
+    <th class="head">parameter</th>
+    <th class="head">required</th>
+    <th class="head">default</th>
+    <th class="head">choices</th>
+    <th class="head">comments</th>
+    </tr>
+    {% for k in option_keys %}
+    {% set v = options[k] %}
+    {% if not v['suboptions'] %}
+    <tr><td>@{ k }@<br/><div style="font-size: small;">{% if v['version_added'] %} (added in @{v['version_added']}@){% endif %}</div></td>
+    <td>{% if v.get('required', False) %}yes{% else %}no{% endif %}</td>
+    <td>{% if v['default'] %}@{ v['default'] }@{% endif %}</td>
+    {% if v.get('type', 'not_bool') == 'bool' %}
+    <td><ul><li>yes</li><li>no</li></ul></td>
+    {% else %}
+    <td>{% if v['choices'] %}<ul>{% for choice in v.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul>{% endif %}</td>
+    {% endif %}
+    <td>{% for desc in v.description -%}<div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>{% endfor -%} {% if 'aliases' in v and v.aliases -%}</br>
+    <div style="font-size: small;">aliases: @{ v.aliases|join(', ') }@<div>{%- endif %}
+    {% else %}
+    <tr><td rowspan="2">@{ k }@<br/><div style="font-size: small;">{% if v['version_added'] %} (added in @{v['version_added']}@){% endif %}</div></td>
+    <td>{% if v.get('required', False) %}yes{% else %}no{% endif %}</td>
+    <td></td><td></td>
+    <td> {% for desc in v.description -%}<div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>{% endfor -%} {% if 'aliases' in v and v.aliases -%}</br>
+    <div style="font-size: small;">aliases: @{ v.aliases|join(', ') }@<div>{%- endif %}
+    </tr>
+    <tr>
+    <td colspan="5">
+    <table border=1 cellpadding=4>
+    <caption><b>Dictionary object @{ k }@</b></caption>
+    <tr>
+    <th class="head">parameter</th>
+    <th class="head">required</th>
+    <th class="head">default</th>
+    <th class="head">choices</th>
+    <th class="head">comments</th>
+    </tr>
+    {% for k2 in v['suboptions'] %}
+        {% set v2 = v['suboptions'] [k2] %}
+        <tr><td>@{ k2 }@<br/><div style="font-size: small;">{% if v2['version_added'] %} (added in @{v2['version_added']}@){% endif %}</div></td>
+        <td>{% if v2.get('required', False) %}yes{% else %}no{% endif %}</td>
+        <td>{% if v2['default'] %}@{ v2['default'] }@{% endif %}</td>
+        {% if v2.get('type', 'not_bool') == 'bool' %}
+        <td><ul><li>yes</li><li>no</li></ul></td>
+        {% else %}
+        <td>{% if v2['choices'] %}<ul>{% for choice in v2.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul>{% endif %}</td>
+        {% endif %}
+        <td>{% for desc in v2.description -%}<div>@{ desc | replace('\n', '\n    ') | html_ify }@</div>{% endfor -%} {% if 'aliases' in v and v2.aliases -%}</br>
+        <div style="font-size: small;">aliases: @{ v2.aliases|join(', ') }@<div>{%- endif %}
+        </td></tr>
+    {% endfor %}
+    </table>
+    </td>
+    </tr>
+    {% endif %}
+    </td></tr>
+    {% endfor %}
+    </table>
+    </br>
+
+{% endif %}
+
+
+{% if examples or plainexamples -%}
+Examples
+--------
+
+ ::
+
+{% for example in examples %}
+{% if example['description'] %}@{ example['description'] | indent(4, True) }@{% endif %}
+@{ example['code'] | escape | indent(4, True) }@
+{% endfor %}
+{% if plainexamples %}@{ plainexamples | indent(4, True) }@{% endif %}
+{% endif %}
+
+
+{% if returndocs -%}
+Return Values
+-------------
+
+Common return values are documented here :doc:`common_return_values`, the following are the fields unique to this module:
+
+.. raw:: html
+
+    <table border=1 cellpadding=4>
+    <tr>
+    <th class="head">name</th>
+    <th class="head">description</th>
+    <th class="head">returned</th>
+    <th class="head">type</th>
+    <th class="head">sample</th>
+    </tr>
+
+    {% for entry in returndocs %}
+    <tr>
+        <td> @{ entry }@ </td>
+        <td> @{ returndocs[entry].description }@ </td>
+        <td align=center> @{ returndocs[entry].returned }@ </td>
+        <td align=center> @{ returndocs[entry].type }@ </td>
+        <td align=center> @{ returndocs[entry].sample}@ </td>
+    </tr>
+    {% if returndocs[entry].type == 'dictionary' %}
+    <tr><td>contains: </td>
+    <td colspan=4>
+        <table border=1 cellpadding=2>
+        <tr>
+        <th class="head">name</th>
+        <th class="head">description</th>
+        <th class="head">returned</th>
+        <th class="head">type</th>
+        <th class="head">sample</th>
+        </tr>
+
+        {% for sub in returndocs[entry].contains %}
+        <tr>
+        <td> @{ sub }@ </td>
+        <td> @{ returndocs[entry].contains[sub].description }@ </td>
+        <td align=center> @{ returndocs[entry].contains[sub].returned }@ </td>
+        <td align=center> @{ returndocs[entry].contains[sub].type }@ </td>
+        <td align=center> @{ returndocs[entry].contains[sub].sample}@ </td>
+        </tr>
+        {% endfor %}
+
+        </table>
+    </td></tr>
+
+    {% endif %}
+    {% endfor %}
+
+    </table>
+    </br></br>
+{% endif %}
+
+{% if notes -%}
+Notes
+-----
+
+.. note::
+{% for note in notes %}
+    - @{ note | convert_symbols_to_format }@
+{% endfor %}
+{% endif %}
+
+{% if not deprecated %}
+{% set support = { 'core': 'This module is maintained by those with core commit privileges', 'curated': 'This module is supported mainly by the community and is curated by core committers.', 'community': 'This module is community maintained without core committer oversight.'} %}
+{% set module_states = { 'preview': 'it is not guaranteed to have a backwards compatible interface', 'stableinterface': 'the maintainers for this module guarantee that no backward incompatible interface changes will be made'} %}
+
+{% if metadata %}
+{% if metadata.status %}
+
+Status
+~~~~~~
+
+{% for cur_state in  metadata.status %}
+This module is flagged as **@{cur_state}@** which means that @{module_states[cur_state]}@.
+{% endfor %}
+{% endif %}
+
+{% if metadata.supported_by %}
+
+Support
+~~~~~~~
+
+@{ support[metadata.supported_by] }@
+
+For more information on what this means please read :doc:`modules_support`
+
+{% endif %}
+{% endif %}
+{% endif %}
+
+For help in developing on modules, should you be so inclined, please read :doc:`community`, :doc:`dev_guide/developing_test_pr` and :doc:`dev_guide/developing_modules`.
+

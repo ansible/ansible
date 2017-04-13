@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = """
 ---
@@ -29,7 +30,9 @@ description:
     - Create, update, remove snapshot volumes for NetApp E/EF-Series storage arrays.
 version_added: '2.2'
 author: Kevin Hulquest (@hulquest)
-note: Only I(full_threshold) is supported for update operations. If the snapshot volume already exists and the threshold matches, then an C(ok) status will be returned, no other changes can be made to a pre-existing snapshot volume.
+notes:
+  - Only I(full_threshold) is supported for update operations. If the snapshot volume already exists and the threshold matches, then an C(ok) status
+    will be returned, no other changes can be made to a pre-existing snapshot volume.
 options:
     api_username:
         required: true
@@ -43,8 +46,6 @@ options:
         required: true
         description:
         - The url to the SANtricity WebServices Proxy or embedded REST API.
-        example:
-        - https://prod-1.wahoo.acme.com/devmgr/v2
     validate_certs:
         required: false
         default: true
@@ -96,7 +97,7 @@ EXAMPLES = """
     - name: Snapshot volume
       netapp_e_snapshot_volume:
         ssid: "{{ ssid }}"
-        api_url: "{{ netapp_api_url }}"/
+        api_url: "{{ netapp_api_url }}/"
         api_username: "{{ netapp_api_username }}"
         api_password: "{{ netapp_api_password }}"
         state: present

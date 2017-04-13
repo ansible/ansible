@@ -282,8 +282,8 @@ of arguments and don't use the ``key=value`` form.  This makes
 them work as simply as you would expect::
 
    tasks:
-     - name: disable selinux
-       command: /sbin/setenforce 0
+     - name: enable selinux
+       command: /sbin/setenforce 1
 
 The **command** and **shell** module care about return codes, so if you have a command
 whose successful exit code is not zero, you may wish to do this::
@@ -452,6 +452,9 @@ There's also a `clever playbook <https://github.com/ansible/ansible-examples/blo
 
 Tips and Tricks
 ```````````````
+
+To check the syntax of a playbook, use ``ansible-playbook`` with the ``--syntax-check`` flag. This will run the
+playbook file through the parser to ensure its included files, roles, etc. have no syntax problems.
 
 Look at the bottom of the playbook execution for a summary of the nodes that were targeted
 and how they performed.   General failures and fatal "unreachable" communication attempts are

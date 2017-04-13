@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -260,7 +261,7 @@ class LibvirtConnection(object):
                 else:
                     # pretend there was a change
                     res = 0
-                if res == 0: 
+                if res == 0:
                     return True
             else:
                 # change the host
@@ -421,7 +422,7 @@ class VirtNetwork(object):
 
     def create(self, entryid):
         return self.conn.create(entryid)
-    
+
     def modify(self, entryid, xml):
         return self.conn.modify(entryid, xml)
 

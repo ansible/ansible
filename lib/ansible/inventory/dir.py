@@ -62,7 +62,8 @@ def get_file_parser(hostsfile, groups, loader):
             myerr.append('Attempted to execute "%s" as inventory script: %s' % (hostsfile, to_native(e)))
     elif shebang_present:
 
-        myerr.append("The inventory file \'%s\' looks like it should be an executable inventory script, but is not marked executable. Perhaps you want to correct this with `chmod +x %s`?" % (hostsfile, hostsfile))
+        myerr.append("The inventory file \'%s\' looks like it should be an executable inventory script, but is not marked executable. "
+                     "Perhaps you want to correct this with `chmod +x %s`?" % (hostsfile, hostsfile))
 
     # YAML/JSON
     if not processed and not shebang_present and os.path.splitext(hostsfile)[-1] in C.YAML_FILENAME_EXTENSIONS:

@@ -18,13 +18,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: apache2_mod_proxy
+author: Olivier Boukili (@oboukili)"
 version_added: "2.2"
 short_description: Set and/or get members' attributes of an Apache httpd 2.4 mod_proxy balancer pool
 description:
@@ -374,14 +376,16 @@ def main():
     if HAS_BEAUTIFULSOUP is False:
         module.fail_json(msg="python module 'BeautifulSoup' is required!")
 
-    if module.params['state'] != None:
+    if module.params['state'] is not None:
         states = module.params['state'].split(',')
         if (len(states) > 1) and (("present" in states) or ("enabled" in states)):
             module.fail_json(msg="state present/enabled is mutually exclusive with other states!")
         else:
             for _state in states:
                 if _state not in ['present', 'absent', 'enabled', 'disabled', 'drained', 'hot_standby', 'ignore_errors']:
-                    module.fail_json(msg="State can only take values amongst 'present', 'absent', 'enabled', 'disabled', 'drained', 'hot_standby', 'ignore_errors'.")
+                    module.fail_json(
+                        msg="State can only take values amongst 'present', 'absent', 'enabled', 'disabled', 'drained', 'hot_standby', 'ignore_errors'."
+                    )
     else:
         states = ['None']
 

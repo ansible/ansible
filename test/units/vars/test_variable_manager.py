@@ -21,11 +21,11 @@ __metaclass__ = type
 
 from collections import defaultdict
 
-from ansible.compat.six import iteritems
-from ansible.compat.six.moves import builtins
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import MagicMock, mock_open, patch
 from ansible.inventory import Inventory
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.six.moves import builtins
 from ansible.playbook.play import Play
 
 from units.mock.loader import DictDataLoader
@@ -237,8 +237,8 @@ class TestVariableManager(unittest.TestCase):
         inv1.set_playbook_basedir('./')
 
         play1 = Play.load(dict(
-           hosts=['all'],
-           roles=['defaults_only1', 'defaults_only2'],
+            hosts=['all'],
+            roles=['defaults_only1', 'defaults_only2'],
         ), loader=fake_loader, variable_manager=v)
 
         # first we assert that the defaults as viewed as a whole are the merged results
@@ -341,8 +341,8 @@ class TestVariableManager(unittest.TestCase):
         })
 
         play1 = Play.load(dict(
-           hosts=['all'],
-           roles=['role1', 'role2'],
+            hosts=['all'],
+            roles=['role1', 'role2'],
         ), loader=fake_loader, variable_manager=v)
 
         # The task defined by common-role exists twice because role1

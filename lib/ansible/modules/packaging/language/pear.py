@@ -20,9 +20,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -77,7 +78,8 @@ def get_local_version(pear_output):
     for line in lines:
         if 'Installed ' in line:
             installed = line.rsplit(None, 1)[-1].strip()
-            if installed == '-': continue
+            if installed == '-':
+                continue
             return installed
     return None
 

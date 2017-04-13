@@ -16,20 +16,21 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
 module: nxos_evpn_vni
+extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages Cisco EVPN VXLAN Network Identifier (VNI).
 description:
     - Manages Cisco Ethernet Virtual Private Network (EVPN) VXLAN Network
       Identifier (VNI) configurations of a Nexus device.
 author: Gabriele Gerbino (@GGabriele)
-extends_documentation_fragment: nxos
 notes:
     - default, where supported, restores params default value.
     - RD override is not permitted. You should set it to the default values
@@ -127,156 +128,11 @@ changed:
     sample: true
 '''
 
-# COMMON CODE FOR MIGRATION
 import re
-
-import ansible.module_utils.nxos
-from ansible.module_utils.basic import get_exception
-from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
-from ansible.module_utils.shell import ShellError
-from ansible.module_utils.network import NetworkModule
-
-
-def to_list(val):
-     if isinstance(val, (list, tuple)):
-         return list(val)
-     elif val is not None:
-         return [val]
-     else:
-         return list()
-
-
-class CustomNetworkConfig(NetworkConfig):
-
-    def expand_section(self, configobj, S=None):
-        if S is None:
-            S = list()
-        S.append(configobj)
-        for child in configobj.children:
-            if child in S:
-                continue
-            self.expand_section(child, S)
-        return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
-
-    def to_block(self, section):
-        return '\n'.join([item.raw for item in section])
-
-    def get_section(self, path):
-        try:
-            section = self.get_section_objects(path)
-            return self.to_block(section)
-        except ValueError:
-            return list()
-
-    def get_section_objects(self, path):
-        if not isinstance(path, list):
-            path = [path]
-        obj = self.get_object(path)
-        if not obj:
-            raise ValueError('path does not exist in config')
-        return self.expand_section(obj)
-
-
-    def add(self, lines, parents=None):
-        """Adds one or lines of configuration
-        """
-
-        ancestors = list()
-        offset = 0
-        obj = None
-
-        ## global config command
-        if not parents:
-            for line in to_list(lines):
-                item = ConfigLine(line)
-                item.raw = line
-                if item not in self.items:
-                    self.items.append(item)
-
-        else:
-            for index, p in enumerate(parents):
-                try:
-                    i = index + 1
-                    obj = self.get_section_objects(parents[:i])[0]
-                    ancestors.append(obj)
-
-                except ValueError:
-                    # add parent to config
-                    offset = index * self.indent
-                    obj = ConfigLine(p)
-                    obj.raw = p.rjust(len(p) + offset)
-                    if ancestors:
-                        obj.parents = list(ancestors)
-                        ancestors[-1].children.append(obj)
-                    self.items.append(obj)
-                    ancestors.append(obj)
-
-            # add child objects
-            for line in to_list(lines):
-                # check if child already exists
-                for child in ancestors[-1].children:
-                    if child.text == line:
-                        break
-                else:
-                    offset = len(parents) * self.indent
-                    item = ConfigLine(line)
-                    item.raw = line.rjust(len(line) + offset)
-                    item.parents = ancestors
-                    ancestors[-1].children.append(item)
-                    self.items.append(item)
-
-
-def get_network_module(**kwargs):
-    try:
-        return get_module(**kwargs)
-    except NameError:
-        return NetworkModule(**kwargs)
-
-def get_config(module, include_defaults=False):
-    config = module.params['config']
-    if not config:
-        try:
-            config = module.get_config()
-        except AttributeError:
-            defaults = module.params['include_defaults']
-            config = module.config.get_config(include_defaults=defaults)
-    return CustomNetworkConfig(indent=2, contents=config)
-
-def load_config(module, candidate):
-    config = get_config(module)
-
-    commands = candidate.difference(config)
-    commands = [str(c).strip() for c in commands]
-
-    save_config = module.params['save']
-
-    result = dict(changed=False)
-
-    if commands:
-        if not module.check_mode:
-            try:
-                module.configure(commands)
-            except AttributeError:
-                module.config(commands)
-
-            if save_config:
-                try:
-                    module.config.save_config()
-                except AttributeError:
-                    module.execute(['copy running-config startup-config'])
-
-        result['changed'] = True
-        result['updates'] = commands
-
-    return result
-# END OF COMMON CODE
+from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.netcfg import CustomNetworkConfig
 
 PARAM_TO_COMMAND_KEYMAP = {
     'vni': 'vni',
@@ -352,11 +208,25 @@ def apply_key_map(key_map, table):
     return new_dict
 
 
+def fix_proposed(proposed_commands):
+    new_proposed = {}
+    for key, value in proposed_commands.items():
+        if key == 'route-target both':
+            new_proposed['route-target export'] = value
+            new_proposed['route-target import'] = value
+        else:
+            new_proposed[key] = value
+    return new_proposed
+
+
 def state_present(module, existing, proposed):
     commands = list()
     parents = list()
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
+
+    if proposed_commands.get('route-target both'):
+        proposed_commands = fix_proposed(proposed_commands)
 
     for key, value in proposed_commands.items():
         if key.startswith('route-target'):
@@ -409,28 +279,35 @@ def execute_config(module, candidate):
 
 def main():
     argument_spec = dict(
-            vni=dict(required=True, type='str'),
-            route_distinguisher=dict(required=False, type='str'),
-            route_target_both=dict(required=False, type='list'),
-            route_target_import=dict(required=False, type='list'),
-            route_target_export=dict(required=False, type='list'),
-            state=dict(choices=['present', 'absent'], default='present',
+        vni=dict(required=True, type='str'),
+        route_distinguisher=dict(required=False, type='str'),
+        route_target_both=dict(required=False, type='list'),
+        route_target_import=dict(required=False, type='list'),
+        route_target_export=dict(required=False, type='list'),
+        state=dict(choices=['present', 'absent'], default='present',
                        required=False),
-            include_defaults=dict(default=True),
-            config=dict(),
-            save=dict(type='bool', default=False)
+        include_defaults=dict(default=True),
+        config=dict(),
+        save=dict(type='bool', default=False)
     )
-    module = get_network_module(argument_spec=argument_spec,
+
+    argument_spec.update(nxos_argument_spec)
+
+    module = AnsibleModule(argument_spec=argument_spec,
                         supports_check_mode=True)
+
+    warnings = list()
+    check_args(module, warnings)
+
 
     state = module.params['state']
     args =  [
-            'vni',
-            'route_distinguisher',
-            'route_target_both',
-            'route_target_import',
-            'route_target_export'
-        ]
+        'vni',
+        'route_distinguisher',
+        'route_target_both',
+        'route_target_import',
+        'route_target_export'
+    ]
 
     existing = invoke('get_existing', module, args)
     end_state = existing
@@ -454,16 +331,15 @@ def main():
         if commands:
             if (existing.get('route_distinguisher') and
                     proposed.get('route_distinguisher')):
-                if (existing['route_distinguisher'] != proposed[
-                    'route_distinguisher'] and
-                    proposed['route_distinguisher'] != 'default'):
+                if (existing['route_distinguisher'] != proposed['route_distinguisher'] and
+                        proposed['route_distinguisher'] != 'default'):
                     WARNINGS.append('EVPN RD {0} was automatically removed. '
                                          'It is highly recommended to use a task '
                                          '(with default as value) to explicitly '
                                          'unconfigure it.'.format(
-                                            existing['route_distinguisher']))
+                                             existing['route_distinguisher']))
                     remove_commands = ['no rd {0}'.format(
-                                            existing['route_distinguisher'])]
+                        existing['route_distinguisher'])]
 
                     candidate.add(remove_commands, parents=parents)
                     result = execute_config(module, candidate)
@@ -475,7 +351,6 @@ def main():
     else:
         result['updates'] = []
 
-    result['connected'] = module.connected
     if module._verbosity > 0:
         end_state = invoke('get_existing', module, args)
         result['end_state'] = end_state
@@ -490,3 +365,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

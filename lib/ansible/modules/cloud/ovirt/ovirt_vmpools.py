@@ -19,29 +19,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-try:
-    import ovirtsdk4.types as otypes
-except ImportError:
-    pass
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ovirt import (
-    BaseModule,
-    check_params,
-    check_sdk,
-    create_connection,
-    equal,
-    get_link_name,
-    ovirt_full_argument_spec,
-    wait,
-)
-
-
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -127,6 +108,25 @@ vm_pool:
     returned: On success if VM pool is found.
 '''
 
+try:
+    import ovirtsdk4.types as otypes
+except ImportError:
+    pass
+
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ovirt import (
+    BaseModule,
+    check_params,
+    check_sdk,
+    create_connection,
+    equal,
+    get_link_name,
+    ovirt_full_argument_spec,
+    wait,
+)
+
 
 class VmPoolsModule(BaseModule):
 
@@ -184,7 +184,8 @@ def main():
     check_params(module)
 
     try:
-        connection = create_connection(module.params.pop('auth'))
+        auth = module.params.pop('auth')
+        connection = create_connection(auth)
         vm_pools_service = connection.system_service().vm_pools_service()
         vm_pools_module = VmPoolsModule(
             connection=connection,
@@ -213,7 +214,7 @@ def main():
     except Exception as e:
         module.fail_json(msg=str(e), exception=traceback.format_exc())
     finally:
-        connection.close(logout=False)
+        connection.close(logout=auth.get('token') is None)
 
 
 if __name__ == "__main__":

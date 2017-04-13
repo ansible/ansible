@@ -19,9 +19,10 @@
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -222,7 +223,7 @@ class Host(object):
             if proxy_id:
                 parameters['proxy_hostid'] = proxy_id
             if visible_name:
-                parameters['name'] = visible_name 
+                parameters['name'] = visible_name
             host_list = self._zapi.host.create(parameters)
             if len(host_list) >= 1:
                 return host_list['hostids'][0]
@@ -237,7 +238,7 @@ class Host(object):
             if proxy_id:
                 parameters['proxy_hostid'] = proxy_id
             if visible_name:
-                parameters['name'] = visible_name 
+                parameters['name'] = visible_name
             self._zapi.host.update(parameters)
             interface_list_copy = exist_interface_list
             if interfaces:
@@ -376,10 +377,10 @@ class Host(object):
 
         if host['proxy_hostid'] != proxy_id:
             return True
-        
+
         if host['name'] != visible_name:
             return True
-        
+
         return False
 
     # link or clear template of the host

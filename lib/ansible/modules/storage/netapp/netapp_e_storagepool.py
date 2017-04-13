@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -41,8 +42,6 @@ options:
       required: true
       description:
       - The url to the SANtricity WebServices Proxy or embedded REST API.
-      example:
-      - https://prod-1.wahoo.acme.com/devmgr/v2
   validate_certs:
       required: false
       default: true
@@ -488,7 +487,8 @@ class NetAppESeriesStoragePool(object):
         # # TODO: this arg appears to be ignored, uncomment if it isn't
         # #if self.criteria_disk_min_size_gb:
         # #    drives_req['driveCapacityMin'] = self.criteria_disk_min_size_gb * 1024
-        # (rc,drives_resp) = request(self.api_url + "/storage-systems/%s/drives" % (self.ssid), data=json.dumps(drives_req), headers=self.post_headers, method='POST', url_username=self.api_usr, url_password=self.api_pwd, validate_certs=self.validate_certs)
+        # (rc,drives_resp) = request(self.api_url + "/storage-systems/%s/drives" % (self.ssid), data=json.dumps(drives_req), headers=self.post_headers,
+        #                            method='POST', url_username=self.api_usr, url_password=self.api_pwd, validate_certs=self.validate_certs)
         #
         # if rc == 204:
         #     self.module.fail_json(msg='Cannot find disks to match requested criteria for storage pool')
@@ -623,8 +623,7 @@ class NetAppESeriesStoragePool(object):
 
     @property
     def reserved_drive_count_differs(self):
-        if int(self.pool_detail['volumeGroupData']['diskPoolData'][
-            'reconstructionReservedDriveCount']) != self.reserve_drive_count:
+        if int(self.pool_detail['volumeGroupData']['diskPoolData']['reconstructionReservedDriveCount']) != self.reserve_drive_count:
             return True
         return False
 

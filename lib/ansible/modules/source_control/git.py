@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'core',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'core'}
+
 
 DOCUMENTATION = '''
 ---
@@ -199,7 +200,7 @@ notes:
 EXAMPLES = '''
 # Example git checkout from Ansible Playbooks
 - git:
-    repo: git://foosball.example.org/path/to/repo.git
+    repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     version: release-0.22
 
@@ -210,14 +211,14 @@ EXAMPLES = '''
 
 # Example just ensuring the repo checkout exists
 - git:
-    repo: git://foosball.example.org/path/to/repo.git
+    repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     update: no
 
 # Example just get information about the repository whether or not it has
 # already been cloned locally.
 - git:
-    repo: git://foosball.example.org/path/to/repo.git
+    repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     clone: no
     update: no
@@ -294,6 +295,9 @@ def head_splitter(headfile, remote, module=None, fail_on_error=False):
 
 
 def unfrackgitpath(path):
+    if path is None:
+        return None
+
     # copied from ansible.utils.path
     return os.path.normpath(os.path.realpath(os.path.expanduser(os.path.expandvars(path))))
 
@@ -420,12 +424,17 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
     else:
         cmd.extend([ '--origin', remote ])
     if depth:
-        if version == 'HEAD' \
-           or refspec  \
-           or is_remote_branch(git_path, module, dest, repo, version) \
-           or is_remote_tag(git_path, module, dest, repo, version):
-            # only use depth if the remote object is branch or tag (i.e. fetchable)
+        if version == 'HEAD' or refspec:
             cmd.extend([ '--depth', str(depth) ])
+        elif is_remote_branch(git_path, module, dest, repo, version) \
+                or is_remote_tag(git_path, module, dest, repo, version):
+            cmd.extend([ '--depth', str(depth) ])
+            cmd.extend(['--branch', version])
+        else:
+            # only use depth if the remote object is branch or tag (i.e. fetchable)
+            module.warn("Ignoring depth argument. "
+                        "Shallow clones are only available for "
+                        "HEAD, branches, tags or in combination with refspec.")
     if reference:
         cmd.extend([ '--reference', str(reference) ])
     cmd.extend([ repo, dest ])
@@ -637,7 +646,7 @@ def set_remote_url(git_path, module, repo, dest, remote):
     ''' updates repo from remote sources '''
     # Return if remote URL isn't changing.
     remote_url = get_remote_url(git_path, module, dest, remote)
-    if remote_url == repo or remote_url == unfrackgitpath(repo):
+    if remote_url == repo or unfrackgitpath(remote_url) == unfrackgitpath(repo):
         return False
 
     command = [git_path, 'remote', 'set-url', remote, repo]
@@ -807,7 +816,7 @@ def switch_version(git_path, module, dest, remote, version, verify_commit, depth
         if rc != 0:
             module.fail_json(msg="Failed to checkout branch %s" % branch,
                              stdout=out, stderr=err, rc=rc)
-        cmd = "%s reset --hard %s" % (git_path, remote)
+        cmd = "%s reset --hard %s/%s --" % (git_path, remote, branch)
     else:
         # FIXME check for local_branch first, should have been fetched already
         if is_remote_branch(git_path, module, dest, remote, version):
@@ -1009,7 +1018,7 @@ def main():
         # exit if already at desired sha version
         if module.check_mode:
             remote_url = get_remote_url(git_path, module, dest, remote)
-            remote_url_changed = remote_url and remote_url != repo and remote_url != unfrackgitpath(repo)
+            remote_url_changed = remote_url and remote_url != repo and unfrackgitpath(remote_url) != unfrackgitpath(repo)
         else:
             remote_url_changed = set_remote_url(git_path, module, repo, dest, remote)
         result.update(remote_url_changed=remote_url_changed)
