@@ -26,7 +26,7 @@ DOCUMENTATION = """
 module: junos_rpc
 version_added: "2.3"
 author: "Peter Sprygada (@privateip)"
-short_description: Runs an arbitrary RPC on the remote device over NetConf
+short_description: Runs an arbitrary RPC over NetConf on an Juniper JUNOS device
 description:
   - Sends a request to the remote device running JUNOS to execute the
     specified RPC using the NetConf transport.  The reply is then

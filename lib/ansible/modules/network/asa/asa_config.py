@@ -26,7 +26,7 @@ DOCUMENTATION = """
 module: asa_config
 version_added: "2.2"
 author: "Peter Sprygada (@privateip), Patrick Ogenstad (@ogenstad)"
-short_description: Manage Cisco ASA configuration sections
+short_description: Manage configuration sections on Cisco ASA devices
 description:
   - Cisco ASA configurations use a simple block indent file syntax
     for segmenting configuration into sections.  This module provides
