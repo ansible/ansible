@@ -29,7 +29,7 @@ DOCUMENTATION = r'''
 ---
 module: win_psmodule
 version_added: "2.4"
-short_description: Add or remove a Powershell Module. 
+short_description: Adds or removes a Powershell Module. 
 description:
     - This module helps to install Powershell modules and register custom modules repository on Windows Server. Powershell 5.0 is needed.
 options:
@@ -39,14 +39,13 @@ options:
     required: true
   repository:
     description: 
-      - Name of the custom repository to register
+      - Name of the custom repository to register.
   url:
     description:
-      - Url of the custom repository
+      - Url of the custom repository.
   state:
     description:
-      - present or absent
-    required: false
+      - If present a new module is installed. If absent a module is removed.
     default: present
 author: Daniele Lazzari
 '''
@@ -55,7 +54,7 @@ EXAMPLES = '''
 ---
 - name: Add a powershell module
   win_route:
-    name: MyCustomModule
+    name: PowershellModule
     state: present
 
 - name: Add a powershell module and register a repository
@@ -67,7 +66,7 @@ EXAMPLES = '''
 
 - name: Remove a powershell module
   win_psmodule:
-    name: MyCustomModule
+    name: PowershellModule
     state: absent
 
 - name: Remove a powershell module and a repository
