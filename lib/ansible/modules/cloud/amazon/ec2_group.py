@@ -92,7 +92,7 @@ EXAMPLES = '''
     name: example
     description: an example EC2 group
     vpc_id: 12345
-    region: eu-west-1a
+    region: eu-west-1
     aws_secret_key: SECRET
     aws_access_key: ACCESS
     rules:
@@ -141,7 +141,7 @@ EXAMPLES = '''
     name: example2
     description: an example2 EC2 group
     vpc_id: 12345
-    region: eu-west-1a
+    region: eu-west-1
     rules:
       # 'ports' rule keyword was introduced in version 2.4. It accepts a single port value or a list of values including ranges (from_port-to_port).
       - proto: tcp
