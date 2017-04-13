@@ -14,6 +14,7 @@ Starting in version 1.7, Ansible also contains support for managing Windows mach
 native PowerShell remoting, rather than SSH.
 
 Ansible will still be run from a Linux control machine, and uses the "winrm" Python module to talk to remote hosts.
+While not supported by Microsoft or Ansible, this Linux control machine can be a Windows Subsystem for Linux (WSL) bash shell.
 
 No additional software needs to be installed on the remote machines for Ansible to manage them, it still maintains the agentless properties that make it popular on Linux/Unix.
 
@@ -29,6 +30,34 @@ On a Linux control machine::
    pip install "pywinrm>=0.2.2"
 
 .. Note:: on distributions with multiple python versions, use pip2 or pip2.x, where x matches the python minor version Ansible is running under.
+
+
+.. _windows_control_machine:
+
+Using a Windows control machine
+```````````````````````````````
+A Linux control machine is required to manage Windows hosts. This Linux control machine can be a Windows Subsystem for Linux (WSL) bash shell.
+
+
+.. Note:: Running Ansible from a Windows control machine directly is not a goal of the project.  Refrain from asking for this feature, as it limits what technologies, features, and code we can use in the main project in the future.  
+
+.. Note:: The Windows Subsystem for Linux (Beta) is not supported by Microsoft or Ansible and should not be used for production systems. 
+
+If you would like to experiment with the Windows Subsystem for Linux (WSL), first enable the Windows Subsystem for Linux using
+`these instructions <https://www.jeffgeerling.com/blog/2017/using-ansible-through-windows-10s-subsystem-linux>`_.
+This requires a reboot.
+
+Once WSL is enabled, you can open the Bash terminal. The first time you so this, a few questions need to be answered.
+At the prompt you can quickly start using the Ansible devel branch by running the following commands::
+
+    sudo apt-get install python-pip
+    pip install pywinrm
+    git clone https://github.com/ansible/ansible.git
+    source ansible/hacking/env-setup
+
+After you've successfully run these commands, you can start to create your inventory, write example playbooks and start targetting systems using the plethora of available Windows modules.
+
+.. Note:: Ansible is also reported to work on Cygwin, but this is more cumbersome and doesn't scale as well as WSL.
 
 
 Authentication Options
@@ -374,17 +403,6 @@ Modules (ps1 files) should start as follows::
 The above magic is necessary to tell Ansible to mix in some common code and also know how to push modules out.  The common code contains some nice wrappers around working with hash data structures and emitting JSON results, and possibly a few more useful things.  Regular Ansible has this same concept for reusing Python code - this is just the windows equivalent.
 
 What modules you see in ``windows/`` are just a start.  Additional modules may be submitted as pull requests to github.
-
-.. _windows_and_linux_control_machine:
-
-Reminder: You Must Have a Linux Control Machine
-```````````````````````````````````````````````
-
-Note running Ansible from a Windows control machine is NOT a goal of the project.  Refrain from asking for this feature,
-as it limits what technologies, features, and code we can use in the main project in the future.  A Linux control machine
-will be required to manage Windows hosts.
-
-Cygwin is not supported, so please do not ask questions about Ansible running from Cygwin.
 
 .. _windows_facts:
 
