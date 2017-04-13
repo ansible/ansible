@@ -554,7 +554,7 @@ def create_autoscaling_group(connection, module):
                                                                         zone in ec2_connection.describe_availability_zones()['AvailabilityZones']]
         enforce_required_arguments(module)
         launch_configs = connection.describe_launch_configurations(LaunchConfigurationNames=[launch_config_name])
-        if len(launch_configs) == 0:
+        if len(launch_configs['LaunchConfigurations']) == 0:
             module.fail_json(msg="No launch config found with name %s" % launch_config_name)
         ag = dict(
             AutoScalingGroupName=group_name,
@@ -716,6 +716,8 @@ def create_autoscaling_group(connection, module):
                     )
 
         launch_configs = connection.describe_launch_configurations(LaunchConfigurationNames=[launch_config_name])
+        if len(launch_configs['LaunchConfigurations']) == 0:
+            module.fail_json(msg="No launch config found with name %s" % launch_config_name)
         ag = dict(
             AutoScalingGroupName=group_name,
             LaunchConfigurationName=launch_configs['LaunchConfigurations'][0]['LaunchConfigurationName'],
