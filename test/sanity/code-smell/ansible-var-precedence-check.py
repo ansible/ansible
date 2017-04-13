@@ -59,7 +59,7 @@ class Role(object):
             if not os.path.isdir(fpath):
                 os.makedirs(fpath)
             fname = os.path.join(fpath, 'main.yml')
-            with open(fname, 'wb') as f:
+            with open(fname, 'w') as f:
                 f.write('findme: %s\n' % self.name)
 
         if self.vars:
@@ -68,7 +68,7 @@ class Role(object):
             if not os.path.isdir(fpath):
                 os.makedirs(fpath)
             fname = os.path.join(fpath, 'main.yml')
-            with open(fname, 'wb') as f:
+            with open(fname, 'w') as f:
                 f.write('findme: %s\n' % self.name)
 
         if self.dependencies:
@@ -76,7 +76,7 @@ class Role(object):
             if not os.path.isdir(fpath):
                 os.makedirs(fpath)
             fname = os.path.join(fpath, 'main.yml')
-            with open(fname, 'wb') as f:
+            with open(fname, 'w') as f:
                 f.write('dependencies:\n')
                 for dep in self.dependencies:
                     f.write('- { role: %s }\n' % dep)
@@ -152,7 +152,7 @@ print(json.dumps(data, indent=2, sort_keys=True))
         data = json.dumps(self.inventory)
         t = self.ENV.from_string(self.BASESCRIPT)
         fdata = t.render(data=data)
-        with open(fpath, 'wb') as f:
+        with open(fpath, 'w') as f:
             f.write(fdata + '\n')
         st = os.stat(fpath)
         os.chmod(fpath, st.st_mode | stat.S_IEXEC)
@@ -191,7 +191,7 @@ class VarTestMaker(object):
         if self.tasks:
             pb_copy['tasks'] = self.tasks
 
-        with open(fname, 'wb') as f:
+        with open(fname, 'w') as f:
             pb_yaml = yaml.dump([pb_copy], f, default_flow_style=False, indent=2)
 
     def build(self):
@@ -239,7 +239,7 @@ class VarTestMaker(object):
             if not os.path.isdir(ipath):
                 os.makedirs(ipath)
 
-            with open(invfile, 'wb') as f:
+            with open(invfile, 'w') as f:
                 f.write(self.inventory)
 
         hpath = os.path.join(TESTDIR, 'inventory', 'host_vars')
@@ -251,49 +251,49 @@ class VarTestMaker(object):
 
         if 'ini_host_vars_file' in self.features:
             hfile = os.path.join(hpath, 'testhost')
-            with open(hfile, 'wb') as f:
+            with open(hfile, 'w') as f:
                 f.write('findme: ini_host_vars_file\n')
 
         if 'ini_group_vars_file_all' in self.features:
             hfile = os.path.join(gpath, 'all')
-            with open(hfile, 'wb') as f:
+            with open(hfile, 'w') as f:
                 f.write('findme: ini_group_vars_file_all\n')
 
         if 'ini_group_vars_file_child' in self.features:
             hfile = os.path.join(gpath, 'child')
-            with open(hfile, 'wb') as f:
+            with open(hfile, 'w') as f:
                 f.write('findme: ini_group_vars_file_child\n')
 
         if 'ini_group_vars_file_parent' in self.features:
             hfile = os.path.join(gpath, 'parent')
-            with open(hfile, 'wb') as f:
+            with open(hfile, 'w') as f:
                 f.write('findme: ini_group_vars_file_parent\n')
 
         if 'pb_host_vars_file' in self.features:
             os.makedirs(os.path.join(TESTDIR, 'host_vars'))
             fname = os.path.join(TESTDIR, 'host_vars', 'testhost')
-            with open(fname, 'wb') as f:
+            with open(fname, 'w') as f:
                 f.write('findme: pb_host_vars_file\n')
 
         if 'pb_group_vars_file_parent' in self.features:
             if not os.path.isdir(os.path.join(TESTDIR, 'group_vars')):
                 os.makedirs(os.path.join(TESTDIR, 'group_vars'))
             fname = os.path.join(TESTDIR, 'group_vars', 'parent')
-            with open(fname, 'wb') as f:
+            with open(fname, 'w') as f:
                 f.write('findme: pb_group_vars_file_parent\n')
 
         if 'pb_group_vars_file_child' in self.features:
             if not os.path.isdir(os.path.join(TESTDIR, 'group_vars')):
                 os.makedirs(os.path.join(TESTDIR, 'group_vars'))
             fname = os.path.join(TESTDIR, 'group_vars', 'child')
-            with open(fname, 'wb') as f:
+            with open(fname, 'w') as f:
                 f.write('findme: pb_group_vars_file_child\n')
 
         if 'pb_group_vars_file_all' in self.features:
             if not os.path.isdir(os.path.join(TESTDIR, 'group_vars')):
                 os.makedirs(os.path.join(TESTDIR, 'group_vars'))
             fname = os.path.join(TESTDIR, 'group_vars', 'all')
-            with open(fname, 'wb') as f:
+            with open(fname, 'w') as f:
                 f.write('findme: pb_group_vars_file_all\n')
 
         if 'play_var' in self.features:
@@ -305,13 +305,13 @@ class VarTestMaker(object):
         if 'vars_file' in self.features:
             self.varsfiles.append('varsfile.yml')
             fname = os.path.join(TESTDIR, 'varsfile.yml')
-            with open(fname, 'wb') as f:
+            with open(fname, 'w') as f:
                 f.write('findme: vars_file\n')
 
         if 'include_vars' in self.features:
             self.tasks.append(dict(include_vars='included_vars.yml'))
             fname = os.path.join(TESTDIR, 'included_vars.yml')
-            with open(fname, 'wb') as f:
+            with open(fname, 'w') as f:
                 f.write('findme: include_vars\n')
 
         if 'role_var' in self.features:
@@ -366,7 +366,7 @@ class VarTestMaker(object):
             self.tasks.append(dict(include='included_tasks.yml'))
 
         fname = os.path.join(TESTDIR, 'included_tasks.yml')
-        with open(fname, 'wb') as f:
+        with open(fname, 'w') as f:
             f.write(yaml.dump(block_wrapper))
 
         self.write_playbook()
