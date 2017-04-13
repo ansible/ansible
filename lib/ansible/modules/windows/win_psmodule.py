@@ -47,6 +47,9 @@ options:
     description:
       - If present a new module is installed. If absent a module is removed.
     default: present
+    choices:
+      - present
+      - absent
 author: Daniele Lazzari
 '''
 
