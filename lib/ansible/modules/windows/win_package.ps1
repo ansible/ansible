@@ -850,7 +850,7 @@ function Set-TargetResource
                     if($process)
                     {
                         $exitCode = $process.ExitCode
-                        Set-Attr -obj $result -name "exit_code" -value $exitCode
+                        $result.exit_code = $exitCode
                     }
                 }
             }
@@ -1254,8 +1254,10 @@ namespace Source
 
 
 $params = Parse-Args $args;
-$result = New-Object psobject;
-Set-Attr $result "changed" $false;
+
+$result = @{
+    changed = $false
+}
 
 $path = Get-Attr -obj $params -name path -failifempty $true -resultobj $result
 $name = Get-Attr -obj $params -name name -default $path
@@ -1294,7 +1296,7 @@ if (($username -ne $null) -and ($password -ne $null))
 }
 
 #Always return the name
-set-attr -obj $result -name "name" -value $name
+$result.name = $name
 
 $testdscresult = Test-TargetResource @dscparams
 if ($testdscresult -eq $true)
@@ -1316,12 +1318,12 @@ Else
     #Check if DSC thinks the computer needs a reboot:
     if ((get-variable DSCMachinestatus -Scope Global -ea 0) -and ($global:DSCMachineStatus -eq 1))
     {
-        Set-Attr $result "restart_required" $true
+        $result.restart_required = $true
     }
 
     #Set-TargetResource did its job. We can assume a change has happened
-    Set-Attr $result "changed" $true
+    $result.changed = $true
     Exit-Json -obj $result
-    
+
 }
 

@@ -22,8 +22,8 @@
 
 $params = Parse-Args $args;
 
-$result = New-Object psobject @{
-    win_unzip = New-Object psobject
+$result = @{
+    win_unzip = @{}
     changed = $false
 }
 
@@ -81,7 +81,7 @@ Else {
         Fail-Json $result "PowerShellCommunityExtensions PowerShell Module (PSCX) is required for non-'.zip' compressed archive types."
     }
     Else {
-        Set-Attr $result.win_unzip "pscx_status" "present"
+        $result.win_unzip.pscx_status = "present"
     }
 
     # Import
@@ -126,7 +126,7 @@ Else {
 
 If ($rm -eq $true){
     Remove-Item $src -Recurse -Force
-    Set-Attr $result.win_unzip "rm" "true"
+    $result.win_unzip.rm = "true"
 }
 
 # Fixes a fail error message (when the task actually succeeds) for a "Convert-ToJson: The converted JSON string is in bad format"
@@ -138,8 +138,8 @@ If ($src[$src.length-1] -eq "\") {
 If ($dest[$dest.length-1] -eq "\") {
     $dest = $dest.Substring(0, $dest.length-1)
 }
-Set-Attr $result.win_unzip "src" $src.toString()
-Set-Attr $result.win_unzip "dest" $dest.toString()
-Set-Attr $result.win_unzip "recurse" $recurse.toString()
+$result.win_unzip.src = $src.toString()
+$result.win_unzip.dest = $dest.toString()
+$result.win_unzip.recurse = $recurse.toString()
 
 Exit-Json $result

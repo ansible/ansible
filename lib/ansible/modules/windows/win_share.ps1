@@ -174,7 +174,7 @@ Try {
         }
         if ($share.CachingMode -ne $cachingMode) {
             Set-SmbShare -Force -Name $name -CachingMode $cachingMode
-            Set-Attr $result "changed" $true;
+            $result.changed = $true
         }
 
         # clean permissions that imply others
