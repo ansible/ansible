@@ -834,19 +834,25 @@ class ModuleValidator(Validator):
                      (option, should_be, version_added))
                 ))
 
+    @staticmethod
+    def is_blacklisted(path):
+        base_name = os.path.basename(path)
+        file_name, _ = os.path.splitext(base_name)
+
+        if file_name.startswith('_') and os.path.islink(path):
+            return True
+
+        if not frozenset((base_name, file_name)).isdisjoint(ModuleValidator.BLACKLIST):
+            return True
+
+        for pat in ModuleValidator.BLACKLIST_PATTERNS:
+            if fnmatch(base_name, pat):
+                return True
+
+        return False
+
     def validate(self):
         super(ModuleValidator, self).validate()
-
-        if self.object_name.startswith('_') and os.path.islink(self.object_path):
-            return
-
-        # Blacklists -- these files are not checked
-        if not frozenset((self.basename,
-                          self.name)).isdisjoint(self.BLACKLIST):
-            return
-        for pat in self.BLACKLIST_PATTERNS:
-            if fnmatch(self.basename, pat):
-                return
 
 #        if self._powershell_module():
 #            self.warnings.append('Cannot check powershell modules at this '
@@ -974,6 +980,8 @@ def main():
             path = module
             if args.exclude and args.exclude.search(path):
                 sys.exit(0)
+            if ModuleValidator.is_blacklisted(path):
+                sys.exit(0)
             with ModuleValidator(path, analyze_arg_spec=args.arg_spec,
                                  base_branch=args.base_branch, git_cache=git_cache) as mv:
                 mv.validate()
@@ -996,6 +1004,8 @@ def main():
             for filename in files:
                 path = os.path.join(root, filename)
                 if args.exclude and args.exclude.search(path):
+                    continue
+                if ModuleValidator.is_blacklisted(path):
                     continue
                 with ModuleValidator(path, analyze_arg_spec=args.arg_spec,
                                      base_branch=args.base_branch, git_cache=git_cache) as mv:
