@@ -29,7 +29,7 @@ DOCUMENTATION = """
 module: fortios_ipv4_policy
 version_added: "2.3"
 author: "Benjamin Jolivot (@bjolivot)"
-short_description: Manage fortios firewall IPv4 policy objects
+short_description: Manage IPv4 policy objects on Fortinet FortiOS firewall devices
 description:
   - This module provides management of firewall IPv4 policies on FortiOS devices.
 extends_documentation_fragment: fortios
