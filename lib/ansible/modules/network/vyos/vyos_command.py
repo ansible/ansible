@@ -112,7 +112,7 @@ tasks:
 RETURN = """
 stdout:
   description: The set of responses from the commands
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: ['...', '...']
 stdout_lines:
@@ -121,7 +121,7 @@ stdout_lines:
   type: list
   sample: [['...', '...'], ['...'], ['...']]
 failed_conditions:
-  description: The conditionals that have failed
+  description: The list of conditionals that have failed
   returned: failed
   type: list
   sample: ['...', '...']

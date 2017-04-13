@@ -128,13 +128,13 @@ tasks:
 RETURN = """
 stdout:
   description: The set of responses from the commands
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: ['...', '...']
 
 stdout_lines:
   description: The value of stdout split into a list
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: [['...', '...'], ['...'], ['...']]
 
