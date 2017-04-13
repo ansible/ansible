@@ -57,6 +57,7 @@ class ActionModule(_ActionModule):
             pc = copy.deepcopy(self._play_context)
             pc.connection = 'network_cli'
             pc.network_os = 'eos'
+            pc.remote_addr = provider['host'] or self._play_context.remote_addr
             pc.remote_user = provider['username'] or self._play_context.connection_user
             pc.password = provider['password'] or self._play_context.password
             pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
