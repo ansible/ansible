@@ -27,7 +27,7 @@ DOCUMENTATION = """
 module: junos_template
 version_added: "2.1"
 author: "Peter Sprygada (@privateip)"
-short_description: Manage configuration on remote devices running Junos
+short_description: Manage configuration on remote devices running Juniper JUNOS
 description:
   - This module will load a candidate configuration
     from a template file onto a remote device running Junos.  The

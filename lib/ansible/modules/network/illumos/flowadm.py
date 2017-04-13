@@ -27,7 +27,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: flowadm
-short_description: Manage bandwidth resource control and priority for protocols, services and zones.
+short_description: Manage bandwidth resource control and priority for protocols, services and zones on Solaris/illumos systems
 description:
     - Create/modify/remove networking bandwidth and associated resources for a type of traffic on a particular link.
 version_added: "2.2"

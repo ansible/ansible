@@ -26,7 +26,7 @@ DOCUMENTATION = """
 module: junos_user
 version_added: "2.3"
 author: "Peter Sprygada (@privateip)"
-short_description: Manage local user accounts on Juniper devices
+short_description: Manage local user accounts on Juniper JUNOS devices
 description:
   - This module manages locally configured user accounts on remote
     network devices running the JUNOS operating system.  It provides

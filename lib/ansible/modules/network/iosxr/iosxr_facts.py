@@ -25,10 +25,10 @@ DOCUMENTATION = """
 module: iosxr_facts
 version_added: "2.2"
 author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
-short_description: Collect facts from remote devices running IOS-XR
+short_description: Collect facts from remote devices running IOS XR
 description:
   - Collects a base set of device facts from a remote device that
-    is running iosxr.  This module prepends all of the
+    is running IOS XR.  This module prepends all of the
     base network fact keys with C(ansible_net_<fact>).  The facts
     module will always collect a base set of facts from the device
     and can enable or disable collection of additional facts.

@@ -27,7 +27,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ipadm_addr
-short_description: Manage IP addresses on an interface.
+short_description: Manage IP addresses on an interface on Solaris/illumos systems
 description:
     - Create/delete static/dynamic IP addresses on network interfaces on Solaris/illumos systems.
     - Up/down static/dynamic IP addresses on network interfaces on Solaris/illumos systems.
