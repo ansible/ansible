@@ -214,8 +214,9 @@ Function SetPrivilegeTokens() {
 
 $params = Parse-Args $args;
 
-$result = New-Object PSObject;
-Set-Attr $result "changed" $false;
+$result = @{
+    changed = $false
+}
 
 $path = Get-Attr $params "path" -failifempty $true
 $user = Get-Attr $params "user" -failifempty $true
@@ -314,7 +315,7 @@ Try {
         Try {
             $objACL.AddAccessRule($objACE)
             Set-ACL $path $objACL
-            Set-Attr $result "changed" $true;
+            $result.changed = $true
         }
         Catch {
             Fail-Json $result "an exception occurred when adding the specified rule - $($_.Exception.Message)"
@@ -324,7 +325,7 @@ Try {
         Try {
             $objACL.RemoveAccessRule($objACE)
             Set-ACL $path $objACL
-            Set-Attr $result "changed" $true;
+            $result.changed = $true
         }
         Catch {
             Fail-Json $result "an exception occurred when removing the specified rule - $($_.Exception.Message)"

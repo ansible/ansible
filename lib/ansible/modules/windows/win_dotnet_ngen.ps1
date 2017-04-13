@@ -22,8 +22,10 @@ $ErrorActionPreference = "Stop"
 # POWERSHELL_COMMON
 
 $params = Parse-Args $args;
-$result = New-Object PSObject;
-Set-Attr $result "changed" $false;
+
+$result = @{
+    changed = $false
+}
 
 function Invoke-NGen
 {
@@ -42,11 +44,11 @@ function Invoke-NGen
     if (test-path $cmd)
     {
         $update = Invoke-Expression "$cmd update /force";
-        Set-Attr $result "dotnet_ngen$($arity)_update_exit_code" $lastexitcode
-        Set-Attr $result "dotnet_ngen$($arity)_update_output" $update
+        $(result.dotnet_ngen$($arity)_update_exit_code) = $lastexitcode
+        $(result.dotnet_ngen$($arity)_update_output) = $update
         $eqi = Invoke-Expression "$cmd executequeueditems";
-        Set-Attr $result "dotnet_ngen$($arity)_eqi_exit_code" $lastexitcode
-        Set-Attr $result "dotnet_ngen$($arity)_eqi_output" $eqi
+        $(result.dotnet_ngen$($arity)_eqi_exit_code) = $lastexitcode
+        $(result.dotnet_ngen$($arity)_eqi_output) = $eqi
 
         $result.changed = $true
     }

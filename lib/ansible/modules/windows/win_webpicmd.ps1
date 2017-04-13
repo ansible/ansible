@@ -67,8 +67,8 @@ Function Test-IsInstalledFromWebPI
 
     if ($LastExitCode -ne 0)
     {
-        Set-Attr $result "webpicmd_error_cmd" $cmd
-        Set-Attr $result "webpicmd_error_log" "$results"
+        $result.webpicmd_error_cmd = $cmd
+        $result.webpicmd_error_log = "$results"
 
         Throw "Error checking installation status for $package"
     }
