@@ -26,7 +26,7 @@ DOCUMENTATION = """
 module: iosxr_config
 version_added: "2.1"
 author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
-short_description: Manage Cisco IOS-XR configuration sections
+short_description: Manage Cisco IOS XR configuration sections
 description:
   - Cisco IOS XR configurations use a simple block indent file syntax
     for segmenting configuration into sections.  This module provides
