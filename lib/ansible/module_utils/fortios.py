@@ -65,13 +65,17 @@ fortios_error_codes = {
 
 def backup(module,running_config):
     backup_path = module.params['backup_path']
+    backup_filename = module.params['backup_filename']
     if not os.path.exists(backup_path):
         try:
             os.mkdir(backup_path)
         except:
             module.fail_json(msg="Can't create directory {0} Permission denied ?".format(backup_path))
     tstamp = time.strftime("%Y-%m-%d@%H:%M:%S", time.localtime(time.time()))
-    filename = '%s/%s_config.%s' % (backup_path, module.params['host'], tstamp)
+    if 0 < len(backup_filename):
+        filename = '%s/%s' % (backup_path, backup_filename)
+    else:
+        filename = '%s/%s_config.%s' % (backup_path, module.params['host'], tstamp)
     try:
         open(filename, 'w').write(running_config)
     except:
