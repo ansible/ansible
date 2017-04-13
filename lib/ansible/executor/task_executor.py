@@ -194,14 +194,15 @@ class TaskExecutor:
         items = None
         if self._task.loop:
             if self._task.loop in self._shared_loader_obj.lookup_loader:
+                fail = True
                 if self._task.loop == 'first_found':
                     # first_found loops are special. If the item is undefined then we want to fall through to the next value rather than failing.
-                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=False,
-                                                             convert_bare=False)
+                    fail = False
+
+                loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=fail,
+                                                         convert_bare=False)
+                if not fail:
                     loop_terms = [t for t in loop_terms if not templar._contains_vars(t)]
-                else:
-                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=True,
-                                                             convert_bare=False)
 
                 # get lookup
                 mylookup = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader, templar=templar)
