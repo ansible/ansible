@@ -36,27 +36,26 @@ On a Linux control machine::
 
 Using a Windows control machine
 ```````````````````````````````
+A Linux control machine is required to manage Windows hosts. This Linux control machine can be a Windows Subsystem for Linux (WSL) bash shell.
 
-Note that running Ansible from a Windows control machine directly is NOT a goal of the project.  Refrain from asking for this feature,
-as it limits what technologies, features, and code we can use in the main project in the future.  A Linux control machine
-will be required to manage Windows hosts. **This Linux control machine however can be a Windows Subsystem for Linux (WSL) bash shell.**
 
-.. Note:: be aware that the Windows Subsystem for Linux (Beta) is not supported by Microsoft or Ansible and deemed **not-for-production**,
-   even when it works and is used by community members on a daily basis for development and testing.
+.. Note:: Running Ansible from a Windows control machine directly is not a goal of the project.  Refrain from asking for this feature, as it limits what technologies, features, and code we can use in the main project in the future.  
 
-If you like to experiment with Windows Subsystem for Linux (WSL), first enable the Windows Subsystem for Linux using
+.. Note:: The Windows Subsystem for Linux (Beta) is not supported by Microsoft or Ansible and should not be used for production systems. 
+
+If you would like to experiment with the Windows Subsystem for Linux (WSL), first enable the Windows Subsystem for Linux using
 `these instructions <https://www.jeffgeerling.com/blog/2017/using-ansible-through-windows-10s-subsystem-linux>`_.
 This requires a reboot.
 
-Once WSL is enabled, you can open the Bash terminal. The first time a few questions need to be answered.
-On the prompt you can quickly start using the Ansible devel branch by doing::
+Once WSL is enabled, you can open the Bash terminal. The first time you so this, a few questions need to be answered.
+At the prompt you can quickly start using the Ansible devel branch by running the following commands::
 
     sudo apt-get install python-pip
     pip install pywinrm
     git clone https://github.com/ansible/ansible.git
     source ansible/hacking/env-setup
 
-After this you can create your inventory, write example playbooks and start targetting systems using the plethora of available Windows modules.
+After you've successfully run these commands, you can start to create your inventory, write example playbooks and start targetting systems using the plethora of available Windows modules.
 
 .. Note:: Ansible is also reported to work on Cygwin, but this is more cumbersome and doesn't scale as well as WSL.
 
