@@ -151,7 +151,7 @@ talk to the remote network device. This generally means that there is an authent
 
 For example:
 
-.. code-block::
+.. code-block:: none
 
   TASK [prepare_eos_tests : enable cli on remote device] **************************************************
   fatal: [veos01]: FAILED! => {"changed": false, "failed": true, "msg": "unable to open shell"}
@@ -160,7 +160,7 @@ For example:
 or:
 
 
-.. code-block:: yaml
+.. code-block:: none
 
    TASK [ios_system : configure name_servers] *************************************************************
    task path:
