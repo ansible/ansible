@@ -418,13 +418,15 @@ def check_mode_changeset(module, stack_params, cfn):
     stack_params['ChangeSetName'] = build_changeset_name(stack_params)
     try:
         change_set = cfn.create_change_set(**stack_params)
-
-        while True:
+        success = False
+        for i in range(60): # total time 5 min
             description = cfn.describe_change_set(ChangeSetName=change_set['Id'])
             if description['Status'] in ['CREATE_COMPLETE', 'FAILED']:
+                success = True
                 break
             time.sleep(5)
-
+        if not success:
+            module.fail_json(msg="Failed to create change set "+name)
         cfn.delete_change_set(ChangeSetName=change_set['Id'])
 
         if description['Status'] == 'FAILED' and "didn't contain changes" in description['StatusReason']:
@@ -440,7 +442,6 @@ def get_stack_facts(cfn, stack_name):
     try:
         stack_response = cfn.describe_stacks(StackName=stack_name)
         stack_info = stack_response['Stacks'][0]
-    #except AmazonCloudFormationException as e:
     except (botocore.exceptions.ValidationError,botocore.exceptions.ClientError) as err:
         error_msg = boto_exception(err)
         if 'does not exist' in error_msg:
