@@ -58,11 +58,9 @@ except ImportError:
 
 
 # Ansible Display object for warnings
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
+display = Display()
+
 
 def _get_gcp_ansible_credentials(module):
     """Helper to fetch creds from AnsibleModule object."""

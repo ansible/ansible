@@ -31,15 +31,11 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types, with_metaclass
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins import shell_loader
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
-
+from ansible.utils.display import Display
 
 __all__ = ['ConnectionBase', 'ensure_connect']
+
+display = Display()
 
 BUFSIZE = 65536
 

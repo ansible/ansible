@@ -28,12 +28,9 @@ from collections import MutableMapping, MutableSet, MutableSequence
 from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.plugins import fragment_loader
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 # modules that are ok that they do not have documentation strings

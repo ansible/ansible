@@ -22,14 +22,11 @@ __metaclass__ = type
 from abc import ABCMeta, abstractmethod
 
 from ansible.module_utils.six import with_metaclass
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
 __all__ = ['LookupBase']
+
+display = Display()
 
 
 class LookupBase(with_metaclass(ABCMeta, object)):

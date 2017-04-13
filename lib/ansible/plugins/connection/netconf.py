@@ -24,6 +24,7 @@ import logging
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.plugins.connection import ConnectionBase, ensure_connect
+from ansible.utils.display import Display
 
 try:
     from ncclient import manager
@@ -33,11 +34,7 @@ try:
 except ImportError:
     raise AnsibleError("ncclient is not installed")
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 logging.getLogger('ncclient').setLevel(logging.INFO)
 

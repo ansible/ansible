@@ -49,12 +49,9 @@ from ansible.plugins import module_loader
 from ansible.utils import plugin_docs
 from ansible.utils.color import stringc
 from ansible.vars import VariableManager
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class ConsoleCLI(CLI, cmd.Cmd):

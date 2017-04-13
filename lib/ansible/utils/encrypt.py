@@ -24,6 +24,9 @@ import tempfile
 import multiprocessing
 import time
 import warnings
+from ansible.utils.display import Display
+
+display = Display()
 
 PASSLIB_AVAILABLE = False
 try:
@@ -31,12 +34,6 @@ try:
     PASSLIB_AVAILABLE = True
 except:
     pass
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
 
 KEYCZAR_AVAILABLE=False
 try:

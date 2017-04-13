@@ -32,12 +32,9 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.dellos10 import dellos10_argument_spec
 from ansible.module_utils.basic import AnsibleFallbackNotFound
 from ansible.module_utils._text import to_bytes
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class ActionModule(_ActionModule):

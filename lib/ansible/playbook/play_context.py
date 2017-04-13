@@ -34,17 +34,14 @@ from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
+from ansible.utils.display import Display
 
 
 boolean = C.mk_boolean
 
 __all__ = ['PlayContext']
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 # the magic variable mapping dictionary below is used to translate
 # host/inventory variables to fields in the PlayContext

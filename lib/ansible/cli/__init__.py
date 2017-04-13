@@ -38,12 +38,9 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six import with_metaclass
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.utils.path import unfrackpath
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class SortedOptParser(optparse.OptionParser):

@@ -29,12 +29,7 @@ from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.utils.color import stringc
 from ansible.vars import strip_internal_keys
-
-try:
-    from __main__ import display as global_display
-except ImportError:
-    from ansible.utils.display import Display
-    global_display = Display()
+from ansible.utils.display import Display
 
 try:
     from __main__ import cli
@@ -57,7 +52,7 @@ class CallbackBase:
         if display:
             self._display = display
         else:
-            self._display = global_display
+            self._display = Display()
 
         if cli:
             self._options = cli.options

@@ -46,6 +46,7 @@ from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import exec_wrapper, become_wrapper, leaf_exec
 from ansible.utils.hashing import secure_hash
 from ansible.utils.path import makedirs_safe
+from ansible.utils.display import Display
 
 try:
     import winrm
@@ -59,11 +60,7 @@ try:
 except ImportError as e:
     raise AnsibleError("xmltodict is not installed: %s" % str(e))
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Connection(ConnectionBase):

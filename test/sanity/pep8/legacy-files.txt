@@ -913,7 +913,6 @@ lib/ansible/plugins/connection/__init__.py
 lib/ansible/plugins/connection/accelerate.py
 lib/ansible/plugins/connection/chroot.py
 lib/ansible/plugins/connection/docker.py
-lib/ansible/plugins/connection/funcd.py
 lib/ansible/plugins/connection/iocage.py
 lib/ansible/plugins/connection/jail.py
 lib/ansible/plugins/connection/libvirt_lxc.py
@@ -972,7 +971,6 @@ lib/ansible/plugins/terminal/asa.py
 lib/ansible/plugins/terminal/eos.py
 lib/ansible/plugins/terminal/ios.py
 lib/ansible/plugins/terminal/iosxr.py
-lib/ansible/plugins/terminal/junos.py
 lib/ansible/plugins/terminal/nxos.py
 lib/ansible/plugins/terminal/vyos.py
 lib/ansible/plugins/test/core.py

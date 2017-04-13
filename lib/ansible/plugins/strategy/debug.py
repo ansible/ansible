@@ -31,12 +31,9 @@ import sys
 
 from ansible.module_utils.six.moves import reduce
 from ansible.plugins.strategy.linear import StrategyModule as LinearStrategyModule
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class NextAction(object):

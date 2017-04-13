@@ -26,12 +26,9 @@ import tty
 from os import isatty
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class AnsibleTimeoutExceeded(Exception):

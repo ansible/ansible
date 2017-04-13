@@ -31,12 +31,9 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.six import iteritems, string_types
 from ansible.plugins import module_loader, action_loader, lookup_loader, callback_loader, cache_loader, connection_loader, strategy_loader
 from ansible.utils import plugin_docs
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class DocCLI(CLI):
