@@ -154,36 +154,29 @@ class RpmKey(object):
         if not gpg:
             self.module.fail_json(msg="rpm_key requires a command line gpg or gpg2, none found")
 
-        stdout, stderr = self.execute_command([gpg, '--no-tty', '--batch', '--with-colons', '--fixed-list-mode', '--list-packets', keyfile])
+        stdout, stderr = self.execute_command([gpg, '--no-tty', '--batch', '--with-colons', '--fixed-list-mode', keyfile])
         for line in stdout.splitlines():
             line = line.strip()
-            if line.startswith(':signature packet:'):
-                # We want just the last 8 characters of the keyid
-                keyid = line.split()[-1].strip()[8:]
-                return keyid
-        self.module.fail_json(msg="Unexpected gpg output")
+            if line.startswith(':pub'):
+                return line.split(':')[4]
+
+        self.json_fail(msg="Unexpected gpg output")
 
     def is_keyid(self, keystr):
         """Verifies if a key, as provided by the user is a keyid"""
         return re.match('(0x)?[0-9a-f]{8}', keystr, flags=re.IGNORECASE)
 
     def execute_command(self, cmd):
-        rc, stdout, stderr = self.module.run_command(cmd)
+        rc, stdout, stderr = self.module.run_command(cmd,use_unsafe_shell=True)
         if rc != 0:
             self.module.fail_json(msg=stderr)
         return stdout, stderr
 
     def is_key_imported(self, keyid):
-        stdout, stderr = self.execute_command([self.rpm, '-qa', 'gpg-pubkey'])
+        cmd=self.rpm+' -q  gpg-pubkey --qf "%{description}" | gpg --no-tty --batch --with-colons --fixed-list-mode -'
+        stdout, stderr = self.execute_command(cmd)
         for line in stdout.splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            match = re.match('gpg-pubkey-([0-9a-f]+)-([0-9a-f]+)', line)
-            if not match:
-                self.module.fail_json(msg="rpm returned unexpected output [%s]" % line)
-            else:
-                if keyid == match.group(1):
+            if keyid in line.split(':')[4]
                     return True
         return False
 
