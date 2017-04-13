@@ -19,7 +19,7 @@ retry.py pip install tox --disable-pip-version-check
 echo '{"verified": false, "results": []}' > test/results/bot/ansible-test-failure.json
 
 ansible-test compile --failure-ok --color -v --junit --requirements
-ansible-test sanity  --failure-ok --color -v --junit --tox --skip-test ansible-doc --python 2.7
+ansible-test sanity  --failure-ok --color -v --junit --tox --skip-test ansible-doc --python 3.5
 ansible-test sanity  --failure-ok --color -v --junit --tox --test ansible-doc --coverage
 
 rm test/results/bot/ansible-test-failure.json
