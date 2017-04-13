@@ -544,7 +544,8 @@ class VaultEditor:
         b_file_data = to_bytes(data, errors='strict')
 
         if filename == '-':
-            sys.stdout.write(b_file_data)
+            file_data = to_text(b_file_data, encoding='utf-8', errors='strict', nonstring='strict')
+            sys.stdout.write(file_data)
         else:
             if os.path.isfile(filename):
                 if shred:
