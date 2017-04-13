@@ -189,10 +189,8 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_ok(self, result):
         res = result._result
-        try:
-            module = res['invocation']['module_name']
-        except KeyError:
-            module = None
+        module = result._task.action
+
         if module == 'setup':
             host = result._host.get_name()
             self.send_facts(host, res)
