@@ -292,6 +292,15 @@ new exception-catching syntax which uses the ``as`` keyword:
     except ValueError as e:
         module.fail_json(msg="Tried to divide by zero: %s" % e)
 
+Do **not** use the following syntax as it will fail on every version of Python-3:
+
+.. code-block:: python
+
+    try:
+        a = 2/0
+    except ValueError, e:
+        module.fail_json(msg="Tried to divide by zero: %s" % e)
+
 Octal numbers
 -------------
 
