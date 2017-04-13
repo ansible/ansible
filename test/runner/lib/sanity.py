@@ -18,6 +18,7 @@ from lib.util import (
     display,
     run_command,
     deepest_path,
+    parse_to_dict,
 )
 
 from lib.ansible_util import (
@@ -566,6 +567,60 @@ def command_sanity_yamllint(args, targets):
     return SanitySuccess(test)
 
 
+def command_sanity_rstcheck(args, targets):
+    """
+    :type args: SanityConfig
+    :type targets: SanityTargets
+    :rtype: SanityResult
+    """
+    test = 'rstcheck'
+
+    with open('test/sanity/rstcheck/ignore-substitutions.txt', 'r') as ignore_fd:
+        ignore_substitutions = sorted(set(ignore_fd.read().splitlines()))
+
+    paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.rst',))
+
+    if not paths:
+        return SanitySkipped(test)
+
+    cmd = [
+        'rstcheck',
+        '--report', 'warning',
+        '--ignore-substitutions', ','.join(ignore_substitutions),
+    ] + paths
+
+    try:
+        stdout, stderr = run_command(args, cmd, capture=True)
+        status = 0
+    except SubprocessError as ex:
+        stdout = ex.stdout
+        stderr = ex.stderr
+        status = ex.status
+
+    if stdout:
+        raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
+
+    if args.explain:
+        return SanitySkipped(test)
+
+    pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+): \((?P<level>INFO|WARNING|ERROR|SEVERE)/[0-4]\) (?P<message>.*)$'
+
+    results = [parse_to_dict(pattern, line) for line in stderr.splitlines()]
+
+    results = [SanityMessage(
+        message=r['message'],
+        path=r['path'],
+        line=int(r['line']),
+        column=0,
+        level=r['level'],
+    ) for r in results]
+
+    if results:
+        return SanityFailure(test, messages=results)
+
+    return SanitySuccess(test)
+
+
 def command_sanity_ansible_doc(args, targets, python_version):
     """
     :type args: SanityConfig
@@ -729,6 +784,7 @@ SANITY_TESTS = (
     SanityFunc('pep8', command_sanity_pep8, intercept=False),
     SanityFunc('pylint', command_sanity_pylint, intercept=False),
     SanityFunc('yamllint', command_sanity_yamllint, intercept=False),
+    SanityFunc('rstcheck', command_sanity_rstcheck, intercept=False),
     SanityFunc('validate-modules', command_sanity_validate_modules, intercept=False),
     SanityFunc('ansible-doc', command_sanity_ansible_doc),
 )
