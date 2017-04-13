@@ -248,7 +248,6 @@ import traceback
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
-from ansible.module_utils.six import iteritems
 
 try:
     import botocore
@@ -551,24 +550,27 @@ def create_autoscaling_group(connection, module):
                                      ResourceId=group_name))
     if not as_groups.get('AutoScalingGroups'):
         if not vpc_zone_identifier and not availability_zones:
-            availability_zones = module.params['availability_zones'] = [zone.name for zone in ec2_connection.get_all_zones()]
+            availability_zones = module.params['availability_zones'] = [zone['ZoneName'] for
+                                                                        zone in ec2_connection.describe_availability_zones()['AvailabilityZones']]
         enforce_required_arguments(module)
         launch_configs = connection.describe_launch_configurations(LaunchConfigurationNames=[launch_config_name])
         if len(launch_configs) == 0:
             module.fail_json(msg="No launch config found with name %s" % launch_config_name)
         ag = dict(
             AutoScalingGroupName=group_name,
-            AvailabilityZones=availability_zones,
             LaunchConfigurationName=launch_configs['LaunchConfigurations'][0]['LaunchConfigurationName'],
             MinSize=min_size,
             MaxSize=max_size,
             DesiredCapacity=desired_capacity,
-            VPCZoneIdentifier=vpc_zone_identifier,
             Tags=asg_tags,
             HealthCheckGracePeriod=health_check_period,
             HealthCheckType=health_check_type,
             DefaultCooldown=default_cooldown,
             TerminationPolicies=termination_policies)
+        if vpc_zone_identifier:
+            ag['VPCZoneIdentifier'] = vpc_zone_identifier
+        if availability_zones:
+            ag['AvailabilityZones'] = availability_zones
         if placement_group:
             ag['PlacementGroup'] = placement_group
         if load_balancers:
@@ -599,6 +601,7 @@ def create_autoscaling_group(connection, module):
                         notification_types,
                     ]
                 )
+            as_group = connection.describe_auto_scaling_groups(AutoScalingGroupNames=[group_name])['AutoScalingGroups'][0]
             asg_properties = get_properties(as_group)
             changed = True
             return changed, asg_properties
@@ -715,18 +718,20 @@ def create_autoscaling_group(connection, module):
         launch_configs = connection.describe_launch_configurations(LaunchConfigurationNames=[launch_config_name])
         ag = dict(
             AutoScalingGroupName=group_name,
-            AvailabilityZones=availability_zones,
             LaunchConfigurationName=launch_configs['LaunchConfigurations'][0]['LaunchConfigurationName'],
             MinSize=min_size,
             MaxSize=max_size,
             DesiredCapacity=desired_capacity,
-            VPCZoneIdentifier=vpc_zone_identifier,
             HealthCheckGracePeriod=health_check_period,
             HealthCheckType=health_check_type,
             DefaultCooldown=default_cooldown,
             TerminationPolicies=termination_policies)
         connection.update_auto_scaling_group(**ag)
 
+        if vpc_zone_identifier:
+            ag['VPCZoneIdentifier'] = vpc_zone_identifier
+        if availability_zones:
+            ag['AvailabilityZones'] = availability_zones
         if notification_topic:
             try:
                 connection.put_notification_configuration(
