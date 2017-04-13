@@ -26,7 +26,7 @@ DOCUMENTATION = """
 module: ios_vrf
 version_added: "2.3"
 author: "Peter Sprygada (@privateip)"
-short_description: Manage the collection of VRF definitions on IOS devices
+short_description: Manage the collection of VRF definitions on Cisco IOS devices
 description:
   - This module provides declarative management of VRF definitions on
     Cisco IOS devices.  It allows playbooks to manage individual or
