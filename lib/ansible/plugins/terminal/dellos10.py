@@ -36,11 +36,13 @@ class TerminalModule(TerminalBase):
     ]
 
     terminal_stderr_re = [
-        re.compile(r"% ?Error: (?:(?!\bdoes not exist\b)(?!\balready exists\b)(?!\bHost not found\b)(?!\bnot active\b).)*$"),
+        re.compile(r"% ?Error"),
         re.compile(r"% ?Bad secret"),
+        re.compile(r"Syntax error:"),
         re.compile(r"invalid input", re.I),
         re.compile(r"(?:incomplete|ambiguous) command", re.I),
         re.compile(r"connection timed out", re.I),
+        re.compile(r"[^\r\n]+ not found", re.I),
         re.compile(r"'[^']' +returned error code: ?\d+"),
     ]
 
