@@ -261,7 +261,6 @@ class Task(Base, Conditional, Taggable, Become):
         env = {}
         if value is not None:
 
-            print(value)
             def _parse_env_kv(k, v):
                 try:
                     env[k] = templar.template(v, convert_bare=False)
