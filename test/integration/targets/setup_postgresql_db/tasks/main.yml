@@ -80,12 +80,13 @@
     group: "{{ pg_group }}"
     mode: "0644"
 
-- name: Generate pt_BR locale (Debian)
-  command: locale-gen pt_BR
-  when: ansible_os_family == 'Debian'
-
-- name: Generate es_ES locale (Debian)
-  command: locale-gen es_ES
+- name: Generate locales (Debian)
+  locale_gen:
+    name: '{{ item }}'
+    state: present
+  with_items:
+    - pt_BR
+    - es_ES
   when: ansible_os_family == 'Debian'
 
 # Suse: locales are installed by default (glibc-locale package).
