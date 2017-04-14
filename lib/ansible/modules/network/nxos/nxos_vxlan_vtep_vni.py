@@ -423,12 +423,8 @@ def main():
             candidate = CustomNetworkConfig(indent=3)
             invoke('state_%s' % state, module, existing, proposed, candidate)
 
-            try:
-                response = load_config(module, candidate)
-                result.update(response)
-            except ShellError:
-                exc = get_exception()
-                module.fail_json(msg=str(exc))
+            load_config(module, candidate)
+            result['changed'] = True
     else:
         result['updates'] = []
 
