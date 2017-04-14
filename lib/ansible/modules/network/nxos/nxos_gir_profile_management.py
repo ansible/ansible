@@ -126,7 +126,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 def get_existing(module):
     existing = []
-    netcfg = get_config(module)
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
     if module.params['mode'] == 'maintenance':
         parents = ['configure maintenance profile maintenance-mode']
