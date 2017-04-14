@@ -67,6 +67,10 @@ class ConfigLine(object):
         return _obj_to_text(self._children)
 
     @property
+    def child_objs(self):
+        return self._children
+
+    @property
     def parents(self):
         return _obj_to_text(self._parents)
 
@@ -368,18 +372,11 @@ class CustomNetworkConfig(NetworkConfig):
         if S is None:
             S = list()
         S.append(configobj)
-        for child in configobj.children:
+        for child in configobj.child_objs:
             if child in S:
                 continue
             self.expand_section(child, S)
         return S
-
-    def get_object(self, path):
-        for item in self.items:
-            if item.text == path[-1]:
-                parents = [p.text for p in item.parents]
-                if parents == path[:-1]:
-                    return item
 
     def to_block(self, section):
         return '\n'.join([item.raw for item in section])
