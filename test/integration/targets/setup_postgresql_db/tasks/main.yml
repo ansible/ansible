@@ -44,26 +44,11 @@
   ignore_errors: True
   when: ansible_os_family == "Debian"
 
-- name: install rpm dependencies for postgresql test
+- name: install dependencies for postgresql test
   package: name={{ postgresql_package_item }} state=latest
-  with_items: "{{postgresql_packages}}"
+  with_items: "{{ postgresql_packages }}"
   loop_control:
     loop_var: postgresql_package_item
-  when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
-
-- name: install dpkg dependencies for postgresql test
-  apt: name={{ postgresql_package_item }} state=latest
-  with_items: "{{postgresql_packages}}"
-  loop_control:
-    loop_var: postgresql_package_item
-  when: ansible_pkg_mgr  ==  'apt'
-
-- name: install FreeBSD dependencies for postgresql test
-  pkgng: name={{ postgresql_package_item }} state=present
-  with_items: "{{postgresql_packages}}"
-  loop_control:
-    loop_var: postgresql_package_item
-  when: ansible_os_family == "FreeBSD"
 
 - name: initialize postgres (FreeBSD)
   command: /usr/local/etc/rc.d/postgresql oneinitdb
