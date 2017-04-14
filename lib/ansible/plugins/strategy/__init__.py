@@ -239,9 +239,21 @@ class StrategyBase:
             host_list = [task_host]
         return host_list
 
-    def get_delegated_hosts(self, result, task):
+    def get_delegated_hosts(self, result, original_host, play, task):
+        # set correct loop var
+        if task.loop_control:
+            loop_var = task.loop_control.loop_var or 'item'
+        else:
+            loop_var = 'item'
+        item = result.get(loop_var, None)
 
-        host_name = task.delegate_to
+        task_vars = self._variable_manager.get_vars(loader=self._loader, play=play, host=original_host, task=task)
+        self.add_tqm_variables(task_vars, play=play)
+        if item is not None:
+            task_vars[loop_var] = item
+
+        templar = Templar(loader=self._loader, variables=task_vars)
+        host_name = templar.template(task.delegate_to)
         actual_host = self._inventory.get_host(host_name)
         if actual_host is None:
             actual_host = Host(name=host_name)
@@ -336,12 +348,6 @@ class StrategyBase:
 
             task_result._host = original_host
             task_result._task = original_task
-
-            # get the correct loop var for use later
-            if original_task.loop_control:
-                loop_var = original_task.loop_control.loop_var or 'item'
-            else:
-                loop_var = 'item'
 
             # send callbacks for 'non final' results
             if '_ansible_retry' in task_result._result:
@@ -492,7 +498,7 @@ class StrategyBase:
 
                         # if delegated fact and we are delegating facts, we need to change target host for them
                         if original_task.delegate_to is not None and original_task.delegate_facts:
-                            host_list = self.get_delegated_hosts(result_item, original_task)
+                            host_list = self.get_delegated_hosts(result_item, original_host, iterator._play, original_task)
                         else:
                             host_list = self.get_task_hosts(iterator, original_host, original_task)
 
