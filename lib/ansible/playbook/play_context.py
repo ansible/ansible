@@ -56,6 +56,7 @@ MAGIC_VARIABLE_MAPPING = dict(
     remote_addr      = ('ansible_ssh_host', 'ansible_host'),
     remote_user      = ('ansible_ssh_user', 'ansible_user'),
     port             = ('ansible_ssh_port', 'ansible_port'),
+    timeout          = ('ansible_ssh_timeout', 'ansible_timeout'),
     ssh_executable   = ('ansible_ssh_executable',),
     accelerate_port  = ('ansible_accelerate_port',),
     password         = ('ansible_ssh_pass', 'ansible_password'),
