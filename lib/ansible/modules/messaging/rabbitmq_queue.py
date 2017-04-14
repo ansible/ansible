@@ -224,7 +224,7 @@ def main():
         'dead_letter_exchange': 'x-dead-letter-exchange',
         'dead_letter_routing_key': 'x-dead-letter-routing-key'
     }.items():
-        if module.params[k]:
+        if module.params[k] is not None:
             module.params['arguments'][v] = module.params[k]
 
     # Exit if check_mode
