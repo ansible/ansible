@@ -110,6 +110,10 @@
   tags:
     - prepare
 
+- name: discover public IP address of ansible host
+  shell: dig +short myip.opendns.com @resolver1.opendns.com
+  register: ip_dig_result
+
 - name: create a security group for use in various tests
   ec2_group:
     name: "{{ resource_prefix }}-sg"
@@ -120,11 +124,15 @@
       - proto: tcp
         from_port: 22
         to_port: 22
-        cidr_ip: 0.0.0.0/0
+        cidr_ip: "{{ip_dig_result.stdout}}/32"
       - proto: tcp
         from_port: 80
         to_port: 80
-        cidr_ip: 0.0.0.0/0
+        cidr_ip: "{{ip_dig_result.stdout}}/32"
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        group_name: "{{ resource_prefix }}-sg"
     ec2_access_key: "{{ ec2_access_key }}"
     ec2_secret_key: "{{ ec2_secret_key }}"
   register: sg
