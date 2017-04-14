@@ -82,8 +82,10 @@ class ActionModule(_ActionModule):
             # start the connection if it isn't started
             if pc.connection == 'netconf':
                 rc, out, err = connection.exec_command('open_session()')
+                display.vvvv('open_session() returned %s %s %s' % (rc, out, err))
             else:
                 rc, out, err = connection.exec_command('open_shell()')
+                display.vvvv('open_shell() returned %s %s %s' % (rc, out, err))
 
             if rc != 0:
                 return {'failed': True,
