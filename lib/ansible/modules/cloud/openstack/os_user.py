@@ -40,7 +40,7 @@ options:
      choices: ['always', 'on_create']
      version_added: "2.3"
      description:
-        - C(always) will attempt to update password.  C(on_create) will only
+        - C(always) will attempt to update password if they differ.  C(on_create) will only
           set the password for newly created users.
    email:
      description:
@@ -137,22 +137,54 @@ user:
             type: string
             sample: "demouser"
 '''
+
+try:
+    import shade
+    from keystoneauth1 import exceptions as ks_exc
+    HAS_SHADE = True
+except ImportError:
+    HAS_SHADE = False
+
 from distutils.version import StrictVersion
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
+def _password_needs_update(username, default_project_id, params_dict, cloud, module):
+    if (params_dict['password'] is None or
+            params_dict['update_password'] != 'always'):
+        return False
+
+    if cloud is None:
+        return True
+
+    if default_project_id is None:
+        module.warn("Could not find default_project_id for user, which is needed to check if password needs to be changed. Password will be updated.")
+        return True
+
+    try:
+        if shade.openstack_cloud(username=username,
+                                 password=params_dict['password'],
+                                 project_id=default_project_id,
+                                 auth_url=cloud.auth['auth_url']).keystone_client is not None:
+            return False
+    except ks_exc.http.Unauthorized:
+        # passwords differ
+        return True
+    except Exception as ex:
+        template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+        message = template.format(ex.__class__, ex.args)
+        module.warn("Could not connect using username, password and project_id to verify password. Password will be updated. %s\n" % message)
+        return True
+
+    return True
+
+
 def _needs_update(params_dict, user):
     for k in params_dict:
         if k not in ('password', 'update_password') and user[k] != params_dict[k]:
             return True
-
-    # We don't get password back in the user object, so assume any supplied
-    # password is a change.
-    if (params_dict['password'] is not None and
-            params_dict['update_password'] == 'always'):
-        return True
 
     return False
 
@@ -252,8 +284,9 @@ def main():
                 if default_project_id is not None:
                     params_dict['default_project_id'] = default_project_id
 
-                if _needs_update(params_dict, user):
-                    if update_password == 'always':
+                password_needs_update = _password_needs_update(name, user.get('default_project_id'), params_dict, cloud, module)
+                if _needs_update(params_dict, user) or password_needs_update:
+                    if password_needs_update:
                         if description is not None:
                             user = cloud.update_user(
                                 user['id'], password=password, email=email,
