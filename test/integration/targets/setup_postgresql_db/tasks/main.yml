@@ -62,7 +62,7 @@
   command: /sbin/service postgresql initdb
   when: ansible_os_family == "RedHat" and ansible_service_mgr != "systemd"
 
-- name: Iniitalize postgres (Debian)
+- name: Initialize postgres (Debian)
   command: /usr/bin/pg_createcluster {{ pg_ver }} main
   # Sometimes package install creates the db cluster, sometimes this step is needed
   ignore_errors: True
