@@ -45,6 +45,7 @@ options:
         description:
             - Manage DNS record.
         choices: ['present', 'absent']
+        default: 'present'
     server:
         description:
             - Apply DNS modification on this server.
@@ -55,12 +56,12 @@ options:
     key_secret:
         description:
             - Use TSIG key secret, associated with C(key_name), to authenticate against C(server)
-        default: 7911
     key_algorithm:
         description:
             - Specify key algorithm used by C(key_secret).
         choices: ['HMAC-MD5.SIG-ALG.REG.INT', 'hmac-md5', 'hmac-sha1', 'hmac-sha224', 'hmac-sha256', 'hamc-sha384',
                   'hmac-sha512']
+        default: 'hmac-md5'
     zone:
         description:
             - DNS record will be modified on this C(zone).
