@@ -52,8 +52,8 @@ options:
       - >
         When passing an encrypted password, the encrypted parameter must also be true, and it must be generated with the format
         C('str[\\"md5\\"] + md5[ password + username ]'), resulting in a total of 35 characters.  An easy way to do this is:
-        C(echo \\"md5`echo -n \\"verysecretpasswordJOE\\" | md5`\\"). Note that if encrypted is set, the stored password will be hashed whether or not
-        it is pre-encrypted.
+        C(echo \\"md5`echo -n \\"verysecretpasswordJOE\\" | md5`\\"). Note that if the provided password string is already in
+        MD5-hashed format, then it is used as-is, regardless of encrypted parameter.
     required: false
     default: null
   db:
