@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 ---
 module: gce_instance_template
 version_added: "2.3"
-short_description: create or destroy intance templates of Compute Engine of GCP.
+short_description: create or destroy instance templates of Compute Engine of GCP.
 description:
      - Creates or destroy Google instance templates
        of Compute Engine of Google Cloud Platform.
@@ -87,7 +87,7 @@ options:
         If C(ephemeral), a new non-static address will be
         used.  If C(None), then no external address will
         be used.  To use an existing static IP address
-        specify adress name.
+        specify address name.
     default: "ephemeral"
   service_account_email:
     description:
@@ -495,7 +495,7 @@ def check_if_system_state_would_be_changed(module, gce):
             output = 'nothing to do for instance template {} '.format(name)
     if current_state == "present":
         if changed:
-            output = 'instance template {} will be detroyed'.format(name)
+            output = 'instance template {} will be destroyed'.format(name)
         else:
             output = 'nothing to do for instance template {} '.format(name)
 

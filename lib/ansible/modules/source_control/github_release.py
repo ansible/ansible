@@ -91,8 +91,7 @@ def main():
     )
 
     if not HAS_GITHUB_API:
-        module.fail_json(msg='Missing required github3 module (check docs or '
-                             'install with: pip install github3.py==1.0.0a4)')
+        module.fail_json(msg='Missing requried github3 module (check docs or install with: pip install github3)')
 
     repo = module.params['repo']
     user = module.params['user']

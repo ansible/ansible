@@ -107,7 +107,7 @@ class PullCLI(CLI):
         self.parser.add_option('--track-subs', dest='tracksubs', default=False, action='store_true',
             help='submodules will track the latest changes. This is equivalent to specifying the --remote flag to git submodule update')
 
-        # for pull we don't wan't a default
+        # for pull we don't want a default
         self.parser.set_defaults(inventory=None)
 
         super(PullCLI, self).parse()
@@ -129,7 +129,7 @@ class PullCLI(CLI):
             raise AnsibleOptionsError("URL for repository not specified, use -h for help")
 
         if self.options.module_name not in self.SUPPORTED_REPO_MODULES:
-            raise AnsibleOptionsError("Unsuported repo module %s, choices are %s" % (self.options.module_name, ','.join(self.SUPPORTED_REPO_MODULES)))
+            raise AnsibleOptionsError("Unsupported repo module %s, choices are %s" % (self.options.module_name, ','.join(self.SUPPORTED_REPO_MODULES)))
 
         display.verbosity = self.options.verbosity
         self.validate_conflicts(vault_opts=True)
