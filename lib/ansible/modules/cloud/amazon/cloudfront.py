@@ -585,7 +585,7 @@ class CloudFrontValidationManager:
                 self.validate_attribute_with_allowed_values(viewer_certificate.get("minimum_protocol_version"),
                         "viewer_certificat.minimum_protocol_version", self.__valid_viewer_certificate_minimum_protocol_versions)
             if 'certificate_source' in viewer_certificate:
-                self.validate_attribute_withallowed_values(viewer_certificate.get("certificate_source"),
+                self.validate_attribute_with_allowed_values(viewer_certificate.get("certificate_source"),
                         "viewer_certificate.certificate_source", self.__valid_viewer_certificate_certificate_sources)
             if 'ssl_support_method' in viewer_certificate:
                 viewer_certificate = self.__helpers.change_dict_key_name(viewer_certificate, "ssl_support_method",
@@ -987,10 +987,7 @@ def main():
         streaming_distribution_id, config, e_tag = validation_mgr.validate_update_delete_streaming_distribution_parameters(alias,
                 streaming_distribution_id, config, e_tag)
 
-    # return e_tag for update/create distribution
-
     # validate all lists[] - create method
-    # validate default_cache target_origin_id in origins list - expand
     # check all required attributes
     # url signing
 
@@ -1060,8 +1057,6 @@ def main():
         result=service_mgr.update_streaming_distribution(config, streaming_distribution_id, e_tag)
     elif validate:
         result = { 'validation_result': 'OK' }
-
-    #print "__result__:: " + str(result)
 
     module.exit_json(changed=True, **helpers.pascal_dict_to_snake_dict(result))
 
