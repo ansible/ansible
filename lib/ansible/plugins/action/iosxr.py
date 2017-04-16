@@ -60,13 +60,16 @@ class ActionModule(_ActionModule):
         pc.password = provider['password'] or self._play_context.password
         pc.timeout = provider['timeout'] or self._play_context.timeout
 
+        display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
         connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
         socket_path = self._get_socket_path(pc)
+        display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
+
         if not os.path.exists(socket_path):
             # start the connection if it isn't started
-            display.vvvv('calling open_shell()', pc.remote_addr)
             rc, out, err = connection.exec_command('open_shell()')
+            display.vvvv('open_shell() returned %s %s %s' % (rc, out, err))
             if rc != 0:
                 return {'failed': True,
                         'msg': 'unable to open shell. Please see: ' +
