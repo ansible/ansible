@@ -341,6 +341,10 @@ class ImageManager(DockerBaseClass):
                 self.results['changed'] = True
                 if not self.check_mode:
                     self.results['image'] = self.client.pull_image(self.name, tag=self.tag)
+                    if image:
+                        # If we have a previous image (meaning we're using
+                        # force), we're only changed # if the image id changed.
+                        self.results['changed'] = image.id != self.results['image'].id
 
         if self.archive_path:
             self.archive_image(self.name, self.tag)
