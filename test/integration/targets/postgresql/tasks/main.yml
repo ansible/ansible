@@ -186,87 +186,13 @@
 #
 # Create and destroy user
 #
-- name: Create a user
-  become_user: "{{ pg_user }}"
-  become: True
-  postgresql_user:
-    name: "{{ db_user1 }}"
-    encrypted: 'yes'
-    password: "md55c8ccfd9d6711fc69a7eae647fc54f51"
-    login_user: "{{ pg_user }}"
-    db: postgres
-  register: result
-
-- name: Check that ansible reports they were created
-  assert:
-    that:
-      - "result.changed == True"
-
-- name: Check that they were created
-  become_user: "{{ pg_user }}"
-  become: True
-  shell: echo "select * from pg_user where usename='{{ db_user1 }}';" | psql -d postgres
-  register: result
-
-- assert:
-    that:
-      - "result.stdout_lines[-1] == '(1 row)'"
-
-- name: Check that creating user a second time does nothing
-  become_user: "{{ pg_user }}"
-  become: True
-  postgresql_user:
-    name: "{{ db_user1 }}"
-    encrypted: 'yes'
-    password: "md55c8ccfd9d6711fc69a7eae647fc54f51"
-    login_user: "{{ pg_user }}"
-    db: postgres
-  register: result
-
-- name: Check that ansible reports no change
-  assert:
-    that:
-      - "result.changed == False"
-
-- name: Remove user
-  become_user: "{{ pg_user }}"
-  become: True
-  postgresql_user:
-    name: "{{ db_user1 }}"
-    state: 'absent'
-    login_user: "{{ pg_user }}"
-    db: postgres
-  register: result
-
-- name: Check that ansible reports they were removed
-  assert:
-    that:
-      - "result.changed == True"
-
-- name: Check that they were removed
-  become_user: "{{ pg_user }}"
-  become: True
-  shell: echo "select * from pg_user where usename='{{ db_user1 }}';" | psql -d postgres
-  register: result
-
-- assert:
-    that:
-      - "result.stdout_lines[-1] == '(0 rows)'"
-
-- name: Check that removing user a second time does nothing
-  become_user: "{{ pg_user }}"
-  become: True
-  postgresql_user:
-    name: "{{ db_user1 }}"
-    state: 'absent'
-    login_user: "{{ pg_user }}"
-    db: postgres
-  register: result
-
-- name: Check that ansible reports no change
-  assert:
-    that:
-      - "result.changed == False"
+- include: test_user.yml
+  vars:
+    encrypted: '{{ item.user_creation_encrypted_value }}'
+    db_password1: 'secretù' # use UTF-8
+  with_items:
+    - user_creation_encrypted_value: 'yes'
+    - user_creation_encrypted_value: 'no'
 
 # BYPASSRLS role attribute was introduced in Postgres 9.5, so 
 # we want to test atrribute management differently depending
@@ -875,7 +801,7 @@
     login_password: "password"
     login_host: "localhost"
 
-- name: Check that they were created
+- name: Check that it was created
   become: True
   become_user: "{{ pg_user }}"
   shell: echo "select * from pg_user where usename='{{ db_user2 }}';" | psql -d postgres
