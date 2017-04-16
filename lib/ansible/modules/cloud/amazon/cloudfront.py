@@ -822,7 +822,7 @@ class CloudFrontHelpers:
                     config_node_items = config_node.items()
                 else:
                     config_node_items = []
-                config[node_name] = dict(config_node_items + validated_node_items)
+                config[node_name] = dict(config_node_items + validated_node.items())
             if isinstance(validated_node, list):
                 config[node_name] = list(set(config.get(node_name) + validated_node))
         return config
