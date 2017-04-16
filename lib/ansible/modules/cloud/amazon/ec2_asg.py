@@ -311,6 +311,14 @@ def get_properties(autoscaling_group):
     properties['load_balancers'] = autoscaling_group.get('LoadBalancerNames')
     properties['launch_config_name'] = autoscaling_group.get('LaunchConfigurationName')
     properties['tags'] = autoscaling_group.get('Tags')
+    properties['min_size'] = autoscaling_group.get('MinSize')
+    properties['max_size'] = autoscaling_group.get('MaxSize')
+    properties['desired_capacity'] = autoscaling_group.get('DesiredCapacity')
+    properties['default_cooldown'] = autoscaling_group.get('DefaultCooldown')
+    properties['healthcheck_grace_period'] = autoscaling_group.get('HealthCheckGracePeriod')
+    properties['healthcheck_type'] = autoscaling_group.get('HealthCheckType')
+    properties['default_cooldown'] = autoscaling_group.get('DefaultCooldown')
+    properties['termination_policies'] = autoscaling_group.get('TerminationPolicies')
 
     return properties
 
@@ -609,6 +617,7 @@ def create_autoscaling_group(connection, module):
             module.fail_json(msg="Failed to create Autoscaling Group: %s" % str(e), exception=traceback.format_exc())
     else:
         as_group = as_groups['AutoScalingGroups'][0]
+        initial_asg_properties = get_properties(as_group)
         changed = False
 
         if suspend_processes(connection, as_group, module):
@@ -760,6 +769,8 @@ def create_autoscaling_group(connection, module):
             as_group = connection.describe_auto_scaling_groups(
                 AutoScalingGroupNames=[group_name])['AutoScalingGroups'][0]
             asg_properties = get_properties(as_group)
+            if asg_properties != initial_asg_properties:
+                changed = True
         except botocore.exceptions.BotoCoreError as e:
             module.fail_json(msg="Failed to read existing Autoscaling Groups: %s" % str(e),
                              exception=traceback.format_exc())
