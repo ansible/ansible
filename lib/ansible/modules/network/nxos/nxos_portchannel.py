@@ -130,7 +130,6 @@ changed:
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
 
 import collections
 
@@ -207,7 +206,7 @@ def get_portchannel_mode(interface, protocol, module, netcfg):
     if protocol != 'LACP':
         mode = 'on'
     else:
-        netcfg = get_config(module)
+        netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
         parents = ['interface {0}'.format(interface.capitalize())]
         body = netcfg.get_section(parents)
 
@@ -281,7 +280,7 @@ def get_portchannel(module, netcfg=None):
 
 def get_existing(module, args):
     existing = {}
-    netcfg = get_config(module)
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
     interface_exist = check_interface(module, netcfg)
     if interface_exist:

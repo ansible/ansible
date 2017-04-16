@@ -174,7 +174,7 @@ def get_route_target_value(arg, config, module):
 
 def get_existing(module, args):
     existing = {}
-    netcfg = get_config(module)
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
     parents = ['evpn', 'vni {0} l2'.format(module.params['vni'])]
     config = netcfg.get_section(parents)
 
