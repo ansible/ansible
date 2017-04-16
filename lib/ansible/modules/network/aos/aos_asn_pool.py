@@ -203,7 +203,7 @@ def asn_pool_absent(module, aos, my_pool):
         try:
             my_pool.delete()
         except:
-            module.fail_json(msg="An error occured, while trying to delete the ASN Pool")
+            module.fail_json(msg="An error occurred, while trying to delete the ASN Pool")
 
     module.exit_json( changed=True,
                       name=my_pool.name,
@@ -234,7 +234,7 @@ def asn_pool_present(module, aos, my_pool):
                 my_new_pool = create_new_asn_pool(my_pool, margs['name'], margs['ranges'])
                 my_pool = my_new_pool
             except:
-                module.fail_json(msg="An error occured while trying to create a new ASN Pool ")
+                module.fail_json(msg="An error occurred while trying to create a new ASN Pool ")
 
         module.exit_json( changed=True,
                           name=my_pool.name,

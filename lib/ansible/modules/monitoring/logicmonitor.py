@@ -947,7 +947,7 @@ class Collector(LogicMonitor):
             installer = self.get_installer_binary()
 
             if self.info is None:
-                self.module.debug("Retriving collector information")
+                self.module.debug("Retrieving collector information")
                 self.info = self._get()
 
             if not os.path.exists(self.installdir + "/agent"):

@@ -239,7 +239,7 @@ def main():
             # When an tap URL is provided explicitly, we allow adding
             # *single* tap only. Validate and proceed to add single tap.
             if len(taps) > 1:
-                msg = "List of muliple taps may not be provided with 'url' option."
+                msg = "List of multiple taps may not be provided with 'url' option."
                 module.fail_json(msg=msg)
             else:
                 failed, changed, msg = add_tap(module, brew_path, taps[0], url)

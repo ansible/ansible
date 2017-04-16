@@ -158,7 +158,7 @@ def do_load_resource(module, collection, name):
     try:
         item = find_collection_item(collection, name, '')
     except:
-        module.fail_json(msg="Ans error occured while running 'find_collection_item'")
+        module.fail_json(msg="An error occurred while running 'find_collection_item'")
 
     if item.exists:
         module.exit_json( changed=False,

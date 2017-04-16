@@ -62,7 +62,7 @@ options:
     upload_image_path:
         description:
             - "Path to disk image, which should be uploaded."
-            - "Note that currently we support only compability version 0.10 of the qcow disk."
+            - "Note that currently we support only compatibility version 0.10 of the qcow disk."
             - "Note that you must have an valid oVirt/RHV engine CA in your system trust store
                or you must provide it in C(ca_file) parameter."
             - "Note that there is no reliable way to achieve idempotency, so
@@ -308,7 +308,7 @@ def transfer(connection, module, direction, transfer_func):
             otypes.ImageTransferPhase.CANCELLED,
         ]:
             raise Exception(
-                "Error occured while uploading image. The transfer is in %s" % transfer.phase
+                "Error occurred while uploading image. The transfer is in %s" % transfer.phase
             )
         if module.params.get('logical_unit'):
             disks_service = connection.system_service().disks_service()

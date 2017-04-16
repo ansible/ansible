@@ -251,11 +251,11 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
             args['ispublic']                = self.module.params.get('is_public')
 
             if args['bootable'] and not args['ostypeid']:
-                self.module.fail_json(msg="OS type 'os_type' is requried if 'bootable=true'.")
+                self.module.fail_json(msg="OS type 'os_type' is required if 'bootable=true'.")
 
             args['url'] = self.module.params.get('url')
             if not args['url']:
-                self.module.fail_json(msg="URL is requried.")
+                self.module.fail_json(msg="URL is required.")
 
             self.result['changed'] = True
             if not self.module.check_mode:
