@@ -117,8 +117,10 @@ class CloudFrontServiceManager:
     def create_origin_access_identity(self, caller_reference, comment):
         try:
             func = partial(self.client.create_cloud_front_origin_access_identity,
-                    CloudFrontOriginAccessIdentityConfig =
-                    { 'CallerReference': caller_reference, 'Comment': comment })
+                    CloudFrontOriginAccessIdentityConfig = {
+                        'CallerReference': caller_reference,
+                        'Comment': comment
+                        })
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="error creating cloud front origin access identity - " + str(e),
@@ -139,8 +141,8 @@ class CloudFrontServiceManager:
         try:
             func = partial(self.client.update_cloud_front_origin_access_identity,
                     CloudFrontOriginAccessIdentityConfig = {
-                        "CallerReference": caller_reference,
-                        "Comment": comment
+                        'CallerReference': caller_reference,
+                        'Comment': comment
                         },
                     Id=origin_access_identity_id, IfMatch=e_tag)
             return self.paginated_response(func)
@@ -175,7 +177,7 @@ class CloudFrontServiceManager:
         try:
             cloudfront_signer = CloudFrontSigner(key_id, rsa_signer)
             signed_url = cloudfront_signer.generate_presigned_url(url, date_less_than=expire_date)
-            return {"presigned_url": signed_url }
+            return { 'presigned_url': signed_url }
         except Exception as e:
             self.module.fail_json(msg="error generating signed url from pem private key - " + str(e),
                     exception=traceback.format_exc(),
@@ -193,7 +195,10 @@ class CloudFrontServiceManager:
             if expires_in is None:
                 expires_in = self.__default_presigned_url_expires_in
             self.create_client('s3')
-            params = { "Bucket": s3_bucket_name, "Key": s3_key_name }
+            params = {
+                    'Bucket': s3_bucket_name,
+                    'Key': s3_key_name
+                    }
             response = self.client.generate_presigned_url(client_method, Params=params,
                     ExpiresIn=expires_in, HttpMethod=http_method)
             return { "presigned_url": response }
@@ -207,9 +212,10 @@ class CloudFrontServiceManager:
             if tags is None:
                 func = partial(self.client.create_distribution, DistributionConfig=config)
             else:
-                distribution_config_with_tags = {}
-                distribution_config_with_tags["DistributionConfig"] = config
-                distribution_config_with_tags["Tags"] = tags
+                distribution_config_with_tags = {
+                        'DistributionConfig' = config,
+                        'Tags' = tags
+                        }
                 func = partial(self.client.create_disribution_with_tags,
                         DistributionConfigWithTags=distribution_config_with_tags)
             return self.paginated_response(func)
@@ -243,8 +249,10 @@ class CloudFrontServiceManager:
             if tags is None:
                 func = partial(self.client.create_streaming_distribution, StreamingDistributionConfig=config)
             else:
-                streaming_distribution_config_with_tags["StreamingDistributionConfig"] = config
-                streaming_distribution_config_with_tags["Tags"] = tags
+                streaming_distribution_config_with_tags = {
+                        'StreamingDistributionConfig' = config,
+                        'Tags' = tags
+                        }
                 func = partial(self.client.create_streaming_disribution_with_tags,
                         StreamingDistributionConfigWithTags=streaming_distribution_config_with_tags)
             return self.paginated_response(func)
@@ -814,10 +822,6 @@ class CloudFrontHelpers:
                     config_node_items = config_node.items()
                 else:
                     config_node_items = []
-                if validated_node is not None:
-                    validated_node_items = validated_node.items()
-                else:
-                    validated_node_items = []
                 config[node_name] = dict(config_node_items + validated_node_items)
             if isinstance(validated_node, list):
                 config[node_name] = list(set(config.get(node_name) + validated_node))
@@ -987,7 +991,6 @@ def main():
         streaming_distribution_id, config, e_tag = validation_mgr.validate_update_delete_streaming_distribution_parameters(alias,
                 streaming_distribution_id, config, e_tag)
 
-    # validate all lists[] - create method
     # check all required attributes
     # url signing
 
