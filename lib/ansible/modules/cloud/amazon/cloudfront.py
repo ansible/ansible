@@ -213,8 +213,8 @@ class CloudFrontServiceManager:
                 func = partial(self.client.create_distribution, DistributionConfig=config)
             else:
                 distribution_config_with_tags = {
-                        'DistributionConfig' = config,
-                        'Tags' = tags
+                        'DistributionConfig': config,
+                        'Tags': tags
                         }
                 func = partial(self.client.create_disribution_with_tags,
                         DistributionConfigWithTags=distribution_config_with_tags)
@@ -250,8 +250,8 @@ class CloudFrontServiceManager:
                 func = partial(self.client.create_streaming_distribution, StreamingDistributionConfig=config)
             else:
                 streaming_distribution_config_with_tags = {
-                        'StreamingDistributionConfig' = config,
-                        'Tags' = tags
+                        'StreamingDistributionConfig': config,
+                        'Tags': tags
                         }
                 func = partial(self.client.create_streaming_disribution_with_tags,
                         StreamingDistributionConfigWithTags=streaming_distribution_config_with_tags)
@@ -991,9 +991,7 @@ def main():
         streaming_distribution_id, config, e_tag = validation_mgr.validate_update_delete_streaming_distribution_parameters(alias,
                 streaming_distribution_id, config, e_tag)
 
-    # check all required attributes
     # url signing
-
     # testing
     # doc
 
@@ -1028,8 +1026,6 @@ def main():
         config = validation_mgr.validate_caller_reference_for_distribution_create(config, caller_reference)
 
     config = helpers.snake_dict_to_pascal_dict(config)
-
-    print "__config__:: " + str(config)
 
     if create_origin_access_identity:
         result=service_mgr.create_origin_access_identity(caller_reference, comment)
