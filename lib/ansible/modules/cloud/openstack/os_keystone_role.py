@@ -40,7 +40,7 @@ options:
      default: present
    availability_zone:
      description:
-       - Ignored. Present for backwards compatability
+       - Ignored. Present for backwards compatibility
      required: false
 requirements:
     - "python >= 2.6"

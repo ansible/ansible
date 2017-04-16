@@ -56,5 +56,5 @@ options:
   backup_filename:
     description:
       - Specifies the backup filename. If omitted filename will be
-        formated like HOST_config.YYYY-MM-DD@HH:MM:SS
+        formatted like HOST_config.YYYY-MM-DD@HH:MM:SS
 """

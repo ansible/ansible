@@ -139,7 +139,7 @@ options:
         matches it. The target can be a user-defined chain (other than the one
         this rule is in), one of the special builtin targets which decide the
         fate of the packet immediately, or an extension (see EXTENSIONS
-        below).  If this option is omitted in a rule (and the goto paramater
+        below).  If this option is omitted in a rule (and the goto parameter
         is not used), then matching the rule will have no effect on the
         packet's fate, but the counters on the rule will be incremented.
     required: false

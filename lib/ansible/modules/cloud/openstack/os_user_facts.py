@@ -49,7 +49,7 @@ options:
      default: None
    availability_zone:
      description:
-       - Ignored. Present for backwards compatability
+       - Ignored. Present for backwards compatibility
      required: false
 '''
 

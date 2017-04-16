@@ -166,7 +166,7 @@ class ModuleArgsParser:
                 args.update(tmp_args)
 
         # only internal variables can start with an underscore, so
-        # we don't allow users to set them directy in arguments
+        # we don't allow users to set them directly in arguments
         if args and action not in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw'):
             for arg in args:
                 arg = to_text(arg)

@@ -79,7 +79,7 @@ options:
             - "C(lun_id) - LUN id."
             - "C(username) - A CHAP user name for logging into a target."
             - "C(password) - A CHAP password for logging into a target."
-            - "C(override_luns) - If I(True) ISCSI storage domain luns will be overriden before adding."
+            - "C(override_luns) - If I(True) ISCSI storage domain luns will be overridden before adding."
             - "Note that these parameters are not idempotent."
     posixfs:
         description:

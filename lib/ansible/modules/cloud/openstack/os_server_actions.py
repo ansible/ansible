@@ -62,7 +62,7 @@ options:
      version_added: "2.3"
    availability_zone:
      description:
-       - Ignored. Present for backwards compatability
+       - Ignored. Present for backwards compatibility
      required: false
 requirements:
     - "python >= 2.6"

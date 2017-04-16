@@ -56,7 +56,7 @@ options:
             - The DNS domain name of the zone (e.g., example.com).
             - One of either I(zone) or I(zone_id) must be specified as an
               option, or the module will fail.
-            - If both I(zone) and I(zone_id) are specifed, I(zone_id) will be
+            - If both I(zone) and I(zone_id) are specified, I(zone_id) will be
               used.
         required: false
     zone_id:
@@ -68,7 +68,7 @@ options:
               with dashes. A zone ID will never have any dots in it.
             - I(zone_id) can be faster than I(zone) in projects with a large
               number of zones.
-            - If both I(zone) and I(zone_id) are specifed, I(zone_id) will be
+            - If both I(zone) and I(zone_id) are specified, I(zone_id) will be
               used.
         required: false
     type:

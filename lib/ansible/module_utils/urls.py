@@ -479,7 +479,7 @@ def generic_urlparse(parts):
                 # so remove it and convert the port to an integer
                 port = int(port[1:])
             if auth:
-                # the capture group above inclues the @, so remove it
+                # the capture group above includes the @, so remove it
                 # and then split it up based on the first ':' found
                 auth = auth[:-1]
                 username, password = auth.split(':', 1)

@@ -30,7 +30,7 @@ options:
   lookup:
     description:
       - "Look up route table by either tags or by route table ID. Non-unique tag lookup will fail.
-        If no tags are specifed then no lookup for an existing route table is performed and a new
+        If no tags are specified then no lookup for an existing route table is performed and a new
         route table will be created. To change tags of a route table or delete a route table,
         you must look up by id."
     required: false

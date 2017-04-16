@@ -17,7 +17,7 @@
 '''
 DOCUMENTATION:
     cache: yaml
-    short_description: File backed, YAML formated.
+    short_description: File backed, YAML formatted.
     description:
         - File backed cache that uses YAML as a format, the files are per host.
     version_added: "2.3"

@@ -71,7 +71,7 @@ options:
       - If specified, the block will be inserted after the last match of
         specified regular expression. A special value is available; C(EOF) for
         inserting the block at the end of the file.  If specified regular
-        expresion has no matches, C(EOF) will be used instead.
+        expression has no matches, C(EOF) will be used instead.
     choices: [ 'EOF', '*regex*' ]
   insertbefore:
     required: false
@@ -80,7 +80,7 @@ options:
       - If specified, the block will be inserted before the last match of
         specified regular expression. A special value is available; C(BOF) for
         inserting the block at the beginning of the file.  If specified regular
-        expresion has no matches, the block will be inserted at the end of the
+        expression has no matches, the block will be inserted at the end of the
         file.
     choices: [ 'BOF', '*regex*' ]
   create:

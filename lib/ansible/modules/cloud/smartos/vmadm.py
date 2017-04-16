@@ -683,7 +683,7 @@ def main():
     uuid = p['uuid']
     state = p['state']
 
-    # Translate the state paramter into something we can use later on.
+    # Translate the state parameter into something we can use later on.
     if state in ['present', 'running']:
         vm_state = 'running'
     elif state in ['stopped', 'created']:

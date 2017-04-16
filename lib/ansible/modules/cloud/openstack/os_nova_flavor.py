@@ -85,7 +85,7 @@ options:
      default: "auto"
    availability_zone:
      description:
-       - Ignored. Present for backwards compatability
+       - Ignored. Present for backwards compatibility
      required: false
    extra_specs:
      description:

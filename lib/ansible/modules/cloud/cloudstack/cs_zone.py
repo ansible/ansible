@@ -38,7 +38,7 @@ options:
     required: true
   id:
     description:
-      - uuid of the exising zone.
+      - uuid of the existing zone.
     default: null
     required: false
   state:

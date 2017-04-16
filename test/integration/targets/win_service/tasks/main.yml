@@ -497,7 +497,7 @@
     desktop_interact: True
   register: win_service_local_system_desktop
 
-- name: check that the service has been set to Local Sytem with desktop interaction
+- name: check that the service has been set to Local System with desktop interaction
   assert:
     that:
     - "win_service_local_system_desktop|changed"
@@ -791,7 +791,7 @@
     name: TestServiceDependency
     state: started
 
-- name: wait 5 seconds for service to propogate service startup
+- name: wait 5 seconds for service to propagate service startup
   pause:
     seconds: 5
 

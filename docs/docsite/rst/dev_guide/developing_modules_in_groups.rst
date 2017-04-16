@@ -25,7 +25,7 @@ Although it's tempting to get straight into coding, there are a few things to be
 * Have a look at the existing modules and how they've been named in the :doc:`../list_of_all_modules`, especially in the same functional area (such as cloud, networking, databases).
 * Shared code can be placed into ``lib/ansible/module_utils/``
 * Shared documentation (for example describing common arguments) can be placed in ``lib/ansible/utils/module_docs_fragments/``.
-* With great power comes great responsiblity: Ansible module maintainers have a duty to help keep modules up to date. As with all successful community projects, module maintainers should keep a watchful eye for reported issues and contributions.
+* With great power comes great responsibility: Ansible module maintainers have a duty to help keep modules up to date. As with all successful community projects, module maintainers should keep a watchful eye for reported issues and contributions.
 * Although not required, unit and/or integration tests are strongly recommended. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see ``test/`` and the `Testing Working Group <https://github.com/ansible/community/blob/master/MEETINGS.md>`_.
 
 Naming Convention
@@ -141,7 +141,7 @@ We realise this may be your first use of Git or GitHub. The following guides may
 * `How to sync (update) your fork <https://help.github.com/articles/syncing-a-fork/>`_
 * `How to create a Pull Request (PR) <https://help.github.com/articles/about-pull-requests/>`_
 
-Please note that in the Ansible Git Repo the main branch is called ``devel`` rather than ``master``, which is used in the offical GitHub documentation
+Please note that in the Ansible Git Repo the main branch is called ``devel`` rather than ``master``, which is used in the official GitHub documentation
 
 After your first PR has been merged ensure you "sync your fork" with ``ansible/ansible`` to ensure you've pulled in the directory structure and and shared code or documentation previously created.
 

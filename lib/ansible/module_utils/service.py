@@ -65,7 +65,7 @@ def get_sysv_script(name):
 def sysv_exists(name):
     '''
     This function will return True or False depending on
-    the existance of an init script corresponding to the service name supplied.
+    the existence of an init script corresponding to the service name supplied.
 
     :arg name: name of the service to test for
     '''
@@ -89,7 +89,7 @@ def fail_if_missing(module, found, service, msg=''):
 
 def daemonize(module, cmd):
     '''
-    Execute a command while detaching as a deamon, returns rc, stdout, and stderr.
+    Execute a command while detaching as a daemon, returns rc, stdout, and stderr.
 
     :arg module: is an  AnsbileModule object, used for it's utility methods
     :arg cmd: is a list or string representing the command and options to run

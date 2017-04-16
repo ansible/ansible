@@ -38,7 +38,7 @@ options:
     required: true
   msg:
     description:
-      - The message you wish to deliver as a notifcation
+      - The message you wish to deliver as a notification
     required: true
   title:
     description:

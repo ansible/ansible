@@ -471,7 +471,7 @@ def main():
     else:
         changed = False
 
-    # Transmogrify the headers, replacing '-' with '_', since variables dont
+    # Transmogrify the headers, replacing '-' with '_', since variables don't
     # work with dashes.
     # In python3, the headers are title cased.  Lowercase them to be
     # compatible with the python2 behaviour.

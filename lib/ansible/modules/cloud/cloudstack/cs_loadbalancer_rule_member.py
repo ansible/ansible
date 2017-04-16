@@ -82,7 +82,7 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Add VMs to an exising load balancer
+# Add VMs to an existing load balancer
 - local_action:
     module: cs_loadbalancer_rule_member
     name: balance_http

@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 ---
 module: gce_instance_template
 version_added: "2.3"
-short_description: create or destroy intance templates of Compute Engine of GCP.
+short_description: create or destroy instance templates of Compute Engine of GCP.
 description:
      - Creates or destroy Google instance templates
        of Compute Engine of Google Cloud Platform.

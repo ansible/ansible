@@ -253,7 +253,7 @@ EXAMPLES = '''
     bucket: mybucket
     mode: delete
 
-- name: GET an object but dont download if the file checksums match. New in 2.0
+- name: GET an object but don't download if the file checksums match. New in 2.0
   s3:
     bucket: mybucket
     object: /my/desired/key.txt

@@ -220,7 +220,7 @@ class InventoryDirectory(object):
         """ Merge all of instance newgroup into group,
             update parent/child relationships
             group lists may still contain group objects that exist in self with
-            same name, but was instanciated as a different object in some other
+            same name, but was instantiated as a different object in some other
             inventory parser; these are handled later """
 
         # name

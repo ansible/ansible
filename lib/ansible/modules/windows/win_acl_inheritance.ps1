@@ -44,7 +44,7 @@ Try {
         $objACL.SetAccessRuleProtection($False, $False)
 
         If ($reorganize) {
-            # it wont work without intermediate save, state would be the same
+            # it won't work without intermediate save, state would be the same
             Set-ACL $path $objACL
             $objACL = Get-ACL $path
 

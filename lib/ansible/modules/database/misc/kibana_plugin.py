@@ -110,7 +110,7 @@ url:
     returned: success
     type: string
 timeout:
-    description: the timout for plugin download
+    description: the timeout for plugin download
     returned: success
     type: string
 stdout:

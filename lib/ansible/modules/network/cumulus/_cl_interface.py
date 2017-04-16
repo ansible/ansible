@@ -240,7 +240,7 @@ def current_iface_config(module):
 
 
 def build_address(module):
-    # if addr_method == 'dhcp', dont add IP address
+    # if addr_method == 'dhcp', don't add IP address
     if module.params.get('addr_method') == 'dhcp':
         return
     _ipv4 = module.params.get('ipv4')
