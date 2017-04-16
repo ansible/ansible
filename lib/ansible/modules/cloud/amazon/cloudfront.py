@@ -73,13 +73,6 @@ register: "{{ distribution_config_details }}"
 RETURN = '''
 '''
 
-try:
-    import boto3
-    import botocore
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
-
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, boto3_conn, HAS_BOTO3
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.basic import AnsibleModule
@@ -308,6 +301,7 @@ class CloudFrontValidationManager:
 
     def __init__(self, module):
         self.__cloudfront_facts_mgr = CloudFrontFactsServiceManager(module)
+        self.module = module
         self.__helpers = CloudFrontHelpers()
         self.__default_distribution_enabled = False
         self.__default_http_port = 80
@@ -365,8 +359,11 @@ class CloudFrontValidationManager:
             default_origin_path, streaming, create_distribution):
         try:
             valid_origins = {}
-            if origins is None:
+            if origins is None and default_origin_domain_name is None:
                 return None
+            else:
+                origins = [ { 'domain_name': default_origin_domain_name,
+                    'origin_path': '' if default_origin_path is None else str(default_origin_path) } ]
             if not isinstance(origins, list):
                 self.module.fail_json(msg="origins[] must be a list")
             quantity = len(origins)
@@ -427,7 +424,6 @@ class CloudFrontValidationManager:
                     else:
                         self.validate_attribute_with_allowed_values(custom_origin_config.get("origin_ssl_protocols"),
                                 "origins[].origin_ssl_protocols", self.__valid_origin_ssl_protocols)
-                    temp_origin_ssl_protocols = custom_origin_config.get("origin_ssl_protocols")
                     custom_origin_config["origin_ssl_protocols"] = self.__helpers.python_list_to_aws_list(
                             temp_origin_ssl_protocols)
             return self.__helpers.python_list_to_aws_list(origins)
@@ -437,7 +433,7 @@ class CloudFrontValidationManager:
 
     def validate_cache_behaviors(self, cache_behaviors, valid_origins):
         try:
-            if cache_behaviors is None:
+            if cache_behaviors is None and valid_origins is not None:
                 return None
             for cache_behavior in cache_behaviors:
                 self.validate_cache_behavior(cache_behavior, valid_origins)
@@ -446,9 +442,11 @@ class CloudFrontValidationManager:
             self.module.fail_json(msg="error validating distribution cache behaviors - " + str(e),
                     exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
-    def validate_cache_behavior(self, cache_behavior, valid_origins):
+    def validate_cache_behavior(self, cache_behavior, valid_origins, validate_default_cache=False):
         try:
-            if cache_behavior is None:
+            if validate_default_cache:
+                cache_behavior = {}
+            if cache_behavior is None and valid_origins is not None:
                 return None
             if 'min_ttl' not in cache_behavior:
                 cache_behavior["min_t_t_l"] = self.__default_cache_behavior_min_ttl
@@ -733,14 +731,13 @@ class CloudFrontValidationManager:
             config["caller_reference"] = caller_reference
         else:
             config["caller_reference"] = self.__default_datetime_string
+        return config
 
     def get_first_origin_id_for_default_cache_behavior(self, valid_origins):
-        if valid_origins is None:
-            return self.__default_datetime_string
-        if isinstance(valid_origins, list) and len(valid_origins) > 0:
+        if valid_origins is not None and isinstance(valid_origins, list) and len(valid_origins) > 0:
             return str(valid_origins.get("Items")[0].get("Id"))
         else:
-            return None
+            return self.__default_datetime_string
 
     def validate_attribute_with_allowed_values(self, attribute, attribute_name, allowed_list):
         if attribute is not None and attribute not in allowed_list:
@@ -812,7 +809,16 @@ class CloudFrontHelpers:
     def merge_validation_into_config(self, config, validated_node, node_name):
         if validated_node is not None:
             if isinstance(validated_node, dict):
-                config[node_name] = dict(config.get(node_name).items() + validated_node.items())
+                config_node = config.get(node_name)
+                if config_node is not None:
+                    config_node_items = config_node.items()
+                else:
+                    config_node_items = []
+                if validated_node is not None:
+                    validated_node_items = validated_node.items()
+                else:
+                    validated_node_items = []
+                config[node_name] = dict(config_node_items + validated_node_items)
             if isinstance(validated_node, list):
                 config[node_name] = list(set(config.get(node_name) + validated_node))
         return config
@@ -1005,7 +1011,7 @@ def main():
         config_origins = config.get("origins")
         valid_cache_behaviors = validation_mgr.validate_cache_behaviors(cache_behaviors, config_origins)
         config = helpers.merge_validation_into_config(config, valid_cache_behaviors, "cache_behaviors")
-        valid_default_cache_behavior = validation_mgr.validate_cache_behavior(default_cache_behavior, config_origins)
+        valid_default_cache_behavior = validation_mgr.validate_cache_behavior(default_cache_behavior, config_origins, True)
         config = helpers.merge_validation_into_config(config, valid_default_cache_behavior, "default_cache_behavior")
         valid_custom_error_responses = validation_mgr.validate_custom_error_responses(custom_error_responses)
         config = helpers.merge_validation_into_config(config, valid_custom_error_responses, "custom_error_responses")
@@ -1019,9 +1025,11 @@ def main():
         config = validation_mgr.validate_streaming_distribution_config_parameters(config, comment,
                 trusted_signers, s3_origin, default_s3_origin_domain_name, default_s3_origin_access_identity)
     if create_distribution or create_streaming_distribution:
-        config = validation_mgr.validate_caller_reference_for_distribution_creation(config, caller_reference)
-   
+        config = validation_mgr.validate_caller_reference_for_distribution_create(config, caller_reference)
+
     config = helpers.snake_dict_to_pascal_dict(config)
+
+    print "__config__:: " + str(config)
 
     if create_origin_access_identity:
         result=service_mgr.create_origin_access_identity(caller_reference, comment)
@@ -1051,9 +1059,11 @@ def main():
     elif update_streaming_distribution:
         result=service_mgr.update_streaming_distribution(config, streaming_distribution_id, e_tag)
     elif validate:
-        result={ 'validation_result': 'OK' }
+        result = { 'validation_result': 'OK' }
 
-    module.exit_json(changed=True, **camel_dict_to_snake_dict(result))
+    #print "__result__:: " + str(result)
+
+    module.exit_json(changed=True, **helpers.pascal_dict_to_snake_dict(result))
 
 if __name__ == '__main__':
     main()
