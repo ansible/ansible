@@ -207,8 +207,9 @@ EXAMPLES = '''
     password: NULL
 '''
 
-import re
+from hashlib import md5
 import itertools
+import re
 
 from distutils.version import StrictVersion
 
@@ -219,6 +220,7 @@ except ImportError:
     postgresqldb_found = False
 else:
     postgresqldb_found = True
+from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import iteritems
 
 _flags = ('SUPERUSER', 'CREATEROLE', 'CREATEUSER', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
@@ -294,20 +296,16 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
         # Do we actually need to do anything?
         pwchanging = False
         if password is not None:
-            if encrypted == 'ENCRYPTED':
-                if password.startswith('md5'):
-                    if password != current_role_attrs['rolpassword']:
-                        pwchanging = True
-                else:
-                    try:
-                        from passlib.hash import postgres_md5 as pm
-                        if pm.encrypt(password, user) != current_role_attrs['rolpassword']:
-                            pwchanging = True
-                    except ImportError:
-                        # Cannot check if passlib is not installed, so assume password is different
-                        pwchanging = True
-            else:
+            # 32: MD5 hashes are represented as a sequence of 32 hexadecimal digits
+            #  3: The size of the 'md5' prefix
+            # When the provided password looks like a MD5-hash, value of
+            # 'encrypted' is ignored.
+            if ((password.startswith('md5') and len(password) == 32+3) or encrypted == 'UNENCRYPTED'):
                 if password != current_role_attrs['rolpassword']:
+                    pwchanging = True
+            elif encrypted == 'ENCRYPTED':
+                hashed_password = 'md5{0}'.format(md5(to_bytes(password) + to_bytes(user)).hexdigest())
+                if hashed_password != current_role_attrs['rolpassword']:
                     pwchanging = True
 
         role_attr_flags_changing = False
@@ -340,6 +338,7 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
 
         try:
             cursor.execute(' '.join(alter), query_password_data)
+            changed = True
         except psycopg2.InternalError:
             e = get_exception()
             if e.pgcode == '25006':
@@ -350,15 +349,6 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
                 return changed
             else:
                 raise psycopg2.InternalError(e)
-
-        # Grab new role attributes.
-        cursor.execute(select, {"user": user})
-        new_role_attrs = cursor.fetchone()
-
-        # Detect any differences between current_ and new_role_attrs.
-        for i in range(len(current_role_attrs)):
-            if current_role_attrs[i] != new_role_attrs[i]:
-                changed = True
 
     elif no_password_changes and role_attr_flags != '':
         # Grab role information from pg_roles instead of pg_authid
