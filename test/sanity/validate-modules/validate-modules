@@ -538,7 +538,7 @@ class ModuleValidator(Validator):
                 self.reporter.warning(
                     path=self.object_path,
                     code=291,
-                    msg='Found Try/Except block without HAS_ assginment'
+                    msg='Found Try/Except block without HAS_ assignment'
                 )
 
     def _ensure_imports_below_docs(self, doc_info, first_callable):

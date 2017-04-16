@@ -45,7 +45,7 @@ options:
     description:
       - List of firewall inbound rules to enforce in this group (see example). If none are supplied,
         no inbound rules will be enabled. Rules list may include its own name in `group_name`.
-        This allows idempotent loopback additions (e.g. allow group to acccess itself).
+        This allows idempotent loopback additions (e.g. allow group to access itself).
     required: false
   rules_egress:
     description:

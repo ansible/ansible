@@ -232,7 +232,7 @@ EXAMPLES = '''
 
 RETURN = '''
 after:
-    description: last commit revision of the repository retrived during the update
+    description: last commit revision of the repository retrieved during the update
     returned: success
     type: string
     sample: 4c020102a9cd6fe908c9a4a326a38f972f63a903

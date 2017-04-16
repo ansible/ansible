@@ -81,7 +81,7 @@ options:
     version_added: "2.3"
   alert_bwquota_enabled:
     description:
-    - Set status of bandwidth quota alerts as percentage of network tranfer quota.
+    - Set status of bandwidth quota alerts as percentage of network transfer quota.
     default: "True"
     choices: [ "True", "False" ]
     version_added: "2.3"

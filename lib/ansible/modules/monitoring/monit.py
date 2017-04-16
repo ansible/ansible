@@ -99,7 +99,7 @@ def main():
         return status()
 
     def wait_for_monit_to_stop_pending():
-        """Fails this run if there is no status or it's pending/initalizing for timeout"""
+        """Fails this run if there is no status or it's pending/initializing for timeout"""
         timeout_time = time.time() + timeout
         sleep_time = 5
 

@@ -42,7 +42,7 @@ def detect_range(line = None):
     A helper function that checks a given host line to see if it contains
     a range pattern described in the docstring above.
 
-    Returnes True if the given line contains a pattern, else False.
+    Returns True if the given line contains a pattern, else False.
     '''
     if '[' in line:
         return True

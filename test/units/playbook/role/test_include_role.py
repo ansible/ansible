@@ -153,7 +153,7 @@ class TestIncludeRole(unittest.TestCase):
         """
         Test nested includes with default tasks and variables.
 
-        Variables from outer roles should be inherited, but overriden in inner
+        Variables from outer roles should be inherited, but overridden in inner
         roles.
         """
 
@@ -194,7 +194,7 @@ class TestIncludeRole(unittest.TestCase):
         """
         Test nested includes with alternative tasks and variables.
 
-        Variables from outer roles should be inherited, but overriden in inner
+        Variables from outer roles should be inherited, but overridden in inner
         roles.
         """
 

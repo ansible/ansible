@@ -161,7 +161,7 @@ region_level_vpc:
   type: boolean
   sample: true
 restart_required:
-  description: "Wheter the VPC router needs a restart or not."
+  description: "Whether the VPC router needs a restart or not."
   returned: success
   type: boolean
   sample: true

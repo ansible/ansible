@@ -119,7 +119,7 @@ version_added: "2.3"
 '''
 
 EXAMPLES = '''
-# Ensure sudo rule is present thats allows all every body to execute any command on any host without beeing asked for a password.
+# Ensure sudo rule is present that's allows all every body to execute any command on any host without being asked for a password.
 - ipa_sudorule:
     name: sudo_all_nopasswd
     cmdcategory: all

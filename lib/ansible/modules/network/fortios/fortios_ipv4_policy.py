@@ -126,7 +126,7 @@ options:
   logtraffic_start:
     version_added: "2.4"
     description:
-      - Logs begining of session as well.
+      - Logs beginning of session as well.
     default: false
     choices: ["true", "false"]
   comment:
@@ -168,7 +168,7 @@ EXAMPLES = """
 
 RETURN = """
 firewall_address_config:
-  description: full firewall adresses config string
+  description: full firewall addresses config string
   returned: always
   type: string
 change_string:

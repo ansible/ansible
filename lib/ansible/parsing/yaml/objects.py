@@ -90,7 +90,7 @@ class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleUnicode):
 
         ciphertext is a byte string (str on PY2, bytestring on PY3).
 
-        The .data atttribute is a property that returns the decrypted plaintext
+        The .data attribute is a property that returns the decrypted plaintext
         of the ciphertext as a PY2 unicode or PY3 string object.
         '''
         super(AnsibleVaultEncryptedUnicode, self).__init__()

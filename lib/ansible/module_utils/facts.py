@@ -538,7 +538,7 @@ class Facts(object):
         # tools must be installed
         if self.module.get_bin_path('systemctl'):
 
-            # this should show if systemd is the boot init system, if checking init faild to mark as systemd
+            # this should show if systemd is the boot init system, if checking init failed to mark as systemd
             # these mirror systemd's own sd_boot test http://www.freedesktop.org/software/systemd/man/sd_booted.html
             for canary in ["/run/systemd/system/", "/dev/.run/systemd/", "/dev/.systemd/"]:
                 if os.path.exists(canary):
@@ -725,7 +725,7 @@ class Distribution(object):
 
                 if not os.path.exists(path):
                     continue
-                # if allowempty is set, we only check for file existance but not content
+                # if allowempty is set, we only check for file existence but not content
                 if 'allowempty' in ddict and ddict['allowempty']:
                     self.facts['distribution'] = name
                     break
@@ -750,7 +750,7 @@ class Distribution(object):
                         parsed = distfunc(name, data, path)
                         if parsed is None or parsed:
                             # distfunc return False if parsing failed
-                            # break only if parsing was succesful
+                            # break only if parsing was successful
                             # otherwise continue with other distributions
                             break
                     except AttributeError:

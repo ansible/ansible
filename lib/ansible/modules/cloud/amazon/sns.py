@@ -207,7 +207,7 @@ def main():
                              "the 'json' message_structure.")
 
     # .publish() takes full ARN topic id, but I'm lazy and type shortnames
-    # so do a lookup (topics cannot contain ':', so thats the decider)
+    # so do a lookup (topics cannot contain ':', so that's the decider)
     if ':' in topic:
         arn_topic = topic
     else:

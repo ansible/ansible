@@ -138,7 +138,7 @@ options:
     migration_bandwidth:
         description:
             - "The bandwidth settings define the maximum bandwidth of both outgoing and incoming migrations per host."
-            - "Following bandwith options are supported:"
+            - "Following bandwidth options are supported:"
             - "C(auto) - Bandwidth is copied from the I(rate limit) [Mbps] setting in the data center host network QoS."
             - "C(hypervisor_default) - Bandwidth is controlled by local VDSM setting on sending host."
             - "C(custom) - Defined by user (in Mbps)."

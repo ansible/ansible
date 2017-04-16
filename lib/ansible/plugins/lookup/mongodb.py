@@ -187,7 +187,7 @@ class LookupModule(LookupBase):
 
       #optional query  parameters
       #we accept any parameter from the normal mongodb query.
-      # the offical documentation is here
+      # the official documentation is here
       # https://api.mongodb.org/python/current/api/pymongo/collection.html?highlight=find#pymongo.collection.Collection.find
       #   filter:  { "hostname": "batman" }
       #   projection: { "pid": True    , "_id" : False , "hostname" : True }

@@ -3,7 +3,7 @@ Module Support
 
 .. toctree:: :maxdepth: 1
 
-Ansible has many modules, but not all of them are maintained by the core project commiters. Each module should have associated metadata that indicates which of the following categories they fall into. This should be visible in each module's documentation.
+Ansible has many modules, but not all of them are maintained by the core project committers. Each module should have associated metadata that indicates which of the following categories they fall into. This should be visible in each module's documentation.
 
 Documentation updates for each module can also be edited directly in the module and by submitting a pull request to the module source code; just look for the "DOCUMENTATION" block in the source tree.
 
