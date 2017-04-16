@@ -45,7 +45,7 @@ options:
     description:
       - List of firewall inbound rules to enforce in this group (see example). If none are supplied,
         no inbound rules will be enabled. Rules list may include its own name in `group_name`.
-        This allows idempotent loopback additions (e.g. allow group to acccess itself).
+        This allows idempotent loopback additions (e.g. allow group to access itself).
         Rule sources list support was added in version 2.4. This allows to define multiple sources per
         source type as well as multiple source types per rule. Prior to 2.4 an individual source is allowed.
     required: false

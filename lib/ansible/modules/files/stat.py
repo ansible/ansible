@@ -404,7 +404,7 @@ def format_output(module, path, st):
         isgid=bool(mode & stat.S_ISGID),
     )
 
-    # Platform dependant flags:
+    # Platform dependent flags:
     for other in [
             # Some Linux
             ('st_blocks', 'blocks'),

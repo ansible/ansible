@@ -114,7 +114,7 @@ class SynchronizeTester(object):
             fdata = f.read()
         test_meta = yaml.load(fdata)
 
-        # load inital play context vars
+        # load initial play context vars
         if '_play_context' in test_meta:
             if test_meta['_play_context']:
                 self.task.args = {}
@@ -123,7 +123,7 @@ class SynchronizeTester(object):
                         v = None
                     setattr(self._play_context, k, v)
 
-        # load inital task context vars
+        # load initial task context vars
         if '_task' in test_meta:
             if test_meta['_task']:
                 self.task.args = {}
@@ -133,14 +133,14 @@ class SynchronizeTester(object):
                         v = None
                     setattr(self.task, k, v)
 
-        # load inital task vars
+        # load initial task vars
         if 'task_args' in test_meta:
             if test_meta['task_args']:
                 self.task.args = {}
                 for (k, v) in test_meta['task_args'].items():
                     self.task.args[k] = v
 
-        # load inital task vars
+        # load initial task vars
         invarspath = os.path.join(fixturepath, test_meta.get('fixtures', {}).get('taskvars_in', 'taskvars_in.json'))
         with open(invarspath, 'rb') as f:
             fdata = f.read()
@@ -163,7 +163,7 @@ class SynchronizeTester(object):
             for (k, v) in test_meta['hostvars'].items():
                 in_task_vars['hostvars'][k] = v
 
-        # initalize and run the module
+        # initialize and run the module
         SAM = ActionModule(self.task, self.connection, self._play_context,
                            self.loader, self.templar, self.shared_loader_obj)
         SAM._execute_module = self._execute_module

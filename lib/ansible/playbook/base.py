@@ -187,7 +187,7 @@ class Base(with_metaclass(BaseMeta, object)):
         self._uuid = get_unique_id()
 
         # we create a copy of the attributes here due to the fact that
-        # it was intialized as a class param in the meta class, so we
+        # it was initialized as a class param in the meta class, so we
         # need a unique object here (all members contained within are
         # unique already).
         self._attributes = self._attributes.copy()

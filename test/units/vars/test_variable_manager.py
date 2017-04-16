@@ -206,7 +206,7 @@ class TestVariableManager(unittest.TestCase):
         res = v.get_vars(play=play1, task=task)
         self.assertEqual(res['default_var'], 'default_var_from_defaults_only1')
 
-        # next we assert the precendence of inventory variables
+        # next we assert the precedence of inventory variables
         v.set_inventory(inv1)
         h1 = inv1.get_host('host1')
 

@@ -91,7 +91,7 @@ EXAMPLES = '''
     state: present
   become: yes
 
-# Change inittab enrty startmyservice to runlevel "2" and processaction "wait".
+# Change inittab entry startmyservice to runlevel "2" and processaction "wait".
 - name: Change startmyservice to inittab
   aix_inittab:
     name: startmyservice

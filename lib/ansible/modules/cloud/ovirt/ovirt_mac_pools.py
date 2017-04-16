@@ -51,7 +51,7 @@ options:
             - "Default value is set by oVirt/RHV engine to I(false)."
     ranges:
         description:
-            - "List of MAC ranges. The from and to should be splitted by comma."
+            - "List of MAC ranges. The from and to should be split by comma."
             - "For example: 00:1a:4a:16:01:51,00:1a:4a:16:01:61"
 extends_documentation_fragment: ovirt
 '''

@@ -65,7 +65,7 @@ options:
         required: No
         default: Null
         choices: [aggregation-group number, access or mode or trunk, description, auto or full or half,
-        recieve or send, port-priority, suspend-individual, timeout,     receive or transmit or trap-notification,
+        receive or send, port-priority, suspend-individual, timeout,     receive or transmit or trap-notification,
         tlv-select, Load interval delay in seconds, counter, Name for the MAC Access List, mac-address in HHHH.HHHH.HHHH format,
         THRESHOLD  Value in unit of buffer cell, <64-9216>  MTU in bytes-<64-9216> for L2 packet,<576-9216> for
         L3 IPv4 packet, <1280-9216> for L3 IPv6 packet, enter the instance id, input or output, copp-system-policy,
@@ -81,7 +81,7 @@ options:
         mac-phy-status or management-address or max-frame-size or port-description or port-protocol-vlan or
         port-vlan or power-mdi or protocol-identity or system-capabilities or system-description or system-name
         or vid-management or vlan-name, counter for load interval, policy input name, all or Copp class name to attach,
-        qos, queing, Enter the allowed traffic level, ipv6]
+        qos, queueing, Enter the allowed traffic level, ipv6]
     interfaceArg4:
         description:
             - This is an overloaded Port Channel fourth argument. Usage of this argument can be found is the User Guide referenced above.

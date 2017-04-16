@@ -42,7 +42,7 @@ options:
     version_added: "2.4"
   name:
     description:
-      - A package name, like C(foo), or mutliple packages, like C(foo, bar).
+      - A package name, like C(foo), or multiple packages, like C(foo, bar).
     required: false
     default: null
   repository:
