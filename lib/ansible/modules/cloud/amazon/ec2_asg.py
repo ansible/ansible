@@ -1120,7 +1120,8 @@ def main():
                                 endpoint=ec2_url,
                                 **aws_connect_params)
     except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ProfileNotFound) as e:
-        module.fail_json(msg="Can't authorize connection. Check your credentials and profile.", exceptions=traceback.format_exc(), **camel_dict_to_snake_dict(e.message))
+        module.fail_json(msg="Can't authorize connection. Check your credentials and profile.",
+                         exceptions=traceback.format_exc(), **camel_dict_to_snake_dict(e.message))
     changed = create_changed = replace_changed = False
 
     if state == 'present':
