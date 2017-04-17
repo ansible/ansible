@@ -518,6 +518,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         2 = permissions issue
         3 = its a directory, not a file
         4 = stat module failed, likely due to not finding python
+        5 = appropriate json module not found
         '''
         x = "0"  # unknown error has occurred
         try:
@@ -532,6 +533,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 x = "2"  # cannot read file
             elif errormsg.endswith(u'MODULE FAILURE'):
                 x = "4"  # python not found or module uncaught exception
+            elif 'json' in errormsg or 'simplejson' in errormsg:
+                x = "5" # json or simplejson modules needed
         finally:
             return x
 
