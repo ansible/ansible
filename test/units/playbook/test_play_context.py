@@ -53,7 +53,7 @@ class TestPlayContext(unittest.TestCase):
     def test_play_context(self):
         (options, args) = self._parser.parse_args(['-vv', '--check'])
         play_context = PlayContext(options=options)
-        self.assertEqual(play_context.connection, C.DEFAULT_TRANSPORT)
+        self.assertEqual(play_context._attributes['connection'], C.DEFAULT_TRANSPORT)
         self.assertEqual(play_context.remote_addr, None)
         self.assertEqual(play_context.remote_user, None)
         self.assertEqual(play_context.password, '')

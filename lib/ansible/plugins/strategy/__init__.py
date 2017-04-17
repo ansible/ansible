@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
 import threading
 import time
 
@@ -903,9 +904,12 @@ class StrategyBase:
                         iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
                 msg="ending play"
         elif meta_action == 'reset_connection':
-            connection = connection_loader.get(play_context.connection, play_context, '/dev/null')
-            connection.reset()
-            msg= 'reset connection'
+            connection = connection_loader.get(play_context.connection, play_context, os.devnull)
+            if connection:
+                connection.reset()
+                msg= 'reset connection'
+            else:
+                msg= 'no connection, nothing to reset'
         else:
             raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
 
