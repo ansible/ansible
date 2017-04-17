@@ -122,26 +122,31 @@ class ActionModule(ActionBase):
 
         dest = dest.replace("//","/")
 
-        if remote_checksum in ('0', '1', '2', '3', '4'):
-            # these don't fail because you may want to transfer a log file that
-            # possibly MAY exist but keep going to fetch other log files
+        if remote_checksum in ('0', '1', '2', '3', '4', '5'):
             result['changed'] = False
             result['file'] = source
             if remote_checksum == '0':
                 result['msg'] = "unable to calculate the checksum of the remote file"
             elif remote_checksum == '1':
-                if fail_on_missing:
-                    result['failed'] = True
-                    del result['changed']
-                    result['msg'] = "the remote file does not exist"
-                else:
-                    result['msg'] = "the remote file does not exist, not transferring, ignored"
+                result['msg'] = "the remote file does not exist"
             elif remote_checksum == '2':
-                result['msg'] = "no read permission on remote file, not transferring, ignored"
+                result['msg'] = "no read permission on remote file"
             elif remote_checksum == '3':
                 result['msg'] = "remote file is a directory, fetch cannot work on directories"
             elif remote_checksum == '4':
                 result['msg'] = "python isn't present on the system.  Unable to compute checksum"
+            elif remote_checksum == '5':
+                result['msg'] = "stdlib json or simplejson was not found on the remote machine. Only the raw module can work without those installed"
+            # Historically, these don't fail because you may want to transfer
+            # a log file that possibly MAY exist but keep going to fetch other
+            # log files. Today, this is better achieved by adding
+            # ignore_errors or failed_when to the task.  Control the behaviour
+            # via fail_when_missing
+            if fail_on_missing:
+                result['failed'] = True
+                del result['changed']
+            else:
+                result['msg'] += ", not transferring, ignored"
             return result
 
         # calculate checksum for the local file
@@ -173,7 +178,9 @@ class ActionModule(ActionBase):
                     msg="checksum mismatch", file=source, dest=dest, remote_md5sum=None,
                     checksum=new_checksum, remote_checksum=remote_checksum))
             else:
-                result.update(dict(changed=True, md5sum=new_md5, dest=dest, remote_md5sum=None, checksum=new_checksum, remote_checksum=remote_checksum))
+                result.update({'changed': True, 'md5sum': new_md5, 'dest': dest,
+                               'remote_md5sum': None, 'checksum': new_checksum,
+                               'remote_checksum': remote_checksum})
         else:
             # For backwards compatibility. We'll return None on FIPS enabled systems
             try:
