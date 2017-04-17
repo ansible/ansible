@@ -457,9 +457,9 @@ class CloudFrontValidationManager:
         except Exception as e:
             self.module.fail_json(msg="error validating distribution cache behaviors - " + str(e))
 
-    def validate_cache_behavior(self, cache_behavior, valid_origins, validate_default_cache=False):
+    def validate_cache_behavior(self, cache_behavior, valid_origins, is_default_cache=False):
         try:
-            if validate_default_cache:
+            if is_default_cache and cache_behavior is None:
                 cache_behavior = {}
             if cache_behavior is None and valid_origins is not None:
                 return None
@@ -477,10 +477,11 @@ class CloudFrontValidationManager:
                 cache_behavior = self.__helpers.change_dict_key_name(cache_behavior, 'default_ttl', 'default_t_t_l')
             if 'compress' not in cache_behavior:
                 cache_behavior['compress'] = self.__default_cache_behavior_compress
-            if 'target_origin_id' not in cache_behavior:
-                cache_behavior['target_origin_id'] = self.get_first_origin_id_for_default_cache_behavior(valid_origins)
-            else:
-                cache_behavior['target_origin_id'] = str(cache_behavior['target_origin_id'])
+            if is_default_cache:
+                if 'target_origin_id' not in cache_behavior:
+                    cache_behavior['target_origin_id'] = self.get_first_origin_id_for_default_cache_behavior(valid_origins)
+                else:
+                    cache_behavior['target_origin_id'] = str(cache_behavior.get('target_origin_id'))
             if 'forwarded_values' not in cache_behavior:
                 cache_behavior['forwarded_values'] = {}
             forwarded_values = cache_behavior.get('forwarded_values')
@@ -722,7 +723,7 @@ class CloudFrontValidationManager:
         except Exception as e:
             self.module.fail_json(msg="error validating common distribution parameters - " + str(e))
 
-    def validate_caller_reference_for_distribution_create(self, config, caller_reference):
+    def validate_caller_reference_for_distribution(self, config, caller_reference):
         if caller_reference is not None:
             config['caller_reference'] = caller_reference
         else:
@@ -730,10 +731,12 @@ class CloudFrontValidationManager:
         return config
 
     def get_first_origin_id_for_default_cache_behavior(self, valid_origins):
-        if valid_origins is not None and isinstance(valid_origins, list) and len(valid_origins) > 0:
-            return str(valid_origins.get('Items')[0].get('Id'))
-        else:
-            return self.__default_datetime_string
+        if valid_origins is not None:
+	    valid_origins_list = valid_origins.get('items')
+	    if valid_origins_list is not None and isinstance(valid_origins_list, list) and len(valid_origins_list) > 0:
+                return str(valid_origins.get('items')[0].get('id'))
+        self.module.fail_json(msg="there are no valid origins from which to specify a target_origin_id " +
+                "for the default_cache_behavior configuration")
 
     def validate_attribute_with_allowed_values(self, attribute, attribute_name, allowed_list):
         if attribute is not None and attribute not in allowed_list:
@@ -970,9 +973,11 @@ def main():
 
     create_update_distribution = create_distribution or update_distribution
     create_update_streaming_distribution = create_streaming_distribution or update_streaming_distribution
-    update_delete_duplicate_distribution = update_distribution or delete_distribution
-    update_delete_duplicate_streaming_distribution = update_streaming_distribution or delete_streaming_distribution
+    update_delete_duplicate_distribution = update_distribution or delete_distribution or duplicate_distribution
+    update_delete_duplicate_streaming_distribution = (update_streaming_distribution or delete_streaming_distribution
+	    or duplicate_streaming_distribution)
     validate = validate_distribution or validate_streaming_distribution
+    duplicate = duplicate_distribution or duplicate_streaming_distribution
     config_required = ( create_distribution or update_delete_duplicate_distribution or create_streaming_distribution
             or update_delete_duplicate_streaming_distribution or validate)
 
@@ -991,14 +996,14 @@ def main():
         streaming_distribution_id, config, e_tag = validation_mgr.validate_update_delete_streaming_distribution_parameters(alias,
                 streaming_distribution_id, config, e_tag)
 
-    if create_update_distribution or create_update_streaming_distribution:
+    if create_update_distribution or create_update_streaming_distribution or duplicate:
         config = validation_mgr.validate_common_distribution_parameters(config, enabled, aliases, logging,
                 price_class, comment, create_update_streaming_distribution)
 
     if config_required:
         config = helpers.pascal_dict_to_snake_dict(config, True)
 
-    if create_update_distribution:
+    if create_update_distribution or validate:
         valid_origins = validation_mgr.validate_origins(origins, default_origin_domain_name,
                 default_origin_access_identity, default_origin_path, create_update_streaming_distribution,
                 create_distribution)
@@ -1016,11 +1021,11 @@ def main():
                 is_ipv6_enabled, http_version, web_acl_id)
         valid_viewer_certificate = validation_mgr.validate_viewer_certificate(viewer_certificate)
         config = helpers.merge_validation_into_config(config, valid_viewer_certificate, 'viewer_certificate')
-    elif create_update_streaming_distribution:
+    elif create_update_streaming_distribution or validate:
         config = validation_mgr.validate_streaming_distribution_config_parameters(config, comment,
                 trusted_signers, s3_origin, default_s3_origin_domain_name, default_s3_origin_access_identity)
-    if create_distribution or create_streaming_distribution:
-        config = validation_mgr.validate_caller_reference_for_distribution_create(config, caller_reference)
+    if create_distribution or create_streaming_distribution or duplicate_distribution or validate:
+        config = validation_mgr.validate_caller_reference_for_distribution(config, caller_reference)
 
     if config_required:
         config = helpers.snake_dict_to_pascal_dict(config)
