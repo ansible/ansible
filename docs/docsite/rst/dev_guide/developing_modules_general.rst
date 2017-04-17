@@ -339,7 +339,7 @@ All arguments are optional unless otherwise specified.
         :jsonarg:
           FIXME details of when this would be useful
         :json:
-        :bytes: # example (human_to_bytes)i
+        :bytes: # example (human_to_bytes)
           # FIXME test and check return type
         :bits: # example (human_to_bytes)
           # FIXME test and check return type
@@ -359,27 +359,9 @@ All arguments are optional unless otherwise specified.
 
 
 Things to document (same style RST field table?)
-* name (primary
-* default
-* Different types (explain validation)
-* choices
-* aliases
-* no_log
 * fallback env
 * reimoved_in_version
 
-str
-list
-dict
-bool # Don't specify choices
-int
-float
-path # Where the playbook is executed?
-raw
-jsonarg
-json
-bytes # example (human_to_bytes)
-bits # example (human_to_bytes)
 
 * suboptions
 
