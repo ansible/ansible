@@ -246,8 +246,8 @@ import time
 import logging as log
 import traceback
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, HAS_BOTO3, camel_dict_to_snake_dict, get_aws_connection_info, AWSRetry
 
 try:
     import botocore
@@ -329,15 +329,12 @@ def elb_dreg(asg_connection, module, group_name, instance_id):
     wait_timeout = module.params.get('wait_timeout')
     count = 1
     if as_group['LoadBalancerNames'] and as_group['HealthCheckType'] == 'ELB':
-        try:
-            elb_connection = boto3_conn(module,
-                                        conn_type='client',
-                                        resource='elb',
-                                        region=region,
-                                        endpoint=ec2_url,
-                                        **aws_connect_params)
-        except boto.exception.NoAuthHandlerFound as e:
-            module.fail_json(msg=str(e))
+        elb_connection = boto3_conn(module,
+                                    conn_type='client',
+                                    resource='elb',
+                                    region=region,
+                                    endpoint=ec2_url,
+                                    **aws_connect_params)
     else:
         return
 
@@ -379,11 +376,13 @@ def elb_healthy(asg_connection, elb_connection, module, group_name):
         # but has not yet show up in the ELB
         try:
             lb_instances = elb_connection.describe_instance_health(LoadBalancerName=lb, Instances=instances)
-        except boto.exception.BotoServerError as e:
-            if e.error_code == 'InvalidInstance':
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == 'InvalidInstance':
                 return None
 
-            module.fail_json(msg=str(e))
+            module.fail_json(msg="Failed to get load balancer.", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except botocore.exceptions.BotoCoreError as e:
+            module.fail_json(msg="Failed to get load balancer.", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message))
 
         for i in lb_instances.get('InstanceStates'):
             if i['State'] == "InService":
@@ -409,10 +408,13 @@ def tg_healthy(asg_connection, elbv2_connection, module, group_name):
         # but has not yet show up in the ELB
         try:
             tg_instances = elbv2_connection.describe_target_health(TargetGroupArn=tg, Targets=instances)
-        except boto.exception.BotoServerError as e:
-            if e.error_code == 'InvalidInstance':
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == 'InvalidInstance':
                 return None
-            module.fail_json(msg=str(e))
+
+            module.fail_json(msg="Failed to get target group.", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except botocore.exceptions.BotoCoreError as e:
+            module.fail_json(msg="Failed to get target group.", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message))
 
         for i in tg_instances.get('TargetHealthDescriptions'):
             if i['TargetHealth']['State'] == "healthy":
@@ -431,16 +433,12 @@ def wait_for_elb(asg_connection, module, group_name):
 
     if as_group.get('LoadBalancerNames') and as_group.get('HealthCheckType') == 'ELB':
         log.debug("Waiting for ELB to consider instances healthy.")
-        try:
-            # elb_connection = connect_to_aws(boto.ec2.elb, region, **aws_connect_params)
-            elb_connection = boto3_conn(module,
-                                        conn_type='client',
-                                        resource='elb',
-                                        region=region,
-                                        endpoint=ec2_url,
-                                        **aws_connect_params)
-        except boto.exception.NoAuthHandlerFound as e:
-            module.fail_json(msg=str(e))
+        elb_connection = boto3_conn(module,
+                                    conn_type='client',
+                                    resource='elb',
+                                    region=region,
+                                    endpoint=ec2_url,
+                                    **aws_connect_params)
 
         wait_timeout = time.time() + wait_timeout
         healthy_instances = elb_healthy(asg_connection, elb_connection, module, group_name)
@@ -465,16 +463,13 @@ def wait_for_target_group(asg_connection, module, group_name):
 
     if as_group.get('TargetGroupARNs') and as_group.get('HealthCheckType') == 'ELB':
         log.debug("Waiting for Target Group to consider instances healthy.")
-        try:
-            # elb_connection = connect_to_aws(boto.ec2.elb, region, **aws_connect_params)
-            elbv2_connection = boto3_conn(module,
-                                          conn_type='client',
-                                          resource='elbv2',
-                                          region=region,
-                                          endpoint=ec2_url,
-                                          **aws_connect_params)
-        except boto.exception.NoAuthHandlerFound as e:
-            module.fail_json(msg=str(e))
+        elbv2_connection = boto3_conn(module,
+                                      conn_type='client',
+                                      resource='elbv2',
+                                      region=region,
+                                      endpoint=ec2_url,
+                                      **aws_connect_params)
+
         wait_timeout = time.time() + wait_timeout
         healthy_instances = tg_healthy(asg_connection, elbv2_connection, module, group_name)
 
@@ -535,15 +530,12 @@ def create_autoscaling_group(connection, module):
 
     if not vpc_zone_identifier and not availability_zones:
         region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-        try:
-            ec2_connection = boto3_conn(module,
-                                        conn_type='client',
-                                        resource='ec2',
-                                        region=region,
-                                        endpoint=ec2_url,
-                                        **aws_connect_params)
-        except (botocore.exceptions.NoCredentialsError, AnsibleAWSError) as e:
-            module.fail_json(msg=str(e))
+        ec2_connection = boto3_conn(module,
+                                    conn_type='client',
+                                    resource='ec2',
+                                    region=region,
+                                    endpoint=ec2_url,
+                                    **aws_connect_params)
     elif vpc_zone_identifier:
         vpc_zone_identifier = ','.join(vpc_zone_identifier)
 
@@ -613,8 +605,8 @@ def create_autoscaling_group(connection, module):
             asg_properties = get_properties(as_group)
             changed = True
             return changed, asg_properties
-        except botocore.exceptions.BotoCoreError as e:
-            module.fail_json(msg="Failed to create Autoscaling Group: %s" % str(e), exception=traceback.format_exc())
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            module.fail_json(msg="Failed to create Autoscaling Group.", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message))
     else:
         as_group = as_groups['AutoScalingGroups'][0]
         initial_asg_properties = get_properties(as_group)
@@ -653,9 +645,9 @@ def create_autoscaling_group(connection, module):
                     AutoScalingGroupName=group_name,
                     LoadBalancerNames=load_balancers
                 )
-            except botocore.exceptions.BotoCoreError as e:
-                module.fail_json(msg="Failed to update Autoscaling Group: %s" % str(e),
-                                 exception=traceback.format_exc())
+            except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+                module.fail_json(msg="Failed to update Autoscaling Group.",
+                                 exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message))
 
         # Update load balancers if they are specified and one or more already exists
         elif as_group['LoadBalancerNames']:
@@ -694,9 +686,9 @@ def create_autoscaling_group(connection, module):
                     AutoScalingGroupName=group_name,
                     TargetGroupARNs=target_group_arns
                 )
-            except botocore.exceptions.BotoCoreError as e:
-                module.fail_json(msg="Failed to update Autoscaling Group: %s" % str(e),
-                                 exception=traceback.format_exc())
+            except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+                module.fail_json(msg="Failed to update Autoscaling Group.",
+                                 exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message))
         # Update target groups if they are specified and one or more already exists
         elif target_group_arns and as_group['TargetGroupARNs']:
             # Get differences
@@ -750,9 +742,9 @@ def create_autoscaling_group(connection, module):
                     TopicARN=notification_topic,
                     NotificationTypes=notification_types
                 )
-            except botocore.exceptions.BotoCoreError as e:
-                module.fail_json(msg="Failed to update Autoscaling Group notifications: %s" % str(e),
-                                 exception=traceback.format_exc())
+            except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+                module.fail_json(msg="Failed to update Autoscaling Group notifications.",
+                                 exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message))
         if wait_for_instances:
             wait_for_new_inst(module, connection, group_name, wait_timeout, desired_capacity, 'viable_instances')
             # Wait for ELB health if ELB(s)defined
@@ -771,9 +763,9 @@ def create_autoscaling_group(connection, module):
             asg_properties = get_properties(as_group)
             if asg_properties != initial_asg_properties:
                 changed = True
-        except botocore.exceptions.BotoCoreError as e:
-            module.fail_json(msg="Failed to read existing Autoscaling Groups: %s" % str(e),
-                             exception=traceback.format_exc())
+        except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+            module.fail_json(msg="Failed to read existing Autoscaling Groups.",
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message))
         return changed, asg_properties
 
 
@@ -1127,10 +1119,8 @@ def main():
                                 region=region,
                                 endpoint=ec2_url,
                                 **aws_connect_params)
-        if not connection:
-            module.fail_json(msg="failed to connect to AWS for the given region: %s" % str(region))
-    except botocore.exceptions.NoCredentialsError as e:
-        module.fail_json(msg=str(e))
+    except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ProfileNotFound) as e:
+        module.fail_json(msg="Can't authorize connection. Check your credentials and profile.", exceptions=traceback.format_exc(), **camel_dict_to_snake_dict(e.message))
     changed = create_changed = replace_changed = False
 
     if state == 'present':
