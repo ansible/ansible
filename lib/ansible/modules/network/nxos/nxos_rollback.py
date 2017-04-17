@@ -78,70 +78,18 @@ status:
 '''
 
 
-import re
-from ansible.module_utils.nxos import get_config, load_config, run_commands
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.nxos import nxos_argument_spec, run_commands
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.netcfg import CustomNetworkConfig
-
-import re
-
-
-def execute_commands(cmds, module, command_type=None):
-    command_type_map = {
-        'cli_show': 'json',
-        'cli_show_ascii': 'text'
-    }
-
-    try:
-        if command_type:
-            response = module.execute(cmds, command_type=command_type)
-        else:
-            response = module.execute(cmds)
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg='Error sending {0}'.format(cmds),
-                         error=str(clie))
-    except AttributeError:
-        try:
-            if command_type:
-                command_type = command_type_map.get(command_type)
-                module.cli.add_commands(cmds, output=command_type)
-                response = module.cli.run_commands()
-            else:
-                module.cli.add_commands(cmds, output=command_type)
-                response = module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending {0}'.format(cmds),
-                             error=str(clie))
-    return response
-
-
-def prepare_show_command(command, module):
-    if module.params['transport'] == 'cli':
-        execute_commands(command, module)
-    elif module.params['transport'] == 'nxapi':
-        execute_commands(command, module, command_type='cli_show_ascii')
 
 
 def checkpoint(filename, module):
     commands = ['terminal dont-ask', 'checkpoint file %s' % filename]
-    prepare_show_command(commands, module)
+    run_commands(module, commands)
 
 
 def rollback(filename, module):
     commands = ['rollback running-config file %s' % filename]
-    try:
-        module.configure(commands)
-    except AttributeError:
-        try:
-            module.cli.add_commands(commands, output='config')
-            module.cli.run_commands()
-        except ShellError:
-            clie = get_exception()
-            module.fail_json(msg='Error sending CLI commands',
-                             error=str(clie), commands=commands)
+    run_commands(module, commands)
 
 
 def main():
@@ -156,9 +104,9 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                        mutually_exclusive=[['checkpoint_file',
-                                             'rollback_to']],
-                        supports_check_mode=False)
+                           mutually_exclusive=[['checkpoint_file',
+                                                'rollback_to']],
+                           supports_check_mode=False)
 
     checkpoint_file = module.params['checkpoint_file']
     rollback_to = module.params['rollback_to']
@@ -166,22 +114,18 @@ def main():
     status = None
     filename = None
     changed = False
-    try:
-        if checkpoint_file:
-            checkpoint(checkpoint_file, module)
-            status = 'checkpoint file created'
-        elif rollback_to:
-            rollback(rollback_to, module)
-            status = 'rollback executed'
-        changed = True
-        filename = rollback_to or checkpoint_file
-    except ShellError:
-        clie = get_exception()
-        module.fail_json(msg=str(clie))
+
+    if checkpoint_file:
+        checkpoint(checkpoint_file, module)
+        status = 'checkpoint file created'
+    elif rollback_to:
+        rollback(rollback_to, module)
+        status = 'rollback executed'
+    changed = True
+    filename = rollback_to or checkpoint_file
 
     module.exit_json(changed=changed, status=status, filename=filename)
 
 
 if __name__ == '__main__':
     main()
-
