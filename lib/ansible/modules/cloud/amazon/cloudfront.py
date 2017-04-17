@@ -290,7 +290,7 @@ class CloudFrontServiceManager:
                     exception=traceback.format_exc(),
                     **camel_dict_to_snake_dict(e.response))
 
-    def paginated_response(self, func, result_key=""):
+    def paginated_response(self, func, result_key=''):
         '''
         Returns expanded response for paginated operations.
         The 'result_key' is used to define the concatenated results that are combined
@@ -301,7 +301,7 @@ class CloudFrontServiceManager:
         loop = True
         while loop:
             response = func(**args)
-            if result_key == "":
+            if result_key == '':
                 result = response
                 result.pop('ResponseMetadata', None)
             else:
@@ -744,11 +744,12 @@ class CloudFrontValidationManager:
         try:
             return datetime.datetime.strptime(datetime_string, self.__default_presigned_url_pem_expire_date_format)
         except Exception as e:
-            self.module.fail_json(msg="presigned_url_pem_expire_date must be in the format 'YYYY-MM-DD'")
+            self.module.fail_json(msg="presigned_url_pem_expire_date must be in the format '{0}'".format(
+                    self.__default_presigned_url_pem_expire_date_format))
 
 class CloudFrontHelpers:
     """
-        Misecllaneous helpers for processing cloudfront data
+        Miscellaneous helpers for processing cloudfront data
     """
 
     def change_dict_key_name(self, dictionary, old_key, new_key):
@@ -772,7 +773,7 @@ class CloudFrontHelpers:
                 return complex_type
             return new_type
         def pascal(words):
-            return words.capitalize().split('_')[0] + "".join(x.capitalize() or '_' for x in words.split('_')[1:])
+            return words.capitalize().split('_')[0] + ''.join(x.capitalize() or '_' for x in words.split('_')[1:])
         return pascalize(snake_dict)
 
     def pascal_dict_to_snake_dict(self, pascal_dict, split_caps=False):
