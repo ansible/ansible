@@ -481,10 +481,9 @@ def main():
     mode = module.params['mode']
 
     region, ec2_url, aws_connect_kwargs = ansible.module_utils.ec2.get_aws_connection_info(module, boto3=True)
-    if region:
-        s3 = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='s3', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     if not region:
         module.fail_json(msg="Region must be specified")
+    s3 = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='s3', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
     if mode == 'push':
         try:
@@ -501,7 +500,7 @@ def main():
             # result.update(filelist=actionable_filelist)
         except botocore.exceptions.ClientError as err:
             error_msg = boto_exception(err)
-            module.fail_json(msg=error_msg, exception=traceback.format_exc())
+            module.fail_json(msg=error_msg, exception=traceback.format_exc(), **camel_dict_to_snake_dict(err.response))
 
     module.exit_json(**result)
 
