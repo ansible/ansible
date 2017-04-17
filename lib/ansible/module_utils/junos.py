@@ -44,7 +44,7 @@ junos_argument_spec = {
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
     for key in junos_argument_spec:
-        if key in ('provider',) and module.params[key]:
+        if key not in ('provider',) and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
                     'removed in a future version' % key)
 
