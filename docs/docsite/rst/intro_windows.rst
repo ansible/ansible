@@ -107,13 +107,13 @@ Edit your /etc/krb5.conf (which should be installed as a result of installing pa
 
 In the section that starts with
 
-.. code-block:: bash
+.. code-block:: ini
 
    [realms]
 
 add the full domain name and the fully qualified domain names of your primary and secondary Active Directory domain controllers.  It should look something like this:
 
-.. code-block:: bash
+.. code-block:: ini
 
    [realms]
    
@@ -125,7 +125,7 @@ add the full domain name and the fully qualified domain names of your primary an
 
 and in the [domain_realm] section add a line like the following for each domain you want to access:
 
-.. code-block:: bash
+.. code-block:: ini
 
     [domain_realm]
         .my.domain.com = MY.DOMAIN.COM

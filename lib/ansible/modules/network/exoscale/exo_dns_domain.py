@@ -101,7 +101,7 @@ RETURN = '''
 exo_dns_domain:
     description: API domain results
     returned: success
-    type: dictionary
+    type: complex
     contains:
         account_id:
             description: Your account ID

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2015 Matt Martz <matt@sivel.net>
@@ -46,6 +46,16 @@ from schema import doc_schema, option_schema, metadata_schema
 from utils import CaptureStd, parse_yaml
 from voluptuous.humanize import humanize_error
 
+from ansible.module_utils.six import PY3, with_metaclass
+
+if PY3:
+    # Because there is no ast.TryExcept in Python 3 ast module
+    TRY_EXCEPT = ast.Try
+    # REPLACER_WINDOWS from ansible.executor.module_common is byte
+    # string but we need unicode for Python 3
+    REPLACER_WINDOWS = REPLACER_WINDOWS.decode('utf-8')
+else:
+    TRY_EXCEPT = ast.TryExcept
 
 BLACKLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
@@ -78,6 +88,7 @@ class ReporterEncoder(json.JSONEncoder):
 
 
 class Reporter(object):
+
     @staticmethod
     @contextmanager
     def _output_handle(output):
@@ -93,10 +104,10 @@ class Reporter(object):
 
     @staticmethod
     def _filter_out_ok(reports):
-        temp_reports = reports.copy()
-        for path, report in temp_reports.items():
-            if not (report['errors'] or report['warnings']):
-                del temp_reports[path]
+        temp_reports = OrderedDict()
+        for path, report in reports.items():
+            if report['errors'] or report['warnings']:
+                temp_reports[path] = report
 
         return temp_reports
 
@@ -148,11 +159,10 @@ class Reporter(object):
         return 3 if sum(ret) else 0
 
 
-class Validator(object):
+class Validator(with_metaclass(abc.ABCMeta, object)):
     """Validator instances are intended to be run on a single object.  if you
     are scanning multiple objects for problems, you'll want to have a separate
     Validator for each one."""
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self):
         self.reset()
@@ -205,7 +215,7 @@ class ModuleValidator(Validator):
         'setup.ps1'
     ))
 
-    def __init__(self, path, analyze_arg_spec=False, base_branch=None):
+    def __init__(self, path, analyze_arg_spec=False, base_branch=None, git_cache=None):
         super(ModuleValidator, self).__init__()
 
         self.path = path
@@ -215,6 +225,7 @@ class ModuleValidator(Validator):
         self.analyze_arg_spec = analyze_arg_spec
 
         self.base_branch = base_branch
+        self.git_cache = git_cache or GitCache()
 
         self._python_module_override = False
 
@@ -272,15 +283,11 @@ class ModuleValidator(Validator):
 
     def _get_base_branch_module_path(self):
         """List all paths within lib/ansible/modules to try and match a moved module"""
-        command = ['git', 'ls-tree', '-r', '--name-only', self.base_branch, 'lib/ansible/modules/']
-        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
+        return self.git_cache.base_module_paths.get(self.object_name)
 
-        for path in stdout.splitlines():
-            if path.endswith('/%s' % self.object_name):
-                return path
-
-        return None
+    def _has_alias(self):
+        """Return true if the module has any aliases."""
+        return self.object_name in self.git_cache.head_aliased_modules
 
     def _get_base_file(self):
         # In case of module moves, look for the original location
@@ -300,6 +307,9 @@ class ModuleValidator(Validator):
         return t.name
 
     def _is_new_module(self):
+        if self._has_alias():
+            return False
+
         return not self.object_name.startswith('_') and bool(self.base_branch) and not bool(self.base_module)
 
     def _check_interpreter(self, powershell=False):
@@ -352,7 +362,7 @@ class ModuleValidator(Validator):
             names = []
             if isinstance(child, ast.Import):
                 names.extend(child.names)
-            elif isinstance(child, ast.TryExcept):
+            elif isinstance(child, TRY_EXCEPT):
                 bodies = child.body
                 for handler in child.handlers:
                     bodies.extend(handler.body)
@@ -459,7 +469,7 @@ class ModuleValidator(Validator):
         for child in self.ast.body:
             found_try_except_import = False
             found_has = False
-            if isinstance(child, ast.TryExcept):
+            if isinstance(child, TRY_EXCEPT):
                 bodies = child.body
                 for handler in child.handlers:
                     bodies.extend(handler.body)
@@ -498,7 +508,7 @@ class ModuleValidator(Validator):
                          'line %d' % (child.lineno,))
                     ))
                     break
-            elif isinstance(child, ast.TryExcept):
+            elif isinstance(child, TRY_EXCEPT):
                 bodies = child.body
                 for handler in child.handlers:
                     bodies.extend(handler.body)
@@ -624,6 +634,7 @@ class ModuleValidator(Validator):
 
     def _validate_docs(self):
         doc_info = self._get_docs()
+        deprecated = False
         if not bool(doc_info['DOCUMENTATION']['value']):
             self.errors.append((301, 'No DOCUMENTATION provided'))
         else:
@@ -658,7 +669,6 @@ class ModuleValidator(Validator):
                          'with DOCUMENTATION.extends_documentation_fragment')
                     ))
 
-                deprecated = False
                 if self.object_name.startswith('_') and not os.path.islink(self.object_path):
                     deprecated = True
                     if 'deprecated' not in doc or not doc.get('deprecated'):
@@ -824,16 +834,25 @@ class ModuleValidator(Validator):
                      (option, should_be, version_added))
                 ))
 
+    @staticmethod
+    def is_blacklisted(path):
+        base_name = os.path.basename(path)
+        file_name, _ = os.path.splitext(base_name)
+
+        if file_name.startswith('_') and os.path.islink(path):
+            return True
+
+        if not frozenset((base_name, file_name)).isdisjoint(ModuleValidator.BLACKLIST):
+            return True
+
+        for pat in ModuleValidator.BLACKLIST_PATTERNS:
+            if fnmatch(base_name, pat):
+                return True
+
+        return False
+
     def validate(self):
         super(ModuleValidator, self).validate()
-
-        # Blacklists -- these files are not checked
-        if not frozenset((self.basename,
-                          self.name)).isdisjoint(self.BLACKLIST):
-            return
-        for pat in self.BLACKLIST_PATTERNS:
-            if fnmatch(self.basename, pat):
-                return
 
 #        if self._powershell_module():
 #            self.warnings.append('Cannot check powershell modules at this '
@@ -954,18 +973,22 @@ def main():
 
     reports = OrderedDict()
 
+    git_cache = GitCache(args.base_branch)
+
     for module in args.modules:
         if os.path.isfile(module):
             path = module
             if args.exclude and args.exclude.search(path):
                 sys.exit(0)
+            if ModuleValidator.is_blacklisted(path):
+                sys.exit(0)
             with ModuleValidator(path, analyze_arg_spec=args.arg_spec,
-                                 base_branch=args.base_branch) as mv:
+                                 base_branch=args.base_branch, git_cache=git_cache) as mv:
                 mv.validate()
                 reports.update(mv.report())
 
         for root, dirs, files in os.walk(module):
-            basedir = root[len(module)+1:].split('/', 1)[0]
+            basedir = root[len(module) + 1:].split('/', 1)[0]
             if basedir in BLACKLIST_DIRS:
                 continue
             for dirname in dirs:
@@ -982,8 +1005,10 @@ def main():
                 path = os.path.join(root, filename)
                 if args.exclude and args.exclude.search(path):
                     continue
+                if ModuleValidator.is_blacklisted(path):
+                    continue
                 with ModuleValidator(path, analyze_arg_spec=args.arg_spec,
-                                     base_branch=args.base_branch) as mv:
+                                     base_branch=args.base_branch, git_cache=git_cache) as mv:
                     mv.validate()
                     reports.update(mv.report())
 
@@ -991,6 +1016,38 @@ def main():
         sys.exit(Reporter.plain(reports, warnings=args.warnings, output=args.output))
     else:
         sys.exit(Reporter.json(reports, warnings=args.warnings, output=args.output))
+
+
+class GitCache(object):
+    def __init__(self, base_branch):
+        self.base_branch = base_branch
+
+        if self.base_branch:
+            self.base_tree = self._git(['ls-tree', '-r', '--name-only', self.base_branch, 'lib/ansible/modules/'])
+        else:
+            self.base_tree = []
+
+        self.head_tree = self._git(['ls-tree', '-r', '--name-only', 'HEAD', 'lib/ansible/modules/'])
+
+        self.base_module_paths = dict((os.path.basename(p), p) for p in self.base_tree if os.path.splitext(p)[1] in ('.py', '.ps1'))
+
+        self.base_module_paths.pop('__init__.py', None)
+
+        self.head_aliased_modules = set()
+
+        for path in self.head_tree:
+            filename = os.path.basename(path)
+
+            if filename.startswith('_') and filename != '__init__.py':
+                if os.path.islink(path):
+                    self.head_aliased_modules.add(os.path.basename(os.path.realpath(path)))
+
+    @staticmethod
+    def _git(args):
+        cmd = ['git'] + args
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
+        return stdout.decode('utf-8').splitlines()
 
 
 if __name__ == '__main__':

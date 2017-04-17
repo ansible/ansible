@@ -146,7 +146,7 @@ import time
 import binascii
 import codecs
 from zipfile import ZipFile, BadZipfile
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_bytes, to_text
 
 try:  # python 3.3+
     from shlex import quote
@@ -169,7 +169,7 @@ BUFSIZE = 65536
 
 def crc32(path):
     ''' Return a CRC32 checksum of a file '''
-    return binascii.crc32(open(path).read()) & 0xffffffff
+    return binascii.crc32(open(path, 'rb').read()) & 0xffffffff
 
 def shell_escape(string):
     ''' Quote meta-characters in the args for the unix shell '''
@@ -218,7 +218,7 @@ class ZipArchive(object):
         for line in out.splitlines()[3:-2]:
             fields = line.split(None, 7)
             self._files_in_archive.append(fields[7])
-            self._infodict[fields[7]] = long(fields[6])
+            self._infodict[fields[7]] = int(fields[6])
 
     def _crc32(self, path):
         if self._infodict:
@@ -237,7 +237,7 @@ class ZipArchive(object):
         else:
             try:
                 for item in archive.infolist():
-                    self._infodict[item.filename] = long(item.CRC)
+                    self._infodict[item.filename] = int(item.CRC)
             except:
                 archive.close()
                 raise UnarchiveError('Unable to list files in the archive')
@@ -800,12 +800,15 @@ def main():
                 # If download fails, raise a proper exception
                 if rsp is None:
                     raise Exception(info['msg'])
-                f = open(package, 'w')
+
+                # open in binary mode for python3
+                f = open(package, 'wb')
                 # Read 1kb at a time to save on ram
                 while True:
                     data = rsp.read(BUFSIZE)
+                    data = to_bytes(data, errors='surrogate_or_strict')
 
-                    if data == "":
+                    if len(data) < 1:
                         break # End of file, break while loop
 
                     f.write(data)

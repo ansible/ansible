@@ -159,6 +159,7 @@ proposed:
 existing:
     description:
         - k/v pairs of existing configuration
+    returned: always
     type: dict
     sample: {"border": false, "dr_prio": "1", "hello_interval": "30000",
             "isauth": false, "jp_bidir": false, "jp_policy_in": "JPIN",

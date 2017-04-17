@@ -18,6 +18,7 @@ from lib.util import (
     display,
     run_command,
     deepest_path,
+    parse_to_dict,
 )
 
 from lib.ansible_util import (
@@ -52,6 +53,8 @@ COMMAND = 'sanity'
 
 PEP8_SKIP_PATH = 'test/sanity/pep8/skip.txt'
 PEP8_LEGACY_PATH = 'test/sanity/pep8/legacy-files.txt'
+
+PYLINT_SKIP_PATH = 'test/sanity/pylint/skip.txt'
 
 
 def command_sanity(args):
@@ -431,6 +434,89 @@ def command_sanity_pep8(args, targets):
     return SanitySuccess(test)
 
 
+def command_sanity_pylint(args, targets):
+    """
+    :type args: SanityConfig
+    :type targets: SanityTargets
+    :rtype: SanityResult
+    """
+    test = 'pylint'
+
+    with open(PYLINT_SKIP_PATH, 'r') as skip_fd:
+        skip_paths = skip_fd.read().splitlines()
+
+    with open('test/sanity/pylint/disable.txt', 'r') as disable_fd:
+        disable = set(disable_fd.read().splitlines())
+
+    skip_paths_set = set(skip_paths)
+
+    paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] == '.py' and i.path not in skip_paths_set)
+
+    if not paths:
+        return SanitySkipped(test)
+
+    cmd = [
+        'pylint',
+        '--jobs', '0',
+        '--reports', 'n',
+        '--max-line-length', '160',
+        '--rcfile', '/dev/null',
+        '--output-format', 'json',
+        '--disable', ','.join(sorted(disable)),
+    ] + paths
+
+    env = ansible_environment(args)
+
+    try:
+        stdout, stderr = run_command(args, cmd, env=env, capture=True)
+        status = 0
+    except SubprocessError as ex:
+        stdout = ex.stdout
+        stderr = ex.stderr
+        status = ex.status
+
+    if stderr or status >= 32:
+        raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
+
+    if args.explain:
+        return SanitySkipped(test)
+
+    if stdout:
+        messages = json.loads(stdout)
+    else:
+        messages = []
+
+    errors = [SanityMessage(
+        message=m['message'],
+        path=m['path'],
+        line=int(m['line']),
+        column=int(m['column']),
+        level=m['type'],
+        code=m['symbol'],
+    ) for m in messages]
+
+    line = 0
+
+    for path in skip_paths:
+        line += 1
+
+        if not os.path.exists(path):
+            # Keep files out of the list which no longer exist in the repo.
+            errors.append(SanityMessage(
+                code='A101',
+                message='Remove "%s" since it does not exist' % path,
+                path=PYLINT_SKIP_PATH,
+                line=line,
+                column=1,
+                confidence=calculate_best_confidence(((PYLINT_SKIP_PATH, line), (path, 0)), args.metadata) if args.metadata.changes else None,
+            ))
+
+    if errors:
+        return SanityFailure(test, messages=errors)
+
+    return SanitySuccess(test)
+
+
 def command_sanity_yamllint(args, targets):
     """
     :type args: SanityConfig
@@ -472,6 +558,60 @@ def command_sanity_yamllint(args, targets):
         path=r['path'],
         line=int(r['line']),
         column=int(r['column']),
+        level=r['level'],
+    ) for r in results]
+
+    if results:
+        return SanityFailure(test, messages=results)
+
+    return SanitySuccess(test)
+
+
+def command_sanity_rstcheck(args, targets):
+    """
+    :type args: SanityConfig
+    :type targets: SanityTargets
+    :rtype: SanityResult
+    """
+    test = 'rstcheck'
+
+    with open('test/sanity/rstcheck/ignore-substitutions.txt', 'r') as ignore_fd:
+        ignore_substitutions = sorted(set(ignore_fd.read().splitlines()))
+
+    paths = sorted(i.path for i in targets.include if os.path.splitext(i.path)[1] in ('.rst',))
+
+    if not paths:
+        return SanitySkipped(test)
+
+    cmd = [
+        'rstcheck',
+        '--report', 'warning',
+        '--ignore-substitutions', ','.join(ignore_substitutions),
+    ] + paths
+
+    try:
+        stdout, stderr = run_command(args, cmd, capture=True)
+        status = 0
+    except SubprocessError as ex:
+        stdout = ex.stdout
+        stderr = ex.stderr
+        status = ex.status
+
+    if stdout:
+        raise SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
+
+    if args.explain:
+        return SanitySkipped(test)
+
+    pattern = r'^(?P<path>[^:]*):(?P<line>[0-9]+): \((?P<level>INFO|WARNING|ERROR|SEVERE)/[0-4]\) (?P<message>.*)$'
+
+    results = [parse_to_dict(pattern, line) for line in stderr.splitlines()]
+
+    results = [SanityMessage(
+        message=r['message'],
+        path=r['path'],
+        line=int(r['line']),
+        column=0,
         level=r['level'],
     ) for r in results]
 
@@ -642,7 +782,9 @@ class SanityFunc(SanityTest):
 SANITY_TESTS = (
     SanityFunc('shellcheck', command_sanity_shellcheck, intercept=False),
     SanityFunc('pep8', command_sanity_pep8, intercept=False),
+    SanityFunc('pylint', command_sanity_pylint, intercept=False),
     SanityFunc('yamllint', command_sanity_yamllint, intercept=False),
+    SanityFunc('rstcheck', command_sanity_rstcheck, intercept=False),
     SanityFunc('validate-modules', command_sanity_validate_modules, intercept=False),
     SanityFunc('ansible-doc', command_sanity_ansible_doc),
 )

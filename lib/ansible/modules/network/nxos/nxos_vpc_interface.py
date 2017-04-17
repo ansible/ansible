@@ -78,6 +78,7 @@ proposed:
     sample: {"portchannel": "100", "vpc": "10"}
 existing:
     description: k/v pairs of existing configuration
+    returned: always
     type: dict
     sample: {}
 end_state:

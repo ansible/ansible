@@ -124,6 +124,7 @@ to yield text but instead do the conversion explicitly ourselves. For example::
             # Handle the exception gracefully -- usually by displaying a good
             # user-centric error message that can be traced back to this piece
             # of code.
+            pass
 
 .. note:: Much of Ansible assumes that all encoded text is UTF-8.  At some
     point, if there is demand for other encodings we may change that, but for
@@ -285,7 +286,6 @@ For modules which also run on Python-2.4, we have to use an uglier
 construction to make this work under both Python-2.4 and Python-3::
 
     from ansible.module_utils.pycompat24 import get_exception
-    [...]
 
     try:
         a = 2/0

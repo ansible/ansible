@@ -26,7 +26,7 @@ DOCUMENTATION = """
 module: junos_rpc
 version_added: "2.3"
 author: "Peter Sprygada (@privateip)"
-short_description: Runs an arbitrary RPC on the remote device over NetConf
+short_description: Runs an arbitrary RPC over NetConf on an Juniper JUNOS device
 description:
   - Sends a request to the remote device running JUNOS to execute the
     specified RPC using the NetConf transport.  The reply is then
@@ -72,14 +72,17 @@ EXAMPLES = """
 
 RETURN = """
 xml:
-  description: The xml return string from the rpc request
+  description: The xml return string from the rpc request.
   returned: always
+  type: string
 output:
-  description: The rpc rely converted to the output format
+  description: The rpc rely converted to the output format.
   returned: always
+  type: string
 output_lines:
-  description: The text output split into lines for readability
+  description: The text output split into lines for readability.
   returned: always
+  type: list
 """
 from ncclient.xml_ import new_ele, sub_ele, to_xml, to_ele
 

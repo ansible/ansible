@@ -75,12 +75,19 @@ import re
 import os.path
 import tempfile
 
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_native
+
+
 def is_pubkey(string):
     """Verifies if string is a pubkey"""
     pgp_regex = ".*?(-----BEGIN PGP PUBLIC KEY BLOCK-----.*?-----END PGP PUBLIC KEY BLOCK-----).*"
-    return re.match(pgp_regex, string, re.DOTALL)
+    return bool(re.match(pgp_regex, to_native(string, errors='surrogate_or_strict'), re.DOTALL))
 
-class RpmKey:
+
+class RpmKey(object):
 
     def __init__(self, module):
         # If the key is a url, we need to check if it's present to be idempotent,
@@ -121,7 +128,6 @@ class RpmKey:
                 module.exit_json(changed=True)
             else:
                 module.exit_json(changed=False)
-
 
     def fetch_key(self, url):
         """Downloads a key from url, returns a valid path to a gpg key"""
@@ -212,9 +218,5 @@ def main():
     RpmKey(module)
 
 
-
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
 if __name__ == '__main__':
     main()

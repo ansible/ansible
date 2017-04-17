@@ -145,14 +145,26 @@ try:
 except ImportError:
     HAS_SSLCONTEXT = False
 
+# SNI Handling for python < 2.7.9 with urllib3 support
 try:
+    # urllib3>=1.15
+    HAS_URLLIB3_SSL_WRAP_SOCKET = False
     try:
-        from urllib3.contrib.pyopenssl import ssl_wrap_socket
+        from urllib3.contrib.pyopenssl import PyOpenSSLContext
     except ImportError:
-        from requests.packages.urllib3.contrib.pyopenssl import ssl_wrap_socket
-    HAS_URLLIB3_SNI_SUPPORT = True
+        from requests.packages.urllib3.contrib.pyopenssl import PyOpenSSLContext
+    HAS_URLLIB3_PYOPENSSLCONTEXT = True
 except ImportError:
-    HAS_URLLIB3_SNI_SUPPORT = False
+    # urllib3<1.15,>=1.6
+    HAS_URLLIB3_PYOPENSSLCONTEXT = False
+    try:
+        try:
+            from urllib3.contrib.pyopenssl import ssl_wrap_socket
+        except ImportError:
+            from requests.packages.urllib3.contrib.pyopenssl import ssl_wrap_socket
+        HAS_URLLIB3_SSL_WRAP_SOCKET = True
+    except ImportError:
+        pass
 
 # Select a protocol that includes all secure tls protocols
 # Exclude insecure ssl protocols if possible
@@ -359,10 +371,13 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
     class CustomHTTPSConnection(httplib.HTTPSConnection):
         def __init__(self, *args, **kwargs):
             httplib.HTTPSConnection.__init__(self, *args, **kwargs)
+            self.context = None
             if HAS_SSLCONTEXT:
                 self.context = create_default_context()
-                if self.cert_file:
-                    self.context.load_cert_chain(self.cert_file, self.key_file)
+            elif HAS_URLLIB3_PYOPENSSLCONTEXT:
+                self.context = PyOpenSSLContext(PROTOCOL)
+            if self.context and self.cert_file:
+                self.context.load_cert_chain(self.cert_file, self.key_file)
 
         def connect(self):
             "Connect to a host on a given (SSL) port."
@@ -380,9 +395,9 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
                 self._tunnel()
                 server_hostname = self._tunnel_host
 
-            if HAS_SSLCONTEXT:
+            if HAS_SSLCONTEXT or HAS_URLLIB3_PYOPENSSLCONTEXT:
                 self.sock = self.context.wrap_socket(sock, server_hostname=server_hostname)
-            elif HAS_URLLIB3_SNI_SUPPORT:
+            elif HAS_URLLIB3_SSL_WRAP_SOCKET:
                 self.sock = ssl_wrap_socket(sock, keyfile=self.key_file, cert_reqs=ssl.CERT_NONE, certfile=self.cert_file, ssl_version=PROTOCOL,
                         server_hostname=server_hostname)
             else:
@@ -541,8 +556,8 @@ def build_ssl_validation_error(hostname, port, paths, exc=None):
     if not HAS_SSLCONTEXT:
         msg.append('If the website serving the url uses SNI you need'
                    ' python >= 2.7.9 on your managed machine')
-        if not HAS_URLLIB3_SNI_SUPPORT:
-            msg.append('or you can install the `urllib3`, `pyopenssl`,'
+        if not HAS_URLLIB3_PYOPENSSLCONTEXT or not HAS_URLLIB3_SSL_WRAP_SOCKET:
+            msg.append('or you can install the `urllib3`, `pyOpenSSL`,'
                        ' `ndg-httpsclient`, and `pyasn1` python modules')
 
         msg.append('to perform SNI verification in python >= 2.6.')
@@ -665,7 +680,10 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         return True
 
     def _make_context(self, to_add_ca_cert_path):
-        context = create_default_context()
+        if HAS_URLLIB3_PYOPENSSLCONTEXT:
+            context = PyOpenSSLContext(PROTOCOL)
+        else:
+            context = create_default_context()
         if to_add_ca_cert_path:
             context.load_verify_locations(to_add_ca_cert_path)
         return context
@@ -674,7 +692,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         tmp_ca_cert_path, to_add_ca_cert_path, paths_checked = self.get_ca_certs()
         https_proxy = os.environ.get('https_proxy')
         context = None
-        if HAS_SSLCONTEXT:
+        if HAS_SSLCONTEXT or HAS_URLLIB3_PYOPENSSLCONTEXT:
             context = self._make_context(to_add_ca_cert_path)
 
         # Detect if 'no_proxy' environment variable is set and if our URL is included
@@ -705,7 +723,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                     self.validate_proxy_response(connect_result)
                     if context:
                         ssl_s = context.wrap_socket(s, server_hostname=self.hostname)
-                    elif HAS_URLLIB3_SNI_SUPPORT:
+                    elif HAS_URLLIB3_SSL_WRAP_SOCKET:
                         ssl_s = ssl_wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL, server_hostname=self.hostname)
                     else:
                         ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL)
@@ -716,7 +734,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                 s.connect((self.hostname, self.port))
                 if context:
                     ssl_s = context.wrap_socket(s, server_hostname=self.hostname)
-                elif HAS_URLLIB3_SNI_SUPPORT:
+                elif HAS_URLLIB3_SSL_WRAP_SOCKET:
                     ssl_s = ssl_wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL, server_hostname=self.hostname)
                 else:
                     ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL)

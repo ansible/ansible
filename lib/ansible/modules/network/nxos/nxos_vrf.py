@@ -98,6 +98,7 @@ proposed:
             "vrf": "ntc"}
 existing:
     description: k/v pairs of existing vrf
+    returned: always
     type: dict
     sample: {"admin_state": "Up", "description": "Old test",
             "vrf": "old_ntc"}

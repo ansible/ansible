@@ -26,9 +26,9 @@ DOCUMENTATION = """
 module: iosxr_command
 version_added: "2.1"
 author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
-short_description: Run commands on remote devices running Cisco iosxr
+short_description: Run commands on remote devices running Cisco IOS XR
 description:
-  - Sends arbitrary commands to an iosxr node and returns the results
+  - Sends arbitrary commands to an IOS XR node and returns the results
     read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
@@ -115,12 +115,12 @@ tasks:
 RETURN = """
 stdout:
   description: The set of responses from the commands
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: ['...', '...']
 stdout_lines:
   description: The value of stdout split into a list
-  returned: always
+  returned: always apart from low level errors (such as action plugin)
   type: list
   sample: [['...', '...'], ['...'], ['...']]
 failed_conditions:

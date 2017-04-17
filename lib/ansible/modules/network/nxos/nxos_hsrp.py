@@ -123,6 +123,7 @@ proposed:
     sample: {"group": "30", "version": "2", "vip": "10.30.1.1"}
 existing:
     description: k/v pairs of existing hsrp info on the interface
+    returned: always
     type: dict
     sample: {}
 end_state:
