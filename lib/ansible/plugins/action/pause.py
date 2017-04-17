@@ -125,7 +125,7 @@ class ActionModule(ActionBase):
             fd = None
             try:
                 fd = self._connection._new_stdin.fileno()
-            except ValueError, AttributeError:
+            except (ValueError, AttributeError):
                 # ValueError: someone is using a closed file descriptor as stdin
                 # AttributeError: someone is using a null file descriptor as stdin on windoez
                 pass
