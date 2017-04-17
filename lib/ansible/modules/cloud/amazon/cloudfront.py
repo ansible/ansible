@@ -165,9 +165,9 @@ class CloudFrontServiceManager:
         try:
             if expires_in is None:
                 expires_in = self.__default_presigned_url_expires_in
-            func = partial(self.client.generate_presigned_url, ClientMethod = client_method,
+            presigned_url = self.client.generate_presigned_url(ClientMethod = client_method,
                     Params=params, ExpiresIn=expires_in, HttpMethod=http_method)
-            return self.paginated_response(func)
+            return { 'presigned_url': presigned_url }
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="error generating presigned url - " + str(e),
                     exception=traceback.format_exc(),
@@ -176,8 +176,8 @@ class CloudFrontServiceManager:
     def generate_signed_url_from_pem_private_key(self, distribution_id, private_key_string, url, expire_date):
         try:
             cloudfront_signer = CloudFrontSigner(key_id, rsa_signer)
-            signed_url = cloudfront_signer.generate_presigned_url(url, date_less_than=expire_date)
-            return { 'presigned_url': signed_url }
+            presigned_url = cloudfront_signer.generate_presigned_url(url, date_less_than=expire_date)
+            return { 'presigned_url': presigned_url }
         except Exception as e:
             self.module.fail_json(msg="error generating signed url from pem private key - " + str(e),
                     exception=traceback.format_exc(),
@@ -866,11 +866,12 @@ def main():
         streaming_distribution_id=dict(required=False, default=None, type='str'),
         invalidation_batch=dict(required=False, default=None, type='str'),
         e_tag=dict(required=False, default=None, type='str'),
-        client_method=dict(required=False, default=None, type='str'),
+        presigned_url_client_method=dict(required=False, default=None, type='str'),
+        presigned_url_expires_in=dict(required=False, default=None, type='int'),
+        presigned_url_http_method=dict(required=False, default=None, type='str'),
+        presigned_url_parameters=dict(required=False, default=None, type='dict'),
         s3_bucket_name=dict(required=False, default=None, type='str'),
         s3_key_name=dict(required=False, default=None, type='str'),
-        expires_in=dict(required=False, default=None, type='int'),
-        http_method=dict(required=False, default=None, type='str'),
         tag_resource=dict(required=False, default=False, type='bool'),
         untag_resource=dict(required=False, default=False, type='bool'),
         config=dict(required=False, default=None, type='json'),
@@ -928,11 +929,12 @@ def main():
     origin_access_identity_id = module.params.get('origin_access_identity_id')
     e_tag = module.params.get('e_tag')
     origin_access_identity_id = module.params.get('origin_access_identity_id')
-    client_method = module.params.get('client_method')
+    presigned_url_client_method = module.params.get('presigned_url_client_method')
+    presigned_url_expires_in = module.params.get('presigned_url_expires_in')
+    presigned_url_http_method = module.params.get('presigned_url_http_method')
+    presigned_url_parameters = module.params.get('presigned_url_parameters')
     s3_bucket_name = module.params.get('s3_bucket_name')
     s3_key_name = module.params.get('s3_key_name')
-    expires_in = module.params.get('expires_in')
-    http_method = module.params.get('http_method')
     config = module.params.get('config')
     tags = module.params.get('tags')
     create_invalidation = module.params.get('create_invalidation')
@@ -975,6 +977,8 @@ def main():
     update_delete_duplicate_distribution = update_distribution or delete_distribution
     update_delete_duplicate_streaming_distribution = update_streaming_distribution or delete_streaming_distribution
     validate = validate_distribution or validate_streaming_distribution
+    config_required = ( update_delete_duplicate_distribution or update_delete_duplicate_streaming_distribution
+            or validate)
 
     if sum(map(bool, [create_origin_access_identity, delete_origin_access_identity, update_origin_access_identity,
             generate_presigned_url, generate_s3_presigned_url, create_distribution, delete_distribution,
@@ -999,7 +1003,8 @@ def main():
         config = validation_mgr.validate_common_distribution_parameters(config, enabled, aliases, logging,
                 price_class, comment, create_update_streaming_distribution)
 
-    config = helpers.pascal_dict_to_snake_dict(config, True)
+    if config_required:
+        config = helpers.pascal_dict_to_snake_dict(config, True)
 
     if create_update_distribution:
         valid_origins = validation_mgr.validate_origins(origins, default_origin_domain_name,
@@ -1025,7 +1030,8 @@ def main():
     if create_distribution or create_streaming_distribution:
         config = validation_mgr.validate_caller_reference_for_distribution_create(config, caller_reference)
 
-    config = helpers.snake_dict_to_pascal_dict(config)
+    if config_required:
+        config = helpers.snake_dict_to_pascal_dict(config)
 
     if create_origin_access_identity:
         result=service_mgr.create_origin_access_identity(caller_reference, comment)
@@ -1038,7 +1044,8 @@ def main():
     elif generate_s3_presigned_url:
         result=service_mgr.generate_s3_presigned_url(client_method, s3_bucket_name, s3_key_name, expires_in, http_method)
     elif generate_presigned_url:
-        result=service_mgr.generate_presigned_url(client_method, s3_bucket_name, s3_key_name, expires_in, http_method)
+        result=service_mgr.generate_presigned_url(presigned_url_client_method, presigned_url_parameters,
+                presigned_url_expires_in, presigned_url_http_method)
     elif generate_signed_url_from_pem_private_key:
         result=service_mgr.generate_signed_url_from_pem_private_key(distribution_id, signed_url_pem_private_key_string,
                 signed_url_url, signed_url_expire_date)
