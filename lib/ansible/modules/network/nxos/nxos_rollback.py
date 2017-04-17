@@ -81,7 +81,6 @@ status:
 from ansible.module_utils.nxos import nxos_argument_spec, run_commands
 from ansible.module_utils.basic import AnsibleModule
 
-
 def checkpoint(filename, module):
     commands = ['terminal dont-ask', 'checkpoint file %s' % filename]
     run_commands(module, commands)
