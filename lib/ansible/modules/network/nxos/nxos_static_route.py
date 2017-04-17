@@ -136,7 +136,7 @@ def state_present(module, candidate, prefix):
 
 
 def state_absent(module, candidate, prefix):
-    netcfg = get_config(module)
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
     commands = list()
     parents = 'vrf context {0}'.format(module.params['vrf'])
     invoke('set_route', module, commands, prefix)
@@ -161,7 +161,7 @@ def fix_prefix_to_regex(prefix):
 
 def get_existing(module, prefix, warnings):
     key_map = ['tag', 'pref', 'route_name', 'next_hop']
-    netcfg = get_config(module)
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
     parents = 'vrf context {0}'.format(module.params['vrf'])
     prefix_to_regex = fix_prefix_to_regex(prefix)
 
