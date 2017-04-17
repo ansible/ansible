@@ -144,7 +144,7 @@ def get_value(arg, config, module):
 
 def get_existing(module, args):
     existing = {}
-    netcfg = get_config(module)
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
     parents = ['vrf context {0}'.format(module.params['vrf'])]
     parents.append('address-family {0} {1}'.format(module.params['afi'],
