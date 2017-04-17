@@ -25,7 +25,7 @@ DOCUMENTATION = '''
 ---
 module: openssl_csr
 author: "Yanis Guenane (@Spredzy)"
-version_added: "2.3"
+version_added: "2.4"
 short_description: Generate OpenSSL Certificate Signing Request (CSR)
 description:
     - "This module allows one to (re)generates OpenSSL certificate signing requests.
