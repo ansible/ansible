@@ -20,7 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import base64
-import sys
 import time
 import traceback
 
@@ -710,27 +709,12 @@ class TaskExecutor:
                     if isinstance(i, string_types) and i.startswith("ansible_") and i.endswith("_interpreter"):
                         variables[i] = delegated_vars[i]
 
-        conn_type = self._play_context.connection
-        if conn_type == 'smart':
-            conn_type = 'ssh'
-            if sys.platform.startswith('darwin') and self._play_context.password:
-                # due to a current bug in sshpass on OSX, which can trigger
-                # a kernel panic even for non-privileged users, we revert to
-                # paramiko on that OS when a SSH password is specified
-                conn_type = "paramiko"
-            else:
-                # see if SSH can support ControlPersist if not use paramiko
-                if not check_for_controlpersist(self._play_context.ssh_executable):
-                    conn_type = "paramiko"
-
-        # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems
-        if conn_type == 'persistent':
-            self._play_context.connection = 'paramiko'
-
-        # if using persistent connections (or the action has set the FORCE_PERSISTENT_CONNECTION attribute to True),
+        # if using persistent paramiko connections (or the action has set the FORCE_PERSISTENT_CONNECTION attribute to True),
         # then we use the persistent connection plugion. Otherwise load the requested connection plugin
-        elif C.USE_PERSISTENT_CONNECTIONS or getattr(self, 'FORCE_PERSISTENT_CONNECTION', False):
+        if C.USE_PERSISTENT_CONNECTIONS or getattr(self, 'FORCE_PERSISTENT_CONNECTION', False):
             conn_type == 'persistent'
+        else:
+            conn_type = self._play_context.connection
 
         connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
 

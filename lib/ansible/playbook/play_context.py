@@ -26,14 +26,18 @@ import pwd
 import random
 import re
 import string
+import sys
 
 from ansible.compat.six import iteritems, string_types
 from ansible.compat.six.moves import shlex_quote
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
+from ansible.utils.ssh_functions import check_for_controlpersist
 
 boolean = C.mk_boolean
 
@@ -238,6 +242,7 @@ class PlayContext(Base):
 
         if play:
             self.set_play(play)
+
 
     def set_play(self, play):
         '''
@@ -609,3 +614,28 @@ class PlayContext(Base):
                         variables[var_opt] = var_val
             except AttributeError:
                 continue
+
+    def _get_attr_connection(self):
+        ''' connections are special, this takes care of responding correctly '''
+        conn_type = None
+        if self._attributes['connection'] == 'smart':
+            conn_type = 'ssh'
+            if sys.platform.startswith('darwin') and self.password:
+                # due to a current bug in sshpass on OSX, which can trigger
+                # a kernel panic even for non-privileged users, we revert to
+                # paramiko on that OS when a SSH password is specified
+                conn_type = "paramiko"
+            else:
+                # see if SSH can support ControlPersist if not use paramiko
+                if not check_for_controlpersist(self.ssh_executable):
+                    conn_type = "paramiko"
+
+        # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems
+        elif self._attributes['connection'] == 'persistent':
+            conn_type = 'paramiko'
+
+        if conn_type:
+            self.connection = conn_type
+
+        return self._attributes['connection']
+
