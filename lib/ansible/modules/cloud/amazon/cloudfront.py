@@ -173,22 +173,34 @@ class CloudFrontServiceManager:
                     exception=traceback.format_exc(),
                     **camel_dict_to_snake_dict(e.response))
 
-    def generate_signed_url_from_pem_private_key(self, distribution_id, private_key_string, url, expire_date):
+    def generate_presigned_url_from_pem_private_key(self, distribution_id, private_key_path, url, expire_date):
         try:
-            cloudfront_signer = CloudFrontSigner(key_id, rsa_signer)
+            self.pem_private_key_path = private_key_path
+            cloudfront_signer = CloudFrontSigner(distribution_id, self.rsa_signer)
             presigned_url = cloudfront_signer.generate_presigned_url(url, date_less_than=expire_date)
             return { 'presigned_url': presigned_url }
-        except Exception as e:
+        except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="error generating signed url from pem private key - " + str(e),
                     exception=traceback.format_exc(),
                     **camel_dict_to_snake_dict(e.response))
 
-    def rsa_signer(message, private_key_string, password=None):
-        private_key = serialization.load_pem_private_key(private_key_string, password=password,
-                backend=default_backend())
+    def rsa_signer(self, message):
+        with open(self.pem_private_key_path, 'rb') as key_file:
+            private_key = serialization.load_pem_private_key(
+                key_file.read(),
+                password=None,
+                backend=default_backend()
+            )
         signer = private_key.signer(padding.PKCS1v15(), hashes.SHA1())
         signer.update(message)
         return signer.finalize()
+
+#    def rsa_signer(message, private_key_string, password=None):
+#        private_key = serialization.load_pem_private_key(private_key_string, password=password,
+#                backend=default_backend())
+#        signer = private_key.signer(padding.PKCS1v15(), hashes.SHA1())
+#        signer.update(message)
+#        return signer.finalize()
 
     def generate_s3_presigned_url(self, client_method, s3_bucket_name, s3_key_name, expires_in, http_method):
         try:
@@ -752,6 +764,12 @@ class CloudFrontValidationManager:
             self.module.fail_json(msg="the attribute " + attribute_name  + " must be one of: " +
                     " ".join(str(e) for e in allowed_list))
 
+    def validate_presigned_url_pem_expire_date(self, datetime_string):
+        try:
+            return datetime.datetime.strptime(datetime_string, "%Y-%m-%d")
+        except Exception as e:
+            self.module.fail_json(msg="presigned_url_pem_expire_date must be in the format 'YYYY-MM-DD'")
+
 class CloudFrontHelpers:
     """
         Misecllaneous helpers for processing cloudfront data
@@ -853,8 +871,7 @@ def main():
         update_streaming_distribution=dict(required=False, default=False, type='bool'),
         delete_streaming_distribution=dict(required=False, default=False, type='bool'),
         generate_presigned_url=dict(required=False, default=False, type='bool'),
-        generate_s3_presigned_url=dict(required=False, default=False, type='bool'),
-        generate_signed_url_from_pem_private_key=dict(required=False, default=False, type='bool'),
+        generate_presigned_url_from_pem_private_key=dict(required=False, default=False, type='bool'),
         duplicate_distribution=dict(required=False, default=False, type='bool'),
         duplicate_streaming_distribution=dict(required=False, default=False, type='bool'),
         validate_distribution=dict(required=False, default=False, type='bool'),
@@ -900,9 +917,9 @@ def main():
         default_origin_access_identity=dict(required=False, default=None, type='str'),
         default_s3_origin_domain_name=dict(required=False, default=None, type='str'),
         default_s3_origin_origin_access_identity=dict(required=False, default=None, type='str'),
-        signed_url_pem_private_key_string=dict(required=False, default=None, type='str'),
-        signed_url_url=dict(required=False, default=None, type='str'),
-        signed_url_expire_date=dict(required=False, default=None, type='str')
+        presigned_url_pem_private_key_path=dict(required=False, default=None, type='str'),
+        presigned_url_pem_url=dict(required=False, default=None, type='str'),
+        presigned_url_pem_expire_date=dict(required=False, default=None, type='str')
     ))
 
     result = {}
@@ -923,7 +940,7 @@ def main():
     delete_streaming_distribution = module.params.get('delete_streaming_distribution')
     generate_presigned_url = module.params.get('generate_presigned_url')
     generate_s3_presigned_url = module.params.get('generate_s3_presigned_url')
-    generate_signed_url_from_pem_private_key = module.params.get('generate_signed_url_from_pem_private_key')
+    generate_presigned_url_from_pem_private_key = module.params.get('generate_presigned_url_from_pem_private_key')
     caller_reference = module.params.get('caller_reference')
     comment = module.params.get('comment')
     origin_access_identity_id = module.params.get('origin_access_identity_id')
@@ -933,6 +950,9 @@ def main():
     presigned_url_expires_in = module.params.get('presigned_url_expires_in')
     presigned_url_http_method = module.params.get('presigned_url_http_method')
     presigned_url_parameters = module.params.get('presigned_url_parameters')
+    presigned_url_pem_private_key_path = module.params.get('presigned_url_pem_private_key_path')
+    presigned_url_pem_url = module.params.get('presigned_url_pem_url')
+    presigned_url_pem_expire_date = module.params.get('presigned_url_pem_expire_date')
     s3_bucket_name = module.params.get('s3_bucket_name')
     s3_key_name = module.params.get('s3_key_name')
     config = module.params.get('config')
@@ -964,9 +984,6 @@ def main():
     default_origin_access_identity = module.params.get('default_origin_access_identity')
     default_s3_origin_domain_name = module.params.get('default_s3_origin_domain_name')
     default_s3_origin_access_identity = module.params.get('default_s3_origin_access_identity')
-    signed_url_pem_private_key_string = module.params.get('signed_url_pem_private_key_string')
-    signed_url_url = module.params.get('signed_url_url')
-    signed_url_expire_date = module.params.get('signed_url_expire_date')
     duplicate_distribution = module.params.get('duplicate_distribution')
     duplicate_streaming_distribution = module.params.get('duplicate_streaming_distribution')
     validate_distribution = module.params.get('validate_distribution')
@@ -983,7 +1000,7 @@ def main():
     if sum(map(bool, [create_origin_access_identity, delete_origin_access_identity, update_origin_access_identity,
             generate_presigned_url, generate_s3_presigned_url, create_distribution, delete_distribution,
             update_distribution, create_streaming_distribution, delete_streaming_distribution,
-            update_streaming_distribution, generate_signed_url_from_pem_private_key, duplicate_distribution,
+            update_streaming_distribution, generate_presigned_url_from_pem_private_key, duplicate_distribution,
             duplicate_streaming_distribution, validate_distribution, validate_streaming_distribution])) > 1:
         module.fail_json(msg="more than one cloudfront action has been specified. please select only one action.")
 
@@ -1010,20 +1027,20 @@ def main():
         valid_origins = validation_mgr.validate_origins(origins, default_origin_domain_name,
                 default_origin_access_identity, default_origin_path, create_update_streaming_distribution,
                 create_distribution)
-        config = helpers.merge_validation_into_config(config, valid_origins, "origins")
-        config_origins = config.get("origins")
+        config = helpers.merge_validation_into_config(config, valid_origins, 'origins')
+        config_origins = config.get('origins')
         valid_cache_behaviors = validation_mgr.validate_cache_behaviors(cache_behaviors, config_origins)
-        config = helpers.merge_validation_into_config(config, valid_cache_behaviors, "cache_behaviors")
+        config = helpers.merge_validation_into_config(config, valid_cache_behaviors, 'cache_behaviors')
         valid_default_cache_behavior = validation_mgr.validate_cache_behavior(default_cache_behavior, config_origins, True)
-        config = helpers.merge_validation_into_config(config, valid_default_cache_behavior, "default_cache_behavior")
+        config = helpers.merge_validation_into_config(config, valid_default_cache_behavior, 'default_cache_behavior')
         valid_custom_error_responses = validation_mgr.validate_custom_error_responses(custom_error_responses)
-        config = helpers.merge_validation_into_config(config, valid_custom_error_responses, "custom_error_responses")
+        config = helpers.merge_validation_into_config(config, valid_custom_error_responses, 'custom_error_responses')
         valid_restrictions = validation_mgr.validate_restrictions(restrictions)
-        config = helpers.merge_validation_into_config(config, valid_restrictions, "restrictions")
+        config = helpers.merge_validation_into_config(config, valid_restrictions, 'restrictions')
         config = validation_mgr.validate_distribution_config_parameters(config, default_root_object,
                 is_ipv6_enabled, http_version, web_acl_id)
         valid_viewer_certificate = validation_mgr.validate_viewer_certificate(viewer_certificate)
-        config = helpers.merge_validation_into_config(config, valid_viewer_certificate, "viewer_certificate")
+        config = helpers.merge_validation_into_config(config, valid_viewer_certificate, 'viewer_certificate')
     elif create_update_streaming_distribution:
         config = validation_mgr.validate_streaming_distribution_config_parameters(config, comment,
                 trusted_signers, s3_origin, default_s3_origin_domain_name, default_s3_origin_access_identity)
@@ -1041,14 +1058,13 @@ def main():
         result=service_mgr.update_origin_access_identity(caller_reference, comment, origin_access_identity_id, e_tag)
     elif create_invalidation:
         result=service_mgr.create_invalidation(distribution_id, invalidation_batch)
-    elif generate_s3_presigned_url:
-        result=service_mgr.generate_s3_presigned_url(client_method, s3_bucket_name, s3_key_name, expires_in, http_method)
     elif generate_presigned_url:
         result=service_mgr.generate_presigned_url(presigned_url_client_method, presigned_url_parameters,
                 presigned_url_expires_in, presigned_url_http_method)
-    elif generate_signed_url_from_pem_private_key:
-        result=service_mgr.generate_signed_url_from_pem_private_key(distribution_id, signed_url_pem_private_key_string,
-                signed_url_url, signed_url_expire_date)
+    elif generate_presigned_url_from_pem_private_key:
+        validated_pem_expire_date = validation_mgr.validate_presigned_url_pem_expire_date(presigned_url_pem_expire_date)
+        result=service_mgr.generate_presigned_url_from_pem_private_key(distribution_id,
+                presigned_url_pem_private_key_path, presigned_url_pem_url, validated_pem_expire_date)
     elif create_distribution or duplicate_distribution:
         result=service_mgr.create_distribution(config, tags)
     elif delete_distribution:
