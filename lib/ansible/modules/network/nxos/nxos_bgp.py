@@ -549,7 +549,7 @@ def get_value(arg, config):
 
 def get_existing(module, args):
     existing = {}
-    netcfg = get_config(module)
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
     try:
         asn_regex = '.*router\sbgp\s(?P<existing_asn>\d+).*'
