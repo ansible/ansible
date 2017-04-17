@@ -54,7 +54,7 @@ class AggregateStats:
             failures=self.failures.get(host, 0),
             unreachable=self.dark.get(host, 0),
             changed=self.changed.get(host, 0),
-            skipped=self.skipped.get(host, 0),
+            skipped=self.skipped.get(host, 0)
         )
 
     def set_custom_stats(self, which, what, host=None):
