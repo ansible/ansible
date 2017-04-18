@@ -136,8 +136,8 @@ class RpmKey(object):
         return tmpname
 
     def normalize_keyid(self, keyid):
-        """Ensure a keyid doesn't have a leading 0x, has leading or trailing whitespace, and make sure is lowercase"""
-        ret = keyid.strip().lower()
+        """Ensure a keyid doesn't have a leading 0x, has leading or trailing whitespace, and make sure is uppercase"""
+        ret = keyid.strip().upper()
         if ret.startswith('0x'):
             return ret[2:]
         elif ret.startswith('0X'):
@@ -157,10 +157,10 @@ class RpmKey(object):
         stdout, stderr = self.execute_command([gpg, '--no-tty', '--batch', '--with-colons', '--fixed-list-mode', keyfile])
         for line in stdout.splitlines():
             line = line.strip()
-            if line.startswith(':pub'):
+            if line.startswith('pub:'):
                 return line.split(':')[4]
 
-        self.json_fail(msg="Unexpected gpg output")
+        self.module.fail_json(msg="Unexpected gpg output")
 
     def is_keyid(self, keystr):
         """Verifies if a key, as provided by the user is a keyid"""
@@ -176,7 +176,7 @@ class RpmKey(object):
         cmd=self.rpm+' -q  gpg-pubkey --qf "%{description}" | gpg --no-tty --batch --with-colons --fixed-list-mode -'
         stdout, stderr = self.execute_command(cmd)
         for line in stdout.splitlines():
-            if keyid in line.split(':')[4]
+            if keyid in line.split(':')[4]:
                     return True
         return False
 
