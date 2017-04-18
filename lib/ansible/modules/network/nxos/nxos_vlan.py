@@ -16,9 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'status': ['preview'],
+    'supported_by': 'community',
+}
 
 
 DOCUMENTATION = '''
@@ -28,145 +30,87 @@ extends_documentation_fragment: nxos
 version_added: "2.1"
 short_description: Manages VLAN resources and attributes.
 description:
-    - Manages VLAN configurations on NX-OS switches.
+  - Manages VLAN configurations on NX-OS switches.
 author: Jason Edelman (@jedelman8)
 options:
-    vlan_id:
-        description:
-            - Single VLAN ID.
-        required: false
-        default: null
-    vlan_range:
-        description:
-            - Range of VLANs such as 2-10 or 2,5,10-15, etc.
-        required: false
-        default: null
-    name:
-        description:
-            - Name of VLAN.
-        required: false
-        default: null
-    vlan_state:
-        description:
-            - Manage the vlan operational state of the VLAN
-              (equivalent to state {active | suspend} command.
-        required: false
-        default: active
-        choices: ['active','suspend']
-    admin_state:
-        description:
-            - Manage the VLAN administrative state of the VLAN equivalent
-              to shut/no shut in VLAN config mode.
-        required: false
-        default: up
-        choices: ['up','down']
-    mapped_vni:
-        description:
-            - The Virtual Network Identifier (VNI) ID that is mapped to the
-              VLAN. Valid values are integer and keyword 'default'.
-        required: false
-        default: null
-        version_added: "2.2"
-    state:
-        description:
-            - Manage the state of the resource.
-        required: false
-        default: present
-        choices: ['present','absent']
+  vlan_id:
+    description:
+      - Single VLAN ID.
+    required: false
+    default: null
+  vlan_range:
+    description:
+      - Range of VLANs such as 2-10 or 2,5,10-15, etc.
+    required: false
+    default: null
+  name:
+    description:
+      - Name of VLAN.
+    required: false
+    default: null
+  vlan_state:
+    description:
+      - Manage the vlan operational state of the VLAN
+        (equivalent to state {active | suspend} command.
+    required: false
+    default: active
+    choices: ['active','suspend']
+  admin_state:
+    description:
+      - Manage the VLAN administrative state of the VLAN equivalent
+        to shut/no shut in VLAN config mode.
+    required: false
+    default: up
+    choices: ['up','down']
+  mapped_vni:
+    description:
+      - The Virtual Network Identifier (VNI) ID that is mapped to the
+        VLAN. Valid values are integer and keyword 'default'.
+    required: false
+    default: null
+    version_added: "2.2"
+  state:
+    description:
+      - Manage the state of the resource.
+    required: false
+    default: present
+    choices: ['present','absent']
 
 '''
 EXAMPLES = '''
 - name: Ensure a range of VLANs are not present on the switch
   nxos_vlan:
     vlan_range: "2-10,20,50,55-60,100-150"
-    host: 68.170.147.165
-    username: cisco
-    password: cisco
     state: absent
     transport: nxapi
 
 - name: Ensure VLAN 50 exists with the name WEB and is in the shutdown state
   nxos_vlan:
     vlan_id: 50
-    host: 68.170.147.165
     admin_state: down
     name: WEB
     transport: nxapi
-    username: cisco
-    password: cisco
 
 - name: Ensure VLAN is NOT on the device
   nxos_vlan:
     vlan_id: 50
-    host: 68.170.147.165
     state: absent
     transport: nxapi
-    username: cisco
-    password: cisco
 '''
 
 RETURN = '''
-
-proposed_vlans_list:
-    description: list of VLANs being proposed
-    returned: when debug enabled
-    type: list
-    sample: ["100"]
-existing_vlans_list:
-    description: list of existing VLANs on the switch prior to making changes
-    returned: when debug enabled
-    type: list
-    sample: ["1", "2", "3", "4", "5", "20"]
-end_state_vlans_list:
-    description: list of VLANs after the module is executed
-    returned: when debug enabled
-    type: list
-    sample:  ["1", "2", "3", "4", "5", "20", "100"]
-proposed:
-    description: k/v pairs of parameters passed into module (does not include
-                 vlan_id or vlan_range)
-    returned: when debug enabled
-    type: dict
-    sample: {"admin_state": "down", "name": "app_vlan",
-            "vlan_state": "suspend", "mapped_vni": "5000"}
-existing:
-    description: k/v pairs of existing vlan or null when using vlan_range
-    returned: when debug enabled
-    type: dict
-    sample: {"admin_state": "down", "name": "app_vlan",
-             "vlan_id": "20", "vlan_state": "suspend", "mapped_vni": ""}
-end_state:
-    description: k/v pairs of the VLAN after executing module or null
-                 when using vlan_range
-    returned: when debug enabled
-    type: dict
-    sample: {"admin_state": "down", "name": "app_vlan", "vlan_id": "20",
-             "vlan_state": "suspend", "mapped_vni": "5000"}
-updates:
-    description: command string sent to the device
-    returned: always
-    type: list
-    sample: ["vlan 20", "vlan 55", "vn-segment 5000"]
 commands:
-    description: command string sent to the device
+    description: Set of command strings to send to the remote device
     returned: always
     type: list
     sample: ["vlan 20", "vlan 55", "vn-segment 5000"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
+import re
+
 from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
-import re
-
-from ansible.module_utils.nxos import nxos_argument_spec, check_args
-from ansible.module_utils.nxos import run_commands, load_config, get_config
-from ansible.module_utils.basic import AnsibleModule
 
 def vlan_range_to_list(vlans):
     result = []
@@ -175,25 +119,23 @@ def vlan_range_to_list(vlans):
             if part == 'none':
                 break
             if '-' in part:
-                a, b = part.split('-')
-                a, b = int(a), int(b)
-                result.extend(range(a, b + 1))
+                start, end = part.split('-')
+                start, end = int(start), int(end)
+                result.extend([str(i) for i in range(start, end + 1)])
             else:
-                a = int(part)
-                result.append(a)
-        return numerical_sort(result)
+                result.append(part)
     return result
 
 
-def numerical_sort(string_int_list):
+def numerical_sort(iterable):
     """Sort list of strings (VLAN IDs) that are digits in numerical order.
     """
-
     as_int_list = []
-    as_str_list = []
-    for vlan in string_int_list:
+    for vlan in iterable:
         as_int_list.append(int(vlan))
     as_int_list.sort()
+
+    as_str_list = []
     for vlan in as_int_list:
         as_str_list.append(str(vlan))
     return as_str_list
@@ -269,8 +211,7 @@ def get_list_of_vlans(module):
 def get_vni(vlanid, module):
     flags = str('all | section vlan.{0}'.format(vlanid)).split(' ')
     body = get_config(module, flags=flags)
-    #command = 'show run all | section vlan.{0}'.format(vlanid)
-    #body = execute_show_command(command, module, command_type='cli_show_ascii')[0]
+
     value = ''
     if body:
         REGEX = re.compile(r'(?:vn-segment\s)(?P<value>.*)$', re.M)
@@ -284,9 +225,6 @@ def get_vlan(vlanid, module):
     """
     command = 'show vlan id %s | json' % vlanid
     body = run_commands(module, [command])
-
-    #command = 'show vlan id ' + vlanid
-    #body = execute_show_command(command, module)
 
     try:
         vlan_table = body[0]['TABLE_vlanbriefid']['ROW_vlanbriefid']
@@ -328,6 +266,7 @@ def apply_value_map(value_map, resource):
         resource[key] = value[resource.get(key)]
     return resource
 
+
 def main():
     argument_spec = dict(
         vlan_id=dict(required=False, type='str'),
@@ -335,9 +274,10 @@ def main():
         name=dict(required=False),
         vlan_state=dict(choices=['active', 'suspend'], required=False),
         mapped_vni=dict(required=False, type='str'),
-        state=dict(choices=['present', 'absent'], default='present',
-                       required=False),
+        state=dict(choices=['present', 'absent'], default='present', required=False),
         admin_state=dict(choices=['up', 'down'], required=False),
+
+        # Deprecated in Ansible 2.4
         include_defaults=dict(default=False),
         config=dict(),
         save=dict(type='bool', default=False)
@@ -345,17 +285,10 @@ def main():
 
     argument_spec.update(nxos_argument_spec)
 
-
-    argument_spec.update(nxos_argument_spec)
-
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=[['vlan_range', 'name'],
                                                ['vlan_id', 'vlan_range']],
                            supports_check_mode=True)
-
-    warnings = list()
-    check_args(module, warnings)
-
 
     warnings = list()
     check_args(module, warnings)
@@ -379,9 +312,8 @@ def main():
 
     proposed = dict((k, v) for k, v in args.items() if v is not None)
 
-    proposed_vlans_list = numerical_sort(vlan_range_to_list(
-        vlan_id or vlan_range))
-    existing_vlans_list = numerical_sort(get_list_of_vlans(module))
+    proposed_vlans_list = vlan_range_to_list(vlan_id or vlan_range)
+    existing_vlans_list = get_list_of_vlans(module)
     commands = []
     existing = {}
 
@@ -389,20 +321,19 @@ def main():
         if state == 'present':
             # These are all of the VLANs being proposed that don't
             # already exist on the switch
-            vlans_delta = list(
+            vlans_delta = numerical_sort(
                 set(proposed_vlans_list).difference(existing_vlans_list))
             commands = build_commands(vlans_delta, state)
         elif state == 'absent':
             # VLANs that are common between what is being proposed and
             # what is on the switch
-            vlans_common = list(
+            vlans_common = numerical_sort(
                 set(proposed_vlans_list).intersection(existing_vlans_list))
             commands = build_commands(vlans_common, state)
     else:
         existing = get_vlan(vlan_id, module)
-        if state == 'absent':
-            if existing:
-                commands = ['no vlan ' + vlan_id]
+        if state == 'absent' and existing:
+            commands = ['no vlan ' + vlan_id]
         elif state == 'present':
             if (existing.get('mapped_vni') == '0' and
                     proposed.get('mapped_vni') == 'default'):
@@ -411,11 +342,8 @@ def main():
             if delta or not existing:
                 commands = get_vlan_config_commands(delta, vlan_id)
 
-    end_state = existing
-    end_state_vlans_list = existing_vlans_list
-
     if commands:
-        if existing.get('mapped_vni') and state != 'absent':
+        if existing.get('mapped_vni'):
             if (existing.get('mapped_vni') != proposed.get('mapped_vni') and
                     existing.get('mapped_vni') != '0' and proposed.get('mapped_vni') != 'default'):
                 commands.insert(1, 'no vn-segment')
@@ -425,32 +353,15 @@ def main():
         else:
             load_config(module, commands)
             changed = True
-            end_state_vlans_list = numerical_sort(get_list_of_vlans(module))
-            if 'configure' in commands:
-                commands.pop(0)
-            if vlan_id:
-                end_state = get_vlan(vlan_id, module)
 
     results = {
         'commands': commands,
-        'updates': commands,
         'changed': changed,
         'warnings': warnings
     }
-
-    if module._debug:
-        results.update({
-            'proposed_vlans_list': proposed_vlans_list,
-            'existing_vlans_list': existing_vlans_list,
-            'proposed': proposed,
-            'existing': existing,
-            'end_state': end_state,
-            'end_state_vlans_list': end_state_vlans_list
-        })
 
     module.exit_json(**results)
 
 
 if __name__ == '__main__':
     main()
-
