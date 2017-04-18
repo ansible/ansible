@@ -84,6 +84,7 @@ EXAMPLES = '''
       state: present
       snapshot_name: snap1
       description: snap1_description
+    delegate_to: localhost
 
   - name: Remove a snapshot
     vmware_guest_snapshot:
@@ -93,6 +94,7 @@ EXAMPLES = '''
       name: dummy_vm
       state: remove
       snapshot_name: snap1
+    delegate_to: localhost
 
   - name: Revert to a snapshot
     vmware_guest_snapshot:
@@ -102,6 +104,7 @@ EXAMPLES = '''
       name: dummy_vm
       state: revert
       snapshot_name: snap1
+    delegate_to: localhost
 
   - name: Remove all snapshots of a VM
     vmware_guest_snapshot:
@@ -110,6 +113,7 @@ EXAMPLES = '''
       password: vmware
       name: dummy_vm
       state: remove_all
+    delegate_to: localhost
 '''
 
 RETURN = """
