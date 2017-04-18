@@ -71,7 +71,7 @@ Controlling What Defines Failure
 
 Suppose the error code of a command is meaningless and to tell if there
 is a failure what really matters is the output of the command, for instance
-if the string "FAILED" is in the output.  
+if the string "FAILED" is in the output.
 
 Ansible in 1.4 and later provides a way to specify this behavior as follows::
 
@@ -80,12 +80,12 @@ Ansible in 1.4 and later provides a way to specify this behavior as follows::
       register: command_result
       failed_when: "'FAILED' in command_result.stderr"
 
-or::
+or based on the return code::
 
-    - name: Fail task when the return code is greater than or equal to 4
-      raw: robocopy.exe \\Server1\reports \\Server2\backup
-      register: rbcopy
-      failed_when: rbcopy.rc >= 4
+    - name: Fail task when both files are identical
+      raw: diff foo/file1 bar/file2
+      register: diff_cmd
+      failed_when: diff_cmd.rc == 0 or diff_cmd.rc >= 2
 
 In previous version of Ansible, this can be still be accomplished as follows::
 
