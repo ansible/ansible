@@ -228,7 +228,7 @@ def main():
         arn=dict(required=False, type='str'),
         family=dict(required=False, type='str'),
         revision=dict(required=False, type='int'),
-        force_create=dict(required=False, type='bool'),
+        force_create=dict(required=False, default=False, type='bool'),
         containers=dict(required=False, type='list'),
         network_mode=dict(required=False, default='bridge', choices=['bridge', 'host', 'none'], type='str'),
         task_role_arn=dict(required=False, default='', type='str'),
