@@ -40,7 +40,7 @@ _DEVICE_CONNECTION = None
 
 eos_argument_spec = {
     'host': dict(),
-    'port': dict(type='int', default=443),
+    'port': dict(type='int'),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
@@ -49,12 +49,19 @@ eos_argument_spec = {
     'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     'auth_pass': dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
 
-    'use_ssl': dict(type='bool', default=True),
-    'validate_certs': dict(type='bool', default=True),
+    'use_ssl': dict(type='bool'),
+    'validate_certs': dict(type='bool'),
     'timeout': dict(type='int'),
 
     'provider': dict(type='dict'),
     'transport': dict(choices=['cli', 'eapi'])
+}
+
+# Add argument's default value here
+ARGS_DEFAULT_VALUE = {
+    'port': 443,
+    'use_ssl': True,
+    'validate_certs': True
 }
 
 def check_args(module, warnings):
@@ -63,6 +70,13 @@ def check_args(module, warnings):
         if key not in ['provider', 'transport', 'authorize'] and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
                     'removed in a future version' % key)
+
+    # set argument's default value if not provided in input
+    # This is done to avoid unwanted argument deprecation warning
+    # in case argument is not given as input (outside provider).
+    for key in ARGS_DEFAULT_VALUE:
+        if not module.params.get(key, None):
+            module.params[key] = ARGS_DEFAULT_VALUE[key]
 
     if provider:
         for param in ('auth_pass', 'password'):
