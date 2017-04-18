@@ -21,6 +21,7 @@
 - name: create ec2 instances for testing
   ec2:
     instance_type: t1.micro
+    assign_public_ip: yes
     image: ami-fb8e9292
     group: "{{ resource_prefix }}-sg"
     region: "{{ ec2_region }}"
