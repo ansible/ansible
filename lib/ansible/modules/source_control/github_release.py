@@ -73,12 +73,14 @@ options:
       - Sets if the release is a draft or not. (boolean)
     default: false
     version_added: 2.4
+    choices: ['True', 'False']
   prerelease:
     required: false
     description:
       - Sets if the release is a prerelease or not. (boolean)
     default: false
     version_added: 2.4
+    choices: ['True', 'False']
 
 author:
     - "Adrian Moisey (@adrianmoisey)"
