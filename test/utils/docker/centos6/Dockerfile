@@ -19,6 +19,7 @@ RUN yum clean all && \
     python-coverage \
     python-devel \
     python-httplib2 \
+    python-jinja2 \
     python-keyczar \
     python-mock \
     python-nose \
@@ -39,7 +40,7 @@ RUN yum clean all && \
     && \
     yum clean all
 
-RUN rpm -e --nodeps python-crypto && pip install --upgrade jinja2 pycrypto
+RUN rpm -e --nodeps python-crypto && pip install --upgrade pycrypto
 
 RUN /bin/sed -i -e 's/^\(Defaults\s*requiretty\)/#--- \1/'  /etc/sudoers
 RUN mkdir /etc/ansible/

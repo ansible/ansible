@@ -1,0 +1,38 @@
+---
+- debug: msg="START nxapi/src_basic.yaml"
+
+- name: setup
+  nxos_config:
+    commands:
+      - no description
+      - no shutdown
+    parents:
+      - interface Ethernet2/5
+    match: none
+    provider: "{{ nxapi }}"
+
+- name: configure device with config
+  nxos_config:
+    src: basic/config.j2
+    provider: "{{ nxapi }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+# https://github.com/ansible/ansible-modules-core/issues/4807
+      - "result.updates is defined"
+
+- name: check device with config
+  nxos_config:
+    src: basic/config.j2
+    provider: "{{ nxapi }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+# https://github.com/ansible/ansible-modules-core/issues/4807
+      - "result.updates is not defined"
+
+- debug: msg="END nxapi/src_basic.yaml"

@@ -37,20 +37,20 @@ import re
 from termios import tcflush, TCIFLUSH
 from binascii import hexlify
 
-from ansible.compat.six import iteritems
-
 from ansible import constants as C
-from ansible.compat.six.moves import input
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.six.moves import input
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import makedirs_safe
-from ansible.utils.unicode import to_bytes
+from ansible.module_utils._text import to_bytes
 
 try:
     from __main__ import display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
 
 AUTHENTICITY_MSG="""
 paramiko: The authenticity of host '%s' can't be established.
@@ -88,7 +88,10 @@ class MyAddPolicy(object):
 
     def missing_host_key(self, client, hostname, key):
 
-        if C.HOST_KEY_CHECKING:
+        if all((C.HOST_KEY_CHECKING, not C.PARAMIKO_HOST_KEY_AUTO_ADD)):
+
+            if C.USE_PERSISTENT_CONNECTIONS:
+                raise AnsibleConnectionFailure('rejected %s host key for host %s: %s' % (key.get_name(), hostname, hexlify(key.get_fingerprint())))
 
             self.connection.connection_lock()
 
@@ -129,6 +132,14 @@ class Connection(ConnectionBase):
 
     transport = 'paramiko'
 
+    def transport_test(self, connect_timeout):
+        ''' Test the transport mechanism, if available '''
+        host = self._play_context.remote_addr
+        port = int(self._play_context.port or 22)
+        display.vvv("attempting transport test to %s:%s" % (host, port))
+        sock = socket.create_connection((host, port), connect_timeout)
+        sock.close()
+
     def _cache_key(self):
         return "%s__%s__" % (self._play_context.remote_addr, self._play_context.remote_user)
 
@@ -144,9 +155,9 @@ class Connection(ConnectionBase):
         proxy_command = None
         # Parse ansible_ssh_common_args, specifically looking for ProxyCommand
         ssh_args = [
-            getattr(self._play_context, 'ssh_extra_args', ''),
-            getattr(self._play_context, 'ssh_common_args', ''),
-            getattr(self._play_context, 'ssh_args', ''),
+            getattr(self._play_context, 'ssh_extra_args', '') or '',
+            getattr(self._play_context, 'ssh_common_args', '') or '',
+            getattr(self._play_context, 'ssh_args', '') or '',
         ]
         if ssh_args is not None:
             args = self._split_ssh_args(' '.join(ssh_args))
@@ -192,7 +203,8 @@ class Connection(ConnectionBase):
             raise AnsibleError("paramiko is not installed")
 
         port = self._play_context.port or 22
-        display.vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr), host=self._play_context.remote_addr)
+        display.vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr),
+                    host=self._play_context.remote_addr)
 
         ssh = paramiko.SSHClient()
 
@@ -226,7 +238,7 @@ class Connection(ConnectionBase):
                 self._play_context.remote_addr,
                 username=self._play_context.remote_user,
                 allow_agent=allow_agent,
-                look_for_keys=True,
+                look_for_keys=C.PARAMIKO_LOOK_FOR_KEYS,
                 key_filename=key_filename,
                 password=self._play_context.password,
                 timeout=self._play_context.timeout,
@@ -273,7 +285,7 @@ class Connection(ConnectionBase):
 
         display.vvv("EXEC %s" % cmd, host=self._play_context.remote_addr)
 
-        cmd = to_bytes(cmd, errors='strict')
+        cmd = to_bytes(cmd, errors='surrogate_or_strict')
 
         no_prompt_out = b''
         no_prompt_err = b''
@@ -290,7 +302,7 @@ class Connection(ConnectionBase):
                     chunk = chan.recv(bufsize)
                     display.debug("chunk is: %s" % chunk)
                     if not chunk:
-                        if 'unknown user' in become_output:
+                        if b'unknown user' in become_output:
                             raise AnsibleError( 'user %s does not exist' % self._play_context.become_user)
                         else:
                             break
@@ -309,7 +321,7 @@ class Connection(ConnectionBase):
 
                 if passprompt:
                     if self._play_context.become and self._play_context.become_pass:
-                        chan.sendall(self._play_context.become_pass + '\n')
+                        chan.sendall(to_bytes(self._play_context.become_pass) + b'\n')
                     else:
                         raise AnsibleError("A password is reqired but none was supplied")
                 else:
@@ -330,7 +342,7 @@ class Connection(ConnectionBase):
 
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
 
-        if not os.path.exists(to_bytes(in_path, errors='strict')):
+        if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
             raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
 
         try:
@@ -339,7 +351,7 @@ class Connection(ConnectionBase):
             raise AnsibleError("failed to open a SFTP connection (%s)" % e)
 
         try:
-            self.sftp.put(to_bytes(in_path, errors='strict'), to_bytes(out_path, errors='strict'))
+            self.sftp.put(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
         except IOError:
             raise AnsibleError("failed to transfer file to %s" % out_path)
 
@@ -365,7 +377,7 @@ class Connection(ConnectionBase):
             raise AnsibleError("failed to open a SFTP connection (%s)", e)
 
         try:
-            self.sftp.get(to_bytes(in_path, errors='strict'), to_bytes(out_path, errors='strict'))
+            self.sftp.get(to_bytes(in_path, errors='surrogate_or_strict'), to_bytes(out_path, errors='surrogate_or_strict'))
         except IOError:
             raise AnsibleError("failed to transfer file from %s" % in_path)
 
@@ -417,8 +429,9 @@ class Connection(ConnectionBase):
         SSH_CONNECTION_CACHE.pop(cache_key, None)
         SFTP_CONNECTION_CACHE.pop(cache_key, None)
 
-        if self.sftp is not None:
-            self.sftp.close()
+        if hasattr(self, 'sftp'):
+            if self.sftp is not None:
+                self.sftp.close()
 
         if C.HOST_KEY_CHECKING and C.PARAMIKO_RECORD_HOST_KEYS and self._any_keys_added():
 

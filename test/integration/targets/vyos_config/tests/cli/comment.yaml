@@ -1,0 +1,38 @@
+---
+- debug: msg="START cli/comment.yaml"
+
+- name: setup
+  vyos_config:
+    lines: set system host-name {{ inventory_hostname_short }}
+    provider: "{{ cli }}"
+    match: none
+
+- name: configure using comment
+  vyos_config:
+    lines: set system host-name foo
+    comment: this is a test
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'set system host-name foo' in result.commands"
+
+- name: collect system commits
+  vyos_command:
+    commands: show system commit
+    provider: "{{ cli }}"
+  register: result
+
+- assert:
+    that:
+      - "'this is a test' in result.stdout_lines[0][1]"
+
+- name: teardown
+  vyos_config:
+    lines: set system host-name {{ inventory_hostname_short }}
+    provider: "{{ cli }}"
+    match: none
+
+- debug: msg="END cli/comment.yaml"

@@ -30,6 +30,7 @@ import time
 
 from ansible.errors import AnsibleOptionsError
 from ansible.cli import CLI
+from ansible.module_utils._text import to_native
 from ansible.plugins import module_loader
 from ansible.utils.cmd_functions import run_cmd
 
@@ -43,7 +44,16 @@ except ImportError:
 ########################################################
 
 class PullCLI(CLI):
-    ''' code behind ansible ad-hoc cli'''
+    ''' is used to up a remote copy of ansible on each managed node,
+        each set to run via cron and update playbook source via a source repository.
+        This inverts the default *push* architecture of ansible into a *pull* architecture,
+        which has near-limitless scaling potential.
+
+        The setup playbook can be tuned to change the cron frequency, logging locations, and parameters to ansible-pull.
+        This is useful both for extreme scale-out as well as periodic remediation.
+        Usage of the 'fetch' module to retrieve logs from ansible-pull runs would be an
+        excellent way to gather and analyze remote logs from ansible-pull.
+    '''
 
     DEFAULT_REPO_TYPE = 'git'
     DEFAULT_PLAYBOOK = 'local.yml'
@@ -52,12 +62,16 @@ class PullCLI(CLI):
         2: 'File is not readable'
     }
     SUPPORTED_REPO_MODULES = ['git']
+    ARGUMENTS = { 'playbook.yml':  'The name of one the YAML format files to run as an Ansible playbook.'
+                                 'This can be a relative path within the checkout. By default, Ansible will'
+                                 "look for a playbook based on the host's fully-qualified domain name,"
+                                 'on the host hostname and finally a playbook named *local.yml*.', }
 
     def parse(self):
         ''' create an options parser for bin/ansible '''
 
         self.parser = CLI.base_parser(
-            usage='%prog -U <repository> [options]',
+            usage='%prog -U <repository> [options] [<playbook.yml>]',
             connect_opts=True,
             vault_opts=True,
             runtask_opts=True,
@@ -65,25 +79,22 @@ class PullCLI(CLI):
             inventory_opts=True,
             module_opts=True,
             runas_prompt_opts=True,
+            desc="pulls playbooks from a VCS repo and executes them for the local host",
         )
 
         # options unique to pull
-        self.parser.add_option('--purge', default=False, action='store_true',
-            help='purge checkout after playbook run')
+        self.parser.add_option('--purge', default=False, action='store_true', help='purge checkout after playbook run')
         self.parser.add_option('-o', '--only-if-changed', dest='ifchanged', default=False, action='store_true',
             help='only run the playbook if the repository has been updated')
         self.parser.add_option('-s', '--sleep', dest='sleep', default=None,
             help='sleep for random interval (between 0 and n number of seconds) before starting. This is a useful way to disperse git requests')
         self.parser.add_option('-f', '--force', dest='force', default=False, action='store_true',
             help='run the playbook even if the repository could not be updated')
-        self.parser.add_option('-d', '--directory', dest='dest', default=None,
-            help='directory to checkout repository to')
-        self.parser.add_option('-U', '--url', dest='url', default=None,
-            help='URL of the playbook repository')
-        self.parser.add_option('--full', dest='fullclone', action='store_true',
-            help='Do a full clone, instead of a shallow one.')
+        self.parser.add_option('-d', '--directory', dest='dest', default=None, help='directory to checkout repository to')
+        self.parser.add_option('-U', '--url', dest='url', default=None, help='URL of the playbook repository')
+        self.parser.add_option('--full', dest='fullclone', action='store_true', help='Do a full clone, instead of a shallow one.')
         self.parser.add_option('-C', '--checkout', dest='checkout',
-            help='branch/tag/commit to checkout.  ' 'Defaults to behavior of repository module.')
+            help='branch/tag/commit to checkout. Defaults to behavior of repository module.')
         self.parser.add_option('--accept-host-key', default=False, dest='accept_host_key', action='store_true',
             help='adds the hostkey for the repo url if not already added')
         self.parser.add_option('-m', '--module-name', dest='module_name', default=self.DEFAULT_REPO_TYPE,
@@ -94,13 +105,12 @@ class PullCLI(CLI):
         self.parser.add_option('--clean', dest='clean', default=False, action='store_true',
             help='modified files in the working repository will be discarded')
         self.parser.add_option('--track-subs', dest='tracksubs', default=False, action='store_true',
-            help='submodules will track the latest changes'
-                 ' This is equivalent to specifying the --remote flag to git submodule update')
+            help='submodules will track the latest changes. This is equivalent to specifying the --remote flag to git submodule update')
 
         # for pull we don't wan't a default
         self.parser.set_defaults(inventory=None)
 
-        self.options, self.args = self.parser.parse_args(self.args[1:])
+        super(PullCLI, self).parse()
 
         if not self.options.dest:
             hostname = socket.getfqdn()
@@ -219,9 +229,9 @@ class PullCLI(CLI):
         if self.options.ask_sudo_pass or self.options.ask_su_pass or self.options.become_ask_pass:
             cmd += ' --ask-become-pass'
         if self.options.skip_tags:
-            cmd += ' --skip-tags "%s"' % self.options.skip_tags
+            cmd += ' --skip-tags "%s"' % to_native(u','.join(self.options.skip_tags))
         if self.options.tags:
-            cmd += ' -t "%s"' % self.options.tags
+            cmd += ' -t "%s"' % to_native(u','.join(self.options.tags))
         if self.options.subset:
             cmd += ' -l "%s"' % self.options.subset
         else:

@@ -19,16 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six.moves import queue
-
-import json
 import multiprocessing
 import os
-import signal
 import sys
-import time
 import traceback
-import zlib
 
 from jinja2.exceptions import TemplateNotFound
 
@@ -40,13 +34,10 @@ try:
 except ImportError:
     HAS_ATFORK=False
 
-from ansible.errors import AnsibleError, AnsibleConnectionFailure
+from ansible.errors import AnsibleConnectionFailure
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
-from ansible.playbook.handler import Handler
-from ansible.playbook.task import Task
-from ansible.vars.unsafe_proxy import AnsibleJSONUnsafeDecoder
-from ansible.utils.unicode import to_unicode
+from ansible.module_utils._text import to_text
 
 try:
     from __main__ import display
@@ -64,20 +55,18 @@ class WorkerProcess(multiprocessing.Process):
     for reading later.
     '''
 
-    def __init__(self, rslt_q, play, host, task, task_vars, play_context, loader, variable_manager, shared_loader_obj):
+    def __init__(self, rslt_q, task_vars, host, task, play_context, loader, variable_manager, shared_loader_obj):
 
         super(WorkerProcess, self).__init__()
         # takes a task queue manager as the sole param:
         self._rslt_q            = rslt_q
-        self._play              = play
+        self._task_vars         = task_vars
         self._host              = host
         self._task              = task
         self._play_context      = play_context
         self._loader            = loader
         self._variable_manager  = variable_manager
         self._shared_loader_obj = shared_loader_obj
-
-        self._task_vars = task_vars
 
         # dupe stdin, if we have one
         self._new_stdin = sys.stdin
@@ -126,7 +115,12 @@ class WorkerProcess(multiprocessing.Process):
             display.debug("done running TaskExecutor() for %s/%s" % (self._host, self._task))
             self._host.vars = dict()
             self._host.groups = []
-            task_result = TaskResult(self._host.name, self._task._uuid, executor_result)
+            task_result = TaskResult(
+                self._host.name,
+                self._task._uuid,
+                executor_result,
+                task_fields=self._task.dump_attrs(),
+            )
 
             # put the result on the result queue
             display.debug("sending task result")
@@ -136,7 +130,12 @@ class WorkerProcess(multiprocessing.Process):
         except AnsibleConnectionFailure:
             self._host.vars = dict()
             self._host.groups = []
-            task_result = TaskResult(self._host.name, self._task._uuid, dict(unreachable=True))
+            task_result = TaskResult(
+                self._host.name,
+                self._task._uuid,
+                dict(unreachable=True),
+                task_fields=self._task.dump_attrs(),
+            )
             self._rslt_q.put(task_result, block=False)
 
         except Exception as e:
@@ -144,11 +143,16 @@ class WorkerProcess(multiprocessing.Process):
                 try:
                     self._host.vars = dict()
                     self._host.groups = []
-                    task_result = TaskResult(self._host.name, self._task._uuid, dict(failed=True, exception=to_unicode(traceback.format_exc()), stdout=''))
+                    task_result = TaskResult(
+                        self._host.name,
+                        self._task._uuid,
+                        dict(failed=True, exception=to_text(traceback.format_exc()), stdout=''),
+                        task_fields=self._task.dump_attrs(),
+                    )
                     self._rslt_q.put(task_result, block=False)
                 except:
-                    display.debug(u"WORKER EXCEPTION: %s" % to_unicode(e))
-                    display.debug(u"WORKER TRACEBACK: %s" % to_unicode(traceback.format_exc()))
+                    display.debug(u"WORKER EXCEPTION: %s" % to_text(e))
+                    display.debug(u"WORKER TRACEBACK: %s" % to_text(traceback.format_exc()))
 
         display.debug("WORKER PROCESS EXITING")
 
@@ -160,4 +164,3 @@ class WorkerProcess(multiprocessing.Process):
         #with open('worker_%06d.stats' % os.getpid(), 'w') as f:
         #    f.write(s.getvalue())
 
-        sys.exit(0)

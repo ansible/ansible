@@ -28,11 +28,12 @@
 
 import re
 import time
-import itertools
 import shlex
 
 from ansible.module_utils.basic import BOOLEANS_TRUE, BOOLEANS_FALSE
-from ansible.module_utils.six import string_types
+from ansible.module_utils.basic import get_exception
+from ansible.module_utils.six import string_types, text_type
+from ansible.module_utils.six.moves import zip
 
 def to_list(val):
     if isinstance(val, (list, tuple)):
@@ -42,15 +43,27 @@ def to_list(val):
     else:
         return list()
 
+
 class FailedConditionsError(Exception):
     def __init__(self, msg, failed_conditions):
         super(FailedConditionsError, self).__init__(msg)
         self.failed_conditions = failed_conditions
 
+class FailedConditionalError(Exception):
+    def __init__(self, msg, failed_conditional):
+        super(FailedConditionalError, self).__init__(msg)
+        self.failed_conditional = failed_conditional
+
 class AddCommandError(Exception):
     def __init__(self, msg, command):
         super(AddCommandError, self).__init__(msg)
         self.command = command
+
+class AddConditionError(Exception):
+    def __init__(self, msg, condition):
+        super(AddConditionError, self).__init__(msg)
+        self.condition=condition
+
 
 class Cli(object):
 
@@ -69,16 +82,13 @@ class Cli(object):
             objects.append(self.to_command(cmd, output))
         return self.connection.run_commands(objects)
 
-    def to_command(self, command, output=None, prompt=None, response=None):
+    def to_command(self, command, output=None, prompt=None, response=None, **kwargs):
         output = output or self.default_output
         if isinstance(command, Command):
             return command
-        elif isinstance(command, dict):
-            output = cmd.get('output') or output
-            cmd = cmd['command']
         if isinstance(prompt, string_types):
             prompt = re.compile(re.escape(prompt))
-        return Command(command, output, prompt=prompt, response=response)
+        return Command(command, output, prompt=prompt, response=response, **kwargs)
 
     def add_commands(self, commands, output=None, **kwargs):
         for cmd in commands:
@@ -86,7 +96,7 @@ class Cli(object):
 
     def run_commands(self):
         responses = self.connection.run_commands(self._commands)
-        for resp, cmd in itertools.izip(responses, self._commands):
+        for resp, cmd in zip(responses, self._commands):
             cmd.response = resp
 
         # wipe out the commands list to avoid issues if additional
@@ -97,8 +107,8 @@ class Cli(object):
 
 class Command(object):
 
-    def __init__(self, command, output=None, prompt=None, is_reboot=False,
-                 response=None, delay=0):
+    def __init__(self, command, output=None, prompt=None, response=None,
+                 **kwargs):
 
         self.command = command
         self.output = output
@@ -107,8 +117,7 @@ class Command(object):
         self.prompt = prompt
         self.response = response
 
-        self.is_reboot = is_reboot
-        self.delay = delay
+        self.args = kwargs
 
     def __str__(self):
         return self.command_string
@@ -128,34 +137,31 @@ class CommandRunner(object):
 
         self.match = 'all'
 
-        self._cache = dict()
         self._default_output = module.connection.default_output
 
-
-    def add_command(self, command, output=None, prompt=None, response=None):
+    def add_command(self, command, output=None, prompt=None, response=None,
+                    **kwargs):
         if command in [str(c) for c in self.commands]:
             raise AddCommandError('duplicated command detected', command=command)
         cmd = self.module.cli.to_command(command, output=output, prompt=prompt,
-                                         response=response)
+                                         response=response, **kwargs)
         self.commands.append(cmd)
 
     def get_command(self, command, output=None):
-        output = output or self._default_output
-        try:
-            cmdobj = self._cache[(command, output)]
-            return cmdobj.response
-        except KeyError:
-            for cmd in self.commands:
-                if cmd.command == command and cmd.output == output:
-                    self._cache[(command, output)] = cmd
-                    return cmd.response
+        for cmd in self.commands:
+            if cmd.command == command:
+                return cmd.response
         raise ValueError("command '%s' not found" % command)
 
     def get_responses(self):
         return [cmd.response for cmd in self.commands]
 
     def add_conditional(self, condition):
-        self.conditionals.add(Conditional(condition))
+        try:
+            self.conditionals.add(Conditional(condition))
+        except AttributeError:
+            exc = get_exception()
+            raise AddConditionError(msg=str(exc), condition=condition)
 
     def run(self):
         while self.retries > 0:
@@ -175,8 +181,9 @@ class CommandRunner(object):
             self.retries -= 1
         else:
             failed_conditions = [item.raw for item in self.conditionals]
-            errmsg = 'One or more conditional statements have not be satisfied'
+            errmsg = 'One or more conditional statements have not been satisfied'
             raise FailedConditionsError(errmsg, failed_conditions)
+
 
 class Conditional(object):
     """Used in command modules to evaluate waitfor conditions
@@ -193,13 +200,16 @@ class Conditional(object):
         'matches': ['matches']
     }
 
-    def __init__(self, conditional, encoding='json'):
+    def __init__(self, conditional, encoding=None):
         self.raw = conditional
-        self.encoding = encoding
 
-        key, op, val = shlex.split(conditional)
+        try:
+            key, op, val = shlex.split(conditional)
+        except ValueError:
+            raise ValueError('failed to parse conditional')
+
         self.key = key
-        self.func = self.func(op)
+        self.func = self._func(op)
         self.value = self._cast_value(val)
 
     def __call__(self, data):
@@ -216,43 +226,25 @@ class Conditional(object):
         elif re.match(r'^\d+$', value):
             return int(value)
         else:
-            return unicode(value)
+            return text_type(value)
 
-    def func(self, oper):
+    def _func(self, oper):
         for func, operators in self.OPERATORS.items():
             if oper in operators:
                 return getattr(self, func)
         raise AttributeError('unknown operator: %s' % oper)
 
     def get_value(self, result):
-        if self.encoding in ['json', 'text']:
+        try:
             return self.get_json(result)
-        elif self.encoding == 'xml':
-            return self.get_xml(result.get('result'))
-
-    def get_xml(self, result):
-        parts = self.key.split('.')
-
-        value_index = None
-        match = re.match(r'^\S+(\[)(\d+)\]', parts[-1])
-        if match:
-            start, end = match.regs[1]
-            parts[-1] = parts[-1][0:start]
-            value_index = int(match.group(2))
-
-        path = '/'.join(parts[1:])
-        path = '/%s' % path
-        path += '/text()'
-
-        index = int(re.match(r'result\[(\d+)\]', parts[0]).group(1))
-        values = result[index].xpath(path)
-
-        if value_index is not None:
-            return values[value_index].strip()
-        return [v.strip() for v in values]
+        except (IndexError, TypeError, AttributeError):
+            msg = 'unable to apply conditional to result'
+            raise FailedConditionalError(msg, self.raw)
 
     def get_json(self, result):
-        parts = re.split(r'\.(?=[^\]]*(?:\[|$))', self.key)
+        string = re.sub(r"\[[\'|\"]", ".", self.key)
+        string = re.sub(r"[\'|\"]\]", ".", string)
+        parts = re.split(r'\.(?=[^\]]*(?:\[|$))', string)
         for part in parts:
             match = re.findall(r'\[(\S+?)\]', part)
             if match:
@@ -296,6 +288,5 @@ class Conditional(object):
         return str(self.value) in value
 
     def matches(self, value):
-        match = re.search(value, self.value, re.M)
+        match = re.search(self.value, value, re.M)
         return match is not None
-

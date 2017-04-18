@@ -24,7 +24,7 @@ def parse_args():
     (opts, args) = parser.parse_args()
     gce_credentials.check_required(opts, parser)
     if not args:
-      parser.error("Missing required argument: name prefix")
+        parser.error("Missing required argument: name prefix")
     return (opts, args)
 
 if __name__ == '__main__':
@@ -33,10 +33,10 @@ if __name__ == '__main__':
     gce = gce_credentials.get_gce_driver(opts)
     prefix = args[0].lower()
     try:
-      base_volume = gce.create_volume(
-          size=10, name=prefix+'-base', location='us-central1-a')
-      gce.create_volume_snapshot(base_volume, name=prefix+'-snapshot')
-      gce.create_volume(
-          size=10, name=prefix+'-extra', location='us-central1-a')
+        base_volume = gce.create_volume(
+            size=10, name=prefix+'-base', location='us-central1-a')
+        gce.create_volume_snapshot(base_volume, name=prefix+'-snapshot')
+        gce.create_volume(
+            size=10, name=prefix+'-extra', location='us-central1-a')
     except KeyboardInterrupt as e:
         print("\nExiting on user command.")

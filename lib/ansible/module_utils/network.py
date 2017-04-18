@@ -25,13 +25,11 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
-import itertools
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback, get_exception
 from ansible.module_utils.netcli import Cli, Command
-from ansible.module_utils.netcfg import Config
+from ansible.module_utils._text import to_native
+from ansible.module_utils.six import iteritems
 
 NET_TRANSPORT_ARGS = dict(
     host=dict(required=True),
@@ -44,7 +42,7 @@ NET_TRANSPORT_ARGS = dict(
     authorize=dict(default=False, fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     auth_pass=dict(no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS'])),
 
-    provider=dict(type='dict'),
+    provider=dict(type='dict', no_log=True),
     transport=dict(choices=list()),
 
     timeout=dict(default=10, type='int')
@@ -54,6 +52,12 @@ NET_CONNECTION_ARGS = dict()
 
 NET_CONNECTIONS = dict()
 
+def _transitional_argument_spec():
+    argument_spec = {}
+    for key, value in iteritems(NET_TRANSPORT_ARGS):
+        value['required'] = False
+        argument_spec[key] = value
+    return argument_spec
 
 def to_list(val):
     if isinstance(val, (list, tuple)):
@@ -76,6 +80,25 @@ class NetworkError(Exception):
     def __init__(self, msg, **kwargs):
         super(NetworkError, self).__init__(msg)
         self.kwargs = kwargs
+
+class Config(object):
+
+    def __init__(self, connection):
+        self.connection = connection
+
+    def __call__(self, commands, **kwargs):
+        lines = to_list(commands)
+        return self.connection.configure(lines, **kwargs)
+
+    def load_config(self, commands, **kwargs):
+        commands = to_list(commands)
+        return self.connection.load_config(commands, **kwargs)
+
+    def get_config(self, **kwargs):
+        return self.connection.get_config(**kwargs)
+
+    def save_config(self):
+        return self.connection.save_config()
 
 
 class NetworkModule(AnsibleModule):
@@ -105,7 +128,7 @@ class NetworkModule(AnsibleModule):
             self.fail_json(msg='Unknown transport or no default transport specified')
         except (TypeError, NetworkError):
             exc = get_exception()
-            self.fail_json(msg=exc.message)
+            self.fail_json(msg=to_native(exc))
 
         if connect_on_load:
             self.connect()
@@ -147,17 +170,20 @@ class NetworkModule(AnsibleModule):
                 self.connection.connect(self.params)
                 if self.params['authorize']:
                     self.connection.authorize(self.params)
+                self.log('connected to %s:%s using %s' % (self.params['host'],
+                         self.params['port'], self.params['transport']))
         except NetworkError:
             exc = get_exception()
-            self.fail_json(msg=exc.message)
+            self.fail_json(msg=to_native(exc))
 
     def disconnect(self):
         try:
             if self.connected:
                 self.connection.disconnect()
+            self.log('disconnected from %s' % self.params['host'])
         except NetworkError:
             exc = get_exception()
-            self.fail_json(msg=exc.message)
+            self.fail_json(msg=to_native(exc))
 
 def register_transport(transport, default=False):
     def register(cls):
@@ -170,8 +196,3 @@ def register_transport(transport, default=False):
 def add_argument(key, value):
     NET_CONNECTION_ARGS[key] = value
 
-def get_module(*args, **kwargs):
-    # This is a temporary factory function to avoid break all modules
-    # until the modules are updated.  This function *will* be removed
-    # before 2.2 final
-    return NetworkModule(*args, **kwargs)

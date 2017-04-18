@@ -1,0 +1,32 @@
+- shell: '{{ ansible_python.executable }} -c "import tempfile; print(tempfile.mkstemp()[1])"'
+  register: tempfilepath
+
+- set_fact:
+    until_tempfile_path: "{{ tempfilepath.stdout }}"
+
+- name: loop with default retries
+  shell: echo "run" >> {{ until_tempfile_path }} && wc -w < {{ until_tempfile_path }} | tr -d ' '
+  register: runcount
+  until: runcount.stdout | int == 3
+  delay: 0.01
+
+- assert:
+    that: runcount.stdout | int == 3
+
+- file: path="{{ until_tempfile_path }}" state=absent
+
+- name: loop with specified max retries
+  shell: echo "run" >> {{ until_tempfile_path }}
+  until: 1==0
+  retries: 5
+  delay: 0.01
+  ignore_errors: true
+
+- name: validate output
+  shell: wc -l < {{ until_tempfile_path }}
+  register: runcount
+
+- assert:
+    that: runcount.stdout | int == 6 # initial + 5 retries
+
+- file: path="{{ until_tempfile_path }}" state=absent

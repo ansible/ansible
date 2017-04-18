@@ -21,15 +21,14 @@ __metaclass__ = type
 
 import os
 
-from ansible.compat.six import string_types
-
 from ansible import constants as C
 from ansible.executor.task_queue_manager import TaskQueueManager
+from ansible.module_utils._text import to_native, to_text
 from ansible.playbook import Playbook
 from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
 from ansible.utils.path import makedirs_safe
-from ansible.utils.unicode import to_unicode, to_str
+from ansible.utils.ssh_functions import check_for_controlpersist
 
 try:
     from __main__ import display
@@ -59,6 +58,14 @@ class PlaybookExecutor:
         else:
             self._tqm = TaskQueueManager(inventory=inventory, variable_manager=variable_manager, loader=loader, options=options, passwords=self.passwords)
 
+        # Note: We run this here to cache whether the default ansible ssh
+        # executable supports control persist.  Sometime in the future we may
+        # need to enhance this to check that ansible_ssh_executable specified
+        # in inventory is also cached.  We can't do this caching at the point
+        # where it is used (in task_executor) because that is post-fork and
+        # therefore would be discarded after every task.
+        check_for_controlpersist(C.ANSIBLE_SSH_EXECUTABLE)
+
     def run(self):
 
         '''
@@ -74,7 +81,7 @@ class PlaybookExecutor:
                 pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
                 self._inventory.set_playbook_basedir(os.path.realpath(os.path.dirname(playbook_path)))
 
-                if self._tqm is None: # we are doing a listing
+                if self._tqm is None:  # we are doing a listing
                     entry = {'playbook': playbook_path}
                     entry['plays'] = []
                 else:
@@ -84,7 +91,7 @@ class PlaybookExecutor:
 
                 i = 1
                 plays = pb.get_plays()
-                display.vv(u'%d plays in %s' % (len(plays), to_unicode(playbook_path)))
+                display.vv(u'%d plays in %s' % (len(plays), to_text(playbook_path)))
 
                 for play in plays:
                     if play._included_path is not None:
@@ -110,7 +117,7 @@ class PlaybookExecutor:
                                 if self._tqm:
                                     self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt, default)
                                     play.vars[vname] = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default)
-                                else: # we are either in --list-<option> or syntax check
+                                else:  # we are either in --list-<option> or syntax check
                                     play.vars[vname] = default
 
                     # Create a temporary copy of the play here, so we can run post_validate
@@ -135,12 +142,11 @@ class PlaybookExecutor:
 
                         break_play = False
                         # we are actually running plays
-                        for batch in self._get_serialized_batches(new_play):
-                            if len(batch) == 0:
-                                self._tqm.send_callback('v2_playbook_on_play_start', new_play)
-                                self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
-                                break
-
+                        batches = self._get_serialized_batches(new_play)
+                        if len(batches) == 0:
+                            self._tqm.send_callback('v2_playbook_on_play_start', new_play)
+                            self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
+                        for batch in batches:
                             # restrict the inventory to the hosts in the serialized batch
                             self._inventory.restrict_to_hosts(batch)
                             # and run it...
@@ -156,7 +162,7 @@ class PlaybookExecutor:
                             # conditions are met, we break out, otherwise we only break out if the entire
                             # batch failed
                             failed_hosts_count = len(self._tqm._failed_hosts) + len(self._tqm._unreachable_hosts) - \
-                                                 (previously_failed + previously_unreachable)
+                                (previously_failed + previously_unreachable)
 
                             if len(batch) == failed_hosts_count:
                                 break_play = True
@@ -173,10 +179,10 @@ class PlaybookExecutor:
                         if break_play:
                             break
 
-                    i = i + 1 # per play
+                    i = i + 1  # per play
 
                 if entry:
-                    entrylist.append(entry) # per playbook
+                    entrylist.append(entry)  # per playbook
 
                 # send the stats callback for this playbook
                 if self._tqm is not None:
@@ -188,7 +194,7 @@ class PlaybookExecutor:
                             if C.RETRY_FILES_SAVE_PATH:
                                 basedir = C.shell_expand(C.RETRY_FILES_SAVE_PATH)
                             elif playbook_path:
-                                basedir = os.path.dirname(playbook_path)
+                                basedir = os.path.dirname(os.path.abspath(playbook_path))
                             else:
                                 basedir = '~/'
 
@@ -276,7 +282,7 @@ class PlaybookExecutor:
                 for x in replay_hosts:
                     fd.write("%s\n" % x)
         except Exception as e:
-            display.warning("Could not create retry file '%s'.\n\t%s" % (retry_path, to_str(e)))
+            display.warning("Could not create retry file '%s'.\n\t%s" % (retry_path, to_native(e)))
             return False
 
         return True

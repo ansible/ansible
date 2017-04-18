@@ -19,25 +19,21 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import collections
 import itertools
 import operator
-import uuid
 
-from copy import copy as shallowcopy, deepcopy
+from copy import copy as shallowcopy
 from functools import partial
-from inspect import getmembers
-
-from ansible.compat.six import iteritems, string_types, with_metaclass
 
 from jinja2.exceptions import UndefinedError
 
+from ansible.module_utils.six import iteritems, string_types, with_metaclass
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable
-from ansible.parsing.dataloader import DataLoader
+from ansible.module_utils._text import to_text
 from ansible.playbook.attribute import Attribute, FieldAttribute
-from ansible.utils.boolean import boolean
-from ansible.utils.vars import combine_vars, isidentifier
-from ansible.utils.unicode import to_unicode
+from ansible.parsing.dataloader import DataLoader
+from ansible.constants import mk_boolean as boolean
+from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
 
 try:
     from __main__ import display
@@ -52,6 +48,7 @@ def _generic_g(prop_name, self):
     except KeyError:
         raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
 
+
 def _generic_g_method(prop_name, self):
     try:
         if self._squashed:
@@ -60,6 +57,7 @@ def _generic_g_method(prop_name, self):
         return getattr(self, method)()
     except KeyError:
         raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+
 
 def _generic_g_parent(prop_name, self):
     try:
@@ -74,11 +72,14 @@ def _generic_g_parent(prop_name, self):
 
     return value
 
+
 def _generic_s(prop_name, self, value):
     self._attributes[prop_name] = value
 
+
 def _generic_d(prop_name, self):
     del self._attributes[prop_name]
+
 
 class BaseMeta(type):
 
@@ -108,13 +109,10 @@ class BaseMeta(type):
                     # its value from a parent object
                     method = "_get_attr_%s" % attr_name
                     if method in src_dict or method in dst_dict:
-                        #print("^ assigning generic_g_method to %s" % attr_name)
                         getter = partial(_generic_g_method, attr_name)
-                    elif '_get_parent_attribute' in dst_dict and value.inherit:
-                        #print("^ assigning generic_g_parent to %s" % attr_name)
+                    elif ('_get_parent_attribute' in dst_dict or '_get_parent_attribute' in src_dict) and value.inherit:
                         getter = partial(_generic_g_parent, attr_name)
                     else:
-                        #print("^ assigning generic_g to %s" % attr_name)
                         getter = partial(_generic_g, attr_name)
 
                     setter = partial(_generic_s, attr_name)
@@ -132,7 +130,9 @@ class BaseMeta(type):
             for parent in parents:
                 if hasattr(parent, '__dict__'):
                     _create_attrs(parent.__dict__, dst_dict)
-                    _process_parents(parent.__bases__, dst_dict)
+                    new_dst_dict = parent.__dict__.copy()
+                    new_dst_dict.update(dst_dict)
+                    _process_parents(parent.__bases__, new_dst_dict)
 
         # create some additional class attributes
         dct['_attributes'] = dict()
@@ -140,11 +140,11 @@ class BaseMeta(type):
 
         # now create the attributes based on the FieldAttributes
         # available, including from parent (and grandparent) objects
-        #print("creating class %s" % name)
         _create_attrs(dct, dct)
         _process_parents(parents, dct)
 
         return super(BaseMeta, cls).__new__(cls, name, parents, dct)
+
 
 class Base(with_metaclass(BaseMeta, object)):
 
@@ -163,6 +163,7 @@ class Base(with_metaclass(BaseMeta, object)):
     _run_once            = FieldAttribute(isa='bool')
     _ignore_errors       = FieldAttribute(isa='bool')
     _check_mode          = FieldAttribute(isa='bool')
+    _any_errors_fatal     = FieldAttribute(isa='bool', default=False, always_post_validate=True)
 
     # param names which have been deprecated/removed
     DEPRECATED_ATTRIBUTES = [
@@ -183,7 +184,7 @@ class Base(with_metaclass(BaseMeta, object)):
         self._finalized = False
 
         # every object gets a random uuid:
-        self._uuid = uuid.uuid4()
+        self._uuid = get_unique_id()
 
         # we create a copy of the attributes here due to the fact that
         # it was intialized as a class param in the meta class, so we
@@ -201,7 +202,6 @@ class Base(with_metaclass(BaseMeta, object)):
         if hasattr(self, '_parent') and self._parent:
             self._parent.dump_me(depth+2)
             dep_chain = self._parent.get_dep_chain()
-            #print("%s^ dep chain: %s" % (" "*(depth+2), dep_chain))
             if dep_chain:
                 for dep in dep_chain:
                     dep.dump_me(depth+2)
@@ -381,7 +381,7 @@ class Base(with_metaclass(BaseMeta, object)):
                 # and make sure the attribute is of the type it should be
                 if value is not None:
                     if attribute.isa == 'string':
-                        value = to_unicode(value)
+                        value = to_text(value)
                     elif attribute.isa == 'int':
                         value = int(value)
                     elif attribute.isa == 'float':
@@ -400,8 +400,8 @@ class Base(with_metaclass(BaseMeta, object)):
                         elif not isinstance(value, list):
                             if isinstance(value, string_types) and attribute.isa == 'barelist':
                                 display.deprecated(
-                                    "Using comma separated values for a list has been deprecated. " \
-                                    "You should instead use the correct YAML syntax for lists. " \
+                                    "Using comma separated values for a list has been deprecated. "
+                                    "You should instead use the correct YAML syntax for lists. "
                                 )
                                 value = value.split(',')
                             else:
@@ -482,7 +482,7 @@ class Base(with_metaclass(BaseMeta, object)):
         except TypeError as e:
             raise AnsibleParserError("Invalid variable name in vars specified for %s: %s" % (self.__class__.__name__, e), obj=ds)
 
-    def _extend_value(self, value, new_value):
+    def _extend_value(self, value, new_value, prepend=False):
         '''
         Will extend the value given with new_value (and will turn both
         into lists if they are not so already). The values are run through
@@ -494,7 +494,21 @@ class Base(with_metaclass(BaseMeta, object)):
         if not isinstance(new_value, list):
             new_value = [ new_value ]
 
-        return [i for i,_ in itertools.groupby(value + new_value) if i is not None]
+        if prepend:
+            combined = new_value + value
+        else:
+            combined = value + new_value
+
+        return [i for i,_ in itertools.groupby(combined) if i is not None]
+
+    def dump_attrs(self):
+        '''
+        Dumps all attributes to a dictionary
+        '''
+        attrs = dict()
+        for name in self._valid_attrs.keys():
+            attrs[name] = getattr(self, name)
+        return attrs
 
     def serialize(self):
         '''
@@ -505,10 +519,7 @@ class Base(with_metaclass(BaseMeta, object)):
         as field attributes.
         '''
 
-        repr = dict()
-
-        for name in self._valid_attrs.keys():
-            repr[name] = getattr(self, name)
+        repr = self.dump_attrs()
 
         # serialize the uuid field
         repr['uuid'] = self._uuid
@@ -537,4 +548,3 @@ class Base(with_metaclass(BaseMeta, object)):
         setattr(self, '_uuid', data.get('uuid'))
         self._finalized = data.get('finalized', False)
         self._squashed = data.get('squashed', False)
-

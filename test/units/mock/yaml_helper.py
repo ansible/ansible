@@ -1,10 +1,10 @@
 import io
 import yaml
 
+from ansible.module_utils.six import PY3
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.dumper import AnsibleDumper
 
-from ansible.compat.six import PY3
 
 class YamlTestUtils(object):
     """Mixin class to combine with a unittest.TestCase subclass."""
@@ -106,7 +106,8 @@ class YamlTestUtils(object):
 
         assert yaml_string == yaml_string_obj_from_stream
         assert yaml_string == yaml_string_obj_from_stream == yaml_string_obj_from_string
-        assert yaml_string == yaml_string_obj_from_stream == yaml_string_obj_from_string == yaml_string_stream_obj_from_stream == yaml_string_stream_obj_from_string
+        assert (yaml_string == yaml_string_obj_from_stream == yaml_string_obj_from_string == yaml_string_stream_obj_from_stream ==
+                yaml_string_stream_obj_from_string)
         assert obj == obj_from_stream
         assert obj == obj_from_string
         assert obj == yaml_string_obj_from_stream

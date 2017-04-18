@@ -17,10 +17,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six.moves import zip_longest
 from ansible.errors import AnsibleError
+from ansible.module_utils.six.moves import zip_longest
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
+
 
 class LookupModule(LookupBase):
     """

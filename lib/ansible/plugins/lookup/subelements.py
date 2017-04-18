@@ -17,11 +17,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.six import string_types
+from ansible.constants import mk_boolean as boolean
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.boolean import boolean
+
 
 FLAGS = ('skip_missing',)
 
@@ -51,7 +52,7 @@ class LookupModule(LookupBase):
                 # the registered result was completely skipped
                 return []
             elementlist = []
-            for key in terms[0].iterkeys():
+            for key in terms[0]:
                 elementlist.append(terms[0][key])
         else:
             elementlist = terms[0]

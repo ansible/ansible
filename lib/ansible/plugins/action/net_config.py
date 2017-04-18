@@ -23,20 +23,19 @@ import os
 import re
 import time
 import glob
-import urlparse
 
-from ansible.plugins.action import ActionBase
-from ansible.utils.unicode import to_unicode
+from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.module_utils._text import to_text
+from ansible.module_utils.six.moves.urllib.parse import urlsplit
+from ansible.utils.vars import merge_hash
+
 
 PRIVATE_KEYS_RE = re.compile('__.+__')
 
-class ActionModule(ActionBase):
 
-    TRANSFERS_FILES = False
+class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
-        result = super(ActionModule, self).run(tmp, task_vars)
-        result['changed'] = False
 
         if self._task.args.get('src'):
             try:
@@ -44,18 +43,15 @@ class ActionModule(ActionBase):
             except ValueError as exc:
                 return dict(failed=True, msg=exc.message)
 
-        action = self._task.action
-
-        result.update(self._execute_module(module_name=action,
-            module_args=self._task.args, task_vars=task_vars))
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         if self._task.args.get('backup') and result.get('__backup__'):
             # User requested backup and no error occurred in module.
             # NOTE: If there is a parameter error, _backup key may not be in results.
             filepath = self._write_backup(task_vars['inventory_hostname'],
                                           result['__backup__'])
-            result['backup_path'] = filepath
 
+            result['backup_path'] = filepath
 
         # strip out any keys that have two leading and two trailing
         # underscore characters
@@ -86,7 +82,7 @@ class ActionModule(ActionBase):
         src = self._task.args.get('src')
         working_path = self._get_working_path()
 
-        if os.path.isabs(src) or urlparse.urlsplit('src').scheme:
+        if os.path.isabs(src) or urlsplit('src').scheme:
             source = src
         else:
             source = self._loader.path_dwim_relative(working_path, 'templates', src)
@@ -94,11 +90,11 @@ class ActionModule(ActionBase):
                 source = self._loader.path_dwim_relative(working_path, src)
 
         if not os.path.exists(source):
-            return
+            raise ValueError('path specified in src not found')
 
         try:
             with open(source, 'r') as f:
-                template_data = to_unicode(f.read())
+                template_data = to_text(f.read())
         except IOError:
             return dict(failed=True, msg='unable to load src file')
 
@@ -107,12 +103,11 @@ class ActionModule(ActionBase):
         searchpath = [working_path]
         if self._task._role is not None:
             searchpath.append(self._task._role._role_path)
-            dep_chain = self._task._block.get_dep_chain()
-            if dep_chain is not None:
-                for role in dep_chain:
-                    searchpath.append(role._role_path)
+            if hasattr(self._task, "_block:"):
+                dep_chain = self._task._block.get_dep_chain()
+                if dep_chain is not None:
+                    for role in dep_chain:
+                        searchpath.append(role._role_path)
         searchpath.append(os.path.dirname(source))
         self._templar.environment.loader.searchpath = searchpath
         self._task.args['src'] = self._templar.template(template_data)
-
-

@@ -67,6 +67,7 @@ except ImportError:
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_text, to_bytes
 
 __all__ = ['do_encrypt']
 
@@ -83,13 +84,21 @@ def do_encrypt(result, encrypt, salt_size=None, salt=None):
         if salt_size:
             result = crypt.encrypt(result, salt_size=salt_size)
         elif salt:
+            if crypt._salt_is_bytes:
+                salt = to_bytes(salt, encoding='ascii', errors='strict')
+            else:
+                salt = to_text(salt, encoding='ascii', errors='strict')
             result = crypt.encrypt(result, salt=salt)
         else:
             result = crypt.encrypt(result)
     else:
         raise AnsibleError("passlib must be installed to encrypt vars_prompt values")
 
-    return result
+    # Hashes from passlib.hash should be represented as ascii strings of hex
+    # digits so this should not traceback.  If it's not representable as such
+    # we need to traceback and then blacklist such algorithms because it may
+    # impact calling code.
+    return to_text(result, errors='strict')
 
 def key_for_hostname(hostname):
     # fireball mode is an implementation of ansible firing up zeromq via SSH
@@ -113,7 +122,9 @@ def key_for_hostname(hostname):
         raise AnsibleError('ACCELERATE_KEYS_DIR is not a directory.')
 
     if stat.S_IMODE(os.stat(key_path).st_mode) != int(C.ACCELERATE_KEYS_DIR_PERMS, 8):
-        raise AnsibleError('Incorrect permissions on the private key directory. Use `chmod 0%o %s` to correct this issue, and make sure any of the keys files contained within that directory are set to 0%o' % (int(C.ACCELERATE_KEYS_DIR_PERMS, 8), C.ACCELERATE_KEYS_DIR, int(C.ACCELERATE_KEYS_FILE_PERMS, 8)))
+        raise AnsibleError('Incorrect permissions on the private key directory. Use `chmod 0%o %s` to correct this issue, and make sure any of the keys files '
+                           'contained within that directory are set to 0%o' % (int(C.ACCELERATE_KEYS_DIR_PERMS, 8), C.ACCELERATE_KEYS_DIR,
+                                                                               int(C.ACCELERATE_KEYS_FILE_PERMS, 8)))
 
     key_path = os.path.join(key_path, hostname)
 
@@ -134,7 +145,8 @@ def key_for_hostname(hostname):
                 return key
 
     if stat.S_IMODE(os.stat(key_path).st_mode) != int(C.ACCELERATE_KEYS_FILE_PERMS, 8):
-        raise AnsibleError('Incorrect permissions on the key file for this host. Use `chmod 0%o %s` to correct this issue.' % (int(C.ACCELERATE_KEYS_FILE_PERMS, 8), key_path))
+        raise AnsibleError('Incorrect permissions on the key file for this host. Use `chmod 0%o %s` to '
+                           'correct this issue.' % (int(C.ACCELERATE_KEYS_FILE_PERMS, 8), key_path))
     fh = open(key_path)
     key = AesKey.Read(fh.read())
     fh.close()

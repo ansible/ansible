@@ -21,11 +21,12 @@ __metaclass__ = type
 
 import os
 
+from ansible import constants as C
 from ansible.errors import AnsibleParserError
+from ansible.module_utils._text import to_text
 from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
 from ansible.plugins import get_all_plugin_loaders
-from ansible import constants as C
 
 try:
     from __main__ import display
@@ -43,7 +44,7 @@ class Playbook:
         # Entries in the datastructure of a playbook may
         # be either a play or an include statement
         self._entries = []
-        self._basedir = os.getcwd()
+        self._basedir = to_text(os.getcwd(), errors='surrogate_or_strict')
         self._loader  = loader
         self._file_name = None
 

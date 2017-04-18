@@ -1,5 +1,0 @@
----
-- hosts: 127.0.0.1
-  gather_facts: False
-  roles:
-    - { role: test_include_vars }

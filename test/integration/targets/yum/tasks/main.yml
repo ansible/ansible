@@ -1,0 +1,32 @@
+# test code for the yum module
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Note: We install the yum package onto Fedora so that this will work on dnf systems
+# We want to test that for people who don't want to upgrade their systems.
+- include: 'yum.yml'
+  when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora'] and
+        ansible_python.version.major == 2
+
+# We can't run yum --installroot tests on dnf systems.  Dnf systems revert to
+# yum-deprecated, and yum-deprecated refuses to run if yum.conf exists
+# so we cannot configure yum-deprecated correctly in an empty /tmp/fake.root/
+# It will always run with $releasever unset
+- include: 'yuminstallroot.yml'
+  when: (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] or
+        (ansible_distribution in ['Fedora'] and ansible_distribution_major_version|int < 23)) and
+        ansible_python.version.major == 2

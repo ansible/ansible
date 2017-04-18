@@ -13,8 +13,10 @@
 - name: add checks for session health check
   consul:
     check_name: session_check
-    script: /usr/bin/true
-    interval: 15
+    script: /bin/true
+    interval: 1
+
+- pause: seconds=2
 
 - name: register a session with check
   consul_session:
@@ -43,7 +45,7 @@
         - with_delay.changed
         - with_delay.session_id | length == 36
         - with_delay.name == 'session_with_delay'
-        - with_delay.delay == 20
+        - with_delay.delay == "20"
 
 
 - name: retrieve session by id
@@ -65,11 +67,9 @@
       - 3 <= retrieved_by_list.sessions[0]
 
 - name: remove sessions
-  consul_session: id={{item}} state=absent
-  with_items:
-    - basic_result.session_id
-    - with_check.session_id
-    - with_delay.session_id
+  consul_session: id='{{basic_result.session_id}}' state=absent
+- consul_session: id='{{with_check.session_id}}' state=absent
+- consul_session: id='{{with_delay.session_id}}' state=absent
 
 - name: remove check
   consul:

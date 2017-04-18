@@ -29,13 +29,10 @@ except ImportError:
     HAS_OPS = False
 
 from ansible.module_utils.basic import json, json_dict_bytes_to_unicode
-from ansible.module_utils.network import NetworkModule, ModuleStub, NetworkError
+from ansible.module_utils.network import ModuleStub, NetworkError, NetworkModule
 from ansible.module_utils.network import add_argument, register_transport, to_list
 from ansible.module_utils.shell import CliBase
 from ansible.module_utils.urls import fetch_url, url_argument_spec
-
-# temporary fix until modules are update.  to be removed before 2.2 final
-from ansible.module_utils.network import get_module
 
 add_argument('use_ssl', dict(default=True, type='bool'))
 add_argument('validate_certs', dict(default=True, type='bool'))
@@ -76,14 +73,22 @@ class Response(object):
         except ValueError:
             return None
 
+
 class Rest(object):
+
+    DEFAULT_HEADERS = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
 
     def __init__(self):
         self.url = None
         self.url_args = ModuleStub(url_argument_spec(), self._error)
-        self.headers = dict({'Content-Type': 'application/json', 'Accept': 'application/json'})
-        self.default_output = 'json'
+
+        self.headers = self.DEFAULT_HEADERS
+
         self._connected = False
+        self.default_output = 'json'
 
     def _error(self, msg):
         raise NetworkError(msg, url=self.url)
@@ -107,7 +112,7 @@ class Rest(object):
                 port = 80
 
         baseurl = '%s://%s:%s' % (proto, host, port)
-        headers = dict({'Content-Type': 'application/x-www-form-urlencoded'})
+        headers = {'Content-Type': 'application/x-www-form-urlencoded'}
         # Get a cookie and save it the rest of the operations.
         url = '%s/%s' % (baseurl, 'login')
         data = 'username=%s&password=%s' % (params['username'], params['password'])
@@ -123,6 +128,8 @@ class Rest(object):
 
     def authorize(self, params, **kwargs):
         raise NotImplementedError
+
+    ### REST methods ###
 
     def _url_builder(self, path):
         if path[0] == '/':
@@ -153,8 +160,12 @@ class Rest(object):
     def delete(self, path, data=None, headers=None):
         return self.request('DELETE', path, data, headers)
 
+    ### Command methods ###
+
     def run_commands(self, commands):
         raise NotImplementedError
+
+    ### Config methods ###
 
     def configure(self, commands):
         path = '/system/full-configuration'
@@ -190,29 +201,18 @@ Rest = register_transport('rest')(Rest)
 
 class Cli(CliBase):
 
-    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
-
     CLI_PROMPTS_RE = [
         re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
         re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
     ]
 
     CLI_ERRORS_RE = [
-        re.compile(r"% ?Error"),
-        re.compile(r"% ?Bad secret"),
-        re.compile(r"invalid input", re.I),
-        re.compile(r"(?:incomplete|ambiguous) command", re.I),
-        re.compile(r"connection timed out", re.I),
-        re.compile(r"[^\r\n]+ not found", re.I),
-        re.compile(r"'[^']' +returned error code: ?\d+"),
+        re.compile(r"(?:unknown|incomplete|ambiguous) command", re.I),
     ]
 
-    ### implementation of netcli.Cli
+    NET_PASSWD_RE = re.compile(r"[\r\n]?password: $", re.I)
 
-    def run_commands(self, commands):
-        return self.execute(to_list(commands))
-
-    ### implementation of netcfg.Config
+    ### Config methods ###
 
     def configure(self, commands, **kwargs):
         cmds = ['configure terminal']
@@ -222,16 +222,17 @@ class Cli(CliBase):
         responses = self.execute(cmds)
         return responses[1:]
 
-    def get_config(self):
+    def get_config(self, **kwargs):
         return self.execute('show running-config')[0]
 
-    def load_config(self, commands):
+    def load_config(self, commands, **kwargs):
         return self.configure(commands)
 
     def save_config(self):
         self.execute(['copy running-config startup-config'])
 
 Cli = register_transport('cli')(Cli)
+
 
 class Ssh(object):
 
@@ -240,6 +241,7 @@ class Ssh(object):
             msg = 'ops.dc lib is required but does not appear to be available'
             raise NetworkError(msg)
         self._opsidl = None
+        self._extschema = None
 
     def configure(self, config):
         if not self._opsidl:

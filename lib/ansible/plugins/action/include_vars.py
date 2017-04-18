@@ -22,13 +22,15 @@ from os import path, walk
 import re
 
 from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.action import ActionBase
-from ansible.utils.unicode import to_str
 
 
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
+    VALID_FILE_EXTENSIONS = ['yaml', 'yml', 'json']
 
     def _mutually_exclusive(self):
         dir_arguments = [
@@ -73,7 +75,7 @@ class ActionModule(ActionBase):
         """ Set instance variables based on the arguments that were passed
         """
         self.VALID_DIR_ARGUMENTS = [
-            'dir', 'depth', 'files_matching', 'ignore_files'
+            'dir', 'depth', 'files_matching', 'ignore_files', 'extensions',
         ]
         self.VALID_FILE_ARGUMENTS = ['file', '_raw_params']
         self.GLOBAL_FILE_ARGUMENTS = ['name']
@@ -96,13 +98,19 @@ class ActionModule(ActionBase):
         self.depth = self._task.args.get('depth', None)
         self.files_matching = self._task.args.get('files_matching', None)
         self.ignore_files = self._task.args.get('ignore_files', None)
+        self.valid_extensions = self._task.args.get('extensions', self.VALID_FILE_EXTENSIONS)
+        if isinstance(self.valid_extensions, string_types):
+            self.valid_extensions = list(self.valid_extensions)
+
+        # validate
+        if not isinstance(self.valid_extensions, list):
+            raise AnsibleError('Invalid type for "extensions" option, it must be a list')
 
         self._mutually_exclusive()
 
     def run(self, tmp=None, task_vars=None):
         """ Load yml files recursively from a directory.
         """
-        self.VALID_FILE_EXTENSIONS = ['yaml', 'yml', '.json']
         if not task_vars:
             task_vars = dict()
 
@@ -137,8 +145,8 @@ class ActionModule(ActionBase):
                     results.update(updated_results)
 
             except AnsibleError as e:
-                err_msg = to_str(e)
-                raise AnsibleError(err_msg)
+                failed = True
+                err_msg = to_native(e)
 
         if self.return_results_as_name:
             scope = dict()
@@ -221,12 +229,12 @@ class ActionModule(ActionBase):
         success = False
         file_ext = source_file.split('.')
         if len(file_ext) >= 1:
-            if file_ext[-1] in self.VALID_FILE_EXTENSIONS:
+            if file_ext[-1] in self.valid_extensions:
                 success = True
                 return success
         return success
 
-    def _load_files(self, filename):
+    def _load_files(self, filename, validate_extensions=False):
         """ Loads a file and converts the output into a valid Python dict.
         Args:
             filename (str): The source file.
@@ -237,15 +245,17 @@ class ActionModule(ActionBase):
         results = dict()
         failed = False
         err_msg = ''
-        if not self._is_valid_file_ext(filename):
+        if validate_extensions and not self._is_valid_file_ext(filename):
             failed = True
             err_msg = (
                 '{0} does not have a valid extension: {1}'
-                .format(filename, ', '.join(self.VALID_FILE_EXTENSIONS))
+                .format(filename, ', '.join(self.valid_extensions))
             )
             return failed, err_msg, results
 
-        data, show_content = self._loader._get_file_contents(filename)
+        b_data, show_content = self._loader._get_file_contents(filename)
+        data = to_text(b_data, errors='surrogate_or_strict')
+
         self.show_content = show_content
         data = self._loader.load(data, show_content)
         if not data:
@@ -287,7 +297,7 @@ class ActionModule(ActionBase):
 
             if not stop_iter and not failed:
                 if path.exists(filepath) and not self._ignore_file(filename):
-                    failed, err_msg, loaded_data = self._load_files(filepath)
+                    failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
                     if not failed:
                         results.update(loaded_data)
 

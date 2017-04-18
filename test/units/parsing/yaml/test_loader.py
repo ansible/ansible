@@ -22,24 +22,26 @@ __metaclass__ = type
 
 from io import StringIO
 
-from six import text_type, binary_type
 from collections import Sequence, Set, Mapping
 
 from ansible.compat.tests import unittest
 
 from ansible import errors
+from ansible.module_utils.six import text_type, binary_type
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing import vault
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.utils.unicode import to_bytes
 
 from units.mock.yaml_helper import YamlTestUtils
 
 try:
     from _yaml import ParserError
+    from _yaml import ScannerError
 except ImportError:
     from yaml.parser import ParserError
+    from yaml.scanner import ScannerError
+
 
 class NameStringIO(StringIO):
     """In py2.6, StringIO doesn't let you set name because a baseclass has it
@@ -48,6 +50,7 @@ class NameStringIO(StringIO):
 
     def __init__(self, *args, **kwargs):
         super(NameStringIO, self).__init__(*args, **kwargs)
+
 
 class TestAnsibleLoaderBasic(unittest.TestCase):
 
@@ -144,6 +147,11 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
         loader = AnsibleLoader(stream, 'myfile.yml')
         self.assertRaises(ParserError, loader.get_single_data)
 
+    def test_tab_error(self):
+        stream = StringIO(u"""---\nhosts: localhost\nvars:\n  foo: bar\n\tblip: baz""")
+        loader = AnsibleLoader(stream, 'myfile.yml')
+        self.assertRaises(ScannerError, loader.get_single_data)
+
     def test_front_matter(self):
         stream = StringIO(u"""---\nfoo: bar""")
         loader = AnsibleLoader(stream, 'myfile.yml')
@@ -196,7 +204,7 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
             lines2.append('        %s' % line)
 
         vaulted_var = '\n'.join(lines2)
-        tagged_vaulted_var = u"""!vault-encrypted |\n%s""" % vaulted_var
+        tagged_vaulted_var = u"""!vault |\n%s""" % vaulted_var
         return tagged_vaulted_var
 
     def _build_stream(self, yaml_text):
@@ -251,7 +259,9 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
         different_var = u"""A different string that is not the same as the first one."""
         different_vaulted_var = self._encrypt_plaintext(different_var)
 
-        yaml_text = u"""---\nwebster: daniel\noed: oxford\nthe_secret: %s\nanother_secret: %s\ndifferent_secret: %s""" % (tagged_vaulted_var, another_vaulted_var, different_vaulted_var)
+        yaml_text = u"""---\nwebster: daniel\noed: oxford\nthe_secret: %s\nanother_secret: %s\ndifferent_secret: %s""" % (tagged_vaulted_var,
+                                                                                                                          another_vaulted_var,
+                                                                                                                          different_vaulted_var)
 
         data_from_yaml = self._load_yaml(yaml_text, self.vault_password)
         vault_string = data_from_yaml['the_secret']
@@ -282,6 +292,7 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
         self.assertEquals(vault_string, plaintext_var)
         self.assertFalse(plaintext_var != vault_string)
         self.assertFalse(vault_string != plaintext_var)
+
 
 class TestAnsibleLoaderPlay(unittest.TestCase):
 

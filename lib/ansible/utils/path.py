@@ -20,17 +20,18 @@ __metaclass__ = type
 import os
 from errno import EEXIST
 from ansible.errors import AnsibleError
-from ansible.utils.unicode import to_bytes, to_str, to_unicode
-from ansible.compat.six import PY2
+from ansible.module_utils._text import to_bytes, to_native, to_text
+
 
 __all__ = ['unfrackpath', 'makedirs_safe']
 
-def unfrackpath(path):
+
+def unfrackpath(path, follow=True):
     '''
-    Returns a path that is free of symlinks, environment
-    variables, relative path traversals and symbols (~)
+    Returns a path that is free of symlinks (if follow=True), environment variables, relative path traversals and symbols (~)
 
     :arg path: A byte or text string representing a path to be canonicalized
+    :arg follow: A boolean to indicate of symlinks should be resolved or not
     :raises UnicodeDecodeError: If the canonicalized version of the path
         contains non-utf8 byte sequences.
     :rtype: A text string (unicode on pyyhon2, str on python3).
@@ -40,10 +41,13 @@ def unfrackpath(path):
     example::
         '$HOME/../../var/mail' becomes '/var/spool/mail'
     '''
-    canonical_path = os.path.normpath(os.path.realpath(os.path.expanduser(os.path.expandvars(to_bytes(path, errors='strict')))))
-    if PY2:
-        return to_unicode(canonical_path, errors='strict')
-    return to_unicode(canonical_path, errors='surrogateescape')
+
+    if follow:
+        final_path = os.path.normpath(os.path.realpath(os.path.expanduser(os.path.expandvars(to_bytes(path, errors='surrogate_or_strict')))))
+    else:
+        final_path = os.path.normpath(os.path.abspath(os.path.expanduser(os.path.expandvars(to_bytes(path, errors='surrogate_or_strict')))))
+
+    return to_text(final_path, errors='surrogate_or_strict')
 
 def makedirs_safe(path, mode=None):
     '''Safe way to create dirs in muliprocess/thread environments.
@@ -64,4 +68,4 @@ def makedirs_safe(path, mode=None):
                 os.makedirs(b_rpath)
         except OSError as e:
             if e.errno != EEXIST:
-                raise AnsibleError("Unable to create local directories(%s): %s" % (to_str(rpath), to_str(e)))
+                raise AnsibleError("Unable to create local directories(%s): %s" % (to_native(rpath), to_native(e)))

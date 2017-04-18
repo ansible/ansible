@@ -1,5 +1,5 @@
 #
-# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
+# (c) 2017 Red Hat, Inc.
 #
 # This file is part of Ansible
 #
@@ -16,246 +16,161 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+from contextlib import contextmanager
 
-from distutils.version import LooseVersion
+from xml.etree.ElementTree import Element, SubElement
 
-from ansible.module_utils.pycompat24 import get_exception
-from ansible.module_utils.network import NetworkError, register_transport, to_list
-from ansible.module_utils.shell import CliBase
+from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.netconf import send_request, children
+from ansible.module_utils.netconf import discard_changes, validate
 from ansible.module_utils.six import string_types
 
-# temporary fix until modules are update.  to be removed before 2.2 final
-from ansible.module_utils.network import get_module
+ACTIONS = frozenset(['merge', 'override', 'replace', 'update', 'set'])
+JSON_ACTIONS = frozenset(['merge', 'override', 'update'])
+FORMATS = frozenset(['xml', 'text', 'json'])
+CONFIG_FORMATS = frozenset(['xml', 'text', 'json', 'set'])
 
-try:
-    from jnpr.junos import Device
-    from jnpr.junos.utils.config import Config
-    from jnpr.junos.version import VERSION
-    from jnpr.junos.exception import RpcError, ConnectError, ConfigLoadError, CommitError
-    from jnpr.junos.exception import LockError, UnlockError
-    if LooseVersion(VERSION) < LooseVersion('1.2.2'):
-        HAS_PYEZ = False
+junos_argument_spec = {
+    'host': dict(),
+    'port': dict(type='int'),
+    'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
+    'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
+    'timeout': dict(type='int', default=10),
+    'provider': dict(type='dict'),
+    'transport': dict()
+}
+
+def check_args(module, warnings):
+    provider = module.params['provider'] or {}
+    for key in junos_argument_spec:
+        if key not in ('provider',) and module.params[key]:
+            warnings.append('argument %s has been deprecated and will be '
+                    'removed in a future version' % key)
+
+    if provider:
+        for param in ('password',):
+            if provider.get(param):
+                module.no_log_values.update(return_values(provider[param]))
+
+def _validate_rollback_id(module, value):
+    try:
+        if not 0 <= int(value) <= 49:
+            raise ValueError
+    except ValueError:
+        module.fail_json(msg='rollback must be between 0 and 49')
+
+def load_configuration(module, candidate=None, action='merge', rollback=None, format='xml'):
+
+    if all((candidate is None, rollback is None)):
+        module.fail_json(msg='one of candidate or rollback must be specified')
+
+    elif all((candidate is not None, rollback is not None)):
+        module.fail_json(msg='candidate and rollback are mutually exclusive')
+
+    if format not in FORMATS:
+        module.fail_json(msg='invalid format specified')
+
+    if format == 'json' and action not in JSON_ACTIONS:
+        module.fail_json(msg='invalid action for format json')
+    elif format in ('text', 'xml') and action not in ACTIONS:
+        module.fail_json(msg='invalid action format %s' % format)
+    if action == 'set' and not format == 'text':
+        module.fail_json(msg='format must be text when action is set')
+
+    if rollback is not None:
+        _validate_rollback_id(module, rollback)
+        xattrs = {'rollback': str(rollback)}
     else:
-        HAS_PYEZ = True
-except ImportError:
-    HAS_PYEZ = False
+        xattrs = {'action': action, 'format': format}
 
-try:
-    import jxmlease
-    HAS_JXMLEASE = True
-except ImportError:
-    HAS_JXMLEASE = False
+    obj = Element('load-configuration', xattrs)
 
-try:
-    from lxml import etree
-except ImportError:
-    import xml.etree.ElementTree as etree
+    if candidate is not None:
+        lookup = {'xml': 'configuration', 'text': 'configuration-text',
+                  'set': 'configuration-set', 'json': 'configuration-json'}
 
-
-def xml_to_json(val):
-    if isinstance(val, string_types):
-        return jxmlease.parse(val)
-    else:
-        return jxmlease.parse_etree(val)
-
-
-def xml_to_string(val):
-    return etree.tostring(val)
-
-
-class Netconf(object):
-
-    def __init__(self):
-        self.device = None
-        self.config = None
-        self._locked = False
-        self._connected = False
-
-    def _error(self, msg):
-        if self.device:
-            if self._locked:
-                self.config.unlock()
-            self.disconnect()
-        raise NetworkError(msg)
-
-    def _log(self, msg):
-        # Logging is a complex topic and a discussion will be started after 2.2
-        # is released
-        pass
-
-    def connect(self, params, **kwargs):
-        host = params['host']
-        port = params.get('port') or 830
-
-        user = params['username']
-        passwd = params['password']
-
-        try:
-            self.device = Device(host, user=user, passwd=passwd, port=port, gather_facts=False).open()
-        except ConnectError:
-            exc = get_exception()
-            self._error('unable to connect to %s: %s' % (host, str(exc)))
-
-        self.config = Config(self.device)
-        self._connected = True
-
-    def disconnect(self):
-        if self.device:
-            self.device.close()
-        self._connected = False
-
-    ### Command methods ###
-
-    def run_commands(self, commands, **kwargs):
-        output = kwargs.get('format') or 'xml'
-        return self.execute(to_list(commands), format=output)
-
-    def execute(self, commands, format='xml', **kwargs):
-        '''Send commands to the device.'''
-        try:
-            return self.device.cli(commands, format=format)
-        except (ValueError, RpcError):
-            exc = get_exception()
-            self._error('Unable to get cli output: %s' % str(exc))
-
-    ### Config methods ###
-
-    def unlock_config(self):
-        try:
-            self.config.unlock()
-            self._locked = False
-        except UnlockError:
-            exc = get_exception()
-            self._log('unable to unlock config: %s' % str(exc))
-
-    def lock_config(self):
-        try:
-            self.config.lock()
-            self._locked = True
-        except LockError:
-            exc = get_exception()
-            self._log('unable to lock config: %s' % str(exc))
-
-    def check_config(self):
-        if not self.config.commit_check():
-            self._error(msg='Commit check failed')
-
-    def commit_config(self, comment=None, confirm=None):
-        try:
-            kwargs = dict(comment=comment)
-            if confirm and confirm > 0:
-                kwargs['confirm'] = confirm
-            return self.config.commit(**kwargs)
-        except CommitError:
-            exc = get_exception()
-            self._error('Unable to commit configuration: %s' % str(exc))
-
-    def load_config(self, candidate, action='replace', comment=None, confirm=None, format='text', commit=True):
-
-        merge = action == 'merge'
-        overwrite = action == 'overwrite'
-
-        self.lock_config()
-
-        try:
-            self.config.load(candidate, format=format, merge=merge, overwrite=overwrite)
-        except ConfigLoadError:
-            exc = get_exception()
-            self._error('Unable to load config: %s' % str(exc))
-
-        diff = self.config.diff()
-        self.check_config()
-        if commit and diff:
-            self.commit_config(comment=comment, confirm=confirm)
-
-        self.unlock_config()
-
-        return diff
-
-    def rollback_config(self, identifier, commit=True, comment=None):
-
-        self.lock_config()
-
-        try:
-            self.config.rollback(identifier)
-        except ValueError:
-            exc = get_exception()
-            self._error('Unable to rollback config: $s' % str(exc))
-
-        diff = self.config.diff()
-        if commit:
-            self.commit_config(comment=comment)
-
-        self.unlock_config()
-        return diff
-
-    def get_facts(self, refresh=True):
-        if refresh:
-            self.device.facts_refresh()
-        return self.device.facts
-
-    def get_config(self, config_format="text"):
-        if config_format not in ['text', 'set', 'xml']:
-            msg = 'invalid config format... must be one of xml, text, set'
-            self._error(msg=msg)
-
-        ele = self.rpc('get_configuration', format=config_format)
-        if config_format in ['text', 'set']:
-            return str(ele.text).strip()
-        elif config_format == "xml":
-            return ele
-
-    def rpc(self, name, format='xml', **kwargs):
-        meth = getattr(self.device.rpc, name)
-        reply = meth({'format': format}, **kwargs)
-        return reply
-Netconf = register_transport('netconf')(Netconf)
-
-
-class Cli(CliBase):
-
-    CLI_PROMPTS_RE = [
-        re.compile(r"[\r\n]?[\w+\-\.:\/\[\]]+(?:\([^\)]+\)){,3}(?:>|#) ?$"),
-        re.compile(r"\[\w+\@[\w\-\.]+(?: [^\]])\] ?[>#\$] ?$")
-    ]
-
-    CLI_ERRORS_RE = [
-        re.compile(r"% ?Error"),
-        re.compile(r"% ?Bad secret"),
-        re.compile(r"invalid input", re.I),
-        re.compile(r"(?:incomplete|ambiguous) command", re.I),
-        re.compile(r"connection timed out", re.I),
-        re.compile(r"[^\r\n]+ not found", re.I),
-        re.compile(r"'[^']' +returned error code: ?\d+"),
-    ]
-
-    def connect(self, params, **kwargs):
-        super(Cli, self).connect(params, **kwargs)
-
-        if self.shell._matched_prompt.strip().endswith('%'):
-            self.execute('cli')
-        self.execute('set cli screen-length 0')
-
-    def authorize(self, params, **kwargs):
-        raise NotImplementedError
-
-    ### Config methods ###
-
-    def configure(self, commands, **kwargs):
-        cmds = ['configure']
-        cmds.extend(to_list(commands))
-
-        if kwargs.get('comment'):
-            cmds.append('commit and-quit comment "%s"' % kwargs.get('comment'))
+        if action == 'set':
+            cfg = SubElement(obj, 'configuration-set')
         else:
-            cmds.append('commit and-quit')
+            cfg = SubElement(obj, lookup[format])
 
-        responses = self.execute(cmds)
-        return responses[1:-1]
+        if isinstance(candidate, string_types):
+            cfg.text = candidate
+        else:
+            cfg.append(candidate)
 
-    def get_config(self, include_defaults=False, **kwargs):
-        raise NotImplementedError
+    return send_request(module, obj)
 
-    def save_config(self):
-        self.execute(['copy running-config startup-config'])
-Cli = register_transport('cli', default=True)(Cli)
+def get_configuration(module, compare=False, format='xml', rollback='0'):
+    if format not in CONFIG_FORMATS:
+        module.fail_json(msg='invalid config format specified')
+    xattrs = {'format': format}
+    if compare:
+        _validate_rollback_id(module, rollback)
+        xattrs['compare'] = 'rollback'
+        xattrs['rollback'] = str(rollback)
+    return send_request(module, Element('get-configuration', xattrs))
+
+def commit_configuration(module, confirm=False, check=False, comment=None, confirm_timeout=None):
+    obj = Element('commit-configuration')
+    if confirm:
+        SubElement(obj, 'confirmed')
+    if check:
+        SubElement(obj, 'check')
+    if comment:
+        subele = SubElement(obj, 'log')
+        subele.text = str(comment)
+    if confirm_timeout:
+        subele = SubElement(obj, 'confirm-timeout')
+        subele.text = int(confirm_timeout)
+    return send_request(module, obj)
+
+def command(module, command, format='text', rpc_only=False):
+    xattrs = {'format': format}
+    if rpc_only:
+        command += ' | display xml rpc'
+        xattrs['format'] = 'text'
+    return send_request(module, Element('command', xattrs, text=command))
+
+lock_configuration = lambda x: send_request(x, Element('lock-configuration'))
+unlock_configuration = lambda x: send_request(x, Element('unlock-configuration'))
+
+@contextmanager
+def locked_config(module):
+    try:
+        lock_configuration(module)
+        yield
+    finally:
+        unlock_configuration(module)
+
+def get_diff(module):
+
+    reply = get_configuration(module, compare=True, format='text')
+    output = reply.find('.//configuration-output')
+    if output is not None:
+        return output.text
+
+def load_config(module, candidate, warnings, action='merge', commit=False, format='xml',
+                comment=None, confirm=False, confirm_timeout=None):
+
+    with locked_config(module):
+        if isinstance(candidate, list):
+            candidate = '\n'.join(candidate)
+
+        reply = load_configuration(module, candidate, action=action, format=format)
+        if isinstance(reply, list):
+            warnings.extend(reply)
+
+        validate(module)
+        diff = get_diff(module)
+
+        if diff:
+            diff = str(diff).strip()
+            if commit:
+                commit_configuration(module, confirm=confirm, comment=comment,
+                                     confirm_timeout=confirm_timeout)
+            else:
+                discard_changes(module)
+
+        return diff
