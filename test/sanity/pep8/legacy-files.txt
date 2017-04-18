@@ -138,7 +138,6 @@ lib/ansible/module_utils/vca.py
 lib/ansible/module_utils/vmware.py
 lib/ansible/module_utils/vyos.py
 lib/ansible/modules/cloud/amazon/_ec2_ami_search.py
-lib/ansible/modules/cloud/amazon/_ec2_vpc.py
 lib/ansible/modules/cloud/amazon/aws_kms.py
 lib/ansible/modules/cloud/amazon/cloudformation.py
 lib/ansible/modules/cloud/amazon/cloudformation_facts.py
