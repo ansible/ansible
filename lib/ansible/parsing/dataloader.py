@@ -273,7 +273,7 @@ class DataLoader:
         for finddir in (b'meta', b'tasks'):
             for suffix in (b'.yml', b'.yaml', b''):
                 b_main = b'main%s' % (suffix)
-                b_tasked = b'%s/%s' % (finddir, b_main)
+                b_tasked = os.path.join(finddir, b_main)
 
                 if (
                     RE_TASKS.search(path) and
