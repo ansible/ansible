@@ -9,6 +9,8 @@ trap 'rm -rf "${MYTMPDIR}"' EXIT
 TEST_FILE="${MYTMPDIR}/test_file"
 echo "This is a test file" > "${TEST_FILE}"
 
+TEST_FILE_OUTPUT="${MYTMPDIR}/test_file_output"
+
 # encrypt it
 ansible-vault encrypt "$@" --vault-password-file vault-password "${TEST_FILE}"
 
@@ -27,6 +29,11 @@ ansible-vault rekey "$@" --vault-password-file vault-password --new-vault-passwo
 ansible-vault view "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" "${TEST_FILE}"
 
 ansible-vault decrypt "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" "${TEST_FILE}"
+
+# reading/writing to/from stdin/stdin  (See https://github.com/ansible/ansible/issues/23567)
+ansible-vault encrypt "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --output="${TEST_FILE_OUTPUT}" < "${TEST_FILE}"
+ansible-vault view "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" - < "${TEST_FILE_OUTPUT}"
+ansible-vault decrypt "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --output=- < "${TEST_FILE_OUTPUT}"
 
 ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" "a test string"
 

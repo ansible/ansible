@@ -516,3 +516,29 @@ class TestVaultEditor(unittest.TestCase):
         assert vl.cipher_name == "AES256", "wrong cipher name set after rekey: %s" % vl.cipher_name
         assert error_hit is False, "error decrypting migrated 1.0 file"
         assert dec_data.strip() == b"foo", "incorrect decryption of rekeyed/migrated file: %s" % dec_data
+
+    def test_real_path_dash(self):
+        filename = '-'
+        ve = vault.VaultEditor('password')
+
+        res = ve._real_path(filename)
+        self.assertEqual(res, '-')
+
+    def test_real_path_dev_null(self):
+        filename = '/dev/null'
+        ve = vault.VaultEditor('password')
+
+        res = ve._real_path(filename)
+        self.assertEqual(res, '/dev/null')
+
+    def test_real_path_symlink(self):
+        self._test_dir = self._create_test_dir()
+        file_path = self._create_file(self._test_dir, 'test_file', content=b'this is a test file')
+        file_link_path = os.path.join(self._test_dir, 'a_link_to_test_file')
+
+        os.symlink(file_path, file_link_path)
+
+        ve = vault.VaultEditor('password')
+
+        res = ve._real_path(file_link_path)
+        self.assertEqual(res, file_path)
