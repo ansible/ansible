@@ -401,6 +401,14 @@ class VaultEditor:
         # shuffle tmp file into place
         self.shuffle_files(tmp_path, filename)
 
+    def _real_path(self, filename):
+        # '-' is special to VaultEditor, dont expand it.
+        if filename == '-':
+            return filename
+
+        real_path = os.path.realpath(filename)
+        return real_path
+
     def encrypt_bytes(self, b_plaintext):
         check_prereqs()
 
@@ -416,7 +424,7 @@ class VaultEditor:
         # so treat the contents as a byte string.
 
         # follow the symlink
-        filename = os.path.realpath(filename)
+        filename = self._real_path(filename)
 
         b_plaintext = self.read_data(filename)
         b_ciphertext = self.vault.encrypt(b_plaintext)
@@ -427,7 +435,7 @@ class VaultEditor:
         check_prereqs()
 
         # follow the symlink
-        filename = os.path.realpath(filename)
+        filename = self._real_path(filename)
 
         ciphertext = self.read_data(filename)
 
@@ -454,7 +462,7 @@ class VaultEditor:
         check_prereqs()
 
         # follow the symlink
-        filename = os.path.realpath(filename)
+        filename = self._real_path(filename)
 
         ciphertext = self.read_data(filename)
 
@@ -486,7 +494,7 @@ class VaultEditor:
         check_prereqs()
 
         # follow the symlink
-        filename = os.path.realpath(filename)
+        filename = self._real_path(filename)
 
         prev = os.stat(filename)
         ciphertext = self.read_data(filename)
@@ -535,7 +543,8 @@ class VaultEditor:
         b_file_data = to_bytes(data, errors='strict')
 
         if filename == '-':
-            sys.stdout.write(b_file_data)
+            file_data = to_text(b_file_data, encoding='utf-8', errors='strict', nonstring='strict')
+            sys.stdout.write(file_data)
         else:
             if os.path.isfile(filename):
                 if shred:
