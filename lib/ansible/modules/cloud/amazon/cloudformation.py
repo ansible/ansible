@@ -541,7 +541,14 @@ def main():
     stack_info = get_stack_facts(cfn, stack_params['StackName'])
 
     if module.check_mode:
-        module.exit_json(**check_mode_changeset(module, stack_params, cfn))
+        if state == 'absent' and stack_info:
+            module.exit_json(changed=True, meta='Stack would be deleted')
+        elif state == 'absent' and not stack_info:
+            module.exit_json(changed=False, meta='Stack doesn\'t exist')
+        elif state == 'present' and not stack_info:
+            module.exit_json(changed=True, meta='New stack would be created')
+        else:
+            module.exit_json(**check_mode_changeset(module, stack_params, cfn))
 
     if state == 'present':
         if not stack_info:
