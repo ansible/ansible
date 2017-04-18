@@ -101,7 +101,7 @@ def open_yaml_file(yaml_file):
     try:
         with open(yaml_file, 'r') as config_yaml_file:
             try:
-                yaml_file_content = yaml.load(config_yaml_file)
+                yaml_file_content = yaml.safe_load(config_yaml_file)
             except yaml.YAMLError as yaml_error:
                 print(yaml_error)
                 sys.exit(1)
