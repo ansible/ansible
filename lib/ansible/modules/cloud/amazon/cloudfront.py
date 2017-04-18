@@ -199,23 +199,6 @@ class CloudFrontServiceManager:
         signer.update(message)
         return signer.finalize()
 
-    def generate_s3_presigned_url(self, client_method, s3_bucket_name, s3_key_name, expires_in, http_method):
-        try:
-            if expires_in is None:
-                expires_in = self.__default_presigned_url_expires_in
-            self.create_client('s3')
-            params = {
-                    'Bucket': s3_bucket_name,
-                    'Key': s3_key_name
-                    }
-            response = self.client.generate_presigned_url(client_method, Params=params,
-                    ExpiresIn=expires_in, HttpMethod=http_method)
-            return { 'presigned_url': response }
-        except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="error generating s3 presigned url - " + str(e),
-                    exception=traceback.format_exc(),
-                    **camel_dict_to_snake_dict(e.response))
-
     def create_distribution(self, config, tags):
         try:
             if tags is None:
@@ -388,7 +371,7 @@ class CloudFrontValidationManager:
                         'domain_name': default_origin_domain_name,
                         'origin_path': '' if default_origin_path is None else str(default_origin_path)
                         } ]
-            self.validate_is_list(origins, "origins")
+            self.validate_is_list(origins, 'origins')
             quantity = len(origins)
             if quantity == 0 and default_origin_domain_name is None and create_distribution:
                 self.module.fail_json(msg="both origins[] and default_origin_domain_name have not been " +
@@ -513,14 +496,15 @@ class CloudFrontValidationManager:
                     self.module.fail_json(msg="a list of items[] must be specified for cache_behavior.allowed_methods")
                 self.validate_attribute_with_allowed_values(cache_behavior.get('cached_methods'),
                         'cache_behavior.allowed_items.cached_methods[]', self.__valid_methods)
-                self.validate_is_list(allowed_methods.get('items'), "cache_behavior.allowed_methods.items")
+                self.validate_is_list(allowed_methods.get('items'), 'cache_behavior.allowed_methods.items')
                 if 'cached_methods' in allowed_methods:
-                    self.validate_is_list(allowed_methods.get('cached_methods'), "cache_behavior.allowed_methods.cached_methods")
+                    self.validate_is_list(allowed_methods.get('cached_methods'),
+                            'cache_behavior.allowed_methods.cached_methods')
                     self.validate_attribute_with_allowed_values(allowed_methods.get('cached_methods'),
                             'cache_behavior.allowed_items.cached_methods[]', self.__valid_methods)
             lambda_function_associations = cache_behavior.get('lambda_function_associations')
             if lambda_function_associations is not None:
-                self.validate_is_list(lambda_function_associations, "lambda_function_associations")
+                self.validate_is_list(lambda_function_associations, 'lambda_function_associations')
                 for association in lambda_function_associations:
                     if 'lambda_function_arn' in association:
                         association = self.__helpers.change_dict_key_name(association, 'lambda_function_arn',
@@ -614,7 +598,7 @@ class CloudFrontValidationManager:
         try:
             if custom_error_responses is None:
                 return None
-            self.validate_is_list(custom_error_responses, "custom_error_responses")
+            self.validate_is_list(custom_error_responses, 'custom_error_responses')
             for custom_error_response in custom_error_responses:
                 if custom_error_response.get('error_code') is None:
                     self.module.json_fail(msg="custom_error_responses[].error_code must be specified")
@@ -924,7 +908,6 @@ def main():
     update_streaming_distribution = module.params.get('update_streaming_distribution')
     delete_streaming_distribution = module.params.get('delete_streaming_distribution')
     generate_presigned_url = module.params.get('generate_presigned_url')
-    generate_s3_presigned_url = module.params.get('generate_s3_presigned_url')
     generate_presigned_url_from_pem_private_key = module.params.get('generate_presigned_url_from_pem_private_key')
     duplicate_distribution = module.params.get('duplicate_distribution')
     duplicate_streaming_distribution = module.params.get('duplicate_streaming_distribution')
@@ -986,10 +969,10 @@ def main():
             or update_delete_duplicate_streaming_distribution or validate)
 
     if sum(map(bool, [create_origin_access_identity, delete_origin_access_identity, update_origin_access_identity,
-            generate_presigned_url, generate_s3_presigned_url, create_distribution, delete_distribution,
-            update_distribution, create_streaming_distribution, delete_streaming_distribution,
-            update_streaming_distribution, generate_presigned_url_from_pem_private_key, duplicate_distribution,
-            duplicate_streaming_distribution, validate_distribution, validate_streaming_distribution])) > 1:
+            generate_presigned_url, create_distribution, delete_distribution, update_distribution,
+            create_streaming_distribution, delete_streaming_distribution, update_streaming_distribution,
+            generate_presigned_url_from_pem_private_key, duplicate_distribution, duplicate_streaming_distribution,
+            validate_distribution, validate_streaming_distribution])) > 1:
         module.fail_json(msg="more than one cloudfront action has been specified. please select only one action.")
 
     if update_delete_duplicate_distribution or validate_distribution:
