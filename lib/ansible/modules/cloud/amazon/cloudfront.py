@@ -1000,12 +1000,12 @@ def main():
         streaming_distribution_id, config, e_tag = validation_mgr.validate_update_delete_streaming_distribution_parameters(alias,
                 streaming_distribution_id, config, e_tag)
 
+    if config_required:
+        config = helpers.pascal_dict_to_snake_dict(config, True)
+
     if create_update_distribution or create_update_streaming_distribution or duplicate:
         config = validation_mgr.validate_common_distribution_parameters(config, enabled, aliases, logging,
                 price_class, comment, create_update_streaming_distribution)
-
-    if config_required:
-        config = helpers.pascal_dict_to_snake_dict(config, True)
 
     if create_update_distribution or validate:
         valid_origins = validation_mgr.validate_origins(origins, default_origin_domain_name,
