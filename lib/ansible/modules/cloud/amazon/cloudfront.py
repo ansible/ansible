@@ -93,7 +93,7 @@ except ImportError:
 
 class CloudFrontServiceManager:
     """
-        Handles CloudFront service calls to AWS
+    Handles CloudFront service calls to AWS
     """
 
     def __init__(self, module):
@@ -313,7 +313,7 @@ class CloudFrontServiceManager:
 
 class CloudFrontValidationManager:
     """
-        Manages Cloudfront validations
+    Manages Cloudfront validations
     """
 
     def __init__(self, module):
@@ -357,20 +357,25 @@ class CloudFrontValidationManager:
         try:
             if logging is None:
                 return None
-            if(logging and not streaming and ('enabled' not in logging or 'include_cookies' not in logging
-                    or 'bucket' not in logging or logging.get('prefix'))):
-                self.module.fail_json(msg="the logging parameters enabled, include_cookies, bucket and " +
-                        "prefix must be specified")
-            if logging and streaming and ('enabled' not in logging or 'bucket' not in logging or logging.get('prefix')):
-                self.module.fail_json(msg="the logging parameters enabled, bucket and prefix must be specified")
+            if not streaming:
+                if(logging and ('enabled' not in logging or 'include_cookies' not in logging
+                        or 'bucket' not in logging or 'prefix' not in logging)):
+                    self.module.fail_json(msg="the logging parameters enabled, include_cookies, bucket and " +
+                            "prefix must be specified")
+                valid_logging['include_cookies'] = logging.get('include_cookies')
+            else:
+                if logging and ('enabled' not in logging or 'bucket' not in logging or 'prefix' not it logging):
+                    self.module.fail_json(msg="the logging parameters enabled, bucket and prefix must be specified")
             valid_logging['enabled'] = logging.get('enabled')
             valid_logging['bucket'] = logging.get('bucket')
             valid_logging['prefix'] = logging.get('prefix')
-            if not streaming:
-                valid_logging['include_cookies'] = logging.get('include_cookies')
             return valid_logging
         except Exception as e:
             self.module.fail_json(msg="error validating distribution logging - " + str(e))
+
+    def validate_is_list(self, list_to_validate, list_name):
+        if not isinstance(list_to_validate, list):
+            self.module.fail_json(msg='{0} must be a list'.format(list_name))
 
     def validate_origins(self, origins, default_origin_domain_name, default_origin_access_identity,
             default_origin_path, streaming, create_distribution):
@@ -383,8 +388,7 @@ class CloudFrontValidationManager:
                         'domain_name': default_origin_domain_name,
                         'origin_path': '' if default_origin_path is None else str(default_origin_path)
                         } ]
-            if not isinstance(origins, list):
-                self.module.fail_json(msg="origins[] must be a list")
+            self.validate_is_list(origins, "origins")
             quantity = len(origins)
             if quantity == 0 and default_origin_domain_name is None and create_distribution:
                 self.module.fail_json(msg="both origins[] and default_origin_domain_name have not been " +
@@ -505,17 +509,14 @@ class CloudFrontValidationManager:
                     self.module.fail_json(msg="a list of items[] must be specified for cache_behavior.allowed_methods")
                 self.validate_attribute_with_allowed_values(cache_behavior.get('cached_methods'),
                         'cache_behavior.allowed_items.cached_methods[]', self.__valid_methods)
-                if not isinstance(allowed_methods.get('items'), list):
-                    self.module.fail_json(msg="cache_behavior.allowed_methods.items must be a list")
+                self.validate_is_list(allowed_methods.get('items'), "cache_behavior.allowed_methods.items")
                 if 'cached_methods' in allowed_methods:
-                    if not isinstance(cache_behavior.get('cached_methods'), list):
-                        self.module.fail_json(msg="cache_behavior.allowed_methods.cached_methods must be a list")
+                    self.validate_is_list(allowed_methods.get('cached_methods'), "cache_behavior.allowed_methods.cached_methods")
                     self.validate_attribute_with_allowed_values(allowed_methods.get('cached_methods'),
                             'cache_behavior.allowed_items.cached_methods[]', self.__valid_methods)
             lambda_function_associations = cache_behavior.get('lambda_function_associations')
             if lambda_function_associations is not None:
-                if not isinstance(lambda_function_associations, list):
-                    self.module.fail_json(msg="lambda_function_associations must be a list")
+                self.validate_is_list(lambda_function_associations, "lambda_function_associations")
                 for association in lambda_function_associations:
                     if 'lambda_function_arn' in association:
                         association = self.__helpers.change_dict_key_name(association, 'lambda_function_arn',
@@ -609,8 +610,7 @@ class CloudFrontValidationManager:
         try:
             if custom_error_responses is None:
                 return None
-            if not isinstance(custom_error_responses, list):
-                self.module.fail_json(msg="custom_error_responses[] must be of type list")
+            self.validate_is_list(custom_error_responses, "custom_error_responses")
             for custom_error_response in custom_error_responses:
                 if custom_error_response.get('error_code') is None:
                     self.module.json_fail(msg="custom_error_responses[].error_code must be specified")
@@ -740,8 +740,8 @@ class CloudFrontValidationManager:
 
     def validate_attribute_with_allowed_values(self, attribute, attribute_name, allowed_list):
         if attribute is not None and attribute not in allowed_list:
-            self.module.fail_json(msg='the attribute {0} must be one of {1}'.format(
-                    attribute_name, ' '.join(str(e) for e in allowed_list)))
+            self.module.fail_json(msg='the attribute {0} must be one of {1}'.format(attribute_name,
+                    ' '.join(str(e) for e in allowed_list)))
 
     def validate_presigned_url_pem_expire_date(self, datetime_string):
         try:
@@ -752,7 +752,7 @@ class CloudFrontValidationManager:
 
 class CloudFrontHelpers:
     """
-        Miscellaneous helpers for processing cloudfront data
+    Miscellaneous helpers for processing cloudfront data
     """
 
     def change_dict_key_name(self, dictionary, old_key, new_key):
