@@ -36,9 +36,14 @@ junos_argument_spec = {
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
-    'timeout': dict(type='int', default=10),
+    'timeout': dict(type='int'),
     'provider': dict(type='dict'),
     'transport': dict()
+}
+
+# Add argument's default value here
+ARGS_DEFAULT_VALUE = {
+    'timeout': 10
 }
 
 def check_args(module, warnings):
@@ -47,6 +52,13 @@ def check_args(module, warnings):
         if key not in ('provider',) and module.params[key]:
             warnings.append('argument %s has been deprecated and will be '
                     'removed in a future version' % key)
+
+    # set argument's default value if not provided in input
+    # This is done to avoid unwanted argument deprecation warning
+    # in case argument is not given as input (outside provider).
+    for key in ARGS_DEFAULT_VALUE:
+        if not module.params.get(key, None):
+            module.params[key] = ARGS_DEFAULT_VALUE[key]
 
     if provider:
         for param in ('password',):
