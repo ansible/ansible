@@ -258,6 +258,8 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             if not b_lines:
                 return False
             return b_lines[-1].strip().endswith(b_prompt) or b_lines[0].strip().endswith(b_prompt)
+        else:
+            return self._play_context.prompt(b_output)
 
     def check_incorrect_password(self, b_output):
         b_incorrect_password = to_bytes(gettext.dgettext(self._play_context.become_method, C.BECOME_ERROR_STRINGS[self._play_context.become_method]))
