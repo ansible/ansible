@@ -151,7 +151,7 @@ options:
     tcp:
         description:
           - TCP check tries to make a TCP connection attempt at set intervals
-            to the specified IP or hostname. Interval must also be prived with 
+            to the specified IP or hostname. Interval must also be prived with
             this option.
         required: false
         default: None
@@ -192,11 +192,11 @@ EXAMPLES = '''
     http: http://localhost:80/status
 
 - name: register nginx with a tcp check
-    consul:
-      service_name: nginx
-      service_port: 80
-      interval: 60s
-      tcp: localhost:80
+  consul:
+    service_name: nginx
+    service_port: 80
+    interval: 60s
+    tcp: localhost:80
 
 - name: register external service nginx available at 10.1.5.23
   consul:
