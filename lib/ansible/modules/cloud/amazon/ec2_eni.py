@@ -552,6 +552,9 @@ def main():
                            mutually_exclusive=[
                                ['secondary_private_ip_addresses', 'secondary_private_ip_address_count']
                                ],
+                           required_together=[
+                               ['instance_id', 'device_index']
+                               ],
                            required_if=([
                                ('state', 'present', ['subnet_id']),
                                ('state', 'absent', ['eni_id']),
