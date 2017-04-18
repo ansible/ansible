@@ -155,7 +155,7 @@ ZIPDATA = """%(zipdata)s"""
 def import_non_local(name):
     # http://stackoverflow.com/questions/6031584/importing-from-builtin-library-when-module-with-same-name-exists
 
-    f, pathname, desc = imp.find_module(name, sys.path[1:])
+    f, pathname, desc = imp.find_module(name, [i for i in sys.path if i != ''])
     module = imp.load_module(name, f, pathname, desc)
     f.close()
 
