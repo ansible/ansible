@@ -57,6 +57,7 @@ eos_argument_spec = {
     'transport': dict(choices=['cli', 'eapi'])
 }
 
+# Add argument's default value here
 ARGS_DEFAULT_VALUE = {
     'port': 443,
     'use_ssl': True,
@@ -70,6 +71,7 @@ def check_args(module, warnings):
             warnings.append('argument %s has been deprecated and will be '
                     'removed in a future version' % key)
 
+    # set argument's default value if not provided in input
     for key in ARGS_DEFAULT_VALUE:
         if not module.params.get(key, None):
             module.params[key] = ARGS_DEFAULT_VALUE[key]
