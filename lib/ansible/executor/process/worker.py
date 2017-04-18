@@ -68,21 +68,25 @@ class WorkerProcess(multiprocessing.Process):
         self._variable_manager  = variable_manager
         self._shared_loader_obj = shared_loader_obj
 
-        # dupe stdin, if we have one
-        self._new_stdin = sys.stdin
-        try:
-            fileno = sys.stdin.fileno()
-            if fileno is not None:
-                try:
-                    self._new_stdin = os.fdopen(os.dup(fileno))
-                except OSError:
-                    # couldn't dupe stdin, most likely because it's
-                    # not a valid file descriptor, so we just rely on
-                    # using the one that was passed in
-                    pass
-        except (AttributeError, ValueError):
-            # couldn't get stdin's fileno, so we just carry on
-            pass
+        if sys.stdin.isatty():
+            # dupe stdin, if we have one
+            self._new_stdin = sys.stdin
+            try:
+                fileno = sys.stdin.fileno()
+                if fileno is not None:
+                    try:
+                        self._new_stdin = os.fdopen(os.dup(fileno))
+                    except OSError:
+                        # couldn't dupe stdin, most likely because it's
+                        # not a valid file descriptor, so we just rely on
+                        # using the one that was passed in
+                        pass
+            except (AttributeError, ValueError):
+                # couldn't get stdin's fileno, so we just carry on
+                pass
+        else:
+            # set to /dev/null
+            self._new_stdin = os.devnull
 
     def run(self):
         '''
