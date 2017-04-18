@@ -167,13 +167,13 @@ class RpmKey(object):
         return re.match('(0x)?[0-9a-f]{8}', keystr, flags=re.IGNORECASE)
 
     def execute_command(self, cmd):
-        rc, stdout, stderr = self.module.run_command(cmd,use_unsafe_shell=True)
+        rc, stdout, stderr = self.module.run_command(cmd, use_unsafe_shell=True)
         if rc != 0:
             self.module.fail_json(msg=stderr)
         return stdout, stderr
 
     def is_key_imported(self, keyid):
-        cmd=self.rpm+' -q  gpg-pubkey --qf "%{description}" | gpg --no-tty --batch --with-colons --fixed-list-mode -'
+        cmd=self.rpm + ' -q  gpg-pubkey --qf "%{description}" | gpg --no-tty --batch --with-colons --fixed-list-mode -'
         stdout, stderr = self.execute_command(cmd)
         for line in stdout.splitlines():
             if keyid in line.split(':')[4]:
