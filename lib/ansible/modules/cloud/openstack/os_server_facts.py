@@ -40,7 +40,7 @@ options:
    filters:
      description:
         - restrict results to servers matching a dictionary of
-          filters (e.g., {vm_state: 'active'})
+          filters
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
@@ -48,10 +48,12 @@ extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
-# Gather facts about all servers named <web*>:
+# Gather facts about all servers named <web*> that are in an active state:
 - os_server_facts:
     cloud: rax-dfw
     server: web*
+    filters:
+      vm_state: active
 - debug:
     var: openstack_servers
 '''
