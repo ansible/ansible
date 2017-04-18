@@ -364,7 +364,7 @@ class CloudFrontValidationManager:
                             "prefix must be specified")
                 valid_logging['include_cookies'] = logging.get('include_cookies')
             else:
-                if logging and ('enabled' not in logging or 'bucket' not in logging or 'prefix' not it logging):
+                if logging and ('enabled' not in logging or 'bucket' not in logging or 'prefix' not in logging):
                     self.module.fail_json(msg="the logging parameters enabled, bucket and prefix must be specified")
             valid_logging['enabled'] = logging.get('enabled')
             valid_logging['bucket'] = logging.get('bucket')
@@ -394,62 +394,66 @@ class CloudFrontValidationManager:
                 self.module.fail_json(msg="both origins[] and default_origin_domain_name have not been " +
                         "specified. please specify at least one.")
             for origin in origins:
-                if 'origin_path' not in origin:
-                    if default_origin_path is not None:
-                        origin['origin_path'] = default_origin_path
-                    else:
-                        origin['origin_path'] = ''
-                if 'domain_name' not in origin:
-                    self.module.fail_json(msg="origins[].domain_name must be specified for an origin")
-                if 'id' not in origin:
-                    origin['id'] = self.__default_datetime_string
-                if 'custom_headers' in origin and streaming:
-                    self.module.fail_json(msg="custom_headers has been specified for a streaming " +
-                            "distribution. custom headers are for web distributions only")
-                if 'custom_headers' in origin and len(origin.get('custom_headers') > 0 ):
-                    for custom_header in origin.get('custom_headers'):
-                        if 'header_name' not in custom_header or 'header_value' not in custom_header:
-                            self.module.fail_json(msg="both origins[].custom_headers.header_name and " +
-                                    "origins[].custom_headers.header_value must be specified")
-                    origin['custom_headers'] = self.__helpers.python_list_to_aws_list(origin.get('custom_headers'))
-                else:
-                    origin['custom_headers'] = self.__helpers.python_list_to_aws_list()
-                if self.__s3_bucket_domain_identifier in origin.get('domain_name'):
-                    if 's3_origin_config' not in origin or 'origin_access_identity' not in origin.get('s3_origin_config'):
-                        origin["s3_origin_config"] = {}
-                        if default_origin_access_identity is not None:
-                            origin['s3_origin_config']['origin_access_identity'] = default_origin_access_identity
-                        else:
-                            origin['s3_origin_config']['origin_access_identity'] = ''
-                else:
-                    if 'custom_origin_config' not in origin:
-                        origin['custom_origin_config'] = {}
-                    custom_origin_config = origin.get('custom_origin_config')
-                    if 'origin_protocol_policy' not in custom_origin_config:
-                        custom_origin_config['origin_protocol_policy'] = self.__default_custom_origin_protocol_policy
-                    else:
-                        self.validate_attribute_with_allowed_values(custom_origin_config.get('origin_protocol_policy'),
-                                'origins[].custom_origin_config.origin_protocol_policy',
-                                self.__valid_origin_protocol_policies)
-                    if 'http_port' not in custom_origin_config:
-                            custom_origin_config['h_t_t_p_port'] = self.__default_http_port
-                    else:
-                        custom_origin_config = change_dict_ket_name(custom_origin_config, 'http_port', 'h_t_t_p_port')
-                    if 'https_port' not in custom_origin_config:
-                        custom_origin_config['h_t_t_p_s_port'] = self.__default_https_port
-                    else:
-                        custom_origin_config = self.__helpers.change_dict_key_name(custom_origin_config, 'https_port',
-                                'h_t_t_p_s_port')
-                    if 'origin_ssl_protocols' not in custom_origin_config:
-                        temp_origin_ssl_protocols = self.__default_origin_ssl_protocols
-                    else:
-                        self.validate_attribute_with_allowed_values(custom_origin_config.get('origin_ssl_protocols'),
-                                'origins[].origin_ssl_protocols', self.__valid_origin_ssl_protocols)
-                    custom_origin_config['origin_ssl_protocols'] = self.__helpers.python_list_to_aws_list(
-                            temp_origin_ssl_protocols)
+                origin = self.validate_origin(origin, default_origin_path, default_origin_access_identity, streaming)
             return self.__helpers.python_list_to_aws_list(origins)
         except Exception as e:
             self.module.fail_json(msg="error validating distribution origins - " + str(e))
+
+    def validate_origin(self, origin, default_origin_path, default_origin_access_identity, streaming):
+        if 'origin_path' not in origin:
+            if default_origin_path is not None:
+                origin['origin_path'] = default_origin_path
+            else:
+                origin['origin_path'] = ''
+        if 'domain_name' not in origin:
+            self.module.fail_json(msg="origins[].domain_name must be specified for an origin")
+        if 'id' not in origin:
+            origin['id'] = self.__default_datetime_string
+        if 'custom_headers' in origin and streaming:
+            self.module.fail_json(msg="custom_headers has been specified for a streaming " +
+                    "distribution. custom headers are for web distributions only")
+        if 'custom_headers' in origin and len(origin.get('custom_headers') > 0 ):
+            for custom_header in origin.get('custom_headers'):
+                if 'header_name' not in custom_header or 'header_value' not in custom_header:
+                    self.module.fail_json(msg="both origins[].custom_headers.header_name and " +
+                            "origins[].custom_headers.header_value must be specified")
+            origin['custom_headers'] = self.__helpers.python_list_to_aws_list(origin.get('custom_headers'))
+        else:
+            origin['custom_headers'] = self.__helpers.python_list_to_aws_list()
+        if self.__s3_bucket_domain_identifier in origin.get('domain_name'):
+            if 's3_origin_config' not in origin or 'origin_access_identity' not in origin.get('s3_origin_config'):
+                origin["s3_origin_config"] = {}
+                if default_origin_access_identity is not None:
+                    origin['s3_origin_config']['origin_access_identity'] = default_origin_access_identity
+                else:
+                    origin['s3_origin_config']['origin_access_identity'] = ''
+        else:
+            if 'custom_origin_config' not in origin:
+                origin['custom_origin_config'] = {}
+            custom_origin_config = origin.get('custom_origin_config')
+            if 'origin_protocol_policy' not in custom_origin_config:
+                custom_origin_config['origin_protocol_policy'] = self.__default_custom_origin_protocol_policy
+            else:
+                self.validate_attribute_with_allowed_values(custom_origin_config.get('origin_protocol_policy'),
+                        'origins[].custom_origin_config.origin_protocol_policy', self.__valid_origin_protocol_policies)
+            if 'http_port' not in custom_origin_config:
+                custom_origin_config['h_t_t_p_port'] = self.__default_http_port
+            else:
+                custom_origin_config = self.__helpers.change_dict_key_name(custom_origin_config, 'http_port',
+                        'h_t_t_p_port')
+            if 'https_port' not in custom_origin_config:
+                custom_origin_config['h_t_t_p_s_port'] = self.__default_https_port
+            else:
+                custom_origin_config = self.__helpers.change_dict_key_name(custom_origin_config, 'https_port',
+                        'h_t_t_p_s_port')
+            if 'origin_ssl_protocols' not in custom_origin_config:
+                temp_origin_ssl_protocols = self.__default_origin_ssl_protocols
+            else:
+                self.validate_attribute_with_allowed_values(custom_origin_config.get('origin_ssl_protocols'),
+                        'origins[].origin_ssl_protocols', self.__valid_origin_ssl_protocols)
+            custom_origin_config['origin_ssl_protocols'] = self.__helpers.python_list_to_aws_list(
+                    temp_origin_ssl_protocols)
+        return origin
 
     def validate_cache_behaviors(self, cache_behaviors, valid_origins):
         try:
@@ -988,11 +992,11 @@ def main():
             duplicate_streaming_distribution, validate_distribution, validate_streaming_distribution])) > 1:
         module.fail_json(msg="more than one cloudfront action has been specified. please select only one action.")
 
-    if update_delete_duplicate_distribution:
+    if update_delete_duplicate_distribution or validate_distribution:
         distribution_id, config, e_tag = validation_mgr.validate_update_delete_distribution_parameters(alias,
                 distribution_id, config, e_tag)
 
-    if update_delete_duplicate_streaming_distribution:
+    if update_delete_duplicate_streaming_distribution or validate_streaming_distribution:
         streaming_distribution_id, config, e_tag = validation_mgr.validate_update_delete_streaming_distribution_parameters(alias,
                 streaming_distribution_id, config, e_tag)
 
@@ -1061,7 +1065,7 @@ def main():
     elif validate:
         result = { 'validation_result': 'OK' }
 
-    module.exit_json(changed=True, **helpers.pascal_dict_to_snake_dict(result))
+    module.exit_json(changed=(not validate), **helpers.pascal_dict_to_snake_dict(result))
 
 if __name__ == '__main__':
     main()
