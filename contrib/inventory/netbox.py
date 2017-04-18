@@ -240,8 +240,8 @@ class NetboxAsInventory(object):
         The vars are defined in script config file.
 
         Args:
-            host_data: A dict has a host data which will be added to inventory.
-            host_vars: A dict has selected fields to be used as host vars.
+            host_data: Dict, it has a host data which will be added to inventory.
+            host_vars: Dict, it has selected fields to be used as host vars.
 
         Returns:
             A dict has all vars are associate with the host.
