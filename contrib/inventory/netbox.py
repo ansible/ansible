@@ -145,7 +145,8 @@ class NetboxAsInventory(object):
             "ip": "address"
         }
 
-    def get_hosts_list(self, api_url, specific_host=None):
+    @staticmethod
+    def get_hosts_list(api_url, specific_host=None):
         """Retrieves hosts list from netbox API.
 
         Returns:
@@ -164,7 +165,8 @@ class NetboxAsInventory(object):
         hosts_list = requests.get(data_source).json()
         return hosts_list
 
-    def add_host_to_group(self, server_name, group_value, inventory_dict):
+    @staticmethod
+    def add_host_to_group(server_name, group_value, inventory_dict):
         """Add a host to a single group.
 
         It checks if host in a group and adds the host to that group.
