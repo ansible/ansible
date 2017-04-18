@@ -217,7 +217,7 @@ def get_custom_value(arg, config, module):
 
 def get_existing(module, args):
     existing = {}
-    netcfg = get_config(module)
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
     custom = [
         'assoc_vrf',
@@ -282,6 +282,10 @@ def state_present(module, existing, proposed, candidate):
         elif key == 'peer-ip' and value != 'default':
             for peer in value:
                 commands.append('{0} {1}'.format(key, peer))
+
+        elif key == 'mcast-group' and value != existing_commands.get(key):
+            commands.append('no {0}'.format(key))
+            commands.append('{0} {1}'.format(key, value))
 
         elif value is True:
             commands.append(key)
@@ -422,13 +426,17 @@ def main():
         else:
             candidate = CustomNetworkConfig(indent=3)
             invoke('state_%s' % state, module, existing, proposed, candidate)
-
-            try:
-                response = load_config(module, candidate)
-                result.update(response)
-            except ShellError:
-                exc = get_exception()
-                module.fail_json(msg=str(exc))
+            result['changed'] = False
+            for k, v in proposed.items():
+                if k in existing:
+                    if existing[k] != proposed[k] or state == 'absent':
+                        result['changed'] = True
+                if k not in existing and state == 'present':
+                    result['changed'] = True
+            if module.check_mode:
+                module.exit_json(commands=candidate)
+            else:
+                load_config(module, candidate)
     else:
         result['updates'] = []
 

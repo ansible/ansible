@@ -503,7 +503,7 @@ def get_custom_value(arg, config, module):
 
 def get_existing(module, args):
     existing = {}
-    netcfg = get_config(module)
+    netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
     custom = [
         'allowas_in_max',
