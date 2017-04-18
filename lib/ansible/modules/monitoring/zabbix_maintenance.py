@@ -118,6 +118,7 @@ options:
         description:
             - Validate SSL certificate of the Zabbix server.
         default: true
+        version_added: "2.4"
         required: false
 notes:
     - Useful for setting hosts in maintenance mode before big update,
