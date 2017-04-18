@@ -184,6 +184,13 @@ def main():
             'grow_flag' : 'filesystem resize',
             'force_flag' : '-f',
             'fsinfo': 'btrfs',
+        },
+        'fat' : {
+            'mkfs' : 'mkfs.fat',
+            'grow' : 'resize2fs',
+            'grow_flag' : None,
+            'force_flag' : None,
+            'fsinfo' : 'tune2fs',
         }
     }
 
