@@ -179,7 +179,7 @@ def main():
             module.exit_json(tag=None)
 
     if action == 'create_release':
-        if tag == None:
+        if tag is None:
             module.fail_json(msg="Specify tag in order to create a release.")
         release_exists = repository.release_from_tag(tag)
         if release_exists:
