@@ -213,7 +213,6 @@ lib/ansible/modules/cloud/amazon/s3.py
 lib/ansible/modules/cloud/amazon/s3_bucket.py
 lib/ansible/modules/cloud/amazon/s3_lifecycle.py
 lib/ansible/modules/cloud/amazon/s3_logging.py
-lib/ansible/modules/cloud/amazon/s3_sync.py
 lib/ansible/modules/cloud/amazon/s3_website.py
 lib/ansible/modules/cloud/amazon/sns_topic.py
 lib/ansible/modules/cloud/amazon/sts_assume_role.py
