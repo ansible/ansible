@@ -64,7 +64,6 @@ FILE_ATTRIBUTES = {
 import locale
 import os
 import re
-import pipes
 import shlex
 import subprocess
 import sys
@@ -164,7 +163,7 @@ except ImportError:
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.six import (PY2, PY3, b, binary_type, integer_types,
         iteritems, text_type, string_types)
-from ansible.module_utils.six.moves import map, reduce
+from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils._text import to_native, to_bytes, to_text
 
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
@@ -2317,7 +2316,7 @@ class AnsibleModule(object):
         shell = False
         if isinstance(args, list):
             if use_unsafe_shell:
-                args = " ".join([pipes.quote(x) for x in args])
+                args = " ".join([shlex_quote(x) for x in args])
                 shell = True
         elif isinstance(args, (binary_type, text_type)) and use_unsafe_shell:
             shell = True
@@ -2411,7 +2410,7 @@ class AnsibleModule(object):
                     is_passwd = True
             arg = heuristic_log_sanitize(arg, self.no_log_values)
             clean_args.append(arg)
-        clean_args = ' '.join(pipes.quote(arg) for arg in clean_args)
+        clean_args = ' '.join(shlex_quote(arg) for arg in clean_args)
 
         if data:
             st_in = subprocess.PIPE
