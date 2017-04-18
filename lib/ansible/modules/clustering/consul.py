@@ -41,7 +41,7 @@ author: "Steve Gargan (@sgargan)"
 options:
     state:
         description:
-          - register or deregister the consul service, defaults to present
+          - Register or deregister the consul service, defaults to present
         required: true
         choices: ['present', 'absent']
     service_name:
@@ -52,29 +52,29 @@ options:
         required: false
     service_id:
         description:
-          - the ID for the service, must be unique per node, defaults to the
+          - The ID for the service, must be unique per node, defaults to the
             service name if the service name is supplied
         required: false
         default: service_name if supplied
     host:
         description:
-          - host of the consul agent defaults to localhost
+          - Host of the consul agent defaults to localhost
         required: false
         default: localhost
     port:
         description:
-          - the port on which the consul agent is running
+          - The port on which the consul agent is running
         required: false
         default: 8500
     scheme:
         description:
-          - the protocol scheme on which the consul agent is running
+          - The protocol scheme on which the consul agent is running
         required: false
         default: http
         version_added: "2.1"
     validate_certs:
         description:
-          - whether to verify the tls certificate of the consul agent
+          - Whether to verify the tls certificate of the consul agent
         required: false
         default: True
         version_added: "2.1"
@@ -85,13 +85,13 @@ options:
         default: None
     service_port:
         description:
-          - the port on which the service is listening. Can optionally be supplied for
+          - The port on which the service is listening required for
             registration of a service, i.e. if service_name or service_id is set
         required: false
         default: None
     service_address:
         description:
-          - the address to advertise that the service will be listening on.
+          - The address to advertise that the service will be listening on.
             This value will be passed as the I(Address) parameter to Consul's
             U(/v1/agent/service/register) API method, so refer to the Consul API
             documentation for further details.
@@ -100,18 +100,18 @@ options:
         version_added: "2.1"
     tags:
         description:
-          - a list of tags that will be attached to the service registration.
+          - A list of tags that will be attached to the service registration.
         required: false
         default: None
     script:
         description:
-          - the script/command that will be run periodically to check the health
+          - The script/command that will be run periodically to check the health
             of the service. Scripts require an interval and vise versa
         required: false
         default: None
     interval:
         description:
-          - the interval at which the service check will be run. This is a number
+          - The interval at which the service check will be run. This is a number
             with a s or m suffix to signify the units of seconds or minutes e.g
             15s or 1m. If no suffix is supplied, m will be used by default e.g.
             1 will be 1m. Required if the script param is specified.
@@ -119,19 +119,19 @@ options:
         default: None
     check_id:
         description:
-          - an ID for the service check, defaults to the check name, ignored if
+          - An ID for the service check, defaults to the check name, ignored if
             part of a service definition.
         required: false
         default: None
     check_name:
         description:
-          - a name for the service check, defaults to the check id. required if
+          - A name for the service check, defaults to the check id. required if
             standalone, ignored if part of service definition.
         required: false
         default: None
     ttl:
         description:
-          - checks can be registered with a ttl instead of a script and interval
+          - Checks can be registered with a ttl instead of a script and interval
             this means that the service will check in with the agent before the
             ttl expires. If it doesn't the check will be considered failed.
             Required if registering a check and the script an interval are missing
@@ -142,12 +142,20 @@ options:
         default: None
     http:
         description:
-          - checks can be registered with an http endpoint. This means that consul
+          - Checks can be registered with an http endpoint. This means that consul
             will check that the http endpoint returns a successful http status.
             Interval must also be provided with this option.
         required: false
         default: None
         version_added: "2.0"
+    tcp:
+        description:
+          - TCP check tries to make a TCP connection attempt at set intervals
+            to the specified IP or hostname. Interval must also be prived with 
+            this option.
+        required: false
+        default: None
+        version_added: "2.4"
     timeout:
         description:
           - A custom HTTP check timeout. The consul default is 10 seconds.
@@ -158,7 +166,7 @@ options:
         version_added: "2.0"
     token:
         description:
-          - the token key indentifying an ACL rule set. May be required to register services.
+          - The token key indentifying an ACL rule set. May be required to register services.
         required: false
         default: None
 """
@@ -182,6 +190,13 @@ EXAMPLES = '''
     service_port: 80
     interval: 60s
     http: http://localhost:80/status
+
+- name: register nginx with a tcp check
+    consul:
+      service_name: nginx
+      service_port: 80
+      interval: 60s
+      tcp: localhost:80
 
 - name: register external service nginx available at 10.1.5.23
   consul:
@@ -290,6 +305,7 @@ def add_check(module, check):
                      interval=check.interval,
                      ttl=check.ttl,
                      http=check.http,
+                     tcp=check.tcp,
                      timeout=check.timeout,
                      service_id=check.service_id)
 
@@ -359,11 +375,12 @@ def get_service_by_id_or_name(consul_api, service_id_or_name):
 
 
 def parse_check(module):
-    if len(filter(None, [module.params.get('script'), module.params.get('ttl'), module.params.get('http')])) > 1:
-        module.fail_json(
-            msg='check are either script, http or ttl driven, supplying more than one does not make sense')
 
-    if module.params.get('check_id') or module.params.get('script') or module.params.get('ttl') or module.params.get('http'):
+    if len(filter(None, [module.params.get('script'), module.params.get('ttl'), module.params.get('http'), module.params.get('tcp')])) > 1:
+        module.fail_json(
+            msg='check are either script, http, tcp or ttl driven, supplying more than one does not make sense')
+
+    if module.params.get('check_id') or module.params.get('script') or module.params.get('ttl') or module.params.get('http') or module.params.get('tcp'):
 
         return ConsulCheck(
             module.params.get('check_id'),
@@ -375,6 +392,7 @@ def parse_check(module):
             module.params.get('ttl'),
             module.params.get('notes'),
             module.params.get('http'),
+            module.params.get('tcp'),
             module.params.get('timeout'),
             module.params.get('service_id'),
         )
@@ -459,7 +477,7 @@ class ConsulService():
 class ConsulCheck(object):
 
     def __init__(self, check_id, name, node=None, host='localhost',
-                 script=None, interval=None, ttl=None, notes=None, http=None, timeout=None, service_id=None):
+                    script=None, interval=None, ttl=None, notes=None, http=None, tcp=None, timeout=None, service_id=None):
         self.check_id = self.name = name
         if check_id:
             self.check_id = check_id
@@ -472,6 +490,7 @@ class ConsulCheck(object):
         self.ttl = self.validate_duration('ttl', ttl)
         self.script = script
         self.http = http
+        self.tcp = tcp
         self.timeout = self.validate_duration('timeout', timeout)
 
         self.check = None
@@ -487,6 +506,14 @@ class ConsulCheck(object):
                 raise Exception('http check must specify interval')
 
             self.check = consul.Check.http(http, self.interval, self.timeout)
+
+        if tcp:
+            if interval is None:
+                raise Exception('tcp check must specify interval')
+            tcp_host, tcp_port = tcp.split(':')
+
+            self.check = consul.Check.tcp(tcp_host, int(tcp_port), self.interval, self.timeout)
+
 
     def validate_duration(self, name, duration):
         if duration:
@@ -522,6 +549,7 @@ class ConsulCheck(object):
         self._add(data, 'interval')
         self._add(data, 'ttl')
         self._add(data, 'http')
+        self._add(data, 'tcp')
         self._add(data, 'timeout')
         self._add(data, 'service_id')
         return data
@@ -561,6 +589,7 @@ def main():
             interval=dict(required=False, type='str'),
             ttl=dict(required=False, type='str'),
             http=dict(required=False, type='str'),
+            tcp=dict(required=False, type='str'),
             timeout=dict(required=False, type='str'),
             tags=dict(required=False, type='list'),
             token=dict(required=False, no_log=True)
