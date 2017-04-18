@@ -601,7 +601,6 @@ lib/ansible/modules/network/nxos/nxos_system.py
 lib/ansible/modules/network/nxos/nxos_udld.py
 lib/ansible/modules/network/nxos/nxos_udld_interface.py
 lib/ansible/modules/network/nxos/nxos_user.py
-lib/ansible/modules/network/nxos/nxos_vlan.py
 lib/ansible/modules/network/nxos/nxos_vpc.py
 lib/ansible/modules/network/nxos/nxos_vpc_interface.py
 lib/ansible/modules/network/nxos/nxos_vrf.py
