@@ -38,7 +38,7 @@ options:
    protocol:
       description:
         - IP protocols TCP UDP ICMP 112 (VRRP)
-      choices: ['tcp', 'udp', 'icmp', '112', None]
+      choices: ['any', 'tcp', 'udp', 'icmp', '112']
       default: None
    port_range_min:
       description:
@@ -220,12 +220,11 @@ def _ports_match(protocol, module_min, module_max, rule_min, rule_max):
     return module_min == rule_min and module_max == rule_max
 
 
-def _find_matching_rule(module, secgroup, remotegroup):
+def _find_matching_rule(module, protocol, secgroup, remotegroup):
     """
     Find a rule in the group that matches the module parameters.
     :returns: The matching rule dict, or None if no matches.
     """
-    protocol = module.params['protocol']
     remote_ip_prefix = module.params['remote_ip_prefix']
     ethertype = module.params['ethertype']
     direction = module.params['direction']
@@ -266,7 +265,7 @@ def main():
         # NOTE(Shrews): None is an acceptable protocol value for
         # Neutron, but Nova will balk at this.
         protocol         = dict(default=None,
-                                choices=[None, 'tcp', 'udp', 'icmp', '112']),
+                                choices=['any', 'tcp', 'udp', 'icmp', '112']),
         port_range_min   = dict(required=False, type='int'),
         port_range_max   = dict(required=False, type='int'),
         remote_ip_prefix = dict(required=False, default=None),
@@ -295,6 +294,7 @@ def main():
     state = module.params['state']
     security_group = module.params['security_group']
     remote_group = module.params['remote_group']
+    protocol = module.params['protocol']
     changed = False
 
     try:
@@ -306,6 +306,9 @@ def main():
         else:
             remotegroup = { 'id' : None }
 
+        if protocol and protocol == 'any':
+            protocol = None
+
         if module.check_mode:
             module.exit_json(changed=_system_state_change(module, secgroup, remotegroup))
 
@@ -314,13 +317,13 @@ def main():
                 module.fail_json(msg='Could not find security group %s' %
                                  security_group)
 
-            rule = _find_matching_rule(module, secgroup, remotegroup)
+            rule = _find_matching_rule(module, protocol, secgroup, remotegroup)
             if not rule:
                 rule = cloud.create_security_group_rule(
                     secgroup['id'],
                     port_range_min=module.params['port_range_min'],
                     port_range_max=module.params['port_range_max'],
-                    protocol=module.params['protocol'],
+                    protocol=protocol,
                     remote_ip_prefix=module.params['remote_ip_prefix'],
                     remote_group_id=remotegroup['id'],
                     direction=module.params['direction'],
