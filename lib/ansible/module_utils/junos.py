@@ -54,6 +54,8 @@ def check_args(module, warnings):
                     'removed in a future version' % key)
 
     # set argument's default value if not provided in input
+    # This is done to avoid unwanted argument deprecation warning
+    # in case argument is not given as input (outside provider).
     for key in ARGS_DEFAULT_VALUE:
         if not module.params.get(key, None):
             module.params[key] = ARGS_DEFAULT_VALUE[key]
