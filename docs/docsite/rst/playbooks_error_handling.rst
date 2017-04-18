@@ -75,10 +75,17 @@ if the string "FAILED" is in the output.
 
 Ansible in 1.4 and later provides a way to specify this behavior as follows::
 
-    - name: this command prints FAILED when it fails
+    - name: Fail task when the command error output prints FAILED
       command: /usr/bin/example-command -x -y -z
       register: command_result
       failed_when: "'FAILED' in command_result.stderr"
+
+or::
+
+    - name: Fail task when the return code is greater than or equal to 4
+      raw: robocopy.exe \\Server1\reports \\Server2\backup
+      register: rbcopy
+      failed_when: rbcopy.rc >= 4
 
 In previous version of Ansible, this can be still be accomplished as follows::
 
