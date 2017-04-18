@@ -316,7 +316,7 @@ def command_sanity_pep8(args, targets):
         return SanitySkipped(test)
 
     cmd = [
-        'pep8',
+        'flake8',
         '--max-line-length', '160',
         '--config', '/dev/null',
         '--ignore', ','.join(sorted(current_ignore)),
@@ -336,7 +336,7 @@ def command_sanity_pep8(args, targets):
     if args.explain:
         return SanitySkipped(test)
 
-    pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<code>[WE][0-9]{3}) (?P<message>.*)$'
+    pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<code>[WEF][0-9]{3}) (?P<message>.*)$'
 
     results = [re.search(pattern, line).groupdict() for line in stdout.splitlines()]
 
