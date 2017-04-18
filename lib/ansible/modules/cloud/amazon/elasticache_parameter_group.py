@@ -48,7 +48,7 @@ options:
     required: true
   values:
     description:
-      - A user-specified list of parameters to reset or modify for the cache parameter group.
+      - A user-specified dictionary of parameters to reset or modify for the cache parameter group.
     required: no
     default: None
 """
@@ -68,17 +68,20 @@ EXAMPLES = """
         state: 'present'
     - name: 'Modify a test parameter group'
       elasticache_parameter_group:
+        group_family: 'redis3.2'
         name: 'test-param-group'
         values:
-          - ['activerehashing', 'yes']
-          - ['client-output-buffer-limit-normal-hard-limit', 4]
+          activerehashing: yes
+          client-output-buffer-limit-normal-hard-limit: 4
         state: 'present'
     - name: 'Reset all modifiable parameters for the test parameter group'
       elasticache_parameter_group:
+        group_family: 'redis3.2'
         name: 'test-param-group'
         state: reset
     - name: 'Delete a test parameter group'
       elasticache_parameter_group:
+        group_family: 'redis3.2'
         name: 'test-param-group'
         state: 'absent'
 """
@@ -128,7 +131,7 @@ def create(module, conn, name, group_family, description):
     try:
         response = conn.create_cache_parameter_group(CacheParameterGroupName=name, CacheParameterGroupFamily=group_family, Description=description)
         changed = True
-    except boto.exception.BotoServerError as e:
+    except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Unable to create cache parameter group.", exception=traceback.format_exc())
     return response, changed
 
@@ -138,7 +141,7 @@ def delete(module, conn, name):
         conn.delete_cache_parameter_group(CacheParameterGroupName=name)
         response = {}
         changed = True
-    except boto.exception.BotoServerError as e:
+    except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Unable to delete cache parameter group.", exception=traceback.format_exc())
     return response, changed
 
@@ -212,7 +215,7 @@ def modify(module, conn, name, values):
         format_parameters.append({'ParameterName': key, 'ParameterValue': value})
     try:
         response = conn.modify_cache_parameter_group(CacheParameterGroupName=name, ParameterNameValues=format_parameters)
-    except boto.exception.BotoServerError as e:
+    except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Unable to modify cache parameter group.", exception=traceback.format_exc())
     return response
 
@@ -235,7 +238,7 @@ def reset(module, conn, name, values):
 
     try:
         response = conn.reset_cache_parameter_group(CacheParameterGroupName=name, ParameterNameValues=format_parameters, ResetAllParameters=all_parameters)
-    except boto.exception.BotoServerError as e:
+    except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Unable to reset cache parameter group.", exception=traceback.format_exc())
 
     # determine changed
@@ -257,7 +260,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            group_family=dict(type='str', choices=['memcached1.4', 'redis2.6', 'redis2.8', 'redis3.2']),
+            group_family=dict(required=True, type='str', choices=['memcached1.4', 'redis2.6', 'redis2.8', 'redis3.2']),
             name=dict(required=True, type='str'),
             description=dict(type='str'),
             state=dict(required=True),
