@@ -101,7 +101,7 @@ hostname:
     sample: "esxi.local.domain"
 status:
     description: Action taken
-    return: always
+    returned: always
     type: string
     sample: "ENTER"
 '''

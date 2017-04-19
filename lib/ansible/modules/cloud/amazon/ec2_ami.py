@@ -256,7 +256,7 @@ architecture:
 block_device_mapping:
     description: block device mapping associated with image
     returned: when AMI is created or already exists
-    type: a dictionary of block devices
+    type: dict
     sample: {
         "/dev/sda1": {
             "delete_on_termination": true,
@@ -329,7 +329,7 @@ state:
 tags:
     description: a dictionary of tags assigned to image
     returned: when AMI is created or already exists
-    type: dictionary of tags
+    type: dict
     sample: {
         "Env": "devel",
         "Name": "nat-server"

@@ -83,11 +83,13 @@ activeServicesCount:
     type: int
 clusterArn:
     description: the ARN of the cluster just created
-    type: string (ARN)
+    type: string
+    returned: 0 if a new cluster
     sample: arn:aws:ecs:us-west-2:172139249013:cluster/test-cluster-mfshcdok
 clusterName:
     description: name of the cluster just created (should match the input argument)
     type: string
+    returned: always
     sample: test-cluster-mfshcdok
 pendingTasksCount:
     description: how many tasks are waiting to run in this cluster
@@ -103,8 +105,9 @@ runningTasksCount:
     type: int
 status:
     description: the status of the new cluster
-    returned: ACTIVE
+    returned: always
     type: string
+    sample: ACTIVE
 '''
 import time
 

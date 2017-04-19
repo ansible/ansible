@@ -493,6 +493,7 @@ vm:
     description: "Dictionary of all the VM attributes. VM attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/vm."
     returned: On success if VM is found.
+    type: dict
 '''
 
 import traceback

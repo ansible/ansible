@@ -118,7 +118,7 @@ EXAMPLES = '''
 
 RETURN = """
 instance:
-    descripton: metadata about the new virtualmachine
+    description: metadata about the new virtualmachine
     returned: always
     type: dict
     sample: None

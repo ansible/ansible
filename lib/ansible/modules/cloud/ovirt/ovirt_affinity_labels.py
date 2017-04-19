@@ -90,6 +90,7 @@ id:
 affinity_label:
     description: "Dictionary of all the affinity label attributes. Affinity label attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/affinity_label."
+    type: dict
     returned: On success if affinity label is found.
 '''
 

@@ -122,6 +122,7 @@ permission:
     description: "Dictionary of all the permission attributes. Permission attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/permission."
     returned: On success if permission is found.
+    type: dict
 '''
 
 try:

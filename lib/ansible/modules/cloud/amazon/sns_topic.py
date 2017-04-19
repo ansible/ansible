@@ -105,11 +105,13 @@ RETURN = '''
 sns_arn:
     description: The ARN of the topic you are modifying
     type: string
+    returned: always
     sample: "arn:aws:sns:us-east-1:123456789012:my_topic_name"
 
 sns_topic:
     description: Dict of sns topic details
     type: dict
+    returned: always
     sample:
       name: sns-topic-name
       state: present

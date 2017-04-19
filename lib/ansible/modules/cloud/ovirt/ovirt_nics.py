@@ -107,6 +107,7 @@ nic:
     description: "Dictionary of all the network interface attributes. Network interface attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/nic."
     returned: On success if network interface is found.
+    type: dict
 '''
 
 try:

@@ -314,7 +314,7 @@ azure_vm:
     description: Facts about the current state of the object. Note that facts are not part of the registered output but available directly.
     returned: always
     type: complex
-    example: {
+    contains: {
         "properties": {
             "hardwareProfile": {
                 "vmSize": "Standard_D1"

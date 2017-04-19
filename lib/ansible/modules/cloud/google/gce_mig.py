@@ -206,7 +206,7 @@ named_ports:
 size:
     description: Number of VMs in Managed Instance Group.
     returned: changed
-    type: integer
+    type: int
     sample: 4
 
 created_instances:

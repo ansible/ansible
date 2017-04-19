@@ -94,6 +94,7 @@ RETURN = '''
 security_groups:
     description: Security groups that match the provided filters. Each element consists of a dict with all the information related to that security group.
     type: list
+    returned: always
     sample:
 '''
 

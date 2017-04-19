@@ -90,7 +90,7 @@ RETURN = '''
 project:
     description: Dictionary describing the project.
     returned: On success when I(state) is 'present'
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Project ID

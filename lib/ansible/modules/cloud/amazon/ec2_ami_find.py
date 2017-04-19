@@ -213,7 +213,7 @@ architecture:
 block_device_mapping:
     description: block device mapping associated with image
     returned: when AMI found
-    type: dictionary of block devices
+    type: dict
     sample: "{
         '/dev/xvda': {
             'delete_on_termination': true,
@@ -280,7 +280,7 @@ state:
 tags:
     description: tags assigned to image
     returned: when AMI found
-    type: dictionary of tags
+    type: dict
     sample: "{
         'Environment': 'devel',
         'Name': 'test-server01',

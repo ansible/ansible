@@ -106,6 +106,7 @@ vm_pool:
     description: "Dictionary of all the VM pool attributes. VM pool attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/vm_pool."
     returned: On success if VM pool is found.
+    type: dict
 '''
 
 try:

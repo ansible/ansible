@@ -71,7 +71,7 @@ RETURN = '''
 nacl:
     description: Returns an array of complex objects as described below.
     returned: success
-    type: list of complex
+    type: complex
     contains:
         nacl_id:
             description: The ID of the Network Access Control List.

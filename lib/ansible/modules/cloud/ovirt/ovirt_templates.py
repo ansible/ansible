@@ -117,6 +117,7 @@ template:
     description: "Dictionary of all the template attributes. Template attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/template."
     returned: On success if template is found.
+    type: dict
 '''
 
 import time

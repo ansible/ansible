@@ -102,7 +102,7 @@ RETURN = '''
 zone:
     description: Dictionary describing the zone.
     returned: On success when I(state) is 'present'.
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Unique zone ID

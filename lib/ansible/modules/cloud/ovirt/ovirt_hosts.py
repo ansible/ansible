@@ -176,6 +176,7 @@ host:
     description: "Dictionary of all the host attributes. Host attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/host."
     returned: On success if host is found.
+    type: dict
 '''
 
 import traceback

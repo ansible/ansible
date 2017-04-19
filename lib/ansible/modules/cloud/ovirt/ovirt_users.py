@@ -82,6 +82,7 @@ user:
     description: "Dictionary of all the user attributes. User attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/user."
     returned: On success if user is found.
+    type: dict
 '''
 
 import traceback

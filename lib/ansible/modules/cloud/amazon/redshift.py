@@ -155,7 +155,7 @@ RETURN = '''
 cluster:
     description: dictionary containing all the cluster information
     returned: success
-    type: dictionary
+    type: complex
     contains:
         identifier:
             description: Id of the cluster.
