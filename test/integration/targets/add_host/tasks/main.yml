@@ -41,9 +41,7 @@
 # async
 - name: test failure with async
   add_host:
-    name: newdynamichost
-    groups: newdynamicgroup
-    a_var: from add_host
+    name: newdynamichost2
   async: 2
   ignore_errors: true
   register: result1
