@@ -3,7 +3,7 @@
 
 # (c) 2013, Andrew Dunham <andrew@du.nham.ca>
 # (c) 2013, Daniel Jaouen <dcj24@cornell.edu>
-# (c) 2015, Indrajit Raychaudhuri <irc+code@indrajit.com>
+# (c) 2015-2017, Indrajit Raychaudhuri <irc+code@indrajit.com>
 #
 # Based on macports (Jimmy Tang <jcftang@gmail.com>)
 #
@@ -134,48 +134,12 @@ EXAMPLES = '''
     install_options: with-baz,enable-debug
 '''
 
-import os.path
-import re
+from ansible.module_utils.homebrew import *
 
-from ansible.module_utils.six import iteritems
-
-
-# exceptions -------------------------------------------------------------- {{{
-class HomebrewException(Exception):
-    pass
-# /exceptions ------------------------------------------------------------- }}}
-
-
-# utils ------------------------------------------------------------------- {{{
-def _create_regex_group(s):
-    lines = (line.strip() for line in s.split('\n') if line.strip())
-    chars = filter(None, (line.split('#')[0].strip() for line in lines))
-    group = r'[^' + r''.join(chars) + r']'
-    return re.compile(group)
-# /utils ------------------------------------------------------------------ }}}
-
-
-class Homebrew(object):
+class Homebrew(HomebrewBase):
     '''A class to manage Homebrew packages.'''
 
     # class regexes ------------------------------------------------ {{{
-    VALID_PATH_CHARS = r'''
-        \w                  # alphanumeric characters (i.e., [a-zA-Z0-9_])
-        \s                  # spaces
-        :                   # colons
-        {sep}               # the OS-specific path separator
-        .                   # dots
-        -                   # dashes
-    '''.format(sep=os.path.sep)
-
-    VALID_BREW_PATH_CHARS = r'''
-        \w                  # alphanumeric characters (i.e., [a-zA-Z0-9_])
-        \s                  # spaces
-        {sep}               # the OS-specific path separator
-        .                   # dots
-        -                   # dashes
-    '''.format(sep=os.path.sep)
-
     VALID_PACKAGE_CHARS = r'''
         \w                  # alphanumeric characters (i.e., [a-zA-Z0-9_])
         .                   # dots
@@ -186,58 +150,10 @@ class Homebrew(object):
         @                   # at-sign
     '''
 
-    INVALID_PATH_REGEX        = _create_regex_group(VALID_PATH_CHARS)
-    INVALID_BREW_PATH_REGEX   = _create_regex_group(VALID_BREW_PATH_CHARS)
-    INVALID_PACKAGE_REGEX     = _create_regex_group(VALID_PACKAGE_CHARS)
+    INVALID_PACKAGE_REGEX = negate_regex_group(VALID_PACKAGE_CHARS)
     # /class regexes ----------------------------------------------- }}}
 
     # class validations -------------------------------------------- {{{
-    @classmethod
-    def valid_path(cls, path):
-        '''
-        `path` must be one of:
-         - list of paths
-         - a string containing only:
-             - alphanumeric characters
-             - dashes
-             - dots
-             - spaces
-             - colons
-             - os.path.sep
-        '''
-
-        if isinstance(path, basestring):
-            return not cls.INVALID_PATH_REGEX.search(path)
-
-        try:
-            iter(path)
-        except TypeError:
-            return False
-        else:
-            paths = path
-            return all(cls.valid_brew_path(path_) for path_ in paths)
-
-    @classmethod
-    def valid_brew_path(cls, brew_path):
-        '''
-        `brew_path` must be one of:
-         - None
-         - a string containing only:
-             - alphanumeric characters
-             - dashes
-             - dots
-             - spaces
-             - os.path.sep
-        '''
-
-        if brew_path is None:
-            return True
-
-        return (
-            isinstance(brew_path, basestring)
-            and not cls.INVALID_BREW_PATH_REGEX.search(brew_path)
-        )
-
     @classmethod
     def valid_package(cls, package):
         '''A valid package is either None or alphanumeric.'''
@@ -288,67 +204,6 @@ class Homebrew(object):
 
     # class properties --------------------------------------------- {{{
     @property
-    def module(self):
-        return self._module
-
-    @module.setter
-    def module(self, module):
-        if not self.valid_module(module):
-            self._module = None
-            self.failed = True
-            self.message = 'Invalid module: {0}.'.format(module)
-            raise HomebrewException(self.message)
-
-        else:
-            self._module = module
-            return module
-
-    @property
-    def path(self):
-        return self._path
-
-    @path.setter
-    def path(self, path):
-        if not self.valid_path(path):
-            self._path = []
-            self.failed = True
-            self.message = 'Invalid path: {0}.'.format(path)
-            raise HomebrewException(self.message)
-
-        else:
-            if isinstance(path, basestring):
-                self._path = path.split(':')
-            else:
-                self._path = path
-
-            return path
-
-    @property
-    def brew_path(self):
-        return self._brew_path
-
-    @brew_path.setter
-    def brew_path(self, brew_path):
-        if not self.valid_brew_path(brew_path):
-            self._brew_path = None
-            self.failed = True
-            self.message = 'Invalid brew_path: {0}.'.format(brew_path)
-            raise HomebrewException(self.message)
-
-        else:
-            self._brew_path = brew_path
-            return brew_path
-
-    @property
-    def params(self):
-        return self._params
-
-    @params.setter
-    def params(self, params):
-        self._params = self.module.params
-        return self._params
-
-    @property
     def current_package(self):
         return self._current_package
 
@@ -368,6 +223,7 @@ class Homebrew(object):
     def __init__(self, module, path, packages=None, state=None,
                  update_homebrew=False, upgrade_all=False,
                  install_options=None):
+        super(Homebrew, self).__init__()
         if not install_options:
             install_options = list()
         self._setup_status_vars()
@@ -377,60 +233,6 @@ class Homebrew(object):
                                   install_options=install_options, )
 
         self._prep()
-
-    # prep --------------------------------------------------------- {{{
-    def _setup_status_vars(self):
-        self.failed = False
-        self.changed = False
-        self.changed_count = 0
-        self.unchanged_count = 0
-        self.message = ''
-
-    def _setup_instance_vars(self, **kwargs):
-        for key, val in iteritems(kwargs):
-            setattr(self, key, val)
-
-    def _prep(self):
-        self._prep_brew_path()
-
-    def _prep_brew_path(self):
-        if not self.module:
-            self.brew_path = None
-            self.failed = True
-            self.message = 'AnsibleModule not set.'
-            raise HomebrewException(self.message)
-
-        self.brew_path = self.module.get_bin_path(
-            'brew',
-            required=True,
-            opt_dirs=self.path,
-        )
-        if not self.brew_path:
-            self.brew_path = None
-            self.failed = True
-            self.message = 'Unable to locate homebrew executable.'
-            raise HomebrewException('Unable to locate homebrew executable.')
-
-        return self.brew_path
-
-    def _status(self):
-        return (self.failed, self.changed, self.message)
-    # /prep -------------------------------------------------------- }}}
-
-    def run(self):
-        try:
-            self._run()
-        except HomebrewException:
-            pass
-
-        if not self.failed and (self.changed_count + self.unchanged_count > 1):
-            self.message = "Changed: %d, Unchanged: %d" % (
-                self.changed_count,
-                self.unchanged_count,
-            )
-        (failed, changed, message) = self._status()
-
-        return (failed, changed, message)
 
     # checks ------------------------------------------------------- {{{
     def _current_package_is_installed(self):
