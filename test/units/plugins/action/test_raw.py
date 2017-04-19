@@ -43,7 +43,7 @@ class TestCopyResultExclude(unittest.TestCase):
 
         play_context = Mock()
         task = MagicMock(Task)
-        task.async = MagicMock()
+        task.async = None
         connection = Mock()
 
         task.args = {'_raw_params': 'Args1'}
