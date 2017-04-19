@@ -330,7 +330,7 @@ class Facts(object):
         else:
             self.facts['pkg_mgr'] = 'unknown'
             for pkg in Facts.PKG_MGRS:
-                if os.path.exists(pkg['path']):
+                if os.path.isfile(pkg['path']):
                     self.facts['pkg_mgr'] = pkg['name']
 
     def get_service_mgr_facts(self):
