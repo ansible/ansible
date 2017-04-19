@@ -510,6 +510,10 @@ class ConsulCheck(object):
         if tcp:
             if interval is None:
                 raise Exception('tcp check must specify interval')
+
+            if ':' not in tcp:
+                raise Exception('tcp check must be specified as host:port')
+
             tcp_host, tcp_port = tcp.split(':')
 
             self.check = consul.Check.tcp(tcp_host, int(tcp_port), self.interval, self.timeout)
