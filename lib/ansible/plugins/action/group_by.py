@@ -32,6 +32,9 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
+        if result.get('skipped', False):
+            return result
+
         if 'key' not in self._task.args:
             result['failed'] = True
             result['msg'] = "the 'key' param is required when using group_by"

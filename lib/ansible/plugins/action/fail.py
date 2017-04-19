@@ -32,6 +32,9 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
+        if result.get('skipped', False):
+            return result
+
         msg = 'Failed as requested from task'
         if self._task.args and 'msg' in self._task.args:
             msg = self._task.args.get('msg')

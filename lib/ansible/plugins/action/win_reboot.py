@@ -82,6 +82,10 @@ class ActionModule(ActionBase):
         winrm_port = self._connection._winrm_port
 
         result = super(ActionModule, self).run(tmp, task_vars)
+
+        if result.get('skipped', False):
+            return result
+
         result['warnings'] = []
 
         # Initiate reboot

@@ -90,7 +90,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         * Module parameters.  These are stored in self._task.args
         """
 
-        result = {'skipped': True}
+        result = {'skipped': True, 'failed': True}
 
         if self._task.async and not self._supports_async:
             result['msg'] = 'async is not supported for this task.'
@@ -100,6 +100,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             result['msg'] = 'check mode and async cannot be used on same task.'
         else:
             # we run!
+            result['failed'] = False
             del result['skipped']
 
         return result

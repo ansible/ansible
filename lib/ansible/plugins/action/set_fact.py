@@ -34,6 +34,9 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
+        if result.get('skipped', False):
+            return result
+
         facts = dict()
         if self._task.args:
             for (k, v) in iteritems(self._task.args):

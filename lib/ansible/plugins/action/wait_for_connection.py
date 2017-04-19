@@ -76,6 +76,9 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
+        if result.get('skipped', False):
+            return result
+
         def ping_module_test(connect_timeout):
             ''' Test ping module, if available '''
             display.vvv("wait_for_connection: attempting ping module test")

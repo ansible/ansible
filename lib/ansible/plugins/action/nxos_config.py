@@ -45,6 +45,9 @@ class ActionModule(_ActionModule):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
+        if result.get('skipped', False):
+            return result
+
         if self._task.args.get('backup') and result.get('__backup__'):
             # User requested backup and no error occurred in module.
             # NOTE: If there is a parameter error, _backup key may not be in results.

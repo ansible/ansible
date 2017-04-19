@@ -43,6 +43,9 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
+        if result.get('skipped', False):
+            return result
+
         verbosity = 0
         # get task verbosity
         if 'verbosity' in self._task.args:
