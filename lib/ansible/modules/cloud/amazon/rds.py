@@ -1123,9 +1123,6 @@ def main():
         'restore': restore_db_instance,
     }
 
-    if module.params['command'] != 'modify' and module.params['multi_zone'] is None:
-        module.params['multi_zone'] = False
-
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
     if not region:
         module.fail_json(msg="Region not specified. Unable to determine region from EC2_REGION.")
