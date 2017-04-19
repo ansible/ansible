@@ -22,7 +22,6 @@ __metaclass__ = type
 import collections
 import os
 
-from ansible.compat.six import iteritems, binary_type, text_type
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.six import iteritems, binary_type, text_type
