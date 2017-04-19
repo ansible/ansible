@@ -47,6 +47,7 @@ options:
   domain_ou_path:
     description:
       - the desired OU path for adding the computer object
+    version_added: "2.4"
   state:
     description:
       - whether the target host should be a member of a domain or workgroup
