@@ -188,30 +188,12 @@ options:
 
     archive:
         required: false
-        default: "no"
-        choices: [ "yes", "no" ]
         version_added: "2.4"
         description:
-            - if C(yes), creates an archive of the specified format containing
-              the tree structure for the source tree.
-
-    archive_format:
-        required: false
-        default: "tar"
-        choices: [ "zip", "tar", "tar.gz" ]
-        version_added: "2.4"
-        description:
-            - if specified, then creates archive in specified format.
-              Default is "tar"
-
-    archive_file:
-        required: false
-        default: null
-        version_added: "2.4"
-        description:
-            - Required parameter if archive is specified. If not specified
-              file path is created using version and archive_format inside
-              clone repository directory.
+            - Specify archive file path with extension. If specified, creates an
+              archive file of the specified format containing the tree structure
+              for the source tree.
+              Allowed archive formats ["zip", "tar.gz", "tar", "tgz"]
 
 requirements:
     - git>=1.7.1 (the command line tool)
@@ -255,6 +237,13 @@ EXAMPLES = '''
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     refspec: '+refs/pull/*:refs/heads/*'
+
+# Example Create git archive from repo
+- git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: /src/ansible-examples
+    archive: /tmp/ansible-examples.zip
+
 '''
 
 RETURN = '''
@@ -280,15 +269,18 @@ warnings:
     sample: Your git version is too old to fully support the depth argument. Falling back to full checkouts.
 '''
 
+import filecmp
 import os
 import re
 import shlex
 import stat
 import sys
+import shutil
 import tempfile
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule, get_module_path
+from ansible.module_utils.basic import get_exception
 from ansible.module_utils.known_hosts import add_git_host_key
 from ansible.module_utils.six import b, string_types
 from ansible.module_utils._text import to_native
@@ -928,6 +920,68 @@ def git_version(git_path, module):
     return LooseVersion(rematch.groups()[0])
 
 
+def git_archive(git_path, module, dest, archive, archive_fmt, version):
+    """ Create git archive in given source directory """
+    cmd = "%s archive --format=%s --output=%s %s" \
+          % (git_path, archive_fmt, archive, version)
+    (rc, out, err) = module.run_command(cmd, cwd=dest)
+    if rc != 0:
+        module.fail_json(msg="Failed to perform archive operation",
+                         details="Git archive command failed to create "
+                                 "archive %s using %s directory."
+                                 "Error: %s" % (archive, dest, err))
+    return rc, out, err
+
+
+def create_archive(git_path, module, dest, archive, version, repo, result):
+    """ Helper function for creating archive using git_archive """
+    all_archive_fmt = {'.zip': 'zip', '.gz': 'tar.gz', '.tar': 'tar',
+                       '.tgz': 'tgz'}
+    _, archive_ext = os.path.splitext(archive)
+    archive_fmt = all_archive_fmt.get(archive_ext, None)
+    if archive_fmt is None:
+        module.fail_json(msg="Unable to get file extension from "
+                             "archive file name : %s" % archive,
+                         details="Please specify archive as filename with "
+                                 "extension. File extension can be one "
+                                 "of ['tar', 'tar.gz', 'zip', 'tgz']")
+
+    repo_name = repo.split("/")[-1].replace(".git", "")
+
+    if os.path.exists(archive):
+        # If git archive file exists, then compare it with new git archive file.
+        # if match, do nothing
+        # if does not match, then replace existing with temp archive file.
+        tempdir = tempfile.mkdtemp()
+        new_archive_dest = os.path.join(tempdir, repo_name)
+        new_archive = new_archive_dest + '.' + archive_fmt
+        git_archive(git_path, module, dest, new_archive, archive_fmt, version)
+
+        # filecmp is supposed to be efficient than md5sum checksum
+        if filecmp.cmp(new_archive, archive):
+            result.update(changed=False)
+            # Cleanup before exiting
+            try:
+                shutil.remove(tempdir)
+            except OSError:
+                pass
+        else:
+            try:
+                shutil.move(new_archive, archive)
+                shutil.remove(tempdir)
+                result.update(changed=True)
+            except OSError:
+                exception = get_exception()
+                module.fail_json(msg="Failed to move %s to %s" %
+                                     (new_archive, archive),
+                                 details="Error occured while moving : %s"
+                                         % exception)
+    else:
+        # Perform archive from local directory
+        git_archive(git_path, module, dest, archive, archive_fmt, version)
+        result.update(changed=True)
+
+
 # ===========================================
 
 def main():
@@ -952,10 +1006,7 @@ def main():
             recursive=dict(default='yes', type='bool'),
             track_submodules=dict(default='no', type='bool'),
             umask=dict(default=None, type='raw'),
-            archive=dict(default='no', type='bool'),
-            archive_format=dict(default="zip", choices=['zip', 'tar',
-                                                        'tar.gz']),
-            archive_file=dict(default=None, type='path'),
+            archive=dict(type='path'),
         ),
         supports_check_mode=True
     )
@@ -1035,45 +1086,6 @@ def main():
     track_submodules = module.params['track_submodules']
 
     result.update(before=None)
-
-    if archive:
-        if module.check_mode:
-            result.update(changed=True)
-            module.exit_json(**result)
-
-        try:
-            os.makedirs(dest)
-        except OSError:
-            pass
-
-        if archive_file is None:
-            archive_file = "%s.%s" % (os.path.join(dest, version),
-                                      archive_fmt)
-
-        repo_name = repo.split("/")[-1].replace(".git", "")
-        # Git archive is not supported by all git servers, so
-        # we will first clone and perform git archive from local directory
-        repo_dest = os.path.join(dest, repo_name)
-
-
-        if not os.path.exists(repo_dest):
-            cmd = "%s clone %s %s" % (git_path, repo, repo_name)
-            (rc, out, err) = module.run_command(cmd, cwd=dest)
-            if rc != 0:
-                module.fail_json(msg="Failed to clone source",
-                                 details="Git clone failed, try again "
-                                         "after removing %s" % repo_dest)
-        # Perform archive from local directory
-        cmd = "%s archive --format=%s --output=%s %s" \
-              % (git_path, archive_fmt, archive_file, version)
-        (rc, out, err) = module.run_command(cmd, cwd=repo_dest)
-        if rc != 0:
-            module.fail_json(msg="Failed to perform archive operation",
-                             details="Git archive command failed to create "
-                                     "archive using %s directory."
-                                     "Error: %s" % (repo_dest, err))
-        result.update(changed=True)
-        module.exit_json(**result)
 
     local_mods = False
     need_fetch = True
@@ -1163,6 +1175,15 @@ def main():
             diff = get_diff(module, git_path, dest, repo, remote, depth, bare, result['before'], result['after'])
             if diff:
                 result['diff'] = diff
+
+    if archive:
+        # Git archive is not supported by all git servers, so
+        # we will first clone and perform git archive from local directory
+        if module.check_mode:
+            result.update(changed=True)
+            module.exit_json(**result)
+
+        create_archive(git_path, module, dest, archive, version, repo, result)
 
     # cleanup the wrapper script
     if ssh_wrapper:
