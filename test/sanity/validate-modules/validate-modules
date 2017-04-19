@@ -702,7 +702,7 @@ class ModuleValidator(Validator):
 
             if data:
                 for ret_key in data:
-                    self._validate_docs_schema(data[ret_key], return_schema(data[ret_key]), 'RETURN', 319)
+                    self._validate_docs_schema(data[ret_key], return_schema(data[ret_key]), 'RETURN.%s' % ret_key, 319)
             self.errors.extend([(313, error) for error in errors])
             self.traces.extend(traces)
 
