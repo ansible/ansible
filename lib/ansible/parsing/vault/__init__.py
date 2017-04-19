@@ -543,9 +543,13 @@ class VaultEditor:
         # FIXME: do we need this now? data_bytes should always be a utf-8 byte string
         b_file_data = to_bytes(data, errors='strict')
 
+        # get a ref to either sys.stdout.buffer for py3 or plain old sys.stdout for py2
+        # We need sys.stdout.buffer on py3 so we can write bytes to it since the plaintext
+        # of the vaulted object could be anything/binary/etc
+        output = getattr(sys.stdout, 'buffer', sys.stdout)
+
         if filename == '-':
-            file_data = to_text(b_file_data, encoding='utf-8', errors='strict', nonstring='strict')
-            sys.stdout.write(file_data)
+            output.write(b_file_data)
         else:
             if os.path.isfile(filename):
                 if shred:
