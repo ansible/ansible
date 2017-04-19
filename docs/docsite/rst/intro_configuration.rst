@@ -1107,6 +1107,15 @@ This defaults to::
 
     control_path_dir=~/.ansible/cp
 
+.. _retries:
+
+retries
+=======
+
+Adds the option to retry failed ssh executions if the failure is encountered in ssh itself, not the remote command. This can be helpful if there are transient network issues. Enabled by setting retries to an integer greater than 1. Defaults to::
+
+    retries = 0
+
 .. _scp_if_ssh:
 
 scp_if_ssh
