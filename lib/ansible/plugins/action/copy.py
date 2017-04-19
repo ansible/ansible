@@ -40,7 +40,7 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        if result.get('skipped'):
+        if result.get('skipped', False) or result.get('failed', False):
             return result
 
         source  = self._task.args.get('src', None)
