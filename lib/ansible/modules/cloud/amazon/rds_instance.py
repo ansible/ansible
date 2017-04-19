@@ -278,7 +278,7 @@ EXAMPLES = '''
 import time
 import traceback
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.rds import RDSDBInstance, get_db_instance
 import sys
@@ -343,7 +343,7 @@ PARAMETER_MAP = {
     'password': 'MasterUserPassword',
     'port': 'Port',
     'publicly_accessible': 'PubliclyAccessible',
-    'security_groups': 'DBSecurityGroup',
+    'security_groups': 'DBSecurityGroups',
     'size': 'AllocatedStorage',
     'skip_final_snapshot': 'SkipFinalSnapshot"',
     'source_instance': 'SourceDBInstanceIdentifier',
@@ -394,10 +394,11 @@ def create_db_instance(module, conn):
         required_vars = ['instance_name', 'db_engine', 'size', 'instance_type', 'username', 'password']
         valid_vars = ['backup_retention', 'backup_window',
                       'character_set_name', 'cluster', 'db_name', 'engine_version',
-                      'instance_type', 'license_model', 'maint_window',
-                      'multi_zone', 'option_group', 'parameter_group','port',
-                      'publicly_accessible', 'storage_type', 'subnet',
-                      'upgrade', 'tags', 'vpc_security_groups', 'zone']
+                      'instance_type', 'license_model', 'maint_window', 'multi_zone',
+                      'option_group', 'parameter_group','port', 'publicly_accessible',
+                      'storage_type', 'subnet', 'upgrade', 'tags', 'security_groups',
+                      'vpc_security_groups',
+                      'zone']
 
     if module.params.get('subnet'):
         valid_vars.append('vpc_security_groups')
@@ -539,12 +540,11 @@ def update_rds_tags(module, conn, resource, current_tags, desired_tags):
 def modify_db_instance(module, conn):
     force_password_update = module.params.pop('force_password_update')
     required_vars = ['instance_name']
-    valid_vars = ['apply_immediately', 'backup_retention', 'backup_window',
-                  'db_name',  'db_engine', 'engine_version',
-                  'instance_type', 'iops', 'license_model',
-                  'maint_window', 'multi_zone', 'new_instance_name',
-                  'option_group', 'parameter_group', 'password', 'port', 'size',
-                  'storage_type', 'subnet', 'tags', 'upgrade', 'username', 'vpc_security_groups']
+    valid_vars = ['apply_immediately', 'backup_retention', 'backup_window', 'db_name',
+                  'db_engine', 'engine_version', 'instance_type', 'iops', 'license_model',
+                  'maint_window', 'multi_zone', 'new_instance_name', 'option_group',
+                  'parameter_group', 'password', 'port', 'size', 'storage_type', 'subnet',
+                  'tags', 'upgrade', 'username', 'security_groups', 'vpc_security_groups']
 
     before_instance_name = module.params.get('instance_name')
     before_instance = get_db_instance(conn, before_instance_name)
