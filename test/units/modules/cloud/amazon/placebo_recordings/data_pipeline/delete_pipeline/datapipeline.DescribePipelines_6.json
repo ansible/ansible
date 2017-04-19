@@ -1,21 +1,70 @@
 {
-    "status_code": 400, 
     "data": {
-        "ResponseMetadata": {
-            "RetryAttempts": 0, 
-            "HTTPStatusCode": 400, 
-            "RequestId": "b1955533-1e45-11e7-89d2-ad8a6326d2e3", 
-            "HTTPHeaders": {
-                "x-amzn-requestid": "b1955533-1e45-11e7-89d2-ad8a6326d2e3", 
-                "date": "Mon, 10 Apr 2017 23:30:33 GMT", 
-                "content-length": "106", 
-                "content-type": "application/x-amz-json-1.1", 
-                "cneonction": "close"
+        "pipelineDescriptionList": [
+            {
+                "name": "ansible-test-create-pipeline",
+                "pipelineId": "df-01665745I2YMC60YPFV",
+                "tags": [],
+                "fields": [
+                    {
+                        "key": "@creationTime",
+                        "stringValue": "2017-04-19T17:01:14"
+                    },
+                    {
+                        "key": "description",
+                        "stringValue": "ansible-unit-test-8"
+                    },
+                    {
+                        "key": "@deletionRequestTime",
+                        "stringValue": "2017-04-19T17:01:15"
+                    },
+                    {
+                        "key": "@sphere",
+                        "stringValue": "PIPELINE"
+                    },
+                    {
+                        "key": "pipelineCreator",
+                        "stringValue": "AIDAIXWKSMISP2Y2H6X7G"
+                    },
+                    {
+                        "key": "name",
+                        "stringValue": "ansible-test-create-pipeline"
+                    },
+                    {
+                        "key": "@id",
+                        "stringValue": "df-01665745I2YMC60YPFV"
+                    },
+                    {
+                        "key": "@pipelineState",
+                        "stringValue": "DELETING"
+                    },
+                    {
+                        "key": "@accountId",
+                        "stringValue": "448830907657"
+                    },
+                    {
+                        "key": "uniqueId",
+                        "stringValue": "7abf52c9939077b00a3710b1ba6f7bd8"
+                    },
+                    {
+                        "key": "@userId",
+                        "stringValue": "AIDAIXWKSMISP2Y2H6X7G"
+                    }
+                ],
+                "description": "ansible-unit-test-8"
             }
-        }, 
-        "Error": {
-            "Message": "Pipeline with id: df-07801892ZGW4Q0U649BP does not exist", 
-            "Code": "PipelineDeletedException"
+        ],
+        "ResponseMetadata": {
+            "HTTPStatusCode": 200,
+            "RetryAttempts": 0,
+            "RequestId": "ccd63c23-2521-11e7-89ab-4382f212930a",
+            "HTTPHeaders": {
+                "content-length": "793",
+                "x-amzn-requestid": "ccd63c23-2521-11e7-89ab-4382f212930a",
+                "content-type": "application/x-amz-json-1.1",
+                "date": "Wed, 19 Apr 2017 17:01:15 GMT"
+            }
         }
-    }
+    },
+    "status_code": 200
 }

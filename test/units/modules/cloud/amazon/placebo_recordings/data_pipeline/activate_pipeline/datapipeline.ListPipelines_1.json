@@ -1,23 +1,18 @@
 {
-    "status_code": 200, 
     "data": {
-        "hasMoreResults": false, 
+        "pipelineIdList": [],
+        "hasMoreResults": false,
         "ResponseMetadata": {
-            "RetryAttempts": 0, 
-            "HTTPStatusCode": 200, 
-            "RequestId": "d3d60f5a-1e44-11e7-8969-cfac31d70ddd", 
+            "HTTPStatusCode": 200,
+            "RetryAttempts": 0,
+            "RequestId": "f124a03b-2520-11e7-b936-6da325678e72",
             "HTTPHeaders": {
-                "x-amzn-requestid": "d3d60f5a-1e44-11e7-8969-cfac31d70ddd", 
-                "date": "Mon, 10 Apr 2017 23:24:21 GMT", 
-                "content-length": "114", 
-                "content-type": "application/x-amz-json-1.1"
+                "content-length": "44",
+                "x-amzn-requestid": "f124a03b-2520-11e7-b936-6da325678e72",
+                "content-type": "application/x-amz-json-1.1",
+                "date": "Wed, 19 Apr 2017 16:55:06 GMT"
             }
-        }, 
-        "pipelineIdList": [
-            {
-                "id": "df-061289720FU5N8UH3EGA", 
-                "name": "ansible-test-create-pipleine"
-            }
-        ]
-    }
+        }
+    },
+    "status_code": 200
 }

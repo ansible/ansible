@@ -147,6 +147,7 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict
+from ansible.module_utils._text import to_bytes, to_text
 
 try:
     import boto3
@@ -237,8 +238,7 @@ def run_with_timeout(timeout, func, *func_args, **func_kwargs):
 
     """
 
-    end = time.time() + timeout
-    while time.time() < end:
+    for _ in range(timeout // 10):
         if func(*func_args, **func_kwargs):
             return True
         else:
@@ -320,7 +320,7 @@ def activate_pipeline(client, module):
                 # activated but completed more rapidly than it was checked
                 pass
             else:
-                module.fail_json(msg=('Data Pipeline {0} failed to activate'
+                module.fail_json(msg=('Data Pipeline {0} failed to activate '
                                  'within timeout {1} seconds').format(dp_name, timeout))
         changed = True
 
@@ -394,9 +394,9 @@ def delete_pipeline(client, module):
 
 def build_unique_id(module):
     data = dict(module.params)
-    # removing objects from the unique id so we can update objects without needing to make a new pipeline
-    data.pop('objects', None)
-    json_data = json.dumps(data)
+    # removing objects from the unique id so we can update objects or populate the pipeline after creation without needing to make a new pipeline
+    [data.pop(each, None) for each in ('objects', 'timeout')]
+    json_data = json.dumps(data, sort_keys=True).encode("utf-8")
     hashed_data = hashlib.md5(json_data).hexdigest()
     return hashed_data
 
@@ -448,9 +448,10 @@ def diff_pipeline(client, module, objects, unique_id, dp_name):
     unique_id = build_unique_id(module)
     try:
         dp_id = pipeline_id(client, dp_name)
-        dp_unique_id = pipeline_field(client, dp_id, field="uniqueId")
+        dp_unique_id = to_text(pipeline_field(client, dp_id, field="uniqueId"))
         if dp_unique_id != unique_id:
-            changed, _ = delete_pipeline(client, module)
+            # A change is expected but not determined. Updated to a bool in create_pipeline().
+            changed = "NEW_VERSION"
             create_dp = True
         # Unique ids are the same - check if pipeline needs modification
         else:
@@ -514,6 +515,10 @@ def create_pipeline(client, module):
 
     unique_id = build_unique_id(module)
     create_dp, changed, result = diff_pipeline(client, module, objects, unique_id, dp_name)
+
+    if changed == "NEW_VERSION":
+        # delete old version
+        changed, _ = delete_pipeline(client, module)
 
     # There isn't a pipeline or it has different parameters than the pipeline in existence.
     if create_dp:

@@ -1,21 +1,21 @@
 {
-    "status_code": 400, 
     "data": {
-        "ResponseMetadata": {
-            "RetryAttempts": 0, 
-            "HTTPStatusCode": 400, 
-            "RequestId": "bd73aa2b-1e45-11e7-a13a-436bfdb78ed8", 
-            "HTTPHeaders": {
-                "x-amzn-requestid": "bd73aa2b-1e45-11e7-a13a-436bfdb78ed8", 
-                "date": "Mon, 10 Apr 2017 23:30:53 GMT", 
-                "content-length": "106", 
-                "content-type": "application/x-amz-json-1.1", 
-                "cneonction": "close"
-            }
-        }, 
         "Error": {
-            "Message": "Pipeline with id: df-015440025PF7YGLDK47C does not exist", 
+            "Message": "Pipeline with id: df-015440025PF7YGLDK47C does not exist",
             "Code": "PipelineDeletedException"
+        },
+        "ResponseMetadata": {
+            "HTTPStatusCode": 400,
+            "RetryAttempts": 0,
+            "RequestId": "da7e2d43-2521-11e7-b936-6da325678e72",
+            "HTTPHeaders": {
+                "content-length": "106",
+                "x-amzn-requestid": "da7e2d43-2521-11e7-b936-6da325678e72",
+                "cneonction": "close",
+                "content-type": "application/x-amz-json-1.1",
+                "date": "Wed, 19 Apr 2017 17:01:38 GMT"
+            }
         }
-    }
+    },
+    "status_code": 400
 }

@@ -48,9 +48,10 @@ import pytest
 import boto3
 import os
 import json
-from . placebo_fixtures import placeboify
+from . placebo_fixtures import placeboify, maybe_sleep
 from ansible.modules.cloud.amazon import data_pipeline as dp
 from ansible.modules.cloud.amazon import s3
+from ansible.module_utils._text import to_text
 
 
 class FakeModule(object):
@@ -68,7 +69,6 @@ class FakeModule(object):
 
 
 def get_object_from_s3():
-    module = FakeModule(disable_rollback=False)
     if not os.getenv('PLACEBO_RECORD'):
         objects = [{"name": "Every 1 day",
                     "id": "DefaultSchedule",
@@ -80,7 +80,7 @@ def get_object_from_s3():
     else:
         s3 = boto3.client('s3')
         data = s3.get_object(Bucket="ansible-test-datapipeline", Key="pipeline-object/new.json")
-        objects = json.load(data['Body'])
+        objects = json.loads(to_text(data['Body'].read()))
         return objects
 
 
@@ -94,7 +94,7 @@ def setup_pipeline(placeboify, description='', objects=[], tags={}):
               'tags': tags,
               'parameters': [],
               'values': []}
-    m = FakeModule(disable_rollback=False, **params)
+    m = FakeModule(**params)
     changed, result = dp.create_pipeline(connection, m)
     return m, connection, result['data_pipeline']['pipeline_id']
 
@@ -106,7 +106,7 @@ def tear_down_pipeline(connection, module):
     dp.delete_pipeline(connection, module)
 
 
-def test_define_pipeline(placeboify):
+def test_define_pipeline(placeboify, maybe_sleep):
     m, connection, dp_id = setup_pipeline(placeboify, description='ansible-unit-test-1', objects=[], tags={})
     m.params['objects'] = get_object_from_s3()  # get objects to populate the pipeline to define it
     changed, result = dp.define_pipeline(client=connection, module=m, objects=m.params.get('objects'), dp_id=dp_id)
@@ -114,14 +114,14 @@ def test_define_pipeline(placeboify):
     tear_down_pipeline(connection, m)
 
 
-def test_deactivate_pipeline(placeboify):
+def test_deactivate_pipeline(placeboify, maybe_sleep):
     m, connection, dp_id = setup_pipeline(placeboify, description='ansible-unit-test-2', objects=get_object_from_s3(), tags={})
     changed, result = dp.deactivate_pipeline(connection, m)
     assert "Data Pipeline ansible-test-create-pipeline deactivated" in result['msg']
     tear_down_pipeline(connection, m)
 
 
-def test_activate_pipeline(placeboify):
+def test_activate_pipeline(placeboify, maybe_sleep):
     objects = get_object_from_s3()
     m, connection, dp_id = setup_pipeline(placeboify, description='ansible-unit-test-3', objects=objects, tags={})
     changed, result = dp.activate_pipeline(connection, m)
@@ -129,7 +129,7 @@ def test_activate_pipeline(placeboify):
     tear_down_pipeline(connection, m)
 
 
-def test_create_pipeline(placeboify):
+def test_create_pipeline(placeboify, maybe_sleep):
     obj = get_object_from_s3()
     connection = placeboify.client('datapipeline')
     params = {'name': 'ansible-test-create-pipeline',
@@ -137,13 +137,13 @@ def test_create_pipeline(placeboify):
               'state': 'present',
               'timeout': 300,
               'tags': {}}
-    m = FakeModule(disable_rollback=False, **params)
+    m = FakeModule(**params)
     changed, result = dp.create_pipeline(connection, m)
     assert changed is True
     tear_down_pipeline(connection, m)
 
 
-def test_create_pipeline_with_tags(placeboify):
+def test_create_pipeline_with_tags(placeboify, maybe_sleep):
     obj = get_object_from_s3()
     connection = placeboify.client('datapipeline')
     params = {'name': 'ansible-test-create-pipeline',
@@ -151,14 +151,14 @@ def test_create_pipeline_with_tags(placeboify):
               'state': 'present',
               'tags': {'ansible': 'test'},
               'timeout': 300}
-    m = FakeModule(disable_rollback=False, **params)
+    m = FakeModule(**params)
     changed, result = dp.create_pipeline(connection, m)
     assert changed is True
     assert result['msg'] == "Data Pipeline ansible-test-create-pipeline created."
     tear_down_pipeline(connection, m)
 
 
-def test_create_pipeline_already_exists(placeboify):
+def test_create_pipeline_already_exists(placeboify, maybe_sleep):
     m, connection, dp_id = setup_pipeline(placeboify, description='ansible-unit-test-6', objects=[], tags={})
     # create the same pipeline
     changed, result = dp.create_pipeline(connection, m)
@@ -167,7 +167,7 @@ def test_create_pipeline_already_exists(placeboify):
     tear_down_pipeline(connection, m)
 
 
-def test_delete_nonexistent_pipeline(placeboify):
+def test_delete_nonexistent_pipeline(placeboify, maybe_sleep):
     connection = placeboify.client('datapipeline')
     params = {'name': 'ansible-test-nonexistent',
               'description': 'ansible-unit-test-7',
@@ -175,98 +175,99 @@ def test_delete_nonexistent_pipeline(placeboify):
               'objects': [],
               'tags': {'ansible': 'test'},
               'timeout': 300}
-    m = FakeModule(disable_rollback=False, **params)
+    m = FakeModule(**params)
     changed, result = dp.delete_pipeline(connection, m)
     assert changed is False
     tear_down_pipeline(connection, m)
 
 
-def test_delete_pipeline(placeboify):
+def test_delete_pipeline(placeboify, maybe_sleep):
     m, connection, dp_id = setup_pipeline(placeboify, description='ansible-unit-test-8', objects=[], tags={})
     changed, result = dp.delete_pipeline(connection, m)
     assert changed is True
 
 
-def test_build_unique_id_different(placeboify):
+def test_build_unique_id_different(placeboify, maybe_sleep):
     params1 = {'name': 'ansible-unittest-1', 'description': 'test-unique-id'}
-    m = FakeModule(disable_rollback=False, **params1)
+    m = FakeModule(**params1)
     hash1 = dp.build_unique_id(m)
     params2 = {'name': 'ansible-unittest-1', 'description': 'test-unique-id-different'}
-    m = FakeModule(disable_rollback=False, **params2)
+    m = FakeModule(**params2)
     hash2 = dp.build_unique_id(m)
     assert hash1 != hash2
 
 
-def test_build_unique_id_same(placeboify):
+def test_build_unique_id_same(placeboify, maybe_sleep):
     params1 = {'name': 'ansible-unittest-1', 'description': 'test-unique-id', 'tags': {'ansible': 'test'}}
-    m = FakeModule(disable_rollback=False, **params1)
+    m = FakeModule(**params1)
     hash1 = dp.build_unique_id(m)
     params2 = {'name': 'ansible-unittest-1', 'description': 'test-unique-id', 'tags': {'ansible': 'test'}}
-    m = FakeModule(disable_rollback=False, **params2)
+    m = FakeModule(**params2)
     hash2 = dp.build_unique_id(m)
     assert hash1 == hash2
 
 
-def test_build_unique_id_obj(placeboify):
+def test_build_unique_id_obj(placeboify, maybe_sleep):
     # check that the object can be different and the unique id should be the same; should be able to modify objects
     params1 = {'name': 'ansible-unittest-1', 'objects': [{'first': 'object'}]}
-    m = FakeModule(disable_rollback=False, **params1)
+    m = FakeModule(**params1)
     hash1 = dp.build_unique_id(m)
     params2 = {'name': 'ansible-unittest-1', 'objects': [{'second': 'object'}]}
-    m = FakeModule(disable_rollback=False, **params2)
+    m = FakeModule(**params2)
     hash2 = dp.build_unique_id(m)
     assert hash1 == hash2
 
 
-def test_format_tags(placeboify):
+def test_format_tags(placeboify, maybe_sleep):
     unformatted_tags = {'key1': 'val1', 'key2': 'val2', 'key3': 'val3'}
     formatted_tags = dp.format_tags(unformatted_tags)
-    assert sorted(formatted_tags) == [{'key': 'key1', 'value': 'val1'}, {'key': 'key2', 'value': 'val2'}, {'key': 'key3', 'value': 'val3'}]
+    for tag_set in formatted_tags:
+        assert unformatted_tags[tag_set['key']] == tag_set['value']
 
 
-def test_format_empty_tags(placeboify):
+def test_format_empty_tags(placeboify, maybe_sleep):
     unformatted_tags = {}
     formatted_tags = dp.format_tags(unformatted_tags)
     assert formatted_tags == []
 
 
-def test_pipeline_description(placeboify):
+def test_pipeline_description(placeboify, maybe_sleep):
     m, connection, dp_id = setup_pipeline(placeboify, description='ansible-unit-test-9', objects=[], tags={})
     pipelines = dp.pipeline_description(connection, dp_id)
     assert dp_id == pipelines['pipelineDescriptionList'][0]['pipelineId']
     tear_down_pipeline(connection, m)
 
 
-def test_pipeline_description_nonexistent(placeboify):
+def test_pipeline_description_nonexistent(placeboify, maybe_sleep):
     hypothetical_pipeline_id = "df-015440025PF7YGLDK47C"
     connection = placeboify.client('datapipeline')
-    m = FakeModule(disable_rollback=False)
+    m = FakeModule()
     with pytest.raises(Exception):
         dp.pipeline_description(connection, hypothetical_pipeline_id)
 
 
-def test_pipeline_field(placeboify):
+def test_pipeline_field(placeboify, maybe_sleep):
     m, connection, dp_id = setup_pipeline(placeboify, description='ansible-unit-test-10', objects=[], tags={})
     pipeline_field_info = dp.pipeline_field(connection, dp_id, "@pipelineState")
     assert pipeline_field_info == "PENDING"
     tear_down_pipeline(connection, m)
 
 
-def test_check_dp_exists_true(placeboify):
+def test_check_dp_exists_true(placeboify, maybe_sleep):
     m, connection, dp_id = setup_pipeline(placeboify, description='ansible-unit-test-11', objects=[], tags={})
     exists = dp.check_dp_exists(connection, dp_id)
     assert exists is True
     tear_down_pipeline(connection, m)
 
 
-def test_check_dp_exists_false(placeboify):
+def test_check_dp_exists_false(placeboify, maybe_sleep):
     hypothetical_pipeline_id = "df-015440025PF7YGLDK47C"
     connection = placeboify.client('datapipeline')
     exists = dp.check_dp_exists(connection, hypothetical_pipeline_id)
     assert exists is False
 
 
-def test_check_dp_status(placeboify):
+def test_check_dp_status(placeboify, maybe_sleep):
     inactive_states = ['INACTIVE', 'PENDING', 'FINISHED', 'DELETING']
     m, connection, dp_id = setup_pipeline(placeboify, description='ansible-unit-test-12', objects=[], tags={})
     state = dp.check_dp_status(connection, dp_id, inactive_states)

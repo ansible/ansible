@@ -1,16 +1,16 @@
 {
-    "status_code": 200, 
     "data": {
         "ResponseMetadata": {
-            "RetryAttempts": 0, 
-            "HTTPStatusCode": 200, 
-            "RequestId": "8c0c91f6-1e45-11e7-a13a-436bfdb78ed8", 
+            "HTTPStatusCode": 200,
+            "RetryAttempts": 0,
+            "RequestId": "b4cbc106-2521-11e7-b936-6da325678e72",
             "HTTPHeaders": {
-                "x-amzn-requestid": "8c0c91f6-1e45-11e7-a13a-436bfdb78ed8", 
-                "date": "Mon, 10 Apr 2017 23:29:31 GMT", 
-                "content-length": "0", 
-                "content-type": "application/x-amz-json-1.1"
+                "content-length": "0",
+                "x-amzn-requestid": "b4cbc106-2521-11e7-b936-6da325678e72",
+                "content-type": "application/x-amz-json-1.1",
+                "date": "Wed, 19 Apr 2017 17:00:34 GMT"
             }
         }
-    }
+    },
+    "status_code": 200
 }
