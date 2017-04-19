@@ -40,7 +40,7 @@ Errors generally fall into one of the following categories:
 
   The ``unable to open shell`` message is new in Ansible 2.3, it means that the ``ansible-connection`` daemon has not been able to successfully
   talk to the remote network device. This generally means that there is an authentication issue. See the "Authentication and connection issues" section
-  in this this document for more information.
+  in this document for more information.
 
 .. _enable_network_logging:
 
@@ -103,26 +103,26 @@ Isolating an error
 
 As with any effort to troubleshoot it's important to simplify the test case as much as possible.
 
-For Ansible this can be done ensuring you are only running against one remote device:
+For Ansible this can be done by ensuring you are only running against one remote device:
 
 * Using ``ansible-playbook --limit switch1.example.net...``
 * Using an ad-hoc ``ansible`` command
 
-`ad-hoc` refers to running Ansible to perform some quick command, using ``/usr/bin/ansible``, rather than the orchestration language, which is ``/usr/bin/ansible-playbook``, in this case we can ensure connectivity by attempting to execute a single command on the remote device::
+`ad-hoc` refers to running Ansible to perform some quick command using ``/usr/bin/ansible``, rather than the orchestration language, which is ``/usr/bin/ansible-playbook``. In this case we can ensure connectivity by attempting to execute a single command on the remote device::
 
   ansible -m eos_command -a 'commands=?' -i inventory switch1.example.net -e 'ansible_connection=local' -u admin -k
 
-In the above example we:
+In the above example, we:
 
-* Connect to ``switch1.example.net`` specified in the inventory file ``inventory``
-* Use the module ``eos_command``
-* Run the command ``?``
-* Connect using the username ``admin``
-* Inform ansible to prompt for the ssh password by specifying ``-k``
+* connect to ``switch1.example.net`` specified in the inventory file ``inventory``
+* use the module ``eos_command``
+* run the command ``?``
+* connect using the username ``admin``
+* inform ansible to prompt for the ssh password by specifying ``-k``
 
-If you have SSH keys configured correctly you can drop the ``-k`` parameter
+If you have SSH keys configured correctly, you don't need to specify the ``-k`` parameter
 
-If the connection still fails you can combine it the enable_network_logging_, for example::
+If the connection still fails you can combine it with the enable_network_logging parameter. For example::
 
    # Specify the location for the log file
    export ANSIBLE_LOG_PATH=~/ansible.log
@@ -133,7 +133,7 @@ If the connection still fails you can combine it the enable_network_logging_, fo
 
 Then review the log file and find the relevant error message in the rest of this document.
 
-.. For details on other ways to authenticate see LINKTOAUTHHOWTODOCS.
+.. For details on other ways to authenticate, see LINKTOAUTHHOWTODOCS.
 
 .. _unable_to_open_shell:
 
@@ -143,9 +143,7 @@ Category "Unable to open shell"
 
 **Platforms:** Any
 
-The ``unable to open shell`` message is new in Ansible 2.3, it means that the ``ansible-connection`` daemon has not been able to successfully
-talk to the remote network device. This generally means that there is an authentication issue. It is a "catch all" message, meaning you need to enable
-``ANSIBLE_LOG_PATH`` to find the underlying issues.
+The ``unable to open shell`` message is new in Ansible 2.3. This message means that the ``ansible-connection`` daemon has not been able to successfully talk to the remote network device. This generally means that there is an authentication issue. It is a "catch all" message, meaning you need to enable ``ANSIBLE_LOG_PATH`` to find the underlying issues.
 
 
 
