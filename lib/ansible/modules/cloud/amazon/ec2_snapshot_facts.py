@@ -105,7 +105,6 @@ snapshot_id:
     type: string
     returned: always
     sample: snap-01234567
-    
 volume_id:
     description: The ID of the volume that was used to create the snapshot.
     type: string
