@@ -22,7 +22,6 @@ import sys
 import yaml
 import argparse
 import requests
-from functools import reduce
 try:
     import json
 except ImportError:
@@ -47,6 +46,15 @@ def cli_arguments():
 
 
 # Utils.
+def reduce_path(source_dict, key_path):
+    for key in key_path:
+        if isinstance(source_dict.get(key), dict) and len(key_path) > 1:
+            source_dict = source_dict.get(key)
+            key_path = key_path[1:]
+            reduce_path(source_dict, key_path)
+        else:
+            return source_dict[key]
+
 def get_value_by_path(source_dict, key_path, ignore_key_error=False):
     """Get key value from nested dict by path.
 
@@ -61,7 +69,7 @@ def get_value_by_path(source_dict, key_path, ignore_key_error=False):
     """
 
     try:
-        key_output = reduce(lambda xdict, key: xdict[key], key_path.split('.'), source_dict)
+        key_output = reduce_path(source_dict, key_path)
     except KeyError as key_name:
         if ignore_key_error:
             key_output = None
@@ -223,7 +231,7 @@ class NetboxAsInventory(object):
                 # The groups that will be used to group hosts in the inventory.
                 for group in groups_categories[category]:
                     # Try to get group value. If the section not found in netbox, this also will print error message.
-                    group_value = get_value_by_path(data_dict, group + "." + key_name)
+                    group_value = get_value_by_path(data_dict, [group, key_name])
                     self.add_host_to_group(server_name, group_value, inventory_dict)
 
         # If no groups in "group_by" section, the host will go to catch-all group.
@@ -267,7 +275,7 @@ class NetboxAsInventory(object):
                     # This is because "custom_fields" has more than 1 type.
                     # Values inside "custom_fields" could be a key:value or a dict.
                     if isinstance(data_dict.get(var_data), dict):
-                        var_value = get_value_by_path(data_dict, var_data + "." + key_name, ignore_key_error=True)
+                        var_value = get_value_by_path(data_dict, [var_data, key_name], ignore_key_error=True)
                     else:
                         var_value = data_dict.get(var_data)
 
