@@ -59,7 +59,8 @@ def avi_common_argument_spec():
         username=dict(default=os.environ.get('AVI_USERNAME', '')),
         password=dict(default=os.environ.get('AVI_PASSWORD', ''), no_log=True),
         tenant=dict(default='admin'),
-        tenant_uuid=dict(default=''))
+        tenant_uuid=dict(default=''),
+        api_version=dict(default='16.4'))
 
 
 def ansible_return(module, rsp, changed, req=None, existing_obj=None):
