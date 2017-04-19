@@ -83,4 +83,3 @@
     that:
       - 'script_result3.failed'
       - 'script_result3.msg == "async is not supported for this task."'
-
