@@ -145,6 +145,8 @@ Ansible Changes By Release
 - bigswitch:
   * bigmon_chain
   * bigmon_policy
+- cisco
+  * cisco_spark
 - cloudengine:
   * ce_command
 - cloudscale_server
