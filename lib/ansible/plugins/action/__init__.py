@@ -100,7 +100,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             result['msg'] = 'check mode and async cannot be used on same task.'
         else:
             # we run!
-            result['failed'] = False
+            del result['failed']
             del result['skipped']
 
         return result
