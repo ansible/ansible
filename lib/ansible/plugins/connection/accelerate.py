@@ -101,10 +101,9 @@ class Connection(ConnectionBase):
     def transport_test(self, connect_timeout):
         ''' Test the transport mechanism, if available '''
         host = self._play_context.remote_addr
-        port = int(self._play_context.accelerate_port or 5099)
-        display.vvv("attempting transport test to %s:%s" % (host, port))
-        sock = socket.create_connection((host, port), connect_timeout)
-        sock.close()
+        display.vvv("attempting transport test to %s" % host)
+        self.reset()
+        self.exec_command("exit")
 
     def send_data(self, data):
         packed_len = struct.pack('!Q',len(data))
