@@ -166,6 +166,7 @@ def _netmask_query(v):
     return str(v.netmask)
 
 def _network_query(v):
+    '''Return the network of a given IP or subnet'''
     return str(v.network)
 
 def _prefix_query(v):
