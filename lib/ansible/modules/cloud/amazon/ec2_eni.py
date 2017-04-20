@@ -47,8 +47,8 @@ options:
     default: null
   subnet_id:
     description:
-      - ID of subnet in which to create the ENI. Only required when state=present.
-    required: true
+      - ID of subnet in which to create the ENI.
+    required: false
   description:
     description:
       - Optional description of the ENI.
@@ -560,11 +560,7 @@ def main():
                            mutually_exclusive=[
                                ['secondary_private_ip_addresses', 'secondary_private_ip_address_count']
                                ],
-                           required_together=[
-                               ['instance_id', 'device_index']
-                               ],
                            required_if=([
-                               ('state', 'present', ['subnet_id']),
                                ('state', 'absent', ['eni_id']),
                                ('attached', True, ['instance_id'])
                                ])
@@ -587,13 +583,16 @@ def main():
     state = module.params.get("state")
 
     if state == 'present':
-        subnet_id = module.params.get("subnet_id")
-        vpc_id = _get_vpc_id(vpc_connection, module, subnet_id)
-
         eni = uniquely_find_eni(connection, module)
         if eni is None:
+            subnet_id = module.params.get("subnet_id")
+            if subnet_id is None:
+                module.fail_json(msg="subnet_id is required when creating a new ENI")
+
+            vpc_id = _get_vpc_id(vpc_connection, module, subnet_id)
             create_eni(connection, vpc_id, module)
         else:
+            vpc_id = eni.vpc_id
             modify_eni(connection, vpc_id, module, eni)
 
     elif state == 'absent':
