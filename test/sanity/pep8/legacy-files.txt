@@ -207,7 +207,6 @@ lib/ansible/modules/cloud/amazon/rds.py
 lib/ansible/modules/cloud/amazon/rds_param_group.py
 lib/ansible/modules/cloud/amazon/rds_subnet_group.py
 lib/ansible/modules/cloud/amazon/redshift.py
-lib/ansible/modules/cloud/amazon/route53_facts.py
 lib/ansible/modules/cloud/amazon/route53_health_check.py
 lib/ansible/modules/cloud/amazon/s3.py
 lib/ansible/modules/cloud/amazon/s3_bucket.py
