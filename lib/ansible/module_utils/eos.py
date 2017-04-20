@@ -54,7 +54,7 @@ eos_argument_spec = {
     'timeout': dict(type='int'),
 
     'provider': dict(type='dict'),
-    'transport': dict(choices=['cli', 'eapi'])
+    'transport': dict(choices=['cli', 'eapi'], default='cli')
 }
 
 # Add argument's default value here
@@ -94,9 +94,7 @@ def get_connection(module):
     global _DEVICE_CONNECTION
     if not _DEVICE_CONNECTION:
         load_params(module)
-        transport = module.params['transport']
-        provider_transport = (module.params['provider'] or {}).get('transport')
-        if 'eapi' in (transport, provider_transport):
+        if is_eapi(module):
             conn = Eapi(module)
         else:
             conn = Cli(module)
