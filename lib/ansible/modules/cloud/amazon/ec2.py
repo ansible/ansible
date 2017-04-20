@@ -1392,6 +1392,8 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
     wait_timeout = int(module.params.get('wait_timeout'))
     source_dest_check = module.params.get('source_dest_check')
     termination_protection = module.params.get('termination_protection')
+    group_id = module.params.get('group_id')
+    group_name = module.params.get('group')
     changed = False
     instance_dict_array = []
 
@@ -1437,6 +1439,26 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
             if (inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection and termination_protection is not None):
                 inst.modify_attribute('disableApiTermination', termination_protection)
                 changed = True
+
+            # Check security groups and if we're using ec2-vpc; ec2-classic security groups may not be modified
+            if inst.vpc_id and (group_id or group_name):
+                if group_name:
+                    grp_details = ec2.get_all_security_groups(filters={'vpc_id': inst.vpc_id})
+                    if isinstance(group_name, basestring):
+                        group_name = [group_name]
+                    unmatched = set(group_name).difference(str(grp.name) for grp in grp_details)
+                    if len(unmatched) > 0:
+                        module.fail_json(msg="The following group names are not valid: %s" % ', '.join(unmatched))
+                    group_ids = [str(grp.id) for grp in grp_details if str(grp.name) in group_name]
+                elif group_id:
+                    if isinstance(group_id, basestring):
+                        group_id = [group_id]
+                    grp_details = ec2.get_all_security_groups(group_ids=group_id)
+                    group_ids = [grp_item.id for grp_item in grp_details]
+                for each in group_ids:
+                    if each not in [sg.id for sg in inst.groups] or len(group_ids) != len(inst.groups):
+                        changed = inst.modify_attribute('groupSet', group_ids)
+                        break
 
             # Check instance state
             if inst.state != state:
@@ -1611,7 +1633,7 @@ def main():
             ['network_interfaces', 'group_id'],
             ['network_interfaces', 'private_ip'],
             ['network_interfaces', 'vpc_subnet_id'],
-            ],
+        ],
     )
 
     if not HAS_BOTO:
