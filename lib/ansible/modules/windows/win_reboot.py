@@ -58,6 +58,11 @@ options:
     description:
     - Message to display to users
     default: Reboot initiated by Ansible
+  wait_for_reboot:
+    description:
+    - Whether to wait for the machine to re-appear on the network
+    default: true
+    version_added: "2.4"
 notes:
 - If a shutdown was already scheduled on the system, C(win_reboot) will abort the scheduled shutdown and enforce its own shutdown.
 author:

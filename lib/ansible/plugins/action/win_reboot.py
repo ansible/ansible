@@ -46,6 +46,7 @@ class ActionModule(ActionBase):
     DEFAULT_PRE_REBOOT_DELAY_SEC = 2
     DEFAULT_TEST_COMMAND = 'whoami'
     DEFAULT_REBOOT_MESSAGE = 'Reboot initiated by Ansible.'
+    DEFAULT_WAIT_FOR_REBOOT = True
 
     def do_until_success_or_timeout(self, what, timeout_sec, what_desc, fail_sleep_sec=1):
         max_end_time = datetime.utcnow() + timedelta(seconds=timeout_sec)
@@ -73,6 +74,7 @@ class ActionModule(ActionBase):
         pre_reboot_delay_sec = int(self._task.args.get('pre_reboot_delay_sec', self.DEFAULT_PRE_REBOOT_DELAY_SEC))
         test_command = str(self._task.args.get('test_command', self.DEFAULT_TEST_COMMAND))
         msg = str(self._task.args.get('msg', self.DEFAULT_REBOOT_MESSAGE))
+        wait_for_reboot = bool(self._task.args.get('wait_for_reboot', self.DEFAULT_WAIT_FOR_REBOOT))
 
         if self._play_context.check_mode:
             display.vvv("win_reboot: skipping for check_mode")
@@ -114,39 +116,40 @@ class ActionModule(ActionBase):
 
             raise Exception("port is open")
 
-        try:
-            self.do_until_success_or_timeout(raise_if_port_open, shutdown_timeout_sec, what_desc="winrm port down")
+        if wait_for_reboot:
+            try:
+                self.do_until_success_or_timeout(raise_if_port_open, shutdown_timeout_sec, what_desc="winrm port down")
 
-            def connect_winrm_port():
-                sock = socket.create_connection((winrm_host, winrm_port), connect_timeout_sec)
-                sock.close()
+                def connect_winrm_port():
+                    sock = socket.create_connection((winrm_host, winrm_port), connect_timeout_sec)
+                    sock.close()
 
-            self.do_until_success_or_timeout(connect_winrm_port, reboot_timeout_sec, what_desc="winrm port up")
+                self.do_until_success_or_timeout(connect_winrm_port, reboot_timeout_sec, what_desc="winrm port up")
 
-            def run_test_command():
-                display.vvv("attempting post-reboot test command '%s'" % test_command)
-                # call connection reset between runs if it's there
-                try:
-                    self._connection._reset()
-                except AttributeError:
-                    pass
+                def run_test_command():
+                    display.vvv("attempting post-reboot test command '%s'" % test_command)
+                    # call connection reset between runs if it's there
+                    try:
+                        self._connection._reset()
+                    except AttributeError:
+                        pass
 
-                (rc, stdout, stderr) = self._connection.exec_command(test_command)
+                    (rc, stdout, stderr) = self._connection.exec_command(test_command)
 
-                if rc != 0:
-                    raise Exception('test command failed')
+                    if rc != 0:
+                        raise Exception('test command failed')
 
-            # FUTURE: ensure that a reboot has actually occurred by watching for change in last boot time fact
-            # FUTURE: add a stability check (system must remain up for N seconds) to deal with self-multi-reboot updates
+                # FUTURE: ensure that a reboot has actually occurred by watching for change in last boot time fact
+                # FUTURE: add a stability check (system must remain up for N seconds) to deal with self-multi-reboot updates
 
-            self.do_until_success_or_timeout(run_test_command, reboot_timeout_sec, what_desc="post-reboot test command success")
+                self.do_until_success_or_timeout(run_test_command, reboot_timeout_sec, what_desc="post-reboot test command success")
 
-            result['rebooted'] = True
-            result['changed'] = True
+            except TimedOutException as toex:
+                result['failed'] = True
+                result['rebooted'] = True
+                result['msg'] = toex.message
 
-        except TimedOutException as toex:
-            result['failed'] = True
-            result['rebooted'] = True
-            result['msg'] = toex.message
+        result['rebooted'] = True
+        result['changed'] = True
 
         return result
