@@ -513,8 +513,8 @@ class Templar:
             for v in data:
                 if self.is_template(v):
                     return True
-        elif isinstance(variable, dict):
-            for k in data.:
+        elif isinstance(data, dict):
+            for k in data:
                 if self.is_template(k) or self.is_template(data[k]):
                     return True
         return False
