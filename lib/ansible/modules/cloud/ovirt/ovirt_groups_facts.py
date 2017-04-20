@@ -27,18 +27,18 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_groups_facts
-short_description: Retrieve facts about one or more oVirt groups
+short_description: Retrieve facts about one or more oVirt/RHV groups
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt groups."
+    - "Retrieve facts about one or more oVirt/RHV groups."
 notes:
     - "This module creates a new top-level C(ovirt_groups) fact, which
        contains a list of groups."
 options:
     pattern:
       description:
-        - "Search term which is accepted by oVirt search backend."
+        - "Search term which is accepted by oVirt/RHV search backend."
         - "For example to search group X use following pattern: name=X"
 extends_documentation_fragment: ovirt_facts
 '''

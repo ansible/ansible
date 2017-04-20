@@ -27,11 +27,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_clusters
-short_description: Module to manage clusters in oVirt
+short_description: Module to manage clusters in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage clusters in oVirt"
+    - "Module to manage clusters in oVirt/RHV"
 options:
     name:
         description:
@@ -81,7 +81,7 @@ options:
             - "If I(True) enables KSM C(ksm) for best berformance inside NUMA nodes."
     ha_reservation:
         description:
-            - "If I(True) enable the oVirt to monitor cluster capacity for highly
+            - "If I(True) enable the oVirt/RHV to monitor cluster capacity for highly
                available virtual machines."
     trusted_service:
         description:
@@ -254,7 +254,7 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 cluster:
-    description: "Dictionary of all the cluster attributes. Cluster attributes can be found on your oVirt instance
+    description: "Dictionary of all the cluster attributes. Cluster attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/cluster."
     returned: On success if cluster is found.
 '''
