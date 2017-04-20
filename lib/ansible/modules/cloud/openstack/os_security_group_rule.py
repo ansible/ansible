@@ -206,9 +206,9 @@ def _ports_match(protocol, module_min, module_max, rule_min, rule_max):
             module_min = None
             module_max = None
 
-        if module_min is None and module_max is None:
-            if (rule_min and int(rule_min) == 1
-                and rule_max and int(rule_max) == 65535):
+        if ((module_min is None and module_max is None) and
+                (rule_min and int(rule_min) == 1 and
+                    rule_max and int(rule_max) == 65535)):
                     # (None, None) == (1, 65535)
                     return True
 
