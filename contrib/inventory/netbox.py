@@ -55,6 +55,7 @@ def reduce_path(source_dict, key_path):
         else:
             return source_dict[key]
 
+
 def get_value_by_path(source_dict, key_path, ignore_key_error=False):
     """Get key value from nested dict by path.
 
