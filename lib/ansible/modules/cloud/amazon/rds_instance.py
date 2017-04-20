@@ -545,8 +545,10 @@ def modify_db_instance(module, conn):
     valid_vars = ['apply_immediately', 'backup_retention', 'backup_window', 'db_name',
                   'db_engine', 'engine_version', 'instance_type', 'iops', 'license_model',
                   'maint_window', 'multi_zone', 'new_instance_name', 'option_group',
-                  'parameter_group', 'password', 'port', 'size', 'storage_type', 'subnet',
-                  'tags', 'upgrade', 'username', 'security_groups', 'vpc_security_groups']
+                  'parameter_group', 'password', 'port', 'publicly_accessible', 'size',
+                  'storage_type', 'subnet', 'tags', 'upgrade', 'username',
+                  'security_groups', 'vpc_security_groups']
+
 
     before_instance_name = module.params.get('instance_name')
     before_instance = get_db_instance(conn, before_instance_name)
