@@ -579,6 +579,10 @@ class VariableManager:
             file_name, ext = os.path.splitext(path)
             data = None
             if not ext or ext not in C.YAML_FILENAME_EXTENSIONS:
+                # Warn for non yaml extensions or backup files
+                if ext or file_name.endswith('~'):
+                    display.warning("Loaded vars in %s although the vars file has not proper name or valid extension" % (path,))
+
                 for test_ext in C.YAML_FILENAME_EXTENSIONS:
                     new_path = path + test_ext
                     if loader.path_exists(new_path):
