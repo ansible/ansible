@@ -197,7 +197,7 @@ Once the playbook quits, your new devices should be reachable via SSH. Try to co
 
 .. code-block:: bash
 
-    tomk@work $ ssh -i id_rsa core@<one_of_the_servers_ip>
+    tomk@work $ ssh -i id_rsa core@$one_of_the_servers_ip
     core@coreos-one ~ $ etcdctl cluster-health
 
 Once you create a couple of devices, you might appreciate the dynamic inventory script...
@@ -281,7 +281,7 @@ It should print a JSON document looking similar to following trimmed dictionary:
       ],
       "d0ab8972-54a8-4bff-832b-28549d1bec96": [
         "147.75.64.169"
-      ],
+      ]
     }
 
 In the ``['_meta']['hostvars']`` key, there is a list of devices (uniquely identified by their public IPv4 address) with their parameters. The other keys under ``['_meta']`` are lists of devices grouped by some parameter. Here, it is type (all devices are of type baremetal_0), operating system, and facility (ewr1 and sjc1).
@@ -292,7 +292,7 @@ You can now target groups in playbooks! The following playbook will install a ro
 
 .. code-block:: yaml
 
-    # plabyook_bootstrap.yml
+    # playbook_bootstrap.yml
 
     - hosts: coreos_beta
       gather_facts: false
@@ -306,4 +306,4 @@ Don't forget to supply the dynamic inventory in the ``-i`` argument!
     $ ansible-playbook -u core -i packet_net.py playbook_bootstrap.yml
 
 
-If you have any questions or comments let us know! help@packet.net 
+If you have any questions or comments let us know! help@packet.net
