@@ -131,6 +131,14 @@ class Play(Base, Taggable, Become):
 
         return super(Play, self).preprocess_data(ds)
 
+    def get_path(self):
+        ''' return the absolute path of the play with its line number '''
+
+        path = ""
+        if hasattr(self, '_ds') and hasattr(self._ds, '_data_source') and hasattr(self._ds, '_line_number'):
+            path = "%s:%s" % (self._ds._data_source, self._ds._line_number)
+        return path
+
     def _load_tasks(self, attr, ds):
         '''
         Loads a list of blocks from a list which may be mixed tasks/blocks.
