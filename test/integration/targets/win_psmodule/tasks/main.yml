@@ -25,28 +25,28 @@
     name: "{{ powershell_module }}"
     state: present
   register: module_setup
-  when: version.stdout_lines[0] >= 5
+  when: version.stdout_lines[0]|int >= 5
 
 - name: check idempotency reinstalling module
   win_psmodule:
     name: "{{ powershell_module }}"
     state: present
   register: module_reinstall
-  when: version.stdout_lines[0] >= 5
+  when: version.stdout_lines[0]|int >= 5
 
 - name: check module install with allow_clobber not active
   win_psmodule:
     name: "{{ allow_clobber_module }}"
   register: fail_allow_clobber
   ignore_errors: yes
-  when: version.stdout_lines[0] >= 5
+  when: version.stdout_lines[0]|int >= 5
 
 - name: check module install with allow_clobber active
   win_psmodule:
     name: "{{ allow_clobber_module }}"
     allow_clobber: yes
   register: ok_allow_clobber
-  when: version.stdout_lines[0] >= 5
+  when: version.stdout_lines[0]|int >= 5
 
 - name: check wrong module install attempt
   win_psmodule: 
@@ -54,7 +54,7 @@
     state: present
   ignore_errors: yes
   register: module_fail
-  when: version.stdout_lines[0] >= 5
+  when: version.stdout_lines[0]|int >= 5
 
 - name: check fake custom ps repository registration attempt
   win_psmodule:
@@ -63,17 +63,17 @@
     url: http://my_fake_repo.com/repo/
   ignore_errors: yes
   register: repo_fail
-  when: version.stdout_lines[0] >= 5
+  when: version.stdout_lines[0]|int >= 5
 
 - name: check module is installed
   win_shell: (Get-Module -Name {{ powershell_module }} -ListAvailable).Name
   register: module_check
-  when: version.stdout_lines[0] >= 5
+  when: version.stdout_lines[0]|int >= 5
 
 - name: check allow_clobber module is installed
   win_shell: (Get-Module -Name {{ allow_clobber_module }} -ListAvailable).Name
   register: allow_clobber_check
-  when: version.stdout_lines[0] >= 5
+  when: version.stdout_lines[0]|int >= 5
 
 - name: test win_psmodule module setup
   assert:
@@ -93,26 +93,26 @@
     name: powershell-yaml
     state: absent
   register: module_uninstall
-  when: version.stdout_lines[0] >= 5
+  when: version.stdout_lines[0]|int >= 5
 
 - name: check module is uninstalled
   win_shell: (Get-Module -Name {{ powershell_module }} -ListAvailable).Name
   register: module_check
-  when: version.stdout_lines[0] >= 5
+  when: version.stdout_lines[0]|int >= 5
 
 - name: check idempotency re-removing module
   win_psmodule:
     name: "{{ powershell_module }}"
     state: absent
   register: module_uninstall_2
-  when: version.stdout_lines[0] >= 5
+  when: version.stdout_lines[0]|int >= 5
 
 - name: check removing allow_clobber module
   win_psmodule:
     name: "{{ allow_clobber_module }}"
     state: absent
   register: module_uninstall_3
-  when: version.stdout_lines[0] >= 5
+  when: version.stdout_lines[0]|int >= 5
 
 - name: test win_psmodule module uninstall
   assert:
