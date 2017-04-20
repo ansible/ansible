@@ -24,9 +24,8 @@ import sys
 import copy
 
 from ansible.module_utils.basic import AnsibleFallbackNotFound
-from ansible.module_utils.eos import eos_argument_spec
+from ansible.module_utils.eos import ARGS_DEFAULT_VALUE, eos_argument_spec
 from ansible.module_utils.six import iteritems
-from ansible.module_utils._text import to_bytes
 from ansible.plugins import connection_loader
 from ansible.plugins.action.normal import ActionModule as _ActionModule
 from ansible.utils.path import unfrackpath
@@ -98,7 +97,7 @@ class ActionModule(_ActionModule):
                 provider['host'] = self._play_context.remote_addr
 
             if provider.get('port') is None:
-                provider['port'] = eos_argument_spec['port']['default']
+                provider['port'] = ARGS_DEFAULT_VALUE['port']
 
             if provider.get('timeout') is None:
                 provider['timeout'] = self._play_context.timeout
@@ -113,10 +112,10 @@ class ActionModule(_ActionModule):
                 provider['authorize'] = False
 
             if provider.get('use_ssl') is None:
-                provider['use_ssl'] = eos_argument_spec['use_ssl']['default']
+                provider['use_ssl'] = ARGS_DEFAULT_VALUE['use_ssl']
 
             if provider.get('validate_certs') is None:
-                provider['validate_certs'] = eos_argument_spec['validate_certs']['default']
+                provider['validate_certs'] = ARGS_DEFAULT_VALUE['validate_certs']
 
             self._task.args['provider'] = provider
 
