@@ -94,7 +94,7 @@ def _bool_ipaddr_query(v):
         return True
 
 def _broadcast_query(v):
-    if v.size > 1:
+    if v.size > 2:
         return str(v.broadcast)
 
 def _cidr_query(v):
