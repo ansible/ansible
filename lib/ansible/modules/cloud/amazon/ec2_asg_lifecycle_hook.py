@@ -110,8 +110,7 @@ RETURN = '''
 
 import traceback
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (boto3_conn,
-        ec2_argument_spec, get_aws_connection_info)
+from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, get_aws_connection_info)
 
 try:
     import boto3
@@ -122,6 +121,7 @@ except ImportError:
 
 def create_lifecycle_hook(connection, module):
     changed = False
+
 
     lch_name = module.params.get('lifecycle_hook_name')
     asg_name = module.params.get('autoscaling_group_name')
@@ -155,7 +155,7 @@ def create_lifecycle_hook(connection, module):
 
     existing_hook = connection.describe_lifecycle_hooks(
         AutoScalingGroupName=asg_name,
-        LifecycleHookNames=[ lch_name ]
+        LifecycleHookNames=[lch_name]
     )['LifecycleHooks']
 
     if not existing_hook:
@@ -171,11 +171,12 @@ def create_lifecycle_hook(connection, module):
 
     if changed:
         try:
-            connection.put_lifecycle_hook( **lch_params )
+            connection.put_lifecycle_hook(**lch_params)
         except Exception as e:
             module.fail_json(msg="Failed to create LifecycleHook %s" % str(e), exception=traceback.format_exc(e))
 
     return(changed)
+
 
 def dict_compare(d1, d2):
     d1_keys = set(d1.keys())
@@ -191,6 +192,7 @@ def dict_compare(d1, d2):
 
     same = set(o for o in intersect_keys if d1[o] == d2[o])
     return added, removed, modified, same
+
 
 def delete_lifecycle_hook(connection, module):
     changed = False
@@ -210,7 +212,7 @@ def delete_lifecycle_hook(connection, module):
             }
 
             try:
-                connection.delete_lifecycle_hook( **lch_params )
+                connection.delete_lifecycle_hook(**lch_params)
                 changed = True
             except Exception as e:
                 module.fail_json(msg="Failed to delete LifecycleHook %s" % str(e), exception=traceback.format_exc(e))
@@ -218,6 +220,7 @@ def delete_lifecycle_hook(connection, module):
             pass
 
     return(changed)
+
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -263,7 +266,7 @@ def main():
     elif state == 'absent':
         changed = delete_lifecycle_hook(connection, module)
 
-    module.exit_json( changed = changed)
+    module.exit_json(changed=changed)
 
 if __name__ == '__main__':
     main()
