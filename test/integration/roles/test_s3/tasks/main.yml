@@ -2,10 +2,10 @@
 # tasks file for test_s3
 # ============================================================
 - name: generate random name for the bucket name
-  shell: echo ansible_test_$RANDOM
+  shell: bash -c 'echo ansible_test_$RANDOM'
   register: bucket
 # ============================================================
-- include_vars: "~/credentials.yml"
+- include_vars: "credentials.yml"
 # ============================================================
 - name: test create bucket
   s3:
