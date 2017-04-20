@@ -41,7 +41,9 @@ def get_config(module):
     if not contents:
         contents = module.config.get_config()
         module.params['config'] = contents
-    return Dellos6NetworkConfig(indent=0, contents=contents[0])
+        return Dellos6NetworkConfig(indent=0, contents=contents[0])
+    else:
+        return Dellos6NetworkConfig(indent=0, contents=contents)
 
 
 def get_sublevel_config(running_config, module):
