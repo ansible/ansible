@@ -181,7 +181,6 @@ lib/ansible/modules/cloud/amazon/ec2_vpc_nat_gateway.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_net.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_net_facts.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_peer.py
-lib/ansible/modules/cloud/amazon/ec2_vpc_subnet.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_vgw.py
 lib/ansible/modules/cloud/amazon/ec2_vpc_vgw_facts.py
 lib/ansible/modules/cloud/amazon/ec2_win_password.py
