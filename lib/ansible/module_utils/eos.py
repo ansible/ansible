@@ -54,11 +54,12 @@ eos_argument_spec = {
     'timeout': dict(type='int'),
 
     'provider': dict(type='dict'),
-    'transport': dict(choices=['cli', 'eapi'], default='cli')
+    'transport': dict(choices=['cli', 'eapi'])
 }
 
 # Add argument's default value here
 ARGS_DEFAULT_VALUE = {
+    'transport': 'cli',
     'port': 443,
     'use_ssl': True,
     'validate_certs': True
