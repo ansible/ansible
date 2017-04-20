@@ -59,6 +59,7 @@ eos_argument_spec = {
 
 # Add argument's default value here
 ARGS_DEFAULT_VALUE = {
+    'transport': 'cli',
     'port': 443,
     'use_ssl': True,
     'validate_certs': True
@@ -94,9 +95,7 @@ def get_connection(module):
     global _DEVICE_CONNECTION
     if not _DEVICE_CONNECTION:
         load_params(module)
-        transport = module.params['transport']
-        provider_transport = (module.params['provider'] or {}).get('transport')
-        if 'eapi' in (transport, provider_transport):
+        if is_eapi(module):
             conn = Eapi(module)
         else:
             conn = Cli(module)
