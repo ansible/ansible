@@ -129,7 +129,7 @@ requirements:
 """
 
 EXAMPLES = '''
-- name: note that encrypted volumes are only supporte in >= Ansible 2.4
+- name: note that encrypted volumes are only supported in >= Ansible 2.4
   ec2_lc:
     name: special
     image_id: ami-XXX
