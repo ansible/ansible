@@ -73,4 +73,3 @@ class TestNetmask(unittest.TestCase):
     def test_broadcast_31(self):
         address = '1.12.1.35/31'
         self.assertEqual(ipaddr(address, 'broadcast'), None)
-
