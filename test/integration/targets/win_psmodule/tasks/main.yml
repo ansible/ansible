@@ -56,11 +56,11 @@
   register: repo_fail
 
 - name: check module is installed
-  raw: (Get-Module -Name {{ powershell_module }} -ListAvailable).Name
+  win_shell: (Get-Module -Name {{ powershell_module }} -ListAvailable).Name
   register: module_check
 
 - name: check allow_clobber module is installed
-  raw: (Get-Module -Name {{ allow_clobber_module }} -ListAvailable).Name
+  win_shell: (Get-Module -Name {{ allow_clobber_module }} -ListAvailable).Name
   register: allow_clobber_check
 
 - name: test win_psmodule module setup
@@ -83,7 +83,7 @@
   register: module_uninstall
 
 - name: check module is uninstalled
-  raw: (Get-Module -Name {{ powershell_module }} -ListAvailable).Name
+  win_shell: (Get-Module -Name {{ powershell_module }} -ListAvailable).Name
   register: module_check
 
 - name: check idempotency re-removing module
