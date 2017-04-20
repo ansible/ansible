@@ -102,9 +102,11 @@ options:
         choices: ['yes', 'no']
         version_added: "1.9.3"
     ignore_checksum:
-        version_added: "2.3"
+        version_added: "2.4"
         description:
-            - If C(yes), the checksum verification after downloading will be ignored. May result in corrupt artifacts if the network connection fails, but enables downloading artifacts which don't have a remote checksum calculated.
+            - If C(yes), the checksum verification after downloading will be ignored.
+            - May result in corrupt artifacts if the network connection fails, but
+            - enables downloading artifacts which don't have a remote checksum calculated.
         required: false
         default: 'no'
         choices: ['yes', 'no']
@@ -266,7 +268,10 @@ class FileSystemMavenClient:
             for d in dirs:
                 versions.append(d)
         if not versions:
-            self.module.fail_json(msg='Unable to find any version for: %s' % (':'.join([artifact.group_id, artifact.artifact_id, artifact.classifier, artifact.extension])))
+            self.module.fail_json(msg='Unable to find any version for: %s' % (':'.join([artifact.group_id,
+                                                                                        artifact.artifact_id,
+                                                                                        artifact.classifier,
+                                                                                        artifact.extension])))
         return sorted(versions, key=distutils.version.LooseVersion)[-1]
 
     def get_release_version(self, artifact):
@@ -278,7 +283,10 @@ class FileSystemMavenClient:
                     continue
                 versions.append(d)
         if not versions:
-            self.module.fail_json(msg='Unable to find any version for: %s' % (':'.join([artifact.group_id, artifact.artifact_id, artifact.classifier, artifact.extension])))
+            self.module.fail_json(msg='Unable to find any version for: %s' % (':'.join([artifact.group_id,
+                                                                                        artifact.artifact_id,
+                                                                                        artifact.classifier,
+                                                                                        artifact.extension])))
         return sorted(versions, key=distutils.version.LooseVersion)[-1]
 
     def download(self, artifact, destination):
@@ -286,7 +294,13 @@ class FileSystemMavenClient:
             src = posixpath.join(self.repo, artifact.url)
             return shutil.copy2(src, destination)
         except (IOError, os.error) as why:
-            self.module.fail_json(msg='Copy failed. %s' % (':'.join([artifact.group_id, artifact.artifact_id, artifact.classifier, artifact.extension, artifact.url, destination, str(why)])))
+            self.module.fail_json(msg='Copy failed. %s' % (':'.join([artifact.group_id,
+                                                                     artifact.artifact_id,
+                                                                     artifact.classifier,
+                                                                     artifact.extension,
+                                                                     artifact.url,
+                                                                     destination,
+                                                                     str(why)])))
 
     def checksum(self, artifact, dest):
         if not os.path.isfile(dest):
