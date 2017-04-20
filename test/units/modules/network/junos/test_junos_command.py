@@ -25,6 +25,7 @@ from ansible.compat.tests.mock import patch
 from ansible.modules.network.junos import junos_command
 from .junos_module import TestJunosModule, load_fixture, set_module_args
 
+
 class TestJunosCommandModule(TestJunosModule):
 
     module = junos_command
@@ -74,7 +75,6 @@ class TestJunosCommandModule(TestJunosModule):
         self.execute_module(failed=True)
         self.assertEqual(self.send_request.call_count, 2)
 
-
     def test_junos_command_match_any(self):
         wait_for = ['result[0] contains "Junos:"',
                     'result[0] contains "test string"']
@@ -105,4 +105,3 @@ class TestJunosCommandModule(TestJunosModule):
         result = self.execute_module(format='xml')
         self.assertEqual(len(result['stdout']), 1)
         self.assertTrue("<software-information>" in result['stdout'][0])
-
