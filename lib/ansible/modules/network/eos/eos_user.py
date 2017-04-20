@@ -203,7 +203,7 @@ def map_config_to_obj(module):
 
     for user in set(match):
         regex = r'username %s .+$' % user
-        cfg = re.findall(r'username %s .+$' % user, data, re.M)
+        cfg = re.findall(regex, data, re.M)
         cfg = '\n'.join(cfg)
         obj = {
             'username': user,
