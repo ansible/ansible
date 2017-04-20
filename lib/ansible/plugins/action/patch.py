@@ -34,6 +34,9 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
+        if result.get('skipped', False) or result.get('failed', False):
+            return result
+
         src        = self._task.args.get('src', None)
         remote_src = boolean(self._task.args.get('remote_src', 'no'))
 

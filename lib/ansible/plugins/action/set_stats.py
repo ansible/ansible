@@ -35,6 +35,9 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
+        if result.get('skipped', False) or result.get('failed', False):
+            return result
+
         stats = {'data': {}, 'per_host': False, 'aggregate': True}
 
         if self._task.args:

@@ -55,6 +55,9 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
+        if result.get('skipped', False) or result.get('failed', False):
+            return result
+
         source = self._task.args.get('src', None)
         dest   = self._task.args.get('dest', None)
         force  = boolean(self._task.args.get('force', True))
