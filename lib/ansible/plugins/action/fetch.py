@@ -37,7 +37,7 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        if result.get('skipped', False):
+        if result.get('skipped', False) or result.get('failed', False):
             return result
 
         if self._play_context.check_mode:

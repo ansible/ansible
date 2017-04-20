@@ -39,7 +39,7 @@ class ActionModule(_ActionModule):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        if result.get('skipped', False):
+        if result.get('skipped', False) or result.get('failed', False):
             return result
 
         if self._task.args.get('backup') and result.get('__backup__'):
