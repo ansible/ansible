@@ -416,7 +416,7 @@ def main():
             'count',
             'tags',
         ], default='list'),
-        )
+    )
     )
 
     module = AnsibleModule(
