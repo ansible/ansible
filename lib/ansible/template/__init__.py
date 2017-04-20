@@ -501,13 +501,23 @@ class Templar:
 
     def is_template(self, data):
         ''' lets us know if data has a template'''
-        try:
-            new = self.template(data)
-        except UndefinedError:
-            return True
-        except:
-            return False
-        return (new != data)
+        if isinstance(data, string_types):
+            try:
+                new = self.do_template(data)
+            except UndefinedError:
+                return True
+            except:
+                return False
+            return (new != data)
+        elif isinstance(data, (list, tuple)):
+            for v in data:
+                if self.is_template(v):
+                    return True
+        elif isinstance(variable, dict):
+            for k in data.:
+                if self.is_template(k) or self.is_template(data[k]):
+                    return True
+        return False
 
     def templatable(self, data):
         '''
