@@ -221,13 +221,13 @@ def db_dump(module, target,
         )
 
     if db:
-      flags = ' --dbname={0}'.format(pipes.quote(db))
+        flags = ' --dbname={0}'.format(pipes.quote(db))
     if host:
-      flags += ' --host={0}'.format(pipes.quote(host))
+        flags += ' --host={0}'.format(pipes.quote(host))
     if port:
-      flags += ' --port={0}'.format(pipes.quote(port))
+        flags += ' --port={0}'.format(pipes.quote(port))
     if user:
-      flags += ' --username={0}'.format(pipes.quote(user))
+        flags += ' --username={0}'.format(pipes.quote(user))
 
     cmd = module.get_bin_path('pg_dump', True)
     comp_prog_path = None
@@ -236,20 +236,20 @@ def db_dump(module, target,
         flags += ' --format=t'
     if os.path.splitext(target)[-1] == '.gz':
         if module.get_bin_path('pigz'):
-          comp_prog_path = module.get_bin_path('pigz', True)
+            comp_prog_path = module.get_bin_path('pigz', True)
         else:
-          comp_prog_path = module.get_bin_path('gzip', True)
+            comp_prog_path = module.get_bin_path('gzip', True)
     elif os.path.splitext(target)[-1] == '.bz2':
-      comp_prog_path = module.get_bin_path('bzip2', True)
+        comp_prog_path = module.get_bin_path('bzip2', True)
     elif os.path.splitext(target)[-1] == '.xz':
-      comp_prog_path = module.get_bin_path('xz', True)
+        comp_prog_path = module.get_bin_path('xz', True)
 
     cmd += flags
 
     if comp_prog_path:
-      cmd = '{0}|{1} > {2}'.format(cmd, comp_prog_path, pipes.quote(target))
+        cmd = '{0}|{1} > {2}'.format(cmd, comp_prog_path, pipes.quote(target))
     else:
-      cmd = '{0} > {1}'.format(cmd, pipes.quote(target))
+        cmd = '{0} > {1}'.format(cmd, pipes.quote(target))
 
 
     rc, stderr, stdout = module.run_command(cmd, use_unsafe_shell=True)
@@ -268,19 +268,19 @@ def db_restore(module, target,
 
     flags = []
     if db:
-      flags.append(' --dbname={0} '.format(pipes.quote(db)))
+        flags.append(' --dbname={0} '.format(pipes.quote(db)))
     if host:
-      flags.append('--host={0} '.format(host))
+        flags.append('--host={0} '.format(host))
     if port:
-      flags.append('--port={0} '.format(port))
+        flags.append('--port={0} '.format(port))
     if user:
-      flags.append('--username={0} '.format(user))
+        flags.append('--username={0} '.format(user))
 
     comp_prog_path = None
     cmd = module.get_bin_path('psql', True)
 
     if os.path.splitext(target)[-1] == '.sql':
-      flags.append('--file={0} '.format(target))
+        flags.append('--file={0} '.format(target))
 
     elif os.path.splitext(target)[-1] == '.tar':
         flags.append('--format=Tar {0}'.format(target))
@@ -295,18 +295,18 @@ def db_restore(module, target,
     cmd += flags[0]
 
     if comp_prog_path:
-      p1 = subprocess.Popen([comp_prog_path, target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-      p2 = subprocess.Popen(cmd, stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-      (stdout2, stderr2) = p2.communicate()
-      p1.stdout.close()
-      p1.wait()
-      if p1.returncode != 0:
-        stderr1 = p1.stderr.read()
-        return p1.returncode, '', stderr1
-      else:
-        return p2.returncode, '', stderr2
+        p1 = subprocess.Popen([comp_prog_path, target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p2 = subprocess.Popen(cmd, stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        (stdout2, stderr2) = p2.communicate()
+        p1.stdout.close()
+        p1.wait()
+        if p1.returncode != 0:
+            stderr1 = p1.stderr.read()
+            return p1.returncode, '', stderr1
+        else:
+            return p2.returncode, '', stderr2
     else:
-      cmd = '{0} < {1}'.format(cmd, pipes.quote(target))
+        cmd = '{0} < {1}'.format(cmd, pipes.quote(target))
 
     rc, stderr, stdout = module.run_command(cmd, use_unsafe_shell=True)
     return rc, stderr, stdout
@@ -434,14 +434,14 @@ def main():
             try:
                 rc, stdout, stderr = db_restore(module, target, db, **kw)
                 if rc != 0:
-                  module.fail_json(msg="{0}".format(stderr))
+                    module.fail_json(msg="{0}".format(stderr))
                 else:
-                  module.exit_json(changed=True, msg=stdout)
-            except Exception:
-                e = get_exception()
+                    module.exit_json(changed=True, msg=stdout)
             except SQLParseError:
                 e = get_exception()
                 module.fail_json(msg=str(e))
+            except Exception:
+                e = get_exception()
 
     except NotSupportedError:
         e = get_exception()
