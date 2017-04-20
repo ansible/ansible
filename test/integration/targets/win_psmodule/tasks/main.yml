@@ -87,6 +87,7 @@
       - "repo_fail|failed"
       - "module_check.stdout_lines[0] == '{{ powershell_module }}'"
       - "allow_clobber_check.stdout_lines[0] == '{{ allow_clobber_module }}'"
+  when: version.stdout_lines[0]|int >= 5
 
 - name: remove installed powershell module
   win_psmodule:
@@ -122,4 +123,5 @@
       - "module_check.stdout == ''"
       - "not module_uninstall_2|changed"
       - "module_uninstall_3|changed"
+  when: version.stdout_lines[0]|int >= 5
       
