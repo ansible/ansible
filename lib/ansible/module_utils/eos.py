@@ -54,7 +54,7 @@ eos_argument_spec = {
     'timeout': dict(type='int'),
 
     'provider': dict(type='dict'),
-    'transport': dict(choices=['cli', 'eapi'])
+    'transport': dict(choices=['cli', 'eapi'], default='cli')
 }
 
 # Add argument's default value here
