@@ -394,7 +394,7 @@ def main():
                 diff['before']['src'] = to_native(b_old_src, errors='strict')
                 diff['after']['src'] = src
                 changed = True
-        elif prev_state in ('file', 'hard', 'directory'):
+        elif prev_state in ('file', 'directory'):
             # continue if the file is a hard link and already correct
             if os.stat(b_path).st_ino == os.stat(b_src).st_ino:
                 pass
