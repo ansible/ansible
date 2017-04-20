@@ -298,7 +298,11 @@ def main():
                    uuid=module.params['uuid'])
 
     if not vm:
-        module.fail_json(msg="Unable to manage snapshots for non-existing VM %(name)s" % module.params)
+        # If UUID is set, getvm select UUID, show error message accordingly.
+        if module.params['uuid'] is not None:
+            module.fail_json(msg="Unable to manage snapshots for non-existing VM %(uuid)s" % module.params)
+        else:
+            module.fail_json(msg="Unable to manage snapshots for non-existing VM %(name)s" % module.params)
 
     if not module.params['snapshot_name'] and module.params['state'] != 'remove_all':
         module.fail_json(msg="snapshot_name param is required when state is '%(state)s'" % module.params)
