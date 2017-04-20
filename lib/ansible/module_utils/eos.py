@@ -60,7 +60,6 @@ eos_argument_spec = {
 # Add argument's default value here
 ARGS_DEFAULT_VALUE = {
     'transport': 'cli',
-    'port': 443,
     'use_ssl': True,
     'validate_certs': True
 }
