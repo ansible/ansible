@@ -932,7 +932,6 @@ test/units/module_utils/basic/test_safe_eval.py
 test/units/module_utils/basic/test_set_mode_if_different.py
 test/units/module_utils/ec2/test_aws.py
 test/units/module_utils/gcp/test_auth.py
-test/units/module_utils/gcp/test_utils.py
 test/units/module_utils/json_utils/test_filter_non_json_lines.py
 test/units/module_utils/test_basic.py
 test/units/module_utils/test_distribution_version.py
