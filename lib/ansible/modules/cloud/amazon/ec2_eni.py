@@ -162,6 +162,12 @@ EXAMPLES = '''
     description: "My new description"
     state: present
 
+# Update an ENI identifying it by private_ip_address and subnet_id
+- ec2_eni:
+    subnet_id: subnet-xxxxxxx
+    private_ip_address: 172.16.1.1
+    description: "My new description"
+
 # Detach an ENI from an instance
 - ec2_eni:
     eni_id: eni-xxxxxxx
