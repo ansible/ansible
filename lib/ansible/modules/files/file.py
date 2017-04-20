@@ -151,8 +151,6 @@ def get_state(b_path):
             return 'link'
         elif os.path.isdir(b_path):
             return 'directory'
-        elif os.stat(b_path).st_nlink > 1:
-            return 'hard'
         else:
             # could be many other things, but defaulting to file
             return 'file'
