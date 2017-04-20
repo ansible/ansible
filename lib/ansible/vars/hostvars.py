@@ -80,13 +80,10 @@ class HostVars(collections.Mapping):
     def __getitem__(self, host_name):
         data = self.raw_get(host_name)
         sha1_hash = sha1(str(data).encode('utf-8')).hexdigest()
-        if sha1_hash in self._cached_result:
-            result = self._cached_result[sha1_hash]
-        else:
+        if sha1_hash not in self._cached_result:
             templar = Templar(variables=data, loader=self._loader)
-            result = templar.template(data, fail_on_undefined=False, static_vars=STATIC_VARS)
-            self._cached_result[sha1_hash] = result
-        return result
+            self._cached_result[sha1_hash] = templar.template(data, fail_on_undefined=False, static_vars=STATIC_VARS)
+        return self._cached_result[sha1_hash]
 
     def set_host_variable(self, host, varname, value):
         self._variable_manager.set_host_variable(host, varname, value)
