@@ -31,12 +31,19 @@ module: win_psmodule
 version_added: "2.4"
 short_description: Adds or removes a Powershell Module.
 description:
-    - This module helps to install Powershell modules and register custom modules repository on Windows Server. Powershell 5.0 is needed.
+    - This module helps to install Powershell modules and register custom modules repository on Windows Server. Powershell 5.0 or higer is needed.
 options:
   name:
     description:
       - Name of the powershell module that has to be installed.
     required: true
+  allow_clobber:
+    description:
+      - If yes imports all commands, even if they have the same names as commands that already exists. Available only in Powershell 5.1 or higher.
+    default: no
+    choices:
+      - no
+      - yes
   repository:
     description:
       - Name of the custom repository to register.
