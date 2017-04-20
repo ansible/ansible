@@ -477,6 +477,7 @@ def uniquely_find_eni(connection, module):
 
     eni_id = module.params.get("eni_id")
     private_ip_address = module.params.get('private_ip_address')
+    subnet_id = module.params.get('subnet_id')
     instance_id = module.params.get('instance_id')
     device_index = module.params.get('device_index')
 
@@ -487,12 +488,13 @@ def uniquely_find_eni(connection, module):
         if eni_id is None and private_ip_address is None and (instance_id is None and device_index is None):
             return None
 
-        if private_ip_address:
+        if private_ip_address and subnet_id:
             filters['private-ip-address'] = private_ip_address
-        else:
-            if instance_id and device_index:
-                filters['attachment.instance-id'] = instance_id
-                filters['attachment.device-index'] = device_index
+            filters['subnet-id'] = subnet_id
+
+        if instance_id and device_index:
+            filters['attachment.instance-id'] = instance_id
+            filters['attachment.device-index'] = device_index
 
         if eni_id is None and len(filters) == 0:
             return None
