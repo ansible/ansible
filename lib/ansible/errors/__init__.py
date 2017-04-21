@@ -204,3 +204,10 @@ class AnsibleUndefinedVariable(AnsibleRuntimeError):
 class AnsibleFileNotFound(AnsibleRuntimeError):
     ''' a file missing failure '''
     pass
+
+class AnsibleActionSkip(AnsibleRuntimeError):
+    ''' an action runtime skip'''
+    pass
+class AnsibleActionFail(AnsibleRuntimeError):
+    ''' an action runtime failure'''
+    pass
