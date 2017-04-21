@@ -418,7 +418,6 @@ lib/ansible/modules/files/copy.py
 lib/ansible/modules/files/find.py
 lib/ansible/modules/files/ini_file.py
 lib/ansible/modules/files/iso_extract.py
-lib/ansible/modules/files/lineinfile.py
 lib/ansible/modules/files/patch.py
 lib/ansible/modules/files/replace.py
 lib/ansible/modules/files/stat.py
