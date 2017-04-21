@@ -30,13 +30,15 @@ import os.path
 import re
 import string
 import sys
+import time
 import uuid
+import yaml
+
 from collections import MutableMapping, MutableSequence
 from datetime import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle
 
-import yaml
 from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
 try:
@@ -120,6 +122,15 @@ def to_bool(a):
 def to_datetime(string, format="%Y-%d-%m %H:%M:%S"):
     return datetime.strptime(string, format)
 
+
+def strftime(string_format, second = None):
+    ''' return a date string using string. See https://docs.python.org/2/library/time.html#time.strftime for format '''
+    if second is not None:
+        try:
+            second = int(second)
+        except:
+            raise errors.AnsibleFilterError('Invalid value for epoch value (%s)' % second)
+    return time.strftime(string_format, time.localtime(second))
 
 def quote(a):
     ''' return its argument quoted for shell usage '''
@@ -509,6 +520,9 @@ class FilterModule(object):
 
             # value as boolean
             'bool': to_bool,
+
+            # date formating
+            'strftime': strftime,
 
             # quote string for shell usage
             'quote': quote,
