@@ -107,11 +107,12 @@ EXAMPLES = """
     purge: yes
 
 - name: set multiple users to privilege level 15
-  users:
-    - username: netop
-    - username: netend
-  privilege: 15
-  state: present
+  eos_user:
+    users:
+      - username: netop
+      - username: netend
+    privilege: 15
+    state: present
 """
 
 RETURN = """
