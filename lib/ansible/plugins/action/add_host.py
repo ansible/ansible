@@ -45,9 +45,6 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        if result.get('skipped', False) or result.get('failed', False):
-            return result
-
         # Parse out any hostname:port patterns
         new_name = self._task.args.get('name', self._task.args.get('hostname', None))
         display.vv("creating host via 'add_host': hostname=%s" % new_name)
