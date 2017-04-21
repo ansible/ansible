@@ -27,11 +27,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_storage_domains
-short_description: Module to manage storage domains in oVirt
+short_description: Module to manage storage domains in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage storage domains in oVirt"
+    - "Module to manage storage domains in oVirt/RHV"
 options:
     name:
         description:
@@ -108,7 +108,7 @@ options:
             - "This parameter is relevant only when C(state) is I(absent)."
     format:
         description:
-            - "If I(True) storage domain will be formatted after removing it from oVirt."
+            - "If I(True) storage domain will be formatted after removing it from oVirt/RHV."
             - "This parameter is relevant only when C(state) is I(absent)."
 extends_documentation_fragment: ovirt
 '''
@@ -178,7 +178,7 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 storage_domain:
-    description: "Dictionary of all the storage domain attributes. Storage domain attributes can be found on your oVirt instance
+    description: "Dictionary of all the storage domain attributes. Storage domain attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/storage_domain."
     returned: On success if storage domain is found.
 '''

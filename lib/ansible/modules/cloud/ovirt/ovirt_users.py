@@ -27,11 +27,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_users
-short_description: Module to manage users in oVirt
+short_description: Module to manage users in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage users in oVirt."
+    - "Module to manage users in oVirt/RHV."
 options:
     name:
         description:
@@ -44,7 +44,7 @@ options:
         default: present
     authz_name:
         description:
-            - "Authorization provider of the user. In previous versions of oVirt known as domain."
+            - "Authorization provider of the user. In previous versions of oVirt/RHV known as domain."
         required: true
         aliases: ['domain']
 extends_documentation_fragment: ovirt
@@ -79,7 +79,7 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 user:
-    description: "Dictionary of all the user attributes. User attributes can be found on your oVirt instance
+    description: "Dictionary of all the user attributes. User attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/user."
     returned: On success if user is found.
 '''
