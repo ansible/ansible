@@ -86,6 +86,10 @@ def timeout(seconds=None, error_message="Timer expired"):
     if seconds is None:
         seconds = globals().get('GATHER_TIMEOUT') or 10
 
+    if 'GATHER_TIMEOUT' in globals():
+        if GATHER_TIMEOUT:
+            seconds = GATHER_TIMEOUT
+
     def decorator(func):
         def _handle_timeout(signum, frame):
             raise TimeoutError(error_message)
