@@ -49,6 +49,7 @@ from ansible.plugins import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
+from ansible.vars.unsafe_proxy import UnsafeProxy, wrap_var
 
 try:
     from __main__ import display
@@ -311,45 +312,64 @@ class Templar:
         return jinja_exts
 
     def _clean_data(self, orig_data):
-        ''' remove jinja2 template tags from a string '''
+        ''' remove jinja2 template tags from data '''
 
-        if not isinstance(orig_data, string_types) or hasattr(orig_data, '__ENCRYPTED__'):
-            return orig_data
+        if hasattr(orig_data, '__ENCRYPTED__'):
+            ret = orig_data
 
-        with contextlib.closing(StringIO(orig_data)) as data:
-            # these variables keep track of opening block locations, as we only
-            # want to replace matched pairs of print/block tags
-            print_openings = []
-            block_openings = []
-            for mo in self._clean_regex.finditer(orig_data):
-                token = mo.group(0)
-                token_start = mo.start(0)
+        elif isinstance(orig_data, list):
+            clean_list = []
+            for list_item in orig_data:
+                clean_list.append(self._clean_data(list_item))
+            ret = clean_list
 
-                if token[0] == self.environment.variable_start_string[0]:
-                    if token == self.environment.block_start_string:
-                        block_openings.append(token_start)
-                    elif token == self.environment.variable_start_string:
-                        print_openings.append(token_start)
+        elif isinstance(orig_data, dict):
+            clean_dict = {}
+            for k in orig_data:
+                clean_dict[self._clean_data(k)] =  self._clean_data(orig_data[k])
+            ret = clean_dict
 
-                elif token[1] == self.environment.variable_end_string[1]:
-                    prev_idx = None
-                    if token == self.environment.block_end_string and block_openings:
-                        prev_idx = block_openings.pop()
-                    elif token == self.environment.variable_end_string and print_openings:
-                        prev_idx = print_openings.pop()
+        elif isinstance(orig_data, string_types):
+            # This will error with str data (needs unicode), but all strings should already be converted already.
+            # If you get exception, the problem is at the data origin, do not add to_text here.
+            with contextlib.closing(StringIO(orig_data)) as data:
+                # these variables keep track of opening block locations, as we only
+                # want to replace matched pairs of print/block tags
+                print_openings = []
+                block_openings = []
+                for mo in self._clean_regex.finditer(orig_data):
+                    token = mo.group(0)
+                    token_start = mo.start(0)
 
-                    if prev_idx is not None:
-                        # replace the opening
-                        data.seek(prev_idx, os.SEEK_SET)
-                        data.write(to_text(self.environment.comment_start_string))
-                        # replace the closing
-                        data.seek(token_start, os.SEEK_SET)
-                        data.write(to_text(self.environment.comment_end_string))
+                    if token[0] == self.environment.variable_start_string[0]:
+                        if token == self.environment.block_start_string:
+                            block_openings.append(token_start)
+                        elif token == self.environment.variable_start_string:
+                            print_openings.append(token_start)
 
-                else:
-                    raise AnsibleError("Error while cleaning data for safety: unhandled regex match")
+                    elif token[1] == self.environment.variable_end_string[1]:
+                        prev_idx = None
+                        if token == self.environment.block_end_string and block_openings:
+                            prev_idx = block_openings.pop()
+                        elif token == self.environment.variable_end_string and print_openings:
+                            prev_idx = print_openings.pop()
 
-            return data.getvalue()
+                        if prev_idx is not None:
+                            # replace the opening
+                            data.seek(prev_idx, os.SEEK_SET)
+                            data.write(to_text(self.environment.comment_start_string))
+                            # replace the closing
+                            data.seek(token_start, os.SEEK_SET)
+                            data.write(to_text(self.environment.comment_end_string))
+
+                    else:
+                        raise AnsibleError("Error while cleaning data for safety: unhandled regex match")
+
+                ret = data.getvalue()
+        else:
+            ret = orig_data
+
+        return ret
 
     def set_available_variables(self, variables):
         '''
@@ -371,14 +391,12 @@ class Templar:
         before being sent through the template engine.
         '''
 
+        # Don't template unsafe variables, just return them.
+        if hasattr(variable, '__UNSAFE__'):
+            return variable
+
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
-
-        # Don't template unsafe variables, instead drop them back down to their constituent type.
-        if hasattr(variable, '__UNSAFE__'):
-            if isinstance(variable, text_type):
-                rval = self._clean_data(variable)
-                return rval
 
         try:
             if convert_bare:
@@ -435,7 +453,6 @@ class Templar:
                                 if eval_results[1] is None:
                                     result = eval_results[0]
                                     if unsafe:
-                                        from ansible.vars.unsafe_proxy import wrap_var
                                         result = wrap_var(result)
                                 else:
                                     # FIXME: if the safe_eval raised an error, should we do something with it?
@@ -481,6 +498,26 @@ class Templar:
                 raise
             else:
                 return variable
+
+    def is_template(self, data):
+        ''' lets us know if data has a template'''
+        if isinstance(data, string_types):
+            try:
+                new = self.do_template(data)
+            except UndefinedError:
+                return True
+            except:
+                return False
+            return (new != data)
+        elif isinstance(data, (list, tuple)):
+            for v in data:
+                if self.is_template(v):
+                    return True
+        elif isinstance(data, dict):
+            for k in data:
+                if self.is_template(k) or self.is_template(data[k]):
+                    return True
+        return False
 
     def templatable(self, data):
         '''
@@ -552,7 +589,6 @@ class Templar:
                 ran = None
 
             if ran:
-                from ansible.vars.unsafe_proxy import UnsafeProxy, wrap_var
                 if wantlist:
                     ran = wrap_var(ran)
                 else:
@@ -593,13 +629,12 @@ class Templar:
                     key = key.strip()
                     setattr(myenv, key, ast.literal_eval(val.strip()))
 
-            #FIXME: add tests
+            # Adds Ansible custom filters and tests
             myenv.filters.update(self._get_filters())
             myenv.tests.update(self._get_tests())
 
             if escape_backslashes:
-                # Allow users to specify backslashes in playbooks as "\\"
-                # instead of as "\\\\".
+                # Allow users to specify backslashes in playbooks as "\\" instead of as "\\\\".
                 data = _escape_backslashes(data, myenv)
 
             try:
@@ -627,7 +662,6 @@ class Templar:
             try:
                 res = j2_concat(rf)
                 if new_context.unsafe:
-                    from ansible.vars.unsafe_proxy import wrap_var
                     res = wrap_var(res)
             except TypeError as te:
                 if 'StrictUndefined' in to_native(te):
