@@ -68,7 +68,6 @@ EXAMPLES = """
         state: 'present'
     - name: 'Modify a test parameter group'
       elasticache_parameter_group:
-        group_family: 'redis3.2'
         name: 'test-param-group'
         values:
           activerehashing: yes
@@ -76,12 +75,10 @@ EXAMPLES = """
         state: 'present'
     - name: 'Reset all modifiable parameters for the test parameter group'
       elasticache_parameter_group:
-        group_family: 'redis3.2'
         name: 'test-param-group'
         state: reset
     - name: 'Delete a test parameter group'
       elasticache_parameter_group:
-        group_family: 'redis3.2'
         name: 'test-param-group'
         state: 'absent'
 """
