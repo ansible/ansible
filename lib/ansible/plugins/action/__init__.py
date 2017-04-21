@@ -30,7 +30,7 @@ import time
 from abc import ABCMeta, abstractmethod
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleConnectionFailure
+from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail
 from ansible.executor.module_common import modify_module, build_windows_module_payload
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.six import binary_type, string_types, text_type, iteritems, with_metaclass
@@ -93,14 +93,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         result = {}
 
         if self._task.async and not self._supports_async:
-            result['msg'] = 'async is not supported for this task.'
-            result['failed'] = True
+            raise AnsibleActionFail('async is not supported for this task.')
         elif self._play_context.check_mode and not self._supports_check_mode:
-            result['msg'] = 'check mode is not supported for this task.'
-            result['skipped'] = True
+            raise AnsibleActionSkip('check mode is not supported for this task.')
         elif self._task.async and self._play_context.check_mode:
-            result['msg'] = 'check mode and async cannot be used on same task.'
-            result['failed'] = True
+            raise AnsibleActionFail('check mode and async cannot be used on same task.')
 
         return result
 
