@@ -174,11 +174,11 @@ class Hardware(FactsBase):
         self.facts['filesystems'] = self.parse_filesystems(
             results['dir /all'])
 
-        match = re.search(r'Physical Memory (\d+)M total \((\d+)',
+        match = re.search(r'Physical Memory: (\d+)M total \((\d+)',
             results['show memory summary'])
         if match:
-            self.facts['memtotal_mb'] = int(match[0])
-            self.facts['memfree_mb'] = int(match[1])
+            self.facts['memtotal_mb'] = match.group(1)
+            self.facts['memfree_mb'] = match.group(2)
 
     def parse_filesystems(self, data):
         return re.findall(r'^Directory of (\S+)', data, re.M)
