@@ -27,12 +27,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_auth
-short_description: "Module to manage authentication to oVirt"
+short_description: "Module to manage authentication to oVirt/RHV"
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.2"
 description:
-    - "This module authenticates to oVirt engine and creates SSO token, which should be later used in
-       all other oVirt modules, so all modules don't need to perform login and logout.
+    - "This module authenticates to oVirt/RHV engine and creates SSO token, which should be later used in
+       all other oVirt/RHV modules, so all modules don't need to perform login and logout.
        This module returns an Ansible fact called I(ovirt_auth). Every module can use this
        fact as C(auth) parameter, to perform authentication."
 options:
@@ -91,19 +91,19 @@ notes:
   - "Everytime you use ovirt_auth module to obtain ticket, you need to also revoke the ticket,
      when you no longer need it, otherwise the ticket would be revoked by engine when it expires.
      For an example of how to achieve that, please take a look at I(examples) section."
-  - "In order to use this module you have to install oVirt Python SDK.
+  - "In order to use this module you have to install oVirt/RHV Python SDK.
      To ensure it's installed with correct version you can create the following task:
      I(pip: name=ovirt-engine-sdk-python version=4.0.0)"
-  - "Note that in oVirt 4.1 if you want to use a user which is not administrator
+  - "Note that in oVirt/RHV 4.1 if you want to use a user which is not administrator
      you must enable the I(ENGINE_API_FILTER_BY_DEFAULT) variable in engine. In
-     oVirt 4.2 and later it's enabled by default."
+     oVirt/RHV 4.2 and later it's enabled by default."
 '''
 
 EXAMPLES = '''
 tasks:
   - block:
        # Create a vault with `ovirt_password` variable which store your
-       # oVirt user's password, and include that yaml file with variable:
+       # oVirt/RHV user's password, and include that yaml file with variable:
        - include_vars: ovirt_password.yml
 
        - name: Obtain SSO token with using username/password credentials
@@ -129,17 +129,17 @@ tasks:
 
 RETURN = '''
 ovirt_auth:
-    description: Authentication facts, needed to perform authentication to oVirt.
+    description: Authentication facts, needed to perform authentication to oVirt/RHV.
     returned: success
     type: dictionary
     contains:
         token:
-            description: SSO token which is used for connection to oVirt engine.
+            description: SSO token which is used for connection to oVirt/RHV engine.
             returned: success
             type: string
             sample: "kdfVWp9ZgeewBXV-iq3Js1-xQJZPSEQ334FLb3eksoEPRaab07DhZ8ED8ghz9lJd-MQ2GqtRIeqhvhCkrUWQPw"
         url:
-            description: URL of the oVirt engine API endpoint.
+            description: URL of the oVirt/RHV engine API endpoint.
             returned: success
             type: string
             sample: "https://ovirt.example.com/ovirt-engine/api"

@@ -27,11 +27,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_vms
-short_description: "Module to manage Virtual Machines in oVirt"
+short_description: "Module to manage Virtual Machines in oVirt/RHV"
 version_added: "2.2"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "This module manages whole lifecycle of the Virtual Machine(VM) in oVirt. Since VM can hold many states in oVirt,
+    - "This module manages whole lifecycle of the Virtual Machine(VM) in oVirt/RHV. Since VM can hold many states in oVirt/RHV,
        this see notes to see how the states of the VM are handled."
 options:
     name:
@@ -77,20 +77,20 @@ options:
             - "C(memory_guaranteed) parameter can't be lower than C(memory) parameter. Default value is set by engine."
     cpu_shares:
         description:
-            - "Set a CPU shares for this Virtual Machine. Default value is set by oVirt engine."
+            - "Set a CPU shares for this Virtual Machine. Default value is set by oVirt/RHV engine."
     cpu_cores:
         description:
-            - "Number of virtual CPUs cores of the Virtual Machine. Default value is set by oVirt engine."
+            - "Number of virtual CPUs cores of the Virtual Machine. Default value is set by oVirt/RHV engine."
     cpu_sockets:
         description:
-            - "Number of virtual CPUs sockets of the Virtual Machine. Default value is set by oVirt engine."
+            - "Number of virtual CPUs sockets of the Virtual Machine. Default value is set by oVirt/RHV engine."
     type:
         description:
-            - "Type of the Virtual Machine. Default value is set by oVirt engine."
+            - "Type of the Virtual Machine. Default value is set by oVirt/RHV engine."
         choices: [server, desktop]
     operating_system:
         description:
-            - "Operating system of the Virtual Machine. Default value is set by oVirt engine."
+            - "Operating system of the Virtual Machine. Default value is set by oVirt/RHV engine."
         choices: [
             rhel_6_ppc64, other, freebsd, windows_2003x64, windows_10, rhel_6x64, rhel_4x64, windows_2008x64,
             windows_2008R2x64, debian_7, windows_2012x64, ubuntu_14_04, ubuntu_12_04, ubuntu_13_10, windows_8x64,
@@ -102,7 +102,7 @@ options:
     boot_devices:
         description:
             - "List of boot devices which should be used to boot. Choices I(network), I(hd) and I(cdrom)."
-            - "For example: ['cdrom', 'hd']. Default value is set by oVirt engine."
+            - "For example: ['cdrom', 'hd']. Default value is set by oVirt/RHV engine."
     host:
         description:
             - "Specify host where Virtual Machine should be running. By default the host is chosen by engine scheduler."
@@ -111,17 +111,17 @@ options:
         description:
             - "If I(True) Virtual Machine will be set as highly available."
             - "If I(False) Virtual Machine won't be set as highly available."
-            - "If no value is passed, default value is set by oVirt engine."
+            - "If no value is passed, default value is set by oVirt/RHV engine."
     delete_protected:
         description:
             - "If I(True) Virtual Machine will be set as delete protected."
             - "If I(False) Virtual Machine won't be set as delete protected."
-            - "If no value is passed, default value is set by oVirt engine."
+            - "If no value is passed, default value is set by oVirt/RHV engine."
     stateless:
         description:
             - "If I(True) Virtual Machine will be set as stateless."
             - "If I(False) Virtual Machine will be unset as stateless."
-            - "If no value is passed, default value is set by oVirt engine."
+            - "If no value is passed, default value is set by oVirt/RHV engine."
     clone:
         description:
             - "If I(True) then the disks of the created virtual machine will be cloned and independent of the template."
@@ -426,7 +426,7 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 vm:
-    description: "Dictionary of all the VM attributes. VM attributes can be found on your oVirt instance
+    description: "Dictionary of all the VM attributes. VM attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/vm."
     returned: On success if VM is found.
 '''
@@ -459,7 +459,7 @@ class VmsModule(BaseModule):
 
     def __get_template_with_version(self):
         """
-        oVirt in version 4.1 doesn't support search by template+version_number,
+        oVirt/RHV in version 4.1 doesn't support search by template+version_number,
         so we need to list all templates with specific name and then iterate
         through it's version until we find the version we look for.
         """
