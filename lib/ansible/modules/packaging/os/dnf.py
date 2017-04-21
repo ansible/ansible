@@ -172,7 +172,7 @@ def _ensure_dnf(module):
 
         if module.check_mode:
             module.fail_json(msg="`{0}` is not installed, but it is required"
-                    " for the Ansible dnf module.".format(package))
+                             "for the Ansible dnf module.".format(package))
 
         module.run_command(['dnf', 'install', '-y', package], check_rc=True)
         global dnf
@@ -184,8 +184,8 @@ def _ensure_dnf(module):
             import dnf.subject
             import dnf.util
         except ImportError:
-            module.fail_json(msg="Could not import the dnf python module."
-                    " Please install `{0}` package.".format(package))
+            module.fail_json(msg="Could not import the dnf python module. "
+                                 "Please install `{0}` package.".format(package))
 
 
 def _configure_base(module, base, conf_file, disable_gpg_check, installroot='/'):
@@ -288,7 +288,7 @@ def _mark_package_install(module, base, pkg_spec):
     try:
         base.install(pkg_spec)
     except dnf.exceptions.MarkingError:
-        module.fail_json(msg="No package {} available.".format(pkg_spec))
+        module.fail_json(msg="No package {0} available.".format(pkg_spec))
 
 
 def _parse_spec_group_file(names):
@@ -340,7 +340,7 @@ def ensure(module, base, state, names):
                     environments.append(environment.id)
                 else:
                     module.fail_json(
-                        msg="No group {} available.".format(group_spec))
+                        msg="No group {0} available.".format(group_spec))
 
         if state in ['installed', 'present']:
             # Install files.
@@ -409,7 +409,7 @@ def ensure(module, base, state, names):
                     # Group is already uninstalled.
                     pass
 
-            for envioronment in environments:
+            for environment in environments:
                 try:
                     base.environment_remove(environment)
                 except dnf.exceptions.CompsError:
@@ -427,14 +427,16 @@ def ensure(module, base, state, names):
 
     if not base.resolve(allow_erasing=allow_erasing):
         if failures:
-            module.fail_json(msg='Failed to install some of the specified packages',
-                    failures=failures)
+            module.fail_json(msg='Failed to install some of the '
+                                 'specified packages',
+                             failures=failures)
         module.exit_json(msg="Nothing to do")
     else:
         if module.check_mode:
             if failures:
-                module.fail_json(msg='Failed to install some of the specified packages',
-                        failures=failures)
+                module.fail_json(msg='Failed to install some of the '
+                                     'specified packages',
+                                 failures=failures)
             module.exit_json(changed=True)
 
         base.download_packages(base.transaction.install_set)
@@ -446,8 +448,9 @@ def ensure(module, base, state, names):
             response['results'].append("Removed: {0}".format(package))
 
         if failures:
-            module.fail_json(msg='Failed to install some of the specified packages',
-                    failures=failures)
+            module.fail_json(msg='Failed to install some of the '
+                                 'specified packages',
+                             failures=failures)
         module.exit_json(**response)
 
 
