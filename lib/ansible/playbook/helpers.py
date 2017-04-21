@@ -289,7 +289,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     needs_templating = False
                     for param in ir.args:
                         if templar._contains_vars(ir.args[param]):
-                            if not templar.templatable(ir.args[param]):
+                            if not templar.is_template(ir.args[param]):
                                 needs_templating = True
                                 break
                     is_static = C.DEFAULT_TASK_INCLUDES_STATIC or \

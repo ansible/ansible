@@ -157,7 +157,7 @@
 - name: assert recursive copied directories mode
   assert:
     that:
-      - "{{item.stat.mode}} == 0700"
+      - "item.stat.mode == '0700'"
   with_items: "{{dir_stats.results}}"
 
 
