@@ -21,9 +21,9 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: cloudfront
-short_description: Create, update and delete AWS CloudFront distributions
+short_description: Create, update, delete, duplicate and validate AWS CloudFront distributions
 description:
-  - Allows for easy creation, updating and deletion of CloudFront distributions
+  - Allows for easy creation, updating, deletion, duplication and validation of CloudFront distributions
 requirements:
   - boto3 >= 1.0.0
   - python >= 2.6
@@ -33,9 +33,150 @@ author: Willem van Ketwich (@wilvk)
 options:
   distribution_id:
       description:
-        - The id of the CloudFront distribution. Used with distribution, distribution_config,
-          invalidation, streaming_distribution, streaming_distribution_config, list_invalidations.
+        - The id of the CloudFront distribution. Used with I(create_distribution), I(update_distribution), I(delete_distribution),
+          I(duplicate_distribution), I(create_invalidation), I(generate_presigned_url_from_pem_private_key) 
+          required: false
+  streaming_distribution_id:
+      description:
+        - The id of the CloudFront streaming distribution. Used with I(create_streaming_distribution), I(update_streaming_distribution), I(delete_streaming_distribution), I(duplicate_streaming_distribution). 
       required: false
+  origin_access_identity_id:
+      description:
+        - The id of the Origin Access Identity. Used with I(create_origin_access_identity), I(update_origin_access_identity), I(delete_origin_access_identity).
+      required: false
+  e_tag:
+      description:
+        - A unique identifier of a modified or newly created distribution. Used in conjunction with I(distribution_id) or I(streaming_distribution_id).
+          Is determined automatically if not specified.
+      required: false
+  create_origin_access_identity:
+      description:
+        - If C(yes), creates an origin access identity.
+      default: 'no'
+      choices: ['yes', 'no']
+      required: false
+  update_origin_access_identity:
+      description:
+        - If C(yes), updates an origin access identity.
+      default: 'no'
+      choices: ['yes', 'no']
+      required: false
+  delete_origin_access_identity:
+      description:
+        - If C(yes), delete an origin access identity.
+      default: 'no'
+      choices: ['yes', 'no']
+      required: false
+  create_distribution:
+      description:
+        - If C(yes), creates a distribution.
+      default: 'no'
+      choices: ['yes', 'no']
+      required: false
+  create_invalidation:
+      description:
+        - If C(yes), creates one or more invalidations.
+      default: 'no'
+      choices: ['yes', 'no']
+      required: false
+  update_distribution:
+      description:
+        - If C(yes), updates a distribution.
+      default: 'no'
+      choices: ['yes', 'no']
+      required: false
+  delete_distribution:
+      description:
+        - If C(yes), deletes a distribution.
+      default: 'no'
+      choices: ['yes', 'no']
+      required: false
+  duplicate_distribution:
+      description:
+        - If C(yes), duplicates a distribution.
+      default: 'no'
+      choices: ['yes', 'no']
+      required: false
+  validate_distribution:
+      description:
+        - If C(yes), validate a distribution.
+      default: 'no'
+      choices: ['yes', 'no']
+      required: false
+  create_streaming_distribution:
+      description:
+        - If C(yes), creates a streaming distribution.
+      default: 'no'
+      choices: ['yes', 'no']
+      required: false
+  update_streaming_distribution:
+      description:
+        - If C(yes), updates a streaming distribution.
+      default: 'no'
+      choices: ['yes', 'no']
+      required: false
+  delete_streaming_distribution:
+      description:
+        - If C(yes), deletes a streaming distribution.
+      default: 'no'
+      choices: ['yes', 'no']
+      required: false
+  duplicate_streaming_distribution:
+      description:
+        - If C(yes), duplicates a streaming distribution.
+      default: 'no'
+      choices: ['yes', 'no']
+      required: false
+  validate_streaming_distribution:
+      description:
+        - If C(yes), validate a streaming distribution.
+      default: 'no'
+      choices: ['yes', 'no']
+      required: false
+  generate_presigned_url:
+      description:
+        - If C(yes), generates a presigned url for a cloudfront method. All valid methods are available at:
+          (http://boto3.readthedocs.io/en/latest/reference/services/cloudfront.html)
+      default: 'no'
+      choices: ['yes', 'no']
+      required: false
+  generate_presigned_url_from_pem_private_key:
+      description:
+        - If C(yes), generates a presigned url for a distribution from a private .pem key.
+      default: 'no'
+      choices: ['yes', 'no']
+      required: false
+  origin_access_identity_id:
+      description:
+        - The id of an origin access identity.
+      required: false
+  presigned_url_client_method:
+      description:
+        - The name of the cloudfront method to request. All valid methods are available at:
+          (http://boto3.readthedocs.io/en/latest/reference/services/cloudfront.html). 
+      required: false
+  presigned_url_expires_in:
+      description:
+        - The number of seconds the url is valid for. Defaults to 3600 seconds (1 hour).
+      required: false
+  presigned_url_http_method:
+      description:
+        - The http method to use on the generated url. Defaults to the client method's http method.
+      required: false
+  presigned_url_parameters:
+      description:
+        - The parameters to send to the client method (as a dictionary). Is whatever is usually
+          sent to the client method.
+      required: false
+  caller_reference:
+      description:
+        - A unique identifier for creating and duplicating cloudfront distributions.
+      required: false
+  invalidation_batch:
+      description:
+        - An array of path strings to be invalidated.
+      required: false
+  
 
 extends_documentation_fragment:
   - aws
@@ -915,7 +1056,6 @@ def main():
     validate_streaming_distribution = module.params.get('validate_streaming_distribution')
     caller_reference = module.params.get('caller_reference')
     comment = module.params.get('comment')
-    origin_access_identity_id = module.params.get('origin_access_identity_id')
     e_tag = module.params.get('e_tag')
     origin_access_identity_id = module.params.get('origin_access_identity_id')
     presigned_url_client_method = module.params.get('presigned_url_client_method')
