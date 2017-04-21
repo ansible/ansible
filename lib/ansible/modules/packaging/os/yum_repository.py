@@ -570,7 +570,7 @@ class YumRepo(object):
         # defined.
         if (self.params['baseurl'], self.params['mirrorlist']) == (None, None):
             self.module.fail_json(
-                msg='Paramater "baseurl" or "mirrorlist" is required for '
+                msg='Parameter "baseurl" or "mirrorlist" is required for '
                 'adding a new repo.')
 
         # Set options

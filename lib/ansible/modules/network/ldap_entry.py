@@ -274,7 +274,7 @@ def main():
 
     if not HAS_LDAP:
         module.fail_json(
-            msg="Missing requried 'ldap' module (pip install python-ldap).")
+            msg="Missing required 'ldap' module (pip install python-ldap).")
 
     state = module.params['state']
 

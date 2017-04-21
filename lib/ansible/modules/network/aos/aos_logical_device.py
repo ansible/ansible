@@ -152,7 +152,7 @@ def logical_device_absent(module, aos, my_logical_dev):
             time.sleep(1)
             my_logical_dev.delete()
         except:
-            module.fail_json(msg="An error occured, while trying to delete the Logical Device")
+            module.fail_json(msg="An error occurred, while trying to delete the Logical Device")
 
     module.exit_json( changed=True,
                       name=my_logical_dev.name,
