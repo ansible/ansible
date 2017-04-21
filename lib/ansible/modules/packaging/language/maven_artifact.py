@@ -161,9 +161,9 @@ import os
 import posixpath
 import shutil
 import distutils.version
-from ansible.module_utils.basic import *
-from ansible.module_utils.urls import *
-import urlparse # Override urlparse from module_utils
+import urlparse
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.urls import fetch_url
 try:
     import boto3
     HAS_BOTO = True
@@ -213,7 +213,7 @@ class HttpMavenClient:
             key_name = parsed_url.path[1:]
             user = self.module.params.get('username', '')
             password = self.module.params.get('password', '')
-            client = boto3.client('s3', aws_access_key_id=user, aws_secret_access_key=passwd)
+            client = boto3.client('s3', aws_access_key_id=user, aws_secret_access_key=password)
             url = client.generate_presigned_url('get_object', Params={ 'Bucket': bucket, 'Key': key_name }, ExpiresIn=10)
 
         response, info = fetch_url(self.module, url, timeout=self.timeout)
