@@ -504,7 +504,7 @@ class Templar:
         if isinstance(data, string_types):
             try:
                 new = self.do_template(data, fail_on_undefined=True)
-            except AnsibleUndefinedVariable, UndefinedError:
+            except (AnsibleUndefinedVariable, UndefinedError):
                 return True
             except:
                 return False
