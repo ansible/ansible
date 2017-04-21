@@ -25,6 +25,10 @@ from ansible.compat.tests.mock import patch
 from ansible.modules.network.junos import junos_command
 from .junos_module import TestJunosModule, load_fixture, set_module_args
 
+RPC_CLI_MAP = {
+    'get-software-information': 'show version'
+}
+
 
 class TestJunosCommandModule(TestJunosModule):
 
@@ -40,7 +44,13 @@ class TestJunosCommandModule(TestJunosModule):
     def load_fixtures(self, commands=None, format='text'):
         def load_from_file(*args, **kwargs):
             module, element = args
-            filename = str(element.text).replace(' ', '_')
+
+            if element.text:
+                path = str(element.text)
+            else:
+                path = RPC_CLI_MAP[str(element.tag)]
+
+            filename = path.replace(' ', '_')
             filename = '%s_%s.txt' % (filename, format)
             return load_fixture(filename)
 
@@ -102,6 +112,24 @@ class TestJunosCommandModule(TestJunosModule):
 
     def test_junos_command_simple_xml(self):
         set_module_args(dict(commands=['show version'], display='xml'))
+        result = self.execute_module(format='xml')
+        self.assertEqual(len(result['stdout']), 1)
+        self.assertTrue("<software-information>" in result['stdout'][0])
+
+    def test_junos_command_simple_rpc_text(self):
+        set_module_args(dict(rpcs=['get-software-information'], display='text'))
+        result = self.execute_module(format='text')
+        self.assertEqual(len(result['stdout']), 1)
+        self.assertTrue(result['stdout'][0].startswith('Hostname:'))
+
+    def test_junos_command_simple_rpc_json(self):
+        set_module_args(dict(rpcs=['get-software-information'], display='json'))
+        result = self.execute_module(format='json')
+        self.assertEqual(len(result['stdout']), 1)
+        self.assertTrue("software-information" in result['stdout'][0])
+
+    def test_junos_command_simple_rpc_xml(self):
+        set_module_args(dict(rpcs=['get-software-information'], display='xml'))
         result = self.execute_module(format='xml')
         self.assertEqual(len(result['stdout']), 1)
         self.assertTrue("<software-information>" in result['stdout'][0])
