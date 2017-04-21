@@ -23,7 +23,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-
 DOCUMENTATION = r'''
 ---
 module: win_reboot
@@ -41,7 +40,7 @@ options:
     - Seconds to wait after the reboot was successful and the connection was re-established
     - This is useful if you want wait for something to settle despite your connection already working
     default: 0
-    version_added: '2.3'
+    version_added: '2.4'
   shutdown_timeout_sec:
     description:
     - Maximum seconds to wait for shutdown to occur
@@ -96,6 +95,6 @@ rebooted:
 elapsed:
   description: The number of seconds that elapsed waiting for the system to be rebooted.
   returned: always
-  type: integer
+  type: int
   sample: 23
 '''

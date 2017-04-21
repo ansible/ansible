@@ -94,7 +94,7 @@ class Connection(ConnectionBase):
         ''' Test the transport mechanism, if available '''
         host = self._winrm_host
         port = int(self._winrm_port)
-        display.vvv("attempting transport test to %s:%s" % (host, port))
+        display.vvv("attempting transport test to %s:%d" % (host, port))
         sock = socket.create_connection((host, port), connect_timeout)
         sock.close()
 
