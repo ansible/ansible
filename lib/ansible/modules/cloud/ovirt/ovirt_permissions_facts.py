@@ -27,11 +27,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_permissions_facts
-short_description: Retrieve facts about one or more oVirt permissions
+short_description: Retrieve facts about one or more oVirt/RHV permissions
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt permissions."
+    - "Retrieve facts about one or more oVirt/RHV permissions."
 notes:
     - "This module creates a new top-level C(ovirt_permissions) fact, which
        contains a list of permissions."
@@ -44,7 +44,7 @@ options:
             - "Name of the the group to manage."
     authz_name:
         description:
-            - "Authorization provider of the user/group. In previous versions of oVirt known as domain."
+            - "Authorization provider of the user/group. In previous versions of oVirt/RHV known as domain."
         required: true
         aliases: ['domain']
     namespace:

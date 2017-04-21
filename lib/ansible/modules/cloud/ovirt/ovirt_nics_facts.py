@@ -27,11 +27,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_nics_facts
-short_description: Retrieve facts about one or more oVirt virtual machine network interfaces
+short_description: Retrieve facts about one or more oVirt/RHV virtual machine network interfaces
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt virtual machine network interfaces."
+    - "Retrieve facts about one or more oVirt/RHV virtual machine network interfaces."
 notes:
     - "This module creates a new top-level C(ovirt_nics) fact, which
        contains a list of NICs."

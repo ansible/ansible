@@ -27,11 +27,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_disks
-short_description: "Module to manage Virtual Machine and floating disks in oVirt"
+short_description: "Module to manage Virtual Machine and floating disks in oVirt/RHV"
 version_added: "2.2"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage Virtual Machine and floating disks in oVirt."
+    - "Module to manage Virtual Machine and floating disks in oVirt/RHV."
 options:
     id:
         description:
@@ -54,7 +54,7 @@ options:
     download_image_path:
         description:
             - "Path on a file system where disk should be downloaded."
-            - "Note that you must have an valid oVirt engine CA in your system trust store
+            - "Note that you must have an valid oVirt/RHV engine CA in your system trust store
                or you must provide it in C(ca_file) parameter."
             - "Note that the disk is not downloaded when the file already exists,
                but you can forcibly download the disk when using C(force) I (true)."
@@ -63,7 +63,7 @@ options:
         description:
             - "Path to disk image, which should be uploaded."
             - "Note that currently we support only compability version 0.10 of the qcow disk."
-            - "Note that you must have an valid oVirt engine CA in your system trust store
+            - "Note that you must have an valid oVirt/RHV engine CA in your system trust store
                or you must provide it in C(ca_file) parameter."
             - "Note that there is no reliable way to achieve idempotency, so
                if you want to upload the disk even if the disk with C(id) or C(name) exists,
@@ -89,7 +89,7 @@ options:
         choices: ['raw', 'cow']
     storage_domain:
         description:
-            - "Storage domain name where disk should be created. By default storage is chosen by oVirt engine."
+            - "Storage domain name where disk should be created. By default storage is chosen by oVirt/RHV engine."
     storage_domains:
         description:
             - "Storage domain names where disk should be copied."
@@ -107,7 +107,7 @@ options:
         version_added: "2.3"
     profile:
         description:
-            - "Disk profile name to be attached to disk. By default profile is chosen by oVirt engine."
+            - "Disk profile name to be attached to disk. By default profile is chosen by oVirt/RHV engine."
     bootable:
         description:
             - "I(True) if the disk should be bootable. By default when disk is created it isn't bootable."
@@ -193,13 +193,13 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 disk:
-    description: "Dictionary of all the disk attributes. Disk attributes can be found on your oVirt instance
+    description: "Dictionary of all the disk attributes. Disk attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/disk."
     returned: "On success if disk is found and C(vm_id) or C(vm_name) wasn't passed."
 
 disk_attachment:
     description: "Dictionary of all the disk attachment attributes. Disk attachment attributes can be found
-                  on your oVirt instance at following url:
+                  on your oVirt/RHV instance at following url:
                   https://ovirt.example.com/ovirt-engine/api/model#types/disk_attachment."
     returned: "On success if disk is found and C(vm_id) or C(vm_name) was passed and VM was found."
 '''

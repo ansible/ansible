@@ -27,11 +27,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_affinity_labels
-short_description: Module to manage affinity labels in oVirt
+short_description: Module to manage affinity labels in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "This module manage affinity labels in oVirt. It can also manage assignments
+    - "This module manage affinity labels in oVirt/RHV. It can also manage assignments
        of those labels to hosts and VMs."
 options:
     name:
@@ -88,7 +88,7 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 affinity_label:
-    description: "Dictionary of all the affinity label attributes. Affinity label attributes can be found on your oVirt instance
+    description: "Dictionary of all the affinity label attributes. Affinity label attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/affinity_label."
     returned: On success if affinity label is found.
 '''

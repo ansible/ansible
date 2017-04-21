@@ -28,11 +28,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_snapshots_facts
-short_description: Retrieve facts about one or more oVirt virtual machine snapshots
+short_description: Retrieve facts about one or more oVirt/RHV virtual machine snapshots
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt virtual machine snapshots."
+    - "Retrieve facts about one or more oVirt/RHV virtual machine snapshots."
 notes:
     - "This module creates a new top-level C(ovirt_snapshots) fact, which
        contains a list of snapshots."
