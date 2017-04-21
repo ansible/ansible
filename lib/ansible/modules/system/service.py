@@ -853,13 +853,13 @@ class LinuxService(Service):
             return
 
         #
-        # insserv (Debian 7)
+        # insserv (Debian <=7, SLES, others)
         #
         if self.enable_cmd.endswith("insserv"):
             if self.enable:
-                (rc, out, err) = self.execute_command("%s -n %s" % (self.enable_cmd, self.name))
+                (rc, out, err) = self.execute_command("%s -n -v %s" % (self.enable_cmd, self.name))
             else:
-                (rc, out, err) = self.execute_command("%s -nr %s" % (self.enable_cmd, self.name))
+                (rc, out, err) = self.execute_command("%s -n -r -v %s" % (self.enable_cmd, self.name))
 
             self.changed = False
             for line in err.splitlines():
