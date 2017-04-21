@@ -313,7 +313,7 @@ class Templar:
     def _clean_data(self, orig_data):
         ''' remove jinja2 template tags from a string '''
 
-        if not isinstance(orig_data, string_types) or hasattr(orig_data, '__ENCRYPTED__'):
+        if not isinstance(orig_data, string_types) or hasattr(orig_data, '__ENCRYPTED__') or hasattr(orig_data, '__UNSAFE__'):
             return orig_data
 
         with contextlib.closing(StringIO(orig_data)) as data:
