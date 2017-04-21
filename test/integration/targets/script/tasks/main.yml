@@ -69,3 +69,17 @@
     that:
       - "script_result1|changed"
       - "script_result2.state == 'absent'"
+
+# async
+- name: test task failure with async param
+
+  script: /some/script.sh
+  async: 2
+  ignore_errors: true
+  register: script_result3
+
+- name: assert task with async param failed
+  assert:
+    that:
+      - 'script_result3.failed'
+      - 'script_result3.msg == "async is not supported for this task."'
