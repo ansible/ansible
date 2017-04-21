@@ -27,18 +27,18 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_users_facts
-short_description: Retrieve facts about one or more oVirt users
+short_description: Retrieve facts about one or more oVirt/RHV users
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt users."
+    - "Retrieve facts about one or more oVirt/RHV users."
 notes:
     - "This module creates a new top-level C(ovirt_users) fact, which
        contains a list of users."
 options:
     pattern:
       description:
-        - "Search term which is accepted by oVirt search backend."
+        - "Search term which is accepted by oVirt/RHV search backend."
         - "For example to search user X use following pattern: name=X"
 extends_documentation_fragment: ovirt_facts
 '''

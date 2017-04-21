@@ -27,11 +27,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_datacenters
-short_description: Module to manage data centers in oVirt
+short_description: Module to manage data centers in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage data centers in oVirt"
+    - "Module to manage data centers in oVirt/RHV"
 options:
     name:
         description:
@@ -62,7 +62,7 @@ options:
     mac_pool:
         description:
             - "MAC pool to be used by this datacenter."
-            - "IMPORTANT: This option is deprecated in oVirt 4.1. You should
+            - "IMPORTANT: This option is deprecated in oVirt/RHV 4.1. You should
                use C(mac_pool) in C(ovirt_clusters) module, as MAC pools are
                set per cluster since 4.1."
 extends_documentation_fragment: ovirt
@@ -92,7 +92,7 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 data_center:
-    description: "Dictionary of all the datacenter attributes. Datacenter attributes can be found on your oVirt instance
+    description: "Dictionary of all the datacenter attributes. Datacenter attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/datacenter."
     returned: "On success if datacenter is found."
 '''

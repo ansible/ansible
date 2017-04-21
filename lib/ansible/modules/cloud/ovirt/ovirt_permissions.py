@@ -27,11 +27,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_permissions
-short_description: "Module to manage permissions of users/groups in oVirt"
+short_description: "Module to manage permissions of users/groups in oVirt/RHV"
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage permissions of users/groups in oVirt"
+    - "Module to manage permissions of users/groups in oVirt/RHV"
 options:
     role:
         description:
@@ -80,7 +80,7 @@ options:
                you should ensure the group exists by using M(ovirt_groups) module."
     authz_name:
         description:
-            - "Authorization provider of the user/group. In previous versions of oVirt known as domain."
+            - "Authorization provider of the user/group. In previous versions of oVirt/RHV known as domain."
         required: true
         aliases: ['domain']
     namespace:
@@ -119,7 +119,7 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 permission:
-    description: "Dictionary of all the permission attributes. Permission attributes can be found on your oVirt instance
+    description: "Dictionary of all the permission attributes. Permission attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/permission."
     returned: On success if permission is found.
 '''
@@ -210,7 +210,7 @@ class PermissionsModule(BaseModule):
         )
 
         # If found more groups, filter them by namespace and authz name:
-        # (filtering here, as oVirt backend doesn't support it)
+        # (filtering here, as oVirt/RHV backend doesn't support it)
         if len(groups) > 1:
             groups = [
                 g for g in groups if (

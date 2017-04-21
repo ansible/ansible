@@ -27,18 +27,18 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_networks_facts
-short_description: Retrieve facts about one or more oVirt networks
+short_description: Retrieve facts about one or more oVirt/RHV networks
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt networks."
+    - "Retrieve facts about one or more oVirt/RHV networks."
 notes:
     - "This module creates a new top-level C(ovirt_networks) fact, which
        contains a list of networks."
 options:
     pattern:
       description:
-        - "Search term which is accepted by oVirt search backend."
+        - "Search term which is accepted by oVirt/RHV search backend."
         - "For example to search network starting with string vlan1 use: name=vlan1*"
 extends_documentation_fragment: ovirt_facts
 '''

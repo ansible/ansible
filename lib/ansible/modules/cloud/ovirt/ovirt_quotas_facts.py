@@ -27,11 +27,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_quotas_facts
-short_description: Retrieve facts about one or more oVirt quotas
+short_description: Retrieve facts about one or more oVirt/RHV quotas
 version_added: "2.3"
 author: "Red Hat"
 description:
-    - "Retrieve facts about one or more oVirt quotas."
+    - "Retrieve facts about one or more oVirt/RHV quotas."
 notes:
     - "This module creates a new top-level C(ovirt_quotas) fact, which
        contains a list of quotas."

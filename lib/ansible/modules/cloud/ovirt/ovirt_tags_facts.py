@@ -27,11 +27,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_tags_facts
-short_description: Retrieve facts about one or more oVirt tags
+short_description: Retrieve facts about one or more oVirt/RHV tags
 author: "Ondra Machacek (@machacekondra)"
 version_added: "2.3"
 description:
-    - "Retrieve facts about one or more oVirt tags."
+    - "Retrieve facts about one or more oVirt/RHV tags."
 notes:
     - "This module creates a new top-level C(ovirt_tags) fact, which
        contains a list of tags"

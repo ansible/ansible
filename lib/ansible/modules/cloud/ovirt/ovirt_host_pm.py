@@ -27,11 +27,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: ovirt_host_pm
-short_description: Module to manage power management of hosts in oVirt
+short_description: Module to manage power management of hosts in oVirt/RHV
 version_added: "2.3"
 author: "Ondra Machacek (@machacekondra)"
 description:
-    - "Module to manage power management of hosts in oVirt."
+    - "Module to manage power management of hosts in oVirt/RHV."
 options:
     name:
         description:
@@ -54,7 +54,7 @@ options:
             - "Password of the user specified in C(username) parameter."
     type:
         description:
-            - "Type of the power management. oVirt predefined values are I(drac5), I(ipmilan), I(rsa),
+            - "Type of the power management. oVirt/RHV predefined values are I(drac5), I(ipmilan), I(rsa),
                I(bladecenter), I(alom), I(apc), I(apc_snmp), I(eps), I(wti), I(rsb), I(cisco_ucs),
                I(drac7), I(hpblade), I(ilo), I(ilo2), I(ilo3), I(ilo4), I(ilo_ssh),
                but user can have defined custom type."
@@ -109,7 +109,7 @@ id:
     type: str
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 agent:
-    description: "Dictionary of all the agent attributes. Agent attributes can be found on your oVirt instance
+    description: "Dictionary of all the agent attributes. Agent attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/agent."
     returned: On success if agent is found.
 '''
