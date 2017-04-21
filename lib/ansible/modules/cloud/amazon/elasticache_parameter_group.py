@@ -33,7 +33,7 @@ options:
     description:
       - The name of the cache parameter group family that the cache parameter group can be used with.
     choices: ['memcached1.4', 'redis2.6', 'redis2.8', 'redis3.2']
-    required: yes
+    required: when creating a cache parameter group
   name:
     description:
      - A user-specified name for the cache parameter group.
@@ -126,6 +126,7 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+
 def create(module, conn, name, group_family, description):
     """ Create ElastiCache parameter group. """
     try:
@@ -134,6 +135,7 @@ def create(module, conn, name, group_family, description):
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Unable to create cache parameter group.", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     return response, changed
+
 
 def delete(module, conn, name):
     """ Delete ElastiCache parameter group. """
@@ -144,6 +146,7 @@ def delete(module, conn, name):
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Unable to delete cache parameter group.", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     return response, changed
+
 
 def make_current_modifiable_param_dict(module, conn, name):
     """ Gets the current state of the cache parameter group and creates a dict with the format: {ParameterName: [Allowed_Values, DataType, ParameterValue]}"""
@@ -158,6 +161,7 @@ def make_current_modifiable_param_dict(module, conn, name):
         if param["IsModifiable"] and ("AllowedValues" and "ParameterValue") in param:
             modifiable_params[param["ParameterName"]] = [param["AllowedValues"], param["DataType"], param["ParameterValue"]]
     return modifiable_params
+
 
 def check_valid_modification(module, values, modifiable_params):
     """ Check if the parameters and values in values are valid.  """
@@ -187,6 +191,7 @@ def check_valid_modification(module, values, modifiable_params):
 
     return changed_with_update
 
+
 def check_changed_parameter_values(values, old_parameters, new_parameters):
     """ Checking if the new values are different than the old values.  """
     changed_with_update = False
@@ -206,6 +211,7 @@ def check_changed_parameter_values(values, old_parameters, new_parameters):
 
     return changed_with_update
 
+
 def modify(module, conn, name, values):
     """ Modify ElastiCache parameter group to reflect the new information if it differs from the current. """
     # compares current group parameters with the parameters we've specified to to a value to see if this will change the group
@@ -218,6 +224,7 @@ def modify(module, conn, name, values):
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Unable to modify cache parameter group.", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     return response
+
 
 def reset(module, conn, name, values):
     """ Reset ElastiCache parameter group if the current information is different from the new information. """
@@ -247,6 +254,7 @@ def reset(module, conn, name, values):
 
     return response, changed
 
+
 def get_info(conn, name):
     """ Gets info about the ElastiCache parameter group. Returns false if it doesn't exist or we don't have access. """
     try:
@@ -260,7 +268,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            group_family=dict(required=True, type='str', choices=['memcached1.4', 'redis2.6', 'redis2.8', 'redis3.2']),
+            group_family=dict(type='str', choices=['memcached1.4', 'redis2.6', 'redis2.8', 'redis3.2']),
             name=dict(required=True, type='str'),
             description=dict(type='str'),
             state=dict(required=True),
@@ -290,7 +298,7 @@ def main():
     exists = get_info(connection, parameter_group_name)
 
     # check that the needed requirements are available
-    if state == 'present' and not exists and not (parameter_group_family or group_description):
+    if state == 'present' and not (exists and parameter_group_family and group_description):
         module.fail_json(msg="Creating a group requires a family group and a description.")
     elif state == 'reset' and not exists:
         module.fail_json(msg="No group %s to reset. Please create the group before using the state 'reset'." % parameter_group_name)
