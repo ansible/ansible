@@ -1455,10 +1455,8 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
                         group_id = [group_id]
                     grp_details = ec2.get_all_security_groups(group_ids=group_id)
                     group_ids = [grp_item.id for grp_item in grp_details]
-                for each in group_ids:
-                    if each not in [sg.id for sg in inst.groups] or len(group_ids) != len(inst.groups):
-                        changed = inst.modify_attribute('groupSet', group_ids)
-                        break
+                if set([sg.id for sg in inst.groups]) != set(group_ids):
+                    changed = inst.modify_attribute('groupSet', group_ids)
 
             # Check instance state
             if inst.state != state:
