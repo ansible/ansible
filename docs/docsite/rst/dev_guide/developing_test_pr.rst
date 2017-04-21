@@ -1,15 +1,18 @@
+*******************
 Helping Testing PRs
-```````````````````
+*******************
+
+.. contents:: Topics
 
 If you're a developer, one of the most valuable things you can do is look at the github issues list and help fix bugs.  We almost always prioritize bug fixing over
 feature development, so clearing bugs out of the way is one of the best things you can do.
 
-Even if you're not a developer, helping test pull requests for bug fixes and features is still immensely valuable.  
+Even if you're not a developer, helping test pull requests for bug fixes and features is still immensely valuable.
 
-This goes for testing new features as well as testing bugfixes.  
+This goes for testing new features as well as testing bugfixes.
 
 In many cases, code should add tests that prove it works but that's not ALWAYS possible and tests are not always comprehensive, especially when a user doesn't have access
-to a wide variety of platforms, or that is using an API or web service.  
+to a wide variety of platforms, or that is using an API or web service.
 
 In these cases, live testing against real equipment can be more valuable than automation that runs against simulated interfaces.
 In any case, things should always be tested manually the first time too.
@@ -17,16 +20,16 @@ In any case, things should always be tested manually the first time too.
 Thankfully helping test ansible is pretty straightforward, assuming you are already used to how ansible works.
 
 Get Started with A Source Checkout
-++++++++++++++++++++++++++++++++++
+==================================
 
-You can do this by checking out ansible, making a test branch off the main one, merging a GitHub issue, testing, 
+You can do this by checking out ansible, making a test branch off the main one, merging a GitHub issue, testing,
 and then commenting on that particular issue on GitHub. Here's how:
 
 .. note::
    Testing source code from GitHub pull requests sent to us does have some inherent risk, as the source code
    sent may have mistakes or malicious code that could have a negative impact on your system. We recommend
    doing all testing on a virtual machine, whether a cloud instance, or locally.  Some users like Vagrant
-   or Docker for this, but they are optional.  It is also useful to have virtual machines of different Linux or 
+   or Docker for this, but they are optional.  It is also useful to have virtual machines of different Linux or
    other flavors, since some features (apt vs. yum, for example) are specific to those OS versions.
 
 First, you will need to configure your testing environment with the necessary tools required to run our test
@@ -42,7 +45,7 @@ If you want to run the full integration test suite you'll also need the followin
    svn
    hg
    python-pip
-   gem 
+   gem
 
 Second, if you haven't already, clone the Ansible source code from GitHub::
 
@@ -57,23 +60,23 @@ Second, if you haven't already, clone the Ansible source code from GitHub::
    the latest development versions of modules.  Skipping the "git submodule update" step will result in versions that will be stale.
 
 Activating The Source Checkout
-++++++++++++++++++++++++++++++
+==============================
 
 The Ansible source includes a script that allows you to use Ansible directly from source without requiring a
-full installation, that is frequently used by developers on Ansible. 
+full installation, that is frequently used by developers on Ansible.
 
 Simply source it (to use the Linux/Unix terminology) to begin using it immediately::
 
    source ./hacking/env-setup
 
 This script modifies the PYTHONPATH enviromnent variables (along with a few other things), which will be temporarily
-set as long as your shell session is open.  
+set as long as your shell session is open.
 
 If you'd like your testing environment to always use the latest source, you could call the command from startup scripts (for example,
 `.bash_profile`).
 
 Finding A Pull Request and Checking It Out On A Branch
-++++++++++++++++++++++++++++++++++++++++++++++++++++++
+======================================================
 
 Next, find the pull request you'd like to test and make note of the line at the top which describes the source
 and destination repositories. It will look something like this::
@@ -81,7 +84,7 @@ and destination repositories. It will look something like this::
    Someuser wants to merge 1 commit into ansible:devel from someuser:feature_branch_name
 
 .. note::
-   It is important that the PR request target be ansible:devel, as we do not accept pull requests into any other branch.  Dot releases are cherry-picked manually by ansible staff.
+   It is important that the PR request target be ansible:devel, as we do not accept pull requests into any other branch.  Dot releases are cherry-picked manually by Ansible staff.
 
 The username and branch at the end are the important parts, which will be turned into git commands as follows::
 
@@ -97,7 +100,8 @@ The first command creates and switches to a new branch named testing_PRXXXX, whe
    Some users do not create feature branches, which can cause problems when they have multiple, un-related commits in their version of `devel`. If the source looks like `someuser:devel`, make sure there is only one commit listed on the pull request.
 
 Finding a Pull Request for Ansible Modules
-++++++++++++++++++++++++++++++++++++++++++
+==========================================
+
 Ansible modules are in separate repositories, which are managed as Git submodules. Here's a step by step process for checking out a PR for an Ansible extras module, for instance:
 
 1. git clone https://github.com/ansible/ansible.git
@@ -111,12 +115,15 @@ Ansible modules are in separate repositories, which are managed as Git submodule
 9. git submodule update --recursive
 
 For Those About To Test, We Salute You
-++++++++++++++++++++++++++++++++++++++
+======================================
 
 At this point, you should be ready to begin testing!
 
 If the PR is a bug-fix pull request, the first things to do are to run the suite of unit and integration tests, to ensure
 the pull request does not break current functionality:
+
+FIXME Link to ansible-test
+FIXME Given we have Shippable is this even needed?
 
 .. code-block:: shell-session
 
@@ -140,7 +147,7 @@ the pull request does not break current functionality:
 Integration tests aren't the end all beat all - in many cases what is fixed might not *HAVE* a test, so determining if it works means
 checking the functionality of the system and making sure it does what it said it would do.
 
-Pull requests for bug-fixes should reference the bug issue number they are fixing. 
+Pull requests for bug-fixes should reference the bug issue number they are fixing.
 
 We encourage users to provide playbook examples for bugs that show how to reproduce the error, and these playbooks should be used to verify the bugfix does resolve
 the issue if available.  You may wish to also do your own review to poke the corners of the change.
@@ -173,7 +180,7 @@ If the pull request resolves the issue, please leave a comment on the pull reque
     * "Works for me!"
     * The output from `ansible --version`.
 
-In some cases, you may wish to share playbook output from the test run as well.  
+In some cases, you may wish to share playbook output from the test run as well.
 
 Example!
 

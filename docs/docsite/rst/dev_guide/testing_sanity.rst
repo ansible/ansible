@@ -1,5 +1,6 @@
+************
 Sanity Tests
-============
+************
 
 Sanity tests are made up of scripts and tools used to perform static code analysis.
 The primary purpose of these tests is to enforce Ansible coding standards and requirements.

@@ -1,12 +1,15 @@
+****************
 validate-modules
-================
+****************
+
+.. contents:: Topics
 
 Python program to help test or validate Ansible modules.
 
 Originally developed by Matt Martz (@sivel)
 
 Usage
-~~~~~
+=====
 
 .. code:: shell
 
@@ -15,7 +18,7 @@ Usage
     test/sanity/validate-modules/validate-modules /path/to/modules
 
 Help
-~~~~
+====
 
 .. code:: shell
 
@@ -39,10 +42,10 @@ Help
       --output OUTPUT       Output location, use "-" for stdout. Default "-"
 
 Codes
-~~~~~~~
+=====
 
 Errors
-^^^^^^
+------
 
 +---------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | code    | sample message                                                                                                                             |
@@ -139,7 +142,7 @@ Errors
 +---------+--------------------------------------------------------------------------------------------------------------------------------------------+
 
 Warnings
-^^^^^^^^
+--------
 
 +---------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | code    | sample message                                                                                                                             |

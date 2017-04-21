@@ -1,33 +1,52 @@
-# PEP 8
+*****
+PEP 8
+*****
 
-[PEP 8](https://www.python.org/dev/peps/pep-0008/) style guidelines are enforced by
-[pep8](https://pypi.python.org/pypi/pep8) on all python files in the repository by default.
+.. contents:: Topics
 
-## Current Rule Set
+| `PEP 8`_ style guidelines are enforced by
+| `pep8`_ on all python files in the repository by default.
 
-By default all files are tested using the current rule set.
-All `pep8` tests are executed, except those listed in the [current ignore list](current-ignore.txt).
+Current Rule Set
+================
 
-## Legacy Rule Set
+| By default all files are tested using the current rule set.
+| All ``pep8`` tests are executed, except those listed in the `current
+  ignore list`_.
 
-Files which are listed in the [legacy file list](legacy-files.txt) are tested using the legacy rule set.
-All `pep8` tests are executed, except those listed in the [current ignore list](current-ignore.txt) or
-[legacy ignore list](legacy-ignore.txt).
+Legacy Rule Set
+===============
 
-> Files listed in the legacy file list which pass the current rule set will result in an error.
-> This is intended to prevent regressions on style guidelines for files which pass the more stringent current rule set.
+Files which are listed in the `legacy file list`_ are tested using the legacy rule set.
+All ``pep8`` tests are executed, except those listed in the `current
+ignore list`_ or `legacy ignore list`_.
 
-## Skipping Tests
+Files listed in the legacy file list which pass the current rule set will result in an error.
 
-Files listed in the [skip list](skip.txt) are not tested by `pep8`.
+This is intended to prevent regressions on style guidelines for files which pass the more stringent current rule set.
 
-## Removed Files
+Skipping Tests
+==============
 
-Files which have been removed from the repository must be removed from the legacy file list and the skip list.
+Files listed in the `skip list`_ are not tested by ``pep8``.
 
-## Running Locally
+Removed Files
+=============
 
-The pep8 check can be run locally with:
+Files which have been removed from the repository must be removed from
+the legacy file list and the skip list.
+
+Running Locally
+===============
+
+The pep8 check can be run locally with::
+
 
     ./test/runner/ansible-test sanity --test pep8 [file-or-directory-path-to-check] ...
 
+.. _PEP 8: https://www.python.org/dev/peps/pep-0008/
+.. _pep8: https://pypi.python.org/pypi/pep8
+.. _current ignore list: current-ignore.txt
+.. _legacy file list: legacy-files.txt
+.. _legacy ignore list: legacy-ignore.txt
+.. _skip list: skip.txt

@@ -4,7 +4,7 @@ Network Tests
 
 .. contents:: Topics
 
-**Note:** From Ansible 2.3, for any new Network Module to be accepted it must be accompanied by a corresponding test.
+**Note:** From Ansible 2.4, for any new Network Module to be accepted it must be accompanied by a corresponding test.
 
 For further help with this please contact `gundalow` in `#ansible-devel` on FreeNode IRC.
 
