@@ -94,9 +94,11 @@ options:
     description:
       - Encoding scheme to use when serializing output from the device.
         This handles how to properly understand the output and apply the
-        conditionals path to the result set.
+        conditionals path to the result set. For I(rpcs) argument default
+        display is C(xml) and for I(commands) argument default display
+        is C(text).
     required: false
-    default: 'text'
+    default: depends on input argument I(rpcs) or I(commands)
     aliases: ['format', 'output']
     choices: ['text', 'json', 'xml']
     version_added: "2.3"
