@@ -194,7 +194,7 @@ from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.junos import check_args as junos_check_args
 from ansible.module_utils.netconf import send_request
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 
 USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_config'
@@ -232,7 +232,7 @@ def filter_delete_statements(module, candidate):
     if match is None:
         # Could not find configuration-set in reply, perhaps device does not support it?
         return candidate
-    config = match.text
+    config = to_native(match.text, encoding='latin1')
 
     modified_candidate = candidate[:]
     for index, line in enumerate(candidate):
@@ -267,7 +267,6 @@ def configure_device(module, warnings):
             kwargs.update({'format': config_format, 'action': module.params['update']})
 
     if isinstance(candidate, string_types):
-        candidate = to_text(candidate, encoding='latin1')
         candidate = candidate.split('\n')
 
     # this is done to filter out `delete ...` statements which map to
@@ -326,7 +325,7 @@ def main():
         else:
             module.fail_json(msg='unable to retrieve device configuration')
 
-        result['__backup__'] = match.text.strip()
+        result['__backup__'] = to_native(match.text.strip(), encoding='latin1')
 
     if module.params['rollback']:
         if not module.check_mode:

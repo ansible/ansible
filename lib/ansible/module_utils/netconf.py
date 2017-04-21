@@ -30,14 +30,12 @@ from xml.etree.ElementTree import Element, SubElement
 from xml.etree.ElementTree import tostring, fromstring
 
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils._text import to_text
 
 
 NS_MAP = {'nc': "urn:ietf:params:xml:ns:netconf:base:1.0"}
 
 def send_request(module, obj, check_rc=True):
-    text = to_text(obj, 'latin1')
-    request = tostring(text)
+    request = tostring(obj)
     rc, out, err = exec_command(module, request)
     if rc != 0 and check_rc:
         error_root = fromstring(err)
