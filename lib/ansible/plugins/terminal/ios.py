@@ -35,7 +35,7 @@ class TerminalModule(TerminalBase):
 
     terminal_stderr_re = [
         re.compile(r"% ?Error"),
-        re.compile(r"^% \w+", re.M),
+        #re.compile(r"^% \w+", re.M),
         re.compile(r"% ?Bad secret"),
         re.compile(r"invalid input", re.I),
         re.compile(r"(?:incomplete|ambiguous) command", re.I),
