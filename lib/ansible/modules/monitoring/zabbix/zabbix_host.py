@@ -94,6 +94,19 @@ options:
                     - 5 (OEM)
                 default: 2
                 required: false
+            authtype:
+                description:
+                    - IPMI authentication algorithm
+                choices:
+                    - -1 (Zabbix default)
+                    - 0 (none);
+                    - 1 (MD2)
+                    - 2 (MD5)
+                    - 4 (straight)
+                    - 5 (OEM)
+                    - 6 (RMCP+)
+                default: -1
+                required: false
     status:
         description:
             - Monitoring status of the host.
@@ -316,6 +329,8 @@ class Host(object):
                     parameters['ipmi_password'] = ipmi['password']
                 if ipmi['privilege']:
                     parameters['ipmi_privilege'] = ipmi['privilege']
+                if ipmi['authtype']:
+                    parameters['ipmi_authtype'] = ipmi['authtype']
 
             host_list = self._zapi.host.create(parameters)
             if len(host_list) >= 1:
@@ -351,6 +366,8 @@ class Host(object):
                     parameters['ipmi_password'] = ipmi['password']
                 if ipmi['privilege']:
                     parameters['ipmi_privilege'] = ipmi['privilege']
+                if ipmi['authtype']:
+                    parameters['ipmi_authtype'] = ipmi['authtype']
 
             self._zapi.host.update(parameters)
             interface_list_copy = exist_interface_list
