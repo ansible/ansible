@@ -90,6 +90,16 @@ options:
         trying the command again.
     required: false
     default: 1
+  display:
+    description:
+      - Encoding scheme to use when serializing output from the device.
+        This handles how to properly understand the output and apply the
+        conditionals path to the result set.
+    required: false
+    default: 'text'
+    aliases: ['format', 'output']
+    choices: ['text', 'json', 'xml']
+    version_added: "2.3"
 """
 
 EXAMPLES = """
