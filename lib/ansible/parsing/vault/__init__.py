@@ -533,12 +533,25 @@ class VaultEditor:
 
     # TODO: add docstrings for arg types since this code is picky about that
     def write_data(self, data, filename, shred=True):
-        """write data to given path
+        """Write the data bytes to given path
 
-        :arg data: the encrypted and hexlified data as a utf-8 byte string
+        This is used to write a byte string to a file or stdout. It is used for
+        writing the results of vault encryption or decryption. It is used for
+        saving the ciphertext after encryption and it is also used for saving the
+        plaintext after decrypting a vault. The type of the 'data' arg should be bytes,
+        since in the plaintext case, the original contents can be of any text encoding
+        or arbitrary binary data.
+
+        When used to write the result of vault encryption, the val of the 'data' arg
+        should be a utf-8 encoded byte string and not a text typ and not a text type..
+
+        When used to write the result of vault decryption, the val of the 'data' arg
+        should be a byte string and not a text type.
+
+        :arg data: the byte string (bytes) data
         :arg filename: filename to save 'data' to.
-        :arg shred: if shred==True, make sure that the original data is first shredded so
-        that is cannot be recovered.
+        :arg shred: if shred==True, make sure that the original data is first shredded so that is cannot be recovered.
+        :returns: None
         """
         # FIXME: do we need this now? data_bytes should always be a utf-8 byte string
         b_file_data = to_bytes(data, errors='strict')
