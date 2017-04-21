@@ -263,7 +263,7 @@ class PlaybookCLI(CLI):
                         play_list.append(curr_play)
                 if self.options.listtasksjson:
                     playbook_json.set_plays(play_list)
-                    display.display(json.dumps(playbook_json.json_repr(), indent=2, cls=CLIEncoder))
+                    display.display(json.dumps(playbook_json.json_cli_repr(), indent=2, cls=CLIEncoder))
             return 0
         else:
             return results
@@ -328,5 +328,5 @@ class PlaybookCliJSON:
         """
         self.plays = play_list
 
-    def json_repr(self):
+    def json_cli_repr(self):
         return self.__dict__
