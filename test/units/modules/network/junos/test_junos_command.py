@@ -22,8 +22,6 @@ __metaclass__ = type
 import json
 
 from ansible.compat.tests.mock import patch, MagicMock
-import sys
-sys.modules['jxmlease'] = MagicMock()
 from ansible.modules.network.junos import junos_command
 from .junos_module import TestJunosModule, load_fixture, set_module_args
 
@@ -112,12 +110,6 @@ class TestJunosCommandModule(TestJunosModule):
         self.assertEqual(len(result['stdout']), 1)
         self.assertTrue("software-information" in result['stdout'][0])
 
-    def test_junos_command_simple_xml(self):
-        set_module_args(dict(commands=['show version'], display='xml'))
-        result = self.execute_module(format='xml')
-        self.assertEqual(len(result['stdout']), 1)
-        self.assertTrue("<software-information>" in result['stdout'][0])
-
     def test_junos_command_simple_rpc_text(self):
         set_module_args(dict(rpcs=['get-software-information'], display='text'))
         result = self.execute_module(format='text')
@@ -129,9 +121,3 @@ class TestJunosCommandModule(TestJunosModule):
         result = self.execute_module(format='json')
         self.assertEqual(len(result['stdout']), 1)
         self.assertTrue("software-information" in result['stdout'][0])
-
-    def test_junos_command_simple_rpc_xml(self):
-        set_module_args(dict(rpcs=['get-software-information'], display='xml'))
-        result = self.execute_module(format='xml')
-        self.assertEqual(len(result['stdout']), 1)
-        self.assertTrue("<software-information>" in result['stdout'][0])
