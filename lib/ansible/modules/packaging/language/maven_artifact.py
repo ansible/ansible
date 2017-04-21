@@ -55,24 +55,24 @@ options:
             - The maven type/extension coordinate.
         required: false
         default: jar
-    url_repository:
+    repository:
         version_added: "2.3"
-        aliases: [ repository_url, repository ]
+        aliases: [ repository_url ]
         description:
             - The URL of the maven Repository to download from.
             - Use s3://... if the repository is hosted on Amazon S3, added in version 2.2.
         required: false
-        default: http://repo1.maven.org/maven2
-    url_username:
+        default: https://repo1.maven.org/maven2
+    username:
         version_added: "2.3"
-        aliases: [ username, user, uname, aws_secret_key ]
+        aliases: [ user, uname, aws_secret_key ]
         description:
             - The username to authenticate as to the maven Repository, Use AWS secret key of the repository is hosted on S3.
         required: false
         default: null
-    url_password:
-        version_added: "2.3"
-        aliases: [ password, pwd, passwd, aws_secret_access_key ]
+    password:
+        version_added: "2.4"
+        aliases: [ passwd, aws_secret_access_key ]
         description:
             - The password to authenticate with to the maven Repository. Use AWS secret access key of the repository is hosted on S3.
         required: false
@@ -128,7 +128,7 @@ EXAMPLES = '''
 - maven_artifact:
     group_id: com.company
     artifact_id: library-name
-    repository_url: https://repo.company.com/maven
+    repository: https://repo.company.com/maven
     username: user
     password: pass
     dest: /tmp/library-name-latest.jar
@@ -137,7 +137,7 @@ EXAMPLES = '''
     group_id: com.company
     artifact_id: web-app
     extension: war
-    repository_url: https://repo.company.com/maven
+    repository: https://repo.company.com/maven
     dest: /var/lib/tomcat7/webapps/web-app.war
 # Passing a directory as destination, the filename will contain the artifact_id, version and classifier
 - maven_artifact:
@@ -150,7 +150,7 @@ EXAMPLES = '''
     group_id: com.company
     artifact_id: web-app
     extension: war
-    repository_url: file://home/jenkins/.m2/repository
+    repository: file://home/jenkins/.m2/repository
     dest: /var/lib/tomcat7/webapps/web-app.war
 '''
 
@@ -202,19 +202,19 @@ class Artifact(object):
 class HttpMavenClient:
     def __init__(self, module, repository, timeout):
         self.module = module
-        self.repo = repository.rstrip("/")
+        self.repository = repository.rstrip("/")
         self.timeout = timeout
 
     def get(self, url):
-        url = posixpath.join(self.repo, url)
+        url = posixpath.join(self.repository, url)
         if url.startswith("s3://"):
             parsed_url = urlparse.urlparse(url)
             bucket = parsed_url.netloc[:parsed_url.netloc.find('.')]
             key_name = parsed_url.path[1:]
-            user = self.module.params.get('url_username', '')
-            password = self.module.params.get('url_password', '')
+            user = self.module.params.get('username', '')
+            password = self.module.params.get('password', '')
             client = boto3.client('s3', aws_access_key_id=user, aws_secret_access_key=passwd)
-            url = client.generate_presigned_url('get_object', Params={'Bucket': bucket, 'Key': key_name }, ExpiresIn=10)
+            url = client.generate_presigned_url('get_object', Params={ 'Bucket': bucket, 'Key': key_name }, ExpiresIn=10)
 
         response, info = fetch_url(self.module, url, timeout=self.timeout)
         if info['status'] != 200:
@@ -257,12 +257,12 @@ class HttpMavenClient:
 class FileSystemMavenClient:
     def __init__(self, module, repository, timeout=None):
         self.module = module
-        self.repo = repository.rstrip("/").replace('file:/', '').replace('//', '/')
-        if os.path.isfile(self.repo):
-            self.module.fail_json(msg='Repository must be a directory, not a file: %s' % (self.repo))
+        self.repository = repository.rstrip("/").replace('file:/', '').replace('//', '/')
+        if os.path.isfile(self.repository):
+            self.module.fail_json(msg='Repository must be a directory, not a file: %s' % (self.repository))
 
     def get_latest_version(self, artifact):
-        path = posixpath.join(self.repo, artifact.shorturl)
+        path = posixpath.join(self.repository, artifact.shorturl)
         versions = []
         for root, dirs, files in os.walk(path):
             for d in dirs:
@@ -275,7 +275,7 @@ class FileSystemMavenClient:
         return sorted(versions, key=distutils.version.LooseVersion)[-1]
 
     def get_release_version(self, artifact):
-        path = posixpath.join(self.repo, artifact.shorturl)
+        path = posixpath.join(self.repository, artifact.shorturl)
         versions = []
         for root, dirs, files in os.walk(path):
             for d in dirs:
@@ -291,7 +291,7 @@ class FileSystemMavenClient:
 
     def download(self, artifact, destination):
         try:
-            src = posixpath.join(self.repo, artifact.url)
+            src = posixpath.join(self.repository, artifact.url)
             return shutil.copy2(src, destination)
         except (IOError, os.error) as why:
             self.module.fail_json(msg='Copy failed. %s' % (':'.join([artifact.group_id,
@@ -305,7 +305,7 @@ class FileSystemMavenClient:
     def checksum(self, artifact, dest):
         if not os.path.isfile(dest):
             return False
-        with open(posixpath.join(self.repo, artifact.url), 'rb') as file:
+        with open(posixpath.join(self.repository, artifact.url), 'rb') as file:
             remote_md5 = hashlib.md5(file.read()).hexdigest()
         with open(dest, 'rb') as file:
             local_md5 = hashlib.md5(file.read()).hexdigest()
@@ -321,9 +321,9 @@ def main():
             version = dict(default='latest'),
             classifier = dict(default=None),
             extension = dict(default='jar'),
-            url_repository = dict(default='http://repo1.maven.org/maven2', aliases=['repository_url', 'repository']),
-            url_username = dict(default=None, aliases=['username', 'user', 'uname', 'aws_secret_key']),
-            url_password = dict(default=None, aliases=['password', 'pwd', 'passwd', 'aws_secret_access_key'], no_log=True),
+            repository = dict(default='https://repo1.maven.org/maven2', aliases=['repository_url' ]),
+            username = dict(default=None, aliases=[ 'user', 'uname', 'aws_secret_key']),
+            password = dict(default=None, aliases=[ 'passwd', 'aws_secret_access_key'], no_log=True),
             http_agent = dict(default='Maven Artifact Downloader/1.0'),
             state = dict(default='present', choices=['present','absent']),
             dest = dict(type='path', default=None),
@@ -335,7 +335,7 @@ def main():
 
 
     try:
-        parsed_url = urlparse.urlparse(module.params["url_repository"])
+        parsed_url = urlparse.urlparse(module.params["repository"])
     except AttributeError as e:
         module.fail_json(msg='url parsing went wrong %s' % e)
 
@@ -347,18 +347,18 @@ def main():
     version = module.params["version"]
     classifier = module.params["classifier"]
     extension = module.params["extension"]
-    repo = module.params["url_repository"]
+    repository = module.params["repository"]
     state = module.params["state"]
     dest = module.params["dest"]
     timeout = module.params["timeout"]
     ignore_checksum = module.params["ignore_checksum"]
 
-    if repo.startswith("s3://") and not HAS_BOTO:
+    if repository.startswith("s3://") and not HAS_BOTO:
         module.fail_json(msg='boto3 required when using s3:// repository URLs with this module.')
-    elif repo.startswith('file://'):
-        client = FileSystemMavenClient(module, repo, timeout)
+    elif repository.startswith('file://'):
+        client = FileSystemMavenClient(module, repository, timeout)
     else:
-        client = HttpMavenClient(module, repo, timeout)
+        client = HttpMavenClient(module, repository, timeout)
     artifact = Artifact(group_id, artifact_id, version, classifier, extension)
 
     try:
@@ -397,7 +397,7 @@ def main():
 
     module.exit_json(state=state, dest=dest, group_id=group_id, artifact_id=artifact_id,
                      version=artifact.version, classifier=classifier, extension=extension,
-                     url_repository=repo, ignore_checksum=ignore_checksum, changed=True)
+                     repository=repository, ignore_checksum=ignore_checksum, changed=True)
 
 if __name__ == '__main__':
     main()
