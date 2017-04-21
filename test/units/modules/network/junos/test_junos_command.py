@@ -21,7 +21,9 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from ansible.compat.tests.mock import patch, MagicMock
+import sys
+sys.modules['jxmlease'] = MagicMock()
 from ansible.modules.network.junos import junos_command
 from .junos_module import TestJunosModule, load_fixture, set_module_args
 
