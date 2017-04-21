@@ -81,5 +81,5 @@
 - name: assert task with async param failed
   assert:
     that:
-      - 'script_result3.failed'
-      - 'script_result3.msg == "async is not supported for this task."'
+      - script_result3|failed
+      - script_result3.msg == "async is not supported for this task."
