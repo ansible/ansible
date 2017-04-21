@@ -27,7 +27,7 @@ import traceback
 from ansible.compat.six import iteritems, string_types, binary_type
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils._text import to_text
 from ansible.playbook.conditional import Conditional
@@ -521,6 +521,10 @@ class TaskExecutor:
             display.debug("running the handler")
             try:
                 result = self._handler.run(task_vars=variables)
+            except AnsibleActionSkip as e:
+                return dict(skipped=True, msg=to_text(e))
+            except AnsibleActionFail as e:
+                return dict(failed=True, msg=to_text(e))
             except AnsibleConnectionFailure as e:
                 return dict(unreachable=True, msg=to_text(e))
             display.debug("handler run complete")
