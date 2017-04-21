@@ -325,7 +325,7 @@ def main():
         else:
             module.fail_json(msg='unable to retrieve device configuration')
 
-        result['__backup__'] = to_native(match.text.strip(), encoding='latin1')
+        result['__backup__'] = match.text.strip()
 
     if module.params['rollback']:
         if not module.check_mode:
