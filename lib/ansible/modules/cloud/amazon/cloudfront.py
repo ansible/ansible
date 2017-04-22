@@ -69,7 +69,7 @@ options:
       required: false
   create_distribution:
       description:
-        - If C(yes), creates a distribution.
+        - If C(yes), creates a distribution. As a minimum either I(default_origin_domain_name) or at least one origin in I(origins) must be specified.
       default: 'no'
       choices: ['yes', 'no']
       required: false
@@ -81,7 +81,8 @@ options:
       required: false
   update_distribution:
       description:
-        - If C(yes), updates a distribution.
+        - If C(yes), updates a distribution.  This can be used with just an C(alias) to specify the distribution and either C(config) or one of it's attributes.
+
       default: 'no'
       choices: ['yes', 'no']
       required: false
@@ -93,7 +94,8 @@ options:
       required: false
   duplicate_distribution:
       description:
-        - If C(yes), duplicates a distribution.
+        - If C(yes), duplicates a distribution.  This can be used with just an C(alias) to specify the distribution and either C(config) or one of it's attributes.
+
       default: 'no'
       choices: ['yes', 'no']
       required: false
@@ -111,7 +113,7 @@ options:
       required: false
   update_streaming_distribution:
       description:
-        - If C(yes), updates a streaming distribution.
+        - If C(yes), updates a streaming distribution. This can be used with just an C(alias) to specify the distribution and either C(config) or one of it's attributes.
       default: 'no'
       choices: ['yes', 'no']
       required: false
@@ -123,7 +125,8 @@ options:
       required: false
   duplicate_streaming_distribution:
       description:
-        - If C(yes), duplicates a streaming distribution.
+        - If C(yes), duplicates a streaming distribution. This can be used with just an C(alias) to specify the distribution and either C(config) or one of it's attributes.
+
       default: 'no'
       choices: ['yes', 'no']
       required: false
@@ -222,9 +225,79 @@ options:
       required: no
   aliases:
       description:
-        - A list of domain name aliases to be used for the distribution.
+        - A list of domain name aliases as strings to be used for the distribution. Each alias must be unique across all distributions.
       required: no
+  default_root_object:
+      description:
+        - Specifies the path to request when the user requests the origin.
+        eg. if specified as 'index.html', this maps to www.example.com/index.html when www.example.com is called by the user.
+        This prevents the entire distribution source from being exposed at the root.
+  origins:
+      description:
+        - A list of complex origin objects to be specified for the distribution. Used for C(create_distribution), C(update_distribution) and C(duplicate_distribution). Only applies to distributions. Each origin attribute comprises the attributes:
+          - id
+          - domain_name
+          - origin_path
+          - custom_headers
+          - s3_origin_config
+          - custom_origin_config
+      required: false
+  default_cache_behavior:
+      description:
+        - A complex object specifying the default cache behavior of the distribution. If not specified, the target_origin_id is defined as the target_origin_id of the first valid cache_behavior in cache_behaviors[] with defaults. Used for distributions only.
+      required: false
+  cache_behaviors:
+      description:
+        - A list of complex cache behavior objects to be specified for the distribution.
+        Each cache behavior comprises the attributes:
+          - path_pattern
+          - target_origin_id
+          - forwarded_values
+          - trusted_signers
+          - viewer_protocol_policy
+          - min_ttl
+          - allowed_methods
+          - smooth_streaming
+          - default_ttl
+          - max_ttl
+          - compress
+          - lambda_function_associations
+    required: false
+  custom_error_responses:
+      description:
+        - A list of complex custom error responses to be specified for the distribution. This attribute configures custom http error messages returned to the user.
+        Each custom error response comprises the attributes:
+          - error_code
+          - reponse_page_path
+          - response_code
+          - error_caching_min_ttl
+      required: false
+  comment:
+      description:
+        - A unique comment to describe the cloudfront distribution. Applies to both distributions and streaming distributions.
+        If not specified, it defaults to a generic message that it has been created with Ansible, and a datetime stamp.
+      required: false
+  logging:
+      description:
+        - A complex object that defines logging for the distribution. Applies to both distributions and streaming distributions.
+        A logging object comprises the attributes:
+          - enabled
+          - include_cookies
+          - bucket
+          - prefix
+      required: false
+  price_class:
+      description:
+        - A string that specifies the pricing class of the distribution. Applies to both distributions and streaming distributions.
+      choices: ['PriceClass_100', 'PriceClass_200', 'PriceClass_All']
+      required: false
+  enabled:
+      description:
+        - A boolean value that specifies whether the distribution is enabled or disabled. 
+      default: 'false'
+      required: false
 
+  
 '''
 
 EXAMPLES = '''
