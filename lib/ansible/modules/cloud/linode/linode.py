@@ -669,8 +669,9 @@ def main():
                     'alert_diskio_enabled': alert_diskio_enabled, 'alert_diskio_threshold': alert_diskio_threshold,
                     'backupweeklyday': backupweeklyday, 'backupwindow': backupwindow}
 
-    for key, value in check_items.iteritems():
-        if value is not None: kwargs[key] = value
+    for key, value in check_items.items():
+        if value is not None: 
+            kwargs[key] = value
 
     # Setup the api_key
     if not api_key:
