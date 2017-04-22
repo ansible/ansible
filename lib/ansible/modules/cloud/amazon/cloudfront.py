@@ -390,54 +390,89 @@ options:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-    - name: create a distribution
-      cloudfront:
-        create_distribution: yes
-        default_origin_domain_name: www.my-cloudfront-origin.com
+# create a basic distribution
+- cloudfront:
+    create_distribution: yes
+    default_origin_domain_name: www.my-cloudfront-origin.com
 
-    - name: update a distribution comment by distribution_id
-      cloudfront:
-        update_distribution: yes
-        distribution_id: E1RP5A2MJ8073O
-        comment: modified by ansible cloudfront.py
+# update a distribution comment by distribution_id
+- cloudfront:
+    update_distribution: yes
+    distribution_id: E1RP5A2MJ8073O
+    comment: modified by ansible cloudfront.py
 
-    - name: update a distribution's aliases and comment using the distribution_id as a reference
-      cloudfront:
-        update_distribution: yes
-        distribution_id: E1RP5A2MJ8073O
-        comment: modified by cloudfront.py again
-        aliases: [ 'www.google.co', 'zzz.aaa.io' ]
+# update a distribution's aliases and comment using the distribution_id as a reference
+- cloudfront:
+    update_distribution: yes
+    distribution_id: E1RP5A2MJ8073O
+    comment: modified by cloudfront.py again
+    aliases: [ 'www.google.co', 'zzz.aaa.io' ]
 
-    - name: duplicate a distribution by distribution_id and modify the comment field
-      cloudfront:
-        duplicate_distribution: yes
-        distribution_id: E1RP5A2MJ8073O
-        comment: duplicated distribution
+# update a distribution's aliases and comment using an alias as a reference
 
-    - name: duplicate a distribution based on distribution_id and set comment and aliases on new distribution
-      cloudfront:
-        duplicate_distribution: yes
-        distribution_id: E1RP5A2MJ8073O
-        comment: duplicated distribution with different aliases
-        aliases: [ 'test.one', 'test.two', 'another.domain.not.in.original.com' ]
+# set tags for a distribution
 
-   - name: create a presigned url for a distribution based on a distribution_id and from a local pem file
-     cloudfront:
-        generate_presigned_url_from_pem_private_key: yes
-        distribution_id: E1RP5A2MJ8073O
-        presigned_url_pem_private_key_path: /home/user/ansible/pk-APKAJMTT6OPAZSFTNSCQ.pem
-        presigned_url_pem_url: 'http://d3vodljfucvmwf.cloudfront.net/example.txt'
-        presigned_url_pem_expire_date: '2017-04-18'
+# validate a distribution with origins and logging
 
-    - name: validate an existing distribution with a new comment (not very useful practically)
-      cloudfront:
-        validate_distribution: yes
-        distribution_id: E1RP5A2MJ8073O
-        comment: modified by cloudfront.py
+# validate a distribution from cloudfront_facts.py with additions
+
+# create a distribution with origins logging and cache behaviors
+
+# delete a distribution
+
+# create an s3 distribution
+
+# duplicate a distribution by distribution_id and modify the comment field
+- cloudfront:
+    duplicate_distribution: yes
+    distribution_id: E1RP5A2MJ8073O
+    comment: duplicated distribution
+
+# duplicate a distribution based on distribution_id and set comment and aliases on new distribution
+- cloudfront:
+    duplicate_distribution: yes
+    distribution_id: E1RP5A2MJ8073O
+    comment: duplicated distribution with different aliases
+    aliases: [ 'test.one', 'test.two', 'another.domain.not.in.original.com' ]
+
+# create a presigned url for a distribution based on a distribution_id and from a local pem file
+- cloudfront:
+    generate_presigned_url_from_pem_private_key: yes
+    distribution_id: E1RP5A2MJ8073O
+    presigned_url_pem_private_key_path: /home/user/ansible/pk-APKAJMTT6OPAZSFTNSCZ.pem
+    presigned_url_pem_url: 'http://d3vodljfucvmwf.cloudfront.net/example.txt'
+    presigned_url_pem_expire_date: '2017-04-18'
+
+# create a streaming distribution
+
+# duplicate a streaming distribution
+
+# update a streaming distribution
+
+# set tags on a streaming distribution
+
+# validate a streaming distribution
+
+# get a streaming distribution from cloudfront_facts and validate with modifications
+
+# create an origin access identity
+
+# update an origin access identity
+
+# delete an origin access identity
+
+# create an invalidation
+
+# create a batch of invalidations
+
 
 '''
 
 RETURN = '''
+
+
+
+
 '''
 
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, boto3_conn, HAS_BOTO3
@@ -1312,7 +1347,7 @@ def main():
             create_distribution, delete_distribution, update_distribution, create_streaming_distribution,
             delete_streaming_distribution, update_streaming_distribution, generate_presigned_url_from_pem_private_key,
             duplicate_distribution, duplicate_streaming_distribution, validate_distribution,
-            validate_streaming_distribution])) > 1:
+            validate_streaming_distribution, create_invalidation])) > 1:
         module.fail_json(msg="more than one cloudfront action has been specified. please select only one action.")
 
     if update_delete_duplicate_distribution or validate_distribution:
