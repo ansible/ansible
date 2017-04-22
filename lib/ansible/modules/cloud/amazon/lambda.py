@@ -333,6 +333,7 @@ def main():
         client = boto3_conn(module, conn_type='client', resource='lambda',
                             region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
+<<<<<<< HEAD
         fail_json_aws(module, e, msg="connecting to AWS")
 
     if state == 'present':
@@ -347,6 +348,21 @@ def main():
                 role_arn = 'arn:aws:iam::{0}:role/{1}'.format(account_id, role)
             except Exception as e:
                 fail_json_aws(module, e, msg="getting account information")
+=======
+        module.fail_json_aws(e, msg="Trying to connect to AWS")
+
+    if role.startswith('arn:aws:iam'):
+        role_arn = role
+    else:
+        # get account ID and assemble ARN
+        try:
+            iam_client = boto3_conn(module, conn_type='client', resource='iam',
+                                region=region, endpoint=ec2_url, **aws_connect_kwargs)
+            account_id = iam_client.get_user()['User']['Arn'].split(':')[4]
+            role_arn = 'arn:aws:iam::{0}:role/{1}'.format(account_id, role)
+        except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
+            module.fail_json_aws(e, msg="Trying to get AWS account details")
+>>>>>>> aws lambda.py module - move over to new error handling function
 
     # Get function configuration if present, False otherwise
     current_function = get_current_function(client, name)
@@ -420,7 +436,11 @@ def main():
                     current_version = response['Version']
                 changed = True
             except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
+<<<<<<< HEAD
                 fail_json_aws(module, e, msg="updating function configuration")
+=======
+                module.fail_json_aws(e, msg="Trying to update lambda configuration")
+>>>>>>> aws lambda.py module - move over to new error handling function
 
         # Update code configuration
         code_kwargs = {'FunctionName': name, 'Publish': True}
@@ -456,7 +476,11 @@ def main():
                     current_version = response['Version']
                 changed = True
             except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
+<<<<<<< HEAD
                 fail_json_aws(module, e, msg="updating function code")
+=======
+                module.fail_json_aws(e, msg="Trying to upload new code")
+>>>>>>> aws lambda.py module - move over to new error handling function
 
         # Describe function code and configuration
         response = get_current_function(client, name, qualifier=current_version)
@@ -526,7 +550,11 @@ def main():
                 current_version = response['Version']
             changed = True
         except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
+<<<<<<< HEAD
             fail_json_aws(module, e, msg="creating new function")
+=======
+            module.fail_json_aws(e, msg="Trying to create function")
+>>>>>>> aws lambda.py module - move over to new error handling function
 
         response = get_current_function(client, name, qualifier=current_version)
         if not response:
@@ -540,7 +568,11 @@ def main():
                 client.delete_function(FunctionName=name)
             changed = True
         except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
+<<<<<<< HEAD
             fail_json_aws(module, e, msg="deleting function")
+=======
+            module.fail_json_aws(e, msg="Trying to delete Lambda function")
+>>>>>>> aws lambda.py module - move over to new error handling function
 
         module.exit_json(changed=changed)
 
