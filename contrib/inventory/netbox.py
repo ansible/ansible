@@ -35,7 +35,8 @@ def cli_arguments():
     """
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-c", "--config-file", default="netbox.yml",
+    parser.add_argument("-c", "--config-file",
+                        default=os.getenv("NETBOX_CONFIG_FILE", "netbox.yml"),
                         help="Path for configuration of the script.")
     parser.add_argument("--list", help="Print all hosts with vars as Ansible dynamic inventory syntax.",
                         action="store_true")
