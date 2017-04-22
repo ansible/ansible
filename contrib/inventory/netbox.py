@@ -83,20 +83,6 @@ def get_value_by_path(source_dict, key_path, ignore_key_error=False):
     return key_output
 
 
-def get_full_path(file_name):
-    """Get full path of file.
-
-    Args:
-        file_name: The file that will be looked for.
-
-    Returns:
-        Full path of the file.
-    """
-
-    full_path = os.path.dirname(os.path.realpath(__file__)) + "/" + file_name
-    return full_path
-
-
 def open_yaml_file(yaml_file):
     """Open YAML file.
 
@@ -116,7 +102,7 @@ def open_yaml_file(yaml_file):
                 print(yaml_error)
                 sys.exit(1)
     except IOError as io_error:
-        print("Cannot open YAML file: %s\n%s" % (get_full_path(yaml_file), io_error))
+        print("Cannot open YAML file.\n%s" % (io_error))
         sys.exit(1)
     return yaml_file_content
 
