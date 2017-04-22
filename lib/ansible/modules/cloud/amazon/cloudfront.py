@@ -151,11 +151,80 @@ options:
       description:
         - An array of path strings to be invalidated.
       required: false
-  
+  presigned_url_pem_private_key_path:
+      description:
+        - The path on the host to the pem private key. This key is used to sign the url.
+      required: false
+  presigned_url_pem_private_key_password:
+      description:
+        - The password for the pem private key if a passwrod exists.
+      required: false
+  presigned_url_pem_url:
+      description:
+        - The cloudfront url to sign with the pem private key.
+      required: false
+  presigned_url_pem_expire_date:
+      description:
+        - The expiry date of the presigned url. Date format is: I(YYY-MM-DD)
+      required: false
+  config:
+      description:
+        - This is the main variable used for creating and updating distributions and streaming distributions.
+          When used, it will be a complex data type as a dictionary that represents the config of the distribution.
+          When used for creating a distribution, it must contain at least one origin in origins[] or
+          default_domain_name_origin used instead. Components of C(config) can be specified all in the config or separate
+          elements outside of the config.
+          Elements of a distribution are:
+           - caller_reference
+           - aliases
+           - default_root_object
+           - origins
+           - default_cache_behavior
+           - cache_behaviors
+           - custom_error_responses
+           - comment
+           - logging
+           - price_class
+           - enabled
+           - viewer_certificate
+           - restrictions
+           - web_acl_id
+           - http_version
+           - is_ipv6_enabled
+         Elements of a streaming distribution are:
+           - caller_reference
+           - s3_origin
+           - aliases
+           - comment
+           - logging
+           - trusted_signers
+          Most of these elements have sub-elements that can be seen in their entirety in the boto3 documentation at:
+           - http://boto3.readthedocs.io/en/latest/reference/services/cloudfront.html#CloudFront.Client.create_distribution
+           - http://boto3.readthedocs.io/en/latest/reference/services/cloudfront.html#CloudFront.Client.create_streaming_distribution
+          When element variables are specified as well as the config variable, the elements specified will have
+          precendence and overwrite any relevant data for that element in the config variable.
+      config_required: false
+  tags:
+      description:
+        - Used for distributions and streaming distributions in conjunction with C(config).
+        Should be input as a list of I(Key) I(Value) pairs.
+      required: false
+  alias:
+      description:
+        - The name of an alias that is used in a distribution. This is used to effectively reference a distribution
+        by it's alias as an alias can only be used by one distribution. This variable avoids haing to provide
+        the distribution_id or streaming_distribution_id as well as the e_tag to reference a distribution.
+        This variable is used for the actions:
+          - C(update_distribution=yes)
+          - C(update_streaming_distribution=yes)
+          - C(duplicate_distribution=yes)
+          - C(duplicate_streaming_distribution=yes)
+      required: no
+  aliases:
+      description:
+        - A list of domain name aliases to be used for the distribution.
+      required: no
 
-extends_documentation_fragment:
-  - aws
-  - ec2
 '''
 
 EXAMPLES = '''
@@ -467,13 +536,14 @@ class CloudFrontValidationManager:
             default_origin_path, streaming, create_distribution):
         try:
             valid_origins = {}
-            if origins is None and default_origin_domain_name is None:
-                return None
-            else:
-                origins = [ {
-                        'domain_name': default_origin_domain_name,
-                        'origin_path': '' if default_origin_path is None else str(default_origin_path)
-                        } ]
+            if origins is None:
+                if default_origin_domain_name is None and not create_distribution:
+                    return None
+                if default_origin_domain_name is not None:
+                    origins = [ {
+                            'domain_name': default_origin_domain_name,
+                            'origin_path': '' if default_origin_path is None else str(default_origin_path)
+                            } ]
             self.validate_is_list(origins, 'origins')
             quantity = len(origins)
             if quantity == 0 and default_origin_domain_name is None and create_distribution:
@@ -596,7 +666,7 @@ class CloudFrontValidationManager:
             allowed_methods = cache_behavior.get('allowed_methods')
             if allowed_methods is not None:
                 if 'items' not in allowed_methods:
-                    self.module.fail_json(msg="a list of items[] must be specified for cache_behavior.allowed_methods")
+                    self.module.fail_json(msg="cache_behavior.allowed_methods.items[] must be specified")
                 self.validate_attribute_with_allowed_values(cache_behavior.get('cached_methods'),
                         'cache_behavior.allowed_items.cached_methods[]', self.__valid_methods)
                 self.validate_is_list(allowed_methods.get('items'), 'cache_behavior.allowed_methods.items')
@@ -957,8 +1027,6 @@ def main():
         presigned_url_pem_private_key_password=dict(required=False, default=None, type='str'),
         presigned_url_pem_url=dict(required=False, default=None, type='str'),
         presigned_url_pem_expire_date=dict(required=False, default=None, type='str'),
-        s3_bucket_name=dict(required=False, default=None, type='str'),
-        s3_key_name=dict(required=False, default=None, type='str'),
         tag_resource=dict(required=False, default=False, type='bool'),
         untag_resource=dict(required=False, default=False, type='bool'),
         config=dict(required=False, default=None, type='json'),
@@ -1018,8 +1086,6 @@ def main():
     presigned_url_pem_private_key_password = module.params.get('presigned_url_pem_private_key_password')
     presigned_url_pem_url = module.params.get('presigned_url_pem_url')
     presigned_url_pem_expire_date = module.params.get('presigned_url_pem_expire_date')
-    s3_bucket_name = module.params.get('s3_bucket_name')
-    s3_key_name = module.params.get('s3_key_name')
     config = module.params.get('config')
     tags = module.params.get('tags')
     create_invalidation = module.params.get('create_invalidation')
