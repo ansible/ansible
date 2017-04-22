@@ -338,6 +338,7 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
                   alert_bwquota_enabled, alert_bwquota_threshold, alert_cpu_enabled, alert_cpu_threshold, alert_diskio_enabled,
                   alert_diskio_threshold,backupweeklyday, backupwindow, displaygroup, plan, additional_disks, distribution,
                   datacenter, kernel_id, linode_id, payment_term, password, private_ip, ssh_pub_key, swap, wait, wait_timeout, watchdog):
+    kwargs = {}
     instances = []
     changed = False
     new_server = False
@@ -346,7 +347,7 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
     configs = []
     jobs = []
     disk_size = 0
-
+    if alert_cpu_enabled is not None: kwargs['alert_cpu_enabled'] = alert_cpu_enabled
     # See if we can match an existing server details with the provided linode_id
     if linode_id:
         # For the moment we only consider linode_id as criteria for match
@@ -388,10 +389,10 @@ def linodeServers(module, api, state, name, alert_bwin_enabled, alert_bwin_thres
                 api.linode_update(LinodeId=linode_id, ALERT_BWIN_ENABLED=alert_bwin_enabled,
                         ALERT_BWIN_THRESHOLD=alert_bwin_threshold, ALERT_BWOUT_ENABLED=alert_bwout_enabled,
                         ALERT_BWOUT_THRESHOLD=alert_bwout_threshold, ALERT_BWQUOTA_ENABLED=alert_bwquota_enabled,
-                        ALERT_BWQUOTA_THRESHOLD=alert_bwquota_threshold, ALERT_CPU_ENABLED=alert_cpu_enabled,
+                        ALERT_BWQUOTA_THRESHOLD=alert_bwquota_threshold,
                         ALERT_CPU_THRESHOLD=alert_cpu_threshold, ALERT_DISKIO_ENABLED=alert_diskio_enabled,
                         ALERT_DISKIO_THRESHOLD=alert_diskio_threshold, BACKUPWEEKLYDAY=backupweeklyday,
-                        BACKUPWINDOW=backupwindow, LPM_DISPLAYGROUP=displaygroup, WATCHDOG=watchdog)
+                        BACKUPWINDOW=backupwindow, LPM_DISPLAYGROUP=displaygroup, WATCHDOG=watchdog, **kwargs)
                 # Save server
                 servers = api.linode_list(LinodeId=linode_id)
             except Exception as e:
@@ -605,7 +606,7 @@ def main():
             alert_bwout_threshold = dict(type='int', default='10'),
             alert_bwquota_enabled = dict(type='bool', default=True),
             alert_bwquota_threshold = dict(type='int', default='80'),
-            alert_cpu_enabled = dict(type='bool', default=True),
+            alert_cpu_enabled = dict(type='bool', default=None),
             alert_cpu_threshold = dict(type='int', default='90'),
             alert_diskio_enabled = dict(type='bool', default=True),
             alert_diskio_threshold = dict(type='int', default='10000'),
@@ -643,7 +644,7 @@ def main():
     alert_bwout_threshold = module.params.get('alert_bwout_threshold')
     alert_bwquota_enabled = int(module.params.get('alert_bwquota_enabled'))
     alert_bwquota_threshold = module.params.get('alert_bwquota_threshold')
-    alert_cpu_enabled = int(module.params.get('alert_cpu_enabled'))
+    alert_cpu_enabled = module.params.get('alert_cpu_enabled')
     alert_cpu_threshold = module.params.get('alert_cpu_threshold')
     alert_diskio_enabled = int(module.params.get('alert_diskio_enabled'))
     alert_diskio_threshold = module.params.get('alert_diskio_threshold')
