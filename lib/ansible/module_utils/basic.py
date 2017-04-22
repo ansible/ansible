@@ -92,6 +92,7 @@ import datetime
 from collections import deque
 from collections import Mapping, MutableMapping, Sequence, MutableSequence, Set, MutableSet
 from itertools import repeat, chain
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 try:
     import syslog
@@ -2137,6 +2138,31 @@ class AnsibleModule(object):
         self.do_cleanup_files()
         self._return_formatted(kwargs)
         sys.exit(1)
+
+
+    def fail_json_aws(self, exception, msg=None):
+        """call fail_json with processed exception
+
+        function for converting exceptions thrown by AWS SDK modules,
+        botocore, boto3 and boto, into nice error messages.
+        """
+        last_traceback=traceback.format_exc()
+        if msg is not None:
+            message = '{}: {}'.format(msg, exception.message)
+        else:
+            message = exception.message
+
+        try:
+            response=exception.response
+        except AttributeError:
+            response=None
+
+        if response is None:
+            self.fail_json(msg=message, traceback=last_traceback)
+        else:
+            self.fail_json(msg=message, traceback=last_traceback,
+                       **camel_dict_to_snake_dict(response))
+
 
     def fail_on_missing_params(self, required_params=None):
         ''' This is for checking for required params when we can not check via argspec because we
