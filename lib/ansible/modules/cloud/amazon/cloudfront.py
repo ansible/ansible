@@ -160,7 +160,7 @@ options:
       required: false
   presigned_url_pem_private_key_password:
       description:
-        - The password for the pem private key if a passwrod exists.
+        - The password for the pem private key if a password exists.
       required: false
   presigned_url_pem_url:
       description:
@@ -168,15 +168,15 @@ options:
       required: false
   presigned_url_pem_expire_date:
       description:
-        - The expiry date of the presigned url. Date format is: I(YYY-MM-DD)
+        - The expiry date of the presigned url. Date format is: I(YYYY-MM-DD)
       required: false
   config:
       description:
         - This is the main variable used for creating and updating distributions and streaming distributions.
           When used, it will be a complex data type as a dictionary that represents the config of the distribution.
-          When used for creating a distribution, it must contain at least one origin in origins[] or
-          default_domain_name_origin used instead. Components of C(config) can be specified all in the config or separate
-          elements outside of the config.
+          When used for creating a distribution, it must contain at least one origin in I(origins) or the variable
+          default_domain_name_origin should be used instead. Components of C(config) can be specified entirely in C(config)
+          or as separate elements outside of the config. This parameter applies to both distributions and streaming distributions.
           Elements of a distribution are:
            - caller_reference
            - aliases
@@ -225,47 +225,67 @@ options:
       required: no
   aliases:
       description:
-        - A list of domain name aliases as strings to be used for the distribution. Each alias must be unique across all distributions.
+        - A list of domain name aliases as strings to be used for the distribution. Each alias must be unique across all distributions. Applies to both distributions and streaming distributions.
       required: no
   default_root_object:
       description:
         - Specifies the path to request when the user requests the origin.
         eg. if specified as 'index.html', this maps to www.example.com/index.html when www.example.com is called by the user.
-        This prevents the entire distribution source from being exposed at the root.
+        This prevents the entire distribution origin from being exposed at the root.
   origins:
       description:
-        - A list of complex origin objects to be specified for the distribution. Used for C(create_distribution), C(update_distribution) and C(duplicate_distribution). Only applies to distributions. Each origin attribute comprises the attributes:
+        - A list of complex origin objects to be specified for the distribution. Used for C(create_distribution), C(update_distribution) and C(duplicate_distribution). Only valid for distributions.
+        Each origin attribute comprises the attributes.
           - id
           - domain_name
           - origin_path
-          - custom_headers
+          - custom_headers []
           - s3_origin_config
+            - origin_access_identity
           - custom_origin_config
+            - http_port
+            - https_port
+            - origin_protocol_policy
+            - origin_ssl_protocols []
+            - origin_read_timeout
+            - origin_keepalive_timeout
       required: false
   default_cache_behavior:
       description:
-        - A complex object specifying the default cache behavior of the distribution. If not specified, the target_origin_id is defined as the target_origin_id of the first valid cache_behavior in cache_behaviors[] with defaults. Used for distributions only.
+        - A complex object specifying the default cache behavior of the distribution. If not specified, the target_origin_id is defined as the target_origin_id of the first valid cache_behavior in cache_behaviors[] with defaults. Only valid for distributions.
       required: false
   cache_behaviors:
       description:
-        - A list of complex cache behavior objects to be specified for the distribution.
+        - A list of complex cache behavior objects to be specified for the distribution. Only valid for distributions.
         Each cache behavior comprises the attributes:
           - path_pattern
           - target_origin_id
           - forwarded_values
+            - query_string
+            - cookies
+              - forward
+              - whitelisted_names []
+            - headers []
+            - query_string_cache_keys []
           - trusted_signers
+            - enabled
+            - items
           - viewer_protocol_policy
           - min_ttl
           - allowed_methods
+            - items
+            - cached_methods []
           - smooth_streaming
           - default_ttl
           - max_ttl
           - compress
-          - lambda_function_associations
+          - lambda_function_associations []
+            - lambda_function_arn
+            - event_type
     required: false
   custom_error_responses:
       description:
-        - A list of complex custom error responses to be specified for the distribution. This attribute configures custom http error messages returned to the user.
+        - A list of complex custom error responses to be specified for the distribution. This attribute configures custom http error messages returned to the user. Only valid for distributions.
         Each custom error response comprises the attributes:
           - error_code
           - reponse_page_path
@@ -280,7 +300,7 @@ options:
   logging:
       description:
         - A complex object that defines logging for the distribution. Applies to both distributions and streaming distributions.
-        A logging object comprises the attributes:
+        The logging object comprises the attributes:
           - enabled
           - include_cookies
           - bucket
@@ -293,11 +313,78 @@ options:
       required: false
   enabled:
       description:
-        - A boolean value that specifies whether the distribution is enabled or disabled. 
+        - A boolean value that specifies whether the distribution is enabled or disabled. Applies to both distributions
+        and streaming distributions.
       default: 'false'
       required: false
+  viewer_certificate:
+      description:
+        - A complex object that specifies the encryption details of the distribution. Only valid for distributions. 
+          The viewer_certificate object comprises the following attributes:
+            - cloudfront_default_certificate
+            - iam_certificate_id
+            - acm_certificate_arn
+            - ssl_support_method
+            - minimum_protocol_version
+            - certificate
+            - certificate_source
+      required: false
+  restrictions:
+      description:
+        - A complex object that describes how a distribution should restrict it's content. Only valid for distributions.
+          The restriction object comprises the following attributes:
+            - geo_restriction
+              - restriction_type
+              - items
+  web_acl_id:
+      description:
+        - The id of a waf web_acl. Only valid for distributions.
+      required: false
+  http_version:
+      description:
+        - The version of http to use for the distribution. Only valid for distributions.
+      choices: [ 'http1.1', 'http2' ]
+      required: false
+  is_ipv6_enabled:
+      description:
+        - A boolean value specifying whether IPV6 addresses should be used for the distribution or not.
+      choices: ['yes', 'no']
+      required: false
+  s3_origin:
+      description:
+        - A complex object that describes the S3 bucket from whence the media streaming arises. Only valid for streaming distributions.
+          The s3_origin object comprises the following attributes:
+            - domain_name
+            - origin_access_identity
+      required: false
+  trusted_signers:
+      description:
+        - A complex object describing the AWS accounts that are allowed to create signed urls for the distribution using C(generate_presigned_url_from_pem_private_key=yes). Only valid for distributions.
+        The trusted_signers object comprises the following attributes:
+          - enabled
+          - items
+  default_origin_domain_name:
+      description:
+        - The domain name to specify for a distribution or a streaming distribution. To create a basic, generic distribution or streaming distribution, this parameter alone can be specified as the minimum required parameters for a distribution. Used in conjunction with C(create_distribtion) and C(create_streaming_distribution)
+      required: false
+  default_origin_path:
+      description:
+        - The origin path to specify as the base of the distribution's origin. Maps to a path on your origin from the distribution.
+        eg. if C(default_origin_path=/production) then www.example.com maps to www.my-distribution-origin.com/production/ where
+        www.example.com is an alias to the cloudfront distribution.
+  default_origin_access_identity:
+      description:
+        - The identity of a user who has access to the origin for use with the distribution. Avoids the assumption that anyone can access the (s3) origin. Used in conjunction with default_origin_path.
+      required: false
+  default_s3_origin_domain_name:
+      description:
+        - The default domain name for an S3 origin. Applies to streaming distribution only. A streaming distribution can be defined with only this parameter in the same way a distribution can be defined with only I(default_origin_domain_name).
+      required: false
+  default_s3_origin_access_identity:
+      description:
+        - The default origin access identity to use for the streaming distribution. Avoids the assumption that anyone can access the (s3) origin). Only applies to streaming distributions.
+      required: false
 
-  
 '''
 
 EXAMPLES = '''
@@ -966,8 +1053,8 @@ class CloudFrontValidationManager:
 
     def get_first_origin_id_for_default_cache_behavior(self, valid_origins):
         if valid_origins is not None:
-	    valid_origins_list = valid_origins.get('items')
-	    if valid_origins_list is not None and isinstance(valid_origins_list, list) and len(valid_origins_list) > 0:
+            valid_origins_list = valid_origins.get('items')
+            if valid_origins_list is not None and isinstance(valid_origins_list, list) and len(valid_origins_list) > 0:
                 return str(valid_origins.get('items')[0].get('id'))
         self.module.fail_json(msg="there are no valid origins from which to specify a target_origin_id " +
                 "for the default_cache_behavior configuration")
@@ -1193,7 +1280,7 @@ def main():
     create_update_streaming_distribution = create_streaming_distribution or update_streaming_distribution
     update_delete_duplicate_distribution = update_distribution or delete_distribution or duplicate_distribution
     update_delete_duplicate_streaming_distribution = (update_streaming_distribution or delete_streaming_distribution
-	    or duplicate_streaming_distribution)
+            or duplicate_streaming_distribution)
     validate = validate_distribution or validate_streaming_distribution
     duplicate = duplicate_distribution or duplicate_streaming_distribution
     config_required = ( create_distribution or update_delete_duplicate_distribution or create_streaming_distribution
