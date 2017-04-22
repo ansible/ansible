@@ -594,7 +594,7 @@ def main():
             api_key = dict(no_log=True),
             name = dict(type='str'),
             alert_bwin_enabled = dict(type='bool', default=None),
-            alert_bwin_threshold = dict(type='int', required=False),
+            alert_bwin_threshold = dict(type='int', default=None),
             alert_bwout_enabled = dict(type='bool', default=None),
             alert_bwout_threshold = dict(type='int', default=None),
             alert_bwquota_enabled = dict(type='bool', default=None),
@@ -670,7 +670,7 @@ def main():
                     'backupweeklyday': backupweeklyday, 'backupwindow': backupwindow}
 
     for key, value in check_items.items():
-        if value is not None: 
+        if value is not None:
             kwargs[key] = value
 
     # Setup the api_key
