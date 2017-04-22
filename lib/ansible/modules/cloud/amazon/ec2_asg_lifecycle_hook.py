@@ -119,9 +119,9 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+
 def create_lifecycle_hook(connection, module):
     changed = False
-
 
     lch_name = module.params.get('lifecycle_hook_name')
     asg_name = module.params.get('autoscaling_group_name')
