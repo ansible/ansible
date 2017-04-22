@@ -54,10 +54,10 @@ options:
     version_added: 1.7
     description:
       - The regular expression to look for in every line of the file. For
-        C(state=present), the pattern to replace if found; only the last line
-        found will be replaced. For C(state=absent), the pattern of the line
-        to remove.  Uses Python regular expressions; see
-        U(http://docs.python.org/2/library/re.html).
+        C(state=present), the pattern to replace if found (also if you use insertafter
+        or insertbefore in combination with regexp); only the last line found will be replaced.
+        For C(state=absent), the pattern of the line to remove. Uses Python regular
+        expressions; see U(http://docs.python.org/2/library/re.html).
   state:
     required: false
     choices: [ present, absent ]
@@ -93,6 +93,7 @@ options:
         available; C(EOF) for inserting the line at the end of the file.
         If specified regular expression has no matches, EOF will be used instead.
         May not be used with C(backrefs).
+        If used in combination with regexp, line will be replaced.
     choices: [ 'EOF', '*regex*' ]
   insertbefore:
     required: false
@@ -103,6 +104,7 @@ options:
         available; C(BOF) for inserting the line at the beginning of the file.
         If specified regular expression has no matches, the line will be
         inserted at the end of the file.  May not be used with C(backrefs).
+        If used in combination with regexp, line will be replaced.
     choices: [ 'BOF', '*regex*' ]
   create:
     required: false
@@ -128,7 +130,8 @@ notes:
 """
 
 EXAMPLES = r"""
-# Before 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
+### Before 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
+# Replace line with regexp
 - lineinfile:
     path: /etc/selinux/config
     regexp: '^SELINUX='
@@ -147,12 +150,14 @@ EXAMPLES = r"""
     group: root
     mode: 0644
 
+# Insert line after regexp
 - lineinfile:
     path: /etc/httpd/conf/httpd.conf
-    regexp: '^Listen '
-    insertafter: '^#Listen '
     line: 'Listen 8080'
+    insertafter: '^#Listen '
+    state: present
 
+# Insert line before 'regexp', (regexp: will be replaced with line)
 - lineinfile:
     path: /etc/services
     regexp: '^# port for http'
