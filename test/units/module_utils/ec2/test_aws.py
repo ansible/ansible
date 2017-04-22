@@ -16,6 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+
 try:
     import boto3
     import botocore
@@ -116,21 +119,29 @@ class ErrorReportingTestcase(unittest.TestCase):
             try:
                 raise botocore.exceptions.ClientError(err_msg, 'Could not find you')
             except Exception as e:
-                print "exception is " + str(e)
+                print("exception is " + str(e))
                 module.fail_json_aws(e, msg="Failure looking for you")
 
         assert(len(fail_json_double.mock_calls) > 0), "failed to call fail_json when should have"
         assert(len(fail_json_double.mock_calls) < 2), "called fail_json multiple times when once would do"
 
-        assert("test_botocore_exception_reports_nicely" in fail_json_double.mock_calls[0][2]["traceback"]), "traceback doesn't include correct function, fail call was actually: " + str(fail_json_double.mock_calls[0])
+        assert("test_botocore_exception_reports_nicely"
+               in fail_json_double.mock_calls[0][2]["traceback"]), \
+               "traceback doesn't include correct function, fail call was actually: " \
+                + str(fail_json_double.mock_calls[0])
 
-        assert("Failure looking for you:" in fail_json_double.mock_calls[0][2]["msg"]), "error message doesn't include the local message; was: " + str(fail_json_double.mock_calls[0])
-        assert("Could not find you" in fail_json_double.mock_calls[0][2]["msg"]), "error message doesn't include the botocore exception message; was: " + str(fail_json_double.mock_calls[0])
+        assert("Failure looking for you:" in fail_json_double.mock_calls[0][2]["msg"]), \
+            "error message doesn't include the local message; was: " \
+            + str(fail_json_double.mock_calls[0])
+        assert("Could not find you" in fail_json_double.mock_calls[0][2]["msg"]), \
+            "error message doesn't include the botocore exception message; was: " \
+            + str(fail_json_double.mock_calls[0])
         try:
             fail_json_double.mock_calls[0][2]["error"]
         except KeyError:
             raise Exception("error was missing; call was: " + str(fail_json_double.mock_calls[0]))
-        assert("FakeClass.FakeError" == fail_json_double.mock_calls[0][2]["error"]["code"]), "Failed to find error/code; was: " + str(fail_json_double.mock_calls[0])
+        assert("FakeClass.FakeError" == fail_json_double.mock_calls[0][2]["error"]["code"]), \
+            "Failed to find error/code; was: " + str(fail_json_double.mock_calls[0])
 
 
 
@@ -147,22 +158,29 @@ class ErrorReportingTestcase(unittest.TestCase):
             try:
                 raise botocore.exceptions.ClientError(err_msg, 'Could not find you')
             except Exception as e:
-                print "exception is " + str(e)
+                print("exception is " + str(e))
                 module.fail_json_aws(e, msg="Failure looking for you")
 
         assert(len(fail_json_double.mock_calls) > 0), "failed to call fail_json when should have"
-        assert(len(fail_json_double.mock_calls) < 2), "called fail_json multiple times when once would do"
+        assert(len(fail_json_double.mock_calls) < 2), \
+            "called fail_json multiple times when once would do"
 
-        assert("test_botocore_exception_without_response_reports_nicely_via_fail_json_aws" in fail_json_double.mock_calls[0][2]["traceback"]), "traceback doesn't include correct function, fail call was actually: " + str(fail_json_double.mock_calls[0])
+        assert("test_botocore_exception_without_response_reports_nicely_via_fail_json_aws"
+               in fail_json_double.mock_calls[0][2]["traceback"]), \
+               "traceback doesn't include correct function, fail call was actually: " \
+               + str(fail_json_double.mock_calls[0])
 
-        assert("Failure looking for you:" in fail_json_double.mock_calls[0][2]["msg"]), "error message doesn't include the local message; was: " + str(fail_json_double.mock_calls[0])
+        assert("Failure looking for you:" in fail_json_double.mock_calls[0][2]["msg"]), \
+            "error message doesn't include the local message; was: " \
+            + str(fail_json_double.mock_calls[0])
 
         # I would have thought this should work, however the botocore exception comes back with
         # "argument of type 'NoneType' is not iterable" so it's probably not really designed
         # to handle "None" as an error response.
         #
-        # assert("Could not find you" in fail_json_double.mock_calls[0][2]["msg"]), "error message doesn't include the botocore exception message; was: " + str(fail_json_double.mock_calls[0])
-
+        # assert("Could not find you" in fail_json_double.mock_calls[0][2]["msg"]), \
+        #    "error message doesn't include the botocore exception message; was: " \
+        #    + str(fail_json_double.mock_calls[0])
 
 
 # TODO:
