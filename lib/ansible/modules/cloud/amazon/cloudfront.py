@@ -390,28 +390,30 @@ options:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Create a config for an Origin Access Identity
-- cloudfront:
-    create_origin_access_identity_config: yes
-    callerreference: callerreferencevalue
-    comment: creating an origin access identity
-    register: "{{ oai_config_details }}"
+    - name: create a distribution
+      cloudfront:
+        create_distribution: yes
+        default_origin_domain_name: www.my-cloudfront-origin.com
 
-# Create an Origin Access Identity
-  - cloudfront:
-    create_cloudfront_origin_access_identity: yes
-    origin_access_identity_config: "{{ oai_config_details }}"
+    - name: update a distribution comment by distribution_id
+      cloudfront:
+        update_distribution: yes
+        distribution_id: E1RP5A2MJ8073O
+        comment: modified by ansible cloudfront.py
 
-# Create a Distribution Configuration
-  - cloudfront:
-    create_distribution_config: true
- ...
-register: "{{ distribution_config_details }}"
+    - name: update a distribution's aliases and comment using the distribution_id as a reference
+      cloudfront:
+        update_distribution: yes
+        distribution_id: E1RP5A2MJ8073O
+        comment: modified by cloudfront.py again
+        aliases: [ 'www.google.co', 'zzz.aaa.io' ]
 
-# Create a Distribution
-  - cloudfront:
-    create_distribution: true
-    distribution_config: '{{ distribution_config }}'
+    - name: duplicate a distribution by distribution_id and modify the comment field
+      cloudfront:
+        duplicate_distribution: yes
+        distribution_id: E1RP5A2MJ8073O
+        comment: duplicated distribution
+
 
 '''
 
