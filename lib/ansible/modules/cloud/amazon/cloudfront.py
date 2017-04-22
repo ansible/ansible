@@ -133,13 +133,6 @@ options:
       default: 'no'
       choices: ['yes', 'no']
       required: false
-  generate_presigned_url:
-      description:
-        - If C(yes), generates a presigned url for a cloudfront method. All valid methods are available at:
-          (http://boto3.readthedocs.io/en/latest/reference/services/cloudfront.html)
-      default: 'no'
-      choices: ['yes', 'no']
-      required: false
   generate_presigned_url_from_pem_private_key:
       description:
         - If C(yes), generates a presigned url for a distribution from a private .pem key.
@@ -149,24 +142,6 @@ options:
   origin_access_identity_id:
       description:
         - The id of an origin access identity.
-      required: false
-  presigned_url_client_method:
-      description:
-        - The name of the cloudfront method to request. All valid methods are available at:
-          (http://boto3.readthedocs.io/en/latest/reference/services/cloudfront.html). 
-      required: false
-  presigned_url_expires_in:
-      description:
-        - The number of seconds the url is valid for. Defaults to 3600 seconds (1 hour).
-      required: false
-  presigned_url_http_method:
-      description:
-        - The http method to use on the generated url. Defaults to the client method's http method.
-      required: false
-  presigned_url_parameters:
-      description:
-        - The parameters to send to the client method (as a dictionary). Is whatever is usually
-          sent to the client method.
       required: false
   caller_reference:
       description:
@@ -299,18 +274,6 @@ class CloudFrontServiceManager:
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="error creating invalidation(s) - " + str(e),
-                    exception=traceback.format_exc(),
-                    **camel_dict_to_snake_dict(e.response))
-
-    def generate_presigned_url(self, client_method, params, expires_in, http_method):
-        try:
-            if expires_in is None:
-                expires_in = self.__default_presigned_url_expires_in
-            presigned_url = self.client.generate_presigned_url(ClientMethod = client_method,
-                    Params=params, ExpiresIn=expires_in, HttpMethod=http_method)
-            return { 'presigned_url': presigned_url }
-        except botocore.exceptions.ClientError as e:
-            self.module.fail_json(msg="error generating presigned url - " + str(e),
                     exception=traceback.format_exc(),
                     **camel_dict_to_snake_dict(e.response))
 
@@ -461,7 +424,6 @@ class CloudFrontValidationManager:
         self.__default_cache_behavior_forwarded_values_forward_cookies = 'none'
         self.__default_cache_behavior_forwarded_values_query_string = True
         self.__default_trusted_signers_enabled = True
-        self.__default_presigned_url_expires_in = 3600
         self.__default_presigned_url_pem_expire_date_format = '%Y-%m-%d'
         self.__valid_price_classes = [ 'PriceClass_100', 'PriceClass_200', 'PriceClass_All' ]
         self.__valid_custom_origin_protocol_policies = [ 'http-only', 'match-viewer', 'https-only' ]
@@ -979,7 +941,6 @@ def main():
         create_streaming_distribution=dict(required=False, default=False, type='bool'),
         update_streaming_distribution=dict(required=False, default=False, type='bool'),
         delete_streaming_distribution=dict(required=False, default=False, type='bool'),
-        generate_presigned_url=dict(required=False, default=False, type='bool'),
         generate_presigned_url_from_pem_private_key=dict(required=False, default=False, type='bool'),
         duplicate_distribution=dict(required=False, default=False, type='bool'),
         duplicate_streaming_distribution=dict(required=False, default=False, type='bool'),
@@ -992,10 +953,6 @@ def main():
         streaming_distribution_id=dict(required=False, default=None, type='str'),
         invalidation_batch=dict(required=False, default=None, type='str'),
         e_tag=dict(required=False, default=None, type='str'),
-        presigned_url_client_method=dict(required=False, default=None, type='str'),
-        presigned_url_expires_in=dict(required=False, default=None, type='int'),
-        presigned_url_http_method=dict(required=False, default=None, type='str'),
-        presigned_url_parameters=dict(required=False, default=None, type='dict'),
         presigned_url_pem_private_key_path=dict(required=False, default=None, type='str'),
         presigned_url_pem_private_key_password=dict(required=False, default=None, type='str'),
         presigned_url_pem_url=dict(required=False, default=None, type='str'),
@@ -1048,7 +1005,6 @@ def main():
     create_streaming_distribution = module.params.get('create_streaming_distribution')
     update_streaming_distribution = module.params.get('update_streaming_distribution')
     delete_streaming_distribution = module.params.get('delete_streaming_distribution')
-    generate_presigned_url = module.params.get('generate_presigned_url')
     generate_presigned_url_from_pem_private_key = module.params.get('generate_presigned_url_from_pem_private_key')
     duplicate_distribution = module.params.get('duplicate_distribution')
     duplicate_streaming_distribution = module.params.get('duplicate_streaming_distribution')
@@ -1058,10 +1014,6 @@ def main():
     comment = module.params.get('comment')
     e_tag = module.params.get('e_tag')
     origin_access_identity_id = module.params.get('origin_access_identity_id')
-    presigned_url_client_method = module.params.get('presigned_url_client_method')
-    presigned_url_expires_in = module.params.get('presigned_url_expires_in')
-    presigned_url_http_method = module.params.get('presigned_url_http_method')
-    presigned_url_parameters = module.params.get('presigned_url_parameters')
     presigned_url_pem_private_key_path = module.params.get('presigned_url_pem_private_key_path')
     presigned_url_pem_private_key_password = module.params.get('presigned_url_pem_private_key_password')
     presigned_url_pem_url = module.params.get('presigned_url_pem_url')
@@ -1109,10 +1061,10 @@ def main():
             or update_delete_duplicate_streaming_distribution or validate)
 
     if sum(map(bool, [create_origin_access_identity, delete_origin_access_identity, update_origin_access_identity,
-            generate_presigned_url, create_distribution, delete_distribution, update_distribution,
-            create_streaming_distribution, delete_streaming_distribution, update_streaming_distribution,
-            generate_presigned_url_from_pem_private_key, duplicate_distribution, duplicate_streaming_distribution,
-            validate_distribution, validate_streaming_distribution])) > 1:
+            create_distribution, delete_distribution, update_distribution, create_streaming_distribution,
+            delete_streaming_distribution, update_streaming_distribution, generate_presigned_url_from_pem_private_key,
+            duplicate_distribution, duplicate_streaming_distribution, validate_distribution,
+            validate_streaming_distribution])) > 1:
         module.fail_json(msg="more than one cloudfront action has been specified. please select only one action.")
 
     if update_delete_duplicate_distribution or validate_distribution:
@@ -1165,9 +1117,6 @@ def main():
         result=service_mgr.update_origin_access_identity(caller_reference, comment, origin_access_identity_id, e_tag)
     elif create_invalidation:
         result=service_mgr.create_invalidation(distribution_id, invalidation_batch)
-    elif generate_presigned_url:
-        result=service_mgr.generate_presigned_url(presigned_url_client_method, presigned_url_parameters,
-                presigned_url_expires_in, presigned_url_http_method)
     elif generate_presigned_url_from_pem_private_key:
         validated_pem_expire_date = validation_mgr.validate_presigned_url_pem_expire_date(presigned_url_pem_expire_date)
         result=service_mgr.generate_presigned_url_from_pem_private_key(distribution_id,
