@@ -33,12 +33,12 @@ author: Willem van Ketwich (@wilvk)
 options:
   distribution_id:
       description:
-        - The id of the CloudFront distribution. Used with I(create_distribution), I(update_distribution), I(delete_distribution),
-          I(duplicate_distribution), I(create_invalidation), I(generate_presigned_url_from_pem_private_key) 
+        - The id of the cloudfront distribution. Used with I(create_distribution), I(update_distribution), I(delete_distribution),
+          I(duplicate_distribution), I(create_invalidation), I(generate_presigned_url_from_pem_private_key). This parameter can be exchanged with alias. To be more specific, e_tag can be specified as well but is not necessary. 
           required: false
   streaming_distribution_id:
       description:
-        - The id of the CloudFront streaming distribution. Used with I(create_streaming_distribution), I(update_streaming_distribution), I(delete_streaming_distribution), I(duplicate_streaming_distribution). 
+        - The id of the CloudFront streaming distribution. Used with I(create_streaming_distribution), I(update_streaming_distribution), I(delete_streaming_distribution), I(duplicate_streaming_distribution). This parameter can be exchanged with alias. To be more specific, e_tag can be specified as well but is not necessary. 
       required: false
   origin_access_identity_id:
       description:
@@ -414,6 +414,26 @@ EXAMPLES = '''
         distribution_id: E1RP5A2MJ8073O
         comment: duplicated distribution
 
+    - name: duplicate a distribution based on distribution_id and set comment and aliases on new distribution
+      cloudfront:
+        duplicate_distribution: yes
+        distribution_id: E1RP5A2MJ8073O
+        comment: duplicated distribution with different aliases
+        aliases: [ 'test.one', 'test.two', 'another.domain.not.in.original.com' ]
+
+   - name: create a presigned url for a distribution based on a distribution_id and from a local pem file
+     cloudfront:
+        generate_presigned_url_from_pem_private_key: yes
+        distribution_id: E1RP5A2MJ8073O
+        presigned_url_pem_private_key_path: /home/user/ansible/pk-APKAJMTT6OPAZSFTNSCQ.pem
+        presigned_url_pem_url: 'http://d3vodljfucvmwf.cloudfront.net/example.txt'
+        presigned_url_pem_expire_date: '2017-04-18'
+
+    - name: validate an existing distribution with a new comment (not very useful practically)
+      cloudfront:
+        validate_distribution: yes
+        distribution_id: E1RP5A2MJ8073O
+        comment: modified by cloudfront.py
 
 '''
 
