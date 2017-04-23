@@ -1414,7 +1414,7 @@ def main():
             or duplicate_streaming_distribution)
     validate = validate_distribution or validate_streaming_distribution
     duplicate = duplicate_distribution or duplicate_streaming_distribution
-    config_required = ( create_distribution or update_delete_duplicate_distribution or create_streaming_distribution
+    config_required = (create_distribution or update_delete_duplicate_distribution or create_streaming_distribution
             or update_delete_duplicate_streaming_distribution or validate)
     tagging = tag_resource or untag_resource
 
@@ -1435,7 +1435,9 @@ def main():
 
     if tagging:
         arn = validation_mgr.validate_tagging_arn(arn, alias, distribution_id, streaming_distribution_id)
+    if tag_resource:
         tags = validation_mgr.validate_list_without_quantity(tags)
+    if untag_resource:
         tag_keys = validation_mgr.validate_list_without_quantity(tag_keys)
 
     if config_required:
@@ -1466,7 +1468,8 @@ def main():
     elif create_update_streaming_distribution or validate:
         config = validation_mgr.validate_streaming_distribution_config_parameters(config, comment,
                 trusted_signers, s3_origin, default_s3_origin_domain_name, default_s3_origin_access_identity)
-    if create_distribution or create_streaming_distribution or duplicate_distribution or validate:
+    if(create_distribution or create_streaming_distribution or duplicate_distribution or
+            duplicate_streaming_distribution or validate):
         config = validation_mgr.validate_caller_reference_for_distribution(config, caller_reference)
 
     if config_required:
