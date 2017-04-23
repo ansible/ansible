@@ -406,11 +406,29 @@ EXAMPLES = '''
     update_distribution: yes
     distribution_id: E1RP5A2MJ8073O
     comment: modified by cloudfront.py again
-    aliases: [ 'www.google.co', 'zzz.aaa.io' ]
+    aliases: [ 'www.my-distribution-source.com', 'zzz.aaa.io' ]
 
 # update a distribution's aliases and comment using an alias as a reference
+- cloudfront:
+    update_distribution: yes
+    distribution_id: zzz.aaa.io
+    comment: modified by cloudfront.py again
+    aliases: [ 'www.my-distribution-source.com', 'zzz.aaa.io' ]
 
-# set tags for a distribution
+# add tags to a distribution referenced by alias
+- cloudfront:
+    tag_resource: yes
+    alias: zzz.aaa.io
+    tags:
+      - {'Key': 'Name', 'Value': 'aaa'}
+      - {'Key': 'project', 'Value': 'aaa project'}
+
+# remove a tag from a distribution referenced by alias
+- cloudfront:
+    untag_resource: yes
+    alias: zzz.aaa.io
+    tag_keys:
+    - 'Name'
 
 # validate a distribution with origins and logging
 
@@ -661,6 +679,24 @@ class CloudFrontServiceManager:
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="error updating streaming distribution - " + str(e),
                     exception=traceback.format_exc(),
+                    **camel_dict_to_snake_dict(e.response))
+
+    def tag_resource(self, arn, tags):
+        try:
+            func = partial(self.client.tag_resource, Resource=arn,
+                    Tags=tags)
+            return self.paginated_response(func)
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg="error tagging resource - " + str(e), exception=traceback.format_exc(),
+                    **camel_dict_to_snake_dict(e.response))
+
+    def untag_resource(self, arn, tag_keys):
+        try:
+            func = partial(self.client.untag_resource, Resource=arn,
+                    TagKeys=tag_keys)
+            return self.paginated_response(func)
+        except botocore.exceptions.ClientError as e:
+            self.module.fail_json(msg="error untagging resource - " + str(e), exception=traceback.format_exc(),
                     **camel_dict_to_snake_dict(e.response))
 
     def paginated_response(self, func, result_key=''):
@@ -1047,6 +1083,38 @@ class CloudFrontValidationManager:
         except Exception as e:
             self.module.fail_json(msg="error validating parameters for streaming distribution update and delete - " + str(e))
 
+    def validate_tagging_arn(self, arn, alias, distribution_id, streaming_distribution_id):
+        if arn is not None:
+            return arn
+        if alias is not None and (distribution_id is not None or streaming_distribution_id is not None):
+            self.module.fail_json(msg="both alias and a distribution id have been specified for tagging a resource. " +
+                    "please only specify one.")
+        if distribution_id is not None and streaming_distribution_id is not None:
+            self.module.fail_json(msg="both distribution_id and streaming_distribution_id have been specified. " +
+                    "please only specify one.")
+        if alias is not None:
+            distribution_id = self.__cloudfront_facts_mgr.get_distribution_id_from_domain_name(alias)
+        if distribution_id is not None:
+            distribution_response = self.__cloudfront_facts_mgr.get_distribution(distribution_id)
+        if distribution_response is not None:
+            distribution = distribution_response.get('Distribution')
+            if distribution is not None:
+                return distribution.get('ARN')
+        streaming_distribution_response = self.__cloudfront_facts_mgr.get_streaming_distribution(streaming_distribution_id)
+        if streaming_distribution_response is not None:
+            streaming_distribution = streaming_distribution_response.get('StreamingDistribution')
+            if streaming_distribution is not None:
+                return streaming_distribution.get('ARN')
+        self.module.fail_json(msg="unable to find a matching distribution with given parameters")
+
+    def validate_list_without_quantity(self, list_items):
+        if list_items is None:
+            return list_items
+        aws_list_items = self.__helpers.python_list_to_aws_list(list_items)
+        aws_list_items.pop('quantity', None)
+        pascal_aws_list_items = self.__helpers.snake_dict_to_pascal_dict(aws_list_items)
+        return pascal_aws_list_items
+
     def validate_distribution_config_parameters(self, config, default_root_object, is_ipv6_enabled,
             http_version, web_acl_id):
         try:
@@ -1241,13 +1309,15 @@ def main():
         invalidation_batch=dict(required=False, default=None, type='str'),
         e_tag=dict(required=False, default=None, type='str'),
         presigned_url_pem_private_key_path=dict(required=False, default=None, type='str'),
-        presigned_url_pem_private_key_password=dict(required=False, default=None, type='str'),
+        presigned_url_pem_private_key_password=dict(required=False, default=None, type='str', no_log=True),
         presigned_url_pem_url=dict(required=False, default=None, type='str'),
         presigned_url_pem_expire_date=dict(required=False, default=None, type='str'),
-        tag_resource=dict(required=False, default=False, type='bool'),
-        untag_resource=dict(required=False, default=False, type='bool'),
+        tag_keys=dict(required=False, default=False, type='list'),
         config=dict(required=False, default=None, type='json'),
-        tags=dict(required=False, default=None, type='str'),
+        tags=dict(required=False, default=None, type='list'),
+        tag_resource=dict(required=False, default=None, type='bool'),
+        untag_resource=dict(required=False, default=None, type='bool'),
+        arn=dict(required=False, default=None, type='str'),
         alias=dict(required=False, default=None, type='str'),
         aliases=dict(required=False, default=None, type='list'),
         default_root_object=dict(required=False, default=None, type='str'),
@@ -1305,6 +1375,10 @@ def main():
     presigned_url_pem_expire_date = module.params.get('presigned_url_pem_expire_date')
     config = module.params.get('config')
     tags = module.params.get('tags')
+    tag_keys = module.params.get('tag_keys')
+    tag_resource = module.params.get('tag_resource')
+    untag_resource = module.params.get('untag_resource')
+    arn = module.params.get('arn')
     create_invalidation = module.params.get('create_invalidation')
     distribution_id = module.params.get('distribution_id')
     streaming_distribution_id = module.params.get('streaming_distribution_id')
@@ -1342,12 +1416,13 @@ def main():
     duplicate = duplicate_distribution or duplicate_streaming_distribution
     config_required = ( create_distribution or update_delete_duplicate_distribution or create_streaming_distribution
             or update_delete_duplicate_streaming_distribution or validate)
+    tagging = tag_resource or untag_resource
 
     if sum(map(bool, [create_origin_access_identity, delete_origin_access_identity, update_origin_access_identity,
             create_distribution, delete_distribution, update_distribution, create_streaming_distribution,
             delete_streaming_distribution, update_streaming_distribution, generate_presigned_url_from_pem_private_key,
             duplicate_distribution, duplicate_streaming_distribution, validate_distribution,
-            validate_streaming_distribution, create_invalidation])) > 1:
+            validate_streaming_distribution, create_invalidation, tag_resource, untag_resource])) > 1:
         module.fail_json(msg="more than one cloudfront action has been specified. please select only one action.")
 
     if update_delete_duplicate_distribution or validate_distribution:
@@ -1357,6 +1432,11 @@ def main():
     if update_delete_duplicate_streaming_distribution or validate_streaming_distribution:
         streaming_distribution_id, config, e_tag = validation_mgr.validate_update_delete_streaming_distribution_parameters(alias,
                 streaming_distribution_id, config, e_tag)
+
+    if tagging:
+        arn = validation_mgr.validate_tagging_arn(arn, alias, distribution_id, streaming_distribution_id)
+        tags = validation_mgr.validate_list_without_quantity(tags)
+        tag_keys = validation_mgr.validate_list_without_quantity(tag_keys)
 
     if config_required:
         config = helpers.pascal_dict_to_snake_dict(config, True)
@@ -1419,6 +1499,10 @@ def main():
         result=service_mgr.update_streaming_distribution(config, streaming_distribution_id, e_tag)
     elif validate:
         result = { 'validation_result': 'OK' }
+    elif tag_resource:
+        result=service_mgr.tag_resource(arn, tags)
+    elif untag_resource:
+        result=service_mgr.untag_resource(arn, tag_keys)
 
     module.exit_json(changed=(not validate), **helpers.pascal_dict_to_snake_dict(result))
 
