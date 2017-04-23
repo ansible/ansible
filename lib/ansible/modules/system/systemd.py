@@ -307,7 +307,7 @@ def main():
     # check service data, cannot error out on rc as it changes across versions, assume not found
     (rc, out, err) = module.run_command("%s show '%s'" % (systemctl, unit))
 
-    if out.find('ignoring request') != -1:
+    if err.find('ignoring request') != -1:
         # fallback list-unit-files as show does not work on some systems (chroot)
         # not used as primary as it skips some services (like those using init.d) and requires .service/etc notation
         (rc, out, err) = module.run_command("%s list-unit-files '%s'" % (systemctl, unit))
