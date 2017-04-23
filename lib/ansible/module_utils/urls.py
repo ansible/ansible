@@ -992,7 +992,7 @@ def url_argument_spec():
 
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=True, force=False, last_mod_time=None, timeout=10):
-    '''Sends a request via HTTP(S) or FTP (needs the module as parameter)
+    """Sends a request via HTTP(S) or FTP (needs the module as parameter)
 
     :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
     :arg url:             The url to use.
@@ -1012,7 +1012,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     Example::
 
         data={...}
-        resp, info = fetch_url("http://example.com",
+        resp, info = fetch_url(module,
+                               "http://example.com",
                                data=module.jsonify(data)
                                header={Content-type': 'application/json'},
                                method="POST")
@@ -1020,7 +1021,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         body = resp.read()
         if status_code >= 400 :
             body = info['body']
-'''
+    """
 
     if not HAS_URLPARSE:
         module.fail_json(msg='urlparse is not installed')
