@@ -2,7 +2,7 @@
 # tasks file for test_s3
 # ============================================================
 - name: generate random name for the bucket name
-  shell: bash -c 'echo ansible_test_$RANDOM'
+  command: bash -c 'echo ansible_test_$RANDOM'
   register: bucket
 # ============================================================
 - include_vars: "credentials.yml"
@@ -32,7 +32,7 @@
       - "result['changed'] == False"
 # ============================================================
 - name: create temporary file object to put in a bucket
-  shell: mktemp /tmp/XXXXXXXX
+  command: mktemp /tmp/XXXXXXXX
   register: tmp1
 - name: give temporary file data
   shell: echo foo > "{{ tmp1.stdout }}"
@@ -63,7 +63,7 @@
     seconds: 3
 # ============================================================
 - name: create a second temp file to download the object from the bucket
-  shell: mktemp /tmp/XXXXXXXX
+  command: mktemp /tmp/XXXXXXXX
   register: tmp2
 - name: test get object
   s3:
