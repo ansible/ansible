@@ -286,9 +286,9 @@ import sys
 try:
     import botocore
 except ImportError:
-    pass # caught by imported HAS_BOTO3
+    pass  # caught by imported HAS_BOTO3
 
-DEFAULT_PORTS= {
+DEFAULT_PORTS = {
     'aurora': 3306,
     'mariadb': 3306,
     'mysql': 3306,
@@ -337,7 +337,6 @@ PARAMETER_MAP = {
     'maint_window': 'PreferredMaintenanceWindow',
     'multi_zone': 'MultiAZ',
     'new_instance_name': 'NewDBInstanceIdentifier',
-    'new_instance_name': 'NewInstanceId',
     'option_group': 'OptionGroupName',
     'parameter_group': 'DBParameterGroupName',
     'password': 'MasterUserPassword',
@@ -357,45 +356,50 @@ PARAMETER_MAP = {
     'zone': 'AvailabilityZone',
 }
 
+
 def eprint(*args, **kwargs):
     print(args, file=sys.stderr, **kwargs)
 
+
 def await_resource(conn, resource, status, module, await_pending=None):
     wait_timeout = module.params.get('wait_timeout') + time.time()
-    # Refresh the resource immediately in case we just changed it's state; should we sleep first?
+    # Refresh the resource immediately in case we just changed it's state;
+    # should we sleep first?
     resource = get_db_instance(conn, resource.name)
     eprint(str(resource))
-    eprint("wait is " +  str(wait_timeout) + " " + str(time.time()) + " await_pending is "
-           + str(await_pending) + " status is " + str(resource.status) )
-    while (  ( await_pending and resource.data["pending_modified_values"] )
-             or resource.status != status ) and wait_timeout > time.time():
+    eprint("wait is " + str(wait_timeout) + " " + str(time.time()) + " await_pending is "
+           + str(await_pending) + " status is " + str(resource.status))
+    while ((await_pending and resource.data["pending_modified_values"])
+           or resource.status != status) and wait_timeout > time.time():
         time.sleep(5)
         # Temporary until all the rds2 commands have their responses parsed
         if resource.name is None:
-            module.fail_json(msg="There was a problem waiting for RDS instance %s" % resource.instance)
+            module.fail_json(
+                msg="There was a problem waiting for RDS instance %s" % resource.instance)
         resource = get_db_instance(conn, resource.name)
         eprint(str(resource))
         if resource is None:
             break
     if wait_timeout <= time.time() and resource.status != status:
-        module.fail_json(msg="Timeout waiting for RDS resource %s status is still %s" % resource.name, status)
+        module.fail_json(msg="Timeout waiting for RDS resource %s status is still %s" % (resource.name, status))
     return resource
 
 
 def create_db_instance(module, conn):
     if module.params.get('db_engine') in ['aurora']:
-        required_vars = ['instance_name','instance_type', 'db_engine']
+        required_vars = ['instance_name', 'instance_type', 'db_engine']
         valid_vars = ['character_set_name', 'cluster', 'db_name', 'engine_version',
                       'instance_type', 'license_model', 'maint_window',
-                      'option_group', 'parameter_group','port',
+                      'option_group', 'parameter_group', 'port',
                       'publicly_accessible', 'subnet',
                       'upgrade', 'tags', 'zone']
     else:
-        required_vars = ['instance_name', 'db_engine', 'size', 'instance_type', 'username', 'password']
+        required_vars = ['instance_name', 'db_engine',
+                         'size', 'instance_type', 'username', 'password']
         valid_vars = ['backup_retention', 'backup_window',
                       'character_set_name', 'cluster', 'db_name', 'engine_version',
                       'instance_type', 'license_model', 'maint_window', 'multi_zone',
-                      'option_group', 'parameter_group','port', 'publicly_accessible',
+                      'option_group', 'parameter_group', 'port', 'publicly_accessible',
                       'storage_type', 'subnet', 'upgrade', 'tags', 'security_groups',
                       'vpc_security_groups',
                       'zone']
@@ -417,14 +421,15 @@ def create_db_instance(module, conn):
             changed = True
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failed to create instance: %s " % str(e),
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response) )
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     if module.params.get('wait'):
         resource = await_resource(conn, instance, 'available', module)
     else:
         resource = get_db_instance(conn, instance_name)
 
-    module.exit_json(changed=changed, instance=resource.data, operation="create")
+    module.exit_json(changed=changed, instance=resource.data,
+                     operation="create")
 
 
 def replicate_db_instance(module, conn):
@@ -445,20 +450,21 @@ def replicate_db_instance(module, conn):
             changed = True
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failed to create replica instance: %s " % str(e),
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response) )
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     if module.params.get('wait'):
         resource = await_resource(conn, instance, 'available', module)
     else:
         resource = get_db_instance(conn, instance_name)
 
-    module.exit_json(changed=changed, instance=resource.data, operation="replicate")
+    module.exit_json(changed=changed, instance=resource.data,
+                     operation="replicate")
 
 
 def delete_db_instance(module, conn):
     required_vars = ['instance_name']
 
-    #we have to accept but ignore variables which have defaults
+    # we have to accept but ignore variables which have defaults
     valid_vars = ['snapshot', 'skip_final_snapshot', 'storage_type']
 
     try:
@@ -486,7 +492,7 @@ def delete_db_instance(module, conn):
         instance = RDSDBInstance(response['DBInstance'])
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Failed to delete instance: %s " % str(e),
-                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response) )
+                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     # If we're not waiting for a delete to complete then we're all done
     # so just return
@@ -500,9 +506,10 @@ def delete_db_instance(module, conn):
             module.exit_json(changed=True, operation="delete")
         else:
             module.fail_json(msg="Failure waiting for deletion to complete: %s " % str(e),
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response) )
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     assert(False), "error in module logic - this should not be reached"
+
 
 def update_rds_tags(module, conn, resource, current_tags, desired_tags):
     changed = False
@@ -521,11 +528,12 @@ def update_rds_tags(module, conn, resource, current_tags, desired_tags):
 
     if to_delete:
         try:
-            conn.remove_tags_from_resource(ResourceName=resource, TagKeys=list(to_delete))
+            conn.remove_tags_from_resource(
+                ResourceName=resource, TagKeys=list(to_delete))
             changed = True
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failure removing instance tags: %s" % str(e),
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response) )
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     if to_add:
         try:
@@ -535,7 +543,7 @@ def update_rds_tags(module, conn, resource, current_tags, desired_tags):
             changed = True
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failure adding instance tags: %s" % str(e),
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response) )
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     return changed
 
 
@@ -549,13 +557,12 @@ def modify_db_instance(module, conn):
                   'storage_type', 'subnet', 'tags', 'upgrade', 'username',
                   'security_groups', 'vpc_security_groups']
 
-
     before_instance_name = module.params.get('instance_name')
     before_instance = get_db_instance(conn, before_instance_name)
     for immutable_key in ['username', 'db_engine', 'db_name']:
         if immutable_key in module.params:
-            if ( immutable_key in before_instance.data
-                 and module.params[immutable_key] != before_instance.data[immutable_key] ):
+            if (immutable_key in before_instance.data
+                    and module.params[immutable_key] != before_instance.data[immutable_key]):
                 module.fail_json(msg="Cannot modify parameter %s for instance %s" %
                                  (immutable_key, before_instance_name))
             del(module.params[immutable_key])
@@ -565,7 +572,8 @@ def modify_db_instance(module, conn):
 
     will_change = before_instance.diff(module.params)
     if not will_change:
-        module.exit_json(changed=False, instance=before_instance.data, operation="modify")
+        module.exit_json(
+            changed=False, instance=before_instance.data, operation="modify")
 
     # modify_db_instance takes DBPortNumber in contrast to
     # create_db_instance which takes Port
@@ -592,36 +600,36 @@ def modify_db_instance(module, conn):
         response = conn.modify_db_instance(**params)
         return_instance = RDSDBInstance(response['DBInstance'])
     except botocore.exceptions.ClientError as e:
-            module.fail_json(msg="Failed to modify instance: %s " % str(e),
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response) )
+        module.fail_json(msg="Failed to modify instance: %s " % str(e),
+                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     if params.get('apply_immediately'):
-        if new_instance_name:
+        if after_instance_name:
             # Wait until the new instance name is valid
             after_instance = None
             while not after_instance:
-                #FIXME: Timeout!!!
+                # FIXME: Timeout!!!
                 after_instance = get_db_instance(conn, after_instance_name)
                 time.sleep(5)
 
             # Found instance but it briefly flicks to available
             # before rebooting so let's wait until we see it rebooting
             # before we check whether to 'wait'
-            return_instance_name = after_instance_name
-            after_instance = await_resource(conn, after_instance, 'rebooting', module)
+            after_instance = await_resource(
+                conn, after_instance, 'rebooting', module)
     else:
-        return_instance_name=before_instance_name
         after_instance = get_db_instance(conn, before_instance_name)
 
     # Do we have a race condition here where, if we are unlucky, the name of the instance
     # set to change without apply_immediately _could_ change before we look it up again?
-    # If so, when instance lookup fails with the old name we should try the new.
+    # If so, when instance lookup fails with the old name we should try the
+    # new.
 
     if module.params.get('wait'):
         if module.params.get('apply_immediately'):
-            await_pending=True
+            await_pending = True
         else:
-            await_pending=False
+            await_pending = False
 
         eprint("about to wait")
         return_instance = await_resource(conn, after_instance, 'available', module,
@@ -635,7 +643,8 @@ def modify_db_instance(module, conn):
     changed = not not diff
 
     # boto3 modify_db_instance can't modify tags directly
-    current_tags = conn.list_tags_for_resource(ResourceName=response['DBInstance']['DBInstanceArn'])['TagList']
+    current_tags = conn.list_tags_for_resource(
+        ResourceName=response['DBInstance']['DBInstanceArn'])['TagList']
     if update_rds_tags(module, conn, response['DBInstance']['DBInstanceArn'],
                        current_tags, tags):
         changed = True
@@ -660,7 +669,7 @@ def promote_db_instance(module, conn):
             changed = True
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failed to promote replica instance: %s " % str(e),
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response) )
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     else:
         changed = False
 
@@ -669,7 +678,8 @@ def promote_db_instance(module, conn):
     else:
         instance = get_db_instance(conn, instance_name)
 
-    module.exit_json(changed=changed, instance=instance.data, operation="promote")
+    module.exit_json(changed=changed, instance=instance.data,
+                     operation="promote")
 
 
 def reboot_db_instance(module, conn):
@@ -684,7 +694,7 @@ def reboot_db_instance(module, conn):
         instance = RDSDBInstance(response['DBInstance'])
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Failed to reboot instance: %s " % str(e),
-                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response) )
+                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
     if module.params.get('wait'):
         instance = await_resource(conn, instance, 'available', module)
     else:
@@ -710,14 +720,15 @@ def restore_db_instance(module, conn):
             changed = True
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg="Failed to restore instance: %s " % str(e),
-                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response) )
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     if module.params.get('wait'):
         instance = await_resource(conn, instance, 'available', module)
     else:
         instance = get_db_instance(conn, instance_name)
 
-    module.exit_json(changed=changed, instance=instance.data, operation="restore")
+    module.exit_json(changed=changed, instance=instance.data,
+                     operation="restore")
 
 
 def ensure_db_state(module, conn):
@@ -750,10 +761,12 @@ def validate_parameters(required_vars, valid_vars, module):
         try:
             PARAMETER_MAP[item]
         except KeyError as e:
-            module.fail_json(msg="unexpected module parameter" + str(e), exception=traceback.format_exc())
+            module.fail_json(msg="unexpected module parameter" +
+                             str(e), exception=traceback.format_exc())
 
     if module.params.get('security_groups'):
-        params['DBSecurityGroups'] = module.params.get('security_groups').split(',')
+        params['DBSecurityGroups'] = module.params.get(
+            'security_groups').split(',')
 
     # Convert tags dict to list of tuples that boto expects
     if 'Tags' in params:
@@ -764,48 +777,49 @@ def validate_parameters(required_vars, valid_vars, module):
 argument_spec = ec2_argument_spec()
 argument_spec.update(
     dict(
-        state = dict(choices=['absent', 'present', 'rebooted'], default='present'),
-        instance_name = dict(required=True),
-        source_instance = dict(),
-        db_engine = dict(choices=DB_ENGINES),
-        size = dict(type='int'),
-        instance_type = dict(aliases=['type']),
-        username = dict(),
-        password = dict(no_log=True),
-        db_name = dict(),
-        engine_version = dict(),
-        parameter_group = dict(),
-        license_model = dict(choices=LICENSE_MODELS),
-        multi_zone = dict(type='bool', default=False),
-        iops = dict(type='int'),
-        storage_type = dict(choices=['standard', 'io1', 'gp2'], default='standard'),
-        security_groups = dict(),
-        vpc_security_groups = dict(type='list'),
-        port = dict(type='int'),
-        upgrade = dict(type='bool', default=False),
-        option_group = dict(),
-        maint_window = dict(),
-        backup_window = dict(),
-        backup_retention = dict(type='int'),
-        zone = dict(aliases=['aws_zone', 'ec2_zone']),
-        subnet = dict(),
-        wait = dict(type='bool', default=False),
-        wait_timeout = dict(type='int', default=600),
-        snapshot = dict(),
-        skip_final_snapshot = dict(type='bool'),
-        apply_immediately = dict(type='bool', default=False),
-        old_instance_name = dict(),
-        tags = dict(type='dict'),
-        publicly_accessible = dict(),
-        character_set_name = dict(),
-        force_failover = dict(type='bool', default=False),
-        force_password_update = dict(type='bool', default=False),
+        state=dict(choices=['absent', 'present',
+                            'rebooted'], default='present'),
+        instance_name=dict(required=True),
+        source_instance=dict(),
+        db_engine=dict(choices=DB_ENGINES),
+        size=dict(type='int'),
+        instance_type=dict(aliases=['type']),
+        username=dict(),
+        password=dict(no_log=True),
+        db_name=dict(),
+        engine_version=dict(),
+        parameter_group=dict(),
+        license_model=dict(choices=LICENSE_MODELS),
+        multi_zone=dict(type='bool', default=False),
+        iops=dict(type='int'),
+        storage_type=dict(
+            choices=['standard', 'io1', 'gp2'], default='standard'),
+        security_groups=dict(),
+        vpc_security_groups=dict(type='list'),
+        port=dict(type='int'),
+        upgrade=dict(type='bool', default=False),
+        option_group=dict(),
+        maint_window=dict(),
+        backup_window=dict(),
+        backup_retention=dict(type='int'),
+        zone=dict(aliases=['aws_zone', 'ec2_zone']),
+        subnet=dict(),
+        wait=dict(type='bool', default=False),
+        wait_timeout=dict(type='int', default=600),
+        snapshot=dict(),
+        skip_final_snapshot=dict(type='bool'),
+        apply_immediately=dict(type='bool', default=False),
+        old_instance_name=dict(),
+        tags=dict(type='dict'),
+        publicly_accessible=dict(),
+        character_set_name=dict(),
+        force_failover=dict(type='bool', default=False),
+        force_password_update=dict(type='bool', default=False),
     )
 )
-required_if=[
+required_if = [
     ('storage_type', 'io1', ['iops']),
 ]
-
 
 
 def main():
@@ -818,9 +832,11 @@ def main():
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required for rds_instance module')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
+    region, ec2_url, aws_connect_params = get_aws_connection_info(
+        module, boto3=True)
     if not region:
-        module.fail_json(msg="Region not specified. Unable to determine region from configuration.")
+        module.fail_json(
+            msg="Region not specified. Unable to determine region from configuration.")
 
     # connect to the rds endpoint
     conn = boto3_conn(module, 'client', 'rds', region, **aws_connect_params)
@@ -843,6 +859,7 @@ def main():
     if module.params.get('snapshot'):
         restore_db_instance(module, conn)
     ensure_db_state(module, conn)
+
 
 if __name__ == '__main__':
     main()
