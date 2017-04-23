@@ -381,7 +381,7 @@ def await_resource(conn, resource, status, module, await_pending=None):
         if resource is None:
             break
     if wait_timeout <= time.time() and resource.status != status:
-        module.fail_json(msg="Timeout waiting for RDS resource %s status is still %s" % (resource.name, status))
+        module.fail_json(msg="Timeout waiting for RDS resource %s status is still %s should be %s" % (resource.name, resource.status, status))
     return resource
 
 
