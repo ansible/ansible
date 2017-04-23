@@ -78,8 +78,6 @@ def get_value_by_path(source_dict, key_path, ignore_key_error=False):
         else:
             print("The key %s is not found. Please remember, Python is case sensitive." % key_name)
             sys.exit(1)
-    except TypeError:
-        key_output = None
     return key_output
 
 
