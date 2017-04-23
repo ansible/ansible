@@ -667,8 +667,7 @@ def is_executable(path):
     # execute bits are set.
     return ((stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) & os.stat(path)[stat.ST_MODE])
 
-
-def _load_params():
+def _load_params(ansible_args=None):
     ''' read the modules parameters and store them globally.
 
     This function may be needed for certain very dynamic custom modules which
@@ -680,8 +679,11 @@ def _load_params():
     inside it as a copy in your own code.
     '''
     global _ANSIBLE_ARGS
+
     if _ANSIBLE_ARGS is not None:
         buffer = _ANSIBLE_ARGS
+    elif ansible_args is not None:
+        buffer = ansible_args
     else:
         # debug overrides to read args from file or cmdline
 
@@ -715,7 +717,7 @@ def _load_params():
         params = json_dict_unicode_to_bytes(params)
 
     try:
-        return params['ANSIBLE_MODULE_ARGS']
+        return params if ansible_args and 'ANSIBLE_MODULE_ARGS' not in params else params['ANSIBLE_MODULE_ARGS']
     except KeyError:
         # This helper does not have access to fail_json so we have to print
         # json output on our own.
@@ -778,7 +780,7 @@ class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
                  check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
                  required_one_of=None, add_file_common_args=False, supports_check_mode=False,
-                 required_if=None):
+                 required_if=None, ansible_args=None):
 
         '''
         common code for quickly building an ansible module in Python
@@ -819,7 +821,7 @@ class AnsibleModule(object):
                 if k not in self.argument_spec:
                     self.argument_spec[k] = v
 
-        self._load_params()
+        self._load_params(ansible_args)
         self._set_fallbacks()
 
         # append to legal_inputs and then possibly check against them
@@ -2042,14 +2044,14 @@ class AnsibleModule(object):
                 except AnsibleFallbackNotFound:
                     continue
 
-    def _load_params(self):
+    def _load_params(self, ansible_args=None):
         ''' read the input and set the params attribute.
 
         This method is for backwards compatibility.  The guts of the function
         were moved out in 2.1 so that custom modules could read the parameters.
         '''
         # debug overrides to read args from file or cmdline
-        self.params = _load_params()
+        self.params = _load_params(ansible_args)
 
     def _log_to_syslog(self, msg):
         if HAS_SYSLOG:
