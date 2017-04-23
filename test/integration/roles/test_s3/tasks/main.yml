@@ -32,13 +32,19 @@
       - "result['changed'] == False"
 # ============================================================
 - name: create temporary file object to put in a bucket
-  command: mktemp /tmp/XXXXXXXX
+  tempfile:
   register: tmp1
+- name: make random contents
+  set_fact:
+      content: "{{ lookup('password', '/dev/null chars=ascii_letters,digits,hexdigits,punctuation') }}"
+
 - name: give temporary file data
-  shell: echo foo > "{{ tmp1.stdout }}"
+  copy:
+    content: "{{ content }}"
+    dest: "{{ tmp1.path }}"
 - name: get the stat of the file
   stat:
-    path: "{{ tmp1.stdout }}"
+    path: "{{ tmp1.path }}"
     get_checksum: yes
   register: file1stat
 # ============================================================
@@ -46,7 +52,7 @@
   s3:
     bucket: "{{ bucket.stdout }}"
     mode: put
-    src: "{{ tmp1.stdout }}"
+    src: "{{ tmp1.path }}"
     object: delete.txt
     aws_access_key: "{{ ec2_access_key }}"
     aws_secret_key: "{{ ec2_secret_key }}"
@@ -63,13 +69,13 @@
     seconds: 3
 # ============================================================
 - name: create a second temp file to download the object from the bucket
-  command: mktemp /tmp/XXXXXXXX
+  tempfile:
   register: tmp2
 - name: test get object
   s3:
     bucket: "{{ bucket.stdout }}"
     mode: get
-    dest: "{{ tmp2.stdout }}"
+    dest: "{{ tmp2.path }}"
     object: delete.txt
     aws_access_key: "{{ ec2_access_key }}"
     aws_secret_key: "{{ ec2_secret_key }}"
@@ -78,7 +84,7 @@
   register: result
 - name: get the stat of the file so we can compare the checksums
   stat:
-    path: "{{ tmp2.stdout }}"
+    path: "{{ tmp2.path }}"
     get_checksum: yes
   register: file2stat
 - name: assert checksums are the same
@@ -118,7 +124,7 @@
 - name: assert that we have the object's contents
   assert:
     that:
-      - "result['contents'] == 'foo\n'"
+      - "result['contents'] == content"
 # ============================================================
 - name: test list to get all objects in the bucket
   s3:
@@ -164,8 +170,8 @@
 - name: delete temporary file 1
   file:
     state: absent
-    path: "{{ tmp1.stdout }}"
+    path: "{{ tmp1.path }}"
 - name: delete temporary file 2
   file:
     state: absent
-    path: "{{ tmp2.stdout }}"
+    path: "{{ tmp2.path }}"
