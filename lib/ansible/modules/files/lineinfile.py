@@ -55,7 +55,7 @@ options:
     description:
       - The regular expression to look for in every line of the file. For
         C(state=present), the pattern to replace if found; only the last line
-        found will be replaced. For C(state=absent), the pattern of the line
+        found will be replaced. For C(state=absent), the pattern of the line(s)
         to remove.  Uses Python regular expressions; see
         U(http://docs.python.org/2/library/re.html).
   state:
@@ -216,8 +216,8 @@ def write_changes(module, b_lines, dest):
                                  'rc:%s error:%s' % (rc, err))
     if valid:
         module.atomic_move(tmpfile,
-                to_native(os.path.realpath(to_bytes(dest, errors='surrogate_or_strict')), errors='surrogate_or_strict'),
-            unsafe_writes=module.params['unsafe_writes'])
+                           to_native(os.path.realpath(to_bytes(dest, errors='surrogate_or_strict')), errors='surrogate_or_strict'),
+                           unsafe_writes=module.params['unsafe_writes'])
 
 
 def check_file_attrs(module, changed, message, diff):
@@ -379,6 +379,7 @@ def absent(module, dest, regexp, line, backup):
     found = []
 
     b_line = to_bytes(line, errors='surrogate_or_strict')
+
     def matcher(b_cur_line):
         if regexp is not None:
             match_found = bre_c.search(b_cur_line)
