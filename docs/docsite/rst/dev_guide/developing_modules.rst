@@ -13,14 +13,14 @@ This section discusses how to develop, debug, review, and test modules.
 Ansible modules are reusable, standalone scripts that can be used by the Ansible API,
 or by the :command:`ansible` or :command:`ansible-playbook` programs.  They
 return information to ansible by printing a JSON string to stdout before
-exiting.  They take arguments in in one of several ways which we'll go into
+exiting.  They take arguments in one of several ways which we'll go into
 as we work through this tutorial.
 
 See :doc:`../modules` for a list of existing modules.
 
 Modules can be written in any language and are found in the path specified
 by :envvar:`ANSIBLE_LIBRARY` or the ``--module-path`` command line option or
-in the `library section of the Ansible configration file <http://docs.ansible.com/ansible/intro_configuration.html#library>`_.
+in the `library section of the Ansible configuration file <http://docs.ansible.com/ansible/intro_configuration.html#library>`_.
 
 .. _module_dev_should_you:
 
