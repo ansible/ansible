@@ -3,7 +3,7 @@
 Building A Simple Module
 ````````````````````````
 
-Let's build a very-basic module to get and set the system time.  For starters, let's build
+Let's build a very basic module to get and set the system time.  For starters, let's build
 a module that just outputs the current time.
 
 We are going to use Python here but any language is possible.  Only File I/O and outputting to standard
@@ -71,7 +71,7 @@ If you did not, you might have a typo in your module, so recheck it and try agai
 Reading Input
 `````````````
 Let's modify the module to allow setting the current time.  We'll do this by seeing
-if a key value pair in the form `time=<string>` is passed in to the module.
+if a key value pair in the form `time=<string>` is passed into the module.
 
 Ansible internally saves arguments to an arguments file.  So we must read the file
 and parse it.  The arguments file is just a string, so any form of arguments are legal.
