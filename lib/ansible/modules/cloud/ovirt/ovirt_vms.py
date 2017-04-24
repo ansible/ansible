@@ -256,6 +256,56 @@ options:
             - "Allows you to specify a custom serial number."
             - "This parameter is used only when C(serial_policy) is I(custom)."
         version_added: "2.3"
+    vmware:
+        description:
+            - "Dictionary of values to be used to connect to VMware and import
+               a virtual machine to oVirt."
+            - "Dictionary can contain following values:"
+            - "C(username) - The username to authenticate against the VMware."
+            - "C(password) - The password to authenticate against the VMware."
+            - "C(url) - The URL to be passed to the I(virt-v2v) tool for conversion.
+               For example: I(vpx://wmware_user@vcenter-host/DataCenter/Cluster/esxi-host?no_verify=1)"
+            - "C(drivers_iso) - The name of the ISO containing drivers that can
+               be used during the I(virt-v2v) conversion process."
+            - "C(sparse) - Specifies the disk allocation policy of the resulting
+               virtual machine: I(true) for sparse, I(false) for preallocated.
+               Default value is I(true)."
+            - "C(storage_domain) - Specifies the target storage domain for
+               converted disks. This is required parameter."
+        version_added: "2.3"
+    xen:
+        description:
+            - "Dictionary of values to be used to connect to XEN and import
+               a virtual machine to oVirt."
+            - "Dictionary can contain following values:"
+            - "C(url) - The URL to be passed to the I(virt-v2v) tool for conversion.
+               For example: I(xen+ssh://root@zen.server). This is required paramater."
+            - "C(drivers_iso) - The name of the ISO containing drivers that can
+               be used during the I(virt-v2v) conversion process."
+            - "C(sparse) - Specifies the disk allocation policy of the resulting
+               virtual machine: I(true) for sparse, I(false) for preallocated.
+               Default value is I(true)."
+            - "C(storage_domain) - Specifies the target storage domain for
+               converted disks. This is required parameter."
+        version_added: "2.3"
+    kvm:
+        description:
+            - "Dictionary of values to be used to connect to kvm and import
+               a virtual machine to oVirt."
+            - "Dictionary can contain following values:"
+            - "C(name) - The name of the KVM virtual machine."
+            - "C(username) - The username to authenticate against the KVM."
+            - "C(password) - The password to authenticate against the KVM."
+            - "C(url) - The URL to be passed to the I(virt-v2v) tool for conversion.
+               For example: I(qemu:///system). This is required paramater."
+            - "C(drivers_iso) - The name of the ISO containing drivers that can
+               be used during the I(virt-v2v) conversion process."
+            - "C(sparse) - Specifies the disk allocation policy of the resulting
+               virtual machine: I(true) for sparse, I(false) for preallocated.
+               Default value is I(true)."
+            - "C(storage_domain) - Specifies the target storage domain for
+               converted disks. This is required parameter."
+        version_added: "2.3"
 notes:
     - "If VM is in I(UNASSIGNED) or I(UNKNOWN) state before any operation, the module will fail.
        If VM is in I(IMAGE_LOCKED) state before any operation, we try to wait for VM to be I(DOWN).
@@ -412,6 +462,20 @@ ovirt_vms:
     boot_devices:
       - network
 
+# Import virtual machine from VMware:
+ovirt_vms:
+    state: stopped
+    cluster: mycluster
+    name: vmware_win10
+    timeout: 1800
+    poll_interval: 30
+    vmware:
+      url: vpx://user@1.2.3.4/Folder1/Cluster1/2.3.4.5?no_verify=1
+      name: windows10
+      storage_domain: mynfs
+      username: user
+      password: password
+
 # Remove VM, if VM is running it will be stopped:
 ovirt_vms:
     state: absent
@@ -559,7 +623,7 @@ class VmsModule(BaseModule):
             and equal(self.param('instance_type'), get_link_name(self._connection, entity.instance_type), ignore_case=True)
             and equal(self.param('description'), entity.description)
             and equal(self.param('comment'), entity.comment)
-            and equal(self.param('timezone'), entity.time_zone.name)
+            and equal(self.param('timezone'), getattr(entity.time_zone, 'name', None))
             and equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None)))
             and equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None))
         )
@@ -791,6 +855,62 @@ class VmsModule(BaseModule):
                 self.changed = True
 
 
+def import_vm(module, connection):
+    vms_service = connection.system_service().vms_service()
+    if search_by_name(vms_service, module.params['name']) is not None:
+        return False
+
+    events_service = connection.system_service().events_service()
+    last_event = events_service.list(max=1)[0]
+
+    external_type = [
+        tmp for tmp in ['kvm', 'xen', 'vmware']
+        if module.params[tmp] is not None
+    ][0]
+
+    external_vm = module.params[external_type]
+    imports_service = connection.system_service().external_vm_imports_service()
+    imported_vm = imports_service.add(
+        otypes.ExternalVmImport(
+            vm=otypes.Vm(
+                name=module.params['name']
+            ),
+            name=external_vm.get('name'),
+            username=external_vm.get('username', 'test'),
+            password=external_vm.get('password', 'test'),
+            provider=otypes.ExternalVmProviderType(external_type),
+            url=external_vm.get('url'),
+            cluster=otypes.Cluster(
+                name=module.params['cluster'],
+            ) if module.params['cluster'] else None,
+            storage_domain=otypes.StorageDomain(
+                name=external_vm.get('storage_domain'),
+            ) if external_vm.get('storage_domain') else None,
+            sparse=external_vm.get('sparse', True),
+            host=otypes.Host(
+                name=module.params['host'],
+            ) if module.params['host'] else None,
+        )
+    )
+
+    # Wait until event with code 1152 for our VM don't appear:
+    vms_service = connection.system_service().vms_service()
+    wait(
+        service=vms_service.vm_service(imported_vm.vm.id),
+        condition=lambda vm: len([
+            event
+            for event in events_service.list(
+                from_=int(last_event.id),
+                search='type=1152 and vm.id=%s' % vm.id,
+            )
+        ]) > 0 if vm is not None else False,
+        fail_condition=lambda vm: vm is None,
+        timeout=module.params['timeout'],
+        poll_interval=module.params['poll_interval'],
+    )
+    return True
+
+
 def _get_initialization(sysprep, cloud_init, cloud_init_nics):
     initialization = None
     if cloud_init or cloud_init_nics:
@@ -928,6 +1048,9 @@ def main():
         timezone=dict(default=None),
         serial_policy=dict(default=None, choices=['vm', 'host', 'custom']),
         serial_policy_value=dict(default=None),
+        vmware=dict(default=None, type='dict'),
+        xen=dict(default=None, type='dict'),
+        kvm=dict(default=None, type='dict'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -950,6 +1073,9 @@ def main():
 
         control_state(vm, vms_service, module)
         if state == 'present' or state == 'running' or state == 'next_run':
+            if module.params['xen'] or module.params['kvm'] or module.params['vmware']:
+                vms_module.changed = import_vm(module, connection)
+
             sysprep = module.params['sysprep']
             cloud_init = module.params['cloud_init']
             cloud_init_nics = module.params['cloud_init_nics'] or []
@@ -958,7 +1084,7 @@ def main():
 
             # In case VM don't exist, wait for VM DOWN state,
             # otherwise don't wait for any state, just update VM:
-            vms_module.create(
+            ret = vms_module.create(
                 entity=vm,
                 result_state=otypes.VmStatus.DOWN if vm is None else None,
                 clone=module.params['clone'],
@@ -1016,7 +1142,10 @@ def main():
                         wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
                     )
         elif state == 'stopped':
-            vms_module.create(
+            if module.params['xen'] or module.params['kvm'] or module.params['vmware']:
+                vms_module.changed = import_vm(module, connection)
+
+            ret = vms_module.create(
                 result_state=otypes.VmStatus.DOWN if vm is None else None,
                 clone=module.params['clone'],
                 clone_permissions=module.params['clone_permissions'],
