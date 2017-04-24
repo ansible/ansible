@@ -42,7 +42,7 @@ options:
             - "State which should a host to be in after successful completion."
         choices: [
             'present', 'absent', 'maintenance', 'upgraded', 'started',
-            'restarted', 'stopped', 'reinstalled'
+            'restarted', 'stopped', 'reinstalled', 'iscsidiscover'
         ]
         default: present
     comment:
@@ -151,6 +151,11 @@ EXAMPLES = '''
 # Upgrade host
 - ovirt_hosts:
     state: upgraded
+    name: myhost
+
+# discover iscsi targets
+- ovirt_hosts:
+    state: iscsidiscover
     name: myhost
 
 # Reinstall host using public key
@@ -314,7 +319,7 @@ def main():
         state=dict(
             choices=[
                 'present', 'absent', 'maintenance', 'upgraded', 'started',
-                'restarted', 'stopped', 'reinstalled',
+                'restarted', 'stopped', 'reinstalled', 'iscsidiscover'
             ],
             default='present',
         ),
@@ -332,6 +337,7 @@ def main():
         override_display=dict(default=None),
         kernel_params=dict(default=None, type='list'),
         hosted_engine=dict(default=None, choices=['deploy', 'undeploy']),
+        iscsi=dict(default=None, type='dict'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -379,6 +385,13 @@ def main():
                 action_condition=lambda h: h.update_available,
                 wait_condition=lambda h: h.status == hoststate.UP,
                 fail_condition=failed_state,
+            )
+        elif state == 'iscsidiscover':
+            ret = hosts_module.action(
+                # This is a synchronize action and we only want to
+                # know if we got 200 response code
+                action='iscsi_discover',
+                iscsi=otypes.IscsiDetails(address=module.params['iscsi']['address'])
             )
         elif state == 'started':
             ret = hosts_module.action(
