@@ -16,8 +16,9 @@ Running Tests
 Extending unit tests
 ====================
 
-FIXME Details here
+FIXME Details here ``test/units`` ``test/units/modules``
 
+FIXME Link back to :doc:`testing_networking`
 
 .. warning:: What a unit test isn't
 

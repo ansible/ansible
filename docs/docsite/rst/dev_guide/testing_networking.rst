@@ -12,17 +12,12 @@ Overview of Network Testing
 This page details the specifics around testing Ansible Networking modules.
 
 
-.. important:: Testing requirements for Ansible 2.4
+.. important:: Network testing requirements for Ansible 2.4
 
    From Ansible 2.4 all network modules MUST include corrisponding unit tests to defend functionality.
-   The unit tests must be added in the same PR that includes the new network module.
+   The unit tests must be added in the same PR that includes the new network module, or extends functionality.
    Integration tests, although not required, are a welcome addition.
    How to do this is explained in the rest of this document.
-
-**Note:** From Ansible 2.4, for any new Network Module to be accepted it must be accompanied by a corresponding test.
-
-For further help with this please contact `gundalow` in `#ansible-devel` on FreeNode IRC.
-
 
 
 
@@ -34,6 +29,9 @@ Unit Tests
 
 
 
+See the :doc:`testing_units` page for more information on running unit tests.
+
+
 Integration Tests
 -----------------
 
@@ -42,7 +40,7 @@ Integration Tests
 $ ANSIBLE_ROLES_PATH=targets ansible-playbook network-all.yaml
 ```
 
-*NOTE* To run the network tests you will need a number of test machines and sutabily configured inventory file, a sample is included in `test/integration/inventory.network`
+*NOTE* To run the network tests you will need a number of test machines and suitably configured inventory file, a sample is included in `test/integration/inventory.network`
 
 *NOTE* As with the rest of the integration tests, they can be found grouped by module in `test/integration/targets/MODULENAME/`
 
@@ -64,6 +62,23 @@ Extending Network Tests
 
 Unit Tests
 ----------
+
+See the :doc:`testing_units` page for general information regarding how to write unit tests, this section details the network specific.
+
+FIXME Detail the network specific stuff here, such as:
+
+Fixtures files
+``````````````
+
+To mock out fetching results from devices you can use ``fixtures`` to read in pre-generated data.
+
+Text files live in ``test/units/modules/network/PLATFORM/fixtures/``
+
+Data is loaded using the ``load_fixture`` method
+
+See  `eos_banner test <https://github.com/ansible/ansible/blob/devel/test/units/modules/network/eos/test_eos_banner.py>`_ for a practical example.
+
+
 
 Integration Tests
 ------------------
