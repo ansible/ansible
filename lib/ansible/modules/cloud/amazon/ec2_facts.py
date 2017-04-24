@@ -57,7 +57,7 @@ EXAMPLES = '''
 
 import socket
 import re
-
+from ansible.module_utils._text import to_text
 socket.setdefaulttimeout(5)
 
 
@@ -97,7 +97,7 @@ class Ec2Metadata(object):
             data = response.read()
         else:
             data = None
-        return data
+        return to_text(data)
 
     def _mangle_fields(self, fields, uri, filter_patterns=['public-keys-0']):
         new_fields = {}
@@ -110,7 +110,7 @@ class Ec2Metadata(object):
                 new_key = "".join(split_fields)
                 new_fields[self._prefix % new_key] = value
         for pattern in filter_patterns:
-            for key in new_fields.keys():
+            for key in dict(new_fields):
                 match = re.search(pattern, key)
                 if match:
                     new_fields.pop(key)
@@ -138,11 +138,10 @@ class Ec2Metadata(object):
 
     def fix_invalid_varnames(self, data):
         """Change ':'' and '-' to '_' to ensure valid template variable names"""
-        for (key, value) in data.items():
+        for key in data:
             if ':' in key or '-' in key:
                 newkey = key.replace(':', '_').replace('-', '_')
-                del data[key]
-                data[newkey] = value
+                data[newkey] = data.pop(key)
 
     def add_ec2_region(self, data):
         """Use the 'ansible_ec2_placement_availability_zone' key/value
