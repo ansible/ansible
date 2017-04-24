@@ -221,6 +221,9 @@ commands:
     type: list
     sample: ["ip access-list ANSIBLE", "10 permit tcp 1.1.1.1/24 any"]
 '''
+import re
+import collections
+
 from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
