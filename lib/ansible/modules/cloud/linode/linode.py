@@ -60,7 +60,7 @@ options:
   alert_bwin_enabled:
     description:
     - Set status of bandwidth in alerts.
-    default: "True"
+    default: null
     choices: [ "True", "False" ]
     version_added: "2.3"
   alert_bwin_threshold:
@@ -71,7 +71,7 @@ options:
   alert_bwout_enabled:
     description:
     - Set status of bandwidth out alerts.
-    default: "True"
+    default: null
     choices: [ "True", "False" ]
     version_added: "2.3"
   alert_bwout_threshold:
@@ -82,7 +82,7 @@ options:
   alert_bwquota_enabled:
     description:
     - Set status of bandwidth quota alerts as percentage of network transfer quota.
-    default: "True"
+    default: null
     choices: [ "True", "False" ]
     version_added: "2.3"
   alert_bwquota_threshold:
@@ -93,7 +93,7 @@ options:
   alert_cpu_enabled:
     description:
     - Set status of receiving CPU usage alerts.
-    default: "True"
+    default: null
     choices: [ "True", "False" ]
     version_added: "2.3"
   alert_cpu_threshold:
@@ -104,7 +104,7 @@ options:
   alert_diskio_enabled:
     description:
     - Set status of receiving disk IO alerts.
-    default: "True"
+    default: null
     choices: [ "True", "False" ]
     version_added: "2.3"
   alert_diskio_threshold:
@@ -336,7 +336,8 @@ def getInstanceDetails(api, server):
 
 def linodeServers(module, api, state, name,
                   displaygroup, plan, additional_disks, distribution,
-                  datacenter, kernel_id, linode_id, payment_term, password, private_ip, ssh_pub_key, swap, wait, wait_timeout, watchdog, **kwargs):
+                  datacenter, kernel_id, linode_id, payment_term, password,
+                  private_ip, ssh_pub_key, swap, wait, wait_timeout, watchdog, **kwargs):
     instances = []
     changed = False
     new_server = False
