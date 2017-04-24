@@ -42,7 +42,7 @@ options:
             - "State which should a host to be in after successful completion."
         choices: [
             'present', 'absent', 'maintenance', 'upgraded', 'started',
-            'restarted', 'stopped', 'reinstalled', 'iscsidiscover'
+            'restarted', 'stopped', 'reinstalled', 'iscsidiscover', 'iscsilogin'
         ]
         default: present
     comment:
@@ -156,6 +156,11 @@ EXAMPLES = '''
 # discover iscsi targets
 - ovirt_hosts:
     state: iscsidiscover
+    name: myhost
+
+# login to iscsi targets
+- ovirt_hosts:
+    state: iscsilogin
     name: myhost
 
 # Reinstall host using public key
@@ -319,7 +324,7 @@ def main():
         state=dict(
             choices=[
                 'present', 'absent', 'maintenance', 'upgraded', 'started',
-                'restarted', 'stopped', 'reinstalled', 'iscsidiscover'
+                'restarted', 'stopped', 'reinstalled', 'iscsidiscover', 'iscsilogin'
             ],
             default='present',
         ),
@@ -392,6 +397,13 @@ def main():
                 # know if we got 200 response code
                 action='iscsi_discover',
                 iscsi=otypes.IscsiDetails(address=module.params['iscsi']['address'])
+            )
+        elif state == 'iscsilogin':
+            ret = hosts_module.action(
+                # This is a synchronize action and we only want to
+                # know if we got 200 response code
+                action='iscsi_login',
+                iscsi=otypes.IscsiDetails(address=module.params['iscsi']['address'], target=module.params['iscsi']['target'])
             )
         elif state == 'started':
             ret = hosts_module.action(
