@@ -24,7 +24,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: rds_instance
-version_added: "2.3"
+version_added: "2.4"
 short_description: create, delete, or modify an Amazon rds instance
 description:
      - Creates, deletes, or modifies rds instances. When creating an instance
@@ -32,7 +32,7 @@ description:
 options:
   state:
     description:
-      - Describes the desired state of the database instance.
+      - Describes the desired state of the database instance. N.B. restarted is allowed as an alias for rebooted.
     required: false
     default: present
     choices: [ 'present', 'absent', 'rebooted' ]
@@ -123,11 +123,11 @@ options:
     required: false
   maint_window:
     description:
-      - "Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi. (Example: Mon:22:00-Mon:23:15) If not specified then a random maintenance window is assigned.
+      - "Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi (Example: Mon:22:00-Mon:23:15). If not specified then AWS will assign a random maintenance window.
     required: false
   backup_window:
     description:
-      - Backup window in format of hh24:mi-hh24:mi. If not specified then a random backup window is assigned.
+      - Backup window in format of hh24:mi-hh24:mi (Example: 04:00-05:45). If not specified then AWS will assign a random backup window.
     required: false
   backup_retention:
     description:
@@ -784,8 +784,7 @@ def validate_parameters(required_vars, valid_vars, module):
 argument_spec = ec2_argument_spec()
 argument_spec.update(
     dict(
-        state=dict(choices=['absent', 'present',
-                            'rebooted'], default='present'),
+        state=dict(choices=['absent', 'present', 'rebooted', 'restarted'], default='present'),
         instance_name=dict(required=True),
         source_instance=dict(),
         db_engine=dict(choices=DB_ENGINES),
@@ -850,7 +849,7 @@ def main():
 
     if module.params['state'] == 'absent':
         delete_db_instance(module, conn)
-    if module.params['state'] == 'rebooted':
+    if module.params['state'] in ['rebooted', 'restarted']:
         reboot_db_instance(module, conn)
 
     # set port to per db defaults if not specified
