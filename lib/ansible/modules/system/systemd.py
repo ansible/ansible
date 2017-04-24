@@ -256,6 +256,9 @@ from ansible.module_utils._text import to_native
 def is_running_service(service_status):
     return service_status['ActiveState'] in set(['active', 'activating'])
 
+def request_was_ignored(out):
+    return '=' not in out and 'ignoring request' in out
+
 
 # ===========================================
 # Main control flow
@@ -307,7 +310,7 @@ def main():
     # check service data, cannot error out on rc as it changes across versions, assume not found
     (rc, out, err) = module.run_command("%s show '%s'" % (systemctl, unit))
 
-    if out.find('ignoring request') != -1:
+    if request_was_ignored(out) or request_was_ignored(err):
         # fallback list-unit-files as show does not work on some systems (chroot)
         # not used as primary as it skips some services (like those using init.d) and requires .service/etc notation
         (rc, out, err) = module.run_command("%s list-unit-files '%s'" % (systemctl, unit))
