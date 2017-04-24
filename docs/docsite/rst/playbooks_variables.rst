@@ -897,8 +897,8 @@ Variable Scopes
 Ansible has 3 main scopes:
 
  * Global: this is set by config, environment variables and the command line
- * Play: each play and contained structures, vars entries, include_vars, role defaults and vars.
- * Host: variables directly associated to a host, like inventory, facts or registered task outputs
+ * Play: each play and contained structures, vars entries (vars; vars_files; vars_prompt), role defaults and vars.
+ * Host: variables directly associated to a host, like inventory, include_vars, facts or registered task outputs
 
 .. _variable_examples:
 
