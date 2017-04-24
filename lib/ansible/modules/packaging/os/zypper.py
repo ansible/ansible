@@ -343,16 +343,16 @@ def package_present(m, name, want_latest):
     name_install, name_remove, urls = get_want_state(m, name)
 
     # filter versioned packages
-    install_version = {p: name_install[p] for p in name_install if name_install[p]}
-    remove_version = {p: name_remove[p] for p in name_remove if name_remove[p]}
+    install_version = dict((p, name_install[p]) for p in name_install if name_install[p])
+    remove_version = dict((p, name_remove[p]) for p in name_remove if name_remove[p])
 
     if install_version or remove_version:
         # add oldpackage flag when a version is given to allow downgrades
         m.params['oldpackage'] = True
 
         # Remove versioned packages from unversioned package list to avoid duplicates
-        name_install = {p for p in name_install if p not in install_version}
-        name_remove = {p for p in name_remove if p not in remove_version}
+        name_install = dict((p, None) for p in name_install if p not in install_version)
+        name_remove = dict((p, None) for p in name_remove if p not in remove_version)
 
         # Create a list of versioned packages
         install_version = [p + install_version[p] for p in install_version]
