@@ -7,8 +7,11 @@ Testing Ansible
 Introduction
 ============
 
-This page describes how to test Ansible, as well as how to extend the tests 
+This page, and it's subpages, describes:
 
+* how ansible is tested
+* how to test Ansible locally
+* how to extend the testing capabilities
 
 Types of tests
 ==============
@@ -23,7 +26,7 @@ Types of tests
 
 
 
-FIXME High level detail, with links to subpages for: Unit (compile, sanity, etc), integration, 
+FIXME High level detail, with links to subpages for: Unit (compile, sanity, etc), integration,
 
 Link to Manual testing of PRs (testing_pullrequests.rst)
 If you're a developer, one of the most valuable things you can do is look at the github issues list and help fix bugs.  We almost always prioritize bug fixing over
@@ -47,6 +50,20 @@ Understanding the results
 
 Running the same tests locally
 ------------------------------
+
+
+
+Want to know more
+=================
+
+FIXME Testing Working Group
+
+
+
+
+
+FIXME Stuff to review and add
+=============================
 
 
 FIXME Look at TWG Etherpad
