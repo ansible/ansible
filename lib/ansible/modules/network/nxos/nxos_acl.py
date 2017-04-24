@@ -511,7 +511,7 @@ def main():
         delta_core = dict(
             set(proposed_core.items()).difference(
                 existing_core.items())
-            )
+        )
         delta_options = dict(
             set(proposed_options.items()).difference(
                 existing_options.items())
