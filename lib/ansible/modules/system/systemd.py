@@ -294,7 +294,7 @@ def main():
     }
 
     for requires in ('state', 'enabled', 'masked'):
-        if requires is not None and unit is None:
+        if module.params[requires] is not None and unit is None:
             module.fail_json(msg="name is also required when specifying %s" % requires)
 
     # Run daemon-reload first, if requested
@@ -302,6 +302,10 @@ def main():
         (rc, out, err) = module.run_command("%s daemon-reload" % (systemctl))
         if rc != 0:
             module.fail_json(msg='failure %d during daemon-reload: %s' % (rc, err))
+
+        # exit if daemon-reload only
+        if module.params['state'] is None and module.params['enabled'] is None and module.params['masked'] is None:
+            module.exit_json(**result)
 
     found = False
     is_initd = sysv_exists(unit)
