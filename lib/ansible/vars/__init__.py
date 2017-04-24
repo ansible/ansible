@@ -429,8 +429,13 @@ class VariableManager:
             variables['inventory_dir'] = self._inventory.basedir()
             variables['inventory_file'] = self._inventory.src()
             if play:
+                templar = Templar(loader=loader)
+                if templar.is_template(play.hosts):
+                    pattern = 'all'
+                else:
+                    pattern = play.hosts or 'all'
                 # add the list of hosts in the play, as adjusted for limit/filters
-                variables['ansible_play_hosts_all'] = [x.name for x in self._inventory.get_hosts(pattern=play.hosts or 'all', ignore_restrictions=True)]
+                variables['ansible_play_hosts_all'] = [x.name for x in self._inventory.get_hosts(pattern=pattern, ignore_restrictions=True)]
                 variables['ansible_play_hosts'] = [x for x in variables['ansible_play_hosts_all'] if x not in play._removed_hosts]
                 variables['ansible_play_batch'] = [x.name for x in self._inventory.get_hosts() if x.name not in play._removed_hosts]
 
