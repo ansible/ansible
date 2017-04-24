@@ -50,6 +50,13 @@ options:
      description:
        - Ignored. Present for backwards compatability
      required: false
+   remove_default_rules:
+     version_added: "2.4"
+     description:
+       - Remove default security rules when creating a new security group.
+         An existing security group won't be modified.
+     choices: [present, absent]
+     default: present
 '''
 
 EXAMPLES = '''
@@ -101,6 +108,8 @@ def main():
         name=dict(required=True),
         description=dict(default=''),
         state=dict(default='present', choices=['absent', 'present']),
+        remove_default_rules=dict(default='present',
+                                  choices=['absent', 'present']),
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -114,6 +123,7 @@ def main():
     name = module.params['name']
     state = module.params['state']
     description = module.params['description']
+    remove_default_rules = module.params['remove_default_rules']
 
     try:
         cloud = shade.openstack_cloud(**module.params)
@@ -126,6 +136,9 @@ def main():
         if state == 'present':
             if not secgroup:
                 secgroup = cloud.create_security_group(name, description)
+                if remove_default_rules == 'absent':
+                    for rule in secgroup['security_group_rules']:
+                        cloud.delete_security_group_rule(rule['id'])
                 changed = True
             else:
                 if _needs_update(module, secgroup):
