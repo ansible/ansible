@@ -503,8 +503,8 @@ class Templar:
         ''' lets us know if data has a template'''
         if isinstance(data, string_types):
             try:
-                new = self.do_template(data)
-            except UndefinedError:
+                new = self.do_template(data, fail_on_undefined=True)
+            except (AnsibleUndefinedVariable, UndefinedError):
                 return True
             except:
                 return False
