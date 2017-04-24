@@ -41,6 +41,13 @@ Help
                             Output format. Default: "plain"
       --output OUTPUT       Output location, use "-" for stdout. Default "-"
 
+
+Extending validate-modules
+==========================
+
+FIXME detail of schema here
+
+
 Codes
 =====
 

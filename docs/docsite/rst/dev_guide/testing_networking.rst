@@ -4,9 +4,39 @@ Network Tests
 
 .. contents:: Topics
 
+
+
+Overview of Network Testing
+===========================
+
+This page details the specifics around testing Ansible Networking modules.
+
+
+.. important:: Testing requirements for Ansible 2.4
+
+   From Ansible 2.4 all network modules MUST include corrisponding unit tests to defend functionality.
+   The unit tests must be added in the same PR that includes the new network module.
+   Integration tests, although not required, are a welcome addition.
+   How to do this is explained in the rest of this document.
+
 **Note:** From Ansible 2.4, for any new Network Module to be accepted it must be accompanied by a corresponding test.
 
 For further help with this please contact `gundalow` in `#ansible-devel` on FreeNode IRC.
+
+
+
+
+Running Network Tests
+=====================
+
+Unit Tests
+----------
+
+
+
+Integration Tests
+-----------------
+
 
 ```
 $ ANSIBLE_ROLES_PATH=targets ansible-playbook network-all.yaml
@@ -29,8 +59,14 @@ and test_cases to the name of the test:
 $ ANSIBLE_ROLES_PATH=targets ansible-playbook -i inventory.network network-all.yaml --tags="cli" -e "limit_to=eos_command test_case=notequal"
 ```
 
-## Contributing Test Cases
+Extending Network Tests
+=======================
 
+Unit Tests
+----------
+
+Integration Tests
+------------------
 Test cases are added to roles based on the module being testing. Test cases
 should include both `cli` and `eapi` test cases. Cli test cases should be
 added to `test/integration/targets/modulename/tests/cli` and eapi tests should be added to
@@ -58,7 +94,8 @@ In addition to positive testing, negative tests are required to ensure user frie
          - "'Subset must be one of' in result.msg"
 
 
-### Conventions
+Conventions
+```````````
 
 - Each test case should generally follow the pattern:
 
@@ -74,6 +111,19 @@ In addition to positive testing, negative tests are required to ensure user frie
 - Files containing test cases must end in `.yaml`
 
 
-### Adding a new Network Platform
+Adding a new Network Platform
+`````````````````````````````
 
 A top level playbook is required such as `ansible/test/integration/eos.yaml` which needs to be references by `ansible/test/integration/network-all.yaml`
+
+Where to find out more
+======================
+
+FIXME Details of Network Meetings
+
+FIXME
+=====
+In an effort to ensure the highest quality of network modules, all contributions must include unit tests to exercise each feature of the module. Additionally, do to the nature of mocked interfaces unit tests use, network modules should also include integration tests. The integration tests should be runnable against supported versions of network devices as well as their virtual machine images or containers if available.
+
+Examples of existing unit tests can be found in ansible/test/units
+Examples of existing integration tests can be found in ansible/test/integration

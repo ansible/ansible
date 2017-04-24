@@ -16,12 +16,21 @@ This page, and it's subpages, describes:
 Types of tests
 ==============
 
-* compile
-* sanity
-* integration
-* network-integration
-* windows-integration
-* units
+At a high level we have the following classifications of tests
+
+:compile:
+  * Test python code against a variety of Python versions.
+:sanity:
+  * Sanity tests are made up of scripts and tools used to perform static code analysis.
+  * The primary purpose of these tests is to enforce Ansible coding standards and requirements.
+:integration:
+  * Functional tests of modules and Ansible language and core functionality.
+:network-integration:
+  * Tests for Ansible Networking
+:windows-integration:
+  * Tests for Windows.
+:units:
+  * 
 
 
 

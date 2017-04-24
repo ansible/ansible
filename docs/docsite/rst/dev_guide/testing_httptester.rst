@@ -4,6 +4,13 @@ httptester
 
 .. contents:: Topics
 
+Overview
+========
+
+FIXME: Details on **why** this is needed, what the plans are moving forward.
+FIXME: If you are interested in helping with this please contact TWG
+
+
 HTTP Testing endpoint which provides httpbin, nginx, SSL and SNI
 capabilities, for providing a local HTTP endpoint for testing
 

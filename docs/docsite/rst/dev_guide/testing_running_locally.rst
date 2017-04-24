@@ -4,7 +4,7 @@ Testing Ansible
 
 .. contents:: Topics
 
-This page describes how to: 
+This page describes how to:
 
 * Run tests locally using ``ansible-test``
 * Extend
@@ -21,7 +21,7 @@ Setup
 
 The code and tests are in the same GitHub repository, to get a local copy do
 
-#. Fork the `ansible/ansible <https://github.com/ansible/ansible/>`_ repositoryi on GitHub.
+#. Fork the `ansible/ansible <https://github.com/ansible/ansible/>`_ repository on GitHub.
 #. Clone your fork: ``git clone git@github.com:USERNAME/ansible.git``
 #. Install the optional ``argcomplete`` package for tab completion (highly recommended)::
 

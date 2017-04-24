@@ -14,6 +14,10 @@ Current Rule Set
 | All ``pep8`` tests are executed, except those listed in the `current
   ignore list`_.
 
+.. warning: Updating the Rule Set
+
+   Changes to the Rule Set need approval from the Core Team, and must be done via the TWG.
+
 Legacy Rule Set
 ===============
 
@@ -43,6 +47,8 @@ The pep8 check can be run locally with::
 
 
     ./test/runner/ansible-test sanity --test pep8 [file-or-directory-path-to-check] ...
+
+
 
 .. _PEP 8: https://www.python.org/dev/peps/pep-0008/
 .. _pep8: https://pypi.python.org/pypi/pep8
