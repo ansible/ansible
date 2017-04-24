@@ -359,7 +359,7 @@ def get_service_by_id_or_name(consul_api, service_id_or_name):
 
 
 def parse_check(module):
-    if len(filter(None, [module.params.get('script'), module.params.get('ttl'), module.params.get('http')])) > 1:
+    if len(list(filter(None, [module.params.get('script'), module.params.get('ttl'), module.params.get('http')]))) > 1:
         module.fail_json(
             msg='check are either script, http or ttl driven, supplying more than one does not make sense')
 
