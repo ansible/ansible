@@ -243,6 +243,7 @@ class EFSConnection(object):
             **kwargs
         )
         for item in items:
+            item['Name'] = item['CreationToken']
             item['CreationTime'] = str(item['CreationTime'])
             """
             Suffix of network path to be used as NFS device for mount. More detail here:
