@@ -603,15 +603,14 @@ def state_present(module, existing, proposed, candidate):
         if module.params['vrf'] != 'default':
             parents.append('vrf {0}'.format(module.params['vrf']))
         candidate.add(commands, parents=parents)
-    else:
-        if len(proposed.keys()) == 0:
-            if module.params['vrf'] != 'default':
-                commands.append('vrf {0}'.format(module.params['vrf']))
-                parents = ['router bgp {0}'.format(module.params['asn'])]
-            else:
-                commands.append('router bgp {0}'.format(module.params['asn']))
-                parents = []
-            candidate.add(commands, parents=parents)
+    elif proposed:
+        if module.params['vrf'] != 'default':
+            commands.append('vrf {0}'.format(module.params['vrf']))
+            parents = ['router bgp {0}'.format(module.params['asn'])]
+        else:
+            commands.append('router bgp {0}'.format(module.params['asn']))
+            parents = []
+        candidate.add(commands, parents=parents)
 
 
 def state_absent(module, existing, proposed, candidate):
@@ -789,8 +788,10 @@ def main():
         candidate = CustomNetworkConfig(indent=3)
         invoke('state_%s' % state, module, existing, proposed, candidate)
 
-        response = load_config(module, candidate)
-        result.update(response)
+        if (candidate):
+            load_config(module, candidate)
+            result['changed'] = True
+        result['commands'] = [item.text for item in candidate.items]
     else:
         result['commands'] = []
 
