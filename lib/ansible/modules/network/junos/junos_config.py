@@ -193,7 +193,7 @@ from ansible.module_utils.junos import get_diff, load_config, get_configuration
 from ansible.module_utils.junos import junos_argument_spec
 from ansible.module_utils.junos import check_args as junos_check_args
 from ansible.module_utils.netconf import send_request
-from ansible.module_utils.six import string_types   
+from ansible.module_utils.six import string_types
 
 USE_PERSISTENT_CONNECTION = True
 DEFAULT_COMMENT = 'configured by junos_config'
