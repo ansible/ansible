@@ -172,6 +172,8 @@ def ansible_j2_concat(invals):
     if isinstance(invals, list):
         if len(invals) == 1:
             invals = invals[0]
+        elif len(invals) > 1:
+            invals = u''.join(invals)
     return invals
 
 
@@ -863,7 +865,6 @@ class Templar:
                 # newline here if preserve_newlines is False.
                 res_newlines = _count_newlines_from_end(res)
                 if data_newlines is not None and data_newlines > res_newlines:
-                    print('data_newlines > res_newlines')
                     res += self.environment.newline_sequence * (data_newlines - res_newlines)
             return res
         except (UndefinedError, AnsibleUndefinedVariable) as e:
