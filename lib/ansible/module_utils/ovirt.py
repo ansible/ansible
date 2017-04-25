@@ -242,6 +242,16 @@ def get_cluster_by_id(connection, cluster_id):
     clusters_service = connection.system_service().clusters_service()
     return clusters_service.cluster_service(cluster_id).get()
 
+def search_unregistered_entity(service, id):
+    entity = None
+
+    # TODO: We should filter only the id of the template instead of iterate every time.
+    entities = service.list(query={ 'unregistered': 'true' })
+    for unreg_entity in entities:
+        if unreg_entity.id == id:
+            entity = unreg_entity
+    return entity
+
 def search_by_name(service, name, **kwargs):
     """
     Search for the entity by its name. Nested entities don't support search
