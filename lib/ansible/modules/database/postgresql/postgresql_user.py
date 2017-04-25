@@ -343,10 +343,15 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
     # Handle passwords.
     if not no_password_changes and (password is not None or role_attr_flags != '' or expires is not None):
         # Select password and all flag-like columns in order to verify changes.
-        select = "SELECT * FROM pg_authid where rolname=%(user)s"
-        cursor.execute(select, {"user": user})
-        # Grab current role attributes.
-        current_role_attrs = cursor.fetchone()
+        query_password_data = dict(password=password, expires=expires)
+
+        try:
+            select = "SELECT * FROM pg_authid where rolname=%(user)s"
+            cursor.execute(select, {"user": user})
+            # Grab current role attributes.
+            current_role_attrs = cursor.fetchone()
+        except psycopg2.ProgrammingError:
+            current_role_attrs = None
 
         pwchanging = user_should_we_change_password(
             current_role_attrs, user, password, encrypted)
