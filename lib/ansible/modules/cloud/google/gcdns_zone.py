@@ -54,6 +54,12 @@ options:
               create a TLD and will fail.
         required: true
         aliases: ['name']
+    zone_id:
+        description:
+            - Google Cloud DNS zone ID.
+            - Used when a new zone created. If absent, ID is generated from domain name.
+        required: false
+        default: null
     description:
         description:
             - An arbitrary text string to use for the zone description.
@@ -94,6 +100,10 @@ EXAMPLES = '''
 # Basic zone creation example.
 - name: Create a basic zone with the minimum number of parameters.
   gcdns_zone: zone=example.com
+
+# Zone creation example with custom zone ID.
+- name: Create a zone with custom zone ID.
+  gcdns_zone: zone=example.com zone_id=example-com
 
 # Zone removal example.
 - name: Remove a zone.
@@ -163,7 +173,8 @@ def create_zone(module, gcdns, zone):
     """Creates a new Google Cloud DNS zone."""
 
     description = module.params['description']
-    extra       = dict(description = description)
+    zone_id     = module.params['zone_id']
+    extra       = dict(description = description, name = zone_id)
     zone_name   = module.params['zone']
 
     # Google Cloud DNS wants the trailing dot on the domain name.
@@ -316,6 +327,7 @@ def main():
         argument_spec = dict(
             state                 = dict(default='present', choices=['present', 'absent'], type='str'),
             zone                  = dict(required=True, aliases=['name'], type='str'),
+            zone_id               = dict(type='str'),
             description           = dict(default='', type='str'),
             service_account_email = dict(type='str'),
             pem_file              = dict(type='path'),
