@@ -276,10 +276,6 @@ class ExoDnsRecord(ExoDns):
     def __init__(self, module):
         super(ExoDnsRecord, self).__init__(module)
 
-        self.content = self.module.params.get('content')
-        if self.content:
-            self.content = self.content.lower()
-
         self.domain = self.module.params.get('domain').lower()
         self.name = self.module.params.get('name').lower()
         if self.name == self.domain:
@@ -289,6 +285,10 @@ class ExoDnsRecord(ExoDns):
         self.record_type = self.module.params.get('record_type')
         if self.multiple and self.record_type != 'A':
             self.module.fail_json(msg="Multiple is only usable with record_type A")
+
+        self.content = self.module.params.get('content')
+        if self.content and self.record_type != 'TXT':
+            self.content = self.content.lower()
 
     def _create_record(self, record):
         self.result['changed'] = True
