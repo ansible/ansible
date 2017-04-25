@@ -282,6 +282,49 @@ def user_add(cursor, user, password, role_attr_flags, encrypted, expires):
     return True
 
 
+def user_should_we_change_password(current_role_attrs, user, password, encrypted):
+    """Check if we should change the user's password.
+
+    Compare the proposed password with the existing one, comparing
+    hashes if encrypted.  If we can't access it or it's encrypted so
+    we can't read it assume yes.
+    """
+
+    if password is None:
+        return False
+
+    if current_role_attrs is None:
+        # on some databases, E.g. AWS RDS instances, there is no access to
+        # the pg_authid relation to check the pre-existing password, so we
+        # just assume password is different
+        return True
+
+    # Do we actually need to do anything?
+
+    if encrypted == 'ENCRYPTED' and password.startswith('md5'):
+        if password == current_role_attrs['rolpassword']:
+            return False
+        else:
+            return True
+
+    if encrypted == 'ENCRYPTED' and not password.startswith('md5'):
+        try:
+            from passlib.hash import postgres_md5 as pm
+            if pm.encrypt(password, user) == current_role_attrs['rolpassword']:
+                return False
+            else:
+                return True
+        except ImportError:
+            # Cannot check if passlib is not installed, so assume password is
+            # different
+            return True
+
+    if password == current_role_attrs['rolpassword']:
+        return False
+    else:
+        return True
+
+
 def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expires, no_password_changes):
     """Change user password and/or attributes. Return True if changed, False otherwise."""
     changed = False
@@ -305,20 +348,8 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
         # Grab current role attributes.
         current_role_attrs = cursor.fetchone()
 
-        # Do we actually need to do anything?
-        pwchanging = False
-        if password is not None:
-            # 32: MD5 hashes are represented as a sequence of 32 hexadecimal digits
-            #  3: The size of the 'md5' prefix
-            # When the provided password looks like a MD5-hash, value of
-            # 'encrypted' is ignored.
-            if ((password.startswith('md5') and len(password) == 32 + 3) or encrypted == 'UNENCRYPTED'):
-                if password != current_role_attrs['rolpassword']:
-                    pwchanging = True
-            elif encrypted == 'ENCRYPTED':
-                hashed_password = 'md5{0}'.format(md5(to_bytes(password) + to_bytes(user)).hexdigest())
-                if hashed_password != current_role_attrs['rolpassword']:
-                    pwchanging = True
+        pwchanging = user_should_we_change_password(
+            current_role_attrs, user, password, encrypted)
 
         role_attr_flags_changing = False
         if role_attr_flags:
