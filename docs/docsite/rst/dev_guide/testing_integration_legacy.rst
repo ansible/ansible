@@ -22,14 +22,49 @@ The following areas are still tested using the legacy ``make tests`` command:
 Over time the above list will be reduced as tests are ported to the ``ansible-test`` framework.
 
 
-Running Legacy Integration Tests
-=================================
+Configuring Cloud Tests
+=======================
 
-FIXME Setup environment LINK
+Cloud tests exercise capabilities of cloud modules (e.g. ec2_key).  These are
+not 'tests run in the cloud' so much as tests that leverage the cloud modules
+and are organized by cloud provider.
+
+In order to run cloud tests, you must provide access credentials in a file
+named ``credentials.yml``.  A sample credentials file named
+``credentials.template`` is available for syntax help.
+
+
+Provide cloud credentials::
+
+    cp credentials.template credentials.yml
+    ${EDITOR:-vi} credentials.yml
+
+Run the tests::
+
+    make cloud
+
+.. warning:: Possible cost of running cloud tests
+
+   Running cloud integration tests will create and destroy cloud
+   resources.  Running these tests may result in additional fees associated with
+   your cloud account.  Care is taken to ensure that created resources are
+   removed.  However, it is advisable to inspect your AWS console to ensure no
+   unexpected resources are running.
+
+
+Other configuration
+===================
+In order to run some tests, you must provide access credentials in a file
+named ``credentials.yml``.  A sample credentials file named
+``credentials.template`` is available for syntax help.
+
+Running Tests
+=============
 
 The tests are invoked via a ``Makefile``::
 
-  # If you haven't already got Ansible available use the local checkout by doing:
+  # If you haven't already got Ansible available use the local checkout by doing::
+
   source hacking/env-setup
    
   cd test/integration/
@@ -37,3 +72,11 @@ The tests are invoked via a ``Makefile``::
   #make TARGET
   # e.g.
   make amazon
+
+.. warning:: Possible cost of running cloud tests
+
+   Running cloud integration tests will create and destroy cloud
+   resources.  Running these tests may result in additional fees associated with
+   your cloud account.  Care is taken to ensure that created resources are
+   removed.  However, it is advisable to inspect your AWS console to ensure no
+   unexpected resources are running.

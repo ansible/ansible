@@ -21,19 +21,7 @@ This page details the specifics around testing Ansible Networking modules.
 
 
 
-Running Network Tests
-=====================
 
-Unit Tests
-----------
-
-
-
-See the :doc:`testing_units` page for more information on running unit tests.
-
-
-Integration Tests
------------------
 
 
 ```
@@ -56,28 +44,6 @@ and test_cases to the name of the test:
 ```
 $ ANSIBLE_ROLES_PATH=targets ansible-playbook -i inventory.network network-all.yaml --tags="cli" -e "limit_to=eos_command test_case=notequal"
 ```
-
-Extending Network Tests
-=======================
-
-Unit Tests
-----------
-
-See the :doc:`testing_units` page for general information regarding how to write unit tests, this section details the network specific.
-
-FIXME Detail the network specific stuff here, such as:
-
-Fixtures files
-``````````````
-
-To mock out fetching results from devices you can use ``fixtures`` to read in pre-generated data.
-
-Text files live in ``test/units/modules/network/PLATFORM/fixtures/``
-
-Data is loaded using the ``load_fixture`` method
-
-See  `eos_banner test <https://github.com/ansible/ansible/blob/devel/test/units/modules/network/eos/test_eos_banner.py>`_ for a practical example.
-
 
 
 Integration Tests

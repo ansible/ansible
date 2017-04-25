@@ -1,8 +1,9 @@
+********************
 Developer Information
-=====================
+********************
 
 Ansible Developer Guide
-```````````````````````
+=======================
 
 Welcome to the Ansible Developer Guide!
 
@@ -22,7 +23,7 @@ To get started, select one of the following topics.
    developing_api
    developing_module_utilities
    developing_core
-   developing_test_pr
+   testing
    developing_rebasing
    repomerge
    developing_releases
