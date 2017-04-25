@@ -52,7 +52,7 @@ options:
       - If C(dest) is a directory, either the server provided filename or, if
         none provided, the base name of the URL on the remote server will be
         used. If a directory, C(force) has no effect.
-        If C(dest) is a directory, the file will always be
+        If C(dest) is not a directory, the file will always be
         downloaded (regardless of the force option), but replaced only if the contents changed.
     required: true
   tmp_dest:
