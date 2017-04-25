@@ -629,7 +629,7 @@ class Templar:
 
                         unsafe = hasattr(result, '__UNSAFE__')
                         if convert_data and not self._no_type_regex.match(variable):
-                            if isinstance(result, (str, unicode, bytes)):
+                            if isinstance(result, (string_types, text_type)):
                                 # if this looks like a dictionary or list, convert it to such using the safe_eval method
                                 if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
                                         result.startswith("[") or result in ("True", "False"):
