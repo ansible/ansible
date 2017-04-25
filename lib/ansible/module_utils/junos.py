@@ -18,7 +18,7 @@
 #
 from contextlib import contextmanager
 
-from xml.etree.ElementTree import Element, SubElement
+from xml.etree.ElementTree import Element, SubElement, fromstring
 
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.netconf import send_request, children
@@ -108,10 +108,12 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
             cfg = SubElement(obj, lookup[format])
 
         if isinstance(candidate, string_types):
-            cfg.text = candidate
+            if format == 'xml':
+                cfg.append(fromstring(candidate))
+            else:
+                cfg.text = candidate
         else:
             cfg.append(candidate)
-
     return send_request(module, obj)
 
 def get_configuration(module, compare=False, format='xml', rollback='0'):
