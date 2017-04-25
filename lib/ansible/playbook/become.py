@@ -77,7 +77,7 @@ class Become:
                 ds['become_user'] = ds['sudo_user']
                 del ds['sudo_user']
 
-            display.deprecated("Instead of sudo/sudo_user, use become/become_user and make sure become_method is 'sudo' (default)")
+            display.deprecated("Instead of sudo/sudo_user, use become/become_user and make sure become_method is 'sudo' (default)", '2.6')
 
         elif 'su' in ds or 'su_user' in ds:
             ds['become_method'] = 'su'
@@ -89,7 +89,7 @@ class Become:
                 ds['become_user'] = ds['su_user']
                 del ds['su_user']
 
-            display.deprecated("Instead of su/su_user, use become/become_user and set become_method to 'su' (default is sudo)")
+            display.deprecated("Instead of su/su_user, use become/become_user and set become_method to 'su' (default is sudo)", '2.6')
 
         return ds
 
