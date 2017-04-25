@@ -173,9 +173,11 @@ def ansible_j2_concat(invals):
     invals = [x for x in invals]
     if isinstance(invals, list):
         if len(invals) == 1:
+            # break out the single value
             invals = invals[0]
         elif len(invals) > 1:
-            invals = u''.join(invals)
+            # cast to unicode and join
+            invals = u''.join([u'%s' % x for x in invals])
     return invals
 
 
