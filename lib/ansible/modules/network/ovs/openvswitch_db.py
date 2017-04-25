@@ -129,7 +129,6 @@ def map_config_to_obj(module):
     templatized_command = "%(ovs-vsctl)s -t %(timeout)s list %(table)s %(record)s"
     command = templatized_command % module.params
     rc, out, err = module.run_command(command, check_rc=True)
-
     if rc != 0:
         module.fail_json(msg=err)
 
@@ -137,7 +136,7 @@ def map_config_to_obj(module):
 
     col_value = match.group(3)
     col_value_to_dict = {}
-    if match.group(3):
+    if col_value and col_value != '{}':
         for kv in col_value[1:-1].split(','):
             k, v = kv.split('=')
             col_value_to_dict[k.strip()] = v.strip()
