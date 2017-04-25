@@ -233,13 +233,9 @@ def main():
             True in existing.values()) or restart):
         candidate = CustomNetworkConfig(indent=3)
         invoke('get_commands', module, existing, proposed_args, candidate)
+        response = load_config(module, candidate)
+        result.update(response)
 
-        try:
-            response = load_config(module, candidate)
-            result.update(response)
-        except ShellError:
-            exc = get_exception()
-            module.fail_json(msg=str(exc))
     else:
         result['updates'] = []
 

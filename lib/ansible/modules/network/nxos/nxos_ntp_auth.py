@@ -335,11 +335,7 @@ def main():
         if module.check_mode:
             module.exit_json(changed=True, commands=cmds)
         else:
-            try:
-                load_config(module, cmds)
-            except ShellError:
-                clie = get_exception()
-                module.fail_json(msg=str(clie) + ": " + cmds)
+            load_config(module, cmds)
             end_state = get_ntp_auth_info(key_id, module)
             delta = dict(set(end_state.items()).difference(existing.items()))
             if delta or (len(existing) != len(end_state)):

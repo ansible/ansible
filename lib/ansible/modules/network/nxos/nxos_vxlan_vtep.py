@@ -363,13 +363,9 @@ def main():
                             "all logical interfaces.")
         candidate = CustomNetworkConfig(indent=3)
         invoke('state_%s' % state, module, existing, proposed, candidate)
+        response = load_config(module, candidate)
+        result.update(response)
 
-        try:
-            response = load_config(module, candidate)
-            result.update(response)
-        except ShellError:
-            exc = get_exception()
-            module.fail_json(msg=str(exc))
     else:
         result['updates'] = []
 
