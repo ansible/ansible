@@ -38,8 +38,9 @@ This script can be run with the switches
 --host, to restrict the inventory to a single named node (requires datacenter config)
 --url, of the Consul agent to connect to (defaults to http on localhost:8500 if not specified)
 
-The following environment variables are also read (and, if present, override
-equivalent values set in the config file or by --datacenter, --host or --url)
+The following environment variables are also read and, if present, override
+equivalent values set in the config file (switches set on the command line
+always have the highest precedence and override everything else)
 ANSIBLE_DI_CONSUL_DATACENTER
 ANSIBLE_DI_CONSUL_HOST
 ANSIBLE_DI_CONSUL_URL
@@ -423,8 +424,8 @@ class ConsulConfig(dict):
 
     def __init__(self):
         self.read_settings()
+        self.read_env_vars()    
         self.read_cli_args()
-        self.read_env_vars()
 
     def has_config(self, name):
         if hasattr(self, name):
@@ -446,6 +447,19 @@ class ConsulConfig(dict):
             if config.has_option('consul', option):
                 value = config.get('consul', option)
             setattr(self, option, value)
+
+    def read_env_vars(self):
+        ''' Reads settings from environment variables '''
+
+        var_names = {
+            'ANSIBLE_DI_CONSUL_HOST': 'host',
+            'ANSIBLE_DI_CONSUL_DATACENTER': 'datacenter',
+            'ANSIBLE_DI_CONSUL_URL': 'url'
+        }
+
+        for var, val in var_names.items():
+            if os.getenv(var):
+                setattr(self, val, os.getenv(var))
 
     def read_cli_args(self):
         ''' Command line argument processing '''
@@ -470,24 +484,10 @@ class ConsulConfig(dict):
             if getattr(args, arg):
                 setattr(self, arg, getattr(args, arg))
 
-    def read_env_vars(self):
-        ''' Reads settings from environment variables'''
-
-        var_names = {
-            'ANSIBLE_DI_CONSUL_HOST': 'host',
-            'ANSIBLE_DI_CONSUL_DATACENTER': 'datacenter',
-            'ANSIBLE_DI_CONSUL_URL': 'url'
-        }
-
-        for var, val in var_names.items():
-            if os.getenv(var):
-                setattr(self, val, os.getenv(var))
-
     def get_availability_suffix(self, suffix, default):
         if self.has_config(suffix):
             return self.has_config(suffix)
         return default
-
 
     def get_consul_api(self):
         '''get an instance of the api based on the supplied configuration'''
