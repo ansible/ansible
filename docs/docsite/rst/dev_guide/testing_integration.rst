@@ -206,7 +206,7 @@ Conventions
 
 - Each test case should generally follow the pattern:
 
-  >setup —> test —> assert —> test again (idempotent) —> assert —> -teardown (if needed) -> done
+  setup —> test —> assert —> test again (idempotent) —> assert —> teardown (if needed) -> done
 
   This keeps test playbooks from becoming monolithic and difficult to
   troubleshoot.
