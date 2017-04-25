@@ -421,24 +421,77 @@ EXAMPLES = '''
     alias: zzz.aaa.io
     tags:
       - {'Key': 'Name', 'Value': 'aaa'}
-      - {'Key': 'project', 'Value': 'aaa project'}
+      - {'Key': 'Project', 'Value': 'aaa project'}
 
 # remove a tag from a distribution referenced by alias
 - cloudfront:
     untag_resource: yes
     alias: zzz.aaa.io
     tag_keys:
-    - 'Name'
+    - 'Project'
 
 # validate a distribution with origins and logging
-
-# validate a distribution from cloudfront_facts.py with additions
+- cloudfront:
+    validate_distribution: yes
+    origins:
+        - id: 'my test origin-000111'
+          domain_name: www.example.com
+          origin_path: /production
+          custom_headers:
+            - header_name: MyCustomHeaderName
+              header_value: MyCustomHeaderValue
+    default_cache_behavior:
+      target_origin_id: 'my test origin-000111'
+      forwarded_values:
+        query_string: true
+        cookies:
+          forward: all
+        headers:
+         - '*'
+      viewer_protocol_policy: allow-all
+      smooth_streaming: true
+      compress: true
+    logging:
+      enabled: true
+      include_cookies: false
+      bucket: myawslogbucket.s3.amazonaws.com
+      prefix: myprefix/
+    enabled: false
+    comment: this is a cloudfront distribution with logging
 
 # create a distribution with origins logging and cache behaviors
+    - cloudfront:
+        create_distribution: yes
+        origins:
+            - id: 'my test origin-000111'
+              domain_name: www.example.com
+              origin_path: /production
+              custom_headers:
+                - header_name: MyCustomHeaderName
+                  header_value: MyCustomHeaderValue
+        default_cache_behavior:
+          target_origin_id: 'my test origin-000111'
+          forwarded_values:
+            query_string: true
+            cookies:
+              forward: all
+            headers:
+             - '*'
+          viewer_protocol_policy: allow-all
+          smooth_streaming: true
+          compress: true
+        logging:
+          enabled: true
+          include_cookies: false
+          bucket: mylogbucket.s3.amazonaws.com
+          prefix: myprefix/
+        enabled: false
+        comment: this is a cloudfront distribution with logging
 
 # delete a distribution
-
-# create an s3 distribution
+- cloudfront:
+    delete_distribution: yes
+    distribution_id: E1ZNUV0U7KWO4P
 
 # duplicate a distribution by distribution_id and modify the comment field
 - cloudfront:
@@ -765,6 +818,7 @@ class CloudFrontValidationManager:
         try:
             if logging is None:
                 return None
+            valid_logging = {}
             if not streaming:
                 if(logging and ('enabled' not in logging or 'include_cookies' not in logging
                         or 'bucket' not in logging or 'prefix' not in logging)):
@@ -809,60 +863,63 @@ class CloudFrontValidationManager:
             self.module.fail_json(msg="error validating distribution origins - " + str(e))
 
     def validate_origin(self, origin, default_origin_path, default_origin_access_identity, streaming):
-        if 'origin_path' not in origin:
-            if default_origin_path is not None:
-                origin['origin_path'] = default_origin_path
-            else:
-                origin['origin_path'] = ''
-        if 'domain_name' not in origin:
-            self.module.fail_json(msg="origins[].domain_name must be specified for an origin")
-        if 'id' not in origin:
-            origin['id'] = self.__default_datetime_string
-        if 'custom_headers' in origin and streaming:
-            self.module.fail_json(msg="custom_headers has been specified for a streaming " +
-                    "distribution. custom headers are for web distributions only")
-        if 'custom_headers' in origin and len(origin.get('custom_headers') > 0 ):
-            for custom_header in origin.get('custom_headers'):
-                if 'header_name' not in custom_header or 'header_value' not in custom_header:
-                    self.module.fail_json(msg="both origins[].custom_headers.header_name and " +
-                            "origins[].custom_headers.header_value must be specified")
-            origin['custom_headers'] = self.__helpers.python_list_to_aws_list(origin.get('custom_headers'))
-        else:
-            origin['custom_headers'] = self.__helpers.python_list_to_aws_list()
-        if self.__s3_bucket_domain_identifier in origin.get('domain_name'):
-            if 's3_origin_config' not in origin or 'origin_access_identity' not in origin.get('s3_origin_config'):
-                origin["s3_origin_config"] = {}
-                if default_origin_access_identity is not None:
-                    origin['s3_origin_config']['origin_access_identity'] = default_origin_access_identity
+        try:
+            if 'origin_path' not in origin:
+                if default_origin_path is not None:
+                    origin['origin_path'] = default_origin_path
                 else:
-                    origin['s3_origin_config']['origin_access_identity'] = ''
-        else:
-            if 'custom_origin_config' not in origin:
-                origin['custom_origin_config'] = {}
-            custom_origin_config = origin.get('custom_origin_config')
-            if 'origin_protocol_policy' not in custom_origin_config:
-                custom_origin_config['origin_protocol_policy'] = self.__default_custom_origin_protocol_policy
+                    origin['origin_path'] = ''
+            if 'domain_name' not in origin:
+                self.module.fail_json(msg="origins[].domain_name must be specified for an origin")
+            if 'id' not in origin:
+                origin['id'] = self.__default_datetime_string
+            if 'custom_headers' in origin and streaming:
+                self.module.fail_json(msg="custom_headers has been specified for a streaming " +
+                        "distribution. custom headers are for web distributions only")
+            if 'custom_headers' in origin and len(origin.get('custom_headers')) > 0:
+                for custom_header in origin.get('custom_headers'):
+                    if 'header_name' not in custom_header or 'header_value' not in custom_header:
+                        self.module.fail_json(msg="both origins[].custom_headers.header_name and " +
+                                "origins[].custom_headers.header_value must be specified")
+                origin['custom_headers'] = self.__helpers.python_list_to_aws_list(origin.get('custom_headers'))
             else:
-                self.validate_attribute_with_allowed_values(custom_origin_config.get('origin_protocol_policy'),
-                        'origins[].custom_origin_config.origin_protocol_policy', self.__valid_origin_protocol_policies)
-            if 'http_port' not in custom_origin_config:
-                custom_origin_config['h_t_t_p_port'] = self.__default_http_port
+                origin['custom_headers'] = self.__helpers.python_list_to_aws_list()
+            if self.__s3_bucket_domain_identifier in origin.get('domain_name'):
+                if 's3_origin_config' not in origin or 'origin_access_identity' not in origin.get('s3_origin_config'):
+                    origin["s3_origin_config"] = {}
+                    if default_origin_access_identity is not None:
+                        origin['s3_origin_config']['origin_access_identity'] = default_origin_access_identity
+                    else:
+                        origin['s3_origin_config']['origin_access_identity'] = ''
             else:
-                custom_origin_config = self.__helpers.change_dict_key_name(custom_origin_config, 'http_port',
-                        'h_t_t_p_port')
-            if 'https_port' not in custom_origin_config:
-                custom_origin_config['h_t_t_p_s_port'] = self.__default_https_port
-            else:
-                custom_origin_config = self.__helpers.change_dict_key_name(custom_origin_config, 'https_port',
-                        'h_t_t_p_s_port')
-            if 'origin_ssl_protocols' not in custom_origin_config:
-                temp_origin_ssl_protocols = self.__default_origin_ssl_protocols
-            else:
-                self.validate_attribute_with_allowed_values(custom_origin_config.get('origin_ssl_protocols'),
-                        'origins[].origin_ssl_protocols', self.__valid_origin_ssl_protocols)
-            custom_origin_config['origin_ssl_protocols'] = self.__helpers.python_list_to_aws_list(
-                    temp_origin_ssl_protocols)
-        return origin
+                if 'custom_origin_config' not in origin:
+                    origin['custom_origin_config'] = {}
+                custom_origin_config = origin.get('custom_origin_config')
+                if 'origin_protocol_policy' not in custom_origin_config:
+                    custom_origin_config['origin_protocol_policy'] = self.__default_custom_origin_protocol_policy
+                else:
+                    self.validate_attribute_with_allowed_values(custom_origin_config.get('origin_protocol_policy'),
+                            'origins[].custom_origin_config.origin_protocol_policy', self.__valid_origin_protocol_policies)
+                if 'http_port' not in custom_origin_config:
+                    custom_origin_config['h_t_t_p_port'] = self.__default_http_port
+                else:
+                    custom_origin_config = self.__helpers.change_dict_key_name(custom_origin_config, 'http_port',
+                            'h_t_t_p_port')
+                if 'https_port' not in custom_origin_config:
+                    custom_origin_config['h_t_t_p_s_port'] = self.__default_https_port
+                else:
+                    custom_origin_config = self.__helpers.change_dict_key_name(custom_origin_config, 'https_port',
+                            'h_t_t_p_s_port')
+                if 'origin_ssl_protocols' not in custom_origin_config:
+                    temp_origin_ssl_protocols = self.__default_origin_ssl_protocols
+                else:
+                    self.validate_attribute_with_allowed_values(custom_origin_config.get('origin_ssl_protocols'),
+                            'origins[].origin_ssl_protocols', self.__valid_origin_ssl_protocols)
+                custom_origin_config['origin_ssl_protocols'] = self.__helpers.python_list_to_aws_list(
+                        temp_origin_ssl_protocols)
+            return origin
+        except Exception as e:
+            self.module.fail_json(msg="error validating distribution origin - " + str(e))
 
     def validate_cache_behaviors(self, cache_behaviors, valid_origins):
         try:
@@ -1412,6 +1469,7 @@ def main():
     update_delete_duplicate_distribution = update_distribution or delete_distribution or duplicate_distribution
     update_delete_duplicate_streaming_distribution = (update_streaming_distribution or delete_streaming_distribution
             or duplicate_streaming_distribution)
+    create = create_distribution or create_streaming_distribution
     validate = validate_distribution or validate_streaming_distribution
     duplicate = duplicate_distribution or duplicate_streaming_distribution
     config_required = (create_distribution or update_delete_duplicate_distribution or create_streaming_distribution
@@ -1425,7 +1483,10 @@ def main():
             validate_streaming_distribution, create_invalidation, tag_resource, untag_resource])) > 1:
         module.fail_json(msg="more than one cloudfront action has been specified. please select only one action.")
 
-    if update_delete_duplicate_distribution or validate_distribution:
+    if (validate or create) and config is None:
+        config = {}
+
+    if update_delete_duplicate_distribution or config:
         distribution_id, config, e_tag = validation_mgr.validate_update_delete_distribution_parameters(alias,
                 distribution_id, config, e_tag)
 
