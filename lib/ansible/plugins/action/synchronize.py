@@ -216,6 +216,11 @@ class ActionModule(ActionBase):
         except KeyError:
             dest_host = dest_host_inventory_vars.get('ansible_ssh_host', inventory_hostname)
 
+        dest_host_ids = [hostid for hostid in (dest_host_inventory_vars.get('inventory_hostname'),
+                                               dest_host_inventory_vars.get('ansible_host'),
+                                               dest_host_inventory_vars.get('ansible_ssh_host'))
+                         if hostid is not None]
+
         localhost_ports = set()
         for host in C.LOCALHOST:
             localhost_vars = task_vars['hostvars'].get(host, {})
@@ -231,9 +236,9 @@ class ActionModule(ActionBase):
         # host rsync puts the files on.  This is about *rsync's connection*,
         # not about the ansible connection to run the module.
         dest_is_local = False
-        if not delegate_to and remote_transport is False:
+        if delegate_to is None and remote_transport is False:
             dest_is_local = True
-        elif delegate_to and delegate_to == dest_host:
+        elif delegate_to is not None and delegate_to in dest_host_ids:
             dest_is_local = True
 
         # CHECK FOR NON-DEFAULT SSH PORT
@@ -245,7 +250,7 @@ class ActionModule(ActionBase):
         # Set use_delegate if we are going to run rsync on a delegated host
         # instead of localhost
         use_delegate = False
-        if dest_host == delegate_to:
+        if delegate_to is not None and delegate_to in dest_host_ids:
             # edge case: explicit delegate and dest_host are the same
             # so we run rsync on the remote machine targeting its localhost
             # (itself)
