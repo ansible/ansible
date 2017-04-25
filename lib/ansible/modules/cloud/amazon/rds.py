@@ -738,7 +738,10 @@ def create_db_instance(module, conn):
     else:
         resource = conn.get_db_instance(instance_name)
 
-    module.exit_json(changed=changed, instance=resource.get_data())
+    if resource:
+        module.exit_json(changed=changed, instance=resource.get_data())
+    else:
+        module.fail_json(msg="Failed to create or await the resource successfully.")
 
 
 def replicate_db_instance(module, conn):
