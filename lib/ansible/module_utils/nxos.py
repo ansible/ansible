@@ -89,9 +89,7 @@ def get_connection(module):
     global _DEVICE_CONNECTION
     if not _DEVICE_CONNECTION:
         load_params(module)
-        transport = module.params['transport']
-        provider_transport = (module.params['provider'] or {}).get('transport')
-        if 'nxapi' in (transport, provider_transport):
+        if is_nxapi(module):
             conn = Nxapi(module)
         else:
             conn = Cli(module)
