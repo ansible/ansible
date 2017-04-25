@@ -39,8 +39,8 @@ options:
         required: true
     state:
         description:
-            - "Should the template be present/absent/exported/imported"
-        choices: ['present', 'absent', 'exported', 'imported']
+            - "Should the template be present/absent/exported/imported/register"
+        choices: ['present', 'absent', 'exported', 'imported', 'register']
         default: present
     vm:
         description:
@@ -101,6 +101,12 @@ EXAMPLES = '''
   storage_domain: mystorage
   cluster: mycluster
 
+# Register template
+- ovirt_templates:
+  state: registered
+  storage_domain: mystorage
+  cluster: mycluster
+
 # Remove template
 - ovirt_templates:
     state: absent
@@ -133,10 +139,12 @@ from ansible.module_utils.ovirt import (
     check_sdk,
     create_connection,
     equal,
+    get_cluster_by_id,
     get_dict_of_struct,
     get_link_name,
     ovirt_full_argument_spec,
     search_by_attributes,
+    search_unregistered_entity,
     search_by_name,
 )
 
@@ -179,6 +187,17 @@ class TemplatesModule(BaseModule):
 
         return export_sds_service.service(export_sd.id)
 
+    def _get_storage_domain_service(self):
+        provider_name = self._module.params['storage_domain']
+        sds_service = self._connection.system_service().storage_domains_service()
+        sd = search_by_name(sds_service, provider_name)
+        if sd is None:
+            raise ValueError(
+                "Storage domain '%s' wasn't found." % provider_name
+            )
+
+        return sds_service.service(sd.id)
+
     def post_export_action(self, entity):
         self._service = self._get_export_domain_service().templates_service()
 
@@ -201,7 +220,7 @@ def wait_for_import(module, templates_service):
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['present', 'absent', 'exported', 'imported'],
+            choices=['present', 'absent', 'exported', 'imported', 'registered'],
             default='present',
         ),
         id=dict(default=None),
@@ -256,6 +275,46 @@ def main():
                 storage_domain=otypes.StorageDomain(id=export_service.get().id),
                 exclusive=module.params['exclusive'],
             )
+        elif state == 'registered':
+            sd_service = templates_module._get_storage_domain_service()
+            # TODO: I didn't use the regular templates_module.search_entity()
+            # since it seems like the search query which is called from
+            # VmTemplateDaoImpl#getAllWithQuery generates a wrong query
+            # that searche the template id for all the template fields
+            # such as cluster_name for example (ILIKe cluster_name = '{Template_guid}'
+            #template = templates_module.search_entity()
+            #if template:
+            #    ret = templates_module.create(
+            #        result_state=otypes.TemplateStatus.OK,
+            #    )
+
+            templatesService = connection.system_service().templates_service()
+            template_serv = templatesService.template_service(module.params['id'])
+            template_from_ovirt = None
+            try:
+                template_from_ovirt = template_serv.get()
+            # TODO: Python bug, should be fixed and then change to except SDK.error
+            except TypeError:
+                pass
+            if (template_from_ovirt):
+                pass
+                # TODO: What should we do if we already have the template exist in the engine.
+                # For now we will not register the template.
+            else:
+                unreg_entity = search_unregistered_entity(sd_service.templates_service(), id=module.params['id'])
+                sd_service.templates_service().template_service(id=module.params['id']).register(
+                    cluster = get_cluster_by_id(connection, module.params['cluster'])
+                    )
+
+                # Fetch template to initialize return
+                template_serv = templatesService.template_service(module.params['id'])
+            ret = {
+                'changed': False,
+                'id': template_serv.get().id,
+                'template': get_dict_of_struct(template_serv.get()),
+            }
+
+
         elif state == 'imported':
             template = templates_module.search_entity()
             if template:
