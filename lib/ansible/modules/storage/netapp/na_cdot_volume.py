@@ -45,7 +45,7 @@ options:
 
   name:
     description:
-    - The name of the lun to manage.
+    - The name of the volume to manage.
     required: true
 
   infinite:
