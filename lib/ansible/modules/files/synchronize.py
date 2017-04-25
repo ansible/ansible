@@ -347,6 +347,14 @@ def substitute_controller(path):
     return path
 
 
+def is_rsh_needed(source, dest):
+    if source.startswith('rsync://') or dest.startswith('rsync://'):
+        return False
+    if ':' in source or ':' in dest:
+        return True
+    return False
+
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
@@ -465,7 +473,7 @@ def main():
     if source.startswith('rsync://') and dest.startswith('rsync://'):
         module.fail_json(msg='either src or dest must be a localhost', rc=1)
 
-    if not source.startswith('rsync://') and not dest.startswith('rsync://'):
+    if is_rsh_needed(source, dest):
         ssh_cmd = [module.get_bin_path('ssh', required=True), '-S', 'none']
         if private_key is not None:
             ssh_cmd.extend(['-i', private_key])
