@@ -370,7 +370,7 @@ options:
   default_origin_path:
       description:
         - The origin path to specify as the base of the distribution's origin. Maps to a path on your origin from the distribution.
-        eg. if C(default_origin_path=/production) then www.example.com maps to www.my-distribution-origin.com/production/ where
+        eg. if C(default_origin_path=/production) then www.example.com maps to www.my-distribution-origin.com/production where
         www.example.com is an alias to the cloudfront distribution.
   default_origin_access_identity:
       description:
@@ -380,11 +380,10 @@ options:
       description:
         - The default domain name for an S3 origin. Applies to streaming distribution only. A streaming distribution can be defined with only this parameter in the same way a distribution can be defined with only I(default_origin_domain_name).
       required: false
-  default_s3_origin_access_identity:
+  default_s3_origin_origin_access_identity:
       description:
         - The default origin access identity to use for the streaming distribution. Avoids the assumption that anyone can access the (s3) origin). Only applies to streaming distributions.
       required: false
-
 '''
 
 EXAMPLES = '''
@@ -430,7 +429,7 @@ EXAMPLES = '''
     tag_keys:
     - 'Project'
 
-# validate a distribution with origins and logging
+# validate a distribution with an origin, logging and default cache behavior
 - cloudfront:
     validate_distribution: yes
     origins:
@@ -459,7 +458,7 @@ EXAMPLES = '''
     enabled: false
     comment: this is a cloudfront distribution with logging
 
-# create a distribution with origins logging and cache behaviors
+# create a distribution with an origin, logging and default cache behavior
     - cloudfront:
         create_distribution: yes
         origins:
@@ -512,30 +511,44 @@ EXAMPLES = '''
     distribution_id: E1RP5A2MJ8073O
     presigned_url_pem_private_key_path: /home/user/ansible/pk-APKAJMTT6OPAZSFTNSCZ.pem
     presigned_url_pem_url: 'http://d3vodljfucvmwf.cloudfront.net/example.txt'
-    presigned_url_pem_expire_date: '2017-04-18'
+    presigned_url_pem_expire_date: '2017-04-20'
 
 # create a streaming distribution
+- cloudfront:
+     create_streaming_distribution: yes
+     default_s3_origin_domain_name: example-bucket.s3.amazonaws.com
+     comment: example streaming distribution
 
 # duplicate a streaming distribution
+- cloudfront:
+    duplicate_streaming_distribution: yes
+    streaming_distribution_id: E2RTIUCAA9RINU
 
 # update a streaming distribution
-
-# set tags on a streaming distribution
+- cloudfront:
+    update_streaming_distribution: yes
+    streaming_distribution_id: E2RTIUCAA9RINU
+    comment: modified streaming distribution
 
 # validate a streaming distribution
 
-# get a streaming distribution from cloudfront_facts and validate with modifications
-
 # create an origin access identity
+- cloudfront:
+    create_origin_access_identity: yes
+    caller_reference: this is an example reference
+    comment: this is an example comment
 
 # update an origin access identity
 
 # delete an origin access identity
+- cloudfront:
+    delete_origin_access_identity: yes
+    origin_access_identity_id: EBXCCWOVSAYYD
+    e_tag: E19J3JLL3TEPVY
 
 # create an invalidation
 
 # create a batch of invalidations
-
 
 '''
 
@@ -1036,13 +1049,12 @@ class CloudFrontValidationManager:
             if default_s3_origin_domain_name is not None:
                 s3_origin['domain_name'] = default_s3_origin_domain_name
             else:
-                self.module.json_fail(msg="s3_origin and default_s3_origin_domain_name not specified. " +
+                self.module.fail_json(msg="s3_origin and default_s3_origin_domain_name not specified. " +
                         "please specify one.")
             if default_s3_origin_origin_access_identity is not None:
-                s3_origin['origin_access_identity'] = default_origin_access_identity
+                s3_origin['origin_access_identity'] = default_s3_origin_origin_access_identity
             else:
-                self.module.json_fail(msg="s3_origin and default_s3_origin_access_identity not specified. " +
-                        "please specify one.")
+                s3_origin['origin_access_identity'] = ''
             return s3_origin
         except Exception as e:
             self.module.fail_json(msg="error validating s3 origin - " + str(e))
@@ -1193,11 +1205,13 @@ class CloudFrontValidationManager:
             self.module.fail_json(msg="error validating distribution config parameters - " + str(e))
 
     def validate_streaming_distribution_config_parameters(self, config, comment, trusted_signers, s3_origin,
-            default_s3_origin_domain_name, default_s3_origin_access_identity):
+            default_s3_origin_domain_name, default_s3_origin_origin_access_identity):
         try:
+            if s3_origin is None:
+                s3_origin = config.get('s3_origin')
             config['s3_origin'] = self.validate_s3_origin(s3_origin, default_s3_origin_domain_name,
-                    default_s3_origin_access_identity)
-            config['valid_trusted_signers'] = self.validate_trusted_signers(trusted_signers)
+                    default_s3_origin_origin_access_identity)
+            config['trusted_signers'] = self.validate_trusted_signers(trusted_signers)
             return config
         except Exception as e:
             self.module.fail_json(msg="error validating streaming distribution config parameters - " + str(e))
@@ -1462,7 +1476,7 @@ def main():
     default_origin_path = module.params.get('default_origin_path')
     default_origin_access_identity = module.params.get('default_origin_access_identity')
     default_s3_origin_domain_name = module.params.get('default_s3_origin_domain_name')
-    default_s3_origin_access_identity = module.params.get('default_s3_origin_access_identity')
+    default_s3_origin_origin_access_identity = module.params.get('default_s3_origin_origin_access_identity')
 
     create_update_distribution = create_distribution or update_distribution
     create_update_streaming_distribution = create_streaming_distribution or update_streaming_distribution
@@ -1528,7 +1542,7 @@ def main():
         config = helpers.merge_validation_into_config(config, valid_viewer_certificate, 'viewer_certificate')
     elif create_update_streaming_distribution or validate:
         config = validation_mgr.validate_streaming_distribution_config_parameters(config, comment,
-                trusted_signers, s3_origin, default_s3_origin_domain_name, default_s3_origin_access_identity)
+                trusted_signers, s3_origin, default_s3_origin_domain_name, default_s3_origin_origin_access_identity)
     if(create_distribution or create_streaming_distribution or duplicate_distribution or
             duplicate_streaming_distribution or validate):
         config = validation_mgr.validate_caller_reference_for_distribution(config, caller_reference)
