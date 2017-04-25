@@ -42,6 +42,12 @@ options:
             - The GitHub user/organization repository to tap.
         required: true
         aliases: ['tap']
+    path:
+        description:
+            - "':' separated list of paths to search for 'brew' executable."
+        required: false
+        default: '/usr/local/bin'
+        version_added: "2.4"
     url:
         description:
             - The optional git URL of the repository to tap. The URL is not
@@ -75,6 +81,10 @@ EXAMPLES = '''
 - homebrew_tap:
     name: telemachus/brew
     url: 'https://bitbucket.org/telemachus/brew'
+
+- homebrew_tap:
+    name: telemachus/brew
+    path: '/usr/bin/brew:/usr/sbin/brew'
 '''
 
 import re
@@ -215,16 +225,21 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(aliases=['tap'], type='list', required=True),
+            path=dict(default="/usr/local/bin", required=False, type='path'),
             url=dict(default=None, required=False),
             state=dict(default='present', choices=['present', 'absent']),
         ),
         supports_check_mode=True,
     )
 
+    path = module.params['path']
+    if path:
+        path = path.split(':')
+
     brew_path = module.get_bin_path(
         'brew',
         required=True,
-        opt_dirs=['/usr/local/bin']
+        opt_dirs=path
     )
 
     taps = module.params['name']
