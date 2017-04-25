@@ -36,6 +36,7 @@ except ImportError:
     from sha import sha as sha1
 
 from jinja2 import Environment
+from jinja2 import escape
 from jinja2 import nodes
 from jinja2.compiler import CodeGenerator
 from jinja2.loaders import FileSystemLoader
@@ -47,6 +48,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable
 from ansible.module_utils.six import string_types, text_type
 from ansible.module_utils._text import to_native, to_text, to_bytes
+from ansible.parsing.yaml.objects import AnsibleUnicode
 from ansible.plugins import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
@@ -850,7 +852,7 @@ class Templar:
                     display.debug("failing because of a type error, template data is: %s" % to_native(data))
                     raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_native(data),to_native(te)))
 
-            if preserve_trailing_newlines and isinstance(res, (str, bytes)):
+            if preserve_trailing_newlines and isinstance(res, (str, bytes, unicode, AnsibleUnicode)):
                 # The low level calls above do not preserve the newline
                 # characters at the end of the input data, so we use the
                 # calculate the difference in newlines and append them
