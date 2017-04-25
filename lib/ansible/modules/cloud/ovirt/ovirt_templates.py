@@ -36,13 +36,16 @@ options:
     name:
         description:
             - "Name of the template to manage."
-        required: true
+    id:
+        description:
+            - "ID of the template to be registered."
+        version_added: "2.4"
     state:
         description:
             - "Should the template be present/absent/exported/imported/registered.
                When C(state) is I(registered) and the unregistered template's name
-               belongs to an already registered in engine template then we fail
-               to register the unregistered template."
+               belongs to an already registered in engine template in the same DC
+               then we fail to register the unregistered template."
         choices: ['present', 'absent', 'exported', 'imported', 'registered']
         default: present
     vm:
@@ -120,9 +123,16 @@ EXAMPLES = '''
 # Register template
 - ovirt_templates:
   state: registered
-  name: mytemplate
   storage_domain: mystorage
   cluster: mycluster
+  name: mytemplate
+
+# Register template using id
+- ovirt_templates:
+  state: registered
+  storage_domain: mystorage
+  cluster: mycluster
+  id: 1111-1111-1111-1111
 
 # Import image from Glance s a template
 - ovirt_templates:
@@ -216,25 +226,14 @@ class TemplatesModule(BaseModule):
         self._service = self._connection.system_service().templates_service()
 
 
-def wait_for_import(module, templates_service):
-    if module.params['wait']:
-        start = time.time()
-        timeout = module.params['timeout']
-        poll_interval = module.params['poll_interval']
-        while time.time() < start + timeout:
-            template = search_by_name(templates_service, module.params['name'])
-            if template:
-                return template
-            time.sleep(poll_interval)
-
-
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
             choices=['present', 'absent', 'exported', 'imported', 'registered'],
             default='present',
         ),
-        name=dict(default=None, required=True),
+        id=dict(default=None),
+        name=dict(default=None),
         vm=dict(default=None),
         description=dict(default=None),
         cluster=dict(default=None),
@@ -251,6 +250,7 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_one_of=[['id', 'name']],
     )
     check_sdk(module)
 
@@ -328,7 +328,7 @@ def main():
                     ) if module.params['cluster'] else None,
                     **kwargs
                 )
-                template = wait_for_import(module, templates_service)
+                template = templates_module.wait_for_import()
                 ret = {
                     'changed': True,
                     'id': template.id,
@@ -344,32 +344,31 @@ def main():
             # Find the the unregistered Template we want to register:
             templates = templates_service.list(unregistered=True)
             template = next(
-                (t for t in templates if t.name == module.params['name']),
+                (t for t in templates if (t.id == module.params['id'] or t.name == module.params['name'])),
                 None
             )
             changed = False
             if template is None:
-                # Test if template is registered:
                 template = templates_module.search_entity()
                 if template is None:
                     raise ValueError(
-                        "Template with name '%s' wasn't found." % module.params['name']
+                        "Template '%s(%s)' wasn't found." % (module.params['name'], module.params['id'])
                     )
             else:
+                # Register the template into the system:
                 changed = True
                 template_service = templates_service.template_service(template.id)
-                # Register the template into the system:
                 template_service.register(
                     cluster=otypes.Cluster(
                         name=module.params['cluster']
-                    ) if module.params['cluster'] else None,
-                    template=otypes.Template(
-                        name=module.params['name'],
-                    ),
+                    ) if module.params['cluster'] else None
                 )
-                if module.params['wait']:
-                    template = wait_for_import(module, templates_service)
 
+                if module.params['wait']:
+                    template = templates_module.wait_for_import()
+                else:
+                    # Fetch template to initialize return.
+                    template = template_service.get()
             ret = {
                 'changed': changed,
                 'id': template.id,
