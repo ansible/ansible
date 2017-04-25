@@ -329,7 +329,7 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
     """Change user password and/or attributes. Return True if changed, False otherwise."""
     changed = False
 
-    cursor = db_connection.cursor( cursor_factory=psycopg2.extras.DictCursor)
+    cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
     # Note: role_attr_flags escaped by parse_role_attrs and encrypted is a
     # literal
     if user == 'PUBLIC':
@@ -409,7 +409,7 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
             else:
                 raise psycopg2.InternalError(e)
 
-        #Commit changes before next command in case select fails
+        # Commit changes before next command in case select fails
         db_connection.commit()
 
         # Grab new role attributes.
@@ -420,7 +420,7 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
             db_connection.rollback()
             cursor = db_connection.cursor(
                 cursor_factory=psycopg2.extras.DictCursor)
-            new_role_attrs=None
+            new_role_attrs = None
             changed = True
 
         # Detect any differences between current_ and new_role_attrs.
