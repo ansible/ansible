@@ -424,7 +424,7 @@ class ConsulConfig(dict):
 
     def __init__(self):
         self.read_settings()
-        self.read_env_vars()    
+        self.read_env_vars()
         self.read_cli_args()
 
     def has_config(self, name):
