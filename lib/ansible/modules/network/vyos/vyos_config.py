@@ -221,9 +221,10 @@ def run(module, result):
 
     commit = not module.check_mode
     comment = module.params['comment']
+    save = module.params['save']
 
     if commands:
-        load_config(module, commands, commit=commit, comment=comment)
+        load_config(module, commands, commit=commit, comment=comment, save=save)
 
         if result.get('filtered'):
             result['warnings'].append('Some configuration commands were '
@@ -267,11 +268,6 @@ def main():
 
     if any((module.params['src'], module.params['lines'])):
         run(module, result)
-
-    if module.params['save']:
-        if not module.check_mode:
-            run_commands(module, ['save'])
-        result['changed'] = True
 
     module.exit_json(**result)
 
