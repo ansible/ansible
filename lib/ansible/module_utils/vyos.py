@@ -77,8 +77,7 @@ def run_commands(module, commands, check_rc=True):
         responses.append(out)
     return responses
 
-
-def load_config(module, commands, commit=False, comment=None, save=False):
+def load_config(module, commands, commit=False, comment=None):
     rc, out, err = exec_command(module, 'configure')
     if rc != 0:
         module.fail_json(msg='unable to enter configuration mode', output=err)
@@ -103,12 +102,10 @@ def load_config(module, commands, commit=False, comment=None, save=False):
             cmd += ' comment "%s"' % comment
         exec_command(module, cmd)
 
-        if save:
-            exec_command(module, 'save')
-
-        exec_command(module, 'exit')
-    else:
+    if not commit:
         exec_command(module, 'exit discard')
+    else:
+        exec_command(module, 'exit')
 
     if diff:
         return diff
