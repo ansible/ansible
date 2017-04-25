@@ -325,10 +325,11 @@ def user_should_we_change_password(current_role_attrs, user, password, encrypted
         return True
 
 
-def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expires, no_password_changes):
+def user_alter(db_connection, module, user, password, role_attr_flags, encrypted, expires, no_password_changes):
     """Change user password and/or attributes. Return True if changed, False otherwise."""
     changed = False
 
+    cursor = db_connection.cursor( cursor_factory=psycopg2.extras.DictCursor)
     # Note: role_attr_flags escaped by parse_role_attrs and encrypted is a
     # literal
     if user == 'PUBLIC':
@@ -352,6 +353,9 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
             current_role_attrs = cursor.fetchone()
         except psycopg2.ProgrammingError:
             current_role_attrs = None
+            db_connection.rollback()
+            cursor = db_connection.cursor(
+                cursor_factory=psycopg2.extras.DictCursor)
 
         pwchanging = user_should_we_change_password(
             current_role_attrs, user, password, encrypted)
@@ -404,6 +408,26 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
                 return changed
             else:
                 raise psycopg2.InternalError(e)
+
+        #Commit changes before next command in case select fails
+        db_connection.commit()
+
+        # Grab new role attributes.
+        try:
+            cursor.execute(select, {"user": user})
+            new_role_attrs = cursor.fetchone()
+        except psycopg2.ProgrammingError:
+            db_connection.rollback()
+            cursor = db_connection.cursor(
+                cursor_factory=psycopg2.extras.DictCursor)
+            new_role_attrs=None
+            changed = True
+
+        # Detect any differences between current_ and new_role_attrs.
+        if new_role_attrs:
+            for i in range(len(current_role_attrs)):
+                if current_role_attrs[i] != new_role_attrs[i]:
+                    changed = True
 
     elif no_password_changes and role_attr_flags != '':
         # Grab role information from pg_roles instead of pg_authid
@@ -835,7 +859,7 @@ def main():
     if state == "present":
         if user_exists(cursor, user):
             try:
-                changed = user_alter(cursor, module, user, password,
+                changed = user_alter(db_connection, module, user, password,
                                      role_attr_flags, encrypted, expires, no_password_changes)
             except SQLParseError:
                 e = get_exception()
