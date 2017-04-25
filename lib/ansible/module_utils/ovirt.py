@@ -238,6 +238,9 @@ def search_by_attributes(service, **kwargs):
     res = res or [None]
     return res[0]
 
+def get_cluster_by_id(connection, cluster_id):
+    clusters_service = connection.system_service().clusters_service()
+    return clusters_service.cluster_service(cluster_id).get()
 
 def search_by_name(service, name, **kwargs):
     """
