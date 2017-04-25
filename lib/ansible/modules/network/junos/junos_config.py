@@ -45,7 +45,7 @@ options:
   src:
     description:
       - The I(src) argument provides a path to the configuration file
-        to load into the remote system.  The path can either be a full
+        to load into the remote system. The path can either be a full
         system path to the configuration file if the value starts with /
         or relative to the root of the implemented role or playbook.
         This argument is mutually exclusive with the I(lines) argument.
@@ -142,12 +142,22 @@ requirements:
 notes:
   - This module requires the netconf system service be enabled on
     the remote device being managed.
+  - Loading JSON-formatted configuration I(json) is supported
+    starting in Junos OS Release 16.1 onwards.
 """
 
 EXAMPLES = """
 - name: load configure file into device
   junos_config:
     src: srx.cfg
+    comment: update config
+    provider: "{{ netconf }}"
+
+- name: load configure lines into device
+  junos_config:
+    lines:
+      - set interfaces ge-0/0/1 unit 0 description "Test interface"
+      - set vlans vlan01 description "Test vlan"
     comment: update config
     provider: "{{ netconf }}"
 
@@ -330,7 +340,7 @@ def main():
 
     else:
         diff = configure_device(module, warnings)
-        if diff:
+        if diff is not None:
             if module._diff:
                 result['diff'] = {'prepared': diff}
             result['changed'] = True
