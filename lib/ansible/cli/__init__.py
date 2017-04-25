@@ -342,31 +342,6 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         return (sshpass, becomepass)
 
-    def normalize_become_options(self):
-        ''' this keeps backwards compatibility with sudo/su self.options '''
-        self.options.become_ask_pass = self.options.become_ask_pass or self.options.ask_sudo_pass or self.options.ask_su_pass or C.DEFAULT_BECOME_ASK_PASS
-        self.options.become_user = self.options.become_user or self.options.sudo_user or self.options.su_user or C.DEFAULT_BECOME_USER
-
-        def _dep(which):
-            display.deprecated('The %s command line option has been deprecated in favor of the "become" command line arguments' % which, '2.6')
-
-        if self.options.become:
-            pass
-        elif self.options.sudo:
-            self.options.become = True
-            self.options.become_method = 'sudo'
-            _dep('sudo')
-        elif self.options.su:
-            self.options.become = True
-            self.options.become_method = 'su'
-            _dep('su')
-
-        # other deprecations:
-        if self.options.ask_sudo_pass or self.options.sudo_user:
-            _dep('sudo')
-        if self.options.ask_su_pass or self.options.su_user:
-            _dep('su')
-
     def validate_conflicts(self, vault_opts=False, runas_opts=False, fork_opts=False, vault_rekey_opts=False):
         ''' check for conflicting options '''
 
@@ -380,15 +355,6 @@ class CLI(with_metaclass(ABCMeta, object)):
         if vault_rekey_opts:
             if (op.new_vault_id and op.new_vault_password_file):
                 self.parser.error("--new-vault-password-file and --new-vault-id are mutually exclusive")
-
-        if runas_opts:
-            # Check for privilege escalation conflicts
-            if ((op.su or op.su_user) and (op.sudo or op.sudo_user) or
-                    (op.su or op.su_user) and (op.become or op.become_user) or
-                    (op.sudo or op.sudo_user) and (op.become or op.become_user)):
-
-                self.parser.error("Sudo arguments ('--sudo', '--sudo-user', and '--ask-sudo-pass') and su arguments ('--su', '--su-user', and '--ask-su-pass') "
-                                  "and become arguments ('--become', '--become-user', and '--ask-become-pass') are exclusive of each other")
 
         if fork_opts:
             if op.forks < 1:
@@ -500,32 +466,20 @@ class CLI(with_metaclass(ABCMeta, object)):
         rg = optparse.OptionGroup(parser, "Privilege Escalation Options", "control how and which user you become as on target hosts")
         if runas_opts:
             runas_group = rg
-            # priv user defaults to root later on to enable detecting when this option was given here
-            runas_group.add_option("-s", "--sudo", default=C.DEFAULT_SUDO, action="store_true", dest='sudo',
-                                   help="run operations with sudo (nopasswd) (deprecated, use become)")
-            runas_group.add_option('-U', '--sudo-user', dest='sudo_user', default=None,
-                                   help='desired sudo user (default=root) (deprecated, use become)')
-            runas_group.add_option('-S', '--su', default=C.DEFAULT_SU, action='store_true',
-                                   help='run operations with su (deprecated, use become)')
-            runas_group.add_option('-R', '--su-user', default=None,
-                                   help='run operations with su as this user (default=%s) (deprecated, use become)' % C.DEFAULT_SU_USER)
-
-            # consolidated privilege escalation (become)
-            runas_group.add_option("-b", "--become", default=C.DEFAULT_BECOME, action="store_true", dest='become',
-                                   help="run operations with become (does not imply password prompting)")
+            # privilege escalation (become)
+            runas_group.add_option('-b', '-S', "-s", "--become", default=C.DEFAULT_BECOME, action="store_true", dest='become',
+                                   help="run operations with become (does not imply password prompting)."
+                                        "-s and -S are deprecated and are currently used for backwards compatiblity.")
             runas_group.add_option('--become-method', dest='become_method', default=C.DEFAULT_BECOME_METHOD, type='choice', choices=C.BECOME_METHODS,
                                    help="privilege escalation method to use (default=%s), valid choices: [ %s ]" %
-                                   (C.DEFAULT_BECOME_METHOD, ' | '.join(C.BECOME_METHODS)))
-            runas_group.add_option('--become-user', default=None, dest='become_user', type='string',
-                                   help='run operations as this user (default=%s)' % C.DEFAULT_BECOME_USER)
+                                        (C.DEFAULT_BECOME_METHOD, ' | '.join(C.BECOME_METHODS)))
+            runas_group.add_option('-U', '-R', '--become-user', default=None, dest='become_user', type='string',
+                                   help='run operations as this user (default=%s). -R is deprecated and currently used for backwards compatiblity.' %
+                                        C.DEFAULT_BECOME_USER)
 
         if runas_opts or runas_prompt_opts:
             if not runas_group:
                 runas_group = rg
-            runas_group.add_option('--ask-sudo-pass', default=C.DEFAULT_ASK_SUDO_PASS, dest='ask_sudo_pass', action='store_true',
-                                   help='ask for sudo password (deprecated, use become)')
-            runas_group.add_option('--ask-su-pass', default=C.DEFAULT_ASK_SU_PASS, dest='ask_su_pass', action='store_true',
-                                   help='ask for su password (deprecated, use become)')
             runas_group.add_option('-K', '--ask-become-pass', default=False, dest='become_ask_pass', action='store_true',
                                    help='ask for privilege escalation password')
 
@@ -662,7 +616,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                 ansible_versions[counter] = 0
             try:
                 ansible_versions[counter] = int(ansible_versions[counter])
-            except:
+            except Exception:
                 pass
         if len(ansible_versions) < 3:
             for counter in range(len(ansible_versions), 3):

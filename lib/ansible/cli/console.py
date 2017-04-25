@@ -411,7 +411,6 @@ class ConsoleCLI(CLI, cmd.Cmd):
             setattr(self, 'do_' + module, lambda arg, module=module: self.default(module + ' ' + arg))
             setattr(self, 'help_' + module, lambda module=module: self.helpdefault(module))
 
-        self.normalize_become_options()
         (sshpass, becomepass) = self.ask_passwords()
         self.passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 

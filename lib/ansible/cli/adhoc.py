@@ -104,7 +104,6 @@ class AdHocCLI(CLI):
         sshpass = None
         becomepass = None
 
-        self.normalize_become_options()
         (sshpass, becomepass) = self.ask_passwords()
         passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
