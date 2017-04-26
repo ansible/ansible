@@ -18,13 +18,13 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_vlan
-version_added: "2.3"
-short_description: Manages VLAN resources and attributes.
+version_added: "2.4"
+short_description: Manages VLAN resources and attributes on Huawei CloudEngine switches.
 description:
     - Manages VLAN configurations on Huawei CloudEngine switches.
 author: QijunPan (@CloudEngine-Ansible)
