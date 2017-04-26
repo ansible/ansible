@@ -25,9 +25,9 @@ The code and tests are in the same GitHub repository, to get a local copy do
 #. Clone your fork: ``git clone git@github.com:USERNAME/ansible.git``
 #. Install the optional ``argcomplete`` package for tab completion (highly recommended)::
 
-   pip install argcomplete
-   activate-global-python-argcomplete
-   # Restart your shell to complete global activation.
+    pip install argcomplete
+    activate-global-python-argcomplete
+    # Restart your shell to complete global activation.
 
 #. Configure your environment to run from your clone (once per shell): ``. hacking/env-setup``
 #. ``ansible``, ``ansible-playbook`` and ``ansible-test`` will now be in your ``PATH``
