@@ -28,6 +28,18 @@ except ImportError:
 from ansible.module_utils.pycompat24 import get_exception
 
 
+def oracle_argument_spec():
+    return dict(
+        oracle_host=dict(type='str', default='127.0.0.1'),
+        oracle_port=dict(type='str', default='1521'),
+        oracle_user=dict(type='str', default='SYSTEM'),
+        oracle_mode=dict(type='str', required=None, default=None, choices=['SYSDBA', 'SYSOPER']),
+        oracle_pass=dict(type='str', default=None, no_log=True),
+        oracle_sid=dict(type='str', default=None),
+        oracle_service=dict(type='str', default=None),
+    )
+
+
 class OracleClient(object):
     def __init__(self, module):
         self.module = module

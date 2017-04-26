@@ -88,40 +88,8 @@ options:
     description:
     - Temporary tablespace name
     required: false
-  oracle_host:
-    description:
-    - DNS name or IP address of Oracle Listener used to connect to the database
-    required: False
-    default: 127.0.0.1
-  oracle_port:
-    description:
-    - Listener Port
-    required: False
-    default: 1521
-  oracle_user:
-    description:
-    - Account to connect to
-    required: False
-    default: SYSTEM
-  oracle_pass:
-    description:
-    - Password used to authenticate
-    required: False
-    default: manager
-  oracle_sid:
-    description:
-    - Oracle SID to use for connection
-    required: False
-    default: None
-  oracle_service:
-    description:
-    - Oracle Service name to connect to
-    required: False
-    default: None
-requirements:
-- cx_Oracle
-version_added: "2.3"
-author: "Thomas Krahn (@nosmoht)"
+extends_documentation_fragment:
+- oracle
 '''
 
 EXAMPLES = '''
@@ -190,14 +158,14 @@ user:
       "temporary_tablespace": "TEMP"
     }
 sql:
-  description: List of SQL statements that are or would be executed to ensure user state in order of execution.
+  description: List of SQL statements executed to ensure the desired state
   returned: always
   type: list
   sample: ["CREATE USER myadmin IDENTIFIED BY VALUES '1234567890'", "GRANT DBA TO myadmin"]
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.oracle import OracleClient, HAS_ORACLE_LIB
+from ansible.module_utils.oracle import OracleClient, HAS_ORACLE_LIB, oracle_argument_spec
 import re
 
 
@@ -537,8 +505,9 @@ def ensure(module, client):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
+    argument_spec = oracle_argument_spec()
+    argument_spec.update(
+        dict(
             name=dict(type='str', required=True),
             password=dict(type='str', required=False),
             password_mismatch=dict(type='bool', default=False),
@@ -546,18 +515,13 @@ def main():
             temporary_tablespace=dict(type='str', required=False),
             quotas=dict(type='list', required=False),
             roles=dict(type='list', required=False),
-            state=dict(type='str', default='present', choices=[
-                'present', 'absent', 'locked', 'unlocked']),
+            state=dict(type='str', default='present', choices=['present', 'absent', 'locked', 'unlocked']),
             sys_privs=dict(type='list', required=False),
             tab_privs=dict(type='list', required=False),
-            oracle_host=dict(type='str', default='127.0.0.1'),
-            oracle_port=dict(type='str', default='1521'),
-            oracle_user=dict(type='str', default='SYSTEM'),
-            oracle_mode=dict(type='str', required=None, default=None, choices=['SYSDBA', 'SYSOPER']),
-            oracle_pass=dict(type='str', default=None, no_log=True),
-            oracle_sid=dict(type='str', default=None),
-            oracle_service=dict(type='str', default=None),
         ),
+    )
+    module = AnsibleModule(
+        argument_spec=argument_spec,
         required_one_of=[['oracle_sid', 'oracle_service']],
         mutually_exclusive=[['oracle_sid', 'oracle_service']],
         supports_check_mode=True,

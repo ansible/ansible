@@ -48,41 +48,8 @@ options:
     required: False
     default: present
     choices: ["present", "absent"]
-  oracle_host:
-    description:
-    - Hostname or IP address of Oracle DB
-    required: False
-    default: 127.0.0.1
-  oracle_port:
-    description:
-    - Listener Port
-    required: False
-    default: 1521
-  oracle_user:
-    description:
-    - Account to connect as
-    required: False
-    default: SYSTEM
-  oracle_pass:
-    description:
-    - Password to be used to authenticate.
-    - Can be omitted if environment variable ORACLE_PASS is set.
-    required: False
-    default: manager
-  oracle_sid:
-    description:
-    - SID to connect to
-    required: False
-    default: None
-  oracle_service:
-    description:
-    - Service name to connect to
-    required: False
-    default: None
-requirements:
-- cx_Oracle
-version_added: "2.3"
-author: "Thomas Krahn (@nosmoht)"
+extends_documentation_fragment:
+- oracle
 '''
 
 EXAMPLES = '''
@@ -100,8 +67,19 @@ EXAMPLES = '''
     oracle_sid: ORCL
 '''
 
+RETURN = '''
+role:
+  description: Role and attributes as it currently exists within the databsae
+  returned: always
+  type: dict
+sql:
+  description: List of SQL statements executed to ensure the desired state
+  returned: always
+  type: list
+'''
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.oracle import OracleClient, HAS_ORACLE_LIB
+from ansible.module_utils.oracle import OracleClient, HAS_ORACLE_LIB, oracle_argument_spec
 
 
 class OracleRoleClient(OracleClient):
@@ -217,22 +195,18 @@ def ensure(module, client):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
+    argument_spec = oracle_argument_spec()
+    argument_spec.update(
+        dict(
             name=dict(type='str', required=True),
             roles=dict(type='list', default=None),
             state=dict(type='str', default='present',
                        choices=['present', 'absent']),
             sys_privs=dict(type='list', default=None),
-            oracle_host=dict(type='str', default='127.0.0.1'),
-            oracle_port=dict(type='str', default='1521'),
-            oracle_user=dict(type='str', default='SYSTEM'),
-            oracle_mode=dict(type='str', required=None, default=None, choices=[
-                'SYSDBA', 'SYSOPER']),
-            oracle_pass=dict(type='str', default=None, no_log=True),
-            oracle_sid=dict(type='str', default=None),
-            oracle_service=dict(type='str', default=None),
         ),
+    )
+    module = AnsibleModule(
+        argument_spec=argument_spec,
         required_one_of=[['oracle_sid', 'oracle_service']],
         mutually_exclusive=[['oracle_sid', 'oracle_service']],
         supports_check_mode=True,

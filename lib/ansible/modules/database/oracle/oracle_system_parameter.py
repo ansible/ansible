@@ -28,7 +28,6 @@ description:
 - The scope of change can be specified with I(scope).
 - The returned value I(restart_required) indicates if a parameter changed requires an instance restart to take effect.
 - The I(oracle_user) used to connect to the instance must have ALTER SYSTEM permissions.
-
 options:
   name:
     description:
@@ -90,7 +89,7 @@ options:
     default: None
 requirements:
 - cx_Oracle
-version_added: "2.3"
+version_added: "2.4"
 author: "Thomas Krahn (@nosmoht)"
 '''
 
@@ -108,7 +107,7 @@ EXAMPLES = '''
 
 RETURN = '''
 system_parameter:
-  description:
+  description: Parameter as it currently exists within the instance
   returned: always
   type: dict
   samle:
@@ -118,13 +117,13 @@ system_parameter:
       "value": "2147483648"
     }
 sql:
-  description: List of SQL that was or, if in check_mode, would be executed.
+  description: List of SQL statements executed to ensure the desired state
   returned: always
   type: list
   sample: ['ALTER SYSTEM SET "sga_mag_size" = 4G']
 restart_required:
   description:
-  - Boolean that determines if an instance restart is required to enable the parameter.
+  - Boolean that determines if an instance restart is required to enable the parameter value.
   - Only true if a parameter I(scope) is C(spfile) and it's value was changed.
   returned: always
   type: bool
@@ -132,7 +131,7 @@ restart_required:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.oracle import OracleClient, HAS_ORACLE_LIB
+from ansible.module_utils.oracle import OracleClient, HAS_ORACLE_LIB, oracle_argument_spec
 
 
 class OracleSystemParameterClient(OracleClient):
@@ -187,20 +186,18 @@ def ensure(module, client):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
+    argument_spec = oracle_argument_spec()
+    argument_spec.update(
+        dict(
             name=dict(type='str', required=True),
             value=dict(type='str', required=False),
             scope=dict(type='str', default='both', choices=['both', 'memory', 'spfile']),
             state=dict(type='str', default='present', choices=['present', 'absent']),
-            oracle_host=dict(type='str', default='127.0.0.1'),
-            oracle_port=dict(type='str', default='1521'),
-            oracle_user=dict(type='str', default='SYSTEM'),
-            oracle_pass=dict(type='str', default=None, no_log=True),
             oracle_mode=dict(type='str', required=None, default=None, choices=['SYSDBA', 'SYSASM', 'SYSOPER']),
-            oracle_sid=dict(type='str', default=None),
-            oracle_service=dict(type='str', default=None),
         ),
+    )
+    module = AnsibleModule(
+        argument_spec=argument_spec,
         required_one_of=[['oracle_sid', 'oracle_service']],
         mutually_exclusive=[['oracle_sid', 'oracle_service']],
         supports_check_mode=True,
