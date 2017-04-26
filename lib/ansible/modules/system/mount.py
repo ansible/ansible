@@ -443,19 +443,12 @@ def is_bind_mounted(module, linux_mounts, dest, src=None, fstype=None):
     if get_platform() == 'Linux' and linux_mounts is not None:
         if src is None:
             # That's for unmounted/absent
-            for m in linux_mounts:
-                if m['dst'] == dest:
-                    is_mounted = True
-        else:
-            mounted_src = None
-
-            for m in linux_mounts:
-                if m['dst'] == dest:
-                    mounted_src = m['src']
-
-            # That's for mounted
-            if mounted_src is not None and mounted_src == src:
+            if dest in linux_mounts:
                 is_mounted = True
+        else:
+            if dest in linux_mounts:
+                is_mounted = linux_mounts[dest]['src'] == src
+
     else:
         bin_path = module.get_bin_path('mount', required=True)
         cmd = '%s -l' % bin_path
@@ -512,7 +505,7 @@ def get_linux_mounts(module, mntinfo_file="/proc/self/mountinfo"):
 
         mntinfo[record['id']] = record
 
-    mounts = []
+    mounts = {}
 
     for mnt in mntinfo.values():
         if mnt['parent_id'] != 1 and mnt['parent_id'] in mntinfo:
@@ -547,7 +540,7 @@ def get_linux_mounts(module, mntinfo_file="/proc/self/mountinfo"):
             'fs': mnt['fs']
         }
 
-        mounts.append(record)
+        mounts[mnt['dst']] = record
 
     return mounts
 
