@@ -128,14 +128,17 @@ else:
 # MySQL module specific support methods.
 #
 
+
 def db_exists(cursor, db):
-    res = cursor.execute("SHOW DATABASES LIKE %s", (db.replace("_","\_"),))
+    res = cursor.execute("SHOW DATABASES LIKE %s", (db.replace("_", "\_"),))
     return bool(res)
+
 
 def db_delete(cursor, db):
     query = "DROP DATABASE %s" % mysql_quote_identifier(db, 'database')
     cursor.execute(query)
     return True
+
 
 def db_dump(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
             single_transaction=None, quick=None):
@@ -181,6 +184,7 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
 
     rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
     return rc, stdout, stderr
+
 
 def db_import(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None):
     if not os.path.exists(target):
@@ -234,6 +238,7 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
         rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
         return rc, stdout, stderr
 
+
 def db_create(cursor, db, encoding, collation):
     query_params = dict(enc=encoding, collate=collation)
     query = ['CREATE DATABASE %s' % mysql_quote_identifier(db, 'database')]
@@ -242,16 +247,17 @@ def db_create(cursor, db, encoding, collation):
     if collation:
         query.append("COLLATE %(collate)s")
     query = ' '.join(query)
-    res = cursor.execute(query, query_params)
+    cursor.execute(query, query_params)
     return True
 
 # ===========================================
 # Module execution.
 #
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             login_user=dict(default=None),
             login_password=dict(default=None, no_log=True),
             login_host=dict(default="localhost"),
@@ -261,7 +267,7 @@ def main():
             encoding=dict(default=""),
             collation=dict(default=""),
             target=dict(default=None, type='path'),
-            state=dict(default="present", choices=["absent", "present","dump", "import"]),
+            state=dict(default="present", choices=["absent", "present", "dump", "import"]),
             ssl_cert=dict(default=None, type='path'),
             ssl_key=dict(default=None, type='path'),
             ssl_ca=dict(default=None, type='path'),
@@ -296,9 +302,9 @@ def main():
     single_transaction = module.params["single_transaction"]
     quick = module.params["quick"]
 
-    if state in ['dump','import']:
+    if state in ['dump', 'import']:
         if target is None:
-            module.fail_json(msg="with state=%s target is required" % (state))
+            module.fail_json(msg="with state=%s target is required" % state)
         if db == 'all':
             db = 'mysql'
             all_databases = True
@@ -338,8 +344,9 @@ def main():
                 module.exit_json(changed=True, db=db)
             else:
                 rc, stdout, stderr = db_dump(module, login_host, login_user,
-                                            login_password, db, target, all_databases,
-                                            login_port, config_file, socket, ssl_cert, ssl_key, ssl_ca, single_transaction, quick)
+                                             login_password, db, target, all_databases,
+                                             login_port, config_file, socket, ssl_cert, ssl_key,
+                                             ssl_ca, single_transaction, quick)
                 if rc != 0:
                     module.fail_json(msg="%s" % stderr)
                 else:
@@ -350,8 +357,10 @@ def main():
                 module.exit_json(changed=True, db=db)
             else:
                 rc, stdout, stderr = db_import(module, login_host, login_user,
-                                            login_password, db, target, all_databases,
-                                            login_port, config_file, socket, ssl_cert, ssl_key, ssl_ca)
+                                               login_password, db, target,
+                                               all_databases,
+                                               login_port, config_file,
+                                               socket, ssl_cert, ssl_key, ssl_ca)
                 if rc != 0:
                     module.fail_json(msg="%s" % stderr)
                 else:
@@ -382,8 +391,8 @@ def main():
                     changed = db_create(cursor, db, encoding, collation)
                     if changed:
                         rc, stdout, stderr = db_import(module, login_host, login_user,
-                                                    login_password, db, target, all_databases,
-                                                    login_port, config_file, socket, ssl_cert, ssl_key, ssl_ca)
+                                                       login_password, db, target, all_databases,
+                                                       login_port, config_file, socket, ssl_cert, ssl_key, ssl_ca)
                         if rc != 0:
                             module.fail_json(msg="%s" % stderr)
                         else:
