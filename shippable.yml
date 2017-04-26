@@ -55,10 +55,10 @@ matrix:
     - env: TEST=linux/ubuntu1604py3/3
 build:
   pre_ci:
-    - docker images | grep u14pyt
+    - docker images drydock/u16pytall
   pre_ci_boot:
-    image_name: drydock/u14pyt
-    image_tag: prod
+    image_name: drydock/u16pytall
+    image_tag: master
     pull: false
     options: "--privileged=false --net=bridge"
   ci:
