@@ -155,13 +155,13 @@ import ssl
 
 from time import sleep
 
-def try_recv(sock,num=1024):
+def try_recv(sock, num=1024):
     '''reads from socket and responds to ping if necessary'''
     while True:
-        ret=sock.recv(num)
-        ping=re.search(r"^PING\s:(\w*)\s*",ret)
+        ret = sock.recv(num)
+        ping = re.search(r"^PING\s:(\w*)\s*", ret)
         if ping and ping.group(1):
-            sock.send("PONG :%s\r\n"%ping.group(1))
+            sock.send("PONG :%s\r\n" % ping.group(1))
         else:
             break
     return ret
