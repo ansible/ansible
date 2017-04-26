@@ -220,7 +220,7 @@ def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=[], key
     motd = ''
     start = time.time()
     while 1:
-        motd += irc.recv(1024)
+        motd += try_recv(irc)
         # The server might send back a shorter nick than we specified (due to NICKLEN),
         #  so grab that and use it from now on (assuming we find the 00[1-4] response).
         match = re.search('^:\S+ 00[1-4] (?P<nick>\S+) :', motd, flags=re.M)
@@ -239,7 +239,7 @@ def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=[], key
     join = ''
     start = time.time()
     while 1:
-        join += irc.recv(1024)
+        join += try_recv(irc)
         if re.search('^:\S+ 366 %s %s :' % (nick, channel), join, flags=re.M):
             break
         elif time.time() - start > timeout:
