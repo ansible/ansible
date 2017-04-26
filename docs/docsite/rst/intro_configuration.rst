@@ -607,15 +607,16 @@ merge_multiple_cli_tags
 
 .. versionadded:: 2.3
 
-This allows changing how multiple --tags and --skip-tags arguments are handled
-on the command line.  In Ansible up to and including 2.3, specifying --tags
-more than once will only take the last value of --tags.  Setting this config
-value to True will mean that all of the --tags options will be merged
-together.  The same holds true for --skip-tags.
+This allows changing how multiple :option:`--tags` and :option:`--skip-tags`
+arguments are handled on the command line.  Specifying :option:`--tags` more
+than once merges all of the :option:`--tags` options together.  If you want
+the pre-2.4.x behaviour where only the last value of :option:`--tags` is used,
+then set this to False.  The same holds true for :option:`--skip-tags`.
 
 .. note:: The default value for this in 2.3 is False.  In 2.4, the
-    default value will be True.  After 2.4, the option is going away.
-    Multiple --tags and multiple --skip-tags will always be merged together.
+    default value is True.  After 2.8, the option will be removed.
+    Multiple :option:`--tags` and multiple :option:`--skip-tags` will always
+    be merged together.
 
 .. _module_lang:
 
