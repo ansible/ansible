@@ -18,16 +18,16 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_vxlan_tunnel
-version_added: "2.3"
-short_description: Manages VXLAN tunnel configuration.
+version_added: "2.4"
+short_description: Manages VXLAN tunnel configuration on HUAWEI CloudEngine devices.
 description:
     - This module offers the ability to set the VNI and mapped to the BD,
-      and configure an ingress replication list on CloudEngine switch.
+      and configure an ingress replication list on HUAWEI CloudEngine devices.
 author:
     - Li Yanfeng (@CloudEngine-Ansible)
 options:
