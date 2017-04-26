@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_vrf
-version_added: "2.3"
-short_description: Manages VPN instance.
+version_added: "2.4"
+short_description: Manages VPN instance on HUAWEI CloudEngine switches.
 description:
-    - Manages VPN instance of Huawei CloudEngine switches.
+    - Manages VPN instance of HUAWEI CloudEngine switches.
 author: Yang yang (@CloudEngine-Ansible)
 notes:
     - If no vrf is supplied, vrf is set to default.
