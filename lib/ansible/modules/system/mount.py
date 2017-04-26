@@ -530,7 +530,7 @@ def get_linux_mounts(module, mntinfo_file="/proc/self/mountinfo"):
                         # 141 140 253:2 /rootfs/tmp/aaa /tmp/bbb rw - ext4 /dev/sdb2 rw
                         # == Expected result:
                         # src=/tmp/aaa
-                        mnt['root'] = mnt['root'][len(m['root']) + 1:]
+                        mnt['root'] = mnt['root'][len(m['root']):]
 
                     # Prepend the parent's dst to the child's root
                     # == Example:
