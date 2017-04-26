@@ -17,14 +17,14 @@
 #
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 DOCUMENTATION = '''
 ---
 module: ce_vrf_af
-version_added: "2.3"
-short_description: Manages VPN instance address family.
+version_added: "2.4"
+short_description: Manages VPN instance address family on HUAWEI CloudEngine switches.
 description:
-    - Manages VPN instance address family of Huawei CloudEngine switches.
+    - Manages VPN instance address family of HUAWEI CloudEngine switches.
 author: Yang yang (@CloudEngine-Ansible)
 notes:
     - If no vrf is supplied, the module will return error.
