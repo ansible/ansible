@@ -536,7 +536,7 @@ lib/ansible/modules/network/netvisor/pn_vrouter.py
 lib/ansible/modules/network/netvisor/pn_vrouterbgp.py
 lib/ansible/modules/network/netvisor/pn_vrouterif.py
 lib/ansible/modules/network/netvisor/pn_vrouterlbif.py
-lib/ansible/modules/network/nmcli.py
+lib/ansible/modules/net_tools/nmcli.py
 lib/ansible/modules/network/nxos/_nxos_mtu.py
 lib/ansible/modules/network/nxos/_nxos_template.py
 lib/ansible/modules/network/nxos/nxos_aaa_server.py
