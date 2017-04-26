@@ -214,8 +214,7 @@ EXAMPLES = """
 # password=n<_665{vS43y
 """
 
-import getpass
-import tempfile
+
 import re
 import string
 try:
@@ -236,12 +235,14 @@ VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
                          'REPLICATION SLAVE', 'SHOW DATABASES', 'SHUTDOWN',
                          'SUPER', 'ALL', 'ALL PRIVILEGES', 'USAGE', 'REQUIRESSL'))
 
+
 class InvalidPrivsError(Exception):
     pass
 
 # ===========================================
 # MySQL module specific support methods.
 #
+
 
 # User Authentication Management was change in MySQL 5.7
 # This is a generic check for if the server version is less than version 5.7
@@ -255,10 +256,11 @@ def server_version_check(cursor):
     # mariadb and the old-style update continues to work
     if 'mariadb' in version_str.lower():
         return True
-    if (int(version[0]) <= 5 and int(version[1]) < 7):
+    if int(version[0]) <= 5 and int(version[1]) < 7:
         return True
     else:
         return False
+
 
 def get_mode(cursor):
     cursor.execute('SELECT @@GLOBAL.sql_mode')
@@ -270,14 +272,16 @@ def get_mode(cursor):
         mode = 'NOTANSI'
     return mode
 
+
 def user_exists(cursor, user, host, host_all):
     if host_all:
         cursor.execute("SELECT count(*) FROM user WHERE user = %s", ([user]))
     else:
-        cursor.execute("SELECT count(*) FROM user WHERE user = %s AND host = %s", (user,host))
+        cursor.execute("SELECT count(*) FROM user WHERE user = %s AND host = %s", (user, host))
 
     count = cursor.fetchone()
     return count[0] > 0
+
 
 def user_add(cursor, user, host, host_all, password, encrypted, new_priv, check_mode):
     # we cannot create users without a proper hostname
@@ -288,15 +292,16 @@ def user_add(cursor, user, host, host_all, password, encrypted, new_priv, check_
         return True
 
     if password and encrypted:
-        cursor.execute("CREATE USER %s@%s IDENTIFIED BY PASSWORD %s", (user,host,password))
+        cursor.execute("CREATE USER %s@%s IDENTIFIED BY PASSWORD %s", (user, host, password))
     elif password and not encrypted:
-        cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user,host,password))
+        cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user, host, password))
     else:
-        cursor.execute("CREATE USER %s@%s", (user,host))
+        cursor.execute("CREATE USER %s@%s", (user, host))
     if new_priv is not None:
         for db_table, priv in iteritems(new_priv):
-            privileges_grant(cursor, user,host,db_table,priv)
+            privileges_grant(cursor, user, host, db_table, priv)
     return True
+
 
 def is_hash(password):
     ishash = False
@@ -304,6 +309,7 @@ def is_hash(password):
         if frozenset(password[1:]).issubset(string.hexdigits):
             ishash = True
     return ishash
+
 
 def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append_privs, module):
     changed = False
@@ -321,9 +327,9 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
             old_user_mgmt = server_version_check(cursor)
 
             if old_user_mgmt:
-                cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user,host))
+                cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user, host))
             else:
-                cursor.execute("SELECT authentication_string FROM user WHERE user = %s AND host = %s", (user,host))
+                cursor.execute("SELECT authentication_string FROM user WHERE user = %s AND host = %s", (user, host))
             current_pass_hash = cursor.fetchone()
 
             if encrypted:
@@ -356,7 +362,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
 
         # Handle privileges
         if new_priv is not None:
-            curr_priv = privileges_get(cursor, user,host)
+            curr_priv = privileges_get(cursor, user, host)
 
             # If the user has privileges on a db.table that doesn't appear at all in
             # the new specification, then revoke all privileges on it.
@@ -368,7 +374,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                     if user != "root" and "PROXY" not in priv and not append_privs:
                         if module.check_mode:
                             return True
-                        privileges_revoke(cursor, user,host,db_table,priv,grant_option)
+                        privileges_revoke(cursor, user, host, db_table, priv, grant_option)
                         changed = True
 
             # If the user doesn't currently have any privileges on a db.table, then
@@ -377,7 +383,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                 if db_table not in curr_priv:
                     if module.check_mode:
                         return True
-                    privileges_grant(cursor, user,host,db_table,priv)
+                    privileges_grant(cursor, user, host, db_table, priv)
                     changed = True
 
             # If the db.table specification exists in both the user's current privileges
@@ -385,15 +391,16 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
             db_table_intersect = set(new_priv.keys()) & set(curr_priv.keys())
             for db_table in db_table_intersect:
                 priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
-                if (len(priv_diff) > 0):
+                if len(priv_diff) > 0:
                     if module.check_mode:
                         return True
                     if not append_privs:
-                        privileges_revoke(cursor, user,host,db_table,curr_priv[db_table],grant_option)
-                    privileges_grant(cursor, user,host,db_table,new_priv[db_table])
+                        privileges_revoke(cursor, user, host, db_table, curr_priv[db_table], grant_option)
+                    privileges_grant(cursor, user, host, db_table, new_priv[db_table])
                     changed = True
 
     return changed
+
 
 def user_delete(cursor, user, host, host_all, check_mode):
     if check_mode:
@@ -409,6 +416,7 @@ def user_delete(cursor, user, host, host_all, check_mode):
 
     return True
 
+
 def user_get_hostnames(cursor, user):
     cursor.execute("SELECT Host FROM mysql.user WHERE user = %s", user)
     hostnames_raw = cursor.fetchall()
@@ -419,7 +427,8 @@ def user_get_hostnames(cursor, user):
 
     return hostnames
 
-def privileges_get(cursor, user,host):
+
+def privileges_get(cursor, user, host):
     """ MySQL doesn't have a better method of getting privileges aside from the
     SHOW GRANTS query syntax, which requires us to then parse the returned string.
     Here's an example of the string that is returned from MySQL:
@@ -444,7 +453,7 @@ def privileges_get(cursor, user,host):
         if res is None:
             raise InvalidPrivsError('unable to parse the MySQL grant string: %s' % grant[0])
         privileges = res.group(1).split(", ")
-        privileges = [ pick(x) for x in privileges]
+        privileges = [pick(x) for x in privileges]
         if "WITH GRANT OPTION" in res.group(4):
             privileges.append('GRANT')
         if "REQUIRE SSL" in res.group(4):
@@ -452,6 +461,7 @@ def privileges_get(cursor, user,host):
         db = res.group(2)
         output[db] = privileges
     return output
+
 
 def privileges_unpack(priv, mode):
     """ Take a privileges string, typically passed as a parameter, and unserialize
@@ -483,7 +493,7 @@ def privileges_unpack(priv, mode):
         if '(' in pieces[1]:
             output[pieces[0]] = re.split(r',\s*(?=[^)]*(?:\(|$))', pieces[1].upper())
             for i in output[pieces[0]]:
-                privs.append(re.sub(r'\s*\(.*\)','',i))
+                privs.append(re.sub(r'\s*\(.*\)', '', i))
         else:
             output[pieces[0]] = pieces[1].upper().split(',')
             privs = output[pieces[0]]
@@ -501,7 +511,8 @@ def privileges_unpack(priv, mode):
 
     return output
 
-def privileges_revoke(cursor, user,host,db_table,priv,grant_option):
+
+def privileges_revoke(cursor, user, host, db_table, priv, grant_option):
     # Escape '%' since mysql db.execute() uses a format string
     db_table = db_table.replace('%', '%%')
     if grant_option:
@@ -515,7 +526,8 @@ def privileges_revoke(cursor, user,host,db_table,priv,grant_option):
     query = ' '.join(query)
     cursor.execute(query, (user, host))
 
-def privileges_grant(cursor, user,host,db_table,priv):
+
+def privileges_grant(cursor, user, host, db_table, priv):
     # Escape '%' since mysql db.execute uses a format string and the
     # specification of db and table often use a % (SQL wildcard)
     db_table = db_table.replace('%', '%%')
@@ -533,9 +545,10 @@ def privileges_grant(cursor, user,host,db_table,priv):
 # Module execution.
 #
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             login_user=dict(default=None),
             login_password=dict(default=None, no_log=True),
             login_host=dict(default="localhost"),
@@ -645,5 +658,6 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.database import *
 from ansible.module_utils.mysql import *
+
 if __name__ == '__main__':
     main()
