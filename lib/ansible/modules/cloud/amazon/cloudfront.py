@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -387,8 +387,6 @@ options:
 '''
 
 EXAMPLES = '''
-# Note: These examples do not set authentication details, see the AWS Guide for details.
-
 # create a basic distribution
 - cloudfront:
     create_distribution: yes
@@ -530,8 +528,6 @@ EXAMPLES = '''
     streaming_distribution_id: E2RTIUCAA9RINU
     comment: modified streaming distribution
 
-# validate a streaming distribution
-
 # create an origin access identity
 - cloudfront:
     create_origin_access_identity: yes
@@ -539,6 +535,12 @@ EXAMPLES = '''
     comment: this is an example comment
 
 # update an origin access identity
+- cloudfront:
+     update_origin_access_identity: yes
+     origin_access_identity_id: E17DRN9XUOAHZX
+     caller_reference: this is an example reference
+     e_tag: E2SOGFWHPXECAI
+     comment: this is a new comment
 
 # delete an origin access identity
 - cloudfront:
@@ -546,17 +548,26 @@ EXAMPLES = '''
     origin_access_identity_id: EBXCCWOVSAYYD
     e_tag: E19J3JLL3TEPVY
 
-# create an invalidation
-
 # create a batch of invalidations
+- cloudfront:
+    create_invalidation: yes
+    distribution_id: E15BU8SDCGSG57
+    invalidation_batch:
+      - /testpathone/test1.txt
+      - /testpathtwo/test2.log
+      - /testpaththree/test3.log
 
 '''
 
 RETURN = '''
-
-
-
-
+location:
+    description: describes a url specifying the output of the action just run.
+    returned: applies to create_distribution, update_distribution, duplicate_distribution, create_streaming_distribution, update_streaming_distribution, duplicate_streaming_distribution, create_invalidation, create_origin_access_identity, update_origin_access_identity, delete_origin_access_identity
+    type: str
+validation_result:
+    description: either returns 'OK' or fails with a description of why the validation failed.
+    returned: applies to validate_distribution and validate_streaming_distribution
+    type: str
 '''
 
 from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, boto3_conn, HAS_BOTO3
@@ -1066,7 +1077,7 @@ class CloudFrontValidationManager:
             if(viewer_certificate.get('cloudfront_default_certificate') == True and
                     viewer_certificate.get('ssl_support_method') is not None):
                 self.module.fail_json(msg="viewer_certificate.ssl_support_method should not be specified with" +
-                        "viewer_certificate_cloudfront_default_certificate set to True")
+                        "viewer_certificate_cloudfront_default_certificate set to true")
             if 'ssl_support_method' in viewer_certificate:
                 self.validate_attribute_with_allowed_values(viewer_certificate.get('ssl_support_method'),
                         'viewer_certificate.ssl_support_method', self.__valid_viewer_certificate_ssl_support_methods)
@@ -1153,36 +1164,42 @@ class CloudFrontValidationManager:
             self.module.fail_json(msg="error validating parameters for streaming distribution update and delete - " + str(e))
 
     def validate_tagging_arn(self, arn, alias, distribution_id, streaming_distribution_id):
-        if arn is not None:
-            return arn
-        if alias is not None and (distribution_id is not None or streaming_distribution_id is not None):
-            self.module.fail_json(msg="both alias and a distribution id have been specified for tagging a resource. " +
-                    "please only specify one.")
-        if distribution_id is not None and streaming_distribution_id is not None:
-            self.module.fail_json(msg="both distribution_id and streaming_distribution_id have been specified. " +
-                    "please only specify one.")
-        if alias is not None:
-            distribution_id = self.__cloudfront_facts_mgr.get_distribution_id_from_domain_name(alias)
-        if distribution_id is not None:
-            distribution_response = self.__cloudfront_facts_mgr.get_distribution(distribution_id)
-        if distribution_response is not None:
-            distribution = distribution_response.get('Distribution')
-            if distribution is not None:
-                return distribution.get('ARN')
-        streaming_distribution_response = self.__cloudfront_facts_mgr.get_streaming_distribution(streaming_distribution_id)
-        if streaming_distribution_response is not None:
-            streaming_distribution = streaming_distribution_response.get('StreamingDistribution')
-            if streaming_distribution is not None:
-                return streaming_distribution.get('ARN')
-        self.module.fail_json(msg="unable to find a matching distribution with given parameters")
+        try:
+            if arn is not None:
+                return arn
+            if alias is not None and (distribution_id is not None or streaming_distribution_id is not None):
+                self.module.fail_json(msg="both alias and a distribution id have been specified for tagging a resource. " +
+                        "please only specify one.")
+            if distribution_id is not None and streaming_distribution_id is not None:
+                self.module.fail_json(msg="both distribution_id and streaming_distribution_id have been specified. " +
+                        "please only specify one.")
+            if alias is not None:
+                distribution_id = self.__cloudfront_facts_mgr.get_distribution_id_from_domain_name(alias)
+            if distribution_id is not None:
+                distribution_response = self.__cloudfront_facts_mgr.get_distribution(distribution_id)
+            if distribution_response is not None:
+                distribution = distribution_response.get('Distribution')
+                if distribution is not None:
+                    return distribution.get('ARN')
+            streaming_distribution_response = self.__cloudfront_facts_mgr.get_streaming_distribution(streaming_distribution_id)
+            if streaming_distribution_response is not None:
+                streaming_distribution = streaming_distribution_response.get('StreamingDistribution')
+                if streaming_distribution is not None:
+                    return streaming_distribution.get('ARN')
+            self.module.fail_json(msg="unable to find a matching distribution with given parameters")
+        except Exception as e:
+            self.module.fail_json(msg="error validating tagging parameters - " + str(e))
 
     def validate_list_without_quantity(self, list_items):
-        if list_items is None:
-            return list_items
-        aws_list_items = self.__helpers.python_list_to_aws_list(list_items)
-        aws_list_items.pop('quantity', None)
-        pascal_aws_list_items = self.__helpers.snake_dict_to_pascal_dict(aws_list_items)
-        return pascal_aws_list_items
+        try:
+            if list_items is None:
+                return list_items
+            aws_list_items = self.__helpers.python_list_to_aws_list(list_items)
+            aws_list_items.pop('quantity', None)
+            pascal_aws_list_items = self.__helpers.snake_dict_to_pascal_dict(aws_list_items)
+            return pascal_aws_list_items
+        except Exception as e:
+            self.module.fail_json(msg="error validating list without items - " + str(e))
 
     def validate_distribution_config_parameters(self, config, default_root_object, is_ipv6_enabled,
             http_version, web_acl_id):
@@ -1216,6 +1233,20 @@ class CloudFrontValidationManager:
         except Exception as e:
             self.module.fail_json(msg="error validating streaming distribution config parameters - " + str(e))
 
+    def validate_invalidation_batch(self, invalidation_batch, caller_reference):
+        try:
+            if caller_reference is not None:
+                valid_caller_reference = caller_reference
+            else:
+                valid_caller_reference = self.__default_datetime_string
+            valid_invalidation_batch = {
+                'paths': self.__helpers.python_list_to_aws_list(invalidation_batch),
+                'caller_reference': valid_caller_reference
+                }
+            return valid_invalidation_batch
+        except Exception as e:
+            self.module.fail_json(msg="error validating invalidation batch - " + str(e))
+
     def validate_common_distribution_parameters(self, config, enabled, aliases, logging,
             price_class, comment, is_streaming_distribution):
         try:
@@ -1241,24 +1272,33 @@ class CloudFrontValidationManager:
             self.module.fail_json(msg="error validating common distribution parameters - " + str(e))
 
     def validate_caller_reference_for_distribution(self, config, caller_reference):
-        if caller_reference is not None:
-            config['caller_reference'] = caller_reference
-        else:
-            config['caller_reference'] = self.__default_datetime_string
-        return config
+        try:
+            if caller_reference is not None:
+                config['caller_reference'] = caller_reference
+            else:
+                config['caller_reference'] = self.__default_datetime_string
+            return config
+        except Exception as e:
+            self.module.fail_json(msg="error validating caller reference - " + str(e))
 
     def get_first_origin_id_for_default_cache_behavior(self, valid_origins):
-        if valid_origins is not None:
-            valid_origins_list = valid_origins.get('items')
-            if valid_origins_list is not None and isinstance(valid_origins_list, list) and len(valid_origins_list) > 0:
-                return str(valid_origins.get('items')[0].get('id'))
-        self.module.fail_json(msg="there are no valid origins from which to specify a target_origin_id " +
-                "for the default_cache_behavior configuration")
+        try:
+            if valid_origins is not None:
+                valid_origins_list = valid_origins.get('items')
+                if valid_origins_list is not None and isinstance(valid_origins_list, list) and len(valid_origins_list) > 0:
+                    return str(valid_origins.get('items')[0].get('id'))
+            self.module.fail_json(msg="there are no valid origins from which to specify a target_origin_id " +
+                    "for the default_cache_behavior configuration")
+        except Exception as e:
+            self.module.fail_json(msg="error getting first origin_id for default cache behavior- " + str(e))
 
     def validate_attribute_with_allowed_values(self, attribute, attribute_name, allowed_list):
-        if attribute is not None and attribute not in allowed_list:
-            self.module.fail_json(msg='the attribute {0} must be one of {1}'.format(attribute_name,
-                    ' '.join(str(e) for e in allowed_list)))
+        try:
+            if attribute is not None and attribute not in allowed_list:
+                self.module.fail_json(msg='the attribute {0} must be one of {1}'.format(attribute_name,
+                        ' '.join(str(e) for e in allowed_list)))
+        except Exception as e:
+            self.module.fail_json(msg="error validating attribute with allowed values - " + str(e))
 
     def validate_presigned_url_pem_expire_date(self, datetime_string):
         try:
@@ -1377,7 +1417,7 @@ def main():
         comment=dict(required=False, default=None, type='str'),
         distribution_id=dict(required=False, default=None, type='str'),
         streaming_distribution_id=dict(required=False, default=None, type='str'),
-        invalidation_batch=dict(required=False, default=None, type='str'),
+        invalidation_batch=dict(required=False, default=None, type='list'),
         e_tag=dict(required=False, default=None, type='str'),
         presigned_url_pem_private_key_path=dict(required=False, default=None, type='str'),
         presigned_url_pem_private_key_password=dict(required=False, default=None, type='str', no_log=True),
@@ -1550,6 +1590,10 @@ def main():
     if config_required:
         config = helpers.snake_dict_to_pascal_dict(config)
 
+    if create_invalidation:
+        valid_invalidation_batch = validation_mgr.validate_invalidation_batch(invalidation_batch, caller_reference)
+        valid_invalidation_batch = helpers.snake_dict_to_pascal_dict(valid_invalidation_batch)
+
     if create_origin_access_identity:
         result=service_mgr.create_origin_access_identity(caller_reference, comment)
     elif delete_origin_access_identity:
@@ -1557,7 +1601,7 @@ def main():
     elif update_origin_access_identity:
         result=service_mgr.update_origin_access_identity(caller_reference, comment, origin_access_identity_id, e_tag)
     elif create_invalidation:
-        result=service_mgr.create_invalidation(distribution_id, invalidation_batch)
+        result=service_mgr.create_invalidation(distribution_id, valid_invalidation_batch)
     elif generate_presigned_url_from_pem_private_key:
         validated_pem_expire_date = validation_mgr.validate_presigned_url_pem_expire_date(presigned_url_pem_expire_date)
         result=service_mgr.generate_presigned_url_from_pem_private_key(distribution_id,
