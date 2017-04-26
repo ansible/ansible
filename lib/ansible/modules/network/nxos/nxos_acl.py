@@ -535,7 +535,6 @@ def main():
         if acl[0].get('acl') != 'no_entries':
             commands.append(['no ip access-list {0}'.format(name)])
 
-    results = {}
     cmds = []
     if commands:
         preface = []
