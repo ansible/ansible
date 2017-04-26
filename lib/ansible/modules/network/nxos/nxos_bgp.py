@@ -297,79 +297,23 @@ EXAMPLES = '''
       vrf: test
       router_id: 1.1.1.1
       state: present
-      username: "{{ un }}"
-      password: "{{ pwd }}"
-      host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: verbose mode
-    type: dict
-    sample: {"asn": "65535", "router_id": "1.1.1.1", "vrf": "test"}
-existing:
-    description: k/v pairs of existing BGP configuration
-    returned: verbose mode
-    type: dict
-    sample: {"asn": "65535", "bestpath_always_compare_med": false,
-            "bestpath_aspath_multipath_relax": false,
-            "bestpath_compare_neighborid": false,
-            "bestpath_compare_routerid": false,
-            "bestpath_cost_community_ignore": false,
-            "bestpath_med_confed": false,
-            "bestpath_med_missing_as_worst": false,
-            "bestpath_med_non_deterministic": false, "cluster_id": "",
-            "confederation_id": "", "confederation_peers": "",
-            "graceful_restart": true, "graceful_restart_helper": false,
-            "graceful_restart_timers_restart": "120",
-            "graceful_restart_timers_stalepath_time": "300", "local_as": "",
-            "log_neighbor_changes": false, "maxas_limit": "",
-            "neighbor_down_fib_accelerate": false, "reconnect_interval": "60",
-            "router_id": "11.11.11.11", "suppress_fib_pending": false,
-            "timer_bestpath_limit": "", "timer_bgp_hold": "180",
-            "timer_bgp_keepalive": "60", "vrf": "test"}
-end_state:
-    description: k/v pairs of BGP configuration after module execution
-    returned: verbose mode
-    type: dict
-    sample: {"asn": "65535", "bestpath_always_compare_med": false,
-            "bestpath_aspath_multipath_relax": false,
-            "bestpath_compare_neighborid": false,
-            "bestpath_compare_routerid": false,
-            "bestpath_cost_community_ignore": false,
-            "bestpath_med_confed": false,
-            "bestpath_med_missing_as_worst": false,
-            "bestpath_med_non_deterministic": false, "cluster_id": "",
-            "confederation_id": "", "confederation_peers": "",
-            "graceful_restart": true, "graceful_restart_helper": false,
-            "graceful_restart_timers_restart": "120",
-            "graceful_restart_timers_stalepath_time": "300", "local_as": "",
-            "log_neighbor_changes": false, "maxas_limit": "",
-            "neighbor_down_fib_accelerate": false, "reconnect_interval": "60",
-            "router_id": "1.1.1.1",  "suppress_fib_pending": false,
-            "timer_bestpath_limit": "", "timer_bgp_hold": "180",
-            "timer_bgp_keepalive": "60", "vrf": "test"}
-updates:
+commands:
     description: commands sent to the device
     returned: always
     type: list
     sample: ["router bgp 65535", "vrf test", "router-id 1.1.1.1"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 
 import re
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import get_config, load_config
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import CustomNetworkConfig
 
 
-WARNINGS = []
 BOOL_PARAMS = [
     'bestpath_always_compare_med',
     'bestpath_aspath_multipath_relax',
@@ -547,12 +491,12 @@ def get_value(arg, config):
     return value
 
 
-def get_existing(module, args):
+def get_existing(module, args, warnings):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
     try:
-        asn_regex = '.*router\sbgp\s(?P<existing_asn>\d+).*'
+        asn_regex = r'.*router\sbgp\s(?P<existing_asn>\d+).*'
         match_asn = re.match(asn_regex, str(netcfg), re.DOTALL)
         existing_asn_group = match_asn.groupdict()
         existing_asn = existing_asn_group['existing_asn']
@@ -583,12 +527,12 @@ def get_existing(module, args):
             if (module.params['state'] == 'present' and
                     module.params['vrf'] != 'default'):
                 msg = ("VRF {0} doesn't exist. ".format(module.params['vrf']))
-                WARNINGS.append(msg)
+                warnings.append(msg)
     else:
         if (module.params['state'] == 'present' and
                 module.params['vrf'] != 'default'):
             msg = ("VRF {0} doesn't exist. ".format(module.params['vrf']))
-            WARNINGS.append(msg)
+            warnings.append(msg)
 
     return existing
 
@@ -659,18 +603,17 @@ def state_present(module, existing, proposed, candidate):
         if module.params['vrf'] != 'default':
             parents.append('vrf {0}'.format(module.params['vrf']))
         candidate.add(commands, parents=parents)
-    else:
-        if len(proposed.keys()) == 0:
-            if module.params['vrf'] != 'default':
-                commands.append('vrf {0}'.format(module.params['vrf']))
-                parents = ['router bgp {0}'.format(module.params['asn'])]
-            else:
-                commands.append('router bgp {0}'.format(module.params['asn']))
-                parents = []
-            candidate.add(commands, parents=parents)
+    elif proposed:
+        if module.params['vrf'] != 'default':
+            commands.append('vrf {0}'.format(module.params['vrf']))
+            parents = ['router bgp {0}'.format(module.params['asn'])]
+        else:
+            commands.append('router bgp {0}'.format(module.params['asn']))
+            parents = []
+        candidate.add(commands, parents=parents)
 
 
-def state_absent(module, existing, proposed,  candidate):
+def state_absent(module, existing, proposed, candidate):
     commands = []
     parents = []
     if module.params['vrf'] == 'default':
@@ -752,8 +695,7 @@ def main():
         timer_bestpath_limit=dict(required=False, type='str'),
         timer_bgp_hold=dict(required=False, type='str'),
         timer_bgp_keepalive=dict(required=False, type='str'),
-        state=dict(choices=['present', 'absent'], default='present',
-                       required=False),
+        state=dict(choices=['present', 'absent'], default='present', required=False),
         include_defaults=dict(default=True),
         config=dict(),
         save=dict(type='bool', default=False)
@@ -762,16 +704,14 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                required_together=[['timer_bgp_hold',
-                                            'timer_bgp_keepalive']],
-                                supports_check_mode=True)
+                           required_together=[['timer_bgp_hold', 'timer_bgp_keepalive']],
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
 
-
     state = module.params['state']
-    args =  [
+    args = [
         "asn",
         "bestpath_always_compare_med",
         "bestpath_aspath_multipath_relax",
@@ -818,10 +758,10 @@ def main():
             if param in GLOBAL_PARAMS and inserted_value:
                 module.fail_json(msg='Global params can be modified only'
                                      ' under "default" VRF.',
-                                     vrf=module.params['vrf'],
-                                     global_param=param)
+                                 vrf=module.params['vrf'],
+                                 global_param=param)
 
-    existing = invoke('get_existing', module, args)
+    existing = get_existing(module, args, warnings)
 
     if existing.get('asn'):
         if (existing.get('asn') != module.params['asn'] and
@@ -830,9 +770,8 @@ def main():
                              proposed_asn=module.params['asn'],
                              existing_asn=existing.get('asn'))
 
-    end_state = existing
     proposed_args = dict((k, v) for k, v in module.params.items()
-                    if v is not None and k in args)
+                         if v is not None and k in args)
     proposed = {}
     for key, value in proposed_args.items():
         if key != 'asn' and key != 'vrf':
@@ -843,33 +782,21 @@ def main():
             if existing.get(key) or (not existing.get(key) and value):
                 proposed[key] = value
 
-    result = {}
-    if (state == 'present' or (state == 'absent' and
-            existing.get('asn') == module.params['asn'])):
+    result = dict(changed=False, warnings=warnings)
+
+    if state == 'present' or existing.get('asn') == module.params['asn']:
         candidate = CustomNetworkConfig(indent=3)
         invoke('state_%s' % state, module, existing, proposed, candidate)
 
-        try:
-            response = load_config(module, candidate)
-            result.update(response)
-        except ShellError:
-            exc = get_exception()
-            module.fail_json(msg=str(exc))
+        if (candidate):
+            load_config(module, candidate)
+            result['changed'] = True
+        result['commands'] = [item.text for item in candidate.items]
     else:
-        result['updates'] = []
-
-    if module._verbosity > 0:
-        end_state = invoke('get_existing', module, args)
-        result['end_state'] = end_state
-        result['existing'] = existing
-        result['proposed'] = proposed_args
-
-    if WARNINGS:
-        result['warnings'] = WARNINGS
+        result['commands'] = []
 
     module.exit_json(**result)
 
 
 if __name__ == '__main__':
     main()
-
