@@ -691,6 +691,8 @@ class Templar:
                 return True
             except:
                 return False
+            if isinstance(new, StrictUndefined):
+                return True
             return (new != data)
         elif isinstance(data, (list, tuple)):
             for v in data:
