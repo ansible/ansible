@@ -254,7 +254,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                     (op.sudo or op.sudo_user) and (op.become or op.become_user)):
 
                 self.parser.error("Sudo arguments ('--sudo', '--sudo-user', and '--ask-sudo-pass') "
-                                  "and su arguments ('-su', '--su-user', and '--ask-su-pass') "
+                                  "and su arguments ('--su', '--su-user', and '--ask-su-pass') "
                                   "and become arguments ('--become', '--become-user', and '--ask-become-pass')"
                                   " are exclusive of each other")
 
