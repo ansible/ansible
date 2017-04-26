@@ -7,12 +7,14 @@ httptester
 Overview
 ========
 
-FIXME: Details on **why** this is needed, what the plans are moving forward.
-FIXME: If you are interested in helping with this please contact TWG
+``httptester`` is a docker container used to host certain resources required by :doc:`testing_integration`, this is to avoid CI tests requiring external resources, such as git or package repos, which if temporarily unavailable would cause tests to fail.
 
+HTTP Testing endpoint which provides the following capabilities:
+* httpbin
+* nginx
+* SSL
+* SNI
 
-HTTP Testing endpoint which provides httpbin, nginx, SSL and SNI
-capabilities, for providing a local HTTP endpoint for testing
 
 Source files can be found at `test/utils/docker/httptester/ <https://github.com/ansible/ansible/tree/devel/test/utils/docker/httptester>`_
 
@@ -50,9 +52,7 @@ packer
 ------
 
 The packer build will use ``ansible-playbook`` to perform the
-configuration, and will tag the image as ``ansible/ansible:httptester``
-
-::
+configuration, and will tag the image as ``ansible/ansible:httptester``::
 
     cd test/utils/docker/httptester
     packer build packer.json
@@ -64,3 +64,8 @@ Ansible
     cd test/utils/docker/httptester
     ansible-playbook -i hosts -v httptester.yml
 
+
+Extending httptester
+====================
+
+If you have sometime to improve httptester please add a comment on the `Testing Working Group Agenda <https://github.com/ansible/community/blob/master/MEETINGS.md>`_ to avoid duplicated effort.

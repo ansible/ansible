@@ -4,26 +4,24 @@ PEP 8
 
 .. contents:: Topics
 
-| `PEP 8`_ style guidelines are enforced by
-| `pep8`_ on all python files in the repository by default.
+`PEP 8`_ style guidelines are enforced by ``pep8`` on all python files in the repository by default.
 
 Current Rule Set
 ================
 
-| By default all files are tested using the current rule set.
-| All ``pep8`` tests are executed, except those listed in the `current
-  ignore list`_.
+By default all files are tested using the current rule set.
+All ``pep8`` tests are executed, except those listed in the `current ignore list`_.
 
 .. warning: Updating the Rule Set
 
-   Changes to the Rule Set need approval from the Core Team, and must be done via the TWG.
+   Changes to the Rule Set need approval from the Core Team, and must be done via the `Testing Working Group <https://github.com/ansible/community/blob/master/MEETINGS.md>`_.
 
 Legacy Rule Set
 ===============
 
 Files which are listed in the `legacy file list`_ are tested using the legacy rule set.
-All ``pep8`` tests are executed, except those listed in the `current
-ignore list`_ or `legacy ignore list`_.
+
+All ``pep8`` tests are executed, except those listed in the `current ignore list`_ or `legacy ignore list`_.
 
 Files listed in the legacy file list which pass the current rule set will result in an error.
 
@@ -37,8 +35,7 @@ Files listed in the `skip list`_ are not tested by ``pep8``.
 Removed Files
 =============
 
-Files which have been removed from the repository must be removed from
-the legacy file list and the skip list.
+Files which have been removed from the repository must be removed from the legacy file list and the skip list.
 
 Running Locally
 ===============

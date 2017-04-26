@@ -8,7 +8,7 @@ This page details how to run the integration tests that haven't been ported to t
 
 The following areas are still tested using the legacy ``make tests`` command:
 
-* amazon 
+* amazon
 * azure
 * cloudflare
 * cloudscale
@@ -22,8 +22,8 @@ The following areas are still tested using the legacy ``make tests`` command:
 Over time the above list will be reduced as tests are ported to the ``ansible-test`` framework.
 
 
-Configuring Cloud Tests
-=======================
+Running Cloud Tests
+====================
 
 Cloud tests exercise capabilities of cloud modules (e.g. ec2_key).  These are
 not 'tests run in the cloud' so much as tests that leverage the cloud modules
@@ -38,18 +38,6 @@ Provide cloud credentials::
 
     cp credentials.template credentials.yml
     ${EDITOR:-vi} credentials.yml
-
-Run the tests::
-
-    make cloud
-
-.. warning:: Possible cost of running cloud tests
-
-   Running cloud integration tests will create and destroy cloud
-   resources.  Running these tests may result in additional fees associated with
-   your cloud account.  Care is taken to ensure that created resources are
-   removed.  However, it is advisable to inspect your AWS console to ensure no
-   unexpected resources are running.
 
 
 Other configuration
@@ -66,12 +54,14 @@ The tests are invoked via a ``Makefile``::
   # If you haven't already got Ansible available use the local checkout by doing::
 
   source hacking/env-setup
-   
+
   cd test/integration/
   # TARGET is the name of the test from the list at the top of this page
   #make TARGET
   # e.g.
   make amazon
+  # To run all cloud tests you can do:
+  make cloud
 
 .. warning:: Possible cost of running cloud tests
 
@@ -80,3 +70,4 @@ The tests are invoked via a ``Makefile``::
    your cloud account.  Care is taken to ensure that created resources are
    removed.  However, it is advisable to inspect your AWS console to ensure no
    unexpected resources are running.
+

@@ -2,23 +2,34 @@
 Unit Tests
 **********
 
-Unit tests are small isolated tests
+Unit tests are small isolated tests that target a specific library or module.
 
 .. contents:: Topics
 
 Available Tests
 ===============
 
+Unit tests can be found in `test/units <https://github.com/ansible/ansible/tree/devel/test/units>`_, notice that the directory structure matches that of ``lib/ansible/``
 
 Running Tests
 =============
 
+Unit tests can be run across the whole code base by doing:
+
+.. code:: shell
+
+    cd /path/to/ansible/source
+    source hacking/env-setup
+    ansible-test units 
+
+
+For advanced usage see the online help::
+
+   ansible-test units --help
+
 Extending unit tests
 ====================
 
-FIXME Details here ``test/units`` ``test/units/modules``
-
-FIXME Link back to :doc:`testing_networking`
 
 .. warning:: What a unit test isn't
 
@@ -35,3 +46,13 @@ Data is loaded using the ``load_fixture`` method
 
 See  `eos_banner test <https://github.com/ansible/ansible/blob/devel/test/units/modules/network/eos/test_eos_banner.py>`_ for a practical example.
 
+Code Coverage
+`````````````
+
+When writing unit tests it can be usefull to generate code coverage data and use this to guide you in where to add extra tests.
+
+
+.. code:: shell
+
+    ansible-test units --coverage
+    ansible-test coverage html

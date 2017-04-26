@@ -29,6 +29,4 @@ For advanced options see ``ansible-test compile --help``
 Extending compile tests
 =======================
 
-FIXME Speak to TWG first
-
-FIXME details of how to extend
+If you believe changes are needed to the Compile tests please add a comment on the `Testing Working Group Agenda <https://github.com/ansible/community/blob/master/MEETINGS.md>`_ so it can be discussed.
