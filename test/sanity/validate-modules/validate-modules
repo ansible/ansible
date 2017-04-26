@@ -202,7 +202,7 @@ class Validator(with_metaclass(abc.ABCMeta, object)):
 
 
 class ModuleValidator(Validator):
-    BLACKLIST_PATTERNS = ('.git*', '*.pyc', '*.pyo', '.*', '*.md', '*.txt')
+    BLACKLIST_PATTERNS = ('.git*', '*.pyc', '*.pyo', '.*', '*.md', '*.rst', '*.txt')
     BLACKLIST_FILES = frozenset(('.git', '.gitignore', '.travis.yml',
                                  'shippable.yml',
                                  '.gitattributes', '.gitmodules', 'COPYING',
