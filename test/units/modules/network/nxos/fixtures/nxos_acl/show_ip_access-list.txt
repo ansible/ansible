@@ -1,0 +1,227 @@
+{
+  "TABLE_ip_ipv6_mac": {
+    "ROW_ip_ipv6_mac": [
+      {
+        "op_ip_ipv6_mac": "ip", 
+        "acl_name": "copp-system-p-acl-bgp", 
+        "TABLE_seqno": {
+          "ROW_seqno": [
+            {
+              "seqno": 10, 
+              "permitdeny": "permit", 
+              "proto_str": "tcp", 
+              "src_any": "any", 
+              "src_port_op": "gt", 
+              "src_port1_num": "1024", 
+              "dest_any": "any", 
+              "dest_port_op": "eq", 
+              "dest_port1_str": "bgp", 
+              "dest_port1_num": "179"
+            }, 
+            {
+              "seqno": 20, 
+              "permitdeny": "permit",
+              "proto_str": "tcp", 
+              "src_any": "any", 
+              "src_port_op": "eq", 
+              "src_port1_str": "bgp", 
+              "src_port1_num": "179", 
+              "dest_any": "any", 
+              "dest_port_op": "gt", 
+              "dest_port1_num": "1024"
+            }
+          ]
+        }
+      }, 
+      {
+        "op_ip_ipv6_mac": "ip", 
+        "acl_name": "copp-system-p-acl-cts", 
+        "TABLE_seqno": {
+          "ROW_seqno": [
+            {
+              "seqno": 10, 
+              "permitdeny": "permit", 
+              "proto_str": "tcp", 
+              "src_any": "any", 
+              "dest_any": "any", 
+              "dest_port_op": "eq", 
+              "dest_port1_num": "64999"
+            }, 
+            {
+              "seqno": 20, 
+              "permitdeny": "permit", 
+              "proto_str": "tcp", 
+              "src_any": "any", 
+              "src_port_op": "eq", 
+              "src_port1_num": "64999", 
+              "dest_any": "any"
+            }
+          ]
+        }
+      }, 
+      {
+        "op_ip_ipv6_mac": "ip", 
+        "acl_name": "copp-system-p-acl-dhcp", 
+        "TABLE_seqno": {
+          "ROW_seqno": [
+            {
+              "seqno": 10, 
+              "permitdeny": "permit", 
+              "proto_str": "udp", 
+              "src_any": "any", 
+              "src_port_op": "eq", 
+              "src_port1_str": "bootpc", 
+              "src_port1_num": "68", 
+              "dest_any": "any"
+            }, 
+            {
+              "seqno": 20, 
+              "permitdeny": "permit", 
+              "proto_str": "udp", 
+              "src_any": "any", 
+              "src_port_op": "neq", 
+              "src_port1_str": "bootps", 
+              "src_port1_num": "67", 
+              "dest_any": "any", 
+              "dest_port_op": "eq", 
+              "dest_port1_str": "bootps", 
+              "dest_port1_num": "67"
+            }
+          ]
+        }
+      }, 
+      {
+        "op_ip_ipv6_mac": "ip", 
+        "acl_name": "copp-system-p-acl-dhcp-relay-response", 
+        "TABLE_seqno": {
+          "ROW_seqno": [
+            {
+              "seqno": 10, 
+              "permitdeny": "permit", 
+              "proto_str": "udp", 
+              "src_any": "any", 
+              "src_port_op": "eq", 
+              "src_port1_str": "bootps", 
+              "src_port1_num": "67", 
+              "dest_any": "any"
+            }, 
+            {
+              "seqno": 20, 
+              "permitdeny": "permit", 
+              "proto_str": "udp", 
+              "src_any": "any", 
+              "dest_any": "any", 
+              "dest_port_op": "eq", 
+              "dest_port1_str": "bootpc", 
+              "dest_port1_num": "68"
+            }
+          ]
+        }
+      }, 
+      {
+        "op_ip_ipv6_mac": "ip", 
+        "acl_name": "copp-system-p-acl-eigrp", 
+        "TABLE_seqno": {
+          "ROW_seqno": {
+            "seqno": 10, 
+            "permitdeny": "permit",
+            "proto_str": "eigrp", 
+            "src_any": "any", 
+            "dest_any": "any"
+          }
+        }
+      }, 
+      {
+        "op_ip_ipv6_mac": "ip", 
+        "acl_name": "copp-system-p-acl-ftp", 
+        "TABLE_seqno": {
+          "ROW_seqno": [
+            {
+              "seqno": 10, 
+              "permitdeny": "permit", 
+              "proto_str": "tcp", 
+              "src_any": "any", 
+              "dest_any": "any", 
+              "dest_port_op": "eq", 
+              "dest_port1_str": "ftp-data", 
+              "dest_port1_num": "20"
+            }, 
+            {
+              "seqno": 20, 
+              "permitdeny": "permit", 
+              "proto_str": "tcp", 
+              "src_any": "any", 
+              "dest_any": "any", 
+              "dest_port_op": "eq", 
+              "dest_port1_str": "ftp", 
+              "dest_port1_num": "21"
+            }, 
+            {
+              "seqno": 30, 
+              "permitdeny": "permit", 
+              "proto_str": "tcp", 
+              "src_any": "any", 
+              "src_port_op": "eq", 
+              "src_port1_str": "ftp-data", 
+              "src_port1_num": "20", 
+              "dest_any": "any"
+            }, 
+            {
+              "seqno": 40, 
+              "permitdeny": "permit", 
+              "proto_str": "tcp", 
+              "src_any": "any", 
+              "src_port_op": "eq", 
+              "src_port1_str": "ftp", 
+              "src_port1_num": "21", 
+              "dest_any": "any"
+            }
+          ]
+        }
+      }, 
+      {
+        "op_ip_ipv6_mac": "ip", 
+        "acl_name": "copp-system-p-acl-glbp", 
+        "TABLE_seqno": {
+          "ROW_seqno": {
+            "seqno": 10, 
+            "permitdeny": "permit", 
+            "proto_str": "udp", 
+            "src_any": "any", 
+            "src_port_op": "eq", 
+            "src_port1_num": "3222", 
+            "dest_ip_prefix": "224.0.0.0/24", 
+            "dest_port_op": "eq", 
+            "dest_port1_num": "3222"
+          }
+        }
+      }, 
+      {
+        "op_ip_ipv6_mac": "ip", 
+        "acl_name": "copp-system-p-acl-hsrp", 
+        "TABLE_seqno": {
+          "ROW_seqno": [
+            {
+              "seqno": 10, 
+              "permitdeny": "permit", 
+              "proto_str": "udp", 
+              "src_any": "any", 
+              "dest_ip_prefix": "224.0.0.2/32", 
+              "dest_port_op": "eq", 
+              "dest_port1_num": "1985"
+            }, 
+            {
+              "seqno": 20, 
+              "permitdeny": "permit", 
+              "proto_str": "udp", 
+              "src_any": "any", 
+              "dest_ip_prefix": "224.0.0.102/32", 
+              "dest_port_op": "eq", 
+              "dest_port1_num": "1985"
+            }
+          ]
+        }
+      } 
+	]
+  }
+}
