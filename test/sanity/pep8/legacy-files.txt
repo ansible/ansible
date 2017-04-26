@@ -541,7 +541,6 @@ lib/ansible/modules/network/nxos/_nxos_mtu.py
 lib/ansible/modules/network/nxos/_nxos_template.py
 lib/ansible/modules/network/nxos/nxos_aaa_server.py
 lib/ansible/modules/network/nxos/nxos_aaa_server_host.py
-lib/ansible/modules/network/nxos/nxos_bgp.py
 lib/ansible/modules/network/nxos/nxos_bgp_af.py
 lib/ansible/modules/network/nxos/nxos_bgp_neighbor.py
 lib/ansible/modules/network/nxos/nxos_bgp_neighbor_af.py
