@@ -20,7 +20,7 @@ Unit tests can be run across the whole code base by doing:
 
     cd /path/to/ansible/source
     source hacking/env-setup
-    ansible-test units 
+    ansible-test units
 
 
 For advanced usage see the online help::
