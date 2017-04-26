@@ -97,8 +97,6 @@ lib/ansible/module_utils/bigswitch_utils.py
 lib/ansible/module_utils/cloudengine.py
 lib/ansible/module_utils/connection.py
 lib/ansible/module_utils/database.py
-lib/ansible/module_utils/dellos10.py
-lib/ansible/module_utils/dellos9.py
 lib/ansible/module_utils/docker_common.py
 lib/ansible/module_utils/ec2.py
 lib/ansible/module_utils/eos.py

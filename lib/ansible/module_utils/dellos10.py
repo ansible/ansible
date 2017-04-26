@@ -34,7 +34,7 @@ import re
 from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.network_common import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.netcfg import NetworkConfig,ConfigLine
+from ansible.module_utils.netcfg import NetworkConfig, ConfigLine
 
 _DEVICE_CONFIGS = {}
 
@@ -55,6 +55,7 @@ dellos10_argument_spec = {
     'timeout': dict(type='int'),
     'provider': dict(type='dict'),
 }
+
 
 def check_args(module, warnings):
     provider = module.params['provider'] or {}
@@ -106,6 +107,7 @@ def run_commands(module, commands, check_rc=True):
         responses.append(out)
     return responses
 
+
 def load_config(module, commands):
     rc, out, err = exec_command(module, 'configure terminal')
     if rc != 0:
@@ -121,6 +123,7 @@ def load_config(module, commands):
             module.fail_json(msg=err, command=command, rc=rc)
 
     exec_command(module, 'end')
+
 
 def get_sublevel_config(running_config, module):
     contents = list()
@@ -141,4 +144,3 @@ def get_sublevel_config(running_config, module):
     sublevel_config = '\n'.join(current_config_contents)
 
     return sublevel_config
-
