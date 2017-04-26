@@ -207,7 +207,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
                 if key in ('connection', 'port', 'remote_user'):
                     display.deprecated("Using '%s' as a role param has been deprecated. " % key + \
                                        "In the future, these values should be entered in the `vars:` " + \
-                                       "section for roles, but for now we'll store it as both a param and an attribute.")
+                                       "section for roles, but for now we'll store it as both a param and an attribute.", version="2.7")
                     role_def[key] = value
                 # this key does not match a field attribute, so it must be a role param
                 role_params[key] = value

@@ -204,7 +204,7 @@ class Play(Base, Taggable, Become):
         vars_prompts = []
         for prompt_data in new_ds:
             if 'name' not in prompt_data:
-                display.deprecated("Using the 'short form' for vars_prompt has been deprecated")
+                display.deprecated("Using the 'short form' for vars_prompt has been deprecated", version="2.7")
                 for vname, prompt in prompt_data.items():
                     vars_prompts.append(dict(
                         name      = vname,
