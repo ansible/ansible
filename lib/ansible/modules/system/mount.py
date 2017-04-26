@@ -495,7 +495,7 @@ def get_linux_mounts(module, mntinfo_file="/proc/self/mountinfo"):
     except IOError:
         module.fail_json(msg="Cannot close file %s" % mntinfo_file)
 
-    mntinfo = []
+    mntinfo = {}
 
     for line in lines:
         fields = line.split()
@@ -510,40 +510,35 @@ def get_linux_mounts(module, mntinfo_file="/proc/self/mountinfo"):
             'src': fields[-2]
         }
 
-        mntinfo.append(record)
+        mntinfo[record['id']] = record
 
     mounts = []
 
-    for mnt in mntinfo:
-        src = mnt['src']
+    for mnt in mntinfo.values():
+        if mnt['parent_id'] != 1 and mnt['parent_id'] in mntinfo:
+            m = mntinfo[mnt['parent_id']]
+            if (
+                    len(m['root']) > 1 and
+                    mnt['root'].startswith("%s/" % m['root'])):
+                # Ommit the parent's root in the child's root
+                # == Example:
+                # 140 136 253:2 /rootfs / rw - ext4 /dev/sdb2 rw
+                # 141 140 253:2 /rootfs/tmp/aaa /tmp/bbb rw - ext4 /dev/sdb2 rw
+                # == Expected result:
+                # src=/tmp/aaa
+                mnt['root'] = mnt['root'][len(m['root']):]
 
-        if mnt['parent_id'] != 1:
-            # Find parent
-            for m in mntinfo:
-                if mnt['parent_id'] == m['id']:
-                    if (
-                            len(m['root']) > 1 and
-                            mnt['root'].startswith("%s/" % m['root'])):
-                        # Ommit the parent's root in the child's root
-                        # == Example:
-                        # 140 136 253:2 /rootfs / rw - ext4 /dev/sdb2 rw
-                        # 141 140 253:2 /rootfs/tmp/aaa /tmp/bbb rw - ext4 /dev/sdb2 rw
-                        # == Expected result:
-                        # src=/tmp/aaa
-                        mnt['root'] = mnt['root'][len(m['root']):]
-
-                    # Prepend the parent's dst to the child's root
-                    # == Example:
-                    # 42 60 0:35 / /tmp rw - tmpfs tmpfs rw
-                    # 78 42 0:35 /aaa /tmp/bbb rw - tmpfs tmpfs rw
-                    # == Expected result:
-                    # src=/tmp/aaa
-                    if m['dst'] != '/':
-                        mnt['root'] = "%s%s" % (m['dst'], mnt['root'])
-
-                    src = mnt['root']
-
-                    break
+            # Prepend the parent's dst to the child's root
+            # == Example:
+            # 42 60 0:35 / /tmp rw - tmpfs tmpfs rw
+            # 78 42 0:35 /aaa /tmp/bbb rw - tmpfs tmpfs rw
+            # == Expected result:
+            # src=/tmp/aaa
+            if m['dst'] != '/':
+                mnt['root'] = "%s%s" % (m['dst'], mnt['root'])
+            src = mnt['root']
+        else:
+            src = mnt['src']
 
         record = {
             'dst': mnt['dst'],
