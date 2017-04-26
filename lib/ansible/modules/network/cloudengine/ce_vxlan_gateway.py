@@ -18,15 +18,16 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = """
 ---
 module: ce_vxlan_gateway
-version_added: "2.3"
-short_description: Manages gateway for the VXLAN network.
+version_added: "2.4"
+short_description: Manages gateway for the VXLAN network on HUAWEI CloudEngine devices.
 description:
-    - Configuring Centralized All-Active Gateways or Distributed Gateway for the VXLAN Network.
+    - Configuring Centralized All-Active Gateways or Distributed Gateway for
+	  the VXLAN Network on HUAWEI CloudEngine devices.
 author: QijunPan (@CloudEngine-Ansible)
 notes:
     - Ensure All-Active Gateways or Distributed Gateway for the VXLAN Network can not configure at the same time.
