@@ -88,23 +88,17 @@ EXAMPLES = '''
 RETURN = '''
 size:
     description: Size (in bits) of the TLS/SSL private key
-    returned:
-        - changed
-        - success
-    type: integer
+    returned: changed or success
+    type: int
     sample: 4096
 type:
     description: Algorithm used to generate the TLS/SSL private key
-    returned:
-        - changed
-        - success
+    returned: changed or success
     type: string
     sample: RSA
 filename:
     description: Path to the generated TLS/SSL private key file
-    returned:
-        - changed
-        - success
+    returned: changed or success
     type: string
     sample: /etc/ssl/private/ansible.com.pem
 '''
