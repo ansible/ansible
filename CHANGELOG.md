@@ -14,7 +14,7 @@ Ansible Changes By Release
   Ansible-2.3 until you can upgrade the system.
 
 ### Deprecations
-* Specifying --tags (or --skip-tags) multiple times on the command line
+* The behaviour when specifying --tags (or --skip-tags) multiple times on the command line
   has changed so that the tags are merged together by default.  See the
   documentation for how to temporarily use the old behaviour if needed:
   https://docs.ansible.com/ansible/intro_configuration.html#merge-multiple-cli-tags
