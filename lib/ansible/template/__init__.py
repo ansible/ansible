@@ -876,8 +876,7 @@ class Templar:
 
             # backwards compatibility for the debug module
             if isinstance(res, StrictUndefined):
-                errmsg  = "Unable to look up a name or access an attribute in template string (%s).\n" % to_native(data)
-                errmsg += "Make sure your variable name does not contain invalid characters like '-'"
+                errmsg = '%s is undefined' % data
                 raise AnsibleUndefinedVariable(errmsg)
 
             return res
