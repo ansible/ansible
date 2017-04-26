@@ -394,10 +394,6 @@ lib/ansible/modules/database/misc/riak.py
 lib/ansible/modules/database/mongodb/mongodb_parameter.py
 lib/ansible/modules/database/mongodb/mongodb_user.py
 lib/ansible/modules/database/mssql/mssql_db.py
-lib/ansible/modules/database/mysql/mysql_db.py
-lib/ansible/modules/database/mysql/mysql_replication.py
-lib/ansible/modules/database/mysql/mysql_user.py
-lib/ansible/modules/database/mysql/mysql_variables.py
 lib/ansible/modules/database/postgresql/postgresql_db.py
 lib/ansible/modules/database/postgresql/postgresql_ext.py
 lib/ansible/modules/database/postgresql/postgresql_lang.py
