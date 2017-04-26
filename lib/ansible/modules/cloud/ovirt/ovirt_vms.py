@@ -43,11 +43,15 @@ options:
             - "ID of the Virtual Machine to manage."
     state:
         description:
-            - "Should the Virtual Machine be running/stopped/present/absent/suspended/next_run."
+            - "Should the Virtual Machine be running/stopped/present/absent/suspended/next_run/registered.
+               When C(state) is I(registered) and the unregistered VM's name
+               belongs to an already registered in engine VM in the same DC
+               then we fail to register the unregistered template."
             - "I(present) and I(running) are equal states."
             - "I(next_run) state updates the VM and if the VM has next run configuration it will be rebooted."
             - "Please check I(notes) to more detailed description of states."
-        choices: ['running', 'stopped', 'present', 'absent', 'suspended', 'next_run']
+            - "I(registered) is supported since 2.4"
+        choices: ['running', 'stopped', 'present', 'absent', 'suspended', 'next_run', 'registered']
         default: present
     cluster:
         description:
@@ -354,6 +358,20 @@ ovirt_vms:
     name: myvm
     template: rhel7_template
 
+# Register VM
+ovirt_vms:
+    state: registered
+    storage_domain: mystorage
+    cluster: mycluster
+    name: myvm
+
+# Register VM using id
+ovirt_vms:
+    state: registered
+    storage_domain: mystorage
+    cluster: mycluster
+    id: 1111-1111-1111-1111
+
 # Creates a stateless VM which will always use latest template version:
 ovirt_vms:
     name: myvm
@@ -522,7 +540,6 @@ vm:
     returned: On success if VM is found.
     type: dict
 '''
-
 import traceback
 
 try:
@@ -538,6 +555,7 @@ from ansible.module_utils.ovirt import (
     convert_to_bytes,
     create_connection,
     equal,
+    get_dict_of_struct,
     get_entity,
     get_link_name,
     get_id_by_name,
@@ -1053,11 +1071,10 @@ def control_state(vm, vms_service, module):
                 condition=lambda vm: vm.status in [otypes.VmStatus.DOWN, otypes.VmStatus.UP],
             )
 
-
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['running', 'stopped', 'present', 'absent', 'suspended', 'next_run'],
+            choices=['running', 'stopped', 'present', 'absent', 'suspended', 'next_run', 'registered'],
             default='present',
         ),
         name=dict(default=None),
@@ -1119,6 +1136,7 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_one_of=[['id', 'name']],
     )
     check_sdk(module)
     check_params(module)
@@ -1243,6 +1261,47 @@ def main():
             )
         elif state == 'absent':
             ret = vms_module.remove()
+        elif state == 'registered':
+            storage_domains_service = connection.system_service().storage_domains_service()
+
+            # Find the storage domain with unregistered VM:
+            sd_id = get_id_by_name(storage_domains_service, module.params['storage_domain'])
+            storage_domain_service = storage_domains_service.storage_domain_service(sd_id)
+            vms_service = storage_domain_service.vms_service()
+
+            # Find the the unregistered VM we want to register:
+            vms = vms_service.list(unregistered=True)
+            vm = next(
+                (vm for vm in vms if (vm.id == module.params['id'] or vm.name == module.params['name'])),
+                None
+            )
+            changed = False
+            if vm is None:
+                vm = vms_module.search_entity()
+                if vm is None:
+                    raise ValueError(
+                        "VM '%s(%s)' wasn't found." % (module.params['name'], module.params['id'])
+                    )
+            else:
+                # Register the vm into the system:
+                changed = True
+                vm_service = vms_service.vm_service(vm.id)
+                vm_service.register(
+                    cluster=otypes.Cluster(
+                        name=module.params['cluster']
+                    ) if module.params['cluster'] else None
+                )
+
+                if module.params['wait']:
+                    vm = vms_module.wait_for_import()
+                else:
+                    # Fetch vm to initialize return.
+                    vm = vm_service.get()
+            ret = {
+                'changed': changed,
+                'id': vm.id,
+                'vm': get_dict_of_struct(vm)
+            }
 
         module.exit_json(**ret)
     except Exception as e:
