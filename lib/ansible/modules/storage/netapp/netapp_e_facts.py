@@ -67,7 +67,7 @@ EXAMPLES = """
 """
 
 RETURN = """
-msg: 
+msg:
     description: Gathered facts for <StorageArrayId>.
     returned: always
     type: string

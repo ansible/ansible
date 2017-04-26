@@ -73,12 +73,12 @@ EXAMPLES = """
 """
 RETURN = """
 ---
-    msg: 
+    msg:
         description: State of operation
         type: string
         returned: always
         sample: "Created snapshot image"
-    image_id: 
+    image_id:
         description: ID of snaphot image
         type: string
         returned: state == created

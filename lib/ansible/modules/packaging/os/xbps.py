@@ -94,7 +94,7 @@ packages:
     description: Packages that are affected/would be affected
     type: list
     sample: ["ansible"]
-    returned: success 
+    returned: success
 '''
 
 

@@ -134,7 +134,7 @@ EXAMPLES = '''
 '''
 RETURN = '''
 ---
-msg: 
+msg:
     description: State of volume
     type: string
     returned: always

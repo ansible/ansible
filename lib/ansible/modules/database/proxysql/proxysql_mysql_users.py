@@ -148,11 +148,11 @@ stdout:
     returned: On create/update will return the newly modified user, on delete
               it will return the deleted record.
     type: dict
-    sample: 
+    sample:
         changed: true
         msg: Added user to mysql_users
         state: present
-        user: 
+        user:
             active: 1
             backend: 1
             default_hostgroup: 1

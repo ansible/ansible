@@ -99,7 +99,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-msg: 
+msg:
     description: State of request
     type: string
     returned: always
