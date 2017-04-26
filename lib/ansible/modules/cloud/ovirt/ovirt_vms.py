@@ -286,6 +286,12 @@ ovirt_vms:
     name: myvm
     template: rhel7_template
 
+# Register an unregistered Virtual Machine
+ovirt_vms:
+    state: registered
+    storage_domain: mystorage
+    cluster: mycluster
+
 # Creates a stateless VM which will always use latest template version:
 ovirt_vms:
     name: myvm
@@ -446,11 +452,13 @@ from ansible.module_utils.ovirt import (
     convert_to_bytes,
     create_connection,
     equal,
+    get_cluster_by_id,
     get_entity,
     get_link_name,
     get_id_by_name,
     ovirt_full_argument_spec,
     search_by_name,
+    search_unregistered_entity,
     wait,
 )
 
@@ -569,6 +577,18 @@ class VmsModule(BaseModule):
         if entity is None:
             if self.param('template') is None:
                 self._module.params['template'] = 'Blank'
+
+    def _get_storage_domain_service(self):
+        provider_name = self._module.params['storage_domain']
+        sds_service = self._connection.system_service().storage_domains_service()
+        sd = search_by_name(sds_service, provider_name)
+        if sd is None:
+            raise ValueError(
+                "Storage domain '%s' wasn't found." % provider_name
+            )
+
+        return sds_service.service(sd.id)
+
 
     def post_update(self, entity):
         self.post_create(entity)
@@ -875,7 +895,7 @@ def control_state(vm, vms_service, module):
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
-            choices=['running', 'stopped', 'present', 'absent', 'suspended', 'next_run'],
+            choices=['running', 'stopped', 'present', 'absent', 'suspended', 'next_run', 'registered'],
             default='present',
         ),
         name=dict(default=None),
@@ -928,6 +948,7 @@ def main():
         timezone=dict(default=None),
         serial_policy=dict(default=None, choices=['vm', 'host', 'custom']),
         serial_policy_value=dict(default=None),
+        storage_domain=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -1050,6 +1071,35 @@ def main():
             )
         elif state == 'absent':
             ret = vms_module.remove()
+        elif state == 'registered':
+            sd_service = vms_module._get_storage_domain_service()
+            # TODO: Check if vms_module.search_entity() works instead
+
+            vmsService = connection.system_service().vms_service()
+            vm_serv = vmsService.vm_service(module.params['id'])
+            vm_from_ovirt = None
+            try:
+               vm_from_ovirt = vm_serv.get()
+            # TODO: Python bug, should be fixed and then change to except SDK.error
+            except TypeError:
+                pass
+            if (vm_from_ovirt):
+                pass
+                # TODO: What should we do if we already have the VM exist in the engine.
+              # For now we will not register the VM.
+            else:
+                unreg_entity = search_unregistered_entity(sd_service.vms_service(), id=module.params['id'])
+                sd_service.vms_service().vm_service(id=module.params['id']).register(
+                    cluster = get_cluster_by_id(connection, module.params['cluster'])
+                    )
+
+                # Fetch VM to initialize return
+                vm_serv = vmsService.vm_service(module.params['id'])
+            ret = {
+                'changed': False,
+                'id': vm_serv.get().id,
+            }
+
 
         module.exit_json(**ret)
     except Exception as e:
