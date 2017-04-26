@@ -61,9 +61,11 @@ matrix:
     - env: TEST=code-smell INSTALL_DEPS=1
       python: 2.7
 build:
+  pre_ci:
+    - docker images drydock/u16pytall
   pre_ci_boot:
-    image_name: drydock/u14pyt
-    image_tag: prod
+    image_name: drydock/u16pytall
+    image_tag: master
     pull: false
     options: "--privileged=false --net=bridge"
   ci:
