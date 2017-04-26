@@ -722,7 +722,10 @@ def download(module, deb):
     BUFSIZE = 65536
 
     try:
-        rsp, info = fetch_url(module, deb)
+        rsp, info = fetch_url(module, deb, method='GET')
+        if info['status'] != 200:
+            module.fail_json(msg="Failed to download %s, %s" % (deb,
+                                                                info['msg']))
         # Ensure file is open in binary mode for Python 3
         f = open(package, 'wb')
         # Read 1kb at a time to save on ram
