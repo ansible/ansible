@@ -68,6 +68,6 @@ The tests are invoked via a ``Makefile``::
    Running cloud integration tests will create and destroy cloud
    resources.  Running these tests may result in additional fees associated with
    your cloud account.  Care is taken to ensure that created resources are
-   removed.  However, it is advisable to inspect your AWS console to ensure no
+   removed. However, it is advisable to inspect your AWS console to ensure no
    unexpected resources are running.
 

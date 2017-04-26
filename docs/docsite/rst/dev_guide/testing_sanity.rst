@@ -37,7 +37,7 @@ Built-in Tests
 These tests are integrated directly into ``ansible-test``.
 All files relevant to each test are tested unless specific files are specified.
 
-A full lust of tests can be obtained by doing ``ansible-test sanity --list-tests``.
+A full list of tests can be obtained by doing ``ansible-test sanity --list-tests``.
 
 ansible-doc
 ~~~~~~~~~~~

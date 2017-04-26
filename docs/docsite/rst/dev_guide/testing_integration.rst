@@ -58,7 +58,7 @@ Destructive Tests
 =================
 
 These tests are allowed to install and remove some trivial packages.  You will likely want to devote these
-to a virtual environment, such as docker.  They won't reformat your filesystem::
+to a virtual environment, such as Docker.  They won't reformat your filesystem::
 
     test/runner/ansible-test integration --docker=fedora25 -v destructive/
 
@@ -141,7 +141,7 @@ This page details the specifics around testing Ansible Networking modules.
 
 .. important:: Network testing requirements for Ansible 2.4
 
-   From Ansible 2.4 all network modules MUST include corrisponding unit tests to defend functionality.
+   From Ansible 2.4 all network modules MUST include corresponding unit tests to defend functionality.
    The unit tests must be added in the same PR that includes the new network module, or extends functionality.
    Integration tests, although not required, are a welcome addition.
    How to do this is explained in the rest of this document.
@@ -156,10 +156,10 @@ Network integration tests can be ran by doing::
 
 .. note::
 
-  * To run the network tests you will need a number of test machines and suitably configured inventory file, a sample is included in `test/integration/inventory.network`
-  * As with the rest of the integration tests, they can be found grouped by module in `test/integration/targets/MODULENAME/`
+  * To run the network tests you will need a number of test machines and suitably configured inventory file, a sample is included in ``test/integration/inventory.network``
+  * As with the rest of the integration tests, they can be found grouped by module in ``test/integration/targets/MODULENAME/``
 
-To filter a set of test cases set `limit_to` to the name of the group, generally this is the name of the module::
+To filter a set of test cases set ``limit_to`` to the name of the group, generally this is the name of the module::
 
    ANSIBLE_ROLES_PATH=targets ansible-playbook -i inventory.network network-all.yaml -e "limit_to=eos_command"
 
