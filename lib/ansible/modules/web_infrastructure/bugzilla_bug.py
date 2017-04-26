@@ -31,7 +31,7 @@ short_description: Fetch details about a bug from a given bugzilla server
 description:
     - Details such as status, resolution, severity, etc.,
       can be fetched for a particular I(bug_id).
-version_added: "2.3"
+version_added: "2.4"
 author: Bhavik Bhavsar
 requirements:
     - "python >= 2.6"
@@ -158,4 +158,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
