@@ -16,9 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = '''
@@ -28,30 +30,30 @@ extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages applying ACLs to interfaces.
 description:
-    - Manages applying ACLs to interfaces.
+  - Manages applying ACLs to interfaces.
 author:
-    - Jason Edelman (@jedelman8)
-    - Gabriele Gerbino (@GGabriele)
+  - Jason Edelman (@jedelman8)
+  - Gabriele Gerbino (@GGabriele)
 options:
-    name:
-        description:
-            - Case sensitive name of the access list (ACL).
-        required: true
-    interface:
-        description:
-            - Full name of interface, e.g. I(Ethernet1/1).
-        required: true
-    direction:
-        description:
-            - Direction ACL to be applied in on the interface.
-        required: true
-        choices: ['ingress', 'egress']
-    state:
-        description:
-            - Specify desired state of the resource.
-        required: false
-        default: present
-        choices: ['present','absent']
+  name:
+    description:
+      - Case sensitive name of the access list (ACL).
+    required: true
+  interface:
+    description:
+      - Full name of interface, e.g. I(Ethernet1/1).
+    required: true
+  direction:
+    description:
+      - Direction ACL to be applied in on the interface.
+    required: true
+    choices: ['ingress', 'egress']
+  state:
+    description:
+      - Specify desired state of the resource.
+    required: false
+    default: present
+    choices: ['present','absent']
 '''
 
 EXAMPLES = '''
@@ -61,45 +63,20 @@ EXAMPLES = '''
     interface: ethernet1/41
     direction: egress
     state: present
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"direction": "egress", "interface": "ethernet1/41",
-            "name": "ANSIBLE"}
-existing:
-    description: k/v pairs of existing ACL applied to the interface
-    returned: always
-    type: dict
-    sample: {}
-end_state:
-    description: k/v pairs of interface ACL after module execution
-    returned: always
-    type: dict
-    sample: {"direction": "egress", "interface": "ethernet1/41",
-            "name": "ANSIBLE"}
 acl_applied_to:
     description: list of interfaces the ACL is applied to
     returned: always
     type: list
     sample: [{"acl_type": "Router ACL", "direction": "egress",
             "interface": "Ethernet1/41", "name": "ANSIBLE"}]
-updates:
+commands:
     description: commands sent to the device
     returned: always
     type: list
     sample: ["interface ethernet1/41", "ip access-group ANSIBLE out"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
 '''
 import re
 
@@ -108,34 +85,21 @@ from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
 
-def execute_show_command(command, module, command_type='cli_show'):
-    if module.params['transport'] == 'cli':
-        if 'summary' not in command:
-            command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        cmds = [command]
-        body = run_commands(module, cmds)
-
-    return body
+NAME = r'.*IP?\s+access list\s+(?P<name>\S+).*'
+INTERFACE = r'.*\s+(?P<interface>\w+(\d+)?\/?(\d+)?)\s-\s(?P<direction>\w+)\s+\W(?P<acl_type>\w+\s\w+)\W.*'
 
 
 def get_acl_interface(module, acl):
-    command = 'show ip access-list summary'
-    name_regex = '.*IPV4\s+ACL\s+(?P<name>\S+).*'
-    interface_regex = ('.*\s+(?P<interface>\w+(\d+)?\/?(\d+)?)\s-\s'
-                      '(?P<direction>\w+)\s+\W(?P<acl_type>\w+\s\w+)\W.*')
+    command = ['show ip access-list summary']
     acl_list = []
 
-    body = execute_show_command(command, module, command_type='cli_show_ascii')
+    body = run_commands(module, command)
     body_split = body[0].split('Active on interfaces:')
 
     for each_acl in body_split:
-        intf_list = []
         temp = {}
         try:
-            match_name = re.match(name_regex, each_acl, re.DOTALL)
+            match_name = re.match(NAME, each_acl, re.DOTALL)
             name_dict = match_name.groupdict()
             name = name_dict['name']
         except AttributeError:
@@ -143,9 +107,8 @@ def get_acl_interface(module, acl):
 
         temp['interfaces'] = []
         for line in each_acl.split('\n'):
-            intf_temp = {}
             try:
-                match_interface = re.match(interface_regex, line, re.DOTALL)
+                match_interface = re.match(INTERFACE, line, re.DOTALL)
                 interface_dict = match_interface.groupdict()
                 interface = interface_dict['interface']
                 direction = interface_dict['direction']
@@ -155,6 +118,7 @@ def get_acl_interface(module, acl):
                 direction = ''
                 acl_type = ''
 
+            intf_temp = {}
             if interface:
                 intf_temp['interface'] = interface
             if acl_type:
@@ -185,21 +149,17 @@ def other_existing_acl(get_existing, interface, direction):
     # now we'll just get the interface in question
     # needs to be a list since same acl could be applied in both dirs
     acls_interface = []
+    this = {}
+
     if get_existing:
         for each in get_existing:
             if each.get('interface').lower() == interface:
                 acls_interface.append(each)
-    else:
-        acls_interface = []
 
-    if acls_interface:
-        this = {}
-        for each in acls_interface:
-            if each.get('direction') == direction:
-                this = each
-    else:
-        acls_interface = []
-        this = {}
+        if acls_interface:
+            for each in acls_interface:
+                if each.get('direction') == direction:
+                    this = each
 
     return acls_interface, this
 
@@ -247,21 +207,18 @@ def main():
         name=dict(required=False, type='str'),
         interface=dict(required=True),
         direction=dict(required=True, choices=['egress', 'ingress']),
-        state=dict(choices=['absent', 'present'],
-                       default='present'),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
+        state=dict(choices=['absent', 'present'], default='present'),
     )
 
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
 
+    results = dict(changed=False, warnings=warnings)
 
     state = module.params['state']
     name = module.params['name']
@@ -275,12 +232,9 @@ def main():
 
     # interface_acls = includes entries of this ACL on the interface (list)
     # this_dir_acl_intf = dict - not null if it already exists
-    interfaces_acls, existing = other_existing_acl(
-        get_existing, interface, direction)
+    interfaces_acls, existing = other_existing_acl(get_existing, interface, direction)
 
-    end_state = existing
     end_state_acls = get_existing
-    changed = False
 
     cmds = []
     commands = []
@@ -303,23 +257,15 @@ def main():
                 module.exit_json(changed=True, commands=cmds)
             else:
                 load_config(module, cmds)
-                changed = True
+                results['changed'] = True
                 end_state_acls = get_acl_interface(module, name)
-                interfaces_acls, this_dir_acl_intf = other_existing_acl(
-                    end_state_acls, interface, direction)
-                end_state = this_dir_acl_intf
+                interfaces_acls, this_dir_acl_intf = other_existing_acl(end_state_acls, interface, direction)
                 if 'configure' in cmds:
                     cmds.pop(0)
     else:
         cmds = []
 
-    results = {}
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['updates'] = cmds
-    results['changed'] = changed
-    results['warnings'] = warnings
-    results['end_state'] = end_state
+    results['commands'] = cmds
     results['acl_applied_to'] = end_state_acls
 
     module.exit_json(**results)
@@ -327,4 +273,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
