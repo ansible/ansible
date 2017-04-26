@@ -25,6 +25,13 @@
 
 - debug: var=fetched
 
+- name: Assert that we fetched correctly
+  assert:
+    that:
+      - 'fetched["changed"] == True'
+      - 'fetched["checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"'
+      - 'fetched["remote_checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"'
+
 # TODO: check the become and non-become forms of fetch because in one form we'll do
 # the get method of the connection plugin and in the become case we'll use the
 # fetch module.
@@ -37,6 +44,16 @@
   assert:
     that:
       'diff.stdout == ""'
+
+- name: fetch a second time to show idempotence
+  fetch: src={{ output_dir }}/orig dest={{ output_dir }}/fetched
+  register: fetched
+
+- name: Assert that the file was not fetched the second time
+  assert:
+    that:
+      - 'fetched["changed"] == False'
+      - 'fetched["checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"'
 
 - name: attempt to fetch a non-existent file - do not fail on missing
   fetch: src={{ output_dir }}/doesnotexist dest={{ output_dir }}/fetched

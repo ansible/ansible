@@ -48,10 +48,14 @@ class ActionModule(ActionBase):
         fail_on_missing   = boolean(self._task.args.get('fail_on_missing'))
         validate_checksum = boolean(self._task.args.get('validate_checksum', self._task.args.get('validate_md5', True)))
 
+        # validate_md5 is the deprecated way to specify validate_checksum
         if 'validate_md5' in self._task.args and 'validate_checksum' in self._task.args:
             result['failed'] = True
             result['msg'] = "validate_checksum and validate_md5 cannot both be specified"
             return result
+
+        if 'validate_md5' in self._task.args:
+            display.deprecated('Use validate_checksum instead of validate_md5', version='2.8')
 
         if source is None or dest is None:
             result['failed'] = True
