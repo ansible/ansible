@@ -81,7 +81,8 @@ options:
       - Days of the week to run a weekly task, not idempotent
   path:
     description:
-      - Task folder in which this task will be stored - creates a non-existent path when C(state) is C(present), and removes an empty path when C(state) is C(absent)
+      - Task folder in which this task will be stored - creates a non-existent path when C(state) is C(present),
+        and removes an empty path when C(state) is C(absent)
     default: '\'
 '''
 
