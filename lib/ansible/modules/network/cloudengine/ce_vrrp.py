@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_vrrp
-version_added: "2.3"
-short_description: Manages VRRP interfaces.
+version_added: "2.4"
+short_description: Manages VRRP interfaces on HUAWEI CloudEngine devices.
 description:
-    - Manages VRRP interface attributes on CloudEngine switches.
+    - Manages VRRP interface attributes on HUAWEI CloudEngine devices.
 author:
     - Li Yanfeng (@CloudEngine-Ansible)
 options:
