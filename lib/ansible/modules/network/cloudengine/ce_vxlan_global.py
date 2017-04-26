@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = """
 ---
 module: ce_vxlan_global
-version_added: "2.3"
-short_description: Manages global attributes of VXLAN and bridge domain.
+version_added: "2.4"
+short_description: Manages global attributes of VXLAN and bridge domain on HUAWEI CloudEngine devices.
 description:
-    - Manages global attributes of VXLAN and bridge domain.
+    - Manages global attributes of VXLAN and bridge domain on HUAWEI CloudEngine devices.
 author: QijunPan (@CloudEngine-Ansible)
 options:
     bridge_domain_id:
