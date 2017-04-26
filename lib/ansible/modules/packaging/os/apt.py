@@ -39,7 +39,7 @@ options:
         typos through easier (If you typo C(foo) as C(fo) apt-get would install packages that have "fo" in their name with a warning and a prompt for
         the user.  Since we don't have warnings and prompts before installing we disallow this.  Use an explicit fnmatch pattern if you want wildcarding)
     required: false
-    default: null
+    default: []
     aliases: [ 'pkg', 'package' ]
   state:
     description:
@@ -803,7 +803,7 @@ def main():
             update_cache = dict(aliases=['update-cache'], type='bool'),
             cache_valid_time = dict(type='int', default=0),
             purge = dict(default=False, type='bool'),
-            package = dict(default=None, aliases=['pkg', 'name'], type='list'),
+            package = dict(default=[], aliases=['pkg', 'name'], type='list'),
             deb = dict(default=None, type='path'),
             default_release = dict(default=None, aliases=['default-release']),
             install_recommends = dict(default=None, aliases=['install-recommends'], type='bool'),
