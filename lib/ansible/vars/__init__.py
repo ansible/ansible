@@ -41,7 +41,7 @@ from ansible.plugins.cache import FactCache
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
-from ansible.vars.unsafe_proxy import wrap_var
+from ansible.utils.unsafe_proxy import wrap_var
 from ansible.module_utils._text import to_native
 
 try:
