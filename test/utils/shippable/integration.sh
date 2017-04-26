@@ -16,6 +16,7 @@ copy_source="${COPY_SOURCE:-}"
 if [ "${SHIPPABLE_BUILD_DIR:-}" ]; then
     host_shared_dir="/home/shippable/cache/build-${BUILD_NUMBER}"
     controller_shared_dir="/home/shippable/cache/build-${BUILD_NUMBER}"
+    test_privileged=false # temporarily disabled to troubleshoot performance issues
 else
     host_shared_dir="${source_root}"
     controller_shared_dir=""
