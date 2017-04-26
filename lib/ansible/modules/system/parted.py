@@ -112,7 +112,7 @@ RETURN = '''
 partition_info:
   description: Current partition information
   returned: success
-  type: dict
+  type: complex
   contains:
     device:
       description: Generic device information.

@@ -73,9 +73,16 @@ EXAMPLES = """
 """
 RETURN = """
 ---
-    changed: true
-    msg: "Created snapshot image"
-    image_id: "3400000060080E5000299B640063074057BC5C5E "
+    msg:
+        description: State of operation
+        type: string
+        returned: always
+        sample: "Created snapshot image"
+    image_id:
+        description: ID of snaphot image
+        type: string
+        returned: state == created
+        sample: "3400000060080E5000299B640063074057BC5C5E "
 """
 
 HEADERS = {

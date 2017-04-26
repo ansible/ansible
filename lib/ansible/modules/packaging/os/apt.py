@@ -212,7 +212,7 @@ cache_updated:
 cache_update_time:
     description: time of the last cache update (0 if unknown)
     returned: success, in some cases
-    type: datetime
+    type: int
     sample: 1425828348000
 stdout:
     description: output from apt

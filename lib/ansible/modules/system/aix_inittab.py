@@ -119,7 +119,7 @@ mgs:
     sample: changed inittab entry startmyservice
 changed:
     description: whether the inittab changed or not
-    return: always
+    returned: always
     type: boolean
     sample: true
 '''

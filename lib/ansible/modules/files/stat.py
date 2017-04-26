@@ -140,7 +140,7 @@ RETURN = '''
 stat:
     description: dictionary containing all the stat data, some platforms might add additional fields
     returned: success
-    type: dictionary
+    type: complex
     contains:
         exists:
             description: if the destination path actually exists or not

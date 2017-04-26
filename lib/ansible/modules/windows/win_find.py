@@ -227,13 +227,13 @@ examined:
     sample: 10
 matched:
     description: The number of files/folders that match the criteria
-    returns: always
+    returned: always
     type: int
     sample: 2
 files:
     description: Information on the files/folders that match the criteria returned as a list of dictionary elements for each file matched
     returned: success
-    type: dictionary
+    type: complex
     contains:
         attributes:
             description: attributes of the file at path in raw form

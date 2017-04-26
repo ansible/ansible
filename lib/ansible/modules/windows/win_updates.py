@@ -103,7 +103,7 @@ reboot_required:
 updates:
     description: List of updates that were found/installed
     returned: success
-    type: dictionary
+    type: complex
     sample:
     contains:
         title:

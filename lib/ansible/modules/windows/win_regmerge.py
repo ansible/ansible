@@ -84,7 +84,7 @@ compare_to_key_found:
 difference_count:
     description: number of differences between the registry and the file
     returned: changed
-    type: integer
+    type: int
     sample: 1
 compared:
     description: whether a comparison has taken place between the registry and the file

@@ -96,7 +96,7 @@ RETURN = '''
 packages:
     description: a list of packages that have been changed
     returned: when upgrade is set to yes
-    type: list of strings
+    type: list
     sample: ['package', 'other-package']
 '''
 

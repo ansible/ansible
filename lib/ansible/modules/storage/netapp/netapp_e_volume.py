@@ -134,12 +134,11 @@ EXAMPLES = '''
 '''
 RETURN = '''
 ---
-msg: "Standard volume [workload_vol_1] has been created."
-msg: "Thin volume [workload_thin_vol] has been created."
-msg: "Volume [workload_vol_1] has been expanded."
-msg: "Volume [workload_vol_1] has been deleted."
-msg: "Volume [workload_vol_1] did not exist."
-msg: "Volume [workload_vol_1] already exists."
+msg:
+    description: State of volume
+    type: string
+    returned: always
+    sample: "Standard volume [workload_vol_1] has been created."
 '''
 
 import json

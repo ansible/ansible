@@ -66,17 +66,20 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-change:
+changed:
     description: True if the cluster state has changed
     type: bool
+    returned: always
 out:
     description: The output of the current state of the cluster. It return a
                  list of the nodes state.
     type: string
     sample: 'out: [["  overcloud-controller-0", " Online"]]}'
+    returned: always
 rc:
     description: exit code of the module
     type: bool
+    returned: always
 '''
 
 import time

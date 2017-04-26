@@ -67,7 +67,10 @@ EXAMPLES = """
 """
 
 RETURN = """
-msg: Gathered facts for <StorageArrayId>.
+msg:
+    description: Gathered facts for <StorageArrayId>.
+    returned: always
+    type: string
 """
 import json
 
