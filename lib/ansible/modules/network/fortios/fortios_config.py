@@ -36,7 +36,7 @@ extends_documentation_fragment: fortios
 options:
   src:
     description:
-      - The I(src) argument provides a path to the configuration file
+      - The I(src) argument provides a path to the configuration template
         to load into the remote device.
   filter:
     description:
@@ -68,7 +68,7 @@ EXAMPLES = """
     host: 192.168.0.254
     username: admin
     password: password
-    src: new_configuration.conf
+    src: new_configuration.conf.j2
 
 """
 
@@ -158,7 +158,7 @@ def main():
     if module.params['src'] is not None:
         #store config in str
         try:
-            conf_str = open(module.params['src'], 'r').read()
+            conf_str = module.params['src']
             f.load_config(in_candidate=True, config_text=conf_str)
         except:
             module.fail_json(msg="Can't open configuration file, or configuration invalid")
