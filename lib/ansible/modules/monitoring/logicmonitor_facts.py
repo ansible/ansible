@@ -112,7 +112,7 @@ RETURN = '''
     ansible_facts:
         description: LogicMonitor properties set for the specified object
         returned: success
-        type: list of dicts containing name/value pairs
+        type: list
         example: >
             {
                 "name": "dc",

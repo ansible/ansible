@@ -76,12 +76,12 @@ started:
     description: timestamp of when the job started running
     returned: success
     type: string
-    sample: 2017-03-01T17:03:53.200234Z
+    sample: "2017-03-01T17:03:53.200234Z"
 finished:
     description: timestamp of when the job finished running
     returned: success
     type: string
-    sample: 2017-03-01T17:04:04.078782Z
+    sample: "2017-03-01T17:04:04.078782Z"
 status:
     description: current status of job
     returned: success

@@ -137,11 +137,12 @@ RETURN = '''
 cert_days:
   description: the number of days the certificate remains valid.
   returned: success
+  type: int
 challenge_data:
   description: per domain / challenge type challenge data
   returned: changed
   type: dictionary
-  contains:
+  sample:
     resource:
       description: the challenge resource that must be created for validation
       returned: changed
@@ -156,7 +157,7 @@ authorizations:
   description: ACME authorization data.
   returned: changed
   type: list
-  contains:
+  sample:
       authorization:
         description: ACME authorization object. See https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.1.2
         returned: success

@@ -78,12 +78,12 @@ start:
   description: Time when started pausing
   returned: always
   type: string
-  sample: 2017-02-23 14:35:07.298862
+  sample: "2017-02-23 14:35:07.298862"
 stop:
   description: Time when ended pausing
   returned: always
   type: string
-  sample: 2017-02-23 14:35:09.552594
+  sample: "2017-02-23 14:35:09.552594"
 delta:
   description: Time paused in seconds
   returned: always
