@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = """
 ---
 module: ce_vxlan_arp
-version_added: "2.3"
-short_description: Manages ARP attributes of VXLAN.
+version_added: "2.4"
+short_description: Manages ARP attributes of VXLAN on HUAWEI CloudEngine devices.
 description:
-    - Manages ARP attributes of VXLAN.
+    - Manages ARP attributes of VXLAN on HUAWEI CloudEngine devices.
 author: QijunPan (@CloudEngine-Ansible)
 options:
     evn_bgp:
