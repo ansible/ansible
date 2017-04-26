@@ -155,6 +155,16 @@ import ssl
 
 from time import sleep
 
+def try_recv(sock,num=1024):
+    '''reads from socket and responds to ping if necessary'''
+    while True:
+        ret=sock.recv(num)
+        ping=re.search(r"^PING\s:(\w*)\s*",ret)
+        if ping and ping.group(1):
+            sock.send("PONG :%s\r\n"%ping.group(1))
+        else:
+            break
+    return ret
 
 def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=[], key=None, topic=None,
              nick="ansible", color='none', passwd=False, timeout=30, use_ssl=False, part=True, style=None):
@@ -272,7 +282,7 @@ def main():
                                                 "light_blue", "pink", "gray",
                                                 "light_gray", "none"]),
             style=dict(default="none", choices=["underline", "reverse", "bold", "italic", "none"]),
-            channel=dict(required=False),
+            channel=dict(required=True),
             key=dict(no_log=True),
             topic=dict(),
             passwd=dict(no_log=True),
