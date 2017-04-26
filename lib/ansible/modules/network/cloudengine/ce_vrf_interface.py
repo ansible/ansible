@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_vrf_interface
-version_added: "2.3"
-short_description: Manages interface specific VPN configuration.
+version_added: "2.4"
+short_description: Manages interface specific VPN configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages interface specific VPN configuration of Huawei CloudEngine switches.
+    - Manages interface specific VPN configuration of HUAWEI CloudEngine switches.
 author: Zhijin Zhou (@CloudEngine-Ansible)
 notes:
     - Ensure that a VPN instance has been created and the IPv4 address family has been enabled for the VPN instance.
