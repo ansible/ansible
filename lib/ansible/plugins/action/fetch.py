@@ -46,7 +46,7 @@ class ActionModule(ActionBase):
         dest              = self._task.args.get('dest', None)
         flat              = boolean(self._task.args.get('flat'))
         fail_on_missing   = boolean(self._task.args.get('fail_on_missing'))
-        validate_checksum = boolean(self._task.args.get('validate_checksum', self._task.args.get('validate_md5')))
+        validate_checksum = boolean(self._task.args.get('validate_checksum', self._task.args.get('validate_md5', True)))
 
         if 'validate_md5' in self._task.args and 'validate_checksum' in self._task.args:
             result['failed'] = True
