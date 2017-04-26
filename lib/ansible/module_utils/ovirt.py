@@ -275,7 +275,7 @@ def get_entity(service):
     entity = None
     try:
         entity = service.get()
-    except sdk.Error:
+    except (sdk.Error, TypeError):
         # We can get here 404, we should ignore it, in case
         # of removing entity for example.
         pass
