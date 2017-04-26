@@ -99,8 +99,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-msg: Storage system removed.
-msg: Storage system added.
+msg:
+    description: State of request
+    type: string
+    returned: always
+    sample: 'Storage system removed.'
 '''
 import json
 from datetime import datetime as dt, timedelta

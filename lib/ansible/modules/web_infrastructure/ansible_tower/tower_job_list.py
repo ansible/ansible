@@ -66,7 +66,7 @@ count:
     description: Total count of objects return
     returned: success
     type: int
-    sampled: 51
+    sample: 51
 next:
     description: next page available for the listing
     returned: success

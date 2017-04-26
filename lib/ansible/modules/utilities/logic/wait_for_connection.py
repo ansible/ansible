@@ -105,6 +105,6 @@ RETURN = r'''
 elapsed:
   description: The number of seconds that elapsed waiting for the connection to appear.
   returned: always
-  type: integer
+  type: int
   sample: 23
 '''

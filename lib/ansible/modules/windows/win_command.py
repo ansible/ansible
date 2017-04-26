@@ -122,6 +122,6 @@ rc:
 stdout_lines:
     description: The command standard output split in lines
     returned: always
-    type: list of strings
+    type: list
     sample: [u'Clustering node rabbit@slave1 with rabbit@master ...']
 '''

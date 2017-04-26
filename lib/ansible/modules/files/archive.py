@@ -107,9 +107,11 @@ archived:
 arcroot:
     description: The archive root.
     type: string
+    returned: always
 expanded_paths:
     description: The list of matching paths from paths argument.
     type: list
+    returned: always
 '''
 
 import os

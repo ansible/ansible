@@ -117,7 +117,7 @@ attributes:
 info:
   description: Information on current state of the Application Pool
   returned: success
-  type: dictionary
+  type: complex
   sample:
   contains:
     attributes:

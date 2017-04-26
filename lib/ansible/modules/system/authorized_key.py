@@ -170,42 +170,42 @@ key_option:
   description: Key options related to the key.
   returned: success
   type: string
-  sameple: null
+  sample: null
 keyfile:
   description: Path for authorzied key file.
   returned: success
   type: string
-  sameple: /home/user/.ssh/authorized_keys
+  sample: /home/user/.ssh/authorized_keys
 manage_dir:
   description: Whether this module managed the directory of the authorized key file.
   returned: success
   type: boolean
-  sameple: True
+  sample: True
 path:
   description: Alternate path to the authorized_keys file
   returned: success
   type: string
-  sameple: null
+  sample: null
 state:
   description: Whether the given key (with the given key_options) should or should not be in the file
   returned: success
   type: string
-  sameple: present
+  sample: present
 unique:
   description: Whether the key is unique
   returned: success
   type: boolean
-  sameple: false
+  sample: false
 user:
   description: The username on the remote host whose authorized_keys file will be modified
   returned: success
   type: string
-  sameple: user
+  sample: user
 validate_certs:
   description: This only applies if using a https url as the source of the keys. If set to C(no), the SSL certificates will not be validated.
   returned: success
   type: boolean
-  sameple: true
+  sample: true
 '''
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.

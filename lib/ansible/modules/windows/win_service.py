@@ -246,7 +246,7 @@ start_mode:
     type: string
     sample: manual
 path:
-    description:
+    description: path to the service
     returned: success and service exists
     type: string
     sample: C:\Windows\system32\svchost.exe -k LocalServiceNoNetwork
@@ -268,11 +268,11 @@ desktop_interact:
 dependencies:
     description: A list of dependencies the service relies on
     returned: success and service exists
-    type: List
+    type: list
     sample: False
 depended_by:
     description: A list of dependencies this service relies on
     returned: success and service exists
-    type: List
+    type: list
     sample: False
 '''

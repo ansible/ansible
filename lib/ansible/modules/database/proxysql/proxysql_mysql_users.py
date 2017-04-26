@@ -148,26 +148,24 @@ stdout:
     returned: On create/update will return the newly modified user, on delete
               it will return the deleted record.
     type: dict
-    sample": {
-        "changed": true,
-        "msg": "Added user to mysql_users",
-        "state": "present",
-        "user": {
-            "active": "1",
-            "backend": "1",
-            "default_hostgroup": "1",
-            "default_schema": null,
-            "fast_forward": "0",
-            "frontend": "1",
-            "max_connections": "10000",
-            "password": "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER",
-            "schema_locked": "0",
-            "transaction_persistent": "0",
-            "use_ssl": "0",
-            "username": "guest_ro"
-        },
-        "username": "guest_ro"
-    }
+    sample:
+        changed: true
+        msg: Added user to mysql_users
+        state: present
+        user:
+            active: 1
+            backend: 1
+            default_hostgroup: 1
+            default_schema: null
+            fast_forward: 0
+            frontend: 1
+            max_connections: 10000
+            password: VALUE_SPECIFIED_IN_NO_LOG_PARAMETER
+            schema_locked: 0
+            transaction_persistent: 0
+            use_ssl: 0
+            username: guest_ro
+        username: guest_ro
 '''
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
