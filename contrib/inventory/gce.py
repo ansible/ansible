@@ -40,6 +40,7 @@ based on the data obtained from the libcloud Node object:
  - gce_tags
  - gce_metadata
  - gce_network
+ - gce_subnetwork
 
 When run in --list mode, instances are grouped by the following categories:
  - zone:
@@ -292,6 +293,7 @@ class GceInventory(object):
                 secrets_found = True
             except:
                 pass
+
         if not secrets_found:
             args = [
                 self.config.get('gce','gce_service_account_email_address'),
@@ -350,6 +352,9 @@ class GceInventory(object):
                 md[entry['key']] = entry['value']
 
         net = inst.extra['networkInterfaces'][0]['network'].split('/')[-1]
+        subnet = None
+        if 'subnetwork' in inst.extra['networkInterfaces'][0]:
+            subnet = inst.extra['networkInterfaces'][0]['subnetwork'].split('/')[-1]
         # default to exernal IP unless user has specified they prefer internal
         if self.ip_type == 'internal':
             ssh_host = inst.private_ips[0]
@@ -370,6 +375,7 @@ class GceInventory(object):
             'gce_tags': inst.extra['tags'],
             'gce_metadata': md,
             'gce_network': net,
+            'gce_subnetwork': subnet,
             # Hosts don't have a public name, so we add an IP
             'ansible_ssh_host': ssh_host
         }
