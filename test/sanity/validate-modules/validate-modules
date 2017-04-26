@@ -979,9 +979,9 @@ def main():
         if os.path.isfile(module):
             path = module
             if args.exclude and args.exclude.search(path):
-                sys.exit(0)
+                continue
             if ModuleValidator.is_blacklisted(path):
-                sys.exit(0)
+                continue
             with ModuleValidator(path, analyze_arg_spec=args.arg_spec,
                                  base_branch=args.base_branch, git_cache=git_cache) as mv:
                 mv.validate()
