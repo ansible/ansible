@@ -156,7 +156,7 @@ RETURN = '''
 files:
     description: all matches found with the specified criteria (see stat module for full output of each dictionary)
     returned: success
-    type: list of dictionaries
+    type: list
     sample: [
         { path: "/var/tmp/test1",
           mode: "0644",

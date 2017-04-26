@@ -98,8 +98,11 @@ EXAMPLES = '''
         api_password: "{{ netapp_api_password }}"
 '''
 RETURN = '''
-msg: Mapping exists.
-msg: Mapping removed.
+msg:
+    description: Status of mapping
+    returned: always
+    type: string
+    sample: 'Mapping existing'
 '''
 import json
 
