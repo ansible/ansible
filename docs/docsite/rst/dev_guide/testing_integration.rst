@@ -154,7 +154,7 @@ Network integration tests can be ran by doing::
     ANSIBLE_ROLES_PATH=targets ansible-playbook network-all.yaml
 
 
-. note::
+.. note::
 
   * To run the network tests you will need a number of test machines and suitably configured inventory file, a sample is included in `test/integration/inventory.network`
   * As with the rest of the integration tests, they can be found grouped by module in `test/integration/targets/MODULENAME/`
