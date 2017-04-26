@@ -7,7 +7,6 @@ install_deps="${INSTALL_DEPS:-}"
 cd "${source_root}"
 
 if [ "${install_deps}" != "" ]; then
-    apt-add-repository 'deb http://archive.ubuntu.com/ubuntu trusty-backports universe'
     apt-get update -qq
     apt-get install shellcheck
 
