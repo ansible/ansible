@@ -480,10 +480,8 @@ def is_bind_mounted(module, linux_mounts, dest, src=None, fstype=None):
     return is_mounted
 
 
-def get_linux_mounts(module):
+def get_linux_mounts(module, mntinfo_file="/proc/self/mountinfo"):
     """Gather mount information"""
-
-    mntinfo_file = "/proc/self/mountinfo"
 
     try:
         f = open(mntinfo_file)
@@ -528,7 +526,7 @@ def get_linux_mounts(module):
                             mnt['root'].startswith("%s/" % m['root'])):
                         # Ommit the parent's root in the child's root
                         # == Example:
-                        # 204 136 253:2 /rootfs / rw - ext4 /dev/sdb2 rw
+                        # 140 136 253:2 /rootfs / rw - ext4 /dev/sdb2 rw
                         # 141 140 253:2 /rootfs/tmp/aaa /tmp/bbb rw - ext4 /dev/sdb2 rw
                         # == Expected result:
                         # src=/tmp/aaa
@@ -615,7 +613,7 @@ def main():
     linux_mounts = []
 
     # Cache all mounts here in order we have consistent results if we need to
-    # call is_bind_mouted() multiple times
+    # call is_bind_mounted() multiple times
     if get_platform() == 'Linux':
         linux_mounts = get_linux_mounts(module)
 
