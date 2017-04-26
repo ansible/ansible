@@ -1,5 +1,5 @@
 *******************************************
-Testing using the legacy Integration system
+Testing using the Legacy Integration system
 *******************************************
 
 .. contents:: Topics

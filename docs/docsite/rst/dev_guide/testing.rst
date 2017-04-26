@@ -33,9 +33,6 @@ At a high level we have the following classifications of tests
   * Tests directly directly against individual parts of the code base.
 
 
-.. note:: Ansible Networking
-   Network testing is a large topic that has it's that :doc:`testing_network` has a dedicated page regarding testing.
-
 
 
 Link to Manual testing of PRs (testing_pullrequests.rst)
@@ -50,17 +47,14 @@ This goes for testing new features as well as testing bugfixes.
 Testing withing GitHub & Shippable
 ==================================
 
+
 Organization
 ------------
 
-FIXME Details of different jobs, overlap with types of tests
+When Pull Requests (PRs) are created they are tested using Shippable, a Continuous Integration (CI) tool. Results are show at the end of every PR.
 
-Understanding the results
--------------------------
 
-FIXME Example of Ansibullbot with two failures
-
-.. code:: none
+When Shippable detects an error and it can be linked back to a file that has been modified in the PR then then relevant lines will be added as a GitHub comment, for example::
 
    The test `ansible-test sanity --test pep8` failed with the following errors:
 
@@ -70,30 +64,45 @@ FIXME Example of Ansibullbot with two failures
    lib/ansible/modules/network/foo/bar.py:0:0: E307 version_added should be 2.4. Currently 2.3
    lib/ansible/modules/network/foo/bar.py:0:0: E316 ANSIBLE_METADATA.metadata_version: required key not provided @ data['metadata_version']. Got None
 
+From the above we can see that that ``--test pep8`` and ``--test validate-modules`` have identified issues. The commands given allow you to run the same tests locally to ensure you've fixed the issues without having to push your changed to GitHub and wait for Shippable, for example:
 
-FIXME How to look at Shippable
+If you haven't already got Ansible available use the local checkout by doing::
+
+  source hacking/env-setup
+
+Then run the tests detailed in the GitHub comment::
+
+  ansible-test sanity --test pep8
+  ansible-test sanity --test validate-modules
+
+
+If there isn't a GitHub comment stating what's failed you can inspect the results by clicking on the "Details" button under the "checks have failed" message at the end of the PR.
 
 Rerunning a failing CI job
 --------------------------
 
-FIXME close/reopen or push another commit
+Occasionally you may find your PR fails due to a reason unrelated to your change, this could happen due to:
 
+* A temporary issue accessing an external resource, such as a yum or git repo
+* A timeout creating a virtual machine to run the tests on
 
-Running the same tests locally
-------------------------------
+If this appears to be the case you can rerun the Shippable test by:
 
-FIXME Include example
+* Closing and re-opening the PR
+* Making another change to the PR and pushing to GitHub
+
+If the issue continues please contact us in ``#ansible-devel`` on Freenode IRC.
 
 
 How to test a PR
 ================
 
-If you're a developer, one of the most valuable things you can do is look at the github issues list and help fix bugs.  We almost always prioritize bug fixing over
+If you're a developer, one of the most valuable things you can do is look at the GitHub issues list and help fix bugs.  We almost always prioritize bug fixing over
 feature development, so clearing bugs out of the way is one of the best things you can do.
 
 Even if you're not a developer, helping test pull requests for bug fixes and features is still immensely valuable.
 
-This goes for testing new features as well as testing bugfixes.
+This goes for testing new features as well as testing bug fixes.
 
 In many cases, code should add tests that prove it works but that's not ALWAYS possible and tests are not always comprehensive, especially when a user doesn't have access
 to a wide variety of platforms, or that is using an API or web service.
@@ -151,7 +160,7 @@ Simply source it (to use the Linux/Unix terminology) to begin using it immediate
 
    source ./hacking/env-setup
 
-This script modifies the PYTHONPATH enviromnent variables (along with a few other things), which will be temporarily
+This script modifies the ``PYTHONPATH`` environment variables (along with a few other things), which will be temporarily
 set as long as your shell session is open.
 
 Testing the Pull Request
@@ -187,36 +196,5 @@ If the PR does not resolve the issue, or if you see any failures from the unit/i
 Want to know more about testing?
 ================================
 
-FIXME Testing Working Group
+If you'd like to know more about the plans for improving testing Ansible then why not join the `Testing Working Group <https://github.com/ansible/community/blob/master/MEETINGS.md>`_.
 
-
-
-
-
-FIXME Stuff to review and add
-=============================
-
-
-FIXME Look at TWG Etherpad
-FIXME Look at Etherpad that contributor started
-https://public.etherpad-mozilla.org/p/ansible-testing-notes
-
-
-1) What type of testing we have
-
-1.1) Where the files live in gitcheckout
-
-2) How they get run in shippable
-
-3) How to read and understand what Shippable/Ansibullbot is telling you
-
-4) How to run locally
-
-5) How to develop unit tests
-
-6) How to develop integration tests
-
-7) How to generate code coverage
-
-
-FIXME See also links (to all test* pages)

@@ -225,5 +225,3 @@ A top level playbook is required such as `ansible/test/integration/eos.yaml` whi
 
 Where to find out more
 ======================
-
-FIXME Details of Network Meetings
