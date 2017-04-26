@@ -873,6 +873,13 @@ class Templar:
                 res_newlines = _count_newlines_from_end(res)
                 if data_newlines is not None and data_newlines > res_newlines:
                     res += self.environment.newline_sequence * (data_newlines - res_newlines)
+
+            # backwards compatibility for the debug module
+            if isinstance(res, StrictUndefined):
+                errmsg  = "Unable to look up a name or access an attribute in template string (%s).\n" % to_native(data)
+                errmsg += "Make sure your variable name does not contain invalid characters like '-'"
+                raise AnsibleUndefinedVariable(errmsg)
+
             return res
         except (UndefinedError, AnsibleUndefinedVariable) as e:
             if fail_on_undefined:
