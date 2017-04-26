@@ -21,6 +21,9 @@ Ansible Changes By Release
 * The fetch module's validate_md5 parameter has been deprecated and will be
   removed in 2.8.  If you wish to disable post-validation of the downloaded
   file, use validate_checksum instead.
+* Those using ansible as a library should note that the ansible.vars.unsafe_proxy
+  module is deprecated and slated to go away in 2.8.  The functionality has been
+  moved to ansible.utils.unsafe_proxy to avoid a circular import.
 
 ### Minor Changes
 * removed previously deprecated config option 'hostfile' and env var 'ANSIBLE_HOSTS'

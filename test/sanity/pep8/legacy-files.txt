@@ -975,7 +975,6 @@ lib/ansible/utils/vars.py
 lib/ansible/vars/__init__.py
 lib/ansible/vars/hostvars.py
 lib/ansible/vars/reserved.py
-lib/ansible/vars/unsafe_proxy.py
 setup.py
 test/integration/cleanup_azure.py
 test/integration/cleanup_ec2.py
