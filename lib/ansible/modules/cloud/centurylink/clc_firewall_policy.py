@@ -236,11 +236,11 @@ class ClcFirewallPolicy:
             destination_account_alias=dict(default=None),
             firewall_policy_id=dict(default=None),
             ports=dict(default=None, type='list'),
-            source=dict(defualt=None, type='list'),
-            destination=dict(defualt=None, type='list'),
+            source=dict(default=None, type='list'),
+            destination=dict(default=None, type='list'),
             wait=dict(default=True),
             state=dict(default='present', choices=['present', 'absent']),
-            enabled=dict(defualt=True, choices=[True, False])
+            enabled=dict(default=True, choices=[True, False])
         )
         return argument_spec
 
