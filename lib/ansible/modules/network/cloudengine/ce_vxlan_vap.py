@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = """
 ---
 module: ce_vxlan_vap
-version_added: "2.3"
-short_description: Manages VXLAN virtual access point.
+version_added: "2.4"
+short_description: Manages VXLAN virtual access point on HUAWEI CloudEngine devices.
 description:
-    - Manages VXLAN Virtual access point.
+    - Manages VXLAN Virtual access point on HUAWEI CloudEngine devices.
 author: QijunPan (@CloudEngine-Ansible)
 options:
     bridge_domain_id:
