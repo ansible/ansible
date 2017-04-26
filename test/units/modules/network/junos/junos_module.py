@@ -38,15 +38,23 @@ fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
 
 
-def load_fixture(name):
+def load_fixture(name, content='xml'):
     path = os.path.join(fixture_path, name)
     if path in fixture_data:
         return fixture_data[path]
 
-    try:
-        data = ET.parse(path).getroot()
-    except:
-        pass
+    if content == 'str':
+        with open(path) as f:
+            data = f.read()
+        try:
+            data = json.load(path)
+        except:
+            pass
+    else:
+        try:
+            data = ET.parse(path).getroot()
+        except:
+            pass
 
     fixture_data[path] = data
     return data
@@ -64,7 +72,7 @@ class TestJunosModule(unittest.TestCase):
 
     def execute_module(self, failed=False, changed=False, commands=None, sort=True, defaults=False, format='text'):
 
-        self.load_fixtures(commands, format)
+        self.load_fixtures(commands, format, changed=changed)
 
         if failed:
             result = self.failed()
@@ -72,12 +80,6 @@ class TestJunosModule(unittest.TestCase):
         else:
             result = self.changed(changed)
             self.assertEqual(result['changed'], changed, result)
-
-        if commands:
-            if sort:
-                self.assertEqual(sorted(commands), sorted(result['commands']), result['commands'])
-            else:
-                self.assertEqual(commands, result['commands'], result['commands'])
 
         return result
 
