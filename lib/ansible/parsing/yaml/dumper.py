@@ -24,8 +24,8 @@ import yaml
 from ansible.module_utils.six import PY3
 from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
+from ansible.utils.unsafe_proxy import AnsibleUnsafeText
 from ansible.vars.hostvars import HostVars
-from ansible.vars.unsafe_proxy import AnsibleUnsafeText
 
 
 class AnsibleDumper(yaml.SafeDumper):
