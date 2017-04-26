@@ -242,8 +242,8 @@ try:
 except ImportError:
     python_consul_installed = False
 
-def register_with_consul(module):
 
+def register_with_consul(module):
     state = module.params.get('state')
 
     if state == 'present':
@@ -367,7 +367,6 @@ def get_service_by_id_or_name(consul_api, service_id_or_name):
 
 
 def parse_check(module):
-
     if len(filter(None, [module.params.get('script'), module.params.get('ttl'), module.params.get('http')])) > 1:
         module.fail_json(
             msg='check are either script, http or ttl driven, supplying more than one does not make sense')
@@ -390,7 +389,6 @@ def parse_check(module):
 
 
 def parse_service(module):
-
     if module.params.get('service_name'):
         return ConsulService(
             module.params.get('service_id'),
@@ -400,8 +398,7 @@ def parse_service(module):
             module.params.get('tags'),
         )
     elif module.params.get('service_port') and not module.params.get('service_name'):
-
-        module.fail_json( msg="service_port supplied but no service_name, a name is required to configure a service." )
+        module.fail_json(msg="service_port supplied but no service_name, a name is required to configure a service.")
 
 
 class ConsulService():
@@ -447,11 +444,11 @@ class ConsulService():
         return len(self.checks) > 0
 
     def __eq__(self, other):
-        return (isinstance(other, self.__class__)
-                and self.id == other.id
-                and self.name == other.name
-                and self.port == other.port
-                and self.tags == other.tags)
+        return (isinstance(other, self.__class__) and
+                self.id == other.id and
+                self.name == other.name and
+                self.port == other.port and
+                self.tags == other.tags)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -470,7 +467,7 @@ class ConsulService():
 class ConsulCheck():
 
     def __init__(self, check_id, name, node=None, host='localhost',
-                    script=None, interval=None, ttl=None, notes=None, http=None, timeout=None, service_id=None):
+                 script=None, interval=None, ttl=None, notes=None, http=None, timeout=None, service_id=None):
         self.check_id = self.name = name
         if check_id:
             self.check_id = check_id
@@ -499,7 +496,6 @@ class ConsulCheck():
 
             self.check = consul.Check.http(http, self.interval, self.timeout)
 
-
     def validate_duration(self, name, duration):
         if duration:
             duration_units = ['ns', 'us', 'ms', 's', 'm', 'h']
@@ -513,12 +509,12 @@ class ConsulCheck():
                                         check=self.check)
 
     def __eq__(self, other):
-        return (isinstance(other, self.__class__)
-                and self.check_id == other.check_id
-                and self.service_id == other.service_id
-                and self.name == other.name
-                and self.script == script
-                and self.interval == interval)
+        return (isinstance(other, self.__class__) and
+                self.check_id == other.check_id and
+                self.service_id == other.service_id and
+                self.name == other.name and
+                self.script == script and
+                self.interval == interval)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -546,9 +542,11 @@ class ConsulCheck():
         except:
             pass
 
+
 def test_dependencies(module):
     if not python_consul_installed:
         module.fail_json(msg="python-consul required for this module. see http://python-consul.readthedocs.org/en/latest/#installation")
+
 
 def main():
     module = AnsibleModule(
