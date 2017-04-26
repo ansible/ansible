@@ -54,13 +54,20 @@ options:
       - The type of value to write.
     required: false
     default: string
-    choices: [ "array", "bool", "boolean", "date", "float", "int", "integer", "string" ]
+    choices: [ "array", "bool", "boolean", "date", "float", "int", "integer", "string", "dict" ]
   array_add:
     description:
       - Add new elements to the array for a key which has an array as its value.
     required: false
     default: false
     choices: [ "true", "false" ]
+  dict_add:
+    description:
+      - Add new key/value pairs to the dict for a key which has an dict as its value.
+    required: false
+    default: false
+    choices: [ "true", "false" ]
+    version_added: "2.4"
   value:
     description:
       - The value to write. Only required when state = present.
@@ -103,6 +110,11 @@ EXAMPLES = '''
     type: string
     value: Centimeters
 
+- osx_defaults:
+    domain: com.irradiatedsoftware.SizeUp
+    key: Lower Left
+    type: dict
+    value: { key: ComboCode, type: int, value: 125 }
 - osx_defaults:
     key: AppleLanguages
     type: array
@@ -197,6 +209,13 @@ class OSXDefaults(object):
             if not isinstance(value, list):
                 raise OSXDefaultsException("Invalid value. Expected value to be an array")
             return value
+        elif type in ["dict", "dictionary"]:
+            if isinstance(value, dict):
+                return [value]
+            elif isinstance(value, list):
+                return value
+            else:
+                raise OSXDefaultsException("Invalid dict value: {0}".format(repr(value)))
 
         raise OSXDefaultsException('Type is not supported: {0}'.format(type))
 
@@ -228,6 +247,37 @@ class OSXDefaults(object):
         value = [re.sub(',$', '', x.strip(' ')) for x in value]
 
         return value
+
+
+    """ Converts dict output from defaults to an dict """
+    @staticmethod
+    def _convert_defaults_str_to_dict(value):
+
+        # Split output of defaults. Every line contains a value
+        lines = value.splitlines()
+
+        # Remove first and last item, those are not actual values
+        lines.pop(0)
+        lines.pop(-1)
+
+        # Remove extra spaces and semicolon (;) at the end of keypairs
+        lines = [re.sub(';$', '', x.strip(' ')) for x in lines]
+
+        converted_value = dict()
+
+        for line in lines:
+            # Split key/value
+            (key, value) = line.split(' = ')
+
+            # Strip quotes from strings. Convert the rest to ints
+            if value.startswith('"') and value.endswith('"'):
+                value = value.strip('"')
+            else:
+                value = int(value)
+
+            converted_value[key] = value
+
+        return converted_value
     # /tools -------------------------------------------------------------- }}}
 
     # commands ------------------------------------------------------------ {{{
@@ -261,8 +311,12 @@ class OSXDefaults(object):
         if type == "array":
             out = self._convert_defaults_str_to_list(out)
 
+        # Convert string to dict when type is dict
         # Store the current_value
-        self.current_value = self._convert_type(type, out)
+        if type in ["dict", "dictionary"]:
+            self.current_value = self._convert_defaults_str_to_dict(out)
+        else:
+            self.current_value = self._convert_type(type, out)
 
     """ Writes value to this domain & key to defaults """
     def write(self):
@@ -289,6 +343,20 @@ class OSXDefaults(object):
         # All values should be a list, for easy passing it to the command
         if not isinstance(value, list):
             value = [value]
+
+        # When the type is dict and dict_add is enabled, morph the type :)
+        # Convert dict type values to list of string arguments
+        if self.type in ["dict", "dictionary"]:
+            if self.dict_add:
+                self.type = "dict-add"
+
+            values = []
+            for new_value in value:
+                values.append(new_value['key'])
+                values.append('-' + new_value['type'])
+                values.append(str(new_value['value']))
+            value = values
+
 
         rc, out, err = self.module.run_command(self._base_command() + ['write', self.domain, self.key, '-' + self.type] + value)
 
@@ -321,8 +389,14 @@ class OSXDefaults(object):
 
         # There is a type mismatch! Given type does not match the type in defaults
         value_type = type(self.value)
-        if self.current_value is not None and not isinstance(self.current_value, value_type):
+        if self.current_value is not None and not isinstance(self.current_value, value_type) and not isinstance(self.current_value, dict):
             raise OSXDefaultsException("Type mismatch. Type in defaults: " + type(self.current_value).__name__)
+
+        # Convert dict/dict-add key/type/value to comparible hash
+        comparable_value = {}
+        if self.type in ["dict", "dictionary"]:
+            for new_value in self.value:
+                comparable_value[new_value['key']] = new_value['value']
 
         # Current value matches the given value. Nothing need to be done. Arrays need extra care
         if self.type == "array" and self.current_value is not None and not self.array_add and \
@@ -330,6 +404,12 @@ class OSXDefaults(object):
             return False
         elif self.type == "array" and self.current_value is not None and self.array_add and \
                 len(list(set(self.value) - set(self.current_value))) == 0:
+            return False
+        elif self.type in ["dict", "dictionary"] and self.current_value is not None and not self.dict_add and \
+                self.current_value == comparable_value:
+            return False
+        elif self.type in ["dict", "dictionary"] and self.current_value is not None and self.dict_add and \
+                set(comparable_value.items()).issubset(set(self.current_value.items())):
             return False
         elif self.current_value == self.value:
             return False
@@ -369,6 +449,8 @@ def main():
                     "bool",
                     "boolean",
                     "date",
+                    "dict",
+                    "dictionary",
                     "float",
                     "int",
                     "integer",
@@ -378,12 +460,17 @@ def main():
             array_add=dict(
                 default=False,
                 required=False,
-                type='bool',
+                type="bool",
+            ),
+            dict_add=dict(
+                default=False,
+                required=False,
+                type="bool",
             ),
             value=dict(
                 default=None,
                 required=False,
-                type='raw'
+                type="raw",
             ),
             state=dict(
                 default="present",
@@ -405,13 +492,15 @@ def main():
     key = module.params['key']
     type = module.params['type']
     array_add = module.params['array_add']
+    dict_add = module.params['dict_add']
     value = module.params['value']
     state = module.params['state']
     path = module.params['path']
 
     try:
         defaults = OSXDefaults(module=module, domain=domain, host=host, key=key, type=type,
-                               array_add=array_add, value=value, state=state, path=path)
+                               array_add=array_add, dict_add=dict_add, value=value,
+                               state=state, path=path)
         changed = defaults.run()
         module.exit_json(changed=changed)
     except OSXDefaultsException:
