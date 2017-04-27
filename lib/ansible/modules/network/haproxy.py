@@ -37,6 +37,8 @@ notes:
       sockets configured for level 'admin'. For example, you can add the line
       'stats socket /var/run/haproxy.sock level admin' to the general section of
       haproxy.cfg. See http://haproxy.1wt.eu/download/1.5/doc/configuration.txt.
+    - Depends on netcat (nc) being available; you need to install the appriate
+      package for your operating system before this module can be used.
 options:
   backend:
     description:
