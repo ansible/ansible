@@ -4,7 +4,7 @@
 # @author: Gaurav Rastogi (grastogi@avinetworks.com)
 #          Eric Anderson (eanderson@avinetworks.com)
 # module_check: supported
-# Avi Version: 16.3.8
+# Avi Version: 17.1.1
 #
 #
 # This file is part of Ansible
@@ -23,7 +23,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'], 'supported_by': 'community', 'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -35,7 +37,7 @@ description:
     - This module is used to configure ServiceEngineGroup object
     - more examples at U(https://github.com/avinetworks/devops)
 requirements: [ avisdk ]
-version_added: "2.3"
+version_added: "2.4"
 options:
     state:
         description:
@@ -56,13 +58,13 @@ options:
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
     algo:
         description:
-            - In compact placement virtual services are placed on existing service engines until they all have the max_vs_per_se limit is reached.
-            - Otherwise, virtual services are distributed to as many service engines as possible.
+            - In compact placement, virtual services are placed on existing ses until max_vs_per_se limit is reached.
+            - Enum options - PLACEMENT_ALGO_PACKED, PLACEMENT_ALGO_DISTRIBUTED.
             - Default value when not specified in API or module is interpreted by Avi Controller as PLACEMENT_ALGO_PACKED.
     auto_rebalance:
         description:
-            - Virtualservices will be automatically migrated based on the load on service engines outside of range determined by minimum and maximum thresholds.
-            - Otherwise, an alert is generated instead of automatically performing the migration.
+            - If set, virtual services will be automatically migrated when load on an se is less than minimum or more than maximum thresholds.
+            - Only alerts are generated when the auto_rebalance is not set.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
     auto_rebalance_interval:
         description:
@@ -84,6 +86,7 @@ options:
         description:
             - Percentage of memory for connection state.
             - This will come at the expense of memory used for http in-memory cache.
+            - Allowed values are 10-90.
             - Default value when not specified in API or module is interpreted by Avi Controller as 50.
     cpu_reserve:
         description:
@@ -121,7 +124,8 @@ options:
     enable_vip_on_all_interfaces:
         description:
             - Enable vip on all interfaces of se.
-            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+            - Field introduced in 17.1.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as True.
     enable_vmac:
         description:
             - Use virtual mac address for interfaces on which floating interface ips are placed.
@@ -130,6 +134,11 @@ options:
         description:
             - Multiplier for extra config to support large vs/pool config.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.0.
+    extra_shared_config_memory:
+        description:
+            - Extra config memory to support large geo db configuration.
+            - Field introduced in 17.1.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 0.
     floating_intf_ip:
         description:
             - If serviceenginegroup is configured for legacy 1+1 active standby ha mode, floating ip's will be advertised only by the active se in the pair.
@@ -137,11 +146,13 @@ options:
             - Only active se hosting vs tagged with active standby se 1 tag will advertise this floating ip when manual load distribution is enabled.
     floating_intf_ip_se_2:
         description:
-            - This field is applicable only if the serviceenginegroup is configured for legacy 1+1 active standby ha mode and manual load distribution.
-            - Floating ip's provided here will be advertised only by the active se hosting all the virtualservices tagged with active standby se 2 tag.
+            - If serviceenginegroup is configured for legacy 1+1 active standby ha mode, floating ip's will be advertised only by the active se in the pair.
+            - Virtual services in this group must be disabled/enabled for any changes to the floating ip's to take effect.
+            - Only active se hosting vs tagged with active standby se 2 tag will advertise this floating ip when manual load distribution is enabled.
     ha_mode:
         description:
             - High availability mode for all the virtual services using this service engine group.
+            - Enum options - HA_MODE_SHARED_PAIR, HA_MODE_SHARED, HA_MODE_LEGACY_ACTIVE_STANDBY.
             - Default value when not specified in API or module is interpreted by Avi Controller as HA_MODE_SHARED.
     hardwaresecuritymodulegroup_ref:
         description:
@@ -152,17 +163,18 @@ options:
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
     host_attribute_key:
         description:
-            - Key of a key,value pair identifying a set of hosts.
-            - Currently used to separate north-south and east-west serviceengine sizing requirements.
-            - Specifically in container ecosystems, where ses on east-west traffic nodes are typically smaller than those on north-south traffic nodes.
+            - Key of a (key, value) pair identifying a set of hosts.
+            - Currently used to separate north-south and east-west se sizing requirements.
+            - This is useful in container ecosystems where ses on east-west traffic nodes are typically smaller than those on north-south traffic nodes.
     host_attribute_value:
         description:
-            - Value of a key,value pair identifying a set of hosts.
-            - Currently used to separate north-south and east-west serviceengine sizing requirements.
-            - Specifically in container ecosystems, where ses on east-west traffic nodes are typically smaller than those on north-south traffic nodes.
+            - Value of a (key, value) pair identifying a set of hosts.
+            - Currently used to separate north-south and east-west se sizing requirements.
+            - This is useful in container ecosystems where ses on east-west traffic nodes are typically smaller than those on north-south traffic nodes.
     hypervisor:
         description:
             - Override default hypervisor.
+            - Enum options - DEFAULT, VMWARE_ESX, KVM, VMWARE_VSAN, XEN.
     instance_flavor:
         description:
             - Instance/flavor type for se instance.
@@ -180,20 +192,24 @@ options:
             - Default value when not specified in API or module is interpreted by Avi Controller as 10000.
     max_cpu_usage:
         description:
-            - When cpu utilization exceeds this maximum threshold, virtual services hosted on this se may be rebalanced to other se to reduce load.
-            - A new service engine may be created as part of this process.
+            - When cpu usage on an se exceeds this threshold, virtual services hosted on this se may be rebalanced to other ses to reduce load.
+            - A new se may be created as part of this process.
+            - Allowed values are 40-90.
             - Default value when not specified in API or module is interpreted by Avi Controller as 80.
     max_scaleout_per_vs:
         description:
             - Maximum number of active service engines for the virtual service.
+            - Allowed values are 1-64.
             - Default value when not specified in API or module is interpreted by Avi Controller as 4.
     max_se:
         description:
             - Maximum number of services engines in this group.
+            - Allowed values are 0-1000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
     max_vs_per_se:
         description:
             - Maximum number of virtual services that can be placed on a single service engine.
+            - Allowed values are 1-1000.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
     mem_reserve:
         description:
@@ -212,14 +228,14 @@ options:
             - Management subnet to use for avi service engines.
     min_cpu_usage:
         description:
-            - When cpu usage falls below the minimum threshold, virtual services hosted on this se may be consolidated onto other underutilized ses.
+            - When cpu usage on an se falls below the minimum threshold, virtual services hosted on the se may be consolidated onto other underutilized ses.
             - After consolidation, unused service engines may then be eligible for deletion.
-            - When cpu usage exceeds the maximum threshold, virtual services hosted on an se may be migrated to other ses to reduce load.
-            - A new service engine may be created as part of this process.
+            - Allowed values are 20-60.
             - Default value when not specified in API or module is interpreted by Avi Controller as 30.
     min_scaleout_per_vs:
         description:
             - Minimum number of active service engines for the virtual service.
+            - Allowed values are 1-64.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
     name:
         description:
@@ -231,7 +247,10 @@ options:
             - Default value when not specified in API or module is interpreted by Avi Controller as 8.
     openstack_availability_zone:
         description:
-            - Openstack_availability_zone of serviceenginegroup.
+            - Field deprecated in 17.1.1.
+    openstack_availability_zones:
+        description:
+            - Field introduced in 17.1.1.
     openstack_mgmt_network_name:
         description:
             - Avi management network name.
@@ -251,6 +270,7 @@ options:
     placement_mode:
         description:
             - If placement mode is 'auto', virtual services are automatically placed on service engines.
+            - Enum options - PLACEMENT_MODE_AUTO.
             - Default value when not specified in API or module is interpreted by Avi Controller as PLACEMENT_MODE_AUTO.
     realtime_se_metrics:
         description:
@@ -259,7 +279,8 @@ options:
         description:
             - Duration to preserve unused service engine virtual machines before deleting them.
             - If traffic to a virtual service were to spike up abruptly, this se would still be available to be utilized again rather than creating a new se.
-            - If this value is set to 0, controller will never delete any ses, administrator has to manually cleanup unused ses.
+            - If this value is set to 0, controller will never delete any ses and administrator has to manually cleanup unused ses.
+            - Allowed values are 0-525600.
             - Default value when not specified in API or module is interpreted by Avi Controller as 120.
     se_dos_profile:
         description:
@@ -268,6 +289,34 @@ options:
         description:
             - Prefix to use for virtual machine name of service engines.
             - Default value when not specified in API or module is interpreted by Avi Controller as Avi.
+    se_thread_multiplier:
+        description:
+            - Multiplier for se threads based on vcpu.
+            - Allowed values are 1-10.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 1.
+    se_tunnel_mode:
+        description:
+            - Determines if dsr from secondary se is active or not      0        automatically determine based on hypervisor type    1        disable dsr
+            - unconditionally    ~[0,1]   enable dsr unconditionally.
+            - Field introduced in 17.1.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+    se_vs_hb_max_pkts_in_batch:
+        description:
+            - Maximum number of aggregated vs heartbeat packets to send in a batch.
+            - Allowed values are 1-256.
+            - Field introduced in 17.1.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 8.
+    se_vs_hb_max_vs_in_pkt:
+        description:
+            - Maximum number of virtualservices for which heartbeat messages are aggregated in one packet.
+            - Allowed values are 1-1024.
+            - Field introduced in 17.1.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 256.
+    service_ip_subnets:
+        description:
+            - Subnets assigned to the se group.
+            - Required for vs group placement.
+            - Field introduced in 17.1.1.
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
@@ -282,7 +331,7 @@ options:
             - Vcenterclusters settings for serviceenginegroup.
     vcenter_datastore_mode:
         description:
-            - Vcenter_datastore_mode of serviceenginegroup.
+            - Enum options - vcenter_datastore_any, vcenter_datastore_local, vcenter_datastore_shared.
             - Default value when not specified in API or module is interpreted by Avi Controller as VCENTER_DATASTORE_ANY.
     vcenter_datastores:
         description:
@@ -301,7 +350,7 @@ options:
     vcpus_per_se:
         description:
             - Number of vcpus for each of the service engine virtual machines.
-            - Default value when not specified in API or module is interpreted by Avi Controller as 2.
+            - Default value when not specified in API or module is interpreted by Avi Controller as 1.
     vs_host_redundancy:
         description:
             - Ensure primary and secondary service engines are deployed on different physical hosts.
@@ -340,7 +389,6 @@ obj:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-
 try:
     from ansible.module_utils.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
@@ -373,6 +421,7 @@ def main():
         enable_vip_on_all_interfaces=dict(type='bool',),
         enable_vmac=dict(type='bool',),
         extra_config_multiplier=dict(type='float',),
+        extra_shared_config_memory=dict(type='int',),
         floating_intf_ip=dict(type='list',),
         floating_intf_ip_se_2=dict(type='list',),
         ha_mode=dict(type='str',),
@@ -398,6 +447,7 @@ def main():
         name=dict(type='str', required=True),
         num_flow_cores_sum_changes_to_ignore=dict(type='int',),
         openstack_availability_zone=dict(type='str',),
+        openstack_availability_zones=dict(type='list',),
         openstack_mgmt_network_name=dict(type='str',),
         openstack_mgmt_network_uuid=dict(type='str',),
         os_reserved_memory=dict(type='int',),
@@ -407,6 +457,11 @@ def main():
         se_deprovision_delay=dict(type='int',),
         se_dos_profile=dict(type='dict',),
         se_name_prefix=dict(type='str',),
+        se_thread_multiplier=dict(type='int',),
+        se_tunnel_mode=dict(type='int',),
+        se_vs_hb_max_pkts_in_batch=dict(type='int',),
+        se_vs_hb_max_vs_in_pkt=dict(type='int',),
+        service_ip_subnets=dict(type='list',),
         tenant_ref=dict(type='str',),
         url=dict(type='str',),
         uuid=dict(type='str',),
@@ -427,11 +482,10 @@ def main():
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:
         return module.fail_json(msg=(
-            'Avi python API SDK (avisdk>=16.3.5.post1) is not installed. '
+            'Avi python API SDK (avisdk>=17.1) is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'serviceenginegroup',
                            set([]))
-
 
 if __name__ == '__main__':
     main()
