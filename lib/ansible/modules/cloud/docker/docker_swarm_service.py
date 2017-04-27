@@ -731,8 +731,11 @@ class DockerServiceManager():
                 'target': mount_data['Target'],
                 'readonly': mount_data.get('ReadOnly', False)})
         for raw_network_data in raw_data['Spec'].get('Networks',[]):
-            network_name=[network_name_id['name'] for network_name_id in networks_names_ids if network_name_id['id']==raw_network_data['Target']][0]
-            ds.networks.append(network_name)
+            network_name=[network_name_id['name'] for network_name_id in networks_names_ids if network_name_id['id']==raw_network_data['Target']]
+            if len(network_name) == 0:
+                ds.networks.append(raw_network_data['Target'])
+            else:
+                ds.networks.append(network_name[0])
         ds.service_version  = raw_data['Version']['Index']
         ds.service_id       = raw_data['ID']
 
