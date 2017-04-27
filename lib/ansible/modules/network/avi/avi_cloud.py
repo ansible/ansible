@@ -4,7 +4,7 @@
 # @author: Gaurav Rastogi (grastogi@avinetworks.com)
 #          Eric Anderson (eanderson@avinetworks.com)
 # module_check: supported
-# Avi Version: 16.3.8
+# Avi Version: 17.1.1
 #
 #
 # This file is part of Ansible
@@ -23,7 +23,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'], 'supported_by': 'community', 'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -35,7 +37,7 @@ description:
     - This module is used to configure Cloud object
     - more examples at U(https://github.com/avinetworks/devops)
 requirements: [ avisdk ]
-version_added: "2.3"
+version_added: "2.4"
 options:
     state:
         description:
@@ -73,7 +75,7 @@ options:
     east_west_ipam_provider_ref:
         description:
             - Ipam profile for east-west services.
-            - Warning - please use virtual subnets in this ipam profile that do not conflict with the underlay networks or any overlay networks in the cluster.
+            - Please use virtual subnets in this ipam profile that do not conflict with the underlay networks or any overlay networks in the cluster.
             - For example in aws and gcp, 169.254.0.0/16 is used for storing instance metadata.
             - Hence, it should not be used in this profile.
             - It is a reference to an object of type ipamdnsproviderprofile.
@@ -89,6 +91,7 @@ options:
         description:
             - If no license type is specified then default license enforcement for the cloud type is chosen.
             - The default mappings are container cloud is max ses, openstack and vmware is cores and linux it is sockets.
+            - Enum options - LIC_BACKEND_SERVERS, LIC_SOCKETS, LIC_CORES, LIC_HOSTS.
     linuxserver_configuration:
         description:
             - Linuxserverconfiguration settings for cloud.
@@ -103,6 +106,10 @@ options:
         description:
             - Name of the object.
         required: true
+    nsx_configuration:
+        description:
+            - Configuration parameters for nsx manager.
+            - Field introduced in 17.1.1.
     obj_name_prefix:
         description:
             - Default prefix for all automatically created objects in this cloud.
@@ -141,6 +148,8 @@ options:
     vtype:
         description:
             - Cloud type.
+            - Enum options - CLOUD_NONE, CLOUD_VCENTER, CLOUD_OPENSTACK, CLOUD_AWS, CLOUD_VCA, CLOUD_APIC, CLOUD_MESOS, CLOUD_LINUXSERVER, CLOUD_DOCKER_UCP,
+            - CLOUD_RANCHER, CLOUD_OSHIFT_K8S.
             - Default value when not specified in API or module is interpreted by Avi Controller as CLOUD_NONE.
         required: true
 extends_documentation_fragment:
@@ -179,7 +188,6 @@ obj:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-
 try:
     from ansible.module_utils.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
@@ -207,6 +215,7 @@ def main():
         mesos_configuration=dict(type='dict',),
         mtu=dict(type='int',),
         name=dict(type='str', required=True),
+        nsx_configuration=dict(type='dict',),
         obj_name_prefix=dict(type='str',),
         openstack_configuration=dict(type='dict',),
         oshiftk8s_configuration=dict(type='dict',),
@@ -225,11 +234,10 @@ def main():
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:
         return module.fail_json(msg=(
-            'Avi python API SDK (avisdk>=16.3.5.post1) is not installed. '
+            'Avi python API SDK (avisdk>=17.1) is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'cloud',
                            set([]))
-
 
 if __name__ == '__main__':
     main()
