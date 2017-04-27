@@ -21,7 +21,7 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -92,6 +92,8 @@ options:
     description:
     - Temporary tablespace name
     required: false
+version_added: "2.4"
+author: "Thomas Krahn (@nosmoht)"
 extends_documentation_fragment:
 - oracle
 '''
