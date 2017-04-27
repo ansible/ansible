@@ -68,6 +68,12 @@ options:
   key:
     description:
       - The path to the private key of the certificate in PEM encoded format.
+  cert_chain_body:
+    description:
+      - The CA certificate chain in PEM encoded format.
+    required: false
+    default: null
+    aliases: []
   cert_body:
     description:
       - The certificate body in PEM encoded format.
@@ -248,6 +254,7 @@ def main():
         key=dict(default=None, required=False, type='path'),
         key_body=dict(default=None, required=False),
         cert_chain=dict(default=None, required=False, type='path'),
+        cert_chain_body=dict(default=None, required=False),
         new_name=dict(default=None, required=False),
         path=dict(default='/', required=False),
         new_path=dict(default=None, required=False),
