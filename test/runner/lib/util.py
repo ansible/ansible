@@ -477,6 +477,9 @@ class EnvironmentConfig(CommonConfig):
 
         self.requirements = args.requirements  # type: bool
 
+        if self.python == 'default':
+            self.python = '.'.join(str(i) for i in sys.version_info[:2])
+
         self.python_version = self.python or '.'.join(str(i) for i in sys.version_info[:2])
 
         self.delegate = self.tox or self.docker or self.remote

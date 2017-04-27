@@ -16,6 +16,7 @@ from lib.executor import (
     SubprocessError,
     ShellConfig,
     SanityConfig,
+    UnitsConfig,
     create_shell_command,
 )
 
@@ -201,6 +202,10 @@ def delegate_docker(args, exclude, require):
         docker_exec(args, test_id, ['mkdir', '/root/ansible'])
         docker_exec(args, test_id, ['tar', 'oxzf', '/root/ansible.tgz', '-C', '/root/ansible'])
 
+        # docker images are only expected to have a single python version available
+        if isinstance(args, UnitsConfig) and not args.python:
+            cmd += ['--python', 'default']
+
         try:
             docker_exec(args, test_id, cmd, options=cmd_options)
         finally:
@@ -355,6 +360,10 @@ def delegate_remote(args, exclude, require):
         if isinstance(args, IntegrationConfig):
             if not args.allow_destructive:
                 cmd.append('--allow-destructive')
+
+        # remote instances are only expected to have a single python version available
+        if isinstance(args, UnitsConfig) and not args.python:
+            cmd += ['--python', 'default']
 
         manage = ManagePosixCI(core_ci)
         manage.setup()
