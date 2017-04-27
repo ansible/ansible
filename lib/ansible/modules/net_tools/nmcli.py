@@ -29,7 +29,7 @@ DOCUMENTATION='''
 module: nmcli
 author: "Chris Long (@alcamie101)"
 short_description: Manage Networking
-requirements: [ nmcli, dbus ]
+requirements: [ nmcli, dbus, NetworkManager-glib ]
 version_added: "2.0"
 description:
     - Manage the network devices. Create, modify, and manage, ethernet, teams, bonds, vlans etc.
