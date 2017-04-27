@@ -49,64 +49,64 @@ options:
     default: []
     description:
     - List comprised of the command and the arguments to be run inside
-      the container
+    - the container
   constraints:
     required: false
     default: []
     description:
     - List of the service constraints.
-      Maps docker service --constraint option.
+    - Maps docker service --constraint option.
   hostname:
     required: false
     default: ""
     description:
     - Container hostname
-      Maps docker service --hostname option.
-      Requires api_version >= 1.25
+    - Maps docker service --hostname option.
+    - Requires api_version >= 1.25
   tty:
     required: false
     default: False
     description:
     - Allocate a pseudo-TTY
-      Maps docker service --tty option.
-      Requires api_version >= 1.25
+    - Maps docker service --tty option.
+    - Requires api_version >= 1.25
   dns:
     required: false
     default: []
     description:
     - List of custom DNS servers.
-      Maps docker service --dns option.
-      Requires api_version >= 1.25
+    - Maps docker service --dns option.
+    - Requires api_version >= 1.25
   dns_search:
     required: false
     default: []
     description:
     - List of custom DNS search domains.
-      Maps docker service --dns-search option.
-      Requires api_version >= 1.25
+    - Maps docker service --dns-search option.
+    - Requires api_version >= 1.25
   dns_options:
     required: false
     default: []
     description:
     - List of custom DNS options.
-      Maps docker service --dns-option option.
-      Requires api_version >= 1.25
+    - Maps docker service --dns-option option.
+    - Requires api_version >= 1.25
   labels:
     required: false
     description:
     - List of the service labels.
-      Maps docker service --label option.
+    - Maps docker service --label option.
   container_labels:
     required: false
     description:
     - List of the service containers labels.
-      Maps docker service --container-label option.
+    - Maps docker service --container-label option.
     default: []
   endpoint_mode:
     required: false
     description:
     - Service endpoint mode.
-      Maps docker service --endpoint-mode option.
+    - Maps docker service --endpoint-mode option.
     default: vip
     choices:
     - vip
@@ -116,81 +116,71 @@ options:
     default: []
     description:
     - List of the service environment variables.
-      Maps docker service --env option.
+    - Maps docker service --env option.
   limit_cpu:
     required: false
     default: 0.000
     description:
     - Service CPU limit. 0 equals no limit.
-      Maps docker service --limit-cpu option.
+    - Maps docker service --limit-cpu option.
   reserve_cpu:
     required: false
     default: 0.000
     description:
     - Service CPU reservation. 0 equals no reservation.
-      Maps docker service --reserve-cpu option.
+    - Maps docker service --reserve-cpu option.
   limit_memory:
     required: false
     default: 0
     description:
     - Service memory limit in MB. 0 equals no limit.
-      Maps docker service --limit-memory option.
+    - Maps docker service --limit-memory option.
   reserve_memory:
     required: false
     default: 0
     description:
     - Service memory reservation in MB. 0 equals no reservation.
-      Maps docker service --reserve-memory option.
+    - Maps docker service --reserve-memory option.
   mode:
     required: false
     default: replicated
     description:
     - Service replication mode.
-      Maps docker service --mode option.
+    - Maps docker service --mode option.
   mounts:
     required: false
     description:
     - List of dictionaries describing the service mounts.
-      Every item must be a dictionary exposing the keys
-      source
-      target
-      type (defaults to 'bind')
-      readonly (defaults to false)
-      Maps docker service --mount option.
+    - Every item must be a dictionary exposing the keys source, target, type (defaults to 'bind'), readonly (defaults to false)
+    - Maps docker service --mount option.
     default: []
   networks:
     required: false
     default: []
     description:
     - List of the service networks names.
-      Maps docker service --network option.
+    - Maps docker service --network option.
   publish:
     default: []
     required: false
     description:
     - List of dictionaries describing the service published ports.
-      Every item must be a dictionary exposing the keys
-      published_port
-      target_port
-      protocol (defaults to 'tcp')
-      mode <ingress|host>, default to ingress. Only used with api_version >= 1.25
+    - Every item must be a dictionary exposing the keys published_port, target_port, protocol (defaults to 'tcp'), mode <ingress|host>, default to ingress. 
+    - Only used with api_version >= 1.25
   replicas:
     required: false
     default: -1
     description:
-    - Number of containers instantiated in the service. Valid only if
-      ``mode=='replicated'``.
-      If set to -1, and service is not present, service replicas will be
-      set to 1.
-      If set to -1, and service is present, service replicas will be
-      unchanged.
-      Maps docker service --replicas option.
+    - Number of containers instantiated in the service. Valid only if ``mode=='replicated'``.
+    - If set to -1, and service is not present, service replicas will be set to 1.
+    - If set to -1, and service is present, service replicas will be unchanged.
+    - Maps docker service --replicas option.
   restart_policy:
     required: false
     default: none
     description:
     - Restart condition of the service.
-      Maps docker service --restart-condition option.
+    - Maps docker service --restart-condition option.
     choices:
     - none
     - on-failure
@@ -200,19 +190,19 @@ options:
     default: 0
     description:
     - Maximum number of service restarts.
-      Maps docker service --restart-max-attempts option.
+    - Maps docker service --restart-max-attempts option.
   restart_policy_delay:
     required: false
     default: 0
     description:
     - Delay between restarts.
-      Maps docker service --restart-delay option.
+    - Maps docker service --restart-delay option.
   restart_policy_window:
     required: false
     default: 0
     description:
     - Restart policy evaluation window.
-      Maps docker service --restart-window option.
+    - Maps docker service --restart-window option.
   user:
     required: false
     default: root
