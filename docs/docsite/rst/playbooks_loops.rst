@@ -170,7 +170,7 @@ Looping over Fileglobs
             src: "{{ item }}"
             dest: "/etc/fooapp/"
             owner: "root"
-            mode: 600
+            mode: 0600
           with_fileglob:
             - "/playbooks/files/fooapp/*"
 
