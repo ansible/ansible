@@ -68,6 +68,14 @@ options:
   key:
     description:
       - The path to the private key of the certificate in PEM encoded format.
+  cert_body:
+    description:
+      - The certificate body in PEM encoded format.
+    required: false
+    aliases: []
+  key_body:
+    description:
+      - The private key of the certificate in PEM encoded format.
   dup_ok:
     description:
       - By default the module will not upload a certificate that is already uploaded into AWS. If set to True, it will upload the certificate as
@@ -236,7 +244,9 @@ def main():
             default=None, required=True, choices=['present', 'absent']),
         name=dict(default=None, required=False),
         cert=dict(default=None, required=False, type='path'),
+        cert_body=dict(default=None, required=False),
         key=dict(default=None, required=False, type='path'),
+        key_body=dict(default=None, required=False),
         cert_chain=dict(default=None, required=False, type='path'),
         new_name=dict(default=None, required=False),
         path=dict(default='/', required=False),
@@ -271,8 +281,14 @@ def main():
     cert_chain = module.params.get('cert_chain')
     dup_ok = module.params.get('dup_ok')
     if state == 'present':
-        cert = open(module.params.get('cert'), 'r').read().rstrip()
-        key = open(module.params.get('key'), 'r').read().rstrip()
+        if module.params.get('cert_body') is not None:
+            cert = module.params.get('cert_body')
+        else:
+            cert = open(module.params.get('cert'), 'r').read().rstrip()
+        if module.params.get('key_body') is not None:
+            key = module.params.get('key_body')
+        else:
+            key = open(module.params.get('key'), 'r').read().rstrip()
         if cert_chain is not None:
             cert_chain = open(module.params.get('cert_chain'), 'r').read()
     else:
