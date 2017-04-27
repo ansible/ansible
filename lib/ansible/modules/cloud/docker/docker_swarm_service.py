@@ -363,7 +363,11 @@ EXAMPLES = '''
         state: absent
 '''
 
-from ansible.module_utils.docker_common import *
+from ansible.module_utils.docker_common import HAS_DOCKER_PY_2
+from ansible.module_utils.docker_common import DockerBaseClass
+from ansible.module_utils.docker_common import AnsibleDockerClient
+from ansible.module_utils.docker_common import docker_version
+
 from distutils.version import LooseVersion
 
 try:
