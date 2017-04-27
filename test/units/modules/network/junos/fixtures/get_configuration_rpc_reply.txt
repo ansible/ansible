@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?><rpc-reply message-id="urn:uuid:72c481b8">
+	<configuration-set>
+		set version 15.1X49-D15.4
+		set system host-name vsrx01
+		set system domain-name ansible.com
+	</configuration-set>
+</rpc-reply>

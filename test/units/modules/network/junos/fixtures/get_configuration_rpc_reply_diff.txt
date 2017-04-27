@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?><rpc-reply message-id="urn:uuid:6fcc8e22">
+<configuration-information>
+<configuration-output>
+[edit interfaces]
++   ae11 {
++       unit 0 {
++           description Test;
++       }
++   }
+</configuration-output>
+</configuration-information>
+</rpc-reply>
