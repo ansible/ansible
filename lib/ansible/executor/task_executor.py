@@ -467,7 +467,8 @@ class TaskExecutor:
         if '_variable_params' in self._task.args:
             variable_params = self._task.args.pop('_variable_params')
             if isinstance(variable_params, dict):
-                display.deprecated("Using variables for task params is unsafe, especially if the variables come from an external source like facts", version="2.6")
+                display.deprecated("Using variables for task params is unsafe, especially if the variables come from an external source like facts",
+                                   version="2.6")
                 variable_params.update(self._task.args)
                 self._task.args = variable_params
 
