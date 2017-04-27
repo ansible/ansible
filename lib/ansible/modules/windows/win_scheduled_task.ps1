@@ -34,7 +34,6 @@ function Invoke-TaskPathCheck {
         PathExists = $null
         RemovedPath = $false
     }
-    $removedPath = $false
 
     if ($path -ne "\") {
         $trimmedPath = $Path.TrimEnd("\")
@@ -116,17 +115,9 @@ try {
         $exists = $true
     }
     elseif ( ($measure.count -eq 0) -and ($state -eq "absent") ){
-        # Nothing to do for the task
+        # Nothing to do
         $result.exists = $false
         $result.msg = "Task does not exist"
-
-        # Remove task path if it exists
-        $pathResults = Invoke-TaskPathCheck -Path $path -Remove -WhatIf:$check_mode
-
-        if ($pathResults.RemovedPath) {
-            $result.msg += " and task path $path removed"
-            $result.changed = $true
-        }
 
         Exit-Json $result
     }
