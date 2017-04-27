@@ -62,8 +62,6 @@ When Shippable detects an error and it can be linked back to a file that has bee
    lib/ansible/modules/network/foo/bar.py:0:0: E316 ANSIBLE_METADATA.metadata_version: required key not provided @ data['metadata_version']. Got None
 
 From the above example we can see that ``--test pep8`` and ``--test validate-modules`` have identified issues. The commands given allow you to run the same tests locally to ensure you've fixed the issues without having to push your changed to GitHub and wait for Shippable, for example:
-  
-    TBD
 
 If you haven't already got Ansible available, use the local checkout by running::
 

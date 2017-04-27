@@ -44,15 +44,13 @@ For advanced usage see the online help:
 
    ansible-test units --help
 
-For advanced options see ``ansible-test compile --help``
-
 
 Installing dependencies
 =======================
 
 ``ansible-test`` has a number of dependencies , for ``compile`` tests we suggest running the tests with ``--local``, which is the default
 
-The dependencies can be installed using the ``-requirements`` argument. For example:
+The dependencies can be installed using the ``--requirements`` argument. For example:
 
 .. code:: shell
 

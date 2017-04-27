@@ -18,9 +18,6 @@ Quick Start
 It is highly recommended that you install and activate the ``argcomplete`` python package.
 It provides tab completion in ``bash`` for the ``ansible-test`` test runner.
 
-To get started quickly using Docker containers for testing,
-see [Tests in Docker containers](#tests-in-docker-containers).
-
 Configuration
 =============
 
@@ -80,7 +77,8 @@ for testing, and enable PowerShell Remoting to continue.
 Running these tests may result in changes to your Windows host, so don't run
 them against a production/critical Windows environment.
 
-Enable PowerShell Remoting (run on the Windows host via Remote Desktop):
+Enable PowerShell Remoting (run on the Windows host via Remote Desktop)::
+
     Enable-PSRemoting -Force
 
 Define Windows inventory::
@@ -140,6 +138,11 @@ Python 3
 To test with Python 3 use the following images:
 
   - ubuntu1604py3
+
+Cloud Tests
+===========
+
+See the :doc:`testing_integration_legacy` page for more information.
 
 Network Tests
 =============
