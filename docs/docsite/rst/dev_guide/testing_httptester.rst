@@ -7,7 +7,7 @@ httptester
 Overview
 ========
 
-``httptester`` is a docker container used to host certain resources required by :doc:`testing_integration`, this is to avoid CI tests requiring external resources, such as git or package repos, which if temporarily unavailable would cause tests to fail.
+``httptester`` is a docker container used to host certain resources required by :doc:`testing_integration`. This is to avoid CI tests requiring external resources (such as git or package repos) which, if temporarily unavailable, would cause tests to fail.
 
 HTTP Testing endpoint which provides the following capabilities:
 

@@ -149,7 +149,7 @@ This page details the specifics around testing Ansible Networking modules.
 
 .. important:: Network testing requirements for Ansible 2.4
 
-   From Ansible 2.4 all network modules MUST include corresponding unit tests to defend functionality.
+   Starting with Ansible 2.4, all network modules MUST include corresponding unit tests to defend functionality.
    The unit tests must be added in the same PR that includes the new network module, or extends functionality.
    Integration tests, although not required, are a welcome addition.
    How to do this is explained in the rest of this document.
@@ -164,7 +164,7 @@ Network integration tests can be ran by doing::
 
 .. note::
 
-  * To run the network tests you will need a number of test machines and suitably configured inventory file, a sample is included in ``test/integration/inventory.network``
+  * To run the network tests you will need a number of test machines and suitably configured inventory file. A sample is included in ``test/integration/inventory.network``
   * As with the rest of the integration tests, they can be found grouped by module in ``test/integration/targets/MODULENAME/``
 
 To filter a set of test cases set ``limit_to`` to the name of the group, generally this is the name of the module::

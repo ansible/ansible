@@ -67,12 +67,12 @@ Extending unit tests
 
 .. warning:: What a unit test isn't
 
-   If you start writing a test that starts requiring external services then you may be writing an integration test, rather than a unit tests.
+   If you start writing a test that requires external services then you may be writing an integration test, rather than a unit test.
 
 Fixtures files
 ``````````````
 
-To mock out fetching results from devices you can use ``fixtures`` to read in pre-generated data.
+To mock out fetching results from devices, you can use ``fixtures`` to read in pre-generated data.
 
 Text files live in ``test/units/modules/network/PLATFORM/fixtures/``
 
@@ -83,18 +83,10 @@ See  `eos_banner test <https://github.com/ansible/ansible/blob/devel/test/units/
 Code Coverage
 `````````````
 
-Most ``ansible-test`` commands allow you to collect code coverage, this is particularly useful when to indicate where to extend testing.
+When writing unit tests it can be usefull to generate code coverage data and use this to guide you in where to add extra tests.
 
-To collect coverage data add the ``--coverage`` argument to your ``ansible-test`` command line:
 
 .. code:: shell
 
-   ansible-test units --coverage apt
-   ansible-test coverage html
-
-Results will be written to ``test/results/reports/coverage/index.html``
-
-A number of different report types are available, as well as the ability to ``combine`` multiple coverage files. See the online help::
-
-   ansible-test coverage --help
-
+    ansible-test units --coverage
+    ansible-test coverage html

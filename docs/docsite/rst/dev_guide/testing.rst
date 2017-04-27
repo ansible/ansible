@@ -7,7 +7,7 @@ Testing Ansible
 Introduction
 ============
 
-This page, and it's subpages, describe:
+This document describes:
 
 * how Ansible is tested
 * how to test Ansible locally
@@ -16,7 +16,7 @@ This page, and it's subpages, describe:
 Types of tests
 ==============
 
-At a high level we have the following classifications of tests
+At a high level we have the following classifications of tests:
 
 :compile:
   * :doc:`testing_compile`
@@ -36,12 +36,9 @@ At a high level we have the following classifications of tests
 
 
 Link to Manual testing of PRs (testing_pullrequests.rst)
-If you're a developer, one of the most valuable things you can do is look at the GitHub issues list and help fix bugs.  We almost always prioritize bug fixing over
-feature development, so clearing bugs out of the way is one of the best things you can do.
+If you're a developer, one of the most valuable things you can do is look at the GitHub issues list and help fix bugs.  We almost always prioritize bug fixing over feature development, so helping to fix bugs is one of the best things you can do.
 
-Even if you're not a developer, helping test pull requests for bug fixes and features is still immensely valuable.
-
-This goes for testing new features as well as testing bug fixes.
+Even if you're not a developer, helping to test pull requests for bug fixes and features is still immensely valuable.
 
 
 Testing within GitHub & Shippable
@@ -54,7 +51,7 @@ Organization
 When Pull Requests (PRs) are created they are tested using Shippable, a Continuous Integration (CI) tool. Results are shown at the end of every PR.
 
 
-When Shippable detects an error and it can be linked back to a file that has been modified in the PR then the relevant lines will be added as a GitHub comment, for example::
+When Shippable detects an error and it can be linked back to a file that has been modified in the PR then the relevant lines will be added as a GitHub comment. For example::
 
    The test `ansible-test sanity --test pep8` failed with the following errors:
 
@@ -64,9 +61,11 @@ When Shippable detects an error and it can be linked back to a file that has bee
    lib/ansible/modules/network/foo/bar.py:0:0: E307 version_added should be 2.4. Currently 2.3
    lib/ansible/modules/network/foo/bar.py:0:0: E316 ANSIBLE_METADATA.metadata_version: required key not provided @ data['metadata_version']. Got None
 
-From the above we can see that ``--test pep8`` and ``--test validate-modules`` have identified issues. The commands given allow you to run the same tests locally to ensure you've fixed the issues without having to push your changed to GitHub and wait for Shippable, for example:
+From the above example we can see that ``--test pep8`` and ``--test validate-modules`` have identified issues. The commands given allow you to run the same tests locally to ensure you've fixed the issues without having to push your changed to GitHub and wait for Shippable, for example:
+  
+    TBD
 
-If you haven't already got Ansible available use the local checkout by doing::
+If you haven't already got Ansible available, use the local checkout by running::
 
   source hacking/env-setup
 
@@ -81,42 +80,42 @@ If there isn't a GitHub comment stating what's failed you can inspect the result
 Rerunning a failing CI job
 --------------------------
 
-Occasionally you may find your PR fails due to a reason unrelated to your change, this could happen due to:
+Occasionally you may find your PR fails due to a reason unrelated to your change. This could happen for several reasons, including:
 
-* A temporary issue accessing an external resource, such as a yum or git repo
-* A timeout creating a virtual machine to run the tests on
+* a temporary issue accessing an external resource, such as a yum or git repo
+* a timeout creating a virtual machine to run the tests on
 
-If this appears to be the case you can rerun the Shippable test by:
+If either of these issues appear to be the case, you can rerun the Shippable test by:
 
-* Closing and re-opening the PR
-* Making another change to the PR and pushing to GitHub
+* closing and re-opening the PR
+* making another change to the PR and pushing to GitHub
 
-If the issue continues please contact us in ``#ansible-devel`` on Freenode IRC.
+If the issue persists, please contact us in ``#ansible-devel`` on Freenode IRC.
 
 
 How to test a PR
 ================
 
-If you're a developer, one of the most valuable things you can do is look at the GitHub issues list and help fix bugs.  We almost always prioritize bug fixing over
-feature development, so clearing bugs out of the way is one of the best things you can do.
+If you're a developer, one of the most valuable things you can do is look at the GitHub issues list and help fix bugs.  We almost always prioritize bug fixing over feature development, so helping to fix bugs is one of the best things you can do.
 
-Even if you're not a developer, helping test pull requests for bug fixes and features is still immensely valuable.
+Even if you're not a developer, helping to test pull requests for bug fixes and features is still immensely valuable.
 
-This goes for testing new features as well as testing bug fixes.
+Ideally, code should add tests that prove that the code works. That's not always possible and tests are not always comprehensive, especially when a user doesn't have access to a wide variety of platforms, or is using an API or web service. In these cases, live testing against real equipment can be more valuable than automation that runs against simulated interfaces. In any case, things should always be tested manually the first time as well.
 
-In many cases, code should add tests that prove it works but that's not ALWAYS possible and tests are not always comprehensive, especially when a user doesn't have access
-to a wide variety of platforms, or that is using an API or web service.
-
-In these cases, live testing against real equipment can be more valuable than automation that runs against simulated interfaces.
-In any case, things should always be tested manually the first time too.
-
-Thankfully, helping test Ansible is pretty straightforward, assuming you are already used to how ansible works.
+Thankfully, helping to test Ansible is pretty straightforward, assuming you are familiar with how Ansible works.
 
 Setup: Checking out a Pull Request
 ----------------------------------
 
-You can do this by checking out Ansible, making a test branch off the main one, merging a GitHub issue, testing,
-and then commenting on that particular issue on GitHub. Here's how:
+You can do this by:
+
+* checking out Ansible
+* making a test branch off the main branch
+* merging a GitHub issue
+* testing
+* commenting on that particular issue on GitHub
+
+Here's how:
 
 .. warning::
    Testing source code from GitHub pull requests sent to us does have some inherent risk, as the source code
@@ -168,14 +167,14 @@ Testing the Pull Request
 
 At this point, you should be ready to begin testing!
 
-Some idea of what to test are:
+Some ideas of what to test are:
 
-* Create a test Playbook with the examples in, do they function correctly
-* Are any Python backtraces returned, if so that's a bug
-* Testing on different Operating Systems, or against different library version.
+* Create a test Playbook with the examples in and check if they function correctly
+* Test to see if any Python backtraces returned (that's a bug)
+* Test on different operating systems, or against different library versions
 
 
-Any potential issues should be added as comments on the Pull Request, likewise if it works say so, remembering to include the output of ``ansible --version``
+Any potential issues should be added as comments on the pull request (and it's acceptable to comment if the feature works as well), remembering to include the output of ``ansible --version``
 
 Example::
 
