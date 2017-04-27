@@ -165,7 +165,7 @@ options:
     required: false
     description:
     - List of dictionaries describing the service published ports.
-    - Every item must be a dictionary exposing the keys published_port, target_port, protocol (defaults to 'tcp'), mode <ingress|host>, default to ingress. 
+    - Every item must be a dictionary exposing the keys published_port, target_port, protocol (defaults to 'tcp'), mode <ingress|host>, default to ingress.
     - Only used with api_version >= 1.25
   replicas:
     required: false
