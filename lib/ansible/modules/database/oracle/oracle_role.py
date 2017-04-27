@@ -37,14 +37,14 @@ options:
   roles:
     description:
       - List of roles granted to the role.
-      - If an empty list ([]) is specified all granted roles will be revoked.
+      - If an empty list C([]) is specified all granted roles will be revoked.
       - All items will be converted using uppercase.
     required: false
     default: None
   sys_privs:
     description:
       - List of system privileges granted to the role.
-      - If an empty list ([]) is specified all granted system privileges will be revoked.
+      - If an empty list C([]) is specified all granted system privileges will be revoked.
       - All items will be converted using uppercase.
   state:
     description:
@@ -75,7 +75,7 @@ EXAMPLES = '''
 
 RETURN = '''
 role:
-  description: Role and attributes as it currently exists within the databsae
+  description: Role and attributes as it currently exists within the database
   returned: always
   type: dict
 sql:

@@ -53,7 +53,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-- name: Ensure directory
+- name: Ensure directory exists
   oracle_directory:
     name: DATA_PUMP_DIR
     path: /u01/app/oracle/admin/ORCL/dpdump

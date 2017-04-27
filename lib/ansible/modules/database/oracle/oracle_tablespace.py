@@ -48,14 +48,17 @@ options:
     - Boolean to define if autoextend of datafiles is enabled or disabled.
     required: false
     default: false
+    type: bool
   init_size:
     description:
     - Initial size of a datafile if it will be created.
+    - Values must by specified as bytes or have one of ['K','M','G','T','P','E'] as suffix.
     required: false
     default: 1M
   next_size:
     description:
     - Size of the next extend of each datafile if autoextend is enabled.
+    - Values must by specified as bytes or have one of ['K','M','G','T','P','E'] as suffix.
     required: false
     default: 0
   max_size:

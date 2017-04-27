@@ -38,13 +38,12 @@ options:
   oracle_pass:
     description:
     - Password to be used to authenticate.
-    - Can be omitted if environment variable ORACLE_PASS is set.
+    - Can be omitted if environment variable C(ORACLE_PASS) is set.
     required: False
     default: None
   oracle_mode:
     description:
     - Connection mode.
-    - Can be SYSDBA or SYSOPER.
     - Omit for normal connection.
     required: False
     default: None
@@ -62,4 +61,3 @@ options:
 requirements:
 - cx_Oracle
 '''
-

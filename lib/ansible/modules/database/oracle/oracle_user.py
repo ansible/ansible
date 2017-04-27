@@ -54,6 +54,7 @@ options:
     - If I(false), password will be changed.
     required: false
     default: false
+    type: bool
   quotas:
     description:
     - List of dictionaries each describing a tablespace quota. See example.
@@ -515,7 +516,7 @@ def main():
     argument_spec.update(
         dict(
             name=dict(type='str', required=True),
-            password=dict(type='str', required=False),
+            password=dict(type='str', required=False, no_log=True),
             password_mismatch=dict(type='bool', default=False),
             default_tablespace=dict(type='str', required=False),
             temporary_tablespace=dict(type='str', required=False),
