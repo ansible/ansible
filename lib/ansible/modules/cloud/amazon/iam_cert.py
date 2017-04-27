@@ -289,7 +289,9 @@ def main():
             key = module.params.get('key_body')
         else:
             key = open(module.params.get('key'), 'r').read().rstrip()
-        if cert_chain is not None:
+        if module.params.get('cert_chain_body') is not None:
+            cert_chain = module.params.get('cert_chain_body')
+        elif cert_chain is not None:
             cert_chain = open(module.params.get('cert_chain'), 'r').read()
     else:
         key=cert=chain=None
