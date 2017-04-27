@@ -73,15 +73,6 @@ class TestVyosConfigModule(TestVyosModule):
         result = self.execute_module()
         self.assertIn('__backup__', result)
 
-    def test_vyos_config_save(self):
-        set_module_args(dict(save=True))
-        self.execute_module(changed=True)
-        self.assertEqual(self.run_commands.call_count, 1)
-        self.assertEqual(self.get_config.call_count, 0)
-        self.assertEqual(self.load_config.call_count, 0)
-        args = self.run_commands.call_args[0][1]
-        self.assertIn('save', args)
-
     def test_vyos_config_lines(self):
         commands = ['set system host-name foo']
         set_module_args(dict(lines=commands))
