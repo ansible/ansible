@@ -553,7 +553,7 @@ class Templar:
                 if bare_deprecated:
                     display.deprecated("Using bare variables is deprecated."
                             " Update your playbooks so that the environment value uses the full variable syntax ('%s%s%s')" %
-                            (self.environment.variable_start_string, variable, self.environment.variable_end_string))
+                            (self.environment.variable_start_string, variable, self.environment.variable_end_string), version='2.7')
                 return "%s%s%s" % (self.environment.variable_start_string, variable, self.environment.variable_end_string)
 
         # the variable didn't meet the conditions to be converted,

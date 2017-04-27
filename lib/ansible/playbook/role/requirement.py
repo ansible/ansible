@@ -83,7 +83,8 @@ class RoleRequirement(RoleDefinition):
         #   'version': 'v1.0',
         #   'name': 'repo'
         # }
-        display.deprecated("The comma separated role spec format, use the yaml/explicit format instead. Line that trigger this: %s" % role_spec)
+        display.deprecated("The comma separated role spec format, use the yaml/explicit format instead. Line that trigger this: %s" % role_spec,
+                           version="2.7")
 
         default_role_versions = dict(git='master', hg='tip')
 

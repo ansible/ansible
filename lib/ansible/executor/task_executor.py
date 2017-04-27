@@ -467,7 +467,8 @@ class TaskExecutor:
         if '_variable_params' in self._task.args:
             variable_params = self._task.args.pop('_variable_params')
             if isinstance(variable_params, dict):
-                display.deprecated("Using variables for task params is unsafe, especially if the variables come from an external source like facts")
+                display.deprecated("Using variables for task params is unsafe, especially if the variables come from an external source like facts",
+                                   version="2.6")
                 variable_params.update(self._task.args)
                 self._task.args = variable_params
 
@@ -751,7 +752,7 @@ class TaskExecutor:
 
         if self._play_context.accelerate:
             # accelerate is deprecated as of 2.1...
-            display.deprecated('Accelerated mode is deprecated. Consider using SSH with ControlPersist and pipelining enabled instead')
+            display.deprecated('Accelerated mode is deprecated. Consider using SSH with ControlPersist and pipelining enabled instead', version='2.6')
             # launch the accelerated daemon here
             ssh_connection = connection
             handler = self._shared_loader_obj.action_loader.get(
