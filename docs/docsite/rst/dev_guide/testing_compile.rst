@@ -18,13 +18,50 @@ Compile tests check source files for valid syntax on all supported python versio
 Running compile tests locally
 =============================
 
-Tests are run with ``ansible-test compile``.
+Unit tests can be run across the whole code base by doing:
 
-All versions are tested unless the ``--python`` option is used.
+.. code:: shell
 
-All ``*.py`` files are tested unless specific files are specified.
+    cd /path/to/ansible/source
+    source hacking/env-setup
+    ansible-test compile
+
+Against a single file by doing:
+
+.. code:: shell
+
+   ansible-test compile lineinfile
+
+Or against a specific Python version by doing:
+
+.. code:: shell
+
+   ansible-test compile --python 2.7 lineinfile
+
+For advanced usage see the online help:
+
+.. code:: shell
+
+   ansible-test units --help
 
 For advanced options see ``ansible-test compile --help``
+
+
+Installing dependencies
+=======================
+
+``ansible-test`` has a number of dependencies , for ``compile`` tests we suggest running the tests with ``--local``, which is the default
+
+The dependencies can be installed using the ``-requirements`` argument. For example:
+
+.. code:: shell
+
+   ansible-test units --requirements lineinfile
+
+
+
+The full list of requirements can be found at `test/runner/requirements <https://github.com/ansible/ansible/tree/devel/test/runner/requirements>`_. Requirements files are named after their respective commands. See also the `constraints <https://github.com/ansible/ansible/blob/devel/test/runner/requirements/constraints.txt>`_ applicable to all commands.
+
 
 Extending compile tests
 =======================

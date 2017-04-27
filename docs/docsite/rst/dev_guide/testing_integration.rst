@@ -42,9 +42,17 @@ Non-destructive Tests
 These tests will modify files in subdirectories, but will not do things that install or remove packages or things
 outside of those test subdirectories.  They will also not reconfigure or bounce system services.
 
+.. note:: Running integration tests within Docker
+
+   To protect your system from any potential changes caused by integration tests, and to ensure the a sensible set of dependencies are available we recommend that you always run integration tests with the ``--docker`` option. See the `list of supported docker images <https://github.com/ansible/ansible/blob/devel/test/runner/completion/docker.txt>`_ for options.
+
+.. note:: Avoiding pulling new Docker images:
+
+   Use the ``--docker-no-pull`` option to avoid pulling the latest container image. This is required when using custom local images that are not available for download.
+
 Run as follows for all POSIX platform tests executed by our CI system::
 
-    test/runner/ansible-test integration -v posix/ci/
+    test/runner/ansible-test integration --docker fedora25 -v posix/ci/
 
 You can select specific tests as well, such as for individual modules::
 
@@ -60,12 +68,12 @@ Destructive Tests
 These tests are allowed to install and remove some trivial packages.  You will likely want to devote these
 to a virtual environment, such as Docker.  They won't reformat your filesystem::
 
-    test/runner/ansible-test integration --docker=fedora25 -v destructive/
+    test/runner/ansible-test integration --docker fedora25 -v destructive/
 
 Windows Tests
 =============
 
-These tests exercise the winrm connection plugin and Windows modules.  You'll
+These tests exercise the ``winrm`` connection plugin and Windows modules.  You'll
 need to define an inventory with a remote Windows 2008 or 2012 Server to use
 for testing, and enable PowerShell Remoting to continue.
 

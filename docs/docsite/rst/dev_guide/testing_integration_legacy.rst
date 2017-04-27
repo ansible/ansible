@@ -34,7 +34,7 @@ Some AWS tests may use environment variables. It is recommended to either unset 
 Subsets of tests may be run by ``#commenting`` out unnecessary roles in the appropriate playbook, such as ``test/integration/amazon.yml``.
 
 In order to run cloud tests, you must provide access credentials in a file
-named ``credentials.yml``.  A sample credentials file named
+named ``credentials.yml``. A sample credentials file named
 ``credentials.template`` is available for syntax help.
 
 
@@ -47,7 +47,7 @@ Provide cloud credentials::
 Other configuration
 ===================
 In order to run some tests, you must provide access credentials in a file
-named ``credentials.yml``.  A sample credentials file named
+named ``credentials.yml``. A sample credentials file named
 ``credentials.template`` is available for syntax help.
 
 Running Tests
@@ -70,8 +70,8 @@ The tests are invoked via a ``Makefile``::
 .. warning:: Possible cost of running cloud tests
 
    Running cloud integration tests will create and destroy cloud
-   resources.  Running these tests may result in additional fees associated with
-   your cloud account.  Care is taken to ensure that created resources are
+   resources. Running these tests may result in additional fees associated with
+   your cloud account. Care is taken to ensure that created resources are
    removed. However, it is advisable to inspect your AWS console to ensure no
    unexpected resources are running.
 
