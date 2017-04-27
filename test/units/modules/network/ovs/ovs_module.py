@@ -65,9 +65,9 @@ class AnsibleFailJson(Exception):
 class TestOpenVSwitchModule(unittest.TestCase):
 
     def execute_module(self, failed=False, changed=False,
-                       command=None, fixture_name=None):
+                       command=None, test_name=None):
 
-        self.load_fixtures(fixture_name)
+        self.load_fixtures(test_name)
 
         if failed:
             result = self.failed()
@@ -108,5 +108,5 @@ class TestOpenVSwitchModule(unittest.TestCase):
         self.assertEqual(result['changed'], changed, result)
         return result
 
-    def load_fixtures(self, fixture_name):
+    def load_fixtures(self, test_name):
         pass
