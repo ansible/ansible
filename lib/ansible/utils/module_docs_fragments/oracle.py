@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+
 class ModuleDocFragment(object):
     DOCUMENTATION = '''
 options:
@@ -60,6 +61,5 @@ options:
     default: None
 requirements:
 - cx_Oracle
-version_added: "2.4"
-author: "Thomas Krahn (@nosmoht)"
-    '''
+'''
+

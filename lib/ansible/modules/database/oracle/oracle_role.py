@@ -48,6 +48,8 @@ options:
     required: False
     default: present
     choices: ["present", "absent"]
+version_added: "2.4"
+author: "Thomas Krahn (@nosmoht)"
 extends_documentation_fragment:
 - oracle
 '''

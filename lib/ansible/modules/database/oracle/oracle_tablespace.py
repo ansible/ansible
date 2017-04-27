@@ -19,15 +19,18 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
+
 DOCUMENTATION = '''
----
 module: oracle_tablespace
 short_description: Manage Oracle tablespaces and datafiles
 description:
-- Create and delete Oracle tablespaces.
+- Create, alter or delete Oracle tablespaces.
 - Add and modify datafiles.
 - All datafiles of a tablespace will be handled equal!
-- For example: if I(init_size) is set the module will ensure the same value for all data files of a tablespace.
+- For example, if I(init_size) is set the module will ensure the same value for all data files of a tablespace.
 options:
   name:
     description:
@@ -67,6 +70,8 @@ options:
     required: False
     default: present
     choices: ["present", "absent"]
+version_added: "2.4"
+author: "Thomas Krahn (@nosmoht)"
 extends_documentation_fragment:
 - oracle
 '''
@@ -109,6 +114,7 @@ sql:
   type: list
   sample: ['CREATE TABLESPACE data SIZE 1M AUTOEXTEND ON NEXT 1M MAXSIZE UNLIMITED']
 '''
+
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.oracle import OracleClient, HAS_ORACLE_LIB, oracle_argument_spec
