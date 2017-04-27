@@ -356,7 +356,7 @@ class GalaxyCLI(CLI):
                                     msg = "Unable to load data from the include requirements file: %s %s"
                                     raise AnsibleError(msg % (role_file, e))
                 else:
-                    display.deprecated("going forward only the yaml format will be supported")
+                    display.deprecated("going forward only the yaml format will be supported", version="2.6")
                     # roles listed in a file, one per line
                     for rline in f.readlines():
                         if rline.startswith("#") or rline.strip() == '':
