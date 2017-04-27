@@ -190,7 +190,7 @@ DEFAULTS='defaults'
 # True, merge the lists of tags together.  If False, let the last argument
 # overwrite any previous ones.  Behaviour is overwrite through 2.2.  2.3
 # overwrites but prints deprecation.  2.4 the default is to merge.
-MERGE_MULTIPLE_CLI_TAGS = get_config(p, DEFAULTS, 'merge_multiple_cli_tags', 'ANSIBLE_MERGE_MULTIPLE_CLI_TAGS', False, value_type='boolean')
+MERGE_MULTIPLE_CLI_TAGS = get_config(p, DEFAULTS, 'merge_multiple_cli_tags', 'ANSIBLE_MERGE_MULTIPLE_CLI_TAGS', True, value_type='boolean')
 
 #### GENERALLY CONFIGURABLE THINGS ####
 DEFAULT_DEBUG             = get_config(p, DEFAULTS, 'debug',            'ANSIBLE_DEBUG',            False, value_type='boolean')
