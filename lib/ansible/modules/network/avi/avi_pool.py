@@ -195,6 +195,7 @@ options:
         description:
             - A list of nsx service groups where the servers for the pool are created.
             - Field introduced in 17.1.1.
+        version_added: "2.4"
     pki_profile_ref:
         description:
             - Avi will validate the ssl certificate present by a server against the selected pki profile.

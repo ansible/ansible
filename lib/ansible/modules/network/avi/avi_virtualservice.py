@@ -145,6 +145,7 @@ options:
         description:
             - Dns policies applied on the dns traffic of the virtual service.
             - Field introduced in 17.1.1.
+        version_added: "2.4"
     east_west_placement:
         description:
             - Force placement on all se's in service group (mesos mode only).
@@ -240,6 +241,7 @@ options:
         description:
             - A list of nsx service groups representing the clients which can access the virtual ip of the virtual service.
             - Field introduced in 17.1.1.
+        version_added: "2.4"
     performance_limits:
         description:
             - Optional settings that determine performance limits like max connections or bandwdith etc.
@@ -282,6 +284,7 @@ options:
             - Metadata pertaining to the service provided by this virtual service.
             - In openshift/kubernetes environments, egress pod info is stored.
             - Any user input to this field will be overwritten by avi vantage.
+        version_added: "2.4"
     service_pool_select:
         description:
             - Select pool based on destination port.
@@ -291,6 +294,7 @@ options:
     sideband_profile:
         description:
             - Sideband configuration to be used for this virtualservice.it can be used for sending traffic to sideband vips for external inspection etc.
+        version_added: "2.4"
     snat_ip:
         description:
             - Nat'ted floating source ip address(es) for upstream connection to servers.
@@ -328,6 +332,7 @@ options:
             - Server network or list of servers for cloning traffic.
             - It is a reference to an object of type trafficcloneprofile.
             - Field introduced in 17.1.1.
+        version_added: "2.4"
     type:
         description:
             - Specify if this is a normal virtual service, or if it is the parent or child of an sni-enabled virtual hosted virtual service.
@@ -355,6 +360,7 @@ options:
             - List of virtual service ips.
             - While creating a 'shared vs',please use vsvip_ref to point to the shared entities.
             - Field introduced in 17.1.1.
+        version_added: "2.4"
     vrf_context_ref:
         description:
             - Virtual routing context that the virtual service is bound to.
@@ -368,6 +374,7 @@ options:
             - Mostly used during the creation of shared vs, this fieldrefers to entities that can be shared across virtual services.
             - It is a reference to an object of type vsvip.
             - Field introduced in 17.1.1.
+        version_added: "2.4"
     weight:
         description:
             - The quality of service weight to assign to traffic transmitted from this virtual service.

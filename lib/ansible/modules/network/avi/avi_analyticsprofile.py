@@ -112,6 +112,7 @@ options:
         description:
             - Configure to send logs to a remote syslog server.
             - Field introduced in 17.1.1.
+        version_added: "2.4"
     conn_lossy_ooo_threshold:
         description:
             - A connection between client and avi is considered lossy when more than this percentage of out of order packets are received.
