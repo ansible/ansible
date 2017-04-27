@@ -130,7 +130,7 @@ RETURN = '''
 flavor:
     description: Dictionary describing the flavor.
     returned: On success when I(state) is 'present'
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Flavor ID.

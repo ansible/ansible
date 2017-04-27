@@ -392,7 +392,7 @@ RETURN="""
 lxc_container:
     description: container information
     returned: success
-    type: list
+    type: complex
     contains:
         name:
             description: name of the lxc container

@@ -136,6 +136,7 @@ host_nic:
     description: "Dictionary of all the host NIC attributes. Host NIC attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/host_nic."
     returned: On success if host NIC is found.
+    type: dict
 '''
 
 import traceback

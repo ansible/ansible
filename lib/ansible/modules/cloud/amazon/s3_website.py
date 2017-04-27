@@ -95,44 +95,59 @@ EXAMPLES = '''
 
 RETURN = '''
 index_document:
-  suffix:
-    description: suffix that is appended to a request that is for a directory on the website endpoint
-    returned: success
-    type: string
-    sample: index.html
+    description: index document
+    type: complex
+    returned: always
+    contains:
+        suffix:
+            description: suffix that is appended to a request that is for a directory on the website endpoint
+            returned: success
+            type: string
+            sample: index.html
 error_document:
-  key:
-    description:  object key name to use when a 4XX class error occurs
-    returned: when error_document parameter set
-    type: string
-    sample: error.html
+    description: error document
+    type: complex
+    returned: always
+    contains:
+        key:
+            description:  object key name to use when a 4XX class error occurs
+            returned: when error_document parameter set
+            type: string
+            sample: error.html
 redirect_all_requests_to:
-  host_name:
-    description: name of the host where requests will be redirected.
-    returned: when redirect all requests parameter set
-    type: string
-    sample: ansible.com
+    description: where to redirect requests
+    type: complex
+    returned: always
+    contains:
+        host_name:
+            description: name of the host where requests will be redirected.
+            returned: when redirect all requests parameter set
+            type: string
+            sample: ansible.com
 routing_rules:
-  routing_rule:
-    host_name:
-      description: name of the host where requests will be redirected.
-      returned: when host name set as part of redirect rule
-      type: string
-      sample: ansible.com
-    condition:
-      key_prefix_equals:
-        description: object key name prefix when the redirect is applied. For example, to redirect requests for ExamplePage.html, the key prefix will be
+    description: routing rules
+    type: complex
+    returned: always
+    contains:
+        routing_rule:
+            host_name:
+                description: name of the host where requests will be redirected.
+                returned: when host name set as part of redirect rule
+                type: string
+                sample: ansible.com
+        condition:
+            key_prefix_equals:
+            description: object key name prefix when the redirect is applied. For example, to redirect requests for ExamplePage.html, the key prefix will be
                      ExamplePage.html
-        returned: when routing rule present
-        type: string
-        sample: docs/
-    redirect:
-      replace_key_prefix_with:
-        description: object key prefix to use in the redirect request
-        returned: when routing rule present
-        type: string
-        sample: documents/
-
+            returned: when routing rule present
+            type: string
+            sample: docs/
+        redirect:
+            replace_key_prefix_with:
+                description: object key prefix to use in the redirect request
+                returned: when routing rule present
+                type: string
+                sample: documents/
 '''
 
 import time

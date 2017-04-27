@@ -77,7 +77,7 @@ RETURN = '''
 group:
     description: dictionary containing all Redshift subnet group information
     returned: success
-    type: dictionary
+    type: complex
     contains:
         name:
             description: name of the Redshift subnet group

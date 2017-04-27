@@ -131,7 +131,7 @@ RETURN = '''
 ovirt_auth:
     description: Authentication facts, needed to perform authentication to oVirt/RHV.
     returned: success
-    type: dictionary
+    type: complex
     contains:
         token:
             description: SSO token which is used for connection to oVirt/RHV engine.

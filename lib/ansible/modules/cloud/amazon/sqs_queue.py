@@ -89,34 +89,42 @@ extends_documentation_fragment:
 RETURN = '''
 default_visibility_timeout:
     description: The default visibility timeout in seconds.
+    type: int
     returned: always
     sample: 30
 delivery_delay:
     description: The delivery delay in seconds.
+    type: int
     returned: always
     sample: 0
 maximum_message_size:
     description: The maximum message size in bytes.
+    type: int
     returned: always
     sample: 262144
 message_retention_period:
     description: The message retention period in seconds.
+    type: int
     returned: always
     sample: 345600
 name:
     description: Name of the SQS Queue
+    type: string
     returned: always
     sample: "queuename-987d2de0"
 queue_arn:
     description: The queue's Amazon resource name (ARN).
+    type: string
     returned: on successful creation or update of the queue
     sample: 'arn:aws:sqs:us-east-1:199999999999:queuename-987d2de0'
 receive_message_wait_time:
     description: The receive message wait time in seconds.
+    type: int
     returned: always
     sample: 0
 region:
     description: Region that the queue was created within
+    type: string
     returned: always
     sample: 'us-east-1'
 '''

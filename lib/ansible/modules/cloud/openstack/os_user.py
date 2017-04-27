@@ -118,7 +118,7 @@ RETURN = '''
 user:
     description: Dictionary describing the user.
     returned: On success when I(state) is 'present'
-    type: dictionary
+    type: complex
     contains:
         default_project_id:
             description: User default project ID. Only present with Keystone >= v3.

@@ -71,7 +71,7 @@ RETURN = '''
 services:
     description: When details is false, returns an array of service ARNs, otherwise an array of complex objects as described below.
     returned: success
-    type: list of complex
+    type: complex
     contains:
         clusterArn:
             description: The Amazon Resource Name (ARN) of the of the cluster that hosts the service.

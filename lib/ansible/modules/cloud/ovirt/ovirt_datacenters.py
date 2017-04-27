@@ -95,6 +95,7 @@ data_center:
     description: "Dictionary of all the datacenter attributes. Datacenter attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/datacenter."
     returned: "On success if datacenter is found."
+    type: dict
 '''
 
 import traceback
