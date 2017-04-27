@@ -86,6 +86,18 @@ The data to be added to the top level JSON dictionary looks like this::
         }
     }
 
+To satisfy the requirements of using ``_meta``, to prevent ansible from calling your inventory with ``--host`` you must at least populate ``_meta`` with an empty ``hostvars`` dictionary, such as::
+
+    {
+
+        # results of inventory script as above go here
+        # ...
+
+        "_meta": {
+            "hostvars": {}
+        }
+    }
+
 .. seealso::
 
    :doc:`developing_api`
