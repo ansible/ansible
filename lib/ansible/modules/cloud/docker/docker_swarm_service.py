@@ -518,59 +518,59 @@ class DockerService(DockerBaseClass):
     def compare(self, os):
         differences = []
         needs_rebuild = False
-        if self.endpoint_mode! = os.endpoint_mode:
+        if self.endpoint_mode != os.endpoint_mode:
             differences.append('endpoint_mode')
-        if self.env! = os.env:
+        if self.env != os.env:
             differences.append('env')
-        if self.mode! = os.mode:
+        if self.mode != os.mode:
             needs_rebuild = True
             differences.append('mode')
-        if self.mounts! = os.mounts:
+        if self.mounts != os.mounts:
             differences.append('mounts')
-        if self.networks! = os.networks:
+        if self.networks != os.networks:
             differences.append('networks')
             needs_rebuild = True
-        if self.replicas! = os.replicas:
+        if self.replicas != os.replicas:
             differences.append('replicas')
-        if self.args! = os.args:
+        if self.args != os.args:
             differences.append('args')
-        if self.constraints! = os.constraints:
+        if self.constraints != os.constraints:
             differences.append('constraints')
-        if self.labels! = os.labels:
+        if self.labels != os.labels:
             differences.append('labels')
-        if self.limit_cpu! = os.limit_cpu:
+        if self.limit_cpu != os.limit_cpu:
             differences.append('limit_cpu')
-        if self.limit_memory! = os.limit_memory:
+        if self.limit_memory != os.limit_memory:
             differences.append('limit_memory')
-        if self.reserve_cpu! = os.reserve_cpu:
+        if self.reserve_cpu != os.reserve_cpu:
             differences.append('reserve_cpu')
-        if self.reserve_memory! = os.reserve_memory:
+        if self.reserve_memory != os.reserve_memory:
             differences.append('reserve_memory')
-        if self.container_labels! = os.container_labels:
+        if self.container_labels != os.container_labels:
             differences.append('container_labels')
-        if self.publish! = os.publish:
+        if self.publish != os.publish:
             differences.append('publish')
-        if self.restart_policy! = os.restart_policy:
+        if self.restart_policy != os.restart_policy:
             differences.append('restart_policy')
-        if self.restart_policy_attempts! = os.restart_policy_attempts:
+        if self.restart_policy_attempts != os.restart_policy_attempts:
             differences.append('restart_policy_attempts')
-        if self.restart_policy_delay! = os.restart_policy_delay:
+        if self.restart_policy_delay != os.restart_policy_delay:
             differences.append('restart_policy_delay')
-        if self.restart_policy_window! = os.restart_policy_window:
+        if self.restart_policy_window != os.restart_policy_window:
             differences.append('restart_policy_window')
-        if self.image! = os.image:
+        if self.image != os.image:
             differences.append('image')
-        if self.user! = os.user:
+        if self.user != os.user:
             differences.append('user')
-        if self.dns! = os.dns:
+        if self.dns != os.dns:
             differences.append('dns')
-        if self.dns_search! = os.dns_search:
+        if self.dns_search != os.dns_search:
             differences.append('dns_search')
-        if self.dns_options! = os.dns_options:
+        if self.dns_options != os.dns_options:
             differences.append('dns_options')
-        if self.hostname! = os.hostname:
+        if self.hostname != os.hostname:
             differences.append('hostname')
-        if self.tty! = os.tty:
+        if self.tty != os.tty:
             differences.append('tty')
         return len(differences) > 0, differences, needs_rebuild
 
