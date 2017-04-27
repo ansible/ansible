@@ -318,6 +318,14 @@ class PlayContext(Base):
 
         new_info = self.copy()
 
+        # loop through a subset of attributes on the task object and set
+        # connection fields based on their values
+        for attr in TASK_ATTRIBUTE_OVERRIDES:
+            if hasattr(task, attr):
+                attr_val = getattr(task, attr)
+                if attr_val is not None:
+                    setattr(new_info, attr, attr_val)
+
         # next, use the MAGIC_VARIABLE_MAPPING dictionary to update this
         # connection info object with 'magic' variables from the variable list.
         # If the value 'ansible_delegated_vars' is in the variables, it means
@@ -383,17 +391,12 @@ class PlayContext(Base):
                         setattr(new_info, attr, delegated_vars[variable_name])
                         attrs_considered.append(attr)
                 elif variable_name in variables:
-                    setattr(new_info, attr, variables[variable_name])
+                    if variable_name == 'ansible_connection' and getattr(task, 'connection'):
+                        setattr(new_info, attr, task.connection)
+                    else:
+                        setattr(new_info, attr, variables[variable_name])
                     attrs_considered.append(attr)
                 # no else, as no other vars should be considered
-
-        # loop through a subset of attributes on the task object and set
-        # connection fields based on their values
-        for attr in TASK_ATTRIBUTE_OVERRIDES:
-            if hasattr(task, attr):
-                attr_val = getattr(task, attr)
-                if attr_val is not None:
-                    setattr(new_info, attr, attr_val)
                 
         # become legacy updates -- from commandline
         if not new_info.become_pass:
