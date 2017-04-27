@@ -594,7 +594,7 @@ class CloudflareAPI(object):
             if ('data' in new_record) and ('data' in cur_record):
                 if (cur_record['data'] > new_record['data']) - (cur_record['data'] < new_record['data']):
                     do_update = True
-            if (type == 'CNAME') and (cur_record['content'] != new_record['content']):
+            if (params['type'] == 'CNAME') and (cur_record['content'] != new_record['content']):
                 do_update = True
             if do_update:
                 if not self.module.check_mode:
