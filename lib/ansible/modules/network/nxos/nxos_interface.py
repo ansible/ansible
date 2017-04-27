@@ -161,7 +161,7 @@ def is_default_interface(interface, module):
         False: if it does not have a default config
         DNE (str): if the interface does not exist - loopbacks, SVIs, etc.
     """
-    command = 'show run interface ' + interface
+    command = 'show run interface {0}'.format(interface)
 
     try:
         body = execute_show_command(command, module)[0]
@@ -219,7 +219,7 @@ def get_manual_interface_attributes(interface, module):
     """
 
     if get_interface_type(interface) == 'svi':
-        command = 'show interface ' + interface
+        command = 'show interface {0}'.format(interface)
         try:
             body = execute_show_command(command, module)[0]
         except IndexError:
@@ -276,7 +276,7 @@ def get_interface(intf, module):
     key_map = {}
     interface = {}
 
-    command = 'show interface ' + intf
+    command = 'show interface {0}'.format(intf)
     try:
         body = execute_show_command(command, module)[0]
     except IndexError:
@@ -305,7 +305,7 @@ def get_interface(intf, module):
                                                           'nxapibug'))
             interface['description'] = str(attributes.get('description',
                                                           'nxapi_bug'))
-            command = 'show run interface ' + intf
+            command = 'show run interface {0}'.format(intf)
             body = execute_show_command(command, module)[0]
             if 'ip forward' in body:
                 interface['ip_forward'] = 'enable'
@@ -497,7 +497,7 @@ def get_interface_config_commands(interface, intf, existing):
             commands.append('no fabric forwarding mode anycast-gateway')
 
     if commands:
-        commands.insert(0, 'interface ' + intf)
+        commands.insert(0, 'interface {0}'.format(intf))
 
     return commands
 
