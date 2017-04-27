@@ -46,7 +46,7 @@ Installing dependencies
 
 ``ansible-test`` has a number of dependencies , for ``units`` tests we suggest using ``tox``
 
-The dependencies can be installed using the ``-requirements`` argument. For example:
+The dependencies can be installed using the ``--requirements`` argument. For example:
 
 .. code:: shell
 
