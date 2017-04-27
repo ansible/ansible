@@ -241,3 +241,121 @@ EXAMPLES = r'''
     name: bob
     state: absent
 '''
+
+RETURN = r'''
+account_locked:
+    description: 'True' if the account is locked
+    returned: always
+    type: boolean
+    sample: false
+changed:
+    description: 'True' if the account changed during execution
+    returned: always
+    type: boolean
+    sample: false
+city:
+    description: The user's city
+    returned: always
+    type: string
+    sample: Indianapolis
+company:
+    description: The user's company
+    returned: always
+    type: string
+    sample: RedHat
+country:
+    description: The user's country
+    returned: always
+    type: string
+    sample: US
+description:
+    description: A description of the account
+    returned: always
+    type: string
+    sample: Server Administrator
+distinguished_name:
+    description: DN of the user account
+    returned: always
+    type: string
+    sample: "CN=nick,OU=test,DC=domain,DC=local"
+email:
+    description: The user's email address
+    returned: always
+    type: string
+    sample: nick@domain.local
+enabled:
+    description: 'True' if the account is enabled and 'False if disabled'
+    returned: always
+    type: string
+    sample: true
+firstname:
+    description: The user's first name
+    returned: always
+    type: string
+    sample: Nick
+groups:
+    description: AD Groups to which the account belongs
+    returned: always
+    type: list
+    sample: [ "Domain Admins", "Domain Users" ]
+msg:
+    description: Summary message of whether the user is present or absent
+    returned: always
+    type: string
+    sample: "User 'nick' is present"
+name:
+    description: The username on the account
+    returned: always
+    type: string
+    sample: nick
+password_expired:
+    description: 'True' if the account password has expired
+    returned: always
+    type: boolean
+    sample: false
+password_updated:
+    description: 'True' if the password changed during this execution
+    returned: always
+    type: boolean
+    sample: true
+postal_code:
+    description: The user's postal code / zip code
+    returned: always
+    type: string
+    sample: 46033
+sid:
+    description: The SID of the account
+    returned: always
+    type: string
+    sample: S-1-5-21-2752426336-228313920-2202711348-1175
+state:
+    description: The state of the user account
+    returned: always
+    type: string
+    sample: present
+state_province:
+    description: The user's state or province
+    returned: always
+    type: string
+    sample: IN
+street:
+    description: The user's street address
+    returned: always
+    type: string
+    sample: 123 4th St.
+surname:
+    description: The user's last name / surname
+    returned: always
+    type: string
+    sample: Doe
+upn:
+    description: The User Principal Name of the account
+    returned: always
+    type: string
+    sample: nick@domain.local
+user_cannot_change_password:
+    description: 'True' if the user is not allowed to change his/her password
+    returned: always
+    type: string
+    sample: false
+'''
