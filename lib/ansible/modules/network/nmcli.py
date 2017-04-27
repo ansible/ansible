@@ -66,7 +66,7 @@ options:
     mode:
         required: False
         choices: [ "balance-rr", "active-backup", "balance-xor", "broadcast", "802.3ad", "balance-tlb", "balance-alb" ]
-        default: balence-rr
+        default: balance-rr
         description:
             - This is the type of device or network connection that you wish to create for a bond, team or bridge.
     master:
@@ -863,6 +863,8 @@ class Nmcli(object):
         cmd.append('con')
         cmd.append('mod')
         cmd.append(self.conn_name)
+        cmd.append('mode')
+        cmd.append(self.mode)
         if self.ip4 is not None:
             cmd.append('ipv4.address')
             cmd.append(self.ip4)
