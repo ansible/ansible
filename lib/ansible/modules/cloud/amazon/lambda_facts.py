@@ -224,7 +224,7 @@ def config_details(client, module):
             if e.response['Error']['Code'] == 'ResourceNotFoundException':
                 lambda_facts.update(function_list=[])
             else:
-                module.fail_json_aws(e, msg="Trying to get function list".format(function_name))
+                module.fail_json_aws(e, msg="Trying to get function list")
 
         functions = dict()
         for func in lambda_facts.pop('function_list', []):
@@ -265,7 +265,7 @@ def mapping_details(client, module):
         if e.response['Error']['Code'] == 'ResourceNotFoundException':
             lambda_facts.update(mappings=[])
         else:
-            module.fail_json_aws(e, msg="Trying to get source event mappings".format(function_name))
+            module.fail_json_aws(e, msg="Trying to get source event mappings")
 
     if function_name:
         return {function_name: camel_dict_to_snake_dict(lambda_facts)}
