@@ -41,7 +41,7 @@ class TestJunosCommandModule(TestJunosModule):
     def tearDown(self):
         self.mock_send_request.stop()
 
-    def load_fixtures(self, commands=None, format='text'):
+    def load_fixtures(self, commands=None, format='text', changed=False):
         def load_from_file(*args, **kwargs):
             module, element = args
 
