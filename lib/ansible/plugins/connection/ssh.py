@@ -167,9 +167,12 @@ def _ssh_retry(func):
                     break
                 else:
                     raise AnsibleConnectionFailure("Failed to connect to the host via ssh: %s" % to_native(return_tuple[2]))
-            except (AnsibleConnectionFailure, Exception) as e:
+            except Exception as e:
                 if attempt == remaining_tries - 1:
-                    raise
+                    if isinstance(e, AnsibleConnectionFailure):
+                        return return_tuple
+                    else:
+                        raise
                 else:
                     pause = 2 ** attempt - 1
                     if pause > 30:
