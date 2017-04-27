@@ -248,7 +248,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                                 suppress_extended_error=True,
                             )
                         display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option",
-                                           version=2.7)
+                                           version="2.7")
                     else:
                         tags = ti_copy.tags[:]
 
