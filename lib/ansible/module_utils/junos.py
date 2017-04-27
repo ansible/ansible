@@ -24,6 +24,7 @@ from ansible.module_utils.basic import env_fallback, return_values
 from ansible.module_utils.netconf import send_request, children
 from ansible.module_utils.netconf import discard_changes, validate
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_text
 
 ACTIONS = frozenset(['merge', 'override', 'replace', 'update', 'set'])
 JSON_ACTIONS = frozenset(['merge', 'override', 'update'])
@@ -111,7 +112,7 @@ def load_configuration(module, candidate=None, action='merge', rollback=None, fo
             if format == 'xml':
                 cfg.append(fromstring(candidate))
             else:
-                cfg.text = candidate
+                cfg.text = to_text(candidate, encoding='latin1')
         else:
             cfg.append(candidate)
     return send_request(module, obj)
@@ -163,7 +164,7 @@ def get_diff(module):
     reply = get_configuration(module, compare=True, format='text')
     output = reply.find('.//configuration-output')
     if output is not None:
-        return output.text
+        return to_text(output.text, encoding='latin1').strip()
 
 def load_config(module, candidate, warnings, action='merge', commit=False, format='xml',
                 comment=None, confirm=False, confirm_timeout=None):
@@ -183,7 +184,6 @@ def load_config(module, candidate, warnings, action='merge', commit=False, forma
         diff = get_diff(module)
 
         if diff:
-            diff = str(diff).strip()
             if commit:
                 commit_configuration(module, confirm=confirm, comment=comment,
                                      confirm_timeout=confirm_timeout)
