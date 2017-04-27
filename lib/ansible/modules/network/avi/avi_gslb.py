@@ -4,7 +4,7 @@
 # @author: Gaurav Rastogi (grastogi@avinetworks.com)
 #          Eric Anderson (eanderson@avinetworks.com)
 # module_check: supported
-# Avi Version: 16.3.8
+# Avi Version: 17.1.1
 #
 #
 # This file is part of Ansible
@@ -23,7 +23,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'], 'supported_by': 'community', 'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -35,7 +37,7 @@ description:
     - This module is used to configure Gslb object
     - more examples at U(https://github.com/avinetworks/devops)
 requirements: [ avisdk ]
-version_added: "2.3"
+version_added: "2.4"
 options:
     state:
         description:
@@ -46,6 +48,7 @@ options:
         description:
             - Max retries after which the remote site is treatedas a fresh start.
             - In fresh start all the configsare downloaded.
+            - Allowed values are 1-1024.
             - Default value when not specified in API or module is interpreted by Avi Controller as 20.
     description:
         description:
@@ -57,7 +60,7 @@ options:
     leader_cluster_uuid:
         description:
             - Mark this site as leader of gslb configuration.
-            - This site is the one among the sites.
+            - This site is the one among the avi sites.
     name:
         description:
             - Name for the gslb object.
@@ -65,13 +68,18 @@ options:
     send_interval:
         description:
             - Frequency with which group members communicate.
+            - Allowed values are 1-3600.
             - Default value when not specified in API or module is interpreted by Avi Controller as 15.
     sites:
         description:
-            - Select site belonging to this gslb.
+            - Select avi site member belonging to this gslb.
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+    third_party_sites:
+        description:
+            - Third party site member belonging to this gslb.
+            - Field introduced in 17.1.1.
     url:
         description:
             - Avi controller URL of the object.
@@ -105,7 +113,6 @@ obj:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-
 try:
     from ansible.module_utils.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
@@ -125,6 +132,7 @@ def main():
         send_interval=dict(type='int',),
         sites=dict(type='list',),
         tenant_ref=dict(type='str',),
+        third_party_sites=dict(type='list',),
         url=dict(type='str',),
         uuid=dict(type='str',),
         view_id=dict(type='int',),
@@ -134,11 +142,10 @@ def main():
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:
         return module.fail_json(msg=(
-            'Avi python API SDK (avisdk>=16.3.5.post1) is not installed. '
+            'Avi python API SDK (avisdk>=17.1) is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'gslb',
                            set([]))
-
 
 if __name__ == '__main__':
     main()
