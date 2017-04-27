@@ -17,7 +17,7 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 DOCUMENTATION = '''
 ---
 module: docker_swarm_service
@@ -26,7 +26,7 @@ short_description: docker swarm service
 description: |
   Manage docker services. Allows live altering of already defined services
   (see examples)
-version_added: "2.3"
+version_added: "2.4"
 options:
   name:
     required: true
