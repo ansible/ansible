@@ -76,7 +76,7 @@ options:
     description:
       - The HTTP method of the request or response. It MUST be uppercase.
     required: false
-    choices: [ "GET", "POST", "PUT", "HEAD", "DELETE", "OPTIONS", "PATCH", "TRACE", "CONNECT", "REFRESH" ]
+    choices: [ "GET", "POST", "PUT", "HEAD", "DELETE", "OPTIONS", "PATCH", "TRACE", "CONNECT", "REFRESH", "..." ]
     default: "GET"
   return_content:
     description:
@@ -389,7 +389,7 @@ def main():
         url_password = dict(required=False, default=None, aliases=['password'], no_log=True),
         body = dict(required=False, default=None, type='raw'),
         body_format = dict(required=False, default='raw', choices=['raw', 'json']),
-        method = dict(required=False, default='GET', choices=['GET', 'POST', 'PUT', 'HEAD', 'DELETE', 'OPTIONS', 'PATCH', 'TRACE', 'CONNECT', 'REFRESH']),
+        method = dict(required=False, default='GET'),
         return_content = dict(required=False, default='no', type='bool'),
         follow_redirects = dict(required=False, default='safe', choices=['all', 'safe', 'none', 'yes', 'no']),
         creates = dict(required=False, default=None, type='path'),
