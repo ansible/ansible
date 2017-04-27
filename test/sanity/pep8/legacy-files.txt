@@ -729,7 +729,6 @@ lib/ansible/modules/system/hostname.py
 lib/ansible/modules/system/iptables.py
 lib/ansible/modules/system/java_cert.py
 lib/ansible/modules/system/kernel_blacklist.py
-lib/ansible/modules/system/known_hosts.py
 lib/ansible/modules/system/locale_gen.py
 lib/ansible/modules/system/lvg.py
 lib/ansible/modules/system/lvol.py
