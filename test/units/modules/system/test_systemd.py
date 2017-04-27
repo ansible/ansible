@@ -33,7 +33,8 @@ class ParseSystemctlShowTestCase(unittest.TestCase):
         parsed = parse_systemctl_show(lines)
         self.assertEqual(parsed, {
             'Type': 'simple',
-            'ExecStart': '{ path=/bin/echo ; argv[]=/bin/echo foo\nbar ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }',
+            'ExecStart': '{ path=/bin/echo ; argv[]=/bin/echo foo\n'
+                         'bar ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }',
             'Description': 'blah',
         })
 
