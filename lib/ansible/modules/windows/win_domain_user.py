@@ -244,27 +244,27 @@ EXAMPLES = r'''
 
 RETURN = r'''
 account_locked:
-    description: 'True' if the account is locked
+    description: true if the account is locked
     returned: always
     type: boolean
     sample: false
 changed:
-    description: 'True' if the account changed during execution
+    description: true if the account changed during execution
     returned: always
     type: boolean
     sample: false
 city:
-    description: The user's city
+    description: The user city
     returned: always
     type: string
     sample: Indianapolis
 company:
-    description: The user's company
+    description: The user company
     returned: always
     type: string
     sample: RedHat
 country:
-    description: The user's country
+    description: The user country
     returned: always
     type: string
     sample: US
@@ -277,19 +277,19 @@ distinguished_name:
     description: DN of the user account
     returned: always
     type: string
-    sample: "CN=nick,OU=test,DC=domain,DC=local"
+    sample: CN=nick,OU=test,DC=domain,DC=local
 email:
-    description: The user's email address
+    description: The user email address
     returned: always
     type: string
     sample: nick@domain.local
 enabled:
-    description: 'True' if the account is enabled and 'False if disabled'
+    description: true if the account is enabled and false if disabled
     returned: always
     type: string
     sample: true
 firstname:
-    description: The user's first name
+    description: The user first name
     returned: always
     type: string
     sample: Nick
@@ -302,24 +302,24 @@ msg:
     description: Summary message of whether the user is present or absent
     returned: always
     type: string
-    sample: "User 'nick' is present"
+    sample: User nick is present
 name:
     description: The username on the account
     returned: always
     type: string
     sample: nick
 password_expired:
-    description: 'True' if the account password has expired
+    description: true if the account password has expired
     returned: always
     type: boolean
     sample: false
 password_updated:
-    description: 'True' if the password changed during this execution
+    description: true if the password changed during this execution
     returned: always
     type: boolean
     sample: true
 postal_code:
-    description: The user's postal code / zip code
+    description: The user postal code
     returned: always
     type: string
     sample: 46033
@@ -334,17 +334,17 @@ state:
     type: string
     sample: present
 state_province:
-    description: The user's state or province
+    description: The user state or province
     returned: always
     type: string
     sample: IN
 street:
-    description: The user's street address
+    description: The user street address
     returned: always
     type: string
     sample: 123 4th St.
 surname:
-    description: The user's last name / surname
+    description: The user last name
     returned: always
     type: string
     sample: Doe
@@ -354,7 +354,7 @@ upn:
     type: string
     sample: nick@domain.local
 user_cannot_change_password:
-    description: 'True' if the user is not allowed to change his/her password
+    description: true if the user is not allowed to change password
     returned: always
     type: string
     sample: false
