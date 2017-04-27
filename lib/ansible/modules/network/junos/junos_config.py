@@ -186,7 +186,7 @@ from ansible.module_utils.junos import check_args as junos_check_args
 from ansible.module_utils.netconf import send_request
 from ansible.module_utils.six import string_types
 
-if sys.version < (2, 7):
+if sys.version_info < (2, 7):
     from xml.parsers.expat import ExpatError
     ParseError = ExpatError
 else:
