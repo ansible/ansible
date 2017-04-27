@@ -33,12 +33,12 @@ Extending unit tests
 
 .. warning:: What a unit test isn't
 
-   If you start writing a test that starts requiring external services then you may be writing an integration test, rather than a unit tests.
+   If you start writing a test that requires external services then you may be writing an integration test, rather than a unit test.
 
 Fixtures files
 ``````````````
 
-To mock out fetching results from devices you can use ``fixtures`` to read in pre-generated data.
+To mock out fetching results from devices, you can use ``fixtures`` to read in pre-generated data.
 
 Text files live in ``test/units/modules/network/PLATFORM/fixtures/``
 
