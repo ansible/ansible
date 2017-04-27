@@ -241,7 +241,7 @@ def parse_args():
 
     units.add_argument('--python',
                        metavar='VERSION',
-                       choices=SUPPORTED_PYTHON_VERSIONS,
+                       choices=SUPPORTED_PYTHON_VERSIONS + ('default',),
                        help='python version: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
 
     units.add_argument('--collect-only',
