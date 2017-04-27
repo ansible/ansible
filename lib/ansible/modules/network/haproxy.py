@@ -273,12 +273,13 @@ class HAProxy(object):
         for backend in backends:
             # Fail when backends were not found
             state = self.get_state_for(backend, svname)
-            if (self.fail_on_not_found or self.wait) and state is None:
+            if (self.fail_on_not_found) and state is None:
                 self.module.fail_json(msg="The specified backend '%s/%s' was not found!" % (backend, svname))
 
-            self.execute(Template(cmd).substitute(pxname = backend, svname = svname))
-            if self.wait:
-                self.wait_until_status(backend, svname, wait_for_status)
+            if state is not None:
+                self.execute(Template(cmd).substitute(pxname = backend, svname = svname))
+                if self.wait:
+                    self.wait_until_status(backend, svname, wait_for_status)
 
 
     def get_state_for(self, pxname, svname):
