@@ -92,26 +92,32 @@ RETURN = '''
 path:
     description: the path to the role
     type: string
+    returned: always
     sample: /
 role_name:
     description: the friendly name that identifies the role
     type: string
+    returned: always
     sample: myrole
 role_id:
     description: the stable and unique string identifying the role
     type: string
+    returned: always
     sample: ABCDEFF4EZ4ABCDEFV4ZC
 arn:
     description: the Amazon Resource Name (ARN) specifying the role
     type: string
+    returned: always
     sample: "arn:aws:iam::1234567890:role/mynewrole"
 create_date:
     description: the date and time, in ISO 8601 date-time format, when the role was created
     type: string
+    returned: always
     sample: "2016-08-14T04:36:28+00:00"
 assume_role_policy_document:
     description: the policy that grants an entity permission to assume the role
     type: string
+    returned: always
     sample: {
                 'statement': [
                     {
@@ -128,6 +134,7 @@ assume_role_policy_document:
 attached_policies:
     description: a list of dicts containing the name and ARN of the managed IAM policies attached to the role
     type: list
+    returned: always
     sample: [
         {
             'policy_arn': 'arn:aws:iam::aws:policy/PowerUserAccess',

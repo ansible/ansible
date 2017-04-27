@@ -157,7 +157,7 @@ RETURN = '''
 facts:
     description: Network inspection results for the affected network.
     returned: success
-    type: complex
+    type: dict
     sample: {}
 '''
 

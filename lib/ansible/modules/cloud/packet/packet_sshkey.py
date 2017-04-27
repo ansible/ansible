@@ -94,7 +94,7 @@ changed:
     returned: always
 sshkeys:
     description: Information about sshkeys that were createe/removed.
-    type: array
+    type: list
     sample: [
         {
             "fingerprint": "5c:93:74:7c:ed:07:17:62:28:75:79:23:d6:08:93:46",

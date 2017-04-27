@@ -65,7 +65,7 @@ RETURN = '''
 role:
     description: Dictionary describing the role.
     returned: On success when I(state) is 'present'.
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Unique role ID.

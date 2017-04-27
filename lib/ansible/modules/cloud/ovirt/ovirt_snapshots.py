@@ -107,6 +107,7 @@ snapshot:
     description: "Dictionary of all the snapshot attributes. Snapshot attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/snapshot."
     returned: On success if snapshot is found.
+    type: dict
 '''
 
 

@@ -135,7 +135,7 @@ RETURN = '''
 openstack_flavors:
     description: Dictionary describing the flavors.
     returned: On success.
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Flavor ID.

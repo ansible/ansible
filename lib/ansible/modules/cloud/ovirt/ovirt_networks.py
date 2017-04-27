@@ -101,6 +101,7 @@ network:
     description: "Dictionary of all the network attributes. Network attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/network."
     returned: "On success if network is found."
+    type: dict
 '''
 
 import traceback

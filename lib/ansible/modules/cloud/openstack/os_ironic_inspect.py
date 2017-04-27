@@ -71,7 +71,7 @@ RETURN = '''
 ansible_facts:
     description: Dictionary of new facts representing discovered properties of the node..
     returned: changed
-    type: dictionary
+    type: complex
     contains:
         memory_mb:
             description: Amount of node memory as updated in the node properties
