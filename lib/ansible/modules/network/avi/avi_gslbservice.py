@@ -4,7 +4,7 @@
 # @author: Gaurav Rastogi (grastogi@avinetworks.com)
 #          Eric Anderson (eanderson@avinetworks.com)
 # module_check: supported
-# Avi Version: 16.3.8
+# Avi Version: 17.1.1
 #
 #
 # This file is part of Ansible
@@ -23,7 +23,9 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'status': ['preview'], 'supported_by': 'community', 'version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -35,7 +37,7 @@ description:
     - This module is used to configure GslbService object
     - more examples at U(https://github.com/avinetworks/devops)
 requirements: [ avisdk ]
-version_added: "2.3"
+version_added: "2.4"
 options:
     state:
         description:
@@ -45,8 +47,8 @@ options:
     controller_health_status_enabled:
         description:
             - Gs member's overall health status is derived based on a combination of controller and datapath health-status inputs.
-            - Datapath status is determined by the association of health monitor profiles.
-            - The controller provided status is determined through this configuration.
+            - Note that the datapath status is determined by the association of health monitor profiles.
+            - Only the controller provided status is determined through this configuration.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
     description:
         description:
@@ -73,9 +75,10 @@ options:
             - It is a reference to an object of type gslbhealthmonitor.
     health_monitor_scope:
         description:
-            - Health monitor probe can be executed for all the members or it can be executed only for non-avi members.
+            - Health monitor probe can be executed for all the members or it can be executed only for third-party members.
             - This operational mode is useful to reduce the number of health monitor probes in case of a hybrid scenario.
-            - In such cases avi members can have controller derived status while non-avi members can be probed by via health monitor probes in dataplane.
+            - In such a case, avi members can have controller derived status while non-avi members can be probed by via health monitor probes in dataplane.
+            - Enum options - GSLB_SERVICE_HEALTH_MONITOR_ALL_MEMBERS, GSLB_SERVICE_HEALTH_MONITOR_ONLY_NON_AVI_MEMBERS.
             - Default value when not specified in API or module is interpreted by Avi Controller as GSLB_SERVICE_HEALTH_MONITOR_ALL_MEMBERS.
     name:
         description:
@@ -85,18 +88,34 @@ options:
         description:
             - Number of ip addresses of this gslb service to be returned by the dns service.
             - Enter 0 to return all ip addresses.
+            - Allowed values are 1-20.
+            - Special values are 0- 'return all ip addresses'.
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
     ttl:
         description:
             - Ttl value (in seconds) for records served for this gslb service by the dns service.
+            - Allowed values are 1-86400.
     url:
         description:
             - Avi controller URL of the object.
+    use_edns_client_subnet:
+        description:
+            - Use the client ip subnet from the edns option as source ipaddress for client geo-location and consistent hash algorithm.
+            - Default is true.
+            - Field introduced in 17.1.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as True.
     uuid:
         description:
             - Uuid of the gslb service.
+    wildcard_match:
+        description:
+            - Enable wild-card match of fqdn  if an exact match is not found in the dns table, the longest match is chosen by wild-carding the fqdn in the dns
+            - request.
+            - Default is false.
+            - Field introduced in 17.1.1.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
 extends_documentation_fragment:
     - avi
 '''
@@ -119,7 +138,6 @@ obj:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-
 try:
     from ansible.module_utils.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
@@ -144,18 +162,19 @@ def main():
         tenant_ref=dict(type='str',),
         ttl=dict(type='int',),
         url=dict(type='str',),
+        use_edns_client_subnet=dict(type='bool',),
         uuid=dict(type='str',),
+        wildcard_match=dict(type='bool',),
     )
     argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:
         return module.fail_json(msg=(
-            'Avi python API SDK (avisdk>=16.3.5.post1) is not installed. '
+            'Avi python API SDK (avisdk>=17.1) is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'gslbservice',
                            set([]))
-
 
 if __name__ == '__main__':
     main()
