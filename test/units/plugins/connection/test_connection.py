@@ -137,10 +137,10 @@ class TestConnectionBaseClass(unittest.TestCase):
         self.assertIsInstance(NetworkCliConnection(self.play_context, self.in_stream), ParamikoConnection)
 
     def test_check_password_prompt(self):
-        local = b'''
-[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: 
-BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq
-'''
+        local = (
+            b'[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: \n'
+            b'BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq\n'
+        )
 
         ssh_pipelining_vvvv = b'''
 debug3: mux_master_read_cb: channel 1 packet type 0x10000002 len 251
@@ -171,17 +171,17 @@ BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq
 debug3: receive packet: type 98
 '''  # noqa
 
-        ssh_novvvv = b'''
-[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: 
-BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq
-'''
+        ssh_novvvv = (
+            b'[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: \n'
+            b'BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq\n'
+        )
 
-        dns_issue = b'''
-timeout waiting for privilege escalation password prompt:
-sudo: sudo: unable to resolve host tcloud014
-[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: 
-BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq
-'''
+        dns_issue = (
+            b'timeout waiting for privilege escalation password prompt:\n'
+            b'sudo: sudo: unable to resolve host tcloud014\n'
+            b'[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: \n'
+            b'BECOME-SUCCESS-ouzmdnewuhucvuaabtjmweasarviygqq\n'
+        )
 
         nothing = b''
 
