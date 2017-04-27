@@ -228,13 +228,11 @@ vm_guest_ip:
   sample: 10.101.65.152
 vpc:
   description: Name of the VPC.
-  version_added: "2.3"
   returned: success
   type: string
   sample: my_vpc
 network:
   description: Name of the network.
-  version_added: "2.3"
   returned: success
   type: string
   sample: dmz

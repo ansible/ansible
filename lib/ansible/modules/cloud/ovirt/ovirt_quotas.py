@@ -125,6 +125,7 @@ quota:
     description: "Dictionary of all the quota attributes. Quota attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/quota."
     returned: On success if quota is found.
+    type: dict
 '''
 
 try:

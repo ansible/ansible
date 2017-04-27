@@ -112,6 +112,7 @@ agent:
     description: "Dictionary of all the agent attributes. Agent attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/agent."
     returned: On success if agent is found.
+    type: dict
 '''
 
 import traceback

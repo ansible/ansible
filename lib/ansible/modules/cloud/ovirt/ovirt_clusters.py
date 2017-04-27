@@ -256,6 +256,7 @@ id:
 cluster:
     description: "Dictionary of all the cluster attributes. Cluster attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/cluster."
+    type: dict
     returned: On success if cluster is found.
 '''
 

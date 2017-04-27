@@ -204,6 +204,7 @@ log:
   sample: ["updating stack"]
 stack_resources:
   description: AWS stack resources and their status. List of dictionaries, one dict per resource.
+  returned: state == present
   type: list
   sample: [
           {
@@ -218,7 +219,7 @@ stack_resources:
 stack_outputs:
   type: dict
   description: A key:value dictionary of all the stack outputs currently defined. If there are no stack outputs, it is an empty dictionary.
-  returned: always
+  returned: state == present
   sample: {"MySg": "AnsibleModuleTestYAML-CFTestSg-C8UVS567B6NS"}
 '''  # NOQA
 

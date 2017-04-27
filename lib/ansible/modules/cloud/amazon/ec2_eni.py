@@ -190,7 +190,7 @@ RETURN = '''
 interface:
   description: Network interface attributes
   returned: when state != absent
-  type: dictionary
+  type: complex
   contains:
     description:
       description: interface description

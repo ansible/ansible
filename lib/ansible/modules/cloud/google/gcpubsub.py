@@ -159,13 +159,13 @@ publish:
     description: List of dictionaries describing messages and attributes to be published.  Dictionary is in message(str):attributes(dict) format.
                  Only message is required.
     returned: Only when specified
-    type: list of dictionary
+    type: list
     sample: "publish: ['message': 'my message', attributes: {'key1': 'value1'}]"
 
 pulled_messages:
     description: list of dictionaries containing message info.  Fields are ack_id, attributes, data, message_id.
     returned: Only when subscription.pull is specified
-    type: list of dictionary
+    type: list
     sample: [{ "ack_id": "XkASTCcYREl...","attributes": {"key1": "val1",...}, "data": "this is message 1", "message_id": "49107464153705"},..]
 
 state:

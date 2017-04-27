@@ -104,54 +104,59 @@ id:
     description: Stack ID.
     type: string
     sample: "97a3f543-8136-4570-920e-fd7605c989d6"
+    returned: always
 
 stack:
-    action:
-        description: Action, could be Create or Update.
-        type: string
-        sample: "CREATE"
-    creation_time:
-        description: Time when the action has been made.
-        type: string
-        sample: "2016-07-05T17:38:12Z"
-    description:
-        description: Description of the Stack provided in the heat template.
-        type: string
-        sample: "HOT template to create a new instance and networks"
-    id:
-        description: Stack ID.
-        type: string
-        sample: "97a3f543-8136-4570-920e-fd7605c989d6"
-    name:
-        description: Name of the Stack
-        type: string
-        sample: "test-stack"
-    identifier:
-        description: Identifier of the current Stack action.
-        type: string
-        sample: "test-stack/97a3f543-8136-4570-920e-fd7605c989d6"
-    links:
-        description: Links to the current Stack.
-        type: list of dict
-        sample: "[{'href': 'http://foo:8004/v1/7f6a/stacks/test-stack/97a3f543-8136-4570-920e-fd7605c989d6']"
-    outputs:
-        description: Output returned by the Stack.
-        type: list of dict
-        sample: "{'description': 'IP address of server1 in private network',
-                    'output_key': 'server1_private_ip',
-                    'output_value': '10.1.10.103'}"
-    parameters:
-        description: Parameters of the current Stack
-        type: dict
-        sample: "{'OS::project_id': '7f6a3a3e01164a4eb4eecb2ab7742101',
-                    'OS::stack_id': '97a3f543-8136-4570-920e-fd7605c989d6',
-                    'OS::stack_name': 'test-stack',
-                    'stack_status': 'CREATE_COMPLETE',
-                    'stack_status_reason': 'Stack CREATE completed successfully',
-                    'status': 'COMPLETE',
-                    'template_description': 'HOT template to create a new instance and networks',
-                    'timeout_mins': 60,
-                    'updated_time': null}"
+    description: stack info
+    type: complex
+    returned: always
+    contains:
+        action:
+            description: Action, could be Create or Update.
+            type: string
+            sample: "CREATE"
+        creation_time:
+            description: Time when the action has been made.
+            type: string
+            sample: "2016-07-05T17:38:12Z"
+        description:
+            description: Description of the Stack provided in the heat template.
+            type: string
+            sample: "HOT template to create a new instance and networks"
+        id:
+            description: Stack ID.
+            type: string
+            sample: "97a3f543-8136-4570-920e-fd7605c989d6"
+        name:
+            description: Name of the Stack
+            type: string
+            sample: "test-stack"
+        identifier:
+            description: Identifier of the current Stack action.
+            type: string
+            sample: "test-stack/97a3f543-8136-4570-920e-fd7605c989d6"
+        links:
+            description: Links to the current Stack.
+            type: list of dict
+            sample: "[{'href': 'http://foo:8004/v1/7f6a/stacks/test-stack/97a3f543-8136-4570-920e-fd7605c989d6']"
+        outputs:
+            description: Output returned by the Stack.
+            type: list of dict
+            sample: "{'description': 'IP address of server1 in private network',
+                        'output_key': 'server1_private_ip',
+                        'output_value': '10.1.10.103'}"
+        parameters:
+            description: Parameters of the current Stack
+            type: dict
+            sample: "{'OS::project_id': '7f6a3a3e01164a4eb4eecb2ab7742101',
+                        'OS::stack_id': '97a3f543-8136-4570-920e-fd7605c989d6',
+                        'OS::stack_name': 'test-stack',
+                        'stack_status': 'CREATE_COMPLETE',
+                        'stack_status_reason': 'Stack CREATE completed successfully',
+                        'status': 'COMPLETE',
+                        'template_description': 'HOT template to create a new instance and networks',
+                        'timeout_mins': 60,
+                        'updated_time': null}"
 '''
 
 from time import sleep

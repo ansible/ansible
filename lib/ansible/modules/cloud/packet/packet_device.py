@@ -205,7 +205,7 @@ changed:
     returned: always
 devices:
     description: Information about each device that was processed
-    type: array
+    type: list
     sample: '[{"hostname": "my-server.com", "id": "server-id", "public-ipv4": "147.229.15.12", "private-ipv4": "10.0.15.12", "public-ipv6": ""2604:1380:2:5200::3"}]'
     returned: always
 '''  # NOQA

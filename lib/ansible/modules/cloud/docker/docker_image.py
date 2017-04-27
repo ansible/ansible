@@ -242,7 +242,7 @@ RETURN = '''
 image:
     description: Image inspection results for the affected image.
     returned: success
-    type: complex
+    type: dict
     sample: {}
 '''
 

@@ -181,6 +181,7 @@ storage_domain:
     description: "Dictionary of all the storage domain attributes. Storage domain attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/storage_domain."
     returned: On success if storage domain is found.
+    type: dict
 '''
 
 try:

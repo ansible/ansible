@@ -111,7 +111,8 @@ EXAMPLES = '''
 RETURN = '''
 taskdefinition:
     description: a reflection of the input parameters
-    type: dict inputs plus revision, status, taskDefinitionArn
+    type: dict
+    returned: always
 '''
 try:
     import boto

@@ -87,7 +87,7 @@ RETURN = '''
 group:
     description: Dictionary describing the group.
     returned: On success when I(state) is 'present'.
-    type: dictionary
+    type: complex
     contains:
         id:
             description: Unique group ID

@@ -241,48 +241,48 @@ RETURN = '''
 openstack_quotas:
     description: Dictionary describing the project quota.
     returned: Regardless if changes where made or note
-    type: dictionary
-    contains example:
-    "openstack_quotas": {
-        "compute": {
-            "cores": 150,
-            "fixed_ips": -1,
-            "floating_ips": 10,
-            "injected_file_content_bytes": 10240,
-            "injected_file_path_bytes": 255,
-            "injected_files": 5,
-            "instances": 100,
-            "key_pairs": 100,
-            "metadata_items": 128,
-            "ram": 153600,
-            "security_group_rules": 20,
-            "security_groups": 10,
-            "server_group_members": 10,
-            "server_groups": 10
-        },
-        "network": {
-            "floatingip": 50,
-            "network": 10,
-            "port": 160,
-            "rbac_policy": 10,
-            "router": 10,
-            "security_group": 10,
-            "security_group_rule": 100,
-            "subnet": 10,
-            "subnetpool": -1
-        },
-        "volume": {
-            "backup_gigabytes": 1000,
-            "backups": 10,
-            "gigabytes": 1000,
-            "gigabytes_lvm": -1,
-            "per_volume_gigabytes": -1,
-            "snapshots": 10,
-            "snapshots_lvm": -1,
-            "volumes": 10,
-            "volumes_lvm": -1
+    type: complex
+    contains:
+        openstack_quotas: {
+            compute: {
+                cores: 150,
+                fixed_ips: -1,
+                floating_ips: 10,
+                injected_file_content_bytes: 10240,
+                injected_file_path_bytes: 255,
+                injected_files: 5,
+                instances: 100,
+                key_pairs: 100,
+                metadata_items: 128,
+                ram: 153600,
+                security_group_rules: 20,
+                security_groups: 10,
+                server_group_members: 10,
+                server_groups: 10
+            },
+            network: {
+                floatingip: 50,
+                network: 10,
+                port: 160,
+                rbac_policy: 10,
+                router: 10,
+                security_group: 10,
+                security_group_rule: 100,
+                subnet: 10,
+                subnetpool: -1
+            },
+            volume: {
+                backup_gigabytes: 1000,
+                backups: 10,
+                gigabytes: 1000,
+                gigabytes_lvm: -1,
+                per_volume_gigabytes: -1,
+                snapshots: 10,
+                snapshots_lvm: -1,
+                volumes: 10,
+                volumes_lvm: -1
+            }
         }
-    }
 
 '''
 

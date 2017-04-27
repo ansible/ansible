@@ -127,10 +127,12 @@ output:
 logs:
     description: The last 4KB of the function logs. Only provided if I(tail_log) is true
     type: string
+    returned: if I(tail_log) == true
 status:
     description: C(StatusCode) of API call exit (200 for synchronous invokes, 202 for async)
     type: int
     sample: 200
+    returned: always
 '''
 
 import base64

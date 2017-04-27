@@ -80,33 +80,33 @@ EXAMPLES = '''
 RETURN = '''
 creation_time:
     description: timestamp of creation date
-    returned:
-    type: datetime
-    sample: 2015-11-16 07:30:57-05:00
+    returned: always
+    type: str
+    sample: "2015-11-16 07:30:57-05:00"
 creation_token:
     description: EFS creation token
-    returned:
-    type: UUID
+    returned: always
+    type: str
     sample: console-88609e04-9a0e-4a2e-912c-feaa99509961
 file_system_id:
     description: ID of the file system
-    returned:
-    type: unique ID
+    returned: always
+    type: str
     sample: fs-xxxxxxxx
 life_cycle_state:
     description: state of the EFS file system
-    returned:
+    returned: always
     type: str
     sample: creating, available, deleting, deleted
 mount_point:
     description: url of file system
-    returned:
+    returned: always
     type: str
     sample: .fs-xxxxxxxx.efs.us-west-2.amazonaws.com:/
 mount_targets:
     description: list of mount targets
-    returned:
-    type: list of dicts
+    returned: always
+    type: list
     sample:
         [
             {
@@ -125,22 +125,22 @@ mount_targets:
         ]
 name:
     description: name of the file system
-    returned:
+    returned: always
     type: str
     sample: my-efs
 number_of_mount_targets:
     description: the number of targets mounted
-    returned:
+    returned: always
     type: int
     sample: 3
 owner_id:
     description: AWS account ID of EFS owner
-    returned:
+    returned: always
     type: str
     sample: XXXXXXXXXXXX
 size_in_bytes:
     description: size of the file system in bytes as of a timestamp
-    returned:
+    returned: always
     type: dict
     sample:
         {
@@ -149,12 +149,12 @@ size_in_bytes:
         }
 performance_mode:
     description: performance mode of the file system
-    returned:
+    returned: always
     type: str
     sample: "generalPurpose"
 tags:
     description: tags on the efs instance
-    returned:
+    returned: always
     type: dict
     sample:
         {
