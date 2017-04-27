@@ -397,7 +397,7 @@ class PlayContext(Base):
                         setattr(new_info, attr, variables[variable_name])
                     attrs_considered.append(attr)
                 # no else, as no other vars should be considered
-                
+
         # become legacy updates -- from commandline
         if not new_info.become_pass:
             if new_info.become_method == 'sudo' and new_info.sudo_pass:
