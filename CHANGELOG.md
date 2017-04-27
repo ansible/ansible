@@ -13,6 +13,15 @@ Ansible Changes By Release
   Python-2.5 you'll need to install Python-2.6 or better there or run
   Ansible-2.3 until you can upgrade the system.
 
+### Deprecations
+* The behaviour when specifying --tags (or --skip-tags) multiple times on the command line
+  has changed so that the tags are merged together by default.  See the
+  documentation for how to temporarily use the old behaviour if needed:
+  https://docs.ansible.com/ansible/intro_configuration.html#merge-multiple-cli-tags
+* The fetch module's validate_md5 parameter has been deprecated and will be
+  removed in 2.8.  If you wish to disable post-validation of the downloaded
+  file, use validate_checksum instead.
+
 ### Minor Changes
 * removed previously deprecated config option 'hostfile' and env var 'ANSIBLE_HOSTS'
 * removed unused and deprecated config option 'pattern'
