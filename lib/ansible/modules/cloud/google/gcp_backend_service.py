@@ -176,7 +176,7 @@ timeout:
     description: In seconds, how long before a request sent to a backend is
                  considered failed.
     returned: If specified.
-    type: integer
+    type: int
     sample: "myhttpport"
 '''
 

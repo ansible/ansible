@@ -85,6 +85,7 @@ EXAMPLES = '''
 RETURN = '''
 contains_resources:
     description: Whether or not the resource group contains associated resources.
+    returned: always
     type: bool
     sample: True
 state:

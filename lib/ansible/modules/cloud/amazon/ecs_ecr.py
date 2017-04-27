@@ -104,9 +104,11 @@ RETURN = '''
 state:
     type: string
     description: The asserted state of the repository (present, absent)
+    returned: always
 created:
     type: boolean
     description: If true, the repository was created
+    returned: always
 name:
     type: string
     description: The name of the repository

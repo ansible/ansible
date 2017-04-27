@@ -90,6 +90,7 @@ tag:
     description: "Dictionary of all the tag attributes. Tag attributes can be found on your oVirt/RHV instance
                   at following url: https://ovirt.example.com/ovirt-engine/api/model#types/tag."
     returned: On success if tag is found.
+    type: dict
 '''
 
 import traceback
