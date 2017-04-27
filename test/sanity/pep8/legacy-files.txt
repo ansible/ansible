@@ -845,7 +845,6 @@ lib/ansible/plugins/action/group_by.py
 lib/ansible/plugins/action/ios_template.py
 lib/ansible/plugins/action/iosxr_template.py
 lib/ansible/plugins/action/junos.py
-lib/ansible/plugins/action/junos_config.py
 lib/ansible/plugins/action/junos_template.py
 lib/ansible/plugins/action/normal.py
 lib/ansible/plugins/action/nxos.py

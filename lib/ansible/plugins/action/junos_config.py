@@ -27,6 +27,7 @@ import glob
 from ansible.plugins.action.junos import ActionModule as _ActionModule
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
+from ansible.module_utils._text import to_native
 from ansible.utils.vars import merge_hash
 
 PRIVATE_KEYS_RE = re.compile('__.+__')
@@ -74,7 +75,7 @@ class ActionModule(_ActionModule):
             os.remove(fn)
         tstamp = time.strftime("%Y-%m-%d@%H:%M:%S", time.localtime(time.time()))
         filename = '%s/%s_config.%s' % (backup_path, host, tstamp)
-        open(filename, 'w').write(contents)
+        open(filename, 'w').write(to_native(contents, encoding='latin1'))
         return filename
 
     def _handle_template(self):
@@ -110,4 +111,3 @@ class ActionModule(_ActionModule):
         searchpath.append(os.path.dirname(source))
         self._templar.environment.loader.searchpath = searchpath
         self._task.args['src'] = self._templar.template(template_data)
-
