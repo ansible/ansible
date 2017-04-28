@@ -267,12 +267,11 @@ commands:
 '''
 
 import re
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+from ansible.module_utils.nxos import get_config, load_config
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import CustomNetworkConfig
 
-WARNINGS = []
 BOOL_PARAMS = [
     'additional_paths_install',
     'additional_paths_receive',
@@ -330,13 +329,7 @@ DAMPENING_PARAMS = [
     'dampening_suppress_time',
     'dampening_reuse_time',
     'dampening_max_suppress_time'
-    ]
-
-
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
+]
 
 
 def get_custom_list_value(config, arg, module):
@@ -347,7 +340,7 @@ def get_custom_list_value(config, arg, module):
                        '\sexist-map\s(?P<exist_map>\S+)-*')
 
         for line in splitted_config:
-            value =  []
+            value = []
             inject_group = {}
             try:
                 match_inject = re.match(REGEX_INJECT, line, re.DOTALL)
@@ -357,7 +350,7 @@ def get_custom_list_value(config, arg, module):
                 value.append(inject_map)
                 value.append(exist_map)
             except AttributeError:
-                value =  []
+                value = []
 
             if value:
                 copy_attributes = False
@@ -382,8 +375,7 @@ def get_custom_list_value(config, arg, module):
         REGEX_NETWORK = re.compile(r'(?:network\s)(?P<value>.*)$')
 
         for line in splitted_config:
-            value =  []
-            network_group = {}
+            value = []
             if 'network' in line:
                 value = REGEX_NETWORK.search(line).group('value').split()
 
@@ -396,8 +388,7 @@ def get_custom_list_value(config, arg, module):
         RED_REGEX = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(
             PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
         for line in splitted_config:
-            value =  []
-            redistribute_group = {}
+            value = []
             if 'redistribute' in line:
                 value = RED_REGEX.search(line).group('value').split()
                 if value:
@@ -491,7 +482,7 @@ def get_value(arg, config, module):
         value = get_custom_list_value(config, arg, module)
 
     elif (arg.startswith('distance') or arg.startswith('dampening') or
-            arg.startswith('table_map')):
+          arg.startswith('table_map')):
         value = get_custom_string_value(config, arg, module)
 
     else:
@@ -502,12 +493,12 @@ def get_value(arg, config, module):
     return value
 
 
-def get_existing(module, args):
+def get_existing(module, args, warnings):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
     try:
-        asn_regex = '.*router\sbgp\s(?P<existing_asn>\d+).*'
+        asn_regex = r'.*router\sbgp\s(?P<existing_asn>\d+).*'
         match_asn = re.match(asn_regex, str(netcfg), re.DOTALL)
         existing_asn_group = match_asn.groupdict()
         existing_asn = existing_asn_group['existing_asn']
@@ -533,7 +524,7 @@ def get_existing(module, args):
             existing['safi'] = module.params['safi']
             existing['vrf'] = module.params['vrf']
     else:
-        WARNINGS.append("The BGP process {0} didn't exist but the task"
+        warnings.append("The BGP process {0} didn't exist but the task"
                         " just created it.".format(module.params['asn']))
 
     return existing
@@ -602,12 +593,10 @@ def default_existing(existing_value, key, value):
     elif key == 'inject-map':
         for maps in existing_value:
             if len(maps) == 2:
-                commands.append('no inject-map {0} exist-map {1}'.format(
-                                maps[0], maps[1]))
+                commands.append('no inject-map {0} exist-map {1}'.format(maps[0], maps[1]))
             elif len(maps) == 3:
                 commands.append('no inject-map {0} exist-map {1} '
-                                'copy-attributes'.format(
-                                    maps[0], maps[1]))
+                                'copy-attributes'.format(maps[0], maps[1]))
     else:
         commands.append('no {0} {1}'.format(key, existing_value))
     return commands
@@ -623,8 +612,7 @@ def get_network_command(existing, key, value):
             if len(inet) == 1:
                 command = '{0} {1}'.format(key, inet[0])
             elif len(inet) == 2:
-                command = '{0} {1} route-map {2}'.format(key,
-                                                inet[0], inet[1])
+                command = '{0} {1} route-map {2}'.format(key, inet[0], inet[1])
             commands.append(command)
     return commands
 
@@ -756,7 +744,7 @@ def state_present(module, existing, proposed, candidate):
             candidate.add(commands, parents=parents)
         elif len(commands) > 1:
             parents.append('address-family {0} {1}'.format(module.params['afi'],
-                                                module.params['safi']))
+                                                           module.params['safi']))
             if addr_family_command in commands:
                 commands.remove(addr_family_command)
             candidate.add(commands, parents=parents)
@@ -777,8 +765,8 @@ def main():
     argument_spec = dict(
         asn=dict(required=True, type='str'),
         vrf=dict(required=False, type='str', default='default'),
-        safi=dict(required=True, type='str', choices=['unicast','multicast', 'evpn']),
-        afi=dict(required=True, type='str', choices=['ipv4','ipv6', 'vpnv4', 'vpnv6', 'l2vpn']),
+        safi=dict(required=True, type='str', choices=['unicast', 'multicast', 'evpn']),
+        afi=dict(required=True, type='str', choices=['ipv4', 'ipv6', 'vpnv4', 'vpnv6', 'l2vpn']),
         additional_paths_install=dict(required=False, type='bool'),
         additional_paths_receive=dict(required=False, type='bool'),
         additional_paths_selection=dict(required=False, type='str'),
@@ -806,8 +794,7 @@ def main():
         suppress_inactive=dict(required=False, type='bool'),
         table_map=dict(required=False, type='str'),
         table_map_filter=dict(required=False, type='bool'),
-        state=dict(choices=['present', 'absent'], default='present',
-                       required=False),
+        state=dict(choices=['present', 'absent'], default='present', required=False),
         include_defaults=dict(default=True),
         config=dict(),
         save=dict(type='bool', default=False)
@@ -815,16 +802,15 @@ def main():
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                                required_together=[DAMPENING_PARAMS,
-                                          ['distance_ibgp',
-                                           'distance_ebgp',
-                                           'distance_local']],
-                                supports_check_mode=True)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_together=[DAMPENING_PARAMS, ['distance_ibgp', 'distance_ebgp', 'distance_local']],
+        supports_check_mode=True,
+    )
 
     warnings = list()
+    result = dict(changed=False, warnings=warnings)
     check_args(module, warnings)
-
 
     state = module.params['state']
     if module.params['dampening_routemap']:
@@ -843,7 +829,7 @@ def main():
         module.fail_json(msg='table_map param is needed when using'
                              ' table_map_filter filter.')
 
-    args =  [
+    args = [
         "additional_paths_install",
         "additional_paths_receive",
         "additional_paths_selection",
@@ -877,7 +863,7 @@ def main():
         "vrf"
     ]
 
-    existing = invoke('get_existing', module, args)
+    existing = get_existing(module, args, warnings)
 
     if existing.get('asn'):
         if (existing.get('asn') != module.params['asn'] and
@@ -886,9 +872,8 @@ def main():
                              proposed_asn=module.params['asn'],
                              existing_asn=existing.get('asn'))
 
-    end_state = existing
     proposed_args = dict((k, v) for k, v in module.params.items()
-                    if v is not None and k in args)
+                         if v is not None and k in args)
 
     if proposed_args.get('networks'):
         if proposed_args['networks'][0] == 'default':
@@ -907,27 +892,20 @@ def main():
             if existing.get(key) or (not existing.get(key) and value):
                 proposed[key] = value
 
-    result = {}
-    if state == 'present' or (state == 'absent' and existing):
-        candidate = CustomNetworkConfig(indent=3)
-        invoke('state_%s' % state, module, existing, proposed, candidate)
+    candidate = CustomNetworkConfig(indent=3)
+    if state == 'present':
+        state_present(module, existing, proposed, candidate)
+    elif state == 'absent' and existing:
+        state_absent(module, existing, proposed, candidate)
+
+    if candidate:
         response = load_config(module, candidate)
         result.update(response)
-
     else:
-        result['updates'] = []
+        result['commands'] = []
 
-    if module._verbosity > 0:
-        end_state = invoke('get_existing', module, args)
-        result['end_state'] = end_state
-        result['existing'] = existing
-        result['proposed'] = proposed_args
-
-    if WARNINGS:
-        result['warnings'] = WARNINGS
     module.exit_json(**result)
 
 
 if __name__ == '__main__':
     main()
-
