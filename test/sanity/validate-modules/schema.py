@@ -61,18 +61,18 @@ list_dict_option_schema = [{str_type: option_schema} for str_type in string_type
 def return_schema(data):
 
     return_schema_dict = {
-        Required('description'): Any(basestring, list),
-        Required('returned'): basestring,
+        Required('description'): Any(list_string_types, list),
+        Required('returned'): list_string_types,
         Required('type'): Any('string', 'list', 'boolean', 'dict', 'complex', 'bool', 'float', 'int', 'dictionary', 'str'),
-        'sample': Any(None, basestring, list, dict, int, float),
-        'example': Any(None, basestring, list, dict, int, float)
+        'sample': Any(None, list_string_types, list, dict, int, float),
+        'example': Any(None, list_string_types, list, dict, int, float)
     }
     if isinstance(data, dict):
         if 'type' in data and (data['type'] == 'complex'):
             # This will just check if the schema has a 'contains' value.
             # It won't recursively validate the contents of the 'contains' field
             additional_schema = {
-                Required('contains'): Any(basestring, dict, list)
+                Required('contains'): Any(list_string_types, dict, list)
             }
             return_schema_dict.update(additional_schema)
 
