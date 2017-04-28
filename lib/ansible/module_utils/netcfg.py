@@ -155,6 +155,9 @@ class NetworkConfig(object):
     def __str__(self):
         return '\n'.join([c.raw for c in self.items])
 
+    def __len__(self):
+        return len(self._items)
+
     def load(self, s):
         self._items = self.parse(s)
 
