@@ -65,6 +65,28 @@
     that:
         - result.failed
 
+- name: test HTTP HEAD request for file in check mode
+  get_url: url="http://{{ httpbin_host }}/get" dest={{ output_dir }}/get_url_check.txt force=yes
+  check_mode: True
+  register: result
+
+- name: assert that the HEAD request was successful in check mode
+  assert:
+    that:
+    - result.changed
+    - '"OK" in result.msg'
+
+- name: test HTTP HEAD for nonexistent URL in check mode
+  get_url: url="http://{{ httpbin_host }}/DOESNOTEXIST" dest={{ output_dir }}/shouldnotexist.html force=yes
+  check_mode: True
+  register: result
+  ignore_errors: True
+
+- name: assert that HEAD request for nonexistent URL failed
+  assert:
+    that:
+    - result.failed
+
 - name: test https fetch
   get_url: url="https://{{ httpbin_host }}/get" dest={{output_dir}}/get_url.txt force=yes
   register: result
