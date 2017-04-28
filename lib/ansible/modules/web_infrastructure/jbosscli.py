@@ -1,6 +1,5 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
+##!/usr/bin/env python
+#
 # (c) 2017, Antonio Insusti <antonio@insuasti.ec>
 #
 # This file is part of Ansible
@@ -23,7 +22,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'supported_by': 'community'}
 
 DOCUMENTATION = """
-author: Antonio Insuasti
+author: "Antonio Insuasti (@wolfantEc)"
 module: jbosscli
 version_added: 2.4
 short_description: deploy applications to JBoss
@@ -64,7 +63,6 @@ options:
 notes:
   - "jboss-cli.sh need to be runing on client host, and $JAVA_HOME/bin is needeth in Client $PATH"
   - ""
-author: "Antonio Insuasti (@wolfantEc)"
 """
 
 EXAMPLES = """
@@ -101,6 +99,12 @@ stdout:
     returned: If verbose JBoss Cli command output, else success or failed
     type: string
     sample: '{"outcome" => "success"}'
+Error:
+    description: Jboss Cli command error
+    returned: return error if falied
+    type: string
+    sample: '{"outcome" => "success"}'
+
 '''
 
 import os
@@ -188,7 +192,7 @@ def main():
                     result['stdout'] = 'success'
             else:
                 result['changed'] = False
-                result['stderr'] = re.findall("failure-description.+", out)
+                result['Error'] = re.findall("failure-description.+", out)
                 if verbose == "True":
                     result['stdout'] = out
                 else:
@@ -203,7 +207,7 @@ def main():
     if rc != 0:
         module.fail_json(name='jbosscli', msg=re.findall("failure-description.+", out))
     if err:
-        result['stderr'] = err
+        result['Error'] = err
 
     module.exit_json(**result)
 
