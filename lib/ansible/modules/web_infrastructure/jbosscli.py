@@ -111,6 +111,7 @@ import grp
 import platform
 from ansible.module_utils.basic import AnsibleModule
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -172,7 +173,7 @@ def main():
 
     if rc != 0 and not out:
         cause = re.findall("Caused.+", err)
-        if not cause is None:
+        if cause is not None:
             module.fail_json(name='jboss-cli', msg=str(cause))
         else:
             module.fail_json(name='jboss-cli', msg=err)
@@ -192,14 +193,13 @@ def main():
                     result['stdout'] = out
                 else:
                     result['stdout'] = re.findall("outcome.+", out)
-
         else:
             result['changed'] = False
             result['stdout'] = out
 
     if src:
-         result['changed'] = True
-         result['stdout'] = out
+        result['changed'] = True
+        result['stdout'] = out
     if rc != 0:
         module.fail_json(name='jbosscli', msg=re.findall("failure-description.+", out))
     if err:
