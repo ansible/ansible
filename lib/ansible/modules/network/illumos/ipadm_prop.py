@@ -90,9 +90,9 @@ temporary:
     type: boolean
     sample: "True"
 value:
-    description: value of the property
+    description: value of the property. May be int or string depending on property.
     returned: always
-    type: int/string (depends on property)
+    type: int
     sample: "'1024' or 'never'"
 '''
 
