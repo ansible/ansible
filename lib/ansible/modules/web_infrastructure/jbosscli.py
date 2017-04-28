@@ -22,9 +22,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = """
-module: jboss
+author: Antonio Insuasti
+module: jbosscli
+version_added: 2.4
 short_description: deploy applications to JBoss
 description:
   - Deploy applications to JBoss standalone using the filesystem
@@ -60,8 +61,6 @@ options:
     default: false
     description:
       - Show the JBoss Cli output, commonly in DMR
-
-
 notes:
   - "jboss-cli.sh need to be runing on client host, and $JAVA_HOME/bin is needeth in Client $PATH"
   - ""
@@ -84,28 +83,46 @@ EXAMPLES = """
     command: undeploy hello.war
     server: "{{ ansible_hostname}}:9990"
 """
+
+RETURN = '''
+---
+changed:
+    description: if jboss cli command change something
+    returned: true
+    type: string
+    sample: 'changed: true'
+command:
+    description: Jboss Cli command
+    returned: JBoss Cli command
+    type: string
+    sample: 'command: "/subsystem=deployment-scanner/scanner=default:write-attribute(name=scan-interval,value=1000)"'
+stdout:
+    description: Jboss Cli command output
+    returned: If verbose JBoss Cli command output, else success or failed
+    type: string
+    sample: '{"outcome" => "success"}'
+'''
+
 import os
 import shutil
 import time
 import re
 import grp
 import platform
-import json
+from ansible.module_utils.basic import AnsibleModule
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             src=dict(),
-            user=dict(default='USER'),
-            password=dict(default='PASSWORD'),
+            user=dict(),
+            password=dict(),
             command=dict(),
             cli_path=dict(default='/usr/share/wildfly/bin'),
             server=dict(default='localhost:9990'),
             verbose=dict(default="False"),
         ),
     )
-
-
 
     changed = False
 
@@ -116,7 +133,7 @@ def main():
     cli_path = module.params['cli_path']
     server = module.params['server']
     verbose = module.params['verbose']
-    jsout=None
+    jsout = None
 
     if command and src:
         module.fail_json(msg="Argument 'src' and 'command' are mutually exclusive")
@@ -127,17 +144,16 @@ def main():
     if not os.access(cli_path + "/jboss-cli.sh", os.X_OK):
         module.fail_json(msg="jboss-cli.sh in not found on cli_path ")
 
-    cmd = [cli_path + "/jboss-cli.sh" ]
+    cmd = [cli_path + "/jboss-cli.sh"]
     cmd.append('-c')
     cmd.append("--controller=" + str(server))
 
-
     if user:
-        cmd.append('--user='+str(user))
-        cmd.append('--password='+str(password))
+        cmd.append('--user=' + str(user))
+        cmd.append('--password=' + str(password))
 
     if src:
-        cmd.append('--file=' + str(src) )
+        cmd.append('--file=' + str(src))
     else:
         cmd.append('%s' % str(command))
 
@@ -147,7 +163,7 @@ def main():
     result = {}
     result['command'] = command
 
-    (rc, out, err) = module.run_command(cmd,encoding='utf-8')
+    (rc, out, err) = module.run_command(cmd, encoding='utf-8')
 
     if rc is None:
         result['changed'] = False
@@ -155,27 +171,27 @@ def main():
         result['changed'] = True
 
     if rc != 0 and not out:
-         cause=re.findall("Caused.+",err)
-         if not cause is None:
-             module.fail_json(name='jboss-cli', msg=str(cause))
-         else:
-             module.fail_json(name='jboss-cli', msg=err)
+        cause = re.findall("Caused.+", err)
+        if not cause is None:
+            module.fail_json(name='jboss-cli', msg=str(cause))
+        else:
+            module.fail_json(name='jboss-cli', msg=err)
 
     if out and not src:
         if not out.find("outcome") < 0:
             if out.find('success'):
-                result['changed']=True
+                result['changed'] = True
                 if verbose == "True":
                     result['stdout'] = out
                 else:
                     result['stdout'] = 'success'
             else:
-                result['changed']= False
-                result['stderr']= re.findall("failure-description.+",out)
+                result['changed'] = False
+                result['stderr'] = re.findall("failure-description.+", out)
                 if verbose == "True":
                     result['stdout'] = out
                 else:
-                    result['stdout'] = re.findall("outcome.+",out)
+                    result['stdout'] = re.findall("outcome.+", out)
 
         else:
             result['changed'] = False
@@ -184,19 +200,12 @@ def main():
     if src:
          result['changed'] = True
          result['stdout'] = out
-
-
     if rc != 0:
-        module.fail_json(name='jbosscli', msg=re.findall("failure-description.+",out))
-
+        module.fail_json(name='jbosscli', msg=re.findall("failure-description.+", out))
     if err:
         result['stderr'] = err
 
     module.exit_json(**result)
-
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
