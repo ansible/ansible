@@ -1,7 +1,13 @@
+***************
 Testing Ansible
-===============
+***************
 
-How to run and create tests for the Ansible core engine and modules with ``ansible-test``.
+.. contents:: Topics
+
+This page describes how to:
+
+* Run tests locally using ``ansible-test``
+* Extend
 
 Requirements
 ============
@@ -13,15 +19,18 @@ The requirements for each ``ansible-test`` command are covered later.
 Setup
 =====
 
-#. Fork the `ansible/ansible <https://github.com/ansible/ansible/>`_ repository on Git Hub.
-#. Clone your fork: ``git clone git@github.com:USERNAME/ansible.git``
-#. Install the optional ``argcomplete`` package for tab completion (highly recommended):
+The code and tests are in the same GitHub repository, to get a local copy do
 
-   #. ``pip install argcomplete``
-   #. ``activate-global-python-argcomplete``
-   #. Restart your shell to complete global activation.
+#. Fork the `ansible/ansible <https://github.com/ansible/ansible/>`_ repository on GitHub.
+#. Clone your fork: ``git clone git@github.com:USERNAME/ansible.git``
+#. Install the optional ``argcomplete`` package for tab completion (highly recommended)::
+
+    pip install argcomplete
+    activate-global-python-argcomplete
+    # Restart your shell to complete global activation.
 
 #. Configure your environment to run from your clone (once per shell): ``. hacking/env-setup``
+#. ``ansible``, ``ansible-playbook`` and ``ansible-test`` will now be in your ``PATH``
 
 Test Environments
 =================
@@ -81,7 +90,7 @@ An API key is required to use this feature.
 
     Recommended for integration tests.
 
-See the `list of supported platforms and versions <runner/completion/remote.txt>`_ for additional details.
+See the `list of supported platforms and versions <https://github.com/ansible/ansible/blob/devel/test/runner/completion/remote.txt>`_ for additional details.
 
 General Usage
 =============
