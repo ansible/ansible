@@ -40,6 +40,8 @@ description:
        or by using the use_proxy option.
      - HTTP redirects can redirect from HTTP to HTTPS so you should be sure that
        your proxy environment for both protocols is correct.
+     - From Ansible 2.4 when run with C(--check), it will do a HEAD request to validate the URL but
+       will not download the entire file or verify it against hashes.
 version_added: "0.6"
 options:
   url:
@@ -241,8 +243,12 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
 
     Return (tempfile, info about the request)
     """
+    if module.check_mode:
+        method='HEAD'
+    else:
+        method='GET'
 
-    rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers)
+    rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers, method=method)
 
     if info['status'] == 304:
         module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''))
@@ -318,7 +324,8 @@ def main():
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec = argument_spec,
-        add_file_common_args=True
+        add_file_common_args=True,
+        supports_check_mode=True,
     )
 
     url  = module.params['url']
@@ -411,6 +418,12 @@ def main():
 
     checksum_src   = None
     checksum_dest  = None
+
+    # If the remote URL exists, we're done with check mode
+    if module.check_mode:
+        os.remove(tmpsrc)
+        res_args = dict( url = url, dest = dest, src = tmpsrc, changed = True, msg = info.get('msg', ''))
+        module.exit_json(**res_args)
 
     # raise an error if there is no tmpsrc file
     if not os.path.exists(tmpsrc):
