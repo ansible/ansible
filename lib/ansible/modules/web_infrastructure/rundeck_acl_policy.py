@@ -104,11 +104,11 @@ rundeck_response:
 before:
     description: dictionnary containing ACL policy informations before modification.
     returned: success
-    type: dictionnary
+    type: dict
 after:
     description: dictionnary containing ACL policy informations after modification.
     returned: success
-    type: dictionnary
+    type: dict
 '''
 
 # import module snippets
