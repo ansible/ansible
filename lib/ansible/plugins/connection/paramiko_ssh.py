@@ -245,6 +245,8 @@ class Connection(ConnectionBase):
                 port=port,
                 **sock_kwarg
             )
+        except paramiko.ssh_exception.BadHostKeyException as e:
+            raise AnsibleConnectionFailure('host key mismatch for %s' % e.hostname)
         except Exception as e:
             msg = str(e)
             if "PID check failed" in msg:
