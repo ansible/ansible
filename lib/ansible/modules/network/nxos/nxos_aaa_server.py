@@ -22,8 +22,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 
 DOCUMENTATION = '''
----
-
 module: nxos_aaa_server
 extends_documentation_fragment: nxos
 version_added: "2.2"
@@ -121,56 +119,24 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: always
-    type: dict
-    sample: {"deadtime": "22", "directed_request": "enabled",
-            "server_type": "radius", "server_timeout": "11"}
-existing:
-    description:
-        - k/v pairs of existing aaa server
-    returned: always
-    type: dict
-    sample: {"deadtime": "0", "directed_request": "disabled",
-            "global_key": "unknown", "server_timeout": "5"}
-end_state:
-    description: k/v pairs of aaa params after module execution
-    returned: always
-    type: dict
-    sample: {"deadtime": "22", "directed_request": "enabled",
-            "global_key": "unknown", "server_timeout": "11"}
 state:
-    description: state as sent in from the playbook
-    returned: always
-    type: string
-    sample: "present"
-updates:
-    description: command sent to the device
-    returned: always
-    type: list
-    sample: ["radius-server deadtime 22", "radius-server timeout 11",
-             "radius-server directed-request"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
+  description: state as sent in from the playbook
+  returned: always
+  type: string
+  sample: "present"
+commands:
+  description: command sent to the device
+  returned: always
+  type: list
+  sample: ["radius-server deadtime 22", "radius-server timeout 11",
+           "radius-server directed-request"]
 '''
 import re
 
+from ansible.module_utils._text import text_type
 from ansible.module_utils.nxos import load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
-
-
-def execute_show_command(command, module, command_type='cli_show'):
-    cmds = [command]
-    if module.params['transport'] == 'cli':
-        body = run_commands(module, cmds)
-    elif module.params['transport'] == 'nxapi':
-        body = run_commands(module, cmds)
-    return body
 
 
 def flatten_list(command_lists):
@@ -183,39 +149,42 @@ def flatten_list(command_lists):
     return flat_command_list
 
 
-
 def get_aaa_server_info(server_type, module):
-    aaa_server_info = {}
     server_command = 'show {0}-server'.format(server_type)
+    server_body = run_commands(module, [server_command])[0]
+
     request_command = 'show {0}-server directed-request'.format(server_type)
-    global_key_command = 'show run | sec {0}'.format(server_type)
-    aaa_regex = '.*{0}-server\skey\s\d\s+(?P<key>\S+).*'.format(server_type)
+    request_body = run_commands(module, [request_command])[0]
 
-    server_body = execute_show_command(
-        server_command, module, command_type='cli_show_ascii')[0]
+    global_key_command = 'show run section {0}'.format(server_type)
+    key_body = run_commands(module, global_key_command)[0]
 
-    split_server = server_body.splitlines()
+    aaa_regex = r'.*{0}-server\skey\s\d\s+(?P<key>\S+).*'.format(server_type)
 
-    for line in split_server:
-        if line.startswith('timeout'):
-            aaa_server_info['server_timeout'] = line.split(':')[1]
+    aaa_server_info = {}
+    if module.params['transport'] == 'cli':
+        split_server = server_body.splitlines()
 
-        elif line.startswith('deadtime'):
-            aaa_server_info['deadtime'] = line.split(':')[1]
+        for line in split_server:
+            if line.startswith('timeout'):
+                aaa_server_info['server_timeout'] = line.split(':')[1]
 
-    request_body = execute_show_command(
-        request_command, module, command_type='cli_show_ascii')[0]
-    aaa_server_info['directed_request'] = request_body.replace('\n', '')
+            elif line.startswith('deadtime'):
+                aaa_server_info['deadtime'] = line.split(':')[1]
 
-    key_body = execute_show_command(
-        global_key_command, module, command_type='cli_show_ascii')[0]
+        aaa_server_info['directed_request'] = request_body.replace('\n', '')
 
-    try:
-        match_global_key = re.match(aaa_regex, key_body, re.DOTALL)
-        group_key = match_global_key.groupdict()
-        aaa_server_info['global_key'] = group_key["key"].replace('\"', '')
-    except (AttributeError, TypeError):
-        aaa_server_info['global_key'] = 'unknown'
+        try:
+            match_global_key = re.match(aaa_regex, key_body, re.DOTALL)
+            group_key = match_global_key.groupdict()
+            aaa_server_info['global_key'] = group_key["key"].replace('\"', '')
+        except (AttributeError, TypeError):
+            aaa_server_info['global_key'] = 'unknown'
+    else:
+        aaa_server_info['server_timeout'] = str(server_body['global_timeout'])
+        aaa_server_info['deadtime'] = str(server_body['global_deadtime'])
+        aaa_server_info['directed_request'] = request_body['{0}_directedRequest_status'.format(server_type)]
+        aaa_server_info['global_key'] = key_body.get('key', 'unknown')
 
     return aaa_server_info
 
