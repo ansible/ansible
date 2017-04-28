@@ -131,6 +131,7 @@ EXAMPLES = '''
 '''
 
 import uuid
+import ipaddress
 
 try:
     import boto
@@ -156,8 +157,8 @@ def find_health_check(conn, wanted):
     """Searches for health checks that have the exact same set of immutable values"""
     for check in conn.get_list_health_checks().HealthChecks:
         config = check.HealthCheckConfig
-        if (
-            config.get('IPAddress') == wanted.ip_addr and
+        if ((config.get('IPAddress') is not None and ipaddress.ip_address(config.get('IPAddress')).compressed)
+             == (wanted.ip_addr is not None and ipaddress.ip_address(wanted.ip_addr).compressed) and
             config.get('FullyQualifiedDomainName') == wanted.fqdn and
             config.get('Type') == wanted.hc_type and
             config.get('RequestInterval') == str(wanted.request_interval) and
@@ -168,7 +169,7 @@ def find_health_check(conn, wanted):
 
 def to_health_check(config):
     return HealthCheck(
-        config.get('IPAddress'),
+        ipaddress.ip_address(config.get('IPAddress')).compressed,
         int(config.get('Port')),
         config.get('Type'),
         config.get('ResourcePath'),
