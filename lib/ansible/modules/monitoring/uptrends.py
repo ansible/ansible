@@ -5,24 +5,27 @@ import requests
 
 headers = {'Accept': 'application/json'}
 
+
 def main():
     module = AnsibleModule(
         argument_spec={
-            'username': { 'required': True, 'type': 'str' },
-            'password': { 'required': True, 'type': 'str', 'no_log': True },
-            'action': { 'required': True, 'type': 'str', 'choices': ['alerts_list', 'alerts_disable', 'alerts_enable']},
-            'url': { 'required': True, 'type': 'str' }
+            'username': {'required': True, 'type': 'str'},
+            'password': {'required': True, 'type': 'str', 'no_log': True},
+            'action': {'required': True, 'type': 'str', 'choices': ['alerts_list', 'alerts_disable', 'alerts_enable']},
+            'url': {'required': True, 'type': 'str'}
         }, supports_check_mode=False
     )
 
-    args=module.params
+    uptrends_url = 'https://api.uptrends.com/v3/probes/'
+
+    args = module.params
     if args['action'] == 'alerts_list':
-        r = requests.get('https://api.uptrends.com/v3/probes/', auth=(args['username'], args['password']), headers=headers)
-        urls = [ re.sub(r'^(https?://)([^/]*)(.*)$', r'\2', e['URL']) for e in r.json() ]
+        r = requests.get(uptrends_url, auth=(args['username'], args['password']), headers=headers)
+        urls = [re.sub(r'^(https?://)([^/]*)(.*)$', r'\2', e['URL']) for e in r.json()]
         if not args['url']:
-            data=urls
+            data = urls
         else:
-            data=[]
+            data = []
             for url in urls:
                 if args['url'] in url:
                     data.append(url)
@@ -31,12 +34,12 @@ def main():
     if args['action'] == 'alerts_disable':
         if not args['url']:
             module.exit_json(changed=False, msg='URL is mandatory for alerts_disable')
-        r = requests.get('https://api.uptrends.com/v3/probes/', auth=(args['username'], args['password']), headers=headers)
-        guids=[ e['Guid'] for e in r.json() if args['url'] in e['URL'] ]
+        r = requests.get(uptrends_url, auth=(args['username'], args['password']), headers=headers)
+        guids = [e['Guid'] for e in r.json() if args['url'] in e['URL']]
         changed = []
-        failed  = []
+        failed = []
         for guid in guids:
-            s = requests.post('https://api.uptrends.com/v3/probes/'+guid, auth=(args['username'], args['password']), headers=headers, data={u'GenerateAlert': 'False'})
+            s = requests.post(uptrends_url + guid, auth=(args['username'], args['password']), headers=headers, data={u'GenerateAlert': 'False'})
             if s.status_code == 201:
                 changed.append(s.json()['URL'])
             else:
@@ -52,12 +55,12 @@ def main():
     if args['action'] == 'alerts_enable':
         if not args['url']:
             module.exit_json(changed=False, msg='URL is mandatory for alerts_enable')
-        r = requests.get('https://api.uptrends.com/v3/probes/', auth=(args['username'], args['password']), headers=headers)
-        guids=[ e['Guid'] for e in r.json() if args['url'] in e['URL'] ]
+        r = requests.get(uptrends_url, auth=(args['username'], args['password']), headers=headers)
+        guids = [e['Guid'] for e in r.json() if args['url'] in e['URL']]
         changed = []
-        failed  = []
+        failed = []
         for guid in guids:
-            s = requests.post('https://api.uptrends.com/v3/probes/'+guid, auth=(args['username'], args['password']), headers=headers, data={u'GenerateAlert': 'True'})
+            s = requests.post(uptrends_url + guid, auth=(args['username'], args['password']), headers=headers, data={u'GenerateAlert': 'True'})
             if s.status_code == 201:
                 changed.append(s.json()['URL'])
             else:
