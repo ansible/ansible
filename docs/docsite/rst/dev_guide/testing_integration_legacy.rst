@@ -29,7 +29,7 @@ Cloud tests exercise capabilities of cloud modules (e.g. ec2_key).  These are
 not 'tests run in the cloud' so much as tests that leverage the cloud modules
 and are organized by cloud provider.
 
-Some AWS tests may use environment variables. It is recommended to either unset any AWS environment variables( such as ``AWS_DEFAULT_PROFILE``, ``AWS_SECRET_ACCESS_KEY``, etc) or be sure that the environment variables match the credentials provided in ``credentials.yml`` to ensure the tests run with consistency to their full capability on the expected account . See `AWS CLI docs <http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html>`_ for information on creating a profile.
+Some AWS tests may use environment variables. It is recommended to either unset any AWS environment variables( such as ``AWS_DEFAULT_PROFILE``, ``AWS_SECRET_ACCESS_KEY``, etc) or be sure that the environment variables match the credentials provided in ``credentials.yml`` to ensure the tests run with consistency to their full capability on the expected account. See `AWS CLI docs <http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html>`_ for information on creating a profile.
 
 Subsets of tests may be run by ``#commenting`` out unnecessary roles in the appropriate playbook, such as ``test/integration/amazon.yml``.
 
@@ -46,6 +46,7 @@ Provide cloud credentials::
 
 Other configuration
 ===================
+
 In order to run some tests, you must provide access credentials in a file
 named ``credentials.yml``. A sample credentials file named
 ``credentials.template`` is available for syntax help.
@@ -53,11 +54,13 @@ named ``credentials.yml``. A sample credentials file named
 Running Tests
 =============
 
-The tests are invoked via a ``Makefile``::
+The tests are invoked via a ``Makefile``.
 
-  # If you haven't already got Ansible available use the local checkout by doing::
+If you haven't already got Ansible available use the local checkout by doing::
 
   source hacking/env-setup
+
+Run the tests by doing::
 
   cd test/integration/
   # TARGET is the name of the test from the list at the top of this page

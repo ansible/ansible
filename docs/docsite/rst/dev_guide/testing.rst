@@ -33,9 +33,6 @@ At a high level we have the following classifications of tests:
   * Tests directly against individual parts of the code base.
 
 
-
-
-Link to Manual testing of PRs (testing_pullrequests.rst)
 If you're a developer, one of the most valuable things you can do is look at the GitHub issues list and help fix bugs.  We almost always prioritize bug fixing over feature development, so helping to fix bugs is one of the best things you can do.
 
 Even if you're not a developer, helping to test pull requests for bug fixes and features is still immensely valuable.
@@ -62,8 +59,6 @@ When Shippable detects an error and it can be linked back to a file that has bee
    lib/ansible/modules/network/foo/bar.py:0:0: E316 ANSIBLE_METADATA.metadata_version: required key not provided @ data['metadata_version']. Got None
 
 From the above example we can see that ``--test pep8`` and ``--test validate-modules`` have identified issues. The commands given allow you to run the same tests locally to ensure you've fixed the issues without having to push your changed to GitHub and wait for Shippable, for example:
-  
-    TBD
 
 If you haven't already got Ansible available, use the local checkout by running::
 
@@ -137,7 +132,8 @@ and destination repositories. It will look something like this::
    Someuser wants to merge 1 commit into ansible:devel from someuser:feature_branch_name
 
 .. note:: Only test ``ansible:devel``
-   It is important that the PR request target be ansible:devel, as we do not accept pull requests into any other branch. Dot releases are cherry-picked manually by Ansible staff.
+
+   It is important that the PR request target be ``ansible:devel``, as we do not accept pull requests into any other branch. Dot releases are cherry-picked manually by Ansible staff.
 
 The username and branch at the end are the important parts, which will be turned into git commands as follows::
 
@@ -187,9 +183,9 @@ If the PR does not resolve the issue, or if you see any failures from the unit/i
    | When I ran this Ubuntu 16.04 it failed with the following:
    |
    |   \```
-   |   BLARG
+   |   some output
    |   StrackTrace
-   |   RRRARRGGG
+   |   some other output
    |   \```
 
 Want to know more about testing?
