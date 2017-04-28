@@ -33,6 +33,7 @@ version_added: 2.0
 author: "Joseph Callen (@jcpowermac)"
 notes:
     - Tested on vSphere 5.5
+    - Tested on vSphere 6.5
 requirements:
     - "python >= 2.6"
     - PyVmomi
@@ -72,7 +73,8 @@ def get_all_virtual_machines(content):
             summary.config.name: {
                 "guest_fullname": summary.config.guestFullName,
                 "power_state": summary.runtime.powerState,
-                "ip_address": _ip_address
+                "ip_address": _ip_address,
+                "uuid": summary.config.uuid
             }
         }
 
