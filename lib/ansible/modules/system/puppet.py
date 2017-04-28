@@ -38,6 +38,12 @@ options:
       - The hostname of the puppetmaster to contact.
     required: false
     default: None
+  modulepath:
+    description:
+      - Path to an alternate location for puppet modules
+    required: false
+    default: None
+    version_added: "2.4"
   manifest:
     description:
       - Path to the manifest file to run puppet apply on.
@@ -155,6 +161,7 @@ def main():
         argument_spec=dict(
             timeout=dict(default="30m"),
             puppetmaster=dict(required=False, default=None),
+            modulepath=dict(required=False, default=None),
             manifest=dict(required=False, default=None),
             logdest=dict(
                 required=False, default='stdout',
@@ -173,6 +180,7 @@ def main():
         mutually_exclusive=[
             ('puppetmaster', 'manifest'),
             ('puppetmaster', 'manifest', 'execute'),
+            ('puppetmaster', 'modulepath')
         ],
     )
     p = module.params
@@ -243,6 +251,8 @@ def main():
         cmd = "%s apply --detailed-exitcodes " % base_cmd
         if p['logdest'] == 'syslog':
             cmd += "--logdest syslog "
+        if p['modulepath']:
+            cmd += "--modulepath='%s'" % p['modulepath']
         if p['environment']:
             cmd += "--environment '%s' " % p['environment']
         if p['certname']:
