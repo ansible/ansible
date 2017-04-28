@@ -48,7 +48,7 @@ An API key is required to use this feature.
 
     Recommended for integration tests.
 
-See the `list of supported platforms and versions <runner/completion/remote.txt>`_ for additional details.
+See the `list of supported platforms and versions <https://github.com/ansible/ansible/blob/devel/test/runner/completion/remote.txt>`_ for additional details.
 
 
 Interactive Shell

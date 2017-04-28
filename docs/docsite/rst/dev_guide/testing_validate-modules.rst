@@ -6,7 +6,10 @@ validate-modules
 
 Python program to help test or validate Ansible modules.
 
+``validate-modules`` is one of the ``ansible-test`` Sanity Tests, see :doc:`testing_sanity` for more information.
+
 Originally developed by Matt Martz (@sivel)
+
 
 Usage
 =====
@@ -15,7 +18,7 @@ Usage
 
     cd /path/to/ansible/source
     source hacking/env-setup
-    test/sanity/validate-modules/validate-modules /path/to/modules
+    ansible-test sanity --test validate-modules
 
 Help
 ====

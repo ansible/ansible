@@ -49,7 +49,7 @@ The pep8 check can be run locally with::
 
 .. _PEP 8: https://www.python.org/dev/peps/pep-0008/
 .. _pep8: https://pypi.python.org/pypi/pep8
-.. _current ignore list: current-ignore.txt
-.. _legacy file list: legacy-files.txt
-.. _legacy ignore list: legacy-ignore.txt
-.. _skip list: skip.txt
+.. _current ignore list: https://github.com/ansible/ansible/blob/devel/test/sanity/pep8/current-ignore.txt
+.. _legacy file list: https://github.com/ansible/ansible/blob/devel/test/sanity/pep8/legacy-files.txt
+.. _legacy ignore list: https://github.com/ansible/ansible/blob/devel/test/sanity/pep8/legacy-ignore.txt
+.. _skip list: https://github.com/ansible/ansible/blob/devel/test/sanity/pep8/skip.txt
