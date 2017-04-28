@@ -113,9 +113,11 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 
+
 def key_to_camel(key):
     parts = key.split('_')
     return ''.join([part.title() for part in parts])
+
 
 def create_or_update_bucket_cors(connection, module):
 
@@ -127,15 +129,15 @@ def create_or_update_bucket_cors(connection, module):
         current_camel_rules = connection.get_bucket_cors(Bucket=name)['CORSRules']
     except ClientError as e:
         current_camel_rules = []
-        
+
     new_camel_rules = []
     for rule in rules:
         new_camel_rule = dict([(key_to_camel(k), v) for k, v in rule.items()])
         new_camel_rules.append(new_camel_rule)
-        
+
     if not (len(new_camel_rules) == len(current_camel_rules)):
         changed = True
-    
+
     if not changed:
         for rule_index, new_camel_rule in enumerate(new_camel_rules):
             if not changed:
@@ -175,6 +177,7 @@ def destroy_bucket_cors(connection, module):
         module.fail_json(msg=str(e))
 
     module.exit_json(changed=changed)
+
 
 def main():
 
