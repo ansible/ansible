@@ -7,11 +7,11 @@ Ansible has many modules, but not all of them are maintained by the core project
 
 Documentation updates for each module can also be edited directly in the module and by submitting a pull request to the module source code; just look for the "DOCUMENTATION" block in the source tree.
 
-If you believe you have found a bug in a module and are already running the latest stable or development version of Ansible, first look in the `issue tracker at github.com/ansible/ansible <http://github.com/ansible/ansible/issues>`_ to see if a bug has already been filed.  If not, we would be grateful if you would file one.
+If you believe you have found a bug in a module and are already running the latest stable or development version of Ansible, first look in the `issue tracker at github.com/ansible/ansible <https://github.com/ansible/ansible/issues>`_ to see if a bug has already been filed.  If not, we would be grateful if you would file one.
 
 Should you have a question rather than a bug report, inquiries are welcome on the `ansible-project google group <https://groups.google.com/forum/#!forum/ansible-project>`_ or on Ansible's "#ansible" channel, located on irc.freenode.net.
 
-For development-oriented topics, use the `ansible-devel google group <https://groups.google.com/forum/#!forum/ansible-devel>`_  or Ansible's "#ansible" and "#ansible-devel" channels, located on irc.freenode.net.  You should also read :doc:`community`, :doc:`dev_guide/developing_test_pr` and :doc:`dev_guide/developing_modules`.
+For development-oriented topics, use the `ansible-devel google group <https://groups.google.com/forum/#!forum/ansible-devel>`_  or Ansible's ``#ansible`` and ``#ansible-devel`` channels, located on irc.freenode.net.  You should also read :doc:`community`, :doc:`dev_guide/testing` and :doc:`dev_guide/developing_modules`.
 
 The modules are hosted on GitHub in a subdirectory of the `ansible <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_ repo.
 
