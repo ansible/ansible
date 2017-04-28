@@ -1,4 +1,4 @@
-##!/usr/bin/env python
+#!/usr/bin/python
 #
 # (c) 2017, Antonio Insusti <antonio@insuasti.ec>
 #
