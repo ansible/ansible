@@ -252,7 +252,7 @@ def main():
         cert=dict(default=None, required=False, type='path'),
         cert_body=dict(default=None, required=False),
         key=dict(default=None, required=False, type='path'),
-        key_body=dict(default=None, required=False),
+        key_body=dict(default=None, required=False, no_log=True),
         cert_chain=dict(default=None, required=False, type='path'),
         cert_chain_body=dict(default=None, required=False),
         new_name=dict(default=None, required=False),
