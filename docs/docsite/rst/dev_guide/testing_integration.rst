@@ -18,9 +18,6 @@ Quick Start
 It is highly recommended that you install and activate the ``argcomplete`` python package.
 It provides tab completion in ``bash`` for the ``ansible-test`` test runner.
 
-To get started quickly using Docker containers for testing,
-see [Tests in Docker containers](#tests-in-docker-containers).
-
 Configuration
 =============
 
@@ -80,7 +77,8 @@ for testing, and enable PowerShell Remoting to continue.
 Running these tests may result in changes to your Windows host, so don't run
 them against a production/critical Windows environment.
 
-Enable PowerShell Remoting (run on the Windows host via Remote Desktop):
+Enable PowerShell Remoting (run on the Windows host via Remote Desktop)::
+
     Enable-PSRemoting -Force
 
 Define Windows inventory::
@@ -141,6 +139,12 @@ To test with Python 3 use the following images:
 
   - ubuntu1604py3
 
+Cloud Tests
+===========
+
+See the :doc:`testing_integration_legacy` page for more information.
+
+
 Network Tests
 =============
 
@@ -183,9 +187,9 @@ Writing network integration tests
 ---------------------------------
 
 Test cases are added to roles based on the module being testing. Test cases
-should include both `cli` and `eapi` test cases. Cli test cases should be
-added to `test/integration/targets/modulename/tests/cli` and eapi tests should be added to
-`test/integration/targets/modulename/tests/eapi`.
+should include both cli and API test cases. Cli test cases should be
+added to ``test/integration/targets/modulename/tests/cli`` and API tests should be added to
+``test/integration/targets/modulename/tests/eapi``, or ``nxapi``.
 
 In addition to positive testing, negative tests are required to ensure user friendly warnings & errors are generated, rather than backtraces, for example:
 
@@ -229,7 +233,9 @@ Conventions
 Adding a new Network Platform
 `````````````````````````````
 
-A top level playbook is required such as `ansible/test/integration/eos.yaml` which needs to be references by `ansible/test/integration/network-all.yaml`
+A top level playbook is required such as ``ansible/test/integration/eos.yaml`` which needs to be references by ``ansible/test/integration/network-all.yaml``
 
 Where to find out more
 ======================
+
+If you'd like to know more about the plans for improving testing Ansible then why not join the `Testing Working Group <https://github.com/ansible/community/blob/master/MEETINGS.md>`_.

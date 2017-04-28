@@ -82,12 +82,24 @@ See  `eos_banner test <https://github.com/ansible/ansible/blob/devel/test/units/
 
 Code Coverage
 `````````````
-
 Most ``ansible-test`` commands allow you to collect code coverage, this is particularly useful when to indicate where to extend testing.
 
 To collect coverage data add the ``--coverage`` argument to your ``ansible-test`` command line:
 
 .. code:: shell
 
-    ansible-test units --coverage
-    ansible-test coverage html
+   ansible-test units --coverage apt
+   ansible-test coverage html
+
+Results will be written to ``test/results/reports/coverage/index.html``
+
+Reports can be generated in several different formats:
+
+* ``ansible-test coverage report`` - Console report.
+* ``ansible-test coverage html`` - HTML report.
+* ``ansible-test coverage xml`` - XML report.
+
+To clear data between test runs, use the ``ansible-test coverage erase`` command. For a full list of features see the online help::
+
+   ansible-test coverage --help
+
