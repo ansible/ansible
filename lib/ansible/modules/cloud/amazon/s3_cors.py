@@ -127,28 +127,28 @@ def create_or_update_bucket_cors(connection, module):
         current_camel_rules = connection.get_bucket_cors(Bucket=name)['CORSRules']
     except ClientError as e:
         current_camel_rules = []
-
-    if len(rules) != len(current_camel_rules):
-        changed = True
-
-    camel_rules = []
+        
+    new_camel_rules = []
     for rule in rules:
-        camel_rule = dict([(key_to_camel(k), v) for k, v in rule.items()])
-        camel_rules.append(camel_rule)
-
+        new_camel_rule = dict([(key_to_camel(k), v) for k, v in rule.items()])
+        new_camel_rules.append(new_camel_rule)
+        
+    if not (len(new_camel_rules) == len(current_camel_rules)):
+        changed = True
+    
     if not changed:
-        for idx, rule in enumerate(camel_rules):
+        for rule_index, new_camel_rule in enumerate(new_camel_rules):
             if not changed:
-                if not (rule.keys() == current_camel_rules[idx].keys()):
+                if not (new_camel_rule.keys() == current_camel_rules[rule_index].keys()):
                     changed = True
                     break
-                for key in rule.keys():
-                    if key == 'MaxAgeSeconds':
-                        if not (rule[key] == current_camel_rules[idx].get(key, None)):
+                for rule_key in new_camel_rule.keys():
+                    if rule_key == 'MaxAgeSeconds':
+                        if not (new_camel_rule[rule_key] == current_camel_rules[rule_index].get(rule_key, None)):
                             changed = True
                             break
                     else:
-                        if not (set(rule[key]) == set(current_camel_rules[idx].get(key, []))):
+                        if not (set(new_camel_rule[rule_key]) == set(current_camel_rules[rule_index].get(rule_key, []))):
                             changed = True
                             break
             else:
@@ -156,7 +156,7 @@ def create_or_update_bucket_cors(connection, module):
 
     if changed:
         try:
-            cors = connection.put_bucket_cors(Bucket=name, CORSConfiguration={'CORSRules': camel_rules})
+            cors = connection.put_bucket_cors(Bucket=name, CORSConfiguration={'CORSRules': new_camel_rules})
         except ClientError as e:
             module.fail_json(msg=str(e))
 
