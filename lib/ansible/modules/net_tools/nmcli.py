@@ -1003,11 +1003,91 @@ class Nmcli(object):
     def create_connection_vlan(self):
         cmd=[self.module.get_bin_path('nmcli', True)]
         # format for creating ethernet interface
+	# To add a Vlan connection with static IP configuration, issue a command as follows
+        # - nmcli: name=add conn_name=my-vlan1 ifname=vlan1 vlandev=eth0 vlanid=1 type=vlan ip4=192.0.2.100/24 gw4=192.0.2.1 state=present
+        # nmcli con add con-name my-vlan1 ifname vlan1 type vlan dev eth0 id 1 ip4 192.0.2.100/24 gw4 192.0.2.1
+        cmd.append('con')
+        cmd.append('add')
+        cmd.append('type')
+        cmd.append('vlan')
+
+        cmd.append('con-name')
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
+        elif self.ifname is not None:
+            cmd.append(self.ifname)
+        else:
+            cmd.append("vlan%s" % self.vlanid)
+
+        cmd.append('ifname')
+        if self.ifname is not None:
+            cmd.append(self.ifname)
+        elif self.conn_name is not None:
+            cmd.append(self.conn_name)
+        else:
+            cmd.append("vlan%s" % self.vlanid)
+
+        assert self.vlandev, "vlandev required"
+        cmd.append('dev')
+        cmd.append(self.vlandev)
+
+        assert self.vlanid, "vlanid required"
+        cmd.append('id')
+        cmd.append(self.vlanid)
+
+        if self.ip4 is not None:
+            cmd.append('ip4')
+            cmd.append(self.ip4)
+        if self.gw4 is not None:
+            cmd.append('gw4')
+            cmd.append(self.gw4)
+        if self.ip6 is not None:
+            cmd.append('ip6')
+            cmd.append(self.ip6)
+        if self.gw6 is not None:
+            cmd.append('gw6')
+            cmd.append(self.gw6)
+        if self.autoconnect is not None:
+            cmd.append('autoconnect')
+            cmd.append(self.bool_to_string(self.autoconnect))
         return cmd
 
     def modify_connection_vlan(self):
         cmd=[self.module.get_bin_path('nmcli', True)]
         # format for modifying ethernet interface
+	cmd.append('con')
+        cmd.append('mod')
+        cmd.append(self.conn_name)
+
+        if self.vlandev is not None:
+            cmd.append('vlan.parent')
+            cmd.append(self.vlandev)
+
+        if self.vlanid is not None:
+            cmd.append('vlan.id')
+            cmd.append(self.vlanid)
+
+        if self.ip4 is not None:
+            cmd.append('ipv4.address')
+            cmd.append(self.ip4)
+        if self.gw4 is not None:
+            cmd.append('ipv4.gateway')
+            cmd.append(self.gw4)
+        if self.dns4 is not None:
+            cmd.append('ipv4.dns')
+            cmd.append(self.dns4)
+        if self.ip6 is not None:
+            cmd.append('ipv6.address')
+            cmd.append(self.ip6)
+        if self.gw6 is not None:
+            cmd.append('ipv6.gateway')
+            cmd.append(self.gw6)
+        if self.dns6 is not None:
+            cmd.append('ipv6.dns')
+            cmd.append(self.dns6)
+        if self.autoconnect is not None:
+            cmd.append('autoconnect')
+            cmd.append(self.bool_to_string(self.autoconnect))
         return cmd
 
     def create_connection(self):
