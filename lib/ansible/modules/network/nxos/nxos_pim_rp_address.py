@@ -253,13 +253,8 @@ def main():
     result = {}
     candidate = CustomNetworkConfig(indent=3)
     invoke('state_%s' % state, module, existing, proposed, candidate)
-
-    try:
-        response = load_config(module, candidate)
-        result.update(response)
-    except ShellError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc))
+    response = load_config(module, candidate)
+    result.update(response)
 
     if module._verbosity > 0:
         end_state = invoke('get_existing', module, args)

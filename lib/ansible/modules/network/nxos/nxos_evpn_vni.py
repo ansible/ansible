@@ -268,12 +268,8 @@ def state_absent(module, existing, proposed):
 
 def execute_config(module, candidate):
     result = {}
-    try:
-        response = load_config(module, candidate)
-        result.update(response)
-    except ShellError:
-        exc = get_exception()
-        module.fail_json(msg=str(exc))
+    response = load_config(module, candidate)
+    result.update(response)
     return result
 
 
