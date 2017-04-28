@@ -41,7 +41,7 @@ from ansible.utils.plugin_docs import BLACKLIST, get_docstring
 
 from module_args import get_argument_spec
 
-from schema import doc_schema, option_schema, metadata_schema, return_schema
+from schema import doc_schema, metadata_schema, return_schema
 
 from utils import CaptureStd, parse_yaml
 from voluptuous.humanize import humanize_error
@@ -63,18 +63,18 @@ TYPE_REGEX = re.compile(r'.*(if|or)(\s+[^"\']*|\s+)(?<!_)(?<!str\()type\(.*')
 BLACKLIST_IMPORTS = {
     'requests': {
         'new_only': True,
-        'msg': (
-            203,
-            ('requests import found, should use '
-             'ansible.module_utils.urls instead')
-        )
+        'error': {
+            'code': 203,
+            'msg': ('requests import found, should use '
+                    'ansible.module_utils.urls instead')
+        }
     },
     'boto(?:\.|$)': {
         'new_only': True,
-        'msg': (
-            204,
-            ('boto import found, new modules should use boto3')
-        )
+        'error': {
+            'code': 204,
+            'msg': 'boto import found, new modules should use boto3'
+        }
     },
 }
 
@@ -88,6 +88,43 @@ class ReporterEncoder(json.JSONEncoder):
 
 
 class Reporter(object):
+    def __init__(self):
+        self.files = OrderedDict()
+
+    def _ensure_default_entry(self, path):
+        try:
+            self.files[path]
+        except KeyError:
+            self.files[path] = {
+                'errors': [],
+                'warnings': [],
+                'traces': [],
+                'warning_traces': []
+            }
+
+    def _log(self, path, code, msg, level='error', line=0, column=0):
+        self._ensure_default_entry(path)
+        lvl_dct = self.files[path]['%ss' % level]
+        lvl_dct.append({
+            'code': code,
+            'msg': msg,
+            'line': line,
+            'column': column
+        })
+
+    def error(self, *args, **kwargs):
+        self._log(*args, level='error', **kwargs)
+
+    def warning(self, *args, **kwargs):
+        self._log(*args, level='warning', **kwargs)
+
+    def trace(self, path, tracebk):
+        self._ensure_default_entry(path)
+        self.files[path]['traces'].append(tracebk)
+
+    def warning_trace(self, path, tracebk):
+        self._ensure_default_entry(path)
+        self.files[path]['warning_traces'].append(tracebk)
 
     @staticmethod
     @contextmanager
@@ -111,20 +148,14 @@ class Reporter(object):
 
         return temp_reports
 
-    @staticmethod
-    def plain(reports, warnings=False, output='-'):
+    def plain(self, warnings=False, output='-'):
         """Print out the test results in plain format
 
         output is ignored here for now
         """
         ret = []
 
-        for path, report in Reporter._filter_out_ok(reports).items():
-            if report['errors'] or (warnings and report['warnings']):
-                print('=' * 76)
-                print(path)
-                print('=' * 76)
-
+        for path, report in Reporter._filter_out_ok(self.files).items():
             traces = report['traces'][:]
             if warnings and report['warnings']:
                 traces.extend(report['warning_traces'])
@@ -133,28 +164,25 @@ class Reporter(object):
                 print('TRACE:')
                 print('\n    '.join(('    %s' % trace).splitlines()))
             for error in report['errors']:
-                print('ERROR:%(code)d:%(msg)s' % error)
+                error['path'] = path
+                print('%(path)s:%(line)d:%(column)d: E%(code)d %(msg)s' % error)
                 ret.append(1)
             if warnings:
                 for warning in report['warnings']:
-                    print('WARNING:%(code)d:%(msg)s' % warning)
-                    # ret.append(1)  # Don't incrememt exit status for warnings
-
-            if report['errors'] or (warnings and report['warnings']):
-                print()
+                    warning['path'] = path
+                    print('%(path)s:%(line)d:%(column)d: W%(code)d %(msg)s' % warning)
 
         return 3 if ret else 0
 
-    @staticmethod
-    def json(reports, warnings=False, output='-'):
+    def json(self, warnings=False, output='-'):
         """Print out the test results in json format
 
         warnings is not respected in this output
         """
-        ret = [len(r['errors']) for _, r in reports.items()]
+        ret = [len(r['errors']) for _, r in self.files.items()]
 
         with Reporter._output_handle(output) as handle:
-            print(json.dumps(Reporter._filter_out_ok(reports), indent=4, cls=ReporterEncoder), file=handle)
+            print(json.dumps(Reporter._filter_out_ok(self.files), indent=4, cls=ReporterEncoder), file=handle)
 
         return 3 if sum(ret) else 0
 
@@ -164,15 +192,8 @@ class Validator(with_metaclass(abc.ABCMeta, object)):
     are scanning multiple objects for problems, you'll want to have a separate
     Validator for each one."""
 
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        """Reset the test results"""
-        self.errors = []
-        self.warnings = []
-        self.traces = []
-        self.warning_traces = []
+    def __init__(self, reporter=None):
+        self.reporter = reporter
 
     @abc.abstractproperty
     def object_name(self):
@@ -185,20 +206,9 @@ class Validator(with_metaclass(abc.ABCMeta, object)):
         pass
 
     @abc.abstractmethod
-    def validate(self, reset=True):
+    def validate(self):
         """Run this method to generate the test results"""
-        if reset:
-            self.reset()
-
-    def report(self):
-        return {
-            self.object_path: OrderedDict([
-                ('errors', [{'code': code, 'msg': msg} for code, msg in self.errors]),
-                ('traces', self.traces[:]),
-                ('warnings', [{'code': code, 'msg': msg} for code, msg in self.warnings]),
-                ('warning_traces', self.warning_traces[:])
-            ])
-        }
+        pass
 
 
 class ModuleValidator(Validator):
@@ -215,8 +225,8 @@ class ModuleValidator(Validator):
         'setup.ps1'
     ))
 
-    def __init__(self, path, analyze_arg_spec=False, base_branch=None, git_cache=None):
-        super(ModuleValidator, self).__init__()
+    def __init__(self, path, analyze_arg_spec=False, base_branch=None, git_cache=None, reporter=None):
+        super(ModuleValidator, self).__init__(reporter=reporter or Reporter())
 
         self.path = path
         self.basename = os.path.basename(self.path)
@@ -315,11 +325,19 @@ class ModuleValidator(Validator):
     def _check_interpreter(self, powershell=False):
         if powershell:
             if not self.text.startswith('#!powershell\n'):
-                self.errors.append((102, 'Interpreter line is not "#!powershell"'))
+                self.reporter.error(
+                    path=self.object_path,
+                    code=102,
+                    msg='Interpreter line is not "#!powershell"'
+                )
             return
 
         if not self.text.startswith('#!/usr/bin/python'):
-            self.errors.append((101, 'Interpreter line is not "#!/usr/bin/python"'))
+            self.reporter.error(
+                path=self.object_path,
+                code=101,
+                msg='Interpreter line is not "#!/usr/bin/python"'
+            )
 
     def _check_type_instead_of_isinstance(self, powershell=False):
         if powershell:
@@ -327,35 +345,45 @@ class ModuleValidator(Validator):
         for line_no, line in enumerate(self.text.splitlines()):
             typekeyword = TYPE_REGEX.match(line)
             if typekeyword:
-                self.errors.append((
-                    403,
-                    ('Type comparison using type() found on '
-                     'line %d. Use isinstance() instead' % (line_no + 1))
-                ))
+                # TODO: add column
+                self.reporter.error(
+                    path=self.object_path,
+                    code=403,
+                    msg=('Type comparison using type() found. '
+                         'Use isinstance() instead'),
+                    line=line_no + 1
+                )
 
     def _check_for_sys_exit(self):
         if 'sys.exit(' in self.text:
-            self.errors.append(
-                (
-                    205,
-                    'sys.exit() call found. Should be exit_json/fail_json'
-                )
+            # TODO: Add line/col
+            self.reporter.error(
+                path=self.object_path,
+                code=205,
+                msg='sys.exit() call found. Should be exit_json/fail_json'
             )
 
     def _check_for_gpl3_header(self):
         if ('GNU General Public License' not in self.text and
                 'version 3' not in self.text):
-            self.errors.append((105, 'GPLv3 license header not found'))
+            self.reporter.error(
+                path=self.object_path,
+                code=105,
+                msg='GPLv3 license header not found'
+            )
 
     def _check_for_tabs(self):
         for line_no, line in enumerate(self.text.splitlines()):
             indent = INDENT_REGEX.search(line)
             if indent and '\t' in line:
                 index = line.index('\t')
-                self.errors.append((
-                    402,
-                    'indentation contains tabs. line %d column %d' % (line_no + 1, index)
-                ))
+                self.reporter.error(
+                    path=self.object_path,
+                    code=402,
+                    msg='indentation contains tabs',
+                    line=line_no + 1,
+                    column=index
+                )
 
     def _find_blacklist_imports(self):
         for child in self.ast.body:
@@ -370,14 +398,20 @@ class ModuleValidator(Validator):
                     if isinstance(grandchild, ast.Import):
                         names.extend(grandchild.names)
             for name in names:
+                # TODO: Add line/col
                 for blacklist_import, options in BLACKLIST_IMPORTS.items():
                     if re.search(blacklist_import, name.name):
-                        msg = options['msg']
                         new_only = options['new_only']
                         if self._is_new_module() and new_only:
-                            self.errors.append(msg)
+                            self.reporter.error(
+                                path=self.object_path,
+                                **options['error']
+                            )
                         elif not new_only:
-                            self.errors.append(msg)
+                            self.reporter.error(
+                                path=self.object_path,
+                                **options['error']
+                            )
 
     def _find_module_utils(self, main):
         linenos = []
@@ -403,25 +437,38 @@ class ModuleValidator(Validator):
                             msg = (
                                 208,
                                 ('module_utils imports should import specific '
-                                 'components, not "*". line %d' % child.lineno)
+                                 'components, not "*"')
                             )
                             if self._is_new_module():
-                                self.errors.append(msg)
+                                self.reporter.error(
+                                    path=self.object_path,
+                                    code=msg[0],
+                                    msg=msg[1],
+                                    line=child.lineno
+                                )
                             else:
-                                self.warnings.append(msg)
+                                self.reporter.warning(
+                                    path=self.object_path,
+                                    code=msg[0],
+                                    msg=msg[1],
+                                    line=child.lineno
+                                )
 
                         if (isinstance(name, ast.alias) and
                                 name.name == 'basic'):
                             found_basic = True
 
         if not linenos:
-            self.errors.append((201, 'Did not find a module_utils import'))
+            self.reporter.error(
+                path=self.object_path,
+                code=201,
+                msg='Did not find a module_utils import'
+            )
         elif not found_basic:
-            self.warnings.append(
-                (
-                    292,
-                    'Did not find "ansible.module_utils.basic" import'
-                )
+            self.reporter.warning(
+                path=self.object_path,
+                code=292,
+                msg='Did not find "ansible.module_utils.basic" import'
             )
 
         return linenos
@@ -455,13 +502,19 @@ class ModuleValidator(Validator):
                             child.value.func.id == 'main'):
                         lineno = child.lineno
                         if lineno < self.length - 1:
-                            self.errors.append((
-                                104,
-                                'Call to main() not the last line'
-                            ))
+                            self.reporter.error(
+                                path=self.object_path,
+                                code=104,
+                                msg='Call to main() not the last line',
+                                line=lineno
+                            )
 
         if not lineno:
-            self.errors.append((103, 'Did not find a call to main'))
+            self.reporter.error(
+                path=self.object_path,
+                code=103,
+                msg='Did not find a call to main'
+            )
 
         return lineno or 0
 
@@ -481,10 +534,12 @@ class ModuleValidator(Validator):
                             if target.id.lower().startswith('has_'):
                                 found_has = True
             if found_try_except_import and not found_has:
-                self.warnings.append((
-                    291,
-                    'Found Try/Except block without HAS_ assginment'
-                ))
+                # TODO: Add line/col
+                self.reporter.warning(
+                    path=self.object_path,
+                    code=291,
+                    msg='Found Try/Except block without HAS_ assginment'
+                )
 
     def _ensure_imports_below_docs(self, doc_info, first_callable):
         min_doc_line = min(
@@ -500,13 +555,14 @@ class ModuleValidator(Validator):
             if isinstance(child, (ast.Import, ast.ImportFrom)):
                 import_lines.append(child.lineno)
                 if child.lineno < min_doc_line:
-                    self.errors.append((
-                        106,
-                        ('Import found before documentation variables. '
-                         'All imports must appear below '
-                         'DOCUMENTATION/EXAMPLES/RETURN/ANSIBLE_METADATA. '
-                         'line %d' % (child.lineno,))
-                    ))
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=106,
+                        msg=('Import found before documentation variables. '
+                             'All imports must appear below '
+                             'DOCUMENTATION/EXAMPLES/RETURN/ANSIBLE_METADATA.'),
+                        line=child.lineno
+                    )
                     break
             elif isinstance(child, TRY_EXCEPT):
                 bodies = child.body
@@ -516,14 +572,15 @@ class ModuleValidator(Validator):
                     if isinstance(grandchild, (ast.Import, ast.ImportFrom)):
                         import_lines.append(grandchild.lineno)
                         if grandchild.lineno < min_doc_line:
-                            self.errors.append((
-                                106,
-                                ('Import found before documentation '
-                                 'variables. All imports must appear below '
-                                 'DOCUMENTATION/EXAMPLES/RETURN/'
-                                 'ANSIBLE_METADATA. line %d' %
-                                 (child.lineno,))
-                            ))
+                            self.reporter.error(
+                                path=self.object_path,
+                                code=106,
+                                msg=('Import found before documentation '
+                                     'variables. All imports must appear below '
+                                     'DOCUMENTATION/EXAMPLES/RETURN/'
+                                     'ANSIBLE_METADATA.'),
+                                line=child.lineno
+                            )
                             break
 
         for import_line in import_lines:
@@ -531,26 +588,48 @@ class ModuleValidator(Validator):
                 msg = (
                     107,
                     ('Imports should be directly below DOCUMENTATION/EXAMPLES/'
-                     'RETURN/ANSIBLE_METADATA. line %d' % import_line)
+                     'RETURN/ANSIBLE_METADATA.')
                 )
                 if self._is_new_module():
-                    self.errors.append(msg)
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=msg[0],
+                        msg=msg[1],
+                        line=import_line
+                    )
                 else:
-                    self.warnings.append(msg)
+                    self.reporter.warning(
+                        path=self.object_path,
+                        code=msg[0],
+                        msg=msg[1],
+                        line=import_line
+                    )
 
     def _find_ps_replacers(self):
         if 'WANT_JSON' not in self.text:
-            self.errors.append((206, 'WANT_JSON not found in module'))
+            self.reporter.error(
+                path=self.object_path,
+                code=206,
+                msg='WANT_JSON not found in module'
+            )
 
         if REPLACER_WINDOWS not in self.text:
-            self.errors.append((207, '"%s" not found in module' % REPLACER_WINDOWS))
+            self.reporter.error(
+                path=self.object_path,
+                code=207,
+                msg='"%s" not found in module' % REPLACER_WINDOWS
+            )
 
     def _find_ps_docs_py_file(self):
         if self.object_name in self.PS_DOC_BLACKLIST:
             return
         py_path = self.path.replace('.ps1', '.py')
         if not os.path.isfile(py_path):
-            self.errors.append((503, 'Missing python documentation file'))
+            self.reporter.error(
+                path=self.object_path,
+                code=503,
+                msg='Missing python documentation file'
+            )
 
     def _get_docs(self):
         docs = {
@@ -627,87 +706,142 @@ class ModuleValidator(Validator):
             else:
                 error_message = error
 
-            self.errors.append((
-                error_code,
-                '%s.%s: %s' % (name, '.'.join(path), error_message)
-            ))
+            self.reporter.error(
+                path=self.object_path,
+                code=error_code,
+                msg='%s.%s: %s' % (name, '.'.join(path), error_message)
+            )
 
     def _validate_docs(self):
         doc_info = self._get_docs()
         deprecated = False
         if not bool(doc_info['DOCUMENTATION']['value']):
-            self.errors.append((301, 'No DOCUMENTATION provided'))
+            self.reporter.error(
+                path=self.object_path,
+                code=301,
+                msg='No DOCUMENTATION provided'
+            )
         else:
             doc, errors, traces = parse_yaml(
                 doc_info['DOCUMENTATION']['value'],
                 doc_info['DOCUMENTATION']['lineno'],
                 self.name, 'DOCUMENTATION'
             )
-            self.errors.extend([(302, e) for e in errors])
-            self.traces.extend(traces)
+            for error in errors:
+                self.reporter.error(
+                    path=self.object_path,
+                    code=302,
+                    msg=error
+                )
+            for trace in traces:
+                self.reporter.trace(
+                    path=self.object_path,
+                    tracebk=trace
+                )
             if not errors and not traces:
                 with CaptureStd():
                     try:
                         get_docstring(self.path, verbose=True)
                     except AssertionError:
                         fragment = doc['extends_documentation_fragment']
-                        self.errors.append((
-                            303,
-                            'DOCUMENTATION fragment missing: %s' % fragment
-                        ))
+                        self.reporter.error(
+                            path=self.object_path,
+                            code=303,
+                            msg='DOCUMENTATION fragment missing: %s' % fragment
+                        )
                     except Exception:
-                        self.traces.append(traceback.format_exc())
-                        self.errors.append((
-                            304,
-                            'Unknown DOCUMENTATION error, see TRACE'
-                        ))
+                        self.reporter.trace(
+                            path=self.object_path,
+                            tracebk=traceback.format_exc()
+                        )
+                        self.reporter.error(
+                            path=self.object_path,
+                            code=304,
+                            msg='Unknown DOCUMENTATION error, see TRACE'
+                        )
 
                 if 'options' in doc and doc['options'] is None and doc.get('extends_documentation_fragment'):
-                    self.errors.append((
-                        305,
-                        ('DOCUMENTATION.options must be a dictionary/hash when used '
-                         'with DOCUMENTATION.extends_documentation_fragment')
-                    ))
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=304,
+                        msg=('DOCUMENTATION.options must be a dictionary/hash when used '
+                             'with DOCUMENTATION.extends_documentation_fragment')
+                    )
 
                 if self.object_name.startswith('_') and not os.path.islink(self.object_path):
                     deprecated = True
                     if 'deprecated' not in doc or not doc.get('deprecated'):
-                        self.errors.append((
-                            318,
-                            'Module deprecated, but DOCUMENTATION.deprecated is missing'
-                        ))
+                        self.reporter.error(
+                            path=self.object_path,
+                            code=318,
+                            msg='Module deprecated, but DOCUMENTATION.deprecated is missing'
+                        )
 
                 self._validate_docs_schema(doc, doc_schema(self.object_name.split('.')[0]), 'DOCUMENTATION', 305)
                 self._check_version_added(doc)
                 self._check_for_new_args(doc)
 
         if not bool(doc_info['EXAMPLES']['value']):
-            self.errors.append((310, 'No EXAMPLES provided'))
+            self.reporter.error(
+                path=self.object_path,
+                code=310,
+                msg='No EXAMPLES provided'
+            )
         else:
             _, errors, traces = parse_yaml(doc_info['EXAMPLES']['value'],
                                            doc_info['EXAMPLES']['lineno'],
                                            self.name, 'EXAMPLES', load_all=True)
-            self.errors.extend([(311, error) for error in errors])
-            self.traces.extend(traces)
+            for error in errors:
+                self.reporter.error(
+                    path=self.object_path,
+                    code=311,
+                    msg=error
+                )
+            for trace in traces:
+                self.reporter.trace(
+                    path=self.object_path,
+                    tracebk=trace
+                )
 
         if not bool(doc_info['RETURN']['value']):
             if self._is_new_module():
-                self.errors.append((312, 'No RETURN documentation provided'))
+                self.reporter.error(
+                    path=self.object_path,
+                    code=312,
+                    msg='No RETURN provided'
+                )
             else:
-                self.warnings.append((312, 'No RETURN provided'))
+                self.reporter.warning(
+                    path=self.object_path,
+                    code=312,
+                    msg='No RETURN provided'
+                )
         else:
             data, errors, traces = parse_yaml(doc_info['RETURN']['value'],
                                            doc_info['RETURN']['lineno'],
                                            self.name, 'RETURN')
-
             if data:
                 for ret_key in data:
                     self._validate_docs_schema(data[ret_key], return_schema(data[ret_key]), 'RETURN.%s' % ret_key, 319)
-            self.errors.extend([(313, error) for error in errors])
-            self.traces.extend(traces)
+
+            for error in errors:
+                self.reporter.error(
+                    path=self.object_path,
+                    code=313,
+                    msg=error
+                )
+            for trace in traces:
+                self.reporter.trace(
+                    path=self.object_path,
+                    tracebk=trace
+                )
 
         if not bool(doc_info['ANSIBLE_METADATA']['value']):
-            self.errors.append((314, 'No ANSIBLE_METADATA provided'))
+            self.reporter.error(
+                path=self.object_path,
+                code=314,
+                msg='No ANSIBLE_METADATA provided'
+            )
         else:
             metadata = None
             if isinstance(doc_info['ANSIBLE_METADATA']['value'], ast.Dict):
@@ -720,8 +854,17 @@ class ModuleValidator(Validator):
                     doc_info['ANSIBLE_METADATA']['lineno'],
                     self.name, 'ANSIBLE_METADATA'
                 )
-                self.errors.extend([(315, error) for error in errors])
-                self.traces.extend(traces)
+                for error in errors:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=315,
+                        msg=error
+                    )
+                for trace in traces:
+                    self.reporter.trace(
+                        path=self.object_path,
+                        tracebk=trace
+                    )
 
             if metadata:
                 self._validate_docs_schema(metadata, metadata_schema(deprecated),
@@ -737,10 +880,11 @@ class ModuleValidator(Validator):
             version_added = StrictVersion(str(doc.get('version_added', '0.0')))
         except ValueError:
             version_added = doc.get('version_added', '0.0')
-            self.errors.append((
-                306,
-                'version_added is not a valid version number: %r' % version_added
-            ))
+            self.reporter.error(
+                path=self.object_path,
+                code=306,
+                msg='version_added is not a valid version number: %r' % version_added
+            )
             return
 
         should_be = '.'.join(ansible_version.split('.')[:2])
@@ -748,10 +892,11 @@ class ModuleValidator(Validator):
 
         if (version_added < strict_ansible_version or
                 strict_ansible_version < version_added):
-            self.errors.append((
-                307,
-                'version_added should be %s. Currently %s' % (should_be, version_added)
-            ))
+            self.reporter.error(
+                path=self.object_path,
+                code=307,
+                msg='version_added should be %s. Currently %s' % (should_be, version_added)
+            )
 
     def _validate_argument_spec(self):
         if not self.analyze_arg_spec:
@@ -759,12 +904,13 @@ class ModuleValidator(Validator):
         spec = get_argument_spec(self.path)
         for arg, data in spec.items():
             if data.get('required') and data.get('default', object) != object:
-                self.errors.append((
-                    317,
-                    ('"%s" is marked as required but specifies '
-                     'a default. Arguments with a default '
-                     'should not be marked as required' % arg)
-                ))
+                self.reporter.error(
+                    path=self.object_path,
+                    code=317,
+                    msg=('"%s" is marked as required but specifies '
+                         'a default. Arguments with a default '
+                         'should not be marked as required' % arg)
+                )
 
     def _check_for_new_args(self, doc):
         if not self.base_branch or self._is_new_module():
@@ -776,19 +922,24 @@ class ModuleValidator(Validator):
                 existing_options = existing_doc.get('options', {})
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']
-                self.warnings.append((
-                    392,
-                    'Pre-existing DOCUMENTATION fragment missing: %s' % fragment
-                ))
+                self.reporter.warning(
+                    path=self.object_path,
+                    code=392,
+                    msg='Pre-existing DOCUMENTATION fragment missing: %s' % fragment
+                )
                 return
             except Exception as e:
-                self.warning_traces.append(e)
-                self.warnings.append((
-                    391,
-                    ('Unknown pre-existing DOCUMENTATION '
-                     'error, see TRACE. Submodule refs may '
-                     'need updated')
-                ))
+                self.reporter.warning_trace(
+                    path=self.object_path,
+                    tracebk=e
+                )
+                self.reporter.warning(
+                    path=self.object_path,
+                    code=391,
+                    msg=('Unknown pre-existing DOCUMENTATION '
+                         'error, see TRACE. Submodule refs may '
+                         'need updated')
+                )
                 return
 
         try:
@@ -815,12 +966,13 @@ class ModuleValidator(Validator):
                 )
             except ValueError:
                 version_added = details.get('version_added', '0.0')
-                self.errors.append((
-                    308,
-                    ('version_added for new option (%s) '
-                     'is not a valid version number: %r' %
-                     (option, version_added))
-                ))
+                self.reporter.error(
+                    path=self.object_path,
+                    code=308,
+                    msg=('version_added for new option (%s) '
+                         'is not a valid version number: %r' %
+                         (option, version_added))
+                )
                 continue
             except:
                 # If there is any other exception it should have been caught
@@ -831,12 +983,13 @@ class ModuleValidator(Validator):
             if (strict_ansible_version != mod_version_added and
                     (version_added < strict_ansible_version or
                      strict_ansible_version < version_added)):
-                self.errors.append((
-                    309,
-                    ('version_added for new option (%s) should '
-                     'be %s. Currently %s' %
-                     (option, should_be, version_added))
-                ))
+                self.reporter.error(
+                    path=self.object_path,
+                    code=309,
+                    msg=('version_added for new option (%s) should '
+                         'be %s. Currently %s' %
+                         (option, should_be, version_added))
+                )
 
     @staticmethod
     def is_blacklisted(path):
@@ -858,25 +1011,29 @@ class ModuleValidator(Validator):
     def validate(self):
         super(ModuleValidator, self).validate()
 
-#        if self._powershell_module():
-#            self.warnings.append('Cannot check powershell modules at this '
-#                                 'time.  Skipping')
-#            return
         if not self._python_module() and not self._powershell_module():
-            self.errors.append((
-                501,
-                ('Official Ansible modules must have a .py '
-                 'extension for python modules or a .ps1 '
-                 'for powershell modules')
-            ))
+            self.reporter.error(
+                path=self.object_path,
+                code=501,
+                msg=('Official Ansible modules must have a .py '
+                     'extension for python modules or a .ps1 '
+                     'for powershell modules')
+            )
             self._python_module_override = True
 
         if self._python_module() and self.ast is None:
-            self.errors.append((401, 'Python SyntaxError while parsing module'))
+            self.reporter.error(
+                path=self.object_path,
+                code=401,
+                msg='Python SyntaxError while parsing module'
+            )
             try:
                 compile(self.text, self.path, 'exec')
             except Exception:
-                self.traces.append(traceback.format_exc())
+                self.reporter.trace(
+                    path=self.object_path,
+                    tracebk=traceback.format_exc()
+                )
             return
 
         if self._python_module():
@@ -908,8 +1065,8 @@ class ModuleValidator(Validator):
 class PythonPackageValidator(Validator):
     BLACKLIST_FILES = frozenset(('__pycache__',))
 
-    def __init__(self, path):
-        super(PythonPackageValidator, self).__init__()
+    def __init__(self, path, reporter=None):
+        super(PythonPackageValidator, self).__init__(reporter=reporter or Reporter())
 
         self.path = path
         self.basename = os.path.basename(path)
@@ -930,11 +1087,10 @@ class PythonPackageValidator(Validator):
 
         init_file = os.path.join(self.path, '__init__.py')
         if not os.path.exists(init_file):
-            self.errors.append(
-                (
-                    502,
-                    'Ansible module subdirectories must contain an __init__.py'
-                )
+            self.reporter.error(
+                path=self.object_path,
+                code=502,
+                msg='Ansible module subdirectories must contain an __init__.py'
             )
 
 
@@ -975,8 +1131,7 @@ def main():
 
     args.modules[:] = [m.rstrip('/') for m in args.modules]
 
-    reports = OrderedDict()
-
+    reporter = Reporter()
     git_cache = GitCache(args.base_branch)
 
     for module in args.modules:
@@ -987,9 +1142,8 @@ def main():
             if ModuleValidator.is_blacklisted(path):
                 continue
             with ModuleValidator(path, analyze_arg_spec=args.arg_spec,
-                                 base_branch=args.base_branch, git_cache=git_cache) as mv:
+                                 base_branch=args.base_branch, git_cache=git_cache, reporter=reporter) as mv:
                 mv.validate()
-                reports.update(mv.report())
 
         for root, dirs, files in os.walk(module):
             basedir = root[len(module) + 1:].split('/', 1)[0]
@@ -1001,9 +1155,8 @@ def main():
                 path = os.path.join(root, dirname)
                 if args.exclude and args.exclude.search(path):
                     continue
-                pv = PythonPackageValidator(path)
+                pv = PythonPackageValidator(path, reporter=reporter)
                 pv.validate()
-                reports.update(pv.report())
 
             for filename in files:
                 path = os.path.join(root, filename)
@@ -1012,14 +1165,13 @@ def main():
                 if ModuleValidator.is_blacklisted(path):
                     continue
                 with ModuleValidator(path, analyze_arg_spec=args.arg_spec,
-                                     base_branch=args.base_branch, git_cache=git_cache) as mv:
+                                     base_branch=args.base_branch, git_cache=git_cache, reporter=reporter) as mv:
                     mv.validate()
-                    reports.update(mv.report())
 
     if args.format == 'plain':
-        sys.exit(Reporter.plain(reports, warnings=args.warnings, output=args.output))
+        sys.exit(reporter.plain(warnings=args.warnings, output=args.output))
     else:
-        sys.exit(Reporter.json(reports, warnings=args.warnings, output=args.output))
+        sys.exit(reporter.json(warnings=args.warnings, output=args.output))
 
 
 class GitCache(object):
