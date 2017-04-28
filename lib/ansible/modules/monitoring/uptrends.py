@@ -1,4 +1,15 @@
-#!/usr/bin/env python2
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# This software may be freely redistributed under the terms of the GNU
+# general public license version 2 or any later version.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+ANSIBLE_METADATA = {'status': ['preview'],
+                    'supported_by': 'community',
+                    'version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -21,6 +32,7 @@ options:
   url:
     description: URL of the service
     required: false
+version_added: 2.4
 author: "Julien Gormotte (@gormux)"
 '''
 
@@ -38,7 +50,7 @@ uptrends:
   url: www.example.com mail.example.com
 '''
 
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 import requests
 
 headers = {'Accept': 'application/json'}
