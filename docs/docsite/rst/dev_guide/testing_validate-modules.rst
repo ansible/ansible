@@ -1,21 +1,27 @@
+****************
 validate-modules
-================
+****************
+
+.. contents:: Topics
 
 Python program to help test or validate Ansible modules.
 
+``validate-modules`` is one of the ``ansible-test`` Sanity Tests, see :doc:`testing_sanity` for more information.
+
 Originally developed by Matt Martz (@sivel)
 
+
 Usage
-~~~~~
+=====
 
 .. code:: shell
 
     cd /path/to/ansible/source
     source hacking/env-setup
-    test/sanity/validate-modules/validate-modules /path/to/modules
+    ansible-test sanity --test validate-modules
 
 Help
-~~~~
+====
 
 .. code:: shell
 
@@ -38,11 +44,18 @@ Help
                             Output format. Default: "plain"
       --output OUTPUT       Output location, use "-" for stdout. Default "-"
 
+
+Extending validate-modules
+==========================
+
+The ``validate-modules`` tool has a `schema.py <https://github.com/ansible/ansible/blob/devel/test/sanity/validate-modules/schema.py>`_ that is used to validate the YAML blocks, such as ``DOCUMENTATION`` and ``RETURNS``.
+
+
 Codes
-~~~~~~~
+=====
 
 Errors
-^^^^^^
+------
 
 +---------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | code    | sample message                                                                                                                             |
@@ -139,7 +152,7 @@ Errors
 +---------+--------------------------------------------------------------------------------------------------------------------------------------------+
 
 Warnings
-^^^^^^^^
+--------
 
 +---------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | code    | sample message                                                                                                                             |
