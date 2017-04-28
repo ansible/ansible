@@ -1,5 +1,3 @@
-postgresql_service: "postgresql"
-
 postgresql_packages:
   - "postgresql93-server"
   - "py27-psycopg2"
