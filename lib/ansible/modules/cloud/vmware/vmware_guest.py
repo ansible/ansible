@@ -1011,7 +1011,7 @@ class PyVmomiHelper(object):
             if not rp[0]:
                 continue
 
-            if not hasattr(rp[0], 'parent'):
+            if not hasattr(rp[0], 'parent') or not rp[0].parent:
                 continue
 
             # Find resource pool on host
