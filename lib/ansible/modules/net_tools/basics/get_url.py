@@ -40,7 +40,7 @@ description:
        or by using the use_proxy option.
      - HTTP redirects can redirect from HTTP to HTTPS so you should be sure that
        your proxy environment for both protocols is correct.
-     - When run with --check, it will do a HEAD request to validate the URL but
+     - From Ansible 2.4 when run with C(--check), it will do a HEAD request to validate the URL but
        will not download the entire file or verify it against hashes.
 version_added: "0.6"
 options:
