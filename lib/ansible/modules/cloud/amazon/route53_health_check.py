@@ -37,7 +37,7 @@ options:
   ip_address:
     description:
       - IP address of the end-point to check. Either this or `fqdn` has to be
-        provided.
+        provided when health check type is not `CALCULATED`.
     required: false
     default: null
   port:
@@ -51,7 +51,7 @@ options:
       - The type of health check that you want to create, which indicates how
         Amazon Route 53 determines whether an endpoint is healthy.
     required: true
-    choices: [ 'HTTP', 'HTTPS', 'HTTP_STR_MATCH', 'HTTPS_STR_MATCH', 'TCP' ]
+    choices: [ 'HTTP', 'HTTPS', 'HTTP_STR_MATCH', 'HTTPS_STR_MATCH', 'TCP', 'CALCULATED' ]
   resource_path:
     description:
       - The path that you want Amazon Route 53 to request when performing
@@ -66,8 +66,8 @@ options:
   fqdn:
     description:
       - Domain name of the endpoint to check. Either this or `ip_address` has
-        to be provided. When both are given the `fqdn` is used in the `Host:`
-        header of the HTTP request.
+        to be provided when health check type is not `CALCULATED`. When both are
+        given the `fqdn` is used in the `Host:` header of the HTTP request.
     required: false
   string_match:
     description:
@@ -82,7 +82,7 @@ options:
       - The number of seconds between the time that Amazon Route 53 gets a
         response from your endpoint and the time that it sends the next
         health-check request.
-    required: true
+    required: false
     default: 30
     choices: [ 10, 30 ]
   failure_threshold:
@@ -93,6 +93,19 @@ options:
     required: true
     default: 3
     choices: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
+  health_threshold:
+    description:
+      - The number of the health checks that are associated with a CALCULATED
+        health check that must be healthy
+    required: false
+    default: 1
+    version_added: "2.4"
+  child_health_checks:
+    description:
+      - Health checks ID that are associated with a CALCULATED health check
+    required: false
+    default: null
+    version_added: "2.4"
 author: "zimbatm (@zimbatm)"
 extends_documentation_fragment:
     - aws
@@ -128,6 +141,14 @@ EXAMPLES = '''
     state: absent
     fqdn: host1.example.com
 
+- route53_health_check:
+    state: present
+    type: CALCULATED
+    child_health_checks:
+      - "{{ my_health_check.health_check.id }}"
+      - "{{ another_health_check.health_check.id }}"
+    health_threshold: 2
+  register: my_health_check
 '''
 
 import uuid
@@ -147,6 +168,41 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
 
+# This function has been imported from boto to patch it and add support for ChildHealthChecks
+def get_list_health_checks(self, maxitems=None, marker=None):
+    """
+        Return a list of health checks
+        :type maxitems: int
+        :param maxitems: Maximum number of items to return
+        :type marker: str
+        :param marker: marker to get next set of items to list
+    """
+
+    params = {}
+    if maxitems is not None:
+        params['maxitems'] = maxitems
+    if marker is not None:
+        params['marker'] = marker
+
+    uri = '/%s/healthcheck' % (self.Version, )
+    response = self.make_request('GET', uri, params=params)
+    body = response.read()
+    boto.log.debug(body)
+    if response.status >= 300:
+        raise exception.DNSServerError(response.status,
+                                       response.reason,
+                                       body)
+    e = boto.jsonresponse.Element(list_marker=('HealthChecks', 'ChildHealthChecks'),
+                                  item_marker=('HealthCheck', 'ChildHealthCheck'))
+    h = boto.jsonresponse.XmlHandler(e, None)
+    h.parse(body)
+    return e
+
+class CalculatedHealthCheck(object):
+    def __init__(self, child_health_checks, health_threshold=3):
+        self.hc_type = 'CALCULATED'
+        self.child_health_checks = sorted(child_health_checks)
+        self.health_threshold = health_threshold
 
 # Things that can't get changed:
 #  protocol
@@ -155,21 +211,24 @@ from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
 #  string_match if not previously enabled
 def find_health_check(conn, wanted):
     """Searches for health checks that have the exact same set of immutable values"""
-    for check in conn.get_list_health_checks().HealthChecks:
+    for check in get_list_health_checks(conn).HealthChecks:
         config = check.HealthCheckConfig
-        if ((config.get('IPAddress') is not None and ipaddress.ip_address(config.get('IPAddress')).compressed)
-             == (wanted.ip_addr is not None and ipaddress.ip_address(wanted.ip_addr).compressed) and
-            config.get('FullyQualifiedDomainName') == wanted.fqdn and
-            config.get('Type') == wanted.hc_type and
-            config.get('RequestInterval') == str(wanted.request_interval) and
-            config.get('Port') == str(wanted.port)
+        if wanted.hc_type == 'CALCULATED':
+            if (config.get('Type') == wanted.hc_type and sorted(config.get('ChildHealthChecks')) == wanted.child_health_checks):
+                return check
+        elif ((config.get('IPAddress') is not None and ipaddress.ip_address(config.get('IPAddress')).compressed)
+              == (wanted.ip_addr is not None and ipaddress.ip_address(str(wanted.ip_addr)).compressed) and
+              config.get('Type') == wanted.hc_type and
+              config.get('FullyQualifiedDomainName') == wanted.fqdn and
+              config.get('RequestInterval') == str(wanted.request_interval) and
+              config.get('Port') == str(wanted.port)
         ):
             return check
     return None
 
 def to_health_check(config):
     return HealthCheck(
-        ipaddress.ip_address(config.get('IPAddress')).compressed,
+        ipaddress.ip_address(config.get('IPAddress')).compressed if config.get('IPAddress') is not None else None,
         int(config.get('Port')),
         config.get('Type'),
         config.get('ResourcePath'),
@@ -211,6 +270,15 @@ def to_template_params(health_check):
         params['string_match_part'] = HealthCheck.XMLStringMatchPart % {'string_match': health_check.string_match}
     return params
 
+def to_calculated_template_params(health_check):
+    return {
+        'health_threshold': health_check.health_threshold,
+        'child_health_checks': '\n'.join(map(
+            lambda hc: '<ChildHealthCheck>%s</ChildHealthCheck>' % (hc,),
+            health_check.child_health_checks
+        )),
+    }
+
 XMLResourcePathPart = """<ResourcePath>%(resource_path)s</ResourcePath>"""
 
 POSTXMLBody = """
@@ -241,14 +309,43 @@ UPDATEHCXMLBody = """
     </UpdateHealthCheckRequest>
     """
 
+CALCULATED_POSTXMLBody = """
+    <CreateHealthCheckRequest xmlns="%(xmlns)s">
+        <CallerReference>%(caller_ref)s</CallerReference>
+        <HealthCheckConfig>
+            <Type>CALCULATED</Type>
+            <HealthThreshold>%(health_threshold)s</HealthThreshold>
+            <ChildHealthChecks>
+                %(child_health_checks)s
+            </ChildHealthChecks>
+        </HealthCheckConfig>
+    </CreateHealthCheckRequest>
+    """
+
+CALCULATED_UPDATEHCXMLBody = """
+    <UpdateHealthCheckRequest xmlns="%(xmlns)s">
+        <HealthCheckVersion>%(health_check_version)s</HealthCheckVersion>
+        <HealthThreshold>%(health_threshold)s</HealthThreshold>
+        <ChildHealthChecks>
+           %(child_health_checks)s
+        </ChildHealthChecks>
+    </UpdateHealthCheckRequest>
+    """
+
 def create_health_check(conn, health_check, caller_ref = None):
     if caller_ref is None:
         caller_ref = str(uuid.uuid4())
     uri = '/%s/healthcheck' % conn.Version
-    params = to_template_params(health_check)
-    params.update(xmlns=conn.XMLNameSpace, caller_ref=caller_ref)
+    if health_check.hc_type == 'CALCULATED':
+        params = to_calculated_template_params(health_check)
+        params.update(xmlns=conn.XMLNameSpace, caller_ref=caller_ref)
 
-    xml_body = POSTXMLBody % params
+        xml_body = CALCULATED_POSTXMLBody % params
+    else:
+        params = to_template_params(health_check)
+        params.update(xmlns=conn.XMLNameSpace, caller_ref=caller_ref)
+
+        xml_body = POSTXMLBody % params
     response = conn.make_request('POST', uri, {'Content-Type': 'text/xml'}, xml_body)
     body = response.read()
     boto.log.debug(body)
@@ -262,12 +359,20 @@ def create_health_check(conn, health_check, caller_ref = None):
 
 def update_health_check(conn, health_check_id, health_check_version, health_check):
     uri = '/%s/healthcheck/%s' % (conn.Version, health_check_id)
-    params = to_template_params(health_check)
-    params.update(
-        xmlns=conn.XMLNameSpace,
-        health_check_version=health_check_version,
-    )
-    xml_body = UPDATEHCXMLBody % params
+    if health_check.hc_type == 'CALCULATED':
+        params = to_calculated_template_params(health_check)
+        params.update(
+            xmlns=conn.XMLNameSpace,
+            health_check_version=health_check_version,
+        )
+        xml_body = CALCULATED_UPDATEHCXMLBody % params
+    else:
+        params = to_template_params(health_check)
+        params.update(
+            xmlns=conn.XMLNameSpace,
+            health_check_version=health_check_version,
+        )
+        xml_body = UPDATEHCXMLBody % params
     response = conn.make_request('POST', uri, {'Content-Type': 'text/xml'}, xml_body)
     body = response.read()
     boto.log.debug(body)
@@ -286,12 +391,14 @@ def main():
         state               = dict(choices=['present', 'absent'], default='present'),
         ip_address          = dict(),
         port                = dict(type='int'),
-        type                = dict(required=True, choices=['HTTP', 'HTTPS', 'HTTP_STR_MATCH', 'HTTPS_STR_MATCH', 'TCP']),
+        type                = dict(required=True, choices=['HTTP', 'HTTPS', 'HTTP_STR_MATCH', 'HTTPS_STR_MATCH', 'TCP', 'CALCULATED']),
         resource_path       = dict(),
         fqdn                = dict(),
         string_match        = dict(),
         request_interval    = dict(type='int', choices=[10, 30], default=30),
         failure_threshold   = dict(type='int', choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], default=3),
+        health_threshold    = dict(type='int', default=1),
+        child_health_checks = dict(type='list')
     )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -308,9 +415,8 @@ def main():
     string_match_in       = module.params.get('string_match')
     request_interval_in   = module.params.get('request_interval')
     failure_threshold_in  = module.params.get('failure_threshold')
-
-    if ip_addr_in is None and fqdn_in is None:
-        module.fail_json(msg="parameter 'ip_address' or 'fqdn' is required")
+    health_threshold_in   = module.params.get('health_threshold')
+    child_health_checks_in = module.params.get('child_health_checks')
 
     # Default port
     if port_in is None:
@@ -318,7 +424,7 @@ def main():
             port_in = 80
         elif type_in in ['HTTPS', 'HTTPS_STR_MATCH']:
             port_in = 443
-        else:
+        elif type_in is 'TCP':
             module.fail_json(msg="parameter 'port' is required for 'type' TCP")
 
     # string_match in relation with type
@@ -330,6 +436,12 @@ def main():
     elif string_match_in:
         module.fail_json(msg="parameter 'string_match' argument is only for the HTTP(S)_STR_MATCH types")
 
+    if type_in == 'CALCULATED':
+        if not child_health_checks_in:
+            module.fail_json(msg="parameter 'child_health_checks' is required for the CALCULATED type")
+    elif ip_addr_in is None and fqdn_in is None:
+        module.fail_json(msg="parameter 'ip_address' or 'fqdn' is required")
+
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
     # connect to the route53 endpoint
     try:
@@ -340,11 +452,20 @@ def main():
     changed = False
     action = None
     check_id = None
-    wanted_config = HealthCheck(ip_addr_in, port_in, type_in, resource_path_in, fqdn_in, string_match_in, request_interval_in, failure_threshold_in)
+    if type_in == 'CALCULATED':
+        wanted_config = CalculatedHealthCheck(child_health_checks_in, health_threshold_in)
+    else:
+        wanted_config = HealthCheck(ip_addr_in, port_in, type_in, resource_path_in, fqdn_in, string_match_in, request_interval_in, failure_threshold_in)
     existing_check = find_health_check(conn, wanted_config)
     if existing_check:
         check_id = existing_check.Id
-        existing_config = to_health_check(existing_check.HealthCheckConfig)
+        if type_in == 'CALCULATED':
+            existing_config = CalculatedHealthCheck(
+                existing_check.HealthCheckConfig.get('ChildHealthChecks'),
+                health_threshold=int(existing_check.HealthCheckConfig.get('HealthThreshold'))
+            )
+        else:
+            existing_config = to_health_check(existing_check.HealthCheckConfig)
 
     if state_in == 'present':
         if existing_check is None:
