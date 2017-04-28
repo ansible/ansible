@@ -358,7 +358,7 @@ class DockerNetworkManager(object):
         if not self.check_mode and not self.parameters.debug:
             self.results.pop('actions')
 
-        self.results['ansible_facts'] = {u'ansible_docker_network': self.get_existing_network()}
+        self.results['ansible_facts'] = {u'docker_network': self.get_existing_network()}
 
     def absent(self):
         self.remove_network()
