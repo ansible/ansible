@@ -24,7 +24,7 @@ from ansible.plugins.lookup import LookupBase
 
 class LookupModule(LookupBase):
 
-    def run(self, terms, varibles=None, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
 
         # Expect any type of Mapping, notably hostvars
         if not isinstance(terms, collections.Mapping):
