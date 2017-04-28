@@ -181,15 +181,17 @@ import time
 from string import Template
 
 
-DEFAULT_SOCKET_LOCATION="/var/run/haproxy.sock"
+DEFAULT_SOCKET_LOCATION = "/var/run/haproxy.sock"
 RECV_SIZE = 1024
 ACTION_CHOICES = ['enabled', 'disabled']
-WAIT_RETRIES=25
-WAIT_INTERVAL=5
+WAIT_RETRIES = 25
+WAIT_INTERVAL = 5
+
 
 ######################################################################
 class TimeoutException(Exception):
     pass
+
 
 class HAProxy(object):
     """
@@ -237,7 +239,6 @@ class HAProxy(object):
         self.client.close()
         return result
 
-
     def capture_command_output(self, cmd, output):
         """
         Capture the output for a command
@@ -249,7 +250,6 @@ class HAProxy(object):
             self.command_results['output'] = []
         self.command_results['output'].append(output)
 
-
     def discover_all_backends(self):
         """
         Discover all entries with svname = 'BACKEND' and return a list of their corresponding
@@ -259,8 +259,7 @@ class HAProxy(object):
         r = csv.DictReader(data.splitlines())
         return tuple(map(lambda d: d['pxname'], filter(lambda d: d['svname'] == 'BACKEND', r)))
 
-
-    def execute_for_backends(self, cmd, pxname, svname, wait_for_status = None):
+    def execute_for_backends(self, cmd, pxname, svname, wait_for_status=None):
         """
         Run some command on the specified backends. If no backends are provided they will
         be discovered automatically (all backends)
@@ -278,10 +277,9 @@ class HAProxy(object):
             if (self.fail_on_not_found or self.wait) and state is None:
                 self.module.fail_json(msg="The specified backend '%s/%s' was not found!" % (backend, svname))
 
-            self.execute(Template(cmd).substitute(pxname = backend, svname = svname))
+            self.execute(Template(cmd).substitute(pxname=backend, svname=svname))
             if self.wait:
                 self.wait_until_status(backend, svname, wait_for_status)
-
 
     def get_state_for(self, pxname, svname):
         """
@@ -297,7 +295,6 @@ class HAProxy(object):
             )
         )
         return state or None
-
 
     def wait_until_status(self, pxname, svname, status):
         """
@@ -317,7 +314,6 @@ class HAProxy(object):
 
         self.module.fail_json(msg="server %s/%s not status '%s' after %d retries. Aborting." % (pxname, svname, status, self.wait_retries))
 
-
     def enabled(self, host, backend, weight):
         """
         Enabled action, marks server to UP and checks are re-enabled,
@@ -329,7 +325,6 @@ class HAProxy(object):
             cmd += "; set weight $pxname/$svname %s" % weight
         self.execute_for_backends(cmd, backend, host, 'UP')
 
-
     def disabled(self, host, backend, shutdown_sessions):
         """
         Disabled action, marks server to DOWN for maintenance. In this mode, no more checks will be
@@ -340,7 +335,6 @@ class HAProxy(object):
         if shutdown_sessions:
             cmd += "; shutdown sessions server $pxname/$svname"
         self.execute_for_backends(cmd, backend, host, 'MAINT')
-
 
     def act(self):
         """
@@ -375,12 +369,12 @@ def main():
 
     # load ansible module object
     module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(required=True, default=None, choices=ACTION_CHOICES),
+        argument_spec=dict(
+            state=dict(required=True, default=None, choices=ACTION_CHOICES),
             host=dict(required=True, default=None),
             backend=dict(required=False, default=None),
             weight=dict(required=False, default=None),
-            socket = dict(required=False, default=DEFAULT_SOCKET_LOCATION),
+            socket=dict(required=False, default=DEFAULT_SOCKET_LOCATION),
             shutdown_sessions=dict(required=False, default=False, type='bool'),
             fail_on_not_found=dict(required=False, default=False, type='bool'),
             wait=dict(required=False, default=False, type='bool'),
@@ -396,7 +390,7 @@ def main():
     ansible_haproxy.act()
 
 # import module snippets
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

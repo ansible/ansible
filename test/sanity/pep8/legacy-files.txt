@@ -498,7 +498,6 @@ lib/ansible/modules/network/f5/bigip_gtm_wide_ip.py
 lib/ansible/modules/network/f5/bigip_virtual_server.py
 lib/ansible/modules/network/fortios/fortios_config.py
 lib/ansible/modules/network/fortios/fortios_ipv4_policy.py
-lib/ansible/modules/net_tools/haproxy.py
 lib/ansible/modules/network/illumos/dladm_iptun.py
 lib/ansible/modules/network/illumos/dladm_linkprop.py
 lib/ansible/modules/network/ios/_ios_template.py
