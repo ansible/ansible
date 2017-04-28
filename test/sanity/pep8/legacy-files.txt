@@ -245,7 +245,6 @@ lib/ansible/modules/cloud/cloudstack/cs_nic.py
 lib/ansible/modules/cloud/cloudstack/cs_pod.py
 lib/ansible/modules/cloud/cloudstack/cs_portforward.py
 lib/ansible/modules/cloud/cloudstack/cs_project.py
-lib/ansible/modules/cloud/cloudstack/cs_region.py
 lib/ansible/modules/cloud/cloudstack/cs_router.py
 lib/ansible/modules/cloud/cloudstack/cs_securitygroup.py
 lib/ansible/modules/cloud/cloudstack/cs_securitygroup_rule.py
