@@ -41,14 +41,14 @@ This script can be run with the switches
 The following environment variables are also read and, if present, override
 equivalent values set in the config file (switches set on the command line
 always have the highest precedence and override everything else)
-ANSIBLE_DI_CONSUL_DATACENTER
-ANSIBLE_DI_CONSUL_HOST
-ANSIBLE_DI_CONSUL_URL
+ANSIBLE_INVENTORY_CONSUL_DATACENTER
+ANSIBLE_INVENTORY_CONSUL_HOST
+ANSIBLE_INVENTORY_CONSUL_URL
 
 The main configuration for this plugin is read from a consul.ini file located in
 the same directory as this inventory script. All config options in the config file
-are optional except 'url' (unless the --url switch was passed to the script or
-the ANSIBLE_DI_CONSUL_URL environemnt variable was set). 'url' must point to a
+are optional except 'url' (unless the --url switch was passed to the script or the
+ANSIBLE_INVENTORY_CONSUL_URL environemnt variable was set). 'url' must point to a
 valid agent or server running the http api. For more information on enabling
 the endpoint see:
 
@@ -452,9 +452,9 @@ class ConsulConfig(dict):
         ''' Reads settings from environment variables '''
 
         var_names = {
-            'ANSIBLE_DI_CONSUL_HOST': 'host',
-            'ANSIBLE_DI_CONSUL_DATACENTER': 'datacenter',
-            'ANSIBLE_DI_CONSUL_URL': 'url'
+            'ANSIBLE_INVENTORY_CONSUL_HOST': 'host',
+            'ANSIBLE_INVENTORY_CONSUL_DATACENTER': 'datacenter',
+            'ANSIBLE_INVENTORY_CONSUL_URL': 'url'
         }
 
         for var, val in var_names.items():
