@@ -1268,6 +1268,7 @@ if ($productid -eq $null)
     $productid = Get-Attr -obj $params -name product_id -failifempty $true -resultobj $result
 }
 $arguments = Get-Attr -obj $params -name arguments
+$normalizeargs = Get-Attr -obj $params -name normalize_arguments -type "bool" 
 $ensure = Get-Attr -obj $params -name state -default "present"
 if ($ensure -eq $null)
 {
@@ -1276,6 +1277,37 @@ if ($ensure -eq $null)
 $username = Get-Attr -obj $params -name user_name
 $password = Get-Attr -obj $params -name user_password
 $return_code = Get-Attr -obj $params -name expected_return_code -default 0
+
+
+if ($normalizeargs -eq $true -and ($arguments -ne $null))
+{
+    $ReplacedArgs = @()
+    $SplitChars = " ","="
+    Foreach ($SplitChar in $SplitChars)
+    {
+        $NewArgs = @()
+        $ArgsSplit = $arguments.split($SplitChar)
+        foreach ($ThisArg in $ArgsSplit)
+        {
+            if ($ThisArg[1] -eq ":")
+            {
+                $OrigArg = $ThisArg
+                $ThisArg = $ThisArg.Replace("\\","\")
+                if ($OrigArg -ne $ThisArg)
+                {
+                    #We replaced a thing
+                    $myobj = "" | Select "original", "normalized"
+                    $myobj.original = $OrigArg
+                    $myobj.normalized = $ThisArg
+                    $ReplacedArgs += $myobj
+                }
+            }
+            $NewArgs += $ThisArg
+        }
+        $arguments = $NewArgs -join $SplitChar
+    }
+    $result.normalized_args = $ReplacedArgs
+}
 
 #Construct the DSC param hashtable
 $dscparams = @{
