@@ -231,6 +231,7 @@ class ConsulInventory(object):
         self.consul_api = config.get_consul_api()
 
         if config.has_config('datacenter'):
+            self.current_dc = config.datacenter
             if config.has_config('host'):
                 self.load_data_for_node(config.host, config.datacenter)
             else:
