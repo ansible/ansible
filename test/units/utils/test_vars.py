@@ -63,6 +63,40 @@ class TestVariableUtils(unittest.TestCase):
             result=defaultdict(a=1, b=2, c=defaultdict(baz='bam'))
             ),
     )
+    test_selective_merge_data = (
+        # Merge cases
+        dict(
+            a=dict(a=1, _ansible_merge_=True),
+            b=dict(b=2, _ansible_merge_=True),
+            result=dict(a=1, b=2)
+            ),
+        dict(
+            a=dict(a=1, c=dict(foo='bar'), _ansible_merge_=True),
+            b=dict(b=2, c=dict(baz='bam'), _ansible_merge_=True),
+            result=dict(a=1, b=2, c=dict(foo='bar', baz='bam'))
+            ),
+        dict(
+            a=defaultdict(a=1, c=defaultdict(foo='bar'), _ansible_merge_=True),
+            b=dict(b=2, c=dict(baz='bam'), _ansible_merge_=True),
+            result=defaultdict(a=1, b=2, c=defaultdict(foo='bar', baz='bam'))
+            ),
+        # Replace cases
+        dict(
+            a=dict(a=1),
+            b=dict(b=2),
+            result=dict(a=1, b=2)
+            ),
+        dict(
+            a=dict(a=1, c=dict(foo='bar')),
+            b=dict(b=2, c=dict(baz='bam')),
+            result=dict(a=1, b=2, c=dict(baz='bam'))
+            ),
+        dict(
+            a=defaultdict(a=1, c=dict(foo='bar')),
+            b=dict(b=2, c=defaultdict(baz='bam')),
+            result=defaultdict(a=1, b=2, c=defaultdict(baz='bam'))
+            ),
+    )
 
     def setUp(self):
         pass
@@ -90,6 +124,11 @@ class TestVariableUtils(unittest.TestCase):
     def test_combine_vars_replace(self):
         with mock.patch('ansible.constants.DEFAULT_HASH_BEHAVIOUR', 'replace'):
             for test in self.test_replace_data:
+                self.assertEqual(combine_vars(test['a'], test['b']), test['result'])
+
+    def test_combine_vars_selective_merge(self):
+        with mock.patch('ansible.constants.DEFAULT_HASH_BEHAVIOUR', 'replace'):
+            for test in self.test_selective_merge_data:
                 self.assertEqual(combine_vars(test['a'], test['b']), test['result'])
 
     def test_combine_vars_merge(self):

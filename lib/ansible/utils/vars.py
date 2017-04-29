@@ -75,12 +75,16 @@ def _validate_mutable_mappings(a, b):
         )
 
 
+def should_merge(a):
+    return isinstance(a, dict) and a.get('_ansible_merge_')
+
+
 def combine_vars(a, b):
     """
     Return a copy of dictionaries of variables based on configured hash behavior
     """
 
-    if C.DEFAULT_HASH_BEHAVIOUR == "merge":
+    if C.DEFAULT_HASH_BEHAVIOUR == "merge" or should_merge(a) or should_merge(b):
         return merge_hash(a, b)
     else:
         # HASH_BEHAVIOUR == 'replace'
@@ -115,6 +119,8 @@ def merge_hash(a, b):
             # otherwise, just copy the value from b to a
             result[k] = v
 
+    if '_ansible_merge_' in result:
+        del result['_ansible_merge_']
     return result
 
 
