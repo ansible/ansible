@@ -64,7 +64,7 @@ options:
   normalize_arguments:
     description:
       - >
-        Performs argument normalization of the arguments string, replacing json-escaped double backslashes with single ones. 
+        Performs argument normalization of the arguments string, replacing json-escaped double backslashes with single ones.
         This makes it easier to pass in complex argument strings in a way that the installer will understand.
     default: false
     choices:
@@ -141,7 +141,7 @@ EXAMPLES = r'''
 - name: install ravendb using argument normalization
   win_package:
     path: "{{ ravendb_source_url }}"
-    arguments: "/quiet /log C:\\raven_log.txt /msicl RAVEN_TARGET_ENVIRONMENT=PRODUCTION /msicl TARGETDIR=F:\\apps\\RavenDB /msicl F:\\apps\\RavenDB /msicl RAVEN_INSTALLATION_TYPE=SERVICE /msicl REMOVE=IIS /msicl ADDLOCAL=Service /msicl RAVEN_LICENSE_FILE_PATH={{ apps_data_path }}\\NServiceBus_RavenDB_License\\license.xml"
+    arguments: "/quiet /log C:\\raven_log.txt /msicl TARGETDIR=F:\\apps\\RavenDB /msicl F:\\apps\\RavenDB"
     product_id: "{D90279D8-6EB3-417E-983B-4BB5E1E9BF88}"
     normalize_arguments: true
   register: ravendb_install_result
