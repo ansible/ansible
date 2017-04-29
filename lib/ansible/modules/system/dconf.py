@@ -156,7 +156,8 @@ class DBusWrapper(object):
 
         # If no existing D-Bus session was detected, check if dbus-run-session
         # is available.
-        if self.dbus_session_bus_address is None and any(os.access(os.path.join(path, 'dbus-run-session'), os.X_OK) for path in os.environ["PATH"].split(os.pathsep)):
+        if self.dbus_session_bus_address is None and any(os.access(os.path.join(path, 'dbus-run-session'), os.X_OK)
+                                                         for path in os.environ["PATH"].split(os.pathsep)):
             self.use_dbus_run_session = True
 
     def _get_existing_dbus_session(self):
@@ -223,7 +224,7 @@ class DBusWrapper(object):
         """
 
         if self.spawned_dbus_daemon:
-            self.spawned_dbus_daemon.send_signal(psutil.signal.SIGTERM);
+            self.spawned_dbus_daemon.send_signal(psutil.signal.SIGTERM)
 
     def run_command(self, command):
         """
@@ -240,7 +241,7 @@ class DBusWrapper(object):
         if self.use_dbus_run_session:
             command = ['dbus-run-session'] + command
 
-        rc, out, err = self.module.run_command(command, environ_update = self.environ_update)
+        rc, out, err = self.module.run_command(command, environ_update=self.environ_update)
 
         if self.use_dbus_run_session and rc == 127:
             self.module.fail_json("Failed to run passed-in command, dbus-run-session faced an internal erorr: %s" % err)
