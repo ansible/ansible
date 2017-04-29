@@ -136,7 +136,26 @@ As of version 2.3, Ansible can now use a vaulted variable that lives in an other
     other_plain_text: othervalue
 
 
-This vaulted variable be decrypted with the supplied vault secret and used as a normal variable. The `ansible-vault` command line supports stdin and stdout for encrypting data on the fly, which can be used from your favorite editor to create these vaulted variables; you just have to be sure to add the `!vault` tag so both Ansible and YAML are aware of the need to decrypt. The `|` is also required, as vault encryption results in a multi-line string.
+This vaulted variable be decrypted with the supplied vault secret and used as a normal variable. The `ansible-vault` command line supports `STDIN` and `STDOUT` for encrypting data on the fly, which can be used from your favorite editor to create these vaulted variables; you just have to be sure to add the `!vault` tag so both Ansible and YAML are aware of the need to decrypt. The `|` is also required, as vault encryption results in a multi-line string. The leading spaces will be ignored and some indentation is required for it to be valid YAML.
+
+As of version 2.3, one way to generate the inline secret is to use `ansible-vault encrypt_string` which will output the secret to `STDOUT`::
+
+   $ ansible-vault encrypt_string "42"
+   !vault-encrypted |
+          $ANSIBLE_VAULT;1.1;AES256
+          <vault cipher text here>
+
+   $ ansible-vault encrypt_string "42" --stdin-name "the_answer"
+    the_answer: !vault-encrypted |
+          $ANSIBLE_VAULT;1.1;AES256
+          <vault cipher text here>
+
+   $ echo -n "the plaintext to encrypt" | ansible-vault encrypt_string
+   !vault-encrypted |
+          $ANSIBLE_VAULT;1.1;AES256
+          <vault cipher text here>
+
+Note the use of `echo -n`. If you use just `echo` the encrypted string will have a new line (`\n`) on the end.
 
 
 .. _speeding_up_vault:
