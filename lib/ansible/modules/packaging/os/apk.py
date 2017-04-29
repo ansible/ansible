@@ -145,13 +145,15 @@ import re
 # Import module snippets.
 from ansible.module_utils.basic import AnsibleModule
 
-def update_package_db(module):
+def update_package_db(module, exit):
     cmd = "%s update" % (APK_PATH)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
-    if rc == 0:
-        return True
+    if rc != 0:
+        module.fail_json(msg="could not update package db", stdout=stdout, stderr=stderr)
+    elif exit:
+        module.exit_json(changed=True, msg='updated repository indexes', stdout=stdout, stderr=stderr)
     else:
-        module.fail_json(msg="could not update package db")
+        return True
 
 def query_package(module, name):
     cmd = "%s -v info --installed %s" % (APK_PATH, name)
@@ -196,10 +198,10 @@ def upgrade_packages(module, available):
         cmd = "%s --available" % cmd
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc != 0:
-        module.fail_json(msg="failed to upgrade packages")
+        module.fail_json(msg="failed to upgrade packages", stdout=stdout, stderr=stderr)
     if re.search(r'^OK', stdout):
-        module.exit_json(changed=False, msg="packages already upgraded")
-    module.exit_json(changed=True, msg="upgraded packages")
+        module.exit_json(changed=False, msg="packages already upgraded", stdout=stdout, stderr=stderr)
+    module.exit_json(changed=True, msg="upgraded packages", stdout=stdout, stderr=stderr)
 
 def install_packages(module, names, state):
     upgrade = False
@@ -235,8 +237,8 @@ def install_packages(module, names, state):
             cmd = "%s add %s" % (APK_PATH, packages)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc != 0:
-        module.fail_json(msg="failed to install %s" % (packages))
-    module.exit_json(changed=True, msg="installed %s package(s)" % (packages))
+        module.fail_json(msg="failed to install %s" % (packages), stdout=stdout, stderr=stderr)
+    module.exit_json(changed=True, msg="installed %s package(s)" % (packages), stdout=stdout, stderr=stderr)
 
 def remove_packages(module, names):
     installed = []
@@ -252,8 +254,8 @@ def remove_packages(module, names):
         cmd = "%s del --purge %s" % (APK_PATH, names)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc != 0:
-        module.fail_json(msg="failed to remove %s package(s)" % (names))
-    module.exit_json(changed=True, msg="removed %s package(s)" % (names))
+        module.fail_json(msg="failed to remove %s package(s)" % (names), stdout=stdout, stderr=stderr)
+    module.exit_json(changed=True, msg="removed %s package(s)" % (names), stdout=stdout, stderr=stderr)
 
 # ==========================================
 # Main control flow.
@@ -293,9 +295,7 @@ def main():
         p['state'] = 'absent'
 
     if p['update_cache']:
-        update_package_db(module)
-        if not p['name'] and not p['upgrade']:
-            module.exit_json(changed=True, msg='updated repository indexes')
+        update_package_db(module, not p['name'] and not p['upgrade'])
 
     if p['upgrade']:
         upgrade_packages(module, p['available'])
