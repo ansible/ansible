@@ -259,7 +259,7 @@ def main():
 
     if p['update_cache']:
         update_package_db(module)
-        if not p['name']:
+        if not p['name'] and not p['upgrade']:
             module.exit_json(changed=True, msg='updated repository indexes')
 
     if p['upgrade']:
