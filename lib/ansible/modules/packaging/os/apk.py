@@ -140,10 +140,27 @@ EXAMPLES = '''
     repository: http://dl-3.alpinelinux.org/alpine/edge/main
 '''
 
+RETURN = '''
+packages:
+    description: a list of packages that have been changed
+    returned: when packages have changed
+    type: list
+    sample: ['package', 'other-package']
+'''
 
 import re
 # Import module snippets.
 from ansible.module_utils.basic import AnsibleModule
+
+def parse_for_packages(stdout):
+    packages = []
+    data = stdout.split('\n')
+    regex = re.compile('^\(\d+/\d+\)\s+\S+\s+(\S+)')
+    for l in data:
+        p = regex.search(l)
+        if p:
+            packages.append(p.group(1))
+    return packages
 
 def update_package_db(module, exit):
     cmd = "%s update" % (APK_PATH)
@@ -197,11 +214,12 @@ def upgrade_packages(module, available):
     if available:
         cmd = "%s --available" % cmd
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+    packagelist = parse_for_packages(stdout)
     if rc != 0:
-        module.fail_json(msg="failed to upgrade packages", stdout=stdout, stderr=stderr)
+        module.fail_json(msg="failed to upgrade packages", stdout=stdout, stderr=stderr, packages=packagelist)
     if re.search(r'^OK', stdout):
-        module.exit_json(changed=False, msg="packages already upgraded", stdout=stdout, stderr=stderr)
-    module.exit_json(changed=True, msg="upgraded packages", stdout=stdout, stderr=stderr)
+        module.exit_json(changed=False, msg="packages already upgraded", stdout=stdout, stderr=stderr, packages=packagelist)
+    module.exit_json(changed=True, msg="upgraded packages", stdout=stdout, stderr=stderr, packages=packagelist)
 
 def install_packages(module, names, state):
     upgrade = False
@@ -236,9 +254,10 @@ def install_packages(module, names, state):
         else:
             cmd = "%s add %s" % (APK_PATH, packages)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+    packagelist = parse_for_packages(stdout)
     if rc != 0:
-        module.fail_json(msg="failed to install %s" % (packages), stdout=stdout, stderr=stderr)
-    module.exit_json(changed=True, msg="installed %s package(s)" % (packages), stdout=stdout, stderr=stderr)
+        module.fail_json(msg="failed to install %s" % (packages), stdout=stdout, stderr=stderr, packages=packagelist)
+    module.exit_json(changed=True, msg="installed %s package(s)" % (packages), stdout=stdout, stderr=stderr, packages=packagelist)
 
 def remove_packages(module, names):
     installed = []
@@ -253,9 +272,10 @@ def remove_packages(module, names):
     else:
         cmd = "%s del --purge %s" % (APK_PATH, names)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+    packagelist = parse_for_packages(stdout)
     if rc != 0:
-        module.fail_json(msg="failed to remove %s package(s)" % (names), stdout=stdout, stderr=stderr)
-    module.exit_json(changed=True, msg="removed %s package(s)" % (names), stdout=stdout, stderr=stderr)
+        module.fail_json(msg="failed to remove %s package(s)" % (names), stdout=stdout, stderr=stderr, packages=packagelist)
+    module.exit_json(changed=True, msg="removed %s package(s)" % (names), stdout=stdout, stderr=stderr, packages=packagelist)
 
 # ==========================================
 # Main control flow.
