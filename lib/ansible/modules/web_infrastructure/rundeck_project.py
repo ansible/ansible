@@ -21,7 +21,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['stableinterface'],
+                    'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
@@ -56,9 +56,8 @@ options:
         description:
             - Sets the token to authenticate against Rundeck API.
         required: True
-
-
 '''
+
 EXAMPLES = '''
 - name: Create a rundeck project
   rundeck_project:
@@ -187,6 +186,7 @@ def main():
         rundeck.create_or_update_project()
     elif module.params['state'] == 'absent':
         rundeck.remove_project()
+
 
 if __name__ == '__main__':
     main()
