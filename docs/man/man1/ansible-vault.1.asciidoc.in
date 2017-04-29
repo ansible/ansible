@@ -12,7 +12,7 @@ ansible-vault - manage encrypted ansible vars files (YAML).
 
 SYNOPSIS
 --------
-ansible-vault [create|decrypt|edit|encrypt|rekey] [--help] [options] file_name
+ansible-vault [create|decrypt|edit|encrypt|encrypt_string|rekey] [--help] [options] file_name
 
 
 DESCRIPTION
@@ -115,6 +115,24 @@ Thus any of the following invocations can be used:
 
 Reading from stdin and writing only encrypted output is a good way to prevent
 sensitive data from ever hitting disk (either interactively or from a script).
+
+
+ENCRYPT_STRING
+--------------
+
+*$ ansible-vault encrypt_string [options] "string cheese"*
+
+The *encrypt_string* sub-command is used to encrypt a string supplied as an argument.
+
+The *encrypt_string* command works with *STDIN* and has the additional options
+*--name* and *--stdin-name*:
+
+*$ ansible-vault encrypt_string "munster" -name="cheese_du_jour"*
+*$ ansible-vault encrypt_string "$@" -stdin-name="cheese_list" < ./cheese_list.txt*
+
+The output will be on *STDOUT*. This command is useful for creating inline
+secrets introduced in version 2.3.
+
 
 DECRYPT
 -------
