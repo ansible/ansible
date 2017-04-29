@@ -32,6 +32,14 @@ description:
 author: "Kevin Brebanov (@kbrebanov)"
 version_added: "2.0"
 options:
+  available:
+    description:
+      - During upgrade, reset versioned world dependencies and change logic to prefer replacing or downgrading packages (instead of holding them)
+        if the currently installed package is no longer available from any repository.
+    required: false
+    default: no
+    choices: [ "yes", "no" ]
+    version_added: "2.4"
   name:
     description:
       - A package name, like C(foo), or mutliple packages, like C(foo, bar).
@@ -115,6 +123,11 @@ EXAMPLES = '''
 - apk:
     upgrade: yes
 
+# Upgrade / replace / downgrade / uninstall all installed packages to the latest versions available
+- apk:
+    available: yes
+    upgrade: yes
+
 # Update repositories as a separate step
 - apk:
     update_cache: yes
@@ -174,11 +187,13 @@ def get_dependencies(module, name):
     else:
         return []
 
-def upgrade_packages(module):
+def upgrade_packages(module, available):
     if module.check_mode:
         cmd = "%s upgrade --simulate" % (APK_PATH)
     else:
         cmd = "%s upgrade" % (APK_PATH)
+    if available:
+        cmd = "%s --available" % cmd
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc != 0:
         module.fail_json(msg="failed to upgrade packages")
@@ -251,6 +266,7 @@ def main():
             repository=dict(type='list'),
             update_cache=dict(default='no', type='bool'),
             upgrade=dict(default='no', type='bool'),
+            available=dict(default='no', type='bool'),
         ),
         required_one_of=[['name', 'update_cache', 'upgrade']],
         mutually_exclusive=[['name', 'upgrade']],
@@ -282,7 +298,7 @@ def main():
             module.exit_json(changed=True, msg='updated repository indexes')
 
     if p['upgrade']:
-        upgrade_packages(module)
+        upgrade_packages(module, p['available'])
 
     if p['state'] in ['present', 'latest']:
         install_packages(module, p['name'], p['state'])
