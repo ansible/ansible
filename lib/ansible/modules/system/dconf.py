@@ -31,10 +31,20 @@ description:
   - This module allows modifications and reading of dconf database. The module
     is implemented as a wrapper around dconf tool. Please see the dconf(1) man
     page for more details.
+  - Since C(dconf) requires a running D-Bus session to change values, the module
+    will try to detect an existing session and reuse it, run the tool via
+    C(dbus-run-session), or launch a new one (and destroy if afterwards) via
+    C(dbus-launch) - in same order of preference as listed here.
 notes:
-  - This module depends on two binaries being present on destination system -
-    C(dconf) and C(dbus-launch). Depending on distribution you are using, you
-    may need to install additional packages to have these available.
+  - This module depends on C(psutil) Python library, C(dconf) binary, and one of
+    C(dbus-run-session) or C(dbus-launch) binaries. Depending on distribution
+    you are using, you may need to install additional packages to have these
+    available.
+  - Detection of existing, running D-Bus session, required to change settings
+    via C(dconf), is not 100% reliable due to implementation details of D-Bus
+    daemon itself. This might lead to inconsitencies if you are changing same
+    C(dconf) setting via two different sessions (i.e. app itself and Ansible
+    overwriting each-others changes).
   - Keep in mind that the C(dconf) CLI tool, which this module wraps around,
     utilises an unusual syntax for the values (GVariant). For example, if you
     wanted to provide a string value, the correct syntax would be
@@ -101,7 +111,141 @@ EXAMPLES = """
 """
 
 
+import os
+
+import psutil
+
 from ansible.module_utils.basic import AnsibleModule
+
+
+class DBusWrapper(object):
+    """
+    Helper class that can be used for running a command with a working D-Bus
+    session.
+
+    If possible, command will be run against an existing D-Bus session,
+    otherwise the session will be spawned either via dbus-run-session
+    (preferred), or dbus-launch (fallback) command.
+
+    Implementation should be used as Python context manager, which will take
+    care of spawning dbus-daemon, setting correct environment variables, and
+    making sure that spawned dbus-daemon is terminated.
+
+    Example usage:
+
+    with DBusWrapper(ansible_module) as wrapper:
+        wrapper.run_command(["printenv", "DBUS_SESSION_BUS_ADDRESS"])
+    """
+
+    def __init__(self, module):
+        """
+        Initialises an instance of the class.
+
+        :param module: Ansible module instance used to signal failures and run commands.
+        :type module: AnsibleModule
+        """
+
+        # Store passed-in arguments and set-up some defaults.
+        self.module = module
+        self.spawned_dbus_daemon = None
+        self.use_dbus_run_session = False
+        self.environ_update = dict()
+
+        # Try to extract existing D-Bus session address.
+        self.dbus_session_bus_address = self._get_existing_dbus_session()
+
+        # If no existing D-Bus session was detected, check if dbus-run-session
+        # is available.
+        if self.dbus_session_bus_address is None and any(os.access(os.path.join(path, 'dbus-run-session'), os.X_OK) for path in os.environ["PATH"].split(os.pathsep)):
+            self.use_dbus_run_session = True
+
+    def _get_existing_dbus_session(self):
+        """
+        Detects and returns as existing D-Bus session bus address.
+
+        :returns: string -- D-Bus session bus address. If a running D-Bus session was not detected, returns None.
+        """
+
+        # We'll be checking the processes of current user only.
+        uid = os.getuid()
+
+        # Go through all the pids for this user, detect running dbus-daemon
+        # processes, and try to extract the D-Bus session bus address if
+        # available.
+        for pid in psutil.pids():
+            process = psutil.Process(pid)
+            process_real_uid, _, _ = process.uids()
+            try:
+                process_command = os.path.basename(process.exe())
+                if process_real_uid == uid and process_command == 'dbus-daemon' and 'DBUS_SESSION_BUS_ADDRESS' in process.environ():
+                    return process.environ()['DBUS_SESSION_BUS_ADDRESS']
+            # This can happen with things like SSH sessions etc.
+            except psutil.AccessDenied:
+                pass
+
+        return None
+
+    def __enter__(self):
+        """
+        Sets-up the context for exectuion.
+
+        If D-Bus session bus address is unknown at this point and
+        dbus-run-session cannot be used, a new dbus-daemon process will be
+        spawned.
+
+        If D-Buss session bus address is already known or dbus-run-session is in
+        use, context will be left untouched.
+        """
+
+        # Spawn D-Bus daemon, and make sure to store the process in order to
+        # destroy it while leaving the context.
+        if self.dbus_session_bus_address is None and not self.use_dbus_run_session:
+            rc, out, err = self.module.run_command("dbus-launch")
+
+            if rc != 0:
+                self.module.fail_json('Failed to spawn D-Bus daemon via dbus-launch: %s' % err)
+            for line in out.strip().split("\n"):
+                var, value = line.split("=", 1)
+                if var == 'DBUS_SESSION_BUS_ADDRESS':
+                    self.dbus_session_bus_address = value
+                elif var == 'DBUS_SESSION_BUS_PID':
+                    self.spawned_dbus_daemon = psutil.Process(int(value))
+
+        if not self.use_dbus_run_session:
+            self.environ_update = {'DBUS_SESSION_BUS_ADDRESS': self.dbus_session_bus_address}
+
+        return self
+
+    def __exit__(self, type, value, traceback):
+        """
+        Destroys the context. Makes sure that spawned dbus-daemon (if any) is
+        killed.
+        """
+
+        if self.spawned_dbus_daemon:
+            self.spawned_dbus_daemon.send_signal(psutil.signal.SIGTERM);
+
+    def run_command(self, command):
+        """
+        Runs the specified command within a functional D-Bus session. Command is
+        effectively passed-on to AnsibleModule.run_command() method, with
+        modification for using dbus-run-session if necessary.
+
+        :param command: Command to run, including parameters. Each element of the list should be a string.
+        :type module: list
+
+        :returns: tuple(result_code, standard_output, standard_error) -- Result code, standard output, and standard error from running the command.
+        """
+
+        if self.use_dbus_run_session:
+            command = ['dbus-run-session'] + command
+
+        rc, out, err = self.module.run_command(command, environ_update = self.environ_update)
+
+        if self.use_dbus_run_session and rc == 127:
+            self.module.fail_json("Failed to run passed-in command, dbus-run-session faced an internal erorr: %s" % err)
+
+        return rc, out, err
 
 
 class DconfPreference(object):
@@ -167,13 +311,14 @@ class DconfPreference(object):
 
         # Set-up command to run. Since DBus is needed for write operation, wrap
         # dconf command dbus-launch.
-        command = ["dbus-launch", "dconf", "write", key, value]
+        command = ["dconf", "write", key, value]
 
         # Run the command and fetch standard return code, stdout, and stderr.
-        rc, out, err = self.module.run_command(command)
+        with DBusWrapper(self.module) as dbus_wrapper:
+            rc, out, err = dbus_wrapper.run_command(command)
 
-        if rc != 0:
-            self.module.fail_json(msg='dconf failed while write the value with error: %s' % err)
+            if rc != 0:
+                self.module.fail_json(msg='dconf failed while write the value with error: %s' % err)
 
         # Value was changed.
         return True
@@ -202,13 +347,14 @@ class DconfPreference(object):
 
         # Set-up command to run. Since DBus is needed for reset operation, wrap
         # dconf command dbus-launch.
-        command = ["dbus-launch", "dconf", "reset", key]
+        command = ["dconf", "reset", key]
 
         # Run the command and fetch standard return code, stdout, and stderr.
-        rc, out, err = self.module.run_command(command)
+        with DBusWrapper(self.module) as dbus_wrapper:
+            rc, out, err = dbus_wrapper.run_command(command)
 
-        if rc != 0:
-            self.module.fail_json(msg='dconf failed while reseting the value with error: %s' % err)
+            if rc != 0:
+                self.module.fail_json(msg='dconf failed while reseting the value with error: %s' % err)
 
         # Value was changed.
         return True
