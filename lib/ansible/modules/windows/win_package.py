@@ -70,6 +70,7 @@ options:
     choices:
       - true
       - false
+    version_added: 2.4
   state:
     description:
       - Install or Uninstall
