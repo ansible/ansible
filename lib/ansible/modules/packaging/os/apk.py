@@ -37,6 +37,12 @@ options:
       - A package name, like C(foo), or mutliple packages, like C(foo, bar).
     required: false
     default: null
+  repository:
+    description:
+      - A package repository or multiple repositories
+    required: false
+    default: null
+    version_added: "2.4"
   state:
     description:
       - Indicates the desired package(s) state.
@@ -112,6 +118,13 @@ EXAMPLES = '''
 # Update repositories as a separate step
 - apk:
     update_cache: yes
+
+# Install package from a specific repository
+- apk:
+    name: foo
+    state: latest
+    update_cache: yes
+    repository: http://dl-3.alpinelinux.org/alpine/edge/main
 '''
 
 
@@ -235,6 +248,7 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'installed', 'absent', 'removed', 'latest']),
             name=dict(type='list'),
+            repository=dict(type='list'),
             update_cache=dict(default='no', type='bool'),
             upgrade=dict(default='no', type='bool'),
         ),
@@ -250,6 +264,11 @@ def main():
     APK_PATH = module.get_bin_path('apk', required=True)
 
     p = module.params
+
+    # add repositories to the APK_PATH
+    if p['repository']:
+        for r in p['repository']:
+            APK_PATH = "%s --repository %s" % (APK_PATH, r)
 
     # normalize the state parameter
     if p['state'] in ['present', 'installed']:
