@@ -244,7 +244,7 @@ def gather_vm_facts(content, vm):
             'label': entry.deviceInfo.label,
             'macaddress': entry.macAddress,
             'ipaddresses': net_dict.get(entry.macAddress, None),
-            'macaddress_dash': entry.macAddress.replace(':', '-'),
+            'macaddress_dash': entry.macAddress.replace(':', '-') if entry.macAddress else None,
             'summary': entry.deviceInfo.summary,
         }
         facts['hw_interfaces'].append('eth' + str(ethernet_idx))

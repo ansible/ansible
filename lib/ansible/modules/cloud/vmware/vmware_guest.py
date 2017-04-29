@@ -389,7 +389,6 @@ class PyVmomiDeviceHelper(object):
                                       (device_type, device_infos['name']))
 
         nic.device.wakeOnLanEnabled = True
-        nic.device.addressType = 'assigned'
         nic.device.deviceInfo = vim.Description()
         nic.device.deviceInfo.label = device_label
         nic.device.deviceInfo.summary = device_infos['name']
@@ -398,7 +397,10 @@ class PyVmomiDeviceHelper(object):
         nic.device.connectable.allowGuestControl = True
         nic.device.connectable.connected = True
         if 'mac' in device_infos:
+            nic.device.addressType = 'assigned'
             nic.device.macAddress = device_infos['mac']
+        else:
+            nic.device.addressType = 'generated'
 
         return nic
 
