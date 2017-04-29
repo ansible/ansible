@@ -275,11 +275,10 @@ def main():
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
-                                supports_check_mode=True)
+                           supports_check_mode=True)
 
     warnings = list()
     check_args(module, warnings)
-
 
     server_type = module.params['server_type']
     address = module.params['address']
@@ -309,7 +308,6 @@ def main():
     if (auth_port or acct_port) and server_type != 'radius':
         module.fail_json(msg='auth_port and acct_port can only be used'
                              'when server_type=radius')
-
 
     existing = get_aaa_host_info(module, server_type, address)
     end_state = existing
@@ -364,4 +362,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
