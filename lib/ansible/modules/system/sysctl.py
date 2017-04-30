@@ -330,10 +330,10 @@ class SysctlModule(object):
         checked = []
         self.fixed_lines = []
         for line in self.file_lines:
-            if not line.strip() or line.strip().startswith(("#", ";")):
+            tmpline = line.strip()
+            if not tmpline or tmpline.startswith(("#", ";")):
                 self.fixed_lines.append(line)
                 continue
-            tmpline = line.strip()
             k, v = line.split('=',1)
             k = k.strip()
             v = v.strip()
