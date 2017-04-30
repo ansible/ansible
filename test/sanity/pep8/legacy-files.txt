@@ -4,6 +4,7 @@ lib/ansible/config/data.py
 lib/ansible/config/manager.py
 lib/ansible/module_utils/vmware.py
 lib/ansible/modules/cloud/amazon/_ec2_ami_search.py
+lib/ansible/modules/cloud/amazon/_ec2_remote_facts.py
 lib/ansible/modules/cloud/amazon/_ec2_vpc.py
 lib/ansible/modules/cloud/amazon/aws_kms.py
 lib/ansible/modules/cloud/amazon/cloudformation.py
@@ -24,7 +25,6 @@ lib/ansible/modules/cloud/amazon/ec2_key.py
 lib/ansible/modules/cloud/amazon/ec2_lc.py
 lib/ansible/modules/cloud/amazon/ec2_lc_facts.py
 lib/ansible/modules/cloud/amazon/ec2_metric_alarm.py
-lib/ansible/modules/cloud/amazon/ec2_remote_facts.py
 lib/ansible/modules/cloud/amazon/ec2_scaling_policy.py
 lib/ansible/modules/cloud/amazon/ec2_snapshot.py
 lib/ansible/modules/cloud/amazon/ec2_snapshot_facts.py
