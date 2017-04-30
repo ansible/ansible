@@ -14,8 +14,8 @@
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'committer',
-                    'version': '1.0'}
+                    'supported_by': 'fivethreeo',
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -23,7 +23,7 @@ module: s3_cors
 short_description: Manage CORS for S3 buckets in AWS
 description:
     - Manage CORS for S3 buckets in AWS
-version_added: "2.3"
+version_added: "2.4"
 author: "Oyvind Saltvik (@fivethreeo)"
 options:
   name:
@@ -111,12 +111,7 @@ except ImportError:
     HAS_BOTO3 = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
-
-
-def key_to_camel(key):
-    parts = key.split('_')
-    return ''.join([part.title() for part in parts])
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info, snake_dict_to_camel_dict
 
 
 def create_or_update_bucket_cors(connection, module):
@@ -130,10 +125,7 @@ def create_or_update_bucket_cors(connection, module):
     except ClientError as e:
         current_camel_rules = []
 
-    new_camel_rules = []
-    for rule in rules:
-        new_camel_rule = dict([(key_to_camel(k), v) for k, v in rule.items()])
-        new_camel_rules.append(new_camel_rule)
+    new_camel_rules = snake_dict_to_camel_dict(rules)
 
     if not (len(new_camel_rules) == len(current_camel_rules)):
         changed = True
@@ -160,7 +152,8 @@ def create_or_update_bucket_cors(connection, module):
         try:
             cors = connection.put_bucket_cors(Bucket=name, CORSConfiguration={'CORSRules': new_camel_rules})
         except ClientError as e:
-            module.fail_json(msg=str(e))
+            module.fail_json(msg="Error putting bucket CORS", exception=traceback.format_exc(),
+                     **camel_dict_to_snake_dict(e.message))
 
     module.exit_json(changed=changed, name=name, rules=rules)
 
@@ -174,7 +167,8 @@ def destroy_bucket_cors(connection, module):
         cors = connection.delete_bucket_cors(Bucket=name)
         changed = True
     except ClientError as e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg="Error deleting bucket CORS", exception=traceback.format_exc(),
+                     **camel_dict_to_snake_dict(e.message))
 
     module.exit_json(changed=changed)
 
@@ -186,7 +180,7 @@ def main():
         dict(
             name=dict(required=True, type='str'),
             rules=dict(type='list'),
-            state=dict(default='present', type='str', choices=['present', 'absent'])
+            state=dict(type='str', choices=['present', 'absent'])
         )
     )
 
@@ -207,10 +201,9 @@ def main():
             )
         )
     except ClientError as e:
-        err_msg = 'Boto3 Client Error - {0}'.format(str(e.msg))
-        module.fail_json(
-            success=False, changed=False, result={}, msg=err_msg
-        )
+        module.fail_json(msg="Boto3 Client Error", exception=traceback.format_exc(),
+                     **camel_dict_to_snake_dict(e.message))
+
     state = module.params.get("state")
 
     if state == 'present':
