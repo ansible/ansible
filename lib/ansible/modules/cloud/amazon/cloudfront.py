@@ -82,7 +82,6 @@ options:
   update_distribution:
       description:
         - If C(yes), updates a distribution.  This can be used with just an C(alias) to specify the distribution and either C(config) or one of it's attributes.
-
       default: 'no'
       choices: ['yes', 'no']
       required: false
@@ -95,7 +94,6 @@ options:
   duplicate_distribution:
       description:
         - If C(yes), duplicates a distribution.  This can be used with just an C(alias) to specify the distribution and either C(config) or one of it's attributes.
-
       default: 'no'
       choices: ['yes', 'no']
       required: false
@@ -126,7 +124,6 @@ options:
   duplicate_streaming_distribution:
       description:
         - If C(yes), duplicates a streaming distribution. This can be used with just an C(alias) to specify the distribution and either C(config) or one of it's attributes.
-
       default: 'no'
       choices: ['yes', 'no']
       required: false
@@ -387,10 +384,19 @@ options:
 '''
 
 EXAMPLES = '''
-# create a basic distribution
+# create a basic distribution with defaults
 - cloudfront:
     create_distribution: yes
     default_origin_domain_name: www.my-cloudfront-origin.com
+
+# create a basic distribution with defaults and tags
+- cloudfront:
+    create_distribution: yes
+    default_origin_domain_name: www.my-cloudfront-origin.com
+    tags:
+      - Name: example distribution
+      - Project: example project
+      - Priority: 1
 
 # update a distribution comment by distribution_id
 - cloudfront:
@@ -417,15 +423,15 @@ EXAMPLES = '''
     tag_resource: yes
     alias: zzz.aaa.io
     tags:
-      - {'Key': 'Name', 'Value': 'aaa'}
-      - {'Key': 'Project', 'Value': 'aaa project'}
+      - Name: aaa
+      - Project: aaa project
 
 # remove a tag from a distribution referenced by alias
 - cloudfront:
     untag_resource: yes
     alias: zzz.aaa.io
     tag_keys:
-    - 'Project'
+    - Project
 
 # validate a distribution with an origin, logging and default cache behavior
 - cloudfront:
@@ -517,6 +523,16 @@ EXAMPLES = '''
      default_s3_origin_domain_name: example-bucket.s3.amazonaws.com
      comment: example streaming distribution
 
+# create a streaming distribution with tags
+- cloudfront:
+     create_streaming_distribution: yes
+     default_s3_origin_domain_name: example-bucket.s3.amazonaws.com
+     comment: example streaming distribution
+     tags:
+       - Name: example distribution
+       - Project: example project
+       - Priority: 1
+
 # duplicate a streaming distribution
 - cloudfront:
     duplicate_streaming_distribution: yes
@@ -556,6 +572,8 @@ EXAMPLES = '''
       - /testpathone/test1.txt
       - /testpathtwo/test2.log
       - /testpaththree/test3.log
+
+# deploy wait
 
 '''
 
@@ -693,7 +711,7 @@ class CloudFrontServiceManager:
                         'DistributionConfig': config,
                         'Tags': tags
                         }
-                func = partial(self.client.create_disribution_with_tags,
+                func = partial(self.client.create_distribution_with_tags,
                         DistributionConfigWithTags=distribution_config_with_tags)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
@@ -730,7 +748,7 @@ class CloudFrontServiceManager:
                         'StreamingDistributionConfig': config,
                         'Tags': tags
                         }
-                func = partial(self.client.create_streaming_disribution_with_tags,
+                func = partial(self.client.create_streaming_distribution_with_tags,
                         StreamingDistributionConfigWithTags=streaming_distribution_config_with_tags)
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
@@ -1190,16 +1208,28 @@ class CloudFrontValidationManager:
         except Exception as e:
             self.module.fail_json(msg="error validating tagging parameters - " + str(e))
 
-    def validate_list_without_quantity(self, list_items):
+    def create_aws_list_without_quantity(self, list_items):
         try:
             if list_items is None:
-                return list_items
+                return None
             aws_list_items = self.__helpers.python_list_to_aws_list(list_items)
             aws_list_items.pop('quantity', None)
             pascal_aws_list_items = self.__helpers.snake_dict_to_pascal_dict(aws_list_items)
             return pascal_aws_list_items
         except Exception as e:
-            self.module.fail_json(msg="error validating list without items - " + str(e))
+            self.module.fail_json(msg="error creating aws list without items - " + str(e))
+
+    def validate_tags(self, tags):
+        try:
+            if tags is None:
+                return None
+            list_items = []
+            for item in tags:
+                key, value = item.iteritems().next()
+                list_items.append({'Key': key, 'Value': value})
+            return self.create_aws_list_without_quantity(list_items)
+        except Exception as e:
+            self.module.fail_json(msg="error validating tags - " + str(e))
 
     def validate_distribution_config_parameters(self, config, default_root_object, is_ipv6_enabled,
             http_version, web_acl_id):
@@ -1452,7 +1482,8 @@ def main():
         default_origin_path=dict(required=False, default=None, type='str'),
         default_origin_access_identity=dict(required=False, default=None, type='str'),
         default_s3_origin_domain_name=dict(required=False, default=None, type='str'),
-        default_s3_origin_origin_access_identity=dict(required=False, default=None, type='str')
+        default_s3_origin_origin_access_identity=dict(required=False, default=None, type='str'),
+        wait=dict(required=False, default=None, type='bool')
     ))
 
     result = {}
@@ -1517,6 +1548,7 @@ def main():
     default_origin_access_identity = module.params.get('default_origin_access_identity')
     default_s3_origin_domain_name = module.params.get('default_s3_origin_domain_name')
     default_s3_origin_origin_access_identity = module.params.get('default_s3_origin_origin_access_identity')
+    wait = module.params.get('wait')
 
     create_update_distribution = create_distribution or update_distribution
     create_update_streaming_distribution = create_streaming_distribution or update_streaming_distribution
@@ -1526,9 +1558,11 @@ def main():
     create = create_distribution or create_streaming_distribution
     validate = validate_distribution or validate_streaming_distribution
     duplicate = duplicate_distribution or duplicate_streaming_distribution
+    delete = delete_distribution or delete_streaming_distribution or delete_origin_access_identity
     config_required = (create_distribution or update_delete_duplicate_distribution or create_streaming_distribution
             or update_delete_duplicate_streaming_distribution or validate)
     tagging = tag_resource or untag_resource
+    has_tags = not (delete or untag_resource or generate_presigned_url_from_pem_private_key)
 
     if sum(map(bool, [create_origin_access_identity, delete_origin_access_identity, update_origin_access_identity,
             create_distribution, delete_distribution, update_distribution, create_streaming_distribution,
@@ -1550,10 +1584,10 @@ def main():
 
     if tagging:
         arn = validation_mgr.validate_tagging_arn(arn, alias, distribution_id, streaming_distribution_id)
-    if tag_resource:
-        tags = validation_mgr.validate_list_without_quantity(tags)
+    if has_tags:
+        valid_tags = validation_mgr.validate_tags(tags)
     if untag_resource:
-        tag_keys = validation_mgr.validate_list_without_quantity(tag_keys)
+        valid_tag_keys = validation_mgr.validate_list_without_quantity(tag_keys)
 
     if config_required:
         config = helpers.pascal_dict_to_snake_dict(config, True)
@@ -1608,13 +1642,13 @@ def main():
                 presigned_url_pem_private_key_path, presigned_url_pem_private_key_password, presigned_url_pem_url,
                 validated_pem_expire_date)
     elif create_distribution or duplicate_distribution:
-        result=service_mgr.create_distribution(config, tags)
+        result=service_mgr.create_distribution(config, valid_tags)
     elif delete_distribution:
         result=service_mgr.delete_distribution(distribution_id, e_tag)
     elif update_distribution:
         result=service_mgr.update_distribution(config, distribution_id, e_tag)
     elif create_streaming_distribution or duplicate_streaming_distribution:
-        result=service_mgr.create_streaming_distribution(config, tags)
+        result=service_mgr.create_streaming_distribution(config, valid_tags)
     elif delete_streaming_distribution:
         result=service_mgr.delete_streaming_distribution(streaming_distribution_id, e_tag)
     elif update_streaming_distribution:
@@ -1622,9 +1656,9 @@ def main():
     elif validate:
         result = { 'validation_result': 'OK' }
     elif tag_resource:
-        result=service_mgr.tag_resource(arn, tags)
+        result=service_mgr.tag_resource(arn, valid_tags)
     elif untag_resource:
-        result=service_mgr.untag_resource(arn, tag_keys)
+        result=service_mgr.untag_resource(arn, valid_tag_keys)
 
     module.exit_json(changed=(not validate), **helpers.pascal_dict_to_snake_dict(result))
 
