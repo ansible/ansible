@@ -18,11 +18,17 @@
 # POWERSHELL_COMMON
 
 ########
-Import-Module ActiveDirectory
 
 $result = @{
     changed = $false;
     password_updated = $false
+}
+
+try {
+    Import-Module ActiveDirectory
+}
+catch {
+    Fail-Json $result "Failed to import ActiveDirectory PowerShell module. This module should be run on a domain controller, and the ActiveDirectory module must be available."
 }
 
 $params = Parse-Args $args
