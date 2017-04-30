@@ -111,7 +111,8 @@ except ImportError:
     HAS_BOTO3 = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info, snake_dict_to_camel_dict
+from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, get_aws_connection_info,
+                                      snake_dict_to_camel_dict, camel_dict_to_snake_dict)
 
 
 def create_or_update_bucket_cors(connection, module):
