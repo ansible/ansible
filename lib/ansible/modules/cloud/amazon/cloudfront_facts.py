@@ -492,7 +492,7 @@ class CloudFrontFactsServiceManager:
                                   exception=traceback.format_exc(),
                                   **camel_dict_to_snake_dict(e.response))
 
-    def paginated_response(self, func, result_key=""):
+    def paginated_response(self, func, result_key=''):
         '''
         Returns expanded response for paginated operations.
         The 'result_key' is used to define the concatenated results that are combined from each paginated response.
@@ -502,7 +502,7 @@ class CloudFrontFactsServiceManager:
         loop = True
         while loop:
             response = func(**args)
-            if result_key == "":
+            if result_key == '':
                 result = response
                 result.pop('ResponseMetadata', None)
             else:
