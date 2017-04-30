@@ -153,8 +153,10 @@ def create_or_update_bucket_cors(connection, module):
             cors = connection.put_bucket_cors(Bucket=name, CORSConfiguration={'CORSRules': new_camel_rules})
         except ClientError as e:
             module.fail_json(
-              msg="Error putting bucket CORS", exception=traceback.format_exc(),
-              **camel_dict_to_snake_dict(e.message))
+              msg="Error putting bucket CORS",
+              exception=traceback.format_exc(),
+              **camel_dict_to_snake_dict(e.message)
+            )
 
     module.exit_json(changed=changed, name=name, rules=rules)
 
@@ -169,8 +171,10 @@ def destroy_bucket_cors(connection, module):
         changed = True
     except ClientError as e:
         module.fail_json(
-          msg="Error deleting bucket CORS", exception=traceback.format_exc(),
-          **camel_dict_to_snake_dict(e.message))
+          msg="Error deleting bucket CORS",
+          exception=traceback.format_exc(),
+          **camel_dict_to_snake_dict(e.message)
+        )
 
     module.exit_json(changed=changed)
 
@@ -204,8 +208,10 @@ def main():
         )
     except ClientError as e:
         module.fail_json(
-          msg="Boto3 Client Error", exception=traceback.format_exc(),
-          **camel_dict_to_snake_dict(e.message))
+          msg="Boto3 Client Error",
+          exception=traceback.format_exc(),
+          **camel_dict_to_snake_dict(e.message)
+        )
 
     state = module.params.get("state")
 
