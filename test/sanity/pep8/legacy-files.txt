@@ -781,8 +781,6 @@ lib/ansible/modules/web_infrastructure/django_manage.py
 lib/ansible/modules/web_infrastructure/ejabberd_user.py
 lib/ansible/modules/web_infrastructure/htpasswd.py
 lib/ansible/modules/web_infrastructure/jboss.py
-lib/ansible/modules/web_infrastructure/jenkins_job.py
-lib/ansible/modules/web_infrastructure/jenkins_script.py
 lib/ansible/modules/web_infrastructure/jira.py
 lib/ansible/modules/web_infrastructure/letsencrypt.py
 lib/ansible/modules/web_infrastructure/taiga_issue.py
