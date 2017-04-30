@@ -323,7 +323,7 @@ class SysctlModule(object):
             k, v = line.split('=',1)
             k = k.strip()
             v = v.strip()
-            self.file_values[k] = v.strip()
+            self.file_values[k] = v
 
     # Fix the value in the sysctl file content
     def fix_lines(self):
