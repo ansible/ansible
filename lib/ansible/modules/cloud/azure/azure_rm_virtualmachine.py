@@ -52,7 +52,8 @@ options:
         description:
             - Assert the state of the virtual machine.
             - State 'present' will check that the machine exists with the requested configuration. If the configuration
-              of the existing machine does not match, the machine will be updated. Use options started, allocated and restarted to change the machine's powerstate.
+              of the existing machine does not match, the machine will be updated. Use options started, allocated and restarted to change the machine's power
+              state.
             - State 'absent' will remove the virtual machine.
         default: present
         required: false
