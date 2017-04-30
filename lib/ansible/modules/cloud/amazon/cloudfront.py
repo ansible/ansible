@@ -416,7 +416,9 @@ EXAMPLES = '''
     update_distribution: yes
     distribution_id: zzz.aaa.io
     comment: modified by cloudfront.py again
-    aliases: [ 'www.my-distribution-source.com', 'zzz.aaa.io' ]
+    aliases:
+      - www.my-distribution-source.com
+      - zzz.aaa.io
 
 # add tags to a distribution referenced by alias
 - cloudfront:
