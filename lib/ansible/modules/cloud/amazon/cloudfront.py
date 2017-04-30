@@ -1482,8 +1482,7 @@ def main():
         default_origin_path=dict(required=False, default=None, type='str'),
         default_origin_access_identity=dict(required=False, default=None, type='str'),
         default_s3_origin_domain_name=dict(required=False, default=None, type='str'),
-        default_s3_origin_origin_access_identity=dict(required=False, default=None, type='str'),
-        wait=dict(required=False, default=None, type='bool')
+        default_s3_origin_origin_access_identity=dict(required=False, default=None, type='str')
     ))
 
     result = {}
@@ -1548,7 +1547,6 @@ def main():
     default_origin_access_identity = module.params.get('default_origin_access_identity')
     default_s3_origin_domain_name = module.params.get('default_s3_origin_domain_name')
     default_s3_origin_origin_access_identity = module.params.get('default_s3_origin_origin_access_identity')
-    wait = module.params.get('wait')
 
     create_update_distribution = create_distribution or update_distribution
     create_update_streaming_distribution = create_streaming_distribution or update_streaming_distribution
