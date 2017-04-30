@@ -526,6 +526,15 @@ def set_facts_for_distribution_id_and_alias(details, facts, distribution_id, ali
     for alias in aliases:
         facts[alias].update(details)
     return facts
+        args=dict()
+        if next_token:
+            args['NextToken'] = next_token
+        response = func(**args)
+        result = response.get(result_key)
+        next_token = response.get('NextToken')
+        if not next_token:
+           return result
+        return result + self.paginated_response(func, result_key, next_token)
 
 def main():
     argument_spec = ec2_argument_spec()
