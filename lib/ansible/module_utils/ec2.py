@@ -623,9 +623,10 @@ def map_complex_type(complex_type, type_map):
         return globals()['__builtins__'][type_map](complex_type)
     return new_type
 
+
 def compare_aws_tags(current_tags_dict, new_tags_dict, purge_tags=True):
     """
-    Compare two dicts of AWS tags. We expect dicts to of been created using 'boto3_tag_list_to_ansible_dict' helper function.
+    Compare two dicts of AWS tags. Dicts are expected to of been created using 'boto3_tag_list_to_ansible_dict' helper function.
     Two dicts are returned - the first is tags to be set, the second is any tags to remove
 
     :param current_tags_dict:
@@ -642,12 +643,8 @@ def compare_aws_tags(current_tags_dict, new_tags_dict, purge_tags=True):
         if key not in new_tags_dict and purge_tags:
             tag_keys_to_unset.append(key)
 
-    # Remove the keys we're going to delete then compare the dicts to see if modification is necessary
-    for key in tag_keys_to_unset:
-        del current_tags_dict[key]
-
-    for key,value in new_tags_dict.items():
-        if key in current_tags_dict and value != current_tags_dict[key]:
-            tag_key_value_pairs_to_set[key] = value
+    for key in set(new_tags_dict.keys()) - set(tag_keys_to_unset):
+        if new_tags_dict[key] != current_tags_dict.get(key):
+            tag_key_value_pairs_to_set[key] = new_tags_dict[key]
 
     return tag_key_value_pairs_to_set, tag_keys_to_unset

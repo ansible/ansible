@@ -71,7 +71,7 @@ from ansible.module_utils.ec2 import (AnsibleAWSError,
         connect_to_aws, ec2_argument_spec, get_aws_connection_info)
 
 
-def list_ec2_snapshots_boto3(connection, module):
+def list_ec2_eni_boto3(connection, module):
 
     if module.params.get("filters") is None:
         filters = []
@@ -89,7 +89,7 @@ def list_ec2_snapshots_boto3(connection, module):
         network_interface['TagSet'] = boto3_tag_list_to_ansible_dict(network_interface['TagSet'])
         camel_network_interfaces.append(camel_dict_to_snake_dict(network_interface))
 
-    module.exit_json(security_groups=camel_network_interfaces)
+    module.exit_json(network_interfaces=camel_network_interfaces)
 
 
 def get_eni_info(interface):
@@ -167,7 +167,7 @@ def main():
         else:
             module.fail_json(msg="region must be specified")
 
-        list_ec2_snapshots_boto3(connection, module)
+        list_ec2_eni_boto3(connection, module)
     else:
         region, ec2_url, aws_connect_params = get_aws_connection_info(module)
 
