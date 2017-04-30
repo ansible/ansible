@@ -52,10 +52,19 @@ options:
         default: null
     working_dir:
         description:
-            - Directory of your project (see --working-dir).
-        required: true
+            - Directory of your project (see --working-dir). This is required when
+              the command is not run globally.
+        required: false
         default: null
         aliases: [ "working-dir" ]
+    global_command:
+        version_added: "2.4"
+        description:
+            - Runs the specified command globally.
+        required: false
+        choices: [ true, false]
+        default: false
+        aliases: [ "global-command" ]
     prefer_source:
         description:
             - Forces installation from package sources when possible (see --prefer-source).
@@ -133,6 +142,12 @@ EXAMPLES = '''
     arguments: package/package /path/to/project ~1.0
     working_dir: /path/to/project
     prefer_dist: yes
+
+# Installs package globally
+- composer:
+    command: require
+    global_command: yes
+    arguments: my/package
 '''
 
 import re
@@ -158,10 +173,12 @@ def get_available_options(module, command='install'):
     return command_help_json['definition']['options']
 
 
-def composer_command(module, command, arguments="", options=[]):
+def composer_command(module, command, arguments="", options=None, global_command=False):
+    if options is None:
+        options = []
     php_path = module.get_bin_path("php", True, ["/usr/local/bin"])
     composer_path = module.get_bin_path("composer", True, ["/usr/local/bin"])
-    cmd = "%s %s %s %s %s" % (php_path, composer_path, command, " ".join(options), arguments)
+    cmd = "%s %s %s %s %s %s" % (php_path, composer_path, "global" if global_command else "", command, " ".join(options), arguments)
     return module.run_command(cmd)
 
 
@@ -170,7 +187,8 @@ def main():
         argument_spec=dict(
             command=dict(default="install", type="str", required=False),
             arguments=dict(default="", type="str", required=False),
-            working_dir=dict(type="path", aliases=["working-dir"], required=True),
+            working_dir=dict(type="path", aliases=["working-dir"]),
+            global_command=dict(default=False, type="bool", aliases=["global-command"]),
             prefer_source=dict(default=False, type="bool", aliases=["prefer-source"]),
             prefer_dist=dict(default=False, type="bool", aliases=["prefer-dist"]),
             no_dev=dict(default=True, type="bool", aliases=["no-dev"]),
@@ -179,6 +197,7 @@ def main():
             optimize_autoloader=dict(default=True, type="bool", aliases=["optimize-autoloader"]),
             ignore_platform_reqs=dict(default=False, type="bool", aliases=["ignore-platform-reqs"]),
         ),
+        required_if=[('global_command', False, ['working_dir'])],
         supports_check_mode=True
     )
 
@@ -188,6 +207,7 @@ def main():
         module.fail_json(msg="Use the 'arguments' param for passing arguments with the 'command'")
 
     arguments = module.params['arguments']
+    global_command = module.params['global_command']
     available_options = get_available_options(module=module, command=command)
 
     options = []
@@ -204,7 +224,8 @@ def main():
             option = "--%s" % option
             options.append(option)
 
-    options.extend(['--working-dir', "'%s'" % module.params['working_dir']])
+    if not global_command:
+        options.extend(['--working-dir', "'%s'" % module.params['working_dir']])
 
     option_params = {
         'prefer_source': 'prefer-source',
@@ -224,7 +245,7 @@ def main():
     if module.check_mode:
         options.append('--dry-run')
 
-    rc, out, err = composer_command(module, command, arguments, options)
+    rc, out, err = composer_command(module, command, arguments, options, global_command)
 
     if rc != 0:
         output = parse_out(err)
