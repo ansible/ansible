@@ -508,7 +508,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             allocated=dict(type='bool', default=True),
             restarted=dict(type='bool', default=False),
             started=dict(type='bool', default=True),
-            volume_type=dict(choices=['ssd', 'hdd'], type='str', required=True),
+            volume_type=dict(choices=['ssd', 'hdd'], type='str', required=True, default='hdd'),
         )
 
         for key in VirtualMachineSizeTypes:
