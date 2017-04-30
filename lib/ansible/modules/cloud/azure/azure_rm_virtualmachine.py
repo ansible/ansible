@@ -52,8 +52,7 @@ options:
         description:
             - Assert the state of the virtual machine.
             - State 'present' will check that the machine exists with the requested configuration. If the configuration
-              of the existing machine does not match, the machine will be updated. Use options started, allocated and restarted to change the machine's power
-              state.
+              of the existing machine does not match, the machine will be updated. Use options started, allocated and restarted to change the machine's powerstate.
             - State 'absent' will remove the virtual machine.
         default: present
         required: false
@@ -509,6 +508,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             allocated=dict(type='bool', default=True),
             restarted=dict(type='bool', default=False),
             started=dict(type='bool', default=True),
+            volume_type=dict(choices=['ssd', 'hdd'], type='str', required=True),
         )
 
         for key in VirtualMachineSizeTypes:
@@ -542,6 +542,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         self.restarted = None
         self.started = None
         self.differences = None
+        self.volume_type = None
 
         self.results = dict(
             changed=False,
@@ -1168,8 +1169,14 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.log("Storage account {0} found.".format(storage_account_name))
             self.check_provisioning_state(account)
             return account
-        sku = Sku(SkuName.standard_lrs)
-        Sku.tier = SkuTier.standard
+
+        if self.volume_type == "ssd":
+            sku = Sku(SkuName.premium_lrs)
+            Sku.tier = SkuTier.premium
+        else:
+            sku = Sku(SkuName.standard_lrs)
+            Sku.tier = SkuTier.standard
+
         kind = Kind.storage
         parameters = StorageAccountCreateParameters(sku, kind, self.location)
         self.log("Creating storage account {0} in location {1}".format(storage_account_name, self.location))
