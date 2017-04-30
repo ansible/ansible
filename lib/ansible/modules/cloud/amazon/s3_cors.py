@@ -13,9 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'status': ['stableinterface'],
-                    'supported_by': 'fivethreeo',
-                    'metadata_version': '1.0'}
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -152,8 +152,9 @@ def create_or_update_bucket_cors(connection, module):
         try:
             cors = connection.put_bucket_cors(Bucket=name, CORSConfiguration={'CORSRules': new_camel_rules})
         except ClientError as e:
-            module.fail_json(msg="Error putting bucket CORS", exception=traceback.format_exc(),
-                     **camel_dict_to_snake_dict(e.message))
+            module.fail_json(
+              msg="Error putting bucket CORS", exception=traceback.format_exc(),
+              **camel_dict_to_snake_dict(e.message))
 
     module.exit_json(changed=changed, name=name, rules=rules)
 
@@ -167,8 +168,9 @@ def destroy_bucket_cors(connection, module):
         cors = connection.delete_bucket_cors(Bucket=name)
         changed = True
     except ClientError as e:
-        module.fail_json(msg="Error deleting bucket CORS", exception=traceback.format_exc(),
-                     **camel_dict_to_snake_dict(e.message))
+        module.fail_json(
+          msg="Error deleting bucket CORS", exception=traceback.format_exc(),
+          **camel_dict_to_snake_dict(e.message))
 
     module.exit_json(changed=changed)
 
@@ -201,8 +203,9 @@ def main():
             )
         )
     except ClientError as e:
-        module.fail_json(msg="Boto3 Client Error", exception=traceback.format_exc(),
-                     **camel_dict_to_snake_dict(e.message))
+        module.fail_json(
+          msg="Boto3 Client Error", exception=traceback.format_exc(),
+          **camel_dict_to_snake_dict(e.message))
 
     state = module.params.get("state")
 
