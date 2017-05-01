@@ -96,12 +96,14 @@ def parse_yaml(value, lineno, module, name, load_all=False):
         # TODO: Better line/column detection
         errors.append({
             'msg': ('%s is not valid YAML. Character '
-                    '0x%x at position %d.' % (name, e.character, e.position))
+                    '0x%x at position %d.' % (name, e.character, e.position)),
+            'line': lineno
         })
     except yaml.YAMLError as e:
         traces.append(e)
         errors.append({
-            'msg': '%s is not valid YAML: %s: %s' % (name, type(e), e)
+            'msg': '%s is not valid YAML: %s: %s' % (name, type(e), e),
+            'line': lineno
         })
 
     return data, errors, traces
