@@ -972,8 +972,6 @@ test/integration/targets/uri/files/testserver.py
 test/runner/lib/sanity.py
 test/runner/test.py
 test/sanity/code-smell/ansible-var-precedence-check.py
-test/sanity/validate-modules/module_args.py
-test/sanity/validate-modules/schema.py
 test/units/cli/test_galaxy.py
 test/units/contrib/inventory/test_vmware_inventory.py
 test/units/errors/test_errors.py
