@@ -317,7 +317,7 @@ class SysctlModule(object):
             self.file_lines.append(line)
 
             # don't split empty lines or comments
-            if not line or line.startswith(("#", ";")):
+            if not line or line.startswith("#") or line.startswith(";"):
                 continue
 
             k, v = line.split('=',1)
@@ -330,7 +330,7 @@ class SysctlModule(object):
         checked = []
         self.fixed_lines = []
         for line in self.file_lines:
-            if not line.strip() or line.strip().startswith(("#", ";")):
+            if not line.strip() or line.startswith("#") or line.startswith(";"):
                 self.fixed_lines.append(line)
                 continue
             tmpline = line.strip()
