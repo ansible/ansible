@@ -36,10 +36,10 @@ description:
     C(dbus-run-session), or launch a new one (and destroy if afterwards) via
     C(dbus-launch) - in same order of preference as listed here.
 notes:
-  - This module depends on C(psutil) Python library, C(dconf) binary, and one of
-    C(dbus-run-session) or C(dbus-launch) binaries. Depending on distribution
-    you are using, you may need to install additional packages to have these
-    available.
+  - This module depends on C(psutil) Python library, C(dconf) binary,
+    C(dbus-send), and one of C(dbus-run-session) or C(dbus-launch)
+    binaries. Depending on distribution you are using, you may need to install
+    additional packages to have these available.
   - Detection of existing, running D-Bus session, required to change settings
     via C(dconf), is not 100% reliable due to implementation details of D-Bus
     daemon itself. This might lead to inconsitencies if you are changing same
@@ -113,7 +113,11 @@ EXAMPLES = """
 
 import os
 
-import psutil
+try:
+    import psutil
+    psutil_found = True
+except ImportError:
+    psutil_found = False
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -170,19 +174,31 @@ class DBusWrapper(object):
         # We'll be checking the processes of current user only.
         uid = os.getuid()
 
-        # Go through all the pids for this user, detect running dbus-daemon
-        # processes, and try to extract the D-Bus session bus address if
-        # available.
+        # Go through all the pids for this user, try to extract the D-Bus
+        # session bus address from environment, and ensure it is possible to
+        # connect to it.
+        self.module.debug("Trying to detect existing D-Bus user session for user: %d" % uid)
+
         for pid in psutil.pids():
             process = psutil.Process(pid)
             process_real_uid, _, _ = process.uids()
             try:
-                process_command = os.path.basename(process.exe())
-                if process_real_uid == uid and process_command == 'dbus-daemon' and 'DBUS_SESSION_BUS_ADDRESS' in process.environ():
-                    return process.environ()['DBUS_SESSION_BUS_ADDRESS']
+                if process_real_uid == uid and 'DBUS_SESSION_BUS_ADDRESS' in process.environ():
+                    dbus_session_bus_address_candidate = process.environ()['DBUS_SESSION_BUS_ADDRESS']
+                    self.module.debug("Found D-Bus user session candidate at address: %s" % dbus_session_bus_address_candidate)
+                    command = ['dbus-send', '--address=%s' % dbus_session_bus_address_candidate, '--type=signal', '/', 'com.example.test']
+                    rc, _, _ = self.module.run_command(command)
+
+                    if rc == 0:
+                        self.module.debug("Verified D-Bus user session candidate as usable at address: %s" % dbus_session_bus_address_candidate)
+
+                        return dbus_session_bus_address_candidate
+
             # This can happen with things like SSH sessions etc.
             except psutil.AccessDenied:
                 pass
+
+        self.module.debug("Failed to find running D-Bus user session, will have to start one of our own")
 
         return None
 
@@ -194,13 +210,16 @@ class DBusWrapper(object):
         dbus-run-session cannot be used, a new dbus-daemon process will be
         spawned.
 
-        If D-Buss session bus address is already known or dbus-run-session is in
+        If D-Bus session bus address is already known or dbus-run-session is in
         use, context will be left untouched.
         """
 
         # Spawn D-Bus daemon, and make sure to store the process in order to
         # destroy it while leaving the context.
         if self.dbus_session_bus_address is None and not self.use_dbus_run_session:
+
+            self.module.debug("Spawning D-Bus daemon via dbus-launch")
+
             rc, out, err = self.module.run_command("dbus-launch")
 
             if rc != 0:
@@ -212,7 +231,10 @@ class DBusWrapper(object):
                 elif var == 'DBUS_SESSION_BUS_PID':
                     self.spawned_dbus_daemon = psutil.Process(int(value))
 
+            self.module.debug("Successfully spawned D-Bus daemon via dbus-launch, process ID is: %d" % self.spawned_dbus_daemon.pid)
+
         if not self.use_dbus_run_session:
+            self.module.debug("DBUS_SESSION_BUS_ADDRESS environment variable will be set to: %s" % self.dbus_session_bus_address)
             self.environ_update = {'DBUS_SESSION_BUS_ADDRESS': self.dbus_session_bus_address}
 
         return self
@@ -224,6 +246,7 @@ class DBusWrapper(object):
         """
 
         if self.spawned_dbus_daemon:
+            self.module.debug("Destroying spawned D-Bus daemon, process ID is: %d" % self.spawned_dbus_daemon.pid)
             self.spawned_dbus_daemon.send_signal(psutil.signal.SIGTERM)
 
     def run_command(self, command):
@@ -239,6 +262,7 @@ class DBusWrapper(object):
         """
 
         if self.use_dbus_run_session:
+            self.module.debug("Using dbus-run-session wrapper for running commands.")
             command = ['dbus-run-session'] + command
 
         rc, out, err = self.module.run_command(command, environ_update=self.environ_update)
@@ -371,6 +395,9 @@ def main():
         ),
         supports_check_mode=True
     )
+
+    if not psutil_found:
+        module.fail_json(msg="Python module psutil is required on managed machine")
 
     # If present state was specified, value must be provided.
     if module.params['state'] == 'present' and module.params['value'] is None:
