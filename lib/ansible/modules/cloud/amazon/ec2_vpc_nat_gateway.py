@@ -211,7 +211,7 @@ nat_gateway_addresses:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
+from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, camel_dict_to_snake_dict
 
 import datetime
 import random
@@ -1087,7 +1087,7 @@ def main():
         )
     else:
         module.exit_json(
-            msg=err_msg, success=success, changed=changed, **results
+            msg=err_msg, success=success, changed=changed, **camel_dict_to_snake_dict(results)
         )
 
 
