@@ -462,7 +462,7 @@ class TaskCliJSON:
     """
 
     # _json_prop_list is a list of properties desired for the JSON output from the ansible task class
-    _json_prop_list = [ 'name', 'action', 'tags', '_ds' ]
+    _json_prop_list = [ 'name', 'action', 'tags', '_ds', 'ignore_errors' ]
 
     def __init__(self, task=None):
 
