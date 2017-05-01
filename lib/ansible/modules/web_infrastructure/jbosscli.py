@@ -41,7 +41,7 @@ options:
     required: false
     default: /usr/share/wildfly/bin
     description:
-      - The location in the filesystem where jboss-cli.sh is
+      - The location in the filesystem where jboss-cli.sh is located
   user:
     required: false
     description:
@@ -54,29 +54,29 @@ options:
     required: false
     default: localhost:9990
     description:
-      - JBoss server or domain controller, whit management port
+      - JBoss server or domain controller, with management port
   verbose:
     required: false
     default: false
     description:
       - Show the JBoss Cli output, commonly in DMR
 notes:
-  - "jboss-cli.sh need to be runing on client host, and $JAVA_HOME/bin is needeth in Client $PATH"
+  - "jboss-cli.sh need to be running on client host, and $JAVA_HOME/bin is needed in Client $PATH"
   - ""
 """
 
 EXAMPLES = """
-# chage scan-interval value, on user wildfy instalation
+# chage scan-interval value, on user wildfly installation
 - jboss:
     command: /subsystem=deployment-scanner/scanner=default:write-attribute(name=scan-interval,value=6000)
     cli_path: /home/user/wildfly-10.1.0.Final/bin
 
-#  change ExampleDS datasource user-name, on 192.168.20.55:9990 default instalation
+#  change ExampleDS datasource user-name, on 192.168.20.55:9990 default installation
 - jboss:
     command: /subsystem=datasources/data-source=ExampleDS:write-attribute(name=user-name,value=other)
     server: 192.168.20.55:9990
 
-# Undeploy the hello world application on wildfy server
+# Undeploy the hello world application on wildfly server
 - jboss:
     command: undeploy hello.war
     server: "{{ ansible_hostname}}:9990"
@@ -205,7 +205,11 @@ def main():
         result['changed'] = True
         result['stdout'] = out
     if rc != 0:
-        module.fail_json(name='jbosscli', msg=re.findall("failure-description.+", out))
+        failure = re.findall("failure-description.+", out)
+        if failure:
+            module.fail_json(name='jbosscli', msg=failure)
+        else:
+            module.fail_json(name='jbosscli', msg=out)
     if err:
         result['Error'] = err
 
