@@ -25,7 +25,7 @@ DOCUMENTATION = '''
 module: os_tempest_run
 short_description: Runs Tempest
 description:
-    - Runs Tempest according to the configuration file in the given workspace 
+    - Runs Tempest according to the configuration file in the given workspace
 
 version_added: "2.4"
 
@@ -76,7 +76,7 @@ options:
 notes:
     - You can find out more about Tempest at U(http://docs.openstack.org/developer/tempest/)
     - The module requires to tempest init <I(workspace)> before usage
-    - The options I(whitelist_file) and I(blacklist_file) are mutually exclusive, if they are both given only the I(whitelist_file) will be used 
+    - The options I(whitelist_file) and I(blacklist_file) are mutually exclusive, if they are both given only the I(whitelist_file) will be used
 '''
 
 EXAMPLES = '''
@@ -233,7 +233,7 @@ def main():
 def prepare_path(file_path):
     """
     Creates the path to the dir that contains the file if it doesn't exists
-    
+
     :arg file_path: A path to a file, will create the dir containing the file if it doesn't already exists.
     :type file_path: str
     """
