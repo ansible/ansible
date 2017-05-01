@@ -54,6 +54,7 @@ options:
         description:
             - Directory of your project (see --working-dir). This is required when
               the command is not run globally.
+            - Will be ignored if C(global_command=true).
         required: false
         default: null
         aliases: [ "working-dir" ]
