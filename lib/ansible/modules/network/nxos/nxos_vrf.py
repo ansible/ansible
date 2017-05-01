@@ -125,16 +125,15 @@ from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 
-def execute_show_command(command, module, command_type='cli_show'):
-    transport = module.params['provider']['transport']
-    if transport in ['cli', None]:
+
+def execute_show_command(command, module):
+    transport = module.params['transport']
+    if transport == 'cli':
         if 'show run' not in command:
             command += ' | json'
-        cmds = [command]
-        body = run_commands(module, cmds)
-    else:
-        cmds = [command]
-        body = run_commands(module, cmds)
+
+    cmds = [command]
+    body = run_commands(module, cmds)
     return body
 
 
@@ -174,12 +173,11 @@ def get_commands_to_config_vrf(delta, vrf):
 
 
 def get_vrf_description(vrf, module):
-    command_type = 'cli_show_ascii'
     command = (r'show run section vrf | begin ^vrf\scontext\s{0} | end ^vrf.*'.format(vrf))
 
     description = ''
     descr_regex = r".*description\s(?P<descr>[\S+\s]+).*"
-    body = execute_show_command(command, module, command_type)
+    body = execute_show_command(command, module)
 
     try:
         body = body[0]
@@ -221,7 +219,7 @@ def get_vrf(vrf, module):
     parsed_vrf = apply_key_map(vrf_key, vrf_table)
 
     command = 'show run all | section vrf.context.{0}'.format(vrf)
-    body = execute_show_command(command, module, 'cli_show_ascii')
+    body = execute_show_command(command, module)
     extra_params = ['vni', 'rd', 'description']
     for param in extra_params:
         parsed_vrf[param] = get_value(param, body[0], module)
