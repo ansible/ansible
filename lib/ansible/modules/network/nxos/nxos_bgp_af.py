@@ -336,8 +336,7 @@ def get_custom_list_value(config, arg, module):
     value_list = []
     splitted_config = config.splitlines()
     if arg == 'inject_map':
-        REGEX_INJECT = ('.*inject-map\s(?P<inject_map>\S+)'
-                       '\sexist-map\s(?P<exist_map>\S+)-*')
+        REGEX_INJECT = r'.*inject-map\s(?P<inject_map>\S+)\sexist-map\s(?P<exist_map>\S+)-*'
 
         for line in splitted_config:
             value = []
@@ -359,8 +358,7 @@ def get_custom_list_value(config, arg, module):
                                           inject_group['inject_map'],
                                           inject_group['exist_map']))
 
-                REGEX = re.compile(r'\s+{0}\s*$'.format(
-                    inject_map_command), re.M)
+                REGEX = re.compile(r'\s+{0}\s*$'.format(inject_map_command), re.M)
                 try:
                     if REGEX.search(config):
                         copy_attributes = True
@@ -428,8 +426,7 @@ def get_custom_string_value(config, arg, module):
             if PARAM_TO_COMMAND_KEYMAP[arg] in config:
                 value = REGEX.search(config).group('value')
         else:
-            REGEX_DAMPENING = ('.*dampening\s(?P<half>\w+)\s(?P<reuse>\w+)'
-                              '\s(?P<suppress>\w+)\s(?P<max_suppress>\w+)')
+            REGEX_DAMPENING = r'.*dampening\s(?P<half>\w+)\s(?P<reuse>\w+)\s(?P<suppress>\w+)\s(?P<max_suppress>\w+)'
             try:
                 match_dampening = re.match(REGEX_DAMPENING, config, re.DOTALL)
                 dampening_group = match_dampening.groupdict()
@@ -510,8 +507,7 @@ def get_existing(module, args, warnings):
         if module.params['vrf'] != 'default':
             parents.append('vrf {0}'.format(module.params['vrf']))
 
-        parents.append('address-family {0} {1}'.format(module.params['afi'],
-                                                module.params['safi']))
+        parents.append('address-family {0} {1}'.format(module.params['afi'], module.params['safi']))
         config = netcfg.get_section(parents)
 
         if config:
@@ -524,8 +520,7 @@ def get_existing(module, args, warnings):
             existing['safi'] = module.params['safi']
             existing['vrf'] = module.params['vrf']
     else:
-        warnings.append("The BGP process {0} didn't exist but the task"
-                        " just created it.".format(module.params['asn']))
+        warnings.append("The BGP process {0} didn't exist but the task just created it.".format(module.params['asn']))
 
     return existing
 
