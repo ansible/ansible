@@ -45,11 +45,11 @@ options:
   user:
     required: false
     description:
-      - Jboss management user
+      - JBoss management user
   password:
     required: false
     description:
-      - Jboss management user password
+      - JBoss management user password
   server:
     required: false
     default: localhost:9990
@@ -61,23 +61,23 @@ options:
     description:
       - Show the JBoss Cli output, commonly in DMR
 notes:
-  - "jboss-cli.sh need to be running on client host, and $JAVA_HOME/bin is needed in Client $PATH"
+  - "jboss-cli.sh need to be running on client host, and $JAVA_HOME/bin is needed in client $PATH"
   - ""
 """
 
 EXAMPLES = """
-# chage scan-interval value, on user wildfly installation
-- jboss:
+# Change scan-interval value, on user wildfly installation
+- jbosscli:
     command: /subsystem=deployment-scanner/scanner=default:write-attribute(name=scan-interval,value=6000)
     cli_path: /home/user/wildfly-10.1.0.Final/bin
 
-#  change ExampleDS datasource user-name, on 192.168.20.55:9990 default installation
-- jboss:
+#  Change ExampleDS datasource user-name, on 192.168.20.55:9990 default installation
+- jbosscli:
     command: /subsystem=datasources/data-source=ExampleDS:write-attribute(name=user-name,value=other)
     server: 192.168.20.55:9990
 
 # Undeploy the hello world application on wildfly server
-- jboss:
+- jbosscli:
     command: undeploy hello.war
     server: "{{ ansible_hostname}}:9990"
 """
@@ -85,22 +85,22 @@ EXAMPLES = """
 RETURN = '''
 ---
 changed:
-    description: if jboss cli command change something
+    description: if JBoss Cli command change something
     returned: true
     type: string
     sample: 'changed: true'
 command:
-    description: Jboss Cli command
+    description: JBoss Cli command
     returned: JBoss Cli command
     type: string
     sample: 'command: "/subsystem=deployment-scanner/scanner=default:write-attribute(name=scan-interval,value=1000)"'
 stdout:
-    description: Jboss Cli command output
+    description: JBoss Cli command output
     returned: If verbose JBoss Cli command output, else success or failed
     type: string
     sample: '{"outcome" => "success"}'
 Error:
-    description: Jboss Cli command error
+    description: JBoss Cli command error
     returned: return error if falied
     type: string
     sample: '{"outcome" => "success"}'
@@ -108,10 +108,7 @@ Error:
 '''
 
 import os
-import shutil
-import time
 import re
-import grp
 import platform
 from ansible.module_utils.basic import AnsibleModule
 
@@ -127,9 +124,8 @@ def main():
             server=dict(default='localhost:9990'),
             verbose=dict(default="False"),
         ),
+        mutually_exclusive=[['command', 'src']],
     )
-
-    changed = False
 
     src = module.params['src']
     user = module.params['user']
@@ -138,13 +134,10 @@ def main():
     cli_path = module.params['cli_path']
     server = module.params['server']
     verbose = module.params['verbose']
-    jsout = None
 
-    if command and src:
-        module.fail_json(msg="Argument 'src' and 'command' are mutually exclusive")
 
     if user and not password:
-        module.fail_json(msg="Argument 'user' need 'password' ")
+        module.fail_json(msg="Argument 'user' needs 'password' ")
 
     if not os.access(cli_path + "/jboss-cli.sh", os.X_OK):
         module.fail_json(msg="jboss-cli.sh in not found on cli_path ")
