@@ -127,6 +127,7 @@ except ImportError:
     # python3
     from urllib.parse import urlencode
 
+
 def is_csrf_protection_enabled(module):
     resp, info = fetch_url(module,
                            module.params['url'] + '/api/json',
@@ -136,6 +137,7 @@ def is_csrf_protection_enabled(module):
 
     content = resp.read()
     return json.loads(content).get('useCrumbs', False)
+
 
 def get_crumb(module):
     resp, info = fetch_url(module,
@@ -147,19 +149,19 @@ def get_crumb(module):
     content = resp.read()
     return json.loads(content)
 
+
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            script = dict(required=True, type="str"),
-            url   = dict(required=False, type="str", default="http://localhost:8080"),
-            validate_certs = dict(required=False, type="bool", default=True),
-            user   = dict(required=False, no_log=True, type="str",default=None),
-            password   = dict(required=False, no_log=True, type="str",default=None),
-            args   = dict(required=False, type="dict", default=None)
+        argument_spec=dict(
+            script=dict(required=True, type="str"),
+            url=dict(required=False, type="str", default="http://localhost:8080"),
+            validate_certs=dict(required=False, type="bool", default=True),
+            user=dict(required=False, no_log=True, type="str", default=None),
+            password=dict(required=False, no_log=True, type="str", default=None),
+            args=dict(required=False, type="dict", default=None)
         )
     )
-
 
     if module.params['user'] is not None:
         if module.params['password'] is None:
@@ -167,7 +169,6 @@ def main():
         module.params['url_username'] = module.params['user']
         module.params['url_password'] = module.params['password']
         module.params['force_basic_auth'] = True
-
 
     if module.params['args'] is not None:
         from string import Template
@@ -183,7 +184,7 @@ def main():
     resp, info = fetch_url(module,
                            module.params['url'] + "/scriptText",
                            data=urlencode({'script': script_contents}),
-                           headers = headers,
+                           headers=headers,
                            method="POST")
 
     if info["status"] != 200:
@@ -195,9 +196,8 @@ def main():
         module.fail_json(msg="script failed with stacktrace:\n " + result)
 
     module.exit_json(
-        output = result,
+        output=result,
     )
-
 
 
 if __name__ == '__main__':
