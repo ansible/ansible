@@ -731,7 +731,7 @@ class ModuleValidator(Validator):
                 self.reporter.error(
                     path=self.object_path,
                     code=302,
-                    msg=error
+                    **error
                 )
             for trace in traces:
                 self.reporter.trace(
@@ -795,7 +795,7 @@ class ModuleValidator(Validator):
                 self.reporter.error(
                     path=self.object_path,
                     code=311,
-                    msg=error
+                    **error
                 )
             for trace in traces:
                 self.reporter.trace(
@@ -828,7 +828,7 @@ class ModuleValidator(Validator):
                 self.reporter.error(
                     path=self.object_path,
                     code=313,
-                    msg=error
+                    **error
                 )
             for trace in traces:
                 self.reporter.trace(
@@ -858,7 +858,7 @@ class ModuleValidator(Validator):
                     self.reporter.error(
                         path=self.object_path,
                         code=315,
-                        msg=error
+                        **error
                     )
                 for trace in traces:
                     self.reporter.trace(
