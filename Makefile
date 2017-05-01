@@ -297,8 +297,10 @@ deb-src-upload: deb-src
 	    $(DPUT_BIN) $(DPUT_OPTS) $(DEB_PPA) deb-build/$${DIST}/$(NAME)_$(VERSION)-$(DEB_RELEASE)~$${DIST}_source.changes ; \
 	done
 
-# for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
+epub:
+	(cd docs/docsite/; CPUS=$(CPUS) make epub)
 
+# for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 webdocs:
 	(cd docs/docsite/; CPUS=$(CPUS) make docs)
 
