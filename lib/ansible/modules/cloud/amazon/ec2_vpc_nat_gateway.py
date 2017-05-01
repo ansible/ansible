@@ -949,7 +949,7 @@ def remove(client, nat_gateway_id, wait=False, wait_timeout=0,
     changed = False
     err_msg = ""
     results = list()
-    states = ['pending', 'available' ]
+    states = ['pending', 'available']
     try:
         exist, _, gw = (
             get_nat_gateways(
