@@ -51,9 +51,9 @@ EXAMPLES = '''
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            selection = dict(choices=['install', 'hold', 'deinstall', 'purge'])
+        argument_spec=dict(
+            name=dict(required=True),
+            selection=dict(choices=['install', 'hold', 'deinstall', 'purge'])
         ),
         supports_check_mode=True,
     )
