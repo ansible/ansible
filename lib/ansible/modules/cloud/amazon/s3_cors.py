@@ -50,24 +50,24 @@ EXAMPLES = '''
 
 # Create a simple cors for s3 bucket
 - s3_cors:
-  name: mys3bucket
-  rules:
-    - allowed_origins:
-        - http://www.example.com/
-      allowed_methods:
-        - GET
-        - POST
-      allowed_headers:
-        - Authorization
-      expose_headers:
-        - x-amz-server-side-encryption
-        - x-amz-request-id
-      max_age_seconds: 30000
+    name: mys3bucket
+    rules:
+      - allowed_origins:
+          - http://www.example.com/
+        allowed_methods:
+          - GET
+          - POST
+        allowed_headers:
+          - Authorization
+        expose_headers:
+          - x-amz-server-side-encryption
+          - x-amz-request-id
+        max_age_seconds: 30000
 
 # Remove cors for s3 bucket
 - s3_cors:
-  name: mys3bucket
-  state: absent
+    name: mys3bucket
+    state: absent
 '''
 
 RETURN = '''
@@ -101,7 +101,7 @@ rules:
     ]
 '''
 
-import re
+import traceback
 
 try:
     import boto3
@@ -154,9 +154,9 @@ def create_or_update_bucket_cors(connection, module):
             cors = connection.put_bucket_cors(Bucket=name, CORSConfiguration={'CORSRules': new_camel_rules})
         except ClientError as e:
             module.fail_json(
-                msg="Error putting bucket CORS",
+                msg=e.message,
                 exception=traceback.format_exc(),
-                **camel_dict_to_snake_dict(e.message)
+                **camel_dict_to_snake_dict(e.response)
             )
 
     module.exit_json(changed=changed, name=name, rules=rules)
@@ -172,9 +172,9 @@ def destroy_bucket_cors(connection, module):
         changed = True
     except ClientError as e:
         module.fail_json(
-            msg="Error deleting bucket CORS",
+            msg=e.message,
             exception=traceback.format_exc(),
-            **camel_dict_to_snake_dict(e.message)
+            **camel_dict_to_snake_dict(e.response)
         )
 
     module.exit_json(changed=changed)
@@ -187,7 +187,7 @@ def main():
         dict(
             name=dict(required=True, type='str'),
             rules=dict(type='list'),
-            state=dict(type='str', choices=['present', 'absent'])
+            state=dict(type='str', choices=['present', 'absent'], required=True)
         )
     )
 
@@ -209,9 +209,9 @@ def main():
         )
     except ClientError as e:
         module.fail_json(
-            msg="Boto3 Client Error",
+            msg=e.message,
             exception=traceback.format_exc(),
-            **camel_dict_to_snake_dict(e.message)
+            **camel_dict_to_snake_dict(e.response)
         )
 
     state = module.params.get("state")
