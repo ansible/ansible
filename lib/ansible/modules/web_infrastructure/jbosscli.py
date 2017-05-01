@@ -135,7 +135,6 @@ def main():
     server = module.params['server']
     verbose = module.params['verbose']
 
-
     if user and not password:
         module.fail_json(msg="Argument 'user' needs 'password' ")
 
