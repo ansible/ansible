@@ -34,158 +34,158 @@ notes:
     - C(state=absent) removes the whole BGP neighbor configuration.
     - Default, where supported, restores params default value.
 options:
-    asn:
-        description:
-            - BGP autonomous system number. Valid values are string,
-              Integer in ASPLAIN or ASDOT notation.
-        required: true
-    vrf:
-        description:
-            - Name of the VRF. The name 'default' is a valid VRF representing
-              the global bgp.
-        required: false
-        default: default
-    neighbor:
-        description:
-            - Neighbor Identifier. Valid values are string. Neighbors may use
-              IPv4 or IPv6 notation, with or without prefix length.
-        required: true
+  asn:
     description:
-        description:
-            - Description of the neighbor.
-        required: false
-        default: null
-    connected_check:
-        description:
-            - Configure whether or not to check for directly connected peer.
-        required: false
-        choices: ['true', 'false']
-        default: null
-    capability_negotiation:
-        description:
-            - Configure whether or not to negotiate capability with
-              this neighbor.
-        required: false
-        choices: ['true', 'false']
-        default: null
-    dynamic_capability:
-        description:
-            - Configure whether or not to enable dynamic capability.
-        required: false
-        choices: ['true', 'false']
-        default: null
-    ebgp_multihop:
-        description:
-            - Specify multihop TTL for a remote peer. Valid values are
-              integers between 2 and 255, or keyword 'default' to disable
-              this property.
-        required: false
-        default: null
-    local_as:
-        description:
-            - Specify the local-as number for the eBGP neighbor.
-              Valid values are String or Integer in ASPLAIN or ASDOT notation,
-              or 'default', which means not to configure it.
-        required: false
-        default: null
-    log_neighbor_changes:
-        description:
-            - Specify whether or not to enable log messages for neighbor
-              up/down event.
-        required: false
-        choices: ['enable', 'disable', 'inherit']
-        default: null
-    low_memory_exempt:
-        description:
-            - Specify whether or not to shut down this neighbor under
-              memory pressure.
-        required: false
-        choices: ['true', 'false']
-        default: null
-    maximum_peers:
-        description:
-            - Specify Maximum number of peers for this neighbor prefix
-              Valid values are between 1 and 1000, or 'default', which does
-              not impose the limit.
-        required: false
-        default: null
-    pwd:
-        description:
-            - Specify the password for neighbor. Valid value is string.
-        required: false
-        default: null
-    pwd_type:
-        description:
-            - Specify the encryption type the password will use. Valid values
-              are '3des' or 'cisco_type_7' encryption.
-        required: false
-        choices: ['3des', 'cisco_type_7']
-        default: null
-    remote_as:
-        description:
-            - Specify Autonomous System Number of the neighbor.
-              Valid values are String or Integer in ASPLAIN or ASDOT notation,
-              or 'default', which means not to configure it.
-        required: false
-        default: null
-    remove_private_as:
-        description:
-            - Specify the config to remove private AS number from outbound
-              updates. Valid values are 'enable' to enable this config,
-              'disable' to disable this config, 'all' to remove all
-              private AS number, or 'replace-as', to replace the private
-              AS number.
-        required: false
-        choices: ['enable', 'disable', 'all', 'replace-as']
-        default: null
-    shutdown:
-        description:
-            - Configure to administratively shutdown this neighbor.
-        required: false
-        choices: ['true','false']
-        default: null
-    suppress_4_byte_as:
-        description:
-            - Configure to suppress 4-byte AS Capability.
-        required: false
-        choices: ['true','false']
-        default: null
-    timers_keepalive:
-        description:
-            - Specify keepalive timer value. Valid values are integers
-              between 0 and 3600 in terms of seconds, or 'default',
-              which is 60.
-        required: false
-        default: null
-    timers_holdtime:
-        description:
-            - Specify holdtime timer value. Valid values are integers between
-              0 and 3600 in terms of seconds, or 'default', which is 180.
-        required: false
-        default: null
-    transport_passive_only:
-        description:
-            - Specify whether or not to only allow passive connection setup.
-              Valid values are 'true', 'false', and 'default', which defaults
-              to 'false'. This property can only be configured when the
-              neighbor is in 'ip' address format without prefix length.
-              This property and the transport_passive_mode property are
-              mutually exclusive.
-        required: false
-        choices: ['true','false']
-        default: null
-    update_source:
-        description:
-            - Specify source interface of BGP session and updates.
-        required: false
-        default: null
-    state:
-        description:
-            - Determines whether the config should be present or not
-              on the device.
-        required: false
-        default: present
-        choices: ['present','absent']
+      - BGP autonomous system number. Valid values are string,
+        Integer in ASPLAIN or ASDOT notation.
+    required: true
+  vrf:
+    description:
+      - Name of the VRF. The name 'default' is a valid VRF representing
+        the global bgp.
+    required: false
+    default: default
+  neighbor:
+    description:
+      - Neighbor Identifier. Valid values are string. Neighbors may use
+        IPv4 or IPv6 notation, with or without prefix length.
+    required: true
+  description:
+    description:
+      - Description of the neighbor.
+    required: false
+    default: null
+  connected_check:
+    description:
+      - Configure whether or not to check for directly connected peer.
+    required: false
+    choices: ['true', 'false']
+    default: null
+  capability_negotiation:
+    description:
+      - Configure whether or not to negotiate capability with
+        this neighbor.
+    required: false
+    choices: ['true', 'false']
+    default: null
+  dynamic_capability:
+    description:
+      - Configure whether or not to enable dynamic capability.
+    required: false
+    choices: ['true', 'false']
+    default: null
+  ebgp_multihop:
+    description:
+      - Specify multihop TTL for a remote peer. Valid values are
+        integers between 2 and 255, or keyword 'default' to disable
+        this property.
+    required: false
+    default: null
+  local_as:
+    description:
+      - Specify the local-as number for the eBGP neighbor.
+        Valid values are String or Integer in ASPLAIN or ASDOT notation,
+        or 'default', which means not to configure it.
+    required: false
+    default: null
+  log_neighbor_changes:
+    description:
+      - Specify whether or not to enable log messages for neighbor
+        up/down event.
+    required: false
+    choices: ['enable', 'disable', 'inherit']
+    default: null
+  low_memory_exempt:
+    description:
+      - Specify whether or not to shut down this neighbor under
+        memory pressure.
+    required: false
+    choices: ['true', 'false']
+    default: null
+  maximum_peers:
+    description:
+      - Specify Maximum number of peers for this neighbor prefix
+        Valid values are between 1 and 1000, or 'default', which does
+        not impose the limit.
+    required: false
+    default: null
+  pwd:
+    description:
+      - Specify the password for neighbor. Valid value is string.
+    required: false
+    default: null
+  pwd_type:
+    description:
+      - Specify the encryption type the password will use. Valid values
+        are '3des' or 'cisco_type_7' encryption.
+    required: false
+    choices: ['3des', 'cisco_type_7']
+    default: null
+  remote_as:
+    description:
+      - Specify Autonomous System Number of the neighbor.
+        Valid values are String or Integer in ASPLAIN or ASDOT notation,
+        or 'default', which means not to configure it.
+    required: false
+    default: null
+  remove_private_as:
+    description:
+      - Specify the config to remove private AS number from outbound
+        updates. Valid values are 'enable' to enable this config,
+        'disable' to disable this config, 'all' to remove all
+        private AS number, or 'replace-as', to replace the private
+        AS number.
+    required: false
+    choices: ['enable', 'disable', 'all', 'replace-as']
+    default: null
+  shutdown:
+    description:
+      - Configure to administratively shutdown this neighbor.
+    required: false
+    choices: ['true','false']
+    default: null
+  suppress_4_byte_as:
+    description:
+      - Configure to suppress 4-byte AS Capability.
+    required: false
+    choices: ['true','false']
+    default: null
+  timers_keepalive:
+    description:
+      - Specify keepalive timer value. Valid values are integers
+        between 0 and 3600 in terms of seconds, or 'default',
+        which is 60.
+    required: false
+    default: null
+  timers_holdtime:
+    description:
+      - Specify holdtime timer value. Valid values are integers between
+        0 and 3600 in terms of seconds, or 'default', which is 180.
+    required: false
+    default: null
+  transport_passive_only:
+    description:
+      - Specify whether or not to only allow passive connection setup.
+        Valid values are 'true', 'false', and 'default', which defaults
+        to 'false'. This property can only be configured when the
+        neighbor is in 'ip' address format without prefix length.
+        This property and the transport_passive_mode property are
+        mutually exclusive.
+    required: false
+    choices: ['true','false']
+    default: null
+  update_source:
+    description:
+      - Specify source interface of BGP session and updates.
+    required: false
+    default: null
+  state:
+    description:
+      - Determines whether the config should be present or not
+        on the device.
+    required: false
+    default: present
+    choices: ['present','absent']
 '''
 EXAMPLES = '''
 # create a new neighbor
@@ -204,56 +204,23 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-proposed:
-    description: k/v pairs of parameters passed into module
-    returned: verbose mode
-    type: dict
-    sample: {"asn": "65535", "description": "just a description",
-            "local_as": "20", "neighbor": "3.3.3.3",
-            "remote_as": "30", "shutdown": "default",
-            "update_source": "Ethernet1/3", "vrf": "default"}
-existing:
-    description: k/v pairs of existing BGP neighbor configuration
-    returned: verbose mode
-    type: dict
-    sample: {}
-end_state:
-    description: k/v pairs of BGP neighbor configuration after module execution
-    returned: verbose mode
-    type: dict
-    sample: {"asn": "65535", "capability_negotiation": false,
-            "connected_check": false, "description": "just a description",
-            "dynamic_capability": true, "ebgp_multihop": "",
-            "local_as": "20", "log_neighbor_changes": "",
-            "low_memory_exempt": false, "maximum_peers": "",
-            "neighbor": "3.3.3.3", "pwd": "",
-            "pwd_type": "", "remote_as": "30",
-            "remove_private_as": "disable", "shutdown": false,
-            "suppress_4_byte_as": false, "timers_holdtime": "180",
-            "timers_keepalive": "60", "transport_passive_only": false,
-            "update_source": "Ethernet1/3", "vrf": "default"}
-updates:
-    description: commands sent to the device
-    returned: always
-    type: list
-    sample: ["router bgp 65535", "neighbor 3.3.3.3",
-            "remote-as 30", "update-source Ethernet1/3",
-            "description just a description", "local-as 20"]
-changed:
-    description: check to see if a change was made on the device
-    returned: always
-    type: boolean
-    sample: true
+commands:
+  description: commands sent to the device
+  returned: always
+  type: list
+  sample: ["router bgp 65535", "neighbor 3.3.3.3",
+          "remote-as 30", "update-source Ethernet1/3",
+          "description just a description", "local-as 20"]
 '''
 
 import re
-from ansible.module_utils.nxos import get_config, load_config, run_commands
+
+from ansible.module_utils.nxos import get_config, load_config
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import CustomNetworkConfig
 
 
-WARNINGS = []
 BOOL_PARAMS = [
     'capability_negotiation',
     'shutdown',
@@ -293,11 +260,6 @@ PARAM_TO_DEFAULT_KEYMAP = {
     'timers_keepalive': 60,
     'timers_holdtime': 180
 }
-
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
 
 
 def get_value(arg, config, module):
@@ -370,7 +332,7 @@ def get_custom_value(arg, config, module):
     return value
 
 
-def get_existing(module, args):
+def get_existing(module, args, warnings):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
     custom = [
@@ -382,7 +344,7 @@ def get_existing(module, args):
         'timers_keepalive'
     ]
     try:
-        asn_regex = '.*router\sbgp\s(?P<existing_asn>\d+).*'
+        asn_regex = r'.*router\sbgp\s(?P<existing_asn>\d+).*'
         match_asn = re.match(asn_regex, str(netcfg), re.DOTALL)
         existing_asn_group = match_asn.groupdict()
         existing_asn = existing_asn_group['existing_asn']
@@ -409,7 +371,7 @@ def get_existing(module, args):
             existing['neighbor'] = module.params['neighbor']
             existing['vrf'] = module.params['vrf']
     else:
-        WARNINGS.append("The BGP process didn't exist but the task"
+        warnings.append("The BGP process didn't exist but the task"
                         " just created it.")
     return existing
 
@@ -532,8 +494,7 @@ def main():
         transport_passive_only=dict(required=False, type='bool'),
         update_source=dict(required=False, type='str'),
         m_facts=dict(required=False, default=False, type='bool'),
-        state=dict(choices=['present', 'absent'], default='present',
-                       required=False),
+        state=dict(choices=['present', 'absent'], default='present', required=False),
         include_defaults=dict(default=True),
         config=dict(),
         save=dict(type='bool', default=False)
@@ -541,20 +502,21 @@ def main():
 
     argument_spec.update(nxos_argument_spec)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                                required_together=[['timer_bgp_hold',
-                                            'timer_bgp_keepalive']],
-                                supports_check_mode=True)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_together=[['timer_bgp_hold', 'timer_bgp_keepalive']],
+        supports_check_mode=True,
+    )
 
     warnings = list()
     check_args(module, warnings)
-
+    result = dict(changed=False, warnings=warnings)
 
     state = module.params['state']
     if module.params['pwd_type'] == 'default':
         module.params['pwd_type'] = '0'
 
-    args =  [
+    args = [
         'asn',
         'capability_negotiation',
         'connected_check',
@@ -579,7 +541,7 @@ def main():
         'vrf'
     ]
 
-    existing = invoke('get_existing', module, args)
+    existing = get_existing(module, args, warnings)
     if existing.get('asn'):
         if (existing.get('asn') != module.params['asn'] and
                 state == 'present'):
@@ -587,9 +549,8 @@ def main():
                              proposed_asn=module.params['asn'],
                              existing_asn=existing.get('asn'))
 
-    end_state = existing
     proposed_args = dict((k, v) for k, v in module.params.items()
-                    if v is not None and k in args)
+                         if v is not None and k in args)
 
     proposed = {}
     for key, value in proposed_args.items():
@@ -601,28 +562,21 @@ def main():
             if existing.get(key) or (not existing.get(key) and value):
                 proposed[key] = value
 
-    result = {}
-    if state == 'present' or (state == 'absent' and existing):
-        candidate = CustomNetworkConfig(indent=3)
-        invoke('state_%s' % state, module, existing, proposed, candidate)
-        response = load_config(module, candidate)
-        result.update(response)
+    candidate = CustomNetworkConfig(indent=3)
+    if state == 'present':
+        state_present(module, existing, proposed, candidate)
+    elif state == 'absent' and existing:
+        state_absent(module, existing, proposed, candidate)
 
+    if candidate:
+        load_config(module, candidate)
+        result['changed'] = True
+        result['commands'] = candidate.items_text()
     else:
-        result['updates'] = []
-
-    if module._verbosity > 0:
-        end_state = invoke('get_existing', module, args)
-        result['end_state'] = end_state
-        result['existing'] = existing
-        result['proposed'] = proposed_args
-
-    if WARNINGS:
-        result['warnings'] = WARNINGS
+        result['commands'] = []
 
     module.exit_json(**result)
 
 
 if __name__ == '__main__':
     main()
-
