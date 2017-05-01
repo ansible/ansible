@@ -406,12 +406,6 @@ PARAM_TO_COMMAND_KEYMAP = {
 }
 
 
-def invoke(name, *args, **kwargs):
-    func = globals().get(name)
-    if func:
-        return func(*args, **kwargs)
-
-
 def get_custom_value(config, arg):
     if arg.startswith('event_history'):
         REGEX_SIZE = re.compile(r'(?:{0} size\s)(?P<value>.*)$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
@@ -784,13 +778,15 @@ def main():
 
     result = dict(changed=False, warnings=warnings)
 
-    if state == 'present' or existing.get('asn') == module.params['asn']:
-        candidate = CustomNetworkConfig(indent=3)
-        invoke('state_%s' % state, module, existing, proposed, candidate)
+    candidate = CustomNetworkConfig(indent=3)
+    if state == 'present':
+        state_present(module, existing, proposed, candidate)
+    elif existing.get('asn') == module.params['asn']:
+        state_absent(module, existing, proposed, candidate)
 
-        if (candidate):
-            load_config(module, candidate)
-            result['changed'] = True
+    if candidate:
+        load_config(module, candidate)
+        result['changed'] = True
         result['commands'] = [item.text for item in candidate.items]
     else:
         result['commands'] = []
