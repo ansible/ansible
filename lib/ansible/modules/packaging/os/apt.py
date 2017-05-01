@@ -245,14 +245,14 @@ from ansible.module_utils.urls import fetch_url
 
 # APT related constants
 APT_ENV_VARS = dict(
-    DEBIAN_FRONTEND = 'noninteractive',
-    DEBIAN_PRIORITY = 'critical',
+    DEBIAN_FRONTEND='noninteractive',
+    DEBIAN_PRIORITY='critical',
     # We screenscrape apt-get and aptitude output for information so we need
     # to make sure we use the C locale when running commands
-    LANG = 'C',
-    LC_ALL = 'C',
-    LC_MESSAGES = 'C',
-    LC_CTYPE = 'C',
+    LANG='C',
+    LC_ALL='C',
+    LC_MESSAGES='C',
+    LC_CTYPE='C',
 )
 
 DPKG_OPTIONS = 'force-confdef,force-confold'
@@ -543,7 +543,7 @@ def get_field_of_deb(m, deb_file, field="Version"):
 
 
 def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated, dpkg_options):
-    changed=False
+    changed = False
     deps_to_install = []
     pkgs_to_install = []
     for deb_file in debs.split(','):
@@ -614,7 +614,7 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
         else:
             m.fail_json(msg="%s failed" % cmd, stdout=stdout, stderr=stderr)
     else:
-        m.exit_json(changed=changed, stdout=retvals.get('stdout',''), stderr=retvals.get('stderr',''), diff=retvals.get('diff', ''))
+        m.exit_json(changed=changed, stdout=retvals.get('stdout', ''), stderr=retvals.get('stderr', ''), diff=retvals.get('diff', ''))
 
 
 def remove(m, pkgspec, cache, purge=False, force=False,
@@ -651,7 +651,7 @@ def remove(m, pkgspec, cache, purge=False, force=False,
         else:
             check_arg = ''
 
-        cmd = "%s -q -y %s %s %s %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, force_yes ,autoremove, check_arg, packages)
+        cmd = "%s -q -y %s %s %s %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, force_yes, autoremove, check_arg, packages)
 
         rc, out, err = m.run_command(cmd)
         if m._diff:
@@ -697,7 +697,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
 
     cmd = '%s -y %s %s %s %s' % (apt_cmd_path, dpkg_options,
-                                    force_yes, check_arg, upgrade_command)
+                                 force_yes, check_arg, upgrade_command)
 
     if default_release:
         cmd += " -t '%s'" % (default_release,)
@@ -798,25 +798,25 @@ def get_cache(module):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(default='present', choices=['installed', 'latest', 'removed', 'absent', 'present', 'build-dep']),
-            update_cache = dict(aliases=['update-cache'], type='bool'),
-            cache_valid_time = dict(type='int', default=0),
-            purge = dict(default=False, type='bool'),
-            package = dict(default=None, aliases=['pkg', 'name'], type='list'),
-            deb = dict(default=None, type='path'),
-            default_release = dict(default=None, aliases=['default-release']),
-            install_recommends = dict(default=None, aliases=['install-recommends'], type='bool'),
-            force = dict(default='no', type='bool'),
-            upgrade = dict(choices=['no', 'yes', 'safe', 'full', 'dist']),
-            dpkg_options = dict(default=DPKG_OPTIONS),
-            autoremove = dict(type='bool', aliases=['autoclean']),
-            only_upgrade = dict(type='bool', default=False),
-            allow_unauthenticated = dict(default='no', aliases=['allow-unauthenticated'], type='bool'),
+        argument_spec=dict(
+            state=dict(default='present', choices=['installed', 'latest', 'removed', 'absent', 'present', 'build-dep']),
+            update_cache=dict(aliases=['update-cache'], type='bool'),
+            cache_valid_time=dict(type='int', default=0),
+            purge=dict(default=False, type='bool'),
+            package=dict(default=None, aliases=['pkg', 'name'], type='list'),
+            deb=dict(default=None, type='path'),
+            default_release=dict(default=None, aliases=['default-release']),
+            install_recommends=dict(default=None, aliases=['install-recommends'], type='bool'),
+            force=dict(default='no', type='bool'),
+            upgrade=dict(choices=['no', 'yes', 'safe', 'full', 'dist']),
+            dpkg_options=dict(default=DPKG_OPTIONS),
+            autoremove=dict(type='bool', aliases=['autoclean']),
+            only_upgrade=dict(type='bool', default=False),
+            allow_unauthenticated=dict(default='no', aliases=['allow-unauthenticated'], type='bool'),
         ),
-        mutually_exclusive = [['package', 'upgrade', 'deb']],
-        required_one_of = [['package', 'upgrade', 'update_cache', 'deb', 'autoremove']],
-        supports_check_mode = True
+        mutually_exclusive=[['package', 'upgrade', 'deb']],
+        required_one_of=[['package', 'upgrade', 'update_cache', 'deb', 'autoremove']],
+        supports_check_mode=True
     )
 
     module.run_command_environ_update = APT_ENV_VARS
@@ -846,7 +846,7 @@ def main():
     if p['upgrade'] == 'no':
         p['upgrade'] = None
 
-    if not APTITUDE_CMD and p.get('upgrade', None) in [ 'full', 'safe', 'yes' ]:
+    if not APTITUDE_CMD and p.get('upgrade', None) in ['full', 'safe', 'yes']:
         module.fail_json(msg="Could not find aptitude. Please ensure it is installed.")
 
     updated_cache = False

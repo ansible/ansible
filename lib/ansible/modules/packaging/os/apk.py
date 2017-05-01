@@ -3,7 +3,7 @@
 
 # (c) 2015, Kevin Brebanov <https://github.com/kbrebanov>
 # Based on pacman (Afterburn <http://github.com/afterburn>, Aaron Bull Schaefer <aaron@elasticdog.com>)
-# and apt (Matthew Williams <matthew@flowroute.com>>) modules.
+# and apt (Matthew Williams <matthew@flowroute.com>) modules.
 #
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -114,8 +114,10 @@ EXAMPLES = '''
     update_cache: yes
 '''
 
-import os
+
 import re
+# Import module snippets.
+from ansible.module_utils.basic import AnsibleModule
 
 def update_package_db(module):
     cmd = "%s update" % (APK_PATH)
@@ -230,15 +232,15 @@ def remove_packages(module, names):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(default='present', choices=['present', 'installed', 'absent', 'removed', 'latest']),
-            name = dict(type='list'),
-            update_cache = dict(default='no', type='bool'),
-            upgrade = dict(default='no', type='bool'),
+        argument_spec=dict(
+            state=dict(default='present', choices=['present', 'installed', 'absent', 'removed', 'latest']),
+            name=dict(type='list'),
+            update_cache=dict(default='no', type='bool'),
+            upgrade=dict(default='no', type='bool'),
         ),
-        required_one_of = [['name', 'update_cache', 'upgrade']],
-        mutually_exclusive = [['name', 'upgrade']],
-        supports_check_mode = True
+        required_one_of=[['name', 'update_cache', 'upgrade']],
+        mutually_exclusive=[['name', 'upgrade']],
+        supports_check_mode=True
     )
 
     # Set LANG env since we parse stdout
@@ -268,7 +270,6 @@ def main():
     elif p['state'] == 'absent':
         remove_packages(module, p['name'])
 
-# Import module snippets.
-from ansible.module_utils.basic import *
+
 if __name__ == '__main__':
     main()
