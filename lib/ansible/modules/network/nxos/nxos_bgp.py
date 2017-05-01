@@ -507,26 +507,18 @@ def get_existing(module, args, warnings):
         config = netcfg.get_section(parents)
         if config:
             for arg in args:
-                if arg != 'asn':
-                    if module.params['vrf'] != 'default':
-                        if arg not in GLOBAL_PARAMS:
-                            existing[arg] = get_value(arg, config)
-                    else:
-                        existing[arg] = get_value(arg, config)
+                if arg != 'asn' and (module.params['vrf'] == 'default' or
+                                     arg not in GLOBAL_PARAMS):
+                    existing[arg] = get_value(arg, config)
 
             existing['asn'] = existing_asn
             if module.params['vrf'] == 'default':
                 existing['vrf'] = 'default'
-        else:
-            if (module.params['state'] == 'present' and
-                    module.params['vrf'] != 'default'):
-                msg = ("VRF {0} doesn't exist. ".format(module.params['vrf']))
-                warnings.append(msg)
-    else:
-        if (module.params['state'] == 'present' and
-                module.params['vrf'] != 'default'):
-            msg = ("VRF {0} doesn't exist. ".format(module.params['vrf']))
-            warnings.append(msg)
+
+    if (not existing and module.params['state'] == 'present' and
+            module.params['vrf'] != 'default'):
+        msg = ("VRF {0} doesn't exist. ".format(module.params['vrf']))
+        warnings.append(msg)
 
     return existing
 
