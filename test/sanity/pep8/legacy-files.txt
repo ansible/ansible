@@ -739,7 +739,6 @@ lib/ansible/modules/system/osx_defaults.py
 lib/ansible/modules/system/pam_limits.py
 lib/ansible/modules/system/pamd.py
 lib/ansible/modules/system/parted.py
-lib/ansible/modules/system/ping.py
 lib/ansible/modules/system/puppet.py
 lib/ansible/modules/system/runit.py
 lib/ansible/modules/system/seboolean.py
