@@ -123,3 +123,124 @@
     that:
     - remove_scheduled_task_again.changed == false
     - remove_scheduled_task_again.exists == false
+
+
+# Test scheduled task RunAs and RunLevel options
+
+- name: Remove potentially leftover run options task 1
+  win_scheduled_task: &wstr1_absent
+    name: Ansible Test Run Options 1
+    state: absent
+
+
+- name: Add scheduled task run options 1
+  win_scheduled_task: &wstr1_present
+    name: Ansible Test Run Options 1
+    description: A test of run options functionality
+    executable: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments: -ExecutionPolicy Unrestricted -NonInteractive -File C:\TestDir\Test.ps1
+    time: "6pm"
+    frequency: once
+    state: present
+    enabled: yes
+    user: SYSTEM
+  register: add_scheduled_task_run_options_1
+
+- name: Test add_scheduled_task_run_options_1
+  assert:
+    that:
+    - add_scheduled_task_run_options_1.changed == true
+    - add_scheduled_task_run_options_1.exists == false
+
+
+- name: Execute run options tests for normal mode only (expects scheduled task)
+  when: not in_check_mode
+  block:
+
+  - name: Change scheduled task run options user
+    win_scheduled_task:
+      <<: *wstr1_present
+      user: NETWORK SERVICE
+    register: change_scheduled_task_run_options_user
+
+  - name: Test change_scheduled_task_run_options_user
+    assert:
+      that:
+      - change_scheduled_task_run_options_user.changed == true
+      - change_scheduled_task_run_options_user.exists == true
+
+
+  - name: Change scheduled task run options user (again)
+    win_scheduled_task:
+      <<: *wstr1_present
+      user: NETWORK SERVICE
+    register: change_scheduled_task_run_options_user_again
+
+  - name: Test change_scheduled_task_run_options_user_again
+    assert:
+      that:
+      - change_scheduled_task_run_options_user_again.changed == false
+      - change_scheduled_task_run_options_user_again.exists == true
+
+
+  - name: Change scheduled task run options run level
+    win_scheduled_task:
+      <<: *wstr1_present
+      user: NETWORK SERVICE
+      run_level: highest
+    register: change_scheduled_task_run_options_run_level
+
+  - name: Test change_scheduled_task_run_options_run_level
+    assert:
+      that:
+      - change_scheduled_task_run_options_run_level.changed == true
+      - change_scheduled_task_run_options_run_level.exists == true
+
+
+  - name: Change scheduled task run options run level (again)
+    win_scheduled_task:
+      <<: *wstr1_present
+      user: NETWORK SERVICE
+      run_level: highest
+    register: change_scheduled_task_run_options_run_level_again
+
+  - name: Test change_scheduled_task_run_options_run_level_again
+    assert:
+      that:
+      - change_scheduled_task_run_options_run_level_again.changed == false
+      - change_scheduled_task_run_options_run_level_again.exists == true
+
+
+  # Should ignore change as account being tested is a built-in service account
+  - name: Change scheduled task run options store password
+    win_scheduled_task:
+      <<: *wstr1_present
+      user: NETWORK SERVICE
+      run_level: highest
+      do_not_store_password: yes
+    register: change_scheduled_task_run_options_store_password
+
+  - name: Test change_scheduled_task_run_options_store_password
+    assert:
+      that:
+      - change_scheduled_task_run_options_store_password.changed == false
+      - change_scheduled_task_run_options_store_password.exists == true
+
+
+- name: Remove scheduled task run options 1
+  win_scheduled_task: *wstr1_absent
+  register: remove_scheduled_task_run_options_1
+
+- name: Test remove_scheduled_task_run_options_1 (normal mode)
+  assert:
+    that:
+    - remove_scheduled_task_run_options_1.changed == true
+    - remove_scheduled_task_run_options_1.exists == true
+  when: not in_check_mode
+
+- name: Test remove_scheduled_task_run_options_1 (check-mode)
+  assert:
+    that:
+    - remove_scheduled_task_run_options_1.changed == false
+    - remove_scheduled_task_run_options_1.exists == false
+  when: in_check_mode

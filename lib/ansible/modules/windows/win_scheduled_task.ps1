@@ -45,8 +45,10 @@ $executable = Get-AnsibleParam -obj $params -name "executable" -type "str" -alia
 $frequency = Get-AnsibleParam -obj $params -name "frequency" -type "str" -validateset "once","daily","weekly" -failifempty $present
 $time = Get-AnsibleParam -obj $params -name "time" -type "str" -failifempty $present
 
-# TODO: We should default to the current user
-$user = Get-AnsibleParam -obj $params -name "user" -type "str" -failifempty $present
+$user = Get-AnsibleParam -obj $params -name "user" -default "$env:USERDOMAIN\$env:USERNAME" -type "str"
+$password = Get-AnsibleParam -obj $params -name "password" -default $null -type "str"
+$run_level = Get-AnsibleParam -obj $params -name "run_level" -default "limited" -type "str" -validateset "limited", "highest"
+$do_not_store_password = Get-AnsibleParam -obj $params -name "do_not_store_password" -default $false -type "bool"
 
 $weekly = $frequency -eq "weekly"
 $days_of_week = Get-AnsibleParam -obj $params -name "days_of_week" -type "str" -failifempty $weekly
@@ -114,7 +116,23 @@ try {
         Exit-Json $result
     }
 
-    $principal = New-ScheduledTaskPrincipal -UserId "$user" -LogonType ServiceAccount
+    # Handle RunAs/RunLevel options for the task
+
+    if ($do_not_store_password) {
+        # Create a ScheduledTaskPrincipal for the task to run under
+        $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType S4U -RunLevel $run_level -Id Author
+        $registerRunOptionParams = @{Principal = $principal}
+    }
+    else {
+        # Specify direct credential and run-level values to add to Register-ScheduledTask
+        $registerRunOptionParams = @{
+            User = $user
+            RunLevel = $run_level
+        }
+        if ($password) {
+            $registerRunOptionParams.Password = $password
+        }
+    }
 
     if ($enabled){
         $settings = New-ScheduledTaskSettingsSet
@@ -132,21 +150,29 @@ try {
 
     if ( ($state -eq "present") -and (-not $exists) ){
         if (-not $check_mode) {
-            Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path -Settings $settings -Principal $principal
+            Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path -Settings $settings @registerRunOptionParams
 #            $task = Get-ScheduledTask -TaskName $name
         }
         $result.changed = $true
         $result.msg = "Added new task $name"
     }
     elseif( ($state -eq "present") -and ($exists) ) {
-        if ($task.Description -eq $description -and $task.TaskName -eq $name -and $task.TaskPath -eq $path -and $task.Actions.Execute -eq $executable -and $taskState -eq $enabled -and $task.Principal.UserId -eq $user) {
+        if (($do_not_store_password -and $task.Principal.LogonType -in @("S4U", "ServiceAccount")) -or (!$do_not_store_password -and $task.Principal.LogonType -notin @("S4U", "Password") -and !$password)) {
+            $passwordStoreConsistent = $true
+        }
+        else {
+            $passwordStoreConsistent = $false
+        }
+
+        if ($task.Description -eq $description -and $task.TaskName -eq $name -and $task.TaskPath -eq $path -and $task.Actions.Execute -eq $executable -and
+        $taskState -eq $enabled -and $task.Principal.UserId -eq $user -and $task.Principal.RunLevel -eq $run_level -and $passwordStoreConsistent) {
             # No change in the task
             $result.msg = "No change in task $name"
         }
         else {
             Unregister-ScheduledTask -TaskName $name -Confirm:$false -WhatIf:$check_mode
             if (-not $check_mode) {
-                Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path -Settings $settings -Principal $principal
+                Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path -Settings $settings @registerRunOptionParams
             }
             $result.changed = $true
             $result.msg = "Updated task $name"

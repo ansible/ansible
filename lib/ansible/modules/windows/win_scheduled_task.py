@@ -57,7 +57,27 @@ options:
       - absent
   user:
     description:
-      - User to run scheduled task as
+      - User to run the scheduled task as; defaults to the current user.  When only a user is set without specifying C(password) or
+        C(do_not_store_password), and the user is not a Windows built-in service account, the task is set to run only when the user
+        is logged in.
+    default: DOMAIN\user
+  password:
+    description:
+      - Password for the user account to run the scheduled task as
+    version_added: "2.4"
+  run_level:
+    description:
+      - The level of user rights used to run the task
+    default: limited
+    choices:
+      - limited
+      - highest
+    version_added: "2.4"
+  do_not_store_password:
+    description:
+      - Do not store the password for the user running the task - the task will only have access to local resources
+    default: false
+    version_added: "2.4"
   executable:
     description:
       - Command the scheduled task should execute
@@ -98,4 +118,46 @@ EXAMPLES = r'''
     state: present
     enabled: yes
     user: SYSTEM
+
+# Create a scheduled task to run a PowerShell script
+# This task runs as the NETWORK SERVICE user at the highest level of user rights for the account
+- win_scheduled_task:
+    name: TaskName2
+    description: Run a PowerShell script
+    executable: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments: -ExecutionPolicy Unrestricted -NonInteractive -File C:\TestDir\Test.ps1
+    time: "6pm"
+    frequency: once
+    state: present
+    enabled: yes
+    user: NETWORK SERVICE
+    run_level: highest
+
+# Change the same task as above to run under a domain user account, storing credentials for the task
+- win_scheduled_task:
+    name: TaskName2
+    description: Run a PowerShell script
+    executable: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments: -ExecutionPolicy Unrestricted -NonInteractive -File C:\TestDir\Test.ps1
+    time: "6pm"
+    frequency: once
+    state: present
+    enabled: yes
+    user: DOMAIN\user
+    password: passwordGoesHere
+    run_level: highest
+
+# Change the same task again, choosing not to store the password for the account
+-  win_scheduled_task:
+    name: TaskName2
+    description: Run a PowerShell script
+    executable: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+    arguments: -ExecutionPolicy Unrestricted -NonInteractive -File C:\TestDir\Test.ps1
+    time: "6pm"
+    frequency: once
+    state: present
+    enabled: yes
+    user: DOMAIN\user
+    run_level: highest
+    do_not_store_password: yes
 '''
