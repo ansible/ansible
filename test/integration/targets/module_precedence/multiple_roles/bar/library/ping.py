@@ -61,6 +61,7 @@ def main():
         if module.params['data'] == 'crash':
             raise Exception("boom")
         result['ping'] = module.params['data']
+    result['location'] = 'role: bar'
     module.exit_json(**result)
 
 
