@@ -704,8 +704,11 @@ status:
 '''
 
 import os
+import re
 import time
-
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.pycompat24 import get_exception
 
 try:
     from proxmoxer import ProxmoxAPI
@@ -716,12 +719,13 @@ except ImportError:
 VZ_TYPE = 'qemu'
 
 
-def get_nextvmid(proxmox):
+def get_nextvmid(module, proxmox):
     try:
         vmid = proxmox.cluster.nextid.get()
         return vmid
-    except Exception as e:
-        module.fail_json(msg="Unable to get next vmid. Failed with exception: %s")
+    except Exception:
+        exc = get_exception()
+        module.fail_json(msg="Unable to get next vmid. Failed with exception: %s" % exc)
 
 
 def get_vmid(proxmox, name):
@@ -801,7 +805,7 @@ def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sock
     proxmox_node = proxmox.nodes(node)
 
     # Sanitize kwargs. Remove not defined args and ensure True and False converted to int.
-    kwargs = dict((k,v) for k, v in kwargs.items() if v is not None)
+    kwargs = dict((k, v) for k, v in kwargs.items() if v is not None)
     kwargs.update(dict([k, int(v)] for k, v in kwargs.items() if isinstance(v, bool)))
 
     # The features work only on PVE 4
@@ -876,9 +880,9 @@ def start_vm(module, proxmox, vm, vmid, timeout):
     taskid = getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.start.post()
     while timeout:
         if (proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['status'] == 'stopped' and
-                proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['exitstatus'] == 'OK' ):
+                proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['exitstatus'] == 'OK'):
             return True
-        timeout = timeout - 1
+        timeout -= 1
         if timeout == 0:
             module.fail_json(msg='Reached timeout while waiting for starting VM. Last line in task before timeout: %s'
                              % proxmox.nodes(vm[0]['node']).tasks(taskid).log.get()[:1])
@@ -896,7 +900,7 @@ def stop_vm(module, proxmox, vm, vmid, timeout, force):
         if (proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['status'] == 'stopped' and
                 proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['exitstatus'] == 'OK'):
             return True
-        timeout = timeout - 1
+        timeout -= 1
         if timeout == 0:
             module.fail_json(msg='Reached timeout while waiting for stopping VM. Last line in task before timeout: %s'
                              % proxmox.nodes(vm[0]['node']).tasks(taskid).log.get()[:1])
@@ -906,83 +910,83 @@ def stop_vm(module, proxmox, vm, vmid, timeout, force):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            acpi = dict(type='bool', default='yes'),
-            agent = dict(type='bool'),
-            args = dict(type='str', default=None),
-            api_host = dict(required=True),
-            api_user = dict(required=True),
-            api_password = dict(no_log=True),
-            autostart = dict(type='bool', default='no'),
-            balloon = dict(type='int',default=0),
-            bios = dict(choices=['seabios', 'ovmf']),
-            boot = dict(type='str', default='cnd'),
-            bootdisk = dict(type='str'),
-            clone = dict(type='str', default=None),
-            cores = dict(type='int', default=1),
-            cpu = dict(type='str', default='kvm64'),
-            cpulimit = dict(type='int'),
-            cpuunits = dict(type='int', default=1000),
-            delete = dict(type='str', default=None),
-            description = dict(type='str'),
-            digest = dict(type='str'),
-            force = dict(type='bool', default=None),
-            format = dict(type='str', default='qcow2', choices=['cloop', 'cow', 'qcow', 'qcow2', 'qed', 'raw', 'vmdk' ]),
-            freeze = dict(type='bool'),
-            full = dict(type='bool', default='yes'),
-            hostpci = dict(type='dict'),
-            hotplug = dict(type='str'),
-            hugepages = dict(choices=['any', '2', '1024']),
-            ide = dict(type='dict', default=None),
-            keyboard = dict(type='str'),
-            kvm = dict(type='bool', default='yes'),
-            localtime = dict(type='bool'),
-            lock = dict(choices=['migrate', 'backup', 'snapshot', 'rollback']),
-            machine = dict(type='str'),
-            memory = dict(type='int', default=512),
-            migrate_downtime = dict(type='int'),
-            migrate_speed = dict(type='int'),
-            name = dict(type='str'),
-            net = dict(type='dict'),
-            newid = dict(type='int', default=None),
-            node = dict(),
-            numa = dict(type='dict'),
-            numa_enabled = dict(type='bool'),
-            onboot = dict(type='bool', default='yes'),
-            ostype = dict(default='l26', choices=['other', 'wxp', 'w2k', 'w2k3', 'w2k8', 'wvista', 'win7', 'win8', 'l24', 'l26', 'solaris']),
-            parallel = dict(type='dict'),
-            pool = dict(type='str'),
-            protection = dict(type='bool'),
-            reboot = dict(type='bool'),
-            revert = dict(type='str', default=None),
-            sata = dict(type='dict'),
-            scsi = dict(type='dict'),
-            scsihw = dict(choices=['lsi', 'lsi53c810', 'virtio-scsi-pci', 'virtio-scsi-single', 'megasas', 'pvscsi']),
-            serial = dict(type='dict'),
-            shares = dict(type='int'),
-            skiplock = dict(type='bool'),
-            smbios = dict(type='str'),
-            snapname = dict(type='str'),
-            sockets = dict(type='int', default=1),
-            startdate = dict(type='str'),
-            startup = dict(),
-            state = dict(default='present', choices=['present', 'absent', 'stopped', 'started', 'restarted', 'current']),
-            storage = dict(type='str'),
-            tablet = dict(type='bool', default='no'),
-            target = dict(type='str'),
-            tdf = dict(type='bool'),
-            template = dict(type='bool', default='no'),
-            timeout = dict(type='int', default=30),
-            update = dict(type='bool', default='no'),
-            validate_certs = dict(type='bool', default='no'),
-            vcpus = dict(type='int', default=None),
-            vga = dict(default='std', choices=['std', 'cirrus', 'vmware', 'qxl', 'serial0', 'serial1', 'serial2', 'serial3', 'qxl2', 'qxl3', 'qxl4']),
-            virtio = dict(type='dict', default=None),
-            vmid = dict(type='int', default=None),
-            watchdog = dict(),
+        argument_spec=dict(
+            acpi=dict(type='bool', default='yes'),
+            agent=dict(type='bool'),
+            args=dict(type='str', default=None),
+            api_host=dict(required=True),
+            api_user=dict(required=True),
+            api_password=dict(no_log=True),
+            autostart=dict(type='bool', default='no'),
+            balloon=dict(type='int', default=0),
+            bios=dict(choices=['seabios', 'ovmf']),
+            boot=dict(type='str', default='cnd'),
+            bootdisk=dict(type='str'),
+            clone=dict(type='str', default=None),
+            cores=dict(type='int', default=1),
+            cpu=dict(type='str', default='kvm64'),
+            cpulimit=dict(type='int'),
+            cpuunits=dict(type='int', default=1000),
+            delete=dict(type='str', default=None),
+            description=dict(type='str'),
+            digest=dict(type='str'),
+            force=dict(type='bool', default=None),
+            format=dict(type='str', default='qcow2', choices=['cloop', 'cow', 'qcow', 'qcow2', 'qed', 'raw', 'vmdk']),
+            freeze=dict(type='bool'),
+            full=dict(type='bool', default='yes'),
+            hostpci=dict(type='dict'),
+            hotplug=dict(type='str'),
+            hugepages=dict(choices=['any', '2', '1024']),
+            ide=dict(type='dict', default=None),
+            keyboard=dict(type='str'),
+            kvm=dict(type='bool', default='yes'),
+            localtime=dict(type='bool'),
+            lock=dict(choices=['migrate', 'backup', 'snapshot', 'rollback']),
+            machine=dict(type='str'),
+            memory=dict(type='int', default=512),
+            migrate_downtime=dict(type='int'),
+            migrate_speed=dict(type='int'),
+            name=dict(type='str'),
+            net=dict(type='dict'),
+            newid=dict(type='int', default=None),
+            node=dict(),
+            numa=dict(type='dict'),
+            numa_enabled=dict(type='bool'),
+            onboot=dict(type='bool', default='yes'),
+            ostype=dict(default='l26', choices=['other', 'wxp', 'w2k', 'w2k3', 'w2k8', 'wvista', 'win7', 'win8', 'l24', 'l26', 'solaris']),
+            parallel=dict(type='dict'),
+            pool=dict(type='str'),
+            protection=dict(type='bool'),
+            reboot=dict(type='bool'),
+            revert=dict(type='str', default=None),
+            sata=dict(type='dict'),
+            scsi=dict(type='dict'),
+            scsihw=dict(choices=['lsi', 'lsi53c810', 'virtio-scsi-pci', 'virtio-scsi-single', 'megasas', 'pvscsi']),
+            serial=dict(type='dict'),
+            shares=dict(type='int'),
+            skiplock=dict(type='bool'),
+            smbios=dict(type='str'),
+            snapname=dict(type='str'),
+            sockets=dict(type='int', default=1),
+            startdate=dict(type='str'),
+            startup=dict(),
+            state=dict(default='present', choices=['present', 'absent', 'stopped', 'started', 'restarted', 'current']),
+            storage=dict(type='str'),
+            tablet=dict(type='bool', default='no'),
+            target=dict(type='str'),
+            tdf=dict(type='bool'),
+            template=dict(type='bool', default='no'),
+            timeout=dict(type='int', default=30),
+            update=dict(type='bool', default='no'),
+            validate_certs=dict(type='bool', default='no'),
+            vcpus=dict(type='int', default=None),
+            vga=dict(default='std', choices=['std', 'cirrus', 'vmware', 'qxl', 'serial0', 'serial1', 'serial2', 'serial3', 'qxl2', 'qxl3', 'qxl4']),
+            virtio=dict(type='dict', default=None),
+            vmid=dict(type='int', default=None),
+            watchdog=dict(),
         ),
-        mutually_exclusive = [('delete', 'revert'), ('delete','update'), ('revert','update'), ('clone', 'update'), ('clone', 'delete'), ('clone','revert')],
-        required_one_of=[('name','vmid',)],
+        mutually_exclusive=[('delete', 'revert'), ('delete', 'update'), ('revert', 'update'), ('clone', 'update'), ('clone', 'delete'), ('clone', 'revert')],
+        required_one_of=[('name', 'vmid',)],
         required_if=[('state', 'present', ['node'])]
     )
 
@@ -1026,9 +1030,9 @@ def main():
     # If vmid not set get the Next VM id from ProxmoxAPI
     # If vm name is set get the VM id from ProxmoxAPI
     if not vmid:
-        if state == 'present' and ( not update and not clone) and (not delete and not revert):
+        if state == 'present' and (not update and not clone) and (not delete and not revert):
             try:
-                vmid = get_nextvmid(proxmox)
+                vmid = get_nextvmid(module, proxmox)
             except Exception as e:
                 module.fail_json(msg="Can't get the next vimd for VM {} automatically. Ensure your cluster state is good".format(name))
         else:
@@ -1052,7 +1056,7 @@ def main():
                 module.fail_json(msg='VM with vmid = %s does not exist in cluster' % vmid)
         if not newid:
             try:
-                newid = get_nextvmid(proxmox)
+                newid = get_nextvmid(module, proxmox)
             except Exception as e:
                 module.fail_json(msg="Can't get the next vimd for VM {} automatically. Ensure your cluster state is good".format(name))
         else:
@@ -1085,65 +1089,65 @@ def main():
                 module.fail_json(msg="node '%s' does not exist in cluster" % node)
 
             create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sockets, timeout, update,
-                      acpi = module.params['acpi'],
-                      agent = module.params['agent'],
-                      autostart = module.params['autostart'],
-                      balloon = module.params['balloon'],
-                      bios = module.params['bios'],
-                      boot = module.params['boot'],
-                      bootdisk = module.params['bootdisk'],
-                      cpulimit = module.params['cpulimit'],
-                      cpuunits = module.params['cpuunits'],
-                      description = module.params['description'],
-                      digest = module.params['digest'],
-                      force = module.params['force'],
-                      freeze = module.params['freeze'],
-                      hostpci = module.params['hostpci'],
-                      hotplug = module.params['hotplug'],
-                      hugepages = module.params['hugepages'],
-                      ide = module.params['ide'],
-                      keyboard = module.params['keyboard'],
-                      kvm = module.params['kvm'],
-                      localtime = module.params['localtime'],
-                      lock = module.params['lock'],
-                      machine = module.params['machine'],
-                      migrate_downtime = module.params['migrate_downtime'],
-                      migrate_speed = module.params['migrate_speed'],
-                      net = module.params['net'],
-                      numa = module.params['numa'],
-                      numa_enabled = module.params['numa_enabled'],
-                      onboot = module.params['onboot'],
-                      ostype = module.params['ostype'],
-                      parallel = module.params['parallel'],
-                      pool = module.params['pool'],
-                      protection = module.params['protection'],
-                      reboot = module.params['reboot'],
-                      sata = module.params['sata'],
-                      scsi = module.params['scsi'],
-                      scsihw = module.params['scsihw'],
-                      serial = module.params['serial'],
-                      shares = module.params['shares'],
-                      skiplock = module.params['skiplock'],
-                      smbios1 = module.params['smbios'],
-                      snapname = module.params['snapname'],
-                      startdate = module.params['startdate'],
-                      startup = module.params['startup'],
-                      tablet = module.params['tablet'],
-                      target = module.params['target'],
-                      tdf = module.params['tdf'],
-                      template = module.params['template'],
-                      vcpus = module.params['vcpus'],
-                      vga = module.params['vga'],
-                      virtio = module.params['virtio'],
-                      watchdog = module.params['watchdog'])
+                      acpi=module.params['acpi'],
+                      agent=module.params['agent'],
+                      autostart=module.params['autostart'],
+                      balloon=module.params['balloon'],
+                      bios=module.params['bios'],
+                      boot=module.params['boot'],
+                      bootdisk=module.params['bootdisk'],
+                      cpulimit=module.params['cpulimit'],
+                      cpuunits=module.params['cpuunits'],
+                      description=module.params['description'],
+                      digest=module.params['digest'],
+                      force=module.params['force'],
+                      freeze=module.params['freeze'],
+                      hostpci=module.params['hostpci'],
+                      hotplug=module.params['hotplug'],
+                      hugepages=module.params['hugepages'],
+                      ide=module.params['ide'],
+                      keyboard=module.params['keyboard'],
+                      kvm=module.params['kvm'],
+                      localtime=module.params['localtime'],
+                      lock=module.params['lock'],
+                      machine=module.params['machine'],
+                      migrate_downtime=module.params['migrate_downtime'],
+                      migrate_speed=module.params['migrate_speed'],
+                      net=module.params['net'],
+                      numa=module.params['numa'],
+                      numa_enabled=module.params['numa_enabled'],
+                      onboot=module.params['onboot'],
+                      ostype=module.params['ostype'],
+                      parallel=module.params['parallel'],
+                      pool=module.params['pool'],
+                      protection=module.params['protection'],
+                      reboot=module.params['reboot'],
+                      sata=module.params['sata'],
+                      scsi=module.params['scsi'],
+                      scsihw=module.params['scsihw'],
+                      serial=module.params['serial'],
+                      shares=module.params['shares'],
+                      skiplock=module.params['skiplock'],
+                      smbios1=module.params['smbios'],
+                      snapname=module.params['snapname'],
+                      startdate=module.params['startdate'],
+                      startup=module.params['startup'],
+                      tablet=module.params['tablet'],
+                      target=module.params['target'],
+                      tdf=module.params['tdf'],
+                      template=module.params['template'],
+                      vcpus=module.params['vcpus'],
+                      vga=module.params['vga'],
+                      virtio=module.params['virtio'],
+                      watchdog=module.params['watchdog'])
 
             if not clone:
                 get_vminfo(module, proxmox, node, vmid,
-                    ide = module.params['ide'],
-                    net = module.params['net'],
-                    sata = module.params['sata'],
-                    scsi = module.params['scsi'],
-                    virtio = module.params['virtio'])
+                           ide=module.params['ide'],
+                           net=module.params['net'],
+                           sata=module.params['sata'],
+                           scsi=module.params['scsi'],
+                           virtio=module.params['virtio'])
             if update:
                 module.exit_json(changed=True, msg="VM %s with vmid %s updated" % (name, vmid))
             elif clone is not None:
@@ -1180,7 +1184,7 @@ def main():
             if getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.current.get()['status'] == 'stopped':
                 module.exit_json(changed=False, msg="VM %s is already stopped" % vmid)
 
-            if stop_vm(module, proxmox, vm, vmid, timeout, force = module.params['force']):
+            if stop_vm(module, proxmox, vm, vmid, timeout, force=module.params['force']):
                 module.exit_json(changed=True, msg="VM %s is shutting down" % vmid)
         except Exception as e:
             module.fail_json(msg="stopping of VM %s failed with exception: %s" % (vmid, e))
@@ -1193,11 +1197,10 @@ def main():
             if getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.current.get()['status'] == 'stopped':
                 module.exit_json(changed=False, msg="VM %s is not running" % vmid)
 
-            if (stop_vm(module, proxmox, vm, vmid, timeout, force = module.params['force'])
-                    and start_vm(module, proxmox, vm, vmid, timeout)):
+            if stop_vm(module, proxmox, vm, vmid, timeout, force=module.params['force']) and start_vm(module, proxmox, vm, vmid, timeout):
                 module.exit_json(changed=True, msg="VM %s is restarted" % vmid)
         except Exception as e:
-            module.fail_json(msg="restarting of VM %s failed with exception: %s" % ( vmid, e ))
+            module.fail_json(msg="restarting of VM %s failed with exception: %s" % (vmid, e))
 
     elif state == 'absent':
         try:
@@ -1211,12 +1214,12 @@ def main():
             taskid = getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE).delete(vmid)
             while timeout:
                 if (proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['status'] == 'stopped' and
-                        proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['exitstatus'] == 'OK' ):
+                        proxmox.nodes(vm[0]['node']).tasks(taskid).status.get()['exitstatus'] == 'OK'):
                     module.exit_json(changed=True, msg="VM %s removed" % vmid)
-                timeout = timeout - 1
+                timeout -= 1
                 if timeout == 0:
                     module.fail_json(msg='Reached timeout while waiting for removing VM. Last line in task before timeout: %s'
-                                     % proxmox_node.tasks(taskid).log.get()[:1])
+                                     % proxmox.nodes(vm[0]['node']).tasks(taskid).log.get()[:1])
 
                 time.sleep(1)
         except Exception as e:
@@ -1236,7 +1239,5 @@ def main():
             module.fail_json(msg="Unable to get vm {} with vmid = {} status: ".format(name, vmid) + str(e))
 
 
-# import module snippets
-from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()
