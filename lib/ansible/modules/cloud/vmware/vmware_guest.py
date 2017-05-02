@@ -109,7 +109,7 @@ options:
             - Name of an existing snapshot to use to create a clone of a VM.
         default: None
         version_added: "2.4"
-   snapshot_linked:
+   linked_clone:
         description:
             - Whether to create a Linked Clone from the snapshot specified
         default: False
@@ -1099,7 +1099,7 @@ class PyVmomiHelper(object):
                 relospec.datastore = datastore
                 relospec.pool = resource_pool
 
-                if self.params['snapshot_src'] is not None and self.params['snapshot_linked']:
+                if self.params['snapshot_src'] is not None and self.params['linked_clone']:
                     relospec.diskMoveType = vim.vm.RelocateSpec.DiskMoveOptions.createNewChildDiskBacking
 
                 clonespec = vim.vm.CloneSpec(template=self.params['is_template'], location=relospec)
@@ -1310,7 +1310,7 @@ def main():
             cluster=dict(type='str'),
             wait_for_ip_address=dict(type='bool', default=False),
             snapshot_src=dict(type='str', default=None),
-            snapshot_linked=dict(type='bool', default=False),
+            linked_clone=dict(type='bool', default=False),
             networks=dict(type='list', default=[]),
             resource_pool=dict(type='str'),
             customization=dict(type='dict', no_log=True, default={}),
