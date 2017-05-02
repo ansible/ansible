@@ -21,7 +21,7 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata-version': '1.0'}
 
 DOCUMENTATION = '''
 ---
@@ -107,12 +107,13 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.bigswitch_utils import Rest, Response
 from ansible.module_utils.pycompat24 import get_exception
 
+
 def leaf_switch(module):
     try:
         access_token = module.params['access_token'] or os.environ['BIGSWITCH_ACCESS_TOKEN']
     except KeyError:
         e = get_exception()
-        module.fail_json(msg='Unable to load %s' % e.message )
+        module.fail_json(msg='Unable to load %s' % e.message)
 
     name = module.params['name']
     fabric_role = module.params['fabric_role']
@@ -122,8 +123,8 @@ def leaf_switch(module):
     controller = module.params['controller']
 
     rest = Rest(module,
-                {'content-type': 'application/json', 'Cookie': 'session_cookie='+access_token},
-                'https://'+controller+':8443/api/v1/data/controller/core')
+                {'content-type': 'application/json', 'Cookie': 'session_cookie=' + access_token},
+                'https://' + controller + ':8443/api/v1/data/controller/core')
 
     response = rest.get('switch-config', data={})
     if response.status_code != 200:
@@ -158,6 +159,7 @@ def leaf_switch(module):
             module.exit_json(changed=True)
         else:
             module.fail_json(msg="error deleting switch '{}': {}".format(name, response.json['description']))
+
 
 def main():
     module = AnsibleModule(
