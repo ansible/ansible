@@ -1,5 +1,5 @@
-# Test code for the command and shell modules.
-# (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
+# Test code for the raw module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
 
 # This file is part of Ansible
 #
