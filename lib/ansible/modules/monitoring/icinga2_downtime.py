@@ -133,7 +133,8 @@ EXAMPLES = '''
     start-time: "2017-04-13 12:00:04"
     end_time: "2017-04-13 14:00:04"
 
-# Schedule downtimes for all services starting by "nrpe-" and "redshift-", related to all the hosts starting by "redshift-*". (downtime will start at the current time and end 2h 30m and 30s later)
+# Schedule downtimes for all services starting by "nrpe-" and "redshift-", related to all the hosts starting by "redshift-*".
+# (downtime will start at the current time and end 2h 30m and 30s later)
 
 - name: Schedule downtime
   icinga2_downtime:
@@ -180,7 +181,16 @@ RETURN = '''
 #
 '''
 
-import time, uuid, hmac, hashlib, base64, time, calendar, datetime, from ansible.module_utils.basic import *
+import time
+import uuid
+import hmac
+import hashlinb
+import base64
+import time
+import calendar
+import datetime
+from ansible.module_utils.basic import *
+
 
 try:
     import requests
@@ -282,13 +292,16 @@ def schedule_downtime(module, start_time, end_time):
 
     if services is None and hostname is not None:
         # Schedule downtime on the host
-        payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, 'author': author, 'comment': comment, "filter": "match(\"" + hostname + "\",host.name)", "type": "Host", "fixed": fixed}
+        payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, 'author': author, \
+        'comment': comment, "filter": "match(\"" + hostname + "\",host.name)", "type": "Host", "fixed": fixed}
     elif hostname is None and services is not None:
         # Schedule downtime on a service across one or multiple hosts
-        payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, 'author': author, 'comment': comment, 'type': 'Service', "filter": filter, "fixed": fixed}
+        payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, \
+        'author': author, 'comment': comment, 'type': 'Service', "filter": filter, "fixed": fixed}
     elif hostname is not None and services is not None:
         # Schedule downtime on a service for a specific host
-        payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, 'author': author, 'comment': comment, 'type': 'Service', 'filter': filter + " && match(\"" + hostname + "\",host.name)", "fixed": fixed}
+        payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, 'author': author, 'comment': comment,\
+        'type': 'Service', 'filter': filter + " && match(\"" + hostname + "\",host.name)", "fixed": fixed}
     else:
         module.fail_json(msg="You have to specify either a host or service")
 
