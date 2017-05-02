@@ -407,81 +407,53 @@ PARAM_TO_COMMAND_KEYMAP = {
 }
 
 
-def get_custom_value(config, arg, command):
-    if arg.startswith('event_history'):
-        size_re = re.compile(r'(?:{0} size\s)(?P<value>.*)$'.format(command), re.M)
-        command_re = re.compile(r'\s+{0}\s*$'.format(command), re.M)
+def get_value(arg, config):
+    command = PARAM_TO_COMMAND_KEYMAP.get(arg)
+
+    if command.split()[0] == 'event-history':
+        command_re = re.compile(r'\s+{0}\s*'.format(command), re.M)
+
+        size_re = re.compile(r'(?:{0} size\s)(?P<value>.*)'.format(command), re.M)
         value = False
 
-        if 'no {0}'.format(command) in config:
-            pass
-        elif command in config:
-            try:
-                value = size_re.search(config).group('value')
-            except AttributeError:
-                if command_re.search(config):
-                    value = True
+        if command_re.search(config):
+            search = size_re.search(config)
+            if search:
+                value = search.group('value')
+            else:
+                value = True
 
-    elif arg == 'enforce_first_as' or arg == 'fast_external_fallover':
-        no_command_re = re.compile(r'no\s+{0}\s*$'.format(command), re.M)
+    elif arg in ['enforce_first_as', 'fast_external_fallover']:
+        no_command_re = re.compile(r'no\s+{0}\s*'.format(command), re.M)
         value = True
 
         if no_command_re.search(config):
             value = False
 
-    elif arg == 'confederation_peers':
-        conf_peer_re = re.compile(r'(?:confederation peers\s)(?P<value>.*)$', re.M)
-        value = ''
-
-        if 'confederation peers' in config:
-            value = conf_peer_re.search(config).group('value').split()
-
-    elif arg == 'timer_bgp_keepalive':
-        timer_re = re.compile(r'(?:timers bgp\s)(?P<value>.*)$', re.M)
-        value = ''
-        if 'timers bgp' in config:
-            parsed = timer_re.search(config).group('value').split()
-            value = parsed[0]
-
-    elif arg == 'timer_bgp_hold':
-        timer_re = re.compile(r'(?:timers bgp\s)(?P<value>.*)$', re.M)
-        value = ''
-        if 'timers bgp' in config:
-            parsed = timer_re.search(config).group('value').split()
-            if len(parsed) == 2:
-                value = parsed[1]
-
-    return value
-
-
-def get_value(arg, config):
-    custom = [
-        'event_history_cli',
-        'event_history_events',
-        'event_history_periodic',
-        'event_history_detail',
-        'confederation_peers',
-        'timer_bgp_hold',
-        'timer_bgp_keepalive',
-        'enforce_first_as',
-        'fast_external_fallover'
-    ]
-    command = PARAM_TO_COMMAND_KEYMAP.get(arg)
-
-    if arg in custom:
-        value = get_custom_value(config, arg, command)
     elif arg in BOOL_PARAMS:
-        command_re = re.compile(r'\s+{0}\s*$'.format(command), re.M)
+        command_re = re.compile(r'\s+{0}\s*'.format(command), re.M)
         value = False
 
         if command_re.search(config):
             value = True
     else:
-        command_val_re = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(command), re.M)
+        command_val_re = re.compile(r'(?:{0}\s)(?P<value>.*)'.format(command), re.M)
         value = ''
 
-        if command in config:
-            value = command_val_re.search(config).group('value')
+        has_command = command_val_re.search(config)
+        if has_command:
+            found_value = has_command.group('value')
+
+            if arg == 'confederation_peers':
+                value = found_value.split()
+            elif arg == 'timer_bgp_keepalive':
+                value = found_value.split()[0]
+            elif arg == 'timer_bgp_hold':
+                split_values = found_value.split()
+                if len(split_values) == 2:
+                    value = split_values[1]
+            elif found_value:
+                value = found_value
 
     return value
 
@@ -513,9 +485,8 @@ def get_existing(module, args, warnings):
             if module.params['vrf'] == 'default':
                 existing['vrf'] = 'default'
 
-    if (not existing and module.params['state'] == 'present' and
-            module.params['vrf'] != 'default'):
-        msg = ("VRF {0} doesn't exist. ".format(module.params['vrf']))
+    if not existing and module.params['vrf'] != 'default' and module.params['state'] == 'present':
+        msg = ("VRF {0} doesn't exist.".format(module.params['vrf']))
         warnings.append(msg)
 
     return existing
@@ -684,6 +655,7 @@ def main():
 
     warnings = list()
     check_args(module, warnings)
+    result = dict(changed=False, warnings=warnings)
 
     state = module.params['state']
 
@@ -710,10 +682,8 @@ def main():
         if key not in ['asn', 'vrf']:
             if str(value).lower() == 'default':
                 value = PARAM_TO_DEFAULT_KEYMAP.get(key, 'default')
-            if existing.get(key) or value:
+            if existing.get(key) != value:
                 proposed[key] = value
-
-    result = dict(changed=False, warnings=warnings)
 
     candidate = CustomNetworkConfig(indent=3)
     if state == 'present':
