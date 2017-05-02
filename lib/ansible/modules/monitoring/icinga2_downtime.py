@@ -189,7 +189,7 @@ import base64
 import time
 import calendar
 import datetime
-from ansible.module_utils.basic import *
+from ansible.module_utils.basic import AnsibleModule
 
 
 try:
