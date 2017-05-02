@@ -208,6 +208,7 @@ def _convert_duration(module):
         duration = 0
     return duration
 
+
 def _create_filter(services):
     filter = "("
     length = len(services)
@@ -217,6 +218,7 @@ def _create_filter(services):
             filter += " || "
     filter += ")"
     return filter
+
 
 def _call_icinga2_api(module, payload, state):
     # At the top of the function
@@ -256,13 +258,13 @@ def _call_icinga2_api(module, payload, state):
         _return_result(module, False, True, 'An unexpected exception occurred while scheduling downtime on Icinga2.')
 
 
-
 def _return_result(module,changed, failed, message):
     result = {}
     result['changed'] = changed
     result['failed'] = failed
     result['response'] = message
     module.exit_json(**result)
+
 
 
 def schedule_downtime(module,start_time,end_time):
@@ -321,6 +323,7 @@ def remove_downtime(module):
 
     _call_icinga2_api(module, payload, "remove-downtime")
 
+
 def check_input(module):
     fixed = module.params.get('fixed')
     start_time = module.params.get('start_time')
@@ -350,25 +353,26 @@ def check_input(module):
         if end_time_duration == 0 and end_time is None:
             module.fail_json(msg="end_time is required for scheduling downtime")
 
+
 def main():
     argument_spec = {}
 
     argument_spec.update(dict(
         icinga2_url = dict(required=True, type='str', defaults='https://localhost:5666'),
-        icinga2_port = dict(required=False, type='str',default='5665'),
+        icinga2_port = dict(required=False, type='str', default='5665'),
         icinga2_api_user = dict(required=True, type='str'),
         icinga2_api_password = dict(required=True, type='str'),
         state = dict(required=False, choices=['present', 'absent'], default='present'),
         hostname = dict(required=False, type='str', default=None),
         services = dict(required=False, type='list', default=None),
         start_time = dict(required=False, type='str', default=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
-        end_time = dict(required=False,type='str',default=None),
-        days = dict(required=False,type='int',default=None),
-        hours = dict(required=False,type='int',default=None),
-        minutes = dict(required=False,type='int',default=None),
-        seconds = dict(required=False,type='int',default=None),
-        duration = dict(required=False,type='int',default=None),
-        author = dict(required=False,type='str',default='Ansible'),
+        end_time = dict(required=False, type='str', default=None),
+        days = dict(required=False, type='int', default=None),
+        hours = dict(required=False, type='int', default=None),
+        minutes = dict(required=False, type='int', default=None),
+        seconds = dict(required=False, type='int', default=None),
+        duration = dict(required=False, type='int', default=None),
+        author = dict(required=False, type='str', default='Ansible'),
         comment = dict(required=False, type='str', default='Downtime scheduled by Ansible'),
         fixed = dict(required=False, type='bool', default=True)
     )),
@@ -383,7 +387,7 @@ def main():
     start_time = module.params.get('start_time')
     end_time = module.params.get('end_time')
     end_time_duration = _convert_duration(module)
-    state=module.params.get('state')
+    state = module.params.get('state')
 
     # Check inputs
     check_input(module)
@@ -392,19 +396,19 @@ def main():
 
         if end_time is not None:
             try:
-                end_time = time.mktime(datetime.datetime.strptime(end_time,"%Y-%m-%d %H:%M:%S").timetuple())
+                end_time = time.mktime(datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S").timetuple())
             except (ValueError, TypeError):
                 module.fail_json(msg="start time does not match format '%Y-%m-%d %H:%M:%S'")
 
         try:
-            start_time = time.mktime(datetime.datetime.strptime(start_time,"%Y-%m-%d %H:%M:%S").timetuple())
+            start_time = time.mktime(datetime.datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S").timetuple())
         except (ValueError, TypeError):
             module.fail_json(msg="start time does not match format '%Y-%m-%d %H:%M:%S'")
 
         if end_time is None:
-            end_time = start_time + datetime.timedelta(seconds=end_time_duration).total_seconds();
+            end_time = start_time + datetime.timedelta(seconds=end_time_duration).total_seconds()
 
-        schedule_downtime(module,start_time,end_time)
+        schedule_downtime(module, start_time, end_time)
 
     elif state == 'absent':
         remove_downtime(module)
