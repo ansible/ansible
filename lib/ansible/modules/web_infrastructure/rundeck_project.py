@@ -83,11 +83,11 @@ rundeck_response:
 before:
     description: dictionnary containing project informations before modification
     returned: success
-    type: dictionnary
+    type: dict
 after:
     description: dictionnary containing project informations after modification
     returned: success
-    type: dictionnary
+    type: dict
 '''
 
 # import module snippets
