@@ -773,7 +773,6 @@ lib/ansible/modules/web_infrastructure/ansible_tower/tower_user.py
 lib/ansible/modules/web_infrastructure/apache2_mod_proxy.py
 lib/ansible/modules/web_infrastructure/apache2_module.py
 lib/ansible/modules/web_infrastructure/deploy_helper.py
-lib/ansible/modules/web_infrastructure/django_manage.py
 lib/ansible/modules/web_infrastructure/ejabberd_user.py
 lib/ansible/modules/web_infrastructure/htpasswd.py
 lib/ansible/modules/web_infrastructure/jboss.py
