@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Ansible module to manage Big Cloud Fabric switches
+# Ansible module to manage Big Cloud Fabric (versions 4.1) switches
 # (c) 2017, Ted Elhourani <ted@bigswitch.com>
 #
 # This file is part of Ansible
