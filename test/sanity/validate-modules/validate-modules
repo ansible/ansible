@@ -690,6 +690,7 @@ class ModuleValidator(Validator):
         return docs
 
     def _validate_docs_schema(self, doc, schema, name, error_code):
+        # TODO: Add line/col
         errors = []
         try:
             schema(doc)
