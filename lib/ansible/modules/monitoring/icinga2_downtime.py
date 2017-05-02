@@ -37,7 +37,7 @@ options:
         description:
             - URL of the icinga2 server on which the API is enabled.
     icinga2_port:
-        requred: false
+        required: false
         default: 5665
         description:
             - Port of the icinga2 server on which the API is enabled.
