@@ -184,13 +184,13 @@ RETURN = '''
 import time
 import uuid
 import hmac
-import hashlinb
+import hashlib
 import base64
 import time
 import calendar
 import datetime
 from ansible.module_utils.basic import AnsibleModule
-
+from ansible.module_utils.basic import json
 
 try:
     import requests
@@ -353,10 +353,10 @@ def check_input(module):
     if state == 'present':
         now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        if start_time < now or end_time < now:
+        if (start_time < now or end_time < now) and end_time_duration==0:
             module.fail_json(msg="start_time or/and end_time can't be lower than current datetime")
 
-        if start_time > end_time:
+        if start_time > end_time and end_time_duration==0:
             module.fail_json(msg="end_time can't be lower than start_time")
 
         if hostname is None and services is None:
