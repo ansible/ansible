@@ -768,7 +768,6 @@ lib/ansible/modules/web_infrastructure/ansible_tower/tower_role.py
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_team.py
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_user.py
 lib/ansible/modules/web_infrastructure/deploy_helper.py
-lib/ansible/modules/web_infrastructure/django_manage.py
 lib/ansible/modules/web_infrastructure/ejabberd_user.py
 lib/ansible/modules/web_infrastructure/htpasswd.py
 lib/ansible/modules/web_infrastructure/jboss.py
