@@ -180,7 +180,7 @@ RETURN = '''
 #
 '''
 
-import  time, uuid, hmac, hashlib, base64, time, calendar, datetime
+import time, uuid, hmac, hashlib, base64, time, calendar, datetime, from ansible.module_utils.basic import *
 
 try:
     import requests
@@ -199,9 +199,9 @@ def _convert_duration(module):
     if days is not None:
         duration = duration + days * 86400
     if hours is not None:
-        duration = duration+ hours * 3600
+        duration = duration + hours * 3600
     if minutes is not None:
-        duration = duration+ minutes * 60
+        duration = duration + minutes * 60
     if seconds is not None:
         duration = duration + seconds
     if days is None and hours is None and minutes is None and seconds is None:
@@ -212,9 +212,9 @@ def _convert_duration(module):
 def _create_filter(services):
     filter = "("
     length = len(services)
-    for i in range(0,length):
-        filter += "match(\""+services[i]+"\",service.name)"
-        if i < length - 1 :
+    for i in range(0, length):
+        filter += "match(\"" + services[i] + "\",service.name)"
+        if i < length - 1:
             filter += " || "
     filter += ")"
     return filter
@@ -222,19 +222,19 @@ def _create_filter(services):
 
 def _call_icinga2_api(module, payload, state):
     # At the top of the function
-    icinga2_api_downtime_endpoint = "/v1/actions/%s" %(state)
+    icinga2_api_downtime_endpoint = "/v1/actions/%s" % (state)
     icinga2_url = module.params.get('icinga2_url')
     icinga2_port = module.params.get('icinga2_port')
     icinga2_api_user = module.params.get('icinga2_api_user')
     icinga2_api_password = module.params.get('icinga2_api_password')
 
     headers = {"Accept": "application/json"}
-    uri = "%s:%s%s" %(icinga2_url, icinga2_port, icinga2_api_downtime_endpoint)
+    uri = "%s:%s%s" % (icinga2_url, icinga2_port, icinga2_api_downtime_endpoint)
 
     r = None
     try:
         r = requests.post(uri, data=json.dumps(payload), verify=False, headers=headers, auth=(icinga2_api_user, icinga2_api_password))
-        results=r.json()['results']
+        results = r.json()['results']
 
         if len(results) > 0:
             _return_result(module, True, False, r.json())
@@ -258,7 +258,7 @@ def _call_icinga2_api(module, payload, state):
         _return_result(module, False, True, 'An unexpected exception occurred while scheduling downtime on Icinga2.')
 
 
-def _return_result(module,changed, failed, message):
+def _return_result(module, changed, failed, message):
     result = {}
     result['changed'] = changed
     result['failed'] = failed
@@ -266,8 +266,7 @@ def _return_result(module,changed, failed, message):
     module.exit_json(**result)
 
 
-
-def schedule_downtime(module,start_time,end_time):
+def schedule_downtime(module, start_time, end_time):
     state = module.params.get('state')
 
     hostname = module.params.get('hostname')
@@ -283,13 +282,13 @@ def schedule_downtime(module,start_time,end_time):
 
     if services is None and hostname is not None:
         # Schedule downtime on the host
-        payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, 'author': author, 'comment': comment, "filter": "match(\""+hostname+"\",host.name)", "type": "Host", "fixed": fixed}
+        payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, 'author': author, 'comment': comment, "filter": "match(\"" + hostname + "\",host.name)", "type": "Host", "fixed": fixed}
     elif hostname is None and services is not None:
         # Schedule downtime on a service across one or multiple hosts
         payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, 'author': author, 'comment': comment, 'type': 'Service', "filter": filter, "fixed": fixed}
     elif hostname is not None and services is not None:
         # Schedule downtime on a service for a specific host
-        payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, 'author': author, 'comment': comment, 'type': 'Service', 'filter': filter+" && match(\""+hostname+"\",host.name)", "fixed": fixed}
+        payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, 'author': author, 'comment': comment, 'type': 'Service', 'filter': filter + " && match(\"" + hostname + "\",host.name)", "fixed": fixed}
     else:
         module.fail_json(msg="You have to specify either a host or service")
 
@@ -413,8 +412,6 @@ def main():
     elif state == 'absent':
         remove_downtime(module)
 
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
