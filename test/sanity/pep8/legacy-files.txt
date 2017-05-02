@@ -634,7 +634,6 @@ lib/ansible/modules/notification/pushover.py
 lib/ansible/modules/notification/rocketchat.py
 lib/ansible/modules/notification/sendgrid.py
 lib/ansible/modules/notification/slack.py
-lib/ansible/modules/notification/sns.py
 lib/ansible/modules/notification/twilio.py
 lib/ansible/modules/packaging/language/bundler.py
 lib/ansible/modules/packaging/language/cpanm.py
