@@ -292,16 +292,16 @@ def schedule_downtime(module, start_time, end_time):
 
     if services is None and hostname is not None:
         # Schedule downtime on the host
-        payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, 'author': author, \
-        'comment': comment, "filter": "match(\"" + hostname + "\",host.name)", "type": "Host", "fixed": fixed}
+        payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, 'author': author,
+            'comment': comment, "filter": "match(\"" + hostname + "\",host.name)", "type": "Host", "fixed": fixed}
     elif hostname is None and services is not None:
         # Schedule downtime on a service across one or multiple hosts
-        payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, \
-        'author': author, 'comment': comment, 'type': 'Service', "filter": filter, "fixed": fixed}
+        payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration,
+            'author': author, 'comment': comment, 'type': 'Service', "filter": filter, "fixed": fixed}
     elif hostname is not None and services is not None:
         # Schedule downtime on a service for a specific host
-        payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, 'author': author, 'comment': comment,\
-        'type': 'Service', 'filter': filter + " && match(\"" + hostname + "\",host.name)", "fixed": fixed}
+        payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, 'author': author, 'comment': comment,
+            'type': 'Service', 'filter': filter + " && match(\"" + hostname + "\",host.name)", "fixed": fixed}
     else:
         module.fail_json(msg="You have to specify either a host or service")
 
