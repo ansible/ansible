@@ -17,7 +17,7 @@ The following section shows one of many possible ways to organize playbook conte
 Your usage of Ansible should fit your needs, however, not ours, so feel free to modify this approach and organize as you see fit.
 
 One thing you will definitely want to do though, is use the "roles" organization feature, which is documented as part
-of the main playbooks page.  See :doc:`playbooks_roles`.  You absolutely should be using roles.  Roles are great.  Use roles.  Roles!
+of the main playbooks page.  See :doc:`playbooks_reuse_roles`.  You absolutely should be using roles.  Roles are great.  Use roles.  Roles!
 Did we say that enough?  Roles are great.
 
 .. _directory_layout:
@@ -269,7 +269,7 @@ of each play::
     - name: restart ntpd
       service: name=ntpd state=restarted
 
-See :doc:`playbooks_roles` for more information.
+See :doc:`playbooks_reuse_roles` for more information.
 
 
 .. _organization_examples:
@@ -367,7 +367,7 @@ We're somewhat repeating ourselves with this tip, but it's worth repeating. A sy
 This allows playbooks to target machines based on role, as well as to assign role specific variables
 using the group variable system.
 
-See :doc:`playbooks_roles`.
+See :doc:`playbooks_reuse_roles`.
 
 .. _os_variance:
 
