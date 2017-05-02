@@ -116,6 +116,12 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.pycompat24 import get_exception
 
+def _fail_mode_to_str(text):
+    if not text:
+        return None
+    else:
+        return text.strip()
+
 def _external_ids_to_dict(text):
     if not text:
         return None
@@ -216,7 +222,7 @@ def map_config_to_obj(module):
                                " %(bridge)s")
         command = templatized_command % module.params
         rc, out, err = module.run_command(command, check_rc=True)
-        obj['fail_mode'] = out.strip()
+        obj['fail_mode'] = _fail_mode_to_str(out)
 
         templatized_command = ("%(ovs-vsctl)s -t %(timeout)s br-get-external-id"
                                " %(bridge)s")
