@@ -53,6 +53,7 @@ options:
   launch_config_name:
     description:
       - Name of the Launch configuration to use for the group. See the ec2_lc module for managing these.
+        If unspecified then the current group value will be used.
     required: true
   min_size:
     description:
@@ -714,6 +715,12 @@ def create_autoscaling_group(connection, module):
                         TargetGroupARNs=list(tgs_to_attach)
                     )
 
+        # check for attributes that aren't required for updating an existing ASG
+        desired_capacity = desired_capacity or as_group['DesiredCapacity']
+        min_size = min_size or as_group['MinSize']
+        max_size = max_size or as_group['MaxSize']
+        launch_config_name = launch_config_name or as_group['LaunchConfigurationName']
+
         launch_configs = connection.describe_launch_configurations(LaunchConfigurationNames=[launch_config_name])
         if len(launch_configs['LaunchConfigurations']) == 0:
             module.fail_json(msg="No launch config found with name %s" % launch_config_name)
@@ -733,10 +740,6 @@ def create_autoscaling_group(connection, module):
             ag['VPCZoneIdentifier'] = vpc_zone_identifier
         connection.update_auto_scaling_group(**ag)
 
-        if vpc_zone_identifier:
-            ag['VPCZoneIdentifier'] = vpc_zone_identifier
-        if availability_zones:
-            ag['AvailabilityZones'] = availability_zones
         if notification_topic:
             try:
                 connection.put_notification_configuration(
