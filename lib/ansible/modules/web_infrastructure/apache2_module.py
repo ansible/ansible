@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2013-2014, Christian Berendt <berendt@b1-systems.de>
 #
@@ -104,12 +104,14 @@ stderr:
 
 import re
 
+
 def _run_threaded(module):
     control_binary = _get_ctl_binary(module)
 
     result, stdout, stderr = module.run_command("%s -V" % control_binary)
 
     return bool(re.search(r'threaded:[ ]*yes', stdout))
+
 
 def _get_ctl_binary(module):
     for command in ['apache2ctl', 'apachectl']:
@@ -121,6 +123,7 @@ def _get_ctl_binary(module):
         msg="Neither of apache2ctl nor apachctl found."
             " At least one apache control binary is necessary."
     )
+
 
 def _module_is_enabled(module):
     control_binary = _get_ctl_binary(module)
@@ -145,6 +148,7 @@ def _module_is_enabled(module):
 
     searchstring = ' ' + create_apache_identifier(name)
     return searchstring in stdout
+
 
 def create_apache_identifier(name):
     """
@@ -215,15 +219,16 @@ def _set_state(module, state):
                          result=success_msg,
                          warnings=module.warnings)
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name  = dict(required=True),
-            force = dict(required=False, type='bool', default=False),
-            state = dict(default='present', choices=['absent', 'present']),
+        argument_spec=dict(
+            name=dict(required=True),
+            force=dict(required=False, type='bool', default=False),
+            state=dict(default='present', choices=['absent', 'present']),
             ignore_configcheck=dict(required=False, type='bool', default=False),
         ),
-        supports_check_mode = True,
+        supports_check_mode=True,
     )
 
     module.warnings = []
