@@ -189,7 +189,6 @@ lib/ansible/modules/cloud/amazon/ecs_taskdefinition.py
 lib/ansible/modules/cloud/amazon/efs.py
 lib/ansible/modules/cloud/amazon/efs_facts.py
 lib/ansible/modules/cloud/amazon/elasticache.py
-lib/ansible/modules/cloud/amazon/elasticache_parameter_group.py
 lib/ansible/modules/cloud/amazon/elasticache_snapshot.py
 lib/ansible/modules/cloud/amazon/elasticache_subnet_group.py
 lib/ansible/modules/cloud/amazon/execute_lambda.py
@@ -634,7 +633,6 @@ lib/ansible/modules/notification/pushover.py
 lib/ansible/modules/notification/rocketchat.py
 lib/ansible/modules/notification/sendgrid.py
 lib/ansible/modules/notification/slack.py
-lib/ansible/modules/notification/sns.py
 lib/ansible/modules/notification/twilio.py
 lib/ansible/modules/packaging/language/bundler.py
 lib/ansible/modules/packaging/language/cpanm.py
@@ -681,7 +679,6 @@ lib/ansible/modules/remote_management/hpilo/hponcfg.py
 lib/ansible/modules/remote_management/stacki/stacki_host.py
 lib/ansible/modules/remote_management/wakeonlan.py
 lib/ansible/modules/source_control/bzr.py
-lib/ansible/modules/source_control/git.py
 lib/ansible/modules/source_control/github_hooks.py
 lib/ansible/modules/source_control/gitlab_group.py
 lib/ansible/modules/source_control/gitlab_project.py
@@ -770,15 +767,11 @@ lib/ansible/modules/web_infrastructure/ansible_tower/tower_project.py
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_role.py
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_team.py
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_user.py
-lib/ansible/modules/web_infrastructure/apache2_mod_proxy.py
-lib/ansible/modules/web_infrastructure/apache2_module.py
 lib/ansible/modules/web_infrastructure/deploy_helper.py
-lib/ansible/modules/web_infrastructure/django_manage.py
 lib/ansible/modules/web_infrastructure/ejabberd_user.py
 lib/ansible/modules/web_infrastructure/htpasswd.py
 lib/ansible/modules/web_infrastructure/jboss.py
 lib/ansible/modules/web_infrastructure/jira.py
-lib/ansible/modules/web_infrastructure/letsencrypt.py
 lib/ansible/modules/windows/win_disk_image.py
 lib/ansible/modules/windows/win_dns_client.py
 lib/ansible/modules/windows/win_domain.py
