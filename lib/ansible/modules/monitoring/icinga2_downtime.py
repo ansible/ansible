@@ -1,6 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
-# (c) 2016, Walid Shaita <walid@gumgum.com>
+# (c) 2016, Walid Shaita <walid.shaita@gmail.com>
 #
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,132 +15,107 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import  time, uuid, hmac, hashlib, base64, time, calendar, datetime
 
-
-try:
-    import requests
-    HAS_REQUESTS = True
-
-except ImportError:
-    HAS_REQUESTS = False
-
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
 module: icinga2_downtime
-version_added: "2.3"
+version_added: "2.4"
 author: "Walid Shaita (@Shaita-KrZ)"
 short_description: Manage downtime for icinga2 using Icinga2 API.
 description:
     - A module to manage downtime for icinga2 using Icinga2 API.
-      This module is able to schedule or remove downtime for hosts or/and services (can be used with regex).
-
+    - This module is able to schedule or remove downtime for hosts or/and services (can be used with regex).
+requirements:
+    - requests
 options:
     icinga2_url:
         required: true
         description:
             - URL of the icinga2 server on which the API is enabled.
-
     icinga2_port:
         requred: false
         default: 5665
         description:
             - Port of the icinga2 server on which the API is enabled.
-
     icinga2_api_user:
         required: true
         description:
             - Icinga2 admin user.
-
     icinga2_api_password:
         required: true
         description:
             - Icinga2 admin password.
-
     state:
         required: false
         default: present
         choices: [ present, absent ]
         description:
             - C(present) to schedule a downtime.
-              C(absent) to remove a downtime.
-
+            - C(absent) to remove a downtime.
     hostname:
         required: false
         description:
             - Name of the hostname you want to schedule a downtime. The hostname can be specified with regex.
-              If you specify services, it will schedule a downtime for the services related to the hostname.
-              If you don't specify services, it will schedule a downtime only for the host.
-              One of hostname or services are required at least.
-
+            - If you specify services, it will schedule a downtime for the services related to the hostname.
+            - If you don't specify services, it will schedule a downtime only for the host.
+            - One of hostname or services are required at least.
     services:
         required: false
         description:
             - List of the services you want to schedule a downtime. The services can be specified with regex.
-              If you specify a hostname, it will schedule a downtime for the services related to a hostname.
-              If you don't specify a hostname, it will schedule a downtime for the all the services listed.
-              One of hostname or services are required at least.
-
+            - If you specify a hostname, it will schedule a downtime for the services related to a hostname.
+            - If you don't specify a hostname, it will schedule a downtime for the all the services listed.
+            - One of hostname or services are required at least.
     start_time:
         required: false
         default: current datetime
         description:
             - Correspond to the datetime you want to schedule your downtime. If you don't specify one, it will take the current datetime.
-              The format of the datetime is : YYYY-mm-dd HH:MM:SS
-
+            - The format of the datetime is : YYYY-mm-dd HH:MM:SS
     end_time:
         required: false
         description:
             - Correspond to the time you want to end your downtime. The format of the datetime is : YYYY-mm-dd HH:MM:SS.
-              You can either use the end_time or the days, hours, minutes, seconds attributes.
-
+            - You can either use the end_time or the days, hours, minutes, seconds attributes.
     days:
         required: false
         description:
             - Number of days you want to schedule your downtime (start from the start_time). You can either use days or specify an end_time.
-
     hours:
         required: false
         description:
             - Number of hours you want to schedule your downtime (starting from the start_time). You can either use hours or specify an end_time.
-
     minutes:
         required: false
         description:
             - Number of minutes you want to schedule your downtime (starting from the start_time). You can either use minutes or specify an end_time.
-
     seconds:
         required: false
         description:
             - Number of seconds you want to schedule your downtime (starting from the start_time). You can either use seconds or specify an end_time.
-
     duration:
         required: false
         description:
             - Duration of the downtime in seconds if fixed is set to false. Duration is required if fixed is set to false.
-
     fixed:
         required: false
         default: true
         description:
             - Default to true. If true, the downtime is fixed otherwise flexible.
-
     author:
         required: false
         default: Ansible
         description:
             - Name of the author. The author can be used to remove all the downtime scheduled by the C(author).
-
     comment:
         required: false
         default: Downtime scheduled by Ansible
         description:
             - Comment text.
-
-
-requirements:
-- requests
 '''
 
 EXAMPLES = '''
@@ -200,6 +175,19 @@ EXAMPLES = '''
     state: absent
     author: Walid
 '''
+
+RETURN = '''
+#
+'''
+
+import  time, uuid, hmac, hashlib, base64, time, calendar, datetime
+
+try:
+    import requests
+    HAS_REQUESTS = True
+
+except ImportError:
+    HAS_REQUESTS = False
 
 
 def _convert_duration(module):
@@ -264,7 +252,7 @@ def _call_icinga2_api(module, payload, state):
             requests.exceptions.RequestException,
             requests.exceptions.InvalidSchema) as e:
         _return_result(module, False, True, str(e))
-        
+
     except Exception as e:
         _return_result(module, False, True, 'An unexpected exception occurred while scheduling downtime on Icinga2.')
 
