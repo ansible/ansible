@@ -249,8 +249,7 @@ def _call_icinga2_api(module, payload, state):
             requests.exceptions.TooManyRedirects,
             requests.exceptions.HTTPError,
             requests.exceptions.ConnectionError,
-            requests.exceptions.RequestException,
-            requests.exceptions.InvalidSchema) as e:
+            requests.exceptions.RequestException) as e:
         _return_result(module, False, True, str(e))
 
     except Exception as e:
