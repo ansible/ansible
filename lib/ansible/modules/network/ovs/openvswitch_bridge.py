@@ -117,14 +117,17 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.pycompat24 import get_exception
 
 def _external_ids_to_dict(text):
-    d = {}
+    if not text:
+        return None
+    else:
+        d = {}
 
-    for l in text.splitlines():
-        if l:
-            k, v = l.split('=')
-            d[k] = v
+        for l in text.splitlines():
+            if l:
+                k, v = l.split('=')
+                d[k] = v
 
-    return d
+        return d
 
 def map_obj_to_commands(want, have, module):
     commands = list()
