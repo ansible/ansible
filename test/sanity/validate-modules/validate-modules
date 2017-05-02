@@ -818,8 +818,8 @@ class ModuleValidator(Validator):
                 )
         else:
             data, errors, traces = parse_yaml(doc_info['RETURN']['value'],
-                                           doc_info['RETURN']['lineno'],
-                                           self.name, 'RETURN')
+                                              doc_info['RETURN']['lineno'],
+                                              self.name, 'RETURN')
             if data:
                 for ret_key in data:
                     self._validate_docs_schema(data[ret_key], return_schema(data[ret_key]), 'RETURN.%s' % ret_key, 319)
