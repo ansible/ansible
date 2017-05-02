@@ -69,17 +69,20 @@ options:
     description:
       - The path to the private key of the certificate in PEM encoded format.
   cert_chain_body:
+    version_added: "2.4"
     description:
       - The CA certificate chain in PEM encoded format.
     required: false
     default: null
     aliases: []
   cert_body:
+    version_added: "2.4"
     description:
       - The certificate body in PEM encoded format.
     required: false
     aliases: []
   key_body:
+    version_added: "2.4"
     description:
       - The private key of the certificate in PEM encoded format.
   dup_ok:
