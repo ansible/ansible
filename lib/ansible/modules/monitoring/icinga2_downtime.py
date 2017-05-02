@@ -286,10 +286,10 @@ def schedule_downtime(module,start_time,end_time):
         payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, 'author': author, 'comment': comment, "filter": "match(\""+hostname+"\",host.name)", "type": "Host", "fixed": fixed}
     elif hostname is None and services is not None:
         # Schedule downtime on a service across one or multiple hosts
-        payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, 'author': author, 'comment': comment, 'type': 'Service', "filter": filter, "fixed": fixed }
+        payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, 'author': author, 'comment': comment, 'type': 'Service', "filter": filter, "fixed": fixed}
     elif hostname is not None and services is not None:
         # Schedule downtime on a service for a specific host
-        payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, 'author': author, 'comment': comment, 'type': 'Service', 'filter': filter+" && match(\""+hostname+"\",host.name)", "fixed": fixed }
+        payload = {'start_time': start_time, 'end_time': end_time, 'duration': duration, 'author': author, 'comment': comment, 'type': 'Service', 'filter': filter+" && match(\""+hostname+"\",host.name)", "fixed": fixed}
     else:
         module.fail_json(msg="You have to specify either a host or service")
 
@@ -308,16 +308,16 @@ def remove_downtime(module):
 
     if hostname is not None and services is None:
         # Remove downtime related to a specific host
-        payload = {"filter": "match(\""+hostname+"\",host.name)", "type": "Host", 'downtime.author': author}
+        payload = {"filter": "match(\"" + hostname + "\",host.name)", "type": "Host", 'downtime.author': author}
     elif hostname is None and services is not None:
         # Remove downtime related to specific services
         payload = {'type': 'Service', "filter": filter, 'downtime.author': author}
     elif hostname is not None and services is not None:
         # Remove downtime related to services within a specific host
-        payload = {'type': 'Service', 'filter': filter+" && match(\""+hostname+"\",host.name)", 'downtime.author': author }
+        payload = {'type': 'Service', 'filter': filter + " && match(\"" + hostname + "\",host.name)", 'downtime.author': author}
     elif hostname is None and services is None:
         # Remove downtime related to the author
-        payload = {'type': 'Downtime', 'downtime.author': author }
+        payload = {'type': 'Downtime', 'downtime.author': author}
     else:
         module.fail_json(msg="You have to specify either a host or service")
 
@@ -334,7 +334,7 @@ def check_input(module):
     hostname = module.params.get('hostname')
     services = module.params.get('services')
 
-    ## for flexible downtime, duration is required
+    # for flexible downtime, duration is required
     if duration is None and fixed is False:
         module.fail_json(msg="duration is required for flexible downtime")
 
@@ -358,23 +358,23 @@ def main():
     argument_spec = {}
 
     argument_spec.update(dict(
-        icinga2_url = dict(required=True, type='str', defaults='https://localhost:5666'),
-        icinga2_port = dict(required=False, type='str', default='5665'),
-        icinga2_api_user = dict(required=True, type='str'),
-        icinga2_api_password = dict(required=True, type='str'),
-        state = dict(required=False, choices=['present', 'absent'], default='present'),
-        hostname = dict(required=False, type='str', default=None),
-        services = dict(required=False, type='list', default=None),
-        start_time = dict(required=False, type='str', default=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
-        end_time = dict(required=False, type='str', default=None),
-        days = dict(required=False, type='int', default=None),
-        hours = dict(required=False, type='int', default=None),
-        minutes = dict(required=False, type='int', default=None),
-        seconds = dict(required=False, type='int', default=None),
-        duration = dict(required=False, type='int', default=None),
-        author = dict(required=False, type='str', default='Ansible'),
-        comment = dict(required=False, type='str', default='Downtime scheduled by Ansible'),
-        fixed = dict(required=False, type='bool', default=True)
+        icinga2_url=dict(required=True, type='str', defaults='https://localhost:5666'),
+        icinga2_port=dict(required=False, type='str', default='5665'),
+        icinga2_api_user=dict(required=True, type='str'),
+        icinga2_api_password=dict(required=True, type='str'),
+        state=dict(required=False, choices=['present', 'absent'], default='present'),
+        hostname=dict(required=False, type='str', default=None),
+        services=dict(required=False, type='list', default=None),
+        start_time=dict(required=False, type='str', default=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
+        end_time=dict(required=False, type='str', default=None),
+        days=dict(required=False, type='int', default=None),
+        hours=dict(required=False, type='int', default=None),
+        minutes=dict(required=False, type='int', default=None),
+        seconds=dict(required=False, type='int', default=None),
+        duration=dict(required=False, type='int', default=None),
+        author=dict(required=False, type='str', default='Ansible'),
+        comment=dict(required=False, type='str', default='Downtime scheduled by Ansible'),
+        fixed=dict(required=False, type='bool', default=True)
     )),
 
     module = AnsibleModule(
