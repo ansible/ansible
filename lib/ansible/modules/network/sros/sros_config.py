@@ -42,7 +42,8 @@ options:
         section.  The commands must be the exact same commands as found
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
-        device config parser.
+        device config parser.  The I(lines) argument only supports current
+        context lines.  See EXAMPLES
     required: false
     default: null
     aliases: ['commands']
@@ -198,6 +199,23 @@ vars:
       src: "{{ inventory_hostname }}.cfg"
       provider: "{{ cli }}"
       save: yes
+
+- name: invalid use of lines
+  sros_config:
+    lines:
+      - service
+      -     vpls 1000 customer foo 1 create
+      -         description "invalid lines example"
+    provider: "{{ cli }}"
+
+- name: valid use of lines
+  sros_config:
+    lines:
+      - description "invalid lines example"
+    parents:
+      - service
+      - vpls 1000 customer foo 1 create
+    provider: "{{ cli }}"
 """
 
 RETURN = """
