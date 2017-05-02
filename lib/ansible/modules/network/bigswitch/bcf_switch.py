@@ -30,7 +30,7 @@ author: "Ted (@tedelhourani)"
 short_description: Create and remove a bcf switch.
 description:
     - Create and remove a bcf switch.
-version_added: "2.3"
+version_added: "2.4"
 options:
   name:
     description:
