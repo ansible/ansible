@@ -34,14 +34,17 @@ description:
 version_added: "2.3"
 options:
   name:
-    description: Name of the inittab entry.
+    description:
+    - Name of the inittab entry.
     required: True
     aliases: ['service']
   runlevel:
-    description: Runlevel of the entry.
+    description:
+    - Runlevel of the entry.
     required: True
   action:
-    description: Action what the init has to do with this entry.
+    description:
+    - Action what the init has to do with this entry.
     required: True
     choices: [
                'respawn',
@@ -58,12 +61,15 @@ options:
                'sysinit'
               ]
   command:
-    description: What command has to run.
+    description:
+    - What command has to run.
     required: True
   insertafter:
-    description: After which inittabline should the new entry inserted.
+    description:
+    - After which inittabline should the new entry inserted.
   state:
-    description: Whether the entry should be present or absent in the inittab file
+    description:
+    - Whether the entry should be present or absent in the inittab file
     choices: [ "present", "absent" ]
     default: present
 notes:
@@ -112,7 +118,7 @@ name:
     returned: always
     type: string
     sample: startmyservice
-mgs:
+msg:
     description: action done with the inittab entry
     returned: changed
     type: string
