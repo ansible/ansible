@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, print_function
 
+import json
 import os
 import time
 
@@ -93,6 +94,25 @@ def docker_rm(args, container_id):
     :type container_id: str
     """
     docker_command(args, ['rm', '-f', container_id], capture=True)
+
+
+def docker_inspect(args, container_id):
+    """
+    :type args: EnvironmentConfig
+    :type container_id: str
+    :rtype: list[dict]
+    """
+    if args.explain:
+        return []
+
+    try:
+        stdout, _ = docker_command(args, ['inspect', container_id], capture=True)
+        return json.loads(stdout)
+    except SubprocessError as ex:
+        try:
+            return json.loads(ex.stdout)
+        except:
+            raise ex  # pylint: disable=locally-disabled, raising-bad-type
 
 
 def docker_exec(args, container_id, cmd, options=None, capture=False, stdin=None, stdout=None):

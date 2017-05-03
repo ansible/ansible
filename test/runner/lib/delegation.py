@@ -45,6 +45,10 @@ from lib.docker_util import (
     docker_run,
 )
 
+from lib.cloud import (
+    get_cloud_providers,
+)
+
 
 def delegate(args, exclude, require):
     """
@@ -191,6 +195,11 @@ def delegate_docker(args, exclude, require):
                 '--env', 'HTTPTESTER=1',
             ]
 
+        cloud_platforms = get_cloud_providers(args)
+
+        for cloud_platform in cloud_platforms:
+            test_options += cloud_platform.get_docker_run_options()
+
         test_id, _ = docker_run(args, test_image, options=test_options)
 
         if args.explain:
@@ -257,8 +266,15 @@ def delegate_remote(args, exclude, require):
         manage = ManagePosixCI(core_ci)
         manage.setup()
 
+        ssh_options = []
+
+        cloud_platforms = get_cloud_providers(args)
+
+        for cloud_platform in cloud_platforms:
+            ssh_options += cloud_platform.get_remote_ssh_options()
+
         try:
-            manage.ssh(cmd)
+            manage.ssh(cmd, ssh_options)
         finally:
             manage.ssh('rm -rf /tmp/results && cp -a ansible/test/results /tmp/results')
             manage.download('/tmp/results', 'test')
