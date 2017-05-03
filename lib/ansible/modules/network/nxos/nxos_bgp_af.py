@@ -899,8 +899,9 @@ def main():
         state_absent(module, existing, proposed, candidate)
 
     if candidate:
-        response = load_config(module, candidate)
-        result.update(response)
+        load_config(module, candidate)
+        result['changed'] = True
+        result['commands'] = candidate.items_text()
     else:
         result['commands'] = []
 
