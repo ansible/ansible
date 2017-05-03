@@ -19,6 +19,7 @@ class WrappedThread(threading.Thread):
         """
         :type action: () -> any
         """
+        # noinspection PyOldStyleClasses
         super(WrappedThread, self).__init__()
         self._result = queue.Queue()
         self.action = action

@@ -372,20 +372,12 @@ class Display(object):
 
 class ApplicationError(Exception):
     """General application error."""
-    def __init__(self, message=None):
-        """
-        :type message: str | None
-        """
-        super(ApplicationError, self).__init__(message)
+    pass
 
 
 class ApplicationWarning(Exception):
     """General application warning which interrupts normal program flow."""
-    def __init__(self, message=None):
-        """
-        :type message: str | None
-        """
-        super(ApplicationWarning, self).__init__(message)
+    pass
 
 
 class SubprocessError(ApplicationError):

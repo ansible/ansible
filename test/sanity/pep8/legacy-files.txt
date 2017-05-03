@@ -964,8 +964,6 @@ test/integration/gce_credentials.py
 test/integration/setup_gce.py
 test/integration/targets/async/library/async_test.py
 test/integration/targets/uri/files/testserver.py
-test/runner/lib/sanity.py
-test/runner/test.py
 test/sanity/code-smell/ansible-var-precedence-check.py
 test/sanity/validate-modules/module_args.py
 test/sanity/validate-modules/schema.py

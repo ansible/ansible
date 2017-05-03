@@ -77,7 +77,7 @@ def categorize_changes(paths, verbose_command=None):
 
                 # identify targeted integration tests (those which only target a single integration command)
                 if 'integration' in verbose_command and tests.get(verbose_command):
-                    if not any('integration' in command for command in tests.keys() if command != verbose_command):
+                    if not any('integration' in command for command in tests if command != verbose_command):
                         result += ' (targeted)'
             else:
                 result = '%s' % tests
@@ -91,7 +91,7 @@ def categorize_changes(paths, verbose_command=None):
         if any(t == 'all' for t in commands[command]):
             commands[command] = set(['all'])
 
-    commands = dict((c, sorted(commands[c])) for c in commands.keys() if commands[c])
+    commands = dict((c, sorted(commands[c])) for c in commands if commands[c])
 
     return commands
 
