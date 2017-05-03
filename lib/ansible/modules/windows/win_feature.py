@@ -49,6 +49,8 @@ options:
   restart:
     description:
       - Restarts the computer automatically when installation is complete, if restarting is required by the roles or features installed.
+      - DEPRECATED in Ansible 2.4, as unmanaged reboots cause numerous issues under Ansible. Check the C(reboot_required) return value
+        from this module to determine if a reboot is necessary, and if so, use the M(win_reboot) action to perform it.
     choices:
       - yes
       - no
@@ -100,4 +102,65 @@ EXAMPLES = r'''
     restart: True
     include_sub_features: True
     include_management_tools: True
+'''
+
+RETURN = r'''
+exitcode:
+    description: The stringified exit code from the feature installation/removal command
+    returned: always
+    type: string
+    sample: Success
+feature_result:
+    description: List of features that were installed or removed
+    returned: success
+    type: complex
+    sample:
+    contains:
+        display_name:
+            description: Feature display name
+            returned: always
+            type: string
+            sample: "Telnet Client"
+        id:
+            description: A list of KB article IDs that apply to the update
+            returned: always
+            type: int
+            sample: 44
+        message:
+            description: Any messages returned from the feature subsystem that occurred during installation or removal of this feature
+            returned: always
+            type: list of strings
+            sample: []
+        reboot_required:
+            description: True when the target server requires a reboot as a result of installing or removing this feature
+            returned: always
+            type: boolean
+            sample: True
+        restart_needed:
+            description: DEPRECATED in Ansible 2.4 (refer to C(reboot_required) instead). True when the target server requires a reboot as a
+                         result of installing or removing this feature
+            returned: always
+            type: boolean
+            sample: True
+        skip_reason:
+            description: The reason a feature installation or removal was skipped
+            returned: always
+            type: string
+            sample: NotSkipped
+        success:
+            description: If the feature installation or removal was successful
+            returned: always
+            type: boolean
+            sample: True
+reboot_required:
+    description: True when the target server requires a reboot to complete updates (no further updates can be installed until after a reboot)
+    returned: success
+    type: boolean
+    sample: True
+restart_needed:
+    description: DEPRECATED in Ansible 2.4 (refer to C(reboot_required) instead). True when the target server requires a reboot to complete updates
+                 (no further updates can be installed until after a reboot)
+    returned: success
+    type: boolean
+    sample: True
 '''
