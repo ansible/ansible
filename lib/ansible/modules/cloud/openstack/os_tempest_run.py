@@ -29,7 +29,7 @@ description:
 
 version_added: "2.4"
 
-author: "Tal Shafir , @TalShafir"
+author: "Tal Shafir (@TalShafir)"
 requirements: ["Tempest"]
 options:
     workspace:
