@@ -291,13 +291,19 @@ main() and AnsibleModule & argument_spec
 
     def main():
         module = AnsibleModule(
-            argument_spec = dict(
-                state     = dict(default='present', choices=['present', 'absent']),
-                name      = dict(required=True),
-                enabled   = dict(required=True, type='bool'),
-                something = dict(aliases=['whatever']),
-                password  = dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
-            )
+            argument_spec=dict(
+                state=dict(default='present', choices=['present', 'absent']),
+                username=dict(type='str'),
+                password=dict(no_log=True),
+                token=dict(no_log=True),
+                src=dict(type='path'),
+                priority=dict(type='int'),
+            ),
+            mutually_exclusive=(['password', 'token'],),
+            required_together=(['username', 'password'],),
+            required_one_of=[['password', 'token']],
+            required_if=[('state', 'present', ['src', 'priority'])],
+            supports_check_mode=True
         )
 
 The ``AnsibleModule`` class takes the following:
@@ -373,7 +379,7 @@ Things to document (same style RST field table?)
 * mutually_exclusive
 * required_together
 * required_one_of
-* require_if
+* required_if
 * supports_check_mode
 * Naming of common options (verify_ssl)
 
