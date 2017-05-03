@@ -27,11 +27,11 @@
   register: group_test0
 
 - name: make a list of groups
-  shell: |
-      cat /etc/group | cut -d: -f1
+  script: grouplist.sh "{{ ansible_distribution }}"
   register: group_names
-- debug: var=group_names
 
+- name: show group names
+  debug: var=group_names
 - name: validate results for testcase 0
   assert:
       that:
@@ -66,10 +66,17 @@
       name: ansibullgroup
       state: absent
   register: group_test2
+
 - name: make a new list of groups
   shell: |
       cat /etc/group | cut -d: -f1
   register: group_names2
+  when: 'ansible_distribution != "MacOSX"'
+
+- name: make a list of groups
+  script: grouplist.sh "{{ ansible_distribution }}"
+  register: group_names2
+
 - debug: var=group_names2
 - name: validate results for testcase 2
   assert:
