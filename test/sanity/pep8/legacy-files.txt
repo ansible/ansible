@@ -515,8 +515,6 @@ lib/ansible/modules/network/junos/junos_config.py
 lib/ansible/modules/network/junos/junos_facts.py
 lib/ansible/modules/network/junos/junos_netconf.py
 lib/ansible/modules/network/junos/junos_package.py
-lib/ansible/modules/network/junos/junos_rpc.py
-lib/ansible/modules/network/junos/junos_user.py
 lib/ansible/modules/network/lenovo/cnos_conditional_template.py
 lib/ansible/modules/network/lenovo/cnos_template.py
 lib/ansible/modules/network/lenovo/cnos_vlan.py
