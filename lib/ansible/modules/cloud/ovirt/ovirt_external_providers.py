@@ -35,7 +35,7 @@ description:
 options:
     name:
         description:
-            - "Name of the the external provider to manage."
+            - "Name of the external provider to manage."
     state:
         description:
             - "Should the external be present or absent"

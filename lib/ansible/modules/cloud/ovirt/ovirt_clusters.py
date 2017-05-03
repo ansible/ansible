@@ -35,7 +35,7 @@ description:
 options:
     name:
         description:
-            - "Name of the the cluster to manage."
+            - "Name of the cluster to manage."
         required: true
     state:
         description:

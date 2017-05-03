@@ -35,7 +35,7 @@ description:
 options:
     name:
         description:
-            - "Name of the the network to manage."
+            - "Name of the network to manage."
         required: true
     state:
         description:
