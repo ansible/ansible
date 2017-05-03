@@ -787,7 +787,7 @@ def main():
     if candidate:
         load_config(module, candidate)
         result['changed'] = True
-        result['commands'] = [item.text for item in candidate.items]
+        result['commands'] = candidate.items_text()
     else:
         result['commands'] = []
 

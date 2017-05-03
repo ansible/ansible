@@ -371,6 +371,9 @@ class NetworkConfig(object):
 
 class CustomNetworkConfig(NetworkConfig):
 
+    def items_text(self):
+        return [item.text for item in self.items]
+
     def expand_section(self, configobj, S=None):
         if S is None:
             S = list()
