@@ -35,7 +35,7 @@ description:
 options:
     name:
         description:
-            - "Name of the the data center to manage."
+            - "Name of the data center to manage."
         required: true
     state:
         description:
