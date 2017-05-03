@@ -403,11 +403,13 @@ except ImportError:
     HAS_BOTO = False
 
 import time
+import traceback
 import random
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import ec2_argument_spec, connect_to_aws, AnsibleAWSError
 from ansible.module_utils.ec2 import get_aws_connection_info
+
 
 def _throttleable_operation(max_retries):
     def _operation_wrapper(op):
@@ -477,7 +479,12 @@ class ElbManager(object):
         self.changed = False
         self.status = 'gone'
         self.elb_conn = self._get_elb_connection()
-        self.elb = self._get_elb()
+
+        try:
+            self.elb = self._get_elb()
+        except boto.exception.BotoServerError as e:
+            module.fail_json(msg='unable to get all load balancers: %s' % e.message, exception=traceback.format_exc())
+
         self.ec2_conn = self._get_ec2_connection()
 
     @_throttleable_operation(_THROTTLING_RETRIES)
@@ -832,20 +839,15 @@ class ElbManager(object):
         try:
             self.elb.enable_zones(zones)
         except boto.exception.BotoServerError as e:
-            if "Invalid Availability Zone" in e.error_message:
-                self.module.fail_json(msg=e.error_message)
-            else:
-                self.module.fail_json(msg="an unknown server error occurred, please try again later")
+            self.module.fail_json(msg='unable to enable zones: %s' % e.message, exception=traceback.format_exc())
+
         self.changed = True
 
     def _disable_zones(self, zones):
         try:
             self.elb.disable_zones(zones)
         except boto.exception.BotoServerError as e:
-            if "Invalid Availability Zone" in e.error_message:
-                self.module.fail_json(msg=e.error_message)
-            else:
-                self.module.fail_json(msg="an unknown server error occurred, please try again later")
+            self.module.fail_json(msg='unable to disable zones: %s' % e.message, exception=traceback.format_exc())
         self.changed = True
 
     def _attach_subnets(self, subnets):
@@ -1321,7 +1323,6 @@ def main():
         except boto.exception.NoAuthHandlerFound as e:
             module.fail_json(msg = str(e))
 
-
     elb_man = ElbManager(module, name, listeners, purge_listeners, zones,
                          purge_zones, security_group_ids, health_check,
                          subnets, purge_subnets, scheme,
@@ -1330,7 +1331,6 @@ def main():
                          access_logs, stickiness, wait, wait_timeout, tags,
                          region=region, instance_ids=instance_ids, purge_instance_ids=purge_instance_ids,
                          **aws_connect_params)
-
 
     # check for unsupported attributes for this version of boto
     if cross_az_load_balancing and not elb_man._check_attribute_support('cross_zone_load_balancing'):
