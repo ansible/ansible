@@ -1,4 +1,3 @@
-# common setup tasks for ec2 module tests
 # (c) 2014, James Laska <jlaska@ansible.com>
 
 # This file is part of Ansible
@@ -15,12 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-- name: generate random string
-  command: '{{ ansible_python.executable }} -c "import string,random; print str().join(random.choice(string.ascii_lowercase) for _ in range(8));"'
-  register: random_string
-  tags:
-    - prepare
 
 - name: create random file
   shell: mktemp /tmp/id_rsa.XXXXXX
@@ -40,16 +33,15 @@
     - prepare
 
 - name: record fingerprint
-  shell: ssh-keygen -lf {{sshkey.stdout}}.pub | awk '{print $2}'
+  shell: ssh-keygen -lf {{sshkey.stdout}}.pub
   register: fingerprint
   tags:
     - prepare
 
 - name: set facts for future roles
   set_fact:
-    random_string: '{{random_string.stdout}}'
     sshkey: '{{sshkey.stdout}}'
     key_material: '{{key_material.stdout}}'
-    fingerprint: '{{fingerprint.stdout}}'
+    fingerprint: '{{fingerprint.stdout.split()[1]}}'
   tags:
     - prepare
