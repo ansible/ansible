@@ -62,18 +62,6 @@ from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import with_metaclass
 from ansible.module_utils._text import to_native
 
-LOCALE_NORMALIZATION = {
-    ".utf8": ".UTF-8",
-    ".eucjp": ".EUC-JP",
-    ".iso885915": ".ISO-8859-15",
-    ".cp1251": ".CP1251",
-    ".koi8r": ".KOI8-R",
-    ".armscii8": ".ARMSCII-8",
-    ".euckr": ".EUC-KR",
-    ".gbk": ".GBK",
-    ".gb18030": ".GB18030",
-    ".euctw": ".EUC-TW",
-}
 
 # ===========================================
 # location module specific support methods.
@@ -112,19 +100,6 @@ def fix_case(name):
     for s, r in LOCALE_NORMALIZATION.items():
         name = name.replace(s, r)
     return name
-
-def replace_line(existing_line, new_line):
-    """Replaces lines in /etc/locale.gen"""
-    try:
-        f = open("/etc/locale.gen", "r")
-        lines = [line.replace(existing_line, new_line) for line in f]
-    finally:
-        f.close()
-    try:
-        f = open("/etc/locale.gen", "w")
-        f.write("".join(lines))
-    finally:
-        f.close()
 
 def set_locale(name, enabled=True):
     """ Sets the state of the locale. Defaults to enabled. """
