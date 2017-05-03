@@ -265,9 +265,9 @@ class Rhsm(RegistrationBase):
 
         # Pass supplied **kwargs as parameters to subscription-manager.  Ignore
         # non-configuration parameters and replace '_' with '.'.  For example,
-        # 'server_hostname' becomes '--system.hostname'.
+        # 'server_hostname' becomes '--server.hostname'.
         for k, v in kwargs.items():
-            if re.search(r'^(system|rhsm)_', k):
+            if re.search(r'^(server|rhsm)_', k):
                 args.append('--%s=%s' % (k.replace('_', '.'), v))
 
         self.module.run_command(args, check_rc=True)
