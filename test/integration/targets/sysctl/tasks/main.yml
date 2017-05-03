@@ -86,4 +86,3 @@
           - 'sysctl_test2.changed is defined'
           - 'sysctl_test2.changed'
           - 'sysctl_check2.stdout_lines == ["net.ipv4.ip_forward = 1"]'
-
