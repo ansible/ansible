@@ -24,9 +24,9 @@ DOCUMENTATION = """
 ---
 module: ce_vxlan_vap
 version_added: "2.4"
-short_description: Manages VXLAN virtual access point on HUAWEI CloudEngine devices.
+short_description: Manages VXLAN virtual access point on HUAWEI CloudEngine Devices.
 description:
-    - Manages VXLAN Virtual access point on HUAWEI CloudEngine devices.
+    - Manages VXLAN Virtual access point on HUAWEI CloudEngine Devices.
 author: QijunPan (@CloudEngine-Ansible)
 options:
     bridge_domain_id:
@@ -37,7 +37,7 @@ options:
         default: null
     bind_vlan_id:
         description:
-            - Specifies the vlan binding to a BD(Bridge Domain).
+            - Specifies the VLAN binding to a BD(Bridge Domain).
               The value is an integer ranging ranging from 1 to 4094.
         required: false
         default: null
@@ -55,15 +55,15 @@ options:
         default: null
     ce_vid:
         description:
-            - When C(encapsulation) is 'dot1q', specifies a VLAN ID in the outer VLAN tag.
-              When C(encapsulation) is 'qinq', specifies an outer VLAN ID for
+            - When I(encapsulation) is 'dot1q', specifies a VLAN ID in the outer VLAN tag.
+              When I(encapsulation) is 'qinq', specifies an outer VLAN ID for
               double-tagged packets to be received by a Layer 2 sub-interface.
               The value is an integer ranging from 1 to 4094.
         required: false
         default: null
     pe_vid:
         description:
-            - When C(encapsulation) is 'qinq', specifies an inner VLAN ID for
+            - When I(encapsulation) is 'qinq', specifies an inner VLAN ID for
               double-tagged packets to be received by a Layer 2 sub-interface.
               The value is an integer ranging from 1 to 4094.
         required: false
@@ -300,7 +300,7 @@ CE_NC_SET_ENCAP_QINQ = """
 
 
 def vlan_vid_to_bitmap(vid):
-    """convert vlan list to vlan bitmap"""
+    """convert VLAN list to VLAN bitmap"""
 
     vlan_bit = ['0'] * 1024
     int_vid = int(vid)
@@ -312,7 +312,7 @@ def vlan_vid_to_bitmap(vid):
 
 
 def bitmap_to_vlan_list(bitmap):
-    """convert vlan bitmap to vlan list"""
+    """convert VLAN bitmap to VLAN list"""
 
     tmp = list()
     if not bitmap:
@@ -336,7 +336,7 @@ def bitmap_to_vlan_list(bitmap):
 
 
 def is_vlan_bitmap_empty(bitmap):
-    """check vlan bitmap empty"""
+    """check VLAN bitmap empty"""
 
     if not bitmap or len(bitmap) == 0:
         return True
@@ -349,7 +349,7 @@ def is_vlan_bitmap_empty(bitmap):
 
 
 def is_vlan_in_bitmap(vid, bitmap):
-    """check is vlan id in bitmap"""
+    """check is VLAN id in bitmap"""
 
     if is_vlan_bitmap_empty(bitmap):
         return False
@@ -447,6 +447,7 @@ class VxlanVap(object):
     def __init_module__(self):
         """init module"""
 
+        required_together = [()]
         self.module = AnsibleModule(
             argument_spec=self.spec, supports_check_mode=True)
 
@@ -470,7 +471,7 @@ class VxlanVap(object):
             replace('xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"', "").\
             replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
-        # get vap: vlan
+        # get vap: VLAN
         vap_info["bdId"] = self.bridge_domain_id
         root = ElementTree.fromstring(xml_str)
         vap_info["vlanList"] = ""
@@ -644,7 +645,7 @@ class VxlanVap(object):
         """configure traffic encapsulation types"""
 
         if not self.l2sub_info:
-            self.module.fail_json(msg="Error: Interface does not exist.")
+            self.module.fail_json(msg="Error: Interface %s does not exist." % self.l2_sub_interface)
 
         if not self.encapsulation:
             return
@@ -693,7 +694,7 @@ class VxlanVap(object):
         """configure a Layer 2 sub-interface as a service access point"""
 
         if not self.vap_info:
-            self.module.fail_json(msg="Error: Bridge domain does not exist.")
+            self.module.fail_json(msg="Error: Bridge domain %s does not exist." % self.bridge_domain_id)
 
         xml_str = ""
         if self.state == "present":
@@ -721,7 +722,7 @@ class VxlanVap(object):
         """configure a VLAN as a service access point"""
 
         if not self.vap_info:
-            self.module.fail_json(msg="Error: Bridge domain does not exist.")
+            self.module.fail_json(msg="Error: Bridge domain %s does not exist." % self.bridge_domain_id)
 
         xml_str = ""
         if self.state == "present":
@@ -750,7 +751,7 @@ class VxlanVap(object):
         self.changed = True
 
     def is_vlan_valid(self, vid, name):
-        """check vlan id"""
+        """check VLAN id"""
 
         if not vid:
             return
