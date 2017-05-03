@@ -46,6 +46,15 @@ options:
     required: false
     default: "!config"
     version_added: "2.3"
+  config_format:
+    description:
+      - The I(config_format) argument specifies the format of the configuration
+         when serializing output from the device. This argument is applicable
+         only when C(config) value is present in I(gather_subset).
+    required: false
+    default: text
+    choices: ['xml', 'set', 'text', 'json']
+    version_added: "2.3"
 """
 
 EXAMPLES = """
