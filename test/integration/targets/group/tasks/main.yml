@@ -75,6 +75,3 @@
   assert:
       that:
           - '"ansibullgroup" not in group_names2.stdout_lines'
-
-
-
