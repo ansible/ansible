@@ -86,8 +86,9 @@ class TaskExecutor:
         display.debug("in run()")
 
         try:
+            templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
             try:
-                items = self._get_loop_items()
+                items = self._get_loop_items(templar)
             except AnsibleUndefinedVariable as e:
                 # save the error raised here for use later
                 items = None
@@ -95,7 +96,7 @@ class TaskExecutor:
 
             if items is not None:
                 if len(items) > 0:
-                    item_results = self._run_loop(items)
+                    item_results = self._run_loop(items, templar)
 
                     # loop through the item results, and remember the changed/failed
                     # result flags based on any item there.
@@ -123,7 +124,7 @@ class TaskExecutor:
                     res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
             else:
                 display.debug("calling self._execute()")
-                res = self._execute()
+                res = self._execute(templar=templar)
                 display.debug("_execute() done")
 
             # make sure changed is set in the result, if it's not present
@@ -169,7 +170,7 @@ class TaskExecutor:
             except Exception as e:
                 display.debug(u"error closing connection: %s" % to_text(e))
 
-    def _get_loop_items(self):
+    def _get_loop_items(self, templar):
         '''
         Loads a lookup plugin to handle the with_* portion of a task (if specified),
         and returns the items result.
@@ -191,7 +192,6 @@ class TaskExecutor:
         self._job_vars['ansible_search_path'] = self._task.get_search_path()
 
 
-        templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
         items = None
         if self._task.loop:
             if self._task.loop in self._shared_loader_obj.lookup_loader:
@@ -239,7 +239,7 @@ class TaskExecutor:
 
         return items
 
-    def _run_loop(self, items):
+    def _run_loop(self, items, templar):
         '''
         Runs the task with the loop items specified and collates the result
         into an array named 'results' which is inserted into the final result
@@ -268,7 +268,7 @@ class TaskExecutor:
                     u" to something else to avoid variable collisions and unexpected behavior." % loop_var)
 
         ran_once = False
-        items = self._squash_items(items, loop_var, task_vars)
+        items = self._squash_items(items, loop_var, task_vars, templar)
         for item in items:
             task_vars[loop_var] = item
 
@@ -290,7 +290,7 @@ class TaskExecutor:
             # execute, and swap them back so we can do the next iteration cleanly
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
-            res = self._execute(variables=task_vars)
+            res = self._execute(variables=task_vars, templar=templar)
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
 
@@ -300,7 +300,6 @@ class TaskExecutor:
             res['_ansible_item_result'] = True
 
             if label is not None:
-                templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
                 res['_ansible_item_label'] = templar.template(label)
 
             self._rslt_q.put(
@@ -317,7 +316,7 @@ class TaskExecutor:
 
         return results
 
-    def _squash_items(self, items, loop_var, variables):
+    def _squash_items(self, items, loop_var, variables, templar):
         '''
         Squash items down to a comma-separated list for certain modules which support it
         (typically package management modules).
@@ -329,7 +328,6 @@ class TaskExecutor:
             # optimizing it here, the templatable string might use template vars
             # that aren't available until later (it could even use vars from the
             # with_items loop) so don't make the templated string permanent yet.
-            templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
             task_action = self._task.action
             if templar._contains_vars(task_action):
                 task_action = templar.template(task_action, fail_on_undefined=False)
@@ -385,7 +383,7 @@ class TaskExecutor:
                 self._task.args['name'] = name
         return items
 
-    def _execute(self, variables=None):
+    def _execute(self, variables=None, templar=None):
         '''
         The primary workhorse of the executor system, this runs the task
         on the specified host (which may be the delegated_to host) and handles
@@ -394,8 +392,8 @@ class TaskExecutor:
 
         if variables is None:
             variables = self._job_vars
-
-        templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
+        else:
+            templar.set_available_variables(variables)
 
         context_validation_error = None
         try:
@@ -641,6 +639,8 @@ class TaskExecutor:
 
         if task_vars is None:
             task_vars = self._job_vars
+        else:
+            templar.set_available_variables(task_vars)
 
         async_jid = result.get('ansible_job_id')
         if async_jid is None:
@@ -707,6 +707,8 @@ class TaskExecutor:
         Reads the connection property for the host, and returns the
         correct connection object from the list of connection plugins
         '''
+
+        templar.set_available_variables(variables)
 
         if self._task.delegate_to is not None:
             # since we're delegating, we don't want to use interpreter values
