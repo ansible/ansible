@@ -254,7 +254,9 @@ class Rhn(redhat.RegistrationBase):
             Register system to RHN.  If enable_eus=True, extended update
             support will be requested.
         '''
-        register_cmd = ['/usr/sbin/rhnreg_ks', '--username', self.username, '--password', self.password, '--force']
+        register_cmd = ['/usr/sbin/rhnreg_ks', '--force']
+        if self.username:
+            register_cmd.extend(['--username', self.username, '--password', self.password])
         if self.server_url:
             register_cmd.extend(['--serverUrl', self.server_url])
         if enable_eus:
