@@ -10,7 +10,7 @@ import json
 try:
     from urllib import urlencode
 except ImportError:
-    # noinspection PyCompatibility,PyUnresolvedReferences,PyUnresolvedReferences
+    # noinspection PyCompatibility, PyUnresolvedReferences
     from urllib.parse import urlencode  # pylint: disable=locally-disabled, import-error, no-name-in-module
 
 from lib.util import (

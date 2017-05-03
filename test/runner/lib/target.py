@@ -323,8 +323,8 @@ class CompletionTarget(object):
     def __eq__(self, other):
         if isinstance(other, CompletionTarget):
             return self.__repr__() == other.__repr__()
-        else:
-            return False
+
+        return False
 
     def __ne__(self, other):
         return not self.__eq__(other)
