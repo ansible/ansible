@@ -116,6 +116,11 @@ options:
         default: Downtime scheduled by Ansible
         description:
             - Comment text.
+    validate_certs:
+        required: false
+        default : true
+        description:
+            - if certificates should be validated or not.
 '''
 
 EXAMPLES = '''
@@ -178,7 +183,26 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-#
+code:
+    description: http status code returned by icinga2.
+    returned: changed
+    type: int
+    sample: 200
+name:
+    description: name of the hostname or/and the services affected.
+    returned: changed
+    type: string
+    sample: test-ansible-v2-172-XX-X-XX!ip-XX-X-XX-XXX
+status:
+    description: status returned by icinga2.
+    returned: changed
+    type: string
+    sample: Successfully scheduled downtime test-ansible-v2-172-XX-X-XX!ip-172-XX-X-XX-XXX for object test-ansible-v2-172-XX-X-XX.
+response:
+    description: response returned by icinga2.
+    returned: always
+    type: complex
+    sample: Services or hostname not found.
 '''
 
 import time
@@ -231,6 +255,7 @@ def _call_icinga2_api(module, payload, state):
     icinga2_port = module.params.get('icinga2_port')
     icinga2_api_user = module.params.get('icinga2_api_user')
     icinga2_api_password = module.params.get('icinga2_api_password')
+    validate_certs = module.params.get('validate_certs')
 
     headers = {"Accept": "application/json"}
     uri = "%s:%s%s" % (icinga2_url, icinga2_port, icinga2_api_downtime_endpoint)
@@ -238,15 +263,15 @@ def _call_icinga2_api(module, payload, state):
     r = None
     try:
         r = open_url(uri, method="POST", headers=headers, url_username=icinga2_api_user,
-                     url_password=icinga2_api_password, force_basic_auth=True, data=json.dumps(payload), validate_certs=False)
+                     url_password=icinga2_api_password, force_basic_auth=True, data=json.dumps(payload), validate_certs=validate_certs)
         results = json.loads(r.read())
         if len(results['results']) > 0:
-            _return_result(module, True, False, results)
+            _return_result(module, True, False, results['results'])
         else:
             _return_result(module, False, False, "Services or hostname not found.")
     except ValueError as e:
         if r is not None:
-            _return_result(module, False, True, results)
+            _return_result(module, False, True, results['results'])
         else:
             _return_result(module, False, True, 'An unexpected exception occurred while scheduling downtime on Icinga2.')
     except Exception as e:
@@ -255,10 +280,16 @@ def _call_icinga2_api(module, payload, state):
 
 def _return_result(module, changed, failed, message):
     result = {}
+    if changed:
+        result['code'] = message[0]["code"]
+        result['name'] = message[0]['name']
+        result['status'] = message[0]['status']
+
+    result['response'] = message
     result['changed'] = changed
     result['failed'] = failed
-    result['response'] = message
     module.exit_json(**result)
+
 
 
 def schedule_downtime(module, start_time, end_time):
@@ -371,7 +402,8 @@ def main():
         duration=dict(required=False, type='int', default=None),
         author=dict(required=False, type='str', default='Ansible'),
         comment=dict(required=False, type='str', default='Downtime scheduled by Ansible'),
-        fixed=dict(required=False, type='bool', default=True)
+        fixed=dict(required=False, type='bool', default=True),
+        validate_certs=dict(required=False, type='bool', default=True)
     )),
 
     module = AnsibleModule(
