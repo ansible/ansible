@@ -237,7 +237,8 @@ def _call_icinga2_api(module, payload, state):
 
     r = None
     try:
-        r = open_url(uri, method="POST", headers=headers, url_username=icinga2_api_user, url_password=icinga2_api_password, force_basic_auth=True, data=json.dumps(payload), validate_certs=False)
+        r = open_url(uri, method="POST", headers=headers, url_username=icinga2_api_user,
+                     url_password=icinga2_api_password, force_basic_auth=True, data=json.dumps(payload), validate_certs=False)
         results = json.loads(r.read())
         if len(results['results']) > 0:
             _return_result(module, True, False, results)
@@ -250,6 +251,7 @@ def _call_icinga2_api(module, payload, state):
             _return_result(module, False, True, 'An unexpected exception occurred while scheduling downtime on Icinga2.')
     except Exception as e:
         _return_result(module, False, True, str(e))
+
 
 def _return_result(module, changed, failed, message):
     result = {}
@@ -336,10 +338,10 @@ def check_input(module):
     if state == 'present':
         now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        if (start_time < now or end_time < now) and end_time_duration==0:
+        if (start_time < now or end_time < now) and end_time_duration == 0:
             module.fail_json(msg="start_time or/and end_time can't be lower than current datetime")
 
-        if start_time > end_time and end_time_duration==0:
+        if start_time > end_time and end_time_duration == 0:
             module.fail_json(msg="end_time can't be lower than start_time")
 
         if hostname is None and services is None:
