@@ -25,12 +25,12 @@
       debconf:
           name: tzdata
       register: debconf_test0
-    #- debug: var=debconf_test0
+
     - name: validate results for test 0
       assert:
-          - that:
+          that:
               - 'debconf_test0.changed is defined'
               - 'debconf_test0.current is defined'
               - '"tzdata/Zones/Etc" in debconf_test0.current'
-              - 'debconf_test0.current["debconf_test0.current"] == "UTC"'
+              - 'debconf_test0.current["tzdata/Zones/Etc"] == "UTC"'
   when: ansible_distribution in ('Ubuntu', 'Debian')
