@@ -275,8 +275,9 @@ class VxlanArp(object):
     def init_module(self):
         """init module"""
 
+        required_together = [("vbdif_name", "arp_collect_host"), ("bridge_domain_id", "arp_suppress")]
         self.module = AnsibleModule(argument_spec=self.spec,
-                                    required_together=[['vbdif_name', 'arp_collect_host']],
+                                    required_together=required_together,
                                     supports_check_mode=True)
 
     def cli_load_config(self, commands):
@@ -324,7 +325,7 @@ class VxlanArp(object):
 
         cmd = "bridge-domain %s" % self.bridge_domain_id
         if not is_config_exist(self.config, cmd):
-            self.module.fail_json(msg="Error: Bridge domain is not exist.")
+            self.module.fail_json(msg="Error: Bridge domain %s is not exist." % self.bridge_domain_id)
 
         cmd = "arp broadcast-suppress enable"
         exist = is_config_exist(self.config, cmd)
@@ -436,7 +437,7 @@ class VxlanArp(object):
 
         if not exist:
             self.module.fail_json(
-                msg="Error: Interface %s is not exist." % self.vbdif_name)
+                msg="Error: Interface %s does not exist." % self.vbdif_name)
 
         cmd = "arp collect host enable"
         exist = is_config_exist(self.config, cmd)
@@ -508,16 +509,6 @@ class VxlanArp(object):
                 " ", "").lower().capitalize()
             if not self.is_valid_vbdif(self.vbdif_name):
                 self.module.fail_json(msg="Error: vbdif_name is invalid.")
-
-        # vbdif_name and arp_collect_host must set at the same time
-        if bool(self.vbdif_name) != bool(self.arp_collect_host):
-            self.module.fail_json(
-                msg="Error: vbdif_name and arp_collect_host must set at the same time.")
-
-        # bridge_domain_id and arp_suppress must set at the same time
-        if bool(self.bridge_domain_id) != bool(self.arp_suppress):
-            self.module.fail_json(
-                msg="Error: bridge_domain_id and arp_suppress must set at the same time.")
 
         # evn_reflect_client and evn_peer_ip must set at the same time
         if self.evn_reflect_client and not self.evn_peer_ip:
