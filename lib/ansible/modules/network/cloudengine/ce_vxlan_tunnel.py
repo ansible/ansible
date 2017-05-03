@@ -158,6 +158,7 @@ CE_NC_GET_NVE_INFO = """
     </nvo3Nves>
   </nvo3>
 </filter>
+</filter>
 """
 
 CE_NC_MERGE_VNI_BD_ID = """
@@ -689,8 +690,7 @@ class VxlanTunnel(object):
         if mode == "mode-l3":
             if not self.is_nve_mode_exist(nve_name, mode):
                 return
-            mode = "mode-l2"
-            cfg_xml = CE_NC_MERGE_NVE_MODE % (nve_name, mode)
+            cfg_xml = CE_NC_MERGE_NVE_MODE % (nve_name, "mode-l2")
 
             recv_xml = set_nc_config(self.module, cfg_xml)
             self.check_response(recv_xml, "DELETE_MODE")
