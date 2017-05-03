@@ -61,11 +61,11 @@ options:
 
 EXAMPLES = '''
 - name: bigmon inline service chain
-      bigmon_chain:
-        name: MyChain
-        controller: '{{ inventory_hostname }}'
-        state: present
-        validate_certs: false
+  bigmon_chain:
+    name: MyChain
+    controller: '{{ inventory_hostname }}'
+    state: present
+    validate_certs: false
 '''
 
 
