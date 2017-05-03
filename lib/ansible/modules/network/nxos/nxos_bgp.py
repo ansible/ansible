@@ -520,21 +520,12 @@ def state_present(module, existing, proposed, candidate):
                 commands.append('{0} {1}'.format(key, default_value))
             elif existing_value:
                 if key == 'confederation peers':
-                    commands.append('no {0} {1}'.format(key, ' '.join(existing_value)))
-                else:
-                    commands.append('no {0} {1}'.format(key, existing_value))
+                    existing_value = ' '.join(existing_value)
+                commands.append('no {0} {1}'.format(key, existing_value))
         elif key == 'confederation peers':
-            existing_confederation_peers = existing.get('confederation_peers', [])
-
-            if existing_confederation_peers:
-                if not isinstance(existing_confederation_peers, list):
-                    existing_confederation_peers = [existing_confederation_peers]
-
-            values = value.split()
-            for each_value in values:
-                if each_value not in existing_confederation_peers:
-                    existing_confederation_peers.append(each_value)
-            peer_string = ' '.join(existing_confederation_peers)
+            existing_confederation_peers = set(existing.get('confederation_peers', []))
+            new_values = set(value.split())
+            peer_string = ' '.join(existing_confederation_peers | new_values)
             commands.append('{0} {1}'.format(key, peer_string))
         elif key.startswith('timers bgp'):
             command = 'timers bgp {0} {1}'.format(
