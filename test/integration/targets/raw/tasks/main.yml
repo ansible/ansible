@@ -47,7 +47,6 @@
           - 'raw_result0.rc == 0'
           - 'raw_result0_stat.stat.size == 0'
 
-
 - name: run a piped command
   raw: "echo 'foo,bar,baz' | cut -d\\, -f2 | tr 'b' 'c'"
   register: raw_result1
@@ -62,7 +61,6 @@
           - 'raw_result1.stdout_lines is defined'
           - 'raw_result1.rc == 0'
           - 'raw_result1.stdout_lines == ["car"]'
-
 
 - name: run exmample non-posix command with bash
   raw: "echo 'foobar' > {{output_dir_test | expanduser}}/test.txt ; cat < {{output_dir_test | expanduser}}/test.txt"
@@ -80,4 +78,3 @@
           - 'raw_result2.stdout_lines is defined'
           - 'raw_result2.rc == 0'
           - 'raw_result2.stdout_lines == ["foobar"]'
-

@@ -59,4 +59,3 @@
           - 'at_test0.script_file is defined'
           - 'at_test0.state is defined'
           - 'at_test0.units is defined'
-
