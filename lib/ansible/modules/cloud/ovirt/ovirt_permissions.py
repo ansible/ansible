@@ -35,7 +35,7 @@ description:
 options:
     role:
         description:
-            - "Name of the the role to be assigned to user/group on specific object."
+            - "Name of the role to be assigned to user/group on specific object."
         default: UserRole
     state:
         description:
@@ -69,13 +69,13 @@ options:
         ]
     user_name:
         description:
-            - "Username of the the user to manage. In most LDAPs it's I(uid) of the user,
+            - "Username of the user to manage. In most LDAPs it's I(uid) of the user,
                but in Active Directory you must specify I(UPN) of the user."
             - "Note that if user don't exist in the system this module will fail,
                you should ensure the user exists by using M(ovirt_users) module."
     group_name:
         description:
-            - "Name of the the group to manage."
+            - "Name of the group to manage."
             - "Note that if group don't exist in the system this module will fail,
                you should ensure the group exists by using M(ovirt_groups) module."
     authz_name:
