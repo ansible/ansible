@@ -110,5 +110,5 @@ class TestJunosModule(unittest.TestCase):
         self.assertEqual(result['changed'], changed, result)
         return result
 
-    def load_fixtures(self, commands=None):
+    def load_fixtures(self, commands=None, format=None, changed=None):
         pass
