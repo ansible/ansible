@@ -56,7 +56,7 @@ Ansible Changes By Release
 - any : true if any element is true
 - all: true if all elements are true
 
-## 2.3 "Ramble On" - RELEASE CANDIDATE
+## 2.3 "Ramble On" - 2017-04-12
 
 ### Major Changes
 * Documented and renamed the previously released 'single var vaulting' feature, allowing user to use vault encryption for single variables in a normal YAML vars file.
