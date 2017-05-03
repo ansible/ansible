@@ -170,7 +170,6 @@ class Conditional:
             try:
                 for conditional in self.when:
                     result = self._check_conditional(conditional, templar, all_vars)
-                    #conditional_results.append(ConditionalResult(result, conditional))
                     conditional_results.append(result)
             except Exception as e:
                 raise AnsibleError(
@@ -265,13 +264,10 @@ class Conditional:
             presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
             val = templar.template(presented, disable_lookups=disable_lookups).strip()
             conditional_val = templar.template(conditional, disable_lookups=disable_lookups).strip()
-            print('conditional_val: %s' % conditional_val)
             if val == "True":
                 return ConditionalResult(True, conditional=conditional, templated_expr=conditional_val)
-                #return True
             elif val == "False":
                 return ConditionalResult(False, conditional=conditional, templated_expr=conditional_val)
-                #return False
             else:
                 raise AnsibleError("unable to evaluate conditional: %s" % original)
         except (AnsibleUndefinedVariable, UndefinedError) as e:
@@ -295,12 +291,12 @@ class Conditional:
                         should_exist = ('not' in logic) != (state == 'defined')
                         if should_exist:
                             return ConditionalResult(False, conditional=conditional)
-                            #return False
                         else:
                             return ConditionalResult(True, conditional=conditional)
-                            #return True
                 # as nothing above matched the failed var name, re-raise here to
                 # trigger the AnsibleUndefinedVariable exception again below
                 raise
             except Exception as new_e:
-                raise AnsibleUndefinedVariable("error while evaluating conditional (%s): %s" % (original, e))
+                raise AnsibleUndefinedVariable(
+                    "error while evaluating conditional (%s): %s" % (original, e)
+                )

@@ -88,7 +88,6 @@ class CallbackBase:
 
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
         if result.get('_ansible_no_log', False):
-            #return self.json_encoder.encode(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"))
             return json.dumps(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"),
                               cls=AnsibleJSONEncoder)
 
