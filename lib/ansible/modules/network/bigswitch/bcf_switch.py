@@ -84,23 +84,8 @@ EXAMPLES = '''
 '''
 
 
-RETURN = '''
-{
-    "changed": true,
-    "invocation": {
-        "module_args": {
-            "access_token": null,
-            "controller": "192.168.86.230",
-            "fabric_role": "leaf",
-            "leaf_group": "R1",
-            "mac": "00:00:00:02:00:02",
-            "name": "Rack1Leaf1",
-            "state": "present",
-            "validate_certs": false
-        }
-    }
-}
-'''
+RETURN = ''' # '''
+
 
 import os
 from ansible.module_utils.basic import AnsibleModule
