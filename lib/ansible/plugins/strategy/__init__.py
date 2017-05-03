@@ -492,7 +492,7 @@ class StrategyBase:
 
                         if original_task.action == 'include_vars':
 
-                            if original_task.delegate_to is not None:
+                            if original_task.delegate_to is not None and original_task.delegate_facts:
                                 host_list = self.get_delegated_hosts(result_item, original_task)
                             else:
                                 host_list = self.get_task_hosts(iterator, original_host, original_task)
