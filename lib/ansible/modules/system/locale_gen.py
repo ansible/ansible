@@ -77,7 +77,7 @@ LOCALE_NORMALIZATION = {
 # location module specific support methods.
 #
 
-def is_available(name, ubuntuMode):
+def is_available_debian(name, ubuntuMode):
     """Check if the given locale is available on the system. This is done by
     checking either :
     * if the locale is present in /etc/locales.gen
@@ -98,7 +98,7 @@ def is_available(name, ubuntuMode):
     fd.close()
     return False
 
-def is_present(name):
+def is_present_debian(name):
     """Checks if the given locale is currently installed."""
     output = Popen(["locale", "-a"], stdout=PIPE).communicate()[0]
     output = to_native(output)
@@ -142,7 +142,7 @@ def set_locale(name, enabled=True):
     finally:
         f.close()
 
-def apply_change(targetState, name):
+def apply_change_debian(targetState, name):
     """Create or remove locale.
 
     Keyword arguments:
@@ -219,11 +219,11 @@ def main():
         # We found the common way to manage locales.
         ubuntuMode = False
 
-    if not is_available(name, ubuntuMode):
+    if not is_available_debian(name, ubuntuMode):
         module.fail_json(msg="The locales you've entered is not available "
                              "on your system.")
 
-    if is_present(name):
+    if is_present_debian(name):
         prev_state = "present"
     else:
         prev_state = "absent"
@@ -235,7 +235,7 @@ def main():
         if changed:
             try:
                 if ubuntuMode is False:
-                    apply_change(state, name)
+                    apply_change_debian(state, name)
                 else:
                     apply_change_ubuntu(state, name)
             except EnvironmentError:
