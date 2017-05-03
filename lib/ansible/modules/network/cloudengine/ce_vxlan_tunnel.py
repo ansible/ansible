@@ -720,7 +720,7 @@ class VxlanTunnel(object):
 
         for peer_ip in peer_ip_list:
             if not self.is_vni_peer_list_exist(nve_name, vni_id, peer_ip):
-                self.module.fail_json(msg='Error: The %s is not exist' % peer_ip)
+                self.module.fail_json(msg='Error: The %s does not exist' % peer_ip)
         config = self.get_current_config(vni_id, peer_ip_list)
         if not config:
             cfg_xml = CE_NC_DELETE_VNI_PEER_ADDRESS_IP_HEAD % (
@@ -783,19 +783,19 @@ class VxlanTunnel(object):
         if self.nve_name:
             if not self.check_nve_name():
                 self.module.fail_json(
-                    msg='Error: Error: Nve interface is invalid.')
+                    msg='Error: Error: NVE interface %s is invalid.' % self.nve_name)
 
         # peer_list_ip check
         if self.peer_list_ip:
             for peer_ip in self.peer_list_ip:
                 if not is_valid_address(peer_ip):
                     self.module.fail_json(
-                        msg='Error: The %s exist invalid ip address' % self.peer_list_ip)
+                        msg='Error: The ip address %s is invalid.' % self.peer_list_ip)
         # source_ip check
         if self.source_ip:
             if not is_valid_address(self.source_ip):
                 self.module.fail_json(
-                    msg='Error: The %s is not a valid ip address' % self.source_ip)
+                    msg='Error: The ip address %s is invalid.' % self.source_ip)
 
     def get_proposed(self):
         """get proposed info"""
