@@ -542,42 +542,42 @@ def state_present(module, existing, proposed, candidate):
         elif value is False:
             commands.append('no {0}'.format(key))
         elif value == 'default':
-            if key in PARAM_TO_DEFAULT_KEYMAP:
-                commands.append('{0} {1}'.format(key, PARAM_TO_DEFAULT_KEYMAP[key]))
-            elif existing_commands.get(key):
-                existing_value = existing_commands.get(key)
+            default_value = PARAM_TO_DEFAULT_KEYMAP.get(key)
+            existing_value = existing_commands.get(key)
+
+            if default_value:
+                commands.append('{0} {1}'.format(key, default_value))
+            elif existing_value:
                 if key == 'confederation peers':
                     commands.append('no {0} {1}'.format(key, ' '.join(existing_value)))
                 else:
                     commands.append('no {0} {1}'.format(key, existing_value))
-        else:
-            if key == 'confederation peers':
-                existing_confederation_peers = existing.get('confederation_peers')
+        elif key == 'confederation peers':
+            existing_confederation_peers = existing.get('confederation_peers', [])
 
-                if existing_confederation_peers:
-                    if not isinstance(existing_confederation_peers, list):
-                        existing_confederation_peers = [existing_confederation_peers]
-                else:
-                    existing_confederation_peers = []
+            if existing_confederation_peers:
+                if not isinstance(existing_confederation_peers, list):
+                    existing_confederation_peers = [existing_confederation_peers]
 
-                values = value.split()
-                for each_value in values:
-                    if each_value not in existing_confederation_peers:
-                        existing_confederation_peers.append(each_value)
-                peer_string = ' '.join(existing_confederation_peers)
-                commands.append('{0} {1}'.format(key, peer_string))
-            elif key.startswith('timers bgp'):
-                command = 'timers bgp {0} {1}'.format(
-                    proposed['timer_bgp_keepalive'],
-                    proposed['timer_bgp_hold'])
-                if command not in commands:
-                    commands.append(command)
-            else:
-                if value.startswith('size'):
-                    value = value.replace('_', ' ')
-                command = '{0} {1}'.format(key, value)
+            values = value.split()
+            for each_value in values:
+                if each_value not in existing_confederation_peers:
+                    existing_confederation_peers.append(each_value)
+            peer_string = ' '.join(existing_confederation_peers)
+            commands.append('{0} {1}'.format(key, peer_string))
+        elif key.startswith('timers bgp'):
+            command = 'timers bgp {0} {1}'.format(
+                proposed['timer_bgp_keepalive'],
+                proposed['timer_bgp_hold'])
+            if command not in commands:
                 commands.append(command)
+        else:
+            if value.startswith('size'):
+                value = value.replace('_', ' ')
+            command = '{0} {1}'.format(key, value)
+            commands.append(command)
 
+    parents = []
     if commands:
         commands = fix_commands(commands)
         parents = ['router bgp {0}'.format(module.params['asn'])]
@@ -589,7 +589,6 @@ def state_present(module, existing, proposed, candidate):
             parents = ['router bgp {0}'.format(module.params['asn'])]
         else:
             commands.append('router bgp {0}'.format(module.params['asn']))
-            parents = []
 
     candidate.add(commands, parents=parents)
 
