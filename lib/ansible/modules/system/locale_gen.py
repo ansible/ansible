@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
+# Copyright (C) 2017 Red Hat, modified by Pierre-Louis Bonicoli
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -42,6 +44,14 @@ options:
       required: false
       choices: ["present", "absent"]
       default: "present"
+    distribution:
+        description:
+            - The service module actually uses system specific commands, normally through auto detection, this setting can force a specific distribution.
+            - Normally it uses the value of the 'ansible_distribution' fact.
+        required: false
+        choices: ['auto', Debian', 'Raspbian', 'Ubuntu']
+        default: 'auto'
+        version_added: 2.4
 '''
 
 EXAMPLES = '''
@@ -58,117 +68,10 @@ import re
 from subprocess import Popen, PIPE, call
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.facts import Distribution
 from ansible.module_utils.pycompat24 import get_exception
 from ansible.module_utils.six import with_metaclass
 from ansible.module_utils._text import to_native
-
-
-# ===========================================
-# location module specific support methods.
-#
-
-def is_available_debian(name, ubuntuMode):
-    """Check if the given locale is available on the system. This is done by
-    checking either :
-    * if the locale is present in /etc/locales.gen
-    * or if the locale is present in /usr/share/i18n/SUPPORTED"""
-    if ubuntuMode:
-        __regexp = '^(?P<locale>\S+_\S+) (?P<charset>\S+)\s*$'
-        __locales_available = '/usr/share/i18n/SUPPORTED'
-    else:
-        __regexp = '^#{0,1}\s*(?P<locale>\S+_\S+) (?P<charset>\S+)\s*$'
-        __locales_available = '/etc/locale.gen'
-
-    re_compiled = re.compile(__regexp)
-    fd = open(__locales_available, 'r')
-    for line in fd:
-        result = re_compiled.match(line)
-        if result and result.group('locale') == name:
-            return True
-    fd.close()
-    return False
-
-def is_present_debian(name):
-    """Checks if the given locale is currently installed."""
-    output = Popen(["locale", "-a"], stdout=PIPE).communicate()[0]
-    output = to_native(output)
-    return any(fix_case(name) == fix_case(line) for line in output.splitlines())
-
-def fix_case(name):
-    """locale --all might return the encoding in either lower or upper case.
-    Passing through this function makes them uniform for comparisons."""
-    for s, r in LOCALE_NORMALIZATION.items():
-        name = name.replace(s, r)
-    return name
-
-def set_locale(name, enabled=True):
-    """ Sets the state of the locale. Defaults to enabled. """
-    search_string = '#{0,1}\s*%s (?P<charset>.+)' % name
-    if enabled:
-        new_string = '%s \g<charset>' % (name)
-    else:
-        new_string = '# %s \g<charset>' % (name)
-    try:
-        f = open("/etc/locale.gen", "r")
-        lines = [re.sub(search_string, new_string, line) for line in f]
-    finally:
-        f.close()
-    try:
-        f = open("/etc/locale.gen", "w")
-        f.write("".join(lines))
-    finally:
-        f.close()
-
-def apply_change_debian(targetState, name):
-    """Create or remove locale.
-
-    Keyword arguments:
-    targetState -- Desired state, either present or absent.
-    name -- Name including encoding such as de_CH.UTF-8.
-    """
-    if targetState=="present":
-        # Create locale.
-        set_locale(name, enabled=True)
-    else:
-        # Delete locale.
-        set_locale(name, enabled=False)
-
-    localeGenExitValue = call("locale-gen")
-    if localeGenExitValue!=0:
-        raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned "+str(localeGenExitValue))
-
-def apply_change_ubuntu(targetState, name):
-    """Create or remove locale.
-
-    Keyword arguments:
-    targetState -- Desired state, either present or absent.
-    name -- Name including encoding such as de_CH.UTF-8.
-    """
-    if targetState=="present":
-        # Create locale.
-        # Ubuntu's patched locale-gen automatically adds the new locale to /var/lib/locales/supported.d/local
-        localeGenExitValue = call(["locale-gen", name])
-    else:
-        # Delete locale involves discarding the locale from /var/lib/locales/supported.d/local and regenerating all locales.
-        try:
-            f = open("/var/lib/locales/supported.d/local", "r")
-            content = f.readlines()
-        finally:
-            f.close()
-        try:
-            f = open("/var/lib/locales/supported.d/local", "w")
-            for line in content:
-                locale, charset = line.split(' ')
-                if locale != name:
-                    f.write(line)
-        finally:
-            f.close()
-        # Purge locales and regenerate.
-        # Please provide a patch if you know how to avoid regenerating the locales to keep!
-        localeGenExitValue = call(["locale-gen", "--purge"])
-
-    if localeGenExitValue!=0:
-        raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned "+str(localeGenExitValue))
 
 
 class Locale(object):
@@ -290,8 +193,154 @@ class Distrib(with_metaclass(ABCMeta, object)):
         else:
             self.delete(locale)
 
+
+class Debian(Distrib):
+    LOCALES_AVAILABLE = ['/usr/share/i18n/SUPPORTED', '/usr/local/share/i18n/SUPPORTED']
+
+    def __init__(self, module):
+        super(Debian, self).__init__(module)
+        self._default_codeset = None
+
+    def is_available(self, locale):
+        """Check if the given locale is available on the system. This is done by
+        checking if the locale is present in /usr/{local/,}share/i18n/SUPPORTED"""
+
+        if not os.path.exists("/etc/locale.gen"):
+            self.module.warn(msg="/etc/locale.gen is missing. Is the package \"locales\" installed?")
+            return False
+
+        if locale.modifier and locale.codeset:
+            search = '{0.lang}@{0.modifier}'.format(locale)
+            search_with_codeset = '{0.lang}.{0.codeset}@{0.modifier}'.format(locale)
+        elif locale.modifier:
+            search = '{0.lang}@{0.modifier} '.format(locale)
+            search_with_codeset = None
+        elif locale.codeset:
+            search = '%s ' % locale.lang
+            search_with_codeset = '{0.lang}.{0.codeset} '.format(locale)
+        else:
+            search = '%s ' % locale.lang
+            search_with_codeset = None
+
+        for supported_path in self.LOCALES_AVAILABLE:
+            if not os.path.exists(supported_path):
+                continue
+
+            with open(supported_path, 'r') as supported:
+                for line in supported:
+                    line = line.strip()
+
+                    # match 'iu_CA UTF-8' or 'aa_ER@saaho UTF-8'
+                    if line.startswith(search):
+                        if not locale.codeset:
+                            # Store the value in order to avoid to parse again
+                            # SUPPORTED files while searching for a default_codeset
+                            locale.codeset = line.replace(search, '')
+                            return locale.codeset
+                        elif line.endswith(' %s' % locale.codeset):
+                            return True
+                    # match 'ja_JP.UTF-8 UTF-8' or 'ca_ES.UTF-8@valencia UTF-8'
+                    elif search_with_codeset and line.startswith(search_with_codeset):
+                        return True
+        return False
+
+    def get_default_codeset(self, locale):
+        super(Debian, self).get_default_codeset(locale)
+        default = self.is_available(locale)
+        if default:
+            return default
+
+    def generate(self, locale):
+        # Create locale.
+        self._set_locale(locale, enabled=True)
+
+    def delete(self, locale):
+        # Delete locale.
+        self._set_locale(locale, enabled=False)
+
+    def _set_locale(self, locale, enabled=True):
+        """ Sets the state of the locale. Defaults to enabled. """
+
+        if locale.modifier:
+            lang = '{0.lang}@{0.modifier}'.format(locale)
+        else:
+            lang = locale.lang
+
+        search = r'{0}\s*{1}\s+{2.codeset}'.format('#' if enabled else '', lang, locale)
+        search_with_enc = r'{0}\s*{1}.{2.codeset}\s+{2.codeset}'.format('#' if enabled else '', lang, locale)
+
+        with open('/etc/locale.gen', 'r') as locale_gen:
+            lines = []
+            found = False
+            for line in locale_gen:
+                if re.search(search, line) or re.search(search_with_enc, line):
+                    found = True
+                    if enabled:
+                        #remove comment
+                        line = line[1:]
+                    else:
+                        line = '#%s' % line
+                lines.append(line)
+
+        if found:
+            with open('/etc/locale.gen', 'w') as locale_gen:
+                locale_gen.write(''.join(lines))
+        elif enabled:
+            with open('/etc/locale.gen', 'a') as locale_gen:
+                locale_gen.write('%s %s\n' % (lang, locale.codeset))
+
+        localeGenExitValue = call("locale-gen")
+        if localeGenExitValue!=0:
+            raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned "+str(localeGenExitValue))
+
+
+class Ubuntu(Debian):
+    REGEXP = '^(?P<locale>\S+_\S+) (?P<charset>\S+)\s*$'
+    LOCALES_AVAILABLE = '/usr/share/i18n/SUPPORTED'
+
+
+    def generate(self, name, lang, charset, modifier):
+        # Ubuntu's patched locale-gen automatically adds the new locale to /var/lib/locales/supported.d/local
+        localeGenExitValue = call(["locale-gen", name])
+
+        if localeGenExitValue != 0:
+            raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned "+str(localeGenExitValue))
+
+    def delete(self, name, lang, charset, modifier):
+        # Delete locale involves discarding the locale from /var/lib/locales/supported.d/local and regenerating all locales.
+        try:
+            f = open("/var/lib/locales/supported.d/local", "r")
+            content = f.readlines()
+        finally:
+            f.close()
+        try:
+            f = open("/var/lib/locales/supported.d/local", "w")
+            for line in content:
+                lang, charset = line.split(' ')
+                if  lang != name:
+                    f.write(line)
+        finally:
+            f.close()
+        # Purge locales and regenerate.
+        # Please provide a patch if you know how to avoid regenerating the locales to keep!
+        localeGenExitValue = call(["locale-gen", "--purge"])
+
+        if localeGenExitValue != 0:
+            raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned "+str(localeGenExitValue))
+
+
 # ==============================================================
 # main
+
+DISTRIBUTIONS = {}
+
+FAMILIES = dict(
+    Debian = Debian,
+)
+
+SUPPORTED = [d for d in set([distrib for distrib, family in Distribution.OS_FAMILY.items() if family in FAMILIES] + DISTRIBUTIONS.keys())]
+SUPPORTED.append('auto')
+
 
 def main():
 
@@ -299,28 +348,26 @@ def main():
         argument_spec = dict(
             name = dict(required=True),
             state = dict(choices=['present','absent'], default='present'),
+            distribution = dict(choices=SUPPORTED, default='auto'),
         ),
         supports_check_mode=True
     )
 
     name = module.params['name']
     state = module.params['state']
+    distribution = module.params['distribution']
 
-    if not os.path.exists("/etc/locale.gen"):
-        if os.path.exists("/var/lib/locales/supported.d/"):
-            # Ubuntu created its own system to manage locales.
-            ubuntuMode = True
-        else:
-            module.fail_json(msg="/etc/locale.gen and /var/lib/locales/supported.d/local are missing. Is the package \"locales\" installed?")
-    else:
-        # We found the common way to manage locales.
-        ubuntuMode = False
+    klass = DISTRIBUTIONS.get(distribution)
+    if klass is None and distribution in Distribution.OS_FAMILY:
+        klass = FAMILIES.get(Distribution.OS_FAMILY.get(distribution))
 
-    if not is_available_debian(name, ubuntuMode):
-        module.fail_json(msg="The locales you've entered is not available "
-                             "on your system.")
+    if klass is None:
+        module.fail_json(msg="Unsupported distribution '{0}'".format(distribution))
 
-    if is_present_debian(name):
+    locale = Locale(name)
+    distrib = klass(module)
+
+    if distrib.is_present(locale):
         prev_state = "present"
     else:
         prev_state = "absent"
@@ -331,10 +378,7 @@ def main():
     else:
         if changed:
             try:
-                if ubuntuMode is False:
-                    apply_change_debian(state, name)
-                else:
-                    apply_change_ubuntu(state, name)
+                distrib.apply_change(state, locale)
             except EnvironmentError:
                 e = get_exception()
                 module.fail_json(msg=e.strerror, exitValue=e.errno)
