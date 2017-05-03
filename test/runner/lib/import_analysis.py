@@ -110,7 +110,7 @@ def get_python_module_utils_imports(compile_targets):
         display.info('%s reports imports from parent package %s' % (virtual_util, parent_package), verbosity=6)
 
     for module_util in sorted(imports):
-        if not len(imports[module_util]):
+        if not imports[module_util]:
             display.warning('No imports found which use the "%s" module_util.' % module_util)
 
     return imports

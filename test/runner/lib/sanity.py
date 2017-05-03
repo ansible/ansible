@@ -683,12 +683,6 @@ def collect_code_smell_tests():
     return tests
 
 
-def sanity_init():
-    """Initialize full sanity test list (includes code-smell scripts determined at runtime)."""
-    global SANITY_TESTS  # pylint: disable=locally-disabled, global-statement
-    SANITY_TESTS = tuple(sorted(SANITY_TESTS + collect_code_smell_tests(), key=lambda k: k.name))
-
-
 def sanity_get_tests():
     """
     :rtype: tuple(SanityFunc)
@@ -778,3 +772,9 @@ SANITY_TESTS = (
     SanityFunc('validate-modules', command_sanity_validate_modules, intercept=False),
     SanityFunc('ansible-doc', command_sanity_ansible_doc),
 )
+
+
+def sanity_init():
+    """Initialize full sanity test list (includes code-smell scripts determined at runtime)."""
+    global SANITY_TESTS  # pylint: disable=locally-disabled, global-statement
+    SANITY_TESTS = tuple(sorted(SANITY_TESTS + collect_code_smell_tests(), key=lambda k: k.name))

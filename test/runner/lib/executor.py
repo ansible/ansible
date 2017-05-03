@@ -478,9 +478,9 @@ def command_integration_filtered(args, targets):
                 run_command(args, ['ssh', '-o', 'BatchMode=yes', 'localhost', 'id'], capture=True)
                 display.info('SSH service responded.')
                 break
-            except SubprocessError as ex:
+            except SubprocessError:
                 if i == max_tries:
-                    raise ex
+                    raise
                 seconds = 3
                 display.warning('SSH service not responding. Waiting %d second(s) before checking again.' % seconds)
                 time.sleep(seconds)
