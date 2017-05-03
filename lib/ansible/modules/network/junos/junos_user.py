@@ -154,6 +154,7 @@ def map_obj_to_ele(want):
 
     return element
 
+
 def get_param_value(key, item, module):
     # if key doesn't exist in the item, get it from module.params
     if not item.get(key):
@@ -172,6 +173,7 @@ def get_param_value(key, item, module):
         validator(value, module)
 
     return value
+
 
 def map_params_to_obj(module):
     users = module.params['users']
