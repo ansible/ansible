@@ -82,7 +82,7 @@ EXAMPLES = '''
 RETURN = '''
 proposed:
     description: k/v pairs of parameters passed into module
-    returned: always
+    returned: verbose mode
     type: dict
     sample: {
                 "state": "present",
@@ -91,6 +91,7 @@ proposed:
              }
 existing:
     description: k/v pairs of existing attributes on the interface
+	returned: verbose mode
     type: dict
     sample: {
                 "vpn_interface": "40GE2/0/17",
@@ -98,8 +99,8 @@ existing:
             }
 end_state:
     description: k/v pairs of end attributes on the interface
-    returned: always
-    type: dict or null
+    returned: verbose mode
+    type: dict
     sample: {
                 "vpn_interface": "40GE2/0/17",
                 "vrf": "jss"
