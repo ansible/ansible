@@ -49,7 +49,8 @@ options:
             - The service module actually uses system specific commands, normally through auto detection, this setting can force a specific distribution.
             - Normally it uses the value of the 'ansible_distribution' fact.
         required: false
-        choices: ['auto', Debian', 'Raspbian', 'Ubuntu']
+        choices: ['auto', 'Amazon', 'Ascendos', 'CentOS', 'CloudLinux', 'Debian', 'OracleLinux', 'OEL', 'OVS', 'PSBM',
+                  'Raspbian', 'RedHat', 'Scientific', 'SLC', 'Ubuntu', 'Virtuozzo', 'XenServer']
         default: 'auto'
         version_added: 2.4
 '''
@@ -296,6 +297,81 @@ class Debian(Distrib):
 
 
 
+class RedHat(Distrib):
+    LOCALES_PATH = '/usr/share/i18n/locales/{0}'
+    CHARMAPS_PATH = '/usr/share/i18n/charmaps/{0}.gz'
+
+    def _check_path(self, path):
+        if not os.path.exists(path):
+            self.module.warn('File not found: {0}'.format(path))
+            return False
+        else:
+            return True
+
+    def is_available(self, locale):
+        if locale.modifier:
+            lang = '{0.lang}@{0.modifier}'.format(locale)
+        return (not locale.codeset or self._check_path(self.CHARMAPS_PATH.format(locale.codeset))) \
+                and self._check_path(self.LOCALES_PATH.format(lang))
+
+    def get_default_codeset(self, locale):
+        super(Debian, self).get_default_codeset(locale)
+
+        if locale.modifier:
+            lang = '{0.lang}@{0.modifier}'.format(locale)
+        else:
+            lang = locale.lang
+
+        locale_path = self.LOCALES_PATH.format(lang)
+
+        if os.path.exists(locale_path):
+            with open(locale_path, 'r') as supported:
+                for line in supported:
+                    match = re.match(r'(?:% char(?:map|set): )(.*)', line.strip(), re.IGNORECASE)
+                    if match:
+                        return match.group(1)
+
+    def generate(self, locale):
+        """ Create locale """
+
+        # try to guess default codeset when not specified
+        if not locale.codeset:
+            locale.codeset = self.get_default_codeset(locale.name)
+            if locale.codeset:
+                self.module.debug('Using default codeset {0.codeset!r}: {0.name!r}'.format(locale))
+            else:
+                self.module.fail_json('Unable to find default codeset for %r' % locale.name)
+
+        cmd = ['localedef', '--inputfile']
+        if locale.modifier:
+            cmd.append('{0.lang}@{0.modifier}'.format(locale))
+        else:
+            cmd.append(locale.lang)
+
+        if locale.codeset:
+            cmd.extend(['--charmap', locale.codeset])
+
+        cmd.append(locale.name)
+
+        ret = call(cmd)
+
+        if ret != 0:
+            raise EnvironmentError(ret, "'localedef' failed to execute, it returned {0}".format(ret))
+
+    def delete(self, locale):
+        # Delete locale. 'localedef' exits with 0 when the locale isn't
+        # defined.
+
+        ret = call(['localedef', '--delete-from-archive', locale.normalized])
+
+        if ret != 0:
+            raise EnvironmentError(ret, "'localedef' failed to execute, it returned {0}".format(ret))
+
+        # localedef doesn't fail when locale doesn't exist/isn't removed
+        if self.is_present(locale):
+            self.module.fail_json('Locale %r was not removed' % locale.name)
+
+
 # ==============================================================
 # main
 
@@ -303,6 +379,7 @@ DISTRIBUTIONS = {}
 
 FAMILIES = dict(
     Debian = Debian,
+    RedHat = RedHat,
 )
 
 SUPPORTED = [d for d in set([distrib for distrib, family in Distribution.OS_FAMILY.items() if family in FAMILIES] + DISTRIBUTIONS.keys())]
