@@ -91,7 +91,7 @@ proposed:
              }
 existing:
     description: k/v pairs of existing attributes on the interface
-	returned: verbose mode
+    returned: verbose mode
     type: dict
     sample: {
                 "vpn_interface": "40GE2/0/17",
