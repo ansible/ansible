@@ -113,7 +113,7 @@ Function Add-Warning($obj, $message)
 # so he does not have to check for the attribute prior to adding.
 Function Add-DeprecationWarning($obj, $message, $version = $null)
 {
-    if (Get-Member -InputObject $obj -Name "deprecations") {
+    if ($obj.ContainsKey("deprecations")) {
         if ($obj.deprecations -is [array]) {
             $obj.deprecations += @{
                 msg = $message
@@ -123,7 +123,7 @@ Function Add-DeprecationWarning($obj, $message, $version = $null)
             throw "deprecations attribute is not a list"
         }
     } else {
-        $obj.deprecations = ,@(
+        $obj.deprecations = @(
             @{
                 msg = $message
                 version = $version
