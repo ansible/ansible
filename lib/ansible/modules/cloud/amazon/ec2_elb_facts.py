@@ -258,7 +258,7 @@ def main():
 
     except BotoServerError as err:
         module.fail_json(msg="{0}: {1}".format(err.error_code, err.error_message),
-                              exception=traceback.format_exc())
+                         exception=traceback.format_exc())
 
     module.exit_json(**ec2_facts_result)
 
