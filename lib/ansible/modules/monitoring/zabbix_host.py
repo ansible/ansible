@@ -136,30 +136,30 @@ options:
         required: false
         default: 1
         choices: [ "1", "2", "3" ]
-     tls_accept:
+    tls_accept:
         description:
-           - Set TLS connection from host:
-           - 1:  (default) No encryption;
-           - 2:  PSK;
+           - Set TLS connection from host
+           - 1:  (default) No encryption
+           - 2:  PSK
            - 3:  No encryption / PSK; (undocumented @ Zabbix)
            - 4:  certificate ( Not implemented )
          required: false
          default: 1
          choices: ["1", "2", "3", "4" ]
-     tls_psk:
+    tls_psk:
         description:
            - The preshared key, at least 32 hex digits. Required if either tls_connect or tls_accept has PSK enabled.
         required: false
-     tls_psk_identity:
+    tls_psk_identity:
         description:
            - PSK identity. Required if either tls_connect or tls_accept has PSK enabled.
         required: false
-     tls_issuer:
+    tls_issuer:
         description:
            - Certificate issuer.
            - Not implemented
         required: false
-     tls_subject:
+    tls_subject:
         description:
            - Certificate subject.
            - Not implemented
@@ -290,11 +290,13 @@ class Host(object):
         except Exception as e:
             self._module.fail_json(msg="Failed to create host %s: %s" % (host_name, e))
 
-    def update_host(self, host_name, group_ids, status, host_id, interfaces, exist_interface_list, proxy_id, visible_name, tls_connect, tls_accept, tls_psk_identity, tls_psk):
+    def update_host(self, host_name, group_ids, status, host_id, interfaces, exist_interface_list, proxy_id, visible_name,
+                   tls_connect, tls_accept, tls_psk_identity, tls_psk):
         try:
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
-            parameters = {'hostid': host_id, 'groups': group_ids, 'status': status, 'tls_connect': tls_connect, 'tls_accept': tls_accept, 'tls_psk_identity': tls_psk_identity, 'tls_psk': tls_psk}
+            parameters = {'hostid': host_id, 'groups': group_ids, 'status': status,
+                   'tls_connect': tls_connect, 'tls_accept': tls_accept, 'tls_psk_identity': tls_psk_identity, 'tls_psk': tls_psk}
             if proxy_id:
                 parameters['proxy_hostid'] = proxy_id
             if visible_name:
@@ -465,7 +467,8 @@ class Host(object):
         # get unlink and clear templates
         templates_clear = exist_template_ids.difference(template_ids)
         templates_clear_list = list(templates_clear)
-        request_str = {'hostid': host_id, 'templates': template_id_list, 'templates_clear': templates_clear_list, 'tls_connect': tls_connect, 'tls_accept': tls_accept, 'tls_psk_identity': tls_psk_identity, 'tls_psk': tls_psk }
+        request_str = {'hostid': host_id, 'templates': template_id_list, 'templates_clear': templates_clear_list,
+                   'tls_connect': tls_connect, 'tls_accept': tls_accept, 'tls_psk_identity': tls_psk_identity, 'tls_psk': tls_psk }
         try:
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
@@ -488,7 +491,8 @@ class Host(object):
             inventory_mode = int(-1)
 
         # watch for - https://support.zabbix.com/browse/ZBX-6033
-        request_str = {'hostid': host_id, 'inventory_mode': inventory_mode, 'tls_connect': tls_connect, 'tls_accept': tls_accept, 'tls_psk_identity': tls_psk_identity, 'tls_psk': tls_psk}
+        request_str = {'hostid': host_id, 'inventory_mode': inventory_mode, 'tls_connect': tls_connect,
+                   'tls_accept': tls_accept, 'tls_psk_identity': tls_psk_identity, 'tls_psk': tls_psk}
         try:
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
@@ -622,8 +626,10 @@ def main():
                     module.exit_json(changed=False)
             else:
                 if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
-                                             exist_interfaces_copy, zabbix_host_obj, proxy_id, visible_name, tls_connect, tls_accept, tls_psk_identity, tls_psk):
-                    host.update_host(host_name, group_ids, status, host_id, interfaces, exist_interfaces, proxy_id, visible_name, tls_connect, tls_accept, tls_psk_identity, tls_psk)
+                                             exist_interfaces_copy, zabbix_host_obj, proxy_id, visible_name,
+                                             tls_connect, tls_accept, tls_psk_identity, tls_psk):
+                    host.update_host(host_name, group_ids, status, host_id, interfaces, exist_interfaces, proxy_id, visible_name,
+                                             tls_connect, tls_accept, tls_psk_identity, tls_psk)
                     host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity, tls_psk)
                     host.update_inventory_mode(host_id, inventory_mode, tls_connect, tls_accept, tls_psk_identity, tls_psk)
                     module.exit_json(changed=True,
@@ -650,9 +656,9 @@ def main():
 
         # create host
         host_id = host.add_host(host_name, group_ids, status, interfaces, proxy_id, visible_name)
-        host.link_or_clear_template(host_id, template_ids)
-        host.update_inventory_mode(host_id, inventory_mode)
         host.update_psk(host_id, tls_connect, tls_accept, tls_psk_identity, tls_psk)
+        host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity, tls_psk)
+        host.update_inventory_mode(host_id, inventory_mode, tls_connect, tls_accept, tls_psk_identity, tls_psk)
         module.exit_json(changed=True, result="Successfully added host %s (%s) and linked with template '%s'" % (
             host_name, ip, link_templates))
 
