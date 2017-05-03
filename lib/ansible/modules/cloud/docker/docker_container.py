@@ -429,6 +429,12 @@ options:
       - "List of ulimit options. A ulimit is specified as C(nofile:262144:262144)"
     default: null
     required: false
+  sysctls:
+    description:
+      - Dictionary of key,value pairs.
+    default: null
+    required: false
+    version_added: 2.4
   user:
     description:
       - Sets the username or UID used and optionally the groupname or GID for the specified command.
@@ -471,6 +477,7 @@ author:
     - "Daan Oosterveld (@dusdanig)"
     - "James Tanner (@jctanner)"
     - "Chris Houseknecht (@chouseknecht)"
+    - "Kassian Sun (@kassiansun)"
 
 requirements:
     - "python >= 2.6"
@@ -783,6 +790,7 @@ class TaskParameters(DockerBaseClass):
 
         self.env = self._get_environment()
         self.ulimits = self._parse_ulimits()
+        self.sysctls = self._parse_sysctls()
         self.log_config = self._parse_log_config()
         self.exp_links = None
         self.volume_binds = self._get_volume_binds(self.volumes)
@@ -932,6 +940,7 @@ class TaskParameters(DockerBaseClass):
             ipc_mode='ipc_mode',
             security_opt='security_opts',
             ulimits='ulimits',
+            sysctls='sysctls',
             log_config='log_config',
             mem_limit='memory',
             memswap_limit='memory_swap',
@@ -1104,6 +1113,12 @@ class TaskParameters(DockerBaseClass):
                 self.fail("Error parsing ulimits value %s - %s" % (limit, exc))
         return results
 
+    def _parse_sysctls(self):
+        '''
+        Turn sysctls into an hash of Sysctl objects
+        '''
+        return self.sysctls
+
     def _parse_log_config(self):
         '''
         Create a LogConfig object
@@ -1169,6 +1184,7 @@ class Container(DockerBaseClass):
         self.parameters.expected_exposed = None
         self.parameters.expected_volumes = None
         self.parameters.expected_ulimits = None
+        self.parameters.expected_sysctls = None
         self.parameters.expected_etc_hosts = None
         self.parameters.expected_env = None
 
@@ -1198,6 +1214,7 @@ class Container(DockerBaseClass):
         self.parameters.expected_volumes = self._get_expected_volumes(image)
         self.parameters.expected_binds = self._get_expected_binds(image)
         self.parameters.expected_ulimits = self._get_expected_ulimits(self.parameters.ulimits)
+        self.parameters.expected_sysctls = self._get_expected_sysctls(self.parameters.sysctls)
         self.parameters.expected_etc_hosts = self._convert_simple_dict_to_list('etc_hosts')
         self.parameters.expected_env = self._get_expected_env(image)
         self.parameters.expected_cmd = self._get_expected_cmd()
@@ -1266,6 +1283,7 @@ class Container(DockerBaseClass):
             stop_signal=config.get("StopSignal"),
             tty=config.get('Tty'),
             expected_ulimits=host_config.get('Ulimits'),
+            expected_sysctls=host_config.get('Sysctls'),
             uts=host_config.get('UTSMode'),
             expected_volumes=config.get('Volumes'),
             expected_binds=host_config.get('Binds'),
@@ -1649,6 +1667,15 @@ class Container(DockerBaseClass):
             ))
         return results
 
+    def _get_expected_sysctls(self, config_sysctls):
+        self.log('_get_expected_sysctls')
+        if config_sysctls is None:
+            return None
+        result = dict()
+        for key, value in config_sysctls.items():
+            result[key] = str(value)
+        return result
+
     def _get_expected_cmd(self):
         self.log('_get_expected_cmd')
         if not self.parameters.command:
@@ -2018,6 +2045,7 @@ def main():
         trust_image_content=dict(type='bool', default=False),
         tty=dict(type='bool', default=False),
         ulimits=dict(type='list'),
+        sysctls=dict(type='dict'),
         user=dict(type='str'),
         uts=dict(type='str'),
         volumes=dict(type='list'),
