@@ -46,6 +46,16 @@ options:
     required: true
     default: null
     aliases: []
+  chunk_size:
+    description:
+      - If multipart upload is used or a file that was uploaded using multipart upload, configure its chunk_size in bytes here.
+    required: false
+    default: null
+  chunk_size_unit:
+    description:
+      - If multipart upload is used, sets unit for the configured chunk_size.
+    required: false
+    default: mb
   dest:
     description:
       - The destination file path when downloading an object/key with a GET operation.
@@ -284,6 +294,19 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+try:
+    import math, hashlib
+    SUPPORTS_MULTIPART_DOWNLOAD = True
+except ImportError:
+    SUPPORTS_MULTIPART_DOWNLOAD = False
+
+try:
+    from filechunkio import FileChunkIO
+    from multiprocessing import Pool
+    SUPPORTS_MULTIPART_UPLOAD = True
+except ImportError:
+    SUPPORTS_MULTIPART_UPLOAD = False
+
 def key_check(module, s3, bucket, obj, version=None, validate=True):
     try:
         bucket = s3.lookup(bucket, validate=validate)
@@ -304,9 +327,6 @@ def keysum(module, s3, bucket, obj, version=None, validate=True):
     if not key_check:
         return None
     md5_remote = key_check.etag[1:-1]
-    etag_multipart = '-' in md5_remote # Check for multipart, etag is not md5
-    if etag_multipart is True:
-        module.fail_json(msg="Files uploaded with multipart of s3 are not supported with checksum, unable to compute checksum.")
     return md5_remote
 
 def bucket_check(module, s3, bucket, validate=True):
@@ -444,6 +464,27 @@ def get_download_url(module, s3, bucket, obj, expiry, changed=True, validate=Tru
     except s3.provider.storage_response_error as e:
         module.fail_json(msg= str(e))
 
+def calculate_multipart_etag(module, dest, chunk_size):
+    if not SUPPORTS_MULTIPART_DOWNLOAD:
+        module.fail_json(msg="Missing modules (multiprocessing, filechunkio) needed for multipart up/download.")
+    if chunk_size == None:
+        module.fail_json(
+            msg="Chunk size missing for multipart download.")
+
+    md5s = []
+    with open(dest, 'rb') as fp:
+        while True:
+            data = fp.read(chunk_size)
+
+            if not data:
+                break
+            md5s.append(hashlib.md5(data))
+    digests = b"".join(m.digest() for m in md5s)
+
+    new_md5 = hashlib.md5(digests)
+    new_etag = "%s-%s" % (new_md5.hexdigest(), len(md5s))
+    return new_etag
+
 def is_fakes3(s3_url):
     """ Return True if s3_url has scheme fakes3:// """
     if s3_url is not None:
@@ -463,12 +504,15 @@ def is_walrus(s3_url):
 
 
 def main():
+
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         bucket                          = dict(required=True),
         dest                            = dict(default=None),
         encrypt                         = dict(default=True, type='bool'),
         expiry                          = dict(default=600, aliases=['expiration']),
+        chunk_size                      = dict(default=None, type='int'),
+        chunk_size_unit                 = dict(default='mb', type='str'),
         headers                         = dict(type='dict'),
         marker                          = dict(default=None),
         max_keys                        = dict(default=1000),
@@ -491,12 +535,27 @@ def main():
         supports_check_mode=True,
     )
 
+    size_unit_map = dict(
+            bytes=1,
+            b=1,
+            kb=1024,
+            mb=1024 ** 2,
+            gb=1024 ** 3,
+            tb=1024 ** 4,
+            pb=1024 ** 5,
+            eb=1024 ** 6,
+            zb=1024 ** 7,
+            yb=1024 ** 8
+        )
+
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
 
     bucket = module.params.get('bucket')
     encrypt = module.params.get('encrypt')
     expiry = int(module.params['expiry'])
+    chunk_size = module.params.get('chunk_size')
+    chunk_size_unit = module.params.get('chunk_size_unit')
     dest = module.params.get('dest', '')
     headers = module.params.get('headers')
     marker = module.params.get('marker')
@@ -512,6 +571,8 @@ def main():
     rgw = module.params.get('rgw')
     src = module.params.get('src')
     ignore_nonexistent_bucket = module.params.get('ignore_nonexistent_bucket')
+
+    chunk_size = chunk_size * size_unit_map[chunk_size_unit]
 
     if dest:
         dest = os.path.expanduser(dest)
@@ -596,7 +657,11 @@ def main():
         # Compare the remote MD5 sum of the object with the local dest md5sum, if it already exists.
         if pathrtn is True:
             md5_remote = keysum(module, s3, bucket, obj, version=version, validate=validate)
-            md5_local = module.md5(dest)
+
+            if '-' in md5_remote:
+              md5_local = calculate_multipart_etag(module, dest, chunk_size)
+            else:
+              md5_local = module.md5(dest)# Check for multipart, etag is not md5
             if md5_local == md5_remote:
                 sum_matches = True
                 if overwrite == 'always':
