@@ -424,7 +424,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.evaluate_conditional.return_value = True
         mock_task.args = dict(_raw_params='foo.yml', a='foo', b='bar')
         mock_task.action = 'include'
-        res = te._execute()
+        res = te._execute(templar=mock_templar)
 
     def test_task_executor_poll_async_result(self):
         fake_loader = DictDataLoader({})
