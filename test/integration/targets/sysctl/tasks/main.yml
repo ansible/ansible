@@ -38,6 +38,7 @@
       name: vm.swappiness
       value: 5
       state: present
+      reload: False
       sysctl_file: "{{ output_dir_test }}/sysctl.conf"
   register: sysctl_test0
 - debug: var=sysctl_test0
@@ -52,6 +53,7 @@
       name: vm.swappiness
       value: 5
       state: present
+      reload: False
       sysctl_file: "{{ output_dir_test }}/sysctl.conf"
   register: sysctl_test1
 
@@ -73,6 +75,7 @@
       name: net.ipv4.ip_forward
       value: 1
       sysctl_set: yes
+      reload: False
   register: sysctl_test2
 - debug: var=sysctl_test2
 
