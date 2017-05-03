@@ -290,6 +290,7 @@ import sys
 
 try:
     import shade
+    from keystoneauth1 import exceptions
     HAS_SHADE = True
 except ImportError:
     HAS_SHADE = False
@@ -307,11 +308,19 @@ def _get_compute_quotas(cloud, project):
 
     return cloud.get_compute_quotas(project)
 
-def _get_quotas(cloud, project):
+def _get_quotas(module, cloud, project):
 
     quota = {}
-    quota['volume'] = _get_volume_quotas(cloud, project)
-    quota['network'] = _get_network_quotas(cloud, project)
+    try:
+        quota['volume'] = _get_volume_quotas(cloud, project)
+    except exceptions.EndpointNotFound:
+        module.warn("No public endpoint for volumev2 service was found. Ignoring volume quotas.")
+
+    try:
+        quota['network'] = _get_network_quotas(cloud, project)
+    except exceptions.EndpointNotFound:
+        module.warn("No public endpoint for network service was found. Ignoring network quotas.")
+
     quota['compute'] = _get_compute_quotas(cloud, project)
 
     for quota_type in quota.keys():
@@ -432,7 +441,7 @@ def main():
                 module.params[k] = int(v)
 
         #Get current quota values
-        project_quota_output = _get_quotas(cloud, cloud_params['name'])
+        project_quota_output = _get_quotas(module, cloud, cloud_params['name'])
         changes_required = False
 
         if module.params['state'] == "absent":
@@ -461,7 +470,7 @@ def main():
                     else:
                         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
-            project_quota_output = _get_quotas(cloud, cloud_params['name'])
+            project_quota_output = _get_quotas(module, cloud, cloud_params['name'])
             changes_required = True
 
 
@@ -480,7 +489,7 @@ def main():
                     quota_call(cloud_params['name'], **quota_change_request[quota_type])
 
                 #Get quota state post changes for validation
-                project_quota_update = _get_quotas(cloud, cloud_params['name'])
+                project_quota_update = _get_quotas(module, cloud, cloud_params['name'])
 
                 if project_quota_output == project_quota_update:
                     module.fail_json(msg='Could not apply quota update')
