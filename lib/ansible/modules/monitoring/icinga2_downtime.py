@@ -191,13 +191,7 @@ import calendar
 import datetime
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import json
-
-try:
-    import requests
-    HAS_REQUESTS = True
-
-except ImportError:
-    HAS_REQUESTS = False
+from ansible.module_utils.urls import open_url
 
 
 def _convert_duration(module):
@@ -243,30 +237,19 @@ def _call_icinga2_api(module, payload, state):
 
     r = None
     try:
-        r = requests.post(uri, data=json.dumps(payload), verify=False, headers=headers, auth=(icinga2_api_user, icinga2_api_password))
-        results = r.json()['results']
-
-        if len(results) > 0:
-            _return_result(module, True, False, r.json())
+        r = open_url(uri, method="POST", headers=headers, url_username=icinga2_api_user, url_password=icinga2_api_password, force_basic_auth=True, data=json.dumps(payload), validate_certs=False)
+        results = json.loads(r.read())
+        if len(results['results']) > 0:
+            _return_result(module, True, False, results)
         else:
             _return_result(module, False, False, "Services or hostname not found.")
-
     except ValueError as e:
         if r is not None:
-            _return_result(module, False, True, r.text)
+            _return_result(module, False, True, results)
         else:
             _return_result(module, False, True, 'An unexpected exception occurred while scheduling downtime on Icinga2.')
-
-    except (requests.exceptions.Timeout,
-            requests.exceptions.TooManyRedirects,
-            requests.exceptions.HTTPError,
-            requests.exceptions.ConnectionError,
-            requests.exceptions.RequestException) as e:
-        _return_result(module, False, True, str(e))
-
     except Exception as e:
-        _return_result(module, False, True, 'An unexpected exception occurred while scheduling downtime on Icinga2.')
-
+        _return_result(module, False, True, str(e))
 
 def _return_result(module, changed, failed, message):
     result = {}
@@ -392,9 +375,6 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
     )
-
-    if not HAS_REQUESTS:
-        module.fail_json(msg='requests required for this module')
 
     start_time = module.params.get('start_time')
     end_time = module.params.get('end_time')
