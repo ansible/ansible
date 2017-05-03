@@ -34,7 +34,7 @@ requirements: ["Tempest"]
 options:
     workspace:
         description:
-            The workspace as was configured in 'Tempest init <I(workspace)>'
+            The workspace as was configured in 'Tempest init <C(workspace)>'
         required: True
     dest:
         description:
