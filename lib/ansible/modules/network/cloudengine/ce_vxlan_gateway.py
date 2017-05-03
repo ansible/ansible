@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages gateway for the VXLAN network on HUAWEI CloudEngine devices.
 description:
     - Configuring Centralized All-Active Gateways or Distributed Gateway for
-	  the VXLAN Network on HUAWEI CloudEngine devices.
+      the VXLAN Network on HUAWEI CloudEngine devices.
 author: QijunPan (@CloudEngine-Ansible)
 notes:
     - Ensure All-Active Gateways or Distributed Gateway for the VXLAN Network can not configure at the same time.
@@ -49,7 +49,7 @@ options:
             - Specifies the name of a VPN instance bound to a DFS group.
               The value is a string of 1 to 31 case-sensitive characters without spaces.
               If the character string is quoted by double quotation marks, the character string can contain spaces.
-              The value _public_ is reserved and cannot be used as the VPN instance name.
+              The value C(_public_) is reserved and cannot be used as the VPN instance name.
         required: false
         default: null
     dfs_udp_port:
@@ -75,7 +75,7 @@ options:
             - Specifies the name of the VPN instance that is associated with all-active gateway peer.
               The value is a string of 1 to 31 case-sensitive characters, spaces not supported.
               When double quotation marks are used around the string, spaces are allowed in the string.
-              The value _public_ is reserved and cannot be used as the VPN instance name.
+              The value C(_public_) is reserved and cannot be used as the VPN instance name.
         required: false
         default: null
     vpn_instance:
@@ -83,7 +83,7 @@ options:
             - Specifies the name of a VPN instance.
               The value is a string of 1 to 31 case-sensitive characters, spaces not supported.
               When double quotation marks are used around the string, spaces are allowed in the string.
-              The value _public_ is reserved and cannot be used as the VPN instance name.
+              The value C(_public_) is reserved and cannot be used as the VPN instance name.
         required: false
         default: null
     vpn_vni:
@@ -103,14 +103,14 @@ options:
             - Specifies the name of the VPN instance that is associated with the interface.
               The value is a string of 1 to 31 case-sensitive characters, spaces not supported.
               When double quotation marks are used around the string, spaces are allowed in the string.
-              The value _public_ is reserved and cannot be used as the VPN instance name.
+              The value C(_public_) is reserved and cannot be used as the VPN instance name.
         required: false
         default: null
     vbdif_mac:
         description:
             - Specifies a MAC address for a VBDIF interface.
-              The value is in the format of H-H-H. Each H is a 4-digit hexadecimal number, such as 00e0 or fc01.
-              If an H contains less than four digits, 0s are added ahead. For example, e0 is equal to 00e0.
+              The value is in the format of H-H-H. Each H is a 4-digit hexadecimal number, such as C(00e0) or C(fc01).
+              If an H contains less than four digits, 0s are added ahead. For example,  C(e0) is equal to C(00e0).
               A MAC address cannot be all 0s or 1s or a multicast MAC address.
         required: false
         default: null
@@ -690,7 +690,7 @@ class VxlanGateway(object):
 
         if vpname == "_public_":
             self.module.fail_json(
-                msg="Error: The value _public_ is reserved and cannot be used as the VPN instance name.")
+                msg="Error: The value C(_public_) is reserved and cannot be used as the VPN instance name.")
 
         if len(vpname) < 1 or len(vpname) > 31:
             self.module.fail_json(
