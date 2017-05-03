@@ -74,13 +74,11 @@ options:
       - The CA certificate chain in PEM encoded format.
     required: false
     default: null
-    aliases: []
   cert_body:
     version_added: "2.4"
     description:
       - The certificate body in PEM encoded format.
     required: false
-    aliases: []
   key_body:
     version_added: "2.4"
     description:
@@ -124,6 +122,16 @@ tasks:
     key: privcertkey
     cert_chain: myverytrustedchain
 
+# Server certificate upload using key from ansible-vault
+tasks:
+- name: Upload Certificate from Vault
+  iam_cert:
+    name: very_ssl
+    state: present
+    path: "/a/cert/path/"
+    cert_body: body_of_somecert
+    key_body: vault_body_of_privcertkey
+    cert_chain_body: body_of_myverytrustedchain
 '''
 import json
 import sys
