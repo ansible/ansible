@@ -51,13 +51,15 @@ EXAMPLES = '''
     state: present
 '''
 
+from abc import ABCMeta, abstractmethod
 import os
 import os.path
-from subprocess import Popen, PIPE, call
 import re
+from subprocess import Popen, PIPE, call
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils.six import with_metaclass
 from ansible.module_utils._text import to_native
 
 LOCALE_NORMALIZATION = {
@@ -105,7 +107,7 @@ def is_present_debian(name):
     return any(fix_case(name) == fix_case(line) for line in output.splitlines())
 
 def fix_case(name):
-    """locale -a might return the encoding in either lower or upper case.
+    """locale --all might return the encoding in either lower or upper case.
     Passing through this function makes them uniform for comparisons."""
     for s, r in LOCALE_NORMALIZATION.items():
         name = name.replace(s, r)
@@ -262,6 +264,56 @@ class Locale(object):
 
         return codeset
 
+
+class Distrib(with_metaclass(ABCMeta, object)):
+
+    def __init__(self, module):
+        self.module = module
+
+    @abstractmethod
+    def is_available(self, locale):
+        """Return a boolean indicating if the given locale could be generated."""
+
+    @abstractmethod
+    def generate(self, locale):
+        """Create locale."""
+
+    @abstractmethod
+    def delete(self, locale):
+        """Create locale."""
+
+    def is_present(self, locale):
+        """Check if the given locale is currently installed."""
+
+        output = Popen(['locale', '--all'], stdout=PIPE).communicate()[0]
+        output = to_native(output)
+
+        return locale.normalized in output.splitlines()
+
+    @abstractmethod
+    def get_default_codeset(self, locale):
+        """Return default codeset for locale"""
+        if '.' in locale.name:
+            raise ValueError('locale {0.name!r} already contains a codeset: {0.codeset!r}'.format(locale))
+
+    def apply_change(self, targetState, locale):
+        """Create or remove locale.
+
+        Keyword arguments:
+        targetState -- Desired state, either present or absent.
+        name -- Locale potentially including codeset such as de_CH.UTF-8.
+        """
+        if not locale.codeset:
+            locale.codeset = self.get_default_codeset(locale)
+
+        if targetState == 'present':
+
+            if not self.is_available(locale):
+                self.module.fail_json(msg='The locale (%r) is not available.' % locale.name)
+
+            self.generate(locale)
+        else:
+            self.delete(locale)
 
 # ==============================================================
 # main
