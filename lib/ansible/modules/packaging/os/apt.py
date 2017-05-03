@@ -126,6 +126,12 @@ options:
     required: false
     default: false
     version_added: "2.1"
+  download_only:
+    description:
+      - Only download package but not install it.
+    required: false
+    default: false
+    version_added: "2.4"
 requirements:
    - python-apt (python 2)
    - python3-apt (python 3)
@@ -458,7 +464,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=None, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
             build_dep=False, autoremove=False, only_upgrade=False,
-            allow_unauthenticated=False):
+            allow_unauthenticated=False, download_only=False):
     pkg_list = []
     packages = ""
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
@@ -503,10 +509,15 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         else:
             only_upgrade = ''
 
+        if download_only:
+            download_only = '--download-only'
+        else:
+            download_only = ''
+
         if build_dep:
             cmd = "%s -y %s %s %s %s build-dep %s" % (APT_GET_CMD, dpkg_options, only_upgrade, force_yes, check_arg, packages)
         else:
-            cmd = "%s -y %s %s %s %s %s install %s" % (APT_GET_CMD, dpkg_options, only_upgrade, force_yes, autoremove, check_arg, packages)
+            cmd = "%s -y %s %s %s %s %s %s install %s" % (APT_GET_CMD, dpkg_options, only_upgrade, download_only, force_yes, autoremove, check_arg, packages)
 
         if default_release:
             cmd += " -t '%s'" % (default_release,)
@@ -813,6 +824,7 @@ def main():
             autoremove=dict(type='bool', aliases=['autoclean']),
             only_upgrade=dict(type='bool', default=False),
             allow_unauthenticated=dict(default='no', aliases=['allow-unauthenticated'], type='bool'),
+            download_only=dict(type='bool', default=False),
         ),
         mutually_exclusive=[['package', 'upgrade', 'deb']],
         required_one_of=[['package', 'upgrade', 'update_cache', 'deb', 'autoremove']],
@@ -948,7 +960,8 @@ def main():
                 build_dep=state_builddep,
                 autoremove=autoremove,
                 only_upgrade=p['only_upgrade'],
-                allow_unauthenticated=allow_unauthenticated
+                allow_unauthenticated=allow_unauthenticated,
+                download_only=p['download_only']
             )
 
             # Store if the cache has been updated
