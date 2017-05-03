@@ -257,8 +257,8 @@ def main():
                                 elbs=elb_information.list_elbs())
 
     except BotoServerError as err:
-        self.module.fail_json(msg="{0}: {1}".format(err.error_code, err.error_message),
-                              exception=traceback.format_exc())
+        module.fail_json(msg="{0}: {1}".format(err.error_code, err.error_message),
+                         exception=traceback.format_exc())
 
     module.exit_json(**ec2_facts_result)
 
