@@ -1,0 +1,89 @@
+# Test code for the sysctl module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- set_fact: output_dir_test={{output_dir}}/test_sysctl
+
+- name: make sure our testing sub-directory does not exist
+  file: path="{{ output_dir_test }}" state=absent
+
+- name: create our testing sub-directory
+  file: path="{{ output_dir_test }}" state=directory
+
+##
+## sysctl - file manipulation
+##
+
+- name: copy the example conf to the test dir
+  copy:
+      src: sysctl.conf
+      dest: "{{ output_dir_test }}"
+
+- name: Set vm.swappiness to 5
+  sysctl:
+      name: vm.swappiness
+      value: 5
+      state: present
+      sysctl_file: "{{ output_dir_test }}/sysctl.conf"
+  register: sysctl_test0
+- debug: var=sysctl_test0
+
+- name: get file content
+  shell: "cat {{ output_dir_test }}/sysctl.conf | egrep -v ^\\#"
+  register: sysctl_content0
+- debug: var=sysctl_content0
+
+- name: Set vm.swappiness to 5 again
+  sysctl:
+      name: vm.swappiness
+      value: 5
+      state: present
+      sysctl_file: "{{ output_dir_test }}/sysctl.conf"
+  register: sysctl_test1
+
+- name: validate results
+  assert:
+      that:
+          - 'sysctl_test0.changed is defined'
+          - 'sysctl_test1.changed is defined'
+          - 'sysctl_test0.changed'
+          - 'not sysctl_test1.changed'
+          - 'sysctl_content0.stdout_lines == ["vm.swappiness=5"]'
+
+##
+## sysctl - sysctl_set
+##
+
+- name: set net.ipv4.ip_forward
+  sysctl:
+      name: net.ipv4.ip_forward
+      value: 1
+      sysctl_set: yes
+  register: sysctl_test2
+- debug: var=sysctl_test2
+
+- name: check with sysctl command
+  shell: sysctl net.ipv4.ip_forward
+  register: sysctl_check2
+
+- name: validate results for test 2
+  assert:
+      that:
+          - 'sysctl_test2.changed is defined'
+          - 'sysctl_test2.changed'
+          - 'sysctl_check2.stdout_lines == ["net.ipv4.ip_forward = 1"]'
+
