@@ -208,7 +208,8 @@ def get_aws_connection_info(module, boto3=False):
             security_token = os.environ['AWS_SESSION_TOKEN']
         elif 'EC2_SECURITY_TOKEN' in os.environ:
             security_token = os.environ['EC2_SECURITY_TOKEN']
-        else:
+
+        if not security_token:
             # in case security_token came in as empty string
             security_token = None
 
