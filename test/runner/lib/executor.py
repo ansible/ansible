@@ -29,7 +29,6 @@ from lib.manage_ci import (
 )
 
 from lib.util import (
-    CommonConfig,
     EnvironmentConfig,
     ApplicationWarning,
     ApplicationError,
@@ -81,10 +80,6 @@ from lib.test import (
     TestSuccess,
     TestFailure,
     TestSkipped,
-)
-
-from lib.metadata import (
-    Metadata,
 )
 
 SUPPORTED_PYTHON_VERSIONS = (
