@@ -27,8 +27,7 @@ description:
     - Manages VPN instance address family of HUAWEI CloudEngine switches.
 author: Yang yang (@CloudEngine-Ansible)
 notes:
-    - If no vrf is supplied, the module will return error.
-      If state=absent, the vrf will be removed, regardless of the
+    - If I(state=absent), the vrf will be removed, regardless of the
       non-required parameters.
 options:
     vrf:
@@ -506,10 +505,8 @@ class VrfAf(object):
         if self.state == "present":
             self.updates_cmd.append('ip vpn-instance %s' % (self.vrf))
             if self.vrf_aftype == 'ipv4uni':
-                #if not self.is_vrf_af_exist():
                 self.updates_cmd.append('ipv4-family')
             elif self.vrf_aftype == 'ipv6uni':
-                #if not self.is_vrf_af_exist():
                 self.updates_cmd.append('ipv6-family')
             if self.route_distinguisher:
                 if not self.is_vrf_rd_exist():
@@ -606,10 +603,7 @@ class VrfAf(object):
 
     def check_params(self):
         """Check all input params"""
-        # vrf check
-        if not self.vrf or not self.vrf_aftype:
-            self.module.fail_json(
-                msg='Error: The vrf name and address family must be set.')
+
         # vrf and description check
         if self.vrf == '_public_':
             self.module.fail_json(
