@@ -730,17 +730,7 @@ class SanityFailure(TestFailure):
 
 class SanityMessage(TestMessage):
     """Single sanity test message for one file."""
-    def __init__(self, message, path, line=0, column=0, level='error', code=None, confidence=None):
-        """
-        :type message: str
-        :type path: str
-        :type line: int
-        :type column: int
-        :type level: str
-        :type code: str | None
-        :type confidence: int | None
-        """
-        super(SanityMessage, self).__init__(message, path, line, column, level, code, confidence)
+    pass
 
 
 class SanityTargets(object):

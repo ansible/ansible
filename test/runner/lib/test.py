@@ -192,14 +192,6 @@ class TestResult(object):
 
 class TestSuccess(TestResult):
     """Test success."""
-    def __init__(self, command, test, python_version=None):
-        """
-        :type command: str
-        :type test: str
-        :type python_version: str
-        """
-        super(TestSuccess, self).__init__(command, test, python_version)
-
     def write_junit(self, args):
         """
         :type args: TestConfig
@@ -211,14 +203,6 @@ class TestSuccess(TestResult):
 
 class TestSkipped(TestResult):
     """Test skipped."""
-    def __init__(self, command, test, python_version=None):
-        """
-        :type command: str
-        :type test: str
-        :type python_version: str
-        """
-        super(TestSkipped, self).__init__(command, test, python_version)
-
     def write_console(self):
         """Write results to console."""
         display.info('No tests applicable.', verbosity=1)
