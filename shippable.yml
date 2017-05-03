@@ -53,6 +53,9 @@ matrix:
     - env: TEST=linux/ubuntu1404/3
     - env: TEST=linux/ubuntu1604/3
     - env: TEST=linux/ubuntu1604py3/3
+
+    - env: TEST=cloud/ubuntu1604
+    - env: TEST=cloud/ubuntu1604py3
 build:
   pre_ci:
     - docker images drydock/u16pytall

@@ -239,7 +239,7 @@
       assert:
         that:
            - 'result.failed'
-           - 'result.msg == "missing required arguments: name,state"'
+           - 'result.msg.startswith("missing required arguments: ")'
 
 
 
