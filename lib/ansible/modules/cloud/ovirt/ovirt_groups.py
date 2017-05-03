@@ -35,7 +35,7 @@ description:
 options:
     name:
         description:
-            - "Name of the the group to manage."
+            - "Name of the group to manage."
         required: true
     state:
         description:

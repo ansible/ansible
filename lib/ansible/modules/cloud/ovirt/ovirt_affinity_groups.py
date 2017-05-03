@@ -36,7 +36,7 @@ description:
 options:
     name:
         description:
-            - "Name of the the affinity group to manage."
+            - "Name of the affinity group to manage."
         required: true
     state:
         description:

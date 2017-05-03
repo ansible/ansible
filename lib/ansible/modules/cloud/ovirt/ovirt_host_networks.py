@@ -35,7 +35,7 @@ description:
 options:
     name:
         description:
-            - "Name of the the host to manage networks for."
+            - "Name of the host to manage networks for."
         required: true
     state:
         description:

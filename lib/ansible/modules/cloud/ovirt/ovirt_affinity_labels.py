@@ -36,7 +36,7 @@ description:
 options:
     name:
         description:
-            - "Name of the the affinity label to manage."
+            - "Name of the affinity label to manage."
         required: true
     state:
         description:

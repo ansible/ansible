@@ -35,7 +35,7 @@ description:
 options:
     name:
         description:
-            - "Name of the the storage domain to manage."
+            - "Name of the storage domain to manage."
     state:
         description:
             - "Should the storage domain be present/absent/maintenance/unattached"

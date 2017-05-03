@@ -35,7 +35,7 @@ description:
 options:
     name:
         description:
-            - "Name of the the MAC pool to manage."
+            - "Name of the MAC pool to manage."
         required: true
     description:
         description:

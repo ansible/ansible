@@ -36,11 +36,11 @@ description:
 options:
     name:
         description:
-            - "Name of the the Virtual Machine to manage. If VM don't exists C(name) is required.
+            - "Name of the Virtual Machine to manage. If VM don't exists C(name) is required.
                Otherwise C(id) or C(name) can be used."
     id:
         description:
-            - "ID of the the Virtual Machine to manage."
+            - "ID of the Virtual Machine to manage."
     state:
         description:
             - "Should the Virtual Machine be running/stopped/present/absent/suspended/next_run."
