@@ -391,7 +391,6 @@ def add_lint(parser):
                         help='exit successfully on failed tests after saving results')
 
 
-
 def add_changes(parser, argparse):
     """
     :type parser: argparse.ArgumentParser

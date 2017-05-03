@@ -673,10 +673,7 @@ def collect_code_smell_tests():
         skip_tests = skip_fd.read().splitlines()
 
     paths = glob.glob('test/sanity/code-smell/*')
-    paths = sorted(p for p in paths
-                   if os.access(p, os.X_OK)
-                   and os.path.isfile(p)
-                   and os.path.basename(p) not in skip_tests)
+    paths = sorted(p for p in paths if os.access(p, os.X_OK) and os.path.isfile(p) and os.path.basename(p) not in skip_tests)
 
     tests = tuple(SanityFunc(os.path.splitext(os.path.basename(p))[0], command_sanity_code_smell, script=p, intercept=False) for p in paths)
 
