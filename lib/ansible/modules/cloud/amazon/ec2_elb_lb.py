@@ -884,7 +884,7 @@ class ElbManager(object):
         if self.scheme:
             if self.elb.scheme != self.scheme:
                 if not self.wait:
-                    module.fail_json(msg="Unable to modify scheme without using the wait option")
+                    self.module.fail_json(msg="Unable to modify scheme without using the wait option")
                 return True
         return False
 
