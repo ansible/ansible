@@ -49,7 +49,8 @@ options:
         version_added: 2.2
         required: false
         description:
-            - VLAN tag for this port
+            - VLAN tag for this port. Must be a value between
+              0 and 4095.
     state:
         required: false
         default: "present"
@@ -111,185 +112,168 @@ EXAMPLES = '''
       iface-status: active
 '''
 
-# pylint: disable=W0703
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.pycompat24 import get_exception
 
+def _external_ids_to_dict(text):
+    text = text.strip()
 
-def truncate_before(value, srch):
-    """ Return content of str before the srch parameters. """
-
-    before_index = value.find(srch)
-    if (before_index >= 0):
-        return value[:before_index]
+    if text == '{}':
+        return None
     else:
-        return value
+        d = {}
 
+        for kv in text[1:-1].split(','):
+            kv = kv.strip()
+            k, v = kv.split('=')
+            d[k] = v
 
-def _set_to_get(set_cmd, module):
-    """ Convert set command to get command and set value.
-    return tuple (get command, set value)
-    """
+        return d
 
-    ##
-    # If set has option: then we want to truncate just before that.
-    set_cmd = truncate_before(set_cmd, " option:")
-    get_cmd = set_cmd.split(" ")
-    (key, value) = get_cmd[-1].split("=")
-    module.log("get commands %s " % key)
-    return (["--", "get"] + get_cmd[:-1] + [key], value)
+def _tag_to_str(text):
+    text = text.strip()
 
+    if text == '[]':
+        return None
+    else:
+        return text
 
-# pylint: disable=R0902
-class OVSPort(object):
-    """ Interface to OVS port. """
-    def __init__(self, module):
-        self.module = module
-        self.bridge = module.params['bridge']
-        self.port = module.params['port']
-        self.tag = module.params['tag']
-        self.state = module.params['state']
-        self.timeout = module.params['timeout']
-        self.set_opt = module.params.get('set', None)
+def map_obj_to_commands(want, have, module):
+    commands = list()
 
-    def _vsctl(self, command, check_rc=True):
-        '''Run ovs-vsctl command'''
+    if module.params['state'] == 'absent':
+        if have:
+            templatized_command = ("%(ovs-vsctl)s -t %(timeout)s del-port"
+                                   " %(bridge)s %(port)s")
+            command = templatized_command % module.params
+            commands.append(command)
+    else:
+        if have:
+            if want['tag'] != have['tag']:
+                templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
+                                       " set port %(port)s tag=%(tag)s")
+                command = templatized_command % module.params
+                commands.append(command)
 
-        cmd = ['ovs-vsctl', '-t', str(self.timeout)] + command
-        return self.module.run_command(cmd, check_rc=check_rc)
-
-    def exists(self):
-        '''Check if the port already exists'''
-
-        (rtc, out, err) = self._vsctl(['list-ports', self.bridge])
-
-        if rtc != 0:
-            self.module.fail_json(msg=err)
-
-        return any(port.rstrip() == self.port for port in out.split('\n')) or self.port == self.bridge
-
-    def set(self, set_opt):
-        """ Set attributes on a port. """
-        self.module.log("set called %s" % set_opt)
-        if (not set_opt):
-            return False
-
-        (get_cmd, set_value) = _set_to_get(set_opt, self.module)
-        (rtc, out, err) = self._vsctl(get_cmd, False)
-        if rtc != 0:
-            ##
-            # ovs-vsctl -t 5 -- get Interface port external_ids:key
-            # returns failure if key does not exist.
-            out = None
+            if want['external_ids'] != have['external_ids']:
+                for k, v in iteritems(want['external_ids']):
+                    if (not have['external_ids']
+                            or k not in have['external_ids']
+                            or want['external_ids'][k] != have['external_ids'][k]):
+                        if v is None:
+                            templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
+                                                   " remove port %(port)s"
+                                                   " external_ids " + k)
+                            command = templatized_command % module.params
+                            commands.append(command)
+                        else:
+                            templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
+                                                   " set port %(port)s"
+                                                   " external_ids:")
+                            command = templatized_command % module.params
+                            command += k + "=" + v
+                            commands.append(command)
         else:
-            out = out.strip("\n")
-            out = out.strip('"')
+            templatized_command = ("%(ovs-vsctl)s -t %(timeout)s add-port"
+                                   " %(bridge)s %(port)s")
+            command = templatized_command % module.params
 
-        if (out == set_value):
-            return False
+            if want['tag']:
+                templatized_command =  " tag=%(tag)s"
+                command += templatized_command % module.params
 
-        (rtc, out, err) = self._vsctl(["--", "set"] + set_opt.split(" "))
-        if rtc != 0:
-            self.module.fail_json(msg=err)
+            if want['set']:
+                templatized_command = " -- set %(set)s"
+                command += templatized_command % module.params
 
-        return True
+            commands.append(command)
 
-    def add(self):
-        '''Add the port'''
-        cmd = ['add-port', self.bridge, self.port]
-        if self.tag:
-            cmd += ["tag=" + self.tag]
-        if self.set and self.set_opt:
-            cmd += ["--", "set"]
-            cmd += self.set_opt.split(" ")
+            if want['external_ids']:
+                for k, v in iteritems(want['external_ids']):
+                    templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
+                                           " set port %(port)s external_ids:")
+                    command = templatized_command % module.params
+                    command +=  k + "=" + v
+                    commands.append(command)
 
-        (rtc, _, err) = self._vsctl(cmd)
-        if rtc != 0:
-            self.module.fail_json(msg=err)
+    return commands
 
-        return True
 
-    def delete(self):
-        '''Remove the port'''
-        (rtc, _, err) = self._vsctl(['del-port', self.bridge, self.port])
-        if rtc != 0:
-            self.module.fail_json(msg=err)
+def map_config_to_obj(module):
+    templatized_command = "%(ovs-vsctl)s -t %(timeout)s list-ports %(bridge)s"
+    command = templatized_command % module.params
+    rc, out, err = module.run_command(command, check_rc=True)
+    if rc != 0:
+        module.fail_json(msg=err)
 
-    def check(self):
-        '''Run check mode'''
-        try:
-            if self.state == 'absent' and self.exists():
-                changed = True
-            elif self.state == 'present' and not self.exists():
-                changed = True
-            else:
-                changed = False
-        except Exception:
-            earg = get_exception()
-            self.module.fail_json(msg=str(earg))
-        self.module.exit_json(changed=changed)
+    obj = {}
 
-    def run(self):
-        '''Make the necessary changes'''
-        changed = False
-        try:
-            if self.state == 'absent':
-                if self.exists():
-                    self.delete()
-                    changed = True
-            elif self.state == 'present':
-                ##
-                # Add any missing ports.
-                if (not self.exists()):
-                    self.add()
-                    changed = True
+    if module.params['port'] in out.splitlines():
+        obj['bridge'] = module.params['bridge']
+        obj['port'] = module.params['port']
 
-                ##
-                # If the -- set changed check here and make changes
-                # but this only makes sense when state=present.
-                if (not changed):
-                    changed = self.set(self.set_opt) or changed
-                    items = self.module.params['external_ids'].items()
-                    for (key, value) in items:
-                        value = value.replace('"', '')
-                        fmt_opt = "Interface %s external_ids:%s=%s"
-                        external_id = fmt_opt % (self.port, key, value)
-                        changed = self.set(external_id) or changed
-                ##
-        except Exception:
-            earg = get_exception()
-            self.module.fail_json(msg=str(earg))
-        self.module.exit_json(changed=changed)
+        templatized_command = ("%(ovs-vsctl)s -t %(timeout)s get"
+                               " Port %(port)s tag")
+        command = templatized_command % module.params
+        rc, out, err = module.run_command(command, check_rc=True)
+        obj['tag'] = _tag_to_str(out)
 
+        templatized_command = ("%(ovs-vsctl)s -t %(timeout)s get"
+                               " Port %(port)s external_ids")
+        command = templatized_command % module.params
+        rc, out, err = module.run_command(command, check_rc=True)
+        obj['external_ids'] = _external_ids_to_dict(out)
+
+    return obj
+
+
+def map_params_to_obj(module):
+    obj = {
+        'bridge': module.params['bridge'],
+        'port': module.params['port'],
+        'tag': module.params['tag'],
+        'external_ids': module.params['external_ids'],
+        'set': module.params['set']
+    }
+
+    return obj
 
 # pylint: disable=E0602
 def main():
-    """ Entry point.  """
-    module = AnsibleModule(
-        argument_spec={
-            'bridge': {'required': True},
-            'port': {'required': True},
-            'tag': {'required': False},
-            'state': {'default': 'present', 'choices': ['present', 'absent']},
-            'timeout': {'default': 5, 'type': 'int'},
-            'set': {'required': False, 'default': None},
-            'external_ids': {'default': {}, 'required': False, 'type': 'dict'},
-        },
-        supports_check_mode=True,
-    )
+    """ Entry point. """
+    argument_spec={
+        'bridge': {'required': True},
+        'port': {'required': True},
+        'state': {'default': 'present', 'choices': ['present', 'absent']},
+        'timeout': {'default': 5, 'type': 'int'},
+        'external_ids': {'default': None, 'type': 'dict'},
+        'tag': {'default': None},
+        'set': {'required': False, 'default': None}
+    }
 
-    port = OVSPort(module)
-    if module.check_mode:
-        port.check()
-    else:
-        port.run()
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
+    result = {'changed': False}
 
-# pylint: disable=W0614
-# pylint: disable=W0401
-# pylint: disable=W0622
+    # We add ovs-vsctl to module_params to later build up templatized commands
+    module.params["ovs-vsctl"] = module.get_bin_path("ovs-vsctl", True)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.pycompat24 import get_exception
+    want = map_params_to_obj(module)
+    have = map_config_to_obj(module)
+
+    commands = map_obj_to_commands(want, have, module)
+    result['commands'] = commands
+
+    if commands:
+        if not module.check_mode:
+            for c in commands:
+                module.run_command(c, check_rc=True)
+        result['changed'] = True
+
+    module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
