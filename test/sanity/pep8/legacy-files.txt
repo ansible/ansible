@@ -770,7 +770,6 @@ lib/ansible/modules/web_infrastructure/ansible_tower/tower_user.py
 lib/ansible/modules/web_infrastructure/deploy_helper.py
 lib/ansible/modules/web_infrastructure/ejabberd_user.py
 lib/ansible/modules/web_infrastructure/jboss.py
-lib/ansible/modules/web_infrastructure/jira.py
 lib/ansible/modules/windows/win_disk_image.py
 lib/ansible/modules/windows/win_dns_client.py
 lib/ansible/modules/windows/win_domain.py
