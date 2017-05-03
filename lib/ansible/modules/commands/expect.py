@@ -157,7 +157,7 @@ def main():
         else:
             response = u'%s\n' % to_text(value).rstrip(u'\n')
 
-        events[key.decode()] = response
+        events[to_text(key)] = response
 
     if args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
