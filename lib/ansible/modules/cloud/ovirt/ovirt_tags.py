@@ -36,7 +36,7 @@ description:
 options:
     name:
         description:
-            - "Name of the the tag to manage."
+            - "Name of the tag to manage."
         required: true
     state:
         description:
@@ -45,7 +45,7 @@ options:
         default: present
     description:
         description:
-            - "Description of the the tag to manage."
+            - "Description of the tag to manage."
     parent:
         description:
             - "Name of the parent tag."

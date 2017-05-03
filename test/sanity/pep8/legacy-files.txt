@@ -515,8 +515,6 @@ lib/ansible/modules/network/junos/junos_config.py
 lib/ansible/modules/network/junos/junos_facts.py
 lib/ansible/modules/network/junos/junos_netconf.py
 lib/ansible/modules/network/junos/junos_package.py
-lib/ansible/modules/network/junos/junos_rpc.py
-lib/ansible/modules/network/junos/junos_user.py
 lib/ansible/modules/network/lenovo/cnos_conditional_template.py
 lib/ansible/modules/network/lenovo/cnos_template.py
 lib/ansible/modules/network/lenovo/cnos_vlan.py
@@ -767,11 +765,8 @@ lib/ansible/modules/web_infrastructure/ansible_tower/tower_project.py
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_role.py
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_team.py
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_user.py
-lib/ansible/modules/web_infrastructure/deploy_helper.py
 lib/ansible/modules/web_infrastructure/ejabberd_user.py
-lib/ansible/modules/web_infrastructure/htpasswd.py
 lib/ansible/modules/web_infrastructure/jboss.py
-lib/ansible/modules/web_infrastructure/jira.py
 lib/ansible/modules/windows/win_disk_image.py
 lib/ansible/modules/windows/win_dns_client.py
 lib/ansible/modules/windows/win_domain.py

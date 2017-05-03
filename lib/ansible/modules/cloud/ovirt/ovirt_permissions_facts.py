@@ -38,10 +38,10 @@ notes:
 options:
     user_name:
         description:
-            - "Username of the the user to manage. In most LDAPs it's I(uid) of the user, but in Active Directory you must specify I(UPN) of the user."
+            - "Username of the user to manage. In most LDAPs it's I(uid) of the user, but in Active Directory you must specify I(UPN) of the user."
     group_name:
         description:
-            - "Name of the the group to manage."
+            - "Name of the group to manage."
     authz_name:
         description:
             - "Authorization provider of the user/group. In previous versions of oVirt/RHV known as domain."

@@ -35,7 +35,7 @@ description:
 options:
     name:
         description:
-            - "Name of the the quota to manage."
+            - "Name of the quota to manage."
         required: true
     state:
         description:
@@ -48,7 +48,7 @@ options:
         required: true
     description:
         description:
-            - "Description of the the quota to manage."
+            - "Description of the quota to manage."
     cluster_threshold:
         description:
             - "Cluster threshold(soft limit) defined in percentage (0-100)."

@@ -35,7 +35,7 @@ description:
 options:
     name:
         description:
-            - "Name of the the template to manage."
+            - "Name of the template to manage."
         required: true
     state:
         description:

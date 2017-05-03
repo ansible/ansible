@@ -35,7 +35,7 @@ description:
 options:
     name:
         description:
-            - "Name of the the host to manage."
+            - "Name of the host to manage."
         required: true
         aliases: ['host']
     state:

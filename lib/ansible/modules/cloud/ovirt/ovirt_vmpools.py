@@ -35,7 +35,7 @@ description:
 options:
     name:
         description:
-            - "Name of the the VM pool to manage."
+            - "Name of the VM pool to manage."
         required: true
     state:
         description:

@@ -35,7 +35,7 @@ description:
 options:
     name:
         description:
-            - "Name of the the user to manage. In most LDAPs it's I(uid) of the user, but in Active Directory you must specify I(UPN) of the user."
+            - "Name of the user to manage. In most LDAPs it's I(uid) of the user, but in Active Directory you must specify I(UPN) of the user."
         required: true
     state:
         description:
