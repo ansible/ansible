@@ -81,6 +81,7 @@ def return_schema(data):
         extra=PREVENT_EXTRA
     )
 
+
 def doc_schema(module_name):
     if module_name.startswith('_'):
         module_name = module_name[1:]
@@ -114,7 +115,6 @@ def metadata_schema(deprecated):
             Required('supported_by'): Any('core', 'community', 'curated')
         }
     )
-
 
 
 # Things to add soon
