@@ -4,7 +4,7 @@
 # @author: Gaurav Rastogi (grastogi@avinetworks.com)
 #          Eric Anderson (eanderson@avinetworks.com)
 # module_check: supported
-# Avi Version: 16.3.8
+# Avi Version: 17.1.1
 #
 #
 # This file is part of Ansible
@@ -26,7 +26,6 @@
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -64,7 +63,8 @@ options:
             - It is a reference to an object of type applicationpersistenceprofile.
     autoscale_launch_config_ref:
         description:
-            - Reference to the launch configuration profile.
+            - If configured then avi will trigger orchestration of pool server creation and deletion.
+            - It is only supported for container clouds like mesos, opensift, kubernates, docker etc.
             - It is a reference to an object of type autoscalelaunchconfig.
     autoscale_networks:
         description:
@@ -80,6 +80,8 @@ options:
     capacity_estimation_ttfb_thresh:
         description:
             - The maximum time-to-first-byte of a server.
+            - Allowed values are 1-5000.
+            - Special values are 0 - 'automatic'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
     cloud_config_cksum:
         description:
@@ -92,6 +94,8 @@ options:
         description:
             - Duration for which new connections will be gradually ramped up to a server recently brought online.
             - Useful for lb algorithms that are least connection based.
+            - Allowed values are 1-300.
+            - Special values are 0 - 'immediate'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
     created_by:
         description:
@@ -100,6 +104,7 @@ options:
         description:
             - Traffic sent to servers will use this destination server port unless overridden by the server's specific port attribute.
             - The ssl checkbox enables avi to server encryption.
+            - Allowed values are 1-65535.
             - Default value when not specified in API or module is interpreted by Avi Controller as 80.
     description:
         description:
@@ -123,11 +128,14 @@ options:
     fewest_tasks_feedback_delay:
         description:
             - Periodicity of feedback for fewest tasks server selection algorithm.
+            - Allowed values are 1-300.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
     graceful_disable_timeout:
         description:
             - Used to gracefully disable a server.
             - Virtual service waits for the specified time before terminating the existing connections  to the servers that are disabled.
+            - Allowed values are 1-60.
+            - Special values are 0 - 'immediate', -1 - 'infinite'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 1.
     health_monitor_refs:
         description:
@@ -153,6 +161,8 @@ options:
     lb_algorithm:
         description:
             - The load balancing algorithm will pick a server within the pool's list of available servers.
+            - Enum options - LB_ALGORITHM_LEAST_CONNECTIONS, LB_ALGORITHM_ROUND_ROBIN, LB_ALGORITHM_FASTEST_RESPONSE, LB_ALGORITHM_CONSISTENT_HASH,
+            - LB_ALGORITHM_LEAST_LOAD, LB_ALGORITHM_FEWEST_SERVERS, LB_ALGORITHM_RANDOM, LB_ALGORITHM_FEWEST_TASKS, LB_ALGORITHM_NEAREST_SERVER.
             - Default value when not specified in API or module is interpreted by Avi Controller as LB_ALGORITHM_LEAST_CONNECTIONS.
     lb_algorithm_consistent_hash_hdr:
         description:
@@ -160,10 +170,14 @@ options:
     lb_algorithm_hash:
         description:
             - Criteria used as a key for determining the hash between the client and  server.
+            - Enum options - LB_ALGORITHM_CONSISTENT_HASH_SOURCE_IP_ADDRESS, LB_ALGORITHM_CONSISTENT_HASH_SOURCE_IP_ADDRESS_AND_PORT,
+            - LB_ALGORITHM_CONSISTENT_HASH_URI, LB_ALGORITHM_CONSISTENT_HASH_CUSTOM_HEADER.
             - Default value when not specified in API or module is interpreted by Avi Controller as LB_ALGORITHM_CONSISTENT_HASH_SOURCE_IP_ADDRESS.
     max_concurrent_connections_per_server:
         description:
             - The maximum number of concurrent connections allowed to each server within the pool.
+            - Allowed values are 50-10000.
+            - Special values are 0 - 'infinite'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
     max_conn_rate_per_server:
         description:
@@ -177,6 +191,11 @@ options:
             - (internal-use) networks designated as containing servers for this pool.
             - The servers may be further narrowed down by a filter.
             - This field is used internally by avi, not editable by the user.
+    nsx_securitygroup:
+        description:
+            - A list of nsx service groups where the servers for the pool are created.
+            - Field introduced in 17.1.1.
+        version_added: "2.4"
     pki_profile_ref:
         description:
             - Avi will validate the ssl certificate present by a server against the selected pki profile.
@@ -292,7 +311,6 @@ obj:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-
 try:
     from ansible.module_utils.avi import (
         avi_common_argument_spec, HAS_AVI, avi_ansible_api)
@@ -337,6 +355,7 @@ def main():
         max_conn_rate_per_server=dict(type='dict',),
         name=dict(type='str', required=True),
         networks=dict(type='list',),
+        nsx_securitygroup=dict(type='list',),
         pki_profile_ref=dict(type='str',),
         placement_networks=dict(type='list',),
         prst_hdr_name=dict(type='str',),
@@ -363,11 +382,10 @@ def main():
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:
         return module.fail_json(msg=(
-            'Avi python API SDK (avisdk>=16.3.5.post1) is not installed. '
+            'Avi python API SDK (avisdk>=17.1) is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'pool',
                            set([]))
-
 
 if __name__ == '__main__':
     main()
