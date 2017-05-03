@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: os_tempest_run
-short_description: Runs Tempest
+short_description: Run OpenStack Tempest
 description:
     - Runs Tempest according to the configuration file in the given workspace
 
@@ -75,41 +75,40 @@ options:
         default: 'False'
 notes:
     - You can find out more about Tempest at U(http://docs.openstack.org/developer/tempest/)
-    - The module requires to tempest init <I(workspace)> before usage
-    - The options I(whitelist_file) and I(blacklist_file) are mutually exclusive, if they are both given only the I(whitelist_file) will be used
+    - The module requires to tempest init <C(workspace)> before usage
 '''
 
 EXAMPLES = '''
-# Run all tests with default number of workers
+- name: Run all tests with default number of workers
 - os_tempest_run:
     dest: DEST
     workspace: cloud
 
-# Run all tests matching to a regex with default number of workers
+- name: Run all tests matching to a regex with default number of workers
 - os_tempest_run:
     dest: DEST
     workspace: cloud
     regex: REGEX
 
-# Run all tests serially
+- name: Run all tests serially
 - os_tempest_run:
     dest: DEST
     workspace: cloud
     concurrency: 1
 
-# Run all tests with 4 workers
+- name: Run all tests with 4 workers
 - os_tempest_run:
     dest: DEST
     workspace: cloud
     concurrency: 4
 
-# Run all tests that their REGEX is in the whitelist file
+- name: Run all tests that their REGEX is in the whitelist file
 - os_tempest_run:
     dest: DEST
     workspace: cloud
     whitelist_file: /path/to/whitelist
 
-# Run all tests that their REGEX is not in the blacklist file
+- name: Run all tests that their REGEX is not in the blacklist file
 - os_tempest_run:
     dest: DEST
     workspace: cloud
@@ -158,7 +157,7 @@ def main():
         concurrency=dict(type="int", required=False, default=None),
         force=dict(type="bool", required=False, default=False),
         subunit=dict(type="bool", required=False, default=True),
-    ))
+    ), mutually_exclusive=(('blacklist_file', 'whitelist_file'),), )
 
     # check if the arguments are valid
     if ansible_module.params['whitelist_file']:
@@ -166,8 +165,6 @@ def main():
     if ansible_module.params['blacklist_file']:
         blacklist_file_path = unfrackpath(ansible_module.params['blacklist_file'])
 
-    if ansible_module.params["whitelist_file"] and ansible_module.params["blacklist_file"]:
-        ansible_module.fail_json(msg="whitelist and blacklist files cannot be used together")
     if ansible_module.params["whitelist_file"] and not os.path.isfile(whitelist_file_path):
         ansible_module.fail_json(msg="'whitelist_file' is not a path to a file: '%s'" % whitelist_file_path)
     if ansible_module.params["blacklist_file"] and not os.path.isfile(blacklist_file_path):
@@ -252,7 +249,7 @@ def unfrackpath(path, follow=True):
     :arg follow: A boolean to indicate of symlinks should be resolved or not
     :raises UnicodeDecodeError: If the canonicalized version of the path
         contains non-utf8 byte sequences.
-    :rtype: A text string (unicode on pyyhon2, str on python3).
+    :rtype: A text string (unicode on python2, str on python3).
     :returns: An absolute path with symlinks, environment variables, and tilde
         expanded.  Note that this does not check whether a path exists.
 
