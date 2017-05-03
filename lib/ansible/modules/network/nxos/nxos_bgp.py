@@ -675,11 +675,7 @@ def main():
         timer_bgp_hold=dict(required=False, type='str'),
         timer_bgp_keepalive=dict(required=False, type='str'),
         state=dict(choices=['present', 'absent'], default='present', required=False),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
     )
-
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -690,61 +686,19 @@ def main():
     check_args(module, warnings)
 
     state = module.params['state']
-    args = [
-        "asn",
-        "bestpath_always_compare_med",
-        "bestpath_aspath_multipath_relax",
-        "bestpath_compare_neighborid",
-        "bestpath_compare_routerid",
-        "bestpath_cost_community_ignore",
-        "bestpath_med_confed",
-        "bestpath_med_missing_as_worst",
-        "bestpath_med_non_deterministic",
-        "cluster_id",
-        "confederation_id",
-        "confederation_peers",
-        "disable_policy_batching",
-        "disable_policy_batching_ipv4_prefix_list",
-        "disable_policy_batching_ipv6_prefix_list",
-        "enforce_first_as",
-        "event_history_cli",
-        "event_history_detail",
-        "event_history_events",
-        "event_history_periodic",
-        "fast_external_fallover",
-        "flush_routes",
-        "graceful_restart",
-        "graceful_restart_helper",
-        "graceful_restart_timers_restart",
-        "graceful_restart_timers_stalepath_time",
-        "isolate",
-        "local_as",
-        "log_neighbor_changes",
-        "maxas_limit",
-        "neighbor_down_fib_accelerate",
-        "reconnect_interval",
-        "router_id",
-        "shutdown",
-        "suppress_fib_pending",
-        "timer_bestpath_limit",
-        "timer_bgp_hold",
-        "timer_bgp_keepalive",
-        "vrf"
-    ]
 
     if module.params['vrf'] != 'default':
-        for param, inserted_value in module.params.items():
-            if param in GLOBAL_PARAMS and inserted_value:
-                module.fail_json(msg='Global params can be modified only'
-                                     ' under "default" VRF.',
+        for param in GLOBAL_PARAMS:
+            if module.params[param]:
+                module.fail_json(msg='Global params can be modified only under "default" VRF.',
                                  vrf=module.params['vrf'],
                                  global_param=param)
 
+    args = PARAM_TO_COMMAND_KEYMAP.keys()
     existing = get_existing(module, args, warnings)
 
-    if existing.get('asn'):
-        if (existing.get('asn') != module.params['asn'] and
-                state == 'present'):
+    if existing.get('asn') and state == 'present':
+        if existing.get('asn') != module.params['asn']:
             module.fail_json(msg='Another BGP ASN already exists.',
                              proposed_asn=module.params['asn'],
                              existing_asn=existing.get('asn'))
@@ -753,12 +707,10 @@ def main():
                          if v is not None and k in args)
     proposed = {}
     for key, value in proposed_args.items():
-        if key != 'asn' and key != 'vrf':
+        if key not in ['asn', 'vrf']:
             if str(value).lower() == 'default':
-                value = PARAM_TO_DEFAULT_KEYMAP.get(key)
-                if value is None:
-                    value = 'default'
-            if existing.get(key) or (not existing.get(key) and value):
+                value = PARAM_TO_DEFAULT_KEYMAP.get(key, 'default')
+            if existing.get(key) or value:
                 proposed[key] = value
 
     result = dict(changed=False, warnings=warnings)
