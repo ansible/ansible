@@ -29,7 +29,7 @@ module: bcf_switch
 author: "Ted (@tedelhourani)"
 short_description: Create and remove a bcf switch.
 description:
-    - Create and remove a bcf switch.
+    - Create and remove a Big Cloud Fabric switch.
 version_added: "2.4"
 options:
   name:
