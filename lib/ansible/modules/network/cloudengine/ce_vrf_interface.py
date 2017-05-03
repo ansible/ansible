@@ -33,7 +33,7 @@ notes:
 options:
     vrf:
         description:
-            - VPN instance, the length of vrf name is 1 ~ 31,i.e. "test", but can not be _public_.
+            - VPN instance, the length of vrf name is 1 ~ 31, i.e. "test", but can not be C(_public_).
         required: true
     vpn_interface:
         description:
@@ -287,8 +287,9 @@ class VrfInterface(object):
     def init_module(self):
         """init_module"""
 
+        required_one_of = [("vrf", "vpn_interface")]
         self.module = AnsibleModule(
-            argument_spec=self.spec, supports_check_mode=True)
+            argument_spec=self.spec, required_one_of=required_one_of, supports_check_mode=True)
 
     def check_response(self, xml_str, xml_name):
         """Check if response message is already succeed."""
@@ -314,9 +315,6 @@ class VrfInterface(object):
 
     def check_params(self):
         """Check all input params"""
-
-        if not self.vrf or not self.vpn_interface:
-            self.module.fail_json(msg='Error: vrf and vpn_interface cannot be empty.')
 
         if not self.is_vrf_exist():
             self.module.fail_json(
