@@ -139,6 +139,7 @@ proposed:
              "vpn_target_value": "none"}
 existing:
     description: k/v pairs of existing switchport
+    returned: always
     type: dict
     sample:  {
         "route_distinguisher": [
@@ -156,7 +157,7 @@ existing:
 end_state:
     description: k/v pairs of switchport after module execution
     returned: always
-    type: dict or null
+    type: dict
     sample:  {
         "route_distinguisher": [
             "1:1",
