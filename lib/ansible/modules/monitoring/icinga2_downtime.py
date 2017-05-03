@@ -201,7 +201,7 @@ status:
 response:
     description: response returned by icinga2.
     returned: always
-    type: complex
+    type: string
     sample: Services or hostname not found.
 '''
 
@@ -289,7 +289,6 @@ def _return_result(module, changed, failed, message):
     result['changed'] = changed
     result['failed'] = failed
     module.exit_json(**result)
-
 
 
 def schedule_downtime(module, start_time, end_time):
