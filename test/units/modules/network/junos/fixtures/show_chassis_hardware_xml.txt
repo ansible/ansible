@@ -1,0 +1,26 @@
+<rpc-reply>
+    <chassis-inventory>
+        <chassis>
+            <name>Chassis</name>
+            <serial-number>adc382ed18b0</serial-number>
+            <description>VSRX</description>
+            <chassis-module>
+                <name>Midplane</name>
+            </chassis-module>
+            <chassis-module>
+                <name>System IO</name>
+            </chassis-module>
+            <chassis-module>
+                <name>Routing Engine</name>
+                <description>VSRX RE</description>
+            </chassis-module>
+            <chassis-module>
+                <name>FPC 0</name>
+                <description>Virtual FPC</description>
+            </chassis-module>
+            <chassis-module>
+                <name>Power Supply 0</name>
+            </chassis-module>
+        </chassis>
+    </chassis-inventory>
+</rpc-reply>
