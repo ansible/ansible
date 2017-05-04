@@ -25,6 +25,11 @@
 ##
 ## user add
 ##
+#
+- name: remove the test user
+  user:
+      name: ansibulluser
+      state: absent
 
 - name: try to create a user
   user:
