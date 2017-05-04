@@ -16,5 +16,5 @@ DISTRO=$1
 if [[ $DISTRO == "MacOSX" ]]; then
     dscl localhost -list /Local/Default/Groups
 else
-    cat /etc/group | cut -d: -f1
+    cat /etc/group | egrep -v ^\# | cut -d: -f1
 fi
