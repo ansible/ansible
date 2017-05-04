@@ -238,8 +238,8 @@ except ImportError:
     pass  # will be caught by imported HAS_BOTO3
 
 
-class CloudFrontServiceManager:
-    """Handles CloudFront Services"""
+class CloudFrontFactsServiceManager:
+    """Handles CloudFront Facts Services"""
 
     def __init__(self, module):
         self.module = module
@@ -272,7 +272,7 @@ class CloudFrontServiceManager:
             return self.paginated_response(func)
         except botocore.exceptions.ClientError as e:
             self.module.fail_json(msg="Error describing distribution configuration - " + str(e),
-                                  exception=traceback.format_exec(e),
+                                  exception=traceback.format_exc(),
                                   **camel_dict_to_snake_dict(e.response))
 
     def get_origin_access_identity(self, origin_access_identity_id):
@@ -558,7 +558,7 @@ def main():
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
 
-    service_mgr = CloudFrontServiceManager(module)
+    service_mgr = CloudFrontFactsServiceManager(module)
 
     distribution_id = module.params.get('distribution_id')
     invalidation_id = module.params.get('invalidation_id')
