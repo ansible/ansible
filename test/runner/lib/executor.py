@@ -838,7 +838,15 @@ def get_coverage_path(args):
     os.chmod(coverage_path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
 
     shutil.copytree(src, os.path.join(coverage_path, 'coverage'))
+
+    for root, dirs, files in os.walk(coverage_path):
+        for path in dirs:
+            os.chmod(os.path.join(root, path), stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+        for path in files:
+            os.chmod(os.path.join(root, path), stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+
     shutil.copy('.coveragerc', os.path.join(coverage_path, 'coverage', '.coveragerc'))
+    os.chmod(os.path.join(coverage_path, 'coverage', '.coveragerc'), stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
 
     for directory in 'output', 'logs':
         os.mkdir(os.path.join(coverage_path, directory))
