@@ -37,7 +37,7 @@ options:
         required: true
         description:
             - API Token of a Pritunl admin user (It needs to be enabled in
-            Administrators > USERNAME > Enable Token Authentication).
+              Administrators > USERNAME > Enable Token Authentication).
 
     pritunl_api_secret:
         required: true
@@ -60,9 +60,6 @@ options:
         default: null
         description:
             - Name of the Organization to manage in Pritunl.
-
-requirements:
-- requests
 '''
 
 EXAMPLES = '''
@@ -94,7 +91,7 @@ RETURN = '''
 response:
     description: JSON representation of Pritunl Organizations
     returned: success
-    type: list of dictionaries
+    type: list
     sample: [
         {
             "auth_api": false,
@@ -170,7 +167,7 @@ def post_pritunl_organization(module):
 
     if org_name is None:
         module.fail_json(msg=("Please provide an organization name "
-            "using name=<OrgName>"))
+                              "using name=<OrgName>"))
 
     # Grab existing orgs
     orgs = _list_pritunl_organization(module, {"name": org_name})

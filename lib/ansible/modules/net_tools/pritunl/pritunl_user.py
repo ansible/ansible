@@ -99,9 +99,6 @@ options:
         default: True
         description:
             - Enable/Disable Gravatar usage for the user C(user_name).
-
-requirements:
-- requests
 '''
 
 EXAMPLES = '''
@@ -147,7 +144,7 @@ RETURN = '''
 response:
     description: JSON representation of Pritunl Users
     returned: success
-    type: list of dictionaries
+    type: list
     sample:
 
         "users": [
