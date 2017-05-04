@@ -27,7 +27,7 @@
 
 - block:
     - name: get a list of running services
-      shell: systemctl | fgrep 'running' | awk '{print $1}' | sed 's/\.service//g' | fgrep -v '.'
+      shell: systemctl | fgrep 'running' | awk '{print $1}' | sed 's/\.service//g' | fgrep -v '.' | egrep ^[a-z]
       register: running_names
     - debug: var=running_names
 
