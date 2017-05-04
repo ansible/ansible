@@ -33,7 +33,7 @@ notes:
       the existing access VLAN can be 'unconfigured' to just having VLAN 1
       on that interface.
     - When working with trunks VLANs the keywords add/remove are always sent
-      in the `port trunk allow-pass vlan` command. Use verbose mode to see
+      in the C(port trunk allow-pass vlan) command. Use verbose mode to see
       commands sent.
     - When C(state=unconfigured), the interface will result with having a default
       Layer 2 interface, i.e. vlan 1 in access mode.
@@ -141,7 +141,7 @@ existing:
 end_state:
     description: k/v pairs of switchport after module execution
     returned: always
-    type: dict or null
+    type: dict
     sample:  {"access_vlan": "20", "interface": "10GE1/0/22",
               "mode": "access", "switchport": "enable"}
 updates:
@@ -325,7 +325,7 @@ def get_interface_type(interface):
     return iftype.lower()
 
 
-def is_portswitch_enalbe(iftype):
+def is_portswitch_enalbed(iftype):
     """"[undo] portswitch"""
 
     return bool(iftype in SWITCH_PORT_TYPE)
@@ -397,8 +397,9 @@ class SwitchPort(object):
     def init_module(self):
         """ init module """
 
+        required_if = [('state', 'absent', ['mode']), ('state', 'present', ['mode'])]
         self.module = AnsibleModule(
-            argument_spec=self.spec, supports_check_mode=True)
+            argument_spec=self.spec, required_if=required_if, supports_check_mode=True)
 
     def check_response(self, xml_str, xml_name):
         """Check if response message is already succeed."""
@@ -690,10 +691,6 @@ class SwitchPort(object):
     def check_params(self):
         """Check all input params"""
 
-        if not self.interface:
-            self.module.fail_json(
-                msg='Error: Interface name must be set.')
-
         # interface type check
         if self.interface:
             self.intf_type = get_interface_type(self.interface)
@@ -701,7 +698,7 @@ class SwitchPort(object):
                 self.module.fail_json(
                     msg='Error: Interface name of %s is error.' % self.interface)
 
-        if not self.intf_type or not is_portswitch_enalbe(self.intf_type):
+        if not self.intf_type or not is_portswitch_enalbed(self.intf_type):
             self.module.fail_json(msg='Error: Interface %s is error.')
 
         # check access_vlan
@@ -719,11 +716,6 @@ class SwitchPort(object):
             if int(self.native_vlan) <= 0 or int(self.native_vlan) > 4094:
                 self.module.fail_json(
                     msg='Error: Native vlan id is not in the range from 1 to 4094.')
-
-        # check mode
-        if self.state == "present" or self.state == "absent":
-            if not self.mode:
-                self.module.fail_json(msg='Error: Interface mode must be set.')
 
         # get interface info
         self.intf_info = self.get_interface_dict(self.interface)
