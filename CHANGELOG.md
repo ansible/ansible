@@ -56,6 +56,21 @@ Ansible Changes By Release
 - any : true if any element is true
 - all: true if all elements are true
 
+### Module Notes
+
+### New Modules
+
+- avi
+  * avi_cloud
+  * avi_cloudproperties.
+  * avi_gslb
+  * avi_gslbhealthmonitor
+  * avi_gslbservice
+  * avi_ipaddrgroup
+  * avi_network
+  * avi_serviceenginegroup
+
+
 ## 2.3 "Ramble On" - 2017-04-12
 
 ### Major Changes
