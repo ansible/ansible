@@ -74,7 +74,7 @@ options:
         choices: ['noPriv', 'des56', '3des168', 'aes128', 'aes192', 'aes256']
     priv_key:
         description:
-            - The encryption password. Simple password length <8-255>. Field max.
+            - The encryption password. Password length 8-255 characters.
         required: false
         default: null
 '''
