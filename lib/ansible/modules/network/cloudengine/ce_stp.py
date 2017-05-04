@@ -176,8 +176,8 @@ proposed:
     sample: {"bpdu_protection": "enable",
              "state": "present"}
 existing:
-    description:
-        - k/v pairs of existing aaa server
+    description: k/v pairs of existing aaa server
+    returned: always
     type: dict
     sample: {"bpdu_protection": "disable"}
 end_state:
