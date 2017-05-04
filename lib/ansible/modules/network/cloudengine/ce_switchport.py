@@ -135,6 +135,7 @@ proposed:
     sample: {"access_vlan": "20", "interface": "10GE1/0/22", "mode": "access"}
 existing:
     description: k/v pairs of existing switchport
+    returned: always
     type: dict
     sample:  {"access_vlan": "10", "interface": "10GE1/0/22",
               "mode": "access", "switchport": "enable"}
