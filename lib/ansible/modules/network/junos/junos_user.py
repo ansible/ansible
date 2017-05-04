@@ -251,7 +251,6 @@ def main():
     kwargs = {'commit': not module.check_mode}
     if module.params['purge']:
         kwargs['action'] = 'replace'
-
     diff = load_config(module, tostring(ele), warnings, **kwargs)
 
     if diff:
