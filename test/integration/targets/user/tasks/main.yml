@@ -28,8 +28,7 @@
 - debug: var=user_test0
 
 - name: make a list of users
-  shell: |
-      cat /etc/passwd | cut -d: -f1
+  script: userlist.sh "{{ ansible_distribution }}"
   register: user_names
 - debug: var=user_names
 
@@ -74,8 +73,7 @@
       state: absent
   register: user_test2
 - name: make a new list of users
-  shell: |
-      cat /etc/passwd | cut -d: -f1
+  script: userlist.sh "{{ ansible_distribution }}"
   register: user_names2
 - debug: var=user_names2
 - name: validate results for testcase 2
