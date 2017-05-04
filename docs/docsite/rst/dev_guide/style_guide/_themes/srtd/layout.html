@@ -1,0 +1,238 @@
+{# TEMPLATE VAR SETTINGS #}
+{%- set url_root = pathto('', 1) %}
+{%- if url_root == '#' %}{% set url_root = '' %}{% endif %}
+{%- if not embedded and docstitle %}
+  {%- set titlesuffix = " &mdash; "|safe + docstitle|e %}
+{%- else %}
+  {%- set titlesuffix = "" %}
+{%- endif %}
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Google Tag Manager Data Layer -->
+  <script>
+   dataLayer = [];
+  </script>
+  <!-- End Google Tag Manager Data Layer -->
+
+  {% block htmltitle %}
+  <title>{{ title|striptags|e }}{{ titlesuffix }}</title>
+  {% endblock %}
+
+  {# FAVICON #}
+  {% if favicon %}
+    <link rel="shortcut icon" href="{{ pathto('_static/' + favicon, 1) }}"/>
+  {% endif %}
+
+  {# CSS #}
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+  <link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.0.3/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
+
+  {# JS #}
+  {% if not embedded %}
+
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:'{{ url_root }}',
+        VERSION:'{{ release|e }}',
+        COLLAPSE_INDEX:false,
+        FILE_SUFFIX:'{{ '' if no_search_suffix else file_suffix }}',
+        HAS_SOURCE:  {{ has_source|lower }}
+      };
+    </script>
+    {%- for scriptfile in script_files %}
+      <script type="text/javascript" src="{{ pathto(scriptfile, 1) }}"></script>
+    {%- endfor %}
+
+    {% if use_opensearch %}
+      <link rel="search" type="application/opensearchdescription+xml" title="{% trans docstitle=docstitle|e %}Search within {{ docstitle }}{% endtrans %}" href="{{ pathto('_static/opensearch.xml', 1) }}"/>
+    {% endif %}
+
+  {% endif %}
+
+  {# RTD hosts these file themselves, so just load on non RTD builds #}
+  {% if not READTHEDOCS %}
+    <link rel="stylesheet" href="{{ pathto('_static/' + style, 1) }}" type="text/css" />
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  {% endif %}
+
+  {% for cssfile in css_files %}
+    <link rel="stylesheet" href="{{ pathto(cssfile, 1) }}" type="text/css" />
+  {% endfor %}
+
+  {%- block linktags %}
+    {%- if hasdoc('about') %}
+        <link rel="author" title="{{ _('About these documents') }}"
+              href="{{ pathto('about') }}"/>
+    {%- endif %}
+    {%- if hasdoc('genindex') %}
+        <link rel="index" title="{{ _('Index') }}"
+              href="{{ pathto('genindex') }}"/>
+    {%- endif %}
+    {%- if hasdoc('search') %}
+        <link rel="search" title="{{ _('Search') }}" href="{{ pathto('search') }}"/>
+    {%- endif %}
+    {%- if hasdoc('copyright') %}
+        <link rel="copyright" title="{{ _('Copyright') }}" href="{{ pathto('copyright') }}"/>
+    {%- endif %}
+    <link rel="top" title="{{ docstitle|e }}" href="{{ pathto('index') }}"/>
+    {%- if parents %}
+        <link rel="up" title="{{ parents[-1].title|striptags|e }}" href="{{ parents[-1].link|e }}"/>
+    {%- endif %}
+    {%- if next %}
+        <link rel="next" title="{{ next.title|striptags|e }}" href="{{ next.link|e }}"/>
+    {%- endif %}
+    {%- if prev %}
+        <link rel="prev" title="{{ prev.title|striptags|e }}" href="{{ prev.link|e }}"/>
+    {%- endif %}
+  {%- endblock %}
+  {%- block extrahead %} {% endblock %}
+
+  <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+  <style>
+    .search-reset-start {
+        color: #463E3F;
+        float: right;
+        position: relative;
+        top: -25px;
+        left: -10px;
+        z-index: 10;
+     }
+     .search-reset-start:hover {
+        cursor: pointer;
+        color: #2980B9;
+     }
+     #search-box-id {
+        padding-right: 25px;
+     }
+  </style>
+
+  <!-- Google Code for Remarketing Tag -->
+  <script type="text/javascript">
+  /* <![CDATA[ */
+  var google_conversion_id = 972577926;
+  var google_custom_params = window.google_tag_params;
+  var google_remarketing_only = true;
+  /* ]]> */
+  </script>
+  <script type="text/javascript" src="//www.googleadservices.com/pagead/conversion.js">
+  </script>
+  <noscript>
+    <div style="display:inline;">
+        <img height="1" width="1" style="border-style:none;" alt=""
+              src="//googleads.g.doubleclick.net/pagead/viewthroughconversion/972577926/?value=0&amp;guid=ON&amp;script=0"/>
+    </div>
+  </noscript>
+  <!-- End of Google Code for Remarketing Tag -->
+
+</head>
+
+<body class="wy-body-for-nav">
+
+  <!-- Google Tag Manager -->
+  <noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-PSB293" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f); })(window,document,'script','dataLayer','GTM-PSB293');</script>
+  <!-- End Google Tag Manager -->
+
+  <div class="wy-grid-for-nav">
+
+    {# SIDE NAV, TOGGLES ON MOBILE #}
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div style='background-color:#64C5C7'>
+        <br/>
+        <center><a href="{{ pathto(master_doc) }}"><img src="http://cdn2.hubspot.net/hub/330046/file-445792629-png/ANSI_logotype_web_white.png" style="border-radius:0;background-color:#64C5C7;width:214px;height:26px;margin:'auto auto auto auto'"></a></center>
+        <br/>      
+      </div>
+      <div class="wy-side-nav-search" style="background-color:#64C5C7;height=80px;margin:'auto auto auto auto'">
+        <!-- <a href="{{ pathto(master_doc) }}" class="icon icon-home"> {{ project }}</a> -->
+        {% include "searchbox.html" %}
+      </div>
+
+      <div id="menu-id" class="wy-menu wy-menu-vertical" data-spy="affix">
+        {% set toctree = toctree(maxdepth=2, collapse=False) %}
+        {% if toctree %}
+            {{ toctree }}
+        {% else %}
+            {{ toc }}
+        {% endif %}
+
+<!-- changeable widget -->
+<center>
+<br/>
+<span class="hs-cta-wrapper" id="hs-cta-wrapper-71d47584-8ef5-4b06-87ae-8d25bc2a837e">
+    <span class="hs-cta-node hs-cta-71d47584-8ef5-4b06-87ae-8d25bc2a837e" id="hs-cta-71d47584-8ef5-4b06-87ae-8d25bc2a837e">
+        <!--[if lte IE 8]><div id="hs-cta-ie-element"></div><![endif]-->
+        <a href="http://cta-redirect.hubspot.com/cta/redirect/330046/71d47584-8ef5-4b06-87ae-8d25bc2a837e"><img class="hs-cta-img" id="hs-cta-img-71d47584-8ef5-4b06-87ae-8d25bc2a837e" style="border-width:0px;" src="https://no-cache.hubspot.com/cta/default/330046/71d47584-8ef5-4b06-87ae-8d25bc2a837e.png" /></a>
+    </span>
+    <script charset="utf-8" src="https://js.hscta.net/cta/current.js"></script>
+        <script type="text/javascript">
+            hbspt.cta.load(330046, '71d47584-8ef5-4b06-87ae-8d25bc2a837e');
+        </script>
+</span>
+</center>
+
+
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      {# MOBILE NAV, TRIGGLES SIDE NAV ON TOGGLE #}
+      <nav class="wy-nav-top">
+        <i data-toggle="wy-nav-top" class="icon icon-reorder"></i>
+        <a href="/">{{ project }}</a>
+      </nav>
+
+
+      {# PAGE CONTENT #}
+      <div class="wy-nav-content">
+        <div class="rst-content">
+
+<!-- AnsibleFest and free eBook preview stuff -->
+<center>
+<a href="http://www.ansible.com/tower?utm_source=docs">
+<img src="http://www.ansible.com/hubfs/Docs_Ads/TowerDocs.png">
+</a>
+<a href="https://www.eventbrite.com/e/ansiblefest-nyc-2015-tickets-16058031003">
+<img src="http://www.ansible.com/hubfs/Docs_Ads/Untitled_design_1.png">
+</a>
+<br/>&nbsp;<br/>
+<br/>&nbsp;<br/>
+</center>
+
+          {% include "breadcrumbs.html" %}
+          <div id="page-content">
+          {% block body %}{% endblock %}
+          </div>
+          <div id="search-results"><gcse:searchresults-only></div>
+          {% include "footer.html" %}
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  {% include "versions.html" %}
+
+<!-- begin analytics -->
+<script type="text/javascript">
+var _hsq = _hsq || [];
+_hsq.push(["setContentType", "standard-page"]);
+        (function(d,s,i,r) {
+        if (d.getElementById(i)){return;}
+        var n = d.createElement(s),e = document.getElementsByTagName(s)[0];
+        n.id=i;n.src = '//js.hs-analytics.net/analytics/'+(Math.ceil(new Date()/r)*r)+'/330046.js';
+        e.parentNode.insertBefore(n, e);
+        })(document, "script", "hs-analytics",300000);
+</script>
+<!-- end analytics -->
+
+</body>
+</html>
