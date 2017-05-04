@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_stp
-version_added: "2.3"
-short_description: Manages STP configuration.
+version_added: "2.4"
+short_description: Manages STP configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages STP configurations on CloudEngine switches.
+    - Manages STP configurations on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@CloudEngine-Ansible)
 options:
@@ -80,13 +80,13 @@ options:
     tc_protection_threshold:
         description:
             - Set the maximum number of TC BPDUs that the MSTP can handle.
-              The value is an integer ranging from 1 to 255. The default value is 1.
+              The value is an integer ranging from 1 to 255. The default value is 1 on the switch.
         required: false
         default: null
     interface:
         description:
             - Interface name.
-              If the value is all, will apply configuration to all interfaces.
+              If the value is C(all), will apply configuration to all interfaces.
               if the value is a special name, only support input the full name.
         required: false
         default: null
@@ -271,8 +271,8 @@ class Stp(object):
 
             self.interface_stp_cfg = tmp_cfg
 
-    def check_args(self):
-        """ Check module args """
+    def check_params(self):
+        """ Check module params """
 
         if self.cost:
             if self.cost.isdigit():
@@ -920,7 +920,7 @@ class Stp(object):
     def work(self):
         """ Work function """
 
-        self.check_args()
+        self.check_params()
         self.get_proposed()
         self.get_existing()
 
