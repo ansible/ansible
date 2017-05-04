@@ -45,7 +45,6 @@
           - 'user_test0.changed'
           - '"ansibulluser" in user_names.stdout_lines'
 
-
 ##
 ## user check
 ##
