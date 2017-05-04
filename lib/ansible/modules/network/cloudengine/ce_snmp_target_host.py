@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_snmp_target_host
-version_added: "2.3"
-short_description: Manages SNMP target host configuration.
+version_added: "2.4"
+short_description: Manages SNMP target host configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages SNMP target host configurations on CloudEngine switches.
+    - Manages SNMP target host configurations on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@CloudEngine-Ansible)
 options:
@@ -151,8 +151,8 @@ proposed:
              "security_model": "v3", "security_name_v3": "wdz",
              "state": "present", "vpn_name": "js"}
 existing:
-    description:
-        - k/v pairs of existing aaa server
+    description: k/v pairs of existing aaa server
+    returned: always
     type: dict
     sample: {}
 end_state:
@@ -291,7 +291,18 @@ class SnmpTargetHost(object):
         # module
         argument_spec = kwargs["argument_spec"]
         self.spec = argument_spec
-        self.module =AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+        required_together = [("address", "notify_type"), ("address", "notify_type")]
+        required_if = [
+            ["security_model", "v1", ["security_name"]],
+            ["security_model", "v2c", ["security_name"]],
+            ["security_model", "v3", ["security_name_v3"]]
+        ]
+        self.module = AnsibleModule(
+            argument_spec=argument_spec,
+            required_together=required_together,
+            required_if=required_if,
+            supports_check_mode=True
+        )
 
         # module args
         self.state = self.module.params['state']
@@ -358,21 +369,6 @@ class SnmpTargetHost(object):
             if len(self.host_name) > 32 or len(self.host_name) < 1:
                 self.module.fail_json(
                     msg='Error: The len of host_name is out of [1 - 32].')
-
-            if self.state == "present":
-                if not self.address or not self.notify_type:
-                    self.module.fail_json(
-                        msg='Error: Please input address notify_type at the same time.')
-
-            if self.security_model and self.security_model in ["v1", "v2c"]:
-                if not self.security_name:
-                    self.module.fail_json(
-                        msg='Error: Please input security_name when use security_model [%s].' % self.security_model)
-
-            if self.security_model and self.security_model in ["v3"]:
-                if not self.security_name_v3:
-                    self.module.fail_json(
-                        msg='Error: Please input security_name_v3 when use security_model [%s].' % self.security_model)
 
             if self.vpn_name and self.is_public_net != 'no_use':
                 if self.is_public_net == "true":
