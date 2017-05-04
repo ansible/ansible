@@ -28,3 +28,5 @@ To get started, select one of the following topics.
    repomerge
    developing_releases
    ../committer_guidelines
+   ../style_guide/index.rst
+   
