@@ -58,32 +58,32 @@ options:
       - Specify the newline sequence to use for templating files.
     choices: [ '\n', '\r', '\r\n' ]
     default: '\n'
-    version_added: '2.3'
+    version_added: '2.4'
   block_start_string:
     description:
       - The string marking the beginning of a block.
     default: '{%'
-    version_added: '2.3'
+    version_added: '2.4'
   block_end_string:
     description:
       - The string marking the end of a block.
     default: '%}'
-    version_added: '2.3'
+    version_added: '2.4'
   variable_start_string:
     description:
       - The string marking the beginning of a print statement.
     default: '{{'
-    version_added: '2.3'
+    version_added: '2.4'
   variable_end_string:
     description:
       - The string marking the end of a print statement.
     default: '}}'
-    version_added: '2.3'
+    version_added: '2.4'
   trim_blocks:
     description:
       - If this is set to True the first newline after a block is removed (block, not variable tag!).
     default: "no"
-    version_added: '2.3'
+    version_added: '2.4'
   force:
     description:
       - the default is C(yes), which will replace the remote file when contents
