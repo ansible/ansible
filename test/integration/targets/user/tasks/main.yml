@@ -15,6 +15,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+- name: get the jinja2 version
+  shell: python -c 'import jinja2; print(jinja2.__version__)'
+  register: jinja2_version
+  delegate_to: localhost
+- debug: var=jinja2_version
 
 ##
 ## user add
@@ -53,15 +59,33 @@
   register: user_test1
 - debug: var=user_test1
 
-- debug: msg="{{ user_test1.results|map(attribute='changed')|unique|list }}"
-
 - name: validate results for testcase 1
   assert:
       that:
           - 'user_test1.results is defined'
           - 'user_test1.results|length == 5'
+
+- name: validate changed results for testcase 1 (jinja >= 2.6)
+  assert:
+      that:
           - "user_test1.results|map(attribute='changed')|unique|list == [False]"
           - "user_test1.results|map(attribute='state')|unique|list == ['present']"
+  when: "jinja2_version.stdout|version_compare('2.6', '>=')"
+
+- name: validate changed results for testcase 1 (jinja >= 2.6)
+  assert:
+      that:
+          - "not user_test1.results[0]['changed']"
+          - "not user_test1.results[1]['changed']"
+          - "not user_test1.results[2]['changed']"
+          - "not user_test1.results[3]['changed']"
+          - "not user_test1.results[4]['changed']"
+          - "user_test1.results[0]['state'] == 'present'"
+          - "user_test1.results[1]['state'] == 'present'"
+          - "user_test1.results[2]['state'] == 'present'"
+          - "user_test1.results[3]['state'] == 'present'"
+          - "user_test1.results[4]['state'] == 'present'"
+  when: "jinja2_version.stdout|version_compare('2.6', '<')"
 
 ##
 ## user remove
