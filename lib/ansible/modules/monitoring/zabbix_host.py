@@ -143,9 +143,9 @@ options:
            - 2:  PSK
            - 3:  No encryption / PSK; (undocumented @ Zabbix)
            - 4:  certificate ( Not implemented )
-         required: false
-         default: 1
-         choices: ["1", "2", "3", "4" ]
+        required: false
+        default: 1
+        choices: ["1", "2", "3", "4" ]
     tls_psk:
         description:
            - The preshared key, at least 32 hex digits. Required if either tls_connect or tls_accept has PSK enabled.
