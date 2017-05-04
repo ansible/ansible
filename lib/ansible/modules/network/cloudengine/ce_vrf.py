@@ -29,17 +29,16 @@ description:
     - Manages VPN instance of HUAWEI CloudEngine switches.
 author: Yang yang (@CloudEngine-Ansible)
 notes:
-    - If no vrf is supplied, vrf is set to default.
-      If state==absent, the route will be removed, regardless of the
-      non-required parameters.
+    - If I(state=absent), the route will be removed, regardless of the
+      non-required options.
 options:
     vrf:
         description:
-            - VPN instance,the length of vrf name is 1 - 31,i.e. "test",but can not be _public_.
+            - VPN instance, the length of vrf name is 1 - 31, i.e. "test", but can not be C(_public_).
         required: true
     description:
         description:
-            - Description of the vrf,the string length is 1 - 242 .
+            - Description of the vrf, the string length is 1 - 242 .
         required: false
         default: null
     state:
@@ -161,6 +160,7 @@ def build_config_xml(xmlstr):
 
     return '<config> ' + xmlstr + ' </config>'
 
+
 class Vrf(object):
     """Manange vpn instance"""
 
@@ -233,10 +233,7 @@ class Vrf(object):
 
     def check_params(self):
         """Check all input params"""
-        # vrf check
-        if not self.vrf:
-            self.module.fail_json(
-                msg='Error: The vrf name must be set.')
+
         # vrf and description check
         if self.vrf == '_public_':
             self.module.fail_json(
