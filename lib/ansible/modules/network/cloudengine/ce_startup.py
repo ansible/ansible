@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_startup
-version_added: "2.3"
-short_description: Manages a system startup information.
+version_added: "2.4"
+short_description: Manages a system startup information on HUAWEI CloudEngine switches.
 description:
-    - Manages a system startup information on CloudEngine switches.
+    - Manages a system startup information on HUAWEI CloudEngine switches.
 author:
     - Li Yanfeng (@CloudEngine-Ansible)
 options:
@@ -114,8 +114,8 @@ proposed:
     sample: {"patch_file": "2.PAT",
              "slot": "all"}
 existing:
-    description:
-        - k/v pairs of existing aaa server
+    description: k/v pairs of existing aaa server
+    returned: always
     type: dict
     sample: {
                 "configSysSoft": "flash:/CE12800-V200R002C20_issuB071.cc",
