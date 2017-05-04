@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: get the jinja2 version
-  shell: python -c 'import jinja2; print jinja2.__version__'
+  shell: python -c 'import jinja2; print(jinja2.__version__)'
   register: jinja2_version
   delegate_to: localhost
 - debug: var=jinja2_version
