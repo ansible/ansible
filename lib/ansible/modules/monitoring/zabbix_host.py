@@ -135,7 +135,7 @@ options:
            - 3: certificate
         required: false
         default: 1
-        choices: [ "1", "2", "3" ]
+        version_added: '2.3'        
     tls_accept:
         description:
            - Set TLS connection from host
@@ -145,25 +145,29 @@ options:
            - 4:  certificate ( Not implemented )
         required: false
         default: 1
-        choices: ["1", "2", "3", "4" ]
+        version_added: '2.3'
     tls_psk:
         description:
            - The preshared key, at least 32 hex digits. Required if either tls_connect or tls_accept has PSK enabled.
         required: false
+        version_added: '2.3'
     tls_psk_identity:
         description:
            - PSK identity. Required if either tls_connect or tls_accept has PSK enabled.
         required: false
+        version_added: '2.3'
     tls_issuer:
         description:
            - Certificate issuer.
            - Not implemented
         required: false
+        version_added: '2.3'
     tls_subject:
         description:
            - Certificate subject.
            - Not implemented
         required: false
+        version_added: '2.3'        
 '''
 
 EXAMPLES = '''
