@@ -113,7 +113,7 @@ proposed:
     description: k/v pairs of parameters passed into module (does not include
                  vlan_id or vlan_range)
     returned: always
-    type: dict or null
+    type: dict
     sample: {"vlan_id":"20", "name": "VLAN_APP", "description": "vlan for app" }
 existing:
     description: k/v pairs of existing vlan or null when using vlan_range
@@ -124,7 +124,7 @@ end_state:
     description: k/v pairs of the VLAN after executing module or null
                  when using vlan_range
     returned: always
-    type: dict or null
+    type: dict
     sample: {"vlan_id":"20", "name": "VLAN_APP", "description": "vlan for app" }
 updates:
     description: command string sent to the device
