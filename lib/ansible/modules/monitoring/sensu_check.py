@@ -85,6 +85,12 @@ options:
       - Timeout for the check
     required: false
     default: 10
+  ttl:
+    description:
+      - The time to live (TTL) in seconds until check results are considered stale. 
+      - If a client stops publishing results for the check, and the TTL expires, an event will be created for the client. 
+    required: false
+    default: 360
   handle:
     description:
       - Whether the check should be handled or not
@@ -363,6 +369,7 @@ def main():
                 'subscribers':  {'type': 'list'},
                 'interval':     {'type': 'int'},
                 'timeout':      {'type': 'int'},
+                'ttl':          {'type': 'int', 'default': 360},
                 'handle':       {'type': 'bool'},
                 'subdue_begin': {'type': 'str'},
                 'subdue_end':   {'type': 'str'},
