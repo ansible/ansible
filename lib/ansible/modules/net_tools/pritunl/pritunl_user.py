@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # (c) 2016, Florian Dambrine <android.florian@gmail.com>
 #
@@ -179,6 +179,7 @@ response:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import json
 from ansible.module_utils.pritunl import pritunl_auth_request
+from ansible.module_utils.six import iteritems
 
 
 def _list_pritunl_organization(module, filters=None):
@@ -197,7 +198,7 @@ def _list_pritunl_organization(module, filters=None):
             else:
                 filtered_flag = False
 
-                for filter_key, filter_val in filters.iteritems():
+                for filter_key, filter_val in iteritems(filters):
                     if filter_val != org[filter_key]:
                         filtered_flag = True
 
@@ -223,7 +224,7 @@ def _list_pritunl_user(module, organization_id, user_id=None, filters=None):
             else:
                 filtered_flag = False
 
-                for filter_key, filter_val in filters.iteritems():
+                for filter_key, filter_val in iteritems(filters):
                     if filter_val != user[filter_key]:
                         filtered_flag = True
 

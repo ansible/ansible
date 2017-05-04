@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # (c) 2016, Florian Dambrine <android.florian@gmail.com>
 #
