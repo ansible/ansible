@@ -148,12 +148,12 @@ def main():
         module.fail_json(msg=e.message, exception=traceback.format_exc())
 
     # Modify boto3 tags list to be ansible friendly dict and then camel_case
-    camel_security_groups = []
+    snaked_security_groups = []
     for security_group in security_groups['SecurityGroups']:
         security_group['Tags'] = boto3_tag_list_to_ansible_dict(security_group['Tags'])
-        camel_security_groups.append(camel_dict_to_snake_dict(security_group))
+        snaked_security_groups.append(camel_dict_to_snake_dict(security_group))
 
-    module.exit_json(security_groups=camel_security_groups)
+    module.exit_json(security_groups=snaked_security_groups)
 
 
 from ansible.module_utils.basic import *

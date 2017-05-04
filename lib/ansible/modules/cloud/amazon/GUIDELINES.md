@@ -252,6 +252,19 @@ else:
     aws_object.set_policy(user_policy)
 ```
 
+### Dealing with tags
+
+AWS has a concept of resource tags. Usually the boto3 API has separate calls for tagging and
+untagging a resource.  For example, the ec2 API has a create_tags and delete_tags call.
+
+It is common practice in Ansible AWS modules to have a 'purge_tags' parameter that defaults to true.
+
+The purge_tags parameter means that existing tags will be deleted if they are not specified in
+by the Ansible playbook.
+
+There is a helper function 'compare_aws_tags' to ease dealing with tags. It can compare two dicts and
+return the tags to set and the tags to delete.  See the Helper function section below for more detail.
+
 ### Helper functions
 
 Along with the connection functions in Ansible ec2.py module_utils, there are some other useful functions detailed below.
