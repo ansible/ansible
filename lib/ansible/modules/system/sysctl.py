@@ -211,12 +211,17 @@ class SysctlModule(object):
     def _parse_value(self, value):
         if value is None:
             return ''
-        elif isinstance(value, bool):
+        if isinstance(value, bool):
             if value:
                 return '1'
             else:
                 return '0'
-        elif isinstance(value, basestring):
+        # Check for python 2.x basestring which unifies (unicode, str) support
+        try:
+            basestring
+        except NameError:
+            basestring = str
+        if isinstance(value, basestring):
             if value.lower() in BOOLEANS_TRUE:
                 return '1'
             elif value.lower() in BOOLEANS_FALSE:
