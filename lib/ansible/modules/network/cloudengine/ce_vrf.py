@@ -86,12 +86,13 @@ proposed:
              "state": "present"}
 existing:
     description: k/v pairs of existing switchport
+    returned: always
     type: dict
     sample:  {}
 end_state:
     description: k/v pairs of switchport after module execution
     returned: always
-    type: dict or null
+    type: dict
     sample:  {"vrf": "vpna",
               "description": "test",
               "present": "present"}
