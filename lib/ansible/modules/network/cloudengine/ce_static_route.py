@@ -17,19 +17,19 @@
 #
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_static_route
-version_added: "2.3"
-short_description: Manages static route configuration.
+version_added: "2.4"
+short_description: Manages static route configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages the static routes of Huawei CloudEngine switches.
+    - Manages the static routes on HUAWEI CloudEngine switches.
 author: Yang yang (@CloudEngine-Ansible)
 notes:
     - If no vrf is supplied, vrf is set to default.
-      If state=absent, the route will be removed, regardless of the
+      If I(state=absent), the route will be removed, regardless of the
       non-required parameters.
 options:
     prefix:
@@ -155,6 +155,7 @@ proposed:
             "vrf": "_public_"}
 existing:
     description: k/v pairs of existing switchport
+    returned: always
     type: dict
     sample:  {null}
 end_state:
@@ -380,8 +381,9 @@ class StaticRoute(object):
     def init_module(self):
         """init module"""
 
+        required_one_of = [["next_hop", "nhp_interface"]]
         self.module = AnsibleModule(
-            argument_spec=self.spec, supports_check_mode=True)
+            argument_spec=self.spec, required_one_of=required_one_of, supports_check_mode=True)
 
     def check_response(self, xml_str, xml_name):
         """check if response message is already succeed."""
@@ -619,13 +621,7 @@ class StaticRoute(object):
 
     def check_params(self):
         """check all input params"""
-        # prefix, mask, aftype, next_hop, state, check
-        if not self.prefix or not self.mask or not self.aftype or not self.state:
-            self.module.fail_json(
-                msg='Error: Prefix or mask or address family type or state must be set.')
-        if not self.next_hop and not self.nhp_interface:
-            self.module.fail_json(
-                msg='Error: Next hop or next hop interface must be set.')
+
         # check prefix and mask
         if not self.mask.isdigit():
             self.module.fail_json(msg='Error: Mask is invalid.')
@@ -653,7 +649,7 @@ class StaticRoute(object):
         if self.description:
             if not is_valid_description(self.description):
                 self.module.fail_json(
-                    msg='Error: Dsecription length should be 1 - 35,and can not contain "?".')
+                    msg='Error: Dsecription length should be 1 - 35, and can not contain "?".')
         # tag check
         if self.tag:
             if not is_valid_tag(self.tag):
