@@ -51,11 +51,13 @@ options:
       - If multipart upload is used or a file that was uploaded using multipart upload, configure its chunk_size in bytes here.
     required: false
     default: null
+    version_added: "2.4"
   chunk_size_unit:
     description:
       - If multipart upload is used, sets unit for the configured chunk_size.
     required: false
     default: mb
+    version_added: "2.4"
   dest:
     description:
       - The destination file path when downloading an object/key with a GET operation.
@@ -295,7 +297,8 @@ except ImportError:
     HAS_BOTO = False
 
 try:
-    import math, hashlib
+    import math
+    import hashlib
     SUPPORTS_MULTIPART_DOWNLOAD = True
 except ImportError:
     SUPPORTS_MULTIPART_DOWNLOAD = False
@@ -467,7 +470,7 @@ def get_download_url(module, s3, bucket, obj, expiry, changed=True, validate=Tru
 def calculate_multipart_etag(module, dest, chunk_size):
     if not SUPPORTS_MULTIPART_DOWNLOAD:
         module.fail_json(msg="Missing modules (multiprocessing, filechunkio) needed for multipart up/download.")
-    if chunk_size == None:
+    if chunk_size is None:
         module.fail_json(
             msg="Chunk size missing for multipart download.")
 
@@ -536,17 +539,17 @@ def main():
     )
 
     size_unit_map = dict(
-            bytes=1,
-            b=1,
-            kb=1024,
-            mb=1024 ** 2,
-            gb=1024 ** 3,
-            tb=1024 ** 4,
-            pb=1024 ** 5,
-            eb=1024 ** 6,
-            zb=1024 ** 7,
-            yb=1024 ** 8
-        )
+        bytes=1,
+        b=1,
+        kb=1024,
+        mb=1024 ** 2,
+        gb=1024 ** 3,
+        tb=1024 ** 4,
+        pb=1024 ** 5,
+        eb=1024 ** 6,
+        zb=1024 ** 7,
+        yb=1024 ** 8
+    )
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
@@ -659,9 +662,9 @@ def main():
             md5_remote = keysum(module, s3, bucket, obj, version=version, validate=validate)
 
             if '-' in md5_remote:
-              md5_local = calculate_multipart_etag(module, dest, chunk_size)
+                md5_local = calculate_multipart_etag(module, dest, chunk_size)
             else:
-              md5_local = module.md5(dest)# Check for multipart, etag is not md5
+                md5_local = module.md5(dest)# Check for multipart, etag is not md5
             if md5_local == md5_remote:
                 sum_matches = True
                 if overwrite == 'always':
