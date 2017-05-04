@@ -149,9 +149,11 @@ class SnmpTraps(object):
         # module
         argument_spec = kwargs["argument_spec"]
         self.spec = argument_spec
-        self.module = AnsibleModule(argument_spec=self.spec,
+        self.module = AnsibleModule(
+            argument_spec=self.spec,
             required_together=[("interface_type", "interface_number")],
-            supports_check_mode=True)
+            supports_check_mode=True
+        )
 
         # config
         self.cur_cfg = dict()
