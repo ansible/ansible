@@ -27,6 +27,11 @@ description:
 version_added: "2.4"
 author: "Rob White (@wimnat)"
 options:
+  access_logs_enabled:
+    description:
+      - "Whether or not to enable access logs. When true, I(access_logs_s3_bucket) must be set."
+    required: false
+    choices: [ 'yes', 'no' ]
   access_logs_s3_bucket:
     description:
       - "The name of the S3 bucket for the access logs. This attribute is required if access logs in Amazon S3 are enabled. The bucket must exist in the same \
@@ -565,6 +570,7 @@ def create_or_update_elb(connection, connection_ec2, module):
     if module.params.get("tags"):
         params['Tags'] = ansible_dict_to_boto3_tag_list(module.params.get("tags"))
     purge_tags = module.params.get("purge_tags")
+    access_logs_enabled = module.params.get("access_logs_enabled")
     access_logs_s3_bucket = module.params.get("access_logs_s3_bucket")
     access_logs_s3_prefix = module.params.get("access_logs_s3_prefix")
     deletion_protection = module.params.get("deletion_protection")
@@ -580,7 +586,7 @@ def create_or_update_elb(connection, connection_ec2, module):
         if set(_get_subnet_ids_from_subnet_list(elb['AvailabilityZones'])) != set(params['Subnets']):
             try:
                 connection.set_subnets(LoadBalancerArn=elb['LoadBalancerArn'], Subnets=params['Subnets'])
-            except (ClientError, NoCredentialsError) as e:
+            except ClientError as e:
                 module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
             changed = True
 
@@ -588,7 +594,7 @@ def create_or_update_elb(connection, connection_ec2, module):
         if set(elb['SecurityGroups']) != set(params['SecurityGroups']):
             try:
                 connection.set_security_groups(LoadBalancerArn=elb['LoadBalancerArn'], SecurityGroups=params['SecurityGroups'])
-            except (ClientError, NoCredentialsError) as e:
+            except ClientError as e:
                 module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
             changed = True
 
@@ -596,7 +602,7 @@ def create_or_update_elb(connection, connection_ec2, module):
         if module.params.get("tags"):
             try:
                 elb_tags = connection.describe_tags(ResourceArns=[elb['LoadBalancerArn']])['TagDescriptions'][0]['Tags']
-            except (ClientError, NoCredentialsError) as e:
+            except ClientError as e:
                 module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
             # Delete necessary tags
@@ -604,7 +610,7 @@ def create_or_update_elb(connection, connection_ec2, module):
             if tags_to_delete:
                 try:
                     connection.remove_tags(ResourceArns=[elb['LoadBalancerArn']], TagKeys=tags_to_delete)
-                except (ClientError, NoCredentialsError) as e:
+                except ClientError as e:
                     module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
                 changed = True
 
@@ -612,7 +618,7 @@ def create_or_update_elb(connection, connection_ec2, module):
             if tags_need_modify:
                 try:
                     connection.add_tags(ResourceArns=[elb['LoadBalancerArn']], Tags=params['Tags'])
-                except (ClientError, NoCredentialsError) as e:
+                except ClientError as e:
                     module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
                 changed = True
 
@@ -632,10 +638,15 @@ def create_or_update_elb(connection, connection_ec2, module):
     # Get current attributes
     current_elb_attributes = boto3_tag_list_to_ansible_dict(connection.describe_load_balancer_attributes(LoadBalancerArn=elb['LoadBalancerArn']))
 
+    #module.exit_json(atts=current_elb_attributes)
     # Access logs
-    if access_logs_s3_bucket != current_elb_attributes['access_logs.s3.bucket'] or access_logs_s3_prefix != current_elb_attributes['access_logs.s3.prefix']:
-        update_attributes_dict['access_logs.s3.enabled'] = True
-    module.exit_json(**current_elb_attributes)
+    #if access_logs_enabled == True and current_elb_attributes['access_logs.s3.prefix'] == "x":
+    #    pass
+
+
+    #if access_logs_s3_bucket != current_elb_attributes['access_logs.s3.bucket'] or access_logs_s3_prefix != current_elb_attributes['access_logs.s3.prefix']:
+    #    update_attributes_dict['access_logs.s3.enabled'] = True
+    #module.exit_json(**current_elb_attributes)
 
     try:
         attribute_changed = update_elb_attributes(connection, module, elb)
@@ -687,6 +698,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
+            access_logs_enabled=dict(required=False, type='bool'),
             access_logs_s3_bucket=dict(required=False, type='str'),
             access_logs_s3_prefix=dict(required=False, type='str'),
             deletion_protection=dict(required=False, default=False, type='bool'),
@@ -709,7 +721,7 @@ def main():
                                ('state', 'present', ['subnets', 'security_groups'])
                            ],
                            required_together=(
-                               ['access_logs_s3_bucket', 'access_logs_s3_prefix']
+                               ['access_logs_enabled', 'access_logs_s3_bucket']
                            )
                            )
 
