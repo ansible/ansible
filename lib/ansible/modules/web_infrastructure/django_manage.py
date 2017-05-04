@@ -141,7 +141,6 @@ EXAMPLES = """
 
 import os
 
-
 def _fail(module, cmd, out, err, **kwargs):
     msg = ''
     if out:
@@ -171,30 +170,23 @@ def _ensure_virtualenv(module):
     os.environ["PATH"] = "%s:%s" % (vbin, os.environ["PATH"])
     os.environ["VIRTUAL_ENV"] = venv_param
 
-
 def createcachetable_filter_output(line):
     return "Already exists" not in line
-
 
 def flush_filter_output(line):
     return "Installed" in line and "Installed 0 object" not in line
 
-
 def loaddata_filter_output(line):
     return "Installed" in line and "Installed 0 object" not in line
-
 
 def syncdb_filter_output(line):
     return ("Creating table " in line) or ("Installed" in line and "Installed 0 object" not in line)
 
-
 def migrate_filter_output(line):
     return ("Migrating forwards " in line) or ("Installed" in line and "Installed 0 object" not in line) or ("Applying" in line)
 
-
 def collectstatic_filter_output(line):
     return line and "0 static files" not in line
-
 
 def main():
     command_allowed_param_map = dict(
@@ -207,11 +199,11 @@ def main():
         validate=(),
         migrate=('apps', 'skip', 'merge', 'database',),
         collectstatic=('clear', 'link', ),
-    )
+        )
 
     command_required_param_map = dict(
         loaddata=('fixtures', ),
-    )
+        )
 
     # forces --noinput on every command that needs it
     noinput_commands = (
@@ -220,7 +212,7 @@ def main():
         'migrate',
         'test',
         'collectstatic',
-    )
+        )
 
     # These params are allowed for certain commands only
     specific_params = ('apps', 'clear', 'database', 'failfast', 'fixtures', 'liveserver', 'testrunner')
@@ -232,23 +224,23 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            command=dict(default=None, required=True),
-            app_path=dict(default=None, required=True),
-            settings=dict(default=None, required=False),
-            pythonpath=dict(default=None, required=False, aliases=['python_path']),
-            virtualenv=dict(default=None, required=False, aliases=['virtual_env']),
+            command     = dict(default=None, required=True),
+            app_path    = dict(default=None, required=True),
+            settings    = dict(default=None, required=False),
+            pythonpath  = dict(default=None, required=False, aliases=['python_path']),
+            virtualenv  = dict(default=None, required=False, aliases=['virtual_env']),
 
-            apps=dict(default=None, required=False),
-            cache_table=dict(default=None, required=False),
-            clear=dict(default=None, required=False, type='bool'),
-            database=dict(default=None, required=False),
-            failfast=dict(default='no', required=False, type='bool', aliases=['fail_fast']),
-            fixtures=dict(default=None, required=False),
-            liveserver=dict(default=None, required=False, aliases=['live_server']),
-            testrunner=dict(default=None, required=False, aliases=['test_runner']),
-            skip=dict(default=None, required=False, type='bool'),
-            merge=dict(default=None, required=False, type='bool'),
-            link=dict(default=None, required=False, type='bool'),
+            apps        = dict(default=None, required=False),
+            cache_table = dict(default=None, required=False),
+            clear       = dict(default=None, required=False, type='bool'),
+            database    = dict(default=None, required=False),
+            failfast    = dict(default='no', required=False, type='bool', aliases=['fail_fast']),
+            fixtures    = dict(default=None, required=False),
+            liveserver  = dict(default=None, required=False, aliases=['live_server']),
+            testrunner  = dict(default=None, required=False, aliases=['test_runner']),
+            skip        = dict(default=None, required=False, type='bool'),
+            merge       = dict(default=None, required=False, type='bool'),
+            link        = dict(default=None, required=False, type='bool'),
         ),
     )
 

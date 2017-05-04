@@ -111,7 +111,6 @@ try:
 except ImportError:
     pass  # will be captured by imported HAS_BOTO3
 
-import traceback
 
 def get_virtual_gateway_info(virtual_gateway):
     virtual_gateway_info = {'VpnGatewayId': virtual_gateway['VpnGatewayId'],

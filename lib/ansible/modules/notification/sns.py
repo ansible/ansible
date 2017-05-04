@@ -200,9 +200,9 @@ def main():
         e = get_exception()
         module.fail_json(msg=str(e))
 
-    if not message_structure == 'string' and message_attributes:
+    if not message_structure=='string' and message_attributes:
         module.fail_json(msg="when specifying message_attributes, the message_structure must be set to 'string'; otherwise the attributes will not be sent.")
-    elif message_structure == 'string' and (email or sqs or sms or http or https):
+    elif message_structure=='string' and (email or sqs or sms or http or https):
         module.fail_json(msg="do not specify non-default message formats when using the 'string' message_structure. they can only be used with "
                              "the 'json' message_structure.")
 
