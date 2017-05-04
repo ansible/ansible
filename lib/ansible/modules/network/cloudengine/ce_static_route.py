@@ -157,11 +157,11 @@ existing:
     description: k/v pairs of existing switchport
     returned: always
     type: dict
-    sample:  {null}
+    sample:  {}
 end_state:
     description: k/v pairs of switchport after module execution
     returned: always
-    type: dict or null
+    type: dict
     sample:  {"next_hop": "3.3.3.3", "pref": "100",
             "prefix": "192.168.20.0", "mask": "24", "description": "testing",
             "tag" : "null"}
@@ -685,22 +685,22 @@ class StaticRoute(object):
         if static_route is None:
             return False
         if self.next_hop and self.nhp_interface:
-            return bool(static_route["prefix"].lower() == self.prefix.lower()
-                        and static_route["maskLength"] == self.mask
-                        and static_route["afType"] == version
-                        and static_route["ifName"].lower() == self.nhp_interface.lower()
+            return bool(static_route["prefix"].lower() == self.prefix.lower() \
+                        and static_route["maskLength"] == self.mask \
+                        and static_route["afType"] == version \
+                        and static_route["ifName"].lower() == self.nhp_interface.lower() \
                         and static_route["nexthop"].lower() == self.next_hop.lower())
 
         if self.next_hop and not self.nhp_interface:
-            return bool(static_route["prefix"].lower() == self.prefix.lower()
-                        and static_route["maskLength"] == self.mask
-                        and static_route["afType"] == version
+            return bool(static_route["prefix"].lower() == self.prefix.lower() \
+                        and static_route["maskLength"] == self.mask \
+                        and static_route["afType"] == version \
                         and static_route["nexthop"].lower() == self.next_hop.lower())
 
         if not self.next_hop and self.nhp_interface:
-            return bool(static_route["prefix"].lower() == self.prefix.lower()
-                        and static_route["maskLength"] == self.mask
-                        and static_route["afType"] == version
+            return bool(static_route["prefix"].lower() == self.prefix.lower() \
+                        and static_route["maskLength"] == self.mask \
+                        and static_route["afType"] == version \
                         and static_route["ifName"].lower() == self.nhp_interface.lower())
 
     def get_ip_static_route(self):
