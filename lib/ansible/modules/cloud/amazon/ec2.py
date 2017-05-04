@@ -146,6 +146,7 @@ options:
     default: 1
     aliases: []
   min_success_percentage:
+    version_added: "2.4"
     description:
       - minimum percentage of instances successfully launched without failing
     required: False
