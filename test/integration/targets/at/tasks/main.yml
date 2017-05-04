@@ -37,6 +37,7 @@
         - Fedora
         - Ubuntu
         - Debian
+        - openSUSE Leap
 
 - name: ensure at is installed
   package:
