@@ -777,8 +777,6 @@ class SwitchPort(object):
             elif self.mode == "trunk":
                 self.merge_trunk_vlan(
                     self.interface, self.native_vlan, self.trunk_vlans)
-            else:
-                self.module.fail_json(msg='Error: Interface mode must be set.')
         # unconfigured
         else:
             self.default_switchport(self.interface)
