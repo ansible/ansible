@@ -29,8 +29,6 @@ short_description: Manage downtime for icinga2 using Icinga2 API.
 description:
     - A module to manage downtime for icinga2 using Icinga2 API.
     - This module is able to schedule or remove downtime for hosts or/and services (can be used with regex).
-requirements:
-    - requests
 options:
     icinga2_url:
         required: true
