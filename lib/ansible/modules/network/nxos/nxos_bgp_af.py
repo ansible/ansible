@@ -267,10 +267,12 @@ commands:
 '''
 
 import re
+
 from ansible.module_utils.nxos import get_config, load_config
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import CustomNetworkConfig
+
 
 BOOL_PARAMS = [
     'additional_paths_install',
@@ -494,15 +496,11 @@ def get_existing(module, args, warnings):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
 
-    try:
-        asn_regex = r'.*router\sbgp\s(?P<existing_asn>\d+).*'
-        match_asn = re.match(asn_regex, str(netcfg), re.DOTALL)
-        existing_asn_group = match_asn.groupdict()
-        existing_asn = existing_asn_group['existing_asn']
-    except AttributeError:
-        existing_asn = ''
+    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+).*', re.DOTALL)
+    match_asn = asn_regex.match(str(netcfg))
 
-    if existing_asn:
+    if match_asn:
+        existing_asn = match_asn.group('existing_asn')
         parents = ["router bgp {0}".format(existing_asn)]
         if module.params['vrf'] != 'default':
             parents.append('vrf {0}'.format(module.params['vrf']))
@@ -527,14 +525,11 @@ def get_existing(module, args, warnings):
 
 def apply_key_map(key_map, table):
     new_dict = {}
-    for key, value in table.items():
+    for key in table:
         new_key = key_map.get(key)
         if new_key:
-            value = table.get(key)
-            if value:
-                new_dict[new_key] = value
-            else:
-                new_dict[new_key] = value
+            new_dict[new_key] = table.get(key)
+
     return new_dict
 
 
@@ -801,10 +796,11 @@ def main():
     )
 
     warnings = list()
-    result = dict(changed=False, warnings=warnings)
     check_args(module, warnings)
+    result = dict(changed=False, warnings=warnings)
 
     state = module.params['state']
+
     if module.params['dampening_routemap']:
         for param in DAMPENING_PARAMS:
             if module.params[param]:
@@ -821,45 +817,11 @@ def main():
         module.fail_json(msg='table_map param is needed when using'
                              ' table_map_filter filter.')
 
-    args = [
-        "additional_paths_install",
-        "additional_paths_receive",
-        "additional_paths_selection",
-        "additional_paths_send",
-        "advertise_l2vpn_evpn",
-        "afi",
-        "asn",
-        "client_to_client",
-        "dampen_igp_metric",
-        "dampening_half_time",
-        "dampening_max_suppress_time",
-        "dampening_reuse_time",
-        "dampening_suppress_time",
-        "dampening_routemap",
-        "dampening_state",
-        "default_information_originate",
-        "default_metric",
-        "distance_ebgp",
-        "distance_ibgp",
-        "distance_local",
-        "inject_map",
-        "maximum_paths",
-        "maximum_paths_ibgp",
-        "networks",
-        "next_hop_route_map",
-        "redistribute",
-        "safi",
-        "suppress_inactive",
-        "table_map",
-        "table_map_filter",
-        "vrf"
-    ]
-
+    args = PARAM_TO_COMMAND_KEYMAP.keys()
     existing = get_existing(module, args, warnings)
 
-    if existing.get('asn'):
-        if (existing.get('asn') != module.params['asn'] and
-                state == 'present'):
+    if existing.get('asn') and state == 'present':
+        if existing.get('asn') != module.params['asn']:
             module.fail_json(msg='Another BGP ASN already exists.',
                              proposed_asn=module.params['asn'],
                              existing_asn=existing.get('asn'))
@@ -878,10 +840,8 @@ def main():
     for key, value in proposed_args.items():
         if key not in ['asn', 'vrf']:
             if str(value).lower() == 'default':
-                value = PARAM_TO_DEFAULT_KEYMAP.get(key)
-                if value is None:
-                    value = 'default'
-            if existing.get(key) or (not existing.get(key) and value):
+                value = PARAM_TO_DEFAULT_KEYMAP.get(key, 'default')
+            if existing.get(key) != value:
                 proposed[key] = value
 
     candidate = CustomNetworkConfig(indent=3)
