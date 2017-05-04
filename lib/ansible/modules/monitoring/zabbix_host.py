@@ -135,7 +135,7 @@ options:
            - '3 certificate ( Not implemented )'
         required: false
         default: 1
-        version_added: '2.4'        
+        version_added: '2.4'
     tls_accept:
         description:
            - 'Set TLS connection from host'
@@ -167,7 +167,7 @@ options:
            - Certificate subject.
            - Not implemented
         required: false
-        version_added: '2.4'        
+        version_added: '2.4'
 '''
 
 EXAMPLES = '''
