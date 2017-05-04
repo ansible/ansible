@@ -87,10 +87,11 @@ options:
     default: 10
   ttl:
     description:
-      - The time to live (TTL) in seconds until check results are considered stale. 
-      - If a client stops publishing results for the check, and the TTL expires, an event will be created for the client. 
+      - The time to live (TTL) in seconds until check results are considered stale.
+      - If a client stops publishing results for the check, and the TTL expires, an event will be created for the client.
     required: false
     default: 360
+    version_added: 2.4
   handle:
     description:
       - Whether the check should be handled or not
