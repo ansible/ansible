@@ -36,7 +36,7 @@ options:
         default: null
     vlan_range:
         description:
-            - Range of VLANs such as 2-10 or 2,5,10-15, etc.
+            - Range of VLANs such as C(2-10) or C(2,5,10-15), etc.
         required: false
         default: null
     name:
@@ -297,8 +297,16 @@ class Vlan(object):
         init ansilbe NetworkModule.
         """
 
+        required_one_of = [["vlan_id", "vlan_range"]]
+        mutually_exclusive = [["vlan_id", "vlan_range"]]
+        required_if = [('description', not None, ('vlan_id',)), ('name', not None, ('vlan_id',))]
+
         self.module = AnsibleModule(
-            argument_spec=self.spec, supports_check_mode=True)
+            argument_spec=self.spec,
+            required_one_of=required_one_of,
+            mutually_exclusive=mutually_exclusive,
+            required_if=required_if,
+            supports_check_mode=True)
 
     def check_response(self, xml_str, xml_name):
         """Check if response message is already succeed."""
@@ -490,22 +498,6 @@ class Vlan(object):
 
     def check_params(self):
         """Check all input params"""
-
-        # is params invalid
-        if not self.vlan_id and not self.vlan_range:
-            self.module.fail_json(
-                msg='Error: Vlan_id or vlan_range must be set.')
-        elif self.vlan_id and self.vlan_range:
-            self.module.fail_json(
-                msg='Error: Vlan_id or vlan_range can not be set at the same time.')
-
-        if not self.vlan_id and self.description:
-            self.module.fail_json(
-                msg='Error: Vlan description could be set only at one vlan.')
-
-        if not self.vlan_id and self.name:
-            self.module.fail_json(
-                msg='Error: Vlan name could be set only at one vlan.')
 
         # check vlan id
         if self.vlan_id:
