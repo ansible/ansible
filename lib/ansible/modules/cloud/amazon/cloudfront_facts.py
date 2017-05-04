@@ -238,8 +238,8 @@ except ImportError:
     pass  # will be caught by imported HAS_BOTO3
 
 
-class CloudFrontServiceManager:
-    """Handles CloudFront Services"""
+class CloudFrontFactsServiceManager:
+    """Handles CloudFront Facts Services"""
 
     def __init__(self, module):
         self.module = module
@@ -560,7 +560,7 @@ def main():
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 is required.')
 
-    service_mgr = CloudFrontServiceManager(module)
+    service_mgr = CloudFrontFactsServiceManager(module)
 
     distribution_id = module.params.get('distribution_id')
     invalidation_id = module.params.get('invalidation_id')
