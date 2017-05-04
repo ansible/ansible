@@ -129,45 +129,45 @@ options:
         version_added: "2.0"
     tls_connect:
         description:
-           - Set TLS connection to host:
-           - 1: (default) No encryption
-           - 2: PSK
-           - 3: certificate
+           - 'Set TLS connection to host'
+           - '1 (default) No encryption'
+           - '2 PSK'
+           - '3 certificate ( Not implemented )'
         required: false
         default: 1
-        version_added: '2.3'        
+        version_added: '2.4'        
     tls_accept:
         description:
-           - Set TLS connection from host
-           - 1:  (default) No encryption
-           - 2:  PSK
-           - 3:  No encryption / PSK; (undocumented @ Zabbix)
-           - 4:  certificate ( Not implemented )
+           - 'Set TLS connection from host'
+           - '1 (default) No encryption'
+           - '2 PSK'
+           - '3 No encryption / PSK (undocumented @ Zabbix)'
+           - '4 certificate ( Not implemented )'
         required: false
         default: 1
-        version_added: '2.3'
+        version_added: '2.4'
     tls_psk:
         description:
            - The preshared key, at least 32 hex digits. Required if either tls_connect or tls_accept has PSK enabled.
         required: false
-        version_added: '2.3'
+        version_added: '2.4'
     tls_psk_identity:
         description:
            - PSK identity. Required if either tls_connect or tls_accept has PSK enabled.
         required: false
-        version_added: '2.3'
+        version_added: '2.4'
     tls_issuer:
         description:
            - Certificate issuer.
            - Not implemented
         required: false
-        version_added: '2.3'
+        version_added: '2.4'
     tls_subject:
         description:
            - Certificate subject.
            - Not implemented
         required: false
-        version_added: '2.3'        
+        version_added: '2.4'        
 '''
 
 EXAMPLES = '''
