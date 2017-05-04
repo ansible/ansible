@@ -54,7 +54,7 @@ options:
         default: null
     tag:
         description:
-            - Route tag for IPv4 ot IPv6 Address in integer format.
+            - Route tag for IPv4 or IPv6 Address in integer format.
         required: false
         default: 0
         version_added: "2.4"
