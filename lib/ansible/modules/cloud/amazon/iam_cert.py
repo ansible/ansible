@@ -56,33 +56,18 @@ options:
     aliases: []
   cert_chain:
     description:
-      - The path to the CA certificate chain in PEM encoded format.
+      - The CA certificate chain in PEM encoded format.
     required: false
     default: null
     aliases: []
   cert:
     description:
-      - The path to the certificate body in PEM encoded format.
+      - The certificate body in PEM encoded format.
     required: false
     aliases: []
   key:
     description:
-      - The path to the private key of the certificate in PEM encoded format.
-  cert_chain_body:
-    version_added: "2.4"
-    description:
-      - The CA certificate chain in PEM encoded format.
-    required: false
-    default: null
-  cert_body:
-    version_added: "2.4"
-    description:
-      - The certificate body in PEM encoded format.
-    required: false
-  key_body:
-    version_added: "2.4"
-    description:
-      - The private key of the certificate in PEM encoded format.
+      - The key of the certificate in PEM encoded format.
   dup_ok:
     description:
       - By default the module will not upload a certificate that is already uploaded into AWS. If set to True, it will upload the certificate as
@@ -112,26 +97,22 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-# Basic server certificate upload
-tasks:
-- name: Upload Certificate
-  iam_cert:
+# Basic server certificate upload from local file
+- iam_cert:
     name: very_ssl
     state: present
-    cert: somecert.pem
-    key: privcertkey
-    cert_chain: myverytrustedchain
+    cert: "{{ lookup('file', 'path/to/cert') }}"
+    key: "{{ lookup('file', 'path/to/key') }}"
+    cert_chain: "{{ lookup('file', 'path/to/certchain') }}"
 
-# Server certificate upload using key from ansible-vault
-tasks:
-- name: Upload Certificate from Vault
-  iam_cert:
+# Server certificate upload using key string
+- iam_cert:
     name: very_ssl
     state: present
     path: "/a/cert/path/"
-    cert_body: body_of_somecert
-    key_body: vault_body_of_privcertkey
-    cert_chain_body: body_of_myverytrustedchain
+    cert: body_of_somecert
+    key: vault_body_of_privcertkey
+    cert_chain: body_of_myverytrustedchain
 '''
 import json
 import sys
@@ -260,12 +241,9 @@ def main():
         state=dict(
             default=None, required=True, choices=['present', 'absent']),
         name=dict(default=None, required=False),
-        cert=dict(default=None, required=False, type='path'),
-        cert_body=dict(default=None, required=False),
-        key=dict(default=None, required=False, type='path'),
-        key_body=dict(default=None, required=False, no_log=True),
-        cert_chain=dict(default=None, required=False, type='path'),
-        cert_chain_body=dict(default=None, required=False),
+        cert=dict(default=None, required=False),
+        key=dict(default=None, required=False, no_log=True),
+        cert_chain=dict(default=None, required=False),
         new_name=dict(default=None, required=False),
         path=dict(default='/', required=False),
         new_path=dict(default=None, required=False),
@@ -299,18 +277,12 @@ def main():
     cert_chain = module.params.get('cert_chain')
     dup_ok = module.params.get('dup_ok')
     if state == 'present':
-        if module.params.get('cert_body') is not None:
-            cert = module.params.get('cert_body')
-        else:
-            cert = open(module.params.get('cert'), 'r').read().rstrip()
-        if module.params.get('key_body') is not None:
-            key = module.params.get('key_body')
-        else:
-            key = open(module.params.get('key'), 'r').read().rstrip()
-        if module.params.get('cert_chain_body') is not None:
-            cert_chain = module.params.get('cert_chain_body')
-        elif cert_chain is not None:
-            cert_chain = open(module.params.get('cert_chain'), 'r').read()
+        if module.params.get('cert') is not None:
+            cert = module.params.get('cert')
+        if module.params.get('key') is not None:
+            key = module.params.get('key')
+        if module.params.get('cert_chain') is not None:
+            cert_chain = module.params.get('cert_chain')
     else:
         key=cert=chain=None
 
