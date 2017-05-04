@@ -116,7 +116,7 @@ def execute_show_command(command, module):
 
 def apply_key_map(key_map, table):
     new_dict = {}
-    for key in table.keys():
+    for key in table:
         new_key = key_map.get(key)
         if new_key:
             new_dict[new_key] = str(table.get(key))
