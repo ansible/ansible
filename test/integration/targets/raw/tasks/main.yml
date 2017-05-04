@@ -62,10 +62,13 @@
           - 'raw_result1.rc == 0'
           - 'raw_result1.stdout_lines == ["car"]'
 
+- name: get the path to bash
+  shell: which bash
+  register: bash_path
 - name: run exmample non-posix command with bash
   raw: "echo 'foobar' > {{output_dir_test | expanduser}}/test.txt ; cat < {{output_dir_test | expanduser}}/test.txt"
   args:
-      executable: /bin/bash
+      executable: "{{ bash_path.stdout }}"
   register: raw_result2
 - debug: var=raw_result2
 - name: ensure proper results
