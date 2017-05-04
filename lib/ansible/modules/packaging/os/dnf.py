@@ -314,11 +314,19 @@ def _install_remote_rpms(base, filenames):
         base.package_install(pkg)
 
 
-def ensure(module, base, state, names):
+def ensure(module, base, state, names, exclude):
     # Accumulate failures.  Package management modules install what they can
     # and fail with a message about what they can't.
     failures = []
     allow_erasing = False
+
+    if exclude:
+        try:
+            base.conf.exclude_pkgs(exclude)
+        except AttributeError:
+            module.fail_json(msg="Could not exclude packages."
+                                 " Please update `dnf` package.")
+
     if names == ['*'] and state == 'latest':
         base.upgrade_all()
     else:
@@ -459,6 +467,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(aliases=['pkg'], type='list'),
+            exclude=dict(required=False, default=None),
             state=dict(
                 default='installed',
                 choices=[
@@ -491,7 +500,7 @@ def main():
             module, params['conf_file'], params['disable_gpg_check'],
             params['disablerepo'], params['enablerepo'], params['installroot'])
 
-        ensure(module, base, params['state'], params['name'])
+        ensure(module, base, params['state'], params['name'], params['exclude'])
 
 
 if __name__ == '__main__':
