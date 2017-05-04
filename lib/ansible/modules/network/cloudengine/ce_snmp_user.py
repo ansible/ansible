@@ -938,8 +938,8 @@ def main():
     mutually_exclusive = [("usm_user_name", "local_user_name")]
     argument_spec.update(ce_argument_spec)
     module = AnsibleModule(argument_spec=argument_spec,
-                            mutually_exclusive=mutually_exclusive,
-                            supports_check_mode=True)
+        mutually_exclusive=mutually_exclusive,
+        supports_check_mode=True)
 
     changed = False
     proposed = dict()
