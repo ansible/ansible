@@ -119,6 +119,7 @@ EXAMPLES = '''
 import os
 import tempfile
 from ansible.module_utils.basic import get_platform, get_exception, AnsibleModule, BOOLEANS_TRUE, BOOLEANS_FALSE
+from ansible.module_utils.six import string_types
 
 
 class SysctlModule(object):
@@ -216,7 +217,7 @@ class SysctlModule(object):
                 return '1'
             else:
                 return '0'
-        elif isinstance(value, basestring):
+        elif isinstance(value, string_types):
             if value.lower() in BOOLEANS_TRUE:
                 return '1'
             elif value.lower() in BOOLEANS_FALSE:
