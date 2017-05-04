@@ -436,6 +436,12 @@ def suspend_processes(as_group, module):
 
     return True
 
+
+@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
+def call_create(connection, ag):
+    connection.create_auto_scaling_group(ag)
+
+
 def create_autoscaling_group(connection, module):
     group_name = module.params.get('name')
     load_balancers = module.params['load_balancers']
@@ -500,7 +506,7 @@ def create_autoscaling_group(connection, module):
             termination_policies=termination_policies)
 
         try:
-            connection.create_auto_scaling_group(ag)
+            call_create(connection, ag)
             suspend_processes(ag, module)
             if wait_for_instances:
                 wait_for_new_inst(module, connection, group_name, wait_timeout, desired_capacity, 'viable_instances')
