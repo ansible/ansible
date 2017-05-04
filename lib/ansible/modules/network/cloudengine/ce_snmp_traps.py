@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_snmp_traps
-version_added: "2.3"
-short_description: Manages SNMP traps configuration.
+version_added: "2.4"
+short_description: Manages SNMP traps configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages SNMP traps configurations on CloudEngine switches.
+    - Manages SNMP traps configurations on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@CloudEngine-Ansible)
 options:
@@ -117,8 +117,8 @@ proposed:
     sample: {"feature_name": "all",
              "state": "present"}
 existing:
-    description:
-        - k/v pairs of existing aaa server
+    description: k/v pairs of existing aaa server
+    returned: always
     type: dict
     sample: {"snmp-agent trap": [],
              "undo snmp-agent trap": []}
@@ -149,7 +149,9 @@ class SnmpTraps(object):
         # module
         argument_spec = kwargs["argument_spec"]
         self.spec = argument_spec
-        self.module = AnsibleModule(argument_spec=self.spec, supports_check_mode=True)
+        self.module = AnsibleModule(argument_spec=self.spec,
+            required_together=[("interface_type", "interface_number")],
+            supports_check_mode=True)
 
         # config
         self.cur_cfg = dict()
@@ -193,14 +195,6 @@ class SnmpTraps(object):
                 self.module.fail_json(
                     msg='Error: The port_number is not digit.')
 
-        if self.interface_type:
-            if not self.interface_number:
-                self.module.fail_json(
-                    msg='Error: The interface_type and interface_number should input at the same time.')
-        if self.interface_number:
-            if not self.interface_type:
-                self.module.fail_json(
-                    msg='Error: The interface_type and interface_number should input at the same time.')
         if self.interface_type and self.interface_number:
             tmp_interface = self.interface_type + self.interface_number
             if tmp_interface not in self.interface[0]:
