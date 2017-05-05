@@ -78,8 +78,7 @@ options:
   save:
     description:
       - The C(save) argument instructs the module to save the running-
-        config to the startup-config at the conclusion of the module
-        running.
+        config to the startup-config if changed.
     required: false
     default: false
     version_added: "2.4"
@@ -224,15 +223,13 @@ def main():
         module.fail_json(msg='Option src or xml must be provided')
 
     try:
-        xml.dom.minidom.parseString( config_xml )
+        xml.dom.minidom.parseString(config_xml)
 
     except:
         e = get_exception()
         module.fail_json(
-            msg='error parsing XML: ' +
-                str(e)
+            msg='error parsing XML: ' + str(e)
         )
-        return
 
     nckwargs = dict(
         host=module.params['host'],
@@ -243,7 +240,6 @@ def main():
         username=module.params['username'],
         password=module.params['password'],
     )
-    retkwargs = dict()
 
     try:
         m = ncclient.manager.connect(**nckwargs)
@@ -254,11 +250,12 @@ def main():
     except:
         e = get_exception()
         module.fail_json(
-            msg='error connecting to the device: ' +
-                str(e)
+            msg='error connecting to the device: ' + str(e)
         )
-      
+
+    retkwargs = dict()
     retkwargs['server_capabilities'] = list(m.server_capabilities)
+
     if module.params['datastore'] == 'candidate':
         if ':candidate' in m.server_capabilities:
             datastore = 'candidate'
@@ -283,17 +280,19 @@ def main():
         else:
             m.close_session()
             module.fail_json(
-                msg='neither :candidate nor :writable-running are supported by this netconf server')
+                msg='neither :candidate nor :writable-running are supported by this netconf server'
+            )
     else:
         m.close_session()
         module.fail_json(
-            msg=module.params['datastore'] +
-            ' datastore is not supported by this ansible module')
+            msg=module.params['datastore'] + ' datastore is not supported by this ansible module'
+        )
 
     if module.params['save']:
         if ':startup' not in m.server_capabilities:
             module.fail_json(
-                msg='cannot copy <running/> to <startup/>, while :startup is not supported')
+                msg='cannot copy <running/> to <startup/>, while :startup is not supported'
+            )
 
     try:
         changed = netconf_edit_config(
@@ -305,14 +304,15 @@ def main():
         )
         if changed and module.params['save']:
             m.copy_config(source="running", target="startup")
-
     except:
         e = get_exception()
-        module.fail_json(msg='error editing configuration: ' + str(e))
+        module.fail_json(
+            msg='error editing configuration: ' + str(e)
+        )
     finally:
         m.close_session()
-    module.exit_json(changed=changed, **retkwargs)
 
+    module.exit_json(changed=changed, **retkwargs)
 
 # import module snippets
 from ansible.module_utils.basic import *
