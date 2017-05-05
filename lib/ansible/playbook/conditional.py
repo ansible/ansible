@@ -25,7 +25,7 @@ import re
 from jinja2.compiler import generate
 from jinja2.exceptions import UndefinedError
 
-from ansible.errors import AnsibleError, AnsibleConditionalError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_native
 from ansible.playbook.attribute import FieldAttribute
@@ -47,12 +47,10 @@ class ConditionalResult:
     _boolable = False
     _conditional_result = True
 
-    def __init__(self, value=None, conditional=None,
-                 templated_expr=None, error=None):
+    def __init__(self, value=None, conditional=None, templated_expr=None):
         self.conditional = conditional
         self.value = value or False
         self.templated_expr = templated_expr
-        self.error = error
 
     def __bool__(self):
         return self.value
@@ -64,7 +62,6 @@ class ConditionalResult:
     def __getstate__(self):
         return {'conditional': self.conditional,
                 'value': self.value,
-                'error': self.error,
                 'templated_expr': self.templated_expr}
 
 
@@ -95,7 +92,7 @@ class ConditionalResults:
 
     @property
     def failed_conditions(self):
-        return [x for x in self.conditional_results if x is False]
+        return [x for x in self.conditional_results if not x]
 
     def append(self, conditional_result):
         return self.conditional_results.append(conditional_result)
@@ -104,9 +101,6 @@ class ConditionalResults:
         return {'when': self.when,
                 'conditional_results': self.conditional_results,
                 'failed_conditions': self.failed_conditions}
-
-    def __iter__(self):
-        return iter(self.conditional_results)
 
 
 class Conditional:
@@ -180,18 +174,7 @@ class Conditional:
                     result = self._check_conditional(conditional, templar, all_vars)
                     conditional_results.append(result)
                 except AnsibleUndefinedVariable as e:
-                    conditional_results.append(ConditionalResult(False, conditional=conditional,
-                                                                 error="The conditional '%s' had an error: %s" % ((to_native(conditional), to_native(e)))))
-
-        # TODO: better formatter error msg
-        # TODO: if a conditional fails, task_executor doesnt return anything aside from the error message. If it returned more info
-        #       the callbacks could format it better (ala skipped reasons)
-        errors = [x for x in conditional_results if x.error]
-        if errors:
-            error_msg_list = [y.error for y in errors]
-            error_msg = '\n'.join(error_msg_list)
-
-            raise AnsibleError("The conditional check '%s' failed. The errors were: %s" % (to_native(self.when), to_native(error_msg)), obj=ds)
+                    raise AnsibleError("The conditional check '%s' failed. The error was: %s" % (to_native(conditional), to_native(e)), obj=ds)
 
         return conditional_results
 
@@ -230,7 +213,6 @@ class Conditional:
             conditional = templar.template(conditional, disable_lookups=disable_lookups)
             if not isinstance(conditional, text_type) or conditional == "":
                 return ConditionalResult(True, conditional=conditional)
-                #return conditional
 
             # update the lookups flag, as the string returned above may now be unsafe
             # and we don't want future templating calls to do unsafe things
