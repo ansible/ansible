@@ -17,16 +17,16 @@
 #
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_rollback
-version_added: "2.3"
-short_description: Set a checkpoint or rollback to a checkpoint.
+version_added: "2.4"
+short_description: Set a checkpoint or rollback to a checkpoint on HUAWEI CloudEngine switches.
 description:
     - This module offers the ability to set a configuration checkpoint
-      file or rollback to a configuration checkpoint file on CloudEngine switch.
+      file or rollback to a configuration checkpoint file on HUAWEI CloudEngine switches.
 author:
     - Li Yanfeng (@CloudEngine-Ansible)
 options:
@@ -98,8 +98,7 @@ proposed:
     type: dict
     sample: {"commit_id": "1000000748", "action": "rollback"}
 existing:
-    description:
-        - k/v pairs of existing rollback
+    description: k/v pairs of existing rollback
     returned: sometimes
     type: dict
     sample: {"commitId": "1000000748", "userLabel": "abc"}
