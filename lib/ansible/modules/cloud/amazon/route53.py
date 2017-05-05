@@ -33,6 +33,7 @@ options:
     required: true
     aliases: [ 'command' ]
     choices: [ 'present', 'absent', 'get', 'create', 'delete' ]
+    version_added: "2.4"
   zone:
     description:
       - The DNS zone to modify
