@@ -146,7 +146,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         Actually runs a child defined method using the execute_<action> pattern
         """
         fn = getattr(self, "execute_%s" % self.action)
-        fn()
+        return fn()
 
     @abstractmethod
     def run(self):

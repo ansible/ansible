@@ -23,6 +23,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import datetime
+import glob
+import json
 import os
 import tarfile
 import tempfile
@@ -364,3 +366,103 @@ class GalaxyRole(object):
         }
         """
         return dict(scm=self.scm, src=self.src, version=self.version, name=self.name)
+
+    def is_valid(self):
+        """
+        Run sanity check validation to ensure role is compliant with what is expected on Galaxy side
+        """
+
+        results = []
+
+        # ROLE001
+        role001_result = {
+            'name': 'ROLE001',
+            'description': 'Role has a meta/mail.yml file',
+            'optional': False,
+            'pass': os.path.exists('%s/meta/main.yml' % self.path)
+        }
+        results.append(role001_result)
+
+        # ROLE002
+        role002_result = {
+            'name': 'ROLE002',
+            'description': 'A LICENSE file is present in the role directory',
+            'optional': True,
+            'pass': os.path.exists('%s/LICENSE' % self.path)
+        }
+        results.append(role002_result)
+
+        # ROLE003
+        role003_result = {
+            'name': 'ROLE003',
+            'optional': False,
+            'description': 'A README.md file is present in the role directory',
+            'pass': os.path.exists('%s/README.md' % self.path)
+        }
+        results.append(role003_result)
+
+        # ROLE004
+        meta = yaml.load(open('%s/meta/main.yml' % self.path).read())
+        keys = ['author', 'description', 'license', 'min_ansible_version']
+        role004_result = {
+            'name': 'ROLE004',
+            'description': 'meta/main.yml contains basic necessary informations',
+            'optional': False,
+            'pass': set(keys) <= set(meta['galaxy_info'].keys())
+        }
+        results.append(role004_result)
+
+        # ROLE005
+        variables = {}
+        role_name = os.path.basename(self.path)
+        if role_name.startswith('ansible-role-'):
+            role_name = role_name.replace('ansible-role-', '')
+        role_name = role_name.replace('-', '_')
+        if os.path.isdir('%s/vars'):
+            for filename in glob.glob('*.yml'):
+                variables.update(yaml.load(open(filename, 'r').read()))
+        if os.path.isdir('%s/defaults' % self.path):
+            for filename in glob.glob('%s/defaults/*.yml' % self.path):
+                variables.update(yaml.load(open(filename, 'r').read()))
+
+        role005_result = {
+            'name': 'ROLE005',
+            'description': 'Variables in defaults/ and vars/ are preceded by role name: %s' % role_name,
+            'optional': True,
+            'pass': not len(
+                [v for v in variables.keys() if not v.startswith(role_name)]
+            )
+        }
+        results.append(role005_result)
+
+        # ROLE006
+        # TODO(spredzy): Handle the complex dependency format
+        #
+        if not self.options.offline:
+            meta = yaml.load(open('%s/meta/main.yml' % self.path).read())
+            result = True
+            fail_deps = []
+            if 'dependencies' in meta and meta['dependencies']:
+                for dep in meta['dependencies']:
+                    url = 'https://galaxy.ansible.com/api/v1/roles/?namespace=%s&name=%s&format=json' % (dep.split('.')[0], dep.split('.')[1])
+                    if json.loads(open_url(url).read())['count'] == 0:
+                        fail_deps.append(dep)
+
+                result = not len(fail_deps)
+            role006_result = {
+                'name': 'ROLE006',
+                'optional': False,
+                'description': 'The dependencies listed in meta/main.yml are in Galaxy',
+                'pass': result
+            }
+            results.append(role006_result)
+
+        failed_results = [result for result in results if result['pass'] is False]
+        is_valid = not len(failed_results)
+
+        if is_valid:
+            display.v(str(results))
+        else:
+            display.display(str(failed_results))
+
+        return is_valid

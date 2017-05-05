@@ -53,7 +53,7 @@ class GalaxyCLI(CLI):
     '''command to manage Ansible roles in shared repostories, the default of which is Ansible Galaxy *https://galaxy.ansible.com*.'''
 
     SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
-    VALID_ACTIONS = ("delete", "import", "info", "init", "install", "list", "login", "remove", "search", "setup")
+    VALID_ACTIONS = ("delete", "import", "info", "init", "install", "list", "login", "remove", "search", "setup", "validate")
 
     def __init__(self, args):
         self.api = None
@@ -110,9 +110,11 @@ class GalaxyCLI(CLI):
             self.parser.add_option('--remove', dest='remove_id', default=None,
                                    help='Remove the integration matching the provided ID value. Use --list to see ID values.')
             self.parser.add_option('--list', dest="setup_list", action='store_true', default=False, help='List all of your integrations.')
+        elif self.action == "validate":
+            self.parser.set_usage("usage: %prog validate [options] role_name")
 
         # options that apply to more than one action
-        if self.action in ['init', 'info']:
+        if self.action in ['init', 'info', 'validate']:
             self.parser.add_option( '--offline', dest='offline', default=False, action='store_true', help="Don't query the galaxy API when creating roles")
 
         if self.action not in ("delete","import","init","login","setup"):
@@ -150,7 +152,7 @@ class GalaxyCLI(CLI):
         super(GalaxyCLI, self).run()
 
         self.api = GalaxyAPI(self.galaxy)
-        self.execute()
+        return self.execute()
 
     def exit_without_ignore(self, rc=1):
         """
@@ -184,6 +186,27 @@ class GalaxyCLI(CLI):
 ############################
 # execute actions
 ############################
+
+    def execute_validate(self):
+        """
+        Runs functions that validates the compliance of a role to be uploaded to Galaxy.
+        """
+
+        role = None
+        role_name = self.args.pop(0).strip() if self.args else None
+        roles_path = self.get_opt('roles_path')
+
+        for role_path in roles_path:
+            if os.path.exists('%s/%s' % (role_path, role_name)):
+                role = GalaxyRole(self.galaxy, role_name,
+                                  path='%s/%s' % (role_path, role_name))
+                break
+        if not role:
+            if os.path.exists(role_name):
+                role = GalaxyRole(self.galaxy, role_name,
+                                  path='%s' % role_name)
+
+        return 0 if role.is_valid() else 1
 
     def execute_init(self):
         """
