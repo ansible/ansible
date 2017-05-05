@@ -155,15 +155,20 @@ class ManagePosixCI(object):
         """
         self.scp(local, '%s@%s:%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname, remote))
 
-    def ssh(self, command):
+    def ssh(self, command, options=None):
         """
         :type command: str | list[str]
+        :type options: list[str] | None
         """
+        if not options:
+            options = []
+
         if isinstance(command, list):
             command = ' '.join(pipes.quote(c) for c in command)
 
         run_command(self.core_ci.args,
                     ['ssh', '-tt', '-q'] + self.ssh_args +
+                    options +
                     ['-p', str(self.core_ci.connection.port),
                      '%s@%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname)] +
                     self.become + [pipes.quote(command)])
