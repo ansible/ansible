@@ -319,7 +319,7 @@ class CloudProvider(CloudBase):
         :rtype: str
         """
         if is_shippable():
-            return 'shippable-%d-%d' % (
+            return 'shippable-%s-%s' % (
                 os.environ['SHIPPABLE_BUILD_NUMBER'],
                 os.environ['SHIPPABLE_JOB_NUMBER'],
             )
