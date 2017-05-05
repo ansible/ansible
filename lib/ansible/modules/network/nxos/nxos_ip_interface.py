@@ -466,7 +466,7 @@ def main():
         state=dict(required=False, default='present',
                    choices=['present', 'absent']),
         allow_secondary=dict(required=False, default=False,
-                             choices=[True, False], type='bool'),
+                             type='bool'),
         include_defaults=dict(default=True),
         config=dict(),
         save=dict(type='bool', default=False)
