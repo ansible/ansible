@@ -18,25 +18,29 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_reboot
-version_added: 2.3
-short_description: Reboot a network device.
+version_added: 2.4
+short_description: Reboot a HUAWEI CloudEngine switches.
 description:
-    - Reboot a network device.
+    - Reboot a HUAWEI CloudEngine switches.
 author: Gong Jianjun (@CloudEngine-Ansible)
+requirements: ncclient
 options:
     confirm:
         description:
             - Safeguard boolean. Set to true if you're sure you want to reboot.
         required: true
+        type: bool
+        default: false
     save_config:
         description:
             - Flag indicating whether to save the configuration.
         required: false
+        type: bool
         default: false
 '''
 
@@ -123,7 +127,7 @@ class Reboot(object):
             self.network_module.fail_json(
                 msg='Error: Confirm must be set to true for this module to work.')
 
-        xml_str = CE_NC_XML_EXECUTE_REBOOT % self.save_config
+        xml_str = CE_NC_XML_EXECUTE_REBOOT % str(self.save_config).lower()
         self.netconf_set_action(xml_str)
 
 
@@ -131,9 +135,8 @@ def main():
     """ main """
 
     argument_spec = dict(
-        confirm=dict(required=True, type='bool'),
-        save_config=dict(required=False, default='false',
-                         type='str', choices=['true', 'false'])
+        confirm=dict(required=True, type='bool', default='false'),
+        save_config=dict(required=False, type='bool', default='false')
     )
 
     argument_spec.update(ce_argument_spec)
