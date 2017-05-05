@@ -28,7 +28,7 @@ short_description: Reboot a HUAWEI CloudEngine switches.
 description:
     - Reboot a HUAWEI CloudEngine switches.
 author: Gong Jianjun (@CloudEngine-Ansible)
-requirements: ncclient
+requirements: ["ncclient"]
 options:
     confirm:
         description:
