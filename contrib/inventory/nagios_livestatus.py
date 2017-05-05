@@ -47,6 +47,7 @@ except ImportError:
     print("Error: mk_livestatus is needed. Try something like: pip install python-mk-livestatus")
     exit(1)
 
+
 class NagiosLivestatusInventory(object):
 
     def parse_ini_file(self):
@@ -80,19 +81,19 @@ class NagiosLivestatusInventory(object):
             # Local unix socket
             unix_match = re.match('unix:(.*)', livestatus_uri)
             if unix_match is not None:
-                backend_definition = { 'connection': unix_match.group(1) }
+                backend_definition = {'connection': unix_match.group(1)}
 
             # Remote tcp connection
             tcp_match = re.match('tcp:(.*):([^:]*)', livestatus_uri)
             if tcp_match is not None:
-                backend_definition = { 'connection': (tcp_match.group(1), int(tcp_match.group(2))) }
+                backend_definition = {'connection': (tcp_match.group(1), int(tcp_match.group(2)))}
 
             # No valid livestatus_uri => exiting
             if backend_definition is None:
                 raise Exception('livestatus_uri field is invalid (%s). Expected: unix:/path/to/live or tcp:host:port' % livestatus_uri)
 
             # Updating backend_definition with current value
-            backend_definition['name']   = section
+            backend_definition['name'] = section
             backend_definition['fields'] = fields_to_retrieve
             for key, value in section_values.items():
                 backend_definition[key] = value
@@ -101,8 +102,8 @@ class NagiosLivestatusInventory(object):
 
     def parse_options(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument('--host',   nargs=1)
-        parser.add_argument('--list',   action='store_true')
+        parser.add_argument('--host', nargs=1)
+        parser.add_argument('--list', action='store_true')
         parser.add_argument('--pretty', action='store_true')
         self.options = parser.parse_args()
 
@@ -113,7 +114,7 @@ class NagiosLivestatusInventory(object):
         if hostname not in self.result[group]['hosts']:
             self.result[group]['hosts'].append(hostname)
 
-    def query_backend(self, backend, host = None):
+    def query_backend(self, backend, host=None):
         '''Query a livestatus backend'''
         hosts_request = Socket(backend['connection']).hosts.columns(backend['host_field'], backend['group_field'])
 
@@ -127,10 +128,10 @@ class NagiosLivestatusInventory(object):
 
         hosts = hosts_request.call()
         for host in hosts:
-            hostname   = host[backend['host_field']]
+            hostname = host[backend['host_field']]
             hostgroups = host[backend['group_field']]
             if not isinstance(hostgroups, list):
-                hostgroups = [ hostgroups ]
+                hostgroups = [hostgroups]
             self.add_host(hostname, 'all')
             self.add_host(hostname, backend['name'])
             for group in hostgroups:
@@ -166,9 +167,9 @@ class NagiosLivestatusInventory(object):
             self.query_backend(backend, self.options.host)
 
         if self.options.host:
-            print(json.dumps(self.result['_meta']['hostvars'][self.options.host[0]], indent = self.json_indent))
+            print(json.dumps(self.result['_meta']['hostvars'][self.options.host[0]], indent=self.json_indent))
         elif self.options.list:
-            print(json.dumps(self.result, indent = self.json_indent))
+            print(json.dumps(self.result, indent=self.json_indent))
         else:
             print("usage: --list or --host HOSTNAME [--pretty]")
             exit(1)
