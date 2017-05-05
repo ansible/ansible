@@ -38,14 +38,18 @@ class CallbackModule(CallbackBase):
 
     def init_config(self, playbook):
         self.playbook_name = os.path.basename(playbook._file_name)
-        config_file = os.path.join(playbook._basedir.encode('ascii', 'ignore'), 'slack.json')
-        if os.path.isfile(config_file) == False:
-            self._display.warning('File {} not found. SlackGithub callback has been disabled'.format(config_file))
+        config_file = os.path.join(
+            playbook._basedir.encode(
+                'ascii', 'ignore'), 'slack.json')
+        if not os.path.isfile(config_file):
+            self._display.warning(
+                'File {} not found. SlackGithub callback has been disabled'.format(config_file))
         with open(config_file) as config_file:
             self.config = json.load(config_file)
         try:
             cmd = ['git', 'config', '--get', 'user.name']
-            username = subprocess.check_output(cmd, universal_newlines=True).split('\0')
+            username = subprocess.check_output(
+                cmd, universal_newlines=True).split('\0')
             self.user = username[0].rstrip()
         except BaseException:
             self.user = 'Anonymous'
@@ -55,46 +59,43 @@ class CallbackModule(CallbackBase):
 
     def send(self, color='good'):
         raw_gist = {
-                'description': 'Ansible play recap',
-                'public': False,
-                'files': {
-                    'recap.md': {
-                        'content': '\n'.join(self._log)
-                        }
-                    }
-                }
+            'description': 'Ansible play recap',
+            'public': False,
+            'files': {
+                'recap.md': {
+                    'content': '\n'.join(
+                        self._log)}}}
 
         data = json.dumps(raw_gist)
         try:
             response = open_url(
-                    self.github_api + 'gists',
-                    data=data,
-                    method='POST')
+                self.github_api + 'gists',
+                data=data,
+                method='POST')
         except Exception as e:
             self._display.warning('Could not submit play recap: {}'.format(e))
 
         gist = json.loads(response.read())
         url = gist[u'html_url'].encode('ascii', 'ignore')
         hosts = '*{}*'.format(', '.join(self.play.hosts))
-        message = 'Playbook *{}* has been played against {} by *{}* *<{}#file-recap-md|Details>*'.format(self.playbook_name, hosts, self.user, url)
-        payload = {
-                'username': self.config['username'],
-                'attachments': [{
-                    'fallback': message,
-                    'fields': [{
-                        'value': message
-                        }],
-                    'color': color,
-                    'mrkdwn_in': ['text', 'fallback', 'fields'],
-                    }],
-                'parse': 'none',
-                }
+        message = 'Playbook *{}* has been played against {} by *{}* *<{}#file-recap-md|Details>*'.format(
+            self.playbook_name, hosts, self.user, url)
+        payload = {'username': self.config['username'],
+                   'attachments': [{'fallback': message,
+                                    'fields': [{'value': message}],
+                                    'color': color,
+                                    'mrkdwn_in': ['text',
+                                                  'fallback',
+                                                  'fields'],
+                                    }],
+                   'parse': 'none'}
 
         data = json.dumps(payload)
         try:
             response = open_url(self.config['webhook'], data=data)
         except Exception as e:
-            self._display.warning('Could not submit notification to Slack: {}'.format(e))
+            self._display.warning(
+                'Could not submit notification to Slack: {}'.format(e))
 
     def v2_playbook_on_start(self, playbook):
         self.init_config(playbook)
@@ -112,7 +113,7 @@ class CallbackModule(CallbackBase):
         for host in hosts:
             summary = stats.summarize(host)
             self.log('**Host**: {}\n'.format(host))
-            if(sys.version_info >= (3,0)):
+            if(sys.version_info >= (3, 0)):
                 items = summary.items()
             else:
                 items = summary.iteritems()
@@ -123,12 +124,25 @@ class CallbackModule(CallbackBase):
         self.send(color)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
-        self.log('**_FAILED_ {}** | {}\n\n'.format(result._host.get_name(), result._task.get_name().strip()))
-        self.log('```json\n{}\n```\n\n'.format(json.dumps(result._result, indent=1,sort_keys=True)))
+        self.log('**_FAILED_ {}** | {}\n\n'.format(result._host.get_name(),
+                                                   result._task.get_name().strip()))
+        self.log(
+            '```json\n{}\n```\n\n'.format(
+                json.dumps(
+                    result._result,
+                    indent=1,
+                    sort_keys=True)))
 
     def v2_runner_on_ok(self, result):
-        self.log('**{}** | {}\n\n'.format(result._host.get_name(), result._task.get_name().strip()))
+        self.log('**{}** | {}\n\n'.format(result._host.get_name(),
+                                          result._task.get_name().strip()))
 
     def v2_runner_on_unreachable(self, result):
-        self.log('**_UNREACHABLE_ {}** | {}\n\n'.format(result._host.get_name(), result._task.get_name().strip))
-        self.log('```json\n{}\n```\n\n'.format(json.dumps(result._result, indent=1,sort_keys=True)))
+        self.log('**_UNREACHABLE_ {}** | {}\n\n'.format(result._host.get_name(),
+                                                        result._task.get_name().strip))
+        self.log(
+            '```json\n{}\n```\n\n'.format(
+                json.dumps(
+                    result._result,
+                    indent=1,
+                    sort_keys=True)))
