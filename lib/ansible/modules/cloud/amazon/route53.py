@@ -29,11 +29,11 @@ description:
 options:
   state:
     description:
-      - Specifies the state of the resource record.
+      - Specifies the state of the resource record. As of Ansible 2.4, the I(command) option has been changed
+        to I(state) as default, but I(command) still works as well.
     required: true
     aliases: [ 'command' ]
     choices: [ 'present', 'absent', 'get', 'create', 'delete' ]
-    version_added: "2.4"
   zone:
     description:
       - The DNS zone to modify
