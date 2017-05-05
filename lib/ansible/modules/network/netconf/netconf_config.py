@@ -94,7 +94,16 @@ options:
   xml:
     description:
      - the XML content to send to the device
-    required: true
+    required: false
+  src:
+    description:
+      - Specifies the source path to the xml file that contains the configuration
+        or configuration template to load.  The path to the source file can
+        either be the full path on the Ansible control host or a relative
+        path from the playbook or role root directory.  This argument is mutually
+        exclusive with I(xml).
+    required: false
+    version_added: "2.4"
 
 
 requirements:
@@ -193,20 +202,30 @@ def main():
             hostkey_verify=dict(type='bool', default=True),
             allow_agent=dict(type='bool', default=True),
             look_for_keys=dict(type='bool', default=True),
-            datastore=dict(type='str', default='auto'),
+            datastore=dict(choices=['auto', 'candidate', 'running'], default='auto'),
             save=dict(type='bool', default=False),
             username=dict(type='str', required=True, no_log=True),
             password=dict(type='str', required=True, no_log=True),
-            xml=dict(type='str', required=True),
-        )
+            xml=dict(type='str', required=False),
+            src=dict(type='path', required=False),
+        ),
+        mutually_exclusive=[('xml', 'src')]
     )
 
     if not HAS_NCCLIENT:
         module.fail_json(msg='could not import the python library '
                          'ncclient required by this module')
 
+    if (module.params['src']):
+        config_xml = str(module.params['src'])
+    elif module.params['xml']:
+        config_xml = str(module.params['xml'])
+    else:
+        module.fail_json(msg='Option src or xml must be provided')
+
     try:
-        xml.dom.minidom.parseString(module.params['xml'])
+        xml.dom.minidom.parseString( config_xml )
+
     except:
         e = get_exception()
         module.fail_json(
@@ -238,7 +257,7 @@ def main():
             msg='error connecting to the device: ' +
                 str(e)
         )
-        return
+      
     retkwargs['server_capabilities'] = list(m.server_capabilities)
     if module.params['datastore'] == 'candidate':
         if ':candidate' in m.server_capabilities:
@@ -272,14 +291,14 @@ def main():
             ' datastore is not supported by this ansible module')
 
     if module.params['save']:
-        if not ':startup' in m.server_capabilities:
+        if ':startup' not in m.server_capabilities:
             module.fail_json(
                 msg='cannot copy <running/> to <startup/>, while :startup is not supported')
 
     try:
         changed = netconf_edit_config(
             m=m,
-            xml=module.params['xml'],
+            xml=config_xml,
             commit=True,
             retkwargs=retkwargs,
             datastore=datastore,
