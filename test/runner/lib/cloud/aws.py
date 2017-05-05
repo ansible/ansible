@@ -59,7 +59,7 @@ class AwsCloudProvider(CloudProvider):
 
         aci = self._create_ansible_core_ci()
 
-        response = aci.start_remote()
+        response = aci.start()
 
         if not self.args.explain:
             credentials = response['aws']['credentials']
