@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_snmp_contact
-version_added: "2.3"
-short_description: Manages SNMP contact configuration.
+version_added: "2.4"
+short_description: Manages SNMP contact configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages SNMP contact configurations on CloudEngine switches.
+    - Manages SNMP contact configurations on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@CloudEngine-Ansible)
 options:
@@ -35,6 +35,12 @@ options:
             - Contact information.
         required: true
         default: null
+    state:
+        description:
+            - Manage the state of the resource.
+        required: false
+        default: present
+        choices: ['present','absent']
 '''
 
 EXAMPLES = '''
@@ -79,8 +85,8 @@ proposed:
     sample: {"contact": "call Operator at 010-99999999",
              "state": "present"}
 existing:
-    description:
-        - k/v pairs of existing aaa server
+    description: k/v pairs of existing aaa server
+    returned: always
     type: dict
     sample: {}
 end_state:
