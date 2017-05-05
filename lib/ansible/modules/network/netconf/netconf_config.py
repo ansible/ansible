@@ -75,6 +75,14 @@ options:
     default: auto
     required: false
     version_added: "2.4"
+  save:
+    description:
+      - The C(save) argument instructs the module to save the running-
+        config to the startup-config at the conclusion of the module
+        running.
+    required: false
+    default: false
+    version_added: "2.4"
   username:
     description:
      - the username to authenticate with
@@ -186,6 +194,7 @@ def main():
             allow_agent=dict(type='bool', default=True),
             look_for_keys=dict(type='bool', default=True),
             datastore=dict(type='str', default='auto'),
+            save=dict(type='bool', default=False),
             username=dict(type='str', required=True, no_log=True),
             password=dict(type='str', required=True, no_log=True),
             xml=dict(type='str', required=True),
@@ -262,6 +271,11 @@ def main():
             msg=module.params['datastore'] +
             ' datastore is not supported by this ansible module')
 
+    if module.params['save']:
+        if not ':startup' in m.server_capabilities:
+            module.fail_json(
+                msg='cannot copy <running/> to <startup/>, while :startup is not supported')
+
     try:
         changed = netconf_edit_config(
             m=m,
@@ -270,6 +284,9 @@ def main():
             retkwargs=retkwargs,
             datastore=datastore,
         )
+        if changed and module.params['save']:
+            m.copy_config(source="running", target="startup")
+
     except:
         e = get_exception()
         module.fail_json(msg='error editing configuration: ' + str(e))
