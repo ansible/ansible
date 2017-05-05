@@ -21,6 +21,30 @@ from lib.util import (
 BUFFER_SIZE = 256 * 256
 
 
+def get_docker_container_id():
+    """
+    :rtype: str | None
+    """
+    path = '/proc/self/cgroup'
+
+    if not os.path.exists(path):
+        return None
+
+    with open(path) as cgroup_fd:
+        contents = cgroup_fd.read()
+
+    paths = [line.split(':')[2] for line in contents.splitlines()]
+    container_ids = set(path.split('/')[2] for path in paths if path.startswith('/docker/'))
+
+    if not container_ids:
+        return None
+
+    if len(container_ids) == 1:
+        return container_ids.pop()
+
+    raise ApplicationError('Found multiple container_id candidates: %s\n%s' % (sorted(container_ids), contents))
+
+
 def docker_pull(args, image):
     """
     :type args: EnvironmentConfig
@@ -107,6 +131,25 @@ def docker_inspect(args, container_id):
 
     try:
         stdout, _ = docker_command(args, ['inspect', container_id], capture=True)
+        return json.loads(stdout)
+    except SubprocessError as ex:
+        try:
+            return json.loads(ex.stdout)
+        except:
+            raise ex  # pylint: disable=locally-disabled, raising-bad-type
+
+
+def docker_network_inspect(args, network):
+    """
+    :type args: EnvironmentConfig
+    :type network: str
+    :rtype: list[dict]
+    """
+    if args.explain:
+        return []
+
+    try:
+        stdout, _ = docker_command(args, ['network', 'inspect', network], capture=True)
         return json.loads(stdout)
     except SubprocessError as ex:
         try:
