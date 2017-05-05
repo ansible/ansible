@@ -256,67 +256,67 @@ ASG_ATTRIBUTES = ('availability_zones', 'default_cooldown', 'desired_capacity',
 
 INSTANCE_ATTRIBUTES = ('instance_id', 'health_status', 'lifecycle_state', 'launch_config_name')
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
 def get_all_groups(asg_connection, group_name):
     return asg_connection.get_all_groups(names=[group_name])
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
 def create_auto_scaling_group(asg_connection, ag):
     asg_connection.create_auto_scaling_group(ag)
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
 def get_all_launch_configurations(asg_connection, launch_config_name):
     return asg_connection.get_all_launch_configurations(names=[launch_config_name])
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
 def delete_tags(asg_connection, dead_tags):
     asg_connection.delete_tags(dead_tags)
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
 def create_or_update_tags(asg_connection, asg_tags):
     asg_connection.create_or_update_tags(asg_tags)
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
 def terminate_instance(asg_connection, instance_id, decrement_capacity):
     asg_connection.terminate_instance(instance_id, decrement_capacity=decrement_capacity)
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
 def update(as_group):
     as_group.update()
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
 def put_notification_configuration(as_group, notification_topic, notification_types):
     as_group.put_notification_configuration(notification_topic, notification_types)
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
 def delete_notification_configuration(as_group, notification_topic):
     as_group.delete_notification_configuration(notification_topic)
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
 def delete(as_group):
     as_group.delete()
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
 def elb_describe_instance_health(elb_connection, lb, instances=None):
     return elb_connection.describe_instance_health(lb, instances=instances)
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
 def elb_deregister_instances(elb_connection, lb, instance_id):
     elb_connection.deregister_instances(lb, instance_id)
 
 
-@AWSRetry.backoff()
+@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
 def ec2_get_all_zones(ec2_connection):
     return ec2_connection.get_all_zones()
 
