@@ -200,9 +200,19 @@ def add_host_key(module, fqdn, port=22, key_type="rsa", create_dir=False):
         this_cmd = "%s -t %s %s" % (keyscan_cmd, key_type, fqdn)
 
     rc, out, err = module.run_command(this_cmd)
-    # ssh-keyscan gives a 0 exit code and prints nothins on timeout
+    # ssh-keyscan gives a 0 exit code and prints nothing on timeout
     if rc != 0 or not out:
-        module.fail_json(msg='failed to get the hostkey for %s' % fqdn)
+        msg = 'failed to retrieve hostkey'
+        if not out:
+            msg += '. "%s" returned no matches.'  % this_cmd
+        else:
+            msg += ' using command "%s". [stdout]: %s' % (this_cmd, out)
+
+        if err:
+            msg += ' [stderr]: %s' % err
+
+        module.fail_json(msg=msg)
+
     module.append_to_file(user_host_file, out)
 
     return rc, out, err
