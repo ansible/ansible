@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_snmp_community
-version_added: "2.3"
-short_description: Manages SNMP community configuration.
+version_added: "2.4"
+short_description: Manages SNMP community configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages SNMP community configuration on CloudEngine switches.
+    - Manages SNMP community configuration on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@CloudEngine-Ansible)
 options:
@@ -77,6 +77,12 @@ options:
             - Mib view name for notification.
         required: false
         default: null
+    state:
+        description:
+            - Manage the state of the resource.
+        required: false
+        default: present
+        choices: ['present','absent']
 '''
 
 EXAMPLES = '''
@@ -139,8 +145,8 @@ proposed:
     sample: {"acl_number": "2000", "group_name": "wdz_group",
              "security_level": "noAuthNoPriv", "state": "present"}
 existing:
-    description:
-        - k/v pairs of existing aaa server
+    description: k/v pairs of existing aaa server
+    returned: always
     type: dict
     sample: {}
 end_state:
@@ -319,13 +325,6 @@ class SnmpCommunity(object):
         acl_number = module.params['acl_number']
         community_mib_view = module.params['community_mib_view']
 
-        if community_name and not access_right:
-            module.fail_json(
-                msg='Error: Please input community_name and access_right at the same time.')
-        if not community_name and access_right:
-            module.fail_json(
-                msg='Error: Please input community_name and access_right at the same time.')
-
         if community_name and access_right:
             if len(community_name) > 32 or len(community_name) == 0:
                 module.fail_json(
@@ -425,13 +424,6 @@ class SnmpCommunity(object):
 
         community_name = module.params['community_name']
         access_right = module.params['access_right']
-
-        if group_name and not security_level:
-            module.fail_json(
-                msg='Error: Please input group_name and security_level at the same time.')
-        if not group_name and security_level:
-            module.fail_json(
-                msg='Error: Please input group_name and security_level at the same time.')
 
         if group_name and security_level:
 
@@ -810,7 +802,12 @@ def main():
     )
 
     argument_spec.update(ce_argument_spec)
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    required_together = [("community_name", "access_right"), ("security_level", "group_name")]
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_together=required_together,
+        supports_check_mode=True
+    )
 
     changed = False
     proposed = dict()
