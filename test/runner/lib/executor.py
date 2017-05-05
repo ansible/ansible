@@ -28,6 +28,13 @@ from lib.manage_ci import (
     ManageNetworkCI,
 )
 
+from lib.cloud import (
+    cloud_filter,
+    cloud_init,
+    get_cloud_environment,
+    get_cloud_platforms,
+)
+
 from lib.util import (
     EnvironmentConfig,
     ApplicationWarning,
@@ -144,7 +151,12 @@ def install_command_requirements(args):
         if args.junit:
             packages.append('junit-xml')
 
-    cmd = generate_pip_install(args.command, packages)
+    extras = []
+
+    if isinstance(args, TestConfig):
+        extras += ['cloud.%s' % cp for cp in get_cloud_platforms(args)]
+
+    cmd = generate_pip_install(args.command, packages, extras)
 
     if not cmd:
         return
@@ -175,10 +187,11 @@ def generate_egg_info(args):
     run_command(args, ['python', 'setup.py', 'egg_info'], capture=args.verbosity < 3)
 
 
-def generate_pip_install(command, packages=None):
+def generate_pip_install(command, packages=None, extras=None):
     """
     :type command: str
     :type packages: list[str] | None
+    :type extras: list[str] | None
     :rtype: list[str] | None
     """
     constraints = 'test/runner/requirements/constraints.txt'
@@ -186,8 +199,15 @@ def generate_pip_install(command, packages=None):
 
     options = []
 
-    if os.path.exists(requirements) and os.path.getsize(requirements):
-        options += ['-r', requirements]
+    requirements_list = [requirements]
+
+    if extras:
+        for extra in extras:
+            requirements_list.append('test/runner/requirements/%s.%s.txt' % (command, extra))
+
+    for requirements in requirements_list:
+        if os.path.exists(requirements) and os.path.getsize(requirements):
+            options += ['-r', requirements]
 
     if packages:
         options += packages
@@ -436,6 +456,8 @@ def command_integration_filter(args, targets):
     internal_targets = walk_internal_targets(targets, args.include, exclude, require)
     environment_exclude = get_integration_filter(args, internal_targets)
 
+    environment_exclude += cloud_filter(args, internal_targets)
+
     if environment_exclude:
         exclude += environment_exclude
         internal_targets = walk_internal_targets(targets, args.include, exclude, require)
@@ -445,6 +467,8 @@ def command_integration_filter(args, targets):
 
     if args.start_at and not any(t.name == args.start_at for t in internal_targets):
         raise ApplicationError('Start at target matches nothing: %s' % args.start_at)
+
+    cloud_init(args, internal_targets)
 
     if args.delegate:
         raise Delegate(require=changes, exclude=exclude)
@@ -492,6 +516,8 @@ def command_integration_filtered(args, targets):
         tries = 2 if args.retry_on_error else 1
         verbosity = args.verbosity
 
+        cloud_environment = get_cloud_environment(args, target)
+
         try:
             while tries:
                 tries -= 1
@@ -509,6 +535,9 @@ def command_integration_filtered(args, targets):
                         start_at_task = None
                     break
                 except SubprocessError:
+                    if cloud_environment:
+                        cloud_environment.on_failure(target, tries)
+
                     if not tries:
                         raise
 
@@ -527,9 +556,11 @@ def command_integration_filtered(args, targets):
             display.verbosity = args.verbosity = verbosity
 
 
-def integration_environment(args):
+def integration_environment(args, target, cmd):
     """
     :type args: IntegrationConfig
+    :type target: IntegrationTarget
+    :type cmd: list[str]
     :rtype: dict[str, str]
     """
     env = ansible_environment(args)
@@ -540,6 +571,11 @@ def integration_environment(args):
     )
 
     env.update(integration)
+
+    cloud_environment = get_cloud_environment(args, target)
+
+    if cloud_environment:
+        cloud_environment.configure_environment(env, cmd)
 
     return env
 
@@ -556,7 +592,7 @@ def command_integration_script(args, target):
     if args.verbosity:
         cmd.append('-' + ('v' * args.verbosity))
 
-    env = integration_environment(args)
+    env = integration_environment(args, target, cmd)
     cwd = target.path
 
     intercept_command(args, cmd, env=env, cwd=cwd)
@@ -587,6 +623,11 @@ def command_integration_role(args, target, start_at_task):
         hosts = 'testhost'
         gather_facts = True
 
+        cloud_environment = get_cloud_environment(args, target)
+
+        if cloud_environment:
+            hosts = cloud_environment.inventory_hosts or hosts
+
     playbook = '''
 - hosts: %s
   gather_facts: %s
@@ -610,7 +651,7 @@ def command_integration_role(args, target, start_at_task):
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
 
-        env = integration_environment(args)
+        env = integration_environment(args, target, cmd)
         cwd = 'test/integration'
 
         env['ANSIBLE_ROLES_PATH'] = os.path.abspath('test/integration/targets')
