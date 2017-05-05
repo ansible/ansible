@@ -491,6 +491,7 @@ def main():
         else:
             load_config(module, commands)
             if transport == 'cli':
+                body = run_commands(module, commands)
                 validate_config(body, vip, module)
             changed = True
             end_state = get_hsrp_group(group, interface, module)
