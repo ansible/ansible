@@ -52,8 +52,9 @@ class ConditionalResult:
         self.value = value or False
         self.templated_expr = templated_expr
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.value
+    __nonzero__ = __bool__
 
     def __repr__(self):
         return "'%s' is %s expanded_to [%s]" % (self.conditional, self.value, self.templated_expr)
@@ -73,10 +74,11 @@ class ConditionalResults:
         self.conditional_results = conditional_results or []
         self.when = when or None
 
-    def __nonzero__(self):
+    def __bool__(self):
         if not all(self.conditional_results):
             return False
         return True
+    __nonzero__ = __bool__
 
     def __repr__(self):
         return "%s(%s)" % (bool(self), self.conditional_results)
