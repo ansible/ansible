@@ -60,6 +60,10 @@ from lib.core_ci import (
     AWS_ENDPOINTS,
 )
 
+from lib.cloud import (
+    initialize_cloud_plugins,
+)
+
 import lib.cover
 
 
@@ -68,6 +72,7 @@ def main():
     try:
         git_root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
         os.chdir(git_root)
+        initialize_cloud_plugins()
         sanity_init()
         args = parse_args()
         config = args.config(args)

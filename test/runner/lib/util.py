@@ -5,6 +5,7 @@ from __future__ import absolute_import, print_function
 import errno
 import os
 import pipes
+import pkgutil
 import shutil
 import subprocess
 import re
@@ -503,6 +504,47 @@ def parse_to_dict(pattern, value):
         raise Exception('Pattern "%s" did not match value: %s' % (pattern, value))
 
     return match.groupdict()
+
+
+def get_subclasses(class_type):
+    """
+    :type class_type: type
+    :rtype: set[str]
+    """
+    subclasses = set()
+    queue = [class_type]
+
+    while queue:
+        parent = queue.pop()
+
+        for child in parent.__subclasses__():
+            if child not in subclasses:
+                subclasses.add(child)
+                queue.append(child)
+
+    return subclasses
+
+
+def import_plugins(directory):
+    """
+    :type directory: str
+    """
+    path = os.path.join(os.path.dirname(__file__), directory)
+    prefix = 'lib.%s.' % directory
+
+    for (_, name, _) in pkgutil.iter_modules([path], prefix=prefix):
+        __import__(name)
+
+
+def load_plugins(base_type, database):
+    """
+    :type base_type: type
+    :type database: dict[str, type]
+    """
+    plugins = dict((sc.__module__.split('.')[2], sc) for sc in get_subclasses(base_type))  # type: dict [str, type]
+
+    for plugin in plugins:
+        database[plugin] = plugins[plugin]
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name

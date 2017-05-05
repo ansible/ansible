@@ -52,6 +52,7 @@ class AnsibleCoreCI(object):
         self.ci_key = os.path.expanduser('~/.ansible-core-ci.key')
 
         aws_platforms = (
+            'aws',
             'windows',
             'freebsd',
             'vyos',
@@ -125,9 +126,6 @@ class AnsibleCoreCI(object):
             self.started = False
             self.instance_id = str(uuid.uuid4())
 
-            display.info('Initializing new %s/%s instance %s.' % (self.platform, self.version, self.instance_id),
-                         verbosity=1)
-
     def start(self):
         """Start instance."""
         if is_shippable():
@@ -140,7 +138,7 @@ class AnsibleCoreCI(object):
         with open(self.ci_key, 'r') as key_fd:
             auth_key = key_fd.read().strip()
 
-        self._start(dict(
+        return self._start(dict(
             remote=dict(
                 key=auth_key,
                 nonce=None,
@@ -149,7 +147,7 @@ class AnsibleCoreCI(object):
 
     def start_shippable(self):
         """Start instance on Shippable."""
-        self._start(dict(
+        return self._start(dict(
             shippable=dict(
                 run_id=os.environ['SHIPPABLE_BUILD_ID'],
                 job_number=int(os.environ['SHIPPABLE_JOB_NUMBER']),
@@ -264,6 +262,8 @@ class AnsibleCoreCI(object):
                          verbosity=1)
             return
 
+        display.info('Initializing new %s/%s instance %s.' % (self.platform, self.version, self.instance_id), verbosity=1)
+
         if self.platform == 'windows':
             with open('examples/scripts/ConfigureRemotingForAnsible.ps1', 'r') as winrm_config_fd:
                 winrm_config = winrm_config_fd.read()
@@ -308,6 +308,11 @@ class AnsibleCoreCI(object):
         self._save()
 
         display.info('Started %s/%s from: %s' % (self.platform, self.version, self._uri), verbosity=1)
+
+        if self.args.explain:
+            return {}
+
+        return response.json()
 
     def _clear(self):
         """Clear instance information."""

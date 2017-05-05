@@ -5,7 +5,6 @@ from __future__ import absolute_import, print_function
 import os
 import sys
 import tempfile
-import time
 
 import lib.pytar
 import lib.thread
@@ -13,7 +12,6 @@ import lib.thread
 from lib.executor import (
     SUPPORTED_PYTHON_VERSIONS,
     IntegrationConfig,
-    SubprocessError,
     ShellConfig,
     SanityConfig,
     UnitsConfig,
@@ -36,11 +34,20 @@ from lib.util import (
     ApplicationError,
     EnvironmentConfig,
     run_command,
-    common_environment,
-    display,
 )
 
-BUFFER_SIZE = 256 * 256
+from lib.docker_util import (
+    docker_exec,
+    docker_get,
+    docker_pull,
+    docker_put,
+    docker_rm,
+    docker_run,
+)
+
+from lib.cloud import (
+    get_cloud_providers,
+)
 
 
 def delegate(args, exclude, require):
@@ -188,6 +195,11 @@ def delegate_docker(args, exclude, require):
                 '--env', 'HTTPTESTER=1',
             ]
 
+        cloud_platforms = get_cloud_providers(args)
+
+        for cloud_platform in cloud_platforms:
+            test_options += cloud_platform.get_docker_run_options()
+
         test_id, _ = docker_run(args, test_image, options=test_options)
 
         if args.explain:
@@ -218,120 +230,6 @@ def delegate_docker(args, exclude, require):
 
         if test_id:
             docker_rm(args, test_id)
-
-
-def docker_pull(args, image):
-    """
-    :type args: EnvironmentConfig
-    :type image: str
-    """
-    if not args.docker_pull:
-        display.warning('Skipping docker pull for "%s". Image may be out-of-date.' % image)
-        return
-
-    for _ in range(1, 10):
-        try:
-            docker_command(args, ['pull', image])
-            return
-        except SubprocessError:
-            display.warning('Failed to pull docker image "%s". Waiting a few seconds before trying again.' % image)
-            time.sleep(3)
-
-    raise ApplicationError('Failed to pull docker image "%s".' % image)
-
-
-def docker_put(args, container_id, src, dst):
-    """
-    :type args: EnvironmentConfig
-    :type container_id: str
-    :type src: str
-    :type dst: str
-    """
-    # avoid 'docker cp' due to a bug which causes 'docker rm' to fail
-    with open(src, 'rb') as src_fd:
-        docker_exec(args, container_id, ['dd', 'of=%s' % dst, 'bs=%s' % BUFFER_SIZE],
-                    options=['-i'], stdin=src_fd, capture=True)
-
-
-def docker_get(args, container_id, src, dst):
-    """
-    :type args: EnvironmentConfig
-    :type container_id: str
-    :type src: str
-    :type dst: str
-    """
-    # avoid 'docker cp' due to a bug which causes 'docker rm' to fail
-    with open(dst, 'wb') as dst_fd:
-        docker_exec(args, container_id, ['dd', 'if=%s' % src, 'bs=%s' % BUFFER_SIZE],
-                    options=['-i'], stdout=dst_fd, capture=True)
-
-
-def docker_run(args, image, options):
-    """
-    :type args: EnvironmentConfig
-    :type image: str
-    :type options: list[str] | None
-    :rtype: str | None, str | None
-    """
-    if not options:
-        options = []
-
-    for _ in range(1, 3):
-        try:
-            return docker_command(args, ['run'] + options + [image], capture=True)
-        except SubprocessError as ex:
-            display.error(ex)
-            display.warning('Failed to run docker image "%s". Waiting a few seconds before trying again.' % image)
-            time.sleep(3)
-
-    raise ApplicationError('Failed to run docker image "%s".' % image)
-
-
-def docker_rm(args, container_id):
-    """
-    :type args: EnvironmentConfig
-    :type container_id: str
-    """
-    docker_command(args, ['rm', '-f', container_id], capture=True)
-
-
-def docker_exec(args, container_id, cmd, options=None, capture=False, stdin=None, stdout=None):
-    """
-    :type args: EnvironmentConfig
-    :type container_id: str
-    :type cmd: list[str]
-    :type options: list[str] | None
-    :type capture: bool
-    :type stdin: file | None
-    :type stdout: file | None
-    :rtype: str | None, str | None
-    """
-    if not options:
-        options = []
-
-    return docker_command(args, ['exec'] + options + [container_id] + cmd, capture=capture, stdin=stdin, stdout=stdout)
-
-
-def docker_command(args, cmd, capture=False, stdin=None, stdout=None):
-    """
-    :type args: EnvironmentConfig
-    :type cmd: list[str]
-    :type capture: bool
-    :type stdin: file | None
-    :type stdout: file | None
-    :rtype: str | None, str | None
-    """
-    env = docker_environment()
-    return run_command(args, ['docker'] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout)
-
-
-def docker_environment():
-    """
-    :rtype: dict[str, str]
-    """
-    env = common_environment()
-    env.update(dict((key, os.environ[key]) for key in os.environ if key.startswith('DOCKER_')))
-    return env
 
 
 def delegate_remote(args, exclude, require):
@@ -368,8 +266,15 @@ def delegate_remote(args, exclude, require):
         manage = ManagePosixCI(core_ci)
         manage.setup()
 
+        ssh_options = []
+
+        cloud_platforms = get_cloud_providers(args)
+
+        for cloud_platform in cloud_platforms:
+            ssh_options += cloud_platform.get_remote_ssh_options()
+
         try:
-            manage.ssh(cmd)
+            manage.ssh(cmd, ssh_options)
         finally:
             manage.ssh('rm -rf /tmp/results && cp -a ansible/test/results /tmp/results')
             manage.download('/tmp/results', 'test')

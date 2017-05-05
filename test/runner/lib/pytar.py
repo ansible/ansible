@@ -5,6 +5,10 @@ from __future__ import absolute_import, print_function
 import tarfile
 import os
 
+from lib.util import (
+    display,
+)
+
 # improve performance by disabling uid/gid lookups
 tarfile.pwd = None
 tarfile.grp = None
@@ -44,7 +48,7 @@ def ignore(item):
         if item.path.startswith('./test/results/'):
             return None
 
-        if item.path.startswith('./docsite/') and filename.endswith('_module.rst'):
+        if item.path.startswith('./docs/docsite/_build/'):
             return None
 
     if name in IGNORE_FILES:
@@ -65,5 +69,9 @@ def create_tarfile(dst_path, src_path, tar_filter):
     :type src_path: str
     :type tar_filter: (tarfile.TarInfo) -> tarfile.TarInfo | None
     """
+    display.info('Creating a compressed tar archive of path: %s' % src_path, verbosity=1)
+
     with tarfile.TarFile.gzopen(dst_path, mode='w', compresslevel=4) as tar:
         tar.add(src_path, filter=tar_filter)
+
+    display.info('Resulting archive is %d bytes.' % os.path.getsize(dst_path), verbosity=1)
