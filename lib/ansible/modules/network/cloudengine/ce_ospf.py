@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_ospf
-version_added: "2.3"
-short_description: Manages configuration of an OSPF instance.
+version_added: "2.4"
+short_description: Manages configuration of an OSPF instance on HUAWEI CloudEngine switches.
 description:
-    - Manages configuration of an OSPF instance.
+    - Manages configuration of an OSPF instance on HUAWEI CloudEngine switches.
 author: QijunPan (@CloudEngine-Ansible)
 options:
     process_id:
@@ -396,8 +396,13 @@ class OSPF(object):
     def init_module(self):
         """ init module """
 
+        required_together = [
+            ("addr", "mask"),
+            ("auth_key_id", "auth_text_md5"),
+            ("nexthop_addr", "nexthop_weight")
+        ]
         self.module = AnsibleModule(
-            argument_spec=self.spec, supports_check_mode=True)
+            argument_spec=self.spec, required_together=required_together, supports_check_mode=True)
 
     def check_response(self, xml_str, xml_name):
         """Check if response message is already succeed."""
@@ -814,9 +819,6 @@ class OSPF(object):
                 if not self.is_valid_v4addr(self.addr):
                     self.module.fail_json(
                         msg="Error: network addr is invalid.")
-                if not self.mask:
-                    self.module.fail_json(
-                        msg="Error: network mask must be set.")
                 if not self.mask.isdigit():
                     self.module.fail_json(
                         msg="Error: network mask is not digit.")
@@ -831,12 +833,6 @@ class OSPF(object):
                         self.module.fail_json(
                             msg="Error: auth_text_simple is not in the range from 1 to 8.")
                 if self.auth_mode in ["hmac-sha256", "hmac-sha256", "md5"]:
-                    if self.auth_key_id and not self.auth_text_md5:
-                        self.module.fail_json(
-                            msg='Error: auth_key_id and auth_text_md5 should be set at the same time.')
-                    if not self.auth_key_id and self.auth_text_md5:
-                        self.module.fail_json(
-                            msg='Error: auth_key_id and auth_text_md5 should be set at the same time.')
                     if self.auth_key_id:
                         if not self.auth_key_id.isdigit():
                             self.module.fail_json(
@@ -861,9 +857,6 @@ class OSPF(object):
         if self.nexthop_addr:
             if not self.is_valid_v4addr(self.nexthop_addr):
                 self.module.fail_json(msg="Error: nexthop_addr is invalid.")
-            if not self.nexthop_weight:
-                self.module.fail_json(
-                    msg='Error: nexthop_addr and nexthop_weight should be set at the same time.')
             if not self.nexthop_weight.isdigit():
                 self.module.fail_json(
                     msg="Error: nexthop_weight is not digit.")
