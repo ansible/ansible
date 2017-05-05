@@ -18,13 +18,13 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = """
 ---
 module: ce_sflow
-version_added: "2.3"
-short_description: Manages sFlow configuration.
+version_added: "2.4"
+short_description: Manages sFlow configuration on HUAWEI CloudEngine switches.
 description:
     - Configure Sampled Flow (sFlow) to monitor traffic on an interface in real time,
       detect abnormal traffic, and locate the source of attack traffic,
@@ -45,7 +45,6 @@ options:
         description:
             - Specifies the ID of an sFlow collector. This ID is used when you specify
               the collector in subsequent sFlow configuration.
-              The value is an integer that can be 1 or 2.
         required: false
         default: null
         choices: ['1', '2']
@@ -59,7 +58,7 @@ options:
             - Specifies the name of a VPN instance.
               The value is a string of 1 to 31 case-sensitive characters, spaces not supported.
               When double quotation marks are used around the string, spaces are allowed in the string.
-              The value _public_ is reserved and cannot be used as the VPN instance name.
+              The value C(_public_) is reserved and cannot be used as the VPN instance name.
         required: false
         default: null
     collector_datagram_size:
@@ -489,8 +488,9 @@ class Sflow(object):
     def __init_module__(self):
         """init module"""
 
+        required_together = [("collector_id", "collector_ip")]
         self.module = AnsibleModule(
-            argument_spec=self.spec, supports_check_mode=True)
+            argument_spec=self.spec, required_together=required_together, supports_check_mode=True)
 
     def check_response(self, con_obj, xml_name):
         """Check if response message is already succeed"""
@@ -1149,11 +1149,6 @@ class Sflow(object):
             if not self.forward_enp_slot.isdigit() and self.forward_enp_slot != "all":
                 self.module.fail_json(
                     msg="Error: forward_enp_slot is invalid.")
-
-        if self.state == "present":
-            if bool(self.collector_id) != bool(self.collector_ip):
-                self.module.fail_json(msg="Error: collector_id and collector_ip must "
-                                          "set at the same time when state is present.")
 
     def get_proposed(self):
         """get proposed info"""
