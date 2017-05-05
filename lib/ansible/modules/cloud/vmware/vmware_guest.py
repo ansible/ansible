@@ -1090,7 +1090,9 @@ class PyVmomiHelper(object):
             if self.should_deploy_from_template():
                 # create the relocation spec
                 relospec = vim.vm.RelocateSpec()
-                relospec.host = hostsystem
+                # Only provide specific host when using ESXi host directly
+                if self.params['esxi_hostname']:
+                    relospec.host = hostsystem
                 relospec.datastore = datastore
                 relospec.pool = resource_pool
 
@@ -1113,7 +1115,8 @@ class PyVmomiHelper(object):
                 self.change_detected = True
             self.wait_for_task(task)
         except TypeError:
-            self.module.fail_json(msg="TypeError was returned, please ensure to give correct inputs.")
+            e = get_exception()
+            self.module.fail_json(msg="TypeError was returned, please ensure to give correct inputs. %s" % e)
 
         if task.info.state == 'error':
             # https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2021361
