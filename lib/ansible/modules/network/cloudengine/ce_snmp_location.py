@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_snmp_location
-version_added: "2.3"
-short_description: Manages SNMP location configuration.
+version_added: "2.4"
+short_description: Manages SNMP location configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages SNMP location configurations on CloudEngine switches.
+    - Manages SNMP location configurations on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@CloudEngine-Ansible)
 options:
@@ -35,6 +35,12 @@ options:
             - Location information.
         required: true
         default: null
+    state:
+        description:
+            - Manage the state of the resource.
+        required: false
+        default: present
+        choices: ['present','absent']
 '''
 
 EXAMPLES = '''
@@ -59,7 +65,7 @@ EXAMPLES = '''
       location:  nanjing China
       provider: "{{ cli }}"
 
-  - name: "Undo SNMP location"
+  - name: "Remove SNMP location"
     ce_snmp_location:
       state:  absent
       location:  nanjing China
@@ -79,8 +85,8 @@ proposed:
     sample: {"location": "nanjing China",
              "state": "present"}
 existing:
-    description:
-        - k/v pairs of existing aaa server
+    description: k/v pairs of existing aaa server
+    returned: always
     type: dict
     sample: {}
 end_state:
