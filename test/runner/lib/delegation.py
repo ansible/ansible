@@ -195,10 +195,11 @@ def delegate_docker(args, exclude, require):
                 '--env', 'HTTPTESTER=1',
             ]
 
-        cloud_platforms = get_cloud_providers(args)
+        if isinstance(args, TestConfig):
+            cloud_platforms = get_cloud_providers(args)
 
-        for cloud_platform in cloud_platforms:
-            test_options += cloud_platform.get_docker_run_options()
+            for cloud_platform in cloud_platforms:
+                test_options += cloud_platform.get_docker_run_options()
 
         test_id, _ = docker_run(args, test_image, options=test_options)
 
@@ -268,10 +269,11 @@ def delegate_remote(args, exclude, require):
 
         ssh_options = []
 
-        cloud_platforms = get_cloud_providers(args)
+        if isinstance(args, TestConfig):
+            cloud_platforms = get_cloud_providers(args)
 
-        for cloud_platform in cloud_platforms:
-            ssh_options += cloud_platform.get_remote_ssh_options()
+            for cloud_platform in cloud_platforms:
+                ssh_options += cloud_platform.get_remote_ssh_options()
 
         try:
             manage.ssh(cmd, ssh_options)

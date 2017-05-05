@@ -1,7 +1,9 @@
 """CloudStack plugin for integration tests."""
 from __future__ import absolute_import, print_function
 
+import json
 import os
+import re
 import time
 
 from lib.cloud import (
@@ -27,6 +29,8 @@ from lib.docker_util import (
     docker_rm,
     docker_inspect,
     docker_pull,
+    docker_network_inspect,
+    get_docker_container_id,
 )
 
 try:
@@ -152,7 +156,15 @@ class CsCloudProvider(CloudProvider):
             docker_run(self.args, self.image, ['-d', '-p', '8888:8888', '--name', self.container_name])
             display.notice('The CloudStack simulator will probably be ready in 5 - 10 minutes.')
 
-        self.host = 'localhost'
+        container_id = get_docker_container_id()
+
+        if container_id:
+            display.info('Running in docker container: %s' % container_id, verbosity=1)
+            self.host = self._get_simulator_address()
+            display.info('Found CloudStack simulator container address: %s' % self.host, verbosity=1)
+        else:
+            self.host = 'localhost'
+
         self.port = 8888
         self.endpoint = 'http://%s:%d' % (self.host, self.port)
 
@@ -182,6 +194,19 @@ class CsCloudProvider(CloudProvider):
 
         self._write_config(config)
 
+    def _get_simulator_address(self):
+        networks = docker_network_inspect(self.args, 'bridge')
+
+        try:
+            bridge = [network for network in networks if network['Name'] == 'bridge'][0]
+            containers = bridge['Containers']
+            container = [containers[container] for container in containers if containers[container]['Name'] == self.DOCKER_SIMULATOR_NAME][0]
+            return re.sub(r'/[0-9]+$', '', container['IPv4Address'])
+        except:
+            display.error('Failed to process the following docker network inspect output:\n%s' %
+                          json.dumps(networks, indent=4, sort_keys=True))
+            raise
+
     def _wait_for_service(self):
         """Wait for the CloudStack service endpoint to accept connections."""
         if self.args.explain:
@@ -190,7 +215,7 @@ class CsCloudProvider(CloudProvider):
         client = HttpClient(self.args, always=True)
         endpoint = self.endpoint
 
-        for _ in range(1, 90):
+        for _ in range(1, 30):
             display.info('Waiting for CloudStack service: %s' % endpoint, verbosity=1)
 
             try:
@@ -199,7 +224,7 @@ class CsCloudProvider(CloudProvider):
             except SubprocessError:
                 pass
 
-            time.sleep(10)
+            time.sleep(30)
 
         raise ApplicationError('Timeout waiting for CloudStack service.')
 
@@ -210,7 +235,7 @@ class CsCloudProvider(CloudProvider):
         client = HttpClient(self.args, always=True)
         endpoint = '%s/admin.json' % self.endpoint
 
-        for _ in range(1, 90):
+        for _ in range(1, 30):
             display.info('Waiting for CloudStack credentials: %s' % endpoint, verbosity=1)
 
             response = client.get(endpoint)
@@ -218,7 +243,7 @@ class CsCloudProvider(CloudProvider):
             if response.status_code == 200:
                 return response.json()
 
-            time.sleep(10)
+            time.sleep(30)
 
         raise ApplicationError('Timeout waiting for CloudStack credentials.')
 
