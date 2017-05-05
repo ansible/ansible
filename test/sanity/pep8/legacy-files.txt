@@ -426,7 +426,6 @@ lib/ansible/modules/monitoring/bigpanda.py
 lib/ansible/modules/monitoring/boundary_meter.py
 lib/ansible/modules/monitoring/circonus_annotation.py
 lib/ansible/modules/monitoring/datadog_event.py
-lib/ansible/modules/monitoring/datadog_monitor.py
 lib/ansible/modules/monitoring/honeybadger_deployment.py
 lib/ansible/modules/monitoring/icinga2_feature.py
 lib/ansible/modules/monitoring/librato_annotation.py
