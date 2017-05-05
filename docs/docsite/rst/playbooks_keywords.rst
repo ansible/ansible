@@ -139,5 +139,5 @@ Task
   - **until:**  UNDOCUMENTED!! 
   - **vars:** Dictionary/map of variables
   - **when:** Conditional expression, determines if an iteration of a task is run or not.
-  - **with_<lookup_plugin>:** with_ is how loops are defined, it can use any available lookup plugin to generate the item list
+  - **with_<lookup_plugin>:** with\_ is how loops are defined, it can use any available lookup plugin to generate the item list
 
