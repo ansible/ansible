@@ -21,374 +21,356 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: cloudfront
-short_description: Create, update, delete, duplicate and validate AWS CloudFront distributions
+short_description: create, update, delete, duplicate and validate AWS CloudFront distributions
 description:
-  - Allows for easy creation, updating, deletion, duplication and validation of CloudFront distributions
+    - Allows for easy creation, updating, deletion, duplication and validation
+      of CloudFront distributions.
 requirements:
   - boto3 >= 1.0.0
   - python >= 2.6
 version_added: "2.3"
 author: Willem van Ketwich (@wilvk)
-
 options:
   distribution_id:
-      description:
-        - The id of the cloudfront distribution. Used with I(create_distribution), I(update_distribution), I(delete_distribution),
-          I(duplicate_distribution), I(create_invalidation), I(generate_presigned_url_from_pem_private_key). This parameter can be exchanged with alias. To be more specific, e_tag can be specified as well but is not necessary.
-          required: false
+    description:
+      - The id of the cloudfront distribution.
+        Used with
+          I(create_distribution),
+          I(update_distribution),
+          I(delete_distribution),
+          I(duplicate_distribution),
+          I(create_invalidation),
+          I(generate_presigned_url_from_pem_private_key).
+        This parameter can be exchanged with I(alias) and in conjunction with e_tag.
+    required: false
   streaming_distribution_id:
-      description:
-        - The id of the CloudFront streaming distribution. Used with I(create_streaming_distribution), I(update_streaming_distribution), I(delete_streaming_distribution), I(duplicate_streaming_distribution). This parameter can be exchanged with alias. To be more specific, e_tag can be specified as well but is not necessary.
-      required: false
+    description:
+      - The id of the CloudFront streaming distribution.
+        Used with
+          I(create_streaming_distribution),
+          I(update_streaming_distribution),
+          I(delete_streaming_distribution),
+          I(duplicate_streaming_distribution).
+        This parameter can be exchanged with I(alias) and in conjunction with e_tag.
+    required: false
   origin_access_identity_id:
-      description:
-        - The id of the Origin Access Identity. Used with I(create_origin_access_identity), I(update_origin_access_identity), I(delete_origin_access_identity).
-      required: false
+    description:
+      - The id of the Origin Access Identity.
+        Used with
+          I(create_origin_access_identity),
+          I(update_origin_access_identity),
+          I(delete_origin_access_identity).
+    required: false
   e_tag:
-      description:
-        - A unique identifier of a modified or newly created distribution. Used in conjunction with I(distribution_id) or I(streaming_distribution_id).
-          Is determined automatically if not specified.
-      required: false
+    description:
+      - A unique identifier of a modified or newly created distribution.
+        Used in conjunction with I(distribution_id) or I(streaming_distribution_id).
+        Is determined automatically if not specified.
+    required: false
   create_origin_access_identity:
-      description:
-        - If C(yes), creates an origin access identity.
-      default: 'no'
-      choices: ['yes', 'no']
-      required: false
+    description:
+      - If C(yes), creates an origin access identity.
+    default: 'no'
+    choices: ['yes', 'no']
+    required: false
   update_origin_access_identity:
-      description:
-        - If C(yes), updates an origin access identity.
-      default: 'no'
-      choices: ['yes', 'no']
-      required: false
+    description:
+      - If C(yes), updates an origin access identity.
+    default: 'no'
+    choices: ['yes', 'no']
+    required: false
   delete_origin_access_identity:
-      description:
-        - If C(yes), delete an origin access identity.
-      default: 'no'
-      choices: ['yes', 'no']
-      required: false
+    description:
+      - If C(yes), delete an origin access identity.
+    default: 'no'
+    choices: ['yes', 'no']
+    required: false
   create_distribution:
-      description:
-        - If C(yes), creates a distribution. As a minimum either I(default_origin_domain_name) or at least one origin in I(origins) must be specified.
-      default: 'no'
-      choices: ['yes', 'no']
-      required: false
+    description:
+      - If C(yes), creates a distribution.
+        As a minimum, either I(default_origin_domain_name) or at least one origin
+        in I(origins) must be specified.
+    default: 'no'
+    choices: ['yes', 'no']
+    required: false
   create_invalidation:
-      description:
-        - If C(yes), creates one or more invalidations.
-      default: 'no'
-      choices: ['yes', 'no']
-      required: false
+    description:
+      - If C(yes), creates one or more invalidations.
+    default: 'no'
+    choices: ['yes', 'no']
+    required: false
   update_distribution:
-      description:
-        - If C(yes), updates a distribution.  This can be used with just an C(alias) to specify the distribution and either C(config) or one of it's attributes.
-      default: 'no'
-      choices: ['yes', 'no']
-      required: false
+    description:
+      - If C(yes), updates a distribution.
+        This can be used with just an C(alias) to specify the distribution and
+        either C(config) or one of it's attributes.
+    default: 'no'
+    choices: ['yes', 'no']
+    required: false
   delete_distribution:
-      description:
-        - If C(yes), deletes a distribution.
-      default: 'no'
-      choices: ['yes', 'no']
-      required: false
+    description:
+      - If C(yes), deletes a distribution.
+    default: 'no'
+    choices: ['yes', 'no']
+    required: false
   duplicate_distribution:
-      description:
-        - If C(yes), duplicates a distribution.  This can be used with just an C(alias) to specify the distribution and either C(config) or one of it's attributes.
-      default: 'no'
-      choices: ['yes', 'no']
-      required: false
+    description:
+      - If C(yes), duplicates a distribution.
+        This can be used with just an C(alias) to specify the
+        distribution and either C(config) or one of it's attributes.
+    default: 'no'
+    choices: ['yes', 'no']
+    required: false
   validate_distribution:
-      description:
-        - If C(yes), validate a distribution.
-      default: 'no'
-      choices: ['yes', 'no']
-      required: false
+    description:
+      - If C(yes), validates a distribution.
+    default: 'no'
+    choices: ['yes', 'no']
+    required: false
   create_streaming_distribution:
-      description:
-        - If C(yes), creates a streaming distribution.
-      default: 'no'
-      choices: ['yes', 'no']
-      required: false
+    description:
+      - If C(yes), creates a streaming distribution.
+    default: 'no'
+    choices: ['yes', 'no']
+    required: false
   update_streaming_distribution:
-      description:
-        - If C(yes), updates a streaming distribution. This can be used with just an C(alias) to specify the distribution and either C(config) or one of it's attributes.
-      default: 'no'
-      choices: ['yes', 'no']
-      required: false
+    description:
+      - If C(yes), updates a streaming distribution. This can be used
+        with just an C(alias) to specify the distribution and either
+        C(config) or one of it's attributes.
+    default: 'no'
+    choices: ['yes', 'no']
+    required: false
   delete_streaming_distribution:
-      description:
-        - If C(yes), deletes a streaming distribution.
-      default: 'no'
-      choices: ['yes', 'no']
-      required: false
+    description:
+      - If C(yes), deletes a streaming distribution.
+    default: 'no'
+    choices: ['yes', 'no']
+    required: false
   duplicate_streaming_distribution:
-      description:
-        - If C(yes), duplicates a streaming distribution. This can be used with just an C(alias) to specify the distribution and either C(config) or one of it's attributes.
-      default: 'no'
-      choices: ['yes', 'no']
-      required: false
+    description:
+      - If C(yes), duplicates a streaming distribution. This can be used with
+        just an C(alias) to specify the distribution and either C(config) or
+        one of it's attributes.
+    default: 'no'
+    choices: ['yes', 'no']
+    required: false
   validate_streaming_distribution:
-      description:
-        - If C(yes), validate a streaming distribution.
-      default: 'no'
-      choices: ['yes', 'no']
-      required: false
+    description:
+      - If C(yes), validates a streaming distribution.
+    default: 'no'
+    choices: ['yes', 'no']
+    required: false
   generate_presigned_url_from_pem_private_key:
-      description:
-        - If C(yes), generates a presigned url for a distribution from a private .pem key.
-      default: 'no'
-      choices: ['yes', 'no']
-      required: false
-  origin_access_identity_id:
-      description:
-        - The id of an origin access identity.
-      required: false
+    description:
+      - If C(yes), generates a presigned url for a distribution from a private
+        .pem key.
+    default: 'no'
+    choices: ['yes', 'no']
+    required: false
   caller_reference:
-      description:
-        - A unique identifier for creating and duplicating cloudfront distributions.
-      required: false
+    description:
+      - A unique identifier for creating and duplicating cloudfront distributions.
+    required: false
   invalidation_batch:
-      description:
-        - An array of path strings to be invalidated.
-      required: false
+    description:
+      - An array of path strings to be invalidated.
+    required: false
   presigned_url_pem_private_key_path:
-      description:
-        - The path on the host to the pem private key. This key is used to sign the url.
-      required: false
+    description:
+      - The path on the host to the pem private key.
+        This key is used to sign the url.
+    required: false
   presigned_url_pem_private_key_password:
-      description:
-        - The password for the pem private key if a password exists.
-      required: false
+    description:
+      - The password for the pem private key if a password exists.
+    required: false
   presigned_url_pem_url:
-      description:
-        - The cloudfront url to sign with the pem private key.
-      required: false
+    description:
+      - The cloudfront url to sign with the pem private key.
+    required: false
   presigned_url_pem_expire_date:
-      description:
-        - The expiry date of the presigned url. Date format is: I(YYYY-MM-DD)
-      required: false
+    description:
+      - The expiry date of the presigned url. Date format is I(YYYY-MM-DD)
+    required: false
   config:
-      description:
-        - This is the main variable used for creating and updating distributions and streaming distributions.
-          When used, it will be a complex data type as a dictionary that represents the config of the distribution.
-          When used for creating a distribution, it must contain at least one origin in I(origins) or the variable
-          default_domain_name_origin should be used instead. Components of C(config) can be specified entirely in C(config)
-          or as separate elements outside of the config. This parameter applies to both distributions and streaming distributions.
-          Elements of a distribution are:
-           - caller_reference
-           - aliases
-           - default_root_object
-           - origins
-           - default_cache_behavior
-           - cache_behaviors
-           - custom_error_responses
-           - comment
-           - logging
-           - price_class
-           - enabled
-           - viewer_certificate
-           - restrictions
-           - web_acl_id
-           - http_version
-           - is_ipv6_enabled
-         Elements of a streaming distribution are:
-           - caller_reference
-           - s3_origin
-           - aliases
-           - comment
-           - logging
-           - trusted_signers
-          Most of these elements have sub-elements that can be seen in their entirety in the boto3 documentation at:
-           - http://boto3.readthedocs.io/en/latest/reference/services/cloudfront.html#CloudFront.Client.create_distribution
-           - http://boto3.readthedocs.io/en/latest/reference/services/cloudfront.html#CloudFront.Client.create_streaming_distribution
-          When element variables are specified as well as the config variable, the elements specified will have
-          precendence and overwrite any relevant data for that element in the config variable.
-      config_required: false
+    description:
+      - This is the main variable used for creating and updating distributions
+        and streaming distributions. When used, it will be a complex data type as
+        a dictionary that represents the config of the distribution.
+        When used for creating a distribution, it must contain at least one
+        origin in I(origins) or the variable default_domain_name_origin should be
+        used instead. Components of C(config) can be specified entirely in
+        C(config) or as separate elements outside of the config.
+        This parameter applies to both distributions and streaming distributions.
+        Elements of a distribution are
+          caller_reference
+          aliases
+          default_root_object
+          origins
+          default_cache_behavior
+          cache_behaviors
+          custom_error_responses
+          comment
+          logging
+          price_class
+          enabled
+          viewer_certificate
+          restrictions
+          web_acl_id
+          http_version
+          is_ipv6_enabled
+        Elements of a streaming distribution are
+          caller_reference
+          s3_origin
+          aliases
+          comment
+          logging
+          trusted_signers
+        Most of these elements have sub-elements that can be seen in their entirety
+        in the boto3 documentation at
+          U(http://boto3.readthedocs.io/en/latest/reference/services/cloudfront.html#CloudFront.Client.create_distribution)
+        and
+          U(http://boto3.readthedocs.io/en/latest/reference/services/cloudfront.html#CloudFront.Client.create_streaming_distribution).
+        When element variables are specified as well as the config variable, the
+        elements specified will have precendence and overwrite any relevant data
+        for that element in the config variable.
+    config_required: false
   tags:
-      description:
-        - Used for distributions and streaming distributions in conjunction with C(config).
-        Should be input as a list of I(Key) I(Value) pairs.
-      required: false
+    description:
+      - Used for distributions and streaming distributions in conjunction with
+        C(config). Should be input as a list of I(Key) I(Value) pairs.
+    required: false
   alias:
-      description:
-        - The name of an alias that is used in a distribution. This is used to effectively reference a distribution
-        by it's alias as an alias can only be used by one distribution. This variable avoids haing to provide
-        the distribution_id or streaming_distribution_id as well as the e_tag to reference a distribution.
-        This variable is used for the actions:
-          - C(update_distribution=yes)
-          - C(update_streaming_distribution=yes)
-          - C(duplicate_distribution=yes)
-          - C(duplicate_streaming_distribution=yes)
-      required: no
+    description:
+      - The name of an alias that is used in a distribution. This is used to
+        effectively reference a distribution by it's alias as an alias can only
+        be used by one distribution. This variable avoids haing to provide the
+        distribution_id or streaming_distribution_id as well as the e_tag to
+        reference a distribution. This variable is used for the actions
+          C(update_distribution=yes),
+          C(update_streaming_distribution=yes),
+          C(duplicate_distribution=yes),
+          C(duplicate_streaming_distribution=yes)
+    required: no
   aliases:
-      description:
-        - A list of domain name aliases as strings to be used for the distribution. Each alias must be unique across all distributions. Applies to both distributions and streaming distributions.
-      required: no
+    description:
+    - A list of domain name aliases as strings to be used for the distribution.
+      Each alias must be unique across all distributions.
+      Applies to both distributions and streaming distributions.
+    required: no
   default_root_object:
-      description:
-        - Specifies the path to request when the user requests the origin.
-        eg. if specified as 'index.html', this maps to www.example.com/index.html when www.example.com is called by the user.
-        This prevents the entire distribution origin from being exposed at the root.
+    description:
+      - Specifies the path to request when the user requests the origin.
+        eg. if specified as 'index.html', this maps to www.example.com/index.html
+        when www.example.com is called by the user. This prevents the entire
+        distribution origin from being exposed at the root.
   origins:
-      description:
-        - A list of complex origin objects to be specified for the distribution. Used for C(create_distribution), C(update_distribution) and C(duplicate_distribution). Only valid for distributions.
-        Each origin attribute comprises the attributes.
-          - id
-          - domain_name
-          - origin_path
-          - custom_headers []
-          - s3_origin_config
-            - origin_access_identity
-          - custom_origin_config
-            - http_port
-            - https_port
-            - origin_protocol_policy
-            - origin_ssl_protocols []
-            - origin_read_timeout
-            - origin_keepalive_timeout
-      required: false
+    description:
+      - A list of complex origin objects to be specified for the distribution.
+        Used for C(create_distribution), C(update_distribution) and
+        C(duplicate_distribution). Only valid for distributions. Each origin
+        attribute comprises the attributes
+          id
+          default_origin_domain_name
+          origin_path custom_headers[]
+          s3_origin_config origin_access_identity
+          custom_origin_config
   default_cache_behavior:
-      description:
-        - A complex object specifying the default cache behavior of the distribution. If not specified, the target_origin_id is defined as the target_origin_id of the first valid cache_behavior in cache_behaviors[] with defaults. Only valid for distributions.
-      required: false
+    description:
+      - A complex object specifying the default cache behavior of the
+        distribution. If not specified, the target_origin_id is defined as the
+        target_origin_id of the first valid cache_behavior in cache_behaviors[]
+        with defaults. Only valid for distributions.
+    required: false
   cache_behaviors:
-      description:
-        - A list of complex cache behavior objects to be specified for the distribution. Only valid for distributions.
-        Each cache behavior comprises the attributes:
-          - path_pattern
-          - target_origin_id
-          - forwarded_values
-            - query_string
-            - cookies
-              - forward
-              - whitelisted_names []
-            - headers []
-            - query_string_cache_keys []
-          - trusted_signers
-            - enabled
-            - items
-          - viewer_protocol_policy
-          - min_ttl
-          - allowed_methods
-            - items
-            - cached_methods []
-          - smooth_streaming
-          - default_ttl
-          - max_ttl
-          - compress
-          - lambda_function_associations []
-            - lambda_function_arn
-            - event_type
+    description:
+      - A list of complex cache behavior objects to be specified for the
+        distribution. Only valid for distributions.
+        Each cache behavior comprises the attributes of
+          path_pattern target_origin_id
+          forwarded_values trusted_signers
+          viewer_protocol_policy
+          min_ttl
+          allowed_methods
+          smooth_streaming
+          default_ttl
+          max_ttl
+          compress
+          lambda_function_associations[]
     required: false
   custom_error_responses:
-      description:
-        - A list of complex custom error responses to be specified for the distribution. This attribute configures custom http error messages returned to the user. Only valid for distributions.
-        Each custom error response comprises the attributes:
-          - error_code
-          - reponse_page_path
-          - response_code
-          - error_caching_min_ttl
-      required: false
+    description:
+      - A list of complex custom error responses to be specified for the
+        distribution. This attribute configures custom http error messages
+        returned to the user. Only valid for distributions.
+        Each custom error response comprises the attributes
+          error_code
+          reponse_page_path
+          response_code error_caching_min_ttl
+    required: false
   comment:
-      description:
-        - A unique comment to describe the cloudfront distribution. Applies to both distributions and streaming distributions.
-        If not specified, it defaults to a generic message that it has been created with Ansible, and a datetime stamp.
-      required: false
+    description:
+      - A unique comment to describe the cloudfront distribution. Applies to both
+        distributions and streaming distributions. If not specified, it defaults
+        to a generic message that it has been created with Ansible, and a
+        datetime stamp.
+    required: false
   logging:
-      description:
-        - A complex object that defines logging for the distribution. Applies to both distributions and streaming distributions.
-        The logging object comprises the attributes:
-          - enabled
-          - include_cookies
-          - bucket
-          - prefix
-      required: false
+    description:
+      - A complex object that defines logging for the distribution. Applies to
+        both distributions and streaming distributions. The logging object
+        comprises the attributes
+          enabled
+          include_cookies
+          bucket
+          prefix
+    required: false
   price_class:
-      description:
-        - A string that specifies the pricing class of the distribution. Applies to both distributions and streaming distributions.
-      choices: ['PriceClass_100', 'PriceClass_200', 'PriceClass_All']
-      required: false
+    description:
+      - A string that specifies the pricing class of the distribution. Applies to
+        both distributions and streaming distributions.
+    choices: ['PriceClass_100', 'PriceClass_200', 'PriceClass_All']
+    required: false
   enabled:
-      description:
-        - A boolean value that specifies whether the distribution is enabled or disabled. Applies to both distributions
-        and streaming distributions.
-      default: 'false'
-      required: false
+    description:
+      - A boolean value that specifies whether the distribution is enabled or
+        disabled. Applies to both distributions and streaming distributions.
+    default: false
+    required: false
   viewer_certificate:
-      description:
-        - A complex object that specifies the encryption details of the distribution. Only valid for distributions.
-          The viewer_certificate object comprises the following attributes:
-            - cloudfront_default_certificate
-            - iam_certificate_id
-            - acm_certificate_arn
-            - ssl_support_method
-            - minimum_protocol_version
-            - certificate
-            - certificate_source
-      required: false
+    description:
+      - A complex object that specifies the encryption details of the
+        distribution. Only valid for distributions. Comprises of the following
+        attributes
+          cloudfront_default_certificate
+          iam_certificate_id
+          acm_certificate_arn
+          ssl_support_method
+          minimum_protocol_version
+          certificate certificate_source
+    required: false
   restrictions:
-      description:
-        - A complex object that describes how a distribution should restrict it's content. Only valid for distributions.
-          The restriction object comprises the following attributes:
-            - geo_restriction
-              - restriction_type
-              - items
+    description:
+      - A complex object that describes how a distribution should restrict it's
+        content. Only valid for distributions. The restriction object comprises the
+        following attributes
+          geo_restriction
   web_acl_id:
-      description:
-        - The id of a waf web_acl. Only valid for distributions.
-      required: false
+    description:
+      - The id of a waf web_acl. Only valid for distributions.
+    required: false
   http_version:
-      description:
-        - The version of http to use for the distribution. Only valid for distributions.
-      choices: [ 'http1.1', 'http2' ]
-      required: false
-  is_ipv6_enabled:
-      description:
-        - A boolean value specifying whether IPV6 addresses should be used for the distribution or not.
-      choices: ['yes', 'no']
-      required: false
-  s3_origin:
-      description:
-        - A complex object that describes the S3 bucket from whence the media streaming arises. Only valid for streaming distributions.
-          The s3_origin object comprises the following attributes:
-            - domain_name
-            - origin_access_identity
-      required: false
-  trusted_signers:
-      description:
-        - A complex object describing the AWS accounts that are allowed to create signed urls for the distribution using C(generate_presigned_url_from_pem_private_key=yes). Only valid for distributions.
-        The trusted_signers object comprises the following attributes:
-          - enabled
-          - items
-  default_origin_domain_name:
-      description:
-        - The domain name to specify for a distribution or a streaming distribution. To create a basic, generic distribution or streaming distribution, this parameter alone can be specified as the minimum required parameters for a distribution. Used in conjunction with C(create_distribtion) and C(create_streaming_distribution)
-      required: false
-  default_origin_path:
-      description:
-        - The origin path to specify as the base of the distribution's origin. Maps to a path on your origin from the distribution.
-        eg. if C(default_origin_path=/production) then www.example.com maps to www.my-distribution-origin.com/production where
-        www.example.com is an alias to the cloudfront distribution.
-  default_origin_access_identity:
-      description:
-        - The identity of a user who has access to the origin for use with the distribution. Avoids the assumption that anyone can access the (s3) origin. Used in conjunction with default_origin_path.
-      required: false
-  default_s3_origin_domain_name:
-      description:
-        - The default domain name for an S3 origin. Applies to streaming distribution only. A streaming distribution can be defined with only this parameter in the same way a distribution can be defined with only I(default_origin_domain_name).
-      required: false
-  default_s3_origin_origin_access_identity:
-      description:
-        - The default origin access identity to use for the streaming distribution. Avoids the assumption that anyone can access the (s3) origin). Only applies to streaming distributions.
-      required: false
+    description:
+      - The version of http to use for the distribution.
+        Only valid for distributions.
+    choices: [ 'http1.1', 'http2' ]
+    required: false
+
+
 '''
 
 EXAMPLES = '''
-# create a basic distribution with defaults
-- cloudfront:
-    create_distribution: yes
-    default_origin_domain_name: www.my-cloudfront-origin.com
-
 # create a basic distribution with defaults and tags
 - cloudfront:
     create_distribution: yes
@@ -575,7 +557,6 @@ EXAMPLES = '''
       - /testpathtwo/test2.log
       - /testpaththree/test3.log
 
-# deploy wait
 
 '''
 
