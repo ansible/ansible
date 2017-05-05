@@ -129,9 +129,9 @@ class AnsibleCoreCI(object):
     def start(self):
         """Start instance."""
         if is_shippable():
-            self.start_shippable()
-        else:
-            self.start_remote()
+            return self.start_shippable()
+
+        return self.start_remote()
 
     def start_remote(self):
         """Start instance for remote development/testing."""
