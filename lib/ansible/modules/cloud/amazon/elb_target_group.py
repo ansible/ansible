@@ -25,7 +25,7 @@ short_description: Manage a target group for an Application load balancer
 description:
     - "Manage an AWS Application Elastic Load Balancer target group. See \
     U(http://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html) for details."
-version_added: "2.3"
+version_added: "2.4"
 author: "Rob White (@wimnat)"
 options:
   name:
@@ -92,10 +92,21 @@ options:
       - Whether or not to alter existing targets in the group to match what is passed with the module
     required: false
     default: yes
+  purge_tags:
+    description:
+      - If yes, existing tags will be purged from the resource to match exactly what is defined by tags parameter. If the tag parameter is not set then tags
+        will not be modified.
+    required: false
+    default: yes
+    choices: [ 'yes', 'no' ]
   targets:
     description:
       - "A list of targets to assign to the target group. This parameter defaults to an empty list. Unless you set the 'modify_targets' parameter then \
       all existing targets will be removed from the group. The list should be an Id and a Port parameter. See the Examples for detail."
+    required: false
+  tags:
+    description:
+      - A dictionary of one or more tags to assign to the target group.
     required: false
   state:
     description:
@@ -144,80 +155,102 @@ EXAMPLES = '''
   health_check_path: /
   successful_response_codes: "200,250-260"
   targets:
-   - Id: i-01234567
-     Port: 80
-   - Id: i-98765432
-     Port: 80
+    - Id: i-01234567
+      Port: 80
+    - Id: i-98765432
+      Port: 80
   state: present
   wait_timeout: 200
   wait: True
 '''
 
 RETURN = '''
-target_group:
-    target_group_arn:
-        description: The Amazon Resource Name (ARN) of the target group.
-        type: string
-        sample: "arn:aws:elasticloadbalancing:ap-southeast-2:01234567890:targetgroup/mytargetgroup/aabbccddee0044332211"
-    target_group_name:
-        description: The name of the target group.
-        type: string
-        sample: mytargetgroup
-    protocol:
-        description: The protocol to use for routing traffic to the targets.
-        type: string
-        sample: HTTP
-    port:
-        description: The port on which the targets are listening.
-        type: int
-        sample: 80
-    vpc_id:
-        description: The ID of the VPC for the targets.
-        type: string
-        sample: vpc-0123456
-    health_check_protocol:
-        description: The protocol to use to connect with the target.
-        type: string
-        sample: HTTP
-    health_check_port:
-        description: The port to use to connect with the target.
-        type: string
-        sample: traffic-port
-    health_check_interval_seconds:
-        description: The approximate amount of time, in seconds, between health checks of an individual target.
-        type: int
-        sample: 30
-    health_check_timeout_seconds:
-        description: The amount of time, in seconds, during which no response means a failed health check.
-        type: int
-        sample: 5
-    healthy_threshold_count:
-        description: The number of consecutive health checks successes required before considering an unhealthy target healthy.
-        type: int
-        sample: 5
-    unhealthy_threshold_count:
-        description: The number of consecutive health check failures required before considering the target unhealthy.
-        type: int
-        sample: 2
-    health_check_path:
-        description: The destination for the health check request.
-        type: string
-        sample: /index.html
-    matcher:
-        description: The HTTP codes to use when checking for a successful response from a target.
-        type: dict
-        sample: {
-            "http_code": "200"
-        }
-    load_balancer_arns:
-        description: The Amazon Resource Names (ARN) of the load balancers that route traffic to this target group.
-        type: list
-        sample: []
+target_group_arn:
+    description: The Amazon Resource Name (ARN) of the target group.
+    returned: when state present
+    type: string
+    sample: "arn:aws:elasticloadbalancing:ap-southeast-2:01234567890:targetgroup/mytargetgroup/aabbccddee0044332211"
+target_group_name:
+    description: The name of the target group.
+    returned: when state present
+    type: string
+    sample: mytargetgroup
+protocol:
+    description: The protocol to use for routing traffic to the targets.
+    returned: when state present
+    type: string
+    sample: HTTP
+port:
+    description: The port on which the targets are listening.
+    returned: when state present
+    type: int
+    sample: 80
+vpc_id:
+    description: The ID of the VPC for the targets.
+    returned: when state present
+    type: string
+    sample: vpc-0123456
+health_check_protocol:
+    description: The protocol to use to connect with the target.
+    returned: when state present
+    type: string
+    sample: HTTP
+health_check_port:
+    description: The port to use to connect with the target.
+    returned: when state present
+    type: string
+    sample: traffic-port
+health_check_interval_seconds:
+    description: The approximate amount of time, in seconds, between health checks of an individual target.
+    returned: when state present
+    type: int
+    sample: 30
+health_check_timeout_seconds:
+    description: The amount of time, in seconds, during which no response means a failed health check.
+    returned: when state present
+    type: int
+    sample: 5
+healthy_threshold_count:
+    description: The number of consecutive health checks successes required before considering an unhealthy target healthy.
+    returned: when state present
+    type: int
+    sample: 5
+unhealthy_threshold_count:
+    description: The number of consecutive health check failures required before considering the target unhealthy.
+    returned: when state present
+    type: int
+    sample: 2
+health_check_path:
+    description: The destination for the health check request.
+    returned: when state present
+    type: string
+    sample: /index.html
+matcher:
+    description: The HTTP codes to use when checking for a successful response from a target.
+    returned: when state present
+    type: dict
+    sample: {
+        "http_code": "200"
+    }
+load_balancer_arns:
+    description: The Amazon Resource Names (ARN) of the load balancers that route traffic to this target group.
+    returned: when state present
+    type: list
+    sample: []
+tags:
+    description: The tags attached to the target group.
+    returned: when state present
+    type: dict
+    sample: "{
+        'Tag': 'Example'
+    }"
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, camel_dict_to_snake_dict, ec2_argument_spec
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, camel_dict_to_snake_dict, \
+    ec2_argument_spec, boto3_tag_list_to_ansible_dict
 import time
+import traceback
 
 try:
     import boto3
@@ -231,17 +264,11 @@ def get_target_group(connection, module):
 
     try:
         return connection.describe_target_groups(Names=[module.params.get("name")])['TargetGroups'][0]
-    except (ClientError, NoCredentialsError) as e:
+    except ClientError as e:
         if e.response['Error']['Code'] == 'TargetGroupNotFound':
             return None
         else:
-            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
-
-
-def diff_list(a, b):
-    """Find the entries in list a that are not in list b"""
-    b = set(b)
-    return [aa for aa in a if aa not in b]
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
 
 def wait_for_status(connection, module, target_group_arn, targets, status):
@@ -257,8 +284,8 @@ def wait_for_status(connection, module, target_group_arn, targets, status):
                 break
             else:
                 time.sleep(polling_increment_secs)
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        except ClientError as e:
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     result = response
     return status_achieved, result
@@ -272,6 +299,8 @@ def create_or_update_target_group(connection, module):
     params['Protocol'] = module.params.get("protocol").upper()
     params['Port'] = module.params.get("port")
     params['VpcId'] = module.params.get("vpc_id")
+    tags = module.params.get("tags")
+    purge_tags = module.params.get("purge_tags")
 
     # If health check path not None, set health check attributes
     if module.params.get("health_check_path") is not None:
@@ -304,51 +333,53 @@ def create_or_update_target_group(connection, module):
 
     if tg:
         # Target group exists so check health check parameters match what has been passed
+        health_check_params = dict()
 
         # If we have no health check path then we have nothing to modify
-        hc_params = dict()
         if module.params.get("health_check_path") is not None:
             # Health check protocol
             if 'HealthCheckProtocol' in params and tg['HealthCheckProtocol'] != params['HealthCheckProtocol']:
-                hc_params['HealthCheckProtocol'] = params['HealthCheckProtocol']
+                health_check_params['HealthCheckProtocol'] = params['HealthCheckProtocol']
 
             # Health check port
             if 'HealthCheckPort' in params and tg['HealthCheckPort'] != params['HealthCheckPort']:
-                hc_params['HealthCheckPort'] = params['HealthCheckPort']
+                health_check_params['HealthCheckPort'] = params['HealthCheckPort']
 
             # Health check path
             if 'HealthCheckPath'in params and tg['HealthCheckPath'] != params['HealthCheckPath']:
-                hc_params['HealthCheckPath'] = params['HealthCheckPath']
+                health_check_params['HealthCheckPath'] = params['HealthCheckPath']
 
             # Health check interval
             if 'HealthCheckIntervalSeconds' in params and tg['HealthCheckIntervalSeconds'] != params['HealthCheckIntervalSeconds']:
-                hc_params['HealthCheckIntervalSeconds'] = params['HealthCheckIntervalSeconds']
+                health_check_params['HealthCheckIntervalSeconds'] = params['HealthCheckIntervalSeconds']
 
             # Health check timeout
             if 'HealthCheckTimeoutSeconds' in params and tg['HealthCheckTimeoutSeconds'] != params['HealthCheckTimeoutSeconds']:
-                hc_params['HealthCheckTimeoutSeconds'] = params['HealthCheckTimeoutSeconds']
+                health_check_params['HealthCheckTimeoutSeconds'] = params['HealthCheckTimeoutSeconds']
 
             # Healthy threshold
             if 'HealthyThresholdCount' in params and tg['HealthyThresholdCount'] != params['HealthyThresholdCount']:
-                hc_params['HealthyThresholdCount'] = params['HealthyThresholdCount']
+                health_check_params['HealthyThresholdCount'] = params['HealthyThresholdCount']
 
             # Unhealthy threshold
             if 'UnhealthyThresholdCount' in params and tg['UnhealthyThresholdCount'] != params['UnhealthyThresholdCount']:
-                hc_params['UnhealthyThresholdCount'] = params['UnhealthyThresholdCount']
+                health_check_params['UnhealthyThresholdCount'] = params['UnhealthyThresholdCount']
 
             # Matcher (successful response codes)
-            current_matcher_list = tg['Matcher']['HttpCode'].split(',')
-            requested_matcher_list = params['Matcher']['HttpCode'].split(',')
-            if set(current_matcher_list) != set(requested_matcher_list):
-                hc_params['Matcher'] = {}
-                hc_params['Matcher']['HttpCode'] = ','.join(requested_matcher_list)
+            # TODO: required and here?
+            if 'Matcher' in params:
+                current_matcher_list = tg['Matcher']['HttpCode'].split(',')
+                requested_matcher_list = params['Matcher']['HttpCode'].split(',')
+                if set(current_matcher_list) != set(requested_matcher_list):
+                    health_check_params['Matcher'] = {}
+                    health_check_params['Matcher']['HttpCode'] = ','.join(requested_matcher_list)
 
             try:
-                if hc_params:
-                    connection.modify_target_group(TargetGroupArn=tg['TargetGroupArn'], **hc_params)
+                if health_check_params:
+                    connection.modify_target_group(TargetGroupArn=tg['TargetGroupArn'], **health_check_params)
                     changed = True
-            except (ClientError, NoCredentialsError) as e:
-                module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+            except ClientError as e:
+                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
         # Do we need to modify targets?
         if module.params.get("modify_targets"):
@@ -360,10 +391,9 @@ def create_or_update_target_group(connection, module):
 
                 try:
                     current_targets = connection.describe_target_health(TargetGroupArn=tg['TargetGroupArn'])
-                except (ClientError, NoCredentialsError) as e:
-                    module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+                except ClientError as e:
+                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
-                current_instances = current_targets['TargetHealthDescriptions']
                 current_instance_ids = []
 
                 for instance in current_targets['TargetHealthDescriptions']:
@@ -373,7 +403,7 @@ def create_or_update_target_group(connection, module):
                 for instance in params['Targets']:
                     new_instance_ids.append(instance['Id'])
 
-                add_instances = diff_list(new_instance_ids, current_instance_ids)
+                add_instances = set(new_instance_ids) - set(current_instance_ids)
 
                 if add_instances:
                     instances_to_add = []
@@ -384,27 +414,27 @@ def create_or_update_target_group(connection, module):
                     changed = True
                     try:
                         connection.register_targets(TargetGroupArn=tg['TargetGroupArn'], Targets=instances_to_add)
-                    except (ClientError, NoCredentialsError) as e:
-                        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+                    except ClientError as e:
+                        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
                     if module.params.get("wait"):
                         status_achieved, registered_instances = wait_for_status(connection, module, tg['TargetGroupArn'], instances_to_add, 'healthy')
                         if not status_achieved:
                             module.fail_json(msg='Error waiting for target registration - please check the AWS console')
 
-                remove_instances = diff_list(current_instance_ids, new_instance_ids)
+                remove_instances = set(current_instance_ids) - set(new_instance_ids)
 
                 if remove_instances:
                     instances_to_remove = []
                     for target in current_targets['TargetHealthDescriptions']:
                         if target['Target']['Id'] in remove_instances:
-                            instances_to_remove.append({'Id': target['Target']['Id'], 'Port': target['Target']['Port'] })
+                            instances_to_remove.append({'Id': target['Target']['Id'], 'Port': target['Target']['Port']})
 
                     changed = True
                     try:
                         connection.deregister_targets(TargetGroupArn=tg['TargetGroupArn'], Targets=instances_to_remove)
-                    except (ClientError, NoCredentialsError) as e:
-                        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+                    except ClientError as e:
+                        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
                     if module.params.get("wait"):
                         status_achieved, registered_instances = wait_for_status(connection, module, tg['TargetGroupArn'], instances_to_remove, 'unused')
@@ -413,21 +443,21 @@ def create_or_update_target_group(connection, module):
             else:
                 try:
                     current_targets = connection.describe_target_health(TargetGroupArn=tg['TargetGroupArn'])
-                except (ClientError, NoCredentialsError) as e:
-                    module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+                except ClientError as e:
+                    module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
                 current_instances = current_targets['TargetHealthDescriptions']
 
                 if current_instances:
                     instances_to_remove = []
                     for target in current_targets['TargetHealthDescriptions']:
-                        instances_to_remove.append({'Id': target['Target']['Id'], 'Port': target['Target']['Port'] })
+                        instances_to_remove.append({'Id': target['Target']['Id'], 'Port': target['Target']['Port']})
 
                     changed = True
                     try:
                         connection.deregister_targets(TargetGroupArn=tg['TargetGroupArn'], Targets=instances_to_remove)
-                    except (ClientError, NoCredentialsError) as e:
-                        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+                    except ClientError as e:
+                        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
                     if module.params.get("wait"):
                         status_achieved, registered_instances = wait_for_status(connection, module, tg['TargetGroupArn'], instances_to_remove, 'unused')
@@ -437,8 +467,8 @@ def create_or_update_target_group(connection, module):
         try:
             connection.create_target_group(**params)
             changed = True
-        except (ClientError, NoCredentialsError) as e:
-            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        except ClientError as e:
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
         tg = get_target_group(connection, module)
 
@@ -446,8 +476,8 @@ def create_or_update_target_group(connection, module):
             params['Targets'] = module.params.get("targets")
             try:
                 connection.register_targets(TargetGroupArn=tg['TargetGroupArn'], Targets=params['Targets'])
-            except (ClientError, NoCredentialsError) as e:
-                module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+            except ClientError as e:
+                module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
             if module.params.get("wait"):
                 status_achieved, registered_instances = wait_for_status(connection, module, tg['TargetGroupArn'], params['Targets'], 'healthy')
@@ -457,7 +487,18 @@ def create_or_update_target_group(connection, module):
     # Get the target group again
     tg = get_target_group(connection, module)
 
-    module.exit_json(changed=changed, target_group=camel_dict_to_snake_dict(tg))
+    # Tags
+    if tags is not None:
+        try:
+            current_tags = boto3_tag_list_to_ansible_dict(connection.describe_tags(ResourceArns=[tg['TargetGroupArn']])['TagDescriptions'][0]['Tags'])
+        except ClientError as e:
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+
+        # TODO: Compare tags with helper function once https://github.com/ansible/ansible/pull/23387 is merged
+
+    tg['tags'] = current_tags
+
+    module.exit_json(changed=changed, **camel_dict_to_snake_dict(tg))
 
 
 def delete_target_group(connection, module):
@@ -469,8 +510,8 @@ def delete_target_group(connection, module):
         try:
             connection.delete_target_group(TargetGroupArn=tg['TargetGroupArn'])
             changed = True
-        except (ClientError, NoCredentialsError) as e:
-            module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+        except ClientError as e:
+            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
 
     module.exit_json(changed=changed)
 
@@ -480,21 +521,23 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            name=dict(required=True, type='str'),
-            protocol=dict(required=False, choices=['http', 'https', 'HTTP', 'HTTPS'], type='str'),
-            port=dict(required=False, type='int'),
-            vpc_id=dict(required=False, type='str'),
             health_check_protocol=dict(required=False, choices=['http', 'https'], type='str'),
             health_check_port=dict(required=False, type='int'),
             health_check_path=dict(required=False, default=None, type='str'),
-            health_check_interval=dict(required=False, default=30, type='int'),
-            health_check_timeout=dict(required=False, default=5, type='int'),
-            healthy_threshold_count=dict(required=False, default=5, type='int'),
-            unhealthy_threshold_count=dict(required=False, default=2, type='int'),
-            state=dict(required=True, choices=['present', 'absent'], type='str'),
-            successful_response_codes=dict(required=False, default='200', type='str'),
+            health_check_interval=dict(required=False, type='int'),
+            health_check_timeout=dict(required=False, type='int'),
+            healthy_threshold_count=dict(required=False, type='int'),
             modify_targets=dict(required=False, default=True, type='bool'),
+            name=dict(required=True, type='str'),
+            port=dict(required=False, type='int'),
+            protocol=dict(required=False, choices=['http', 'https', 'HTTP', 'HTTPS'], type='str'),
+            purge_tags=dict(required=False, default=True, type='bool'),
+            state=dict(required=True, choices=['present', 'absent'], type='str'),
+            successful_response_codes=dict(required=False, type='str'),
+            tags=dict(required=False, default={}, type='dict'),
             targets=dict(required=False, type='list'),
+            unhealthy_threshold_count=dict(required=False, type='int'),
+            vpc_id=dict(required=False, type='str'),
             wait_timeout=dict(required=False, type='int'),
             wait=dict(required=False, type='bool')
         )
