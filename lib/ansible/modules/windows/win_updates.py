@@ -37,7 +37,6 @@ options:
     category_names:
         description:
         - A scalar or list of categories to install updates from
-        required: false
         default: ["CriticalUpdates","SecurityUpdates","UpdateRollups"]
         choices:
         - Application
@@ -56,7 +55,6 @@ options:
         description:
         - Controls whether found updates are returned as a list or actually installed.
         - This module also supports Ansible check mode, which has the same effect as setting state=searched
-        required: false
         default: installed
         choices:
         - installed
@@ -64,7 +62,6 @@ options:
     log_path:
         description:
         - If set, win_updates will append update progress to the specified file. The directory must already exist.
-        required: false
 author: "Matt Davis (@mattdavispdx)"
 notes:
 - win_updates must be run by a user with membership in the local Administrators group
