@@ -572,7 +572,7 @@ def main():
         http_timeout=dict(type='int'),
         load_path=dict(type='path'),
         name=dict(type='str', required=True),
-        nocache=dict(type='str', default=False),
+        nocache=dict(type='bool', default=False),
         path=dict(type='path', aliases=['build_path']),
         pull=dict(type='bool', default=True),
         push=dict(type='bool', default=False),
