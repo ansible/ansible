@@ -556,8 +556,6 @@ EXAMPLES = '''
       - /testpathone/test1.txt
       - /testpathtwo/test2.log
       - /testpaththree/test3.log
-
-
 '''
 
 RETURN = '''
@@ -572,7 +570,7 @@ location:
     type: str
 validation_result:
     description: either returns 'OK' or fails with a description of why the
-    validation failed.
+      validation failed.
     returned: applies to validate_distribution and validate_streaming_distribution
     type: str
 '''
