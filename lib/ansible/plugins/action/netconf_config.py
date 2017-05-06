@@ -24,3 +24,4 @@ from ansible.plugins.action.net_config import ActionModule as NetActionModule
 
 class ActionModule(NetActionModule, ActionBase):
     pass
+
