@@ -28,7 +28,7 @@ description:
 requirements:
   - boto3 >= 1.0.0
   - python >= 2.6
-version_added: "2.3"
+version_added: "2.4"
 author: Willem van Ketwich (@wilvk)
 options:
   distribution_id:
@@ -447,33 +447,33 @@ EXAMPLES = '''
     comment: this is a cloudfront distribution with logging
 
 # create a distribution with an origin, logging and default cache behavior
-    - cloudfront:
-        create_distribution: yes
-        origins:
-            - id: 'my test origin-000111'
-              domain_name: www.example.com
-              origin_path: /production
-              custom_headers:
-                - header_name: MyCustomHeaderName
-                  header_value: MyCustomHeaderValue
-        default_cache_behavior:
-          target_origin_id: 'my test origin-000111'
-          forwarded_values:
-            query_string: true
-            cookies:
-              forward: all
-            headers:
-             - '*'
-          viewer_protocol_policy: allow-all
-          smooth_streaming: true
-          compress: true
-        logging:
-          enabled: true
-          include_cookies: false
-          bucket: mylogbucket.s3.amazonaws.com
-          prefix: myprefix/
-        enabled: false
-        comment: this is a cloudfront distribution with logging
+- cloudfront:
+    create_distribution: yes
+    origins:
+        - id: 'my test origin-000111'
+          domain_name: www.example.com
+          origin_path: /production
+          custom_headers:
+            - header_name: MyCustomHeaderName
+              header_value: MyCustomHeaderValue
+    default_cache_behavior:
+      target_origin_id: 'my test origin-000111'
+      forwarded_values:
+        query_string: true
+        cookies:
+          forward: all
+        headers:
+         - '*'
+      viewer_protocol_policy: allow-all
+      smooth_streaming: true
+      compress: true
+    logging:
+      enabled: true
+      include_cookies: false
+      bucket: mylogbucket.s3.amazonaws.com
+      prefix: myprefix/
+    enabled: false
+    comment: this is a cloudfront distribution with logging
 
 # delete a distribution
 - cloudfront:
@@ -563,11 +563,12 @@ EXAMPLES = '''
 RETURN = '''
 location:
     description: describes a url specifying the output of the action just run.
-    returned: applies to create_distribution, update_distribution,
-    duplicate_distribution, create_streaming_distribution,
-    update_streaming_distribution, duplicate_streaming_distribution,
-    create_invalidation, create_origin_access_identity,
-    update_origin_access_identity, delete_origin_access_identity
+      applies to create_distribution, update_distribution,
+      duplicate_distribution, create_streaming_distribution,
+      update_streaming_distribution, duplicate_streaming_distribution,
+      create_invalidation, create_origin_access_identity,
+      update_origin_access_identity, delete_origin_access_identity
+    returns: url of distribution
     type: str
 validation_result:
     description: either returns 'OK' or fails with a description of why the
