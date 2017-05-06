@@ -67,8 +67,24 @@ decide to do something conditionally based on success or failure::
       - command: /bin/still/something_else
         when: result|skipped
 
+      - yum:
+          name: package_name
+          state: latest
+        register: package_installed
+        
+      - command: /bin/other/thing
+        when: package_installed|changed
 
-.. note:: the filters have been updated in 2.1 so both `success` and `succeeded` work (`fail`/`failed`, etc).
+.. note:: As of Ansible 2.2, the complete list of task state filters available for use with when statements is:
+
+    failure
+    failed
+    success
+    succeeded
+    change
+    changed
+    skip
+    skipped
 
 Note that was a little bit of foreshadowing on the 'register' statement.  We'll get to it a bit later in this chapter.
 
