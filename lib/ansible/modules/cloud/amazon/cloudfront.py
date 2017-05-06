@@ -563,10 +563,15 @@ EXAMPLES = '''
 RETURN = '''
 location:
     description: describes a url specifying the output of the action just run.
-    returned: applies to create_distribution, update_distribution, duplicate_distribution, create_streaming_distribution, update_streaming_distribution, duplicate_streaming_distribution, create_invalidation, create_origin_access_identity, update_origin_access_identity, delete_origin_access_identity
+    returned: applies to create_distribution, update_distribution,
+    duplicate_distribution, create_streaming_distribution,
+    update_streaming_distribution, duplicate_streaming_distribution,
+    create_invalidation, create_origin_access_identity,
+    update_origin_access_identity, delete_origin_access_identity
     type: str
 validation_result:
-    description: either returns 'OK' or fails with a description of why the validation failed.
+    description: either returns 'OK' or fails with a description of why the
+    validation failed.
     returned: applies to validate_distribution and validate_streaming_distribution
     type: str
 '''
@@ -849,8 +854,8 @@ class CloudFrontValidationManager:
                 return None
             valid_logging = {}
             if not streaming:
-                if(logging and ('enabled' not in logging or 'include_cookies' not in logging
-                                or 'bucket' not in logging or 'prefix' not in logging)):
+                if(logging and ('enabled' not in logging or 'include_cookies' not in logging or
+                                'bucket' not in logging or 'prefix' not in logging)):
                     self.module.fail_json(msg="the logging parameters enabled, include_cookies, bucket and " +
                                           "prefix must be specified")
                 valid_logging['include_cookies'] = logging.get('include_cookies')
@@ -1092,19 +1097,22 @@ class CloudFrontValidationManager:
         try:
             if viewer_certificate is None:
                 return None
-            if(viewer_certificate.get('cloudfront_default_certificate') == True and
+            if(viewer_certificate.get('cloudfront_default_certificate') and
                     viewer_certificate.get('ssl_support_method') is not None):
                 self.module.fail_json(msg="viewer_certificate.ssl_support_method should not be specified with" +
                                       "viewer_certificate_cloudfront_default_certificate set to true")
             if 'ssl_support_method' in viewer_certificate:
                 self.validate_attribute_with_allowed_values(viewer_certificate.get('ssl_support_method'),
-                                                            'viewer_certificate.ssl_support_method', self.__valid_viewer_certificate_ssl_support_methods)
+                                                            'viewer_certificate.ssl_support_method',
+                                                            self.__valid_viewer_certificate_ssl_support_methods)
             if 'minimum_protocol_version' in viewer_certificate:
                 self.validate_attribute_with_allowed_values(viewer_certificate.get('minimum_protocol_version'),
-                                                            'viewer_certificat.minimum_protocol_version', self.__valid_viewer_certificate_minimum_protocol_versions)
+                                                            'viewer_certificate.minimum_protocol_version',
+                                                            self.__valid_viewer_certificate_minimum_protocol_versions)
             if 'certificate_source' in viewer_certificate:
                 self.validate_attribute_with_allowed_values(viewer_certificate.get('certificate_source'),
-                                                            'viewer_certificate.certificate_source', self.__valid_viewer_certificate_certificate_sources)
+                                                            'viewer_certificate.certificate_source',
+                                                            self.__valid_viewer_certificate_certificate_sources)
             if 'ssl_support_method' in viewer_certificate:
                 viewer_certificate = self.__helpers.change_dict_key_name(viewer_certificate, 'ssl_support_method',
                                                                          's_s_l_support_method')
@@ -1579,14 +1587,14 @@ def main():
     create_update_distribution = create_distribution or update_distribution
     create_update_streaming_distribution = create_streaming_distribution or update_streaming_distribution
     update_delete_duplicate_distribution = update_distribution or delete_distribution or duplicate_distribution
-    update_delete_duplicate_streaming_distribution = (update_streaming_distribution or delete_streaming_distribution
-                                                      or duplicate_streaming_distribution)
+    update_delete_duplicate_streaming_distribution = (update_streaming_distribution or delete_streaming_distribution or
+                                                      duplicate_streaming_distribution)
     create = create_distribution or create_streaming_distribution
     validate = validate_distribution or validate_streaming_distribution
     duplicate = duplicate_distribution or duplicate_streaming_distribution
     delete = delete_distribution or delete_streaming_distribution or delete_origin_access_identity
-    config_required = (create_distribution or update_delete_duplicate_distribution or create_streaming_distribution
-                       or update_delete_duplicate_streaming_distribution or validate)
+    config_required = (create_distribution or update_delete_duplicate_distribution or create_streaming_distribution or
+                       update_delete_duplicate_streaming_distribution or validate)
     tagging = tag_resource or untag_resource
     has_tags = not (delete or untag_resource or generate_presigned_url_from_pem_private_key)
 
@@ -1602,12 +1610,12 @@ def main():
         config = {}
 
     if update_delete_duplicate_distribution or config:
-        distribution_id, config, e_tag = validation_mgr.validate_update_delete_distribution_parameters(alias,
-                                                                                                       distribution_id, config, e_tag)
+        distribution_id, config, e_tag = validation_mgr.validate_update_delete_distribution_parameters(
+            alias, distribution_id, config, e_tag)
 
     if update_delete_duplicate_streaming_distribution or validate_streaming_distribution:
-        streaming_distribution_id, config, e_tag = validation_mgr.validate_update_delete_streaming_distribution_parameters(alias,
-                                                                                                                           streaming_distribution_id, config, e_tag)
+        streaming_distribution_id, config, e_tag = validation_mgr.validate_update_delete_streaming_distribution_parameters(alias, streaming_distribution_id,
+                                                                                                                           config, e_tag)
 
     if tagging:
         arn = validation_mgr.validate_tagging_arn(
@@ -1625,9 +1633,9 @@ def main():
                                                                         price_class, comment, create_update_streaming_distribution)
 
     if create_update_distribution or validate:
-        valid_origins = validation_mgr.validate_origins(origins, default_origin_domain_name,
-                                                        default_origin_access_identity, default_origin_path, create_update_streaming_distribution,
-                                                        create_distribution)
+        valid_origins = validation_mgr.validate_origins(
+            origins, default_origin_domain_name, default_origin_access_identity,
+            default_origin_path, create_update_streaming_distribution, create_distribution)
         config = helpers.merge_validation_into_config(config, valid_origins, 'origins')
         config_origins = config.get('origins')
         valid_cache_behaviors = validation_mgr.validate_cache_behaviors(
@@ -1650,8 +1658,9 @@ def main():
         config = helpers.merge_validation_into_config(
             config, valid_viewer_certificate, 'viewer_certificate')
     elif create_update_streaming_distribution or validate:
-        config = validation_mgr.validate_streaming_distribution_config_parameters(config, comment,
-                                                                                  trusted_signers, s3_origin, default_s3_origin_domain_name, default_s3_origin_origin_access_identity)
+        config = validation_mgr.validate_streaming_distribution_config_parameters(config, comment, trusted_signers,
+                                                                                  s3_origin, default_s3_origin_domain_name,
+                                                                                  default_s3_origin_origin_access_identity)
     if(create_distribution or create_streaming_distribution or duplicate_distribution or
             duplicate_streaming_distribution or validate):
         config = validation_mgr.validate_caller_reference_for_distribution(config, caller_reference)
@@ -1676,9 +1685,9 @@ def main():
     elif generate_presigned_url_from_pem_private_key:
         validated_pem_expire_date = validation_mgr.validate_presigned_url_pem_expire_date(
             presigned_url_pem_expire_date)
-        result = service_mgr.generate_presigned_url_from_pem_private_key(distribution_id,
-                                                                         presigned_url_pem_private_key_path, presigned_url_pem_private_key_password, presigned_url_pem_url,
-                                                                         validated_pem_expire_date)
+        result = service_mgr.generate_presigned_url_from_pem_private_key(distribution_id, presigned_url_pem_private_key_path,
+                                                                         presigned_url_pem_private_key_password,
+                                                                         presigned_url_pem_url, validated_pem_expire_date)
     elif create_distribution or duplicate_distribution:
         result = service_mgr.create_distribution(config, valid_tags)
     elif delete_distribution:
