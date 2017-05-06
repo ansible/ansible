@@ -561,12 +561,11 @@ EXAMPLES = '''
 RETURN = '''
 location:
     description: describes a url specifying the output of the action just run.
-      applies to create_distribution, update_distribution,
+    returned: applies to create_distribution, update_distribution,
       duplicate_distribution, create_streaming_distribution,
       update_streaming_distribution, duplicate_streaming_distribution,
       create_invalidation, create_origin_access_identity,
       update_origin_access_identity, delete_origin_access_identity
-    returns: url of distribution
     type: str
 validation_result:
     description: either returns 'OK' or fails with a description of why the
