@@ -63,9 +63,9 @@
   when: ansible_os_family == "RedHat" and ansible_service_mgr != "systemd"
 
 - name: Initialize postgres (Debian)
-  command: /usr/bin/pg_createcluster {{ pg_ver }} main
-  # Sometimes package install creates the db cluster, sometimes this step is needed
-  ignore_errors: True
+  shell: '. /usr/share/postgresql-common/maintscripts-functions && set_system_locale && /usr/bin/pg_createcluster -u postgres {{ pg_ver }} main'
+  args:
+    creates: "/etc/postgresql/{{ pg_ver }}/"
   when: ansible_os_family == 'Debian'
 
 - name: Initialize postgres (Suse)
