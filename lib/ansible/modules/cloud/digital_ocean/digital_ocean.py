@@ -211,12 +211,14 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 class TimeoutError(Exception):
+
     def __init__(self, msg, id_):
         super(TimeoutError, self).__init__(msg)
         self.id = id_
 
 
 class JsonfyMixIn(object):
+
     def to_json(self):
         return self.__dict__
 
@@ -276,8 +278,8 @@ class Droplet(JsonfyMixIn):
         backups_enabled_lower = str(backups_enabled).lower()
         ipv6_lower = str(ipv6).lower()
         json = cls.manager.new_droplet(name, size_id, image_id, region_id,
-            ssh_key_ids=ssh_key_ids, virtio=virtio, private_networking=private_networking_lower,
-            backups_enabled=backups_enabled_lower, user_data=user_data, ipv6=ipv6_lower)
+                                       ssh_key_ids=ssh_key_ids, virtio=virtio, private_networking=private_networking_lower,
+                                       backups_enabled=backups_enabled_lower, user_data=user_data, ipv6=ipv6_lower)
         droplet = cls(json)
         return droplet
 
@@ -432,35 +434,35 @@ def core(module):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            command = dict(choices=['droplet', 'ssh'], default='droplet'),
-            state = dict(choices=['active', 'present', 'absent', 'deleted'], default='present'),
-            api_token = dict(aliases=['API_TOKEN'], no_log=True),
-            name = dict(type='str'),
-            size_id = dict(),
-            image_id = dict(),
-            region_id = dict(),
-            ssh_key_ids = dict(type='list'),
-            virtio = dict(type='bool', default='yes'),
-            private_networking = dict(type='bool', default='no'),
-            backups_enabled = dict(type='bool', default='no'),
-            id = dict(aliases=['droplet_id'], type='int'),
-            unique_name = dict(type='bool', default='no'),
-            user_data = dict(default=None),
-            ipv6 = dict(type='bool', default='no'),
-            wait = dict(type='bool', default=True),
-            wait_timeout = dict(default=300, type='int'),
-            ssh_pub_key = dict(type='str'),
+        argument_spec=dict(
+            command=dict(choices=['droplet', 'ssh'], default='droplet'),
+            state=dict(choices=['active', 'present', 'absent', 'deleted'], default='present'),
+            api_token=dict(aliases=['API_TOKEN'], no_log=True),
+            name=dict(type='str'),
+            size_id=dict(),
+            image_id=dict(),
+            region_id=dict(),
+            ssh_key_ids=dict(type='list'),
+            virtio=dict(type='bool', default='yes'),
+            private_networking=dict(type='bool', default='no'),
+            backups_enabled=dict(type='bool', default='no'),
+            id=dict(aliases=['droplet_id'], type='int'),
+            unique_name=dict(type='bool', default='no'),
+            user_data=dict(default=None),
+            ipv6=dict(type='bool', default='no'),
+            wait=dict(type='bool', default=True),
+            wait_timeout=dict(default=300, type='int'),
+            ssh_pub_key=dict(type='str'),
         ),
-        required_together = (
+        required_together=(
             ['size_id', 'image_id', 'region_id'],
         ),
-        mutually_exclusive = (
+        mutually_exclusive=(
             ['size_id', 'ssh_pub_key'],
             ['image_id', 'ssh_pub_key'],
             ['region_id', 'ssh_pub_key'],
         ),
-        required_one_of = (
+        required_one_of=(
             ['id', 'name'],
         ),
     )
