@@ -91,4 +91,3 @@ EXAMPLES = r'''
     name: TestVariable
     level: user
 '''
-
