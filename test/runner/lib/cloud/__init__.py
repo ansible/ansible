@@ -341,10 +341,9 @@ class CloudEnvironment(CloudBase):
         """
         pass
 
-    def on_failure(self, target, tries):
+    def on_failure(self, target):
         """
         :type target: TestTarget
-        :type tries: int
         """
         pass
 
