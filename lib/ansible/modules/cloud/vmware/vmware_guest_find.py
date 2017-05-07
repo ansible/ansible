@@ -216,6 +216,7 @@ class PyVmomiHelper(object):
             self.params['datacenter']
         )
 
+
 def get_obj(content, vimtype, name):
     """
     Return an object by name, if name is None the
