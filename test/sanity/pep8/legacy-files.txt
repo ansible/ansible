@@ -766,17 +766,6 @@ lib/ansible/modules/web_infrastructure/ansible_tower/tower_team.py
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_user.py
 lib/ansible/modules/web_infrastructure/ejabberd_user.py
 lib/ansible/modules/web_infrastructure/jboss.py
-lib/ansible/modules/windows/win_disk_image.py
-lib/ansible/modules/windows/win_dns_client.py
-lib/ansible/modules/windows/win_domain.py
-lib/ansible/modules/windows/win_domain_controller.py
-lib/ansible/modules/windows/win_domain_membership.py
-lib/ansible/modules/windows/win_environment.py
-lib/ansible/modules/windows/win_iis_webapppool.py
-lib/ansible/modules/windows/win_msg.py
-lib/ansible/modules/windows/win_msi.py
-lib/ansible/modules/windows/win_ping.py
-lib/ansible/modules/windows/win_tempfile.py
 lib/ansible/parsing/dataloader.py
 lib/ansible/parsing/mod_args.py
 lib/ansible/parsing/quoting.py
