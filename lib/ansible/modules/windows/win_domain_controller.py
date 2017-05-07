@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'supported_by': 'core'}
 
 
-DOCUMENTATION='''
+DOCUMENTATION = '''
 module: win_domain_controller
 short_description: Manage domain controller/member server state for a Windows host
 version_added: 2.3
@@ -58,7 +58,7 @@ author:
     - Matt Davis (@nitzmahone)
 '''
 
-RETURN='''
+RETURN = '''
 reboot_required:
     description: True if changes were made that require a reboot.
     returned: always
@@ -67,7 +67,7 @@ reboot_required:
 
 '''
 
-EXAMPLES=r'''
+EXAMPLES = r'''
 # ensure a server is a domain controller
 - hosts: winclient
   gather_facts: no
@@ -97,4 +97,3 @@ EXAMPLES=r'''
       log_path: c:\ansible_win_domain_controller.txt
 
 '''
-
