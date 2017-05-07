@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -27,7 +28,7 @@ module: vmware_guest_find
 short_description: Find the folder path(s) for a VM by name or UUID
 description:
     - Find the folder path(s) for a VM by name or UUID
-version_added: 2.3
+version_added: 2.4
 author:
     - James Tanner <tanner.jc@gmail.com>
 notes:
@@ -176,7 +177,8 @@ class PyVmomiHelper(object):
             elif k == 'virtualmachines':
                 for x in v:
                     # Apparently x.config can be None on corrupted VMs
-                    if x.config is None: continue
+                    if x.config is None:
+                        continue
                     self.foldermap['uuids'][x.config.uuid] = x.config.name
                     self.foldermap['paths'][thispath].append(x.config.uuid)
 
