@@ -86,6 +86,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 class JsonfyMixIn(object):
+
     def to_json(self):
         return self.__dict__
 
@@ -161,15 +162,15 @@ def core(module):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(choices=['present', 'absent'], default='present'),
-            client_id = dict(aliases=['CLIENT_ID'], no_log=True),
-            api_key = dict(aliases=['API_KEY'], no_log=True),
-            name = dict(type='str'),
-            id = dict(aliases=['droplet_id'], type='int'),
-            ssh_pub_key = dict(type='str'),
+        argument_spec=dict(
+            state=dict(choices=['present', 'absent'], default='present'),
+            client_id=dict(aliases=['CLIENT_ID'], no_log=True),
+            api_key=dict(aliases=['API_KEY'], no_log=True),
+            name=dict(type='str'),
+            id=dict(aliases=['droplet_id'], type='int'),
+            ssh_pub_key=dict(type='str'),
         ),
-        required_one_of = (
+        required_one_of=(
             ['id', 'name'],
         ),
     )
