@@ -1,0 +1,223 @@
+---
+- name: test create isolated network for adv
+  cs_network:
+    name: "net_iso"
+    zone: "{{ cs_common_zone_adv }}"
+    network_offering: Offering for Isolated networks with Source Nat service enabled
+  register: vm_net_iso
+- name: verify test create network for lb
+  assert:
+    that:
+    - vm_net_iso|success
+    - vm_net_iso.name == "net_iso"
+
+- name: test create shared 1 network for adv
+  cs_network:
+    name: "net_shared_1"
+    zone: "{{ cs_common_zone_adv }}"
+    network_offering: Offering for Shared networks
+    gateway: 10.5.5.1
+    netmask: 255.255.255.0
+    start_ip: 10.5.5.11
+    end_ip: 10.5.5.200
+    vlan: 5
+  register: vm_net_sh
+- name: verify test create network for lb
+  assert:
+    that:
+    - vm_net_sh|success
+    - vm_net_sh.name == "net_shared_1"
+
+- name: test create shared 2 network for adv
+  cs_network:
+    name: "net_shared_2"
+    zone: "{{ cs_common_zone_adv }}"
+    network_offering: Offering for Shared networks
+    gateway: 10.5.6.1
+    netmask: 255.255.255.0
+    start_ip: 10.5.6.11
+    end_ip: 10.5.6.200
+    vlan: 5
+  register: vm_net_sh
+- name: verify test create network for lb
+  assert:
+    that:
+    - vm_net_sh|success
+    - vm_net_sh.name == "net_shared_2"
+
+- name: setup instance to be absent
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: instance
+- name: verify instance to be absent
+  assert:
+    that:
+    - instance|success
+
+- name: test create instance with isolated network
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    zone: "{{ cs_common_zone_adv }}"
+    network: "net_iso"
+  register: instance
+- name: verify test create instance with isolated network
+  assert:
+    that:
+    - instance|success
+    - instance|changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Running"
+    - not instance.tags
+
+- name: test create instance with isolated network idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    zone: "{{ cs_common_zone_adv }}"
+    network: "net_iso"
+  register: instance
+- name: verify test create instance with isolated network idempotence
+  assert:
+    that:
+    - instance|success
+    - not instance|changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Running"
+    - not instance.tags
+
+- name: test add shared network
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    zone: "{{ cs_common_zone_adv }}"
+    network:
+    - "net_iso"
+    - "net_shared_1"
+  register: instance
+- name: verify test add shared network
+  assert:
+    that:
+    - instance|success
+    - instance|changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+#    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Running"
+    - not instance.tags
+
+- name: test add shared network idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    zone: "{{ cs_common_zone_adv }}"
+    network:
+    - "net_iso"
+    - "net_shared_1"
+  register: instance
+- name: verify test add shared network idempotence
+  assert:
+    that:
+    - instance|success
+    - not instance|changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+#    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Running"
+    - not instance.tags
+
+- name: test change shared network
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    zone: "{{ cs_common_zone_adv }}"
+    network:
+    - "net_iso"
+    - "net_shared_2"
+  register: instance
+- name: verify test add shared network
+  assert:
+    that:
+    - instance|success
+    - instance|changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+#    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Running"
+    - not instance.tags
+
+- name: test change shared network idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    zone: "{{ cs_common_zone_adv }}"
+    network:
+    - "net_iso"
+    - "net_shared_2"
+  register: instance
+- name: verify test change shared network idempotence
+  assert:
+    that:
+    - instance|success
+    - not instance|changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+#    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Running"
+    - not instance.tags
+
+- name: test set IP to shared network
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    zone: "{{ cs_common_zone_adv }}"
+    network:
+    - "net_iso"
+    - name: "net_shared_2"
+      ip: 10.5.6.12
+  register: instance
+- name: verify test set IP to shared network
+  assert:
+    that:
+    - instance|success
+    - instance|changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+#    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Running"
+    - not instance.tags
+
+- name: test set IP to shared network idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
+    zone: "{{ cs_common_zone_adv }}"
+    network:
+    - "net_iso"
+    - name: "net_shared_2"
+      ip: 10.5.6.12
+  register: instance
+- name: test set IP to shared network idempotence
+  assert:
+    that:
+    - instance|success
+    - not instance|changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+#    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
+    - instance.state == "Running"
+    - not instance.tags

@@ -1,0 +1,20 @@
+---
+- include: setup.yml
+- include: present.yml
+- include: tags.yml
+- include: absent.yml
+- include: cleanup.yml
+
+- include: setup.yml
+- include: present_display_name.yml
+- include: absent_display_name.yml
+- include: cleanup.yml
+
+#- include: setup.yml
+#  tags: test_cs_instance_adv
+#- include: present_adv.yml
+#  tags: test_cs_instance_adv
+#- include: absent.yml
+#  tags: test_cs_instance_adv
+#- include: cleanup.yml
+#  tags: test_cs_instance_adv
