@@ -5,7 +5,6 @@ import json
 import os
 import subprocess
 from ansible.module_utils.urls import open_url
-from ansible.module_utils.six import iteritems
 from ansible.plugins.callback import CallbackBase
 
 
@@ -113,7 +112,7 @@ class CallbackModule(CallbackBase):
         for host in hosts:
             summary = stats.summarize(host)
             self.log('**Host**: {}\n'.format(host))
-            for item, count in iteritems(items):
+            for item, count in summary.items():
                 self.log('> **{}**: {}\n\n'.format(item, count))
                 if item == 'failures' and count > 0:
                     color = 'danger'
