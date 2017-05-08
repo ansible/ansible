@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_mlag_config
-version_added: "2.3"
-short_description: Manages MLAG configuration.
+version_added: "2.4"
+short_description: Manages MLAG configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages MLAG configuration on CloudEngine switches.
+    - Manages MLAG configuration on HUAWEI CloudEngine switches.
 author:
     - Li Yanfeng (@CloudEngine-Ansible)
 options:
@@ -75,7 +75,7 @@ options:
         default: null
     peer_link_id:
         description:
-            - Number of the peer-link interface.The value is 1.
+            - Number of the peer-link interface. The value is 1.
         required: false
         default: null
     state:
@@ -146,8 +146,8 @@ proposed:
               "peer_link_id": "1",
               "state": "present"}
 existing:
-    description:
-        - k/v pairs of existing aaa server
+    description: k/v pairs of existing aaa server
+    returned: always
     type: dict
     sample: { }
 end_state:
