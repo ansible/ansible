@@ -18,16 +18,16 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 
 module: ce_ntp_auth
-version_added: "2.3"
-short_description: Manages NTP authentication configuration.
+version_added: "2.4"
+short_description: Manages NTP authentication configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages NTP authentication configuration.
+    - Manages NTP authentication configuration on HUAWEI CloudEngine switches.
 author:
     - Zhijin Zhou (@CloudEngine-Ansible)
 notes:
@@ -47,7 +47,7 @@ options:
         default: null
     auth_mode:
         description:
-            - Specify authentication algorithm md5 or hmac-sha256.
+            - Specify authentication algorithm.
         required: false
         default: null
         choices: ['hmac-sha256', 'md5']
@@ -147,8 +147,8 @@ proposed:
                 "state": "present"
             }
 existing:
-    description:
-        - k/v pairs of existing ntp authentication
+    description: k/v pairs of existing ntp authentication
+    returned: always
     type: dict
     sample: {
                 "authentication": "off",
@@ -327,10 +327,6 @@ class NtpAuth(object):
                 msg='Error: The length of key_id is between 1 and 4294967295.')
 
         if self.state == "present":
-            if (not self.password) or (not self.auth_mode):
-                self.module.fail_json(
-                    msg='Error: Please input password and auth_mode.')
-
             if (self.auth_type == 'encrypt') and\
                     ((len(self.password) < 20) or (len(self.password) > 392)):
                 self.module.fail_json(
@@ -343,8 +339,12 @@ class NtpAuth(object):
     def init_module(self):
         """Init module object"""
 
+        required_if = [("state", "present", ("password", "auth_mode"))]
         self.module = AnsibleModule(
-            argument_spec=self.spec, supports_check_mode=True)
+            argument_spec=self.spec,
+            required_if=required_if,
+            supports_check_mode=True
+        )
 
     def check_response(self, xml_str, xml_name):
         """Check if response message is already succeed."""
@@ -583,6 +583,7 @@ def main():
     argument_spec.update(ce_argument_spec)
     ntp_auth_obj = NtpAuth(argument_spec)
     ntp_auth_obj.work()
+
 
 if __name__ == '__main__':
     main()
