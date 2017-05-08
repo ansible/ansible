@@ -208,8 +208,33 @@ def set_parameter(param, value, immediate):
         else:
             converted_value = bool(value)
 
-    param.value = converted_value
+    param._value = verify_new_value(param, value)
     param.apply(immediate)
+
+
+# this patches a boto bug; can be removed once this module uses boto3
+def verify_new_value(param, value):
+    if isinstance(value, int) or isinstance(value, long):
+        if param.allowed_values:
+            dashes = len(param.allowed_values.split('-'))
+            if dashes == 3:
+                # the first number may be negative, resulting in 3 returned values
+                _, min, max = param.allowed_values.split('-')
+                min = '-' + min
+            elif dashes == 2:
+                min, max = param.allowed_values.split('-')
+            if value < float(min) or value > float(max):
+                raise ValueError('range is %s' % param.allowed_values)
+        return value
+    elif isinstance(value, str):
+        if param.allowed_values:
+            choices = param.allowed_values.split(',')
+            if value not in choices:
+                raise ValueError('value must be in %s' % self.allowed_values)
+        return value
+    elif isintance(value, bool):
+        return value
+
 
 def modify_group(group, params, immediate=False):
     """ Set all of the params in a group to the provided new params. Raises NotModifiableError if any of the
