@@ -155,6 +155,9 @@ class NetworkConfig(object):
     def __str__(self):
         return '\n'.join([c.raw for c in self.items])
 
+    def __len__(self):
+        return len(self._items)
+
     def load(self, s):
         self._items = self.parse(s)
 
@@ -367,6 +370,9 @@ class NetworkConfig(object):
 
 
 class CustomNetworkConfig(NetworkConfig):
+
+    def items_text(self):
+        return [item.text for item in self.items]
 
     def expand_section(self, configobj, S=None):
         if S is None:
