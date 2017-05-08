@@ -43,8 +43,8 @@ import os
 import json
 import docker
 
-class SwarmNodesInventory(object):
 
+class SwarmNodesInventory(object):
 
     def __init__(self):
         """ Main execution path """
