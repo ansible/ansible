@@ -18,25 +18,22 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_netconf
-version_added: "2.3"
-short_description: Run arbitrary netconf command on cloudengine devices.
+version_added: "2.4"
+short_description: Run an arbitrary netconf command on HUAWEI CloudEngine switches.
 description:
-    - Sends an arbitrary netconf command to a cloudengine node and returns the results read from the device.
+    - Sends an arbitrary netconf command on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@CloudEngine-Ansible)
-notes:
-    - The rpc parameter is always required.
 options:
     rpc:
         description:
             - The type of rpc.
-        required: false
-        default: null
+        required: true
         choices: ['get', 'edit-config', 'execute-action', 'execute-cli']
     cfg_xml:
         description:
@@ -131,7 +128,7 @@ def main():
 
     argument_spec = dict(
         rpc=dict(choices=['get', 'edit-config',
-                          'execute-action', 'execute-cli'], default=None),
+                          'execute-action', 'execute-cli'], required=True),
         cfg_xml=dict(required=True)
     )
 
