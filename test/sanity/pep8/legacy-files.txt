@@ -1,11 +1,3 @@
-lib/ansible/cli/__init__.py
-lib/ansible/cli/adhoc.py
-lib/ansible/cli/console.py
-lib/ansible/cli/doc.py
-lib/ansible/cli/galaxy.py
-lib/ansible/cli/playbook.py
-lib/ansible/cli/pull.py
-lib/ansible/cli/vault.py
 lib/ansible/constants.py
 lib/ansible/inventory/data.py
 lib/ansible/inventory/group.py
