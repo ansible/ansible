@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_ntp
-version_added: "2.3"
-short_description: Manages core NTP configuration.
+version_added: "2.4"
+short_description: Manages core NTP configuration on HUAWEI CloudEngine switches.
 description:
-    - Manages core NTP configuration.
+    - Manages core NTP configuration on HUAWEI CloudEngine switches.
 author:
     - Zhijin Zhou (@CloudEngine-Ansible)
 options:
@@ -60,8 +60,9 @@ options:
     source_int:
         description:
             - Local source interface from which NTP messages are sent.
-              Must be fully qualified interface name, i.e. 40GE1/0/22, vlanif10.
-              Interface types, such as 10GE, 40GE, 100GE, Eth-Trunk, LoopBack, MEth, NULL, Tunnel, Vlanif...
+              Must be fully qualified interface name, i.e. C(40GE1/0/22), C(vlanif10).
+              Interface types, such as C(10GE), C(40GE), C(100GE), C(Eth-Trunk), C(LoopBack),
+              C(MEth), C(NULL), C(Tunnel), C(Vlanif).
         required: false
         default: null
     state:
@@ -115,8 +116,8 @@ proposed:
              "is_preferred": "enable",     "vpn_name":"js",
              "source_int": "vlanif4002", "state":"present"}
 existing:
-    description:
-        - k/v pairs of existing ntp server/peer
+    description: k/v pairs of existing ntp server/peer
+    returned: always
     type: dict
     sample: {"server": "2.2.2.2",        "key_id": "32",
             "is_preferred": "disable",     "vpn_name":"js",
@@ -310,8 +311,13 @@ class Ntp(object):
     def init_module(self):
         """Init module"""
 
-        self.module = AnsibleModule(argument_spec=self.spec, supports_check_mode=True,
-                                    mutually_exclusive=self.mutually_exclusive)
+        required_one_of = [("server", "peer")]
+        self.module = AnsibleModule(
+            argument_spec=self.spec,
+            supports_check_mode=True,
+            required_one_of=required_one_of,
+            mutually_exclusive=self.mutually_exclusive
+        )
 
     def check_ipaddr_validate(self):
         """Check ipaddress validate"""
@@ -347,8 +353,8 @@ class Ntp(object):
         if not addr_list:
             self.module.fail_json(msg='Error: Match ip-address fail.')
 
-        value = ((long(addr_list[0][0])) * 0x1000000) + (long(addr_list[0][1])\
-                * 0x10000) + (long(addr_list[0][2]) * 0x100) + (long(addr_list[0][3]))
+        value = ((long(addr_list[0][0])) * 0x1000000) + (long(addr_list[0][1])
+                                                         * 0x10000) + (long(addr_list[0][2]) * 0x100) + (long(addr_list[0][3]))
         if (value & (0xff000000) == 0x7f000000) or (value & (0xF0000000) == 0xF0000000) \
                 or (value & (0xF0000000) == 0xE0000000) or (value == 0):
             return False
@@ -364,10 +370,6 @@ class Ntp(object):
                 self.module.fail_json(
                     msg='Error: Interface name of %s '
                         'is error.' % self.interface)
-
-        if not self.server and not self.peer:
-            self.module.fail_json(
-                msg='Error: Please supply the server or peer parameter')
 
         if self.vpn_name:
             if (len(self.vpn_name) < 1) or (len(self.vpn_name) > 31):
@@ -616,6 +618,7 @@ def main():
     argument_spec.update(ce_argument_spec)
     ntp_obj = Ntp(argument_spec)
     ntp_obj.work()
+
 
 if __name__ == '__main__':
     main()
