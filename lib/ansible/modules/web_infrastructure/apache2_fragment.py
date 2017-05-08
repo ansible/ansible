@@ -99,12 +99,13 @@ class ApacheFragmentException(Exception):
 class ApacheFragment(object):
     available_dir = None
     enabled_dir = None
-    fragment_suffix = None
+    fragment_suffix = '.conf'
+    command_names = {'present': None, 'absent': None}
 
     def __init__(self, name):
         self.fragment_file = basename(name)
 
-    def is_enabled(self):
+    def state(self):
         """
         :return: True if fragment enabled, False otherwise. Raise exception if fragment not found.  
         """
@@ -114,89 +115,60 @@ class ApacheFragment(object):
                 "Apache config fragment %s not found in %s" % (self.fragment_file, self.available_dir))
         for enabled_fragment in glob.glob(join(self.enabled_dir, '*' + self.fragment_suffix)):
             if islink(enabled_fragment) and samefile(available_fragment, enabled_fragment):
-                return True
-        return False
+                return "present"
+        return "absent"
 
-    def name(self):
-        """
-        :return: Short name of fragment: without path and suffix 
-        """
-        return splitext(self.fragment_file)[0]
+    def set(self, state=None):
+        command_name = module.get_bin_path(self.command_names[state], required=True)
+        # Short name of fragment: without path and suffix
+        fragment_name = splitext(self.fragment_file)[0]
+        return module.run_command("%s %s" % (command_name, fragment_name), check_rc=True)
 
 
 class ApacheConfigFragment(ApacheFragment):
     available_dir = '/etc/apache2/conf-available'
     enabled_dir = '/etc/apache2/conf-enabled'
-    fragment_suffix = '.conf'
+    command_names = {'present': 'a2enconf', 'absent': 'a2disconf'}
 
 
 class ApacheSiteFragment(ApacheFragment):
     available_dir = '/etc/apache2/sites-available'
     enabled_dir = '/etc/apache2/sites-enabled'
-    fragment_suffix = '.conf'
-
-
-class ApacheCommand(object):
-    command_names = {'present': None, 'absent': None}
-
-    def __init__(self, module):
-        self.module = module
-
-    def name(self, state, force=None):
-        command_name = self.module.get_bin_path(self.command_names[state], required=True)
-        if force:
-            command_name += ' -f'
-        return command_name
-
-    def set(self, fragment=None, state=None, force=None):
-        return self.module.run_command("%s %s" % (self.name(state, force), fragment.name()), check_rc=True)
-
-
-class ApacheConfigCommand(ApacheCommand):
-    command_names = {'present': 'a2enconf', 'absent': 'a2disconf'}
-
-
-class ApacheSiteCommand(ApacheCommand):
     command_names = {'present': 'a2ensite', 'absent': 'a2dissite'}
 
 
-def _set_state(module, state):
+def _set_state(state):
     type = module.params['type']
     name = module.params['name']
-    force = module.params['force']
 
-    want_enabled = state == 'present'
     state_string = {'present': 'enabled', 'absent': 'disabled'}[state]
     success_msg = "Fragment %s %s" % (name, state_string)
 
     if type == 'conf':
         fragment = ApacheConfigFragment(name)
-        command = ApacheConfigCommand(module)
     elif type == 'site':
         fragment = ApacheSiteFragment(name)
-        command = ApacheSiteCommand(module)
 
-    if fragment.is_enabled() != want_enabled:
-        # state must be changed
+    if fragment.state() != state:
         if module.check_mode:
             return True, success_msg
 
-        result, stdout, stderr = command.set(fragment, state, force)
+        result, stdout, stderr = fragment.set(state)
 
-        if fragment.is_enabled() == want_enabled:
+        if fragment.state() == state:
             return True, success_msg
         else:
-            raise ApacheFragmentException("Failed to set module %s to %s: %s" % (name, state_string, stdout))
+            raise ApacheFragmentException("Failed to set fragment %s to %s: %s" % (name, state_string, stdout))
     else:
         return False, success_msg
 
 
 def main():
+    global module
     module = AnsibleModule(
         argument_spec=dict(
             type=dict(required=True, choices=['conf', 'site']),
             name=dict(required=True),
-            force=dict(required=False, type='bool', default=False),
             state=dict(default='present', choices=['absent', 'present'])
         ),
         supports_check_mode=True
@@ -205,7 +177,7 @@ def main():
     module.warnings = []
 
     try:
-        (changed, msg) = _set_state(module, module.params['state'])
+        (changed, msg) = _set_state(module.params['state'])
         module.exit_json(changed=changed, result=msg, warnings=module.warnings)
     except ApacheFragmentException as e:
         module.fail_json(msg=e.message)
