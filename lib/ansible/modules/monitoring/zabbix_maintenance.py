@@ -355,7 +355,7 @@ def main():
     changed = False
 
     if state == "present":
-        
+
         if not host_names and not host_groups:
             module.fail_json(msg="At least one host_name or host_group must be defined for each created maintenance.")
 
