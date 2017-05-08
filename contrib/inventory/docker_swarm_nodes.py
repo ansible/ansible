@@ -17,27 +17,26 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-######################################################################
-## Installation
-## ------------
-##
-## pip install docker
-##
-## curl -L https://gitlab.com/snippets/1661311/raw -o /etc/ansible/docker-swarm-nodes.py && chmod +x /etc/ansible/docker-swarm-nodes.py
-##
-## create /etc/ansible/docker_swarm_nodes.ini like this:
-## ----------------------------------------------------
-## [swarm]
-##
-## docker_host = tcp://my-docker-host:2375
-## ----------------------------------------------------
-##
-## Use it:
-## ansible -i /etc/ansible/docker-swarm-nodes.py swarm -m ping
-## ansible -i /etc/ansible/docker-swarm-nodes.py manager -m ping
-## ansible -i /etc/ansible/docker-swarm-nodes.py worker -m ping
-## ansible -i /etc/ansible/docker-swarm-nodes.py single-host-from-swarm -m ping
-##
+# Installation
+# ------------
+#
+# pip install docker
+#
+# curl -L https://gitlab.com/snippets/1661311/raw -o /etc/ansible/docker-swarm-nodes.py && chmod +x /etc/ansible/docker-swarm-nodes.py
+#
+# create /etc/ansible/docker_swarm_nodes.ini like this:
+# ----------------------------------------------------
+# [swarm]
+#
+# docker_host = tcp://my-docker-host:2375
+# ----------------------------------------------------
+#
+# Use it:
+# ansible -i /etc/ansible/docker-swarm-nodes.py swarm -m ping
+# ansible -i /etc/ansible/docker-swarm-nodes.py manager -m ping
+# ansible -i /etc/ansible/docker-swarm-nodes.py worker -m ping
+# ansible -i /etc/ansible/docker-swarm-nodes.py single-host-from-swarm -m ping
+#
 
 import ConfigParser
 import os
@@ -45,6 +44,7 @@ import json
 import docker
 
 class SwarmNodesInventory(object):
+
 
     def __init__(self):
         """ Main execution path """
