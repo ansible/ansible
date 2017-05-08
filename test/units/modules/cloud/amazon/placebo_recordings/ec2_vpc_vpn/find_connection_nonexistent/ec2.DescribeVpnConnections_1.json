@@ -1,0 +1,18 @@
+{
+    "status_code": 200, 
+    "data": {
+        "VpnConnections": [], 
+        "ResponseMetadata": {
+            "RetryAttempts": 0, 
+            "HTTPStatusCode": 200, 
+            "RequestId": "8a1ce3cd-d99f-49ff-a913-0679bb4a50b9", 
+            "HTTPHeaders": {
+                "transfer-encoding": "chunked", 
+                "vary": "Accept-Encoding", 
+                "server": "AmazonEC2", 
+                "content-type": "text/xml;charset=UTF-8", 
+                "date": "Mon, 08 May 2017 21:50:43 GMT"
+            }
+        }
+    }
+}

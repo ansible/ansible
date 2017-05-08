@@ -1,0 +1,1581 @@
+{
+    "status_code": 200, 
+    "data": {
+        "VpnConnections": [
+            {
+                "VpnConnectionId": "vpn-94c1d986", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-9ac1d988", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-98c1d98a", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-99c1d98b", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-9ec1d98c", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-9cc1d98e", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-82c1d990", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-83c1d991", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-80c1d992", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-86c1d994", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-84c1d996", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-85c1d997", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-8ac1d998", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-89c1d99b", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-8fc1d99d", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-8cc1d99e", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-8dc1d99f", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-b0c1d9a2", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-b6c1d9a4", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-b7c1d9a5", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-b4c1d9a6", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-bbc1d9a9", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-b9c1d9ab", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-bec1d9ac", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-bfc1d9ad", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-bdc1d9af", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-a3c1d9b1", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-a0c1d9b2", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-a1c1d9b3", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-a8c1d9ba", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-aec1d9bc", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-afc1d9bd", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-acc1d9be", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-d3c1d9c1", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-d1c1d9c3", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-d7c1d9c5", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-d4c1d9c6", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-d5c1d9c7", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-dac1d9c8", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-d8c1d9ca", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-dec1d9cc", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-c2c1d9d0", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-c3c1d9d1", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-c0c1d9d2", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-cac1d9d8", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-c8c1d9da", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-c9c1d9db", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-cec1d9dc", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-cfc1d9dd", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-f2c1d9e0", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-f4c1d9e6", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-f5c1d9e7", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-f9c1d9eb", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-ffc1d9ed", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-fdc1d9ef", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-e0c1d9f2", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-e1c1d9f3", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-e6c1d9f4", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-e7c1d9f5", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-e5c1d9f7", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-ebc1d9f9", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-e8c1d9fa", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-e9c1d9fb", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-eec1d9fc", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-10c2da02", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-16c2da04", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-17c2da05", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-14c2da06", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-15c2da07", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-1ac2da08", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-1bc2da09", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-1ec2da0c", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-00c2da12", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-01c2da13", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-06c2da14", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-07c2da15", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-04c2da16", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-05c2da17", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-0bc2da19", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-09c2da1b", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-0ec2da1c", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-0fc2da1d", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-0cc2da1e", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-0dc2da1f", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-32c2da20", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-34c2da26", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-3ac2da28", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-3bc2da29", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-38c2da2a", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-39c2da2b", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-3ec2da2c", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-3fc2da2d", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-25c2da37", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-2bc2da39", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-28c2da3a", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-29c2da3b", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-2ec2da3c", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-2fc2da3d", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-2cc2da3e", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-40c2da52", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-41c2da53", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-47c2da55", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-45c2da57", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-4ac2da58", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-4bc2da59", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-48c2da5a", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-49c2da5b", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-4ec2da5c", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-4cc2da5e", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-4dc2da5f", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-76c2da64", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-75c2da67", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-7bc2da69", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-78c2da6a", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-79c2da6b", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-7ec2da6c", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-7fc2da6d", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-7cc2da6e", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-7dc2da6f", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-62c2da70", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-60c2da72", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-66c2da74", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-67c2da75", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-64c2da76", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-65c2da77", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-6ac2da78", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-6bc2da79", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-68c2da7a", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-69c2da7b", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-6fc2da7d", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-6dc2da7f", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-93c2da81", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-90c2da82", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-91c2da83", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-96c2da84", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-97c2da85", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-94c2da86", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-95c2da87", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-9ac2da88", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-98c2da8a", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-9ec2da8c", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }, 
+            {
+                "VpnConnectionId": "vpn-9cc2da8e", 
+                "Routes": [], 
+                "State": "deleted", 
+                "VpnGatewayId": "vgw-35d70c2b", 
+                "CustomerGatewayId": "cgw-6113c87f", 
+                "Type": "ipsec.1", 
+                "Options": {
+                    "StaticRoutesOnly": true
+                }
+            }
+        ], 
+        "ResponseMetadata": {
+            "RetryAttempts": 0, 
+            "HTTPStatusCode": 200, 
+            "RequestId": "c318cb71-daf5-4137-85fc-87be62977433", 
+            "HTTPHeaders": {
+                "transfer-encoding": "chunked", 
+                "vary": "Accept-Encoding", 
+                "server": "AmazonEC2", 
+                "content-type": "text/xml;charset=UTF-8", 
+                "date": "Mon, 08 May 2017 21:50:52 GMT"
+            }
+        }
+    }
+}
