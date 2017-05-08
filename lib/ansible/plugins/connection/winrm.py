@@ -143,10 +143,10 @@ class Connection(ConnectionBase):
         elif kinit_mode == "manual":
             self._kerb_managed = False
         else:
-            raise AnsibleError('Unknown ansible_winrm_kinit_mode value: %s' % kinit_mode)
+            raise AnsibleError('Unknown ansible_winrm_kinit_mode value: "%s" (must be "managed" or "manual")' % kinit_mode)
 
         # arg names we're going passing directly
-        internal_kwarg_mask = set(['self', 'endpoint', 'transport', 'username', 'password', 'scheme', 'path'])
+        internal_kwarg_mask = set(['self', 'endpoint', 'transport', 'username', 'password', 'scheme', 'path', 'kinit_mode', 'kinit_cmd'])
 
         self._winrm_kwargs = dict(username=self._winrm_user, password=self._winrm_pass)
         argspec = inspect.getargspec(Protocol.__init__)
