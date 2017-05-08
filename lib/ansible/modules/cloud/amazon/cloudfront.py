@@ -646,7 +646,9 @@ class CloudFrontServiceManager:
             else:
                 distribution_config_with_tags = {
                     'DistributionConfig': config,
-                    'Tags': tags
+                    'Tags': {
+                        'Items': tags
+                    }
                 }
                 func = partial(self.client.create_distribution_with_tags,
                                DistributionConfigWithTags=distribution_config_with_tags)
@@ -684,7 +686,9 @@ class CloudFrontServiceManager:
             else:
                 streaming_distribution_config_with_tags = {
                     'StreamingDistributionConfig': config,
-                    'Tags': tags
+                    'Tags': {
+                        'Items': tags
+                    }
                 }
                 func = partial(self.client.create_streaming_distribution_with_tags,
                                StreamingDistributionConfigWithTags=streaming_distribution_config_with_tags)
@@ -1198,7 +1202,7 @@ class CloudFrontValidationManager:
             list_items = []
             for tag in tags:
                 key = tag.keys()[0]
-                value = tag[key]
+                value = str(tag[key])
                 list_items.append({'Key': key, 'Value': value})
             return list_items
         except Exception as e:
@@ -1401,8 +1405,8 @@ class CloudFrontHelpers:
                 type(list_items).__name__, str(list_items)))
         result = {}
         if include_quantity:
-            result['Quantity'] = len(list_items)
-        result['Items'] = list_items
+            result['quantity'] = len(list_items)
+        result['items'] = list_items
         return result
 
 
@@ -1640,7 +1644,8 @@ def main():
         if purge_tags:
             service_mgr.remove_all_tags_from_resource(arn)
         valid_aws_tags = helpers.python_list_to_aws_list(valid_tags, False)
-        service_mgr.tag_resource(arn, valid_aws_tags)
+        valid_pascal_aws_tags = helpers.snake_dict_to_pascal_dict(valid_aws_tags)
+        service_mgr.tag_resource(arn, valid_pascal_aws_tags)
 
     module.exit_json(changed=(not validate), **helpers.pascal_dict_to_snake_dict(result))
 
