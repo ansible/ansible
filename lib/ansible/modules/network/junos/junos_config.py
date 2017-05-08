@@ -348,7 +348,7 @@ def main():
 
     else:
         diff = configure_device(module, warnings)
-        if len(diff):
+        if diff:
             if module._diff:
                 result['diff'] = {'prepared': diff}
             result['changed'] = True
