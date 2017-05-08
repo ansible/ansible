@@ -23,7 +23,7 @@ modules.   Keep in mind, though, that some modules in Ansible's source tree are 
 so look at :ref:`service` or :ref:`yum`, and don't stare too close into things like ``async_wrapper`` or
 you'll turn to stone.  Nobody ever executes ``async_wrapper`` directly.
 
-Ok, let's get going with an example.  We'll use Python.  For starters, save this as a file named :file:`timetest.py`
+Ok, let's get going with an example.  We're going to use Python.  For starters, save this as a file named :file:`timetest.py`
 
 .. code-block:: python
 
@@ -46,7 +46,7 @@ There's a useful test script in the source checkout for Ansible:
 
 .. code-block:: shell-session
 
-    git clone git://github.com/ansible/ansible.git --recursive
+    git clone git://github.com/ansible/ansible.git
     source ansible/hacking/env-setup
 
 For instructions on setting up Ansible from source, please see
@@ -230,7 +230,7 @@ this, just have the module return a `ansible_facts` key, like so, along with oth
 These 'facts' will be available to all statements called after that module (but not before) in the playbook.
 A good idea might be to make a module called 'site_facts' and always call it at the top of each playbook, though
 we're always open to improving the selection of core facts in Ansible as well.
- 
+
 Returning a new fact from a python module could be done like::
 
         module.exit_json(msg=message, ansible_facts=dict(leptons=5000, colors=my_colors))
@@ -331,6 +331,3 @@ system state is altered when the user enables check mode.
 
 If your module does not support check mode, when the user runs Ansible in check
 mode, your module will simply be skipped.
-
-
-
