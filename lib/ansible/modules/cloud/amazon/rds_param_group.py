@@ -275,7 +275,7 @@ def modify_group(group, params, immediate=False):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state=dict(required=True,  choices=['present', 'absent']),
+        state=dict(required=True, choices=['present', 'absent']),
         name=dict(required=True),
         engine=dict(required=False, choices=VALID_ENGINES),
         description=dict(required=False),
@@ -288,12 +288,12 @@ def main():
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
 
-    state                   = module.params.get('state')
-    group_name              = module.params.get('name').lower()
-    group_engine            = module.params.get('engine')
-    group_description       = module.params.get('description')
-    group_params            = module.params.get('params') or {}
-    immediate               = module.params.get('immediate') or False
+    state = module.params.get('state')
+    group_name = module.params.get('name').lower()
+    group_engine = module.params.get('engine')
+    group_description = module.params.get('description')
+    group_params = module.params.get('params') or {}
+    immediate = module.params.get('immediate') or False
 
     if state == 'present':
         for required in ['name', 'description', 'engine']:
@@ -369,4 +369,3 @@ from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
-
