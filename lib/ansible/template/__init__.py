@@ -251,6 +251,9 @@ class Templar:
             loader=FileSystemLoader(self._basedir),
         )
 
+        # the current rendering context under which the templar class is working
+        self.cur_context = None
+
         self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (self.environment.variable_start_string, self.environment.variable_end_string))
 
         self.block_start    = self.environment.block_start_string
@@ -564,6 +567,7 @@ class Templar:
 
         if instance is not None:
             wantlist = kwargs.pop('wantlist', False)
+            allow_unsafe = kwargs.pop('allow_unsafe', C.DEFAULT_ALLOW_UNSAFE_LOOKUPS)
 
             from ansible.utils.listify import listify_lookup_plugin_terms
             loop_terms = listify_lookup_plugin_terms(terms=args, templar=self, loader=self._loader, fail_on_undefined=True, convert_bare=False)
@@ -577,7 +581,8 @@ class Templar:
                     raise AnsibleError("An unhandled exception occurred while running the lookup plugin '%s'. Error was a %s, original message: %s" % (name, type(e), e))
                 ran = None
 
-            if ran:
+            if ran and not allow_unsafe:
+                from ansible.vars.unsafe_proxy import UnsafeProxy, wrap_var
                 if wantlist:
                     ran = wrap_var(ran)
                 else:
@@ -589,6 +594,8 @@ class Templar:
                         else:
                             ran = wrap_var(ran)
 
+                if self.cur_context:
+                    self.cur_context.unsafe = True
             return ran
         else:
             raise AnsibleError("lookup plugin (%s) not found" % name)
@@ -645,7 +652,7 @@ class Templar:
 
             jvars = AnsibleJ2Vars(self, t.globals)
 
-            new_context = t.new_context(jvars, shared=True)
+            self.cur_context = new_context = t.new_context(jvars, shared=True)
             rf = t.root_render_func(new_context)
 
             try:
