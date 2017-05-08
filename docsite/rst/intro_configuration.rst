@@ -85,6 +85,20 @@ different locations::
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details.
 
 
+.. _allow_unsafe_lookups:
+
+allow_unsafe_lookups
+====================
+
+.. versionadded:: 2.2.3, 2.3.1
+
+When enabled, this option allows lookup plugins (whether used in variables as `{{lookup('foo')}}` or as a loop as `with_foo`) to return data that is **not** marked "unsafe". By default, such data is marked as unsafe to prevent the templating engine from evaluating any jinja2 templating language, as this could represent a security risk.
+
+This option is provided to allow for backwards-compatibility, however users should first consider adding `allow_unsafe=True` to any lookups which may be expected to contain data which may be run through the templating engine later. For example::
+
+    {{lookup('pipe', '/path/to/some/command', allow_unsafe=True)}}
+
+
 .. _allow_world_readable_tmpfiles:
 
 allow_world_readable_tmpfiles
