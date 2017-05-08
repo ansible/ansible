@@ -75,7 +75,7 @@ options:
     east_west_ipam_provider_ref:
         description:
             - Ipam profile for east-west services.
-            - Please use virtual subnets in this ipam profile that do not conflict with the underlay networks or any overlay networks in the cluster.
+            - Warning - please use virtual subnets in this ipam profile that do not conflict with the underlay networks or any overlay networks in the cluster.
             - For example in aws and gcp, 169.254.0.0/16 is used for storing instance metadata.
             - Hence, it should not be used in this profile.
             - It is a reference to an object of type ipamdnsproviderprofile.
@@ -158,7 +158,7 @@ extends_documentation_fragment:
 
 
 EXAMPLES = '''
-  - name: Create a VMWare cloud with write access mode
+  - name: Create a VMware cloud with write access mode
     avi_cloud:
       username: ''
       controller: ''

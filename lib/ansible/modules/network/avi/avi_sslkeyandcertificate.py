@@ -149,7 +149,7 @@ def main():
         enckey_base64=dict(type='str',),
         enckey_name=dict(type='str',),
         hardwaresecuritymodulegroup_ref=dict(type='str',),
-        key=dict(type='str',),
+        key=dict(type='str', no_log=True,),
         key_params=dict(type='dict',),
         name=dict(type='str', required=True),
         status=dict(type='str',),
