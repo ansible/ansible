@@ -121,7 +121,6 @@ notes:
       so if Zabbix server's time and host's time are not synchronized,
       you will get strange results.
     - Install required module with 'pip install zabbix-api' command.
-    - Checks existence only by maintenance name.
 '''
 
 EXAMPLES = '''
@@ -202,29 +201,56 @@ def create_maintenance(zbx, group_ids, host_ids, start_time, maintenance_type, p
     return 0, None, None
 
 
-def get_maintenance_id(zbx, name):
+def update_maintenance(zbx, maintenance_id, group_ids, host_ids, start_time, maintenance_type, period, desc):
+    end_time = start_time + period
     try:
-        result = zbx.maintenance.get(
+        zbx.maintenance.update(
+            {
+                "maintenanceid": maintenance_id,
+                "groupids": group_ids,
+                "hostids": host_ids,
+                "maintenance_type": maintenance_type,
+                "active_since": str(start_time),
+                "active_till": str(end_time),
+                "description": desc,
+                "timeperiods":  [{
+                    "timeperiod_type": "0",
+                    "start_date": str(start_time),
+                    "period": str(period),
+                }]
+            }
+        )
+    except BaseException as e:
+        return 1, None, str(e)
+    return 0, None, None
+
+
+def get_maintenance(zbx, name):
+    try:
+        maintenances = zbx.maintenance.get(
             {
                 "filter":
                 {
                     "name": name,
-                }
+                },
+                "selectGroups": "extend",
+                "selectHosts": "extend"
             }
         )
     except BaseException as e:
         return 1, None, str(e)
 
-    maintenance_ids = []
-    for res in result:
-        maintenance_ids.append(res["maintenanceid"])
+    for maintenance in maintenances:
+        maintenance["groupids"] = [group["groupid"] for group in maintenance["groups"]] if "groups" in maintenance else []
+        maintenance["hostids"] = [host["hostid"] for host in maintenance["hosts"]] if "hosts" in maintenance else []
+        return 0, maintenance, None
 
-    return 0, maintenance_ids, None
+    return 0, None, None
 
 
 def delete_maintenance(zbx, maintenance_id):
     try:
-        zbx.maintenance.delete(maintenance_id)
+        zbx.maintenance.delete([maintenance_id])
     except BaseException as e:
         return 1, None, str(e)
     return 0, None, None
@@ -329,8 +355,11 @@ def main():
     changed = False
 
     if state == "present":
+        
+        if not host_names and not host_groups:
+            module.fail_json(msg="At least one host_name or host_group must be defined for each created maintenance.")
 
-        now = datetime.datetime.now()
+        now = datetime.datetime.now().replace(second=0)
         start_time = time.mktime(now.timetuple())
         period = 60 * int(minutes)  # N * 60 seconds
 
@@ -348,14 +377,27 @@ def main():
         else:
             host_ids = []
 
-        (rc, maintenance, error) = get_maintenance_id(zbx, name)
+        (rc, maintenance, error) = get_maintenance(zbx, name)
         if rc != 0:
             module.fail_json(msg="Failed to check maintenance %s existence: %s" % (name, error))
 
-        if not maintenance:
-            if not host_names and not host_groups:
-                module.fail_json(msg="At least one host_name or host_group must be defined for each created maintenance.")
+        if maintenance and (
+            sorted(group_ids) != sorted(maintenance["groupids"])
+            or sorted(host_ids) != sorted(maintenance["hostids"])
+            or str(maintenance_type) != maintenance["maintenance_type"]
+            or str(int(start_time)) != maintenance["active_since"]
+            or str(int(start_time + period)) != maintenance["active_till"]
+        ):
+            if module.check_mode:
+                changed = True
+            else:
+                (rc, _, error) = update_maintenance(zbx, maintenance["maintenanceid"], group_ids, host_ids, start_time, maintenance_type, period, desc)
+                if rc == 0:
+                    changed = True
+                else:
+                    module.fail_json(msg="Failed to update maintenance: %s" % error)
 
+        if not maintenance:
             if module.check_mode:
                 changed = True
             else:
@@ -367,7 +409,7 @@ def main():
 
     if state == "absent":
 
-        (rc, maintenance, error) = get_maintenance_id(zbx, name)
+        (rc, maintenance, error) = get_maintenance(zbx, name)
         if rc != 0:
             module.fail_json(msg="Failed to check maintenance %s existence: %s" % (name, error))
 
@@ -375,7 +417,7 @@ def main():
             if module.check_mode:
                 changed = True
             else:
-                (rc, _, error) = delete_maintenance(zbx, maintenance)
+                (rc, _, error) = delete_maintenance(zbx, maintenance["maintenanceid"])
                 if rc == 0:
                     changed = True
                 else:
