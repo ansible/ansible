@@ -28,43 +28,32 @@ author:
     - Den Ivanov (@urajio)
 short_description: enables/disables a configuration fragment of the Apache2 webserver
 description:
-   - Enables or disables a specified module, site or configuration snippet of the Apache2 webserver.
+   - Enables or disables a specified site or configuration snippet of the Apache2 webserver.
 options:
    type:
      description:
         - type of fragment
      required: true
-     choices: ['conf', 'site', 'mod']
+     choices: ['conf', 'site']
    name:
      description:
         - name of the configuration fragment to enable/disable
      required: true
-   force:
-     description:
-        - force disabling of default modules and override Debian warnings
-     required: false
-     choices: ['True', 'False']
-     default: False
    state:
      description:
         - indicate the desired state of the resource
      choices: ['present', 'absent']
      default: present
-requirements: ["a2enmod","a2dismod","a2enconf","a2disconf","a2ensite","a2dismod"]
+requirements: ["a2enconf","a2disconf","a2ensite","a2dissite"]
 '''
 
 EXAMPLES = '''
-# enables the Apache2 module "wsgi"
+# enable config fragmen charset.conf
 - apache2_fragment:
-    type: mod
+    type: conf
     state: present
-    name: wsgi
-# disables the Apache2 module "wsgi"
-- apache2_fragment:
-    type: mod
-    state: absent
-    name: wsgi
-# disable default config
+    name: charset
+# disable config fragment
 - apache2_fragment:
     type: conf
     state: absent
@@ -186,8 +175,6 @@ def _set_state(module, state):
     elif type == 'site':
         fragment = ApacheSiteFragment(name)
         command = ApacheSiteCommand(module)
-    else:
-        raise ApacheFragmentException("Unknown Apache fragment type: %s" % type)
 
     if fragment.is_enabled() != want_enabled:
         # state must be changed
@@ -207,7 +194,7 @@ def _set_state(module, state):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            type=dict(required=True, choices=['conf', 'site', 'mod']),
+            type=dict(required=True, choices=['conf', 'site']),
             name=dict(required=True),
             force=dict(required=False, type='bool', default=False),
             state=dict(default='present', choices=['absent', 'present'])
