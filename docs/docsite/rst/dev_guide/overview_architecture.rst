@@ -16,14 +16,14 @@ Ansible works by connecting to your nodes and pushing out small programs, called
 Your library of modules can reside on any machine, and there are no servers, daemons, or databases required. Typically you'll work with your favorite terminal program, a text editor, and probably a version control system to keep track of changes to your content.
 
 Plugins
--------
+``````````````````
 
 Plugins are pieces of code that augment Ansible's core functionality. Ansible ships with a number of handy plugins, and you can easily write your own.
 
 Inventory
 ````````````````````
 
-By default, Ansible represents what machines it manages using a very simple INI file that puts all of your managed machines in groups of your own choosing.  
+By default, Ansible represents what machines it manages using a very simple INI file that puts all of your managed machines in groups of your own choosing.
 
 To add new machines, there is no additional SSL signing server involved, so there's never any hassle deciding why a particular machine didn’t get linked up due to obscure NTP or DNS issues.
 
@@ -51,7 +51,7 @@ Playbooks can finely orchestrate multiple slices of your infrastructure topology
 
 Ansible's approach to orchestration is one of finely-tuned simplicity, as we believe your automation code should make perfect sense to you years down the road and there should be very little to remember about special syntax or features.
 
-Here's what a simple playbook looks like:: 
+Here's what a simple playbook looks like::
 
     ---
     - hosts: webservers
@@ -70,6 +70,3 @@ Extending Ansible with Plug-ins and the API
 ````````````````````````````````````````````
 
 Should you want to write your own, Ansible modules can be written in any language that can return JSON (Ruby, Python, bash, etc). Inventory can also plug in to any datasource by writing a program that speaks to that datasource and returns JSON. There's also various Python APIs for extending Ansible’s connection types (SSH is not the only transport possible), callbacks (how Ansible logs, etc), and even for adding new server side behaviors.
-
-
-
