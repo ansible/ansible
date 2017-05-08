@@ -83,13 +83,15 @@ options:
     default: present
     choices: ['present','absent']
 '''
+
 EXAMPLES = '''
-- nxos_evpn_vni:
+- name: vni configuration
+  nxos_evpn_vni:
     vni: 6000
     route_distinguisher: "60:10"
     route_target_import:
-        - "5000:10"
-        - "4100:100"
+      - "5000:10"
+      - "4100:100"
     route_target_export: auto
     route_target_both: default
 '''
@@ -108,7 +110,6 @@ from ansible.module_utils.nxos import get_config, load_config, run_commands
 from ansible.module_utils.nxos import nxos_argument_spec, check_args
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.netcfg import CustomNetworkConfig
-
 
 
 PARAM_TO_COMMAND_KEYMAP = {
@@ -228,7 +229,6 @@ def state_present(module, existing, proposed):
 def state_absent(module, existing, proposed):
     commands = ['no vni {0} l2'.format(module.params['vni'])]
     parents = ['evpn']
-    
     return commands, parents
 
 
@@ -253,13 +253,13 @@ def main():
     check_args(module, warnings)
     result = dict(changed=False, warnings=warnings)
 
-
     state = module.params['state']
     args = PARAM_TO_COMMAND_KEYMAP.keys()
-
     existing = get_existing(module, args)
     proposed_args = dict((k, v) for k, v in module.params.items()
-                    if v is not None and k in args)
+                         if v is not None and k in args)
+    commands = []
+    parents = []
 
     proposed = {}
     for key, value in proposed_args.items():
@@ -271,11 +271,10 @@ def main():
             if existing.get(key) != value:
                 proposed[key] = value
 
-    candidate = CustomNetworkConfig(indent=3)
     if state == 'present':
-        commands, parents = state_present((module, existing, proposed, candidate)
-    if state == 'absent' and existing:
-        commands, parents = state_absent(module, existing, candidate)
+        commands, parents = state_present(module, existing, proposed)
+    elif state == 'absent' and existing:
+        commands, parents = state_absent(module, existing, proposed)
 
         if commands:
             if (existing.get('route_distinguisher') and
@@ -283,23 +282,26 @@ def main():
                 if (existing['route_distinguisher'] != proposed['route_distinguisher'] and
                         proposed['route_distinguisher'] != 'default'):
                     warnings.append('EVPN RD {0} was automatically removed. '
-                                         'It is highly recommended to use a task '
-                                         '(with default as value) to explicitly '
-                                         'unconfigure it.'.format(existing['route_distinguisher']))
+                                    'It is highly recommended to use a task '
+                                    '(with default as value) to explicitly '
+                                    'unconfigure it.'.format(existing['route_distinguisher']))
                     remove_commands = ['no rd {0}'.format(existing['route_distinguisher'])]
 
+                    candidate = CustomNetworkConfig(indent=3)
                     candidate.add(remove_commands, parents=parents)
                     load_config(module, candidate)
                     result['changed'] = True
                     result['commands'] = candidate.items_text()
                     time.sleep(30)
 
-            candidate = CustomNetworkConfig(indent=3)
-            candidate.add(commands, parents=parents)
-            load_config(module, candidate)
-            result['changed'] = True
-            result['commands'] = candidate.items_text()
-
+            else:
+                candidate = CustomNetworkConfig(indent=3)
+                candidate.add(commands, parents=parents)
+                load_config(module, candidate)
+                result['changed'] = True
+                result['commands'] = candidate.items_text()
+        else:
+            pass
     else:
         result['commands'] = []
 
