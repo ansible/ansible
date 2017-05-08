@@ -107,7 +107,7 @@ class ApacheFragment(object):
 
     def state(self):
         """
-        :return: True if fragment enabled, False otherwise. Raise exception if fragment not found.  
+        :return: True if fragment enabled, False otherwise. Raise exception if fragment not found.
         """
         available_fragment = join(self.available_dir, self.fragment_file)
         if not exists(available_fragment):
