@@ -137,10 +137,6 @@ def main():
 
     rpc = module.params['rpc']
     cfg_xml = module.params['cfg_xml']
-
-    if not rpc or not cfg_xml:
-        module.fail_json(msg='please input rpc and cfg_xml.')
-
     changed = False
     end_state = dict()
 
