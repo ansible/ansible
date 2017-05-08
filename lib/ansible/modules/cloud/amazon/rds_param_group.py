@@ -177,6 +177,7 @@ INT_MODIFIERS = {
 
 TRUE_VALUES = ('on', 'true', 'yes', '1',)
 
+
 def set_parameter(param, value, immediate):
     """
     Allows setting parameters with 10M = 10* 1024 * 1024 and so on.
@@ -274,12 +275,12 @@ def modify_group(group, params, immediate=False):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state             = dict(required=True,  choices=['present', 'absent']),
-        name              = dict(required=True),
-        engine            = dict(required=False, choices=VALID_ENGINES),
-        description       = dict(required=False),
-        params            = dict(required=False, aliases=['parameters'], type='dict'),
-        immediate         = dict(required=False, type='bool'),
+        state=dict(required=True,  choices=['present', 'absent']),
+        name=dict(required=True),
+        engine=dict(required=False, choices=VALID_ENGINES),
+        description=dict(required=False),
+        params=dict(required=False, aliases=['parameters'], type='dict'),
+        immediate=dict(required=False, type='bool'),
     )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -297,22 +298,22 @@ def main():
     if state == 'present':
         for required in ['name', 'description', 'engine']:
             if not module.params.get(required):
-                module.fail_json(msg = str("Parameter %s required for state='present'" % required))
+                module.fail_json(msg=str("Parameter %s required for state='present'" % required))
     else:
         for not_allowed in ['description', 'engine', 'params']:
             if module.params.get(not_allowed):
-                module.fail_json(msg = str("Parameter %s not allowed for state='absent'" % not_allowed))
+                module.fail_json(msg=str("Parameter %s not allowed for state='absent'" % not_allowed))
 
     # Retrieve any AWS settings from the environment.
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
     if not region:
-        module.fail_json(msg = str("Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region or ec2_region must be set."))
+        module.fail_json(msg=str("Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region or ec2_region must be set."))
 
     try:
         conn = connect_to_aws(boto.rds, region, **aws_connect_kwargs)
     except boto.exception.BotoServerError as e:
-        module.fail_json(msg = e.error_message)
+        module.fail_json(msg=e.error_message)
 
     group_was_added = False
 
@@ -324,7 +325,7 @@ def main():
             exists = len(all_groups) > 0
         except BotoServerError as e:
             if e.error_code != 'DBParameterGroupNotFound':
-                module.fail_json(msg = e.error_message)
+                module.fail_json(msg=e.error_message)
             exists = False
 
         if state == 'absent':
@@ -352,7 +353,7 @@ def main():
                     break
 
     except BotoServerError as e:
-        module.fail_json(msg = e.error_message)
+        module.fail_json(msg=e.error_message)
 
     except NotModifiableError as e:
         msg = e.error_message
