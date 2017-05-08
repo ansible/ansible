@@ -36,7 +36,7 @@ from jinja2 import Environment, FileSystemLoader
 from six import iteritems
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_text
 from ansible.utils import plugin_docs
 
 #####################################################################################
@@ -117,7 +117,7 @@ def write_data(text, options, outputname, module):
         fname = os.path.join(options.output_dir, outputname % module)
         fname = fname.replace(".py","")
         f = open(fname, 'w')
-        f.write(text.encode('utf-8'))
+        f.write(to_text(text))
         f.close()
     else:
         print(text)
@@ -338,7 +338,7 @@ def print_modules(module, category_file, deprecated, options, env, template, out
     if module in deprecated:
         modstring = modstring + DEPRECATED
 
-    category_file.write("  %s - %s <%s_module>\n" % (to_bytes(modstring), to_bytes(rst_ify(module_map[module][1])), to_bytes(modname)))
+    category_file.write("  %s - %s <%s_module>\n" % (to_text(modstring), to_text(rst_ify(module_map[module][1])), to_text(modname)))
 
 def process_category(category, categories, options, env, template, outputname):
 
@@ -409,7 +409,7 @@ def process_category(category, categories, options, env, template, outputname):
         category_file.write("\n%s\n%s\n\n" % (section.replace("_"," ").title(),'-' * len(section)))
         category_file.write(".. toctree:: :maxdepth: 1\n\n")
 
-        section_modules = module_map[section].keys()
+        section_modules = list(module_map[section].keys())
         section_modules.sort(key=lambda k: k[1:] if k.startswith('_') else k)
         #for module in module_map[section]:
         for module in (m for m in section_modules if m in module_info):
