@@ -33,10 +33,6 @@ author: Willem van Ketwich (@wilvk)
 options:
   resource:
     description:
-      - The name of the resource to action.
-    choices: ['distribution', 'streaming_distribution', 'origin_access_identity', 'invalidation']
-    required: false
-    description:
       - The desired state of the resource specified by the C(resource) tag.
         present - creates a new resource
           used for the resources
