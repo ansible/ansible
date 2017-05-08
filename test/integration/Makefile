@@ -243,7 +243,7 @@ rackspace: $(CREDENTIALS_FILE)
     exit $$RC;
 
 cloudstack:
-	ansible-playbook cloudstack.yml -i $(INVENTORY) -e @$(VARS_FILE) -e "resource_prefix=$(CLOUD_RESOURCE_PREFIX)" -v $(TEST_FLAGS) ; \
+	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook cloudstack.yml -i $(INVENTORY) -e @$(VARS_FILE) -e "resource_prefix=$(CLOUD_RESOURCE_PREFIX)" -v $(TEST_FLAGS) ; \
 	RC=$$? ; \
 	exit $$RC;
 

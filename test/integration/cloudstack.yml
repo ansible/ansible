@@ -1,30 +1,37 @@
 ---
 - hosts: localhost
   connection: local
-  gather_facts: no
+  gather_facts: yes
   tags:
     - cloudstack
-  vars:
-    cs_resource_prefix: "{{ resource_prefix | default('cs-') }}"
+  pre_tasks:
+    # TODO: change image src once moved to ansible
+    - shell: docker rm -f cloudstack || true; docker run --name cloudstack -d -p 8888:8888 resmo/cloudstack-sim
+      tags: always
   roles:
-    - { role: test_cs_user,                 tags: test_cs_user }
-    - { role: test_cs_project,              tags: test_cs_project }
-    - { role: test_cs_iso,                  tags: test_cs_iso }
-    - { role: test_cs_domain,               tags: test_cs_domain }
-    - { role: test_cs_vmsnapshot,           tags: test_cs_vmsnapshot }
-    - { role: test_cs_sshkeypair,           tags: test_cs_sshkeypair }
-    - { role: test_cs_affinitygroup,        tags: test_cs_affinitygroup }
-    - { role: test_cs_securitygroup,        tags: test_cs_securitygroup }
-    - { role: test_cs_securitygroup_rule,   tags: test_cs_securitygroup_rule }
-    - { role: test_cs_instance,             tags: test_cs_instance }
-    - { role: test_cs_instancegroup,        tags: test_cs_instancegroup }
-    - { role: test_cs_portforward,          tags: test_cs_portforward }
-    - { role: test_cs_account,              tags: test_cs_account }
-    - { role: test_cs_firewall,             tags: test_cs_firewall }
-    - { role: test_cs_loadbalancer_rule,    tags: test_cs_loadbalancer_rule }
-    - { role: test_cs_volume,               tags: test_cs_volume }
-    - { role: test_cs_instance_facts,       tags: test_cs_instance_facts }
-    - { role: test_cs_configuration,        tags: test_cs_configuration }
-    - { role: test_cs_pod,                  tags: test_cs_pod }
-    - { role: test_cs_cluster,              tags: test_cs_cluster }
-    - { role: test_cs_resourcelimit,        tags: test_cs_resourcelimit }
+    - { role: cs_prepare,              tags: always }
+    - { role: cs_user,                 tags: cs_user }
+    - { role: cs_project,              tags: cs_project }
+    - { role: cs_iso,                  tags: cs_iso }
+    - { role: cs_domain,               tags: cs_domain }
+    - { role: cs_vmsnapshot,           tags: cs_vmsnapshot }
+    - { role: cs_sshkeypair,           tags: cs_sshkeypair }
+    - { role: cs_affinitygroup,        tags: cs_affinitygroup }
+    - { role: cs_securitygroup,        tags: cs_securitygroup }
+    - { role: cs_securitygroup_rule,   tags: cs_securitygroup_rule }
+    - { role: cs_instance,             tags: cs_instance }
+    - { role: cs_instancegroup,        tags: cs_instancegroup }
+    - { role: cs_portforward,          tags: cs_portforward }
+    - { role: cs_account,              tags: cs_account }
+    - { role: cs_firewall,             tags: cs_firewall }
+    - { role: cs_loadbalancer_rule,    tags: cs_loadbalancer_rule }
+    - { role: cs_volume,               tags: cs_volume }
+    - { role: cs_instance_facts,       tags: cs_instance_facts }
+    - { role: cs_configuration,        tags: cs_configuration }
+    - { role: cs_pod,                  tags: cs_pod }
+    - { role: cs_cluster,              tags: cs_cluster }
+    - { role: cs_resourcelimit,        tags: cs_resourcelimit }
+    - { role: cs_vpc,                  tags: cs_vpc }
+  post_tasks:
+    - shell: docker rm -f cloudstack
+      tags: always
