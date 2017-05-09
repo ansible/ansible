@@ -131,7 +131,7 @@
   win_find:
     patterns: a
   register: actual
-  failed_when: "actual.msg != 'Missing required argument: paths'"
+  failed_when: "actual.msg != 'Get-AnsibleParam: Missing required argument: paths'"
 
 - name: expect failure when setting paths to a file
   win_find:
