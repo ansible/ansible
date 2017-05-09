@@ -230,11 +230,12 @@ EXAMPLES = '''
     desired_capacity: 5
     region: us-east-1
 '''
-
+import re
 import time
 import logging as log
 import traceback
 
+from ansible.module_utils.cloud import CloudRetry
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 log.getLogger('boto').setLevel(log.CRITICAL)
@@ -256,67 +257,96 @@ ASG_ATTRIBUTES = ('availability_zones', 'default_cooldown', 'desired_capacity',
 
 INSTANCE_ATTRIBUTES = ('instance_id', 'health_status', 'lifecycle_state', 'launch_config_name')
 
-@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
+
+def _boto_exception_maybe():
+    """
+    Allow for boto exceptions to be retried.
+    """
+    if HAS_BOTO:
+        return BotoServerError
+    return type(None)
+
+
+class ASGRetry(CloudRetry):
+    """ A retry class for ec2_asg while this module isn't using boto3 """
+    base_class = _boto_exception_maybe()
+
+    @staticmethod
+    def status_code_from_exception(error):
+        return error.response['Error']['Code']
+
+    @staticmethod
+    def found(response_code):
+        retry_on = ['RequestLimitExceeded', 'Unavailable', 'ServiceUnavailable',
+                    'InternalFailure', 'InternalError', 'Throttling']
+        not_found = re.compile(r'^\w+.NotFound')
+        if response_code in retry_on or not_found.search(response_code):
+            return True
+        else:
+            return False
+
+
+@ASGRetry.backoff(tries=10, delay=10, backoff=1.5)
 def get_all_groups(asg_connection, group_name):
     return asg_connection.get_all_groups(names=[group_name])
 
 
-@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
+@ASGRetry.backoff(tries=10, delay=10, backoff=1.5)
 def create_auto_scaling_group(asg_connection, ag):
     asg_connection.create_auto_scaling_group(ag)
 
 
-@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
+@ASGRetry.backoff(tries=10, delay=10, backoff=1.5)
 def get_all_launch_configurations(asg_connection, launch_config_name):
     return asg_connection.get_all_launch_configurations(names=[launch_config_name])
 
 
-@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
+@ASGRetry.backoff(tries=10, delay=10, backoff=1.5)
 def delete_tags(asg_connection, dead_tags):
     asg_connection.delete_tags(dead_tags)
 
 
-@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
+@ASGRetry.backoff(tries=10, delay=10, backoff=1.5)
 def create_or_update_tags(asg_connection, asg_tags):
     asg_connection.create_or_update_tags(asg_tags)
 
 
-@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
+@ASGRetry.backoff(tries=10, delay=10, backoff=1.5)
 def terminate_instance(asg_connection, instance_id, decrement_capacity):
     asg_connection.terminate_instance(instance_id, decrement_capacity=decrement_capacity)
 
 
-@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
+@ASGRetry.backoff(tries=10, delay=10, backoff=1.5)
 def update(as_group):
     as_group.update()
 
 
-@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
+@ASGRetry.backoff(tries=10, delay=10, backoff=1.5)
 def put_notification_configuration(as_group, notification_topic, notification_types):
     as_group.put_notification_configuration(notification_topic, notification_types)
 
 
-@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
+@ASGRetry.backoff(tries=10, delay=10, backoff=1.5)
 def delete_notification_configuration(as_group, notification_topic):
     as_group.delete_notification_configuration(notification_topic)
 
 
-@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
+@ASGRetry.backoff(tries=10, delay=10, backoff=1.5)
 def delete(as_group):
     as_group.delete()
 
 
-@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
+@ASGRetry.backoff(tries=10, delay=10, backoff=1.5)
 def elb_describe_instance_health(elb_connection, lb, instances=None):
     return elb_connection.describe_instance_health(lb, instances=instances)
 
 
-@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
+@ASGRetry.backoff(tries=10, delay=10, backoff=1.5)
 def elb_deregister_instances(elb_connection, lb, instance_id):
     elb_connection.deregister_instances(lb, instance_id)
 
 
-@AWSRetry.backoff(tries=10, delay=10, backoff=1.5)
+@ASGRetry.backoff(tries=10, delay=10, backoff=1.5)
 def ec2_get_all_zones(ec2_connection):
     return ec2_connection.get_all_zones()
 
