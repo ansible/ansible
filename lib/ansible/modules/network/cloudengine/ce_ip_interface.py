@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_ip_interface
-version_added: "2.3"
-short_description: Manages L3 attributes for IPv4 and IPv6 interfaces.
+version_added: "2.4"
+short_description: Manages L3 attributes for IPv4 and IPv6 interfaces on HUAWEI CloudEngine switches.
 description:
-    - Manages Layer 3 attributes for IPv4 and IPv6 interfaces.
+    - Manages Layer 3 attributes for IPv4 and IPv6 interfaces on HUAWEI CloudEngine switches.
 author: QijunPan (@CloudEngine-Ansible)
 notes:
     - Interface must already be a L3 port when using this module.
@@ -130,6 +130,7 @@ proposed:
     sample: {"addr": "20.20.20.20", "interface": "10GE1/0/22", "mask": "24"}
 existing:
     description: k/v pairs of existing IP attributes on the interface
+    returned: always
     type: dict
     sample: {"ipv4": [{"ifIpAddr": "11.11.11.11", "subnetMask": "255.255.0.0", "addrType": "main"}],
             "interface": "10GE1/0/22"}
@@ -402,8 +403,14 @@ class IpInterface(object):
     def __init_module__(self):
         """ init module """
 
+        required_if = [("version", "v4", ("addr", "mask"))]
+        required_together = [("addr", "mask")]
         self.module = AnsibleModule(
-            argument_spec=self.spec, supports_check_mode=True)
+            argument_spec=self.spec,
+            required_if=required_if,
+            required_together=required_together,
+            supports_check_mode=True
+        )
 
     def netconf_set_config(self, xml_str, xml_name):
         """ netconf set config """
@@ -444,7 +451,7 @@ class IpInterface(object):
         ipv6_info = re.findall(
             r'.*<ifmAm6>.*\s*<enableFlag>(.*)</enableFlag>.*', rcv_xml)
         if not ipv6_info:
-            self.module.fail_json(msg='Error: Fail to get interface IPv6 state.')
+            self.module.fail_json(msg='Error: Fail to get interface %s IPv6 state.' % self.interface)
         else:
             intf_info["enableFlag"] = ipv6_info[0]
 
@@ -633,8 +640,6 @@ class IpInterface(object):
 
         # ipv4 addr and mask check
         if self.version == "v4":
-            if not self.addr or not self.mask:
-                self.module.fail_json(msg='Error: addr and mask must be set.')
             if not is_valid_v4addr(self.addr):
                 self.module.fail_json(
                     msg='Error: The %s is not a valid address.' % self.addr)
@@ -647,8 +652,6 @@ class IpInterface(object):
         # ipv6 mask check
         if self.version == "v6":
             if self.addr:
-                if not self.mask:
-                    self.module.fail_json(msg='Error: mask must be set.')
                 if not self.mask.isdigit():
                     self.module.fail_json(msg='Error: mask is invalid.')
                 if int(self.mask) > 128 or int(self.mask) < 1:
@@ -658,10 +661,10 @@ class IpInterface(object):
         # interface and layer3 check
         self.intf_info = self.get_interface_dict(self.interface)
         if not self.intf_info:
-            self.module.fail_json(msg='Error: interface does not exist.')
+            self.module.fail_json(msg='Error: interface %s does not exist.' % self.interface)
 
         if self.intf_info["isL2SwitchPort"] == "true":
-            self.module.fail_json(msg='Error: interface is layer2.')
+            self.module.fail_json(msg='Error: interface %s is layer2.' % self.interface)
 
     def get_proposed(self):
         """get proposed info"""
