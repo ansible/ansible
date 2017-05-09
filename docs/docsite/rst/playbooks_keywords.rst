@@ -42,7 +42,7 @@ Play
   - **post_tasks:** A list of tasks to execute after the ``tasks`` section.
   - **pre_tasks:** A list of tasks to execute before ``roles``.
   - **remote_user:** User used to log into the target via the connection plugin. AKA login user.
-  - **roles:**  UNDOCUMENTED!! 
+  - **roles:** List of roles to execute before the ``tasks`` section. Relative to ``roles_path`` defined in ansible config file.``$HOME/.ansible.cfg``
   - **run_once:** Boolean that will bypass the host loop, forcing the task to execute on the first host available and will also apply any facts to all active hosts.
   - **serial:** Defines the 'batch' of hosts to execute the current play until the end.
   - **strategy:** Allows you to choose the connection plugin to use for the play.
@@ -128,10 +128,10 @@ Task
   - **loop_control:**  UNDOCUMENTED!! 
   - **name:** It's a name, works mostly for documentation, in the case of tasks/handlers it can be an identifier.
   - **no_log:** Boolean that controls information disclosure.
-  - **notify:**  UNDOCUMENTED!! 
+  - **notify:** Calls a handler from ``handlers`` section by name/identifier if task reports ``status: changed``
   - **poll:**  UNDOCUMENTED!! 
   - **port:** Used to override the default port used in a connection.
-  - **register:**  UNDOCUMENTED!! 
+  - **register:** Registers a variable which can be later be referenced, i.e. in conditional checks with ``when`` 
   - **remote_user:** User used to log into the target via the connection plugin. AKA login user.
   - **retries:**  UNDOCUMENTED!! 
   - **run_once:** Boolean that will bypass the host loop, forcing the task to execute on the first host available and will also apply any facts to all active hosts.
