@@ -220,8 +220,9 @@ def state_present(module, existing, proposed):
             command = '{0} {1}'.format(key, value)
             commands.append(command)
 
-    if commands:
-        parents = ['evpn', 'vni {0} l2'.format(module.params['vni'])]
+    else:
+        commands = ['vni {0} l2'.format(module.params['vni'])]
+        parents = ['evpn']
 
     return commands, parents
 
@@ -251,7 +252,7 @@ def main():
 
     warnings = list()
     check_args(module, warnings)
-    result = dict(changed=False, warnings=warnings)
+    results = dict(changed=False, warnings=warnings)
 
     state = module.params['state']
     args = PARAM_TO_COMMAND_KEYMAP.keys()
@@ -276,36 +277,33 @@ def main():
     elif state == 'absent' and existing:
         commands, parents = state_absent(module, existing, proposed)
 
-        if commands:
-            if (existing.get('route_distinguisher') and
-                    proposed.get('route_distinguisher')):
-                if (existing['route_distinguisher'] != proposed['route_distinguisher'] and
-                        proposed['route_distinguisher'] != 'default'):
-                    warnings.append('EVPN RD {0} was automatically removed. '
-                                    'It is highly recommended to use a task '
-                                    '(with default as value) to explicitly '
-                                    'unconfigure it.'.format(existing['route_distinguisher']))
-                    remove_commands = ['no rd {0}'.format(existing['route_distinguisher'])]
+    if commands:
+        if (existing.get('route_distinguisher') and
+                proposed.get('route_distinguisher')):
+            if (existing['route_distinguisher'] != proposed['route_distinguisher'] and
+                    proposed['route_distinguisher'] != 'default'):
+                warnings.append('EVPN RD {0} was automatically removed. '
+                                'It is highly recommended to use a task '
+                                '(with default as value) to explicitly '
+                                'unconfigure it.'.format(existing['route_distinguisher']))
+                remove_commands = ['no rd {0}'.format(existing['route_distinguisher'])]
 
-                    candidate = CustomNetworkConfig(indent=3)
-                    candidate.add(remove_commands, parents=parents)
-                    load_config(module, candidate)
-                    result['changed'] = True
-                    result['commands'] = candidate.items_text()
-                    time.sleep(30)
-
-            else:
                 candidate = CustomNetworkConfig(indent=3)
-                candidate.add(commands, parents=parents)
+                candidate.add(remove_commands, parents=parents)
                 load_config(module, candidate)
-                result['changed'] = True
-                result['commands'] = candidate.items_text()
-        else:
-            pass
-    else:
-        result['commands'] = []
+                results['changed'] = True
+                results['commands'] = candidate.items_text()
+                time.sleep(30)
 
-    module.exit_json(**result)
+        else:
+            candidate = CustomNetworkConfig(indent=3)
+            candidate.add(commands, parents=parents)
+            load_config(module, candidate)
+            results['changed'] = True
+            results['commands'] = candidate.items_text()
+    else:
+        results['commands'] = []
+    module.exit_json(**results)
 
 
 if __name__ == '__main__':
