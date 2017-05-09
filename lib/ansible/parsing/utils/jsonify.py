@@ -30,12 +30,13 @@ def jsonify(result, format=False):
     if result is None:
         return "{}"
 
+    separators = None
     indent = None
     if format:
         indent = 4
+        separators = (',', ': ')
 
     try:
-        return json.dumps(result, sort_keys=True, indent=indent, ensure_ascii=False)
+        return json.dumps(result, sort_keys=True, indent=indent, ensure_ascii=False, separators=separators)
     except UnicodeDecodeError:
-        return json.dumps(result, sort_keys=True, indent=indent)
-
+        return json.dumps(result, sort_keys=True, indent=indent, separators=separators)
