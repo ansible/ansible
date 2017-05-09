@@ -32,7 +32,7 @@ description:
 version_added: "2.1"
 author: "Werner Dijkerman (@dj-wasabi)"
 requirements:
-    - pyapi-gitlab python module
+    - python-gitlab python module
 options:
     server_url:
         description:
@@ -85,26 +85,53 @@ options:
     issues_enabled:
         description:
             - Whether you want to create issues or not.
-            - Possible values are true and false.
         required: false
+        choices: ["true", "false"]
         default: true
     merge_requests_enabled:
         description:
             - If merge requests can be made or not.
-            - Possible values are true and false.
         required: false
+        choices: ["true", "false"]
         default: true
     wiki_enabled:
         description:
             - If an wiki for this project should be available or not.
-            - Possible values are true and false.
         required: false
+        choices: ["true", "false"]
         default: true
+    builds_enabled:
+        description:
+            - If a build creation for this project should be available or not.
+        choices: ["true", "false"]
+        default: false
+        version_added: "2.3"
+    public_builds:
+        description:
+            - If true, builds can be viewed by non-project-members.
+            - Will only work when C(builds_enabled=True).
+        choices: ["true", "false"]
+        default: false
+        version_added: "2.3"
+    only_allow_merge_if_build_succeeds:
+        description:
+            - Set whether merge requests can only be merged with successful builds.
+            - Will only work when C(builds_enabled=True).
+        choices: ["true", "false"]
+        default: false
+        version_added: "2.3"
+    container_registry_enabled:
+        description:
+            - Enable container registry for this project.
+            - Will only work when C(builds_enabled=True).
+        choices: ["true", "false"]
+        default: false
+        version_added: "2.3"
     snippets_enabled:
         description:
             - If creating snippets should be available or not.
-            - Possible values are true and false.
         required: false
+        choices: ["true", "false"]
         default: true
     public:
         description:
@@ -112,6 +139,7 @@ options:
             - Setting this to true is same as setting visibility_level to 20.
             - Possible values are true and false.
         required: false
+        choices: ["true", "false"]
         default: false
     visibility_level:
         description:
@@ -120,10 +148,11 @@ options:
             - Public. visibility_level is 20. The project can be cloned without any authentication.
             - Possible values are 0, 10 and 20.
         required: false
+        choices: [0, 10, 20]
         default: 0
     import_url:
         description:
-            - Git repository which will me imported into gitlab.
+            - Git repository which will be imported into gitlab.
             - Gitlab server needs read access to this git repository.
         required: false
         default: false
@@ -178,126 +207,126 @@ class GitLabProject(object):
     def __init__(self, module, git):
         self._module = module
         self._gitlab = git
+        self.groupObject = None
 
-    def createOrUpdateProject(self, project_exists, group_name, import_url, arguments):
-        is_user = False
-        group_id = self.getGroupId(group_name)
-        if not group_id:
-            group_id = self.getUserId(group_name)
-            is_user = True
+    def createOrUpdateProject(self, project, name, group_id, issues, wiki, merge_request, description,
+                              snippets, builds, public_builds, public, only_allow_merge_if_build_succeeds,
+                              container_registry_enabled, visibility_level, import_url, path):
+        """Create or update a project."""
+        changed = False
+        if not project:
+            project = self.createProject(name=name, group_id=group_id, import_url=import_url)
 
-        if project_exists:
-            # Edit project
-            return self.updateProject(group_name, arguments)
-        else:
-            # Create project
+        if project.path != path:
+            project.path = path
+            changed = True
+        if project.wiki_enabled != wiki:
+            project.wiki_enabled = wiki
+            changed = True
+        if project.issues_enabled != issues:
+            project.issues_enabled = issues
+            changed = True
+        if project.merge_requests_enabled != merge_request:
+            project.merge_requests_enabled = merge_request
+            changed = True
+        if project.snippets_enabled != snippets:
+            project.snippets_enabled = snippets
+            changed = True
+        if project.builds_enabled != builds:
+            project.builds_enabled = builds
+            changed = True
+            if project.public_builds != public_builds:
+                project.public_builds = public_builds
+                changed = True
+            if project.only_allow_merge_if_build_succeeds != only_allow_merge_if_build_succeeds:
+                project.only_allow_merge_if_build_succeeds = only_allow_merge_if_build_succeeds
+                changed = True
+            if project.container_registry_enabled != container_registry_enabled:
+                project.container_registry_enabled = container_registry_enabled
+                changed = True
+        if project.description != description:
+            project.description = description
+            changed = True
+        if project.public != public:
+            project.public = public
+            changed = True
+        if project.visibility_level != visibility_level:
+            project.visibility_level = int(visibility_level)
+
+        if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True)
-            return self.createProject(is_user, group_id, import_url, arguments)
-
-    def createProject(self, is_user, user_id, import_url, arguments):
-        if is_user:
-            return self._gitlab.createprojectuser(user_id=user_id, import_url=import_url, **arguments)
-        else:
-            group_id = user_id
-            return self._gitlab.createproject(namespace_id=group_id, import_url=import_url, **arguments)
-
-    def deleteProject(self, group_name, project_name):
-        if self.existsGroup(group_name):
-            project_owner = group_name
-        else:
-            project_owner = self._gitlab.currentuser()['username']
-
-        search_results = self._gitlab.searchproject(search=project_name)
-        for result in search_results:
-            owner = result['namespace']['name']
-            if owner == project_owner:
-                return self._gitlab.deleteproject(result['id'])
-
-    def existsProject(self, group_name, project_name):
-        if self.existsGroup(group_name):
-            project_owner = group_name
-        else:
-            project_owner = self._gitlab.currentuser()['username']
-
-        search_results = self._gitlab.searchproject(search=project_name)
-        for result in search_results:
-            owner = result['namespace']['name']
-            if owner == project_owner:
-                return True
-        return False
-
-    def existsGroup(self, group_name):
-        if group_name is not None:
-            # Find the group, if group not exists we try for user
-            for group in self._gitlab.getall(self._gitlab.getgroups):
-                if group['name'] == group_name:
-                    return True
-
-            user_name = group_name
-            user_data = self._gitlab.getusers(search=user_name)
-            for data in user_data:
-                if 'id' in user_data:
-                    return True
-        return False
-
-    def getGroupId(self, group_name):
-        if group_name is not None:
-            # Find the group, if group not exists we try for user
-            for group in self._gitlab.getall(self._gitlab.getgroups):
-                if group['name'] == group_name:
-                    return group['id']
-
-    def getProjectId(self, group_name, project_name):
-        if self.existsGroup(group_name):
-            project_owner = group_name
-        else:
-            project_owner = self._gitlab.currentuser()['username']
-
-        search_results = self._gitlab.searchproject(search=project_name)
-        for result in search_results:
-            owner = result['namespace']['name']
-            if owner == project_owner:
-                return result['id']
-
-    def getUserId(self, user_name):
-        user_data = self._gitlab.getusers(search=user_name)
-
-        for data in user_data:
-            if 'id' in data:
-                return data['id']
-        return self._gitlab.currentuser()['id']
-
-    def to_bool(self, value):
-        if value:
-            return 1
-        else:
-            return 0
-
-    def updateProject(self, group_name, arguments):
-        project_changed = False
-        project_name = arguments['name']
-        project_id = self.getProjectId(group_name, project_name)
-        project_data = self._gitlab.getproject(project_id=project_id)
-
-        for arg_key, arg_value in arguments.items():
-            project_data_value = project_data[arg_key]
-
-            if isinstance(project_data_value, bool) or project_data_value is None:
-                to_bool = self.to_bool(project_data_value)
-                if to_bool != arg_value:
-                    project_changed = True
-                    continue
-            else:
-                if project_data_value != arg_value:
-                    project_changed = True
-
-        if project_changed:
-            if self._module.check_mode:
-                self._module.exit_json(changed=True)
-            return self._gitlab.editproject(project_id=project_id, **arguments)
+                module.exit_json(changed=True, result="Project should have updated.")
+            try:
+                project.save()
+            except Exception:
+                e = get_exception()
+                self._module.fail_json(msg="Failed to update a project: %s " % e)
+            return True
         else:
             return False
+
+    def createProject(self, name, group_id, import_url):
+        """Creates a project"""
+        project = None
+        if import_url is None:
+            try:
+                project = self._gitlab.projects.create({'name': name, 'namespace_id': group_id})
+            except Exception:
+                e = get_exception()
+                self._module.fail_json(msg="Failed to create a project: %s " % e)
+        else:
+            try:
+                project = self._gitlab.projects.create(
+                    {'name': name, 'namespace_id': group_id, 'import_url': import_url})
+            except Exception:
+                e = get_exception()
+                self._module.fail_json(msg="Failed to create a project: %s " % e)
+        return project
+
+    def deleteProject(self, project):
+        """Deletes a project."""
+        try:
+            project.delete()
+        except Exception:
+            e = get_exception()
+            self._module.fail_json(msg="Failed to dekla project: %s " % e)
+        return True
+
+    def existsProject(self, group, project, state):
+        """Validates if a project exists."""
+        project_name = project
+        if not self.existsGroup(name=group):
+            if state == "present":
+                self._module.fail_json(msg="The group " + group + " doesnt exists in Gitlab. Please create it first.")
+
+        projects = self._gitlab.projects.search(project_name)
+        if len(projects) >= 1:
+            for project in projects:
+                group_project_name = group + "/" + project_name
+                if group_project_name == project.path_with_namespace:
+                    return project
+        return False
+
+    def existsGroup(self, name):
+        """When group/user exists, object will be stored in self.groupObject."""
+        groups = self._gitlab.groups.search(name)
+        if len(groups) == 1:
+            self.groupObject = groups[0]
+            return True
+        users = self._gitlab.users.list(username=name)
+        if len(users) == 1:
+            self.groupObject = users[0]
+            return True
+        return False
+
+    def getGroupId(self):
+        """Returns the id of the groupobject."""
+        return int(self.groupObject.id)
+
+    def getUserData(self):
+        """Returns the userid and username."""
+        user_data = self._gitlab.user
+        return str(user_data.id), user_data.username
 
 
 def main():
@@ -315,6 +344,10 @@ def main():
             issues_enabled=dict(default=True, type='bool'),
             merge_requests_enabled=dict(default=True, type='bool'),
             wiki_enabled=dict(default=True, type='bool'),
+            builds_enabled=dict(default=False, type='bool'),
+            public_builds=dict(default=False, type='bool'),
+            only_allow_merge_if_build_succeeds=dict(default=False, type='bool'),
+            container_registry_enabled=dict(default=False, type='bool'),
             snippets_enabled=dict(default=True, type='bool'),
             public=dict(default=False, type='bool'),
             visibility_level=dict(default="0", choices=["0", "10", "20"]),
@@ -325,7 +358,7 @@ def main():
     )
 
     if not HAS_GITLAB_PACKAGE:
-        module.fail_json(msg="Missing required gitlab module (check docs or install with: pip install pyapi-gitlab")
+        module.fail_json(msg="Missing required gitlab module (check docs or install with: pip install python-gitlab")
 
     server_url = module.params['server_url']
     verify_ssl = module.params['validate_certs']
@@ -339,13 +372,18 @@ def main():
     issues_enabled = module.params['issues_enabled']
     merge_requests_enabled = module.params['merge_requests_enabled']
     wiki_enabled = module.params['wiki_enabled']
+    builds_enabled = module.params['builds_enabled']
+    public_builds = module.params['public_builds']
+    only_allow_merge_if_build_succeeds = module.params['only_allow_merge_if_build_succeeds']
+    container_registry_enabled = module.params['container_registry_enabled']
     snippets_enabled = module.params['snippets_enabled']
     public = module.params['public']
     visibility_level = module.params['visibility_level']
     import_url = module.params['import_url']
     state = module.params['state']
+    use_credentials = None
 
-    # We need both login_user and login_password or login_token, otherwise we fail.
+    # Validate some credentials configuration parameters.
     if login_user is not None and login_password is not None:
         use_credentials = True
     elif login_token is not None:
@@ -353,56 +391,52 @@ def main():
     else:
         module.fail_json(msg="No login credentials are given. Use login_user with login_password, or login_token")
 
-    # Set project_path to project_name if it is empty.
-    if project_path is None:
-        project_path = project_name.replace(" ", "_")
+    if login_token and login_user:
+        module.fail_json(msg="You can either use 'login_token' or 'login_user' and 'login_password'")
 
-    # Gitlab API makes no difference between upper and lower cases, so we lower them.
-    project_name = project_name.lower()
-    project_path = project_path.lower()
-    if group_name is not None:
-        group_name = group_name.lower()
-
-    # Lets make an connection to the Gitlab server_url, with either login_user and login_password
-    # or with login_token
     try:
         if use_credentials:
-            git = gitlab.Gitlab(host=server_url, verify_ssl=verify_ssl)
-            git.login(user=login_user, password=login_password)
+            git = gitlab.Gitlab(url=server_url, email=login_user, password=login_password, ssl_verify=verify_ssl)
+            git.auth()
         else:
-            git = gitlab.Gitlab(server_url, token=login_token, verify_ssl=verify_ssl)
+            git = gitlab.Gitlab(url=server_url, private_token=login_token, ssl_verify=verify_ssl)
+            git.auth()
     except Exception:
         e = get_exception()
         module.fail_json(msg="Failed to connect to Gitlab server: %s " % e)
 
-    # Validate if project exists and take action based on "state"
     project = GitLabProject(module, git)
-    project_exists = project.existsProject(group_name, project_name)
+    # Gather information if we have a group, or we have to add the project to the current user.
+    if group_name is None:
+        group_id, group_name = project.getUserData()
+        project_data = project.existsProject(group=group_name, project=project_name, state=state)
+    else:
+        project_data = project.existsProject(group=group_name, project=project_name, state=state)
+        if state == "present":
+            group_id = project.getGroupId()
 
-    # Creating the project dict
-    arguments = {"name": project_name,
-                 "path": project_path,
-                 "description": description,
-                 "issues_enabled": project.to_bool(issues_enabled),
-                 "merge_requests_enabled": project.to_bool(merge_requests_enabled),
-                 "wiki_enabled": project.to_bool(wiki_enabled),
-                 "snippets_enabled": project.to_bool(snippets_enabled),
-                 "public": project.to_bool(public),
-                 "visibility_level": int(visibility_level)}
+    if project_path is None:
+        project_path = project_name.replace(" ", "_")
 
-    if project_exists and state == "absent":
-        project.deleteProject(group_name, project_name)
-        module.exit_json(changed=True, result="Successfully deleted project %s" % project_name)
+    if project_data and state == "absent":
+        if module.check_mode:
+            module.exit_json(changed=True, result="Project should have been deleted.")
+        if project.deleteProject(project=project_data):
+            module.exit_json(changed=True, result="Successfully deleted project %s" % project_name)
     else:
         if state == "absent":
             module.exit_json(changed=False, result="Project deleted or does not exists")
         else:
-            if project.createOrUpdateProject(project_exists, group_name, import_url, arguments):
+            if project.createOrUpdateProject(project=project_data, name=project_name, group_id=group_id,
+                                             issues=issues_enabled, wiki=wiki_enabled, path=project_path,
+                                             merge_request=merge_requests_enabled, description=description,
+                                             snippets=snippets_enabled, builds=builds_enabled, public_builds=public_builds,
+                                             only_allow_merge_if_build_succeeds=only_allow_merge_if_build_succeeds,
+                                             container_registry_enabled=container_registry_enabled, public=public,
+                                             visibility_level=visibility_level, import_url=import_url):
                 module.exit_json(changed=True, result="Successfully created or updated the project %s" % project_name)
             else:
-                module.exit_json(changed=False)
-
-
+                module.exit_json(changed=False, result="No configuration updates for project %s" % project_name)
 
 if __name__ == '__main__':
     main()
