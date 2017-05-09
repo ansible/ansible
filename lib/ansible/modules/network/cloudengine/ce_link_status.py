@@ -18,16 +18,16 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 
 module: ce_link_status
-version_added: "2.3"
-short_description: Get interface link status.
+version_added: "2.4"
+short_description: Get interface link status on HUAWEI CloudEngine switches.
 description:
-    - Get interface link status.
+    - Get interface link status on HUAWEI CloudEngine switches.
 author:
     - Zhijin Zhou (@CloudEngine-Ansible)
 notes:
@@ -55,9 +55,10 @@ notes:
 options:
     interface:
         description:
-            - For the interface parameter, you can enter "all" to display information about all interface,
-              an interface type such as 40GE to display information about interfaces of the specified type,
-              or full name of an interface such as 40GE1/0/22 or vlanif10 to display information about the specific interface.
+            - For the interface parameter, you can enter C(all) to display information about all interface,
+              an interface type such as C(40GE) to display information about interfaces of the specified type,
+              or full name of an interface such as C(40GE1/0/22) or C(vlanif10)
+              to display information about the specific interface.
         required: true
 '''
 
@@ -560,6 +561,7 @@ def main():
     argument_spec.update(ce_argument_spec)
     linkstatus_obj = LinkStatus(argument_spec)
     linkstatus_obj.work()
+
 
 if __name__ == '__main__':
     main()
