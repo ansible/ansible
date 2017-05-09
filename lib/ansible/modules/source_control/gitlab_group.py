@@ -165,7 +165,8 @@ def main():
     )
 
     if not HAS_GITLAB_PACKAGE:
-        module.fail_json(msg="Missing requried gitlab module (check docs or install with: pip install pyapi-gitlab")
+        module.fail_json(msg="Missing required gitlab module (check docs or "
+                             "install with: pip install pyapi-gitlab")
 
     server_url = module.params['server_url']
     verify_ssl = module.params['validate_certs']
@@ -199,6 +200,14 @@ def main():
     except Exception:
         e = get_exception()
         module.fail_json(msg="Failed to connect to Gitlab server: %s " % e)
+
+    # Check if user is authorized or not before proceeding to any operations
+    # if not, exit from here
+    auth_msg = git.currentuser().get('message', None)
+    if auth_msg is not None and auth_msg == '401 Unauthorized':
+        module.fail_json(msg='User unauthorized',
+                         details="User is not allowed to access Gitlab server "
+                                 "using login_token. Please check login_token")
 
     # Validate if group exists and take action based on "state"
     group = GitLabGroup(module, git)
