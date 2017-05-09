@@ -33,18 +33,28 @@ group nodes by:
  - values from the k/v store
 
 This script can be run with the switches
---list as expected groups all the nodes in all datacenters
+--list, as expected groups all nodes in all datacenters
 --datacenter, to restrict the nodes to a single datacenter
---host to restrict the inventory to a single named node. (requires datacenter config)
+--host, to restrict the inventory to a single named node (requires datacenter config)
+--url, of the Consul agent to connect to (defaults to http on localhost:8500 if not specified)
 
-The configuration for this plugin is read from a consul.ini file located in the
-same directory as this inventory script. All config options in the config file
-are optional except the host and port, which must point to a valid agent or
-server running the http api. For more information on enabling the endpoint see.
+The following environment variables are also read and, if present, override
+equivalent values set in the config file (switches set on the command line
+always have the highest precedence and override everything else)
+ANSIBLE_INVENTORY_CONSUL_DATACENTER
+ANSIBLE_INVENTORY_CONSUL_HOST
+ANSIBLE_INVENTORY_CONSUL_URL
+
+The main configuration for this plugin is read from a consul.ini file located in
+the same directory as this inventory script. All config options in the config file
+are optional except 'url' (unless the --url switch was passed to the script or the
+ANSIBLE_INVENTORY_CONSUL_URL environemnt variable was set). 'url' must point to a
+valid agent or server running the http api. For more information on enabling
+the endpoint see:
 
 http://www.consul.io/docs/agent/options.html
 
-Other options include:
+Available config file options include:
 
 'datacenter':
 
@@ -221,6 +231,7 @@ class ConsulInventory(object):
         self.consul_api = config.get_consul_api()
 
         if config.has_config('datacenter'):
+            self.current_dc = config.datacenter
             if config.has_config('host'):
                 self.load_data_for_node(config.host, config.datacenter)
             else:
@@ -414,6 +425,7 @@ class ConsulConfig(dict):
 
     def __init__(self):
         self.read_settings()
+        self.read_env_vars()
         self.read_cli_args()
 
     def has_config(self, name):
@@ -437,6 +449,19 @@ class ConsulConfig(dict):
                 value = config.get('consul', option)
             setattr(self, option, value)
 
+    def read_env_vars(self):
+        ''' Reads settings from environment variables '''
+
+        var_names = {
+            'ANSIBLE_INVENTORY_CONSUL_HOST': 'host',
+            'ANSIBLE_INVENTORY_CONSUL_DATACENTER': 'datacenter',
+            'ANSIBLE_INVENTORY_CONSUL_URL': 'url'
+        }
+
+        for var, val in var_names.items():
+            if os.getenv(var):
+                setattr(self, val, os.getenv(var))
+
     def read_cli_args(self):
         ''' Command line argument processing '''
         parser = argparse.ArgumentParser(description=
@@ -449,9 +474,12 @@ class ConsulConfig(dict):
               requires datacenter set in consul.ini.')
         parser.add_argument('--datacenter', action='store',
             help='Get all inventory about a specific consul datacenter')
+        parser.add_argument('--url', action='store',
+            help='URL of the Consul cluster (if not specified, defaults \
+               to http requests to localhost on port 8500)')
 
         args = parser.parse_args()
-        arg_names = ['host', 'datacenter']
+        arg_names = ['host', 'datacenter', 'url']
 
         for arg in arg_names:
             if getattr(args, arg):
@@ -461,7 +489,6 @@ class ConsulConfig(dict):
         if self.has_config(suffix):
             return self.has_config(suffix)
         return default
-
 
     def get_consul_api(self):
         '''get an instance of the api based on the supplied configuration'''
