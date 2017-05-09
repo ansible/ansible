@@ -16,9 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import pytest
-import boto3
 import os
-import json
 from . placebo_fixtures import placeboify, maybe_sleep
 from ansible.modules.cloud.amazon import ec2_vpc_vpn as v
 from ansible.module_utils._text import to_text
