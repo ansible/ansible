@@ -31,6 +31,7 @@ class CallbackModule(CallbackBase):
     CALLBACK_NEEDS_WHITELIST = True
 
     def __init__(self, display=None):
+        self.disabled = False
         super(CallbackModule, self).__init__(display=display)
         self.github_api = 'https://api.github.com/'
         self._log = []
@@ -43,6 +44,8 @@ class CallbackModule(CallbackBase):
         if not os.path.isfile(config_file):
             self._display.warning(
                 'File {} not found. SlackGithub callback has been disabled'.format(config_file))
+            self.disabled = True
+            return
         with open(config_file) as config_file:
             self.config = json.load(config_file)
         try:
@@ -57,6 +60,8 @@ class CallbackModule(CallbackBase):
         self._log.append(text)
 
     def send(self, color='good'):
+        if self.disabled:
+            return
         raw_gist = {
             'description': 'Ansible play recap',
             'public': False,
