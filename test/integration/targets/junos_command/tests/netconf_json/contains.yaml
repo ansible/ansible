@@ -1,0 +1,22 @@
+---
+- debug: msg="START netconf_json/contains.yaml"
+
+- name: test contains operator with json encoding
+  junos_command:
+    commands:
+      - show version
+      - show interfaces fxp0
+    format: json
+    wait_for:
+      - "result[0]['software-information'][0]['host-name'][0]['data'] contains {{ inventory_hostname_short }}"
+      - "result[1]['interface-information'][0]['physical-interface'][0]['name'][0]['data'] contains fxp0"
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+      - "result.stdout_lines is defined"
+
+- debug: msg="END netconf_json/contains.yaml"

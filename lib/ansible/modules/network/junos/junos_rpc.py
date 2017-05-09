@@ -62,7 +62,7 @@ EXAMPLES = """
   junos_rpc:
     rpc: get-interface-information
     args:
-      interface: em0
+      interface-name: em0
       media: True
 
 - name: get system information

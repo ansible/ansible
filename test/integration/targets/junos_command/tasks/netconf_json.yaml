@@ -1,7 +1,7 @@
 ---
-- name: collect netconf_text test cases with text encoding
+- name: collect netconf_json test cases with json encoding
   find:
-    paths: "{{ role_path }}/tests/netconf_text"
+    paths: "{{ role_path }}/tests/netconf_json"
     patterns: "{{ testcase }}.yaml"
   register: test_cases
 
