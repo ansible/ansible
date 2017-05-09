@@ -27,9 +27,7 @@ class TestJsonify(unittest.TestCase):
         self.assertEqual(jsonify(dict(a=1, b=2, c=3)), '{"a": 1, "b": 2, "c": 3}')
 
     def test_jsonify_simple_format(self):
-        res = jsonify(dict(a=1, b=2, c=3), format=True)
-        cleaned = "".join([x.strip() for x in res.splitlines()])
-        self.assertEqual(cleaned, '{"a": 1,"b": 2,"c": 3}')
+        self.assertEqual(jsonify(dict(a=1, b=2, c=3), format=True), '{\n    "a":1,\n    "b":2,\n    "c":3\n}')
 
     def test_jsonify_unicode(self):
         self.assertEqual(jsonify(dict(toshio=u'くらとみ')), u'{"toshio": "くらとみ"}')
