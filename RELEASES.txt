@@ -5,7 +5,8 @@ VERSION  RELEASE     CODE NAME
 ++++++++++++++++++++++++++++++
 
 2.4.0    TBD         "Dancing Days"
-2.3.0    TBD         "Ramble On"
+2.3.0    04-12-2017  "Ramble On"
+2.2.3    05-09-2017  "The Battle of Evermore"
 2.2.2    03-27-2017  "The Battle of Evermore"
 2.2.1    01-16-2017  "The Battle of Evermore"
 2.2.0    11-01-2016  "The Battle of Evermore"
