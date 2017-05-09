@@ -51,7 +51,7 @@ class CsCloudProvider(CloudProvider):
         """
         super(CsCloudProvider, self).__init__(args, config_extension='.ini')
 
-        self.image = 'resmo/cloudstack-sim'
+        self.image = 'ansible/ansible:cloudstack-simulator'
         self.container_name = ''
         self.endpoint = ''
         self.host = ''
@@ -154,7 +154,8 @@ class CsCloudProvider(CloudProvider):
             display.info('Starting a new CloudStack simulator docker container.', verbosity=1)
             docker_pull(self.args, self.image)
             docker_run(self.args, self.image, ['-d', '-p', '8888:8888', '--name', self.container_name])
-            display.notice('The CloudStack simulator will probably be ready in 5 - 10 minutes.')
+            if not self.args.explain:
+                display.notice('The CloudStack simulator will probably be ready in 5 - 10 minutes.')
 
         container_id = get_docker_container_id()
 
