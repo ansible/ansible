@@ -1,0 +1,38 @@
+---
+- debug: msg="START netconf_json/notequal.yaml"
+
+- name: test neq operator
+  junos_command:
+    commands:
+      - show version
+      - show interfaces fxp0
+    format: json
+    wait_for:
+      - "result[0]['software-information'][0]['host-name'][0]['data'] neq localhost"
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+      - "result.stdout_lines is defined"
+
+- name: test != operator
+  junos_command:
+    commands:
+      - show version
+      - show interfaces fxp0
+    format: json
+    wait_for:
+      - "result[0]['software-information'][0]['host-name'][0]['data'] != localhost"
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.stdout is defined"
+      - "result.stdout_lines is defined"
+
+- debug: msg="END netconf_json/notequal.yaml"
