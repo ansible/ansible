@@ -501,8 +501,7 @@ EXAMPLES = '''
       allowed_methods:
         items:
           - GET
-          - PUT
-          - POST
+          - HEAD
         cached_methods:
           - GET
           - HEAD
