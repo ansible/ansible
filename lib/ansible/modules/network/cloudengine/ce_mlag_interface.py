@@ -18,15 +18,15 @@
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'version': '1.0'}
+                    'metadata_version': '1.0'}
 
 DOCUMENTATION = '''
 ---
 module: ce_mlag_interface
-version_added: "2.3"
-short_description: Manages MLAG interfaces.
+version_added: "2.4"
+short_description: Manages MLAG interfaces on HUAWEI CloudEngine switches.
 description:
-    - Manages MLAG interface attributes on CloudEngine switches.
+    - Manages MLAG interface attributes on HUAWEI CloudEngine switches.
 author:
     - Li Yanfeng (@CloudEngine-Ansible)
 options:
@@ -132,8 +132,8 @@ proposed:
               "state": "present"
             }
 existing:
-    description:
-        - k/v pairs of existing aaa server
+    description: k/v pairs of existing aaa server
+    returned: always
     type: dict
     sample: {   "mlagErrorDownInfos": [
                 {
