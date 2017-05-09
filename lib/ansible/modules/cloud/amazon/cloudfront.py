@@ -461,6 +461,13 @@ EXAMPLES = '''
       viewer_protocol_policy: allow-all
       smooth_streaming: true
       compress: true
+      allowed_methods:
+        items:
+          - GET
+          - HEAD
+        cached_methods:
+          - GET
+          - HEAD
     logging:
       enabled: true
       include_cookies: false
@@ -491,6 +498,14 @@ EXAMPLES = '''
       viewer_protocol_policy: allow-all
       smooth_streaming: true
       compress: true
+      allowed_methods:
+        items:
+          - GET
+          - PUT
+          - POST
+        cached_methods:
+          - GET
+          - HEAD
     logging:
       enabled: true
       include_cookies: false
@@ -1073,15 +1088,19 @@ class CloudFrontValidationManager:
                 if 'items' not in allowed_methods:
                     self.module.fail_json(
                         msg="cache_behavior.allowed_methods.items[] must be specified")
-                self.validate_attribute_with_allowed_values(cache_behavior.get('cached_methods'),
+                temp_cached_methods = allowed_methods.get('cached_methods')
+                temp_allowed_methods = allowed_methods.get('items')
+                self.validate_attribute_with_allowed_values(temp_cached_methods,
                                                             'cache_behavior.allowed_items.cached_methods[]', self.__valid_methods)
-                self.validate_is_list(allowed_methods.get('items'),
+                self.validate_is_list(temp_allowed_methods,
                                       'cache_behavior.allowed_methods.items')
                 if 'cached_methods' in allowed_methods:
-                    self.validate_is_list(allowed_methods.get('cached_methods'),
+                    self.validate_is_list(temp_cached_methods,
                                           'cache_behavior.allowed_methods.cached_methods')
-                    self.validate_attribute_with_allowed_values(allowed_methods.get('cached_methods'),
+                    self.validate_attribute_with_allowed_values(temp_cached_methods,
                                                                 'cache_behavior.allowed_items.cached_methods[]', self.__valid_methods)
+                cache_behavior['allowed_methods'] = self.__helpers.python_list_to_aws_list(temp_allowed_methods)
+                cache_behavior['allowed_methods']['cached_methods'] = self.__helpers.python_list_to_aws_list(temp_cached_methods)
             lambda_function_associations = cache_behavior.get('lambda_function_associations')
             if lambda_function_associations is not None:
                 self.validate_is_list(lambda_function_associations, 'lambda_function_associations')
@@ -1392,9 +1411,12 @@ class CloudFrontValidationManager:
 
     def validate_attribute_with_allowed_values(self, attribute, attribute_name, allowed_list):
         try:
-            if attribute is not None and attribute not in allowed_list:
-                self.module.fail_json(msg='the attribute {0} must be one of {1}'.format(attribute_name,
-                                                                                        ' '.join(str(e) for e in allowed_list)))
+            fail_validate = False
+            if attribute is not None:
+                if (isinstance(attribute, list) and (not set(attribute)<set(allowed_list)) or
+                        (not isinstance(attribute, list) and attribute not in allowed_list)):
+                    self.module.fail_json(msg='the attribute {0} must be one of {1}'.format(attribute_name,
+                                                                                        ' '.join(str(a) for a in allowed_list)))
         except Exception as e:
             self.module.fail_json(msg="error validating attribute with allowed values - " + str(e))
 
