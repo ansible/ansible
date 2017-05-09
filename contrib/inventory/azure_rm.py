@@ -484,27 +484,77 @@ class AzureInventory(object):
             # get VMs for requested resource groups
             for resource_group in self.resource_groups:
                 try:
-                    virtual_machines = self._compute_client.virtual_machines.list(resource_group)
+                    virtual_machines = self._selected_machines(self._compute_client.virtual_machines.list(resource_group))
+                    self._load_machines(virtual_machines)
+
+                    scalesets = self._compute_client.virtual_machine_scale_sets.list(resource_group)
+
+                    for scaleset in scalesets:
+                        virtual_machines = self._compute_client.virtual_machine_scale_set_vms.list(resource_group, scaleset.name)
+                        self._load_scaleset_machines(virtual_machines)
                 except Exception as exc:
                     sys.exit("Error: fetching virtual machines for resource group {0} - {1}".format(resource_group,
                                                                                                    str(exc)))
-                if self._args.host or self.tags:
-                    selected_machines = self._selected_machines(virtual_machines)
-                    self._load_machines(selected_machines)
-                else:
-                    self._load_machines(virtual_machines)
         else:
             # get all VMs within the subscription
             try:
-                virtual_machines = self._compute_client.virtual_machines.list_all()
+                virtual_machines = self._selected_machines(self._compute_client.virtual_machines.list_all())
+                self._load_machines(virtual_machines)
             except Exception as exc:
                 sys.exit("Error: fetching virtual machines - {0}".format(str(exc)))
 
-            if self._args.host or self.tags or self.locations:
-                selected_machines = self._selected_machines(virtual_machines)
-                self._load_machines(selected_machines)
-            else:
-                self._load_machines(virtual_machines)
+            scalesets = self._compute_client.virtual_machine_scale_sets.list_all()
+
+            # get all scalesets in the subscription and then all VMs inside them
+            for scaleset in scalesets:
+                id_dict = azure_id_to_dict(scaleset.id)
+
+                resource_group = id_dict['resourceGroups'].lower()
+                virtual_machines = self._compute_client.virtual_machine_scale_set_vms.list(resource_group, scaleset.name)
+                self._load_scaleset_machines(virtual_machines)
+
+    def _load_scaleset_machines(self, machines):
+        for machine in machines:
+            id_dict = azure_id_to_dict(machine.id)
+
+            #TODO - The API is returning an ID value containing resource group name in ALL CAPS. If/when it gets
+            #       fixed, we should remove the .lower(). Opened Issue
+            #       #574: https://github.com/Azure/azure-sdk-for-python/issues/574
+            resource_group = id_dict['resourceGroups'].lower()
+
+            host_vars = dict(
+                ansible_host=None,
+                private_ip=None,
+                name=machine.name,
+                computer_name=machine.os_profile.computer_name,
+                resource_group=resource_group,
+                scaleset=id_dict['virtualMachineScaleSets'],
+                instance_id=machine.instance_id,
+                location=machine.location,
+                type=machine.type,
+                id=machine.id,
+                tags=machine.tags,
+                virtual_machine_size=machine.sku.name,
+                provisioning_state=machine.provisioning_state,
+            )
+
+            self._read_image_host_vars(machine, host_vars)
+
+            for interface in machine.network_profile.network_interfaces:
+                interface_reference = self._parse_ref_id(interface.id)
+                network_interface = self._network_client.network_interfaces.get_virtual_machine_scale_set_network_interface(
+                    interface_reference['resourceGroups'],
+                    interface_reference['virtualMachineScaleSets'],
+                    interface_reference['virtualMachines'],
+                    interface_reference['networkInterfaces'])
+
+                self._read_network_host_vars(host_vars, network_interface, resource_group)
+                host_vars['ansible_host'] = host_vars['private_ip']
+
+            if self.include_powerstate:
+                host_vars['powerstate'] = self._get_scaleset_vm_powerstate(resource_group, host_vars['scaleset'], machine.instance_id)
+
+            self._add_host(host_vars)
 
     def _load_machines(self, machines):
         for machine in machines:
@@ -550,13 +600,7 @@ class AzureInventory(object):
             if self.include_powerstate:
                 host_vars['powerstate'] = self._get_powerstate(resource_group, machine.name)
 
-            if machine.storage_profile.image_reference:
-                host_vars['image'] = dict(
-                    offer=machine.storage_profile.image_reference.offer,
-                    publisher=machine.storage_profile.image_reference.publisher,
-                    sku=machine.storage_profile.image_reference.sku,
-                    version=machine.storage_profile.image_reference.version
-                )
+            self._read_image_host_vars(machine, host_vars)
 
             # Add windows details
             if machine.os_profile.windows_configuration is not None:
@@ -577,35 +621,52 @@ class AzureInventory(object):
                 network_interface = self._network_client.network_interfaces.get(
                     interface_reference['resourceGroups'],
                     interface_reference['networkInterfaces'])
-                if network_interface.primary:
-                    if self.group_by_security_group and \
-                       self._security_groups[resource_group].get(network_interface.id, None):
-                        host_vars['security_group'] = \
-                            self._security_groups[resource_group][network_interface.id]['name']
-                        host_vars['security_group_id'] = \
-                            self._security_groups[resource_group][network_interface.id]['id']
-                    host_vars['network_interface'] = network_interface.name
-                    host_vars['network_interface_id'] = network_interface.id
-                    host_vars['mac_address'] = network_interface.mac_address
-                    for ip_config in network_interface.ip_configurations:
-                        host_vars['private_ip'] = ip_config.private_ip_address
-                        host_vars['private_ip_alloc_method'] = ip_config.private_ip_allocation_method
-                        if ip_config.public_ip_address:
-                            public_ip_reference = self._parse_ref_id(ip_config.public_ip_address.id)
-                            public_ip_address = self._network_client.public_ip_addresses.get(
-                                public_ip_reference['resourceGroups'],
-                                public_ip_reference['publicIPAddresses'])
-                            host_vars['ansible_host'] = public_ip_address.ip_address
-                            host_vars['public_ip'] = public_ip_address.ip_address
-                            host_vars['public_ip_name'] = public_ip_address.name
-                            host_vars['public_ip_alloc_method'] = public_ip_address.public_ip_allocation_method
-                            host_vars['public_ip_id'] = public_ip_address.id
-                            if public_ip_address.dns_settings:
-                                host_vars['fqdn'] = public_ip_address.dns_settings.fqdn
+
+                self._read_network_host_vars(host_vars, network_interface, resource_group)
+
 
             self._add_host(host_vars)
 
+    def _read_image_host_vars(self, machine, host_vars):
+        if machine.storage_profile.image_reference:
+            host_vars['image'] = dict(
+                offer=machine.storage_profile.image_reference.offer,
+                publisher=machine.storage_profile.image_reference.publisher,
+                sku=machine.storage_profile.image_reference.sku,
+                version=machine.storage_profile.image_reference.version
+            )
+
+    def _read_network_host_vars(self, host_vars, network_interface, resource_group):
+        if network_interface.primary:
+            if self.group_by_security_group and \
+                    self._security_groups[resource_group].get(network_interface.id, None):
+                host_vars['security_group'] = \
+                    self._security_groups[resource_group][network_interface.id]['name']
+                host_vars['security_group_id'] = \
+                    self._security_groups[resource_group][network_interface.id]['id']
+            host_vars['network_interface'] = network_interface.name
+            host_vars['network_interface_id'] = network_interface.id
+            host_vars['mac_address'] = network_interface.mac_address
+            for ip_config in network_interface.ip_configurations:
+                host_vars['private_ip'] = ip_config.private_ip_address
+                host_vars['private_ip_alloc_method'] = ip_config.private_ip_allocation_method
+                if ip_config.public_ip_address:
+                    public_ip_reference = self._parse_ref_id(ip_config.public_ip_address.id)
+                    public_ip_address = self._network_client.public_ip_addresses.get(
+                        public_ip_reference['resourceGroups'],
+                        public_ip_reference['publicIPAddresses'])
+                    host_vars['ansible_host'] = public_ip_address.ip_address
+                    host_vars['public_ip'] = public_ip_address.ip_address
+                    host_vars['public_ip_name'] = public_ip_address.name
+                    host_vars['public_ip_alloc_method'] = public_ip_address.public_ip_allocation_method
+                    host_vars['public_ip_id'] = public_ip_address.id
+                    if public_ip_address.dns_settings:
+                        host_vars['fqdn'] = public_ip_address.dns_settings.fqdn
+
     def _selected_machines(self, virtual_machines):
+        if not(self._args.host or self.tags or self.locations):
+            return list(virtual_machines)
+
         selected_machines = []
         for machine in virtual_machines:
             if self._args.host and self._args.host == machine.name:
@@ -638,8 +699,19 @@ class AzureInventory(object):
         except Exception as exc:
             sys.exit("Error: fetching instanceview for host {0} - {1}".format(name, str(exc)))
 
+        return self._extract_power_state(vm.instance_view)
+
+    def _get_scaleset_vm_powerstate(self, resource_group, scaleset, instance_id):
+        try:
+            instance_view = self._compute_client.virtual_machine_scale_set_vms.get_instance_view(resource_group, scaleset, instance_id)
+        except Exception as exc:
+            sys.exit("Error: fetching instance_view for scaleset host {0}/{1} - {2}".format(scaleset, instance_id, str(exc)))
+
+        return self._extract_power_state(instance_view)
+
+    def _extract_power_state(self, instance_view):
         return next((s.code.replace('PowerState/', '')
-                    for s in vm.instance_view.statuses if s.code.startswith('PowerState')), None)
+                     for s in instance_view.statuses if s.code.startswith('PowerState')), None)
 
     def _add_host(self, vars):
 
