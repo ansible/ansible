@@ -1011,6 +1011,13 @@
     that:
       - "result.stdout_lines[-1] == '(0 rows)'"
 
+# dump/restore tests
+# ============================================================
+- include: state_dump_restore.yml file=dbdata.sql
+- include: state_dump_restore.yml file=dbdata.gz
+- include: state_dump_restore.yml file=dbdata.bz2
+- include: state_dump_restore.yml file=dbdata.xz
+
 #
 # Cleanup
 #

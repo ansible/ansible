@@ -1,0 +1,97 @@
+# test code for state dump and restore for postgresql_db module
+# copied from mysql_db/tasks/state_dump_import.yml
+# (c) 2014,  Wayne Rosario <wrosario@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+- set_fact: db_file_name="{{tmp_dir}}/{{file}}"
+
+- set_fact:
+     pg_str: "env PGPASSWORD=password psql -h localhost -U {{ db_user1 }} {{ db_name }}"
+     pg_map:
+         name: "{{ db_name }}"
+         target: "{{ db_file_name }}"
+         login_host: "localhost"
+         login_user: "{{ db_user1 }}"
+         login_password: "password"
+
+- set_fact:
+     sql_create: "create table employee(id int, name varchar(100));"
+     sql_insert: "insert into employee values (47,'Joe Smith');"
+     sql_update: "update employee set name='John Doe' where id=47;"
+     sql_select: "select * from  employee;"
+
+- name: state dump/restore - create database
+  postgresql_db: name={{ db_name }} state=present owner={{ db_user1 }}
+  become_user: "{{ pg_user }}"
+  become: True
+
+- name: state dump/restore - create table employee
+  command: '{{ pg_str }} -c "{{ sql_create }}"'
+
+- name: state dump/restore - insert data into table employee
+  command: '{{ pg_str }} -c "{{ sql_insert }}"'
+
+- name: state dump/restore - file name should not exist
+  file: name={{ db_file_name }} state=absent
+
+- name: test state=dump to backup the database (expect changed=true)
+  postgresql_db: "{{ pg_map | combine({'state': 'dump'}) }}"
+  register: result
+
+- name: assert output message backup the database
+  assert:
+    that:
+       - "result.changed == true"
+       - "result.db =='{{ db_name }}'"
+
+- name: assert database was backup successfully
+  command: file {{ db_file_name }}
+  register: result
+
+- name: update database table employee
+  command: '{{ pg_str }} -c "{{ sql_update }}"'
+
+- name: test state=restore to restore the database (expect changed=true)
+  postgresql_db: "{{ pg_map | combine({'state': 'restore'}) }}"
+  register: result
+
+- name: assert output message restore the database
+  assert: { that: "result.changed == true" }
+
+- name: select data from table employee
+  command: '{{ pg_str }} -c "{{ sql_create }}"'
+  register: result
+
+- name: assert data in database is from the restore database
+  assert:
+    that:
+       - "'47' in result.stdout"
+       - "'Joe Smith' in result.stdout"
+
+- name: state dump/restore - remove database name
+  postgresql_db: name={{ db_name }} state=absent
+  become_user: "{{ pg_user }}"
+  become: True
+
+- name: state dump/restore - remove user
+  postgresql_user: name={{ db_user1 }} state=absent
+  become_user: "{{ pg_user }}"
+  become: True
+
+- name: remove file name
+  file: name={{ db_file_name }}  state=absent
