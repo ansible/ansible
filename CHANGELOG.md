@@ -1,6 +1,47 @@
 Ansible Changes By Release
 ==========================
 
+## 2.2.3 "The Battle of Evermore" - 05-09-2017
+
+### Major Changes:
+
+* [SECURITY] (HIGH): fix for CVE-2017-7466, which was caused by an incomplete cherry-picking of commits related to CVE-2016-9587. This can lead to some jinja2 syntax not being stripped out of templated results.
+* [SECURITY] (MODERATE): fix for CVE-2017-7481, in which data for lookup plugins used as variables was not being correctly marked as "unsafe".
+
+### Minor Changes:
+
+* Fixes a bug when using YAML inventory where hosts were not put in the 'all' group, and some other 'ungrouped' issues in inventory.
+* Fixes a bug when using ansible commands without a tty for stdin.
+* Split on newlines when searching for become prompt.
+* Fix crash upon pass prompt in py3 when using the paramiko connection type.
+
+
+## 2.2.2 "The Battle of Evermore" - 03-27-2017
+
+### Major Changes:
+
+* [SECURITY] (HIGH): (continued fix for CVE-2016-9587) Handle some additional corner cases in the way conditionals are parsed and evaluated.
+* [SECURITY] (LOW): properly filter passwords out of URLs when displaying output from some modules.
+
+### Minor Changes:
+
+* Fix azure_rm version checks (#22270).
+* Fix for traceback when we encounter non-utf8 characters when using --diff.
+* Ensure ssh hostkey checks respect server port.
+* Use proper PyYAML classes for safe loading YAML files.
+* Fix for bug related to when statements for older jinja2 versions.
+* Fix a bug/traceback when using to_yaml/to_nice_yaml.
+* Properly clean data of jinja2-like syntax, even if that data came from an unsafe source.
+* Fix bug regarding undefined entries in HostVars.
+* Skip fact gathering if the entire play was included via conditional which evaluates to False.
+* Fixed a performance regression when using a large number of items in a with loop.
+* Fixed a bug in the way the end of role was detected, which in some cases could cause a role to be run more than once.
+* Add jinja2 groupby filter override to cast namedtuple to tuple to handle a non-compatible change in jinja2 2.9.4-2.9.5.
+* Fixed several bugs related to temp directory creation on remote systems when using shell expansions and become privilege escalation.
+* Fixed a bug related to spliting/parsing the output of a become privilege escalation when looking for a password prompt.
+* Several unicode/bytes fixes.
+
+
 ## 2.2.1 "The Battle of Evermore" - 01-16-2017
 
 ### Major Changes:
