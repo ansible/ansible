@@ -154,6 +154,10 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ec2 import ec2_argument_spec, connect_to_aws, get_aws_connection_info
+import re
+
 
 # returns a tuple: (whether or not a parameter was changed, the remaining parameters that weren't found in this parameter group)
 
@@ -217,21 +221,20 @@ def set_parameter(param, value, immediate):
 def verify_new_value(param, value):
     if isinstance(value, int) or isinstance(value, long):
         if param.allowed_values:
-            dashes = len(param.allowed_values.split('-'))
-            if dashes == 3:
-                # the first number may be negative, resulting in 3 returned values
-                _, min, max = param.allowed_values.split('-')
-                min = '-' + min
-            elif dashes == 2:
-                min, max = param.allowed_values.split('-')
-            if value < float(min) or value > float(max):
+            matches = re.search('(-?\d+)-((-?\d+\.?\d*)+([eE][-+]?\d+)?)', param.allowed_values)
+            if matches:
+                minimum = matches.group(1)
+                maximum = matches.group(2)
+            else:
+                raise ValueError('The min and max of the range %s for parameter %s was not able to be determined.' % (param.allowed_values, param.name))
+            if value < float(minimum) or value > float(maximum):
                 raise ValueError('range is %s' % param.allowed_values)
         return value
     elif isinstance(value, str):
         if param.allowed_values:
             choices = param.allowed_values.split(',')
             if value not in choices:
-                raise ValueError('value must be in %s' % self.allowed_values)
+                raise ValueError('value must be in %s' % param.allowed_values)
         return value
     elif isintance(value, bool):
         return value
@@ -259,11 +262,13 @@ def modify_group(group, params, immediate=False):
                 # way that bypasses the property functions
                 old_value = param._value
 
-            if old_value != new_value:
+            if str(old_value) != str(new_value):
                 if not param.is_modifiable:
                     raise NotModifiableError('Parameter %s is not modifiable.' % key)
 
-                changed[key] = {'old': old_value, 'new': new_value}
+                # new and old values should be displayed as the same type; without changing the type old_value is always a string
+                old_value = {"string": str(old_value), "integer": int(old_value), "boolean": old_value in TRUE_VALUES}
+                changed[key] = {'old': old_value[param.type], 'new': new_value}
 
                 set_parameter(param, new_value, immediate)
 
@@ -312,7 +317,7 @@ def main():
 
     try:
         conn = connect_to_aws(boto.rds, region, **aws_connect_kwargs)
-    except boto.exception.BotoServerError as e:
+    except BotoServerError as e:
         module.fail_json(msg=e.error_message)
 
     group_was_added = False
@@ -361,11 +366,14 @@ def main():
             msg = '%s The group "%s" was added first.' % (msg, group_name)
         module.fail_json(msg=msg)
 
+    except ValueError as e:
+        msg = e.message
+        if group_was_added:
+            msg = '%s The group "%s" was added first.' % (msg, group_name)
+        module.fail_json(msg=msg)
+
     module.exit_json(changed=changed)
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
