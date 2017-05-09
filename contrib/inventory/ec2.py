@@ -623,6 +623,10 @@ class Ec2Inventory(object):
         ''' Makes an AWS API call to the list of RDS instances in a particular
         region '''
 
+        if not HAS_BOTO3:
+            self.fail_with_error("Working with RDS clusters requires boto3 - please install boto3 and try again",
+                                 "getting RDS clusters")
+
         client = ec2_utils.boto3_inventory_conn('client', 'rds', region, **self.credentials)
         db_instances = client.describe_db_instances()
 
