@@ -899,7 +899,7 @@ class CloudFrontValidationManager:
         self.__default_cache_behavior_smooth_streaming = False
         self.__default_cache_behavior_forwarded_values_forward_cookies = 'none'
         self.__default_cache_behavior_forwarded_values_query_string = True
-        self.__default_trusted_signers_enabled = True
+        self.__default_trusted_signers_enabled = False
         self.__default_presigned_url_pem_expire_date_format = '%Y-%m-%d'
         self.__valid_price_classes = ['PriceClass_100', 'PriceClass_200', 'PriceClass_All']
         self.__valid_custom_origin_protocol_policies = ['http-only', 'match-viewer', 'https-only']
