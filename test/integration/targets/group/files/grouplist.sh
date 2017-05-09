@@ -11,7 +11,7 @@
 #  register: group_names
 #  when: 'ansible_distribution == "MacOSX"'
 
-DISTRO=$1
+DISTRO="$@"
 
 if [[ "$DISTRO" == "MacOSX" ]]; then
     dscl localhost -list /Local/Default/Groups
