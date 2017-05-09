@@ -1,0 +1,3 @@
+---
+test_cs_instance_template: "{{ cs_common_template }}"
+test_cs_instance_offering_1: Small Instance

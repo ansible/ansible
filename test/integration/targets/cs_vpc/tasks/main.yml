@@ -1,0 +1,399 @@
+---
+- name: setup
+  cs_vpc:
+    name: "{{ cs_resource_prefix }}_vpc"
+    state: absent
+  register: vpc
+- name: verify setup
+  assert:
+    that:
+    - vpc|success
+
+- name: test fail missing name
+  cs_vpc:
+  ignore_errors: true
+  register: vpc
+- name: verify test fail missing name
+  assert:
+    that:
+    - vpc|failed
+    - 'vpc.msg == "missing required arguments: name"'
+
+- name: test fail missing cidr
+  cs_vpc:
+    name: "{{ cs_resource_prefix }}_vpc"
+  ignore_errors: true
+  register: vpc
+- name: verify test fail missing name
+  assert:
+    that:
+    - vpc|failed
+    - 'vpc.msg == "state is present but the following are missing: cidr"'
+
+- name: test create vpc
+  cs_vpc:
+    name: "{{ cs_resource_prefix }}_vpc"
+    display_text: "{{ cs_resource_prefix }}_display_text"
+    cidr: 10.10.0.0/16
+    zone: "{{ cs_common_zone_adv }}"
+  register: vpc
+- name: verify test create vpc
+  assert:
+    that:
+    - vpc|success
+    - vpc|changed
+    - vpc.name == "{{ cs_resource_prefix }}_vpc"
+    - vpc.display_text == "{{ cs_resource_prefix }}_display_text"
+    - vpc.cidr == "10.10.0.0/16"
+
+- name: test create vpc idempotence
+  cs_vpc:
+    name: "{{ cs_resource_prefix }}_vpc"
+    display_text: "{{ cs_resource_prefix }}_display_text"
+    cidr: 10.10.0.0/16
+    zone: "{{ cs_common_zone_adv }}"
+  register: vpc
+- name: verify test create vpc idempotence
+  assert:
+    that:
+    - vpc|success
+    - not vpc|changed
+    - vpc.name == "{{ cs_resource_prefix }}_vpc"
+    - vpc.display_text == "{{ cs_resource_prefix }}_display_text"
+    - vpc.cidr == "10.10.0.0/16"
+
+- name: test create vpc idempotence2
+  cs_vpc:
+    name: "{{ cs_resource_prefix }}_vpc"
+    cidr: 10.10.0.0/16
+    zone: "{{ cs_common_zone_adv }}"
+  register: vpc
+- name: verify test create vpc idempotence
+  assert:
+    that:
+    - vpc|success
+    - not vpc|changed
+    - vpc.name == "{{ cs_resource_prefix }}_vpc"
+    - vpc.display_text == "{{ cs_resource_prefix }}_display_text"
+    - vpc.cidr == "10.10.0.0/16"
+
+- name: test update vpc
+  cs_vpc:
+    name: "{{ cs_resource_prefix }}_vpc"
+    display_text: "{{ cs_resource_prefix }}_display_text2"
+    cidr: 10.10.0.0/16
+    zone: "{{ cs_common_zone_adv }}"
+  register: vpc
+- name: verify test create vpc
+  assert:
+    that:
+    - vpc|success
+    - vpc|changed
+    - vpc.name == "{{ cs_resource_prefix }}_vpc"
+    - vpc.display_text == "{{ cs_resource_prefix }}_display_text2"
+    - vpc.cidr == "10.10.0.0/16"
+
+- name: test update vpc idempotence
+  cs_vpc:
+    name: "{{ cs_resource_prefix }}_vpc"
+    display_text: "{{ cs_resource_prefix }}_display_text2"
+    cidr: 10.10.0.0/16
+    zone: "{{ cs_common_zone_adv }}"
+  register: vpc
+- name: verify test create vpc
+  assert:
+    that:
+    - vpc|success
+    - not vpc|changed
+    - vpc.name == "{{ cs_resource_prefix }}_vpc"
+    - vpc.display_text == "{{ cs_resource_prefix }}_display_text2"
+    - vpc.cidr == "10.10.0.0/16"
+
+- name: test create network in vpc
+  cs_network:
+    name: "{{ cs_resource_prefix }}_net_vpc"
+    zone: "{{ cs_common_zone_adv }}"
+    network_offering: Offering for Isolated Vpc networks with Source Nat service enabled
+    vpc: "{{ cs_resource_prefix }}_vpc"
+    gateway: 10.10.0.1
+    netmask: 255.255.255.0
+  register: vpc_net
+- name: verify test create network in vpc
+  assert:
+    that:
+    - vpc_net|success
+    - vpc_net|changed
+    - vpc_net.name == "{{ cs_resource_prefix }}_net_vpc"
+
+- name: test create network in vpc idempotence
+  cs_network:
+    name: "{{ cs_resource_prefix }}_net_vpc"
+    zone: "{{ cs_common_zone_adv }}"
+    network_offering: Offering for Isolated Vpc networks with Source Nat service enabled
+    vpc: "{{ cs_resource_prefix }}_vpc"
+    gateway: 10.10.0.1
+    netmask: 255.255.255.0
+  register: vpc_net
+- name: verify test create network in vpc idempotence
+  assert:
+    that:
+    - vpc_net|success
+    - not vpc_net|changed
+    - vpc_net.name == "{{ cs_resource_prefix }}_net_vpc"
+
+- name: test create instance in vpc
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-vpc"
+    template: "{{ cs_common_template }}"
+    service_offering: "{{ cs_common_service_offering }}"
+    zone: "{{ cs_common_zone_adv }}"
+    network: "{{ cs_resource_prefix }}_net_vpc"
+  register: instance
+- name: verify test create instance in vpc
+  assert:
+    that:
+    - instance|success
+    - instance|changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-vpc"
+    - instance.state == "Running"
+
+- name: test create instance in vpc idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-vpc"
+    template: "{{ cs_common_template }}"
+    service_offering: "{{ cs_common_service_offering }}"
+    zone: "{{ cs_common_zone_adv }}"
+    network: "{{ cs_resource_prefix }}_net_vpc"
+  register: instance
+- name: verify test create instance in vpc idempotence
+  assert:
+    that:
+    - instance|success
+    - not instance|changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-vpc"
+    - instance.state == "Running"
+
+- name: test get ip address in vpc
+  cs_ip_address:
+    network: "{{ cs_resource_prefix }}_net_vpc"
+    vpc: "{{ cs_resource_prefix }}_vpc"
+    zone: "{{ cs_common_zone_adv }}"
+  register: ip_address
+  when: instance.public_ip is undefined
+
+- name: test static nat in vpc
+  cs_staticnat:
+    vm: "{{ cs_resource_prefix }}-vm-vpc"
+    ip_address: "{{ ip_address.ip_address }}"
+    zone: "{{ cs_common_zone_adv }}"
+    vpc: "{{ cs_resource_prefix }}_vpc"
+    network: "{{ cs_resource_prefix }}_net_vpc"
+  register: static_nat
+- name: verify test static nat in vpc
+  assert:
+    that:
+    - static_nat|success
+    - static_nat|changed
+
+- name: test static nat in vpc idempotence
+  cs_staticnat:
+    vm: "{{ cs_resource_prefix }}-vm-vpc"
+    ip_address: "{{ ip_address.ip_address }}"
+    zone: "{{ cs_common_zone_adv }}"
+    vpc: "{{ cs_resource_prefix }}_vpc"
+    network: "{{ cs_resource_prefix }}_net_vpc"
+  register: static_nat
+- name: verify test static nat in vpc idempotence
+  assert:
+    that:
+    - static_nat|success
+    - not static_nat|changed
+
+- name: test remove static nat in vpc
+  cs_staticnat:
+    vm: "{{ cs_resource_prefix }}-vm-vpc"
+    ip_address: "{{ ip_address.ip_address }}"
+    zone: "{{ cs_common_zone_adv }}"
+    vpc: "{{ cs_resource_prefix }}_vpc"
+    network: "{{ cs_resource_prefix }}_net_vpc"
+    state: absent
+  register: static_nat
+- name: verify test remove static nat in vpc
+  assert:
+    that:
+    - static_nat|success
+    - static_nat|changed
+
+- name: test remove static nat in vpc idempotence
+  cs_staticnat:
+    vm: "{{ cs_resource_prefix }}-vm-vpc"
+    ip_address: "{{ ip_address.ip_address }}"
+    zone: "{{ cs_common_zone_adv }}"
+    vpc: "{{ cs_resource_prefix }}_vpc"
+    network: "{{ cs_resource_prefix }}_net_vpc"
+    state: absent
+  register: static_nat
+- name: verify test remove static nat in vpc idempotence
+  assert:
+    that:
+    - static_nat|success
+    - not static_nat|changed
+
+- name: test create port forwarding in vpc
+  cs_portforward:
+    ip_address: "{{ ip_address.ip_address }}"
+    vm: "{{ cs_resource_prefix }}-vm-vpc"
+    public_port: 80
+    private_port: 8080
+    network: "{{ cs_resource_prefix }}_net_vpc"
+    vpc: "{{ cs_resource_prefix }}_vpc"
+    zone: "{{ cs_common_zone_adv }}"
+  register: port_forward
+- name: verify test create port forwarding in vpc
+  assert:
+    that:
+    - port_forward|success
+    - port_forward|changed
+
+- name: test create port forwarding in vpc idempotence
+  cs_portforward:
+    ip_address: "{{ ip_address.ip_address }}"
+    vm: "{{ cs_resource_prefix }}-vm-vpc"
+    public_port: 80
+    private_port: 8080
+    network: "{{ cs_resource_prefix }}_net_vpc"
+    vpc: "{{ cs_resource_prefix }}_vpc"
+    zone: "{{ cs_common_zone_adv }}"
+  register: port_forward
+- name: verify test create port forwarding in vpc idempotence
+  assert:
+    that:
+    - port_forward|success
+    - not port_forward|changed
+
+- name: test remove port forwarding in vpc
+  cs_portforward:
+    ip_address: "{{ ip_address.ip_address }}"
+    vm: "{{ cs_resource_prefix }}-vm-vpc"
+    public_port: 80
+    private_port: 8080
+    network: "{{ cs_resource_prefix }}_net_vpc"
+    vpc: "{{ cs_resource_prefix }}_vpc"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: port_forward
+- name: verify test remove port forwarding in vpc
+  assert:
+    that:
+    - port_forward|success
+    - port_forward|changed
+
+- name: test remove port forwarding in vpc idempotence
+  cs_portforward:
+    ip_address: "{{ ip_address.ip_address }}"
+    vm: "{{ cs_resource_prefix }}-vm-vpc"
+    public_port: 80
+    private_port: 8080
+    network: "{{ cs_resource_prefix }}_net_vpc"
+    vpc: "{{ cs_resource_prefix }}_vpc"
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: port_forward
+- name: verify test remove port forwarding in vpc idempotence
+  assert:
+    that:
+    - port_forward|success
+    - not port_forward|changed
+
+- name: test remove ip address from vpc
+  cs_ip_address:
+    network: "{{ cs_resource_prefix }}_net_vpc"
+    vpc: "{{ cs_resource_prefix }}_vpc"
+    zone: "{{ cs_common_zone_adv }}"
+    ip_address: "{{ ip_address.ip_address }}"
+    state: absent
+  register: ip_address_removed
+- name: verify test remove static nat in vpc idempotence
+  assert:
+    that:
+    - ip_address_removed|success
+    - ip_address_removed|changed
+
+- name: test remove instance in vpc
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-vpc"
+    zone: "{{ cs_common_zone_adv }}"
+    state: expunged
+  register: instance
+- name: verify test remove instance in vpc
+  assert:
+    that:
+    - instance|success
+    - instance|changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-vpc"
+    - instance.state == "Running"
+
+- name: test remove instance in vpc idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-vpc"
+    zone: "{{ cs_common_zone_adv }}"
+    state: expunged
+  register: instance
+- name: verify test remove instance in vpc idempotence
+  assert:
+    that:
+    - instance|success
+    - not instance|changed
+
+- name: test remove network in vpc
+  cs_network:
+    name: "{{ cs_resource_prefix }}_net_vpc"
+    zone: "{{ cs_common_zone_adv }}"
+    vpc: "{{ cs_resource_prefix }}_vpc"
+    state: absent
+  register: vpc_net
+- name: verify test remove network in vpc
+  assert:
+    that:
+    - vpc_net|success
+    - vpc_net|changed
+    - vpc_net.name == "{{ cs_resource_prefix }}_net_vpc"
+
+- name: test remove network in vpc idempotence
+  cs_network:
+    name: "{{ cs_resource_prefix }}_net_vpc"
+    zone: "{{ cs_common_zone_adv }}"
+    vpc: "{{ cs_resource_prefix }}_vpc"
+    state: absent
+  register: vpc_net
+- name: verify test remove network in vpc idempotence
+  assert:
+    that:
+    - vpc_net|success
+    - not vpc_net|changed
+
+- name: test remove vpc
+  cs_vpc:
+    name: "{{ cs_resource_prefix }}_vpc"
+    state: absent
+    zone: "{{ cs_common_zone_adv }}"
+  register: vpc
+- name: verify test remove vpc
+  assert:
+    that:
+    - vpc|success
+    - vpc|changed
+    - vpc.name == "{{ cs_resource_prefix }}_vpc"
+    - vpc.display_text == "{{ cs_resource_prefix }}_display_text2"
+    - vpc.cidr == "10.10.0.0/16"
+
+- name: test remove vpc idempotence
+  cs_vpc:
+    name: "{{ cs_resource_prefix }}_vpc"
+    state: absent
+  register: vpc
+- name: verify test remove vpc idempotence
+  assert:
+    that:
+    - vpc|success
+    - not vpc|changed

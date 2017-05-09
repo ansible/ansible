@@ -36,7 +36,7 @@
     last_name: "{{ cs_resource_prefix }}_last_name"
     first_name: "{{ cs_resource_prefix }}_first_name"
     email: "{{ cs_resource_prefix }}@example.com"
-    network_domain: "{{ cs_resource_prefix }}.local"
+    network_domain: "example.com"
   register: acc
 - name: verify results of create account
   assert:
@@ -44,7 +44,7 @@
     - acc|success
     - acc|changed
     - acc.name == "{{ cs_resource_prefix }}_user"
-    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.network_domain == "example.com"
     - acc.account_type == "user"
     - acc.state == "enabled"
     - acc.domain == "ROOT"
@@ -57,7 +57,7 @@
     last_name: "{{ cs_resource_prefix }}_last_name"
     first_name: "{{ cs_resource_prefix }}_first_name"
     email: "{{ cs_resource_prefix }}@example.com"
-    network_domain: "{{ cs_resource_prefix }}.local"
+    network_domain: "example.com"
   register: acc
 - name: verify results of create account idempotence
   assert:
@@ -65,7 +65,7 @@
     - acc|success
     - not acc|changed
     - acc.name == "{{ cs_resource_prefix }}_user"
-    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.network_domain == "example.com"
     - acc.account_type == "user"
     - acc.state == "enabled"
     - acc.domain == "ROOT"
@@ -81,7 +81,7 @@
     - acc|success
     - acc|changed
     - acc.name == "{{ cs_resource_prefix }}_user"
-    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.network_domain == "example.com"
     - acc.account_type == "user"
     - acc.state == "locked"
     - acc.domain == "ROOT"
@@ -97,7 +97,7 @@
     - acc|success
     - not acc|changed
     - acc.name == "{{ cs_resource_prefix }}_user"
-    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.network_domain == "example.com"
     - acc.account_type == "user"
     - acc.state == "locked"
     - acc.domain == "ROOT"
@@ -113,7 +113,7 @@
     - acc|success
     - acc|changed
     - acc.name == "{{ cs_resource_prefix }}_user"
-    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.network_domain == "example.com"
     - acc.account_type == "user"
     - acc.state == "disabled"
     - acc.domain == "ROOT"
@@ -129,7 +129,7 @@
     - acc|success
     - not acc|changed
     - acc.name == "{{ cs_resource_prefix }}_user"
-    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.network_domain == "example.com"
     - acc.account_type == "user"
     - acc.state == "disabled"
     - acc.domain == "ROOT"
@@ -145,7 +145,7 @@
     - acc|success
     - acc|changed
     - acc.name == "{{ cs_resource_prefix }}_user"
-    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.network_domain == "example.com"
     - acc.account_type == "user"
     - acc.state == "locked"
     - acc.domain == "ROOT"
@@ -161,7 +161,7 @@
     - acc|success
     - not acc|changed
     - acc.name == "{{ cs_resource_prefix }}_user"
-    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.network_domain == "example.com"
     - acc.account_type == "user"
     - acc.state == "locked"
     - acc.domain == "ROOT"
@@ -177,7 +177,7 @@
     - acc|success
     - acc|changed
     - acc.name == "{{ cs_resource_prefix }}_user"
-    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.network_domain == "example.com"
     - acc.account_type == "user"
     - acc.state == "enabled"
     - acc.domain == "ROOT"
@@ -193,7 +193,7 @@
     - acc|success
     - not acc|changed
     - acc.name == "{{ cs_resource_prefix }}_user"
-    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.network_domain == "example.com"
     - acc.account_type == "user"
     - acc.state == "enabled"
     - acc.domain == "ROOT"
@@ -209,7 +209,7 @@
     - acc|success
     - acc|changed
     - acc.name == "{{ cs_resource_prefix }}_user"
-    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.network_domain == "example.com"
     - acc.account_type == "user"
     - acc.state == "enabled"
     - acc.domain == "ROOT"
@@ -233,7 +233,7 @@
     last_name: "{{ cs_resource_prefix }}_last_name"
     first_name: "{{ cs_resource_prefix }}_first_name"
     email: "{{ cs_resource_prefix }}@example.com"
-    network_domain: "{{ cs_resource_prefix }}.local"
+    network_domain: "example.com"
     state: disabled
   register: acc
 - name: verify results of create disabled account
@@ -242,7 +242,7 @@
     - acc|success
     - acc|changed
     - acc.name == "{{ cs_resource_prefix }}_user"
-    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.network_domain == "example.com"
     - acc.account_type == "user"
     - acc.state == "disabled"
     - acc.domain == "ROOT"
@@ -258,7 +258,7 @@
     - acc|success
     - acc|changed
     - acc.name == "{{ cs_resource_prefix }}_user"
-    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.network_domain == "example.com"
     - acc.account_type == "user"
     - acc.state == "disabled"
     - acc.domain == "ROOT"
@@ -271,7 +271,7 @@
     last_name: "{{ cs_resource_prefix }}_last_name"
     first_name: "{{ cs_resource_prefix }}_first_name"
     email: "{{ cs_resource_prefix }}@example.com"
-    network_domain: "{{ cs_resource_prefix }}.local"
+    network_domain: "example.com"
     state: locked
   register: acc
 - name: verify results of create locked account
@@ -280,7 +280,7 @@
     - acc|success
     - acc|changed
     - acc.name == "{{ cs_resource_prefix }}_user"
-    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.network_domain == "example.com"
     - acc.account_type == "user"
     - acc.state == "locked"
     - acc.domain == "ROOT"
@@ -296,7 +296,7 @@
     - acc|success
     - acc|changed
     - acc.name == "{{ cs_resource_prefix }}_user"
-    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.network_domain == "example.com"
     - acc.account_type == "user"
     - acc.state == "locked"
     - acc.domain == "ROOT"
@@ -309,7 +309,7 @@
     last_name: "{{ cs_resource_prefix }}_last_name"
     first_name: "{{ cs_resource_prefix }}_first_name"
     email: "{{ cs_resource_prefix }}@example.com"
-    network_domain: "{{ cs_resource_prefix }}.local"
+    network_domain: "example.com"
     state: unlocked
   register: acc
 - name: verify results of create unlocked/enabled account
@@ -318,7 +318,7 @@
     - acc|success
     - acc|changed
     - acc.name == "{{ cs_resource_prefix }}_user"
-    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.network_domain == "example.com"
     - acc.account_type == "user"
     - acc.state == "enabled"
     - acc.domain == "ROOT"
@@ -334,7 +334,7 @@
     - acc|success
     - acc|changed
     - acc.name == "{{ cs_resource_prefix }}_user"
-    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.network_domain == "example.com"
     - acc.account_type == "user"
     - acc.state == "enabled"
     - acc.domain == "ROOT"
