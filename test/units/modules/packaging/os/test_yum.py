@@ -116,6 +116,16 @@ Security: kernel-3.10.0-327.28.2.el7.x86_64 is an installed security update
 Security: kernel-3.10.0-327.22.2.el7.x86_64 is the currently running version
 """
 
+longname = """
+Loaded plugins: fastestmirror, priorities, rhnplugin
+This system is receiving updates from RHN Classic or Red Hat Satellite.
+Loading mirror speeds from cached hostfile
+
+xxxxxxxxxxxxxxxxxxxxxxxxxx.noarch
+                        1.16-1            xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+glibc.x86_64            2.17-157.el7_3.1  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
+
+
 unwrapped_output_rhel7_obsoletes = unwrapped_output_rhel7 + wrapped_output_rhel7_obsoletes_postfix
 unwrapped_output_rhel7_expected_pkgs = ["NetworkManager-openvpn", "NetworkManager-openvpn-gnome", "cabal-install",
                                         "cgit", "python34-libs", "python34-test", "python34-tkinter",
@@ -133,6 +143,11 @@ class TestYumUpdateCheckParse(unittest.TestCase):
     def test_empty_output(self):
         res = yum.parse_check_update("")
         expected_pkgs = []
+        self._assert_expected(expected_pkgs, res)
+
+    def test_longname(self):
+        res = yum.parse_check_update(longname)
+        expected_pkgs = ['xxxxxxxxxxxxxxxxxxxxxxxxxx', 'glibc']
         self._assert_expected(expected_pkgs, res)
 
     def test_plugin_load_error(self):
