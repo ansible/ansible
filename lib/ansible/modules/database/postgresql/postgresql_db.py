@@ -325,12 +325,13 @@ def db_restore(module, target,
 def do_with_password(module, cmd, login_password):
     try:
         if login_password:
-            os.environ["PGPASSWORD"] = login_password
+            raise NotSupportedError(
+                'login_password not supported'
+            )
         rc, stderr, stdout = module.run_command(cmd, use_unsafe_shell=True)
         return rc, stderr, stdout
     finally:
-        if login_password:
-            del os.environ["PGPASSWORD"]
+        pass
 
 # ===========================================
 # Module execution.
