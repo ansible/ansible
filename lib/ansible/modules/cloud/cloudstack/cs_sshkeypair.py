@@ -120,6 +120,7 @@ except ImportError:
     HAS_LIB_SSHPUBKEYS = False
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
     CloudStackException,
@@ -232,6 +233,8 @@ class AnsibleCloudStackSshKey(AnsibleCloudStack):
 
     def _get_ssh_fingerprint(self, public_key):
         key = sshpubkeys.SSHKey(public_key)
+        if hasattr(key, 'hash_md5'):
+            return key.hash_md5().replace(to_native('MD5:'), to_native(''))
         return key.hash()
 
 

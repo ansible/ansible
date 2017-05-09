@@ -28,7 +28,11 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import sys
 import time
+
+from ansible.module_utils._text import to_text
+
 try:
     from cs import CloudStack, CloudStackException, read_config
     HAS_LIB_CS = True
@@ -46,6 +50,9 @@ CS_HYPERVISORS = [
     'OVM', 'ovm',
     'Simulator', 'simulator',
 ]
+
+if sys.version_info > (3,):
+    long = int
 
 
 def cs_argument_spec():
@@ -184,20 +191,23 @@ class AnsibleCloudStack(object):
                         self.result['diff']['after'][key] = value
                         result = True
                 else:
+                    before_value = to_text(current_dict[key])
+                    after_value = to_text(value)
+
                     if self.case_sensitive_keys and key in self.case_sensitive_keys:
-                        if value != current_dict[key].encode('utf-8'):
-                            self.result['diff']['before'][key] = current_dict[key].encode('utf-8')
-                            self.result['diff']['after'][key] = value
+                        if before_value != after_value:
+                            self.result['diff']['before'][key] = before_value
+                            self.result['diff']['after'][key] = after_value
                             result = True
 
                     # Test for diff in case insensitive way
-                    elif value.lower() != current_dict[key].encode('utf-8').lower():
-                        self.result['diff']['before'][key] = current_dict[key].encode('utf-8')
-                        self.result['diff']['after'][key] = value
+                    elif before_value.lower() != after_value.lower():
+                        self.result['diff']['before'][key] = before_value
+                        self.result['diff']['after'][key] = after_value
                         result = True
             else:
                 self.result['diff']['before'][key] = None
-                self.result['diff']['after'][key] = value
+                self.result['diff']['after'][key] = to_text(value)
                 result = True
         return result
 
