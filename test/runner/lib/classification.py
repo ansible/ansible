@@ -378,6 +378,16 @@ class PathMapper(object):
 
                 test_path = os.path.dirname(test_path)
 
+        if path.startswith('test/runner/lib/cloud/'):
+            cloud_target = 'cloud/%s/' % name
+
+            if cloud_target in self.integration_targets_by_alias:
+                return {
+                    'integration': cloud_target,
+                }
+
+            return all_tests()  # test infrastructure, run all tests
+
         if path.startswith('test/runner/'):
             return all_tests()  # test infrastructure, run all tests
 
