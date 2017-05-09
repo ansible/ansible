@@ -59,7 +59,7 @@
   assert:
     that:
     - pf|failed
-    - 'pf.msg == "missing required arguments: private_port,ip_address,public_port"'
+    - 'pf.msg.startswith("missing required arguments: ")'
 
 - name: test present port forwarding
   cs_portforward:

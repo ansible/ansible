@@ -7,7 +7,7 @@
   assert:
     that:
       - config|failed
-      - "config.msg == 'missing required arguments: value,name'"
+      - "config.msg.startswith('missing required arguments: ')"
 
 - name: test configuration
   cs_configuration:
