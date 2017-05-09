@@ -114,7 +114,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             server=dict(required=True),
-            port=dict(default='8888'),
+            port=dict(default='443', type="int"),
             user=dict(default='admin'),
             passwd=dict(default='admin', no_log=True)))
 
