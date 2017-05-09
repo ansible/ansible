@@ -29,7 +29,7 @@
   assert:
     that:
     - snap|failed
-    - 'snap.msg == "missing required arguments: vm,name"'
+    - 'snap.msg.startswith("missing required arguments: ")'
 
 - name: test create snapshot
   cs_vmsnapshot:
