@@ -29,7 +29,7 @@
   win_reg_stat:
     name: a
   register: actual
-  failed_when: "actual.msg != 'Missing required argument: path'"
+  failed_when: "actual.msg != 'Get-AnsibleParam: Missing required argument: path'"
 
 - name: expect failure when passing in an invalid hive
   win_reg_stat:
