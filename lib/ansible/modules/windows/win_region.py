@@ -76,26 +76,26 @@ EXAMPLES = r'''
     format: en-AU
     copy_settings: True
 
-# Set the unicode language to English Great Britain
+# Set the unicode language to English Great Britain, reboot if required
 - win_region:
     unicode_language: en-GB
   register: result
 
-- action: win_reboot
+- win_reboot:
   when: result.restart_required
 
 # Set the location to United States
 - win_region:
     location: 244
 
-# Set format, location and unicode to English Australia and copy settings
+# Set format, location and unicode to English Australia and copy settings, reboot if required
 - win_region:
     location: 12
     format: en-AU
     unicode_language: en-AU
   register: result
 
-- action: win_reboot
+- win_reboot:
   when: result.restart_required
 '''
 

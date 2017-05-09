@@ -63,15 +63,15 @@ options:
         - searched
     log_path:
         description:
-        - If set, win_updates will append update progress to the specified file. The directory must already exist.
+        - If set, C(win_updates) will append update progress to the specified file. The directory must already exist.
         required: false
 author: "Matt Davis (@mattdavispdx)"
 notes:
-- win_updates must be run by a user with membership in the local Administrators group
-- win_updates will use the default update service configured for the machine (Windows Update, Microsoft Update, WSUS, etc)
-- win_updates does not manage reboots, but will signal when a reboot is required with the reboot_required return value.
-- win_updates can take a significant amount of time to complete (hours, in some cases). Performance depends on many factors, including OS version, number of
-  updates, system load, and update server load.
+- C(win_updates) must be run by a user with membership in the local Administrators group
+- C(win_updates) will use the default update service configured for the machine (Windows Update, Microsoft Update, WSUS, etc)
+- C(win_updates) does not manage reboots, but will signal when a reboot is required with the reboot_required return value.
+- C(win_updates) can take a significant amount of time to complete (hours, in some cases).
+  Performance depends on many factors, including OS version, number of updates, system load, and update server load.
 '''
 
 EXAMPLES = r'''
