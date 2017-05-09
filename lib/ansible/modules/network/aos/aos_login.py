@@ -37,7 +37,7 @@ description:
     ansible facts with the variable I(aos_session)
     This module is not idempotent and do not support check mode.
 requirements:
-  - "aos-pyez >= 0.6.0"
+  - "aos-pyez >= 0.6.1"
 options:
   server:
     description:
