@@ -6,18 +6,18 @@
 
 - name: Create sysinternals directory
   win_file:
-    path: C:\Program Files\sysinternals
+    path: C:\Windows\Temp\sysinternals
     state: directory
 
 - name: Unzip PSTools
   win_unzip:
     src: C:\Windows\Temp\PSTools.zip
-    dest: C:\Program Files\sysinternals
+    dest: C:\Windows\Temp\sysinternals
 
 - name: Add sysinternals to PATH
   win_path:
     name: PATH
-    elements: C:\Program Files\sysinternals
+    elements: C:\Windows\Temp\sysinternals
     scope: machine
     state: present
 
@@ -68,13 +68,13 @@
 - name: Remove sysinternals from PATH
   win_path:
     name: PATH
-    elements: C:\Program Files\sysinternals
+    elements: C:\Windows\Temp\sysinternals
     scope: machine
     state: absent
 
 - name: Remove sysinternals directory
   win_file:
-    path: C:\Program Files\sysinternals
+    path: C:\Windows\Temp\sysinternals
     state: absent
 
 - name: Remove sysinternals directory

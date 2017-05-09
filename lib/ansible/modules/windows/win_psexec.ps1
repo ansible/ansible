@@ -24,7 +24,7 @@
 $params = Parse-Args $args
 
 $command = Get-AnsibleParam -obj $params -name "command" -type "str" -failifempty $true
-$executable = Get-AnsibleParam -obj $params -name "executable" -type "str" -default "psexec.exe"
+$executable = Get-AnsibleParam -obj $params -name "executable" -type "path" -default "psexec.exe"
 $hostnames = Get-AnsibleParam -obj $params -name "hostnames" -type "list"
 $username = Get-AnsibleParam -obj $params -name "username" -type "str"
 $password = Get-AnsibleParam -obj $params -name "password" -type "str"

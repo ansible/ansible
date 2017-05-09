@@ -103,7 +103,7 @@ options:
     description:
     - Wait for the application to terminate.
     - Only use for non-interactive applications.
-    default: 'no'
+    default: 'yes'
     choices: [ 'no', 'yes' ]
 notes:
 - More information related to PsExec is available from
