@@ -10,6 +10,7 @@ versions:
 - "2.2":
     code_name: "The Battle of Evermore"
     releases:
+    - "3": "05-09-2017"
     - "2": "03-27-2017"
     - "1": "01-16-2017"
     - "0": "11-01-2016"
