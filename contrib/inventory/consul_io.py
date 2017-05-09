@@ -239,7 +239,6 @@ class ConsulInventory(object):
             self.current_dc = datacenter
             self.load_data_for_datacenter(datacenter)
 
-
     def load_availability_groups(self, node, datacenter):
         '''check the health of each service on a node and add add the node to either
         an 'available' or 'unavailable' grouping. The suffix for each group can be
@@ -257,8 +256,7 @@ class ConsulInventory(object):
                                 suffix = self.config.get_availability_suffix(
                                     'unavailable_suffix', '_unavailable')
                             self.add_node_to_map(self.nodes_by_availability,
-                                                  service_name + suffix, node['Node'])
-
+                                                 service_name + suffix, node['Node'])
 
     def load_data_for_datacenter(self, datacenter):
         '''processes all the nodes in a particular datacenter'''
@@ -295,7 +293,7 @@ class ConsulInventory(object):
             if metadata and metadata['Value']:
                 try:
                     metadata = json.loads(metadata['Value'])
-                    for k,v in metadata.items():
+                    for k, v in metadata.items():
                         self.add_metadata(node_data, k, v)
                 except:
                     pass
@@ -337,19 +335,19 @@ class ConsulInventory(object):
             tags = service['Tags']
             self.add_metadata(node_data, "consul_%s_tags" % service_name, tags)
             for tag in service['Tags']:
-                tagname = service_name +'_'+tag
+                tagname = service_name + '_' + tag
                 self.add_node_to_map(self.nodes_by_tag, tagname, node_data['Node'])
 
     def combine_all_results(self):
         '''prunes and sorts all groupings for combination into the final map'''
-        self.inventory = {"_meta": { "hostvars" : self.node_metadata}}
+        self.inventory = {"_meta": {"hostvars": self.node_metadata}}
         groupings = [self.nodes, self.nodes_by_datacenter, self.nodes_by_service,
-                    self.nodes_by_tag, self.nodes_by_kv, self.nodes_by_availability]
+                     self.nodes_by_tag, self.nodes_by_kv, self.nodes_by_availability]
         for grouping in groupings:
             for name, addresses in grouping.items():
                 self.inventory[name] = sorted(list(set(addresses)))
 
-    def add_metadata(self, node_data, key, value, is_list = False):
+    def add_metadata(self, node_data, key, value, is_list=False):
         ''' Pushed an element onto a metadata dict for the node, creating
             the dict if it doesn't exist '''
         key = self.to_safe(key)
@@ -371,15 +369,14 @@ class ConsulInventory(object):
         if domain:
             node_name = node_data['Node']
             if self.current_dc:
-                return '%s.node.%s.%s' % ( node_name, self.current_dc, domain)
+                return '%s.node.%s.%s' % (node_name, self.current_dc, domain)
             else:
-                return '%s.node.%s' % ( node_name, domain)
+                return '%s.node.%s' % (node_name, domain)
         else:
             return node_data['Address']
 
     def add_node_to_map(self, map, name, node):
         self.push(map, name, self.get_inventory_name(node))
-
 
     def push(self, my_dict, key, element):
         ''' Pushed an element onto an array that may not have been defined in the
@@ -439,16 +436,15 @@ class ConsulConfig(dict):
 
     def read_cli_args(self):
         ''' Command line argument processing '''
-        parser = argparse.ArgumentParser(description=
-            'Produce an Ansible Inventory file based nodes in a Consul cluster')
+        parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based nodes in a Consul cluster')
 
         parser.add_argument('--list', action='store_true',
-            help='Get all inventory variables from all nodes in the consul cluster')
+                            help='Get all inventory variables from all nodes in the consul cluster')
         parser.add_argument('--host', action='store',
-            help='Get all inventory variables about a specific consul node, \
-              requires datacenter set in consul.ini.')
+                            help='Get all inventory variables about a specific consul node,'
+                                 'requires datacenter set in consul.ini.')
         parser.add_argument('--datacenter', action='store',
-            help='Get all inventory about a specific consul datacenter')
+                            help='Get all inventory about a specific consul datacenter')
 
         args = parser.parse_args()
         arg_names = ['host', 'datacenter']
@@ -462,11 +458,10 @@ class ConsulConfig(dict):
             return self.has_config(suffix)
         return default
 
-
     def get_consul_api(self):
         '''get an instance of the api based on the supplied configuration'''
         host = 'localhost'
-        port =  8500
+        port = 8500
         token = None
         scheme = 'http'
 

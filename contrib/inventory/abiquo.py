@@ -53,64 +53,68 @@ except ImportError:
 
 from ansible.module_utils.urls import open_url
 
+
 def api_get(link, config):
     try:
         if link is None:
-            url = config.get('api','uri') + config.get('api','login_path')
-            headers = {"Accept": config.get('api','login_type')}
+            url = config.get('api', 'uri') + config.get('api', 'login_path')
+            headers = {"Accept": config.get('api', 'login_type')}
         else:
             url = link['href'] + '?limit=0'
             headers = {"Accept": link['type']}
-        result = open_url(url, headers=headers, url_username=config.get('auth','apiuser').replace('\n', ''),
-                url_password=config.get('auth','apipass').replace('\n', ''))
+        result = open_url(url, headers=headers, url_username=config.get('auth', 'apiuser').replace('\n', ''),
+                          url_password=config.get('auth', 'apipass').replace('\n', ''))
         return json.loads(result.read())
     except:
         return None
 
+
 def save_cache(data, config):
     ''' saves item to cache '''
-    dpath = config.get('cache','cache_dir')
+    dpath = config.get('cache', 'cache_dir')
     try:
-        cache = open('/'.join([dpath,'inventory']), 'w')
+        cache = open('/'.join([dpath, 'inventory']), 'w')
         cache.write(json.dumps(data))
         cache.close()
     except IOError as e:
-        pass # not really sure what to do here
+        pass  # not really sure what to do here
 
 
 def get_cache(cache_item, config):
     ''' returns cached item  '''
-    dpath = config.get('cache','cache_dir')
+    dpath = config.get('cache', 'cache_dir')
     inv = {}
     try:
-        cache = open('/'.join([dpath,'inventory']), 'r')
+        cache = open('/'.join([dpath, 'inventory']), 'r')
         inv = cache.read()
         cache.close()
     except IOError as e:
-        pass # not really sure what to do here
+        pass  # not really sure what to do here
 
     return inv
+
 
 def cache_available(config):
     ''' checks if we have a 'fresh' cache available for item requested '''
 
-    if config.has_option('cache','cache_dir'):
-        dpath = config.get('cache','cache_dir')
+    if config.has_option('cache', 'cache_dir'):
+        dpath = config.get('cache', 'cache_dir')
 
         try:
-            existing = os.stat( '/'.join([dpath,'inventory']))
+            existing = os.stat('/'.join([dpath, 'inventory']))
         except:
             # cache doesn't exist or isn't accessible
             return False
 
         if config.has_option('cache', 'cache_max_age'):
             maxage = config.get('cache', 'cache_max_age')
-            if ((int(time.time()) - int(existing.st_mtime)) <= int(maxage)):
+            if (int(time.time()) - int(existing.st_mtime)) <= int(maxage):
                 return True
 
     return False
 
-def generate_inv_from_api(enterprise_entity,config):
+
+def generate_inv_from_api(enterprise_entity, config):
     try:
         inventory['all'] = {}
         inventory['all']['children'] = []
@@ -118,22 +122,22 @@ def generate_inv_from_api(enterprise_entity,config):
         inventory['_meta'] = {}
         inventory['_meta']['hostvars'] = {}
 
-        enterprise = api_get(enterprise_entity,config)
-        vms_entity = next(link for link in (enterprise['links']) if (link['rel']=='virtualmachines'))
-        vms = api_get(vms_entity,config)
+        enterprise = api_get(enterprise_entity, config)
+        vms_entity = next(link for link in enterprise['links'] if link['rel'] == 'virtualmachines')
+        vms = api_get(vms_entity, config)
         for vmcollection in vms['collection']:
             for link in vmcollection['links']:
                 if link['rel'] == 'virtualappliance':
-                    vm_vapp = link['title'].replace('[','').replace(']','').replace(' ','_')
+                    vm_vapp = link['title'].replace('[', '').replace(']', '').replace(' ', '_')
                 elif link['rel'] == 'virtualdatacenter':
-                    vm_vdc = link['title'].replace('[','').replace(']','').replace(' ','_')
+                    vm_vdc = link['title'].replace('[', '').replace(']', '').replace(' ', '_')
                 elif link['rel'] == 'virtualmachinetemplate':
-                    vm_template = link['title'].replace('[','').replace(']','').replace(' ','_')
+                    vm_template = link['title'].replace('[', '').replace(']', '').replace(' ', '_')
 
             # From abiquo.ini: Only adding to inventory VMs with public IP
             if config.getboolean('defaults', 'public_ip_only') is True:
                 for link in vmcollection['links']:
-                    if (link['type']=='application/vnd.abiquo.publicip+json' and link['rel']=='ip'):
+                    if link['type'] == 'application/vnd.abiquo.publicip+json' and link['rel'] == 'ip':
                         vm_nic = link['title']
                         break
                     else:
@@ -166,10 +170,10 @@ def generate_inv_from_api(enterprise_entity,config):
                     inventory[vm_template]['children'] = []
                     inventory[vm_template]['hosts'] = []
                 if config.getboolean('defaults', 'get_metadata') is True:
-                    meta_entity = next(link for link in (vmcollection['links']) if (link['rel']=='metadata'))
+                    meta_entity = next(link for link in vmcollection['links'] if link['rel'] == 'metadata')
                     try:
-                        metadata = api_get(meta_entity,config)
-                        if (config.getfloat("api","version") >= 3.0):
+                        metadata = api_get(meta_entity, config)
+                        if (config.getfloat("api", "version") >= 3.0):
                             vm_metadata = metadata['metadata']
                         else:
                             vm_metadata = metadata['metadata']['metadata']
@@ -187,7 +191,8 @@ def generate_inv_from_api(enterprise_entity,config):
         return inventory
     except Exception as e:
         # Return empty hosts output
-        return { 'all': {'hosts': []}, '_meta': { 'hostvars': {} } }
+        return {'all': {'hosts': []}, '_meta': {'hostvars': {}}}
+
 
 def get_inventory(enterprise, config):
     ''' Reads the inventory from cache or Abiquo api '''
@@ -197,10 +202,11 @@ def get_inventory(enterprise, config):
     else:
         default_group = os.path.basename(sys.argv[0]).rstrip('.py')
         # MAKE ABIQUO API CALLS #
-        inv = generate_inv_from_api(enterprise,config)
+        inv = generate_inv_from_api(enterprise, config)
 
     save_cache(inv, config)
     return json.dumps(inv)
+
 
 if __name__ == '__main__':
     inventory = {}
@@ -214,8 +220,8 @@ if __name__ == '__main__':
             break
 
     try:
-        login = api_get(None,config)
-        enterprise = next(link for link in (login['links']) if (link['rel']=='enterprise'))
+        login = api_get(None, config)
+        enterprise = next(link for link in login['links'] if link['rel'] == 'enterprise')
     except Exception as e:
         enterprise = None
 

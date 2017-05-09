@@ -46,6 +46,7 @@ if LooseVersion(requests.__version__) < LooseVersion('1.1.0'):
 
 from requests.auth import HTTPBasicAuth
 
+
 def json_format_dict(data, pretty=False):
     """Converts a dict to a JSON object and dumps it as a formatted string"""
 
@@ -53,6 +54,7 @@ def json_format_dict(data, pretty=False):
         return json.dumps(data, sort_keys=True, indent=2)
     else:
         return json.dumps(data)
+
 
 class ForemanInventory(object):
 

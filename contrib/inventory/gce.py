@@ -84,8 +84,8 @@ except ImportError:
     # library is used.
     pass
 
-USER_AGENT_PRODUCT="Ansible-gce_inventory_plugin"
-USER_AGENT_VERSION="v2"
+USER_AGENT_PRODUCT = "Ansible-gce_inventory_plugin"
+USER_AGENT_VERSION = "v2"
 
 import sys
 import os
@@ -296,8 +296,8 @@ class GceInventory(object):
 
         if not secrets_found:
             args = [
-                self.config.get('gce','gce_service_account_email_address'),
-                self.config.get('gce','gce_service_account_pem_file_path')
+                self.config.get('gce', 'gce_service_account_email_address'),
+                self.config.get('gce', 'gce_service_account_pem_file_path')
             ]
             kwargs = {'project': self.config.get('gce', 'gce_project_id'),
                       'datacenter': self.config.get('gce', 'gce_zone')}
@@ -320,7 +320,7 @@ class GceInventory(object):
         '''returns a list of comma separated zones parsed from the GCE_ZONE environment variable.
         If provided, this will be used to filter the results of the grouped_instances call'''
         import csv
-        reader = csv.reader([os.environ.get('GCE_ZONE',"")], skipinitialspace=True)
+        reader = csv.reader([os.environ.get('GCE_ZONE', "")], skipinitialspace=True)
         zones = [r for r in reader]
         return [z for z in zones[0]]
 
@@ -330,16 +330,15 @@ class GceInventory(object):
         parser = argparse.ArgumentParser(
             description='Produce an Ansible Inventory file based on GCE')
         parser.add_argument('--list', action='store_true', default=True,
-                           help='List instances (default: True)')
+                            help='List instances (default: True)')
         parser.add_argument('--host', action='store',
-                           help='Get all information about an instance')
+                            help='Get all information about an instance')
         parser.add_argument('--pretty', action='store_true', default=False,
-                           help='Pretty format (default: False)')
+                            help='Pretty format (default: False)')
         parser.add_argument(
             '--refresh-cache', action='store_true', default=False,
             help='Force refresh of cache by making API requests (default: False - use cache files)')
         self.args = parser.parse_args()
-
 
     def node_to_dict(self, inst):
         md = {}
@@ -403,7 +402,7 @@ class GceInventory(object):
         all_nodes = []
         params, more_results = {'maxResults': 500}, True
         while more_results:
-            self.driver.connection.gce_params=params
+            self.driver.connection.gce_params = params
             all_nodes.extend(self.driver.list_nodes())
             more_results = 'pageToken' in params
         return all_nodes
