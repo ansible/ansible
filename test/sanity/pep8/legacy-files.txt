@@ -495,7 +495,6 @@ lib/ansible/modules/network/nxos/nxos_bgp_neighbor_af.py
 lib/ansible/modules/network/nxos/nxos_command.py
 lib/ansible/modules/network/nxos/nxos_config.py
 lib/ansible/modules/network/nxos/nxos_evpn_global.py
-lib/ansible/modules/network/nxos/nxos_evpn_vni.py
 lib/ansible/modules/network/nxos/nxos_facts.py
 lib/ansible/modules/network/nxos/nxos_feature.py
 lib/ansible/modules/network/nxos/nxos_file_copy.py
