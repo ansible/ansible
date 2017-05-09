@@ -624,8 +624,8 @@ class Ec2Inventory(object):
         region '''
 
         if not HAS_BOTO3:
-            self.fail_with_error("Working with RDS clusters requires boto3 - please install boto3 and try again",
-                                 "getting RDS clusters")
+            self.fail_with_error("Working with RDS instances requires boto3 - please install boto3 and try again",
+                                 "getting RDS instances")
 
         client = ec2_utils.boto3_inventory_conn('client', 'rds', region, **self.credentials)
         db_instances = client.describe_db_instances()
