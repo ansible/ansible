@@ -3,7 +3,7 @@
     name: http
     state: absent
     action: "{{ item }}"
-    direction: In
+    direction: in
   with_items:
      - allow
      - block
@@ -15,8 +15,8 @@
     state: present
     localport: 80
     action: allow
-    direction: In
-    protocol: TCP
+    direction: in
+    protocol: tcp
   register: add_firewall_rule
 
 - name: Check that creating new firewall rule succeeds with a change
@@ -31,8 +31,8 @@
     state: present
     localport: 80
     action: allow
-    direction: In
-    protocol: TCP
+    direction: in
+    protocol: tcp
   register: add_firewall_rule_again
 
 - name: Check that creating same firewall rule succeeds without a change
@@ -47,8 +47,8 @@
     state: absent
     localport: 80
     action: allow
-    direction: In
-    protocol: TCP
+    direction: in
+    protocol: tcp
   register: remove_firewall_rule
 
 - name: Check that removing existing firewall rule succeeds with a change
@@ -63,8 +63,8 @@
     state: absent
     localport: 80
     action: allow
-    direction: In
-    protocol: TCP
+    direction: in
+    protocol: tcp
   register: remove_absent_firewall_rule
 
 - name: Check that removing non existing firewall rule succeeds without a change
@@ -79,8 +79,8 @@
     state: present
     localport: 80
     action: allow
-    direction: In
-    protocol: TCP
+    direction: in
+    protocol: tcp
 
 - name: Add different firewall rule
   win_firewall_rule:
@@ -89,8 +89,8 @@
     state: present
     localport: 80
     action: block
-    direction: In
-    protocol: TCP
+    direction: in
+    protocol: tcp
   ignore_errors: yes
   register: add_different_firewall_rule_without_force
 
@@ -107,8 +107,8 @@
     state: present
     localport: 80
     action: block
-    direction: In
-    protocol: TCP
+    direction: in
+    protocol: tcp
     force: yes
   register: add_different_firewall_rule_with_force
 
@@ -125,8 +125,8 @@
     localport: 80
     remoteip: 192.168.0.1-192.168.0.5
     action: allow
-    direction: In
-    protocol: TCP
+    direction: in
+    protocol: tcp
     force: yes
 
 - name: Add same firewall rule when remoteip is range (again)
@@ -137,8 +137,8 @@
     localport: 80
     remoteip: 192.168.0.1-192.168.0.5
     action: allow
-    direction: In
-    protocol: TCP
+    direction: in
+    protocol: tcp
   register: add_firewall_rule_with_range_remoteip_again
 
 - name: Check that creating same firewall rule when remoteip is range succeeds without a change
@@ -154,8 +154,8 @@
     localport: 80
     remoteip: 192.168.0.0/24
     action: allow
-    direction: In
-    protocol: TCP
+    direction: in
+    protocol: tcp
     force: yes
 
 - name: Add same firewall rule when remoteip in CIDR notation (again)
@@ -166,8 +166,8 @@
     localport: 80
     remoteip: 192.168.0.0/24
     action: allow
-    direction: In
-    protocol: TCP
+    direction: in
+    protocol: tcp
   register: add_firewall_rule_with_cidr_remoteip_again
 
 - name: Check that creating same firewall rule succeeds without a change when remoteip in CIDR notation
@@ -183,8 +183,8 @@
     localport: 80
     remoteip: 192.168.0.0/255.255.255.0
     action: allow
-    direction: In
-    protocol: TCP
+    direction: in
+    protocol: tcp
     force: yes
 
 - name: Add same firewall rule when remoteip contains a netmask (again)
@@ -195,8 +195,8 @@
     localport: 80
     remoteip: 192.168.0.0/255.255.255.0
     action: allow
-    direction: In
-    protocol: TCP
+    direction: in
+    protocol: tcp
   register: add_firewall_rule_remoteip_contains_netmask_again
 
 - name: Check that creating same firewall rule succeeds without a change when remoteip contains a netmask
@@ -212,8 +212,8 @@
     localport: 80
     remoteip: 192.168.0.1
     action: allow
-    direction: In
-    protocol: TCP
+    direction: in
+    protocol: tcp
     force: yes
 
 - name: Add same firewall rule when remoteip is IPv4 (again)
@@ -224,8 +224,8 @@
     localport: 80
     remoteip: 192.168.0.1
     action: allow
-    direction: In
-    protocol: TCP
+    direction: in
+    protocol: tcp
   register: add_firewall_rule_with_ipv4_remoteip_again
 
 - name: Check that creating same firewall rule when remoteip is IPv4 succeeds without a change

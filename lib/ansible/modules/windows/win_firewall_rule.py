@@ -50,23 +50,23 @@ options:
         description:
             - Is this rule for inbound or outbound traffic
         required: true
-        choices: ['In', 'Out']
+        choices: ['in', 'out']
     action:
         description:
             - What to do with the items this rule is for
         required: true
-        choices: ['Allow', 'Block', 'Bypass']
+        choices: ['allow', 'block', 'bypass']
     description:
         description:
             - Description for the firewall rule
     localip:
         description:
             - The local ip address this rule applies to
-        default: 'Any'
+        default: 'any'
     remoteip:
         description:
             - The remote ip address/range this rule applies to
-        default: 'Any'
+        default: 'any'
     localport:
         description:
             - The local port this rule applies to
@@ -82,11 +82,11 @@ options:
     protocol:
         description:
             - The protocol this rule applies to
-        default: 'Any'
+        default: 'any'
     profiles:
         description:
             - The profile this rule applies to
-        default: 'Domain,Private,Public'
+        default: 'domain,private,public'
         aliases: [ 'profile' ]
     force:
         description:
@@ -107,20 +107,20 @@ EXAMPLES = r'''
   win_firewall_rule:
     name: SMTP
     localport: 25
-    action: Allow
-    direction: In
-    protocol: TCP
+    action: allow
+    direction: in
+    protocol: tcp
     state: present
-    enabled: Yes
+    enabled: yes
 
 - name: Firewall rule to allow RDP on TCP port 3389
   win_firewall_rule:
     name: Remote Desktop
     localport: 3389
-    action: Allow
-    direction: In
-    protocol: TCP
-    profiles: Private
+    action: allow
+    direction: in
+    protocol: tcp
+    profiles: private
     state: present
-    enabled: Yes
+    enabled: yes
 '''
