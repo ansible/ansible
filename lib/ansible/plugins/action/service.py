@@ -36,7 +36,10 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        module = self._task.args.get('use', 'auto').lower()
+        # Default to None to preserve backwards compatibility with 2.x.
+        module = self._task.args.get('use', None)
+        if module:
+            module = module.lower()
 
         if module == 'auto':
             try:
