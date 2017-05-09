@@ -617,6 +617,47 @@ class Ec2Inventory(object):
                 error = "Error connecting to %s backend.\n%s" % (backend, e.message)
             self.fail_with_error(error, 'getting EC2 instances')
 
+    def tags_match_filters(self, tags):
+        ''' return True if given tags match configured filters '''
+        if not self.ec2_instance_filters:
+            return True
+        match = True
+        if self.stack_filters:
+            for ec2_filter in self.ec2_instance_filters.items():
+                filter_name, filter_value = ec2_filter
+                if filter_name[:4] != 'tag:':
+                    continue
+                filter_name = filter_name[4:]
+                if not filter_name in tags:
+                    match = False
+                    break
+                if isinstance(filter_value, list):
+                    if tags[filter_name] not in filter_value:
+                        match = False
+                        break
+                if isinstance(filter_value, basestring):
+                    if tags[filter_name] != filter_value:
+                        match = False
+                        break
+        else:
+            match = False
+            for ec2_filter in self.ec2_instance_filters.items():
+                filter_name, filter_value = ec2_filter
+                if filter_name[:4] != 'tag:':
+                    continue
+                filter_name = filter_name[4:]
+                if not filter_name in tags:
+                    continue
+                if isinstance(filter_value, list):
+                    if tags[filter_name] in filter_value:
+                        match = True
+                        break
+                if isinstance(filter_value, basestring):
+                    if tags[filter_name] == filter_value:
+                        match = True
+                        break
+        return match
+
     def get_rds_instances_by_region(self, region):
         ''' Makes an AWS API call to the list of RDS instances in a particular
         region '''
@@ -642,8 +683,8 @@ class Ec2Inventory(object):
                         instance.tags = {}
                         for tag in tags:
                             instance.tags[tag['Key']] = tag['Value']
-
-                        self.add_rds_instance(instance, region)
+                        if self.tags_match_filters(instance.tags):
+                            self.add_rds_instance(instance, region)
                     if not marker:
                         break
         except boto.exception.BotoServerError as e:
