@@ -96,7 +96,14 @@ options:
     choices: [ "yes", "no" ]
     version_added: "1.8"
     description:
-      - 'This flag indicates that filesystem links, if they exist, should be followed.'
+      - 'This flag indicates that filesystem links in the destination, if they exist, should be followed.'
+  local_follow:
+    required: false
+    default: "yes"
+    choices: [ "yes", "no" ]
+    version_added: "2.4"
+    description:
+      - 'This flag indicates that filesystem links in the source tree, if they exist, should be followed.'
 extends_documentation_fragment:
     - files
     - validate
@@ -273,6 +280,7 @@ def main():
             validate          = dict(required=False, type='str'),
             directory_mode    = dict(required=False, type='raw'),
             remote_src        = dict(required=False, type='bool'),
+            local_follow      = dict(required=False, type='bool'),
         ),
         add_file_common_args=True,
         supports_check_mode=True,
