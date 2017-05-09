@@ -237,6 +237,7 @@ import os
 import re
 import sys
 import time
+import subprocess
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pycompat24 import get_exception
@@ -920,6 +921,17 @@ def main():
                         force=force_yes, dpkg_options=p['dpkg_options'])
 
         packages = p['package']
+        if not packages:
+            cmd = "/usr/bin/apt-get --dry-run autoremove | grep -Po '^Remv \K[^ ]+'"
+            ps = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            packages = ps.communicate()[0].split('\n')
+            if len(packages) == 0:
+                module.exit_json(
+                    changed=False,
+                    cache_updated=False,
+                    cache_update_time=updated_cache_time
+                )
+
         latest = p['state'] == 'latest'
         if packages:
             for package in packages:
@@ -928,7 +940,7 @@ def main():
                 if latest and '=' in package:
                     module.fail_json(msg='version number inconsistent with state=latest: %s' % package)
 
-        if p['state'] in ('latest', 'present', 'build-dep'):
+        if not p['autoremove'] and p['state'] in ('latest', 'present', 'build-dep'):
             state_upgrade = False
             state_builddep = False
             if p['state'] == 'latest':
@@ -960,7 +972,7 @@ def main():
                 module.exit_json(**retvals)
             else:
                 module.fail_json(**retvals)
-        elif p['state'] == 'absent':
+        elif p['autoremove'] or p['state'] == 'absent':
             remove(module, packages, cache, p['purge'], force=force_yes, dpkg_options=dpkg_options, autoremove=autoremove)
 
     except apt.cache.LockFailedException:
