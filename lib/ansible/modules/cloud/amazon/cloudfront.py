@@ -1098,8 +1098,10 @@ class CloudFrontValidationManager:
                                           'cache_behavior.allowed_methods.cached_methods')
                     self.validate_attribute_with_allowed_values(temp_cached_methods,
                                                                 'cache_behavior.allowed_items.cached_methods[]', self.__valid_methods)
-                cache_behavior['allowed_methods'] = self.__helpers.python_list_to_aws_list(temp_allowed_methods)
-                cache_behavior['allowed_methods']['cached_methods'] = self.__helpers.python_list_to_aws_list(temp_cached_methods)
+                cache_behavior['allowed_methods'] = self.__helpers.python_list_to_aws_list(
+                    temp_allowed_methods)
+                cache_behavior['allowed_methods']['cached_methods'] = self.__helpers.python_list_to_aws_list(
+                    temp_cached_methods)
             lambda_function_associations = cache_behavior.get('lambda_function_associations')
             if lambda_function_associations is not None:
                 self.validate_is_list(lambda_function_associations, 'lambda_function_associations')
@@ -1410,10 +1412,10 @@ class CloudFrontValidationManager:
 
     def validate_attribute_with_allowed_values(self, attribute, attribute_name, allowed_list):
         try:
-            if attribute is not None:
-                if (isinstance(attribute, list) and (not set(attribute)<set(allowed_list)) or
-                        (not isinstance(attribute, list) and attribute not in allowed_list)):
-                    self.module.fail_json(msg='the attribute {0} must be one of {1}'.format(attribute_name,
+            if (attribute is not None and (isinstance(attribute, list)
+                    and (not set(attribute) < set(allowed_list)) or
+                    (not isinstance(attribute, list) and attribute not in allowed_list))):
+                self.module.fail_json(msg='the attribute {0} must be one of {1}'.format(attribute_name,
                                                                                         ' '.join(str(a) for a in allowed_list)))
         except Exception as e:
             self.module.fail_json(msg="error validating attribute with allowed values - " + str(e))
@@ -1520,9 +1522,12 @@ def main():
     argument_spec = ec2_argument_spec()
 
     argument_spec.update(dict(
-        resource=dict(choices=['distribution', 'streaming_distribution', 'origin_access_identity', 'invalidation'], default=None),
-        state=dict(choices=['present', 'updated', 'absent', 'duplicated', 'validated'], default=None),
-        generate_presigned_url_from_pem_private_key=dict(required=False, default=False, type='bool'),
+        resource=dict(choices=['distribution', 'streaming_distribution',
+                               'origin_access_identity', 'invalidation'], default=None),
+        state=dict(choices=['present', 'updated', 'absent',
+                            'duplicated', 'validated'], default=None),
+        generate_presigned_url_from_pem_private_key=dict(
+            required=False, default=False, type='bool'),
         origin_access_identity_id=dict(required=False, default=None, type='str'),
         caller_reference=dict(required=False, default=None, type='str'),
         comment=dict(required=False, default=None, type='str'),
@@ -1624,8 +1629,10 @@ def main():
     create_streaming_distribution = (state == 'present' and resource == 'streaming_distribution')
     update_streaming_distribution = (state == 'updated' and resource == 'streaming_distribution')
     delete_streaming_distribution = (state == 'absent' and resource == 'streaming_distribution')
-    duplicate_streaming_distribution = (state == 'duplicated' and resource == 'streaming_distribution')
-    validate_streaming_distribution = (state == 'validated' and resource == 'streaming_distribution')
+    duplicate_streaming_distribution = (
+        state == 'duplicated' and resource == 'streaming_distribution')
+    validate_streaming_distribution = (
+        state == 'validated' and resource == 'streaming_distribution')
     create_invalidation = (state == 'present' and resource == 'invalidation')
 
     create_update_distribution = create_distribution or update_distribution
