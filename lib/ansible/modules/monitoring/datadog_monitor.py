@@ -198,6 +198,14 @@ def main():
 
     initialize(**options)
 
+    # Check if api_key and app_key is correct or not
+    # if not, then fail here.
+    response = api.Monitor.get_all()
+    if isinstance(response, dict):
+        msg = response.get('errors', None)
+        if msg:
+            module.fail_json(msg="Failed to connect Datadog server using given app_key and api_key : {0}".format(msg[0]))
+
     if module.params['state'] == 'present':
         install_monitor(module)
     elif module.params['state'] == 'absent':
@@ -206,6 +214,7 @@ def main():
         mute_monitor(module)
     elif module.params['state'] == 'unmute':
         unmute_monitor(module)
+
 
 def _fix_template_vars(message):
     if message:
@@ -243,10 +252,12 @@ def _post_monitor(module, options):
         e = get_exception()
         module.fail_json(msg=str(e))
 
+
 def _equal_dicts(a, b, ignore_keys):
     ka = set(a).difference(ignore_keys)
     kb = set(b).difference(ignore_keys)
     return ka == kb and all(a[k] == b[k] for k in ka)
+
 
 def _update_monitor(module, monitor, options):
     try:
@@ -278,7 +289,7 @@ def install_monitor(module):
         "escalation_message": module.params['escalation_message'],
         "notify_audit": module.boolean(module.params['notify_audit']),
         "locked": module.boolean(module.params['locked']),
-        "require_full_window" : module.params['require_full_window']
+        "require_full_window": module.params['require_full_window']
     }
 
     if module.params['type'] == "service check":
@@ -311,8 +322,7 @@ def mute_monitor(module):
         module.fail_json(msg="Monitor %s not found!" % module.params['name'])
     elif monitor['options']['silenced']:
         module.fail_json(msg="Monitor is already muted. Datadog does not allow to modify muted alerts, consider unmuting it first.")
-    elif (module.params['silenced'] is not None
-         and len(set(monitor['options']['silenced']) - set(module.params['silenced'])) == 0):
+    elif (module.params['silenced'] is not None and len(set(monitor['options']['silenced']) - set(module.params['silenced'])) == 0):
         module.exit_json(changed=False)
     try:
         if module.params['silenced'] is None or module.params['silenced'] == "":
