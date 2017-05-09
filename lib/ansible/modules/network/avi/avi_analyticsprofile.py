@@ -108,9 +108,9 @@ options:
     client_log_config:
         description:
             - Configure which logs are sent to the avi controller from ses and how they are processed.
-    client_log_syslog_config:
+    client_log_streaming_config:
         description:
-            - Configure to send logs to a remote syslog server.
+            - Configure to stream logs to an external server.
             - Field introduced in 17.1.1.
         version_added: "2.4"
     conn_lossy_ooo_threshold:
@@ -460,7 +460,7 @@ def main():
         apdex_server_rtt_threshold=dict(type='int',),
         apdex_server_rtt_tolerated_factor=dict(type='float',),
         client_log_config=dict(type='dict',),
-        client_log_syslog_config=dict(type='dict',),
+        client_log_streaming_config=dict(type='dict',),
         conn_lossy_ooo_threshold=dict(type='int',),
         conn_lossy_timeo_rexmt_threshold=dict(type='int',),
         conn_lossy_total_rexmt_threshold=dict(type='int',),

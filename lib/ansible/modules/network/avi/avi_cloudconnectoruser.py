@@ -101,7 +101,7 @@ def main():
         state=dict(default='present',
                    choices=['absent', 'present']),
         name=dict(type='str', required=True),
-        private_key=dict(type='str',),
+        private_key=dict(type='str', no_log=True,),
         public_key=dict(type='str',),
         tenant_ref=dict(type='str',),
         url=dict(type='str',),
