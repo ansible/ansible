@@ -635,7 +635,7 @@ class Ec2Inventory(object):
                     if tags[filter_name] not in filter_value:
                         match = False
                         break
-                if isinstance(filter_value, basestring):
+                if isinstance(filter_value, six.string_types):
                     if tags[filter_name] != filter_value:
                         match = False
                         break
@@ -652,7 +652,7 @@ class Ec2Inventory(object):
                     if tags[filter_name] in filter_value:
                         match = True
                         break
-                if isinstance(filter_value, basestring):
+                if isinstance(filter_value, six.string_types):
                     if tags[filter_name] == filter_value:
                         match = True
                         break
