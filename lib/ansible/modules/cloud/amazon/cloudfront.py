@@ -1410,7 +1410,6 @@ class CloudFrontValidationManager:
 
     def validate_attribute_with_allowed_values(self, attribute, attribute_name, allowed_list):
         try:
-            fail_validate = False
             if attribute is not None:
                 if (isinstance(attribute, list) and (not set(attribute)<set(allowed_list)) or
                         (not isinstance(attribute, list) and attribute not in allowed_list)):
