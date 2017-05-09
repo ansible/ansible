@@ -29,6 +29,7 @@ author:
 short_description: enables/disables a configuration fragment of the Apache2 webserver
 description:
    - Enables or disables a specified site or configuration snippet of the Apache2 webserver.
+     This module support Debian/Ubuntu based systems, and requires a2enconf, a2disconf, a2ensite, a2dissite scripts.
 options:
    type:
      description:
@@ -103,6 +104,10 @@ class ApacheFragmentFail(ApacheFragmentException):
         self.stderr = stderr
 
 
+class ApacheFragmentUnsupported(ApacheFragmentException):
+    pass
+
+
 class ApacheFragment(object):
     available_dir = None
     enabled_dir = None
@@ -111,6 +116,9 @@ class ApacheFragment(object):
 
     def __init__(self, name):
         self.fragment_file = basename(name)
+        for required_dir in (self.available_dir, self.enabled_dir):
+            if not exists(required_dir):
+                raise ApacheFragmentUnsupported("directory %s not found" % required_dir)
 
     def state(self):
         """
@@ -126,7 +134,9 @@ class ApacheFragment(object):
         return "absent"
 
     def set(self, state=None):
-        command_name = module.get_bin_path(self.command_names[state], required=True)
+        command_name = module.get_bin_path(self.command_names[state])
+        if command_name is None:
+            raise ApacheFragmentUnsupported("command %s not found" % self.command_names[state])
         # Short name of fragment: without path and suffix
         fragment_name = splitext(self.fragment_file)[0]
         return module.run_command([command_name, fragment_name], check_rc=True)
@@ -191,6 +201,8 @@ def main():
         changed = _set_state(state)
     except ApacheFragmentFail as e:
         module.fail_json(msg=fail_msg, rc=e.rc, stdout=e.stdout, stderr=e.stderr)
+    except ApacheFragmentUnsupported as e:
+        module.fail_json(msg="Unsupported distribution: %s" % e.message)
     except ApacheFragmentException as e:
         module.fail_json(msg=e.message)
     else:
