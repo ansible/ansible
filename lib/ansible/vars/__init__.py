@@ -389,10 +389,6 @@ class VariableManager:
         if task and task.delegate_to is not None and include_delegate_to:
             all_vars['ansible_delegated_vars'] = self._get_delegated_vars(loader, play, task, all_vars)
 
-        #VARIABLE_CACHE[cache_entry] = all_vars
-        if task or play:
-            all_vars['vars'] = all_vars.copy()
-
         display.debug("done with get_vars()")
         return all_vars
 
