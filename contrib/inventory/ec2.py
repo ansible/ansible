@@ -290,9 +290,13 @@ class Ec2Inventory(object):
         else:
             self.route53_hostnames = None
         self.route53_excluded_zones = []
+        self.route53_included_zones = []
         if config.has_option('ec2', 'route53_excluded_zones'):
             self.route53_excluded_zones.extend(
-                config.get('ec2', 'route53_excluded_zones', '').split(','))
+                config.get('ec2', 'route53_excluded_zones', '').replace(' ','').split(','))
+        if config.has_option('ec2', 'route53_included_zones'):
+            self.route53_included_zones.extend(
+                config.get('ec2', 'route53_included_zones', '').replace(' ','').split(','))
 
         # Include RDS instances?
         self.rds_enabled = True
@@ -1324,7 +1328,12 @@ class Ec2Inventory(object):
             r53_conn = route53.Route53Connection()
         all_zones = r53_conn.get_zones()
 
-        route53_zones = [ zone for zone in all_zones if zone.name[:-1]
+        if self.route53_included_zones:
+            route53_zones = [ zone for zone in all_zones if zone.name[:-1]
+                          in self.route53_included_zones and zone.name[:-1] not
+                          in self.route53_excluded_zones ]
+        else:
+            route53_zones = [ zone for zone in all_zones if zone.name[:-1]
                           not in self.route53_excluded_zones ]
 
         self.route53_records = {}
