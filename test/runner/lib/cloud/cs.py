@@ -51,7 +51,7 @@ class CsCloudProvider(CloudProvider):
         """
         super(CsCloudProvider, self).__init__(args, config_extension='.ini')
 
-        self.image = 'resmo/cloudstack-sim'
+        self.image = 'ansible/ansible:cloudstack-simulator'
         self.container_name = ''
         self.endpoint = ''
         self.host = ''
