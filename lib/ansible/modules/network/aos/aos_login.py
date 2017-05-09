@@ -81,6 +81,7 @@ aos_session:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.aos import check_aos_version
 
 try:
     from apstra.aosom.session import Session
@@ -121,6 +122,9 @@ def main():
     if not HAS_AOS_PYEZ:
         module.fail_json(msg='aos-pyez is not installed.  Please see details '
                              'here: https://github.com/Apstra/aos-pyez')
+
+    # Check if aos-pyez is present and match the minimum version
+    check_aos_version(module, '0.6.1')
 
     aos_login(module)
 
