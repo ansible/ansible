@@ -57,7 +57,7 @@
   assert:
     that:
     - lb|failed
-    - "'ip_address,name' in lb.msg"
+    - "lb.msg.startswith('missing required arguments: ')"
 
 - name: test create rule
   cs_loadbalancer_rule:
@@ -143,7 +143,7 @@
   assert:
     that:
     - lb|failed
-    - "'vms,name' in lb.msg"
+    - "lb.msg.startswith('missing required arguments: ')"
 
 - name: test add members to rule
   cs_loadbalancer_rule_member:
