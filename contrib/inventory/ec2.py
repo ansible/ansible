@@ -628,7 +628,7 @@ class Ec2Inventory(object):
                 if filter_name[:4] != 'tag:':
                     continue
                 filter_name = filter_name[4:]
-                if not filter_name in tags:
+                if filter_name not in tags:
                     match = False
                     break
                 if isinstance(filter_value, list):
@@ -646,7 +646,7 @@ class Ec2Inventory(object):
                 if filter_name[:4] != 'tag:':
                     continue
                 filter_name = filter_name[4:]
-                if not filter_name in tags:
+                if filter_name not in tags:
                     continue
                 if isinstance(filter_value, list):
                     if tags[filter_name] in filter_value:
