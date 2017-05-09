@@ -22,8 +22,6 @@
 #
 # pip install docker
 #
-# curl -L https://gitlab.com/snippets/1661311/raw -o /etc/ansible/docker-swarm-nodes.py && chmod +x /etc/ansible/docker-swarm-nodes.py
-#
 # create /etc/ansible/docker_swarm_nodes.ini like this:
 # ----------------------------------------------------
 # [swarm]
