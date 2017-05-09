@@ -41,7 +41,6 @@ options:
    name:
         description:
             - Name of the VM to work with
-        required: True
    name_match:
         description:
             - If multiple VMs matching the name, use the first or last found
@@ -182,12 +181,14 @@ def main():
                 default=os.environ.get('VMWARE_PASSWORD')
             ),
             validate_certs=dict(required=False, type='bool', default=True),
-            name=dict(required=True, type='str'),
+            name=dict(type='str'),
             name_match=dict(required=False, type='str', default='first'),
             uuid=dict(required=False, type='str'),
             folder=dict(required=False, type='str', default='/vm'),
             datacenter=dict(required=True, type='str'),
         ),
+        required_one_of=[['name', 'uuid']],
+        supports_check_mode=True,
     )
 
     # Prepend /vm if it was missing from the folder path, also strip trailing slashes
@@ -208,6 +209,8 @@ def main():
         except Exception:
             e = get_exception()
             module.fail_json(msg="Fact gather failed with exception %s" % e)
+    elif module.params['uuid'] is not None:
+        module.fail_json(msg="Unable to gather facts for non-existing VM %(uuid)s" % module.params)
     else:
         module.fail_json(msg="Unable to gather facts for non-existing VM %(name)s" % module.params)
 
