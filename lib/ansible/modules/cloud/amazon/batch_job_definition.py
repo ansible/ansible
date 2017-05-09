@@ -33,162 +33,162 @@ except ImportError:
 
 
 DOCUMENTATION = '''
----
-module: batch_job_definition
-short_description: Manage AWS Batch Job Definitions
-description:
-    - This module allows the management of AWS Batch Job Definitions.
-      It is idempotent and supports "Check" mode.  Use module M(batch_compute_environment) to manage the compute
-      environment, M(batch_job_queue) to manage job queues, M(batch_job_definition) to manage job definitions.
-
-version_added: "2.4?"
-
-author: Jon Meran (@jonmer85)
-options:
-  job_definition_name:
+    ---
+    module: batch_job_definition
+    short_description: Manage AWS Batch Job Definitions
     description:
-      - The name for the job definition
-    required: true
+        - This module allows the management of AWS Batch Job Definitions.
+          It is idempotent and supports "Check" mode.  Use module M(batch_compute_environment) to manage the compute
+          environment, M(batch_job_queue) to manage job queues, M(batch_job_definition) to manage job definitions.
 
-  state:
-    description:
-      - Describes the desired state.
-    required: true
-    default: "present"
-    choices: ["present", "absent"]
+    version_added: "2.4?"
 
-  type:
-    description:
-      - The type of job definition
-    required: true
+    author: Jon Meran (@jonmer85)
+    options:
+      job_definition_name:
+        description:
+          - The name for the job definition
+        required: true
 
-  parameters:
-    description:
-      - Default parameter substitution placeholders to set in the job definition. Parameters are specified as a
-        key-value pair mapping. Parameters in a SubmitJob request override any corresponding parameter defaults from
-        the job definition.
+      state:
+        description:
+          - Describes the desired state.
+        required: true
+        default: "present"
+        choices: ["present", "absent"]
 
-  image:
-    description:
-      - The image used to start a container. This string is passed directly to the Docker daemon. Images in the Docker
-        Hub registry are available by default. Other repositories are specified with `` repository-url /image :tag ``.
-        Up to 255 letters (uppercase and lowercase), numbers, hyphens, underscores, colons, periods, forward slashes,
-        and number signs are allowed. This parameter maps to Image in the Create a container section of the Docker
-        Remote API and the IMAGE parameter of docker run.
+      type:
+        description:
+          - The type of job definition
+        required: true
 
-  vcpus:
-    description:
-      - The number of vCPUs reserved for the container. This parameter maps to CpuShares in the Create a container
-        section of the Docker Remote API and the --cpu-shares option to docker run. Each vCPU is equivalent to
-        1,024 CPU shares.
+      parameters:
+        description:
+          - Default parameter substitution placeholders to set in the job definition. Parameters are specified as a
+            key-value pair mapping. Parameters in a SubmitJob request override any corresponding parameter defaults from
+            the job definition.
 
-  memory:
-    description:
-      - The hard limit (in MiB) of memory to present to the container. If your container attempts to exceed the memory
-        specified here, the container is killed. This parameter maps to Memory in the Create a container section of the
-        Docker Remote API and the --memory option to docker run.
+      image:
+        description:
+          - The image used to start a container. This string is passed directly to the Docker daemon. Images in the Docker
+            Hub registry are available by default. Other repositories are specified with `` repository-url /image :tag ``.
+            Up to 255 letters (uppercase and lowercase), numbers, hyphens, underscores, colons, periods, forward slashes,
+            and number signs are allowed. This parameter maps to Image in the Create a container section of the Docker
+            Remote API and the IMAGE parameter of docker run.
 
-  command:
-    description:
-      - The command that is passed to the container. This parameter maps to Cmd in the Create a container section of
-        the Docker Remote API and the COMMAND parameter to docker run. For more information,
-        see https://docs.docker.com/engine/reference/builder/#cmd.
+      vcpus:
+        description:
+          - The number of vCPUs reserved for the container. This parameter maps to CpuShares in the Create a container
+            section of the Docker Remote API and the --cpu-shares option to docker run. Each vCPU is equivalent to
+            1,024 CPU shares.
 
-  job_role_arn:
-    description:
-      - The Amazon Resource Name (ARN) of the IAM role that the container can assume for AWS permissions.
+      memory:
+        description:
+          - The hard limit (in MiB) of memory to present to the container. If your container attempts to exceed the memory
+            specified here, the container is killed. This parameter maps to Memory in the Create a container section of the
+            Docker Remote API and the --memory option to docker run.
 
-  volumes:
-    description:
-      - A list of data volumes used in a job. List of dictionaries with the following
-        form: { host: { sourcePath: <string> }, name: <string> }
+      command:
+        description:
+          - The command that is passed to the container. This parameter maps to Cmd in the Create a container section of
+            the Docker Remote API and the COMMAND parameter to docker run. For more information,
+            see https://docs.docker.com/engine/reference/builder/#cmd.
 
-  environment:
-    description:
-      - The environment variables to pass to a container. This parameter maps to Env in the Create a container section
-        of the Docker Remote API and the --env option to docker run. List of dictionaries with the following
-        form: { name: <string>, value: <string> }
+      job_role_arn:
+        description:
+          - The Amazon Resource Name (ARN) of the IAM role that the container can assume for AWS permissions.
 
-  mount_points:
-    description:
-      - The mount points for data volumes in your container. This parameter maps to Volumes in the Create a container
-        section of the Docker Remote API and the --volume option to docker run. List of dictionaries with the following
-        form: { containerPath: <string>, readOnly: <boolean>, sourceVolume: <string> }
+      volumes:
+        description:
+          - A list of data volumes used in a job. List of dictionaries with the following
+            form: { host: { sourcePath: <string> }, name: <string> }
 
-  readonly_root_filesystem:
-    description:
-      - When this parameter is true, the container is given read-only access to its root file system. This parameter
-        maps to ReadonlyRootfs in the Create a container section of the Docker Remote API and the --read-only option
-        to docker run.
+      environment:
+        description:
+          - The environment variables to pass to a container. This parameter maps to Env in the Create a container section
+            of the Docker Remote API and the --env option to docker run. List of dictionaries with the following
+            form: { name: <string>, value: <string> }
 
-  privileged:
-    description:
-      - When this parameter is true, the container is given elevated privileges on the host container instance
-        (similar to the root user). This parameter maps to Privileged in the Create a container section of the
-        Docker Remote API and the --privileged option to docker run.
+      mount_points:
+        description:
+          - The mount points for data volumes in your container. This parameter maps to Volumes in the Create a container
+            section of the Docker Remote API and the --volume option to docker run. List of dictionaries with the following
+            form: { containerPath: <string>, readOnly: <boolean>, sourceVolume: <string> }
 
-  ulimits:
-    description:
-      - A list of ulimits to set in the container. This parameter maps to Ulimits in the Create a container section
-        of the Docker Remote API and the --ulimit option to docker run. List of dictionaries with the following
-        form: { hardLimit: <int>, name: <string>, softLimit: <int> }.
+      readonly_root_filesystem:
+        description:
+          - When this parameter is true, the container is given read-only access to its root file system. This parameter
+            maps to ReadonlyRootfs in the Create a container section of the Docker Remote API and the --read-only option
+            to docker run.
 
-  user:
-    description:
-      - The user name to use inside the container. This parameter maps to User in the Create a container section of
-        the Docker Remote API and the --user option to docker run.
+      privileged:
+        description:
+          - When this parameter is true, the container is given elevated privileges on the host container instance
+            (similar to the root user). This parameter maps to Privileged in the Create a container section of the
+            Docker Remote API and the --privileged option to docker run.
 
-  attempts:
-    description:
-      - Retry strategy - The number of times to move a job to the RUNNABLE status. You may specify between 1 and 10
-        attempts. If attempts is greater than one, the job is retried if it fails until it has moved to RUNNABLE that
-        many times.
+      ulimits:
+        description:
+          - A list of ulimits to set in the container. This parameter maps to Ulimits in the Create a container section
+            of the Docker Remote API and the --ulimit option to docker run. List of dictionaries with the following
+            form: { hardLimit: <int>, name: <string>, softLimit: <int> }.
 
-requirements:
-    - boto3
-extends_documentation_fragment:
-    - aws
+      user:
+        description:
+          - The user name to use inside the container. This parameter maps to User in the Create a container section of
+            the Docker Remote API and the --user option to docker run.
 
-'''
+      attempts:
+        description:
+          - Retry strategy - The number of times to move a job to the RUNNABLE status. You may specify between 1 and 10
+            attempts. If attempts is greater than one, the job is retried if it fails until it has moved to RUNNABLE that
+            many times.
+
+    requirements:
+        - boto3
+    extends_documentation_fragment:
+        - aws
+
+    '''
 
 EXAMPLES = '''
----
-- hosts: localhost
-  gather_facts: no
-  vars:
-    state: present
-  tasks:
-- name: My Batch Job Definition
-  batch_job_definition:
-    job_definition_name: My Batch Job Definition
-    state: present
-    type: container
-    parameters:
-      Param1: Val1
-      Param2: Val2
-    image: <Docker Image URL>
-    vcpus: 1
-    memory: 512
-    command:
-      - python
-      - run_my_script.py
-      - arg1
-    job_role_arn: <Job Role ARN>
-    attempts: 3
-  register: job_definition_create_result
+    ---
+    - hosts: localhost
+      gather_facts: no
+      vars:
+        state: present
+      tasks:
+    - name: My Batch Job Definition
+      batch_job_definition:
+        job_definition_name: My Batch Job Definition
+        state: present
+        type: container
+        parameters:
+          Param1: Val1
+          Param2: Val2
+        image: <Docker Image URL>
+        vcpus: 1
+        memory: 512
+        command:
+          - python
+          - run_my_script.py
+          - arg1
+        job_role_arn: <Job Role ARN>
+        attempts: 3
+      register: job_definition_create_result
 
-- name: show results
-  debug: var=job_definition_create_result
+    - name: show results
+      debug: var=job_definition_create_result
 
-'''
+    '''
 
 RETURN = '''
----
-batch_job_definition_action:
-    description: describes what action was taken
-    returned: success
-    type: string
-'''
+    ---
+    batch_job_definition_action:
+        description: describes what action was taken
+        returned: success
+        type: string
+    '''
 
 # ---------------------------------------------------------------------------------------------------
 #

@@ -33,163 +33,163 @@ except ImportError:
 
 
 DOCUMENTATION = '''
----
-module: batch_compute_environment
-short_description: Manage AWS Batch Compute Environments
-description:
-    - This module allows the management of AWS Batch Compute Environments.
-      It is idempotent and supports "Check" mode.  Use module M(batch_compute_environment) to manage the compute
-      environment, M(batch_job_queue) to manage job queues, M(batch_job_definition) to manage job definitions.
-
-version_added: "2.4?"
-
-author: Jon Meran (@jonmer85)
-options:
-  compute_environment_name:
+    ---
+    module: batch_compute_environment
+    short_description: Manage AWS Batch Compute Environments
     description:
-      - The name for your compute environment. Up to 128 letters (uppercase and lowercase), numbers, and underscores are allowed.
-    required: true
+        - This module allows the management of AWS Batch Compute Environments.
+          It is idempotent and supports "Check" mode.  Use module M(batch_compute_environment) to manage the compute
+          environment, M(batch_job_queue) to manage job queues, M(batch_job_definition) to manage job definitions.
 
-  type:
-    description:
-      - The type of the compute environment.
-    required: true
-    choices: ["MANAGED", "UNMANAGED"]
+    version_added: "2.4?"
 
-  state:
-    description:
-      - Describes the desired state.
-    required: true
-    default: "present"
-    choices: ["present", "absent"]
+    author: Jon Meran (@jonmer85)
+    options:
+      compute_environment_name:
+        description:
+          - The name for your compute environment. Up to 128 letters (uppercase and lowercase), numbers, and underscores are allowed.
+        required: true
 
-  compute_environment_state:
-    description:
-      - The state of the compute environment. If the state is ENABLED, then the compute environment accepts jobs from
-        a queue and can scale out automatically based on queues.
-    default: "ENABLED"
-    choices: ["ENABLED", "DISABLED"]
+      type:
+        description:
+          - The type of the compute environment.
+        required: true
+        choices: ["MANAGED", "UNMANAGED"]
 
-  service_role:
-    description:
-      - The full Amazon Resource Name (ARN) of the IAM role that allows AWS Batch to make calls to other AWS services
-        on your behalf.
-    required: true
+      state:
+        description:
+          - Describes the desired state.
+        required: true
+        default: "present"
+        choices: ["present", "absent"]
 
-  compute_resource_type:
-    description:
-      - The type of compute resource.
-    required: true
-    choices: ["EC2", "SPOT"]
+      compute_environment_state:
+        description:
+          - The state of the compute environment. If the state is ENABLED, then the compute environment accepts jobs from
+            a queue and can scale out automatically based on queues.
+        default: "ENABLED"
+        choices: ["ENABLED", "DISABLED"]
 
-  minv_cpus:
-    description:
-      - The minimum number of EC2 vCPUs that an environment should maintain.
-    required: true
+      service_role:
+        description:
+          - The full Amazon Resource Name (ARN) of the IAM role that allows AWS Batch to make calls to other AWS services
+            on your behalf.
+        required: true
 
-  maxv_cpus:
-    description:
-      - The maximum number of EC2 vCPUs that an environment can reach.
-    required: true
+      compute_resource_type:
+        description:
+          - The type of compute resource.
+        required: true
+        choices: ["EC2", "SPOT"]
 
-  desiredv_cpus:
-    description:
-      - The desired number of EC2 vCPUS in the compute environment.
+      minv_cpus:
+        description:
+          - The minimum number of EC2 vCPUs that an environment should maintain.
+        required: true
 
-  instance_types:
-    description:
-      - The instance types that may be launched.
-    required: true
+      maxv_cpus:
+        description:
+          - The maximum number of EC2 vCPUs that an environment can reach.
+        required: true
 
-  image_id:
-    description:
-      - The Amazon Machine Image (AMI) ID used for instances launched in the compute environment.
+      desiredv_cpus:
+        description:
+          - The desired number of EC2 vCPUS in the compute environment.
 
-  subnets:
-    description:
-      - The VPC subnets into which the compute resources are launched.
-    required: true
+      instance_types:
+        description:
+          - The instance types that may be launched.
+        required: true
 
-  security_group_ids:
-    description:
-      - The EC2 security groups that are associated with instances launched in the compute environment.
-    required: true
+      image_id:
+        description:
+          - The Amazon Machine Image (AMI) ID used for instances launched in the compute environment.
 
-  ec2_key_pair:
-    description:
-      - The EC2 key pair that is used for instances launched in the compute environment.
+      subnets:
+        description:
+          - The VPC subnets into which the compute resources are launched.
+        required: true
 
-  instance_role:
-    description:
-      - The Amazon ECS instance role applied to Amazon EC2 instances in a compute environment.
-    required: true
+      security_group_ids:
+        description:
+          - The EC2 security groups that are associated with instances launched in the compute environment.
+        required: true
 
-  tags:
-    description:
-      - Key-value pair tags to be applied to resources that are launched in the compute environment.
+      ec2_key_pair:
+        description:
+          - The EC2 key pair that is used for instances launched in the compute environment.
 
-  bid_percentage:
-    description:
-      - The minimum percentage that a Spot Instance price must be when compared with the On-Demand price for that
-        instance type before instances are launched. For example, if your bid percentage is 20%, then the Spot price
-        must be below 20% of the current On-Demand price for that EC2 instance.
+      instance_role:
+        description:
+          - The Amazon ECS instance role applied to Amazon EC2 instances in a compute environment.
+        required: true
 
-  spot_iam_fleet_role:
-    description:
-      - The Amazon Resource Name (ARN) of the Amazon EC2 Spot Fleet IAM role applied to a SPOT compute environment.
+      tags:
+        description:
+          - Key-value pair tags to be applied to resources that are launched in the compute environment.
+
+      bid_percentage:
+        description:
+          - The minimum percentage that a Spot Instance price must be when compared with the On-Demand price for that
+            instance type before instances are launched. For example, if your bid percentage is 20%, then the Spot price
+            must be below 20% of the current On-Demand price for that EC2 instance.
+
+      spot_iam_fleet_role:
+        description:
+          - The Amazon Resource Name (ARN) of the Amazon EC2 Spot Fleet IAM role applied to a SPOT compute environment.
 
 
-requirements:
-    - boto3
-extends_documentation_fragment:
-    - aws
+    requirements:
+        - boto3
+    extends_documentation_fragment:
+        - aws
 
-'''
+    '''
 
 EXAMPLES = '''
----
-- hosts: localhost
-  gather_facts: no
-  vars:
-    state: present
-  tasks:
-  - name: My Batch Compute Environment
-    batch_compute_environment:
-      compute_environment_name: computeEnvironmentName
-      state: present
-      region: us-east-1
-      compute_environment_state: ENABLED
-      type: MANAGED
-      compute_resource_type: EC2
-      minv_cpus: 0
-      maxv_cpus: 2
-      desiredv_cpus: 1
-      instance_types:
-        - optimal
-      subnets:
-        - my-subnet1
-        - my-subnet2
-      security_group_ids:
-        - my-sg1
-        - my-sg2
-      instance_role: arn:aws:iam::<account>:instance-profile/<role>
-      tags:
-        tag1: value1
-        tag2: value2
-      service_role: arn:aws:iam::<account>:role/service-role/<role>
+    ---
+    - hosts: localhost
+      gather_facts: no
+      vars:
+        state: present
+      tasks:
+      - name: My Batch Compute Environment
+        batch_compute_environment:
+          compute_environment_name: computeEnvironmentName
+          state: present
+          region: us-east-1
+          compute_environment_state: ENABLED
+          type: MANAGED
+          compute_resource_type: EC2
+          minv_cpus: 0
+          maxv_cpus: 2
+          desiredv_cpus: 1
+          instance_types:
+            - optimal
+          subnets:
+            - my-subnet1
+            - my-subnet2
+          security_group_ids:
+            - my-sg1
+            - my-sg2
+          instance_role: arn:aws:iam::<account>:instance-profile/<role>
+          tags:
+            tag1: value1
+            tag2: value2
+          service_role: arn:aws:iam::<account>:role/service-role/<role>
 
-  - name: show results
-    debug: var=batch_compute_environment_action
+      - name: show results
+        debug: var=batch_compute_environment_action
 
-'''
+    '''
 
 RETURN = '''
----
-batch_compute_environment_action:
-    description: describes what action was taken
-    returned: success
-    type: string
-'''
+    ---
+    batch_compute_environment_action:
+        description: describes what action was taken
+        returned: success
+        type: string
+    '''
 
 # ---------------------------------------------------------------------------------------------------
 #
