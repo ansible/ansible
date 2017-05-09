@@ -38,13 +38,15 @@ try:
     from pyFG import FortiOS, FortiConfig
     from pyFG.exceptions import CommandExecutionException, FailedCommit
     HAS_PYFG=True
-except:
+except ImportError:
     HAS_PYFG=False
 
 fortios_argument_spec = dict(
-    host            = dict(required=True ),
-    username        = dict(required=True ),
-    password        = dict(required=True, type='str', no_log=True ),
+    file_mode       = dict(type='bool', default=False),
+    config_file     = dict(type='path'),
+    host            = dict( ),
+    username        = dict( ),
+    password        = dict(type='str', no_log=True ),
     timeout         = dict(type='int', default=60),
     vdom            = dict(type='str', default=None ),
     backup          = dict(type='bool', default=False),
@@ -53,9 +55,16 @@ fortios_argument_spec = dict(
 )
 
 fortios_required_if = [
+    ['file_mode', False, ['host', 'username', 'password']],
+    ['file_mode', True, ['config_file']],
     ['backup',   True   , ['backup_path']   ],
 ]
 
+fortios_mutually_exclusive = [
+    ['config_file', 'host'],
+    ['config_file', 'username'],
+    ['config_file', 'password']
+]
 
 fortios_error_codes = {
     '-3':"Object not found",
@@ -96,38 +105,54 @@ class AnsibleFortios(object):
 
 
     def _connect(self):
-        host = self.module.params['host']
-        username = self.module.params['username']
-        password = self.module.params['password']
-        timeout = self.module.params['timeout']
-        vdom = self.module.params['vdom']
+        if self.module.params['file_mode']:
+            self.forti_device = FortiOS('')
+        else:
+            host = self.module.params['host']
+            username = self.module.params['username']
+            password = self.module.params['password']
+            timeout = self.module.params['timeout']
+            vdom = self.module.params['vdom']
 
-        self.forti_device = FortiOS(host, username=username, password=password, timeout=timeout, vdom=vdom)
+            self.forti_device = FortiOS(host, username=username, password=password, timeout=timeout, vdom=vdom)
 
-        try:
-            self.forti_device.open()
-        except Exception:
-            e = get_exception()
-            self.module.fail_json(msg='Error connecting device. %s' % e)
+            try:
+                self.forti_device.open()
+            except Exception:
+                e = get_exception()
+                self.module.fail_json(msg='Error connecting device. %s' % e)
 
 
     def load_config(self, path):
-        self._connect()
         self.path = path
-        #get  config
-        try:
-            self.forti_device.load_config(path=path)
-            self.result['running_config'] = self.forti_device.running_config.to_text()
-        except Exception:
-            self.forti_device.close()
-            e = get_exception()
-            self.module.fail_json(msg='Error reading running config. %s' % e)
+        self._connect()
+        #load in file_mode
+        if self.module.params['file_mode']:
+            try:
+                f = open(self.module.params['config_file'], 'r')
+                running = f.read()
+                f.close()
+            except IOError:
+                e = get_exception()
+                self.module.fail_json(msg='Error reading configuration file. %s' % e)
+            self.forti_device.load_config(config_text=running, path = path)
+
+        else:
+            #get  config
+            try:
+                self.forti_device.load_config(path=path)
+            except Exception:
+                self.forti_device.close()
+                e = get_exception()
+                self.module.fail_json(msg='Error reading running config. %s' % e)
+
+        #set configs in object
+        self.result['running_config'] = self.forti_device.running_config.to_text()
+        self.candidate_config = self.forti_device.candidate_config
 
         #backup if needed
         if self.module.params['backup']:
-            backup(self.module, self.result['running_config'])
-
-        self.candidate_config = self.forti_device.candidate_config
+            backup(self.module, self.forti_device.running_config.to_text())
 
 
     def apply_changes(self):
@@ -138,16 +163,25 @@ class AnsibleFortios(object):
 
         #Commit if not check mode
         if change_string and not self.module.check_mode:
-            try:
-                self.forti_device.commit()
-            except FailedCommit:
-                #Something's wrong (rollback is automatic)
-                self.forti_device.close()
-                e = get_exception()
-                error_list = self.get_error_infos(e)
-                self.module.fail_json(msg_error_list=error_list, msg="Unable to commit change, check your args, the error was %s" % e.message )
+            if self.module.params['file_mode']:
+                try:
+                    f = open(self.module.params['config_file'], 'w')
+                    f.write(self.candidate_config.to_text())
+                    f.close
+                except IOError:
+                    e = get_exception()
+                    self.module.fail_json(msg='Error writing configuration file. %s' % e)
+            else:
+                try:
+                    self.forti_device.commit()
+                except FailedCommit:
+                    #Something's wrong (rollback is automatic)
+                    self.forti_device.close()
+                    e = get_exception()
+                    error_list = self.get_error_infos(e)
+                    self.module.fail_json(msg_error_list=error_list, msg="Unable to commit change, check your args, the error was %s" % e.message )
 
-        self.forti_device.close()
+                self.forti_device.close()
         self.module.exit_json(**self.result)
 
 
