@@ -209,7 +209,7 @@ def set_parameter(param, value, immediate):
 
     elif param.type == 'boolean':
         if isinstance(value, basestring):
-            converted_value = value in TRUE_VALUES
+            converted_value = value.lower() in TRUE_VALUES
         else:
             converted_value = bool(value)
 
@@ -236,7 +236,7 @@ def verify_new_value(param, value):
             if value not in choices:
                 raise ValueError('value must be in %s' % param.allowed_values)
         return value
-    elif isintance(value, bool):
+    elif isinstance(value, bool):
         return value
 
 
@@ -267,7 +267,7 @@ def modify_group(group, params, immediate=False):
                     raise NotModifiableError('Parameter %s is not modifiable.' % key)
 
                 # new and old values should be displayed as the same type; without changing the type old_value is always a string
-                old_value = {"string": str(old_value), "integer": int(old_value), "boolean": old_value in TRUE_VALUES}
+                old_value = {"string": str(old_value), "integer": int(old_value), "boolean": old_value.lower() in TRUE_VALUES}
                 changed[key] = {'old': old_value[param.type], 'new': new_value}
 
                 set_parameter(param, new_value, immediate)
