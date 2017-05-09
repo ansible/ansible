@@ -97,15 +97,13 @@ Function Fail-Json($obj, $message = $null)
 # so he does not have to check for the attribute prior to adding.
 Function Add-Warning($obj, $message)
 {
-    if (Get-Member -InputObject $obj -Name "warnings") {
-        if ($obj.warnings -is [array]) {
-            $obj.warnings += $message
-        } else {
-            throw "warnings attribute is not an array"
-        }
-    } else {
-        $obj.warnings = ,@( $message )
+    if (-not $obj.ContainsKey("warnings")) {
+        $obj.warnings = @()
+    } elseif ($obj.warnings -isnot [array]) {
+        throw "Add-Warning: warnings attribute is not an array"
     }
+
+    $obj.warnings += $message
 }
 
 # Helper function to add deprecations, even if the deprecations attribute was
@@ -113,22 +111,15 @@ Function Add-Warning($obj, $message)
 # so he does not have to check for the attribute prior to adding.
 Function Add-DeprecationWarning($obj, $message, $version = $null)
 {
-    if ($obj.ContainsKey("deprecations")) {
-        if ($obj.deprecations -is [array]) {
-            $obj.deprecations += @{
-                msg = $message
-                version = $version
-            }
-        } else {
-            throw "deprecations attribute is not a list"
-        }
-    } else {
-        $obj.deprecations = @(
-            @{
-                msg = $message
-                version = $version
-            }
-        )
+    if (-not $obj.ContainsKey("deprecations")) {
+        $obj.deprecations = @()
+    } elseif ($obj.deprecations -isnot [array]) {
+        throw "Add-DeprecationWarning: deprecations attribute is not a list"
+    }
+
+    $obj.deprecations += @{
+        msg = $message
+        version = $version
     }
 }
 
@@ -179,7 +170,7 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
             } else {
                 if ($ValidateSetErrorMessage -eq $null) {
                     #Auto-generated error should be sufficient in most use cases
-                    $ValidateSetErrorMessage = "Argument $name needs to be one of $($ValidateSet -join ",") but was $($obj.$name)."
+                    $ValidateSetErrorMessage = "Get-AnsibleParam: Argument $name needs to be one of $($ValidateSet -join ",") but was $($obj.$name)."
                 }
                 Fail-Json -obj $resultobj -message $ValidateSetErrorMessage
             }
@@ -193,37 +184,40 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
             $value = $default
         } else {
             if (!$emptyattributefailmessage) {
-                $emptyattributefailmessage = "Missing required argument: $name"
+                $emptyattributefailmessage = "Get-AnsibleParam: Missing required argument: $name"
             }
             Fail-Json -obj $resultobj -message $emptyattributefailmessage
         }
 
     }
 
-    # If $value -eq $null, the parameter was unspecified
-    if ($value -ne $null -and $type -eq "path") {
-        # Expand environment variables on path-type
-        $value = Expand-Environment($value)
-    } elseif ($value -ne $null -and $type -eq "str") {
-        # Convert str types to real Powershell strings
-        $value = $value.ToString()
-    } elseif ($value -ne $null -and $type -eq "bool") {
-        # Convert boolean types to real Powershell booleans
-        $value = $value | ConvertTo-Bool
-    } elseif ($value -ne $null -and $type -eq "int") {
-        # Convert int types to real Powershell integers
-        $value = $value -as [int]
-    } elseif ($value -ne $null -and $type -eq "float") {
-        # Convert float types to real Powershell floats
-        $value = $value -as [float]
-    } elseif ($value -ne $null -and $type -eq "list") {
-        if ($value -is [array]) {
-            # Nothing to do
-        } elseif ($value -is [string]) {
-            # Convert string type to real Powershell array
-            $value = $value -split ","
-        } else {
-            Fail-Json -obj $resultobj -message "Parameter $name is not a Yaml list."
+    # If $value -eq $null, the parameter was unspecified by the user (deliberately or not)
+    # Please leave $null-values intact, modules need to know if a parameter was specified
+    if ($value -ne $null) {
+        if ($type -eq "path") {
+            # Expand environment variables on path-type
+            $value = Expand-Environment($value)
+        } elseif ($type -eq "str") {
+            # Convert str types to real Powershell strings
+            $value = $value.ToString()
+        } elseif ($type -eq "bool") {
+            # Convert boolean types to real Powershell booleans
+            $value = $value | ConvertTo-Bool
+        } elseif ($type -eq "int") {
+            # Convert int types to real Powershell integers
+            $value = $value -as [int]
+        } elseif ($type -eq "float") {
+            # Convert float types to real Powershell floats
+            $value = $value -as [float]
+        } elseif ($type -eq "list") {
+            if ($value -is [array]) {
+                # Nothing to do
+            } elseif ($value -is [string]) {
+                # Convert string type to real Powershell array
+                $value = $value -split ","
+            } else {
+                Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter $name is not a YAML list."
+            }
         }
     }
 
