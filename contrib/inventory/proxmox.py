@@ -38,9 +38,11 @@ from six import iteritems
 
 from ansible.module_utils.urls import open_url
 
+
 class ProxmoxNodeList(list):
     def get_names(self):
         return [node['node'] for node in self]
+
 
 class ProxmoxVM(dict):
     def get_variables(self):
@@ -48,6 +50,7 @@ class ProxmoxVM(dict):
         for key, value in iteritems(self):
             variables['proxmox_' + key] = value
         return variables
+
 
 class ProxmoxVMList(list):
     def __init__(self, data=[]):
@@ -68,13 +71,16 @@ class ProxmoxVMList(list):
 
         return variables
 
+
 class ProxmoxPoolList(list):
     def get_names(self):
         return [pool['poolid'] for pool in self]
 
+
 class ProxmoxPool(dict):
     def get_members_name(self):
         return [member['name'] for member in self['members'] if member['template'] != 1]
+
 
 class ProxmoxAPI(object):
     def __init__(self, options):
@@ -139,6 +145,7 @@ class ProxmoxAPI(object):
     def pool(self, poolid):
         return ProxmoxPool(self.get('api2/json/pools/{}'.format(poolid)))
 
+
 def main_list(options):
     results = {
         'all': {
@@ -199,6 +206,7 @@ def main_list(options):
 
     return results
 
+
 def main_host(options):
     proxmox_api = ProxmoxAPI(options)
     proxmox_api.auth()
@@ -210,6 +218,7 @@ def main_host(options):
             return qemu.get_variables()
 
     return {}
+
 
 def main():
     parser = OptionParser(usage='%prog [options] --list | --host HOSTNAME')
@@ -234,6 +243,7 @@ def main():
         indent = 2
 
     print(json.dumps(data, indent=indent))
+
 
 if __name__ == '__main__':
     main()

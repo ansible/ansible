@@ -54,6 +54,7 @@ except ImportError as e:
 # Imports for ansible
 import ConfigParser
 
+
 class AzureInventory(object):
     def __init__(self):
         """Main execution path."""
@@ -171,10 +172,9 @@ class AzureInventory(object):
         parser.add_argument('--list-images', action='store',
                             help='Get all available images.')
         parser.add_argument('--refresh-cache',
-            action='store_true', default=False,
-            help='Force refresh of thecache by making API requests to Azure '
-                 '(default: False - use cache files)',
-        )
+                            action='store_true', default=False,
+                            help='Force refresh of thecache by making API requests to Azure '
+                            '(default: False - use cache files)')
         parser.add_argument('--host', action='store',
                             help='Get all information about an instance.')
         self.args = parser.parse_args()
@@ -198,7 +198,7 @@ class AzureInventory(object):
         associated with a cloud service.
         """
         try:
-            for deployment in self.sms.get_hosted_service_properties(cloud_service.service_name,embed_detail=True).deployments.deployments:
+            for deployment in self.sms.get_hosted_service_properties(cloud_service.service_name, embed_detail=True).deployments.deployments:
                 self.add_deployment(cloud_service, deployment)
         except Exception as e:
             sys.exit("Error: Failed to access deployments - {0}".format(str(e)))
