@@ -278,9 +278,11 @@ Expected output format in Device mode
 }
 """
 
+
 def fail(msg):
     sys.stderr.write("%s\n" % msg)
     sys.exit(1)
+
 
 class AosInventory(object):
 
@@ -303,10 +305,10 @@ class AosInventory(object):
         # ----------------------------------------------------
         # Open session to AOS
         # ----------------------------------------------------
-        aos = Session(  server=self.aos_server,
-                        port=self.aos_server_port,
-                        user=self.aos_username,
-                        passwd=self.aos_password)
+        aos = Session(server=self.aos_server,
+                      port=self.aos_server_port,
+                      user=self.aos_username,
+                      passwd=self.aos_password)
 
         aos.login()
 
@@ -314,10 +316,10 @@ class AosInventory(object):
         self.add_var_to_group('all', 'aos_session', aos.session)
 
         # Add the AOS server itself in the inventory
-        self.add_host_to_group("all", 'aos' )
-        self.add_var_to_host("aos", "ansible_ssh_host", self.aos_server )
-        self.add_var_to_host("aos", "ansible_ssh_pass", self.aos_password )
-        self.add_var_to_host("aos", "ansible_ssh_user", self.aos_username )
+        self.add_host_to_group("all", 'aos')
+        self.add_var_to_host("aos", "ansible_ssh_host", self.aos_server)
+        self.add_var_to_host("aos", "ansible_ssh_pass", self.aos_password)
+        self.add_var_to_host("aos", "ansible_ssh_user", self.aos_username)
 
         # ----------------------------------------------------
         # Build the inventory
@@ -336,7 +338,7 @@ class AosInventory(object):
             for dev_name, dev_id in bp.params['devices'].value.items():
 
                 self.add_host_to_group('all', dev_name)
-                device = aos.Devices.find( uid=dev_id)
+                device = aos.Devices.find(uid=dev_id)
 
                 if 'facts' in device.value.keys():
                     self.add_device_facts_to_var(dev_name, device)
@@ -344,7 +346,7 @@ class AosInventory(object):
                 # Define admin State and Status
                 if 'user_config' in device.value.keys():
                     if 'admin_state' in device.value['user_config'].keys():
-                        self.add_var_to_host(dev_name, 'admin_state', device.value['user_config']['admin_state'] )
+                        self.add_var_to_host(dev_name, 'admin_state', device.value['user_config']['admin_state'])
 
                 self.add_device_status_to_var(dev_name, device)
 
@@ -496,7 +498,6 @@ class AosInventory(object):
         except:
             pass
 
-
     def parse_cli_args(self):
         """ Command line argument processing """
 
@@ -554,7 +555,7 @@ class AosInventory(object):
                              'ansible_ssh_host',
                              device.value['facts']['mgmt_ipaddr'])
 
-        self.add_var_to_host(device_name,'id', device.id)
+        self.add_var_to_host(device_name, 'id', device.id)
 
         # self.add_host_to_group('all', device.name)
         for key, value in device.value['facts'].items():
