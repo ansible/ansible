@@ -14,22 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import json
 
-# TODO: used temporarily for backward compatibility with older versions of ansible but should be removed once included in the distro.
-import logging
-
-try:
-    import boto
-except ImportError:
-    pass
-
-try:
-    import boto3
-    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -41,7 +29,7 @@ DOCUMENTATION = '''
           It is idempotent and supports "Check" mode.  Use module M(batch_compute_environment) to manage the compute
           environment, M(batch_job_queue) to manage job queues, M(batch_job_definition) to manage job definitions.
 
-    version_added: "2.4?"
+    version_added: "2.4"
 
     author: Jon Meran (@jonmer85)
     options:
@@ -67,6 +55,7 @@ DOCUMENTATION = '''
           - Default parameter substitution placeholders to set in the job definition. Parameters are specified as a
             key-value pair mapping. Parameters in a SubmitJob request override any corresponding parameter defaults from
             the job definition.
+        type: dict
 
       image:
         description:
@@ -93,6 +82,7 @@ DOCUMENTATION = '''
           - The command that is passed to the container. This parameter maps to Cmd in the Create a container section of
             the Docker Remote API and the COMMAND parameter to docker run. For more information,
             see https://docs.docker.com/engine/reference/builder/#cmd.
+        type: list
 
       job_role_arn:
         description:
@@ -102,18 +92,21 @@ DOCUMENTATION = '''
         description:
           - A list of data volumes used in a job. List of dictionaries with the following
             form: { host: { sourcePath: <string> }, name: <string> }
+        type: list
 
       environment:
         description:
           - The environment variables to pass to a container. This parameter maps to Env in the Create a container section
             of the Docker Remote API and the --env option to docker run. List of dictionaries with the following
             form: { name: <string>, value: <string> }
+        type: list
 
       mount_points:
         description:
           - The mount points for data volumes in your container. This parameter maps to Volumes in the Create a container
             section of the Docker Remote API and the --volume option to docker run. List of dictionaries with the following
             form: { containerPath: <string>, readOnly: <boolean>, sourceVolume: <string> }
+        type: list
 
       readonly_root_filesystem:
         description:
@@ -132,6 +125,7 @@ DOCUMENTATION = '''
           - A list of ulimits to set in the container. This parameter maps to Ulimits in the Create a container section
             of the Docker Remote API and the --ulimit option to docker run. List of dictionaries with the following
             form: { hardLimit: <int>, name: <string>, softLimit: <int> }.
+        type: list
 
       user:
         description:
@@ -189,6 +183,19 @@ RETURN = '''
         returned: success
         type: string
     '''
+
+# TODO: used temporarily for backward compatibility with older versions of ansible but should be removed once included in the distro.
+try:
+    import boto
+except ImportError:
+    pass
+
+try:
+    import boto3
+    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
 
 # ---------------------------------------------------------------------------------------------------
 #

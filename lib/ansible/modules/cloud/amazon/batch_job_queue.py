@@ -14,22 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import json
 
-# TODO: used temporarily for backward compatibility with older versions of ansible but should be removed once included in the distro.
-import logging
-
-try:
-    import boto
-except ImportError:
-    pass
-
-try:
-    import boto3
-    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -41,7 +29,7 @@ DOCUMENTATION = '''
           It is idempotent and supports "Check" mode.  Use module M(batch_compute_environment) to manage the compute
           environment, M(batch_job_queue) to manage job queues, M(batch_job_definition) to manage job definitions.
 
-    version_added: "2.4?"
+    version_added: "2.4"
 
     author: Jon Meran (@jonmer85)
     options:
@@ -78,6 +66,7 @@ DOCUMENTATION = '''
             environments must be in the VALID state before you can associate them with a job queue. You can associate up to
             3 compute environments with a job queue.
         required: true
+        type: list
 
     requirements:
         - boto3
@@ -119,15 +108,25 @@ RETURN = '''
         type: string
     '''
 
+# TODO: used temporarily for backward compatibility with older versions of ansible but should be removed once included in the distro.
+try:
+    import boto
+except ImportError:
+    pass
+
+try:
+    import boto3
+    from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
+
 # ---------------------------------------------------------------------------------------------------
 #
 #   Helper Functions & classes
 #
 # ---------------------------------------------------------------------------------------------------
 
-# logger = logging.getLogger()
-# logging.basicConfig(filename='ansible_debug.log')
-# logger.setLevel(logging.DEBUG)
 
 
 class AWSConnection:
