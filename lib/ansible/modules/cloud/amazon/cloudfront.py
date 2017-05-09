@@ -1412,8 +1412,8 @@ class CloudFrontValidationManager:
 
     def validate_attribute_with_allowed_values(self, attribute, attribute_name, allowed_list):
         try:
-            if (attribute is not None and ((isinstance(attribute, list)
-                                           and (not set(attribute) < set(allowed_list))) or (not
+            if (attribute is not None and ((isinstance(attribute, list) and (not
+                                           set(attribute) < set(allowed_list))) or (not
                                            isinstance(attribute, list) and attribute not in allowed_list))):
                 self.module.fail_json(msg='the attribute {0} must be one of {1}'.format(attribute_name,
                                                                                         ' '.join(str(a) for a in allowed_list)))
