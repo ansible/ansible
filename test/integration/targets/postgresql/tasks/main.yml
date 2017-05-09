@@ -1014,9 +1014,13 @@
 # dump/restore tests
 # ============================================================
 - include: state_dump_restore.yml file=dbdata.sql
-- include: state_dump_restore.yml file=dbdata.gz
-- include: state_dump_restore.yml file=dbdata.bz2
-- include: state_dump_restore.yml file=dbdata.xz
+- include: state_dump_restore.yml file=dbdata.sql.gz
+- include: state_dump_restore.yml file=dbdata.sql.bz2
+- include: state_dump_restore.yml file=dbdata.sql.xz
+- include: state_dump_restore.yml file=dbdata.tar
+- include: state_dump_restore.yml file=dbdata.tar.gz
+- include: state_dump_restore.yml file=dbdata.tar.bz2
+- include: state_dump_restore.yml file=dbdata.tar.xz
 
 #
 # Cleanup

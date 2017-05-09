@@ -65,7 +65,8 @@ options:
         dump requires a target definition to which the database will be backed up.
         (Added in 2.4) restore also requires a target definition from which the database will be restored.
         (Added in 2.4) The format of the backup will be detected based on the target name.
-        Supported formats for dump and restore are: .gz, .tar, .bz, .xz, and .sql
+        Supported compression formats for dump and restore are: .bz2, .gz, and .xz
+        Supported formats for dump and restore are: .sql and .tar
     required: false
     default: present
     choices: [ "present", "absent", "dump", "restore" ]
@@ -94,6 +95,12 @@ EXAMPLES = '''
     template: template0
 
 # Dump an existing database to a file
+- postgresql_db:
+    name: acme
+    state: dump
+    target: /tmp/acme.sql
+
+# Dump an existing database to a file (with compression)
 - postgresql_db:
     name: acme
     state: dump
@@ -296,10 +303,13 @@ def db_restore(module, target,
 
     elif os.path.splitext(target)[-1] == '.tar':
         flags.append(' --format=Tar {0}'.format(target))
-        comp_prog_path = [module.get_bin_path('pg_restore', True)]
+        cmd = module.get_bin_path('pg_restore', True)
 
     elif os.path.splitext(target)[-1] == '.gz':
         comp_prog_path = module.get_bin_path('zcat', True)
+
+    elif os.path.splitext(target)[-1] == '.bz2':
+        comp_prog_path = module.get_bin_path('bzcat', True)
 
     elif os.path.splitext(target)[-1] == '.xz':
         comp_prog_path = module.get_bin_path('xzcat', True)
@@ -314,9 +324,9 @@ def db_restore(module, target,
         p1.wait()
         if p1.returncode != 0:
             stderr1 = p1.stderr.read()
-            return p1.returncode, '', stderr1
+            return p1.returncode, '', stderr1, 'cmd: ****'
         else:
-            return p2.returncode, '', stderr2
+            return p2.returncode, '', stderr2, 'cmd: ****'
     else:
         cmd = '{0} < {1}'.format(cmd, pipes.quote(target))
 
@@ -329,7 +339,7 @@ def do_with_password(module, cmd, login_password):
                 'login_password not supported'
             )
         rc, stderr, stdout = module.run_command(cmd, use_unsafe_shell=True)
-        return rc, stderr, stdout
+        return rc, stderr, stdout, cmd
     finally:
         pass
 
@@ -447,11 +457,11 @@ def main():
         elif state in ("dump", "restore"):
             method = state == "dump" and db_dump or db_restore
             try:
-                rc, stdout, stderr = method(module, target, db, **kw)
+                rc, stdout, stderr, cmd = method(module, target, db, **kw)
                 if rc != 0:
-                    module.fail_json(msg="stdout: {0}\nstderr: {1}".format(stdout, stderr))
+                    module.fail_json(msg=stderr, stdout=stdout, rc=rc, cmd=cmd)
                 else:
-                    module.exit_json(changed=True, msg=stdout)
+                    module.exit_json(changed=True, msg=stdout, stderr=stderr, rc=rc, cmd=cmd)
             except SQLParseError:
                 e = get_exception()
                 module.fail_json(msg=str(e))
