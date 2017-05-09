@@ -21,11 +21,11 @@
 - set_fact: db_file_name="{{tmp_dir}}/{{file}}"
 
 - set_fact:
-     pg_str: "psql -U postgres {{ db_name }}"
+     pg_str: "psql -U {{ pg_user }} {{ db_name }}"
      pg_map:
          name: "{{ db_name }}"
          target: "{{ db_file_name }}"
-         login_user: "postgres"
+         login_user: "{{ pg_user }}"
 
 - set_fact:
      sql_create: "create table employee(id int, name varchar(100));"
@@ -33,7 +33,7 @@
      sql_select: "select * from  employee;"
 
 - name: state dump/restore - create database
-  postgresql_db: name={{ db_name }} state=present
+  postgresql_db: "{{ pg_map | combine({'state': 'present'}) }}"
 
 - name: state dump/restore - create table employee
   command: '{{ pg_str }} -c "{{ sql_create }}"'
@@ -47,7 +47,7 @@
 - name: test state=dump to backup the database (expect changed=true)
   postgresql_db: "{{ pg_map | combine({'state': 'dump'}) }}"
   register: result
-  become_user: postgres
+  become_user: "{{ pg_user }}"
   become: True
 
 - name: assert output message backup the database
@@ -60,15 +60,15 @@
   register: result
 
 - name: state dump/restore - remove database for restore
-  postgresql_db: name={{ db_name }} state=absent
+  postgresql_db: "{{ pg_map | combine({'state': 'absent'}) }}"
 
 - name: state dump/restore - re-create database
-  postgresql_db: name={{ db_name }} state=present
+  postgresql_db: "{{ pg_map | combine({'state': 'present'}) }}"
 
 - name: test state=restore to restore the database (expect changed=true)
   postgresql_db: "{{ pg_map | combine({'state': 'restore'}) }}"
   register: result
-  become_user: postgres
+  become_user: "{{ pg_user }}"
   become: True
 
 - name: assert output message restore the database
@@ -85,7 +85,7 @@
        - "'Joe Smith' in result.stdout"
 
 - name: state dump/restore - remove database name
-  postgresql_db: name={{ db_name }} state=absent
+  postgresql_db: "{{ pg_map | combine({'state': 'absent'}) }}"
 
 - name: remove file name
   file: name={{ db_file_name }}  state=absent
