@@ -92,6 +92,12 @@ EXAMPLES = '''
     lc_collate: de_DE.UTF-8
     lc_ctype: de_DE.UTF-8
     template: template0
+
+# Dump an existing database to a file
+- postgresql_db:
+    name: acme
+    state: dump
+    target: /tmp/acme.sql.gz
 '''
 
 HAS_PSYCOPG2 = False
@@ -217,22 +223,24 @@ def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
             return True
 
 def db_dump(module, target,
-            db=None, host=None,
-            user=None, port=None,
-            password=None):
+            db=None,
+            login_user=None,
+            login_password=None,
+            login_host=None,
+            login_unix_socket=None,
+            port=None,
+            **kw):
 
-    if password:
-        raise NotSupportedError(
-            'password not supported for pg_dump'
-        )
-
+    flags = ''
     if db:
-        flags = ' --dbname={0}'.format(pipes.quote(db))
-    if host:
-        flags += ' --host={0}'.format(pipes.quote(host))
-    if port:
-        flags += ' --port={0}'.format(pipes.quote(port))
-    if user:
+        flags += ' {0}'.format(pipes.quote(db))
+    if login_unix_socket:
+        flags += ' --host={0}'.format(pipes.quote(login_unix_socket))
+    elif login_host:
+        flags += ' --host={0}'.format(pipes.quote(login_host))
+        if port:
+            flags += ' --port={0}'.format(pipes.quote(port))
+    if login_user:
         flags += ' --username={0}'.format(pipes.quote(user))
 
     cmd = module.get_bin_path('pg_dump', True)
@@ -257,20 +265,18 @@ def db_dump(module, target,
     else:
         cmd = '{0} > {1}'.format(cmd, pipes.quote(target))
 
-
-    rc, stderr, stdout = module.run_command(cmd, use_unsafe_shell=True)
-    return rc, stderr, stdout
+    return do_with_password(module, cmd, login_password)
 
 def db_restore(module, target,
-               db=None, host=None,
-               user=None, port=None,
-               password=None):
-    # set initial flags. These are the same in pg_restore as psql
+            db=None,
+            login_user=None,
+            login_password=None,
+            login_host=None,
+            login_unix_socket=None,
+            port=None,
+            **kw):
 
-    if password:
-        raise NotSupportedError(
-            'password not supported for pg_restore'
-        )
+    # set initial flags. These are the same in pg_restore as psql
 
     flags = []
     if db:
@@ -314,8 +320,17 @@ def db_restore(module, target,
     else:
         cmd = '{0} < {1}'.format(cmd, pipes.quote(target))
 
-    rc, stderr, stdout = module.run_command(cmd, use_unsafe_shell=True)
-    return rc, stderr, stdout
+    return do_with_password(module, cmd, login_password)
+
+def do_with_password(module, cmd, login_password):
+    try:
+        if login_password:
+            os.environ["PGPASSWORD"] = login_password
+        rc, stderr, stdout = module.run_command(cmd, use_unsafe_shell=True)
+        return rc, stderr, stdout
+    finally:
+        if login_password:
+            del os.environ["PGPASSWORD"]
 
 # ===========================================
 # Module execution.
@@ -428,17 +443,10 @@ def main():
                 e = get_exception()
                 module.fail_json(msg=str(e))
 
-        elif state == "dump":
+        elif state in ("dump", "restore"):
+            method = state == "dump" and db_dump or db_restore
             try:
-                changed = db_dump(module, target, db, **kw)
-
-            except Exception:
-                e = get_exception()
-                module.fail_json(msg=str(e))
-
-        elif state == "restore":
-            try:
-                rc, stdout, stderr = db_restore(module, target, db, **kw)
+                rc, stdout, stderr = method(module, target, db, **kw)
                 if rc != 0:
                     module.fail_json(msg="{0}".format(stderr))
                 else:
