@@ -22,7 +22,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 DOCUMENTATION = '''
 ---
-module: apache2_fragment
+module: apache2_conf
 version_added: 2.4
 author:
     - Den Ivanov (@urajio)
@@ -49,17 +49,17 @@ requirements: ["a2enconf","a2disconf","a2ensite","a2dissite"]
 
 EXAMPLES = '''
 # enable config fragmen charset.conf
-- apache2_fragment:
+- apache2_conf:
     type: conf
     state: present
     name: charset
 # disable config fragment
-- apache2_fragment:
+- apache2_conf:
     type: conf
     state: absent
     name: localized-error-pages
 # enable default-ssl site
-- apache2_fragment:
+- apache2_conf:
     type: site
     name: default-ssl
 '''
