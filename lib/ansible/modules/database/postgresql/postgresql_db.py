@@ -280,22 +280,22 @@ def db_restore(module, target,
 
     flags = []
     if db:
-        flags.append(' --dbname={0} '.format(pipes.quote(db)))
-    if host:
-        flags.append('--host={0} '.format(host))
+        flags.append(' --dbname={0}'.format(pipes.quote(db)))
+    if login_host:
+        flags.append(' --host={0}'.format(login_host))
     if port:
-        flags.append('--port={0} '.format(port))
-    if user:
-        flags.append('--username={0} '.format(user))
+        flags.append(' --port={0}'.format(port))
+    if login_user:
+        flags.append(' --username={0}'.format(login_user))
 
     comp_prog_path = None
     cmd = module.get_bin_path('psql', True)
 
     if os.path.splitext(target)[-1] == '.sql':
-        flags.append('--file={0} '.format(target))
+        flags.append(' --file={0}'.format(target))
 
     elif os.path.splitext(target)[-1] == '.tar':
-        flags.append('--format=Tar {0}'.format(target))
+        flags.append(' --format=Tar {0}'.format(target))
         comp_prog_path = [module.get_bin_path('pg_restore', True)]
 
     elif os.path.splitext(target)[-1] == '.gz':
@@ -449,14 +449,12 @@ def main():
             try:
                 rc, stdout, stderr = method(module, target, db, **kw)
                 if rc != 0:
-                    module.fail_json(msg="{0}".format(stderr))
+                    module.fail_json(msg="stdout: {0}\nstderr: {1}".format(stdout, stderr))
                 else:
                     module.exit_json(changed=True, msg=stdout)
             except SQLParseError:
                 e = get_exception()
                 module.fail_json(msg=str(e))
-            except Exception:
-                e = get_exception()
 
     except NotSupportedError:
         e = get_exception()
