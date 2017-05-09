@@ -635,7 +635,6 @@ lib/ansible/modules/remote_management/hpilo/hponcfg.py
 lib/ansible/modules/remote_management/stacki/stacki_host.py
 lib/ansible/modules/remote_management/wakeonlan.py
 lib/ansible/modules/source_control/bzr.py
-lib/ansible/modules/source_control/github_hooks.py
 lib/ansible/modules/source_control/gitlab_group.py
 lib/ansible/modules/source_control/gitlab_project.py
 lib/ansible/modules/source_control/gitlab_user.py
