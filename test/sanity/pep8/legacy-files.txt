@@ -539,7 +539,6 @@ lib/ansible/modules/network/nxos/nxos_user.py
 lib/ansible/modules/network/nxos/nxos_vpc.py
 lib/ansible/modules/network/nxos/nxos_vpc_interface.py
 lib/ansible/modules/network/nxos/nxos_vrf.py
-lib/ansible/modules/network/nxos/nxos_vrf_af.py
 lib/ansible/modules/network/nxos/nxos_vrf_interface.py
 lib/ansible/modules/network/nxos/nxos_vrrp.py
 lib/ansible/modules/network/nxos/nxos_vtp_domain.py
