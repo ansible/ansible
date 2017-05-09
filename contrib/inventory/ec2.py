@@ -394,6 +394,10 @@ class Ec2Inventory(object):
         cache_dir = os.path.expanduser(config.get('ec2', 'cache_path'))
         if self.boto_profile:
             cache_dir = os.path.join(cache_dir, 'profile_' + self.boto_profile)
+        if not None in [os.environ.get('AWS_PROFILE')]:
+            cache_dir = os.path.join(cache_dir, 'aws_profile_' + os.environ.get('AWS_PROFILE'))
+        else:
+            cache_dir = os.path.join(cache_dir, 'aws_profile_default')
         if not os.path.exists(cache_dir):
             os.makedirs(cache_dir)
 
