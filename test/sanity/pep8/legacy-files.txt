@@ -6,7 +6,6 @@ contrib/inventory/cobbler.py
 contrib/inventory/collins.py
 contrib/inventory/consul_io.py
 contrib/inventory/digital_ocean.py
-contrib/inventory/docker.py
 contrib/inventory/ec2.py
 contrib/inventory/fleet.py
 contrib/inventory/foreman.py
