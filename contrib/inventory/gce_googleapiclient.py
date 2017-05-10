@@ -41,7 +41,7 @@ Options:
 All the parameters can also be set as environment variables using the 'GCE_' prefix (i.e. {1}API_VERSION=beta).
 """.format(basename(argv[0]), ENV_PREFIX)
 
-def list_all_projects(api_version='v1'):
+def get_all_projects(api_version='v1'):
     project_ids = []
 
     credentials = GoogleCredentials.get_application_default()
@@ -62,7 +62,7 @@ def list_all_projects(api_version='v1'):
 
     return project_ids
 
-def list_instances(project_id, zone, api_version='v1'):
+def get_instances(project_id, zone, api_version='v1'):
     instances = []
 
     credentials = GoogleCredentials.get_application_default()
@@ -135,7 +135,7 @@ def main(args):
     zone = args['--zone']
     api_version = args['--api-version']
 
-    instances = list_instances(project_id=project, zone=zone, api_version=api_version)
+    instances = get_instances(project_id=project, zone=zone, api_version=api_version)
 
     inventory_json = get_inventory(instances)
     print(json.dumps(inventory_json, sort_keys=True, indent=2, separators=(',', ': ')))
