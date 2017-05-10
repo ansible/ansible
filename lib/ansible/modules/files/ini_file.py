@@ -75,6 +75,12 @@ options:
      type: bool
      default: 'yes'
      version_added: "2.2"
+  allow_no_value:
+     description:
+       - allow option without value and without '=' symbol
+     required: false
+     default: false
+     version_added: "2.5"
 notes:
    - While it is possible to add an I(option) without specifying a I(value), this makes
      no sense.
@@ -112,18 +118,19 @@ from ansible.module_utils.basic import AnsibleModule
 
 def match_opt(option, line):
     option = re.escape(option)
-    return re.match('( |\t)*%s( |\t)*=' % option, line) \
-        or re.match('#( |\t)*%s( |\t)*=' % option, line) \
-        or re.match(';( |\t)*%s( |\t)*=' % option, line)
+    return re.match('( |\t)*%s( |\t)*(=|$)' % option, line) \
+        or re.match('#( |\t)*%s( |\t)*(=|$)' % option, line) \
+        or re.match(';( |\t)*%s( |\t)*(=|$)' % option, line)
 
 
 def match_active_opt(option, line):
     option = re.escape(option)
-    return re.match('( |\t)*%s( |\t)*=' % option, line)
+    return re.match('( |\t)*%s( |\t)*(=|$)' % option, line)
 
 
 def do_ini(module, filename, section=None, option=None, value=None,
-           state='present', backup=False, no_extra_spaces=False, create=True):
+           state='present', backup=False, no_extra_spaces=False, create=True,
+           allow_no_value=False):
 
     diff = dict(
         before='',
@@ -182,7 +189,10 @@ def do_ini(module, filename, section=None, option=None, value=None,
                     for i in range(index, 0, -1):
                         # search backwards for previous non-blank or non-comment line
                         if not re.match(r'^[ \t]*([#;].*)?$', ini_lines[i - 1]):
-                            ini_lines.insert(i, assignment_format % (option, value))
+                            if not value and allow_no_value:
+                                ini_lines.insert(i, '%s\n' % option)
+                            else:
+                                ini_lines.insert(i, assignment_format % (option, value))
                             msg = 'option added'
                             changed = True
                             break
@@ -197,7 +207,10 @@ def do_ini(module, filename, section=None, option=None, value=None,
                 if state == 'present':
                     # change the existing option line
                     if match_opt(option, line):
-                        newline = assignment_format % (option, value)
+                        if not value and allow_no_value:
+                            newline = '%s\n' % option
+                        else:
+                            newline = assignment_format % (option, value)
                         option_changed = ini_lines[index] != newline
                         changed = changed or option_changed
                         if option_changed:
@@ -228,7 +241,10 @@ def do_ini(module, filename, section=None, option=None, value=None,
 
     if not within_section and option and state == 'present':
         ini_lines.append('[%s]\n' % section)
-        ini_lines.append(assignment_format % (option, value))
+        if not value and allow_no_value:
+            ini_lines.append('%s\n' % option)
+        else:
+            ini_lines.append(assignment_format % (option, value))
         changed = True
         msg = 'section and option added'
 
@@ -259,6 +275,7 @@ def main():
             backup=dict(type='bool', default=False),
             state=dict(type='str', default='present', choices=['absent', 'present']),
             no_extra_spaces=dict(type='bool', default=False),
+            allow_no_value=dict(type='bool', default=False, required=False),
             create=dict(type='bool', default=True)
         ),
         add_file_common_args=True,
@@ -272,9 +289,10 @@ def main():
     state = module.params['state']
     backup = module.params['backup']
     no_extra_spaces = module.params['no_extra_spaces']
+    allow_no_value = module.params['allow_no_value']
     create = module.params['create']
 
-    (changed, backup_file, diff, msg) = do_ini(module, path, section, option, value, state, backup, no_extra_spaces, create)
+    (changed, backup_file, diff, msg) = do_ini(module, path, section, option, value, state, backup, no_extra_spaces, create, allow_no_value)
 
     if not module.check_mode and os.path.exists(path):
         file_args = module.load_file_common_arguments(module.params)
