@@ -16,9 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.0',
+    'status': ['preview'],
+    'supported_by': 'community',
+}
 
 
 DOCUMENTATION = '''
@@ -28,11 +30,11 @@ extends_documentation_fragment: nxos
 version_added: "2.2"
 short_description: Manages BGP neighbors configurations.
 description:
-    - Manages BGP neighbors configurations on NX-OS switches.
+  - Manages BGP neighbors configurations on NX-OS switches.
 author: Gabriele Gerbino (@GGabriele)
 notes:
-    - C(state=absent) removes the whole BGP neighbor configuration.
-    - Default, where supported, restores params default value.
+  - C(state=absent) removes the whole BGP neighbor configuration.
+  - Default, where supported, restores params default value.
 options:
   asn:
     description:
@@ -198,9 +200,6 @@ EXAMPLES = '''
     update_source: Ethernet1/3
     shutdown: default
     state: present
-    username: "{{ un }}"
-    password: "{{ pwd }}"
-    host: "{{ inventory_hostname }}"
 '''
 
 RETURN = '''
@@ -209,8 +208,8 @@ commands:
   returned: always
   type: list
   sample: ["router bgp 65535", "neighbor 3.3.3.3",
-          "remote-as 30", "update-source Ethernet1/3",
-          "description just a description", "local-as 20"]
+           "remote-as 30", "update-source Ethernet1/3",
+           "description just a description", "local-as 20"]
 '''
 
 import re
@@ -243,13 +242,13 @@ PARAM_TO_COMMAND_KEYMAP = {
     'maximum_peers': 'maximum-peers',
     'neighbor': 'neighbor',
     'pwd': 'password',
-    'pwd_type': 'password-type',
+    'pwd_type': 'password',
     'remote_as': 'remote-as',
     'remove_private_as': 'remove-private-as',
     'shutdown': 'shutdown',
     'suppress_4_byte_as': 'capability suppress 4-byte-as',
-    'timers_keepalive': 'timers-keepalive',
-    'timers_holdtime': 'timers-holdtime',
+    'timers_keepalive': 'timers',
+    'timers_holdtime': 'timers',
     'transport_passive_only': 'transport connection-mode passive',
     'update_source': 'update-source',
     'vrf': 'vrf'
@@ -343,15 +342,12 @@ def get_existing(module, args, warnings):
         'timers_holdtime',
         'timers_keepalive'
     ]
-    try:
-        asn_regex = r'.*router\sbgp\s(?P<existing_asn>\d+).*'
-        match_asn = re.match(asn_regex, str(netcfg), re.DOTALL)
-        existing_asn_group = match_asn.groupdict()
-        existing_asn = existing_asn_group['existing_asn']
-    except AttributeError:
-        existing_asn = ''
 
-    if existing_asn:
+    asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+).*', re.S)
+    match_asn = asn_regex.match(str(netcfg))
+
+    if match_asn:
+        existing_asn = match_asn.group('existing_asn')
         parents = ["router bgp {0}".format(existing_asn)]
         if module.params['vrf'] != 'default':
             parents.append('vrf {0}'.format(module.params['vrf']))
@@ -378,14 +374,11 @@ def get_existing(module, args, warnings):
 
 def apply_key_map(key_map, table):
     new_dict = {}
-    for key, value in table.items():
+    for key in table:
         new_key = key_map.get(key)
         if new_key:
-            value = table.get(key)
-            if value:
-                new_dict[new_key] = value
-            else:
-                new_dict[new_key] = value
+            new_dict[new_key] = table.get(key)
+
     return new_dict
 
 
@@ -397,10 +390,8 @@ def state_present(module, existing, proposed, candidate):
     for key, value in proposed_commands.items():
         if value is True:
             commands.append(key)
-
         elif value is False:
             commands.append('no {0}'.format(key))
-
         elif value == 'default':
             if existing_commands.get(key):
                 existing_value = existing_commands.get(key)
@@ -445,7 +436,7 @@ def state_present(module, existing, proposed, candidate):
                 commands.append(command)
 
     if commands:
-        parents = ["router bgp {0}".format(module.params['asn'])]
+        parents = ['router bgp {0}'.format(module.params['asn'])]
         if module.params['vrf'] != 'default':
             parents.append('vrf {0}'.format(module.params['vrf']))
 
@@ -495,16 +486,12 @@ def main():
         update_source=dict(required=False, type='str'),
         m_facts=dict(required=False, default=False, type='bool'),
         state=dict(choices=['present', 'absent'], default='present', required=False),
-        include_defaults=dict(default=True),
-        config=dict(),
-        save=dict(type='bool', default=False)
     )
-
     argument_spec.update(nxos_argument_spec)
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_together=[['timer_bgp_hold', 'timer_bgp_keepalive']],
+        required_together=[['timers_holdtime', 'timers_keepalive']],
         supports_check_mode=True,
     )
 
@@ -513,53 +500,27 @@ def main():
     result = dict(changed=False, warnings=warnings)
 
     state = module.params['state']
+
     if module.params['pwd_type'] == 'default':
         module.params['pwd_type'] = '0'
 
-    args = [
-        'asn',
-        'capability_negotiation',
-        'connected_check',
-        'description',
-        'dynamic_capability',
-        'ebgp_multihop',
-        'local_as',
-        'log_neighbor_changes',
-        'low_memory_exempt',
-        'maximum_peers',
-        'neighbor',
-        'pwd',
-        'pwd_type',
-        'remote_as',
-        'remove_private_as',
-        'shutdown',
-        'suppress_4_byte_as',
-        'timers_keepalive',
-        'timers_holdtime',
-        'transport_passive_only',
-        'update_source',
-        'vrf'
-    ]
-
+    args = PARAM_TO_COMMAND_KEYMAP.keys()
     existing = get_existing(module, args, warnings)
-    if existing.get('asn'):
-        if (existing.get('asn') != module.params['asn'] and
-                state == 'present'):
+
+    if existing.get('asn') and state == 'present':
+        if existing['asn'] != module.params['asn']:
             module.fail_json(msg='Another BGP ASN already exists.',
                              proposed_asn=module.params['asn'],
                              existing_asn=existing.get('asn'))
 
     proposed_args = dict((k, v) for k, v in module.params.items()
                          if v is not None and k in args)
-
     proposed = {}
     for key, value in proposed_args.items():
         if key not in ['asn', 'vrf', 'neighbor', 'pwd_type']:
             if str(value).lower() == 'default':
-                value = PARAM_TO_DEFAULT_KEYMAP.get(key)
-                if value is None:
-                    value = 'default'
-            if existing.get(key) or (not existing.get(key) and value):
+                value = PARAM_TO_DEFAULT_KEYMAP.get(key, 'default')
+            if existing.get(key) != value:
                 proposed[key] = value
 
     candidate = CustomNetworkConfig(indent=3)
@@ -569,9 +530,10 @@ def main():
         state_absent(module, existing, proposed, candidate)
 
     if candidate:
+        candidate = candidate.items_text()
         load_config(module, candidate)
         result['changed'] = True
-        result['commands'] = candidate.items_text()
+        result['commands'] = candidate
     else:
         result['commands'] = []
 
