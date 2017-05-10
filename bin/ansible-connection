@@ -45,6 +45,7 @@ from io import BytesIO
 
 from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle, StringIO
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import connection_loader
@@ -73,11 +74,11 @@ def do_fork():
                 sys.exit(0)
 
             if C.DEFAULT_LOG_PATH != '':
-                out_file = file(C.DEFAULT_LOG_PATH, 'a+')
-                err_file = file(C.DEFAULT_LOG_PATH, 'a+', 0)
+                out_file = open(C.DEFAULT_LOG_PATH, 'ab+')
+                err_file = open(C.DEFAULT_LOG_PATH, 'ab+', 0)
             else:
-                out_file = file('/dev/null', 'a+')
-                err_file = file('/dev/null', 'a+', 0)
+                out_file = open('/dev/null', 'ab+')
+                err_file = open('/dev/null', 'ab+', 0)
 
             os.dup2(out_file.fileno(), sys.stdout.fileno())
             os.dup2(err_file.fileno(), sys.stderr.fileno())
@@ -254,19 +255,24 @@ class Server():
             os.remove(self.path)
 
 def main():
+    # Need stdin as a byte stream
+    if PY3:
+        stdin = sys.stdin.buffer
+    else:
+        stdin = sys.stdin
 
     try:
         # read the play context data via stdin, which means depickling it
         # FIXME: as noted above, we will probably need to deserialize the
         #        connection loader here as well at some point, otherwise this
         #        won't find role- or playbook-based connection plugins
-        cur_line = sys.stdin.readline()
-        init_data = ''
-        while cur_line.strip() != '#END_INIT#':
-            if cur_line  == '':
-                raise Exception("EOL found before init data was complete")
+        cur_line = stdin.readline()
+        init_data = b''
+        while cur_line.strip() != b'#END_INIT#':
+            if cur_line  == b'':
+                raise Exception("EOF found before init data was complete")
             init_data += cur_line
-            cur_line = sys.stdin.readline()
+            cur_line = stdin.readline()
         src = BytesIO(to_bytes(init_data))
         pc_data = cPickle.load(src)
 
