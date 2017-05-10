@@ -24,7 +24,7 @@ import subprocess
 import sys
 
 from ansible.module_utils._text import to_bytes
-from ansible.module_utils.six.moves import cPickle, StringIO
+from ansible.module_utils.six.moves import cPickle
 from ansible.plugins.connection import ConnectionBase
 
 try:
@@ -52,9 +52,8 @@ class Connection(ConnectionBase):
         stdin = os.fdopen(master, 'wb', 0)
         os.close(slave)
 
-        src = StringIO()
-        cPickle.dump(self._play_context.serialize(), src)
-        stdin.write(src.getvalue())
+        src = cPickle.dumps(self._play_context.serialize())
+        stdin.write(src)
         src.close()
 
         stdin.write(b'\n#END_INIT#\n')
