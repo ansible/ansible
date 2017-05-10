@@ -34,6 +34,14 @@
       - result1.changed == True
       - result1.msg == 'section and option added'
 
+# sha1sum: df66db77ecc39daa88abd1aac930dd6b762547b4'
+# expected content:
+#"""
+#
+#[drinks]
+#fav = lemonade
+#"""
+
 - name: stat the file to compute checksum
   stat:
     path: "{{ output_file }}"
@@ -72,6 +80,15 @@
       - result3.changed == True
       - result3.msg == 'option added'
 
+# sha1sum: 1bfd93f5e6d8a9ca932864a66a85c50cf0a222fe
+# expected content:
+#"""
+#
+#[drinks]
+#fav = lemonade
+#hate = coke
+#"""
+
 - name: stat the file to compute checksum
   stat:
     path: "{{ output_file }}"
@@ -104,7 +121,7 @@
 - name: Verify content of ini file is as expected (checksum)
   assert:
     that:
-      - resultstat3.stat.checksum == 'df66db77ecc39daa88abd1aac930dd6b762547b4'
+      - resultstat3.stat.checksum == resultstat1.stat.checksum
 
 - name: remove section 'drinks'
   ini_file:
@@ -118,6 +135,12 @@
     that:
       - result5.changed == True
       - result5.msg == 'section removed'
+
+# sha1sum: adc83b19e793491b1c6ea0fd8b46cd9f32e592fc
+# expected content:
+#"""
+#
+#"""
 
 - name: stat the file to compute checksum
   stat:
