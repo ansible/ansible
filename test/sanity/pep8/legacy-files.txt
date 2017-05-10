@@ -687,7 +687,6 @@ lib/ansible/modules/system/puppet.py
 lib/ansible/modules/system/runit.py
 lib/ansible/modules/system/seboolean.py
 lib/ansible/modules/system/sefcontext.py
-lib/ansible/modules/system/selinux.py
 lib/ansible/modules/system/seport.py
 lib/ansible/modules/system/service.py
 lib/ansible/modules/system/setup.py
