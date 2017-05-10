@@ -256,11 +256,6 @@ def get_all_billing_projects(billing_account_name, cache_dir, refresh_cache=True
 
     return project_ids
 
-<<<<<<< HEAD
-=======
-def get_all_projects(api_version='v1'):
-    project_ids = []
->>>>>>> change list_* functions to get_*
 
 def get_hostvars(instance):
     hostvars = {
@@ -293,12 +288,7 @@ def get_hostvars(instance):
         if 'subnetwork' in interface:
             hostvars['gce_subnetwork'] = interface['subnetwork'].split('/')[-1]
 
-<<<<<<< HEAD
         access_configs = interface.get('accessConfigs', [])
-=======
-def get_instances(project_id, zone, api_version='v1'):
-    instances = []
->>>>>>> change list_* functions to get_*
 
         for access_config in access_configs:
             hostvars['gce_public_ip'] = access_config.get('natIP', None)
@@ -316,12 +306,7 @@ def get_ssh_host(network_interfaces, looking_public=True):
         if not looking_public:
             return interface['networkIP']
 
-<<<<<<< HEAD
         access_configs = interface.get('accessConfigs', [])
-=======
-def get_hostvars(instance):
-    hostvars = {}
->>>>>>> renamed functions from parse_* to get_*
 
         for access_config in access_configs:
             if 'natIP' in access_config:
@@ -342,7 +327,6 @@ def get_boot_image(disks):
         return None
 
 
-<<<<<<< HEAD
 def get_uuid(instance):
     """
     Use only for libcloud retro compatibility
@@ -357,10 +341,6 @@ def get_inventory(instances):
     inventory = collections.defaultdict(list)
     inventory['_meta'] = collections.defaultdict(
         lambda: collections.defaultdict(dict))
-=======
-def get_inventory(instances):
-    inventory = {}
->>>>>>> renamed functions from parse_* to get_*
 
     for instance in instances:
         if instance['status'] in ['RUNNING', 'STAGING']:
@@ -373,12 +353,8 @@ def get_inventory(instances):
             for tag in instance['tags'].get('items', []):
                 inventory['tag_{tag}'.format(tag=tag)].append(instance['name'])
 
-<<<<<<< HEAD
             project = instance['selfLink'].split('/')[6]
             inventory['project_{project}'.format(project=project)].append(instance['name'])
-=======
-        inventory['_meta']['hostvars'][instance['name']] = get_hostvars(instance)
->>>>>>> renamed functions from parse_* to get_* (fix)
 
             # zone groups are not prefixed to be compatible with the previous gce.py
             zone = instance['zone'].split('/')[-1]
@@ -605,19 +581,10 @@ def main(args):
               file=sys.stderr)
         exit(1)
 
-<<<<<<< HEAD
     if num_threads < 1:
         num_threads = 1
-=======
-    instances = get_instances(project_id=project, zone=zone, api_version=api_version)
->>>>>>> change list_* functions to get_*
 
-<<<<<<< HEAD
     pool_workers = mp.Pool(num_threads, signal_handler)
-=======
-    inventory_json = get_inventory(instances)
-    print(json.dumps(inventory_json, sort_keys=True, indent=2, separators=(',', ': ')))
->>>>>>> renamed functions from parse_* to get_* (fix)
 
     if not project_list:
         project_list = get_all_billing_projects(billing_account_name, cache_dir, refresh_cache)
