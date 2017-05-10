@@ -1,0 +1,130 @@
+---
+# test code for ini_file plugins
+# (c) 2017 Red Hat Inc.
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: record the output directory
+  set_fact: output_file={{output_dir}}/foo.ini
+
+- name: add "fav=lemonade" is in section "[drinks]" in specified file
+  ini_file:
+    path: "{{ output_file }}"
+    section: drinks
+    option: fav
+    value: lemonade
+  register: result1
+
+- name: verify ini_file 'changed' is true
+  assert:
+    that:
+      - result1.changed == True
+      - result1.msg == 'section and option added'
+
+- name: stat the file to compute checksum
+  stat:
+    path: "{{ output_file }}"
+  register: resultstat1
+
+- name: Verify content of ini file is as expected (checksum)
+  assert:
+    that:
+      - resultstat1.stat.checksum == 'df66db77ecc39daa88abd1aac930dd6b762547b4'
+
+- name: add "fav=lemonade" is in section "[drinks]" in specified file again
+  ini_file:
+    path: "{{ output_file }}"
+    section: drinks
+    option: fav
+    value: lemonade
+  register: result2
+
+- name: Ensure unchanged
+  assert:
+    that:
+      - result2.changed == False
+      - result2.msg == 'OK'
+
+- name: Ensure "hate=coke" is in section "[drinks]" in specified file
+  ini_file:
+    path: "{{ output_file }}"
+    section: drinks
+    option: hate
+    value: coke
+  register: result3
+
+- name: assert 'changed' is true
+  assert:
+    that:
+      - result3.changed == True
+      - result3.msg == 'option added'
+
+- name: stat the file to compute checksum
+  stat:
+    path: "{{ output_file }}"
+  register: resultstat2
+
+- name: Verify content of ini file is as expected (checksum)
+  assert:
+    that:
+      - resultstat2.stat.checksum == '1bfd93f5e6d8a9ca932864a66a85c50cf0a222fe'
+
+- name: Remove option "hate=coke"
+  ini_file:
+    path: "{{ output_file }}"
+    section: drinks
+    option: hate
+    state: absent
+  register: result4
+
+- name: assert changed
+  assert:
+    that:
+      - result4.changed == True
+      - result4.msg == 'option changed'
+
+- name: stat the file to compute checksum
+  stat:
+    path: "{{ output_file }}"
+  register: resultstat3
+
+- name: Verify content of ini file is as expected (checksum)
+  assert:
+    that:
+      - resultstat3.stat.checksum == 'df66db77ecc39daa88abd1aac930dd6b762547b4'
+
+- name: remove section 'drinks'
+  ini_file:
+    path: "{{ output_file }}"
+    section: drinks
+    state: absent
+  register: result5
+
+- name: assert changed
+  assert:
+    that:
+      - result5.changed == True
+      - result5.msg == 'section removed'
+
+- name: stat the file to compute checksum
+  stat:
+    path: "{{ output_file }}"
+  register: resultstat4
+
+- name: Verify with checksum that content of ini file empty ('\n')
+  assert:
+    that:
+      - resultstat4.stat.checksum == 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
