@@ -23,33 +23,30 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: expect
-version_added: 2.0
-short_description: Executes a command and responds to prompts
+version_added: '2.0'
+short_description: Executes a command and responds to prompts.
 description:
-     - The C(expect) module executes a command and responds to prompts
+     - The C(expect) module executes a command and responds to prompts.
      - The given command will be executed on all selected nodes. It will not be
        processed through the shell, so variables like C($HOME) and operations
-       like C("<"), C(">"), C("|"), and C("&") will not work
+       like C("<"), C(">"), C("|"), and C("&") will not work.
 options:
   command:
     description:
-      - the command module takes command to run.
+      - The command module takes command to run.
     required: true
   creates:
     description:
-      - a filename, when it already exists, this step will B(not) be run.
-    required: false
+      - A filename, when it already exists, this step will B(not) be run.
   removes:
     description:
-      - a filename, when it does not exist, this step will B(not) be run.
-    required: false
+      - A filename, when it does not exist, this step will B(not) be run.
   chdir:
     description:
-      - cd into this directory before running the command
-    required: false
+      - Change into this directory before running the command.
   responses:
     description:
       - Mapping of expected string/regex and string to respond with. If the
@@ -58,11 +55,11 @@ options:
     required: true
   timeout:
     description:
-      - Amount of time in seconds to wait for the expected strings
+      - Amount of time in seconds to wait for the expected strings.
     default: 30
   echo:
     description:
-      - Whether or not to echo out your response strings
+      - Whether or not to echo out your response strings.
     default: false
 requirements:
   - python >= 2.6
@@ -70,25 +67,28 @@ requirements:
 notes:
   - If you want to run a command through the shell (say you are using C(<),
     C(>), C(|), etc), you must specify a shell in the command such as
-    C(/bin/bash -c "/path/to/something | grep else")
+    C(/bin/bash -c "/path/to/something | grep else").
   - The question, or key, under I(responses) is a python regex match. Case
-    insensitive searches are indicated with a prefix of C(?i)
-  - By default, if a question is encountered multiple times, it's string
+    insensitive searches are indicated with a prefix of C(?i).
+  - By default, if a question is encountered multiple times, its string
     response will be repeated. If you need different responses for successive
     question matches, instead of a string response, use a list of strings as
-    the response. The list functionality is new in 2.1
+    the response. The list functionality is new in 2.1.
+  - The M(expect) module is designed for simple scenarios. For more complex
+    needs, consider the use of expect code with the M(shell) or M(script)
+    modules. (An example is part of the M(shell) module documentation)
 author: "Matt Martz (@sivel)"
 '''
 
-EXAMPLES = '''
-# Case insensitve password string match
-- expect:
+EXAMPLES = r'''
+- name: Case insensitve password string match
+  expect:
     command: passwd username
     responses:
       (?i)password: "MySekretPa$$word"
 
-# Generic question with multiple different responses
-- expect:
+- name: Generic question with multiple different responses
+  expect:
     command: /path/to/custom/command
     responses:
       Question:
