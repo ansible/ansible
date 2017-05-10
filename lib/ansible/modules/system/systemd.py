@@ -457,6 +457,12 @@ def main():
                         (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                         if rc != 0:
                             module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
+
+                    # Test real state after systemctl start
+                    (rc, out, err) = module.run_command("%s status '%s'" % (systemctl, unit))
+                    if action == "start":
+                        if rc != 0:
+                            module.fail_json(msg="%s service failed to start" % unit)
             else:
                 # this should not happen?
                 module.fail_json(msg="Service is in unknown state", status=result['status'])
