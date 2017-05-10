@@ -186,7 +186,7 @@ class DataLoader:
             return (data, show_content)
 
         except (IOError, OSError) as e:
-            raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (file_name, str(e)))
+            raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (file_name, str(e)), orig_exc=e)
 
     def _handle_error(self, yaml_exc, file_name, show_content):
         '''
@@ -202,7 +202,7 @@ class DataLoader:
             err_obj = AnsibleBaseYAMLObject()
             err_obj.ansible_pos = (file_name, yaml_exc.problem_mark.line + 1, yaml_exc.problem_mark.column + 1)
 
-        raise AnsibleParserError(YAML_SYNTAX_ERROR, obj=err_obj, show_content=show_content)
+        raise AnsibleParserError(YAML_SYNTAX_ERROR, obj=err_obj, show_content=show_content, orig_exc=yaml_exc)
 
     def get_basedir(self):
         ''' returns the current basedir '''
@@ -419,7 +419,7 @@ class DataLoader:
             return real_path
 
         except (IOError, OSError) as e:
-            raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (to_native(real_path), to_native(e)))
+            raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (to_native(real_path), to_native(e)), orig_exc=e)
 
     def cleanup_tmp_file(self, file_path):
         """

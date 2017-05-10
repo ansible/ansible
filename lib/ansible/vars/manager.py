@@ -142,7 +142,7 @@ class VariableManager:
     @extra_vars.setter
     def extra_vars(self, value):
         ''' ensures a clean copy of the extra_vars are used to set the value '''
-        assert isinstance(value, MutableMapping)
+        assert isinstance(value, MutableMapping), "the type of 'value' for extra_vars should be a MutableMapping, but is a %s" % type(value)
         self._extra_vars = value.copy()
 
     def set_inventory(self, inventory):
@@ -156,7 +156,7 @@ class VariableManager:
     @options_vars.setter
     def options_vars(self, value):
         ''' ensures a clean copy of the options_vars are used to set the value '''
-        assert isinstance(value, dict)
+        assert isinstance(value, dict), "the type of 'value' for options_vars should be a dict, but is a %s" % type(value)
         self._options_vars = value.copy()
 
     def _preprocess_vars(self, a):
@@ -577,7 +577,7 @@ class VariableManager:
         Sets or updates the given facts for a host in the fact cache.
         '''
 
-        assert isinstance(facts, dict)
+        assert isinstance(facts, dict), "the type of 'facts' to set for host_facts should be a dict but is a %s" % type(facts)
 
         if host.name not in self._fact_cache:
             self._fact_cache[host.name] = facts
@@ -592,7 +592,7 @@ class VariableManager:
         Sets or updates the given facts for a host in the fact cache.
         '''
 
-        assert isinstance(facts, dict)
+        assert isinstance(facts, dict), "the type of 'facts' to set for nonpersistent_facts should be a dict but is a %s" % type(facts)
 
         if host.name not in self._nonpersistent_fact_cache:
             self._nonpersistent_fact_cache[host.name] = facts
