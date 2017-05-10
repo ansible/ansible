@@ -261,72 +261,47 @@ PARAM_TO_DEFAULT_KEYMAP = {
 }
 
 
-def get_value(arg, config, module):
+def get_value(arg, config):
+    command = PARAM_TO_COMMAND_KEYMAP[arg]
+    has_command = re.search(r'\s+{0}\s*$'.format(command), config, re.M)
+    has_command_value = re.search(r'(?:{0}\s)(?P<value>.*)$'.format(command), config, re.M)
+
     if arg in BOOL_PARAMS:
-        REGEX = re.compile(r'\s+{0}\s*$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
         value = False
         try:
-            if REGEX.search(config):
+            if has_command:
                 value = True
         except TypeError:
             value = False
-
-    else:
-        REGEX = re.compile(r'(?:{0}\s)(?P<value>.*)$'.format(PARAM_TO_COMMAND_KEYMAP[arg]), re.M)
+    elif arg == 'log_neighbor_changes':
         value = ''
-        if PARAM_TO_COMMAND_KEYMAP[arg] in config:
-            value = REGEX.search(config).group('value')
-    return value
-
-
-def get_custom_value(arg, config, module):
-    value = ''
-    splitted_config = config.splitlines()
-
-    if arg == 'log_neighbor_changes':
-        for line in splitted_config:
-            if 'log-neighbor-changes' in line:
-                if 'disable' in line:
-                    value = 'disable'
-                else:
-                    value = 'enable'
-
-    elif arg == 'pwd':
-        for line in splitted_config:
-            if 'password' in line:
-                splitted_line = line.split()
-                value = splitted_line[2]
-
-    elif arg == 'pwd_type':
-        for line in splitted_config:
-            if 'password' in line:
-                splitted_line = line.split()
-                value = splitted_line[1]
+        if has_command:
+            if has_command_value:
+                value = 'disable'
+            else:
+                value = 'enable'
 
     elif arg == 'remove_private_as':
         value = 'disable'
-        for line in splitted_config:
-            if 'remove-private-as' in line:
-                splitted_line = line.split()
-                if len(splitted_line) == 1:
-                    value = 'enable'
-                elif len(splitted_line) == 2:
-                    value = splitted_line[1]
-
-    elif arg == 'timers_keepalive':
-        REGEX = re.compile(r'(?:timers\s)(?P<value>.*)$', re.M)
+        if has_command:
+            if has_command_value:
+                value = has_command_value.group('value')
+            else:
+                value = 'enable'
+    else:
         value = ''
-        if 'timers' in config:
-            parsed = REGEX.search(config).group('value').split()
-            value = parsed[0]
 
-    elif arg == 'timers_holdtime':
-        REGEX = re.compile(r'(?:timers\s)(?P<value>.*)$', re.M)
-        value = ''
-        if 'timers' in config:
-            parsed = REGEX.search(config).group('value').split()
-            if len(parsed) == 2:
-                value = parsed[1]
+        if has_command_value:
+            value = has_command_value.group('value')
+
+            if command in ['timers', 'password']:
+                split_value = value.split()
+                value = ''
+
+                if arg in ['timers_keepalive', 'pwd_type']:
+                    value = split_value[0]
+                elif arg in ['timers_holdtime', 'pwd'] and len(split_value) == 2:
+                    value = split_value[1]
 
     return value
 
@@ -334,14 +309,6 @@ def get_custom_value(arg, config, module):
 def get_existing(module, args, warnings):
     existing = {}
     netcfg = CustomNetworkConfig(indent=2, contents=get_config(module))
-    custom = [
-        'log_neighbor_changes',
-        'pwd',
-        'pwd_type',
-        'remove_private_as',
-        'timers_holdtime',
-        'timers_keepalive'
-    ]
 
     asn_regex = re.compile(r'.*router\sbgp\s(?P<existing_asn>\d+).*', re.S)
     match_asn = asn_regex.match(str(netcfg))
@@ -349,19 +316,16 @@ def get_existing(module, args, warnings):
     if match_asn:
         existing_asn = match_asn.group('existing_asn')
         parents = ["router bgp {0}".format(existing_asn)]
+
         if module.params['vrf'] != 'default':
             parents.append('vrf {0}'.format(module.params['vrf']))
 
         parents.append('neighbor {0}'.format(module.params['neighbor']))
         config = netcfg.get_section(parents)
-
         if config:
             for arg in args:
                 if arg not in ['asn', 'vrf', 'neighbor']:
-                    if arg in custom:
-                        existing[arg] = get_custom_value(arg, config, module)
-                    else:
-                        existing[arg] = get_value(arg, config, module)
+                    existing[arg] = get_value(arg, config)
 
             existing['asn'] = existing_asn
             existing['neighbor'] = module.params['neighbor']
