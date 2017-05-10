@@ -30,7 +30,7 @@ Before using:
 $ pip install google-api-python-client docoptcfg
 
 Usage:
-    {0} [options]
+    {script_name} [options]
 
 Options:
     -a API_VERSION --api-version=API_VERSION    The API version used to connect to GCE [default: v1]
@@ -39,8 +39,8 @@ Options:
     -p PROJECT --project=PROJECT                The GCE project where you want to get the inventory
     -z ZONE --zone=ZONE                         The GCE zone where you ant to get the inventory
 
-All the parameters can also be set as environment variables using the 'GCE_' prefix (i.e. {1}API_VERSION=beta).
-""".format(basename(argv[0]), ENV_PREFIX)
+All the parameters can also be set as environment variables using the 'GCE_' prefix (i.e. {envvar_prefix}API_VERSION=beta).
+""".format(script_name=basename(argv[0]), envvar_prefix=ENV_PREFIX)
 
 
 def get_all_projects(api_version='v1'):
