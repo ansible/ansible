@@ -498,7 +498,6 @@ lib/ansible/modules/network/nxos/nxos_evpn_global.py
 lib/ansible/modules/network/nxos/nxos_evpn_vni.py
 lib/ansible/modules/network/nxos/nxos_facts.py
 lib/ansible/modules/network/nxos/nxos_feature.py
-lib/ansible/modules/network/nxos/nxos_file_copy.py
 lib/ansible/modules/network/nxos/nxos_gir.py
 lib/ansible/modules/network/nxos/nxos_gir_profile_management.py
 lib/ansible/modules/network/nxos/nxos_hsrp.py
