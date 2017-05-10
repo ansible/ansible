@@ -56,7 +56,6 @@ class Connection(ConnectionBase):
         # controller with python2 on the remote side
         src = cPickle.dumps(self._play_context.serialize(), protocol=2)
         stdin.write(src)
-        src.close()
 
         stdin.write(b'\n#END_INIT#\n')
         stdin.write(to_bytes(action))
