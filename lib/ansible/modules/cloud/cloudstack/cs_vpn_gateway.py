@@ -59,7 +59,7 @@ options:
     default: null
   zone:
     description:
-      - Name of the zone in which the VPC is related to.
+      - Name of the zone the VPC is related to.
       - If not set, default zone is used.
     required: false
     default: null
