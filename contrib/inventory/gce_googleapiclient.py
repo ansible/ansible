@@ -306,7 +306,12 @@ def get_ssh_host(network_interfaces, looking_public=True):
         if not looking_public:
             return interface['networkIP']
 
+<<<<<<< HEAD
         access_configs = interface.get('accessConfigs', [])
+=======
+def get_hostvars(instance):
+    hostvars = {}
+>>>>>>> renamed functions from parse_* to get_*
 
         for access_config in access_configs:
             if 'natIP' in access_config:
@@ -327,6 +332,7 @@ def get_boot_image(disks):
         return None
 
 
+<<<<<<< HEAD
 def get_uuid(instance):
     """
     Use only for libcloud retro compatibility
@@ -341,6 +347,10 @@ def get_inventory(instances):
     inventory = collections.defaultdict(list)
     inventory['_meta'] = collections.defaultdict(
         lambda: collections.defaultdict(dict))
+=======
+def get_inventory(instances):
+    inventory = {}
+>>>>>>> renamed functions from parse_* to get_*
 
     for instance in instances:
         if instance['status'] in ['RUNNING', 'STAGING']:
