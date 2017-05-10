@@ -363,8 +363,12 @@ def get_inventory(instances):
             for tag in instance['tags'].get('items', []):
                 inventory['tag_{tag}'.format(tag=tag)].append(instance['name'])
 
+<<<<<<< HEAD
             project = instance['selfLink'].split('/')[6]
             inventory['project_{project}'.format(project=project)].append(instance['name'])
+=======
+        inventory['_meta']['hostvars'][instance['name']] = get_hostvars(instance)
+>>>>>>> renamed functions from parse_* to get_* (fix)
 
             # zone groups are not prefixed to be compatible with the previous gce.py
             zone = instance['zone'].split('/')[-1]
@@ -594,7 +598,12 @@ def main(args):
     if num_threads < 1:
         num_threads = 1
 
+<<<<<<< HEAD
     pool_workers = mp.Pool(num_threads, signal_handler)
+=======
+    inventory_json = get_inventory(instances)
+    print(json.dumps(inventory_json, sort_keys=True, indent=2, separators=(',', ': ')))
+>>>>>>> renamed functions from parse_* to get_* (fix)
 
     if not project_list:
         project_list = get_all_billing_projects(billing_account_name, cache_dir, refresh_cache)
