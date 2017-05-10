@@ -23,21 +23,22 @@
 
 $params = Parse-Args $args
 
-$command = Get-AnsibleParam -obj $params -name "command" -failifempty $true
-$executable = Get-AnsibleParam -obj $params -name "executable" -default "psexec.exe"
-$hostnames = Get-AnsibleParam -obj $params -name "hostnames"
-$username = Get-AnsibleParam -obj $params -name "username"
-$password = Get-AnsibleParam -obj $params -name "password"
+$command = Get-AnsibleParam -obj $params -name "command" -type "str" -failifempty $true
+$executable = Get-AnsibleParam -obj $params -name "executable" -type "path" -default "psexec.exe"
+$hostnames = Get-AnsibleParam -obj $params -name "hostnames" -type "list"
+$username = Get-AnsibleParam -obj $params -name "username" -type "str"
+$password = Get-AnsibleParam -obj $params -name "password" -type "str"
 $chdir = Get-AnsibleParam -obj $params -name "chdir" -type "path"
 $wait = Get-AnsibleParam -obj $params -name "wait" -type "bool" -default $true
+$nobanner = Get-AnsibleParam -obj $params -name "nobanner" -type "bool" -default $true
 $noprofile = Get-AnsibleParam -obj $params -name "noprofile" -type "bool" -default $false
 $elevated = Get-AnsibleParam -obj $params -name "elevated" -type "bool" -default $false
 $limited = Get-AnsibleParam -obj $params -name "limited" -type "bool" -default $false
 $system = Get-AnsibleParam -obj $params -name "system" -type "bool" -default $false
 $interactive = Get-AnsibleParam -obj $params -name "interactive" -type "bool" -default $false
-$priority = Get-AnsibleParam -obj $params -name "priority" -validateset "background","low","belownormal","abovenormal","high","realtime"
-$timeout = Get-AnsibleParam -obj $params -name "timeout"
-$extra_opts = Get-AnsibleParam -obj $params -name "extra_opts" -default @()
+$priority = Get-AnsibleParam -obj $params -name "priority" -type "str" -validateset "background","low","belownormal","abovenormal","high","realtime"
+$timeout = Get-AnsibleParam -obj $params -name "timeout" -type "int"
+$extra_opts = Get-AnsibleParam -obj $params -name "extra_opts" -type "list"
 
 $result = @{
     changed = $true
@@ -87,9 +88,13 @@ $util_type = Add-Type -TypeDefinition $util_def
 
 $arguments = ""
 
-# Supports running on local system if not hostname is specified
-If ($hostnames -ne $null) {
-  $arguments = " \\" + $($hostnames | sort -Unique) -join ','
+If ($nobanner -eq $true) {
+    $arguments += " -nobanner"
+}
+
+# Support running on local system if no hostname is specified
+If ($hostnames) {
+  $arguments += " \\" + $($hostnames | sort -Unique) -join ','
 }
 
 # Username is optional
@@ -139,8 +144,10 @@ If ($timeout -ne $null) {
 }
 
 # Add additional advanced options
-ForEach ($opt in $extra_opts) {
-    $arguments += " $opt"
+If ($extra_opts) {
+    ForEach ($opt in $extra_opts) {
+        $arguments += " $opt"
+    }
 }
 
 $arguments += " -accepteula"
@@ -153,7 +160,6 @@ $psi.RedirectStandardOutput = $true
 $psi.RedirectStandardError = $true
 $psi.UseShellExecute = $false
 
-# TODO: psexec has a limit to the argument length of 260 (?)
 $result.psexec_command = "$executable$arguments $command"
 
 $start_datetime = [DateTime]::UtcNow
