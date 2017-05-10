@@ -84,7 +84,7 @@ def list_instances(project_id, zone, api_version='v1'):
 
     return instances
 
-def parse_hostvars(instance):
+def get_hostvars(instance):
     hostvars = {}
 
     hostvars['gce_id'] = instance['id']
@@ -103,7 +103,7 @@ def parse_hostvars(instance):
 
     return hostvars
 
-def parse_inventory(instances):
+def get_inventory(instances):
     inventory = {}
 
     for instance in instances:
