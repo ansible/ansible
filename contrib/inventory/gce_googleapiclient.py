@@ -113,7 +113,7 @@ def get_inventory(instances):
         if 'hostvars' not in inventory['_meta']:
             inventory['_meta']['hostvars'] = {}
 
-        inventory['_meta']['hostvars'][instance['name']] = parse_hostvars(instance)
+        inventory['_meta']['hostvars'][instance['name']] = get_hostvars(instance)
 
         if 'all' not in inventory:
             inventory['all'] = []
@@ -137,7 +137,7 @@ def main(args):
 
     instances = list_instances(project_id=project, zone=zone, api_version=api_version)
 
-    inventory_json = parse_inventory(instances)
+    inventory_json = get_inventory(instances)
     print(json.dumps(inventory_json, sort_keys=True, indent=2, separators=(',', ': ')))
 
 if __name__ == "__main__":
