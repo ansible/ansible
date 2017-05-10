@@ -99,6 +99,7 @@ try:
 except ImportError:
     HAS_SCP = False
 
+
 def execute_show_command(command, module, command_type='cli_show'):
     if module.params['transport'] == 'cli':
         cmds = [command]
@@ -152,9 +153,6 @@ def enough_space(module):
 def transfer_file(module, dest):
     file_size = os.path.getsize(module.params['local_file'])
 
-    if not local_file_exists(module):
-        module.fail_json(msg='Could not transfer file. Local file doesn\'t exist.')
-
     if not enough_space(module):
         module.fail_json(msg='Could not transfer file. Not enough space on device.')
 
@@ -185,6 +183,7 @@ def transfer_file(module, dest):
                              'permissions are set.', temp_size=temp_size,
                              file_size=file_size)
     scp.close()
+    ssh.close()
     return True
 
 
@@ -206,46 +205,43 @@ def main():
     if not HAS_SCP:
         module.fail_json(
             msg='library scp is required but does not appear to be '
-                'installed.  It can be installed using `pip install scp`'
-            )
+                'installed. It can be installed using `pip install scp`'
+        )
 
     warnings = list()
     check_args(module, warnings)
+
+    results = dict(changed=False, warnings=warnings)
 
     local_file = module.params['local_file']
     remote_file = module.params['remote_file']
     file_system = module.params['file_system']
 
-    changed = False
-    transfer_status = 'No Transfer'
+    results['transfer_status'] = 'No Transfer'
+    results['local_file'] = local_file
+    results['file_system'] = file_system
 
-    if not os.path.isfile(local_file):
+    if not local_file_exists(module):
         module.fail_json(msg="Local file {} not found".format(local_file))
 
     dest = remote_file or os.path.basename(local_file)
     remote_exists = remote_file_exists(module, dest, file_system=file_system)
 
     if not remote_exists:
-        changed = True
+        results['changed'] = True
         file_exists = False
     else:
         file_exists = True
 
     if not module.check_mode and not file_exists:
         transfer_file(module, dest)
-        transfer_status = 'Sent'
+        results['transfer_status'] = 'Sent'
 
     if remote_file is None:
         remote_file = os.path.basename(local_file)
+    results['remote_file'] = remote_file
 
-    module.exit_json(changed=changed,
-                     transfer_status=transfer_status,
-                     local_file=local_file,
-                     remote_file=remote_file,
-                     warnings=warnings,
-                     file_system=file_system)
-
+    module.exit_json(**results)
 
 if __name__ == '__main__':
     main()
-
