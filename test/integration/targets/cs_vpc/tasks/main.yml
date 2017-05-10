@@ -9,22 +9,22 @@
     that:
     - vpc|success
 
-- name: test fail missing name
+- name: test fail missing name of vpc
   cs_vpc:
   ignore_errors: true
   register: vpc
-- name: verify test fail missing name
+- name: verify test fail missing name of vpc
   assert:
     that:
     - vpc|failed
-    - 'vpc.msg == "missing required arguments: name"'
+    - "vpc.msg.startswith('missing required arguments: ')"
 
-- name: test fail missing cidr
+- name: test fail missing cidr for vpc
   cs_vpc:
     name: "{{ cs_resource_prefix }}_vpc"
   ignore_errors: true
   register: vpc
-- name: verify test fail missing name
+- name: verify test fail missing cidr for vpc
   assert:
     that:
     - vpc|failed
@@ -68,7 +68,7 @@
     cidr: 10.10.0.0/16
     zone: "{{ cs_common_zone_adv }}"
   register: vpc
-- name: verify test create vpc idempotence
+- name: verify test create vpc idempotence2
   assert:
     that:
     - vpc|success
@@ -84,7 +84,7 @@
     cidr: 10.10.0.0/16
     zone: "{{ cs_common_zone_adv }}"
   register: vpc
-- name: verify test create vpc
+- name: verify test update vpc
   assert:
     that:
     - vpc|success
@@ -100,7 +100,7 @@
     cidr: 10.10.0.0/16
     zone: "{{ cs_common_zone_adv }}"
   register: vpc
-- name: verify test create vpc
+- name: verify test update vpc idempotence
   assert:
     that:
     - vpc|success
