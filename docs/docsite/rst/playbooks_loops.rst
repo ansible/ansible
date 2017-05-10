@@ -59,10 +59,9 @@ Also be aware that when combining `when` with `with_items` (or any other loop st
 
 Loops are actually a combination of things `with_` + `lookup()`, so any lookup plugin can be used as a source for a loop, 'items' is lookup.
 
-Additionally, take note that, for convenience, ``with_items`` flattens the
-first depth of the list it is provided and can yield unexpected results if you
-pass a list which is composed of lists. You can work around this by wrapping
-your nested list inside a list::
+Please note that ``with_items`` flattens the first depth of the list it is
+provided and can yield unexpected results if you pass a list which is composed
+of lists. You can work around this by wrapping your nested list inside a list::
 
     # This will run debug three times since the list is flattened
     - debug:
