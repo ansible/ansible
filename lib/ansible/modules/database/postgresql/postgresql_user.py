@@ -228,6 +228,16 @@ else:
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import iteritems
 
+try:
+    from passlib.hash import postgres_md5 as pm
+except ImportError:
+    passlib_hash_found = False
+else:
+    passlib_hash_found = True
+
+
+
+
 FLAGS = ('SUPERUSER', 'CREATEROLE', 'CREATEUSER', 'CREATEDB', 'INHERIT', 'LOGIN', 'REPLICATION')
 FLAGS_BY_VERSION = {'BYPASSRLS': '9.5.0'}
 
@@ -302,27 +312,16 @@ def user_should_we_change_password(current_role_attrs, user, password, encrypted
     # Do we actually need to do anything?
 
     if encrypted == 'ENCRYPTED' and password.startswith('md5'):
-        if password == current_role_attrs['rolpassword']:
-            return False
-        else:
-            return True
+        return password != current_role_attrs['rolpassword']
 
     if encrypted == 'ENCRYPTED' and not password.startswith('md5'):
-        try:
-            from passlib.hash import postgres_md5 as pm
-            if pm.encrypt(password, user) == current_role_attrs['rolpassword']:
-                return False
-            else:
-                return True
-        except ImportError:
-            # Cannot check if passlib is not installed, so assume password is
-            # different
+        if passlib_hash_found:
+            return pm.encrypt(password, user) != current_role_attrs['rolpassword']
+        else:
+            # Can't check the password, so just assume update needed.  A warning would be nice.
             return True
 
-    if password == current_role_attrs['rolpassword']:
-        return False
-    else:
-        return True
+    return password != current_role_attrs['rolpassword']
 
 
 def user_alter(db_connection, module, user, password, role_attr_flags, encrypted, expires, no_password_changes):
