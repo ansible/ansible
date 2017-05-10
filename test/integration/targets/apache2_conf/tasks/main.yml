@@ -1,0 +1,13 @@
+---
+- name: Prepare for testing
+  include: prepare.yml
+  when: ansible_distribution in ('Ubuntu', 'Debian')
+
+- name: Test 'conf'
+  include: test_conf.yml
+  when: ansible_distribution in ('Ubuntu', 'Debian')
+
+
+- name: Test 'site'
+  include: test_site.yml
+  when: ansible_distribution in ('Ubuntu', 'Debian')

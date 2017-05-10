@@ -1,0 +1,11 @@
+---
+- name: install apache
+  apt: name={{ item }}
+  with_items:
+    - apache2
+
+- name: add example config files
+  copy: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - { src: conf_example.conf, dest: /etc/apache2/conf-available/conf_example.conf }
+    - { src: site_example.conf, dest: /etc/apache2/sites-available/site_example.conf }
