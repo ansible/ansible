@@ -571,12 +571,14 @@ def main():
                 downloaded = download_disk_image(connection, module)
                 ret['changed'] = ret['changed'] or downloaded
 
-            # Disk sparsify:
-            ret = disks_module.action(
-                action='sparsify',
-                action_condition=lambda d: module.params['sparsify'],
-                wait_condition=lambda d: d.status == otypes.DiskStatus.OK,
-            )
+            # Disk sparsify, only if disk is of image type:
+            disk = disks_service.disk_service(module.params['id']).get()
+            if disk.storage_type == otypes.DiskStorageType.IMAGE:
+                ret = disks_module.action(
+                    action='sparsify',
+                    action_condition=lambda d: module.params['sparsify'],
+                    wait_condition=lambda d: d.status == otypes.DiskStatus.OK,
+                )
         elif state == 'absent':
             ret = disks_module.remove()
 

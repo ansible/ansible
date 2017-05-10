@@ -173,7 +173,10 @@ options:
             - "C(legacy) - Legacy behavior of 3.6 version."
             - "C(minimal_downtime) - Virtual machines should not experience any significant downtime."
             - "C(suspend_workload) - Virtual machines may experience a more significant downtime."
-        choices: ['legacy', 'minimal_downtime', 'suspend_workload']
+            - "C(post_copy) - Virtual machines should not experience any significant downtime.
+               If the VM migration is not converging for a long time, the migration will be switched to post-copy.
+               Added in version I(2.4)."
+        choices: ['legacy', 'minimal_downtime', 'suspend_workload', 'post_copy']
     serial_policy:
         description:
             - "Specify a serial number policy for the virtual machines in the cluster."
@@ -311,6 +314,7 @@ class ClustersModule(BaseModule):
         # legacy - 00000000-0000-0000-0000-000000000000
         # minimal downtime - 80554327-0569-496b-bdeb-fcbbf52b827b
         # suspend workload if needed - 80554327-0569-496b-bdeb-fcbbf52b827c
+        # post copy - a7aeedb2-8d66-4e51-bb22-32595027ce71
         migration_policy = self.param('migration_policy')
         if migration_policy == 'legacy':
             return '00000000-0000-0000-0000-000000000000'
@@ -318,6 +322,8 @@ class ClustersModule(BaseModule):
             return '80554327-0569-496b-bdeb-fcbbf52b827b'
         elif migration_policy == 'suspend_workload':
             return '80554327-0569-496b-bdeb-fcbbf52b827c'
+        elif migration_policy == 'post_copy':
+            return 'a7aeedb2-8d66-4e51-bb22-32595027ce71'
 
     def _get_sched_policy(self):
         sched_policy = None
@@ -475,7 +481,7 @@ class ClustersModule(BaseModule):
             equal(self.param('migration_compressed'), str(entity.migration.compressed)) and
             equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None))) and
             equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None)) and
-            equal(self.param('scheduling_policy'), getattr(sched_policy, 'name', None)) and
+            equal(self.param('scheduling_policy'), getattr(self._connection.follow_link(entity.scheduling_policy), 'name', None)) and
             equal(self._get_policy_id(), getattr(migration_policy, 'id', None)) and
             equal(self._get_memory_policy(), entity.memory_policy.over_commit.percent) and
             equal(self.__get_minor(self.param('compatibility_version')), self.__get_minor(entity.version)) and
@@ -522,7 +528,10 @@ def main():
         migration_bandwidth_limit=dict(default=None, type='int'),
         migration_auto_converge=dict(default=None, choices=['true', 'false', 'inherit']),
         migration_compressed=dict(default=None, choices=['true', 'false', 'inherit']),
-        migration_policy=dict(default=None, choices=['legacy', 'minimal_downtime', 'suspend_workload']),
+        migration_policy=dict(
+            default=None,
+            choices=['legacy', 'minimal_downtime', 'suspend_workload', 'post_copy']
+        ),
         serial_policy=dict(default=None, choices=['vm', 'host', 'custom']),
         serial_policy_value=dict(default=None),
         scheduling_policy=dict(default=None),
