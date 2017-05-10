@@ -328,7 +328,9 @@ def db_restore(module, target,
     return do_with_password(module, cmd, password)
 
 def do_with_password(module, cmd, password):
-    env = {"PGPASSWORD": password}
+    env = {}
+    if password:
+        env = {"PGPASSWORD": password}
     rc, stderr, stdout = module.run_command(cmd, use_unsafe_shell=True, environ_update=env)
     return rc, stderr, stdout, cmd
 
