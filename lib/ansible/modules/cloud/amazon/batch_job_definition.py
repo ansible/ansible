@@ -55,7 +55,6 @@ options:
       - Default parameter substitution placeholders to set in the job definition. Parameters are specified as a
         key-value pair mapping. Parameters in a SubmitJob request override any corresponding parameter defaults from
         the job definition.
-    type: dict
 
   image:
     description:
@@ -82,7 +81,6 @@ options:
       - The command that is passed to the container. This parameter maps to Cmd in the Create a container section of
         the Docker Remote API and the COMMAND parameter to docker run. For more information,
         see https://docs.docker.com/engine/reference/builder/#cmd.
-    type: list
 
   job_role_arn:
     description:
@@ -92,21 +90,18 @@ options:
     description:
       - A list of data volumes used in a job. List of dictionaries with the following
         form: { host: { sourcePath: <string> }, name: <string> }
-    type: list
 
   environment:
     description:
       - The environment variables to pass to a container. This parameter maps to Env in the Create a container section
         of the Docker Remote API and the --env option to docker run. List of dictionaries with the following
         form: { name: <string>, value: <string> }
-    type: list
 
   mount_points:
     description:
       - The mount points for data volumes in your container. This parameter maps to Volumes in the Create a container
         section of the Docker Remote API and the --volume option to docker run. List of dictionaries with the following
         form: { containerPath: <string>, readOnly: <boolean>, sourceVolume: <string> }
-    type: list
 
   readonly_root_filesystem:
     description:
@@ -125,7 +120,6 @@ options:
       - A list of ulimits to set in the container. This parameter maps to Ulimits in the Create a container section
         of the Docker Remote API and the --ulimit option to docker run. List of dictionaries with the following
         form: { hardLimit: <int>, name: <string>, softLimit: <int> }.
-    type: list
 
   user:
     description:
@@ -182,18 +176,13 @@ batch_job_definition_action:
     type: string
 '''
 
-# TODO: used temporarily for backward compatibility with older versions of ansible but should be removed once included in the distro.
-try:
-    import boto
-except ImportError:
-    pass
-
 try:
     import boto3
     from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
+
 
 # ---------------------------------------------------------------------------------------------------
 #
@@ -304,7 +293,7 @@ def get_current_job_definition(module, connection):
                                      None)
             return latest_definition
         return None
-    except botocore.exceptions.ClientError:
+    except ClientError:
         return None
 
 
@@ -495,7 +484,6 @@ def main():
     results = manage_state(module, aws)
 
     module.exit_json(**results)
-
 
 # ansible import module(s) kept at ~eof as recommended
 from ansible.module_utils.basic import *

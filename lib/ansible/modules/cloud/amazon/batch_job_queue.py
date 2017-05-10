@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -66,7 +65,6 @@ options:
         environments must be in the VALID state before you can associate them with a job queue. You can associate up to
         3 compute environments with a job queue.
     required: true
-    type: list
 
 requirements:
     - boto3
@@ -106,18 +104,13 @@ batch_job_queue_action:
     type: string
 '''
 
-# TODO: used temporarily for backward compatibility with older versions of ansible but should be removed once included in the distro.
-try:
-    import boto
-except ImportError:
-    pass
-
 try:
     import boto3
     from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
+
 
 # ---------------------------------------------------------------------------------------------------
 #
@@ -327,7 +320,7 @@ def manage_state(module, aws):
                         aws.client().update_job_queue(**job_kwargs)
                     changed = True
                     action_taken = "updated"
-                except (botocore.exceptions.ParamValidationError, botocore.exceptions.ClientError) as e:
+                except (ParamValidationError, ClientError) as e:
                     module.fail_json(msg=str(e))
 
         else:
@@ -389,10 +382,8 @@ def main():
 
     module.exit_json(**results)
 
-
 # ansible import module(s) kept at ~eof as recommended
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
-
 if __name__ == '__main__':
     main()

@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -88,7 +87,6 @@ options:
     description:
       - The instance types that may be launched.
     required: true
-    type: list
 
   image_id:
     description:
@@ -98,13 +96,11 @@ options:
     description:
       - The VPC subnets into which the compute resources are launched.
     required: true
-    type: list
 
   security_group_ids:
     description:
       - The EC2 security groups that are associated with instances launched in the compute environment.
     required: true
-    type: list
 
   ec2_key_pair:
     description:
@@ -118,7 +114,6 @@ options:
   tags:
     description:
       - Key-value pair tags to be applied to resources that are launched in the compute environment.
-    type: dict
 
   bid_percentage:
     description:
@@ -181,17 +176,9 @@ batch_compute_environment_action:
     type: string
 '''
 
-# TODO: used temporarily for backward compatibility with older versions of ansible but should be removed once included
-# in the distro.
-try:
-    import boto
-except ImportError:
-    pass
-
 try:
     import boto3
     from botocore.exceptions import ClientError, ParamValidationError, MissingParametersError
-
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -507,7 +494,6 @@ def main():
     results = manage_state(module, aws)
 
     module.exit_json(**results)
-
 
 # ansible import module(s) kept at ~eof as recommended
 from ansible.module_utils.basic import *
