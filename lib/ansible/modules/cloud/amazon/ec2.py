@@ -615,18 +615,20 @@ EXAMPLES = '''
 
 '''
 
+import traceback
 import time
 from ast import literal_eval
 from ansible.module_utils.six import get_function_code
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect, connect_to_aws
+from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, ec2_connect
 from distutils.version import LooseVersion
 
 try:
     import boto.ec2
     from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
     from boto.exception import EC2ResponseError
-    from boto.vpc import VPCConnection
+    from boto import connect_ec2_endpoint
+    from boto import connect_vpc
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -1617,17 +1619,16 @@ def main():
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
 
-    ec2 = ec2_connect(module)
+    try:
+        if module.params.get('region') or not module.params.get('ec2_url'):
+            ec2 = ec2_connect(module)
+        elif module.params.get('ec2_url'):
+            _, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
+            ec2 = connect_ec2_endpoint(ec2_url, **aws_connect_kwargs)
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
-
-    if region:
-        try:
-            vpc = connect_to_aws(boto.vpc, region, **aws_connect_kwargs)
-        except boto.exception.NoAuthHandlerFound as e:
-            module.fail_json(msg=str(e))
-    else:
-        vpc = None
+        vpc = connect_vpc(**aws_connect_kwargs)
+    except boto.exception.NoAuthHandlerFound as e:
+        module.fail_json(msg="Failed to get connection.", exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.message))
 
     tagged_instances = []
 
