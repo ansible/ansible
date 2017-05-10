@@ -21,168 +21,166 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 
 
 DOCUMENTATION = '''
-    ---
-    module: batch_job_definition
-    short_description: Manage AWS Batch Job Definitions
+---
+module: batch_job_definition
+short_description: Manage AWS Batch Job Definitions
+description:
+    - This module allows the management of AWS Batch Job Definitions.
+      It is idempotent and supports "Check" mode.  Use module M(batch_compute_environment) to manage the compute
+      environment, M(batch_job_queue) to manage job queues, M(batch_job_definition) to manage job definitions.
+
+version_added: "2.4"
+
+author: Jon Meran (@jonmer85)
+options:
+  job_definition_name:
     description:
-        - This module allows the management of AWS Batch Job Definitions.
-          It is idempotent and supports "Check" mode.  Use module M(batch_compute_environment) to manage the compute
-          environment, M(batch_job_queue) to manage job queues, M(batch_job_definition) to manage job definitions.
+      - The name for the job definition
+    required: true
 
-    version_added: "2.4"
+  state:
+    description:
+      - Describes the desired state.
+    required: true
+    default: "present"
+    choices: ["present", "absent"]
 
-    author: Jon Meran (@jonmer85)
-    options:
-      job_definition_name:
-        description:
-          - The name for the job definition
-        required: true
+  type:
+    description:
+      - The type of job definition
+    required: true
 
-      state:
-        description:
-          - Describes the desired state.
-        required: true
-        default: "present"
-        choices: ["present", "absent"]
+  parameters:
+    description:
+      - Default parameter substitution placeholders to set in the job definition. Parameters are specified as a
+        key-value pair mapping. Parameters in a SubmitJob request override any corresponding parameter defaults from
+        the job definition.
+    type: dict
 
-      type:
-        description:
-          - The type of job definition
-        required: true
+  image:
+    description:
+      - The image used to start a container. This string is passed directly to the Docker daemon. Images in the Docker
+        Hub registry are available by default. Other repositories are specified with `` repository-url /image :tag ``.
+        Up to 255 letters (uppercase and lowercase), numbers, hyphens, underscores, colons, periods, forward slashes,
+        and number signs are allowed. This parameter maps to Image in the Create a container section of the Docker
+        Remote API and the IMAGE parameter of docker run.
 
-      parameters:
-        description:
-          - Default parameter substitution placeholders to set in the job definition. Parameters are specified as a
-            key-value pair mapping. Parameters in a SubmitJob request override any corresponding parameter defaults from
-            the job definition.
-        type: dict
+  vcpus:
+    description:
+      - The number of vCPUs reserved for the container. This parameter maps to CpuShares in the Create a container
+        section of the Docker Remote API and the --cpu-shares option to docker run. Each vCPU is equivalent to
+        1,024 CPU shares.
 
-      image:
-        description:
-          - The image used to start a container. This string is passed directly to the Docker daemon. Images in the Docker
-            Hub registry are available by default. Other repositories are specified with `` repository-url /image :tag ``.
-            Up to 255 letters (uppercase and lowercase), numbers, hyphens, underscores, colons, periods, forward slashes,
-            and number signs are allowed. This parameter maps to Image in the Create a container section of the Docker
-            Remote API and the IMAGE parameter of docker run.
+  memory:
+    description:
+      - The hard limit (in MiB) of memory to present to the container. If your container attempts to exceed the memory
+        specified here, the container is killed. This parameter maps to Memory in the Create a container section of the
+        Docker Remote API and the --memory option to docker run.
 
-      vcpus:
-        description:
-          - The number of vCPUs reserved for the container. This parameter maps to CpuShares in the Create a container
-            section of the Docker Remote API and the --cpu-shares option to docker run. Each vCPU is equivalent to
-            1,024 CPU shares.
+  command:
+    description:
+      - The command that is passed to the container. This parameter maps to Cmd in the Create a container section of
+        the Docker Remote API and the COMMAND parameter to docker run. For more information,
+        see https://docs.docker.com/engine/reference/builder/#cmd.
+    type: list
 
-      memory:
-        description:
-          - The hard limit (in MiB) of memory to present to the container. If your container attempts to exceed the memory
-            specified here, the container is killed. This parameter maps to Memory in the Create a container section of the
-            Docker Remote API and the --memory option to docker run.
+  job_role_arn:
+    description:
+      - The Amazon Resource Name (ARN) of the IAM role that the container can assume for AWS permissions.
 
-      command:
-        description:
-          - The command that is passed to the container. This parameter maps to Cmd in the Create a container section of
-            the Docker Remote API and the COMMAND parameter to docker run. For more information,
-            see https://docs.docker.com/engine/reference/builder/#cmd.
-        type: list
+  volumes:
+    description:
+      - A list of data volumes used in a job. List of dictionaries with the following
+        form: { host: { sourcePath: <string> }, name: <string> }
+    type: list
 
-      job_role_arn:
-        description:
-          - The Amazon Resource Name (ARN) of the IAM role that the container can assume for AWS permissions.
+  environment:
+    description:
+      - The environment variables to pass to a container. This parameter maps to Env in the Create a container section
+        of the Docker Remote API and the --env option to docker run. List of dictionaries with the following
+        form: { name: <string>, value: <string> }
+    type: list
 
-      volumes:
-        description:
-          - A list of data volumes used in a job. List of dictionaries with the following
-            form: { host: { sourcePath: <string> }, name: <string> }
-        type: list
+  mount_points:
+    description:
+      - The mount points for data volumes in your container. This parameter maps to Volumes in the Create a container
+        section of the Docker Remote API and the --volume option to docker run. List of dictionaries with the following
+        form: { containerPath: <string>, readOnly: <boolean>, sourceVolume: <string> }
+    type: list
 
-      environment:
-        description:
-          - The environment variables to pass to a container. This parameter maps to Env in the Create a container section
-            of the Docker Remote API and the --env option to docker run. List of dictionaries with the following
-            form: { name: <string>, value: <string> }
-        type: list
+  readonly_root_filesystem:
+    description:
+      - When this parameter is true, the container is given read-only access to its root file system. This parameter
+        maps to ReadonlyRootfs in the Create a container section of the Docker Remote API and the --read-only option
+        to docker run.
 
-      mount_points:
-        description:
-          - The mount points for data volumes in your container. This parameter maps to Volumes in the Create a container
-            section of the Docker Remote API and the --volume option to docker run. List of dictionaries with the following
-            form: { containerPath: <string>, readOnly: <boolean>, sourceVolume: <string> }
-        type: list
+  privileged:
+    description:
+      - When this parameter is true, the container is given elevated privileges on the host container instance
+        (similar to the root user). This parameter maps to Privileged in the Create a container section of the
+        Docker Remote API and the --privileged option to docker run.
 
-      readonly_root_filesystem:
-        description:
-          - When this parameter is true, the container is given read-only access to its root file system. This parameter
-            maps to ReadonlyRootfs in the Create a container section of the Docker Remote API and the --read-only option
-            to docker run.
+  ulimits:
+    description:
+      - A list of ulimits to set in the container. This parameter maps to Ulimits in the Create a container section
+        of the Docker Remote API and the --ulimit option to docker run. List of dictionaries with the following
+        form: { hardLimit: <int>, name: <string>, softLimit: <int> }.
+    type: list
 
-      privileged:
-        description:
-          - When this parameter is true, the container is given elevated privileges on the host container instance
-            (similar to the root user). This parameter maps to Privileged in the Create a container section of the
-            Docker Remote API and the --privileged option to docker run.
+  user:
+    description:
+      - The user name to use inside the container. This parameter maps to User in the Create a container section of
+        the Docker Remote API and the --user option to docker run.
 
-      ulimits:
-        description:
-          - A list of ulimits to set in the container. This parameter maps to Ulimits in the Create a container section
-            of the Docker Remote API and the --ulimit option to docker run. List of dictionaries with the following
-            form: { hardLimit: <int>, name: <string>, softLimit: <int> }.
-        type: list
+  attempts:
+    description:
+      - Retry strategy - The number of times to move a job to the RUNNABLE status. You may specify between 1 and 10
+        attempts. If attempts is greater than one, the job is retried if it fails until it has moved to RUNNABLE that
+        many times.
 
-      user:
-        description:
-          - The user name to use inside the container. This parameter maps to User in the Create a container section of
-            the Docker Remote API and the --user option to docker run.
-
-      attempts:
-        description:
-          - Retry strategy - The number of times to move a job to the RUNNABLE status. You may specify between 1 and 10
-            attempts. If attempts is greater than one, the job is retried if it fails until it has moved to RUNNABLE that
-            many times.
-
-    requirements:
-        - boto3
-    extends_documentation_fragment:
-        - aws
-
-    '''
+requirements:
+    - boto3
+extends_documentation_fragment:
+    - aws
+'''
 
 EXAMPLES = '''
-    ---
-    - hosts: localhost
-      gather_facts: no
-      vars:
-        state: present
-      tasks:
-    - name: My Batch Job Definition
-      batch_job_definition:
-        job_definition_name: My Batch Job Definition
-        state: present
-        type: container
-        parameters:
-          Param1: Val1
-          Param2: Val2
-        image: <Docker Image URL>
-        vcpus: 1
-        memory: 512
-        command:
-          - python
-          - run_my_script.py
-          - arg1
-        job_role_arn: <Job Role ARN>
-        attempts: 3
-      register: job_definition_create_result
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    state: present
+  tasks:
+- name: My Batch Job Definition
+  batch_job_definition:
+    job_definition_name: My Batch Job Definition
+    state: present
+    type: container
+    parameters:
+      Param1: Val1
+      Param2: Val2
+    image: <Docker Image URL>
+    vcpus: 1
+    memory: 512
+    command:
+      - python
+      - run_my_script.py
+      - arg1
+    job_role_arn: <Job Role ARN>
+    attempts: 3
+  register: job_definition_create_result
 
-    - name: show results
-      debug: var=job_definition_create_result
-
-    '''
+- name: show results
+  debug: var=job_definition_create_result
+'''
 
 RETURN = '''
-    ---
-    batch_job_definition_action:
-        description: describes what action was taken
-        returned: success
-        type: string
-    '''
+---
+batch_job_definition_action:
+    description: describes what action was taken
+    returned: success
+    type: string
+'''
 
 # TODO: used temporarily for backward compatibility with older versions of ansible but should be removed once included in the distro.
 try:
@@ -260,7 +258,6 @@ def cc(key):
     return components[0] + "".join([token.capitalize() for token in components[1:]])
 
 
-
 def set_api_params(module, module_params):
     """
     Sets module parameters to those expected by the boto3 API.
@@ -290,7 +287,6 @@ def validate_params(module, aws):
     return
 
 
-
 # ---------------------------------------------------------------------------------------------------
 #
 #   Batch Job Definition functions
@@ -299,7 +295,7 @@ def validate_params(module, aws):
 
 def get_current_job_definition(module, connection):
     try:
-        environments=connection.client().describe_job_definitions(
+        environments = connection.client().describe_job_definitions(
             jobDefinitionName=module.params['job_definition_name']
         )
         if len(environments) > 0:
@@ -375,7 +371,7 @@ def remove_job_definition(module, aws):
     changed = False
 
     # set API parameters
-    api_params = { 'jobDefinition' : module.params['job_definition_name']}
+    api_params = {'jobDefinition': module.params['job_definition_name']}
 
     try:
         if not module.check_mode:
@@ -384,6 +380,7 @@ def remove_job_definition(module, aws):
     except (ClientError, ParamValidationError, MissingParametersError) as e:
         module.fail_json(msg='Error removing job definition: {0}'.format(e))
     return changed
+
 
 def job_definition_equal(module, current_definition):
 
@@ -418,7 +415,7 @@ def manage_state(module, aws):
     check_mode = module.check_mode
 
     # check if the job definition exists
-    current_job_definition = get_current_job_definition(module,aws)
+    current_job_definition = get_current_job_definition(module, aws)
     if current_job_definition:
         current_state = 'present'
 
