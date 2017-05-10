@@ -89,7 +89,7 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 affinity_label:
     description: "Dictionary of all the affinity label attributes. Affinity label attributes can be found on your oVirt/RHV instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/affinity_label."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/affinity_label."
     type: dict
     returned: On success if affinity label is found.
 '''

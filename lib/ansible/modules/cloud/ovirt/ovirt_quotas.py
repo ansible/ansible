@@ -123,7 +123,7 @@ id:
     sample: 7de90f31-222c-436c-a1ca-7e655bd5b60c
 quota:
     description: "Dictionary of all the quota attributes. Quota attributes can be found on your oVirt/RHV instance
-                  at following url: https://ovirt.example.com/ovirt-engine/api/model#types/quota."
+                  at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/quota."
     returned: On success if quota is found.
     type: dict
 '''

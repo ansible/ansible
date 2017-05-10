@@ -57,7 +57,7 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_users:
     description: "List of dictionaries describing the users. User attribues are mapped to dictionary keys,
-                  all users attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/user."
+                  all users attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/user."
     returned: On success.
     type: list
 '''

@@ -59,7 +59,7 @@ EXAMPLES = '''
 RETURN = '''
 ovirt_templates:
     description: "List of dictionaries describing the templates. Template attribues are mapped to dictionary keys,
-                  all templates attributes can be found at following url: https://ovirt.example.com/ovirt-engine/api/model#types/template."
+                  all templates attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/template."
     returned: On success.
     type: list
 '''
