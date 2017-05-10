@@ -329,8 +329,9 @@ class NetboxAsInventory(object):
             result = {}
         print(json.dumps(result))
 
+
 # Main.
-if __name__ == "__main__":
+def main():
     # Script vars.
     args = cli_arguments()
     config_data = open_yaml_file(args.config_file)
@@ -339,3 +340,7 @@ if __name__ == "__main__":
     netbox = NetboxAsInventory(args, config_data)
     ansible_inventory = netbox.generate_inventory()
     netbox.print_inventory_json(ansible_inventory)
+
+# Run main.
+if __name__ == "__main__":
+    main()
