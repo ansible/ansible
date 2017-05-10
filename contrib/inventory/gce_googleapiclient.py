@@ -256,6 +256,11 @@ def get_all_billing_projects(billing_account_name, cache_dir, refresh_cache=True
 
     return project_ids
 
+<<<<<<< HEAD
+=======
+def get_all_projects(api_version='v1'):
+    project_ids = []
+>>>>>>> change list_* functions to get_*
 
 def get_hostvars(instance):
     hostvars = {
@@ -288,7 +293,12 @@ def get_hostvars(instance):
         if 'subnetwork' in interface:
             hostvars['gce_subnetwork'] = interface['subnetwork'].split('/')[-1]
 
+<<<<<<< HEAD
         access_configs = interface.get('accessConfigs', [])
+=======
+def get_instances(project_id, zone, api_version='v1'):
+    instances = []
+>>>>>>> change list_* functions to get_*
 
         for access_config in access_configs:
             hostvars['gce_public_ip'] = access_config.get('natIP', None)
@@ -595,8 +605,12 @@ def main(args):
               file=sys.stderr)
         exit(1)
 
+<<<<<<< HEAD
     if num_threads < 1:
         num_threads = 1
+=======
+    instances = get_instances(project_id=project, zone=zone, api_version=api_version)
+>>>>>>> change list_* functions to get_*
 
 <<<<<<< HEAD
     pool_workers = mp.Pool(num_threads, signal_handler)
