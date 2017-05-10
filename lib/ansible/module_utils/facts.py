@@ -1204,7 +1204,7 @@ class LinuxHardware(Hardware):
                     self.facts['processor_count'] = i
 
                 socket_values = list(sockets.values())
-                if socket_values:
+                if socket_values and socket_values[0]:
                     self.facts['processor_cores'] = socket_values[0]
                 else:
                     self.facts['processor_cores'] = 1
