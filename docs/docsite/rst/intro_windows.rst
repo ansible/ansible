@@ -178,6 +178,15 @@ To see what tickets if any you have acquired, use the command klist
 
    klist
 
+Automatic kerberos ticket management
+------------------------------------
+
+Ansible defaults to automatically managing kerberos tickets (as of Ansible 2.3) when both username and password are specified for a host that's configured for kerberos. A new ticket is created in a temporary credential cache for each host, before each task executes (to minimize the chance of ticket expiration). The temporary credential caches are deleted after each task, and will not interfere with the default credential cache.
+
+To disable automatic ticket management (e.g., to use an existing SSO ticket or call ``kinit`` manually to populate the default credential cache), set ``ansible_winrm_kinit_mode=manual`` via inventory.
+
+Automatic ticket management requires a standard ``kinit`` binary on the control host system path. To specify a different location or binary name, set the ``ansible_winrm_kinit_cmd`` inventory var to the fully-qualified path to an MIT krbv5 ``kinit``-compatible binary.
+
 Troubleshooting kerberos connections
 ------------------------------------
 
