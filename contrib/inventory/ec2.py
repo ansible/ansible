@@ -621,41 +621,30 @@ class Ec2Inventory(object):
         ''' return True if given tags match configured filters '''
         if not self.ec2_instance_filters:
             return True
-        match = True
-        if self.stack_filters:
-            for ec2_filter in self.ec2_instance_filters.items():
-                filter_name, filter_value = ec2_filter
-                if filter_name[:4] != 'tag:':
-                    continue
-                filter_name = filter_name[4:]
-                if filter_name not in tags:
+        match = self.stack_filters
+        for filter_name, filter_value in self.ec2_instance_filters.items():
+            if filter_name[:4] != 'tag:':
+                continue
+            filter_name = filter_name[4:]
+            if filter_name not in tags:
+                if self.stack_filters:
                     match = False
                     break
-                if isinstance(filter_value, list):
-                    if tags[filter_name] not in filter_value:
-                        match = False
-                        break
-                if isinstance(filter_value, six.string_types):
-                    if tags[filter_name] != filter_value:
-                        match = False
-                        break
-        else:
-            match = False
-            for ec2_filter in self.ec2_instance_filters.items():
-                filter_name, filter_value = ec2_filter
-                if filter_name[:4] != 'tag:':
-                    continue
-                filter_name = filter_name[4:]
-                if filter_name not in tags:
-                    continue
-                if isinstance(filter_value, list):
-                    if tags[filter_name] in filter_value:
-                        match = True
-                        break
-                if isinstance(filter_value, six.string_types):
-                    if tags[filter_name] == filter_value:
-                        match = True
-                        break
+                continue
+            if isinstance(filter_value, list):
+                if self.stack_filters and tags[filter_name] not in filter_value:
+                    match = False
+                    break
+                if not self.stack_filters and tags[filter_name] in filter_value:
+                    match = True
+                    break
+            if isinstance(filter_value, six.string_types):
+                if self.stack_filters and tags[filter_name] != filter_value:
+                    match = False
+                    break
+                if not self.stack_filters and tags[filter_name] == filter_value:
+                    match = True
+                    break
         return match
 
     def get_rds_instances_by_region(self, region):
