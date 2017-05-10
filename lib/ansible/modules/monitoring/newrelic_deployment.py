@@ -88,7 +88,7 @@ EXAMPLES = '''
     revision: '1.0'
 '''
 
-import urllib
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 # ===========================================
 # Module execution.
@@ -135,7 +135,7 @@ def main():
 
     # Send the data to NewRelic
     url = "https://rpm.newrelic.com/deployments.xml"
-    data = urllib.urlencode(params)
+    data = urlencode(params)
     headers = {
         'x-api-key': module.params["token"],
     }

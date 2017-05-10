@@ -530,7 +530,8 @@ import platform
 import socket
 import sys
 import types
-import urllib
+
+from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 HAS_LIB_JSON = True
 try:
@@ -575,8 +576,8 @@ class LogicMonitor(object):
         and return the response"""
         self.module.debug("Running LogicMonitor.rpc")
 
-        param_str = urllib.urlencode(params)
-        creds = urllib.urlencode(
+        param_str = urlencode(params)
+        creds = urlencode(
             {"c": self.company,
                 "u": self.user,
                 "p": self.password})
@@ -614,8 +615,8 @@ class LogicMonitor(object):
          server \"do\" function"""
         self.module.debug("Running LogicMonitor.do...")
 
-        param_str = urllib.urlencode(params)
-        creds = (urllib.urlencode(
+        param_str = urlencode(params)
+        creds = (urlencode(
             {"c": self.company,
                 "u": self.user,
                 "p": self.password}))
