@@ -52,7 +52,9 @@ class Connection(ConnectionBase):
         stdin = os.fdopen(master, 'wb', 0)
         os.close(slave)
 
-        src = cPickle.dumps(self._play_context.serialize())
+        # Force protocol=2 because we might be mixing python3 on the
+        # controller with python2 on the remote side
+        src = cPickle.dumps(self._play_context.serialize(), protocol=2)
         stdin.write(src)
         src.close()
 
