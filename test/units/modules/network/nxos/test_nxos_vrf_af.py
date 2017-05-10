@@ -50,23 +50,23 @@ class TestNxosVrfafModule(TestNxosModule):
     def test_nxos_vrf_af_present(self):
         set_module_args(dict(vrf='ntc', afi='ipv4', safi='unicast', state='present'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['vrf context ntc',
-                                              'address-family ipv4 unicast',
-                                              'afi ipv4',
-                                              'vrf ntc',
-                                              'safi unicast'])
+        self.assertEqual(sorted(result['commands']), sorted(['vrf context ntc',
+                                                             'address-family ipv4 unicast',
+                                                             'afi ipv4',
+                                                             'vrf ntc',
+                                                             'safi unicast']))
 
     def test_nxos_vrf_af_absent(self):
         set_module_args(dict(vrf='ntc', afi='ipv4', safi='unicast', state='absent'))
-        result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['vrf context ntc', 'no address-family ipv4 unicast'])
+        result = self.execute_module(changed=False)
+        self.assertEqual(result['commands'], [])
 
     def test_nxos_vrf_af_route_target(self):
         set_module_args(dict(vrf='ntc', afi='ipv4', safi='unicast', route_target_both_auto_evpn=True))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['vrf context ntc',
-                                              'address-family ipv4 unicast',
-                                              'afi ipv4',
-                                              'route-target both auto evpn',
-                                              'vrf ntc',
-                                              'safi unicast'])
+        self.assertEqual(sorted(result['commands']), sorted(['vrf context ntc',
+                                                             'address-family ipv4 unicast',
+                                                             'afi ipv4',
+                                                             'route-target both auto evpn',
+                                                             'vrf ntc',
+                                                             'safi unicast']))

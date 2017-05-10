@@ -234,7 +234,7 @@ def main():
     candidate = CustomNetworkConfig(indent=3)
     if state == 'present':
         state_present(module, existing, proposed, candidate)
-    elif state == 'absent' or existing:
+    elif state == 'absent' and existing:
         state_absent(module, existing, proposed, candidate)
 
     if candidate:
