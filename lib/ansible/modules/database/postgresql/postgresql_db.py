@@ -231,23 +231,19 @@ def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
 
 def db_dump(module, target,
             db=None,
-            login_user=None,
-            login_password=None,
-            login_host=None,
-            login_unix_socket=None,
+            user=None,
+            password=None,
+            host=None,
             port=None,
             **kw):
-
     flags = ''
     if db:
         flags += ' {0}'.format(pipes.quote(db))
-    if login_unix_socket:
-        flags += ' --host={0}'.format(pipes.quote(login_unix_socket))
-    elif login_host:
-        flags += ' --host={0}'.format(pipes.quote(login_host))
+    elif host:
+        flags += ' --host={0}'.format(pipes.quote(host))
         if port:
             flags += ' --port={0}'.format(pipes.quote(port))
-    if login_user:
+    if user:
         flags += ' --username={0}'.format(pipes.quote(user))
 
     cmd = module.get_bin_path('pg_dump', True)
@@ -272,14 +268,13 @@ def db_dump(module, target,
     else:
         cmd = '{0} > {1}'.format(cmd, pipes.quote(target))
 
-    return do_with_password(module, cmd, login_password)
+    return do_with_password(module, cmd, password)
 
 def db_restore(module, target,
             db=None,
-            login_user=None,
-            login_password=None,
-            login_host=None,
-            login_unix_socket=None,
+            user=None,
+            password=None,
+            host=None,
             port=None,
             **kw):
 
@@ -288,12 +283,12 @@ def db_restore(module, target,
     flags = []
     if db:
         flags.append(' --dbname={0}'.format(pipes.quote(db)))
-    if login_host:
-        flags.append(' --host={0}'.format(login_host))
+    if host:
+        flags.append(' --host={0}'.format(host))
     if port:
         flags.append(' --port={0}'.format(port))
-    if login_user:
-        flags.append(' --username={0}'.format(login_user))
+    if user:
+        flags.append(' --username={0}'.format(user))
 
     comp_prog_path = None
     cmd = module.get_bin_path('psql', True)
@@ -330,18 +325,12 @@ def db_restore(module, target,
     else:
         cmd = '{0} < {1}'.format(cmd, pipes.quote(target))
 
-    return do_with_password(module, cmd, login_password)
+    return do_with_password(module, cmd, password)
 
-def do_with_password(module, cmd, login_password):
-    try:
-        if login_password:
-            raise NotSupportedError(
-                'login_password not supported'
-            )
-        rc, stderr, stdout = module.run_command(cmd, use_unsafe_shell=True)
-        return rc, stderr, stdout, cmd
-    finally:
-        pass
+def do_with_password(module, cmd, password):
+    env = {"PGPASSWORD": password}
+    rc, stderr, stdout = module.run_command(cmd, use_unsafe_shell=True, environ_update=env)
+    return rc, stderr, stdout, cmd
 
 # ===========================================
 # Module execution.

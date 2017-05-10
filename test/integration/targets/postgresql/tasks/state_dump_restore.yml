@@ -21,11 +21,19 @@
 - set_fact: db_file_name="{{tmp_dir}}/{{file}}"
 
 - set_fact:
-     pg_str: "psql -U {{ pg_user }} {{ db_name }}"
-     pg_map:
+     admin_str: "psql -U {{ pg_user }}"
+     admin_map:
+         name: "{{ db_name }}"
+         owner: "{{ db_user1 }}"
+         login_user: "{{ pg_user }}"
+     user_str: "env PGPASSWORD=password psql -h localhost -U {{ db_user1 }} {{ db_name }}"
+     user_map:
          name: "{{ db_name }}"
          target: "{{ db_file_name }}"
-         login_user: "{{ pg_user }}"
+         owner: "{{ db_user1 }}"
+         login_host: "localhost"
+         login_user: "{{ db_user1 }}"
+         login_password: "password"
 
 - set_fact:
      sql_create: "create table employee(id int, name varchar(100));"
@@ -33,19 +41,19 @@
      sql_select: "select * from  employee;"
 
 - name: state dump/restore - create database
-  postgresql_db: "{{ pg_map | combine({'state': 'present'}) }}"
+  postgresql_db: "{{ admin_map | combine({'state': 'present'}) }}"
 
 - name: state dump/restore - create table employee
-  command: '{{ pg_str }} -c "{{ sql_create }}"'
+  command: '{{ user_str }} -c "{{ sql_create }}"'
 
 - name: state dump/restore - insert data into table employee
-  command: '{{ pg_str }} -c "{{ sql_insert }}"'
+  command: '{{ user_str }} -c "{{ sql_insert }}"'
 
 - name: state dump/restore - file name should not exist
   file: name={{ db_file_name }} state=absent
 
 - name: test state=dump to backup the database (expect changed=true)
-  postgresql_db: "{{ pg_map | combine({'state': 'dump'}) }}"
+  postgresql_db: "{{ user_map | combine({'state': 'dump'}) }}"
   register: result
   become_user: "{{ pg_user }}"
   become: True
@@ -60,13 +68,13 @@
   register: result
 
 - name: state dump/restore - remove database for restore
-  postgresql_db: "{{ pg_map | combine({'state': 'absent'}) }}"
+  postgresql_db: "{{ user_map | combine({'state': 'absent'}) }}"
 
 - name: state dump/restore - re-create database
-  postgresql_db: "{{ pg_map | combine({'state': 'present'}) }}"
+  postgresql_db: "{{ admin_map | combine({'state': 'present'}) }}"
 
 - name: test state=restore to restore the database (expect changed=true)
-  postgresql_db: "{{ pg_map | combine({'state': 'restore'}) }}"
+  postgresql_db: "{{ user_map | combine({'state': 'restore'}) }}"
   register: result
   become_user: "{{ pg_user }}"
   become: True
@@ -75,7 +83,7 @@
   assert: { that: "result.changed == true" }
 
 - name: select data from table employee
-  command: '{{ pg_str }} -c "{{ sql_select }}"'
+  command: '{{ user_str }} -c "{{ sql_select }}"'
   register: result
 
 - name: assert data in database is from the restore database
@@ -85,7 +93,7 @@
        - "'Joe Smith' in result.stdout"
 
 - name: state dump/restore - remove database name
-  postgresql_db: "{{ pg_map | combine({'state': 'absent'}) }}"
+  postgresql_db: "{{ user_map | combine({'state': 'absent'}) }}"
 
 - name: remove file name
   file: name={{ db_file_name }}  state=absent
