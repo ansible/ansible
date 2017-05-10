@@ -1,0 +1,45 @@
+# Test code for the iso_extract module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- set_fact: output_dir_test={{output_dir}}/test_command_raw
+
+- name: make sure our testing sub-directory does not exist
+  file: path="{{ output_dir_test }}" state=absent
+
+- name: create our testing sub-directory
+  file: path="{{ output_dir_test }}" state=directory
+
+##
+## iso_extract
+##
+
+- name: copy the iso to the test dir
+  copy:
+      src: test.iso
+      dest: "{{ output_dir_test }}"
+
+- name: extract the iso
+  iso_extract:
+      image: "{{ output_dir_test }}/test.iso"
+      dest: "{{ output_dir_test }}"
+      files:
+          - 1.txt
+          - 2.txt
+  register: iso_extract_test0
+
+# FIXME - fill this in after figuring out how to allow mounts

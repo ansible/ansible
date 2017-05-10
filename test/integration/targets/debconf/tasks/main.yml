@@ -1,0 +1,36 @@
+# Test code for the debconf module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+##
+## debconf query
+##
+
+- block:
+    - name: query the tzdata package
+      debconf:
+          name: tzdata
+      register: debconf_test0
+
+    - name: validate results for test 0
+      assert:
+          that:
+              - 'debconf_test0.changed is defined'
+              - 'debconf_test0.current is defined'
+              - '"tzdata/Zones/Etc" in debconf_test0.current'
+              - 'debconf_test0.current["tzdata/Zones/Etc"] == "UTC"'
+  when: ansible_distribution in ('Ubuntu', 'Debian')
