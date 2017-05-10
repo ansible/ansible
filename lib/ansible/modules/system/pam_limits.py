@@ -114,8 +114,11 @@ EXAMPLES = '''
 
 import os
 import os.path
-import shutil
+import tempfile
 import re
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 def main():
@@ -172,15 +175,15 @@ def main():
     space_pattern = re.compile(r'\s+')
 
     message = ''
-    f = open (limits_conf, 'r')
+    f = open (limits_conf, 'rb')
     # Tempfile
-    nf = tempfile.NamedTemporaryFile()
+    nf = tempfile.NamedTemporaryFile(mode='w+')
 
     found = False
     new_value = value
 
     for line in f:
-
+        line = to_native(line, errors='surrogate_or_strict')
         if line.startswith('#'):
             nf.write(line)
             continue
@@ -284,9 +287,6 @@ def main():
 
     module.exit_json(**res_args)
 
-
-# import module snippets
-from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
