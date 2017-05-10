@@ -1,0 +1,27 @@
+- name: Increment batch count
+  set_fact:
+    batch_count: "{{ batch_count | int + 1 }}"
+
+- name: "Executing a batch of {{ batched_items | length }} items"
+  debug:
+    msg: "{{ batched_items }}"
+
+- name: Async sleeping for batched_items
+  command: sleep {{ async_item }}
+  async: 45
+  poll: 0
+  with_items: "{{ batched_items }}"
+  loop_control:
+    loop_var: "async_item"
+  register: async_results
+
+- name: Check sync status
+  async_status:
+    jid: "{{ async_result_item.ansible_job_id }}"
+  with_items: "{{ async_results.results }}"
+  loop_control:
+    loop_var: "async_result_item"
+  register: async_poll_results
+  until: async_poll_results.finished
+  retries: 30
+  delay: 1
