@@ -1,4 +1,5 @@
 # (c) 2013, Jan-Piet Mens <jpmens(at)gmail.com>
+# (m) 2017, Juan Manuel Parrilla <jparrill@redhat.com>
 #
 # This file is part of Ansible
 #
@@ -44,6 +45,9 @@ DOCUMENTATION:
                 - name: ANSIBLE_ETCD_VERSION
 EXAMPLES:
     - name: "a value from a locally running etcd"
+      debug: msg={{ lookup('etcd', 'foo/bar') }}
+
+    - name: "a values from a folder on a locally running etcd"
       debug: msg={{ lookup('etcd', 'foo') }}
 RETURN:
     _list:
@@ -51,7 +55,6 @@ RETURN:
             - list of values associated with input keys
         type: strings
 '''
-
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -82,28 +85,47 @@ class Etcd:
         self.baseurl = '%s/%s/keys' % (self.url,self.version)
         self.validate_certs = validate_certs
 
-    def get(self, key):
-        url = "%s/%s" % (self.baseurl, key)
+    def _parse_node(self, node):
+        # This function will receive all etcd tree,
+        # if the level requested has any node, the recursion starts
+        # create a list in the dir variable and it is passed to the
+        # recursive function, and so on, if we get a variable,
+        # the function will create a key-value at this level and
+        # undoing the loop.
+        path = {}
+        if node.get('dir', False):
+            for n in node.get('nodes', []):
+                path[n['key'].split('/')[-1]] = self._parse_node(n)
 
+        else:
+            path = node['value']
+
+        return path
+
+    def get(self, key):
+        url = "%s/%s?recursive=true" % (self.baseurl, key)
         data = None
-        value = ""
+        value = {}
         try:
             r = open_url(url, validate_certs=self.validate_certs)
             data = r.read()
         except:
-            return value
+            return None
 
         try:
-            # {"action":"get","key":"/name","value":"Jane Jolie","index":5}
+            # I will not support Version 1 of etcd for folder parsing
             item = json.loads(data)
             if self.version == 'v1':
+                # When ETCD are working with just v1
                 if 'value' in item:
                     value = item['value']
             else:
                 if 'node' in item:
-                    value = item['node']['value']
+                    # When a usual result from ETCD
+                    value = self._parse_node(item['node'])
 
             if 'errorCode' in item:
+                # Here return an error when an unknown entry responds
                 value = "ENOENT"
         except:
             raise
