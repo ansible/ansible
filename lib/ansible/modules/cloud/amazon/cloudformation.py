@@ -425,17 +425,31 @@ def check_mode_changeset(module, stack_params, cfn):
                 success = True
                 break
             time.sleep(5)
+
         if not success:
             module.fail_json(msg="Failed to create change set "+name)
+
         cfn.delete_change_set(ChangeSetName=change_set['Id'])
 
         if description['Status'] == 'FAILED' and "didn't contain changes" in description['StatusReason']:
             return {'changed': False, 'meta': description['StatusReason']}
-
         return {'changed': True, 'meta': description['Changes']}
+
     except (botocore.exceptions.ValidationError, botocore.exceptions.ClientError) as err:
         error_msg = boto_exception(err)
         module.fail_json(msg=error_msg, exception=traceback.format_exc())
+
+
+def process_changeset(changeset):
+    """Given the output of boto3 describe_change_set, return a dict
+    suitable for module.exit_json"""
+    # StatusReason can be null
+    reason = changeset.get('StatusReason')
+    if changeset['Status'] == 'FAILED' and "didn't contain changes" in reason:
+        return {'changed': False, 'msg': reason, 'meta': []}
+    else:
+        return {'changed': True, 'msg': reason or 'Would change stack',
+                'meta': changeset['Changes']}
 
 
 def get_stack_facts(cfn, stack_name):
@@ -542,11 +556,11 @@ def main():
 
     if module.check_mode:
         if state == 'absent' and stack_info:
-            module.exit_json(changed=True, meta='Stack would be deleted')
+            module.exit_json(changed=True, msg='Stack would be deleted', meta=[])
         elif state == 'absent' and not stack_info:
-            module.exit_json(changed=False, meta='Stack doesn\'t exist')
+            module.exit_json(changed=False, msg='Stack doesn\'t exist', meta=[])
         elif state == 'present' and not stack_info:
-            module.exit_json(changed=True, meta='New stack would be created')
+            module.exit_json(changed=True, msg='New stack would be created', meta=[])
         else:
             module.exit_json(**check_mode_changeset(module, stack_params, cfn))
 
