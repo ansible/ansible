@@ -6,6 +6,7 @@ from __future__ import print_function
 from os.path import basename
 from sys import argv
 
+import collections
 import logging as log
 import json
 
@@ -41,12 +42,14 @@ Options:
 All the parameters can also be set as environment variables using the 'GCE_' prefix (i.e. {1}API_VERSION=beta).
 """.format(basename(argv[0]), ENV_PREFIX)
 
+
 def get_all_projects(api_version='v1'):
     project_ids = []
 
     credentials = GoogleCredentials.get_application_default()
 
-    service = discovery.build('cloudresourcemanager', api_version, credentials=credentials)
+    service = discovery.build('cloudresourcemanager', api_version,
+                              credentials=credentials)
     # pylint: disable=no-member
     request = service.projects().list()
 
@@ -61,6 +64,7 @@ def get_all_projects(api_version='v1'):
                                                previous_response=response)
 
     return project_ids
+
 
 def get_instances(project_id, zone, api_version='v1'):
     instances = []
@@ -84,11 +88,15 @@ def get_instances(project_id, zone, api_version='v1'):
 
     return instances
 
-def get_hostvars(instance):
-    hostvars = {}
 
-    hostvars['gce_id'] = instance['id']
-    hostvars['gce_status'] = instance['status']
+def get_hostvars(instance):
+    hostvars = {
+        'gce_id': instance['id'],
+        'gce_status': instance['status']
+    }
+
+    if instance['networkInterfaces'] and instance['networkInterfaces'][0]['networkIP']:
+        hostvars['ansible_ssh_host'] = instance['networkInterfaces'][0]['networkIP']
 
     if 'labels' in instance:
         hostvars['gce_labels'] = instance['labels']
@@ -96,55 +104,56 @@ def get_hostvars(instance):
     if 'items' in instance['metadata']:
         hostvars['gce_metadata'] = instance['metadata']['items']
 
-    hostvars['ansible_ssh_host'] = instance['networkInterfaces'][0]['networkIP']
-
     if 'items' in instance['tags']:
         hostvars['gce_tags'] = instance['tags']['items']
 
     return hostvars
 
+
 def get_inventory(instances):
-    inventory = {}
+    inventory = collections.defaultdict(list)
+    inventory['_meta'] = collections.defaultdict(
+        lambda: collections.defaultdict(dict))
 
     for instance in instances:
-        if '_meta' not in inventory:
-            inventory['_meta'] = {}
+        if instance['status'] in ['RUNNING', 'STAGING']:
+            inventory['_meta']['hostvars'][instance['name']] \
+                = get_hostvars(instance)
 
-        if 'hostvars' not in inventory['_meta']:
-            inventory['_meta']['hostvars'] = {}
+            # populate the 'all' group with all hosts found
+            inventory['all'].append(instance['name'])
 
-        inventory['_meta']['hostvars'][instance['name']] = get_hostvars(instance)
-
-        if 'all' not in inventory:
-            inventory['all'] = []
-
-        # populate the 'all' group with all hosts found
-        inventory['all'].append(instance['name'])
-
-        # create a group for every tag prefixed by 'tag_' and populate accordingly
-        if 'items' in instance['tags']:
-            for tag in instance['tags']['items']:
-                if 'tag_{}'.format(tag) not in inventory:
-                    inventory['tag_{}'.format(tag)] = []
-                inventory['tag_{}'.format(tag)].append(instance['name'])
+            # create a group for every tag prefixed by 'tag_' and populate
+            # accordingly
+            if 'items' in instance['tags']:
+                for tag in instance['tags']['items']:
+                    inventory['tag_{}'.format(tag)].append(instance['name'])
 
     return inventory
+
 
 def main(args):
     project = args['--project']
     zone = args['--zone']
     api_version = args['--api-version']
 
-    instances = get_instances(project_id=project, zone=zone, api_version=api_version)
+    instances = get_instances(project_id=project,
+                              zone=zone,
+                              api_version=api_version)
 
     inventory_json = get_inventory(instances)
-    print(json.dumps(inventory_json, sort_keys=True, indent=2, separators=(',', ': ')))
+    print(json.dumps(inventory_json,
+                     sort_keys=True,
+                     indent=2,
+                     separators=(',', ': ')))
 
 if __name__ == "__main__":
     log.basicConfig(filename='gce_googleapiclient.log')
 
     try:
-        ARGS = docoptcfg(DOCOPT_USAGE, config_option='--config', env_prefix=ENV_PREFIX)
+        ARGS = docoptcfg(DOCOPT_USAGE,
+                         config_option='--config',
+                         env_prefix=ENV_PREFIX)
     except DocoptcfgFileError as exc:
         log.info('Failed reading: %s', str(exc))
         ARGS = docoptcfg(DOCOPT_USAGE, env_prefix=ENV_PREFIX)
