@@ -112,7 +112,7 @@ class ApacheFragment(object):
     available_dir = None
     enabled_dir = None
     fragment_suffix = '.conf'
-    command_names = {'present': None, 'absent': None}
+    command_names = dict(present=None, absent=None)
 
     def __init__(self, name):
         self.fragment_file = basename(name)
@@ -145,13 +145,13 @@ class ApacheFragment(object):
 class ApacheConfigFragment(ApacheFragment):
     available_dir = '/etc/apache2/conf-available'
     enabled_dir = '/etc/apache2/conf-enabled'
-    command_names = {'present': 'a2enconf', 'absent': 'a2disconf'}
+    command_names = dict(present='a2enconf', absent='a2disconf')
 
 
 class ApacheSiteFragment(ApacheFragment):
     available_dir = '/etc/apache2/sites-available'
     enabled_dir = '/etc/apache2/sites-enabled'
-    command_names = {'present': 'a2ensite', 'absent': 'a2dissite'}
+    command_names = dict(present='a2ensite', absent='a2dissite')
 
 
 def _set_state(state):
@@ -193,7 +193,7 @@ def main():
     state = module.params['state']
     name = module.params['name']
 
-    state_string = {'present': 'enabled', 'absent': 'disabled'}[state]
+    state_string = dict(present='enabled', absent='disabled')[state]
     success_msg = "Fragment %s %s" % (name, state_string)
     fail_msg = "Failed to set fragment %s to %s" % (name, state_string)
 
