@@ -271,7 +271,7 @@ def main():
                 raise Exception("EOF found before init data was complete")
             init_data += cur_line
             cur_line = stdin.readline()
-        pc_data = cPickle.load(init_data)
+        pc_data = cPickle.loads(init_data)
 
         pc = PlayContext()
         pc.deserialize(pc_data)
