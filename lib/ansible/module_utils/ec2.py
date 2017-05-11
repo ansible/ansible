@@ -415,11 +415,13 @@ def ansible_dict_to_boto3_filter_list(filters_dict):
     return filters_list
 
 
-def boto3_tag_list_to_ansible_dict(tags_list):
+def boto3_tag_list_to_ansible_dict(tags_list, tag_name_key_name='Key', tag_value_key_name='Value'):
 
     """ Convert a boto3 list of resource tags to a flat dict of key:value pairs
     Args:
         tags_list (list): List of dicts representing AWS tags.
+        tag_name_key_name (str): Value to use as the key for all tag keys (useful because boto3 doesn't always use "Key")
+        tag_value_key_name (str): Value to use as the key for all tag values (useful because boto3 doesn't always use "Value")
     Basic Usage:
         >>> tags_list = [{'Key': 'MyTagKey', 'Value': 'MyTagValue'}]
         >>> boto3_tag_list_to_ansible_dict(tags_list)
@@ -438,19 +440,19 @@ def boto3_tag_list_to_ansible_dict(tags_list):
 
     tags_dict = {}
     for tag in tags_list:
-        if 'key' in tag:
-            tags_dict[tag['key']] = tag['value']
-        elif 'Key' in tag:
-            tags_dict[tag['Key']] = tag['Value']
+        if tag_name_key_name in tag:
+            tags_dict[tag[tag_name_key_name]] = tag[tag_value_key_name]
 
     return tags_dict
 
 
-def ansible_dict_to_boto3_tag_list(tags_dict):
+def ansible_dict_to_boto3_tag_list(tags_dict, tag_name_key_name='Key', tag_value_key_name='Value'):
 
     """ Convert a flat dict of key:value pairs representing AWS resource tags to a boto3 list of dicts
     Args:
         tags_dict (dict): Dict representing AWS resource tags.
+        tag_name_key_name (str): Value to use as the key for all tag keys (useful because boto3 doesn't always use "Key")
+        tag_value_key_name (str): Value to use as the key for all tag values (useful because boto3 doesn't always use "Value")
     Basic Usage:
         >>> tags_dict = {'MyTagKey': 'MyTagValue'}
         >>> ansible_dict_to_boto3_tag_list(tags_dict)
@@ -469,7 +471,7 @@ def ansible_dict_to_boto3_tag_list(tags_dict):
 
     tags_list = []
     for k,v in tags_dict.items():
-        tags_list.append({'Key': k, 'Value': v})
+        tags_list.append({tag_name_key_name: k, tag_value_key_name: v})
 
     return tags_list
 
@@ -623,3 +625,29 @@ def map_complex_type(complex_type, type_map):
     elif type_map:
         return globals()['__builtins__'][type_map](complex_type)
     return new_type
+
+
+def compare_aws_tags(current_tags_dict, new_tags_dict, purge_tags=True):
+    """
+    Compare two dicts of AWS tags. Dicts are expected to of been created using 'boto3_tag_list_to_ansible_dict' helper function.
+    Two dicts are returned - the first is tags to be set, the second is any tags to remove
+
+    :param current_tags_dict:
+    :param new_tags_dict:
+    :param purge_tags:
+    :return: tag_key_value_pairs_to_set: a dict of key value pairs that need to be set in AWS. If all tags are identical this dict will be empty
+    :return: tag_keys_to_unset: a list of key names that need to be unset in AWS. If no tags need to be unset this list will be empty
+    """
+
+    tag_key_value_pairs_to_set = {}
+    tag_keys_to_unset = []
+
+    for key in current_tags_dict.keys():
+        if key not in new_tags_dict and purge_tags:
+            tag_keys_to_unset.append(key)
+
+    for key in set(new_tags_dict.keys()) - set(tag_keys_to_unset):
+        if new_tags_dict[key] != current_tags_dict.get(key):
+            tag_key_value_pairs_to_set[key] = new_tags_dict[key]
+
+    return tag_key_value_pairs_to_set, tag_keys_to_unset

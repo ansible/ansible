@@ -132,7 +132,7 @@ def list_ec2_vpc_nacls(connection, module):
     # Turn the boto3 result in to ansible friendly tag dictionary
     for nacl in snaked_nacls:
         if 'tags' in nacl:
-            nacl['tags'] = boto3_tag_list_to_ansible_dict(nacl['tags'])
+            nacl['tags'] = boto3_tag_list_to_ansible_dict(nacl['tags'], 'key', 'value')
         if 'entries' in nacl:
             nacl['egress'] = [nacl_entry_to_list(e) for e in nacl['entries']
                               if e['rule_number'] != 32767 and e['egress']]
