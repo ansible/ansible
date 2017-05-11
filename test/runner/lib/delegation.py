@@ -245,6 +245,7 @@ def delegate_remote(args, exclude, require):
     version = parts[1]
 
     core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage)
+    success = False
 
     try:
         core_ci.start()
@@ -277,11 +278,13 @@ def delegate_remote(args, exclude, require):
 
         try:
             manage.ssh(cmd, ssh_options)
+            success = True
         finally:
             manage.ssh('rm -rf /tmp/results && cp -a ansible/test/results /tmp/results')
             manage.download('/tmp/results', 'test')
     finally:
-        pass
+        if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
+            core_ci.stop()
 
 
 def generate_command(args, path, options, exclude, require):
