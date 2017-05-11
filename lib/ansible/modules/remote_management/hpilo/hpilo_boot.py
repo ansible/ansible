@@ -80,6 +80,7 @@ options:
       - Change the ssl_version used
     default: TLSv1
     choices: ['SSLv3','SSLv23','TLSv1','TLSv1_1','TLSv1_2']
+    version_added: '2.4' 
 requirements:
 - hpilo
 notes:
