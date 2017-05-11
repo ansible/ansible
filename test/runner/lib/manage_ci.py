@@ -71,17 +71,15 @@ class ManageNetworkCI(object):
         """Wait for instance to respond to ansible ping."""
         extra_vars = [
             'ansible_host=%s' % self.core_ci.connection.hostname,
-            'ansible_user=%s' % self.core_ci.connection.username,
             'ansible_port=%s' % self.core_ci.connection.port,
             'ansible_connection=local',
             'ansible_ssh_private_key_file=%s' % self.core_ci.ssh_key.key,
-            'ansible_network_os=%s' % self.core_ci.platform,
         ]
 
         name = '%s-%s' % (self.core_ci.platform, self.core_ci.version.replace('.', '_'))
 
         env = ansible_environment(self.core_ci.args)
-        cmd = ['ansible', '-m', 'net_command', '-a', '?', '-i', '%s,' % name, name, '-e', ' '.join(extra_vars)]
+        cmd = ['ansible', '-m', '%s' %self.core_ci.platform + '_command', '-a', 'commands=?', '-u', '%s' % self.core_ci.connection.username, '-i', '%s,' % name, name, '-e', ' '.join(extra_vars)]
 
         for _ in range(1, 90):
             try:
