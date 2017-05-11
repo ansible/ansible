@@ -59,7 +59,7 @@ options:
   image:
     description:
       - The image used to start a container. This string is passed directly to the Docker daemon. Images in the Docker
-        Hub registry are available by default. Other repositories are specified with `` repository-url /image :tag ``.
+        Hub registry are available by default. Other repositories are specified with `` repository-url /image <colon>tag ``.
         Up to 255 letters (uppercase and lowercase), numbers, hyphens, underscores, colons, periods, forward slashes,
         and number signs are allowed. This parameter maps to Image in the Create a container section of the Docker
         Remote API and the IMAGE parameter of docker run.
@@ -88,20 +88,55 @@ options:
 
   volumes:
     description:
-      - A list of data volumes used in a job. List of dictionaries with the following
-        form: { host: { sourcePath: <string> }, name: <string> }
+      - A list of data volumes used in a job. List of dictionaries.
+    suboptions:
+      host:
+        description:
+          - The contents of the host parameter determine whether your data volume persists on the host container
+            instance and where it is stored. If the host parameter is empty, then the Docker daemon assigns a host
+            path for your data volume, but the data is not guaranteed to persist after the containers associated with
+            it stop running.
+        suboptions:
+          sourcePath:
+            description:
+              - The path on the host container instance that is presented to the container. If this parameter is empty,
+                then the Docker daemon has assigned a host path for you. If the host parameter contains a sourcePath
+                file location, then the data volume persists at the specified location on the host container instance
+                until you delete it manually. If the sourcePath value does not exist on the host container instance,
+                the Docker daemon creates it. If the location does exist, the contents of the source path folder are
+                exported.
+      name:
+        description:
+          - The name of the volume. Up to 255 letters (uppercase and lowercase), numbers, hyphens, and underscores are
+            allowed. This name is referenced in the sourceVolume parameter of container definition mountPoints.
 
   environment:
     description:
       - The environment variables to pass to a container. This parameter maps to Env in the Create a container section
-        of the Docker Remote API and the --env option to docker run. List of dictionaries with the following
-        form: { name: <string>, value: <string> }
+        of the Docker Remote API and the --env option to docker run. List of dictionaries.
+    suboptions:
+      name:
+        description:
+          - The name of the key value pair. For environment variables, this is the name of the environment variable.
+      value:
+        description:
+          - The value of the key value pair. For environment variables, this is the value of the environment variable.
 
   mount_points:
     description:
       - The mount points for data volumes in your container. This parameter maps to Volumes in the Create a container
-        section of the Docker Remote API and the --volume option to docker run. List of dictionaries with the following
-        form: { containerPath: <string>, readOnly: <boolean>, sourceVolume: <string> }
+        section of the Docker Remote API and the --volume option to docker run. List of dictionaries.
+    suboptions:
+      containerPath:
+        description:
+          - The path on the container at which to mount the host volume.
+      readOnly:
+        description:
+          - If this value is true , the container has read-only access to the volume; otherwise, the container can write
+             to the volume. The default value is false.
+      sourceVolume:
+        description:
+          - The name of the volume to mount.
 
   readonly_root_filesystem:
     description:
@@ -118,8 +153,17 @@ options:
   ulimits:
     description:
       - A list of ulimits to set in the container. This parameter maps to Ulimits in the Create a container section
-        of the Docker Remote API and the --ulimit option to docker run. List of dictionaries with the following
-        properties - hardLimit(int), name(string), softLimit(int).
+        of the Docker Remote API and the --ulimit option to docker run. List of dictionaries.
+    suboptions:
+      hardLimit:
+        description:
+          - The hard limit for the ulimit type.
+      name:
+        description:
+          - The type of the ulimit.
+      softLimit:
+        description:
+          - The soft limit for the ulimit type.
 
   user:
     description:
