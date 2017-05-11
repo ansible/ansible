@@ -12,7 +12,6 @@ import functools
 import shutil
 import stat
 import random
-import pipes
 import string
 import atexit
 
@@ -607,7 +606,7 @@ def command_integration_script(args, target):
     env = integration_environment(args, target, cmd)
     cwd = target.path
 
-    intercept_command(args, cmd, env=env, cwd=cwd)
+    intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd)
 
 
 def command_integration_role(args, target, start_at_task):
@@ -668,7 +667,7 @@ def command_integration_role(args, target, start_at_task):
 
         env['ANSIBLE_ROLES_PATH'] = os.path.abspath('test/integration/targets')
 
-        intercept_command(args, cmd, env=env, cwd=cwd)
+        intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd)
 
 
 def command_units(args):
@@ -723,7 +722,7 @@ def command_units(args):
         display.info('Unit test with Python %s' % version)
 
         try:
-            intercept_command(args, command, env=env, python_version=version)
+            intercept_command(args, command, target_name='units', env=env, python_version=version)
         except SubprocessError as ex:
             # pytest exits with status code 5 when all tests are skipped, which isn't an error for our use case
             if ex.status != 5:
@@ -838,7 +837,7 @@ def compile_version(args, python_version, include, exclude):
     return TestSuccess(command, test, python_version=python_version)
 
 
-def intercept_command(args, cmd, capture=False, env=None, data=None, cwd=None, python_version=None):
+def intercept_command(args, cmd, target_name, capture=False, env=None, data=None, cwd=None, python_version=None):
     """
     :type args: TestConfig
     :type cmd: collections.Iterable[str]
@@ -853,13 +852,25 @@ def intercept_command(args, cmd, capture=False, env=None, data=None, cwd=None, p
         env = common_environment()
 
     cmd = list(cmd)
-    escaped_cmd = ' '.join(pipes.quote(c) for c in cmd)
     inject_path = get_coverage_path(args)
+    config_path = os.path.join(inject_path, 'injector.json')
+    version = python_version or args.python_version
+    interpreter = find_executable('python%s' % version)
+    coverage_file = os.path.abspath(os.path.join(inject_path, '..', 'output', '%s=%s=%s=%s=coverage' % (
+        args.command, target_name, args.coverage_label or 'local-%s' % version, version)))
 
     env['PATH'] = inject_path + os.pathsep + env['PATH']
-    env['ANSIBLE_TEST_COVERAGE'] = 'coverage' if args.coverage else 'version'
-    env['ANSIBLE_TEST_PYTHON_VERSION'] = python_version or args.python_version
-    env['ANSIBLE_TEST_CMD'] = escaped_cmd
+    env['ANSIBLE_TEST_PYTHON_VERSION'] = version
+    env['ANSIBLE_TEST_PYTHON_INTERPRETER'] = interpreter
+
+    config = dict(
+        python_interpreter=interpreter,
+        coverage_file=coverage_file if args.coverage else None,
+    )
+
+    if not args.explain:
+        with open(config_path, 'w') as config_fd:
+            json.dump(config, config_fd, indent=4, sort_keys=True)
 
     return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd)
 
@@ -887,6 +898,10 @@ def get_coverage_path(args):
 
     shutil.copytree(src, os.path.join(coverage_path, 'coverage'))
     shutil.copy('.coveragerc', os.path.join(coverage_path, 'coverage', '.coveragerc'))
+
+    for root, dir_names, file_names in os.walk(coverage_path):
+        for name in dir_names + file_names:
+            os.chmod(os.path.join(root, name), stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
 
     for directory in 'output', 'logs':
         os.mkdir(os.path.join(coverage_path, directory))
@@ -1210,7 +1225,7 @@ class EnvironmentDescription(object):
         :type command: list[str]
         :rtype: str
         """
-        stdout, stderr = raw_command(command, capture=True)
+        stdout, stderr = raw_command(command, capture=True, cmd_verbosity=2)
         return (stdout or '').strip() + (stderr or '').strip()
 
     @staticmethod

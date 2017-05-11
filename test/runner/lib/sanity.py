@@ -644,7 +644,7 @@ def command_sanity_ansible_doc(args, targets, python_version):
     cmd = ['ansible-doc'] + modules
 
     try:
-        stdout, stderr = intercept_command(args, cmd, env=env, capture=True, python_version=python_version)
+        stdout, stderr = intercept_command(args, cmd, target_name='ansible-doc', env=env, capture=True, python_version=python_version)
         status = 0
     except SubprocessError as ex:
         stdout = ex.stdout

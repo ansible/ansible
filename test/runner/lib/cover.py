@@ -33,8 +33,7 @@ def command_coverage_combine(args):
 
     modules = dict((t.module, t.path) for t in list(walk_module_targets()))
 
-    coverage_files = [os.path.join(COVERAGE_DIR, f) for f in os.listdir(COVERAGE_DIR)
-                      if f.startswith('coverage') and f != 'coverage']
+    coverage_files = [os.path.join(COVERAGE_DIR, f) for f in os.listdir(COVERAGE_DIR) if '=coverage.' in f]
 
     arc_data = {}
 
@@ -60,7 +59,12 @@ def command_coverage_combine(args):
             continue
 
         for filename in original.measured_files():
-            arcs = set(original.arcs(filename))
+            arcs = set(original.arcs(filename) or [])
+
+            if not arcs:
+                # This is most likely due to using an unsupported version of coverage.
+                display.warning('No arcs found for "%s" in coverage file: %s' % (filename, coverage_file))
+                continue
 
             if '/ansible_modlib.zip/ansible/' in filename:
                 new_name = re.sub('^.*/ansible_modlib.zip/ansible/', ansible_path, filename)
@@ -68,11 +72,14 @@ def command_coverage_combine(args):
                 filename = new_name
             elif '/ansible_module_' in filename:
                 module = re.sub('^.*/ansible_module_(?P<module>.*).py$', '\\g<module>', filename)
+                if module not in modules:
+                    display.warning('Skipping coverage of unknown module: %s' % module)
+                    continue
                 new_name = os.path.abspath(modules[module])
                 display.info('%s -> %s' % (filename, new_name), verbosity=3)
                 filename = new_name
-            elif filename.startswith('/root/ansible/'):
-                new_name = re.sub('^/.*?/ansible/', root_path, filename)
+            elif re.search('^(/.*?)?/root/ansible/', filename):
+                new_name = re.sub('^(/.*?)?/root/ansible/', root_path, filename)
                 display.info('%s -> %s' % (filename, new_name), verbosity=3)
                 filename = new_name
 
@@ -125,7 +132,7 @@ def command_coverage_erase(args):
     initialize_coverage(args)
 
     for name in os.listdir(COVERAGE_DIR):
-        if not name.startswith('coverage'):
+        if not name.startswith('coverage') and '=coverage.' not in name:
             continue
 
         path = os.path.join(COVERAGE_DIR, name)
