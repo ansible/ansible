@@ -467,6 +467,7 @@ class EnvironmentConfig(CommonConfig):
 
         self.remote_stage = args.remote_stage  # type: str
         self.remote_aws_region = args.remote_aws_region  # type: str
+        self.remote_terminate = args.remote_terminate  # type: str
 
         self.requirements = args.requirements  # type: bool
 
