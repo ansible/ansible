@@ -88,7 +88,7 @@ stderr:
     type: string
 '''
 
-from module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from os.path import basename, join, exists, islink, samefile, splitext
 import glob
 
