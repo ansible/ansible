@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = '''
 ---
 module: apache2_conf
-version_added: 2.4
+version_added: "2.4"
 author:
     - Den Ivanov (@urajio)
 short_description: enables/disables a configuration fragment of the Apache2 webserver
@@ -88,7 +88,7 @@ stderr:
     type: string
 '''
 
-from ansible.module_utils.basic import AnsibleModule
+from module_utils.basic import AnsibleModule
 from os.path import basename, join, exists, islink, samefile, splitext
 import glob
 
