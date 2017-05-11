@@ -46,7 +46,7 @@ from io import BytesIO
 from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six import PY3
-from ansible.module_utils.six.moves import cPickle, StringIO
+from ansible.module_utils.six.moves import cPickle
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import connection_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
@@ -212,11 +212,9 @@ class Server():
                                 pass
                         elif data.startswith(b'CONTEXT: '):
                             display.display("socket operation is CONTEXT", log_only=True)
-                            pc_data = data.split(b'CONTEXT: ')[1]
+                            pc_data = data.split(b'CONTEXT: ', 1)[1]
 
-                            src = StringIO(pc_data)
-                            pc_data = cPickle.load(src)
-                            src.close()
+                            pc_data = cPickle.loads(pc_data)
 
                             pc = PlayContext()
                             pc.deserialize(pc_data)
@@ -273,8 +271,7 @@ def main():
                 raise Exception("EOF found before init data was complete")
             init_data += cur_line
             cur_line = stdin.readline()
-        src = BytesIO(to_bytes(init_data))
-        pc_data = cPickle.load(src)
+        pc_data = cPickle.load(init_data)
 
         pc = PlayContext()
         pc.deserialize(pc_data)
@@ -325,10 +322,10 @@ def main():
     #        the connection will timeout here. Need to make this more resilient.
     rc = 0
     while rc == 0:
-        data = sys.stdin.readline()
-        if data == '':
+        data = stdin.readline()
+        if data == b'':
             break
-        if data.strip() == '':
+        if data.strip() == b'':
             continue
         sf = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         attempts = 1
@@ -348,11 +345,10 @@ def main():
 
         # send the play_context back into the connection so the connection
         # can handle any privilege escalation activities
-        pc_data = b'CONTEXT: %s' % src.getvalue()
-        send_data(sf, to_bytes(pc_data))
-        src.close()
+        pc_data = b'CONTEXT: %s' % init_data
+        send_data(sf, pc_data)
 
-        send_data(sf, to_bytes(data.strip()))
+        send_data(sf, data.strip())
 
         rc = int(recv_data(sf), 10)
         stdout = recv_data(sf)
