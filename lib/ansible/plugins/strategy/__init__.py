@@ -331,8 +331,7 @@ class StrategyBase:
             found_task = iterator.get_original_task(original_host, task_result._task)
             original_task = found_task.copy(exclude_parent=True, exclude_tasks=True)
             original_task._parent = found_task._parent
-            for (attr, val) in iteritems(task_result._task_fields):
-                setattr(original_task, attr, val)
+            original_task.from_attrs(task_result._task_fields)
 
             task_result._host = original_host
             task_result._task = original_task
