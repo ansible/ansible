@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
 #
@@ -109,14 +109,14 @@ except ImportError:
 def main():
     argument_spec = tower_argument_spec()
     argument_spec.update(dict(
-        status = dict(choices=['pending', 'waiting', 'running', 'error', 'failed', 'canceled', 'successful']),
-        page = dict(type='int'),
-        all_pages = dict(type='bool', default=False),
-        query = dict(type='dict'),
+        status=dict(choices=['pending', 'waiting', 'running', 'error', 'failed', 'canceled', 'successful']),
+        page=dict(type='int'),
+        all_pages=dict(type='bool', default=False),
+        query=dict(type='dict'),
     ))
 
     module = AnsibleModule(
-        argument_spec = argument_spec,
+        argument_spec=argument_spec,
         supports_check_mode=True
     )
 
@@ -135,7 +135,7 @@ def main():
         tower_check_mode(module)
         try:
             job = tower_cli.get_resource('job')
-            params = {'status':status, 'page':page, 'all_pages': all_pages}
+            params = {'status': status, 'page': page, 'all_pages': all_pages}
             if query:
                 params['query'] = query.items()
             json_output = job.list(**params)

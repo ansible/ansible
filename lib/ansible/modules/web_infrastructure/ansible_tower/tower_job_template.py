@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2017, Wayne Witzel III <wayne@riotousliving.com>
 #
@@ -220,7 +220,7 @@ def update_fields(p):
     params = p.copy()
     field_map = {
         'ask_extra_vars': 'ask_variables_on_launch',
-        'ask_limit' :'ask_limit_on_launch',
+        'ask_limit': 'ask_limit_on_launch',
         'ask_tags': 'ask_tags_on_launch',
         'ask_job_type': 'ask_job_type_on_launch',
         'machine_credential': 'credential',
@@ -248,11 +248,11 @@ def update_resources(module, p):
         'network_credential': 'name',
         'cloud_credential': 'name',
     }
-    for k,v in identity_map.items():
+    for k, v in identity_map.items():
         try:
             if params[k]:
                 key = 'credential' if '_credential' in k else k
-                result = tower_cli.get_resource(key).get(**{v:params[k]})
+                result = tower_cli.get_resource(key).get(**{v: params[k]})
                 params[k] = result['id']
         except (exc.NotFound) as excinfo:
             module.fail_json(msg='Failed to update job template: {0}'.format(excinfo), changed=False)
@@ -261,36 +261,36 @@ def update_resources(module, p):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            description = dict(),
-            job_type = dict(choices=['run', 'check', 'scan'], required=True),
-            inventory = dict(),
-            project = dict(required=True),
-            playbook = dict(required=True),
-            machine_credential = dict(),
-            cloud_credential = dict(),
-            network_credential = dict(),
-            forks = dict(type='int'),
-            limit = dict(),
-            verbosity = dict(choices=['verbose', 'debug']),
-            job_tags = dict(),
-            skip_tags = dict(),
-            host_config_key = dict(),
-            extra_vars_path = dict(type='path', required=False),
-            ask_extra_vars = dict(type='bool', default=False),
-            ask_limit = dict(type='bool', default=False),
-            ask_tags = dict(type='bool', default=False),
-            ask_job_type = dict(type='bool', default=False),
-            ask_inventory = dict(type='bool', default=False),
-            ask_credential = dict(type='bool', default=False),
-            become_enabled = dict(type='bool', default=False),
-            tower_host = dict(),
-            tower_username = dict(),
-            tower_password = dict(no_log=True),
-            tower_verify_ssl = dict(type='bool', default=True),
-            tower_config_file = dict(type='path'),
-            state = dict(choices=['present', 'absent'], default='present'),
+        argument_spec=dict(
+            name=dict(required=True),
+            description=dict(),
+            job_type=dict(choices=['run', 'check', 'scan'], required=True),
+            inventory=dict(),
+            project=dict(required=True),
+            playbook=dict(required=True),
+            machine_credential=dict(),
+            cloud_credential=dict(),
+            network_credential=dict(),
+            forks=dict(type='int'),
+            limit=dict(),
+            verbosity=dict(choices=['verbose', 'debug']),
+            job_tags=dict(),
+            skip_tags=dict(),
+            host_config_key=dict(),
+            extra_vars_path=dict(type='path', required=False),
+            ask_extra_vars=dict(type='bool', default=False),
+            ask_limit=dict(type='bool', default=False),
+            ask_tags=dict(type='bool', default=False),
+            ask_job_type=dict(type='bool', default=False),
+            ask_inventory=dict(type='bool', default=False),
+            ask_credential=dict(type='bool', default=False),
+            become_enabled=dict(type='bool', default=False),
+            tower_host=dict(),
+            tower_username=dict(),
+            tower_password=dict(no_log=True),
+            tower_verify_ssl=dict(type='bool', default=True),
+            tower_config_file=dict(type='path'),
+            state=dict(choices=['present', 'absent'], default='present'),
         ),
         supports_check_mode=True
     )
